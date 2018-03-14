@@ -1,0 +1,144 @@
+###############################################################################
+# Test: PLBDropReplicaDuringUpgrade.test
+# Owners: v-bogmar,yangli,anuragg
+# This test verifies that replica could be dropped/moved during partition 
+# upgrade so that upgrade can successfully be finished alongside replica drop/move.
+###############################################################################
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set DummyPLBEnabled true
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+set UserReplicaRestartWaitDuration 9999
+set UpgradeStatusPollInterval 5
+set ExpectedReplicaUpgradeDuration 3600
+set UseSeparateSecondaryLoad true
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set SendLoadReportInterval 1
+set PeriodicLoadPersistInterval 1
+
++10 ud=UD4 cap=CPU:200
++20 ud=UD3 cap=CPU:100
++30 ud=UD2 cap=CPU:200
++40 ud=UD1 cap=CPU:200
+
+
+verify
+
+# Application version 1.0
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA version=1.0
+app.upload version10
+provisionapp version10
+
+# Application version 1.1
+
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA stateful
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA version=1.1
+app.upload version11
+provisionapp version11
+
+# Application version 1.2
+
+app.add version12 TestApp 1.2
+app.clear version12
+app.servicepack version12 ServicePackageA version=1.2
+app.servicetypes version12 ServicePackageA ServiceTypeA stateful
+app.codepack version12 ServicePackageA CodeA1 types=ServiceTypeA version=1.2
+app.upload version12
+provisionapp version12
+
+# Create application version 1.0
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+# Create services
+createservice fabric:/MyApp/Volatile ServiceTypeA y 1 3 appname=fabric:/MyApp metrics=CPU,High,25,15
+verify
+
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile.40 Primary
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile.20 Secondary
+
+!var test1PartitionId FM.FT.PartitionId.fabric:/MyApp/Volatile
+
+verify
+
+addbehavior b1 * * DoReconfiguration
+
+#
+# Perform application upgrade from version 1.0 to 1.1
+#
+# Partition upgrade is successfully finished even though replica movement is to be held during upgrade.
+# In this test case, replica movement is triggered during upgrade
+
+upgradeapp fabric:/MyApp 1.1 Rolling upgrademode=manual
+
+!pause 5
+
+updateservice fabric:/MyApp/Volatile Stateful metrics=CPU,High,150,150
+verifypartitionload <var.test1PartitionId> CPU 150 150
+
+removebehavior b1
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3,UD4
+
+verify
+
+updateservice fabric:/MyApp/Volatile Stateful metrics=CPU,High,15,15
+verifypartitionload <var.test1PartitionId> CPU 15 15
+
+addbehavior b2 * * AddReplicaReply
+
+movesecondary fabric:/MyApp/Volatile 10 20
+
+!waitforstate FM.Replica.State.fabric:/MyApp/Volatile.20 InBuild
+
+#
+# Perform application upgrade from version 1.1 to 1.2
+#
+# Partition upgrade is successfully finished even though replica movement is to be held during upgrade.
+# In this test case, replica movement is triggered before upgrade
+
+upgradeapp fabric:/MyApp 1.2 Rolling upgrademode=manual
+
+removebehavior b2
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3,UD4
+
+verify
+
+-*
+
+!q
+
+

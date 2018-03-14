@@ -1,0 +1,22 @@
+votes 20 40 60
+cmservice 0 0
+namingservice 6 1 1
+cleantest
++60
++40
++20
++10
++5
++1
+verify
+createname fabric:/calc
+verify
+createservice fabric:/calc CalculatorServiceType n 6 2
+verify
+resolve fabric:/calc 0
+resolve fabric:/calc 50
+resolve fabric:/calc 100
+verify
+deleteservice fabric:/calc
+deletename fabric:/calc
+!q

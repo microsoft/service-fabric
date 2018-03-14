@@ -1,0 +1,203 @@
+#
+# [owner] aprameyr
+# Fault Injection on the node during upgrade
+# Regression test for 2012352
+# 
+
+set DummyPLBEnabled true
+set NamingOperationTimeout 10
+set RAPMessageRetryInterval 1
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+set CMPlacementConstraints system==true
+set NamingPlacementConstraints system==true
+set FabricUpgradeUpgradeRetryInterval 3
+set IsSingletonReplicaMoveAllowedDuringUpgrade false
+
+votes 10 20 30
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true ud=ud0
++20 nodeprops=system:false ud=ud1
++30 nodeprops=system:false ud=ud2
++40 nodeprops=system:false ud=ud3
+verify
+
+#
+# Create app
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeB stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeB version=1.0
+app.upload version10
+provisionapp version10
+
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version11 ServicePackageA ServiceTypeB stateless
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeB version=1.1
+app.upload version11
+provisionapp version11
+
+createapp fabric:/app2 TestApp 1.0
+verify
+
+createapp fabric:/app1 TestApp 1.0
+verify
+
+prepareupgradefabric code=4.2.762.0 config=version2
+provisionfabric code=4.2.762.0 config=version2
+
+prepareupgradefabric code=4.2.763.0 config=version3
+provisionfabric code=4.2.763.0 config=version3
+
+###########################################
+# Scenario 0: Verify async API in hosting can be interrupted
+# Create a service in the app and perform an upgrade and block the upgrade in hosting wrapper
+# Perform a rollback - this should cause the cancel to happen and rollback to proceed
+###########################################
+createservice fabric:/app2/test TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 3 persist constraint=(system!=true) appname=fabric:/app2
+verify
+
+injectfailure 40 * hosting.downloadapplication.block
+
+#upgrade should proceed past ud0, ud1, ud2 and get stuck on ud3 because the node cant download the package
+upgradeapp fabric:/app2 1.1 Rolling upgrademode=auto restart
+verifyupgradeapp fabric:/app2 upgradedomains=ud0,ud1,ud2
+
+!waitforstate RA.Upgrade.fabric:/app2.40 ApplicationUpgrade_Download
+
+#Rollback the upgrade
+#remove the failure because the rollback should not get blocked
+removefailure 40 * hosting.downloadapplication.block
+upgradeapp fabric:/app2 1.0 Rolling upgrademode=auto restart
+!pause 10
+
+#Rollback should succeed
+verifyupgradeapp fabric:/app2 timeout=60 upgradedomains=ud0,ud1,ud2,ud3
+
+deleteservice fabric:/app2/test 
+verify
+
+#Important because this is used for the final verification of cancel
+#The cancel waits for 30 s - if not cancelled in that much test fails
+!pause 30
+
+###########################################
+# Scenario 1: Verify async API in hosting can be interrupted
+# Create a service in the app and perform an upgrade
+# Inject a fault in UD3 and cause FM to send Cancel message
+# Cancel should be processed and reply returned and async op left to continue in BG
+# Rollback should proceed 
+###########################################
+createservice fabric:/app1/test TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 3 persist constraint=(system!=true) appname=fabric:/app1
+verify
+
+injectfailure 40 * hosting.downloadapplication
+
+#upgrade should proceed past ud0, ud1, ud2 and get stuck on ud3 because the node cant download the package
+upgradeapp fabric:/app1 1.1 Rolling upgrademode=auto restart
+verifyupgradeapp fabric:/app1 upgradedomains=ud0,ud1,ud2
+
+!waitforstate RA.Upgrade.fabric:/app1.40 ApplicationUpgrade_DownloadFailed
+
+#Rollback the upgrade
+upgradeapp fabric:/app1 1.0 Rolling upgrademode=auto restart
+!pause 10
+
+#Upgrade should progress past ud0, ud1, ud2 and again be stuck on ud2 as the node cant download
+verifyupgradeapp fabric:/app1 timeout=60 upgradedomains=ud0,ud1,ud2
+!waitforstate RA.Upgrade.fabric:/app1.40 ApplicationUpgrade_DownloadFailed
+
+#Remove the failure and rollback should succeed
+removefailure 40 * hosting.downloadapplication
+
+verifyupgradeapp fabric:/app1 timeout=60 upgradedomains=ud0,ud1,ud2,ud3
+
+deleteservice fabric:/app1/test 
+verify
+
+###########################################
+# Scenario 2: Verify that RA drops requests for create during fabric upgrade
+###########################################
+# Create a service on each node
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+# perform baseline upgrade
+# block replica close
+addbehavior b1 40 * ReplicaClose
+upgradefabric code=4.2.762.0 config=version2 Rolling 
+
+# upgrade should be blocked on 40
+!waitforstate RA.Upgrade.fabric:/System.40 FabricUpgrade_CloseReplicas
+
+# Create a stateless service with instance count -1
+createservice fabric:/app1/test2 TestApp_App0:ServicePackageA:ServiceTypeB n 1 -1 appname=fabric:/app1
+
+# Wait until the service is brought up
+!waitforstate FM.Replica.State.fabric:/app1/test2.40 InBuild
+!waitforstate FM.Replica.State.fabric:/app1/test2.30 Ready
+!waitforstate FM.Replica.State.fabric:/app1/test2.20 Ready
+!waitforstate FM.Replica.State.fabric:/app1/test2.10 Ready
+
+#ensure message retry to RA has happened and RA has dropped the message
+!pause 10
+
+#let the upgrade go through
+removebehavior b1
+
+#with the bug this should assert
+verifyupgradefabric
+
+verify
+
+deleteservice fabric:/app1/test2
+deleteservice fabric:/test1
+verify
+
+###########################################
+# Scenario 3: Verify that rollback of fabric upgrade
+# Opens any replicas that were closed due to the upgrade
+###########################################
+
++50 nodeprops=system:false ud=ud4
++60 nodeprops=system:false ud=ud5
+verify
+
+# create a service for verification
+createservice fabric:/app1/test1 TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 5 persist constraint=(system!=true) appname=fabric:/app1
+verify
+
+# inject a failure on node 60 for the upgrade api
+# this will be hit after the replica is closed
+# also block all cancel messages to the node to test the direct rollback message
+addbehavior b1 * * CancelFabricUpgradeRequest
+injectfailure 50 * hosting.fabricupgrade
+
+# Issue the upgrade
+upgradefabric code=4.2.763.0 config=version3 Rolling 
+
+#wait for the upgrade to hit ud 6 and ra to hit the upgrade failed stat
+verifyupgradefabric upgradedomains=ud0,ud1,ud2,ud3
+!waitforstate RA.Upgrade.fabric:/System.50 FabricUpgrade_UpgradeFailed
+
+rollbackfabric code=4.2.762.0 config=version2 
+
+upgradefabric code=4.2.762.0 config=version2 Rolling timeout=30 error=Timeout
+
+!pause 30
+removefailure 50 * hosting.fabricupgrade
+
+verify
+!q

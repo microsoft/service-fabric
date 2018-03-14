@@ -1,0 +1,84 @@
+votes 10 20 30 40 50
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+
+set OfflineReplicaKeepDuration 5
+set QuorumLossWaitDuration 5
+set ServiceLocationBroadcastInterval 5
+
++10
++20
++30
++40
++50
+verify
+
+#
+# Ensure stability of Naming service before proceeding
+#
+createname fabric:/caching
+
+######################################################
+# Testcase 1: 
+# Refresh should clear the cached PSD on the gateway
+######################################################
+
+createservice fabric:/caching/testcase1 CalculatorServiceType n 0 3
+
+createclient client1
+resolveusingclient client1 fabric:/caching/testcase1 false
+
+deleteservice fabric:/caching/testcase1
+
+resolveusingclient client1 fabric:/caching/testcase1 false cache=cache1 noverify=true skipverifyresults=true
+
+# Refresh the information
+resolveusingclient client1 fabric:/caching/testcase1 false cache=cache1 error=UserServiceNotFound
+
+####################################################################
+# Testcase 2: 
+# The cached PSD should be cleared after the delete is broadcasted
+####################################################################
+
+createservice fabric:/caching/testcase2 CalculatorServiceType n 0 3
+
+createclient client2
+getservicedescriptionusingclient client2 fabric:/caching/testcase2 Success
+
+deleteservice fabric:/caching/testcase2
+
+!pause 10
+
+getservicedescriptionusingclient client2 fabric:/caching/testcase2 UserServiceNotFound
+
+resolveusingclient client2 fabric:/caching/testcase2 false error=UserServiceNotFound noverify=true
+
+################################################
+# Testcase 3:
+# Rebooting a node will also clear the PSD cache
+################################################
+
+createservice fabric:/caching/testcase3 CalculatorServiceType n 0 3
+
+resolve fabric:/caching/testcase3 false nodeconfig=30
+
+deleteservice fabric:/caching/testcase3
+
+verify
+
+createservice fabric:/caching/testcase3 CalculatorServiceType n 2 3 lowRange=1 highRange=2
+
+verify
+
+-30
+
+verify
+
++30
+
+verify
+
+resolve fabric:/caching/testcase3 1 nodeconfig=30
+
+!q

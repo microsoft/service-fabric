@@ -1,0 +1,234 @@
+votes 10
+fmservice 1 1
+namingservice 7 1 1
+cmservice 0 0
+cleantest
++10
+verify
+
+set LazyPersistWaitDuration 0
+
+###
+### Testcase 0: Error contract
+###
+
+# not found
+prefixresolve client=c0.1 node=10 prefix=fabric:/test0 error=UserServiceNotFound
+prefixresolve client=c0.1 prefix=fabric:/test0/x error=UserServiceNotFound
+prefixresolve client=c0.1 prefix=fabric:/test0/x/y error=UserServiceNotFound
+
+createname fabric:/test0
+nameexists fabric:/test0 true
+
+# only name exists
+prefixresolve client=c0.1 prefix=fabric:/test0 error=UserServiceNotFound
+prefixresolve client=c0.1 prefix=fabric:/test0/x error=UserServiceNotFound
+prefixresolve client=c0.1 prefix=fabric:/test0/x/y error=UserServiceNotFound
+
+createservice fabric:/test0/x CalculatorServiceType n 0 1
+verify
+
+# found
+prefixresolve client=c0.1 prefix=fabric:/test0/x match=fabric:/test0/x
+prefixresolve client=c0.1 prefix=fabric:/test0/x/y match=fabric:/test0/x
+
+# not found
+prefixresolve client=c0.1 prefix=fabric:/test0 error=UserServiceNotFound
+prefixresolve client=c0.1 prefix=fabric:/test0/y error=UserServiceNotFound
+prefixresolve client=c0.1 prefix=fabric:/test0/y/x error=UserServiceNotFound
+
+# create empty subnames
+createname fabric:/test0/x
+createname fabric:/test0/x/y
+createname fabric:/test0/x/y/z
+
+nameexists fabric:/test0/x true
+nameexists fabric:/test0/x/y true
+nameexists fabric:/test0/x/y/z true
+
+# found
+prefixresolve client=c0.1 prefix=fabric:/test0/x match=fabric:/test0/x
+prefixresolve client=c0.1 prefix=fabric:/test0/x/y match=fabric:/test0/x
+prefixresolve client=c0.1 prefix=fabric:/testx/x/y/z error=UserServiceNotFound
+
+###
+### Testcase 1: Building cache
+###
+
+createservice fabric:/test1/a CalculatorServiceType n 0 1
+verify
+
+# cold cache
+prefixresolve client=c1.1 node=10 prefix=fabric:/test1/a/b match=fabric:/test1/a
+
+# warm both caches
+prefixresolve client=c1.1 prefix=fabric:/test1/a/b/c match=fabric:/test1/a
+
+# query fragment
+prefixresolve client=c1.1 prefix=fabric:/test1/a/c/d?e match=fabric:/test1/a
+
+# cold client cache + warm gateway cache
+prefixresolve client=c1.2 node=10 prefix=fabric:/test1/a/x/y/z match=fabric:/test1/a
+
+# warm both caches
+prefixresolve client=c1.2 prefix=fabric:/test1/a/d?x/y/z match=fabric:/test1/a
+
+# error
+prefixresolve client=c1.1 prefix=fabric:/test1 error=UserServiceNotFound
+prefixresolve client=c1.2 prefix=fabric:/test1 error=UserServiceNotFound
+
+# still cached
+prefixresolve client=c1.1 prefix=fabric:/test1/a match=fabric:/test1/a
+prefixresolve client=c1.2 prefix=fabric:/test1/a/b match=fabric:/test1/a
+
+###
+### Testcase 2: Bypass cache flag
+###
+
+createservice fabric:/test2 CalculatorServiceType n 0 1
+verify
+
+prefixresolve client=c2.1 node=10 prefix=fabric:/test2/child/suffixA match=fabric:/test2
+prefixresolve client=c2.2 node=10 prefix=fabric:/test2/child/suffixB match=fabric:/test2
+
+createservice fabric:/test2/child CalculatorServiceType n 0 1
+verify
+
+# still cached
+prefixresolve client=c2.1 prefix=fabric:/test2/child/suffixA match=fabric:/test2
+prefixresolve client=c2.2 prefix=fabric:/test2/child/suffixB match=fabric:/test2
+
+# bypass caches
+prefixresolve client=c2.1 prefix=fabric:/test2/child/suffixA match=fabric:/test2/child bypass=true
+
+# other client still cached
+prefixresolve client=c2.2 prefix=fabric:/test2/child/suffixB match=fabric:/test2
+
+# bypass client cache
+prefixresolve client=c2.2 prefix=fabric:/test2/child/suffixB match=fabric:/test2/child bypass=true
+
+# cache updated for new client
+prefixresolve client=c2.3 node=10 prefix=fabric:/test2/child/suffixC match=fabric:/test2/child
+
+###
+### Testcase 3: Exact resolution interaction
+###
+
+createservice fabric:/test3/a CalculatorServiceType n 0 1
+verify
+
+resolve fabric:/test3/a false
+
+prefixresolve client=c3.1 node=10 prefix=fabric:/test3/a/b/c match=fabric:/test3/a
+
+createservice fabric:/test3/a/b CalculatorServiceType n 0 1
+verify
+
+# cached prefix match
+prefixresolve client=c3.1 prefix=fabric:/test3/a/b/c match=fabric:/test3/a
+
+resolve fabric:/test3/a/b false
+
+# client cache not updated
+prefixresolve client=c3.1 prefix=fabric:/test3/a/b/c match=fabric:/test3/a
+
+# gateway cache is updated
+prefixresolve client=c3.2 node=10 prefix=fabric:/test3/a/b/c match=fabric:/test3/a/b
+
+# bypass cache
+prefixresolve client=c3.1 prefix=fabric:/test3/a/b/c match=fabric:/test3/a/b bypass=true
+prefixresolve client=c3.1 prefix=fabric:/test3/a/b/d match=fabric:/test3/a/b
+
+###
+### Testcase 4: De-duplication
+###
+
+createservice fabric:/test4 CalculatorServiceType n 0 1
+verify
+
+# no client de-duplication
+prefixresolve client=c4.1 node=10 prefix=fabric:/test4/a;fabric:/test4/b;fabric:/test4/c match=fabric:/test4
+
+# client de-duplication
+prefixresolve client=c4.2 node=10 prefix=fabric:/test4/x;fabric:/test4/x;fabric:/test4/x match=fabric:/test4
+
+# client de-duplication with error
+prefixresolve client=c4.2 prefix=fabric:/testx/x;fabric:/testx/x;fabric:/testx/x error=UserServiceNotFound
+
+createservice fabric:/test4/b CalculatorServiceType n 0 1
+verify
+
+# empty gateway cache
++20
+verify
+
+# no gateway de-duplication
+prefixresolve client=c4.3a node=20 prefix=fabric:/test4/b/x match=fabric:/test4/b async=true
+prefixresolve client=c4.3b node=20 prefix=fabric:/test4/b/y match=fabric:/test4/b async=true
+prefixresolve client=c4.3c node=20 prefix=fabric:/test4/b/z match=fabric:/test4/b async=true
+
+waitasync
+
+# clear gateway cache
+-20
++20
+verify
+
+# gateway de-duplication
+prefixresolve client=c4.4a node=20 prefix=fabric:/test4/b/x match=fabric:/test4/b async=true
+prefixresolve client=c4.4b node=20 prefix=fabric:/test4/b/x match=fabric:/test4/b async=true
+prefixresolve client=c4.4c node=20 prefix=fabric:/test4/b/x match=fabric:/test4/b async=true
+
+waitasync
+
+# gateway de-duplication with error
+prefixresolve client=c4.5a node=20 prefix=fabric:/testx/b/x error=UserServiceNotFound async=true
+prefixresolve client=c4.5b node=20 prefix=fabric:/testx/b/x error=UserServiceNotFound async=true
+prefixresolve client=c4.5c node=20 prefix=fabric:/testx/b/x error=UserServiceNotFound async=true
+
+waitasync
+
+###
+### Testcase 5: Mixed concurrent requests
+###
+
+-20
+createservice fabric:/test5/a CalculatorServiceType n 0 1
+createservice fabric:/test5/b CalculatorServiceType n 0 1
+createservice fabric:/test5/c CalculatorServiceType n 0 1
+verify
+
++20
+verify
+
+prefixresolve client=c5.1 node=20 prefix=fabric:/test5/a/x;fabric:/test5/a/x;fabric:/test5/a/x match=fabric:/test5/a async=true
+prefixresolve client=c5.2 node=20 prefix=fabric:/test5/b/x;fabric:/test5/b/x;fabric:/test5/b/x match=fabric:/test5/b async=true
+prefixresolve client=c5.3 node=20 prefix=fabric:/test5/c/x;fabric:/test5/c/y;fabric:/test5/c/z match=fabric:/test5/c async=true
+prefixresolve client=c5.4 node=20 prefix=fabric:/test5/a/x match=fabric:/test5/a async=true
+prefixresolve client=c5.5 node=20 prefix=fabric:/test5/b/x match=fabric:/test5/b async=true
+prefixresolve client=c5.6 node=20 prefix=fabric:/test5/c/x match=fabric:/test5/c async=true
+prefixresolve client=c5.7 node=20 prefix=fabric:/testx/a/x;fabric:/testx/b/x;fabric:/testx/c/x error=UserServiceNotFound async=true
+
+waitasync
+
+###
+### Testcase 6: Partitioned service
+###
+
+createservice fabric:/test6/a CalculatorServiceType n 10 1 lowRange=0 highRange=9
+verify
+
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=0 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=1 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=2 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=3 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=4 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=5 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=6 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=7 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=8 match=fabric:/test6/a
+prefixresolve client=c6.1 node=10 prefix=fabric:/test6/a partitionKey=9 match=fabric:/test6/a
+
+-*
+
+!q

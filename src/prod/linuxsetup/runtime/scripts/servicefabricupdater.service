@@ -1,0 +1,13 @@
+[Unit]
+Description=ServiceFabric Updater Daemon
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/servicefabric/servicefabricupdater.config
+ExecStart=/opt/microsoft/servicefabric/bin/doupgrade.sh $PathToTargetInfoFile
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+

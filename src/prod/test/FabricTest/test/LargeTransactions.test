@@ -1,0 +1,28 @@
+##########################################################
+#
+# This script is not run during regular pre-checkin tests
+# or in automation tests. This script is provided as a
+# quick starting point for manually testing large 
+# transactions.
+# 
+##########################################################
+
+votes 10 20 30
+fmservice 3 1
+namingservice 1 3 1
+cmservice 0 0
+cleantest
++10
++20
++30
+verify
+
+createservice fabric:/testcase1a TestPersistedStoreServiceType y 1 3 persist lowRange=0 highRange=0 initdata=RE_MaxPrimaryReplicationQueueMemorySize:1073741824;RE_MaxReplicationMessageSize:1073741824;RE_MaxSecondaryReplicationQueueMemorySize:1073741824
+createservice fabric:/testcase1b TestPersistedStoreServiceType y 1 3 persist lowRange=0 highRange=0 initdata=RE_MaxPrimaryReplicationQueueMemorySize:1073741824;RE_MaxReplicationMessageSize:1073741824;RE_MaxSecondaryReplicationQueueMemorySize:1073741824
+verify
+
+clientcompression fabric:/testcase1a 0 w,s,x,1,TestKey,1024000,500,1
+clientcompression fabric:/testcase1b 0 w,r,x,1,TestKey,1024000,500,1
+
+clientcompression fabric:/testcase1a 0 r,s,TestKey,1024000,500,1
+clientcompression fabric:/testcase1b 0 r,r,TestKey,1024000,500,1

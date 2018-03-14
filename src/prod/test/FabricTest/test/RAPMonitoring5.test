@@ -1,0 +1,51 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1476313
+# 
+set DummyPLBEnabled true
+
+# set this to a very high value to verify that the low reconfig value is what is being used
+set ServiceApiHealthDuration 500000000
+set ServiceReconfigurationApiHealthDuration 3
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
+verify
+
+setsignal 20 fabric:/test service.beginchangerole.block
+createservice fabric:/test TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+
+!waitforstate RA.Replica.State.fabric:/test.20.20 IC
+
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning
+
+resetsignal 20 fabric:/test service.beginchangerole.block
+
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+
+verify
+
+setsignal 20 fabric:/test service.beginclose.block
+reportfault 20 fabric:/test transient
+
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning
+
+resetsignal 20 fabric:/test service.beginclose.block
+
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+
+verify
+
+!q

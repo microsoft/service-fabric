@@ -1,0 +1,51 @@
+#
+# [owner] MMohsin
+#
+# This test case covers the scenario where the partition goes down below the TargetReplicaSetSize. If the
+# PlacementTimeLimit has not expired, no health report should be sent the by FM.
+#
+
+votes 10
+fmservice 1 1
+cmservice 1 1
+namingservice 1 1 1
+
+set DummyPLBEnabled true
+set PlacementTimeLimit 30
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+cleantest
+
++10
+verify
+
++20
++30
+verify
+
+createservice fabric:/volatile1 TestStoreServiceType y 1 1
+createservice fabric:/volatile2 TestStoreServiceType y 1 3 minreplicasetsize=2
+createservice fabric:/volatile3 TestStoreServiceType y 1 3 minreplicasetsize=3
+verify
+
++40
+verify
+
+!waitforstate FM.Replica.Role.fabric:/volatile1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/volatile2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/volatile3.30 Primary
+
+healthgetprogress partition sourceid=System.FM expectedprogress=5
+
+set PlacementTimeLimit 5
+
+# Wait for PlacementTimeLimit. This will ensure that the duration since last PlacementStartTime is greater than PlacementTimeLimit.
+!pause,5
+
+-30
+verify
+
+healthgetprogress partition sourceid=System.FM expectedprogress=5
+
+
+!q

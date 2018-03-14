@@ -1,0 +1,268 @@
+#
+# [owner]- SumukhS
+# Sanity Tests that bring up a service based on the transactional replicator
+# 
+
+!load FailoverCITInitialization.test
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify  
+
+##############################################################################################
+#
+# TestCase 1 - Add keys and verify. The first add results in a new state provider. 
+#
+##############################################################################################
+
+createservice fabric:/test1 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+verify 
+
+clientput fabric:/test1 10 ten
+clientput fabric:/test1 20 twenty
+clientput fabric:/test1 30 thirty
+clientput fabric:/test1 40 forty
+requestcheckpoint fabric:/test1 40
+clientput fabric:/test1 50 fifty
+!wait
+
+clientget fabric:/test1 10 ten
+clientget fabric:/test1 20 twenty
+clientget fabric:/test1 30 thirty
+clientget fabric:/test1 40 forty
+clientget fabric:/test1 50 fifty
+!wait 
+
+deleteservice fabric:/test1
+verify 
+
+##############################################################################################
+#
+# TestCase 2 - Add keys and update them and verify. The first add results in a new state provider. 
+# Subsequent adds turn into updates
+#
+##############################################################################################
+
+createservice fabric:/test2 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test2.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.20 Secondary
+verify 
+
+clientput fabric:/test2 10 ten~
+clientput fabric:/test2 20 twenty~
+clientput fabric:/test2 30 thirty~
+clientput fabric:/test2 40 forty~
+clientput fabric:/test2 50 fifty~
+!wait
+
+clientput fabric:/test2 10 ten
+clientput fabric:/test2 20 twenty
+clientput fabric:/test2 30 thirty
+clientput fabric:/test2 40 forty
+clientput fabric:/test2 50 fifty
+!wait
+
+clientget fabric:/test2 10 ten
+clientget fabric:/test2 20 twenty
+clientget fabric:/test2 30 thirty
+clientget fabric:/test2 40 forty
+clientget fabric:/test2 50 fifty
+!wait 
+
+deleteservice fabric:/test2
+verify 
+
+##############################################################################################
+#
+# TestCase 3 - Add keys and update them and swap primary and verify data
+#
+##############################################################################################
+
+createservice fabric:/test3 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test3.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.20 Secondary
+verify 
+
+clientput fabric:/test3 10 ten~
+clientput fabric:/test3 20 twenty~
+clientput fabric:/test3 30 thirty~
+clientput fabric:/test3 40 forty~
+clientput fabric:/test3 50 fifty~
+!wait
+
+clientput fabric:/test3 10 ten
+clientput fabric:/test3 20 twenty
+clientput fabric:/test3 30 thirty
+clientput fabric:/test3 40 forty
+clientput fabric:/test3 50 fifty
+!wait
+
+swapprimary fabric:/test3 40 20
+!waitforstate FM.Replica.Role.fabric:/test3.20 Primary
+
+clientget fabric:/test3 10 ten
+clientget fabric:/test3 20 twenty
+clientget fabric:/test3 30 thirty
+clientget fabric:/test3 40 forty
+clientget fabric:/test3 50 fifty
+!wait 
+
+deleteservice fabric:/test3
+verify 
+
+##############################################################################################
+#
+# TestCase 4 - Add keys and update them and delete them and verify data
+#
+##############################################################################################
+
+createservice fabric:/test4 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test4.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test4.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test4.20 Secondary
+verify 
+
+clientput fabric:/test4 10 ten~
+clientput fabric:/test4 20 twenty~
+clientput fabric:/test4 30 thirty~
+clientput fabric:/test4 40 forty~
+clientput fabric:/test4 50 fifty~
+!wait
+
+clientput fabric:/test4 10 ten
+clientdelete fabric:/test4 20
+clientput fabric:/test4 30 thirty
+clientdelete fabric:/test4 40
+clientput fabric:/test4 50 fifty
+!wait
+
+clientget fabric:/test4 10 ten
+clientget fabric:/test4 20 KeyDoesNotExist
+clientget fabric:/test4 30 thirty
+clientget fabric:/test4 40 KeyDoesNotExist
+clientget fabric:/test4 50 fifty
+!wait 
+
+deleteservice fabric:/test4
+verify 
+
+##############################################################################################
+#
+# TestCase 5 - Add keys and update them and delete them and swap and verify data
+#
+##############################################################################################
+
+createservice fabric:/test5 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test5.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test5.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.20 Secondary
+verify 
+
+clientput fabric:/test5 10 ten~
+clientput fabric:/test5 20 twenty~
+clientput fabric:/test5 30 thirty~
+clientput fabric:/test5 40 forty~
+clientput fabric:/test5 50 fifty~
+!wait
+
+clientdelete fabric:/test5 10
+clientdelete fabric:/test5 20
+clientput fabric:/test5 30 thirty
+clientdelete fabric:/test5 40
+clientdelete fabric:/test5 50
+!wait
+
+swapprimary fabric:/test5 40 20
+!waitforstate FM.Replica.Role.fabric:/test5.20 Primary
+
+clientget fabric:/test5 10 KeyDoesNotExist
+clientget fabric:/test5 20 KeyDoesNotExist
+clientget fabric:/test5 30 thirty
+clientget fabric:/test5 40 KeyDoesNotExist
+clientget fabric:/test5 50 KeyDoesNotExist
+!wait 
+
+deleteservice fabric:/test5
+verify   
+
+##############################################################################################
+#
+# TestCase 6 - Add keys and update them and delete them and report fault transient
+#
+##############################################################################################
+
+createservice fabric:/test6 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test6.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test6.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.20 Secondary
+verify 
+
+clientput fabric:/test6 10 ten~
+clientput fabric:/test6 20 twenty~
+clientput fabric:/test6 30 thirty~
+clientput fabric:/test6 40 forty~
+clientput fabric:/test6 50 fifty~
+!wait
+
+clientdelete fabric:/test6 10
+clientdelete fabric:/test6 20
+clientput fabric:/test6 30 thirty
+clientdelete fabric:/test6 40
+clientdelete fabric:/test6 50
+!wait
+
+reportfault 40 fabric:/test6 transient
+!waitforstate FM.Replica.Role.fabric:/test6.30 Primary
+
+clientget fabric:/test6 10 KeyDoesNotExist
+clientget fabric:/test6 20 KeyDoesNotExist
+clientget fabric:/test6 30 thirty
+clientget fabric:/test6 40 KeyDoesNotExist
+clientget fabric:/test6 50 KeyDoesNotExist
+!wait 
+
+deleteservice fabric:/test6
+verify 
+
+
+##############################################################################################
+#
+# TestCase 8 - Report fault permanent on primary
+#
+##############################################################################################
+
+createservice fabric:/test8 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test8.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test8.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test8.20 Secondary
+verify 
+
+clientput fabric:/test8 10 ten
+clientput fabric:/test8 20 twenty
+clientput fabric:/test8 30 thirty
+clientput fabric:/test8 40 forty
+clientput fabric:/test8 50 fifty
+!wait
+clientget fabric:/test8 10 ten
+clientget fabric:/test8 50 fifty
+!wait 
+
+reportfault 40 fabric:/test8 permanent
+!waitforstate FM.Replica.Role.fabric:/test8.30 Primary 
+clientget fabric:/test8 10 ten
+clientget fabric:/test8 20 twenty 
+clientget fabric:/test8 30 thirty
+clientget fabric:/test8 40 forty
+clientget fabric:/test8 50 fifty
+!wait 
+
+deleteservice fabric:/test8
+verify 
+
+!q

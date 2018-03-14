@@ -1,0 +1,69 @@
+set DummyPLBEnabled true
+votes 20 30 40
+fmservice 3 3
+cmservice 5 1
+namingservice 1 5 2
+cleantest
+
+set FabricUpgradeStatusPollInterval 5
+set DelayOpenAfterAbortNode 2
+set NamingOperationTimeout 60
+set NamingOperationRetryTimeout 180
+
+set FMPlacementConstraints fmservice==true
+
++10
++20
++30 nodeprops=fmservice:true
+!wait
+
+!waitforstate FM.Replica.Role.FMService.30 Primary
+
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
+verify
+
+# Bring down node 10 before doing upgrade
+-10
+verify
+
+# Perform upgrade
+prepareupgradefabric code=4.2.762.0 config=version2
+provisionfabric code=4.2.762.0 config=version2
+upgradefabric code=4.2.762.0 config=version2 Rolling 
+verifyupgradefabric
+
+# Put FMService into quorum loss
+addbehavior b2 * * GetLSN
+-30 removedata
+-40 removedata
+!waitforstate FM.FT.QuorumLost.FMService true
+removebehavior b2
+
+# Block AddPrimary for the FMService so that the full rebuild does not start
+addbehavior b1 * * AddPrimary
+
+# Set naming operation timeout to a small value to allow nodestateremoved to complete quickly.
+set NamingOperationRetryTimeout 5
+set NamingOperationTimeout 5
+
+# Recycle nodes 30 and 40 to trigger full rebuild
+nodestateremoved 30 Timeout
+nodestateremoved 40 Timeout
+
+# Reset naming operation timeout
+set NamingOperationRetryTimeout 0
+set NamingOperationTimeout 150
+
+# Add nodes 10, 30, and 40 back before rebuild
++10 version=1.0.960.0:__default__
++30 nodeprops=fmservice:true
++40 nodeprops=fmservice:true
+!wait
+
+# Allow FMService primary to be placed to start full rebuild
+removebehavior b1
+
+verify
+
+!q

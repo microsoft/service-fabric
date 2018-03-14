@@ -1,0 +1,59 @@
+﻿{
+    "RequiredParameters": [ "PSScriptName" ],
+
+    "Defaults": {
+        "SetupInstall": "",
+        "SetupArgs": "",
+        "SetupType": "",
+        "Arguments": "",
+        "Machines": "",
+        "CleanupType": "",
+        "CleanupTaskName": "",
+        "SetupTimeout": "900",
+        "ExecutionTimeout": "1200",
+        "CleanupTimeout": "2100"
+    },
+
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\Globalization\\SetupV2GlobalizationTest.cmd",
+        "Arguments": "[SETUPINSTALL] [SETUPARGS] [SETUPTYPE]",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\Globalization\\RunGlobalizationTests_Secure.cmd",
+            "Arguments": "\"[MACHINES]\" [BINS]\\[PSSCRIPTNAME] Secure [ARGUMENTS]",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\Globalization\\CleanupV2GlobalizationTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.xml,.*\\.json,.*\\.man"
+    }
+}

@@ -1,0 +1,100 @@
+# SETUP
+
+set RunAsPolicyEnabled true
+set DummyPLBEnabled true
+
+votes 10 20 30 40 50
+
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+rmservice 3 1
+
+cleantest
+
+# set timeouts to higher values for manual debugging
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 120
+
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+
+set MaxPercentUnhealthyNodes 25
+
++10 nodeprops=stateless:1,volatile:1,persisted:1
++20 nodeprops=stateless:1,volatile:1,persisted:1
++30 nodeprops=stateless:1,volatile:1,persisted:1
++40
++50
+
+verify
+
+# END SETUP
+
+# TEST LOGIC
+
+# Note: Use lowercase for all switches
+
+createrepair id=RepairA action=Reboot
+getrepair id=RepairA propertyname=performPreparingHealthCheck expectedpropertyvalue=false
+getrepair id=RepairA propertyname=performRestoringHealthCheck expectedpropertyvalue=false
+getrepair id=RepairA propertyname=PreparingHealthCheckState expectedpropertyvalue=0
+getrepair id=RepairA propertyname=RestoringHealthCheckState expectedpropertyvalue=0
+
+# update the health policy to perform health check
+# 3 = PreparingHealthCheck (0x1) | RestoringHealthCheck (0x2)
+updaterepairhealthpolicy id=RepairA performpreparinghealthcheck=true performrestoringhealthcheck=true flags=3
+getrepair id=RepairA propertyname=performPreparingHealthCheck expectedpropertyvalue=true
+getrepair id=RepairA propertyname=performRestoringHealthCheck expectedpropertyvalue=true
+getrepair id=RepairA propertyname=PreparingHealthCheckState expectedpropertyvalue=0
+getrepair id=RepairA propertyname=RestoringHealthCheckState expectedpropertyvalue=0
+
+# Create flags which doesn't include preparing, so preparing should unchanged
+updaterepairhealthpolicy id=RepairA performpreparinghealthcheck=false performrestoringhealthcheck=false flags=2
+getrepair id=RepairA propertyname=performPreparingHealthCheck expectedpropertyvalue=true
+getrepair id=RepairA propertyname=performRestoringHealthCheck expectedpropertyvalue=false
+
+# similarly, restoring shouldn't change now
+updaterepairhealthpolicy id=RepairA performpreparinghealthcheck=false performrestoringhealthcheck=true flags=1
+getrepair id=RepairA propertyname=performPreparingHealthCheck expectedpropertyvalue=false
+getrepair id=RepairA propertyname=performRestoringHealthCheck expectedpropertyvalue=false
+
+# Update repair to preparing->approved
+updaterepair id=RepairA state=4 executor=RE impact=1[nodeid:10=3]
+
+!pause 30
+
+# is preparing health check skipped
+getrepair id=RepairA propertyname=PreparingHealthCheckState expectedpropertyvalue=3
+
+updaterepair id=RepairA state=32 result=1
+
+!pause 30
+
+# is restoring health check skipped
+getrepair id=RepairA propertyname=RestoringHealthCheckState expectedpropertyvalue=3
+
+deleterepair id=RepairA
+
+# InvalidArgument when health checks aren't enabled but we try to update the policy
+createrepair id=RepairB action=Reboot state=4 executor=RE impact=1[nodeid:10=3]
+!pause 30
+updaterepairhealthpolicy id=RepairB performpreparinghealthcheck=true performrestoringhealthcheck=true flags=3 error=InvalidArgument
+updaterepairhealthpolicy id=RepairB performpreparinghealthcheck=true performrestoringhealthcheck=true flags=2
+updaterepairhealthpolicy id=RepairB performrestoringhealthcheck=false flags=2
+updaterepair id=RepairB state=32 result=1
+
+!pause 30
+deleterepair id=RepairB
+
+# END TEST LOGIC
+
+# CLEANUP
+
+# close and delete nodes
+-*
+
+# exit session
+!q
+
+# END CLEANUP

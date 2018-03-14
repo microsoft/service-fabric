@@ -1,0 +1,223 @@
+###############################################################################
+# Test: RGBasic.Test
+# Owners: nipuzovi, yangli, anuragg
+# This test verifies the flow of information manifest to PLB and Hosting subsystems.
+# Does not verify that Hosting is enforcing the actual limits.
+###############################################################################
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+set DefragmentationMetrics MEMORY true
+#use fast balancing
+set PLBActionRetryTimes 30
+set DeactivationGraceInterval 5
+set DeactivationFailedRetryIntervalRange 0
+
+# Do not check for available resources and do not enforce RG on the nodes
+# This is to be able to execute the test on any machine, regardless 
+set LocalResourceManagerTestMode true
+
++10 ud=UD1 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
++20 ud=UD2 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
++30 ud=UD3 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
+verify
+
+###############################################################################
+#
+# Create several applications of the same type.
+#
+###############################################################################
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+app.parameters versionTC1 CPUCoresA:2,MemoryA1:1000,MemoryA2:1000,MemoryB:4000
+# ServicePackageA - 2 cores, 1000 MB memory, Service Types: ServiceTypeA1, ServiceTypeA2
+app.servicepack versionTC1 ServicePackageA version=v1 resources=CPU,[CPUCoresA]
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA2 stateful persist
+app.codepack versionTC1 ServicePackageA CodeA1 types=ServiceTypeA1 version=v1 rgpolicies=MemoryInMB;[MemoryA1]
+app.codepack versionTC1 ServicePackageA CodeA2 types=ServiceTypeA2 version=v1 rgpolicies=MemoryInMB;[MemoryA2]
+# ServicePackageB - 4 cores, 1000 MB Memory, Service Types: ServiceTypeB
+app.servicepack versionTC1 ServicePackageB version=v1 resources=CPU,4,MemoryInMB,[MemoryB]
+app.servicetypes versionTC1 ServicePackageB ServiceTypeB stateful persist
+app.codepack versionTC1 ServicePackageB CodeB types=ServiceTypeB version=v1
+app.upload versionTC1
+
+provisionapp versionTC1
+
+# Create two applications.
+createapp fabric:/app1 TestAppTC1 vTC1
+createapp fabric:/app2 TestAppTC1 vTC1
+
+verify
+
+#########################################################################################
+#
+# Test case: Create two services of the same type, they should go to same host.
+#            There should be no load increase on the node when second service is created.
+#
+#########################################################################################
+
+# app1 - small service, 1 partition, 3 replicas
+createservice fabric:/app1/smallservice ServiceTypeA1 y 1 3 persist metrics=dummy,Low,0,0 appname=fabric:/app1
+
+verify
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 2
+verifynodeload nodeid:20 servicefabric:/_CpuCores 2
+verifynodeload nodeid:30 servicefabric:/_CpuCores 2
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 2
+verifyresourceonnode 20 servicefabric:/_CpuCores 2
+verifyresourceonnode 30 servicefabric:/_CpuCores 2
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 2000
+
+verifyplbandlrmsync
+
+# app1 - another small service of different type but same SP, 1 partition, 3 replicas
+createservice fabric:/app1/smallservice1 ServiceTypeA2 y 1 3 persist metrics=dummy,Low,0,0 appname=fabric:/app1
+
+verify
+
+# Cluster should be full now
+verifynodeload nodeid:10 servicefabric:/_CpuCores 2
+verifynodeload nodeid:20 servicefabric:/_CpuCores 2
+verifynodeload nodeid:30 servicefabric:/_CpuCores 2
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 2
+verifyresourceonnode 20 servicefabric:/_CpuCores 2
+verifyresourceonnode 30 servicefabric:/_CpuCores 2
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 2000
+
+verifyplbandlrmsync
+
+#########################################################################################
+#
+# Test case: Create another two services of the same type, fill up all nodes.
+#            Try to create third service, can't be placed, check for health warning.
+#
+#########################################################################################
+
+# app2 - 2 large services, 1 partition, 3 replicas
+createservice fabric:/app2/largeservice1 ServiceTypeB y 1 3 persist metrics=dummy,Low,0,0 appname=fabric:/app2
+createservice fabric:/app2/largeservice2 ServiceTypeB y 1 3 persist metrics=dummy,Low,0,0 appname=fabric:/app2
+
+verify
+
+# Replicas should go into the same host, so no load increase.
+verifynodeload nodeid:10 servicefabric:/_CpuCores 6
+verifynodeload nodeid:20 servicefabric:/_CpuCores 6
+verifynodeload nodeid:30 servicefabric:/_CpuCores 6
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 6000
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 6000
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 6000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 6
+verifyresourceonnode 20 servicefabric:/_CpuCores 6
+verifyresourceonnode 30 servicefabric:/_CpuCores 6
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 6000
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 6000
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 6000
+
+verifyplbandlrmsync
+
+# Create another small service from app2/largeservice1
+createservice fabric:/app2/smallservice1 ServiceTypeA1 y 1 3 persist metrics=dummy,Low,0,0 appname=fabric:/app2
+!pause 5
+queryhealth service servicename=fabric:/app2/smallservice1 expectedhealthstate=warning
+
+deleteservice fabric:/app2/smallservice1
+deleteservice fabric:/app2/largeservice1
+deleteservice fabric:/app2/largeservice2
+deleteservice fabric:/app1/smallservice1
+
+verify
+
+#########################################################################################
+#
+# Test case: 3 nodes filled loaded with 4 CPU, 4000MB
+#            Add 3 more nodes, spread the load to balance the cluster.
+#
+#########################################################################################
+
+# app2 - one small service, 1 partition, 3 replicas
+createservice fabric:/app2/smallservice1 ServiceTypeA1 y 1 3 persist metrics=dummy,Low,0,0 appname=fabric:/app2
+
+verify
+
+# Verify that PLB and Hosting see the correct load.
+verifynodeload nodeid:10 servicefabric:/_CpuCores 4
+verifynodeload nodeid:20 servicefabric:/_CpuCores 4
+verifynodeload nodeid:30 servicefabric:/_CpuCores 4
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 4000
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 4000
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 4000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 4
+verifyresourceonnode 20 servicefabric:/_CpuCores 4
+verifyresourceonnode 30 servicefabric:/_CpuCores 4
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 4000
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 4000
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 4000
+
+verifyplbandlrmsync
+
+# Start balancing immediately
+set BalancingDelayAfterNewNode 0
+# Use only fast balancing
+set PLBActionRetryTimes 1000
+
+# Add 3 more nodes.
++40 ud=UD4 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
++50 ud=UD5 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
++60 ud=UD6 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
+
+verify
+
+# Give some time to PLB to balance (20 * 5 seconds).
+set QueryOperationRetryCount 20
+
+# PLB should balance this.
+verifynodeload nodeid:10 servicefabric:/_CpuCores 2
+verifynodeload nodeid:20 servicefabric:/_CpuCores 2
+verifynodeload nodeid:30 servicefabric:/_CpuCores 2
+verifynodeload nodeid:40 servicefabric:/_CpuCores 2
+verifynodeload nodeid:50 servicefabric:/_CpuCores 2
+verifynodeload nodeid:60 servicefabric:/_CpuCores 2
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:50 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:60 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 2
+verifyresourceonnode 20 servicefabric:/_CpuCores 2
+verifyresourceonnode 30 servicefabric:/_CpuCores 2
+verifyresourceonnode 40 servicefabric:/_CpuCores 2
+verifyresourceonnode 50 servicefabric:/_CpuCores 2
+verifyresourceonnode 60 servicefabric:/_CpuCores 2
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 50 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 60 servicefabric:/_MemoryInMB 2000
+
+verifyplbandlrmsync
+
+!q

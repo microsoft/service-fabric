@@ -1,0 +1,49 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1187686
+# This tests the scenario where a replica that is deleted when reopened and reopen fails causes the ReplicaDropped to be sent
+set DummyPLBEnabled true
+set ReplicaReopenFailureMaxRetryThreshold 1
+set NamingOperationTimeout 10
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 1 persist minreplicasetsize=1 constraint=(StringProperty!=SeedNode)
+verify
+
+addbehavior b1 * * ReplicaClose
+
+deleteservice fabric:/test1 errors=Timeout
+
+!waitforstate RA.Replica.State.fabric:/test1.20.20 ID
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+removebehavior b1
+addbehavior b0 * * DeleteReplica
+injectfailure 20 fabric:/test1 service.beginopen
+
++20
+!waitforstate FM.Node.IsUp.20 true
+
+#replica will now reopen and fail reopen
+#assert that it is deleted
+!waitforstate RA.FT.State.fabric:/test1.20 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.20 true
+
+removebehavior b0
+
+deleteservice fabric:/test1 errors=UserServiceNotFound
+
+verify
+!q

@@ -1,0 +1,94 @@
+votes 10
+namingservice 1 1 1
+cmservice 1 1
+fmservice 1 1
+cleantest
+
+set ImageBuilderJobQueueDelay 5
+
++10
+verify
+
+# 
+# Original casing
+#
+app.add versionA TestApp v1
+app.clear versionA
+app.servicepack versionA ServicePackageA version=v1
+app.servicetypes versionA ServicePackageA ServiceTypeA1 stateful persist
+app.codepack versionA ServicePackageA CodeA1 types=ServiceTypeA1 version=v1
+app.upload versionA compress
+
+# 
+# Different version casing
+#
+app.add versionB TestApp V1
+app.clear versionB
+app.servicepack versionB ServicePackageA version=v1
+app.servicetypes versionB ServicePackageA ServiceTypeA1 stateful persist
+app.codepack versionB ServicePackageA CodeA1 types=ServiceTypeA1 version=v1
+app.upload versionB compress
+
+# 
+# Different type name casing
+#
+app.add versionC testApp v1
+app.clear versionC
+app.servicepack versionC ServicePackageA version=v1
+app.servicetypes versionC ServicePackageA ServiceTypeA1 stateful persist
+app.codepack versionC ServicePackageA CodeA1 types=ServiceTypeA1 version=v1
+app.upload versionC compress
+
+#
+# Testcase 1: Disallow provisioning/unprovisioning with different casing
+#
+provisionapp versionA Success
+provisionapp versionB ApplicationTypeAlreadyExists
+provisionapp versionC ApplicationTypeAlreadyExists
+
+createapp fabric:/testcase1 TestApp v1
+
+provisionapp versionB Success async
+provisionapp versionC Success async
+
+!pause 20
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Available \
+ApplicationTypeName=testApp,ApplicationTypeVersion=v1,Status=Failed
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Available \
+ApplicationTypeName=testApp,ApplicationTypeVersion=v1,Status=Failed
+
+deleteapp fabric:/testcase1
+
+unprovisionapp TestApp V1
+unprovisionapp testApp v1
+
+!pause 20
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Available
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Available
+
+unprovisionapp TestApp V1 ApplicationTypeNotFound
+unprovisionapp testApp v1 ApplicationTypeNotFound
+
+verify
+
+#
+# Testcase 2: Disallow create/upgrade application with different casing
+#
+
+createapp fabric:/testcase2 testApp v1 error=ApplicationTypeNotFound
+createapp fabric:/testcase2 TestApp V1 error=ApplicationTypeNotFound
+createapp fabric:/testcase2 TestApp v1
+
+upgradeapp fabric:/testcase2 V1 Rolling errors=ApplicationTypeNotFound
+upgradeapp fabric:/testcase2 v1 Rolling errors=ApplicationAlreadyInTargetVersion
+
+-*
+!q

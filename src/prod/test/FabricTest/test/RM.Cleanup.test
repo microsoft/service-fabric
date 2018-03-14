@@ -1,0 +1,124 @@
+set RunAsPolicyEnabled true
+set DummyPLBEnabled true
+
+votes 10 20 30 40 50
+
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+rmservice 3 1
+
+cleantest
+
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 120
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+
+set MaxPercentUnhealthyNodes 25
+
++10 nodeprops=stateless:1,volatile:1,persisted:1
++20 nodeprops=stateless:1,volatile:1,persisted:1
++30 nodeprops=stateless:1,volatile:1,persisted:1
++40
++50
+
+verify
+
+# Config assumptions:
+# CleanupInterval = 1
+# MinCompletedTaskAge = 30
+# MaxCompletedTaskAge = 90
+# DesiredTotalTasks = 10
+# MaxActiveTasks = 10
+# MaxTotalTasks = 15
+
+##################################################
+# Test case 1: Deletion only after max age
+##################################################
+
+repairs expectedcount=0
+createrepair id=A/1
+cancelrepair id=A/1
+repairs expectedcount=1
+!pause 45
+repairs expectedcount=1
+!pause 90
+repairs expectedcount=0
+
+##################################################
+# Test case 2: Check all policies
+##################################################
+
+repairs expectedcount=0
+
+createrepair id=B/01
+createrepair id=B/02
+createrepair id=B/03
+createrepair id=B/04
+createrepair id=B/05
+createrepair id=B/06
+createrepair id=B/07
+createrepair id=B/08
+createrepair id=B/09
+createrepair id=B/10
+
+cancelrepair id=B/01
+cancelrepair id=B/02
+cancelrepair id=B/03
+cancelrepair id=B/04
+cancelrepair id=B/05
+
+createrepair id=B/11
+createrepair id=B/12
+createrepair id=B/13
+createrepair id=B/14
+createrepair id=B/15
+
+cancelrepair id=B/06
+cancelrepair id=B/07
+cancelrepair id=B/08
+cancelrepair id=B/09
+cancelrepair id=B/10
+cancelrepair id=B/11
+cancelrepair id=B/12
+cancelrepair id=B/13
+cancelrepair id=B/14
+# Intentionally not cancelling 15
+
+repairs expectedcount=15
+
+# Nothing deleted until min age
+!pause 15
+repairs expectedcount=15
+
+# Exceeding min age causes reduction to desired count
+!pause 30
+repairs expectedcount=10
+
+# Deleted oldest first
+repairs id=B/01 expectedcount=0
+repairs id=B/02 expectedcount=0
+repairs id=B/03 expectedcount=0
+repairs id=B/04 expectedcount=0
+repairs id=B/05 expectedcount=0
+repairs id=B/06 expectedcount=1
+repairs id=B/10 expectedcount=1
+repairs id=B/15 expectedcount=1
+
+# Delete everything after max age
+!pause 90
+repairs expectedcount=1
+repairs id=B/15 expectedcount=1
+cancelrepair id=B/15
+
+# Still not deleted because it just completed recently
+!pause 45
+repairs id=B/15 expectedcount=1
+deleterepair id=B/15
+repairs expectedcount=0
+
+##################################################
+
+-*
+!q

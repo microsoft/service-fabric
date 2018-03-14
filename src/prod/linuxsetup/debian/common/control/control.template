@@ -1,0 +1,9 @@
+Package: servicefabricsdkcommon
+Version: REPLACE_VERSION
+Section: base
+Priority: optional
+Architecture: amd64
+Depends: servicefabric (>= REPLACE_RUNTIME_VERSION)
+Maintainer: ServiceFabric Maintainer <sfmaint@microsoft.com>
+Description: Service Fabric SDK Common
+ Version REPLACE_VERSION of Service Fabric SDK Common for linux

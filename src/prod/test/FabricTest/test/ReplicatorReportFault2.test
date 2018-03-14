@@ -1,0 +1,349 @@
+##############################################################################################################################
+#
+#   This script exercises the code paths for Report Fault API on the IFabricOperation2 interface
+#
+##############################################################################################################################
+
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set UserReplicaRestartWaitDuration 60
+set MaxApiDelayInterval 10
+set MinApiDelayInterval 10 
+
++10
++20
++30 nodeprops=userservice:1
+verify
++40 nodeprops=userservice:1
++50 nodeprops=userservice:1
++60 nodeprops=userservice:1
+verify 
+
+########################################################
+#   Test 1 - Report Transient Stream Fault during Copy operation pump
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+injectfailure 40 fabric:/test1 pump.copy.reportfault.transient 
+addbehavior blockreplicationto40 * 40 ReplicationOperation
+addbehavior blockreplicaclose * * ReplicaClose
+
+createservice fabric:/test1 TestStoreServiceType y 1 3 constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary
+!waitforstate RA.Replica.State.fabric:/test1.60.40 IB
+
+clientput fabric:/test1 10 10Data1
+
+# This will ensure the replica has reported the stream fault
+# This replica will be dropped as it is a volatile service
+!waitforstate RA.Replica.State.fabric:/test1.40.40 ID
+removebehavior blockreplicaclose
+removefailure 40 fabric:/test1 pump.copy.reportfault.transient 
+removebehavior blockreplicationto40
+!waitforstate RA.Replica.State.fabric:/test1.40.40 RD
+
+verify 
+
+
+########################################################
+#   Test 2 - Report Permanent Stream Fault during Copy Operation Pump
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+injectfailure 40 fabric:/test2 pump.copy.reportfault.permanent
+addbehavior blockreplicationto40 * 40 ReplicationOperation
+addbehavior blockreplicaclose * * ReplicaClose
+
+createservice fabric:/test2 TestStoreServiceType y 1 3 constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test2.60 Primary
+!waitforstate RA.Replica.State.fabric:/test2.60.40 IB
+
+clientput fabric:/test2 10 10Data1
+
+# This will ensure the replica has reported the stream fault 
+# This replica will be dropped as it is a volatile service
+!waitforstate RA.Replica.State.fabric:/test2.40.40 ID
+removebehavior blockreplicaclose
+removebehavior blockreplicationto40
+removefailure 40 fabric:/test2 pump.copy.reportfault.permanent
+!waitforstate RA.Replica.State.fabric:/test2.40.40 RD
+
+verify 
+
+#
+# NOTE:
+# Testcases 3 and onward use a test hook not supported by 
+# the native store stack (pump.replication.reportfault.transient)
+# to fault the replication stream
+#
+
+seteseonly
+
+########################################################
+#   Test 3 - Report Transient Stream Fault during Replication Operation Pump
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+# TODO :- Fix this behavior by adding initialization params during service creation after bug 1428529 is fixed
+injectfailure 40 fabric:/test3 pump.replication.reportfault.transient
+addbehavior blockreplicareopen * * StatefulServiceReopen
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test3.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.40 Secondary 
+
+verify 
+
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 10Data2
+!wait 
+
+# This will ensure the replica has reported the stream fault
+# This replica will be reopened as it is a transient fault and persisted service
+!waitforstate RA.Replica.State.fabric:/test3.40.40 SB
+removebehavior blockreplicareopen
+removefailure 40 fabric:/test3 pump.replication.reportfault.transient 
+!waitforstate RA.Replica.State.fabric:/test3.40.40 RD
+
+verify 
+
+
+########################################################
+#   Test 4 - Report Permanent Stream Fault during Replication Operation Pump
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+injectfailure 40 fabric:/test4 pump.replication.reportfault.permanent
+addbehavior blockreplicaclose * * ReplicaClose
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test4.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test4.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test4.40 Secondary 
+
+verify 
+
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 10Data2
+!wait 
+
+# This will ensure the replica has reported permanent stream fault
+# This replica will be dropped as it is a permanent fault
+!waitforstate RA.Replica.State.fabric:/test4.40.40 ID
+removebehavior blockreplicaclose 
+removefailure 40 fabric:/test4 pump.replication.reportfault.permanent
+!waitforstate RA.Replica.State.fabric:/test4.40.40 RD
+
+verify 
+
+
+########################################################
+#   Test 5 - Report Transient Stream Fault while Replicator Close is waiting for 
+#   the replication queue to drain
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+# This will block the replication pump on 40
+setsignal 40 fabric:/test5 pump.replication.block
+injectfailure 40 fabric:/test5 pump.replication.reportfault.transient 
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 persist constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test5.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test5.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.40 Secondary 
+
+verify 
+
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 10Data2
+!wait  
+
+reportfault 40 fabric:/test5 transient 
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test5.40 true
+removebehavior blockreplicareopen
+# Close will be stuck at this point, waiting for the replication queue to drain
+!pause 5
+
+# this will unblock the close and everything must stabilize
+resetsignal 40 fabric:/test5 pump.replication.block
+!waitforstate RA.Replica.State.fabric:/test5.40.40 RD 
+verify  
+
+########################################################
+#   Test 5.1 - Report Permanent Stream Fault while Replicator Close is waiting for 
+#   the replication queue to drain
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+# This will block the replication pump on 40
+setsignal 40 fabric:/test51 pump.replication.block
+injectfailure 40 fabric:/test51 pump.replication.reportfault.permanent
+
+createservice fabric:/test51 TestPersistedStoreServiceType y 1 3 persist constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test51.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test51.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test51.40 Secondary 
+
+verify 
+
+clientput fabric:/test51 10 10Data1
+clientput fabric:/test51 20 10Data2
+!wait  
+
+reportfault 40 fabric:/test51 transient 
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test51.40 true
+removebehavior blockreplicareopen
+# Close will be stuck at this point, waiting for the replication queue to drain
+!pause 5
+
+# this will unblock the close and everything must stabilize
+resetsignal 40 fabric:/test51 pump.replication.block
+!waitforstate RA.Replica.State.fabric:/test51.40.40 RD 
+verify  
+
+
+########################################################
+#   Test 6 - Report Transient Stream Fault while Secondary Replicator Update Epoch is waiting for 
+#   the replication queue to drain
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+# This will block the replication pump on 50
+setsignal 50 fabric:/test6 pump.replication.block
+injectfailure 50 fabric:/test6 pump.replication.reportfault.transient 
+
+createservice fabric:/test6 TestStoreServiceType y 1 3 constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test6.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test6.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.40 Secondary 
+
+verify 
+
+clientput fabric:/test6 10 10Data1
+clientput fabric:/test6 20 10Data2
+!wait  
+
+-60
+!wait
+!pause 5
+# Update Epoch on the secondary replicator will be blocked in 50 at this point, waiting for the replication queue to drain 
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.50 Phase1_GetLSN
+
+# this will unblock the replication drain and things must stabilize
+resetsignal 50 fabric:/test6 pump.replication.block
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.50 None
++60 nodeprops=userservice:1
+!wait
+verify 
+
+
+########################################################
+#   Test 7 - Report Permanent Stream Fault while Secondary Replicator Update Epoch is waiting for 
+#   the replication queue to drain
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+# This will block the replication pump on 50
+setsignal 50 fabric:/test7 pump.replication.block
+injectfailure 50 fabric:/test7 pump.replication.reportfault.permanent
+
+createservice fabric:/test7 TestStoreServiceType y 1 3 constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test7.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test7.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.40 Secondary 
+
+verify 
+
+clientput fabric:/test7 10 10Data1
+clientput fabric:/test7 20 10Data2
+!wait  
+
+-60
+!wait
+!pause 5
+# Update Epoch on the secondary replicator will be blocked in 50 at this point, waiting for the replication queue to drain 
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.50 Phase1_GetLSN
+
+# this will unblock the replication drain and things must stabilize
+resetsignal 50 fabric:/test7 pump.replication.block
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.50 None
++60 nodeprops=userservice:1
+!wait
+verify 
+
+########################################################
+#   Test 8 - Report Permanent Stream Fault while Replicator CR(None) is waiting for 
+#   the replication queue to drain
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+# This will block the replication pump on 40
+setsignal 40 fabric:/test8 pump.replication.block
+injectfailure 40 fabric:/test8 pump.replication.reportfault.permanent
+addbehavior blockreplicaclose * * ReplicaClose
+
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 3 persist constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test8.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test8.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test8.40 Secondary 
+
+verify 
+
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 10Data2
+!wait  
+
+reportfault 40 fabric:/test8 permanent
+!waitforstate RA.Replica.State.fabric:/test8.40.40 ID
+removebehavior blockreplicaclose 
+# Close will be stuck at this point, waiting for the replication queue to drain
+!pause 5
+
+# this will unblock the close and everything must stabilize
+resetsignal 40 fabric:/test8 pump.replication.block
+!waitforstate RA.Replica.State.fabric:/test8.40.40 RD 
+verify  
+
+
+########################################################
+#   Test 8.1 - Report Transient Stream Fault while Replicator CR(None) is waiting for 
+#   the replication queue to drain
+########################################################
+
+# This test requires for services to ACK operations on the secondary
+setsignal 40 fabric:/test81 pump.replication.block
+injectfailure 40 fabric:/test81 pump.replication.reportfault.transient
+addbehavior blockreplicaclose * * ReplicaClose
+
+createservice fabric:/test81 TestPersistedStoreServiceType y 1 3 persist constraint=userservice==1 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+!waitforstate FM.Replica.Role.fabric:/test81.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test81.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test81.40 Secondary 
+
+verify 
+
+clientput fabric:/test81 10 10Data1
+clientput fabric:/test81 20 10Data2
+!wait  
+
+reportfault 40 fabric:/test81 permanent
+!waitforstate RA.Replica.State.fabric:/test81.40.40 ID
+removebehavior blockreplicaclose 
+# Close will be stuck at this point, waiting for the replication queue to drain
+!pause 5
+
+# this will unblock the close and everything must stabilize
+resetsignal 40 fabric:/test81 pump.replication.block
+!waitforstate RA.Replica.State.fabric:/test81.40.40 RD 
+verify  
+
+cleareseonly
+
+!q

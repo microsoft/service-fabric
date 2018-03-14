@@ -1,0 +1,214 @@
+#
+# Create fabric
+#
+votes 10 30 40
+cmservice 0 0
+namingservice 10 1 1
+cleantest
++10
++20
++30
++40
++50
++60
+verify
+createname fabric:/test
+#
+# FABRIC_E_INVALID_NAME_URI
+#
+# Empty query and fragment is ignored
+createname fabric:/test0/name?
+createname fabric:/test0/name# NameAlreadyExists
+# Non-empty query is reserved
+createname fabric:/test0?query InvalidNameUri
+createname fabric:/test0/name?query InvalidNameUri
+deletename fabric:/test0?query InvalidNameUri
+deletename fabric:/test0/name?query InvalidNameUri
+nameexists fabric:/test0?query false InvalidNameUri
+nameexists fabric:/test0/name?query false InvalidNameUri
+enumnames fabric:/test0?query expectedCount=0 recursive=false error=InvalidNameUri
+enumnames fabric:/test0/name?query expectedCount=0 recursive=false error=InvalidNameUri
+putproperty fabric:/test0?query SomeProp XXX error=InvalidNameUri 
+putproperty fabric:/test0/name?query SomeProp XXX error=InvalidNameUri 
+getproperty fabric:/test0?query SomeProp SomeData error=InvalidNameUri
+getproperty fabric:/test0/name?query SomeProp SomeData error=InvalidNameUri
+deleteproperty fabric:/test0?query SomeProp error=InvalidNameUri
+deleteproperty fabric:/test0/name?query SomeProp error=InvalidNameUri
+createservice fabric:/test0?query CalculatorServiceType n 2 2 minreplicasetsize=0 errors=InvalidNameUri
+createservice fabric:/test0/name?query CalculatorServiceType n 2 2 minreplicasetsize=0 errors=InvalidNameUri
+deleteservice fabric:/test0?query errors=InvalidNameUri
+deleteservice fabric:/test0/name?query errors=InvalidNameUri
+# Non-empty fragment is reserved
+createname fabric:/test0#fragment InvalidNameUri
+createname fabric:/test0/name#fragment InvalidNameUri
+deletename fabric:/test0#fragment InvalidNameUri
+deletename fabric:/test0/name#fragment InvalidNameUri
+nameexists fabric:/test0#fragment false InvalidNameUri
+nameexists fabric:/test0/name#fragment false InvalidNameUri
+enumnames fabric:/test0#fragment expectedCount=0 recursive=false error=InvalidNameUri
+enumnames fabric:/test0/name#fragment expectedCount=0 recursive=false error=InvalidNameUri
+createservice fabric:/test0#fragment CalculatorServiceType n 2 2 minreplicasetsize=0 errors=InvalidNameUri
+createservice fabric:/test0/name#fragment CalculatorServiceType n 2 2 minreplicasetsize=0 errors=InvalidNameUri
+deleteservice fabric:/test0#fragment errors=InvalidNameUri
+deleteservice fabric:/test0/name#fragment errors=InvalidNameUri
+# Property operations are allowed on fragments to support service group properties on a per-member basis
+putproperty fabric:/test0#fragment SomeProp1 XXX1
+putproperty fabric:/test0#fragment SomeProp2 XXX2 
+putproperty fabric:/test0/name#fragment SomeProp1 YYY1
+putproperty fabric:/test0/name#fragment SomeProp2 YYY2
+getproperty fabric:/test0#fragment SomeProp1 XXX1
+getproperty fabric:/test0#fragment SomeProp2 XXX2
+getproperty fabric:/test0/name#fragment SomeProp1 YYY1
+getproperty fabric:/test0/name#fragment SomeProp2 YYY2
+enumproperties fabric:/test0#fragment includeValues=true
+verifypropertyenumeration fabric:/test0#fragment
+enumproperties fabric:/test0/name#fragment includeValues=true
+verifypropertyenumeration fabric:/test0/name#fragment
+
+deleteproperty fabric:/test0#fragment SomeProp1
+getproperty fabric:/test0#fragment SomeProp1 XXX1 error=PropertyNotFound
+getproperty fabric:/test0#fragment SomeProp2 XXX2
+getproperty fabric:/test0/name#fragment SomeProp1 YYY1
+
+#
+# Not FABRIC_E_NAME_DOES_NOT_EXIST (since the name is created automatically)
+#
+createservice fabric:/test2 CalculatorServiceType n 2 2 minreplicasetsize=0
+createservice fabric:/test/a CalculatorServiceType n 2 2 minreplicasetsize=0
+createname fabric:/test2/a/b/c
+createname fabric:/test/a/b/c
+verify
+deleteservice fabric:/test/a
+deleteservice fabric:/test2
+deletename fabric:/test/a/b/c
+deletename fabric:/test2/a/b/c
+verify
+#
+# FABRIC_E_NAME_DOES_NOT_EXIST
+#
+deletename fabric:/test2 NameNotFound
+deletename fabric:/test/a NameNotFound
+nameexists fabric:/test2/a false
+nameexists fabric:/test/a/b/c false
+enumnames fabric:/test2 expectedCount=0 recursive=false error=NameNotFound
+enumnames fabric:/test/a expectedCount=0 recursive=true error=NameNotFound
+putproperty fabric:/test2 Property SomeProp error=NameNotFound
+putproperty fabric:/test/a Property SomeProp error=NameNotFound
+getproperty fabric:/test2 Property SomeProp error=NameNotFound
+getproperty fabric:/test/a Property SomeProp error=NameNotFound
+getmetadata fabric:/test2 Property error=NameNotFound
+getmetadata fabric:/test/a Property error=NameNotFound
+deleteproperty fabric:/test2 Property error=NameNotFound
+deleteproperty fabric:/test/a Property error=NameNotFound
+verify
+#
+#FABRIC_E_NAME_ALREADY_EXISTS
+#
+createname fabric:/test NameAlreadyExists
+#
+# FABRIC_E_NAME_NOT_EMPTY
+#
+createname fabric:/test/service
+deletename fabric:/test NameNotEmpty
+nameexists fabric:/test/service true
+nameexists fabric:/test true
+putproperty fabric:/test/service PropertyName SomeProp
+deletename fabric:/test/service NameNotEmpty
+createservice fabric:/test/service CalculatorServiceType n 2 1
+verify
+deleteproperty fabric:/test/service PropertyName
+deletename fabric:/test/service NameNotEmpty
+
+createname fabric:/test_empty/a
+createname fabric:/test_empty/a.b
+createname fabric:/test_empty/a/b
+deletename fabric:/test_empty/a NameNotEmpty
+deletename fabric:/test_empty/a/b
+deletename fabric:/test_empty/a
+deletename fabric:/test_empty/a.b
+
+#
+# FABRIC_E_PROPERTY_SIZE_TOO_LARGE (1024 * 1024 + 1)
+#
+putproperty fabric:/test/service LargePropertyName 1048577 error=PropertyTooLarge
+#
+# FABRIC_E_SERVICE_DOES_NOT_EXIST
+#
+createname fabric:/name
+createname fabric:/name/path
+deleteservice fabric:/name errors=UserServiceNotFound
+deleteservice fabric:/name/path errors=UserServiceNotFound
+verify
+getservicedescription fabric:/name UserServiceNotFound
+resolve fabric:/name 50 error=UserServiceNotFound
+resolve fabric:/name/path 0 error=UserServiceNotFound
+# non-existent name should still return UserServiceNotFound
+deleteservice fabric:/test2 errors=UserServiceNotFound
+deleteservice fabric:/test/a errors=UserServiceNotFound
+getservicedescription fabric:/test2 UserServiceNotFound
+resolve fabric:/test2 50 error=UserServiceNotFound
+resolve fabric:/test/a 0 error=UserServiceNotFound
+#
+# FABRIC_E_SERVICE_ALREADY_EXISTS
+#
+createservice fabric:/test/service CalculatorServiceType n 3 4 errors=UserServiceAlreadyExists minreplicasetsize=0
+verify
+#
+# FABRIC_E_INVALID_SERVICE_PARTITION
+#
+resolve fabric:/test/service -1 error=InvalidServicePartition
+#
+# FABRIC_E_PROPERTY_DOES_NOT_EXIST
+#
+getproperty fabric:/test Property error=PropertyNotFound
+getproperty fabric:/test/service XXX SomeOtherProp error=PropertyNotFound
+#
+# FABRIC_E_PROPERTY_CHECK_FAILED
+#
+#TODO: 114642 - Add check property operations to FabricTest
+#
+# FABRIC_E_INVALID_PROPERTY_TYPE
+#
+#TODO: Add property type overloads
+#
+# FABRIC_E_READ_ONLY
+#
+#TODO: SubmitPropertyBatch when security is added
+#TODO: SubmitPropertyBatchAtLongestServicePrefix when security is added
+#
+# E_ACCESSDENIED
+#
+deletename fabric: AccessDenied
+createname fabric: AccessDenied
+enumnames fabric: expectedCount=0 recursive=false error=AccessDenied
+nameexists fabric: false AccessDenied
+putproperty fabric: SomeProp XXX error=AccessDenied 
+getproperty fabric: SomeProp SomeData error=AccessDenied
+createservice fabric: CalculatorServiceType n 2 2 errors=AccessDenied minreplicasetsize=0
+deleteservice fabric: errors=AccessDenied
+resolve fabric: 2 error=AccessDenied
+
+createclient c1
+registercallback c1 cb1 fabric: 0 error=AccessDenied
+#
+# Error contract not covered by this test and reason:
+#   - FABRIC_E_WRITE_CONFLICT - FabricTest's naming operations are synchronous
+#   - FABRIC_E_OPERATION_CANCELLED - Cancel not supported by FabricTest
+#   - FABRIC_E_OPERATION_TIMED_OUT - Single box test should not timeout
+#   - E_FAIL - Should not happen under normal circumstances
+#
+# cleanup
+#
+deleteservice fabric:/test/service
+verify
+deletename fabric:/name/path
+deletename fabric:/name
+deletename fabric:/test/service
+deletename fabric:/test 
+-20
+-40
+-50
+-60
+-10
+-30
+!q

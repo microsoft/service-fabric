@@ -1,0 +1,71 @@
+#
+# [owner] yangli
+#
+# This test case covers the scenario where the following sequence of events happen:
+#
+# - Primary should be on Node 80 in UD2 at the beginning
+# - After upgrade of UD1, the primary should be swapped to node 60 in UD1 
+#
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set DummyPLBEnabled true
+set ConstraintCheckEnabled false
+set UpgradeStatusPollInterval 5
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 150
+set UserReplicaRestartWaitDuration 3600
+set RestoreReplicaLocationAfterUpgrade false
+
++10 ud=UD3
++20 ud=UD3
++30 ud=UD4
++40 ud=UD4
++50 ud=UD1
++60 ud=UD1
++70 ud=UD2
++80 ud=UD2
+
+verify
+
+createservice fabric:/volatile TestStoreServiceType y 1 8
+verify
+
+#
+# Prepare and privision for cluster upgrade
+#
+prepareupgradefabric code=4.2.765.0 config=version5
+provisionfabric code=4.2.765.0 config=version5
+
+#
+# Upgrade cluster
+#
+upgradefabric code=4.2.765.0 config=version5 Rolling upgrademode=manual
+
+verifyupgradefabric upgradedomains=UD1
+
+!waitforstate FM.Replica.Role.fabric:/volatile.60 Secondary
+
+upgradefabricmovenext
+
+# Primary should be swapped to 60/UD1 because of it is the only completed UD
+!waitforstate FM.Replica.Role.fabric:/volatile.60 Primary
+
+verifyupgradefabric upgradedomains=UD1,UD2
+
+updatefabricupgrade upgrademode=auto
+
+verifyupgradefabric
+
+# With RestoreReplicaLocationAfterUpgrade false, primary should stay at node 60 instead of 80
+!waitforstate FM.Replica.Role.fabric:/volatile.60 Primary
+
+verify
+
+-*
+
+!q

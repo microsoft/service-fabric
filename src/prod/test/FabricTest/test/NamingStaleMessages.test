@@ -1,0 +1,351 @@
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+
+# Reduce running time of CIT 
+#
+set RepairOperationTimeout 5
+set RepairInterval 2
+
++10
++20
++30
+verify
+
+#
+# Ensure stability of Naming service before proceeding
+#
+createname fabric:/stale
+
+createclient client1 nodeconfig=10
+
+##############################
+# Authority Owner / Name Owner
+##############################
+
+#
+# 1) Delay CreateName request between Authority Owner and Name Owner
+#
+nameexists fabric:/stale/testcase1 false
+
+addbehavior b1 * * InnerCreateNameRequest 1.0 20
+set NamingOperationTimeout 5
+createname fabric:/stale/testcase1 Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+createname fabric:/stale/testcase1 NameAlreadyExists
+
+nameexists fabric:/stale/testcase1 true
+
+deletename fabric:/stale/testcase1
+
+!pause 25
+
+nameexists fabric:/stale/testcase1 false
+
+#
+# 2) Delay DeleteName request between Authority Owner and Name Owner
+#
+createname fabric:/stale/testcase2
+
+nameexists fabric:/stale/testcase2 true
+
+addbehavior b1 * * InnerDeleteNameRequest 1.0 20
+set NamingOperationTimeout 5
+deletename fabric:/stale/testcase2 Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+deletename fabric:/stale/testcase2 NameNotFound
+
+nameexists fabric:/stale/testcase2 false
+
+createname fabric:/stale/testcase2 Success
+
+!pause 25
+
+nameexists fabric:/stale/testcase2 true
+
+#
+# 3) Delay CreateService request between Authority Owner and Name Owner
+#
+createname fabric:/stale/testcase3
+
+addbehavior b1 * * InnerCreateServiceRequest 1.0 20
+set NamingOperationTimeout 5
+createservice fabric:/stale/testcase3 CalculatorServiceType n 1 1 client=client1 errors=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+createservice fabric:/stale/testcase3 CalculatorServiceType n 1 1 client=client1 errors=Success,UserServiceAlreadyExists
+
+deleteservice fabric:/stale/testcase3 client=client1
+
+!pause 25
+
+verify
+
+#
+# 4) Delay DeleteService request between Authority Owner and Name Owner
+#
+createname fabric:/stale/testcase4
+
+createservice fabric:/stale/testcase4 CalculatorServiceType n 1 1 client=client1
+
+verify
+
+addbehavior b1 * * InnerDeleteServiceRequest 1.0 20
+set NamingOperationTimeout 5
+deleteservice fabric:/stale/testcase4 CalculatorServiceType n 1 1 client=client1 errors=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+deleteservice fabric:/stale/testcase4 CalculatorServiceType n 1 1 client=client1 errors=Success,UserServiceNotFound
+
+createservice fabric:/stale/testcase4 CalculatorServiceType n 1 1 client=client1
+
+!pause 25
+
+verify
+
+##################################
+# Naming Gateway / Authority Owner
+##################################
+
+#
+# 5) Delay CreateName request between Naming Gateway and Authority Owner
+#
+nameexists fabric:/stale/testcase5 false
+
+addbehavior b1 * * CreateNameRequest 1.0 20
+set NamingOperationTimeout 2
+createname fabric:/stale/testcase5 Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+createname fabric:/stale/testcase5 Success,NameAlreadyExists
+
+nameexists fabric:/stale/testcase5 true
+
+deletename fabric:/stale/testcase5
+
+!pause 25
+
+nameexists fabric:/stale/testcase5 false
+
+#
+# 6) Delay DeleteName request between Naming Gateway and Authority Owner
+#
+createname fabric:/stale/testcase6
+
+nameexists fabric:/stale/testcase6 true
+
+addbehavior b1 * * DeleteNameRequest 1.0 20
+set NamingOperationTimeout 2
+deletename fabric:/stale/testcase6 Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+deletename fabric:/stale/testcase6
+
+nameexists fabric:/stale/testcase6 false
+
+createname fabric:/stale/testcase6 Success
+
+!pause 25
+
+nameexists fabric:/stale/testcase6 true
+
+#
+# 7) Delay CreateService request between Naming Gateway and Authority Owner
+#
+createname fabric:/stale/testcase7
+
+addbehavior b1 * * CreateServiceRequest 1.0 20
+set NamingOperationTimeout 2
+createservice fabric:/stale/testcase7 CalculatorServiceType n 1 1 client=client1 errors=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+createservice fabric:/stale/testcase7 CalculatorServiceType n 1 1 client=client1
+
+deleteservice fabric:/stale/testcase7 client=client1
+
+!pause 25
+
+verify
+
+#
+# 8) Delay DeleteService request between Naming Gateway and Authority Owner
+#
+createname fabric:/stale/testcase8
+
+createservice fabric:/stale/testcase8 CalculatorServiceType n 1 1 client=client1
+
+verify
+
+addbehavior b1 * * DeleteServiceRequest 1.0 20
+set NamingOperationTimeout 2
+deleteservice fabric:/stale/testcase8 CalculatorServiceType n 1 1 client=client1 errors=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+deleteservice fabric:/stale/testcase8 CalculatorServiceType n 1 1 client=client1
+
+createservice fabric:/stale/testcase8 CalculatorServiceType n 1 1 client=client1
+
+!pause 25
+
+verify
+
+##################
+# Named Properties
+##################
+
+#
+# 9) Delay DeleteProperty request
+#
+createname fabric:/stale/testcase9
+
+addbehavior b1 * * PropertyBatchRequest 1.0 20
+set NamingOperationTimeout 2
+deleteproperty fabric:/stale/testcase9 Prop9 error=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+putproperty fabric:/stale/testcase9 Prop9 Data9
+
+!pause 25
+
+getproperty fabric:/stale/testcase9 Prop9 Data9
+
+#
+# 10) Delay PutProperty request (across delete)
+#
+createname fabric:/stale/testcase10
+
+addbehavior b1 * * PropertyBatchRequest 1.0 20
+set NamingOperationTimeout 2
+putproperty fabric:/stale/testcase10 Prop10 Data10 error=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+deleteproperty fabric:/stale/testcase10 Prop10 error=PropertyNotFound
+
+!pause 25
+
+getproperty fabric:/stale/testcase10 Prop10 xxx error=PropertyNotFound
+
+#
+# 11) Delay PutProperty request (overwrite)
+#
+createname fabric:/stale/testcase11
+
+putproperty fabric:/stale/testcase11 Prop11 Data11
+
+getproperty fabric:/stale/testcase11 Prop11 Data11
+
+addbehavior b1 * * PropertyBatchRequest 1.0 20
+set NamingOperationTimeout 2
+putproperty fabric:/stale/testcase11 Prop11 DataX error=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+putproperty fabric:/stale/testcase11 Prop11 DataY
+
+!pause 25
+
+getproperty fabric:/stale/testcase11 Prop11 DataY
+
+#
+# 12) Delay batch with common PutProperty operation
+#
+createname fabric:/stale/testcase12
+
+submitbatch fabric:/stale/testcase12 ops=put:Prop12A:Data12A,put:Prop12B:Data12B
+
+getproperty fabric:/stale/testcase12 Prop12A Data12A
+getproperty fabric:/stale/testcase12 Prop12B Data12B
+
+addbehavior b1 * * PropertyBatchRequest 1.0 20
+set NamingOperationTimeout 2
+submitbatch fabric:/stale/testcase12 ops=put:Prop12A:Data12XX,put:Prop12C:Data12C error=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+submitbatch fabric:/stale/testcase12 ops=put:Prop12A:Data12AY,put:Prop12B:Data12BY
+
+!pause 25
+
+addbehavior b1 * * PropertyBatchRequest 1.0 20
+set NamingOperationTimeout 2
+submitbatch fabric:/stale/testcase12 ops=put:Prop12D:Data12D,put:Prop12B:Data12XX error=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 20
+submitbatch fabric:/stale/testcase12 ops=put:Prop12A:Data12AYY,put:Prop12B:Data12BYY
+
+!pause 25
+getproperty fabric:/stale/testcase12 Prop12A Data12AYY
+getproperty fabric:/stale/testcase12 Prop12B Data12BYY
+getproperty fabric:/stale/testcase12 Prop12C xxx error=PropertyNotFound
+getproperty fabric:/stale/testcase12 Prop12D xxx error=PropertyNotFound
+
+###############
+# HashMap Prune
+###############
+
+#
+# 13) Allow time for pruning algorithm to run
+#
+set NamingOperationTimeout 5
+set NamingMaxOperationTimeout 5
+set NamingOperationRetryTimeout 20
+
+# reset pruning algorithm timers by restarting Naming replicas
+
+-10
+!waitforstate FM.Node.IsUp.10 false
+
++10
+verify
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
++20
+verify
+
+-30
+!waitforstate FM.Node.IsUp.30 false
+
++30
+verify
+
+createclient client13 nodeconfig=10
+
+createname fabric:/stale/testcase13 Success client=client13
+
+nameexists fabric:/stale/testcase13/a false
+
+addbehavior b1 * * DeleteNameRequest 1.0 20
+set NamingOperationTimeout 2
+
+deletename fabric:/stale/testcase13/a Timeout client=client13
+
+set NamingOperationTimeout 5
+
+createname fabric:/stale/testcase13/a Success client=client13
+
+removebehavior b1
+
+nameexists fabric:/stale/testcase13/a true
+
+!pause 25
+
+nameexists fabric:/stale/testcase13/a false
+
+
+!q

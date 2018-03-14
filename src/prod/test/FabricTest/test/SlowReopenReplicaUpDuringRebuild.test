@@ -1,0 +1,82 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1587037
+# ReplicaUp from RA for SB D replica which has not reopened in the ReopenSuccessWaitInterval should contain the full configuration
+# 
+set DummyPLBEnabled true
+votes 40 50 60
+cmservice 0 0
+namingservice 1 3 1
+
+set ReopenSuccessWaitInterval 10
+set UserReplicaRestartWaitDuration 9999
+set FullRebuildWaitDuration 10
+set FMPlacementConstraints fmservice==true
+
+cleantest
+
++40 nodeprops=fmservice:true
++50
+!wait
+!waitforstate FM.Replica.Role.FMService.40 Primary
+
+-50
+!wait
+
++50 nodeprops=fmservice:true
++60 nodeprops=fmservice:true
+!waitforstate FM.Replica.Role.FMService.50 Secondary
+!waitforstate FM.Replica.Role.FMService.60 Secondary
+
++30 nodeprops=fmservice:true,us:true
++20 nodeprops=fmservice:true,us:true
++10 nodeprops=fmservice:true,us:true
++70 nodeprops=fmservice:true
+verify
+
+# Create a persisted stateful service
+#
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 3 persist constraint=(us==true)
+verify
+
+#Validate the primary location
+!waitforstate FM.Replica.Role.fabric:/persisted.30 Primary
+
+addbehavior b2 * * ChangeNotification
+
+# Remove nodes 40, 30, 20, 10. This will result in quorum loss for the FM Service.
+#
+-40
+-30
+-20
+-10
+
+removebehavior b2
+
+# Wait for the new FM
+!waitforstate FM.Replica.Role.FMService.70 Primary
+
+# Allow some time for the rebuild protocol to start
+!pause, 30
+
+#Ensure that replica open is blocked and bring back a secondary hosting the user replica
+#Last replica up should complete
+setsignal 20 fabric:/persisted replicator.beginopen.block
++20 nodeprops=fmservice:true,us:true
+!waitforstate FM.Node.IsUp.20 true
+!waitforstate FM.Node.IsReplicaUploaded.20 true
+
+setsignal 30 fabric:/persisted replicator.beginopen.block
++30 nodeprops=fmservice:true,us:true
+!waitforstate FM.Node.IsUp.30 true
+!waitforstate FM.Node.IsReplicaUploaded.30 true
+
+#Remove the wait and bring up all the nodes
+#Rebuild should complete and verify should succeed
+resetsignal 30 fabric:/persisted replicator.beginopen.block
+resetsignal 20 fabric:/persisted replicator.beginopen.block
++10 nodeprops=fmservice:true,us:true
++40 nodeprops=fmservice:true
+
+verify
+!q

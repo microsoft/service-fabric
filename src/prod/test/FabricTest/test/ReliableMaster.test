@@ -1,0 +1,92 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 3 3 2
+cleantest
+set ExpectedClusterSize 3
+fmservice 5 1
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+
+# Boot the ring and setup
++10
++20
++30
+verify
+!waitforstate FM.Replica.Role.FMService.30 Primary
++40
++50
+verify
++60
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 4 persist
+verify
+clientput fabric:/test1 10 10Data1
+!wait
+!pause 5
+# Introduce a new FMM and verify
++5
+verify
+
+# Kill FM primary to cause a reconfiguration
+abort 30
+verify
+!waitforstate FM.Replica.Role.FMService.50 Primary
+clientput fabric:/test1 10 10Data2
+!wait
+gfum fmm
+
+# Cause another reconfiguration and block it
+addbehavior b1 * 10 GetLSN
+-50
+!waitforstate RA.FT.ReconfigStage.FMService.60 Phase1_GetLSN
+
+# Cause another reconfiguration and rebuild at the same time
+addbehavior b2 * * ReplicaUp
+addbehavior b3 * * ChangeNotification
+-60
+-5
+!waitforstate FMM.Location 10
+removebehavior b1
+removebehavior b2
+removebehavior b3
++50
+verify
+clientput fabric:/test1 10 10Data3
+!wait
+gfum fmm
+
+# Move FM replica to higher nodes
++60
++70
+verify
++30
+verify
+-20
+verify
+gfum fmm
+addbehavior b2 * * ReplicaUp
+addbehavior b3 * * ChangeNotification
+-70
+-60
+-50
+-40
+-30
+-10
+removebehavior b2
+removebehavior b3
+clearticket
++10
++20
++30
++40
++50
++60
++70
+verify
+!waitforstate FM.FT.QuorumLost.fabric:/test1 false
+clientget fabric:/test1 10 10Data3
+!wait
+
+gfum fmm
+!q

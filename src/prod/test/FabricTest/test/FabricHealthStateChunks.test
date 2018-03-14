@@ -1,0 +1,505 @@
+#
+# Checks health state chunk queries, using different filters.
+#
+votes 10
+fmservice 3 1
+cmservice 3 1
+namingservice 3 1 1
+set DummyPLBEnabled true
+set HealthOperationTimeout 5
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+set QueryOperationRetryDelay 1
+
+# The test checks expected number of replicas for System services, so make sure no additional SB replicas are created
+set FMStandByReplicaKeepDuration 1
+set CMStandByReplicaKeepDuration 1
+set NamingStandByReplicaKeepDuration 1
+set SystemReplicaRestartWaitDuration 3600
+set UserStandByReplicaKeepDuration 1
+set UserReplicaRestartWaitDuration 3600
+
+cleantest
+
+# Force the system replicas to be placed on the first 3 nodes.
++10
++20
++30
++40
++50
+verify
+
+httpgateway 10
+
+# Wait for system reports to arrive at HM
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:5;apps-ok:1
+
+# By default, health state chunk doesn't return any children
+queryhealthstatechunk cluster expectedhealthstate=ok expectedstates=0
+
+########################################
+# Testcase: aggregated health state
+########################################
+reporthealth cluster sequencenumber=1 healthstate=error
+queryhealthstatechunk cluster expectedhealthstate=error expectedstates=0
+
+reporthealth cluster sequencenumber=2 healthstate=ok
+queryhealthstatechunk cluster expectedhealthstate=ok expectedstates=0
+
+########################################
+# Testcase: invalid filters
+########################################
+!string duplicatedefaultnodefilters {"Items":[{"HealthStateFilter":65535,"NodeNameFilter":""},{"HealthStateFilter":8}]}
+queryhealthstatechunk cluster nodefilters=<string.duplicatedefaultnodefilters> expectederror=InvalidArgument "expectederrormessage=Node filter information: global."
+
+!string duplicatenodefilters {"Items":[{"HealthStateFilter":65535,"NodeNameFilter":"nodeid:10"},{"HealthStateFilter":8,"NodeNameFilter":"nodeid:10"}]}
+queryhealthstatechunk cluster nodefilters=<string.duplicatenodefilters> expectederror=InvalidArgument "expectederrormessage=Node filter information: NodeNameFilter: nodeid:10."
+
+!string duplicatedefaultappfilters {"Items":[{"HealthStateFilter":0},{"HealthStateFilter":4}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatedefaultappfilters> expectederror=InvalidArgument "expectederrormessage=Application filter information: global."
+
+!string duplicateappfilters {"Items":[{"HealthStateFilter":0,"ApplicationNameFilter":"fabric:/app1"},{"HealthStateFilter":4,"ApplicationNameFilter":"fabric:/app1"}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicateappfilters> expectederror=InvalidArgument "expectederrormessage=Application filter information: ApplicationNameFilter: fabric:/app1."
+
+!string duplicateapptypefilters {"Items":[{"ApplicationTypeNameFilter":"AppType1"},{"ApplicationTypeNameFilter":"AppType1"}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicateapptypefilters> expectederror=InvalidArgument "expectederrormessage=Application filter information: ApplicationTypeNameFilter: AppType1."
+
+!string duplicatedefaultservicefilters {"Items":[{"ServiceFilters":[{"HealthStateFilter":4},{"HealthStateFilter":8}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatedefaultservicefilters> expectederror=InvalidArgument "expectederrormessage=Application and service filter information: global, global."
+
+!string duplicateservicefilters {"Items":[{"ServiceFilters":[{"HealthStateFilter":4,"ServiceNameFilter":"fabric:/app1/Service1"},{"HealthStateFilter":8,"ServiceNameFilter":"fabric:/app1/Service1"}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicateservicefilters> expectederror=InvalidArgument "expectederrormessage=Application and service filter information: global, ServiceNameFilter: fabric:/app1/Service1."
+
+!string duplicatedefaultpartitionfilters {"Items":[{"ServiceFilters":[{"PartitionFilters":[{"HealthStateFilter":4},{"HealthStateFilter":8}]}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatedefaultpartitionfilters> expectederror=InvalidArgument "expectederrormessage=Application, service and partition filter information: global, global, global."
+
+!string duplicatepartitionfilters {"Items":[{"ServiceFilters":[{"PartitionFilters":[{"PartitionIdFilter":"089a3fd4-4dbd-43b9-b1fe-573f35fe05e6"},{"HealthStateFilter":8,"PartitionIdFilter":"089a3fd4-4dbd-43b9-b1fe-573f35fe05e6"}]}]}]}}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatepartitionfilters> expectederror=InvalidArgument "expectederrormessage=Application, service and partition filter information: global, global, PartitionIdFilter: 089a3fd4-4dbd-43b9-b1fe-573f35fe05e6."
+
+!string duplicatedefaultreplicafilters {"Items":[{"ServiceFilters":[{"PartitionFilters":[{"ReplicaFilters":[{"HealthStateFilter":4},{"HealthStateFilter":8}]}]}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatedefaultreplicafilters> expectederror=InvalidArgument "expectederrormessage=Application, service, partition and replica filter information: global, global, global, global."
+
+!string duplicatereplicafilters {"Items":[{"ServiceFilters":[{"PartitionFilters":[{"ReplicaFilters":[{"HealthStateFilter":4,"ReplicaOrInstanceIdFilter":"34"},{"HealthStateFilter":8,"ReplicaOrInstanceIdFilter":"34"}]}]}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatereplicafilters> expectederror=InvalidArgument "expectederrormessage=Application, service, partition and replica filter information: global, global, global, ReplicaOrInstanceIdFilter: 34."
+
+!string duplicatedefaultdeployedapplicationfilters {"Items":[{"DeployedApplicationFilters":[{"HealthStateFilter":4},{"HealthStateFilter":8}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatedefaultdeployedapplicationfilters> expectederror=InvalidArgument "expectederrormessage=Application and deployed application filter information: global, global."
+
+!string duplicatedeployedapplicationfilters {"Items":[{"DeployedApplicationFilters":[{"HealthStateFilter":4,"NodeNameFilter":"nodeid:10"},{"HealthStateFilter":8,"NodeNameFilter":"nodeid:10"}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatedeployedapplicationfilters> expectederror=InvalidArgument "expectederrormessage=Application and deployed application filter information: global, NodeNameFilter: nodeid:10."
+
+!string duplicatedefaultdeployedservicepackagefilters {"Items":[{"DeployedApplicationFilters":[{"DeployedServicePackageFilters":[{"HealthStateFilter":4},{"HealthStateFilter":8}]}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatedefaultdeployedservicepackagefilters> expectederror=InvalidArgument "expectederrormessage=Application, deployed application and deployed service package filter information: global, global, global."
+
+!string duplicatedeployedservicepackagefilters {"Items":[{"DeployedApplicationFilters":[{"DeployedServicePackageFilters":[{"HealthStateFilter":4,"ServiceManifestNameFilter":"ServiceManifest1"},{"HealthStateFilter":8,"ServiceManifestNameFilter":"ServiceManifest1"}]}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.duplicatedeployedservicepackagefilters> expectederror=InvalidArgument "expectederrormessage=Application, deployed application and deployed service package filter information: global, global, ServiceManifestNameFilter: ServiceManifest1."
+
+########################################
+# Testcase: node filters
+########################################
+
+# Filters: All nodes
+!string allnodesfilter {"Items":[{"HealthStateFilter":65535,"NodeNameFilter":""}]}
+
+#Fitlers: Default nodes
+!string defaultnodesfilter {"Items":[{"HealthStateFilter":0,"NodeNameFilter":""}]}
+
+# Filters: All nodes, except node 10, just errors
+!string allnodeserror10filter {"Items":[{"HealthStateFilter":65535,"NodeNameFilter":""},{"HealthStateFilter":8,"NodeNameFilter":"nodeid:10"}]}
+
+# Filters: All nodes default, except node 10, just errors
+!string defaultnodeserror10filter {"Items":[{"HealthStateFilter":0,"NodeNameFilter":""},{"HealthStateFilter":8,"NodeNameFilter":"nodeid:10"}]}
+
+queryhealthstatechunk cluster nodefilters=<string.allnodesfilter> expectedhealthstate=ok expectedstates=nodes-ok:5;apps-0
+queryhealthstatechunk cluster nodefilters=<string.defaultnodesfilter> expectedhealthstate=ok expectedstates=nodes-ok:0;apps-0
+queryhealthstatechunk cluster nodefilters=<string.allnodeserror10filter> expectedhealthstate=ok expectedstates=nodes-ok:4;apps-0
+queryhealthstatechunk cluster nodefilters=<string.defaultnodeserror10filter> expectedhealthstate=ok expectedstates=nodes-ok:0;apps-0
+
+reporthealth node nodeid=10 sequencenumber=1 healthstate=error
+queryhealth node nodeid=10 expectedhealthstate=error
+
+queryhealthstatechunk cluster expectedhealthstate=error expectedstates=0
+queryhealthstatechunk cluster nodefilters=<string.allnodesfilter> expectedhealthstate=error expectedstates=nodes-ok:4,error:1;apps-0
+queryhealthstatechunk cluster nodefilters=<string.defaultnodesfilter> expectedhealthstate=error expectedstates=nodes-0;apps-0
+queryhealthstatechunk cluster nodefilters=<string.allnodeserror10filter> expectedhealthstate=error expectedstates=nodes-ok:4,error:1;apps-0
+queryhealthstatechunk cluster nodefilters=<string.defaultnodeserror10filter> expectedhealthstate=error expectedstates=nodes-ok:0,error:1;apps-0
+
+reporthealth node nodeid=10 sequencenumber=2 healthstate=warning
+queryhealth node nodeid=10 expectedhealthstate=warning
+
+queryhealthstatechunk cluster expectedhealthstate=warning expectedstates=0
+queryhealthstatechunk cluster nodefilters=<string.allnodesfilter> expectedhealthstate=warning expectedstates=nodes-ok:4,warning:1;apps-0
+queryhealthstatechunk cluster nodefilters=<string.defaultnodesfilter> expectedhealthstate=warning expectedstates=nodes-0;apps-0
+queryhealthstatechunk cluster nodefilters=<string.allnodeserror10filter> expectedhealthstate=warning expectedstates=nodes-ok:4,warning:0,error:0;apps-0
+queryhealthstatechunk cluster nodefilters=<string.defaultnodeserror10filter> expectedhealthstate=warning expectedstates=nodes-ok:0,warning:0,error:0;apps-0
+
+reporthealth node nodeid=10 sequencenumber=3 healthstate=ok
+queryhealth node nodeid=10 expectedhealthstate=ok
+
+########################################
+# Testcase: Application filters
+########################################
+
+# Create an application with:
+# Stateful service with 2 partitions / 3 replicas
+# 2 stateless services with 1 partition / 3 replicas
+
+!string SvcType1Partition0 31299114-0820-4cbd-8090-3ba86b899db2
+!string SvcType1Partition1 1b822f7a-291d-4afc-b143-7830dc44454e
+
+reporthealthinternal application appname=fabric:/app1 appinstanceid=1 apptype=AppType1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal service servicename=fabric:/app1/ServiceA1 appname=fabric:/app1 servicetypename=SvcType1 sequencenumber=1 healthstate=ok sourceid=System.FM
+
+reporthealthinternal partition partitionguid=<string.SvcType1Partition0> servicename=fabric:/app1/ServiceA1 type=persistent sequencenumber=1 healthstate=ok sourceid=System.FM
+reporthealthinternal partition partitionguid=<string.SvcType1Partition1> servicename=fabric:/app1/ServiceA1 type=persistent sequencenumber=1 healthstate=ok sourceid=System.FM
+
+reporthealthinternal replica replica.id=1111 replica.instanceid=1 partitionguid=<string.SvcType1Partition0> nodeid=20 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal replica replica.id=1112 replica.instanceid=1 partitionguid=<string.SvcType1Partition0> nodeid=30 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal replica replica.id=1121 replica.instanceid=1 partitionguid=<string.SvcType1Partition1> nodeid=40 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal replica replica.id=1122 replica.instanceid=1 partitionguid=<string.SvcType1Partition1> nodeid=50 sequencenumber=1 healthstate=ok sourceid=System.RA
+
+reporthealthinternal deployedapplication nodeid=20 appname=fabric:/app1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedapplication nodeid=30 appname=fabric:/app1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedapplication nodeid=40 appname=fabric:/app1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedapplication nodeid=50 appname=fabric:/app1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+
+reporthealthinternal deployedservicepackage nodeid=20 appname=fabric:/app1 servicemanifestname=ServicePackage1 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedservicepackage nodeid=30 appname=fabric:/app1 servicemanifestname=ServicePackage1 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedservicepackage nodeid=40 appname=fabric:/app1 servicemanifestname=ServicePackage1 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedservicepackage nodeid=50 appname=fabric:/app1 servicemanifestname=ServicePackage1 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+
+reporthealthinternal deployedservicepackage nodeid=20 appname=fabric:/app1 servicemanifestname=ServicePackage2 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedservicepackage nodeid=30 appname=fabric:/app1 servicemanifestname=ServicePackage2 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedservicepackage nodeid=40 appname=fabric:/app1 servicemanifestname=ServicePackage2 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedservicepackage nodeid=50 appname=fabric:/app1 servicemanifestname=ServicePackage2 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+
+# 2 stateless svcs with 1 partition / 3 replicas
+!string SvcType2Svc1Partition0 0b94cb8f-9889-4357-a9ef-e5c7c3324f44
+
+reporthealthinternal service servicename=fabric:/app1/ServiceB1 appname=fabric:/app1 servicetypename=SvcType2 sequencenumber=1 healthstate=ok sourceid=System.FM
+
+reporthealthinternal partition partitionguid=<string.SvcType2Svc1Partition0> servicename=fabric:/app1/ServiceB1 type=stateless sequencenumber=1 healthstate=ok sourceid=System.FM
+
+reporthealthinternal instance replica.id=1211 partitionguid=<string.SvcType2Svc1Partition0> nodeid=20 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal instance replica.id=1212 partitionguid=<string.SvcType2Svc1Partition0> nodeid=30 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal instance replica.id=1213 partitionguid=<string.SvcType2Svc1Partition0> nodeid=10 sequencenumber=1 healthstate=ok sourceid=System.RA
+
+reporthealthinternal deployedapplication nodeid=10 appname=fabric:/app1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+
+reporthealthinternal deployedservicepackage nodeid=20 appname=fabric:/app1 servicemanifestname=ServicePackage3 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedservicepackage nodeid=30 appname=fabric:/app1 servicemanifestname=ServicePackage3 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+reporthealthinternal deployedservicepackage nodeid=10 appname=fabric:/app1 servicemanifestname=ServicePackage3 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+
+
+!string SvcType2Svc2Partition0 cae99481-bfec-4193-860f-759ac90b2cc2
+
+reporthealthinternal service servicename=fabric:/app1/ServiceB2 appname=fabric:/app1 servicetypename=SvcType2 sequencenumber=1 healthstate=ok sourceid=System.FM
+
+reporthealthinternal partition partitionguid=<string.SvcType2Svc2Partition0> servicename=fabric:/app1/ServiceB2 type=stateless sequencenumber=1 healthstate=ok sourceid=System.FM
+
+reporthealthinternal instance replica.id=1311 partitionguid=<string.SvcType2Svc2Partition0> nodeid=20 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal instance replica.id=1312 partitionguid=<string.SvcType2Svc2Partition0> nodeid=40 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal instance replica.id=1313 partitionguid=<string.SvcType2Svc2Partition0> nodeid=10 sequencenumber=1 healthstate=ok sourceid=System.RA
+
+reporthealthinternal deployedservicepackage nodeid=40 appname=fabric:/app1 servicemanifestname=ServicePackage3 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+
+########################################
+# General application filters
+########################################
+
+# Filters: default apps
+!string defaultappsfilter {"Items":[{"HealthStateFilter":0}]}
+
+# Filters: All apps, no children
+!string allappsfilter {"Items":[{"HealthStateFilter":65535}]}
+
+#Filters: All apps, all services
+!string allappsallservices {"Items":[{"HealthStateFilter":65535,"ServiceFilters":[{"HealthStateFilter":65535}]}]}
+
+#Filters: All apps, all services, all partitions
+!string allappsallservicesallpartitions {"Items":[\
+	{"HealthStateFilter":65535,\
+	 "ServiceFilters":[\
+		{"HealthStateFilter":65535,\
+		 "PartitionFilters":[\
+			{"HealthStateFilter":65535}]}\
+		]\
+	}]}\
+
+#Filters: All apps, all services, all partitions, all replicas
+!string allappsallservicesallpartitionsallreplicas {"Items":[\
+	{"HealthStateFilter":65535,\
+	 "ServiceFilters":[\
+		{"HealthStateFilter":65535,\
+		 "PartitionFilters":[\
+			{"HealthStateFilter":65535,\
+			 "ReplicaFilters":[\
+                {"HealthStateFilter":65535,"ReplicaOrInstanceIdFilter":"-1"}]\
+			}]\
+		}]\
+	}]}\
+
+!string allappsalldeployedapps {"Items":[\
+    {"HealthStateFilter":65535,\
+     "DeployedApplicationFilters":[\
+           {"HealthStateFilter":65535}]\
+     }]}\
+
+!string allappsalldeployedappsalldeployedservpckgs {"Items":[\
+    {"HealthStateFilter":65535,\
+     "DeployedApplicationFilters":[\
+           {"HealthStateFilter":65535,\
+	        "DeployedServicePackageFilters":[\
+                  {"HealthStateFilter":65535,"ServiceManifestNameFilter":""}]\
+	       }]\
+     }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.defaultappsfilter> expectedhealthstate=ok expectedstates=0
+queryhealthstatechunk cluster applicationfilters=<string.allappsfilter> expectedhealthstate=ok expectedstates=apps-ok:2;services-0 expectedapps=fabric:/app1,AppType1,ok;fabric:/System,,ok
+
+# 3 System services, 3 created services
+queryhealthstatechunk cluster applicationfilters=<string.allappsallservices> expectedhealthstate=ok expectedstates=apps-ok:2;services-ok:6;partitions-0 expectedapps=fabric:/app1,AppType1,ok;fabric:/System,,ok
+
+# 5 system partitions, 4 created ones
+queryhealthstatechunk cluster applicationfilters=<string.allappsallservicesallpartitions> expectedhealthstate=ok expectedstates=apps-ok:2;services-ok:6;partitions-ok:9;replicas-0
+
+# 9 system replicas, 10 created ones
+queryhealthstatechunk cluster applicationfilters=<string.allappsallservicesallpartitionsallreplicas> expectedhealthstate=ok expectedstates=apps-ok:2;services-ok:6;partitions-ok:9;replicas-ok:19
+
+queryhealthstatechunk cluster applicationfilters=<string.allappsalldeployedapps> expectedhealthstate=ok expectedstates=apps-ok:2;services-0;deployedapps-ok:5;deployedservicepackages-0
+
+queryhealthstatechunk cluster applicationfilters=<string.allappsalldeployedappsalldeployedservpckgs> expectedhealthstate=ok expectedstates=apps-ok:2;services-0;deployedapps-ok:5;deployedservicepackages-12
+
+########################################
+# Specific application filters
+########################################
+# Filter: all apps, for specific app only error
+!string allappsapperrorfilter {"Items":[{"HealthStateFilter":65535},{"HealthStateFilter":8,"ApplicationNameFilter":"fabric:/app1"}]}
+!string defaultappsapperrorfilter {"Items":[{"HealthStateFilter":0},{"HealthStateFilter":8,"ApplicationNameFilter":"fabric:/app1"}]}
+!string appswarningapperrorfilter {"Items":[{"HealthStateFilter":4},{"HealthStateFilter":8,"ApplicationNameFilter":"fabric:/app1"}]}
+!string apptypeallfilter {"Items":[{"ApplicationTypeNameFilter":"AppType1"}]}
+!string apptypenonexistentfilter {"Items":[{"ApplicationTypeNameFilter":"NonExistentAppType"}]}
+
+queryhealthstatechunk cluster applicationfilters=<string.allappsapperrorfilter> expectedhealthstate=ok expectedstates=apps-ok:1 expectedapps=fabric:/System,,ok
+queryhealthstatechunk cluster applicationfilters=<string.defaultappsapperrorfilter> expectedhealthstate=ok expectedstates=apps-0
+queryhealthstatechunk cluster applicationfilters=<string.appswarningapperrorfilter> expectedhealthstate=ok expectedstates=apps-0
+queryhealthstatechunk cluster applicationfilters=<string.apptypeallfilter> expectedhealthstate=ok expectedstates=apps-ok:1 expectedapps=fabric:/app1,AppType1,ok
+queryhealthstatechunk cluster applicationfilters=<string.apptypenonexistentfilter> expectedhealthstate=ok expectedstates=apps-0
+
+# Report error on fabric:/app1
+reporthealthinternal application appname=fabric:/app1 sequencenumber=1 healthstate=error
+queryhealth application appname=fabric:/app1 expectedhealthstate=error
+
+queryhealthstatechunk cluster applicationfilters=<string.allappsapperrorfilter> expectedhealthstate=error expectedstates=apps-ok:1,error:1 expectedapps=fabric:/app1,AppType1,error;fabric:/System,,ok
+queryhealthstatechunk cluster applicationfilters=<string.defaultappsapperrorfilter> expectedhealthstate=error expectedstates=apps-ok:0,error:1 expectedapps=fabric:/app1,AppType1,error
+queryhealthstatechunk cluster applicationfilters=<string.appswarningapperrorfilter> expectedhealthstate=error expectedstates=apps-ok:0,error:1 expectedapps=fabric:/app1,AppType1,error
+queryhealthstatechunk cluster applicationfilters=<string.apptypeallfilter> expectedhealthstate=error expectedstates=apps-error:1 expectedapps=fabric:/app1,AppType1,error
+queryhealthstatechunk cluster applicationfilters=<string.apptypenonexistentfilter> expectedhealthstate=error expectedstates=apps-0
+
+# Report warning on fabric:/app1
+reporthealthinternal application appname=fabric:/app1 sequencenumber=2 healthstate=warning
+queryhealth application appname=fabric:/app1 expectedhealthstate=warning
+
+queryhealthstatechunk cluster applicationfilters=<string.allappsapperrorfilter> expectedhealthstate=warning expectedstates=apps-ok:1,warning:0,error:0
+queryhealthstatechunk cluster applicationfilters=<string.defaultappsapperrorfilter> expectedhealthstate=warning expectedstates=apps-0
+queryhealthstatechunk cluster applicationfilters=<string.appswarningapperrorfilter> expectedhealthstate=warning expectedstates=apps-0
+
+# Report warning on System app
+reporthealthinternal application appname=fabric:/System sequencenumber=3 healthstate=warning
+queryhealth application appname=fabric:/System expectedhealthstate=warning
+
+queryhealthstatechunk cluster applicationfilters=<string.allappsapperrorfilter> expectedhealthstate=warning expectedstates=apps-ok:0,warning:1,error:0 expectedapps=fabric:/System,,warning
+queryhealthstatechunk cluster applicationfilters=<string.defaultappsapperrorfilter> expectedhealthstate=warning expectedstates=apps-0
+queryhealthstatechunk cluster applicationfilters=<string.appswarningapperrorfilter> expectedhealthstate=warning expectedstates=apps-ok:0,warning:1,error:0 expectedapps=fabric:/System,,warning
+
+reporthealthinternal application appname=fabric:/app1 sequencenumber=4 healthstate=ok
+queryhealth application appname=fabric:/app1 expectedhealthstate=ok
+reporthealthinternal application appname=fabric:/System sequencenumber=5 healthstate=ok
+queryhealth application appname=fabric:/System expectedhealthstate=ok
+
+########################################
+# Specific service filters
+########################################
+#Filters: Return ok|warning services for specific app
+!string appdefaultokwarningservicesfilter {"Items":[{"ApplicationNameFilter":"fabric:\/app1","ServiceFilters":[{"HealthStateFilter":6}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.appdefaultokwarningservicesfilter> expectedhealthstate=ok expectedstates=apps-ok:1;services-ok:3;partitions-0
+
+!string appokwarningservicesfilter {"Items":[{"HealthStateFilter":65535,"ApplicationNameFilter":"fabric:\/app1","ServiceFilters":[{"HealthStateFilter":6}]}]}
+queryhealthstatechunk cluster applicationfilters=<string.appokwarningservicesfilter> expectedhealthstate=ok expectedstates=apps-ok:1;services-ok:3;partitions-0
+
+# Filter: for specified app return all services, for specified service, return all partitions
+!string appservicepartitionsfilter {"Items":[\
+    {"HealthStateFilter":65535,\
+     "ApplicationNameFilter":"fabric:\/app1",\
+     "ServiceFilters":[\
+        {"HealthStateFilter":65535},\
+        {"HealthStateFilter":65535,\
+         "ServiceNameFilter":"fabric:\/app1\/ServiceA1",\
+         "PartitionFilters":[\
+			{"HealthStateFilter":65535}]\
+        }]\
+    }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.appservicepartitionsfilter> expectedhealthstate=ok expectedstates=apps-ok:1;services-ok:3;partitions-ok:2
+
+# Filter: all apps, for error services all partitions and all replicas, for specific services ok|warning
+!string okwarningserviceserrorpartitionreplicasfilter {"Items":[\
+    {"HealthStateFilter":65535,\
+     "ServiceFilters":[\
+        {"HealthStateFilter":6,"ServiceNameFilter":"fabric:\/app1\/ServiceB1"},\
+        {"HealthStateFilter":2,"ServiceNameFilter":"fabric:\/app1\/ServiceB2"},\
+        {"HealthStateFilter":8,\
+         "PartitionFilters":[{"ReplicaFilters":[{"HealthStateFilter":65535}]}]}\
+        ]\
+    }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.okwarningserviceserrorpartitionreplicasfilter> expectedhealthstate=ok expectedstates=apps-ok:2;services-ok:2;partitions-0
+
+# Report error on a service
+reporthealthinternal service servicename=fabric:/app1/ServiceA1 sequencenumber=1 healthstate=error
+queryhealth service servicename=fabric:/app1/ServiceA1 expectedhealthstate=error
+
+queryhealthstatechunk cluster applicationfilters=<string.appokwarningservicesfilter> expectedhealthstate=error expectedstates=apps-error:1;services-ok:2;partitions-0
+queryhealthstatechunk cluster applicationfilters=<string.okwarningserviceserrorpartitionreplicasfilter> expectedhealthstate=error expectedstates=apps-ok:1,error:1;services-ok:2,error:1;partitions-ok:2;replicas-ok:4
+
+# Clear error on the service
+reporthealthinternal service servicename=fabric:/app1/ServiceA1 sequencenumber=2 healthstate=ok
+queryhealth service servicename=fabric:/app1/ServiceA1 expectedhealthstate=ok
+
+########################################
+# Specific partition filters
+########################################
+# Filter: all apps, all services, and specified partition
+!string partitionfilter {"Items":[\
+    {"ServiceFilters":[\
+        {"PartitionFilters":[\
+     		{"PartitionIdFilter":"31299114-0820-4cbd-8090-3ba86b899db2"}]\
+        }]\
+    }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.partitionfilter> expectedhealthstate=ok expectedstates=apps-ok:2;services-ok:6;partitions-ok:1;replicas-0
+
+# Filter: all apps, for specified service, return all partitions, and for specified partition return all replicas
+!string servicepartitionreplicasfilter {"Items":[\
+    {"HealthStateFilter":65535,\
+     "ServiceFilters":[\
+        {"ServiceNameFilter":"fabric:\/app1\/ServiceA1",\
+         "PartitionFilters":[\
+            {"HealthStateFilter":65535},\
+			{"PartitionIdFilter":"31299114-0820-4cbd-8090-3ba86b899db2",\
+             "ReplicaFilters":[\
+                {"HealthStateFilter":65535}]\
+            }]\
+        }]\
+    }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.servicepartitionreplicasfilter> expectedhealthstate=ok expectedstates=apps-ok:2;services-ok:1;partitions-ok:2;replicas-ok:2
+
+# Filter: for error partitions, return all replicas
+!string allpartitionserrorpartitionallreplicas {"Items":[\
+    {"HealthStateFilter":65535,\
+     "ApplicationNameFilter":"fabric:\/app1",\
+     "ServiceFilters":[\
+        {"HealthStateFilter":65535,\
+         "PartitionFilters":[\
+			{"HealthStateFilter":8,\
+             "ReplicaFilters":[\
+                {"HealthStateFilter":65535,"ReplicaOrInstanceIdFilter":"-1"}]\
+            }]\
+        }]\
+    }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.allpartitionserrorpartitionallreplicas> expectedhealthstate=ok expectedstates=apps-ok:1;services-ok:3
+
+# Report error on partition
+reporthealthinternal partition partitionguid=<string.SvcType1Partition0> sequencenumber=1 healthstate=error
+queryhealth partition partitionguid=<string.SvcType1Partition0> expectedhealthstate=error
+
+queryhealthstatechunk cluster applicationfilters=<string.partitionfilter> expectedhealthstate=error expectedstates=apps-ok:1,error:1;services-ok:5,error:1;partitions-error:1;replicas-0
+queryhealthstatechunk cluster applicationfilters=<string.servicepartitionreplicasfilter> expectedhealthstate=error expectedstates=apps-ok:1,error:1;services-error:1;partitions-error:1,ok:1;replicas-ok:2
+queryhealthstatechunk cluster applicationfilters=<string.allpartitionserrorpartitionallreplicas> expectedhealthstate=error expectedstates=apps-error:1;services-ok:2,error:1;partitions-error:1;replicas-ok:2
+
+reporthealthinternal partition partitionguid=<string.SvcType1Partition0> sequencenumber=2 healthstate=ok
+queryhealth partition partitionguid=<string.SvcType1Partition0> expectedhealthstate=ok
+
+########################################
+# Specific replica filters
+########################################
+#Filter: for app, all services, partitions and only specific replica
+!string allonereplicafilter {"Items":[\
+    {"HealthStateFilter":65535,\
+     "ApplicationNameFilter":"fabric:\/app1",\
+     "ServiceFilters":[\
+        {"HealthStateFilter":65535,\
+         "PartitionFilters":[\
+            {"ReplicaFilters":[\
+                {"HealthStateFilter":65535,"ReplicaOrInstanceIdFilter":"1111"}]\
+            }]\
+        }]\
+    }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.allonereplicafilter> expectedhealthstate=ok expectedstates=apps-ok:1;services-ok:3;partitions-ok:4;replicas-ok:1
+
+########################################
+# Specific deployed application filters
+########################################
+# Filter: all deployed apps on node 
+!string alldeployedappsonnodefilter {"Items":[\
+    {"HealthStateFilter":65535,\
+     "DeployedApplicationFilters":[\
+           {"HealthStateFilter":65535,\
+            "NodeNameFilter":"nodeid:20"\
+           }]\
+     }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.alldeployedappsonnodefilter> expectedhealthstate=ok expectedstates=apps-ok:2;deployedapps-ok:1;deployedservicepackages-0
+
+# Filter: all deployed apps for app and node
+!string alldeployedappsforapponnodefilter {"Items":[\
+    {"ApplicationNameFilter":"fabric:\/app1",\
+     "DeployedApplicationFilters":[\
+           {"HealthStateFilter":65535,\
+            "NodeNameFilter":"nodeid:20"\
+           }]\
+     }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.alldeployedappsforapponnodefilter> expectedhealthstate=ok expectedstates=apps-ok:1;deployedapps-ok:1;deployedservicepackages-0
+
+# Filter: all deployed apps and service packages on node 
+!string alldeployedappssvcpcksonnodefilter {"Items":[\
+    {"HealthStateFilter":65535,\
+     "DeployedApplicationFilters":[\
+           {"NodeNameFilter":"nodeid:20",\
+            "DeployedServicePackageFilters":[\
+                  {"HealthStateFilter":65535,"ServiceManifestNameFilter":""}]\
+           }]\
+     }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.alldeployedappssvcpcksonnodefilter> expectedhealthstate=ok expectedstates=apps-ok:2;deployedapps-ok:1;deployedservicepackages-ok:3
+
+########################################
+# Specific deployed service packages filters
+########################################
+!string alldeployedappsservicemanifestfilter {"Items":[\
+    {"HealthStateFilter":65535,\
+     "DeployedApplicationFilters":[\
+           {"HealthStateFilter":65535,\
+	        "DeployedServicePackageFilters":[\
+                  {"HealthStateFilter":65535,\
+                   "ServiceManifestNameFilter":"ServicePackage1"}]\
+	       }]\
+     }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.alldeployedappsservicemanifestfilter> expectedhealthstate=ok expectedstates=apps-ok:2;deployedapps-ok:5;deployedservicepackages-ok:4
+
+!string alldefaultdeployedappsservicemanifestonnodefilter {"Items":[\
+    {"DeployedApplicationFilters":[\
+           {"NodeNameFilter":"nodeid:20",\
+	        "DeployedServicePackageFilters":[\
+                  {"ServiceManifestNameFilter":"ServicePackage1"}]\
+	       }]\
+     }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.alldefaultdeployedappsservicemanifestonnodefilter> expectedhealthstate=ok expectedstates=apps-ok:2;deployedapps-ok:1;deployedservicepackages-ok:1
+
+!q

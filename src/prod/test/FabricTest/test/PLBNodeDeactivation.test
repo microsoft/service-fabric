@@ -1,0 +1,74 @@
+#
+# [owner] MMicic, MMohsin
+# Stateful volatile services with target replica count 1 should not be moved to deactivated node during node deactivation.
+# This test represents case where target node for replica build got deactivated during source node deactivation.
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set DummyPLBEnabled true
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+set UserReplicaRestartWaitDuration 9999
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
+verify
+
+# Application version 1.0
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA2 stateful
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA2 version=1.0
+app.reqservices version10 Volatile1 ServiceTypeA2 stateful partition=1 replica=1
+app.upload version10
+
+provisionapp version10
+
+# Create application version 1.0
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+# Adding more nodes for a test service
++40 ud=UD4
+verify
+
+addbehavior b1 * * AddReplicaReply
+
+# Deactivating node where primary replica is
+DeactivateNodes batch0 30:Restart
+
+# The primary replica should be moved out to (not deactivating) node 40
+!waitforstate FM.Replica.State.fabric:/MyApp/Volatile1.40 InBuild
+!waitforstate RA.Replica.State.fabric:/MyApp/Volatile1.30.40 RD
+
+# Deactivating node where primary replica is being built
+DeactivateNodes batch1 40:Restart
+
+removebehavior b1
+
+# Validate deactivation statuses and intentions
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationIntent.40 Restart
+
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile1.40 None
+
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile1.20 Primary
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile1.30 None
+
+!pause 5
+
+# validate that primary didn't return to deactivated node
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile1.20 Primary
+
+RemoveNodeDeactivation batch0
+RemoveNodeDeactivation batch1
+
+verify
+-*
+
+!q

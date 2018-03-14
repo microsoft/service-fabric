@@ -1,0 +1,79 @@
+#
+# [owner] MMohsin, AnuragG
+# [bug] 5236765
+#
+# This test case covers the scenario where the FM service is stuck in rebuild and the FullRebuildWaitDuration has
+# expired. In this case, FMM should start off with a new configuration instead of picking of picking some existing
+# replica as the new primary.
+#
+
+votes 10 20 30
+cleantest
+fmservice 3 2
+cmservice 5 2
+namingservice 1 5 2
+
+set DummyPLBEnabled true
+set ExpectedClusterSize 6
+set FMPlacementConstraints FM==true
+
+
++10 nodeprops=FM:false
++20 nodeprops=FM:false
++30 nodeprops=FM:false
++40 nodeprops=FM:true
++50 nodeprops=FM:true
++60 nodeprops=FM:true
+verify
+
+!waitforstate FM.Replica.Role.FMService.40 Secondary
+!waitforstate FM.Replica.Role.FMService.50 Secondary
+!waitforstate FM.Replica.Role.FMService.60 Primary
+
+# Bring down the FM primary
+-60
+!waitforstate FM.Replica.IsUp.FMService.60 false
+
+# Add another node (so that the state of the FM data is changed)
++70 nodeprops=FM:true
+verify
+
+# Add some more nodes
++80 nodeprops=FM:true
++90 nodeprops=FM:true
++100 nodeprops=FM:true
+verify
+
+#
+# Bring down all replicas of the FM
+#
+#
+
+addbehavior b1 * * AddReplica
+
+-40
+-50
+-70
+
+!waitforstate FM.Replica.IsUp.FMService.40 false
+!waitforstate FM.Replica.IsUp.FMService.50 false
+!waitforstate FM.Replica.IsUp.FMService.70 false
+
+removebehavior b1
+
+# Failover the FMM and bring back node 60 shich has the old FM primary
+-10
++60
+
+# FM service should be stuck in rebuild
+!waitforstate FM.FT.IsInRebuild.FMService true
+
+# Reduce the FullRebuildWaitDuration to trigger full rebuild
+set FullRebuildWaitDuration 1
+
+# FM shoud know all the nodes (including the ones that were added while the old FM primary was down)
+verify
+
+-*
+
+!q

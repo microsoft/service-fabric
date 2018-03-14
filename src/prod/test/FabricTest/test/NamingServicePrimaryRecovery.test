@@ -1,0 +1,55 @@
+#
+# Tests that Naming Service primary recovery will abort outstanding requests
+# (such as an outstanding DeleteService) from the previous role change
+# and restart a new primary recovery. This allows it to accept and process
+# new requests
+#
+set DummyPLBEnabled true
+set NamingOperationTimeout 10
+set RepairOperationTimeout 10
+
+votes 10
+cleantest
+fmservice 3 1
+cmservice 0 0
+namingservice 1 3 1
+
++10
+
+verify
+!waitforstate FM.Replica.Role.NamingService.10 Primary
+
++20
++30
+
+verify
+!waitforstate FM.Replica.Role.NamingService.10 Primary
+!waitforstate FM.Replica.Role.NamingService.20 Secondary
+!waitforstate FM.Replica.Role.NamingService.30 Secondary
+
+createservice fabric:/testservice TestStoreServiceType y 1 3
+verify
+
+nameexists fabric:/testservice true
+
+addbehavior b1 * * DeleteReplica
+deleteservice fabric:/testservice errors=Timeout
+
+nameexists fabric:/testservice true
+
+moveprimaryclient 20 00000000-0000-0000-0000-000000001000
+!waitforstate FM.Replica.Role.NamingService.20 Primary
+
+nameexists fabric:/testservice true
+
+moveprimaryclient 10 00000000-0000-0000-0000-000000001000
+!waitforstate FM.Replica.Role.NamingService.10 Primary
+
+nameexists fabric:/testservice true
+
+moveprimaryclient 20 00000000-0000-0000-0000-000000001000
+!waitforstate FM.Replica.Role.NamingService.20 Primary
+
+nameexists fabric:/testservice true
+
+!q

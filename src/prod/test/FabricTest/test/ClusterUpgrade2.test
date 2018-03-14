@@ -1,0 +1,80 @@
+#
+# [owner] MMohsin
+#
+# This test covers the scenario where non-persisted replicas go down
+# belonging to UDs for which upgrade has not yet started. Replacement
+# replicas should immediately be created. We should not remember the
+# the location of these replicas because the replicas went down
+# because of unplanned failure.
+#
+
+set DummyPLBEnabled true
+
+votes 10 20 30
+fmservice 3 3
+namingservice 1 3 2
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 150
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+
++10
++20
++30
+verify
+
+createservice fabric:/volatile TestStoreServiceType y 1 5 minreplicasetsize=5
+
+!waitforstate FM.Replica.Role.fabric:/volatile.30 Primary
+
++40
++50
+verify
+
+swapprimary fabric:/volatile 30 20
+verify
+
+#
+# Prepare and privision for cluster upgrade
+#
+prepareupgradefabric code=4.2.765.0 config=version5
+provisionfabric code=4.2.765.0 config=version5
+
+#
+# Upgrade cluster
+#
+upgradefabric code=4.2.765.0 config=version5 Rolling upgrademode=manual
+
+# Restart nodes 40, 50, and 60
+-30
+!waitforstate FM.Node.IsUp.30 false
++30
+!wait
+-40
+!waitforstate FM.Node.IsUp.40 false
++40
+!wait
+-50
+!waitforstate FM.Node.IsUp.50 false
++50
+!wait
+
+# New replicas should have been created on nodes 30, 40, and 50
+!waitforstate FM.Replica.IsUp.fabric:/volatile.30 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile.40 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile.50 true
+
+updatefabricupgrade upgrademode=auto
+
+verifyupgradefabric
+
+verify
+
+-*
+
+!q

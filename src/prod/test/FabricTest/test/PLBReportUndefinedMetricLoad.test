@@ -1,0 +1,36 @@
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set SendLoadReportInterval 1
+set PeriodicLoadPersistInterval 1
+
++10 cap=CPU:10,MEMORY:10
+
++20 cap=CPU:5,MEMORY:5
+
++30 cap=CPU:1,MEMORY:1
+
+verify
+createname fabric:/test1
+createservice fabric:/test1 TestStoreServiceType y 1 2 metrics=CPU,High,6,2,MEMORY,High,6,3
+!waitforstate FM.Replica.Role.fabric:/test1.10 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+
+!var test1PartitionId FM.FT.PartitionId.fabric:/test1#0
+#verify the initial load
+verifypartitionload <var.test1PartitionId> CPU 6 2
+verifypartitionload <var.test1PartitionId> MEMORY 6 3
+verifypartitionload <var.test1PartitionId> DISK -1 -1
+
+# undefined metric will be ignored but all defined ones will be reported
+reportload fabric:/test1 10 CPU=10,MEMORY=10,DISK=5
+reportload fabric:/test1 20 CPU=5,MEMORY=4,DISK=9
+!pause 5
+verifypartitionload <var.test1PartitionId> MEMORY 10 4
+verifypartitionload <var.test1PartitionId> CPU 10 5
+verifypartitionload <var.test1PartitionId> DISK -1 -1
+
+!q

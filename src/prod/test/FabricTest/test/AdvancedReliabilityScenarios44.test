@@ -1,0 +1,118 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1520279
+# RAP needs to echo the abort flag in its reply
+
+set DummyPLBEnabled true
+set RAPMessageRetryInterval 1
+set ReplicaOpenFailureMaxRetryThreshold 1
+set ReplicaReopenFailureMaxRetryThreshold 1
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
+verify
+
+############################################################
+# Validate that RAP echoes the abort flag for reopen in the normal case
+######################################################
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+verify
+
+addbehavior b1 * * StatefulServiceReopen
+reportfault 20 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.20.20 SB
+removebehavior b1
+
+verify
+
+############################################################
+# Validate the same scenario but this time block the reopen reply
+# This will cause the first reopen reply from RA to reopen the FUP on RAP
+# And validate that subsequent replies from RAP also cause the replica to be reopened
+############################################################
+
+addbehavior b1 * * StatefulServiceReopenReply
+reportfault 20 fabric:/test1 transient
+
+!pause 15
+
+removebehavior b1
+verify
+
+############################################################
+# Validate the same scenario but this time block the reopen reply and with rerorr
+# This will cause the first reopen reply from RA to reopen the FUP on RAP and the failure to abort it
+# And validate that subsequent replies from RAP also cause the replica to be aborted on RA
+############################################################
+
+addbehavior b0 * * ReplicaUp
+addbehavior b1 * * StatefulServiceReopenReply
+injectfailure 20 fabric:/test1 service.endopen
+reportfault 20 fabric:/test1 transient
+
+!pause 15
+
+removebehavior b1
+!waitforstate RA.FT.State.fabric:/test1.20 Closed
+
+removebehavior b0
+removefailure 20 fabric:/test1 service.endopen
+verify
+
+deleteservice fabric:/test1
+verify
+
+############################################################
+# Validate that RAP echoes the abort flag for open in the normal case
+# Simple create service and verify is enough because RA will send message to RAP
+# RAP must reply with abort or the test will fail
+######################################################
+createservice fabric:/test2 CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
+deleteservice fabric:/test2 CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
+############################################################
+# Validate the same scenario but this time block the open reply
+# This will cause open retry from RA to hit the code path in RAP where the FUP is already open
+############################################################
+
+addbehavior b1 * * ReplicaOpenReply
+createservice fabric:/test3 CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+
+!pause 15
+
+removebehavior b1
+verify
+
+deleteservice fabric:/test3 CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
+############################################################
+# Validate the same scenario but this time fail the open
+# This will cause open retry from RA to hit the code path in RAP where the FUP is already closed
+############################################################
+
+addbehavior b1 * * ReplicaOpenReply
+injectfailure 20 fabric:/test4 service.endopen
+createservice fabric:/test4 CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+
+!pause 15
+
+removefailure 20 fabric:/test4 service.endopen
+removebehavior b1
+verify
+
+deleteservice fabric:/test4 CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
+!q

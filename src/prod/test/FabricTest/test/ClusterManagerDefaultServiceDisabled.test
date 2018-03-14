@@ -1,0 +1,117 @@
+#
+# [owner] linggeng
+# Test scenarios around upgrading default services when it is disabled
+# Only creating default services should be allowed
+# Design doc: https://microsoft.sharepoint.com/teams/WindowsFabric/_layouts/OneNote.aspx?id=%2Fteams%2FWindowsFabric%2FNotebooks%2FWindows%20Fabric%20Design%20Notes&wd=target%28ClusterManager.one%7CBE48945C-624A-4B0C-AF5C-4F4EF0315951%2FRDBug%206528112%20%3A%20%5BDCR%5D%20Changes%20to%20default%20service%20definitions%7CDC5CAA6D-1EEB-456A-BA17-21C24026ACF0%2F%29
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+fmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+# EnableDefaultServicesUpgrade default false
+
++10 ud=UD1 nodeprops=servicenode:1 fd=fd:/dc0/r0
++20 ud=UD2 nodeprops=servicenode:1 fd=fd:/dc0/r1
++30 ud=UD3 fd=fd:/dc1/r0
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeB stateless
+app.codepack version10 ServicePackageA CodeA types=ServiceTypeA,ServiceTypeB version=1.0
+
+# defaultservice1/1b to update
+app.reqservices version10 defaultservice1 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version10 defaultservice1b ServiceTypeB stateless partition=1 instance=2 metrics=MetricA,Low,0,0
+
+# defaultservice2 to delete, defaultservice2 to recreate
+app.reqservices version10 defaultservice2 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version10 defaultservice2notactive ServiceTypeB stateless partition=1 instance=1
+
+
+app.upload version10
+provisionapp version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes version11 ServicePackageA ServiceTypeB stateless
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA,ServiceTypeB version=1.1
+
+app.reqservices version11 defaultservice1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 replicarestartwaitduration=7 quorumlosswaitduration=801 standbyreplicakeepduration=88 metrics=MetricA,Low,0,0
+app.reqservices version11 defaultservice1b ServiceTypeB stateless partition=1 instance=1 servicecorrelations=fabric:/MyApp/defaultservice3,affinity defaultmovecost=Low constraint=servicenode==1 placementPolicies=fd:/dc0,requiredDomain
+# defaultservice3/3in10 to create
+app.reqservices version11 defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version11 defaultservice3in10 ServiceTypeB stateless partition=1 instance=2
+
+app.upload version11
+provisionapp version11
+
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+##############################################################
+# Testcase 1:
+#   Perform application upgrade from 1.0 to 1.1 fail 
+#   Update is not allowed
+##############################################################
+
+upgradeapp fabric:/MyApp 1.1 Rolling upgrademode=auto errors=ApplicationUpgradeValidationError
+getservicedescription fabric:/MyApp/defaultservice1 verify replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+##############################################################
+# Testcase 2:
+#   Perform application upgrade from 1.0 to 1.2
+#   Normal workflow. 
+#   Create new services
+#   Not delete removed services
+##############################################################
+
+updateservice fabric:/MyApp/defaultservice1 Stateful MinReplicaSetSize=1
+deleteservice fabric:/MyApp/defaultservice2notactive
+
+#
+# Application version 1.2
+#
+app.add version12 TestApp 1.2
+app.clear version12
+app.servicepack version12 ServicePackageA version=1.2
+app.servicetypes version12 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes version12 ServicePackageA ServiceTypeB stateless
+app.codepack version12 ServicePackageA CodeA types=ServiceTypeA,ServiceTypeB version=1.2
+
+# defaultservice1/1b remains
+app.reqservices version12 defaultservice1 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version12 defaultservice1b ServiceTypeB stateless partition=1 instance=2 metrics=MetricA,Low,0,0
+
+# defaultservice2 removed but will not be deleted, defaultservice2notactive to recreate
+app.reqservices version12 defaultservice2notactive ServiceTypeB stateless partition=1 instance=2
+
+# defaultservice3 to create
+app.reqservices version12 defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+app.upload version12
+provisionapp version12
+
+upgradeapp fabric:/MyApp 1.2 Rolling upgrademode=auto
+verifyupgradeapp fabric:/MyApp
+
+verify
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice1 1
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice2 2
+
+-*
+
+!q

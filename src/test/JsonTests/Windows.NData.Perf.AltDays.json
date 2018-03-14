@@ -1,0 +1,327 @@
+{
+    "Default": {
+    },
+    "Tests": [
+        {
+            "Name": "NW-V1Repl-3R-6P-PaaS (D3)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Volatile-Perf-3R-6P-PaaS-D3.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-V1Repl-3R-6P-PaaS (D3)"              
+            }
+        },
+        {
+            "Name": "NW-V1Repl-3R-1P-PaaS (D3)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Volatile-Perf-3R-1P-PaaS-D3.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-V1Repl-3R-1P-PaaS (D3)"                    
+            }
+        },
+        {
+            "Name": "NW-V1Repl-3R-6P-PaaS (D14)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Volatile-Perf-3R-6P-PaaS-D14.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName":"NW-V1Repl-3R-6P-PaaS (D14)"
+            }
+        },
+        {
+            "Name": "NW-V1Repl-3R-1P-PaaS (D14)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Volatile-Perf-3R-1P-PaaS-D14.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName":"NW-V1Repl-3R-1P-PaaS (D14)"
+            }
+        },
+        {
+            "Name": "NW-TXR-3R-6P-PaaS (D3)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Perf-3R-6P-PaaS-D3.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName":"NW-TXR-3R-6P-PaaS (D3)"
+            }
+        },
+        {
+            "Name": "NW-TXR-1R-1P-PaaS (D3)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Perf-1R-1P-PaaS-D3.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-TXR-1R-1P-PaaS (D3)"
+            }
+        },
+        {
+            "Name": "NW-TXR-3R-1P-PaaS (D3)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Perf-3R-1P-PaaS-D3.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName":"NW-TXR-3R-1P-PaaS (D3)"              
+            }
+        },
+        {
+            "Name": "NW-TXR-3R-6P-PaaS (D14)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Perf-3R-6P-PaaS-D14.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-TXR-3R-6P-PaaS (D14)"              
+            }
+        },
+        {
+            "Name": "NW-TXR-1R-1P-PaaS (D14)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Perf-1R-1P-PaaS-D14.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-TXR-1R-1P-PaaS (D14)"              
+            }
+        },
+        {
+            "Name": "NW-TXR-3R-1P-PaaS (D14)",
+            "Type": "Azure_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\NightWatch-Perf-3R-1P-PaaS-D14.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "7200",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-TXR-3R-1P-PaaS (D14)"              
+            }
+        },
+        {
+            "Name": "NW-TXR-1R-1P-IaaS (LAB)",
+            "Type": "V2_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+            "TestExecutionParameters": {
+              "SetupType": "Perf",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+              "TaskName": "NightWatch-Perf-1R-1P.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "5400",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-TXR-1R-1P-IaaS (LAB)"              
+            }
+        },
+        {
+            "Name": "NW-TXR-3R-1P-IaaS (LAB)",
+            "Type": "V2_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+            "TestExecutionParameters": {
+              "SetupType": "Perf",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+              "TaskName": "NightWatch-Perf-3R-1P.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "5400",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-TXR-3R-1P-IaaS (LAB)"              
+            }
+        },
+        {
+            "Name": "NW-TXR-3R-6P-IaaS (LAB)",
+            "Type": "V2_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+            "TestExecutionParameters": {
+              "SetupType": "Perf",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+              "TaskName": "NightWatch-Perf-3R-6P.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "5400",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-TXR-3R-6P-IaaS (LAB)"              
+            }
+        },
+        {
+            "Name": "NW-V1Repl-3R-1P-IaaS (LAB)",
+            "Type": "V2_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+            "TestExecutionParameters": {
+              "SetupType": "Perf",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+              "TaskName": "NightWatch-Volatile-Perf-3R-1P.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "5400",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-V1Repl-3R-1P-IaaS (LAB)"              
+            }
+        },
+        {
+            "Name": "NW-V1Repl-3R-6P-IaaS (LAB)",
+            "Type": "V2_ScriptTest_Perf",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+            "TestExecutionParameters": {
+              "SetupType": "Perf",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+              "TaskName": "NightWatch-Volatile-Perf-3R-6P.test",
+              "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "5400",
+              "CleanupTimeout": "2100",
+              "PerfTestTaskName": "NW-V1Repl-3R-6P-IaaS (LAB)"              
+            }
+        },
+        {
+            "Name": "NW-TStore-3R-6P-PaaS (D14)",
+            "Type": "Azure_ScriptTest",
+            "Owners": "preethas, zuparvez",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\TStoreNightWatch-Perf-3R-6P-PaaS-D14.test",
+              "ExpectedResultsFileName": "TstoreNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "5400",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "12000"
+            }
+        },
+        {
+            "Name": "NW-TStore-3R-1P-PaaS (D14)",
+            "Type": "Azure_ScriptTest",
+            "Owners": "preethas, zuparvez",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\TStoreNightWatch-Perf-3R-1P-PaaS-D14.test",
+              "ExpectedResultsFileName": "TStoreNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "5400",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "12000"
+            }
+        },
+        {
+            "Name": "NW-TStore-1R-1P-PaaS (D14)",
+            "Type": "Azure_ScriptTest",
+            "Owners": "preethas, zuparvez",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "PaaS\\TStoreNightWatch-Perf-1R-1P-PaaS-D14.test",
+              "ExpectedResultsFileName": "TStoreNightWatchExpectedResults.xml",
+              "ExecutionTimeout": "5400",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "12000"
+            }
+        },
+        {
+	    "Name": "E2ENativeDictionary-3P-3N (PerfLab)",
+            "Type": "V2_ScriptTest_Perf_Quark",
+            "Owners": "Shalabhs, Yzha, HaNagar, SumukhS",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+            "Tags": "NativeE2EPerf,Lab,3P3N",
+            "TestExecutionParameters": {
+              "SetupType": "Perf",
+              "SetupTimeout": "600",
+              "PerfTestTaskName": "E2ENativeDictionary-3P-3N (PerfLab)",
+              "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+              "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+              "TaskName": "RelDP3N3_Native.test",
+              "ExecutionTimeout": "81600",
+              "CleanupTimeout": "6100"
+            }
+        }
+    ]
+}

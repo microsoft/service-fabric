@@ -1,0 +1,71 @@
+##############################################################################################################################
+# Test for Bug Repro - 1227614
+# [owner - sumukhs]
+# Summary :
+#   GetNext is stuck inside the provider (on primary), while the build is cancelled and the primary is demoted to secondary
+#   When GetNext returns, it AV's while trying to access obselete objects.
+#
+# Note: This script repros the bug without the fix CL 500539 and an additional condition when GetNext returns synchronously
+##############################################################################################################################
+
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set UserReplicaRestartWaitDuration 1
+set MaxApiDelayInterval 60
+set MinApiDelayInterval 60
+
++10
++20
++30
+verify
++40
++50
+verify 
+
+createname fabric:/test1
+createservice fabric:/test1 TestStoreServiceType y 1 3
+verify
+
+# Block the getnext call inside the primary copy state provider - call it BugThread
+setsignal 50 fabric:/test1 provider.begingetnextcopystate.block 
+
+reportfault 30 fabric:/test1 transient 
+
+# BuildIdle's BugThread will be stuck inside state provider's GetNext() call on the primary node - 50
+!waitforstate FM.Replica.State.fabric:/test1.30 InBuild
+
+# Due to the injected failure, the BugThread goes to sleep after resuming from the reset signal below
+injectfailure * fabric:/test1 provider.begingetnextcopystate.delay
+resetsignal 50 fabric:/test1 provider.begingetnextcopystate.block 
+
+!pause 5
+
+# At this point, remove the failure as we want the build of 30 to complete soon and have the cluster in a stable state to enable a swap primary
+removefailure * fabric:/test1 provider.begingetnextcopystate.delay
+
+#
+# All this while, the BugThread that is building 30 is sleeping inside the getnext call due to the inject failure
+#
+
+# Build is cancelled here as 30 goes down, but since the async op has already started, it has no effect
+-30 
+!waitforstate FM.Replica.State.fabric:/test1.20 Ready
+
+# 50 becomes a secondary and after some delay, the BugThread above continues
+swapprimary fabric:/test1 50 40
+
+verify
+
+#
+# At some point during the pause, the BugThread wakes up and tries to access stale state.
+# Without the fix, it used to AV. With the fix, it should gracefully exit and release all resources
+#
+!pause 60
+
+!q

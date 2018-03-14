@@ -1,0 +1,67 @@
+#
+# This script sends one-way and request Routed messages, from a node to another node, and to itself.
+#
+
+!setcfg Federation.LoopbackJobQueueThreadMax=1
+!setcfg Federation.TraceLoopbackJobQueue=true
+
+votes 100 700
+clearticket
++100
++700
+verify
++200
++300
++400
++500
++600
++800
+verify
+routeone 100 200
+routeone 200 200
+routeone 400 2034
+# route to edge of owned token
+routeone 300 380
+routeone 300 381
+routeone 400 380
+routeone 400 381
+verify
+routereq 600 700
+routereq 800 666
+routereq 700 801
+routereq 100 101
+verify
+addbehavior b1 * * Routed
+routereq 700 801
+routeone 400 100000000
+routeone 400 700 routeExact
+routereq 500 40abcde
+routereq 500 300 routeExact
+routereq 500 202020 routeExact expectRoutingNodeDoesNotMatchFault
+routereq 500 300:1 routeExact expectRoutingNodeDoesNotMatchFault
+!pause 10
+removebehavior b1
+verify
++850
++860
++870
++880
+verify
+addbehavior b2 * 700 Routed
+addbehavior b3 700 100 *
+routereq 100 700
+routeone 600 710
+routeone 200 720
+!pause 10
+removebehavior b2
+removebehavior b3
+verify
+addbehavior b4 * 200 Ping
+addbehavior b5 * 200 UpdateRequest
+addbehavior b6 * 200 UpdateReply
+abort 700
++700
+!waitforstate Phase.700 R
+routeone 200 700:* routeExact !idempotent
+verify
+!q

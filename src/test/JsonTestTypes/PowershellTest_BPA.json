@@ -1,0 +1,59 @@
+﻿{
+    "RequiredParameters": [ "PSScriptName" ],
+
+    "Defaults": {
+        "SetupInstall": "",
+        "SetupArgs": "",
+        "SetupType": "",
+        "Arguments": "",
+        "Machines": "",
+        "CleanupType": "",
+        "CleanupTaskName": "",
+        "SetupTimeout": "900",
+        "ExecutionTimeout": "1200",
+        "CleanupTimeout": "2100"
+    },
+
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupBPATest.cmd",
+        "Arguments": "\"[MACHINES]\" [SETUPTYPE]",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\RunPSScript_RT.cmd",
+            "Arguments": "\"[MACHINES]\" [BINS]\\[PSSCRIPTNAME] \"[ARGUMENTS]\"",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupBPATest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.xml,.*\\.json,.*\\.man"
+    }
+}

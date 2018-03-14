@@ -1,0 +1,144 @@
+#
+# Tests Health Reporting in the secondary replicator
+# Since the fabrictest.exe.cfg is configured to use "QueueHealthWarningAtUsage" to be 50, we can expect warnings after reaching 50% queue full
+# 
+set DummyPLBEnabled true
+
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test.30 Secondary 
+
+##########################################################################
+# Test1:
+# Secondary Queue Full Basic
+##########################################################################  
+setsignal 30 fabric:/test pump.replication.block 
+clientput fabric:/test 10 10Data1
+clientput fabric:/test 20 20Data1
+
+#Verify Health Event is warning on the secondary 
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=warning
+
+resetsignal 30 fabric:/test pump.replication.block 
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=ok
+
+##########################################################################
+# Test2:
+# Secondary Queue Full during change role - Verify that health is warning and clears out
+#
+# Note (corollary to PrimaryHealthReporting Test7): 
+# A stale Secondary Queue Full health report is not possible since
+# the secondary replication queue must be drained before ChangeRole
+# can proceed 
+##########################################################################
+setsignal 30 fabric:/test pump.replication.block 
+clientput fabric:/test 10 10Data1
+clientput fabric:/test 20 20Data1
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=warning
+
+resetsignal 30 fabric:/test pump.replication.block 
+swapprimary fabric:/test 40 30
+!wait
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=ok
+
+# swap back the primary to the original config
+swapprimary fabric:/test 30 40
+!wait
+verify
+##########################################################################
+# Test3:
+# Secondary Queue Full and then report fault transient
+##########################################################################
+setsignal 30 fabric:/test pump.replication.block 
+clientput fabric:/test 10 10Data1
+clientput fabric:/test 20 20Data1
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=warning
+
+reportfault 30 fabric:/test transient
+!pause 3 
+resetsignal 30 fabric:/test pump.replication.block 
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=ok
+
+verify 
+
+##########################################################################
+# Test4:
+# Secondary Queue Full and progress and again queue full
+##########################################################################
+setsignal 30 fabric:/test pump.replication.block 
+clientput fabric:/test 10 10Data1
+clientput fabric:/test 20 20Data1
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=warning
+
+resetsignal 30 fabric:/test pump.replication.block 
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=ok
+
+setsignal 30 fabric:/test pump.replication.block 
+clientput fabric:/test 10 10Data1
+clientput fabric:/test 20 20Data1
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=warning
+
+resetsignal 30 fabric:/test pump.replication.block 
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=ok
+
+verify
+!q

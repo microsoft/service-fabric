@@ -1,0 +1,5 @@
+install(
+    FILES fabdbg.py sftypes.py
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+    DESTINATION ${TEST_OUTPUT_DIR}
+)

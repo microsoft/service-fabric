@@ -1,0 +1,64 @@
+{
+    "RequiredParameters": [ "TaskName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "Params": "",
+        "CleanupType": "",
+        "CredentialType": "",
+        "WorkingDirectory" : "",
+        "SetupTimeout": "1200",
+        "ExecutionTimeout": "2100",
+        "CleanupTimeout": "2100"
+    },
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPTYPE] [SETUPARGS] ",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\FabricUnitTests\\[TASKNAME]",
+            "Arguments": "[PARAMS] %-security:[CREDENTIALTYPE]% --log_level=all --catch_system_errors=no",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
+            "WorkingDirectory" : "[WORKINGDIRECTORY]"
+        }
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+         {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabric.TestInfra.PerfUploader.exe",
+            "Arguments": "",
+            "WorkingDirectory": "[BINS]",
+            "MaxExecutionTimeInSeconds": "300"
+        },    
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.out$,.-*\\.trace$,.*\\.pdb$,.*\\.dmp$,.*\\.etl$,.*\\.xml$,.*\\.json$,.*\\.man$"
+    }
+}

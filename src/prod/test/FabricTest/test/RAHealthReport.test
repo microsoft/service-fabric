@@ -1,0 +1,127 @@
+#
+# [owner:aprameyr]
+# RA Health tests 
+#
+set DummyPLBEnabled true
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
+verify
+
+###########################################################################
+# Validate lifecycle events for stateless
+###########################################################################
+createservice fabric:/sl1 CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
+!var SLInstId RA.Replica.ReplicaId.fabric:/sl1.20.20
+!var SLFUID FM.FT.PartitionId.fabric:/sl1#0
+
+#validate that there is a health OK event for this replica
+queryhealth replica replica.id=<var.SLInstId> partitionguid=<var.SLFUID> expectedhealthstate=ok description=nodeid:20
+
+deleteservice fabric:/sl1
+verify
+
+#!pause 5
+
+queryhealth replica replica.id=<var.SLInstId> partitionguid=<var.SLFUID> expectempty=true
+
+###########################################################################
+# Validate lifecycle events for stateful
+###########################################################################
+createservice fabric:/sv1 TestStoreServiceType y 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
+!var SVInstId RA.Replica.ReplicaId.fabric:/sv1.20.20
+!var SVFUID FM.FT.PartitionId.fabric:/sv1#0
+
+#validate that there is a health OK event for this replica
+queryhealth replica replica.id=<var.SVInstId> partitionguid=<var.SVFUID> expectedhealthstate=ok description=nodeid:20
+
+deleteservice fabric:/sv1
+verify
+
+queryhealth replica replica.id=<var.SVInstId> partitionguid=<var.SVFUID> expectempty=true
+
+###########################################################################
+# Validate lifecycle events for stateful persisted
+###########################################################################
+createservice fabric:/sp1 TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+verify
+
+!var spInstId RA.Replica.ReplicaId.fabric:/sp1.20.20
+!var spFUID FM.FT.PartitionId.fabric:/sp1#0
+
+queryhealth replica replica.id=<var.spInstId> partitionguid=<var.spFUID> expectedhealthstate=ok description=nodeid:20
+
+reportfault 20 fabric:/sp1 transient
+!waitforstate RA.Replica.State.fabric:/sp1.20.20 RD
+
+queryhealth replica replica.id=<var.spInstId> partitionguid=<var.spFUID> expectedhealthstate=ok description=nodeid:20
+
+deleteservice fabric:/sp1
+verify
+
+queryhealth replica replica.id=<var.spInstId> partitionguid=<var.spFUID> expectempty=true
+
+###########################################################################
+# Validate new instance and lower sequence number is accepted by HM
+###########################################################################
+createservice fabric:/sp2 TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/sp2.20.20
+!var spReplInstanceId RA.Replica.InstanceId.fabric:/sp2.20.20
+
+!var spFUID FM.FT.PartitionId.fabric:/sp2#0
+
+#Report an event for current instance and check it's received
+reporthealthinternal replica replica.id=<var.spReplId> replica.instanceid=<var.spReplInstanceId> partitionguid=<var.spFUID> sequencenumber=10 healthstate=error
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=error description=nodeid:20
+
+reportfault 20 fabric:/sp2 transient
+!waitforstate RA.Replica.State.fabric:/sp2.20.20 RD
+
+# When new instance is reported, all old events are removed
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok description=nodeid:20
+
+#Report event for higher instance and lower LSN, check it's received
+!var spReplInstanceId2 RA.Replica.InstanceId.fabric:/sp2.20.20
+reporthealthinternal replica replica.id=<var.spReplId> replica.instanceid=<var.spReplInstanceId2> partitionguid=<var.spFUID> sequencenumber=8 healthstate=warning
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning description=nodeid:20
+
+deleteservice fabric:/sp2
+verify
+
+###########################################################################
+# Validate replica going down reports closed 
+###########################################################################
+createservice fabric:/sp1a TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+verify
+
+!var spaInstId RA.Replica.ReplicaId.fabric:/sp1a.20.20
+!var spaFUID FM.FT.PartitionId.fabric:/sp1a#0
+
+queryhealth replica replica.id=<var.spaInstId> partitionguid=<var.spaFUID> expectedhealthstate=ok description=nodeid:20
+
+removeruntime 20 y
+!waitforstate RA.Replica.IsUp.fabric:/sp1a.20.20 false
+
+queryhealth replica replica.id=<var.spaInstId> partitionguid=<var.spaFUID> expectempty=true
+
+#reset runtime on 20
+addruntime 20 y
+
+!q

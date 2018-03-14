@@ -1,0 +1,39 @@
+votes 100
+clearticket
++100
++200
++300
+verify
++400
++500
+verify
++600
++700
++800
+verify
+routeone 100 200
+routeone 400 2034
+verify
+routereq 600 700
+routereq 800 666
+routereq 700 801
+verify
+-800
+verify
+routereq 700 801
+verify
+-300
+verify
+routeone 400 100000000
+verify
+-200
+verify
+routereq 500 201
+verify
+-700
+-600
+-400
+verify
+-500
+-100
+!q

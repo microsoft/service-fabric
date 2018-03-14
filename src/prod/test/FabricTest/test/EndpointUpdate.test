@@ -1,0 +1,50 @@
+#
+# [owner] aprameyr, mmohsin
+# Verify that endpoints are sent to FM on ChangeRole(P)
+set DummyPLBEnabled true
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+#
+# Verify that the primary endpoint is updated at the FM before the reconfiguration is complete
+#
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode)
+verify
+
+clientput fabric:/persisted 10 10
+!wait
+
+#block UC reply and endpoint updated message from RAP
+#kill the primary and wait for the reconfig to enter phase2
+addbehavior b0 * * UpdateConfigurationReply
+addbehavior b1 * * ReplicaEndpointUpdated
+
+-40
+!waitforstate RA.FT.ReconfigStage.fabric:/persisted.30 Phase2_Catchup
+
+#wait and test retry from RAP
+!pause 10
+
+#unblock the ReplicaEndpointUpdated message 
+removebehavior b1
+
+#wait until the message gets processed on the FM
+!pause 30
+
+#resolve and ensure it is readable
+resolve fabric:/persisted 0 noverify
+
+clientget fabric:/persisted 10 10
+!wait
+
+!q

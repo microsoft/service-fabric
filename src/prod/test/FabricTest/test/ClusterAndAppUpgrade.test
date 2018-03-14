@@ -1,0 +1,94 @@
+#
+# [owner] MMohsin, AnuragG
+#
+
+votes 10 20 30
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 150
+set UserReplicaRestartWaitDuration 3600
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
++40 ud=UD1
++50 ud=UD2
++60 ud=UD3
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeA2 stateful
+app.servicetypes version10 ServicePackageA ServiceTypeA3 stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeA2,ServiceTypeA3 version=1.0
+app.reqservices version10 Persisted1 ServiceTypeA1 stateful partition=1 replica=2 servicePackageActivationMode=ExclusiveProcess
+app.reqservices version10 Persisted2 ServiceTypeA1 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version10 Persisted3 ServiceTypeA1 stateful partition=1 replica=3 minreplicasetsize=3 servicePackageActivationMode=ExclusiveProcess
+app.reqservices version10 Volatile1 ServiceTypeA2 stateful partition=1 replica=2
+app.reqservices version10 Volatile2 ServiceTypeA2 stateful partition=1 replica=3 minreplicasetsize=2 servicePackageActivationMode=ExclusiveProcess
+app.reqservices version10 Volatile3 ServiceTypeA2 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version10 Stateless ServiceTypeA3 stateless partition=1 instance=3 servicePackageActivationMode=ExclusiveProcess
+app.upload version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1 version10
+app.servicepack version11 ServicePackageA version=1.1 configversion=1.1 dataversion=1.0
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version11 ServicePackageA ServiceTypeA2 stateful
+app.servicetypes version11 ServicePackageA ServiceTypeA3 stateless
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeA2,ServiceTypeA3 version=1.1
+app.reqservices version11 Persisted1 ServiceTypeA1 stateful partition=1 replica=2 servicePackageActivationMode=ExclusiveProcess
+app.reqservices version11 Persisted2 ServiceTypeA1 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version11 Persisted3 ServiceTypeA1 stateful partition=1 replica=3 minreplicasetsize=3 servicePackageActivationMode=ExclusiveProcess
+app.reqservices version11 Volatile1 ServiceTypeA2 stateful partition=1 replica=2
+app.reqservices version11 Volatile2 ServiceTypeA2 stateful partition=1 replica=3 minreplicasetsize=2 servicePackageActivationMode=ExclusiveProcess
+app.reqservices version11 Volatile3 ServiceTypeA2 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version11 Stateless ServiceTypeA3 stateless partition=1 instance=3 servicePackageActivationMode=ExclusiveProcess
+app.upload version11
+
+# Provision application version 1.0
+provisionapp version10
+
+# Provision application version 1.1
+provisionapp version11
+
+# Create application version 1.0
+createapp fabric:/test/MyApp TestApp 1.0
+verify
+
+# Give some time to PLB to balance the cluster
+!pause 5
+
+verify
+
+# Start cluster upgrade
+prepareupgradefabric code=4.2.765.0 config=version5
+provisionfabric code=4.2.765.0 config=version5
+upgradefabric code=4.2.765.0 config=version5 Rolling
+
+!rpause 10
+
+# Start application upgrade
+upgradeapp fabric:/test/MyApp 1.1 Rolling
+
+# Verify that the upgrades are complete
+verifyupgradeapp fabric:/test/MyApp
+verifyupgradefabric
+
+verify
+
+-*
+
+!q

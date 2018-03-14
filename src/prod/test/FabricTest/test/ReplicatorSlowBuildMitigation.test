@@ -1,0 +1,742 @@
+#
+# Tests Slow Build Mitigation in Primary Replicator -
+# 
+!load FailoverCITInitialization.test
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify  
+
+##########################Persisted Services Test Cases################################################ 
+
+##########################################################################
+# Block AddReplicaReply Message from RA->FM  Persisted
+# This test case verifies the negative code path where build has completed, but the replica is still in the IdleList in replicator as it is not promoted yet
+# at this point, if the queue gets full, we do not take any action
+##########################################################################  
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary 
+
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+addbehavior addreplreply * * AddReplicaReply
+addbehavior scblock * * StartCopy
+addbehavior replblockto20 * 20 ReplicationOperation
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.40.20 IB
+removebehavior scblock
+!waitforstate RA.Replica.State.fabric:/test1.40.20 RD
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1 
+
+!pause 5
+removebehavior replblockto20
+removebehavior addreplreply
+
+verify  
+deleteservice fabric:/test1
+verify  
+
+##########################################################################
+# StartCOPY Message Delivery Stuck - Persisted
+##########################################################################  
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary 
+
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+addbehavior scblock * 20 StartCopy
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+!wait
+
+removebehavior scblock
+verify  
+deleteservice fabric:/test1
+verify  
+
+##########################################################################
+# Block COPY Operations from P->S - Persisted
+##########################################################################   
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test2.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test2.20 Secondary 
+
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+addbehavior cblock * 20 CopyOperation
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test2 transient
+!waitforstate RA.Replica.State.fabric:/test2.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+!wait
+
+removebehavior cblock
+verify  
+deleteservice fabric:/test2
+verify  
+
+##########################################################################
+# Block COPYCONTEXT Operations from S->P - Persisted
+##########################################################################   
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test3.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test3.20 Secondary 
+
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+addbehavior ccblock * * CopyContextOperation
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test3 transient
+!waitforstate RA.Replica.State.fabric:/test3.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+!wait
+
+removebehavior ccblock
+verify  
+
+deleteservice fabric:/test3
+verify  
+
+
+##########################################################################
+# Block ReplicationAck Operations from S->P after receiving StartCopy - Persisted
+##########################################################################   
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test4.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test4.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test4.20 Secondary 
+
+clientput fabric:/test4 10 10Data1
+!wait 
+!pause 5
+# All replicas have upto Repl 2
+addbehavior cblock * * CopyOperation
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test4 transient 
+
+clientput fabric:/test4 20 20Data1
+!wait
+
+!waitforstate RA.Replica.State.fabric:/test4.40.20 IB
+!pause 5
+# by now, the start copy must have reached the secondary and copy operations are getting dropped continuously.
+# lets unblock copy, and block replication ack
+addbehavior ackblock 20 * ReplicationAck
+removebehavior cblock
+!pause 5
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+!wait
+
+removebehavior ackblock
+verify  
+
+deleteservice fabric:/test4
+verify   
+
+
+##########################END Persisted Services Test Cases################################################ 
+
+
+
+##########################Volatile Services Test Cases (RequireServiceACk= false)################################################
+
+##########################################################################
+# StartCOPY Message Delivery Stuck  - Volatile
+##########################################################################  
+
+createservice fabric:/test5 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test5.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test5.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test5.20 Secondary 
+
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+addbehavior scblock * 20 StartCopy
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test5 transient
+!waitforstate RA.Replica.State.fabric:/test5.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 20Data1
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 20Data1
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 20Data1
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 20Data1
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 20Data1
+!wait
+
+removebehavior scblock
+verify  
+deleteservice fabric:/test5
+verify  
+
+##########################################################################
+# Block COPY Operations from P->S - Volatile
+##########################################################################   
+
+createservice fabric:/test6 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test6.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test6.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test6.20 Secondary 
+
+clientput fabric:/test6 10 10Data1
+clientput fabric:/test6 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+addbehavior cblock * 20 CopyOperation
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test6 transient
+!waitforstate RA.Replica.State.fabric:/test6.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test6 10 10Data1
+clientput fabric:/test6 20 20Data1
+clientput fabric:/test6 10 10Data1
+clientput fabric:/test6 20 20Data1
+clientput fabric:/test6 10 10Data1
+clientput fabric:/test6 20 20Data1
+clientput fabric:/test6 10 10Data1
+clientput fabric:/test6 20 20Data1
+clientput fabric:/test6 10 10Data1
+clientput fabric:/test6 20 20Data1
+!wait
+
+removebehavior cblock
+verify  
+deleteservice fabric:/test6
+verify  
+
+##########################################################################
+# Block ReplicationAck Operations from S->P after receiving StartCopy - Volatile
+##########################################################################   
+
+createservice fabric:/test7 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test7.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test7.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test7.20 Secondary 
+
+clientput fabric:/test7 10 10Data1
+!wait 
+!pause 5
+# All replicas have upto Repl 2
+addbehavior cblock * * CopyOperation
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test7 transient 
+
+clientput fabric:/test7 20 20Data1
+!wait
+
+!waitforstate RA.Replica.State.fabric:/test7.40.20 IB
+!pause 5
+# by now, the start copy must have reached the secondary and copy operations are getting dropped continuously.
+# lets unblock copy, and block replication ack
+addbehavior ackblock 20 * ReplicationAck
+removebehavior cblock
+!pause 5
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test7 10 10Data1
+clientput fabric:/test7 20 20Data1
+clientput fabric:/test7 10 10Data1
+clientput fabric:/test7 20 20Data1
+clientput fabric:/test7 10 10Data1
+clientput fabric:/test7 20 20Data1
+clientput fabric:/test7 10 10Data1
+clientput fabric:/test7 20 20Data1
+clientput fabric:/test7 10 10Data1
+clientput fabric:/test7 20 20Data1
+!wait
+
+removebehavior ackblock
+verify  
+
+deleteservice fabric:/test7
+verify  
+
+##########################################################################
+# GetCopyState - GetNextAPI Stuck - Volatile
+##########################################################################  
+
+createservice fabric:/test8 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4;
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test8.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test8.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test8.20 Secondary 
+
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+setsignal 40 fabric:/test8 provider.begingetnextcopystate.block
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test8 transient
+!waitforstate RA.Replica.State.fabric:/test8.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 20Data1
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 20Data1
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 20Data1
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 20Data1
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 20Data1
+!wait
+
+resetsignal 40 fabric:/test8 provider.begingetnextcopystate.block
+verify  
+deleteservice fabric:/test8
+verify  
+
+##########################################################################
+# Block AddReplicaReply Message from RA->FM  Volatile RequireServiceAck=false
+# This test case verifies the negative code path where build has completed, but the replica is still in the IdleList in replicator as it is not promoted yet
+# at this point, if the queue gets full, we do not take any action
+##########################################################################  
+
+createservice fabric:/test9 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4;
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test9.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test9.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test9.20 Secondary 
+
+clientput fabric:/test9 10 10Data1
+clientput fabric:/test9 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+addbehavior addreplreply * * AddReplicaReply
+addbehavior scblock * * StartCopy
+addbehavior replblockto20 * 20 ReplicationOperation
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test9 transient
+!waitforstate RA.Replica.State.fabric:/test9.40.20 IB
+removebehavior scblock
+!waitforstate RA.Replica.State.fabric:/test9.40.20 RD
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test9 10 10Data1
+clientput fabric:/test9 20 20Data1
+clientput fabric:/test9 10 10Data1
+clientput fabric:/test9 20 20Data1
+clientput fabric:/test9 10 10Data1
+clientput fabric:/test9 20 20Data1
+clientput fabric:/test9 10 10Data1
+clientput fabric:/test9 20 20Data1
+clientput fabric:/test9 10 10Data1
+clientput fabric:/test9 20 20Data1 
+
+!pause 5
+removebehavior replblockto20
+removebehavior addreplreply
+
+verify  
+deleteservice fabric:/test9
+verify  
+
+##########################END Volatile Services Test Cases (RequireServiceACk= false)################################################
+
+
+##########################Volatile Services Test Cases (RequireServiceACk= true)################################################
+
+##########################################################################
+# GetCopyState - GetNextAPI Stuck - Volatile RequireServiceAck = true
+##########################################################################  
+
+createservice fabric:/test1 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4;RE_RequireServiceAck:true
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary 
+
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+setsignal 40 fabric:/test1 provider.begingetnextcopystate.block
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+!wait
+
+resetsignal 40 fabric:/test1 provider.begingetnextcopystate.block
+verify  
+deleteservice fabric:/test1
+verify  
+
+##########################################################################
+# GetCopyStream blocked - Volatile RequireServiceAck = true
+##########################################################################  
+
+createservice fabric:/test2 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4;RE_RequireServiceAck:true
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test2.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test2.20 Secondary 
+
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+setsignal 20 fabric:/test2 startpump.copy.block
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test2 transient
+!waitforstate RA.Replica.State.fabric:/test2.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+clientput fabric:/test2 10 10Data1
+clientput fabric:/test2 20 20Data1
+!wait
+
+resetsignal 20 fabric:/test2 startpump.copy.block
+verify  
+deleteservice fabric:/test2
+verify  
+
+
+##########################################################################
+# CopyPump blocked - Volatile RequireServiceAck = true
+##########################################################################  
+
+createservice fabric:/test3 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4;RE_RequireServiceAck:true
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test3.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test3.20 Secondary 
+
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+setsignal 20 fabric:/test3 pump.copy.block
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test3 transient
+!waitforstate RA.Replica.State.fabric:/test3.40.20 IB
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+!wait
+
+resetsignal 20 fabric:/test3 pump.copy.block
+verify  
+deleteservice fabric:/test3
+verify  
+
+##########################################################################
+# Block AddReplicaReply Message from RA->FM  Volatile RequireServiceAck=true
+# This test case verifies the negative code path where build has completed, but the replica is still in the IdleList in replicator as it is not promoted yet
+# at this point, if the queue gets full, we do not take any action
+##########################################################################  
+
+createservice fabric:/test4 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4;RE_RequireServiceAck:true
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test4.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test4.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test4.20 Secondary 
+
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+addbehavior addreplreply * * AddReplicaReply
+addbehavior scblock * * StartCopy
+addbehavior replblockto20 * 20 ReplicationOperation
+
+# Target replica is 20. Wait for replica to go down and then RA to build again
+reportfault 20 fabric:/test4 transient
+!waitforstate RA.Replica.State.fabric:/test4.40.20 IB
+removebehavior scblock
+!waitforstate RA.Replica.State.fabric:/test4.40.20 RD
+
+# now perform 10 REPL operations and wait. Without the feature in question, this would fail since the idle replica
+# will block the repl queue
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1 
+
+!pause 5
+removebehavior replblockto20
+removebehavior addreplreply
+
+verify  
+deleteservice fabric:/test4
+verify  
+
+##########################################################################
+# RNM Scenario - Copy takes long time and primary ends up faulting idle even though we could have possibly moved up the build complete LSN
+# With bug fix for 8797213, this should not happen if the secondary queue is big enough 
+# Make batch ack 0 so that we get acks soon
+##########################################################################  
+
+createservice fabric:/test5 TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:128;RE_RequireServiceAck:true;RE_BatchAckIntervalMilliseconds:0
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test5.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test5.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test5.20 Secondary 
+
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 20Data1
+!wait
+!pause 5
+
+# All replicas have upto Repl 2
+setsignal 20 fabric:/test5 pump.copy.block 
+
+# This ensures we process an ACK from the idle and ONLY THEN replicate an operation 
+# This is needed for verifying part 2 of the above bug fix in question where build complete lsn was set prematurely
+# when there are no replication operations
+setsignal 40 fabric:/test5 provider.begingetnextcopystate.block 
+
+# Target replica is 20. Wait for replica to go down and then RA to build again 
+reportfault 20 fabric:/test5 transient
+!waitforstate RA.Replica.State.fabric:/test5.40.20 IB 
+
+# Block InduceFault to ensure this replica is never restarted by primary
+addbehavior blockInduceFault * * InduceFault 
+waitforsignalhit 40 fabric:/test5 provider.begingetnextcopystate.block
+resetsignal 40 fabric:/test5 provider.begingetnextcopystate.block
+
+# now perform 10 REPL operations and wait. Without the bug fix in question, this would end up restarting the slow idle. now we will just keep moving its build complete lsn upto 
+# relpicate only 2 at a time and wait to ensure primary does not run into queue full trigger to restart slow idle immediately
+clientput fabric:/test5 10 10Data1 
+!wait 
+clientput fabric:/test5 20 20Data1
+!wait 
+
+!pause 2
+
+clientput fabric:/test5 10 10Data1
+!wait 
+clientput fabric:/test5 20 20Data1
+!wait 
+
+!pause 2
+
+clientput fabric:/test5 10 10Data1
+!wait
+clientput fabric:/test5 20 20Data1
+!wait 
+
+!pause 2
+
+clientput fabric:/test5 10 10Data1
+!wait
+clientput fabric:/test5 20 20Data1
+!wait
+!pause 2
+
+clientput fabric:/test5 10 10Data1
+!wait
+clientput fabric:/test5 20 20Data1
+!wait 
+
+!pause 2
+
+# this wait is needed to trigger the timer of 10 second interval that would increase the build complete lsn
+!pause 10
+
+resetsignal 20 fabric:/test5 pump.copy.block
+verify  
+!waitforstate RA.Replica.State.fabric:/test5.40.20 RD
+deleteservice fabric:/test5 
+removebehavior blockInduceFault
+verify  
+
+##########################END Volatile Services Test Cases (RequireServiceACk= false)################################################
+
+
+!q

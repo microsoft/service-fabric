@@ -1,0 +1,40 @@
+votes 10 20 30
+fmservice 5 3
+cmservice 5 3
+namingservice 1 5 3
+cleantest
++10
++20
++30
++40
++50
+verify
+#
+# Application type version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.reqservices version10 ServiceA1 ServiceTypeA1 stateless partition=1 instance=-1
+app.upload version10
+provisionapp version10
+createapp fabric:/app1 TestApp 1.0
+verify
+DeactivateNodes b1 50:Restart
+
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+DeactivateNodes b2 40:Pause
+
+!waitforstate FM.Node.DeactivationStatus.40 DeactivationComplete
+-50
+!pause 10
++50
+!pause 10
+RemoveNodeDeactivation b1
+!waitforstate FM.Node.DeactivationIntent.50 None
+!waitforstate FM.Node.DeactivationStatus.50 None
+verify
+
+!q

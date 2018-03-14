@@ -1,0 +1,100 @@
+#
+# Tests parallel provisioning of multiple versions of the same application type.
+# Cluster Manager should internally serialize provision operations for the same
+# application type.
+#
+votes 10
+fmservice 1 1
+namingservice 1 1 1
+cmservice 1 1
+cleantest
+
++10
+verify
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+app.clear versionV1
+app.servicepack versionV1 ServicePackageX version=V1
+app.servicetypes versionV1 ServicePackageX ServiceTypeX stateful persist
+app.codepack versionV1 ServicePackageX CodeX types=ServiceTypeX version=V1
+app.upload versionV1 compress
+
+# 
+# Application version V2 
+#
+
+app.add versionV2 TestApp V2
+app.clear versionV2
+app.servicepack versionV2 ServicePackageX version=V2
+app.servicetypes versionV2 ServicePackageX ServiceTypeX stateful persist
+app.codepack versionV2 ServicePackageX CodeX types=ServiceTypeX version=V2
+app.upload versionV2
+
+# 
+# Application version V3 
+#
+
+app.add versionV3 TestApp V3
+app.clear versionV3
+app.servicepack versionV3 ServicePackageX version=V3
+app.servicetypes versionV3 ServicePackageX ServiceTypeX stateful persist
+app.codepack versionV3 ServicePackageX CodeX types=ServiceTypeX version=V3
+app.upload versionV3 compress
+
+# 
+# Application version V4
+#
+app.add versionV4 TestApp V4
+app.clear versionV4
+app.servicepack versionV4 ServicePackageY version=V4
+app.servicetypes versionV4 ServicePackageY ServiceTypeY stateful persist
+app.codepack versionV4 ServicePackageY CodeY types=ServiceTypeY version=V4
+app.upload versionV4
+
+# 
+# Application version V5
+#
+app.add versionV5 TestApp V5
+app.clear versionV5
+app.servicepack versionV5 ServicePackageY version=V5
+app.servicetypes versionV5 ServicePackageY ServiceTypeY stateful persist
+app.codepack versionV5 ServicePackageY CodeY types=ServiceTypeY version=V5
+app.upload versionV5 compress
+
+#
+# Provision application versions in parallel
+#
+parallelprovisionapp versionV1;versionV2;versionV3;versionV4;versionV5
+
+createapp fabric:/app1 TestApp V1
+createapp fabric:/app2 TestApp V2
+createapp fabric:/app3 TestApp V3
+createapp fabric:/app4 TestApp V4
+createapp fabric:/app5 TestApp V5
+verify
+
+deleteapp fabric:/app1
+deleteapp fabric:/app2
+deleteapp fabric:/app3
+deleteapp fabric:/app4
+deleteapp fabric:/app5
+verify
+
+#
+# Unprovision and check that files are deleted from Store
+#
+
+unprovisionapp TestApp V1
+unprovisionapp TestApp V2
+unprovisionapp TestApp V3
+unprovisionapp TestApp V4
+unprovisionapp TestApp V5
+
+verifyimagestore
+
+-*
+
+!q

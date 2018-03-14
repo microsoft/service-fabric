@@ -1,0 +1,31 @@
+votes 10
+cmservice 0 0
+cleantest
++10 skipruntime
++20 skipruntime
++30 skipruntime
+#Add Stateless runtime
+verify
+addruntime 10 n
+addruntime 20 n
+addruntime 30 n
+verify
+#Add Stateful runtime
+addruntime 10 y
+addruntime 20 y
+addruntime 30 y
+verify
+#remove stateless runtime from 30 and 20 so no placements can happen there. 
+removeruntime 30 n
+removeruntime 20 n
+verify
+#remove stateful runtime from 10 and 20 so no placements can happen there. 
+removeruntime 10 y
+removeruntime 20 y
+verify
+addruntime 30 n
+addruntime 20 n
+addruntime 10 y
+addruntime 20 y
+verify
+!q

@@ -1,0 +1,381 @@
+############################################################
+# Tests Naming repair in case of failures 
+# and health reporting for operations that take too long
+############################################################
+
+votes 10 20 30
+
+fmservice 3 1
+cmservice 3 1
+namingservice 1 3 2
+cleantest
+
+set DummyPLBEnabled true
+
+# Reduce running time of CIT 
+#
+set RepairOperationTimeout 5
+set RepairInterval 2
+set NamingServiceProcessOperationHealthDuration 2
+set PrimaryRecoveryStartedHealthDuration 5
+set NamingServiceHealthReportingTimerInterval 2
+
+# Wait until all nodes are up before placing the system services,
+# to be able to consistently find the service primaries placed by dummy plb
+set ExpectedClusterSize 6
+
++10
++20
++30
++40
++50
++60
+verify
+
+#
+# Ensure stability of Naming service before proceeding
+#
+createclient client1 nodeconfig=10
+
+createname fabric:/repair Success client=client1
+
+queryhealth service servicename=fabric:/System/NamingService expectedhealthstate=ok expectedstates=partitions-ok:1
+queryhealth application appname=fabric:/System expectedstates=services-ok:3
+
+# Primary is on 60
+gfum
+!var NamingServiceFTID FM.FT.PartitionId.NamingService
+!waitforstate FM.Replica.Role.NamingService.60 Primary
+!var NamingServicePrimaryId RA.Replica.ReplicaId.NamingService.60.60
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+set ExpectedClusterSize 1
+
+################
+# Service repair
+################
+
+#
+# 1) Drop CreateService request between Name Owner and FM
+#
+# CreateService will automatically create non-existent names, but this consumes
+# the timeout. Create the name beforehand to improve CIT stability.
+#
+createname fabric:/repair/testcase1 Success client=client1
+
+addbehavior b1 * * CreateService
+set NamingOperationTimeout 5
+createservice fabric:/repair/testcase1 TestStoreService n 1 1 errors=Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_NOCreateService.fabric:/repair/testcase1,Warning;System.NamingService,Duration_AOCreateService.fabric:/repair/testcase1,Warning
+
+removebehavior b1
+set NamingOperationTimeout 20
+createservice fabric:/repair/testcase1 TestStoreService n 1 1 errors=UserServiceAlreadyExists client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 1b) Drop DeleteService request between Name Owner and FM
+#
+addbehavior b1 * * DeleteService
+set NamingOperationTimeout 5
+deleteservice fabric:/repair/testcase1 errors=Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_NODeleteService.fabric:/repair/testcase1,Warning;System.NamingService,Duration_AODeleteService.fabric:/repair/testcase1,Warning
+
+removebehavior b1
+set NamingOperationTimeout 20
+deleteservice fabric:/repair/testcase1 errors=UserServiceNotFound client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 2) Drop CreateService reply between FM and Name Owner
+#
+createname fabric:/repair/testcase2 Success client=client1
+
+set NamingOperationTimeout 5
+addbehavior b1 * * CreateServiceReply
+createservice fabric:/repair/testcase2 TestStoreService n 1 1 errors=Timeout client=client1
+
+# ensure that a subsequent request does not return while repair is still pending
+createservice fabric:/repair/testcase2 TestPersistedStoreServiceType y 1 1 errors=Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_NOCreateService.fabric:/repair/testcase2,Warning;System.NamingService,Duration_AOCreateService.fabric:/repair/testcase2,Warning
+
+removebehavior b1
+set NamingOperationTimeout 20
+createservice fabric:/repair/testcase2 TestStoreService n 1 1 errors=UserServiceAlreadyExists client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 2b) Drop DeleteService reply between FM and Name Owner
+#
+set NamingOperationTimeout 5
+addbehavior b1 * * DeleteServiceReply
+deleteservice fabric:/repair/testcase2 errors=Timeout client=client1
+
+# ensure that a subsequent request does not return while repair is still pending
+deleteservice fabric:/repair/testcase2 errors=Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_NODeleteService.fabric:/repair/testcase2,Warning;System.NamingService,Duration_AODeleteService.fabric:/repair/testcase2,Warning
+
+removebehavior b1
+set NamingOperationTimeout 20
+deleteservice fabric:/repair/testcase2 errors=UserServiceNotFound client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 3) Drop CreateService request between Authority Owner and Name Owner
+#
+createname fabric:/repair/testcase3 Success client=client1
+
+addbehavior b1 * * InnerCreateServiceRequest
+set NamingOperationTimeout 5
+createservice fabric:/repair/testcase3 TestStoreService n 1 1 errors=Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_AOCreateService.fabric:/repair/testcase3,Warning
+
+removebehavior b1
+set NamingOperationTimeout 20
+createservice fabric:/repair/testcase3 TestStoreService n 1 1 errors=UserServiceAlreadyExists client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 3b) Drop DeleteService request between Authority Owner and Name Owner
+#
+addbehavior b1 * * InnerDeleteServiceRequest
+set NamingOperationTimeout 5
+deleteservice fabric:/repair/testcase3 errors=Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_AODeleteService.fabric:/repair/testcase3,Warning
+    
+removebehavior b1
+set NamingOperationTimeout 20
+deleteservice fabric:/repair/testcase3 errors=UserServiceNotFound client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 4) Drop CreateService reply between Name Owner and Authority Owner
+#
+createname fabric:/repair/testcase4 Success client=client1
+
+addbehavior b1 * * InnerCreateServiceReply
+set NamingOperationTimeout 5
+createservice fabric:/repair/testcase4 TestStoreService n 1 1 errors=Timeout client=client1
+
+removebehavior b1
+set NamingOperationTimeout 20
+createservice fabric:/repair/testcase4 TestStoreService n 1 1 errors=UserServiceAlreadyExists client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 4b) Drop DeleteService reply between Name Owner and Authority Owner
+#
+addbehavior b1 * * InnerDeleteServiceReply
+set NamingOperationTimeout 5
+deleteservice fabric:/repair/testcase4 errors=Timeout client=client1
+
+removebehavior b1
+set NamingOperationTimeout 20
+deleteservice fabric:/repair/testcase4 errors=UserServiceNotFound client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 5) Drop automatic CreateName request between Authority Owner and Name Owner
+#
+addbehavior b1 * * InnerCreateNameRequest
+set NamingOperationTimeout 5
+createservice fabric:/repair/testcase5 TestStoreService n 1 1 errors=Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_AOCreateService.fabric:/repair/testcase5,Warning;System.NamingService,Duration_AOCreateName.fabric:/repair/testcase5,Warning
+
+removebehavior b1
+set NamingOperationTimeout 20
+createservice fabric:/repair/testcase5 TestStoreService n 1 1 errors=UserServiceAlreadyExists client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 6) Drop automatic CreateName reply between Name Owner and Authority Owner
+#
+addbehavior b1 * * InnerCreateNameReply
+set NamingOperationTimeout 5
+createservice fabric:/repair/testcase6 TestStoreService n 1 1 errors=Timeout client=client1
+
+removebehavior b1
+set NamingOperationTimeout 20
+createservice fabric:/repair/testcase6 TestStoreService n 1 1 errors=UserServiceAlreadyExists client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#############
+# Name repair
+#############
+
+#
+# 7) Drop CreateName request between Authority Owner and Name Owner
+#
+addbehavior b1 * * InnerCreateNameRequest
+set NamingOperationTimeout 5
+createname fabric:/repair/testcase7 Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_AOCreateName.fabric:/repair/testcase7,Warning
+
+removebehavior b1
+set NamingOperationTimeout 20
+createname fabric:/repair/testcase7 NameAlreadyExists client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 7b) Special-case for DeleteName:
+#     Create a property at the Name Owner to fail the operation at the Authority Owner with NameNotEmpty.
+#     The hierarchy name should not be left in a tentative state.
+#
+putproperty fabric:/repair/testcase7 PropertyTC7 XXX
+getproperty fabric:/repair/testcase7 PropertyTC7 XXX
+
+addbehavior b1 * * InnerDeleteNameRequest
+set NamingOperationTimeout 5
+deletename fabric:/repair/testcase7 Timeout client=client1
+
+removebehavior b1
+set NamingOperationTimeout 20
+enumnames fabric:/repair expectedCount=7 bestEffort=false moreData=false
+createname fabric:/repair/testcase7 NameAlreadyExists client=client1
+
+deleteproperty fabric:/repair/testcase7 PropertyTC7
+
+#
+# 7c) Drop DeleteName request between Authority Owner and Name Owner
+#
+addbehavior b1 * * InnerDeleteNameRequest
+set NamingOperationTimeout 5
+deletename fabric:/repair/testcase7 Timeout client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=warning \
+    expectedEventsString=System.NamingService,Duration_AODeleteName.fabric:/repair/testcase7,Warning
+
+removebehavior b1
+set NamingOperationTimeout 20
+deletename fabric:/repair/testcase7 NameNotFound client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 8) Drop CreateName reply between Name Owner and Authority Owner
+#
+addbehavior b1 * * InnerCreateNameReply
+set NamingOperationTimeout 5
+createname fabric:/repair/testcase8 Timeout client=client1
+
+removebehavior b1
+set NamingOperationTimeout 20
+createname fabric:/repair/testcase8 NameAlreadyExists client=client1
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=ok
+
+#
+# 8b) Drop DeleteName reply between Name Owner and Authority Owner
+#
+addbehavior b1 * * InnerDeleteNameReply
+set NamingOperationTimeout 5
+deletename fabric:/repair/testcase8 Timeout client=client1
+
+removebehavior b1
+set NamingOperationTimeout 20
+deletename fabric:/repair/testcase8 NameNotFound client=client1
+
+################
+# Startup repair
+################
+
+# Lower the report ttl so we can force resend on each timer callback
+set NamingServiceSlowOperationHealthReportTimeToLive 10
+
+# Only send 1 report for slow operations, even if there are more
+set MaxNamingServiceHealthReports 1
+
+#
+# 9) Try to cause failover during repair. This testcase currently
+#    works by "knowing" that the Naming primary will be placed
+#    on node 60. This assumption needs to be manually verified
+#    by looking at the 'gfum' command output when making changes
+#    to startup repair.
+#
+createclient client2 nodeconfig=20
+
+createname fabric:/repair/testcase9_setup Success client=client2
+
+set NamingOperationTimeout 5
+
+# Authority Owner service repair
+addbehavior b1 * * InnerCreateServiceReply
+addbehavior b1b * * ServiceExistsReply
+createservice fabric:/repair/testcase9a TestStoreService n 1 1 errors=Timeout client=client2
+
+# Name Owner service repair
+addbehavior b2 * * CreateServiceReply
+createservice fabric:/repair/testcase9b TestStoreService n 1 1 errors=Timeout client=client2
+
+# Hierarchy name repair
+addbehavior b3 * * InnerCreateNameReply
+addbehavior b3b * * NameExistsRequest
+createname fabric:/repair/testcase9c Timeout client=client2
+
+# Expected 2 reports - one from RA, one Warning from Naming
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=Warning expectedeventscount=2
+
+# Only sending all reports for slow operations
+set MaxNamingServiceHealthReports 20
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId> expectedhealthstate=Warning \
+    expectedEventsString=System.NamingService,Duration_AOCreateService.fabric:/repair/testcase9a,Warning;System.NamingService,Duration_AOCreateService.fabric:/repair/testcase9b,Warning
+
+# for debugging
+fm
+gfum
+
+-60
+# don't verify - the test framework is unaware of repairs and will fail to verify services
+
+# Primary moves to 50
+!waitforstate FM.Replica.Role.NamingService.50 Primary
+gfum
+
+!var NamingServicePrimaryId2 RA.Replica.ReplicaId.NamingService.50.50
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId2> expectedhealthstate=Warning \
+    expectedEventsString=System.NamingService,Duration_PrimaryRecovery,Warning;System.NamingService,Duration_AOCreateService.fabric:/repair/testcase9a,Warning;System.NamingService,Duration_AOCreateService.fabric:/repair/testcase9b,Warning
+
+removebehavior b1
+removebehavior b1b
+removebehavior b2
+removebehavior b3
+removebehavior b3b
+
+set NamingOperationTimeout 60
+deletename fabric:/repair/testcase9c Success client=client2
+createservice fabric:/repair/testcase9a TestStoreService n 1 1 errors=UserServiceAlreadyExists  client=client2
+createservice fabric:/repair/testcase9b TestStoreService n 1 1 errors=UserServiceAlreadyExists  client=client2
+
+queryhealth replica partitionguid=<var.NamingServiceFTID> replica.id=<var.NamingServicePrimaryId2> expectedhealthstate=ok
+queryhealth service servicename=fabric:/System/NamingService expectedhealthstate=ok expectedstates=partitions-ok:1
+
+!q

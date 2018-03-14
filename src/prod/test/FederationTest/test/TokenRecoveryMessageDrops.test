@@ -1,0 +1,92 @@
+# TokenRecovery Probe/Echo Message Drops -- Test plan invariant (10b) and (10c)
+set RouteTimeout 5.0
+set OpenTimeout 120
+set BootstrapTicketLeaseDuration 40
+set GlobalTicketLeaseDuration 120
+set JoinLockDuration 45
+set TokenAcquireTimeout 120
+
+votes 0
+clearticket
++0
++400
+verify
+
+# Force a gap to be created by dropping the initial TokenTransfer as well as the
+# Token recovery messages too.  In this case there will be a gap between 0 and 300...
+addbehavior DropTokenTransferFrom0 0 * TokenTransfer 1.0 Max
+addbehavior DropTokenProbeFrom0 0 * TokenProbe 1.0 Max
+addbehavior DropTokenEchoFrom0 0 * TokenEcho 1.0 Max
+
++300
+
+# Node 300 should be in Routing but with only part its token range (200, 380].
+# The full range should be (180, 380]
+# It will be sending TokenProbes towards 0 at this point but all are blocked...
+!wait 30
+!state Phase.300 R
+
+# Introduce 2 "pass through" nodes and 1 inactive node in between 300 and 0.
+# Node 100 will be Routing w/Empty token, Node 200 will be in Joining or Booting phase, Node 280 will be stuck in Inserting...
+addbehavior DelayNeighborhoodQueryReplyFrom0 0 * NeighborhoodQueryReply 1.0 2.0
+addbehavior DropTokenTransferFrom300 300 * TokenTransfer 1.0 Max
+
++100
+addbehavior DropTokenRequestFrom100 100 * TokenRequest 1.0 Max
+!waitforstate Phase.100 R 30
+
+addbehavior DropUnlockTo0 * 0 UnlockRequest 1.0 Max
++200
++280
+
+!waitforstate Phase.200 J|B
+!waitforstate Phase.280 I
+
+# The inactive node 200 should not be involved in Probe/Echo at all. To prove this we'll 
+# drop all recovery traffic from this node for the duration of the test...
+addbehavior DropTokenProbeFrom200 200 * TokenProbe 1.0 Max
+addbehavior DropTokenEchoFrom200 200 * TokenEcho 1.0 Max
+
+# Verify the gap really exists
+routereq 0 181 expectTimeout
+routereq 0 200 expectTimeout
+!pause 6
+
+# Verify that the Probe path is actually using the non-routing nodes by unblocking 0's ability
+# to Echo and blocking 100's ability to pass through the Probe...
+addbehavior DropTokenProbeFrom100 100 * TokenProbe 1.0 Max
+removebehavior DropTokenEchoFrom0
+!pause 5
+
+# Verify the gap still exists
+routereq 0 181 expectTimeout
+routereq 0 200 expectTimeout
+!pause 6
+
+# Verify that the Echo path is actually using the non-routing nodes by unblocking 100's ability
+# to Probe and blocking 280's ability to pass back the Echo...
+addbehavior DropTokenEchoFrom280 280 * TokenEcho 1.0 Max
+removebehavior DropTokenProbeFrom100
+!pause 5
+
+# Verify the gap still exists
+routereq 0 181 expectTimeout
+routereq 0 200 expectTimeout
+!pause 6
+
+# Verify that we can completely heal by letting all the messages through...
+removebehavior DropTokenEchoFrom280
+removebehavior DropTokenProbeFrom0
+removebehavior DropUnlockTo0
+removebehavior DropTokenRequestFrom100
+removebehavior DropTokenTransferFrom300
+removebehavior DropTokenTransferFrom0
+removebehavior DropTokenProbeFrom200
+removebehavior DropTokenEchoFrom200
+verify
+
+routereq 300 181
+routereq 300 200
+verify
+-*
+!q

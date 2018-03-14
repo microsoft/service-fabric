@@ -1,0 +1,20 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Linux.Chaos",
+      "Type": "Linux_Chaos",
+      "Owners": "anmola,xunlu,chenxu,jefchen,motanv",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ServiceTimeout": "64800",
+        "ExecutionTimeout": "80000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

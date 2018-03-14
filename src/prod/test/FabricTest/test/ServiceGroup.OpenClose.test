@@ -1,0 +1,69 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+
+######################################################
+#### Stateful Service Report Fail Open and Close  ####
+######################################################
+
+createname fabric:/servicegroup2
+
+injectfailure 60 fabric:/servicegroup2#test1 service.endopen
+injectfailure 60 fabric:/servicegroup2#test2 service.endclose
+
+createservicegroup fabric:/servicegroup2 SGStatefulServiceFactory y 1 2 \
+    2 \
+    fabric:/servicegroup2#test1 SGStatefulService \
+    fabric:/servicegroup2#test2 SGStatefulService
+
+!pause,15
+
+removefailure 60 fabric:/servicegroup2#test1 service.endopen
+removefailure 60 fabric:/servicegroup2#test2 service.endclose
+
+verify
+
+deleteservicegroup fabric:/servicegroup2
+deletename fabric:/servicegroup2
+
+verify
+
+######################################################
+#### Stateless Service Report Fail Open and Close ####
+######################################################
+
+createname fabric:/servicegroup2
+
+injectfailure 60 fabric:/servicegroup2#test1 service.endopen
+injectfailure 60 fabric:/servicegroup2#test2 service.endclose
+
+createservicegroup fabric:/servicegroup2 SGStatelessServiceFactory n 1 2 \
+    2 \
+    fabric:/servicegroup2#test1 SGStatelessService \
+    fabric:/servicegroup2#test2 SGStatelessService
+
+!pause,15
+
+removefailure 60 fabric:/servicegroup2#test1 service.endopen
+removefailure 60 fabric:/servicegroup2#test2 service.endclose
+
+verify
+
+deleteservicegroup fabric:/servicegroup2
+deletename fabric:/servicegroup2
+
+verify
+
+!q

@@ -1,0 +1,104 @@
+votes 10
+fmservice 1 1
+namingservice 1 1 1
+cmservice 0 0
+set IsBackupTest true
+cleantest
++10
+verify
+
+###############################################################
+# Testcase 1: Simple backup, then incremental backup
+#
+###############################################################
+
+createservice fabric:/testcase1 TestPersistedStoreServiceType y 1 1 persist lowRange=0 highRange=9 initdata=Store_EnableIncrementalBackup:true
+verify
+
+clientput fabric:/testcase1 0 hello
+!wait
+verify
+
+# happy path for truncate logs - should succeed
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\truncatelogsonly backupOption=truncatelogsonly
+!wait
+verify
+
+# initial full backup after inserting a few records
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\full1
+!wait
+
+clientput fabric:/testcase1 0 world
+!wait
+clientget fabric:/testcase1 0 world
+verify
+
+# incremental backup
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\incremental1 backupOption=incremental postBackupReturn=true
+!wait
+verify
+
+clientput fabric:/testcase1 0 world2
+!wait
+clientget fabric:/testcase1 0 world2
+verify
+
+# incremental backup
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\incremental2 backupOption=incremental postBackupReturn=false
+!wait
+verify
+
+clientput fabric:/testcase1 0 world3
+!wait
+clientget fabric:/testcase1 0 world3
+verify
+
+# incremental backup should fail since the postBackupReturn was false 
+# the previous time (which prevents the next incremental backup until a full backup is created)
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\incremental3 backupOption=incremental postBackupReturn=true error=MissingFullBackup
+!wait
+verify
+
+# truncatelogsonly can succeed any time
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\truncatelogsonly backupOption=truncatelogsonly
+!wait
+verify
+
+# incremental backup should fail immediately after truncatelogsonly
+# the previous time (which prevents the next incremental backup until a full backup is created)
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\incremental3 backupOption=incremental postBackupReturn=true error=MissingFullBackup
+!wait
+verify
+
+# full backup should succeed and should allow a future incremnental backup too
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\full2
+!wait
+
+clientput fabric:/testcase1 0 world4
+!wait
+clientget fabric:/testcase1 0 world4
+verify
+
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\incremental4 backupOption=incremental
+!wait
+verify
+
+clientput fabric:/testcase1 0 world5
+!wait
+clientget fabric:/testcase1 0 world5
+verify
+
+# full backup should succeed BUT should prevent a future incremnental backup since postBackupReturn is false
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\full3 postBackupReturn=false
+!wait
+
+clientput fabric:/testcase1 0 world6
+!wait
+clientget fabric:/testcase1 0 world6
+verify
+
+clientbackup fabric:/testcase1 0 BackupRestore4.test.Data\backup_dir\incremental5 backupOption=incremental postBackupReturn=true error=MissingFullBackup
+!wait
+verify
+
+!q

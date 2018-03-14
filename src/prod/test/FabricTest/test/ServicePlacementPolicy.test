@@ -1,0 +1,44 @@
+votes 10 20 30
+cleantest
+fmservice 3 1
+namingservice 1 3 1
+
++10 fd=fd:/dc0/r0
++20 fd=fd:/dc0/r1
++30 fd=fd:/dc1/r0
++40 fd=fd:/dc1/r1
++50 fd=fd:/dc2/r0
++60 fd=fd:/dc2/r0
++70 fd=fd:/dc2/r1
++80 fd=fd:/dc3/r0
+
+verify
+# Required domain test
+# fabric:/test1 can be placed in 30, 40, or 80
+createname fabric:/test1
+verify
+createservice fabric:/test1 TestStoreServiceType y 1 3 placementPolicies=fd:/dc1,requiredDomain,fd:/dc3,requiredDomain
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.80 Primary|Secondary
+
+# Invalid domain test
+# fabric:/test2 can be placed in 10, 20
+createname fabric:/test2
+createservice fabric:/test2 TestStoreServiceType y 1 2 placementPolicies=fd:/dc1,invalidDomain,fd:/dc2,invalidDomain,fd:/dc3,invalidDomain
+verify
+!waitforstate FM.Replica.Role.fabric:/test2.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.20 Primary|Secondary
+
+# Preferred primary domain test
+# fabric:/test3 primary replica can only be placed in 80
+createname fabric:/test3
+createservice fabric:/test3 TestStoreServiceType y 1 2 placementPolicies=fd:/dc3,preferredPrimaryDomain
+verify
+!waitforstate FM.Replica.Role.fabric:/test3.80 Primary
+
+gfum
+
+!q

@@ -1,0 +1,52 @@
+votes 100
+clearticket
++100
+verify
++1000
++2000
++3000
+verify
++4000
++5000
++6000
+verify
++7000
++8000
++9000
+verify
++10000
++11000
++12000
+verify
++13000
++14000
++15000
+verify
+abort 14000
+abort 3000
+verify
+abort 6000
+abort 9000
+verify
+abort 12000
+abort 15000
+verify
+abort 1000
+abort 4000
+verify
+abort 7000
+abort 10000
+verify
+abort 2000
+verify
+abort 5000
+verify
+abort 8000
+verify
+abort 11000
+verify
+abort 13000
+verify
+abort 100
+verify
+!q

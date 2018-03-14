@@ -1,0 +1,55 @@
+# PersistedServiceRingRestart
+# Create a persisted service
+# Take down the entire ring
+# Bring back the entire ring
+# Perform a write and ensure that the write succeeds
+set DummyPLBEnabled true
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+verify
+
+clientput fabric:/test 10 10Data1
+!wait 
+
+# take down the nodes
+-40
+-30
+-20
+-10
+
+!wait
+clearticket 40
+clearticket 30
+clearticket 20
+clearticket 10
+
++10 nodeprops=StringProperty:SeedNode
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+clientput fabric:/test 20 20Data2
+!wait 
+
+clientget fabric:/test 10 10Data1
+!wait
+
+clientget fabric:/test 20 20Data2
+!wait
+
+!q

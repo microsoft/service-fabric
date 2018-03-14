@@ -1,0 +1,271 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Backup Run 0",
+      "Type": "V2_ScriptTest",
+      "Owners": "zhol, mcoskun, sumukhs",
+      "Tags": "MData,Backup",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "Backup.test",
+        "ExecutionTimeout": "57600",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "Backup Run 1",
+      "Type": "V2_ScriptTest",
+      "Owners": "zhol, mcoskun, sumukhs",
+      "Tags": "MData,Backup",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "Backup.test",
+        "ExecutionTimeout": "57600",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "Backup Chained Run 0",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, zhol, sumukhs",
+      "Tags": "MData,Backup,IBAR",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "Backup-Chained.test",
+        "ExecutionTimeout": "57600",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "Backup Chained Run 1",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, zhol, sumukhs",
+      "Tags": "MData,Backup,IBAR",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "Backup-Chained.test",
+        "ExecutionTimeout": "57600",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "BackupStress Quick SingleMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun,zhol,rajak",
+      "Tags": "MData,Backup,BackupStress",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "BackupStress-Q.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "BackupStress Quick MultiMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun,zhol,rajak",
+      "Tags": "MData,Backup,BackupStress",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "BackupStress-Q.test",
+        "ExecutionTimeout": "7200",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "BackupStress SingleMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun,zhol,rajak",
+      "Tags": "MData,Backup,BackupStress",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "BackupStress.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "BackupStress MultiMachine IBAR",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun,zhol,rajak",
+      "Tags": "MData,Backup,BackupStress,IBAR",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "BackupStress-IBAR.test",
+        "ExecutionTimeout": "10800",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "TPCC-CIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "preethas,zuparvez",
+      "Tags": "MData,TPCC",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "TPCC-CIT.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "7200"
+      }
+    },
+    {
+      "Name": "TPCC 1Day 1Partition",
+      "Type": "V2_ScriptTest",
+      "Owners": "preethas,zuparvez",
+      "Tags": "MData,TPCC",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "TPCC-1Day1P.test",
+        "ExecutionTimeout": "93600",
+        "CleanupTimeout": "7200"
+      }
+    },
+    {
+      "Name": "TPCC 1Day 1Partition SlowLog",
+      "Type": "V2_ScriptTest",
+      "Owners": "hanagar,mcoskun,sumukhs",
+      "Tags": "MData,TPCC",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "TPCC-1Day1P-SlowLog.test",
+        "ExecutionTimeout": "93600",
+        "CleanupTimeout": "7200"
+      }
+    },
+    {
+      "Name": "TPCC 1Day 1Partition Flighting",
+      "Type": "V2_ScriptTest",
+      "Owners": "preethas,zuparvez",
+      "Tags": "MData,TPCC",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "TPCC-1Day1P-Flighting.test",
+        "ExecutionTimeout": "93600",
+        "CleanupTimeout": "7200"
+      }
+    },
+    {
+      "Name": "ReliableQueueSlimFailures",
+      "Type": "V2_ScriptTest",
+      "Owners": "yzha,tyadam,rajak",
+      "Tags": "MData,RCQ",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "RCQ-Faults.test",
+        "ExecutionTimeout": "18000",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "ReliableQueueSlimStress",
+      "Type": "V2_ScriptTest",
+      "Owners": "yzha,tyadam,rajak",
+      "Tags": "MData,RCQ",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "RCQ-Stress.test",
+        "ExecutionTimeout": "18000",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "State Manager Long Haul",
+      "Type": "V2_ScriptTest",
+      "Owners": "zhol,mcoskun,preethas",
+      "Tags": "MData,SM",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "MCFDynamicSM.test",
+        "ExecutionTimeout": "86400",
+        "CleanupTimeout": "7200"
+      }
+    },
+    {
+      "Name": "CrashOnRunAsync",
+      "Type": "V2_ScriptTest",
+      "Owners": "sumukhs,mcoskun",
+      "Tags": "MData,Robustness",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "CrashOnRunAsync.test",
+        "ExecutionTimeout": "10000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "7000"
+      }
+    },
+    {
+      "Name": "System.Fabric.ReplicatorStack.LongRunning.dll",
+      "Type": "TAEFTest_Sequential",
+      "Owners": "mcoskun,preethas",
+      "Tags": "MData,LongRunning",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "TaskName": "System.Fabric.ReplicatorStack.Test.LongRunning.dll",
+        "ExecutionTimeout": "28800",        
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.Stress.Test.dll",
+      "Type": "TAEFTest_Sequential",
+      "Owners": "preethas,zuparvez",
+      "Tags": "MData,Stress",
+      "Tags": "",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "TaskName": "Microsoft.ServiceFabric.Stress.Test.dll",
+        "ExecutionTimeout": "28800",        
+      }
+    }
+  ]
+}

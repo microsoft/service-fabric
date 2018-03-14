@@ -1,0 +1,78 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1225345
+set DummyPLBEnabled true
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+#########################
+# Scenario: Service is deleted while node is down
+# The FM has not forgotten about the replica 
+# RA should treat ReplicaUpReply as an intention to delete the replica
+#########################
+
+addbehavior b1 10 20 DeleteReplica
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+verify
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+deleteservice fabric:/test1
+!waitforstate RA.FT.State.fabric:/test1.40 Closed
+!waitforstate RA.FT.State.fabric:/test1.30 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.40 true
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.30 true
+
+!waitforstate FM.FT.IsOrphaned.fabric:/test1 true
+
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+!waitforstate RA.FT.State.fabric:/test1.20 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.20 true
+
+removebehavior b1
+verify
+
+#########################
+# Scenario: Volatile Service is deleted while node is down
+# The FM has not forgotten about the replica and RA reports it as dropped
+# RA should treat ReplicaUpReply as an intention to delete the replica
+#########################
+
+addbehavior b2 10 20 DeleteReplica
+createservice fabric:/test2 TestStoreServiceType y 1 3 constraint=(StringProperty!=SeedNode)
+verify
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+deleteservice fabric:/test2
+!waitforstate RA.FT.State.fabric:/test2.40 Closed
+!waitforstate RA.FT.State.fabric:/test2.30 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.40 true
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.30 true
+
+!waitforstate FM.FT.IsOrphaned.fabric:/test1 true
+
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+!waitforstate RA.FT.State.fabric:/test2.20 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.20 true
+
+removebehavior b2
+verify
+
+!q

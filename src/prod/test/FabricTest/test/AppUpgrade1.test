@@ -1,0 +1,89 @@
+#
+# [owner] MMohsin
+# [bug] 2360404
+#
+# This test case covers the scenario where the following sequence of events happen:
+#
+# 1. Node N is getting upgraded.
+# 2. All the replicas on node N get dropped.
+# 3. NodeUpgradeReply message from node N to FM is dropped.
+#
+# In this case, FM should not proceed to the next UD and should wait for the NodeUpgradeReply message after a retry.
+#
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set DummyPLBEnabled true
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA version=1.0
+app.upload version10
+provisionapp version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA stateful
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA version=1.1
+app.upload version11
+provisionapp version11
+
+# Create application version 1.0
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+# Create services
+createservice fabric:/MyApp/Volatile ServiceTypeA y 1 3 appname=fabric:/MyApp
+verify
+
+createservice fabric:/MyApp/Volatile1 ServiceTypeA y 2 3 appname=fabric:/MyApp servicePackageActivationMode=ExclusiveProcess
+verify
+
+# Block the NodeUpgradeReply so that node 10 stays in PendingApplicationUpgrade state
+addbehavior b1 * * NodeUpgradeReply
+
+#
+# Perform application upgrade from version 1.0 to 1.1
+#
+upgradeapp fabric:/MyApp 1.1 Rolling upgrademode=manual
+
+# Upgrade should not move to UD2 even if all the replicas have been upgraded
+# and their versions are updated
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1 timeout=30 expectTimeout
+
+# Allow NodeUpgradeReply messages
+removebehavior b1
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3
+
+verify
+
+-*
+
+!q

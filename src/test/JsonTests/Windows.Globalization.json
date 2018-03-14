@@ -1,0 +1,3620 @@
+{
+    "Default": {
+    },
+    "Tests": [
+        {
+            "Name": "Glob-BasicStatefulActorRD-Arabic",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "ar-EG",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Arabic",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "ar-EG",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Arabic",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "ar-EG",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Arabic",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "ar-EG",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorRD-ChineseSimplified",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "zh-CN",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-ChineseSimplified",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "zh-CN",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-ChineseSimplified",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "zh-CN",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-ChineseSimplified",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "zh-CN",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-ChineseTraditional",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "zh-TW",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-ChineseTraditional",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "zh-TW",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-ChineseTraditional",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "zh-TW",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-ChineseTraditional",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "zh-TW",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Czech",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "cs-CZ",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Czech",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "cs-CZ",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Czech",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "cs-CZ",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Czech",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "cs-CZ",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Danish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "da-DK",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Danish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "da-DK",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Danish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "da-DK",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Danish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "da-DK",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-DutchNetherlands",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "nl-NL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-DutchNetherlands",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "nl-NL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-DutchNetherlands",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "nl-NL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-DutchNetherlands",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "nl-NL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Finnish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "fi-FI",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Finnish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "fi-FI",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Finnish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "fi-FI",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Finnish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "fi-FI",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-French",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "fr-FR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-French",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "fr-FR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-French",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "fr-FR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-French",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "fr-FR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-German",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "de-DE",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-German",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "de-DE",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-German",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "de-DE",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-German",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "de-DE",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Greek",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "el-GR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Greek",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "el-GR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Greek",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "el-GR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Greek",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "el-GR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Hebrew",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "he-IL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Hebrew",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "he-IL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Hebrew",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "he-IL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Hebrew",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "he-IL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Hungarian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "hu-HU",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Hungarian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "hu-HU",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Hungarian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "hu-HU",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Hungarian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "hu-HU",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Italian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "it-IT",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Italian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "it-IT",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Italian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "it-IT",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Italian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "it-IT",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Japanese",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "ja-JP",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Japanese",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "ja-JP",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Japanese",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "ja-JP",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Japanese",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "ja-JP",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Korean",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "ko-KR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Korean",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "ko-KR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Korean",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "ko-KR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Korean",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "ko-KR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Norwegian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "nb-NO",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Norwegian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "nb-NO",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Norwegian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "nb-NO",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Norwegian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "nb-NO",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Polish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "pl-PL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Polish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "pl-PL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Polish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "pl-PL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Polish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "pl-PL",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-PortugeseBrazilian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "pt-BR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-PortugeseBrazilian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "pt-BR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-PortugeseBrazilian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "pt-BR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-PortugeseBrazilian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "pt-BR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-PortugeseStandard",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "pt-PT",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-PortugeseStandard",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "pt-PT",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-PortugeseStandard",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "pt-PT",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-PortugeseStandard",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "pt-PT",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Russian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "ru-RU",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Russian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "ru-RU",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Russian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "ru-RU",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Russian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "ru-RU",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Slovak",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "sk-SK",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Slovak",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "sk-SK",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Slovak",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "sk-SK",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Slovak",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "sk-SK",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Slovenian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "sl-SI",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Slovenian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "sl-SI",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Slovenian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "sl-SI",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Slovenian",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "sl-SI",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Spanish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "es-ES",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Spanish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "es-ES",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Spanish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "es-ES",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Spanish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "es-ES",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Swedish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "sv-SE",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Swedish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "sv-SE",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Swedish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "sv-SE",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Swedish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "sv-SE",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Thailand",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "th-TH",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Thailand",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "th-TH",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Thailand",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "th-TH",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Thailand",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "th-TH",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-BasicStatefulActorRD-Turkish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorRD.test",
+                "Locale": "tr-TR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorKvs-Turkish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorKvs.test",
+                "Locale": "tr-TR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatelessActor-Turkish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatelessActor.test",
+                "Locale": "tr-TR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-StatefulActorGlobActorID-Turkish",
+            "Type": "V2_ScriptTest_With_Locale",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorWithGlobalizedActorID.test",
+                "Locale": "tr-TR",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+        {
+            "Name": "Glob-BasicStatefulActorGlobalState",
+            "Type": "V2_ScriptTest",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\FabActTestConfigGlobalization.txt",
+                "TaskName": "Globalization_BasicStatefulActorGlobalState.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ServiceFabricTest-Arabic",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ar-EG Glob-ServiceFabricTest-Arabic",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Arabic",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ar-EG Glob-SFTest-Secure-Arabic",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ReliableDictionaryTest-Arabic",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "ar-EG Glob-ReliableDictionaryTest-Arabic",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-ChineseSimplified",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "zh-CN Glob-ServiceFabricTest-ChineseSimplified",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-ChineseSimplified",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "zh-CN Glob-SFTest-Secure-ChineseSimplified",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ReliableDictionaryTest-ChineseSimplified",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "zh-CN Glob-ReliableDictionaryTest-ChineseSimplified",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-ChineseTraditional",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "zh-TW Glob-ServiceFabricTest-ChineseTraditional",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-ChineseTraditional",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "zh-TW Glob-SFTest-Secure-ChineseTraditional",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ReliableDictionaryTest-ChineseTraditional",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "zh-TW Glob-ReliableDictionaryTest-ChineseTraditional",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Czech",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "cs-CZ Glob-ServiceFabricTest-Czech",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Czech",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "cs-CZ Glob-SFTest-Secure-Czech",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Czech",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "cs-CZ Glob-ReliableDictionaryTest-Czech",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Dannish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "da-DK Glob-ServiceFabricTest-Dannish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Dannish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "da-DK Glob-SFTest-Secure-Dannish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Dannish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "da-DK Glob-ReliableDictionaryTest-Dannish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-DutchNetharland",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "nl-NL Glob-ServiceFabricTest-DutchNetharland",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-DutchNetharland",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "nl-NL Glob-SFTest-Secure-DutchNetharland",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-DutchNetharland",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "nl-NL Glob-ReliableDictionaryTest-DutchNetharland",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Finnish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "fi-FI Glob-ServiceFabricTest-Finnish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Finnish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "fi-FI Glob-SFTest-Secure-Finnish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Finnish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "fi-FI Glob-ReliableDictionaryTest-Finnish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-France",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "fr-FR Glob-ServiceFabricTest-France",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-France",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "fr-FR Glob-SFTest-Secure-France",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-France",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "fr-FR Glob-ReliableDictionaryTest-France",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-German",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "de-DE Glob-ServiceFabricTest-German",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-German",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "de-DE Glob-SFTest-Secure-German",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-German",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "de-DE Glob-ReliableDictionaryTest-German",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Greek",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "el-GR Glob-ServiceFabricTest-Greek",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Greek",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "el-GR Glob-SFTest-Secure-Greek",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Greek",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "el-GR Glob-ReliableDictionaryTest-Greek",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Hebrew",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "he-IL Glob-ServiceFabricTest-Hebrew",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Hebrew",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "he-IL Glob-SFTest-Secure-Hebrew",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Hebrew",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "he-IL Glob-ReliableDictionaryTest-Hebrew",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Hungarian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "hu-HU Glob-ServiceFabricTest-Hungarian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Hungarian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "hu-HU Glob-SFTest-Secure-Hungarian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Hungarian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "hu-HU Glob-ReliableDictionaryTest-Hungarian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Italian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "it-IT Glob-ServiceFabricTest-Italian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Italian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "it-IT Glob-SFTest-Secure-Italian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Italian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "it-IT Glob-ReliableDictionaryTest-Italian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Japanese",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ja-JP Glob-ServiceFabricTest-Japanese",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Japanese",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ja-JP Glob-SFTest-Secure-Japanese",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Japanese",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "ja-JP Glob-ReliableDictionaryTest-Japanese",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Korean",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ko-KR Glob-ServiceFabricTest-Korean",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Korean",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ko-KR Glob-SFTest-Secure-Korean",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Korean",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "ko-KR Glob-ReliableDictionaryTest-Korean",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Norwegian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "nb-NO Glob-ServiceFabricTest-Norwegian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Norwegian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "nb-NO Glob-SFTest-Secure-Norwegian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Norwegian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "nb-NO Glob-ReliableDictionaryTest-Norwegian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Polish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pl-PL Glob-ServiceFabricTest-Polish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Polish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pl-PL Glob-SFTest-Secure-Polish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Polish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "pl-PL Glob-ReliableDictionaryTest-Polish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-PortugeseBrazilian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pt-BR Glob-ServiceFabricTest-PortugeseBrazilian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-PortugeseBrazilian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pt-BR Glob-SFTest-Secure-PortugeseBrazilian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-PortugeseBrazilian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "pt-BR Glob-ReliableDictionaryTest-PortugeseBrazilian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-PortugeseStandard",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pt-PT Glob-ServiceFabricTest-PortugeseStandard",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-PortugeseStandard",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pt-PT Glob-SFTest-Secure-PortugeseStandard",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-PortugeseStandard",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "pt-PT Glob-ReliableDictionaryTest-PortugeseStandard",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Russian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ru-RU Glob-ServiceFabricTest-Russian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Russian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ru-RU Glob-SFTest-Secure-Russian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Russian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "ru-RU Glob-ReliableDictionaryTest-Russian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Slovak",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "sk-SK Glob-ServiceFabricTest-Slovak",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Slovak",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "sk-SK Glob-SFTest-Secure-Slovak",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Slovak",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "sk-SK Glob-ReliableDictionaryTest-Slovak",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Slovenian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "sl-SI Glob-ServiceFabricTest-Slovenian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Slovenian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "sl-SI Glob-SFTest-Secure-Slovenian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Slovenian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "sl-SI Glob-ReliableDictionaryTest-Slovenian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Spanish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "es-ES Glob-ServiceFabricTest-Spanish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Spanish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "es-ES Glob-SFTest-Secure-Spanish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Spanish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "es-ES Glob-ReliableDictionaryTest-Spanish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Swedish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "sv-SE Glob-ServiceFabricTest-Swedish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Swedish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "sv-SE Glob-SFTest-Secure-Swedish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Swedish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "sv-SE Glob-ReliableDictionaryTest-Swedish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Thailand",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "th-TH Glob-ServiceFabricTest-Thailand",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Thailand",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "th-TH Glob-SFTest-Secure-Thailand",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Thailand",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "th-TH Glob-ReliableDictionaryTest-Thailand",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+        {
+            "Name": "Glob-ServiceFabricTest-Turkish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "tr-TR Glob-ServiceFabricTest-Turkish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-SFTest-Secure-Turkish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "tr-TR Glob-SFTest-Secure-Turkish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Glob-ReliableDictionaryTest-Turkish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "tr-TR Glob-ReliableDictionaryTest-Turkish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ServiceFabricTest-ChineseTraditional",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "zh-TW Loc-ServiceFabricTest-ChineseTraditional",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-ChineseTraditional",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "zh-TW Loc-SFTest-Secure-ChineseTraditional",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-ChineseTraditional",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "zh-TW Loc-ReliableDictionaryTest-ChineseTraditional",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-Czech",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-CZECH",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "cs-CZ Loc-ServiceFabricTest-Czech",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Czech",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-CZECH",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "cs-CZ Loc-SFTest-Secure-Czech",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Czech",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-CZECH",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "cs-CZ Loc-ReliableDictionaryTest-Czech",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-DutchNetharland",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Dutch",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "nl-NL Loc-ServiceFabricTest-DutchNetharland",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-DutchNetharland",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Dutch",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "nl-NL Loc-SFTest-Secure-DutchNetharland",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-DutchNetharland",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Dutch",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "nl-NL Loc-ReliableDictionaryTest-DutchNetharland",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-France",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-French",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "fr-FR Loc-ServiceFabricTest-France",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-France",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-French",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "fr-FR Loc-SFTest-Secure-France",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-France",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-French",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "fr-FR Loc-ReliableDictionaryTest-France",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-German",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "de-DE Loc-ServiceFabricTest-German",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-German",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "de-DE Loc-SFTest-Secure-German",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-German",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "de-DE Loc-ReliableDictionaryTest-German",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Globalization_LocalizeRun_Hungarian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Hungarian",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "hu-HU Loc-ServiceFabricTest-Hungarian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Hungarian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Hungarian",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "hu-HU Loc-SFTest-Secure-Hungarian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Hungarian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Hungarian",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "hu-HU Loc-ReliableDictionaryTest-Hungarian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Globalization_LocalizeRun_Italian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Italian",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "it-IT Loc-ServiceFabricTest-Italian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Italian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Italian",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "it-IT Loc-SFTest-Secure-Italian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Italian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Italian",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "it-IT Loc-ReliableDictionaryTest-Italian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-Japanese",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ja-JP Loc-ServiceFabricTest-Japanese",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Japanese",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ja-JP Loc-SFTest-Secure-Japanese",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Japanese",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "ja-JP Loc-ReliableDictionaryTest-Japanese",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-Korean",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Korean",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ko-KR Loc-ServiceFabricTest-Korean",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Korean",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Korean",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ko-KR Loc-SFTest-Secure-Korean",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Korean",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Korean",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "ko-KR Loc-ReliableDictionaryTest-Korean",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-Polish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Polish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pl-PL Loc-ServiceFabricTest-Polish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Polish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Polish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pl-PL Loc-SFTest-Secure-Polish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Polish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Polish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "pl-PL Loc-ReliableDictionaryTest-Polish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-PortugeseBrazilian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Brazil",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pt-BR Loc-ServiceFabricTest-PortugeseBrazilian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-PortugeseBrazilian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Brazil",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pt-BR Loc-SFTest-Secure-PortugeseBrazilian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-PortugeseBrazilian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Brazil",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "pt-BR Loc-ReliableDictionaryTest-PortugeseBrazilian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-PortugeseStandard",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Portugal",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pt-PT Loc-ServiceFabricTest-PortugeseStandard",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-PortugeseStandard",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Portugal",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "pt-PT Loc-SFTest-Secure-PortugeseStandard",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-PortugeseStandard",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Portuguese_Portugal",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "pt-PT Loc-ReliableDictionaryTest-PortugeseStandard",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-Russian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ru-RU Loc-ServiceFabricTest-Russian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Russian",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "ru-RU Loc-SFTest-Secure-Russian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Russian",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "ru-RU Loc-ReliableDictionaryTest-Russian",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-Spanish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Spanish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "es-ES Loc-ServiceFabricTest-Spanish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Spanish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Spanish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "es-ES Loc-SFTest-Secure-Spanish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Spanish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Spanish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "es-ES Loc-ReliableDictionaryTest-Spanish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-Swedish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Swedish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "sv-SE Loc-ServiceFabricTest-Swedish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Swedish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Swedish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "sv-SE Loc-SFTest-Secure-Swedish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Swedish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-Swedish",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "sv-SE Loc-ReliableDictionaryTest-Swedish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+
+
+        {
+            "Name": "Loc-ServiceFabricTest-Turkish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "tr-TR Loc-ServiceFabricTest-Turkish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-SFTest-Secure-Turkish",
+            "Type": "PowershellTest_Glob_Secure",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
+
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ServiceFabric_TestScript.ps1",
+                "Arguments": "tr-TR Loc-SFTest-Secure-Turkish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "Loc-ReliableDictionaryTest-Turkish",
+            "Type": "PowershellTest_Glob",
+            "Owners": "v-rachiw,v-mnagar,lemai",
+            "Environment": "Iaas",
+            "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
+            "TestExecutionParameters": {
+                "SetupTimeout": "900",
+                "PSScriptName": "WinFabricTest\\Globalization\\Globalization_ReliableDictionary_TestScript.ps1",
+                "Arguments": "tr-TR Loc-ReliableDictionaryTest-Turkish",
+                "ExecutionTimeout": "4200",
+                "CleanupTimeout": "2100"
+            }
+        }
+    ]
+}

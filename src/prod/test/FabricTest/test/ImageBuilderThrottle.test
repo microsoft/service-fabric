@@ -1,0 +1,46 @@
+votes 10
+fmservice 1 1
+namingservice 1 1 1
+cmservice 1 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+set ImageBuilderJobQueueThrottle 11
+set ImageBuilderUpgradeJobQueueThrottle 7
+
++10
+verify
+
+# 
+# Application version v1
+#
+app.add v1 AppType AppVersion1
+app.clear v1
+
+app.servicepack v1 ServicePackageA version=v1
+app.servicetypes v1 ServicePackageA ServiceTypeA stateful persist
+app.codepack v1 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.upload v1
+
+provisionapp v1
+
+# 
+# Application version v2
+#
+app.add v2 AppType AppVersion2
+app.clear v2
+
+app.servicepack v2 ServicePackageA version=v2
+app.servicetypes v2 ServicePackageA ServiceTypeA stateful persist
+app.codepack v2 ServicePackageA CodeA types=ServiceTypeA version=v2
+
+app.upload v2
+
+provisionapp v2
+
+scenario ImageBuilderApplicationScale appcount=100 timeout=120
+
+!pause 10
+
+!q

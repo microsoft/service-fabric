@@ -1,0 +1,42 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 2 1
+fmservice 2 1
+cleantest
+
++10
++30
+verify
+
+# Create a persisted stateful service
+createname fabric:/persisted
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 2 persist
+verify
+
+# Move all the primary replicas to node 10
+-30
+!waitforstate FM.Node.IsUp.30 false
+
++30
+!waitforstate FM.Node.IsUp.30 true
+
+verify
+
+!waitforstate FM.Replica.Role.FMService.10 Primary
+!waitforstate FM.Replica.Role.FMService.30 Secondary
+
+!waitforstate FM.Replica.Role.fabric:/persisted.10 Primary
+!waitforstate FM.Replica.Role.fabric:/persisted.30 Secondary
+
+# Close node 10. This will cause FMM rebuild.
+# It will only get a report from a ready secondary
+# and would generate the FMService FailoverUnit.
+# This will avoid full rebuild.
+-10
+
+verify
+
+-*
+
+!q

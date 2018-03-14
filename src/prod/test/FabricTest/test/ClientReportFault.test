@@ -1,0 +1,140 @@
+#
+# [owner] aprameyr
+# Sanity tests for client report fault in native
+# 
+set DummyPLBEnabled true
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
+# ReportFault with incorrect partition id should fail
+clientreportfault 10 14489BEE8-F5F6-4D4D-B7FF-FDE90E1E3C8 1 permanent REReplicaDoesNotExist
+
+#
+# Test stateless services
+#
+
+# Report Fault Transient on volatile should fail
+createservice fabric:/testsl CalculatorServiceType n 1 1
+verify
+
+!var StatelessPartitionId FM.FT.PartitionId.fabric:/testsl#0
+!var StatelessReplicaId RA.Replica.ReplicaId.fabric:/testsl.10.10
+
+#ReportFault for incorrect replica id should fail
+clientreportfault 10 <var.StatelessPartitionId> 1 permanent REReplicaDoesNotExist
+
+#ReportFault transient for stateless should fail
+clientreportfault 10 <var.StatelessPartitionId> 1 transient InvalidReplicaOperation
+
+#ReportFault permanent should succeed
+#To verify add another node and then drop the replica on node 10
++20 nodeprops=system:false
+!waitforstate FM.Node.IsUp.20 true
+
+clientreportfault 10 <var.StatelessPartitionId> <var.StatelessReplicaId> permanent
+!waitforstate RA.FT.State.fabric:/testsl.10 Closed
+
+
+#
+# Test Stateful Volatiles
+#
++30  nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+
+createservice fabric:/testsv TestStoreServiceType y 1 3
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testsv.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testsv.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testsv.10 Secondary
+
+!var StatefulVolatilePartitionId FM.FT.PartitionId.fabric:/testsv#0
+!var StatefulVolatileReplicaId RA.Replica.ReplicaId.fabric:/testsv.30.30
+
+#Report fault transient for SV should fail
+clientreportfault 30 <var.StatefulVolatilePartitionId> 1 transient InvalidReplicaOperation
+
+#Report fault permanent should pass
+#To test, add another node first and expect that when ReportFault Permanent is called DummyPLB will place replica on 40
++40 nodeprops=system:false
+!waitforstate FM.Node.IsUp.40 true
+verify
+
+clientreportfault 30 <var.StatefulVolatilePartitionId> <var.StatefulVolatileReplicaId> permanent
+!waitforstate RA.FT.State.fabric:/testsv.30 Closed
+
+#
+# Test for Stateful Persisted services
+#
+createservice fabric:/testsp TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testsp.40 Primary
+!waitforstate FM.Replica.Role.fabric:/testsp.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/testsp.20 Secondary
+
+!var StatefulPersistedPartitionId FM.FT.PartitionId.fabric:/testsp#0
+!var StatefulPersistedPrimary1ReplicaId RA.Replica.ReplicaId.fabric:/testsp.40.40
+
+#Report Fault Transient should succeed
+#Expect that the replica is restarted 
+addbehavior b1 * * StatefulServiceReopen
+clientreportfault 40 <var.StatefulPersistedPartitionId> <var.StatefulPersistedPrimary1ReplicaId> transient
+
+!waitforstate RA.Replica.State.fabric:/testsp.40.40 SB
+
+#unblock and allow the system to stabilize
+removebehavior b1 
+
+# Wait for the RA replica to become ready again (part of quorum)
+!waitforstate RA.Replica.State.fabric:/testsp.40.40 RD
+verify
+
+#Now report fault permanent on this replica
+#RA should drop the replica
+#Block add replica to the node so that the closed state can be verified
+addbehavior ba * 40 CreateReplica
+clientreportfault 40 <var.StatefulPersistedPartitionId> <var.StatefulPersistedPrimary1ReplicaId> permanent
+
+#RA should drop the replica
+!waitforstate RA.FT.State.fabric:/testsp.40 Closed
+
+#system should be stable
+removebehavior ba
+
+# Test report fault with force remove option
+# Use an application for this test 
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeB stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeB version=1.0
+app.upload version10
+provisionapp version10
+
+createapp fabric:/app1 TestApp 1.0
+verify
+
+createservice fabric:/app1/test TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 1 persist constraint=(system!=true) appname=fabric:/app1
+verify
+
+!var ForceRemovePartitionId FM.FT.PartitionId.fabric:/app1/test#0
+!var ForceRemoveReplicaId RA.Replica.ReplicaId.fabric:/app1/test.40.40
+
+addbehavior bx * * ReplicaUp
+setcodepackagekillpending 40 TestApp_App0:ServicePackageA#CodeA1
+clientreportfault 40 <var.ForceRemovePartitionId> <var.ForceRemoveReplicaId> permanent true
+!waitforstate RA.FT.State.fabric:/app1/test.40 Closed
+removebehavior bx
+verify
+
+verify
+!q

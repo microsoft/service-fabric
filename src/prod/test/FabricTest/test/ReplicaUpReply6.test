@@ -1,0 +1,54 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1665686
+# RA should persist that replica has been deleted in ReplicaUpReply
+# 
+set DummyPLBEnabled true
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
+addbehavior b1 * 20 RemoveInstance
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+deleteservice fabric:/test
+verify
+
++30 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
++20 nodeprops=StringProperty:NormalNode
+verify
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+deleteservice fabric:/test
+verify
+
+# wait for the service to get removed from everything in FM
+!pause 15
+
++20 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+verify
+
+!q

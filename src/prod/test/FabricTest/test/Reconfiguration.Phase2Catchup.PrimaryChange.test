@@ -1,0 +1,445 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase2_Catchup
+!load FailoverCITInitialization.test
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Primary is informed of down replicas during catchup
+# Ensure slow secondary does not block catchup
+# Block replication to 20, 30, 40
+# Put some data which should be on 60, 50
+# Take down 60
+# Primary should be stuck in Catchup because it cant catchup 
+# Unblock catchup for 30 and 40 and it should go through
+#####################################################
+
+# NOTE: 
+# Native store stack will abort the outstanding tx
+# when 60 is taken down. This scenario will not
+# work as written.
+#
+seteseonly
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+clientput fabric:/test1 1 1
+!wait
+
+addbehavior b1 * 20 ReplicationOperation
+addbehavior b2 * 30 ReplicationOperation
+addbehavior b3 * 40 ReplicationOperation
+clientput fabric:/test1 10 10
+
+!pause 1
+
+-60
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 Phase2_Catchup
+
+#retry of UC should happen
+!pause 1
+
+removebehavior b2
+removebehavior b3
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 None
+
++60 nodeprops=system:false
+verify
+
+removebehavior b1
+
+deleteservice fabric:/test1
+verify
+
+cleareseonly
+
+#####################################################
+# Scenario 2: Primary is informed of down replicas during catchup
+# Block replication to 20, 30, 40
+# Put some data which should be on 60, 50
+# Take down 60
+# Primary should be stuck in Catchup because it cant catchup 
+#####################################################
+
+# NOTE: 
+# Native store stack will abort the outstanding tx
+# when 60 is taken down. This scenario will not
+# work as written.
+#
+seteseonly
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+clientput fabric:/test2 1 1
+!wait
+
+addbehavior b1 * 20 ReplicationOperation
+addbehavior b2 * 30 ReplicationOperation
+addbehavior b3 * 40 ReplicationOperation
+clientput fabric:/test2 10 10
+
+!pause 10
+
+-60
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.50 Phase2_Catchup
+
+#retry of UC should happen
+!pause 1
+
+reportfault 40 fabric:/test2 permanent
+-30
+removebehavior b1 
++60 nodeprops=system:false
+!pause 1
+removebehavior b3
++30 nodeprops=system:false
+removebehavior b2
+verify
+
+deleteservice fabric:/test2
+verify
+
+cleareseonly
+
+#####################################################
+# Scenario 3: Replica Build during Catchup
+# Take down a quorum of replicas and then bring them back up
+# Verify Build Retry
+# Verify Build Failure Retry
+# They should be built and reconfig should complete
+#####################################################
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=5 constraint=(system!=true)
+verify
+
+clientput fabric:/test3 10 10
+!wait
+
+addbehavior b1 * * UpdateConfiguration
+
+-60
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.50 Phase2_Catchup
+
+-30
+-20
+!waitforstate RA.Replica.IsUp.fabric:/test3.50.30 false
+!waitforstate RA.Replica.IsUp.fabric:/test3.50.20 false
+
+removebehavior b1
+
+addbehavior b1 * * ReplicatorBuildIdleReplica
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test3.50.30 IB
+
++20 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test3.50.20 SB|IB
+
+!pause 1
+
+injectfailure 50 fabric:/test3 replicator.beginbuildreplica
+removebehavior b1
+!pause 2
+
+addbehavior b1 * * ReplicatorBuildIdleReplicaReply
+removefailure 50 fabric:/test3 replicator.beginbuildreplica
+
+!pause 2
+removebehavior b1
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.50 None
+
++60 nodeprops=system:false
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: During catchup CR(P) fails
+# There should be infinite retry
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=5 constraint=(system!=true)
+verify
+
+clientput fabric:/test4 10 10
+!wait
+
+addbehavior b1 * * UpdateConfiguration
+injectfailure 50 fabric:/test4 service.beginchangerole
+
+-60
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.50 Phase2_Catchup
+
+removebehavior b1
+
+!pause 5
+removefailure 50 fabric:/test4 service.beginchangerole
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.50 None
+
++60 nodeprops=system:false
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 5: During DataLoss if state is changed then 
+# Retry should automatically send reply
+#####################################################
+createservice fabric:/test5 TestStoreServiceType y 1 5 minreplicasetsize13 constraint=(system!=true)
+verify
+
+clientput fabric:/test5 1 1
+clientput fabric:/test5 2 2
+!wait
+
+setsignal 30 fabric:/test5 provider.statechangedondataloss.decrementprogress
+addbehavior b2 * * UpdateConfigurationReply
+addbehavior b1 * * DoReconfiguration
+
+# cause data loss
+-60
+-50
+-40
+!waitforstate FM.Node.IsUp.60 false
+!waitforstate FM.Node.IsUp.50 false
+!waitforstate FM.Node.IsUp.40 false
+
+removebehavior b1
+
+#wait for retry
+!pause 3
+
+removebehavior b2
+verify
+
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Tests for slow replica
+# RemoteReplicaProgressQueryWaitDuration is reduced
+#####################################################
+
+set RemoteReplicaProgressQueryWaitDuration 5
+
+#####################################################
+# Scenario 6: ToBeRestarted replicas are not considered in quorum even if they are ready
+#####################################################
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+#block getlsn to 30 and restart 60
+#with this the catchup quorum size should be 3 to replicator
+addbehavior b0 * 30 GetLSN
+addbehavior b1 * 30 Deactivate
+
+reportfault 60 fabric:/test6 transient
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.50 Phase2_Catchup
+
+!pause 10
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.50 Phase2_Catchup
+
+removebehavior b0
+removebehavior b1
+verify 
+
+deleteservice fabric:/test6
+verify
+
+#####################################################
+# Scenario 7: ToBeRestarted replica in phase 2 catchup getting dropped completes reconfig
+#####################################################
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior bx * * UpdateConfigurationReply
+
+#block getlsn to 30 and restart 60
+#with this the catchup quorum size should be 3 to replicator
+addbehavior b0 * 30 GetLSN
+addbehavior b1 * 30 Deactivate
+
+reportfault 60 fabric:/test7 transient
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.50 Phase2_Catchup
+
+reportfault 30 fabric:/test7 permanent
+!waitforstate RA.Replica.State.fabric:/test7.50.30 DD
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.50 Phase2_Catchup
+
+removebehavior bx
+removebehavior b0
+removebehavior b1
+verify 
+
+deleteservice fabric:/test7
+verify
+
+#####################################################
+# Scenario 8: ToBeRestarted replica in phase 2 catchup restarting completes reconfig
+#####################################################
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior bx * * UpdateConfigurationReply
+
+#block getlsn to 30 and restart 60
+#with this the catchup quorum size should be 3 to replicator
+addbehavior b0 * 30 GetLSN
+addbehavior b1 * 30 Deactivate
+addbehavior by * * ReplicaUp
+
+reportfault 60 fabric:/test8 transient
+!waitforstate RA.FT.FMMessageStage.fabric:/test8.60 ReplicaUp
+removebehavior by
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.50 Phase2_Catchup
+
+-40
+!waitforstate RA.Replica.IsUp.fabric:/test8.50.40 false
+
+reportfault 30 fabric:/test8 transient
+removebehavior bx
+removebehavior b1
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.50 None
+
+removebehavior bx
+verify 
+
+deleteservice fabric:/test8
+
++40 nodeprops=system:false
+
+verify
+
+
+#####################################################
+# Scenario 9: ToBeRestarted volatile replicas are not considered in quorum even if they are ready
+# Also tests DeactivateReply works
+#####################################################
+createservice fabric:/test9 TestStoreServiceType y 1 4 minreplicasetsize=4 constraint=(system!=true)
+verify
+
+#block getlsn to 30 and restart 60
+#with this the catchup quorum size should be 3 to replicator
+addbehavior b0 * 30 GetLSN
+addbehavior b1 * 30 Deactivate
+
+reportfault 60 fabric:/test9 permanent
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.50 Phase2_Catchup
+
+!pause 10
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.50 Phase2_Catchup
+
+removebehavior b0
+removebehavior b1
+verify 
+
+deleteservice fabric:/test9
+verify
+
+#####################################################
+# Scenario 10: ReplicaDropped completes restart in phase2 for volatile
+#####################################################
+createservice fabric:/test10 TestStoreServiceType y 1 4 minreplicasetsize=4 constraint=(system!=true)
+verify
+
+#block getlsn to 30 and restart 60
+#with this the catchup quorum size should be 3 to replicator
+addbehavior b0 * 30 GetLSN
+addbehavior b1 * 30 Deactivate
+
+reportfault 60 fabric:/test10 permanent
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.50 Phase2_Catchup
+
+reportfault 30 fabric:/test10 permanent
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.50 None
+
+removebehavior b0
+removebehavior b1
+verify 
+
+deleteservice fabric:/test10
+verify
+
+#####################################################
+# Scenario 11: Upon receiving RAProxyStateChangedOnDataLoss in UpdateConfigurationReply only up, inConfig and ready nodes will get marked as ToBeRestarted
+#####################################################
+createservice fabric:/test11 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=5 constraint=(system!=true)
+verify
+
+clientput fabric:/test11 1 1
+clientput fabric:/test11 2 2
+!wait
+
+setsignal 50 fabric:/test11 provider.statechangedondataloss.decrementprogress
+addbehavior b1 * * DoReconfiguration
+
+#block replica up
+addbehavior b2 * * ReplicaUp
+
+#Take down a quorum of replicas 60, 50, 40
+reportfault 20 fabric:/test11 transient
+reportfault 30 fabric:/test11 transient
+reportfault 40 fabric:/test11 transient
+reportfault 60 fabric:/test11 transient
+
+# verify that 20, 30, 40, 60 have restarted
+!waitforstate RA.Replica.IsUp.fabric:/test11.20.20 true
+!waitforstate RA.Replica.IsUp.fabric:/test11.30.30 true
+!waitforstate RA.Replica.IsUp.fabric:/test11.40.40 true
+!waitforstate RA.Replica.IsUp.fabric:/test11.60.60 true
+
+# unblock replica up
+removebehavior b2
+
+# verify that reconfig on fm has started
+# verify 20, 30, 40, 60 are IB on FM
+!waitforstate FM.Replica.State.fabric:/test11.20 InBuild
+!waitforstate FM.Replica.State.fabric:/test11.30 InBuild
+!waitforstate FM.Replica.State.fabric:/test11.40 InBuild
+!waitforstate FM.Replica.State.fabric:/test11.60 InBuild
+
+
+#RF permanent on 20, 30, 40
+reportfault 20 fabric:/test11 permanent
+reportfault 30 fabric:/test11 permanent
+reportfault 40 fabric:/test11 permanent
+
+#wait for 20, 30, 40 to be DD on FM
+!waitforstate FM.Replica.State.fabric:/test11.20 Dropped
+!waitforstate FM.Replica.State.fabric:/test11.30 Dropped
+!waitforstate FM.Replica.State.fabric:/test11.40 Dropped
+
+addbehavior b3 50 60 Activate
+
+removebehavior b1
+
+# doReconfig 50 S/P RD, 60 P/S IB, 40 S/S DD, 30 S/S DD, 20 S/S DD
+
+verify
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.50 Phase4_Activate
+
+removebehavior b3
+
+deleteservice fabric:/test11
+verify
+
+!q

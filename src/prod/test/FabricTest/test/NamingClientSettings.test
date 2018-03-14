@@ -1,0 +1,29 @@
+votes 10
+fmservice 1 1
+cmservice 3 1
+namingservice 5 1 1
+cleantest
++10
++20
++30
++40
++50
+verify
+
+setclientsettings keepalive=20 
+setclientsettings connectioninitializationtimeout=7
+setclientsettings healthreportsendinterval=40 healthoperationtimeout=50
+
+# pollinterval < connectioninitializationtimeout
+setclientsettings pollinterval=30 connectioninitializationtimeout=37 error=InvalidArgument
+
+setclientsettings keepalive=22 connectioninitializationtimeout=77 pollinterval=111 cachesize=222
+
+# CacheSize can't be changed after open
+setclientsettings forceopen=true cachesize=105 error=InvalidState
+
+setclientsettings connectioninitializationtimeout=3
+setclientsettings healthreportsendinterval=70 healthoperationtimeout=80
+
+
+!q

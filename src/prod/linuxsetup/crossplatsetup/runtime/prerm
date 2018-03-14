@@ -1,0 +1,68 @@
+#!/bin/bash
+echo In PreRm - $@
+
+# NOTE: Any changes in this file have to be compatible for both DEB and RPM distros 
+# as it is used in both installers. Use conditionals where necessary.
+
+GetDistroInstaller()
+{
+    local __resultvar=$1
+
+    /usr/bin/dpkg --search /usr/bin/dpkg >/dev/null 2>&1
+    if [ $? = 0 ]; then
+        eval $__resultvar="DEB"
+    else
+        /usr/bin/rpm -q -f /usr/bin/rpm >/dev/null 2>&1
+        if [ $? = 0 ]; then
+            eval $__resultvar="RPM"
+        else
+            eval $__resultvar="UNKNOWN"
+        fi
+    fi
+}
+
+GetDistroInstaller DISTROINSTALLER
+
+IsRemove="false"
+if [ $DISTROINSTALLER = "DEB" ]; then
+    for var in "$@"
+    do
+        echo "$var"
+         if [ "$var" == "remove" ]; then
+            IsRemove="true"
+         fi
+    done
+elif [ $DISTROINSTALLER = "RPM" ]; then
+    for var in "$@"
+    do
+        echo "$var"
+         if [ "$var" == "0" ]; then
+            IsRemove="true"
+         fi
+    done
+fi
+
+echo Stopping service fabric service
+systemctl stop servicefabric
+
+if [ "$IsRemove" == "true" ]; then
+    echo Disable service fabric service
+    systemctl disable servicefabric
+
+    echo Remove servicefabric.service file from systemd
+    rm -f /etc/systemd/system/servicefabric.service
+
+    echo Stopping service fabric updater service
+    systemctl stop servicefabricupdater
+
+    echo Disable service fabric updater service
+    systemctl disable servicefabricupdater
+
+    echo Remove servicefabricupdater.service file from systemd
+    rm -f /etc/systemd/system/servicefabricupdater.service
+fi
+
+#remove cgroups associated with fabric when doing either removal or upgrade
+/opt/microsoft/servicefabric/bin/cleancgroup.sh
+
+exit 0

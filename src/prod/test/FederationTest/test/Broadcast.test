@@ -1,0 +1,42 @@
+votes 0
+clearticket
++0
+verify
+broadcastone 0
+verify
+broadcastreq 0
+verify
+broadcastreliable 0
+verify
++10
+verify
+broadcastone 10
+verify
+broadcastreq 10
+verify
+broadcastreliable 10
+verify
++20
++30
++40
++50
++60
++70
++80
++90
++100
+verify
+broadcastone 10
+broadcastreliable 30
+broadcastreq 50
+broadcastreliable 100
+broadcastreq 70
+broadcastone 80
+verify
+reject 20 NotReady
+broadcastreliable 100
+broadcastreq 100
+!pause,3
+reject 20
+verify
+!q

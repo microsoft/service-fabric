@@ -1,0 +1,117 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1359136
+# RA should wait for all Replicas belonging to service types that are being deleted to be dropped before calling upgrade on hosting
+# 
+set DummyPLBEnabled true
+set NamingOperationTimeout 10
+votes 10 
+fmservice 1 1
+namingservice 1 1 1
+cmservice 1 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+
++10
+verify
+
+
++20
++30
++40
+verify
+
+# 
+# Application version 1.0
+# Two service packages. Each with one service type and one code package
+#
+app.add version10 TestApp 1.0
+app.clear version10
+
+app.servicepack version10 ServicePackageA version=1.0
+
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeB1 stateful
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeB1 version=1.0
+
+app.upload version10
+
+# 
+# Application version 1.1 
+# Remove service package B in this upgrade
+#
+app.add version11 TestApp 1.1 
+app.clear version11
+
+app.servicepack version11 ServicePackageA version=1.1 
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.1
+
+app.upload version11
+
+#
+# Provision application version 1.0
+#
+provisionapp version10
+
+#
+# Provision application version 1.1
+#
+provisionapp version11
+
+# Create the application
+createapp fabric:/app1 TestApp 1.0
+verify
+
+# Create two services 
+
+createservice fabric:/app1/testA1 ServiceTypeA1 y 1 3 persist appname=fabric:/app1
+createservice fabric:/app1/testB1 ServiceTypeB1 y 1 3 appname=fabric:/app1
+verify
+
+addbehavior b1 * 20 DeleteReplica 
+deleteservice fabric:/app1/testB1 errors=Timeout
+
+# prevent replica close from going to RAP
+addbehavior b2 20 * ReplicaClose
+
+# wait until the replicas are dropped on 40, 30
+!waitforstate FM.Replica.State.fabric:/app1/testB1.40 Dropped
+!waitforstate RA.FT.State.fabric:/app1/testB1.40 Closed
+!waitforstate FM.Replica.State.fabric:/app1/testB1.30 Dropped
+!waitforstate RA.FT.State.fabric:/app1/testB1.30 Closed
+
+upgradeapp fabric:/app1 1.1 Rolling
+
+# wait until on node 20 the replica for test1 is to be closed
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/app1/testA1.20 true
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/app1/testB1.20 false
+
+#remove replica close and let A1 be closed
+removebehavior b2
+
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/app1/testA1.20 false
+
+#at this point B1 should still be up and ra should not have called upgrade
+!waitforstate RA.Replica.IsUp.fabric:/app1/testB1.20.20 true
+
+#add back the block for replica close to make the ID check below deterministic
+addbehavior b3 20 * ReplicaClose
+removebehavior b1 
+!waitforstate RA.Replica.State.fabric:/app1/testB1.20.20 ID
+
+#remove the block
+removebehavior b3
+
+#everything should complete
+deleteservice fabric:/app1/testB1 errors=UserServiceNotFound
+
+#the replica should be dropped on the FM
+#the replica should be deleted on the RA
+!waitforstate RA.FT.State.fabric:/app1/testB1.20 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/app1/testB1.20 true
+!waitforstate FM.Replica.State.fabric:/app1/testB1.20 Dropped
+
+verify
+!q

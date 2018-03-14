@@ -1,0 +1,420 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase1_GetLSN
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 15
+
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Simple add secondary scenario
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 None
+removebehavior b0
+
++30 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test1.30 true
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2: Add secondary with replica going down during create replica
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.40 None
+removebehavior b0
+
+addbehavior b0 * * CreateReplica
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test2.40.30 IC
+
+#add secondary state achieved
+
+-30
+
+!waitforstate RA.Replica.IsUp.fabric:/test2.40.30 false
+!waitforstate FM.Replica.IsUp.fabric:/test2.30 false
+verify
+
+removebehavior b0
++30 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test2.30 true
+verify
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 3: Add secondary with replica restart during create replica
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 None
+removebehavior b0
+
+addbehavior b0 * * CreateReplica
++30 nodeprops=system:false
+
+!waitforstate RA.Replica.State.fabric:/test3.40.30 IC
+
+#add secondary state achieved
+
+addbehavior bx * * ReplicaUp
+addbehavior by * * ReplicaClose
+reportfault 30 fabric:/test3 transient
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test3.30 true
+
+addbehavior bz * * StatefulServiceReopen
+removebehavior by
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test3.30 false
+!var Instance RA.Replica.InstanceId.fabric:/test3.30.30
+removebehavior bz
+
+removebehavior bx
+!waitforstate FM.Replica.InstanceId.fabric:/test3.30 <var.Instance>
+
+removebehavior b0
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: Drop remote replica during CreateReplica
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.40 None
+removebehavior b0
+
+addbehavior b0 * * CreateReplica
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test4.40.30 IC
+
+#add secondary state achieved
+addbehavior bx * * ReplicaUp
+reportfault 30 fabric:/test4 permanent
+!waitforstate RA.FT.State.fabric:/test4.30 Closed
+removebehavior bx
+removebehavior b0
+
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 5: Add secondary with replica going down after create but no build has been sent
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 None
+removebehavior b0
+
+addbehavior b0 * * ReplicatorBuildIdleReplica
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test5.40.30 IB
+
+#add secondary state achieved
+
+-30
+
+!waitforstate RA.Replica.IsUp.fabric:/test5.40.30 false
+!waitforstate FM.Replica.IsUp.fabric:/test5.30 false
+verify
+
+removebehavior b0
++30 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test5.30 true
+verify
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Scenario 6: Add secondary with replica going restart after create but no build is sent
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 None
+removebehavior b0
+
+addbehavior b0 * * ReplicatorBuildIdleReplica
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test6.40.30 IB
+
+#add secondary state achieved
+
+addbehavior bx * * ReplicaUp
+addbehavior by * * ReplicaClose
+reportfault 30 fabric:/test6 transient
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test6.30 true
+
+addbehavior bz * * StatefulServiceReopen
+removebehavior by
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test6.30 false
+removebehavior bx
+
+!var Instance RA.Replica.InstanceId.fabric:/test6.30.30
+removebehavior bz
+
+!waitforstate FM.Replica.InstanceId.fabric:/test6.30 <var.Instance>
+
+removebehavior b0
+
+verify
+
+deleteservice fabric:/test6
+verify
+
+#####################################################
+# Scenario 7: Add secondary with replica getting dropped after create but without build
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 None
+removebehavior b0
+
+addbehavior b0 * * ReplicatorBuildIdleReplica
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test7.40.30 IB
+
+#add secondary state achieved
+
+addbehavior by * * ReplicaUp
+reportfault 30 fabric:/test7 permanent
+!waitforstate RA.FT.State.fabric:/test7.30 Closed
+
+removebehavior by
+removebehavior b0
+verify
+
+deleteservice fabric:/test7
+verify
+#####################################################
+# Scenario 8: Add secondary with replica going down after build starts
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 None
+removebehavior b0
+
+addbehavior b0 * * ReplicatorBuildIdleReplicaReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test8.40.30 IB
+!pause 5
+
+#add secondary state achieved
+
+-30
+
+!waitforstate RA.Replica.IsUp.fabric:/test8.40.30 false
+!waitforstate FM.Replica.IsUp.fabric:/test8.30 false
+verify
+
+removebehavior b0
++30 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test8.30 true
+verify
+
+deleteservice fabric:/test8
+verify
+
+#####################################################
+# Scenario9 6: Add secondary with replica going restart during build
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test9 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.40 None
+removebehavior b0
+
+addbehavior b0 * * ReplicatorBuildIdleReplicaReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test9.40.30 IB
+!pause 5
+
+#add secondary state achieved
+
+addbehavior bx * * ReplicaUp
+addbehavior by * * ReplicaClose
+reportfault 30 fabric:/test9 transient
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test9.30 true
+
+addbehavior bz * * StatefulServiceReopen
+removebehavior by
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test9.30 false
+!var Instance RA.Replica.InstanceId.fabric:/test9.30.30
+removebehavior bx
+removebehavior bz
+
+!waitforstate FM.Replica.InstanceId.fabric:/test9.30 <var.Instance>
+
+removebehavior b0
+
+verify
+
+deleteservice fabric:/test9
+verify
+
+#####################################################
+# Scenario 10: Add secondary with replica getting dropped after create during build
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test10 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.40 None
+removebehavior b0
+
+addbehavior b0 * * ReplicatorBuildIdleReplicaReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test10.40.30 IB
+!pause 5
+
+#add secondary state achieved
+
+addbehavior by * * ReplicaUp
+reportfault 30 fabric:/test10 permanent
+!waitforstate RA.FT.State.fabric:/test10.30 Closed
+
+removebehavior by
+removebehavior b0
+verify
+
+deleteservice fabric:/test10
+verify
+
+#####################################################
+# Scenario 11: Add secondary with replica going down after activate starts
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test11 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.40 None
+removebehavior b0
+
+addbehavior b0 * * Activate
++30 nodeprops=system:false
+!waitforstate RA.Replica.MessageStage.fabric:/test11.40.30 RA
+
+#add secondary state achieved
+
+-30
+
+!waitforstate RA.Replica.IsUp.fabric:/test11.40.30 false
+!waitforstate FM.Replica.IsUp.fabric:/test11.30 false
+verify
+
+removebehavior b0
++30 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test11.30 true
+verify
+
+deleteservice fabric:/test11
+verify
+
+#####################################################
+# Scenario 12: Add secondary with replica going restart during activate
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test12 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test12.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test12.40 None
+removebehavior b0
+
+addbehavior b0 * * Activate
++30 nodeprops=system:false
+!waitforstate RA.Replica.MessageStage.fabric:/test12.40.30 RA
+
+#add secondary state achieved
+
+addbehavior bx * * ReplicaUp
+addbehavior by * * ReplicaClose
+reportfault 30 fabric:/test12 transient
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test12.30 true
+
+addbehavior bz * * StatefulServiceReopen
+removebehavior by
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test12.30 false
+removebehavior bx
+!var Instance RA.Replica.InstanceId.fabric:/test12.30.30
+removebehavior bz
+
+!waitforstate FM.Replica.InstanceId.fabric:/test12.30 <var.Instance>
+
+removebehavior b0
+
+verify
+
+deleteservice fabric:/test12
+verify
+
+#####################################################
+# Scenario 13: Add secondary with replica getting dropped during activate
+#####################################################
+addbehavior b0 * * Activate
+createservice fabric:/test13 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test13.40 Phase4_Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test13.40 None
+removebehavior b0
+
+addbehavior b0 * * Activate
++30 nodeprops=system:false
+!waitforstate RA.Replica.MessageStage.fabric:/test13.40.30 RA
+!pause 5
+
+#add secondary state achieved
+
+addbehavior by * * ReplicaUp
+reportfault 30 fabric:/test13 permanent
+!waitforstate RA.FT.State.fabric:/test13.30 Closed
+
+removebehavior by
+removebehavior b0
+verify
+
+deleteservice fabric:/test13
+verify
+
+!q

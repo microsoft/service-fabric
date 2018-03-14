@@ -1,0 +1,331 @@
+##################################################################################################
+# Script to test the change role behavior when the primary and secondary queue sizes are different
+##################################################################################################
+
+set DummyPLBEnabled true
+votes 10
+cmservice 0 0
+namingservice 1 3 1
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set UserReplicaRestartWaitDuration 1000
+
++10
+verify
++20
++30
++40
+verify 
+
+######################################################################
+#   Configuration 1 - Secondary Queue Size = 4, Primary Queue Size = 2
+#
+#   Case 1:
+#   1. Block ACK of REPL operations on 1 secondary
+#   2. Replicate 4 operations. All must complete since there is quorum 
+#   3. Initiate swap primary with the blocked secondary 
+#   4. Unblock the ACK of REPL operations and then verify swap completes
+#   5. Initiate Move Secondary to verify build succeeds.
+#   6. Replicate 2 operations to ensure replication completes
+######################################################################
+
+#
+# The primary on node 40 goes into Phase0_Demote, but that gets aborted quickly (Abort_Phase0_Demote)
+# and the partition stabilizes with 40, 20 up, 30 down. The reconfiguration stage becomes None.
+#
+
+seteseonly
+
+createservice fabric:/c1test1 TestPersistedStoreServiceType y 1 3 persist initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/c1test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/c1test1.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/c1test1.20 Secondary
+
+verify
+setsignal 30 fabric:/c1test1 pump.replication.block 
+
+clientput fabric:/c1test1 10 10Data1 
+!wait 
+clientput fabric:/c1test1 20 20Data1 
+!wait 
+clientput fabric:/c1test1 30 30Data1 
+!wait 
+clientput fabric:/c1test1 40 40Data1 
+!wait 
+
+swapprimary fabric:/c1test1 40 30 
+!waitforstate RA.FT.ReconfigStage.fabric:/c1test1.40 Phase0_Demote
+
+!pause 5 
+resetsignal 30 fabric:/c1test1 pump.replication.block 
+!waitforstate FM.FT.Reconfig.fabric:/c1test1 false 
+!waitforstate FM.Replica.Role.fabric:/c1test1.30 Primary 
+
+movesecondary fabric:/c1test1 20 10 
+!wait 
+clientput fabric:/c1test1 50 50Data1 
+clientput fabric:/c1test1 60 60Data1 
+!wait
+
+cleareseonly
+
+######################################################################
+#   Configuration 1 - Secondary Queue Size = 4, Primary Queue Size = 2
+#
+#   Case 2:
+#   1. Block ACK of REPL operations on 1 secondary (node 30)
+#   2. Replicate 4 operations. All must complete since there is quorum 
+#   3. Kill the primary
+#   4. Unblock the ACK of REPL operations and then verify reconfig completes
+#   5. Initiate Move Secondary to verify build succeeds.
+#   6. Replicate 2 operations to ensure replication completes
+######################################################################
+
+#
+# Assumes 30 will become primary after aborting 40, but 20 can also become primary.
+#
+seteseonly
+
+createservice fabric:/c1test2 TestPersistedStoreServiceType y 1 3 persist initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/c1test2.40 Primary
+!waitforstate FM.Replica.Role.fabric:/c1test2.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/c1test2.20 Secondary
+
+verify
+setsignal 30 fabric:/c1test2 pump.replication.block 
+
+clientput fabric:/c1test2 10 10Data1 
+!wait 
+clientput fabric:/c1test2 20 20Data1 
+!wait 
+clientput fabric:/c1test2 30 30Data1 
+!wait 
+clientput fabric:/c1test2 40 40Data1 
+!wait 
+
+abort 40
+!waitforstate RA.FT.ReconfigStage.fabric:/c1test2.30 Phase1_GetLSN 
+
+!pause 5 
+resetsignal 30 fabric:/c1test2 pump.replication.block 
+!waitforstate FM.FT.Reconfig.fabric:/c1test2 false 
+!waitforstate FM.Replica.Role.fabric:/c1test2.30 Primary 
+
++40
+!wait 
+!waitforstate FM.Replica.Role.fabric:/c1test2.40 Secondary
+clientput fabric:/c1test2 50 50Data1 
+clientput fabric:/c1test2 60 60Data1 
+!wait 
+
+cleareseonly
+
+######################################################################
+#   Configuration 2 - Secondary Queue Size = 4, Primary Queue Size = 4
+#
+#   Case 1:
+#   1. Block ACK of REPL operations on 1 secondary
+#   2. Replicate 4 operations. All must complete since there is quorum 
+#   3. Initiate swap primary with the blocked secondary 
+#   4. Unblock the ACK of REPL operations and then verify swap completes
+#   5. Initiate Move Secondary to verify build succeeds.
+#   6. Replicate 2 operations to ensure replication completes
+######################################################################
+
+#
+# The replica on node 30 is being faulted due to it affecting the primary queue size.
+# The native store stack replicates more operations than KVS/ESE does - the replication
+# queue limits used in this test (initdata) seem to be tuned for KVS/ESE.
+#
+
+seteseonly
+
+createservice fabric:/c2test1 TestPersistedStoreServiceType y 1 3 persist initdata=RE_InitialPrimaryReplicationQueueSize:4;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/c2test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/c2test1.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/c2test1.20 Secondary
+
+verify
+
+setsignal 30 fabric:/c2test1 pump.replication.block 
+
+clientput fabric:/c2test1 10 10Data1 
+!wait 
+clientput fabric:/c2test1 20 20Data1 
+!wait 
+clientput fabric:/c2test1 30 30Data1 
+!wait 
+clientput fabric:/c2test1 40 40Data1 
+!wait 
+
+swapprimary fabric:/c2test1 40 30 
+!waitforstate RA.FT.ReconfigStage.fabric:/c2test1.40 Phase0_Demote
+
+!pause 5 
+resetsignal 30 fabric:/c2test1 pump.replication.block 
+!waitforstate FM.FT.Reconfig.fabric:/c2test1 false 
+!waitforstate FM.Replica.Role.fabric:/c2test1.30 Primary 
+
+movesecondary fabric:/c2test1 20 10 
+!wait 
+clientput fabric:/c2test1 50 50Data1 
+clientput fabric:/c2test1 60 60Data1 
+!wait  
+
+cleareseonly
+
+######################################################################
+#   Configuration 2 - Secondary Queue Size = 4, Primary Queue Size = 4
+#
+#   Case 2:
+#   1. Block ACK of REPL operations on 1 secondary (node 30)
+#   2. Replicate 4 operations. All must complete since there is quorum 
+#   3. Kill the primary
+#   4. Unblock the ACK of REPL operations and then verify reconfig completes
+#   5. Initiate Move Secondary to verify build succeeds.
+#   6. Replicate 2 operations to ensure replication completes
+######################################################################
+
+#
+# Like Configuration 1, Case 2, 20 is becoming primary instead of 30
+# after aborting 40.
+#
+
+seteseonly
+
+createservice fabric:/c2test2 TestPersistedStoreServiceType y 1 3 persist initdata=RE_InitialPrimaryReplicationQueueSize:4;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/c2test2.40 Primary
+!waitforstate FM.Replica.Role.fabric:/c2test2.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/c2test2.20 Secondary
+
+verify
+setsignal 30 fabric:/c2test2 pump.replication.block 
+
+clientput fabric:/c2test2 10 10Data1 
+!wait 
+clientput fabric:/c2test2 20 20Data1 
+!wait 
+clientput fabric:/c2test2 30 30Data1 
+!wait 
+clientput fabric:/c2test2 40 40Data1 
+!wait 
+
+abort 40
+!waitforstate RA.FT.ReconfigStage.fabric:/c2test2.30 Phase1_GetLSN 
+
+!pause 5 
+resetsignal 30 fabric:/c2test2 pump.replication.block 
+!waitforstate FM.FT.Reconfig.fabric:/c2test2 false 
+!waitforstate FM.Replica.Role.fabric:/c2test2.30 Primary 
+
++40
+!wait 
+!waitforstate FM.Replica.Role.fabric:/c2test2.40 Secondary
+clientput fabric:/c2test2 50 50Data1 
+clientput fabric:/c2test2 60 60Data1 
+!wait 
+
+cleareseonly
+
+######################################################################
+#   Configuration 3 - Secondary Queue Size = 2, Primary Queue Size = 4
+#
+#   Case 1:
+#   1. Block ACK of REPL operations on 1 secondary
+#   2. Replicate 2 operations. All must complete since there is quorum 
+#   3. Initiate swap primary with the blocked secondary 
+#   4. Unblock the ACK of REPL operations and then verify swap completes
+#   5. Initiate Move Secondary to verify build succeeds.
+#   6. Replicate 2 operations to ensure replication completes
+######################################################################
+createservice fabric:/c3test1 TestPersistedStoreServiceType y 1 3 persist initdata=RE_InitialPrimaryReplicationQueueSize:4;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:2
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/c3test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/c3test1.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/c3test1.20 Secondary
+
+verify
+setsignal 30 fabric:/c3test1 pump.replication.block 
+
+clientput fabric:/c3test1 10 10Data1 
+!wait 
+clientput fabric:/c3test1 20 20Data1 
+!wait 
+
+swapprimary fabric:/c3test1 40 30 
+!waitforstate RA.FT.ReconfigStage.fabric:/c3test1.40 Phase0_Demote
+
+!pause 5 
+resetsignal 30 fabric:/c3test1 pump.replication.block 
+!waitforstate FM.FT.Reconfig.fabric:/c3test1 false 
+!waitforstate FM.Replica.Role.fabric:/c3test1.30 Primary 
+
+movesecondary fabric:/c3test1 20 10 
+!wait 
+clientput fabric:/c3test1 50 50Data1 
+clientput fabric:/c3test1 60 60Data1 
+!wait  
+
+######################################################################
+#   Configuration 3 - Secondary Queue Size = 2, Primary Queue Size = 4
+#
+#   Case 2:
+#   1. Block ACK of REPL operations on 1 secondary (node 30)
+#   2. Replicate 2 operations. All must complete since there is quorum 
+#   3. Kill the primary
+#   4. Unblock the ACK of REPL operations and then verify reconfig completes
+#   5. Initiate Move Secondary to verify build succeeds.
+#   6. Replicate 2 operations to ensure replication completes
+######################################################################
+
+#
+# Like Configuration 1, Case 2, 20 is becoming primary instead of 30
+# after aborting 40.
+#
+
+seteseonly
+
+createservice fabric:/c3test2 TestPersistedStoreServiceType y 1 3 persist initdata=RE_InitialPrimaryReplicationQueueSize:4;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:2
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/c3test2.40 Primary
+!waitforstate FM.Replica.Role.fabric:/c3test2.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/c3test2.20 Secondary
+
+verify
+setsignal 30 fabric:/c3test2 pump.replication.block 
+
+clientput fabric:/c3test2 10 10Data1 
+!wait 
+clientput fabric:/c3test2 20 20Data1 
+!wait 
+
+abort 40
+!waitforstate RA.FT.ReconfigStage.fabric:/c3test2.30 Phase1_GetLSN 
+
+!pause 5 
+resetsignal 30 fabric:/c3test2 pump.replication.block 
+!waitforstate FM.FT.Reconfig.fabric:/c3test2 false 
+!waitforstate FM.Replica.Role.fabric:/c3test2.30 Primary 
+
++40
+!wait 
+!waitforstate FM.Replica.Role.fabric:/c3test2.40 Secondary
+clientput fabric:/c3test2 50 50Data1 
+clientput fabric:/c3test2 60 60Data1 
+!wait 
+
+cleareseonly
+
+!q

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest ApplicationTypeName="ContainerApplicationType"
+                     ApplicationTypeVersion="2.0.0"
+                     xmlns="http://schemas.microsoft.com/2011/01/fabric"
+                     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Parameters>
+    <Parameter Name="ContainerRepositoryPassword" DefaultValue="" />
+  </Parameters>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="ContainerServicePkg" ServiceManifestVersion="2.0.0" />
+    <ConfigOverrides />
+    <Policies>
+      <ContainerHostPolicies CodePackageRef="Code">
+        <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Not a secret.")]-->   
+        <RepositoryCredentials AccountName="sftestcontainerreg" Password="[ContainerRepositoryPassword]" />
+        <HealthConfig IncludeDockerHealthStatusInSystemHealthReport="false" RestartContainerOnUnhealthyDockerHealthStatus="true"></HealthConfig>
+        <PortBinding ContainerPort="15243" EndpointRef="Endpoint"/>
+        <CertificateRef Name="MyCert1" X509StoreName="My" X509FindValue="ad fc 91 97 13 16 8d 9f a8 ee 71 2b a2 f4 37 62 00 03 49 0d"/>
+        <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Not a secret, test value.")]-->   
+        <CertificateRef Name="MyCert2" DataPackageRef="Data"  DataPackageVersion="1.0" RelativePath="Certificate.pfx" Password="password" IsPasswordEncrypted="false"/>
+        <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Not a secret, test value.")]-->   
+        <CertificateRef Name="MyCert3" DataPackageRef="Data"  DataPackageVersion="2.0" RelativePath="Certificate.pfx" Password="password" IsPasswordEncrypted="true"/>
+        <LogConfig Driver="etwlogs" >
+          <DriverOption Name="test" Value="value"/>
+        </LogConfig>
+        <Volume Source="c:\workspace" Destination="c:\testmountlocation1" IsReadOnly="false"></Volume>
+        <Volume Source="d:\myfolder" Destination="c:\testmountlocation2" IsReadOnly="true"> </Volume>
+        <Volume Source="myexternalvolume" Destination="c:\testmountlocation3" Driver="sf" IsReadOnly="true"></Volume>
+      </ContainerHostPolicies>
+    </Policies>
+  </ServiceManifestImport>
+</ApplicationManifest>

@@ -1,0 +1,32 @@
+#Test vote dynamic update
+set GlobalTicketLeaseDuration 60
+set GlobalTicketRenewInterval 3
+set BootstrapTicketLeaseDuration 20
+set BootstrapTicketAcquireLimit 3
+set ArbitrationTimeout 10
+set PingInterval 3
+votes 100:SeedNode:10001 200:SeedNode:10002 300:SeedNode:10003
+addbehavior b1 300 * NeighborhoodQueryRequest
+clearticket
++100
++300
++500 10500
+!waitforstate Phase.100 R
+!pause,2
+!state Phase.500 B|J
+removebehavior b1
+verify
++200
++400 port=10004
+verify
+-300
+verify
+#remove vote 200 and add 400
+-200
+!updatecfg Votes.100=SeedNode,127.0.0.1:10001 Votes.200= Votes.300=SeedNode,127.0.0.1:10003 Votes.400=SeedNode,127.0.0.1:10004
+!pause,70
+addbehavior block500 500 * ArbitrateRequest
+!expect,Node 500 Failed
+blockleaseagent 10500
+verify
+!q

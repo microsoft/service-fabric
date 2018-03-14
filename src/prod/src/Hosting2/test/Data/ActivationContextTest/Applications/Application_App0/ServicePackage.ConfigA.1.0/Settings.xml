@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Section Name="SectionA">
+    <Parameter Name="Param1" Value="65536"/>
+    <Parameter Name="Param2" Value="False"/>
+  </Section>
+  <Section Name="SectionB">
+    <Parameter Name="Param1" Value="True"/>
+    <Parameter Name="Param2" Value="String"/>
+    <Parameter Name="Param3" Value="256"/>
+    <Parameter Name="Param4" Value="String"/>
+  </Section>
+  <Section Name="SectionC">
+    <Parameter Name="Param1" Value="1010"/>
+  </Section>
+</Settings>

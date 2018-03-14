@@ -1,0 +1,629 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+set NamingServiceChangePollInterval 30
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+###############################################
+######## Stateless Open/Close        ##########
+###############################################
+createname fabric:/servicegroup5
+createservicegroup fabric:/servicegroup5 SGStatelessServiceFactory n 1 2 \
+    2 \
+    fabric:/servicegroup5#test1 SGStatelessService \
+    fabric:/servicegroup5#test2 SGStatelessService
+
+verify
+
++70
+verify
+
+injectfailure 50 fabric:/servicegroup5#test1 service.endclose
+
+movesecondary fabric:/servicegroup5 50 70
+
+verify
+!waitforstate FM.Replica.State.fabric:/servicegroup5.60 Ready
+!waitforstate FM.Replica.State.fabric:/servicegroup5.70 Ready
+
+removefailure 50 fabric:/servicegroup5#test1 service.endclose
+
+-70
+
+deleteservicegroup fabric:/servicegroup5
+deletename fabric:/servicegroup5
+
+verify
+
+#####################################################
+######## Fail on Change role Secondary->None ########
+#####################################################
+
+createname fabric:/servicegroup6
+
+createservicegroup fabric:/servicegroup6 SGStatefulServiceFactory y 1 3 \
+    2 \
+    fabric:/servicegroup6#test1 SGStatefulService \
+    fabric:/servicegroup6#test2 SGStatefulService \
+    persist
+
+verify
+movesecondary fabric:/servicegroup6 40 30
+!pause,10
+!waitforstate FM.Replica.Role.fabric:/servicegroup6.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup6.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup6.30 Secondary
+verify
+
+injectfailure 30 fabric:/servicegroup6#test2 service.beginchangerole
+
+movesecondary fabric:/servicegroup6 30 70 force
+
+!pause,10
+
+removefailure 30 fabric:/servicegroup6#test2 service.beginchangerole
+
+!waitforstate RA.FT.LocalReplicaRole.fabric:/servicegroup6.30 Secondary
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup6.30 Secondary
+
+deleteservicegroup fabric:/servicegroup6
+deletename fabric:/servicegroup6
+verify
+
+#############################################
+######## Fail on Primary's BeginOpen ########
+#############################################
+createname fabric:/servicegroup7
+injectfailure 60 fabric:/servicegroup7#test2 service.beginopen
+createservicegroup fabric:/servicegroup7 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup7#test1 SGStatefulService fabric:/servicegroup7#test2 SGStatefulService persist
+
+!pause,10
+!waitforstate FM.Replica.State.fabric:/servicegroup7.60 InBuild|Dropped
+
+##########################################################################################
+######## Fail on Secondary's BeginOpen, and remove failure on Primary's BeginOpen ########
+##########################################################################################
+injectfailure 50 fabric:/servicegroup7#test1 service.beginopen
+removefailure 60 fabric:/servicegroup7#test2 service.beginopen
+!waitforstate FM.Replica.Role.fabric:/servicegroup7.60 Primary
+!pause,6
+removefailure 50 fabric:/servicegroup7#test1 service.beginopen
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup7.50 Secondary
+deleteservicegroup fabric:/servicegroup7
+deletename fabric:/servicegroup7
+verify
+
+###################################################
+######## Fail on Change role None->Primary ########
+###################################################
+createname fabric:/servicegroup8
+injectfailure 60 fabric:/servicegroup8#test2 service.beginchangerole
+createservicegroup fabric:/servicegroup8 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup8#test1 SGStatefulService fabric:/servicegroup8#test2 SGStatefulService persist
+!pause,6
+removefailure 60 fabric:/servicegroup8#test2 service.beginchangerole
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup8.60 Primary
+deleteservicegroup fabric:/servicegroup8
+deletename fabric:/servicegroup8
+verify
+
+################################################
+######## Fail on Change role None->Idle ########
+################################################
+injectfailure 50 fabric:/servicegroup9#test2 service.beginchangerole
+createname fabric:/servicegroup9
+createservicegroup fabric:/servicegroup9 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup9#test1 SGStatefulService fabric:/servicegroup9#test2 SGStatefulService persist
+
+!waitforstate FM.Replica.Role.fabric:/servicegroup9.60 Primary
+
+!pause,6
+removefailure 50 fabric:/servicegroup9#test2 service.beginchangerole
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup9.50 Secondary
+
+deleteservicegroup fabric:/servicegroup9
+deletename fabric:/servicegroup9
+verify
+
+##########################################################################
+######## Fail on Change role Secondary->Primary using swapprimary ########
+##########################################################################
+createname fabric:/servicegroup10
+createservicegroup fabric:/servicegroup10 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup10#test1 SGStatefulService fabric:/servicegroup10#test2 SGStatefulService persist
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup10.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup10.50 Secondary
+
+# P60 S50
+injectfailure 50 fabric:/servicegroup10#test2 service.beginchangerole
+swapprimary fabric:/servicegroup10 60 50
+!pause,1
+removefailure 50 fabric:/servicegroup10#test2 service.beginchangerole
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup10.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup10.50 Primary
+
+deleteservicegroup fabric:/servicegroup10
+deletename fabric:/servicegroup10
+verify
+
+###########################################################################
+######## Fail on Change role Secondary->Primary by killing primary ########
+###########################################################################
+createname fabric:/servicegroup11
+createservicegroup fabric:/servicegroup11 SGStatefulServiceFactory y 1 3 2 fabric:/servicegroup11#test1 SGStatefulService fabric:/servicegroup11#test2 SGStatefulService persist
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup11.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup11.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup11.40 Secondary
+
+injectfailure 50 fabric:/servicegroup11#test2 service.beginchangerole
+-60
+!waitforstate FM.FT.Reconfig.fabric:/servicegroup11 true
+!pause,1
+removefailure 50 fabric:/servicegroup11#test2 service.beginchangerole
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup11.50 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup11.40 Primary|Secondary
+
+deleteservicegroup fabric:/servicegroup11
++60
+deletename fabric:/servicegroup11
+verify
+
+##########################################################################
+######## Fail on Change role Primary->Secondary using swapprimary ########
+##########################################################################
+createname fabric:/servicegroup12
+createservicegroup fabric:/servicegroup12 SGStatefulServiceFactory y 1 3 2 fabric:/servicegroup12#test1 SGStatefulService fabric:/servicegroup12#test2 SGStatefulService persist
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup12.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup12.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup12.40 Secondary
+
+injectfailure 60 fabric:/servicegroup12#test2 service.beginchangerole
+swapprimary fabric:/servicegroup12 60 50
+!waitforstate FM.FT.Reconfig.fabric:/servicegroup12 true
+!pause,1
+removefailure 60 fabric:/servicegroup12#test2 service.beginchangerole
+verify
+
+!waitforstate FM.Replica.Role.fabric:/servicegroup12.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup12.50 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup12.40 Secondary
+
+deleteservicegroup fabric:/servicegroup12
+deletename fabric:/servicegroup12
+verify
+
+############################################################
+######## Fail on Primary's GetLastCommittedSequence ########
+############################################################
+createname fabric:/servicegroup13
+
+injectfailure 60 fabric:/servicegroup13#test2 provider.getlastcommittedsequencenumber
+createservicegroup fabric:/servicegroup13 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup13#test1 SGStatefulService fabric:/servicegroup13#test2 SGStatefulService persist
+
+!pause,10
+!waitforstate FM.Replica.State.fabric:/servicegroup13.60 InBuild|Dropped
+removefailure 60 fabric:/servicegroup13#test2 provider.getlastcommittedsequencenumber
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup13.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup13.50 Secondary
+
+deleteservicegroup fabric:/servicegroup13
+deletename fabric:/servicegroup13
+verify
+
+#############################################
+######## Fail on Primary's endopen ########
+#############################################
+createname fabric:/servicegroup14
+
+injectfailure 60 fabric:/servicegroup14#test2 service.endopen
+
+createservicegroup fabric:/servicegroup14 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup14#test1 SGStatefulService fabric:/servicegroup14#test2 SGStatefulService persist
+
+!pause,10
+!waitforstate FM.Replica.State.fabric:/servicegroup14.60 InBuild|Dropped
+
+######################################################################################
+######## Fail on Secondary's endopen, and remove failure on Primary's endopen ########
+######################################################################################
+injectfailure 50 fabric:/servicegroup14#test1 service.endopen
+removefailure 60 fabric:/servicegroup14#test2 service.endopen
+!waitforstate FM.Replica.Role.fabric:/servicegroup14.60 Primary
+!pause,6
+removefailure 50 fabric:/servicegroup14#test1 service.endopen
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup14.50 Secondary
+
+deleteservicegroup fabric:/servicegroup14
+deletename fabric:/servicegroup14
+verify
+
+###################################################
+######## Fail on Change role None->Primary ########
+###################################################
+createname fabric:/servicegroup15
+
+injectfailure 60 fabric:/servicegroup15#test2 service.endchangerole
+createservicegroup fabric:/servicegroup15 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup15#test1 SGStatefulService fabric:/servicegroup15#test2 SGStatefulService persist
+
+removefailure 60 fabric:/servicegroup15#test2 service.endchangerole
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup15.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup15.50 Secondary
+
+deleteservicegroup fabric:/servicegroup15
+deletename fabric:/servicegroup15
+verify
+
+################################################
+######## Fail on Change role None->Idle ########
+################################################
+createname fabric:/servicegroup16
+
+injectfailure 50 fabric:/servicegroup16#test2 service.endchangerole
+createservicegroup fabric:/servicegroup16 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup16#test1 SGStatefulService fabric:/servicegroup16#test2 SGStatefulService persist
+
+!waitforstate FM.Replica.Role.fabric:/servicegroup16.60 Primary
+!pause,6
+removefailure 50 fabric:/servicegroup16#test2 service.endchangerole
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup16.50 Secondary
+
+deleteservicegroup fabric:/servicegroup16
+deletename fabric:/servicegroup16
+verify
+
+##########################################################################
+######## Fail on Change role Secondary->Primary using swapprimary ########
+##########################################################################
+createname fabric:/servicegroup17
+createservicegroup fabric:/servicegroup17 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup17#test1 SGStatefulService fabric:/servicegroup17#test2 SGStatefulService persist
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup17.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup17.50 Secondary
+
+# P60 S50
+injectfailure 50 fabric:/servicegroup17#test2 service.endchangerole
+
+swapprimary fabric:/servicegroup17 60 50
+
+!waitforstate FM.FT.Reconfig.fabric:/servicegroup17 true
+!pause,1
+removefailure 50 fabric:/servicegroup17#test2 service.endchangerole
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup17.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup17.50 Primary
+
+deleteservicegroup fabric:/servicegroup17
+deletename fabric:/servicegroup17
+verify
+
+##########################################################################
+######## Fail on Change role Secondary->Primary by killing primary ########
+###########################################################################
+createname fabric:/servicegroup18
+createservicegroup fabric:/servicegroup18 SGStatefulServiceFactory y 1 3 2 fabric:/servicegroup18#test1 SGStatefulService fabric:/servicegroup18#test2 SGStatefulService persist
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup18.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup18.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup18.40 Secondary
+
+injectfailure 50 fabric:/servicegroup18#test2 service.endchangerole
+
+-60
+
+!waitforstate FM.FT.Reconfig.fabric:/servicegroup18 true
+!pause,1
+removefailure 50 fabric:/servicegroup18#test2 service.endchangerole
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup18.50 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup18.40 Primary|Secondary
+
+deleteservicegroup fabric:/servicegroup18
++60
+deletename fabric:/servicegroup18
+verify
+
+##########################################################################
+######## Fail on Change role Primary->Secondary using swapprimary ########
+##########################################################################
+createname fabric:/servicegroup19
+createservicegroup fabric:/servicegroup19 SGStatefulServiceFactory y 1 3 2 fabric:/servicegroup19#test1 SGStatefulService fabric:/servicegroup19#test2 SGStatefulService persist
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup19.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup19.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup19.40 Secondary
+
+injectfailure 60 fabric:/servicegroup19#test2 service.endchangerole
+swapprimary fabric:/servicegroup19 60 50
+!waitforstate FM.FT.Reconfig.fabric:/servicegroup19 true
+!pause,1
+removefailure 60 fabric:/servicegroup19#test2 service.endchangerole
+
+verify
+!waitforstate FM.FT.Reconfig.fabric:/servicegroup19 false
+
+deleteservicegroup fabric:/servicegroup19
+deletename fabric:/servicegroup19
+verify
+
+##############################################
+######## Primary fail on GetCopyState ########
+##############################################
+createname fabric:/servicegroup20
+injectfailure 60 fabric:/servicegroup20#test2 provider.getcopystate
+createservicegroup fabric:/servicegroup20 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup20#test1 SGStatefulService fabric:/servicegroup20#test2 SGStatefulService persist
+
+!pause,30
+removefailure 60 fabric:/servicegroup20#test2 provider.getcopystate
+
+verify
+deleteservicegroup fabric:/servicegroup20
+deletename fabric:/servicegroup20
+verify
+
+#######################################################################
+######## Primary fail on BeginGetNext on copy state enumerator ########
+#######################################################################
+createname fabric:/servicegroup21
+injectfailure 60 fabric:/servicegroup21#test2 provider.begingetnextcopystate
+createservicegroup fabric:/servicegroup21 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup21#test1 SGStatefulService fabric:/servicegroup21#test2 SGStatefulService persist
+
+!pause,30
+removefailure 60 fabric:/servicegroup21#test2 provider.begingetnextcopystate
+
+verify
+
+deleteservicegroup fabric:/servicegroup21
+deletename fabric:/servicegroup21
+verify
+
+#####################################################################
+######## Primary fail on EndGetNext on copy state enumerator ########
+#####################################################################
+createname fabric:/servicegroup22
+injectfailure 60 fabric:/servicegroup22#test2 provider.endgetnextcopystate
+createservicegroup fabric:/servicegroup22 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup22#test1 SGStatefulService fabric:/servicegroup22#test2 SGStatefulService persist
+
+!pause,30
+removefailure 60 fabric:/servicegroup22#test2 provider.endgetnextcopystate
+
+verify
+
+deleteservicegroup fabric:/servicegroup22
+deletename fabric:/servicegroup22
+verify
+
+##################################################
+######## Secondary fail on GetCopyContext ########
+##################################################
+#createname fabric:/servicegroup23
+#injectfailure 50 fabric:/servicegroup23#test2 provider.getcopycontext
+#createservicegroup fabric:/servicegroup23 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup23#test1 SGStatefulService fabric:/servicegroup23#test2 SGStatefulService persist
+#
+#!pause,30
+#removefailure 50 fabric:/servicegroup23#test2 provider.getcopycontext
+#
+#verify
+#
+#deleteservicegroup fabric:/servicegroup23
+#deletename fabric:/servicegroup23
+#verify
+#
+###########################################################################
+######## Secondary fail on BeginGetNext on copy context enumerator ########
+###########################################################################
+#createname fabric:/servicegroup24
+#injectfailure 50 fabric:/servicegroup24#test2 provider.begingetnextcopycontext
+#createservicegroup fabric:/servicegroup24 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup24#test1 SGStatefulService fabric:/servicegroup24#test2 SGStatefulService persist
+#
+#!pause,10
+#removefailure 50 fabric:/servicegroup24#test2 provider.begingetnextcopycontext
+#
+#verify
+#
+#deleteservicegroup fabric:/servicegroup24
+#deletename fabric:/servicegroup24
+#verify
+#
+#########################################################################
+######## Secondary fail on EndGetNext on copy context enumerator ########
+#########################################################################
+#createname fabric:/servicegroup25
+#injectfailure 50 fabric:/servicegroup25#test2 provider.endgetnextcopycontext
+#createservicegroup fabric:/servicegroup25 SGStatefulServiceFactory y 1 2 2 fabric:/servicegroup25#test1 SGStatefulService fabric:/servicegroup25#test2 SGStatefulService persist
+#
+#!pause,10
+#removefailure 50 fabric:/servicegroup25#test2 provider.endgetnextcopycontext
+#
+#verify
+#
+#deleteservicegroup fabric:/servicegroup25
+#deletename fabric:/servicegroup25
+#verify
+
+###############################################
+## Stateless service group test
+###############################################
+createname fabric:/servicegroup26
+createservicegroup fabric:/servicegroup26 SGStatelessServiceFactory n 1 2 2 fabric:/servicegroup26#test1 SGStatelessService fabric:/servicegroup26#test2 SGStatelessService
+verify
+deleteservicegroup fabric:/servicegroup26
+deletename fabric:/servicegroup26
+
+injectfailure 60 fabric:/servicegroup27#test2 service.beginopen
+createname fabric:/servicegroup27
+createservicegroup fabric:/servicegroup27 SGStatelessServiceFactory n 1 2 2 fabric:/servicegroup27#test1 SGStatelessService fabric:/servicegroup27#test2 SGStatelessService
+!pause,6
+removefailure 60 fabric:/servicegroup27#test2 service.beginopen
+verify
+deleteservicegroup fabric:/servicegroup27
+deletename fabric:/servicegroup27
+
+injectfailure 50 fabric:/servicegroup28#test1 service.endopen
+createname fabric:/servicegroup28
+createservicegroup fabric:/servicegroup28 SGStatelessServiceFactory n 1 2 2 fabric:/servicegroup28#test1 SGStatelessService fabric:/servicegroup28#test2 SGStatelessService
+!pause,6
+removefailure 50 fabric:/servicegroup28#test1 service.endopen
+verify
+deleteservicegroup fabric:/servicegroup28
+deletename fabric:/servicegroup28
+verify
+
+###############################################
+## Begin name resolution test for stateful service group
+###############################################
+createname fabric:/servicegroup29
+createservicegroup fabric:/servicegroup29 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup29#test1 SGStatefulService fabric:/servicegroup29#test2 SGStatefulService fabric:/servicegroup29#test3 SGStatefulService persist
+verify
+#
+resolve fabric:/servicegroup29 10 error=AccessDenied
+resolve fabric:/servicegroup29#test1 10
+resolve fabric:/servicegroup29#test2 10
+resolve fabric:/servicegroup29#test3 10
+resolve fabric:/servicegroup29#test1 10
+resolve fabric:/servicegroup29#test2 10
+resolve fabric:/servicegroup29#test3 10
+resolve fabric:/servicegroup29#test4 10 error=UserServiceNotFound
+resolve fabric:/namenotexist#test1 10 error=UserServiceNotFound
+#
+createclient c1
+resolveusingclient c1 fabric:/servicegroup29#test1 10
+resolveusingclient c1 fabric:/servicegroup29#test2 10
+resolveusingclient c1 fabric:/servicegroup29 10 error=AccessDenied
+resolveusingclient c1 fabric:/servicegroup29#test3 10
+resolveusingclient c1 fabric:/servicegroup29#test4 10 error=UserServiceNotFound
+resolveusingclient c1 fabric:/namenotexist#test1 10 error=UserServiceNotFound
+deleteclient c1
+#
+createclient c2
+registercallback c2 cSG fabric:/servicegroup29 10
+registercallback c2 cSGtest1 fabric:/servicegroup29#test1 10 
+registercallback c2 cSGtest2 fabric:/servicegroup29#test2 10 
+registercallback c2 cSGtest3 fabric:/servicegroup29#test3 10 
+registercallback c2 cSGtest4 fabric:/servicegroup29#test4 10 
+waitforcallback c2 cSGtest2
+waitforcallback c2 cSGtest1
+waitforcallback c2 cSG error=AccessDenied
+waitforcallback c2 cSGtest3
+waitforcallback c2 cSGtest4 error=UserServiceNotFound
+deleteclient c2
+#
+putproperty fabric:/servicegroup29 Property Value
+getproperty fabric:/servicegroup29 Property Value
+putproperty fabric:/servicegroup29#test1 Property1 Value1
+getproperty fabric:/servicegroup29#test1 Property1 Value1
+putproperty fabric:/servicegroup29#test2 Property2 Value2
+getproperty fabric:/servicegroup29#test2 Property2 Value2
+putproperty fabric:/servicegroup29#test3 Property3 Value3
+getproperty fabric:/servicegroup29#test3 Property3 Value3
+putproperty fabric:/servicegroup29#notexisting PropertyNotExisting ValueNotExisting
+getproperty fabric:/servicegroup29#notexisting PropertyNotExisting ValueNotExisting
+deleteproperty fabric:/servicegroup29 Property
+deleteproperty fabric:/servicegroup29#test1 Property1
+deleteproperty fabric:/servicegroup29#test2 Property2
+deleteproperty fabric:/servicegroup29#test3 Property3
+deleteproperty fabric:/servicegroup29#notexisting PropertyNotExisting
+#
+deleteservicegroup fabric:/servicegroup29
+deletename fabric:/servicegroup29
+verify
+###############################################
+## End name resolution test for stateful service group
+###############################################
+
+###############################################
+## Begin name resolution test for stateless service group
+###############################################
+createname fabric:/servicegroup30
+createservicegroup fabric:/servicegroup30 SGStatelessServiceFactory n 1 3 3 fabric:/servicegroup30#test1 SGStatelessService fabric:/servicegroup30#test2 SGStatelessService fabric:/servicegroup30#test3 SGStatelessService
+verify
+#
+resolve fabric:/servicegroup30 10 error=AccessDenied
+resolve fabric:/servicegroup30#test1 10
+resolve fabric:/servicegroup30#test2 10
+resolve fabric:/servicegroup30#test3 10
+resolve fabric:/servicegroup30#test1 10
+resolve fabric:/servicegroup30#test2 10
+resolve fabric:/servicegroup30#test3 10
+resolve fabric:/servicegroup30#test4 10 error=UserServiceNotFound
+resolve fabric:/namenotexist#test1 10 error=UserServiceNotFound
+#
+createclient c1
+resolveusingclient c1 fabric:/servicegroup30#test1 10
+resolveusingclient c1 fabric:/servicegroup30#test2 10
+resolveusingclient c1 fabric:/servicegroup30 10 error=AccessDenied
+resolveusingclient c1 fabric:/servicegroup30#test3 10
+resolveusingclient c1 fabric:/servicegroup30#test4 10 error=UserServiceNotFound
+resolveusingclient c1 fabric:/namenotexist#test1 10 error=UserServiceNotFound
+deleteclient c1
+#
+createclient c2
+registercallback c2 cSG fabric:/servicegroup30 10 
+registercallback c2 cSGtest1 fabric:/servicegroup30#test1 10 
+registercallback c2 cSGtest2 fabric:/servicegroup30#test2 10 
+registercallback c2 cSGtest3 fabric:/servicegroup30#test3 10 
+registercallback c2 cSGtest4 fabric:/servicegroup30#test4 10 
+waitforcallback c2 cSG error=AccessDenied
+waitforcallback c2 cSGtest1
+waitforcallback c2 cSGtest2
+waitforcallback c2 cSGtest3
+waitforcallback c2 cSGtest4 error=UserServiceNotFound
+deleteclient c2
+#
+putproperty fabric:/servicegroup30 Property Value
+getproperty fabric:/servicegroup30 Property Value
+putproperty fabric:/servicegroup30#test1 Property1 Value1
+getproperty fabric:/servicegroup30#test1 Property1 Value1
+putproperty fabric:/servicegroup30#test2 Property2 Value2
+getproperty fabric:/servicegroup30#test2 Property2 Value2
+putproperty fabric:/servicegroup30#test3 Property3 Value3
+getproperty fabric:/servicegroup30#test3 Property3 Value3
+putproperty fabric:/servicegroup30#notexisting PropertyNotExisting ValueNotExisting
+getproperty fabric:/servicegroup30#notexisting PropertyNotExisting ValueNotExisting
+deleteproperty fabric:/servicegroup30 Property
+deleteproperty fabric:/servicegroup30#test1 Property1
+deleteproperty fabric:/servicegroup30#test2 Property2
+deleteproperty fabric:/servicegroup30#test3 Property3
+deleteproperty fabric:/servicegroup30#notexisting PropertyNotExisting
+#
+deleteservicegroup fabric:/servicegroup30
+deletename fabric:/servicegroup30
+###############################################
+## End name resolution test for stateless service group
+###############################################
+verify
+!q
+

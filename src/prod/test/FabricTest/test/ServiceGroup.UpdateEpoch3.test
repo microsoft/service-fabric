@@ -1,0 +1,125 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+
++10
++20
++30
+verify
++40
++50
++60
++70
++80
+verify
+
+################################################
+###### Update epoch on failed swapprimary ######
+################################################
+
+# This test validates that UpdateEpoch is called on all service members on a failed swapprimary 
+# in which the old primary remains in its role.
+
+# By preventing replication from completing we prevent the primary from transitioning to secondary.
+
+# Upon UpdateEpoch on the primary we need to restart the replication process
+# so that the secondaries also receive the UpdateEpoch.
+
+# The test validates that UpdateEpoch has been called with the expected LSN when the remaining replicas 
+# change role to None upon service deletion.
+
+# The test also validates that the transition from primary to active secondary does not occur.
+
+createname fabric:/servicegroup0
+
+# block replication operation to secondaries
+# this will prevent 80 from transitioning to secondary
+addbehavior b2 * 60 ReplicationOperation
+
+# delay the replication of the commit operation to after everyone has been built so that we see it on the repl stream
+setsignal 80 fabric:/servicegroup0#test1 servicegroup.delaycommit
+
+createservicegroup \
+    fabric:/servicegroup0 SGStatefulServiceFactory y 1 4 \
+    2 \
+    fabric:/servicegroup0#test1 SGStatefulService \
+    fabric:/servicegroup0#test2 SGStatefulService \
+    init fabric:/servicegroup0#test1 \
+        replicateatomic \
+        atomicgroupstateprovider \
+        onchangerole.none.assert.previousEpochLastLsn=4 \
+        onchangerole.primary_to_secondary.failtest \
+    endinit \
+    init fabric:/servicegroup0#test2 \
+        replicateatomic \
+        atomicgroupstateprovider \
+        onchangerole.none.assert.previousEpochLastLsn=4 \
+        onchangerole.primary_to_secondary.failtest \
+    endinit \
+    persist \
+    minreplicasetsize=3
+
+# workaround for test issue
+setsignal 70 fabric:/servicegroup0#test1 servicegroup.skipvalidation
+setsignal 60 fabric:/servicegroup0#test1 servicegroup.skipvalidation
+setsignal 50 fabric:/servicegroup0#test1 servicegroup.skipvalidation
+setsignal 70 fabric:/servicegroup0#test2 servicegroup.skipvalidation
+setsignal 60 fabric:/servicegroup0#test2 servicegroup.skipvalidation
+setsignal 50 fabric:/servicegroup0#test2 servicegroup.skipvalidation
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.80 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.50 Secondary
+
+!waitforstate RA.FT.ReconfigStage.fabric:/servicegroup0.80 None
+
+# replicate the commit operation
+resetsignal 80 fabric:/servicegroup0#test1 servicegroup.delaycommit
+
+!pause,20
+
+# trigger swap primary
+swapprimary fabric:/servicegroup0 80 60
+
+!pause,10
+
+# Verify 60 is selected as new primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.80 Secondary
+
+!waitforstate RA.FT.ReconfigStage.fabric:/servicegroup0.80 Phase0_Demote
+
+!pause,10
+
+# Kill new primary, this will cause cancelling swap primary.
+removeruntime 60 y
+
+!pause,10
+
+# Verify 80 is selected is the primary again
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.80 Primary
+
+removebehavior b2
+
+!pause,10
+
+# Remove the replicas on which we don't want validation to run. Replicas on these
+# nodes would have been created in the new epoch and therefore UpdateEpoch has not been called.
+removeruntime 40 y
+removeruntime 30 y
+removeruntime 20 y
+removeruntime 10 y
+
+deleteservicegroup fabric:/servicegroup0
+
+!pause,5
+
+deletename fabric:/servicegroup0
+
+!q

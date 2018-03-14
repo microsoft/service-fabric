@@ -1,0 +1,328 @@
+#
+# Tests provision scenarios for package in an external store.
+# The packages have been uploaded out of band in the container https://sftestresources.blob.core.windows.net/ftsfpkg,
+# blobs FTTestAppV1.sfpkg and FTTestAppV2.sfpkg.
+# Use URI such as https://sftestresources.blob.core.windows.net:443/ftsfpkg/FTTestAppV1.sfpkg to access them.
+#
+
+votes 10
+namingservice 1 1 1
+cmservice 3 1
+fmservice 1 1
+cleantest
+
+set DummyPLBEnabled true
+!setcfg Management.CleanupApplicationPackageOnProvisionSuccess=false
+
+# Retry queries frequently to speed up validation for operations executed directly on HM (default is 5 sec)
+set QueryOperationRetryDelay 2
+# Retry queries for longer (default 15 times) to allow time for stabilization
+set QueryOperationRetryCount 45
+
+# Wait until all nodes are up before placing the system services,
+# to be able to consistently find the service primaries placed by dummy plb
+set ExpectedClusterSize 5
+
++10
++20
++30
++40
++50
+verify
+
+set ExpectedClusterSize 1
+
+httpgateway 10
+
+# Wait for CM have primary
+queryhealth service servicename=fabric:/System/ClusterManagerService expectedhealthstate=ok 
+
+!string TestAppV1Uri https://sftestresources.blob.core.windows.net/ftsfpkg/DotNetTestAppV1.sfpkg
+!string TestAppV2Uri https://sftestresources.blob.core.windows.net/ftsfpkg/DotNetTestAppV2.sfpkg
+!string TestAppV3Uri https://sftestresources.blob.core.windows.net/ftsfpkg/DotNetTestAppV3.sfpkg
+
+!string TestAppV1CtToken %7B%22Name%22%3A%22TestApp%22%2C%22Version%22%3A%22V1%22%7D
+!string TestAppV2CtToken %7B%22Name%22%3A%22TestApp%22%2C%22Version%22%3A%22V2%22%7D
+
+############################################
+# Testcase: Provision application from external store with incorrect parameters.
+############################################
+
+# Incorrect link: protocol not supported
+provisionapp ftp://sftestresources.blob.core.windows.net:443/ftsfpkg/FTTestAppV1.sfpkg InvalidArgument externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+# Incorrect link: not an sfpkg
+provisionapp https://sftestresources.blob.core.windows.net:443/ftsfpkg/FTTestAppV1.sfpkg1 InvalidArgument externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+# Incorrect link: non existing sfpkg. Provision fails on Download
+provisionapp https://sftestresources.blob.core.windows.net:443/ftsfpkg/FTTestAppV129.sfpkg ImageBuilderUnexpectedError externalPath=true appTypeName=TestApp appTypeVersion=V1
+verifyimagestore
+
+# Correct package, incorrect app type name
+provisionapp <string.TestAppV1Uri> ImageBuilderValidationError externalPath=true appTypeName=InvalidTestApp appTypeVersion=V1
+
+# Correct package, incorrect app type version
+provisionapp <string.TestAppV1Uri> ImageBuilderValidationError externalPath=true appTypeName=TestApp appTypeVersion=1.0
+
+# Unprovision type that is not downloading
+unprovisionapp TestApp V1 ApplicationTypeNotFound
+
+############################################
+# Testcase: Provision and unprovision sync.
+############################################
+set ImageBuilderJobQueueDelay 0
+
+provisionapp <string.TestAppV1Uri> Success externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Available
+query GetApplicationTypeList ApplicationTypeName=TestApp verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Available
+
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Available
+query GetApplicationTypePagedList ApplicationTypeName=TestApp verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Available
+
+unprovisionapp TestApp V1 Success 
+
+verifyimagestore
+
+query GetApplicationTypePagedList expectempty=true
+query GetApplicationTypeList expectempty=true
+
+############################################
+# Testcase: Provision and unprovision async.
+# Steps:
+# - Add delay to image builder jobs to simulate long running downloads
+# - Provision
+# - Query status while download is pending - see downloading message
+# - Query status after download - status mentions provisioning
+# - Unprovision
+############################################
+
+# Delay execution of the image builder operations to simulate long downloads.
+set ImageBuilderJobQueueDelay 5
+
+provisionapp <string.TestAppV1Uri> Success async=true externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+
+# Do not add delay to other IB operations.
+set ImageBuilderJobQueueDelay 0
+
+# When download completes, provision continues until type becomes available.
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Available
+
+# Unprovision the successfully provisioned operation
+set ImageBuilderJobQueueDelay 5
+unprovisionapp TestApp V1 Success async
+
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Unprovisioning
+
+verifyimagestore
+
+query GetApplicationTypePagedList expectempty=true
+
+# Reprovision sync
+set ImageBuilderJobQueueDelay 0
+provisionapp <string.TestAppV1Uri> Success async=false externalPath=true appTypeName=TestApp appTypeVersion=V1
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Available
+
+unprovisionapp TestApp V1 Success async=false
+verifyimagestore
+
+query GetApplicationTypePagedList expectempty=true
+query GetApplicationTypeList expectempty=true
+
+############################################
+# Testcase: Interrupt provisioning while downloading
+############################################
+set ImageBuilderJobQueueDelay 60
+provisionapp <string.TestAppV1Uri> Success async=true externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+
+# Unprovision with app type and version
+# This will call external cancel on the IB download operation (if in progress) and the unprovision will complete successfully.
+unprovisionapp TestApp V1 Success async
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Unprovisioning
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Unprovisioning
+
+query GetApplicationTypeList expectempty=true
+query GetApplicationTypePagedList expectempty=true
+
+############################################
+# Testcase: Interrupt provisioning with sync unprovision
+############################################
+set ImageBuilderJobQueueDelay 30
+
+provisionapp <string.TestAppV1Uri> Success async=true externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+
+unprovisionapp TestApp V1 ApplicationTypeNotFound
+
+query GetApplicationTypeList expectempty=true
+query GetApplicationTypePagedList expectempty=true
+
+############################################
+# Testcase: Test recovery of sfpkg download operation.
+# While download is in progress, move CM replica.
+############################################
+set ImageBuilderJobQueueDelay 60
+
+provisionapp <string.TestAppV1Uri> Success async=true externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+
+!pause 5
+set ImageBuilderJobQueueDelay 10
+
+gfum
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.50 Primary
+moveprimaryclient 40 00000000-0000-0000-0000-000000002000
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.40 Primary
+verify
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+
+# The app type becomes available eventually
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Available
+
+unprovisionapp TestApp V1 Success
+query GetApplicationTypePagedList expectempty=true
+
+############################################
+# Testcase: Interrupt provisioning while downloading
+# and move CM to test recovery of delete operation
+############################################
+set ImageBuilderJobQueueDelay 60
+
+provisionapp <string.TestAppV1Uri> Success async=true externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning
+
+unprovisionapp TestApp V1 Success async
+
+set ImageBuilderJobQueueDelay 10
+
+gfum
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.40 Primary
+moveprimaryclient 50 00000000-0000-0000-0000-000000002000
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.50 Primary
+verify
+
+query GetApplicationTypeList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Unprovisioning
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Unprovisioning
+
+query GetApplicationTypeList expectempty=true
+query GetApplicationTypePagedList expectempty=true
+
+############################################
+# Testcase: Provision multiple sfpkgs in parallel.
+# Test query with continuation token.
+############################################
+#set ImageBuilderExeRunDelay 0
+set ImageBuilderJobQueueDelay 0
+
+# Provision some versions through image store
+app.add AltTestApp1V1 AltTestApp1 V1
+app.clear AltTestApp1V1
+app.servicepack AltTestApp1V1 ServicePackageY version=V1
+app.servicetypes AltTestApp1V1 ServicePackageY ServiceTypeY stateful persist
+app.codepack AltTestApp1V1 ServicePackageY CodeY types=ServiceTypeY version=V1
+app.upload AltTestApp1V1
+provisionapp AltTestApp1V1 Success
+
+app.add AltTestApp2V1 AltTestApp2 V1
+app.clear AltTestApp2V1
+app.servicepack AltTestApp2V1 ServicePackageY version=V1
+app.servicetypes AltTestApp2V1 ServicePackageY ServiceTypeY stateful persist
+app.codepack AltTestApp2V1 ServicePackageY CodeY types=ServiceTypeY version=V1
+app.upload AltTestApp2V1 compress
+provisionapp AltTestApp2V1 Success
+
+!string AltTestApp1CtToken %7B%22Name%22%3A%22AltTestApp1%22%2C%22Version%22%3A%22V1%22%7D
+!string AltTestApp2CtToken %7B%22Name%22%3A%22AltTestApp2%22%2C%22Version%22%3A%22V1%22%7D
+
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=AltTestApp1,ApplicationTypeVersion=V1,Status=Available \
+    ApplicationTypeName=AltTestApp2,ApplicationTypeVersion=V1,Status=Available
+
+# Provision from external store, with download delayed
+set ImageBuilderJobQueueDelay 30
+
+provisionapp <string.TestAppV3Uri> Success async=true externalPath=true appTypeName=TestApp appTypeVersion=V3
+provisionapp <string.TestAppV2Uri> Success async=true externalPath=true appTypeName=TestApp appTypeVersion=V2
+provisionapp <string.TestAppV1Uri> Success async=true externalPath=true appTypeName=TestApp appTypeVersion=V1
+
+query GetApplicationTypePagedList MaxResults=3 verify \
+    ApplicationTypeName=AltTestApp1,ApplicationTypeVersion=V1,Status=Available \
+    ApplicationTypeName=AltTestApp2,ApplicationTypeVersion=V1,Status=Available \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning \
+    ContinuationToken=<string.TestAppV1CtToken>
+        
+query GetApplicationTypePagedList MaxResults=2 verify \
+    ApplicationTypeName=AltTestApp1,ApplicationTypeVersion=V1,Status=Available \
+    ApplicationTypeName=AltTestApp2,ApplicationTypeVersion=V1,Status=Available \
+    ContinuationToken=<string.AltTestApp2CtToken>
+
+query GetApplicationTypePagedList MaxResults=1 ContinuationToken=<string.AltTestApp2CtToken> verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Provisioning \
+    ContinuationToken=<string.TestAppV1CtToken>
+
+query GetApplicationTypePagedList MaxResults=1 ContinuationToken=<string.TestAppV1CtToken> verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V2,Status=Available \
+    ContinuationToken=<string.TestAppV2CtToken>
+
+query GetApplicationTypePagedList MaxResults=1 ContinuationToken=<string.TestAppV2CtToken> verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V3,Status=Available 
+
+query GetApplicationTypePagedList MaxResults=1 ContinuationToken=<string.AltTestApp2CtToken> verify \
+    ApplicationTypeName=TestApp,ApplicationTypeVersion=V1,Status=Available \
+    ContinuationToken=<string.TestAppV1CtToken>
+
+set ImageBuilderJobQueueDelay 0
+
+unprovisionapp TestApp V1 Success
+unprovisionapp TestApp V2 Success
+unprovisionapp TestApp V3 Success
+
+query GetApplicationTypePagedList verify \
+    ApplicationTypeName=AltTestApp1,ApplicationTypeVersion=V1,Status=Available \
+    ApplicationTypeName=AltTestApp2,ApplicationTypeVersion=V1,Status=Available
+    
+query GetApplicationTypeList verify \
+    ApplicationTypeName=AltTestApp1,ApplicationTypeVersion=V1,Status=Available \
+    ApplicationTypeName=AltTestApp2,ApplicationTypeVersion=V1,Status=Available 
+        
+-*
+!q

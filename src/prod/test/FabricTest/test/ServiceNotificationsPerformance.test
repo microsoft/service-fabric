@@ -1,0 +1,128 @@
+#
+# This script is intended for manual execution when testing the performance of Service Notifications.
+# It is not run as part of RunTests.cmd.
+#
+
+### V2
+
+### Total Services
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=1000 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2 iterationSleep=1
+#0: count=1000 elapsed=00.782 throughput=1278.77 /sec
+#1: count=1000 elapsed=00.595 throughput=1680.67 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=5000 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2 iterationSleep=1
+#0: count=5000 elapsed=03.751 throughput=1332.98 /sec
+#1: count=5000 elapsed=02.834 throughput=1764.29 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=12000 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2 iterationSleep=1
+#0: count=12000 elapsed=09.152 throughput=1311.19 /sec
+#1: count=12000 elapsed=06.765 throughput=1773.84 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=10000 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=10000 elapsed=07.498 throughput=1333.69 /sec
+#1: count=10000 elapsed=05.598 throughput=1786.35 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=100000 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=1:23.945 throughput=1191.26 /sec
+#1: count=100000 elapsed=57.415 throughput=1741.71 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=200000 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=200000 elapsed=4:05.851 throughput=813.501 /sec
+#1: count=200000 elapsed=2:47.425 throughput=1194.56 /sec
+
+### Filters (100k)
+
+#scenario PushNotificationsPerformance serviceCount=1000 subnameCount=100 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=1:29.330 throughput=1119.44 /sec
+#1: count=100000 elapsed=1:00.971 throughput=1640.12 /sec
+
+#scenario PushNotificationsPerformance serviceCount=10000 subnameCount=10 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#scenario PushNotificationsPerformance serviceCount=10000 subnameCount=10 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=1:25.694 throughput=1166.94 /sec
+#1: count=100000 elapsed=55.581 throughput=1799.18 /sec
+
+#scenario PushNotificationsPerformance serviceCount=100000 subnameCount=1 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=1:20.077 throughput=1248.8 /sec
+#1: count=100000 elapsed=55.251 throughput=1809.92 /sec
+
+### Batch (100K)
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=100000 partitions=1 keys=100000 batchCount=10 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=1:01.581 throughput=1623.88 /sec
+#1: count=100000 elapsed=24.520 throughput=4078.3 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=100000 partitions=1 keys=100000 batchCount=100 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=59.672 throughput=1675.83 /sec
+#1: count=100000 elapsed=22.110 throughput=4522.84 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=100000 partitions=1 keys=100000 batchCount=1000 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=59.335 throughput=1685.35 /sec
+#1: count=100000 elapsed=19.870 throughput=5032.71 /sec
+
+### Partitions (100k)
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=10000 partitions=10 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=17.980 throughput=5561.74 /sec
+#1: count=100000 elapsed=24.451 throughput=4089.81 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=1000 partitions=100 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=20.761 throughput=4816.72 /sec
+#1: count=100000 elapsed=21.122 throughput=4734.4 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=100 partitions=1000 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=17.857 throughput=5600.04 /sec
+#1: count=100000 elapsed=18.320 throughput=5458.52 /sec
+
+#scenario PushNotificationsPerformance serviceCount=1 subnameCount=10 partitions=10000 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2
+#0: count=100000 elapsed=21.867 throughput=4573.1 /sec
+#1: count=100000 elapsed=20.981 throughput=4766.22 /sec
+
+### SQL scale
+
+#scenario PushNotificationsPerformance serviceCount=1000 subnameCount=1000 partitions=1 keys=100000 batchCount=1 sleepBeforeDelete=0 iterations=2 notificationBurst=2000
+#0: count=1000000 elapsed=13:52.213 throughput=1201.62 /sec
+#1: count=1000000 elapsed=13:36.357 throughput=1224.95 /sec
+
+scenario PushNotificationsPerformance serviceCount=10000 subnameCount=1000 partitions=1 keys=100000 batchCount=10 sleepBeforeDelete=0 iterations=2 notificationBurst=4000
+
+### V1
+
+### Services
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=1000 partitions=1 serviceCount=0 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=10000
+#Notification[1024:0] count=10000 ops=970.874/sec failures=0
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=5000 partitions=1 serviceCount=0 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=5000
+#Notification[1024:0] count=9695 ops=1160.11/sec failures=0
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=10000 partitions=1 serviceCount=0 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=10000
+# Notification[1024:0] count=16707 ops=1150.07/sec failures=0
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=12000 partitions=1 serviceCount=0 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=12000
+#Notification[1024:0] count=18765 ops=1152.71/sec failures=0
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=15000 partitions=1 serviceCount=0 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=15000
+#Frame Limit
+
+# Partitions
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=1000 partitions=10 serviceCount=0 keys=10 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=10000
+#Notification[1024:0] count=17716 ops=2097.31/sec failures=0
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=100 partitions=100 serviceCount=0 keys=100 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=10000
+#Notification[1024:0] count=17680 ops=2370.29/sec failures=0
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=10 partitions=1000 serviceCount=0 keys=1000 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=10000
+#Notification[1024:0] count=17735 ops=2524.56/sec failures=0
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=1 partitions=10000 serviceCount=0 keys=10000 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=10000
+#Notification[1024:0] count=18699 ops=2860.92/sec failures=0
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=10000 partitions=10 serviceCount=0 keys=10 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=100000
+#Frame Limit
+
+#scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=1 partitions=100000 serviceCount=0 keys=100000 name=fabric:/perftest subname=subname_ shuffle iterations=1 sgmembers=0 expectedNotificationCount=100000
+#Frame Limit
+
+!q

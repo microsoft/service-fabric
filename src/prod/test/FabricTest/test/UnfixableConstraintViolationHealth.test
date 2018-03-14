@@ -1,0 +1,53 @@
+votes 10 20 30
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+set SendLoadReportInterval 1
+set HealthOperationTimeout 30
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 10
+set ConstraintViolationReportingPolicy -1
+set ConstraintViolationHealthReportLimit 10
+set DetailedConstraintViolationHealthReportLimit 11
+
+cleantest
++10 cap=memory:10,cpu:10 nodeprops=Color:Green
++20 cap=memory:1,cpu:1 nodeprops=Color:Green
++30 cap=memory:10,cpu:10 nodeprops=Color:Blue
++40 cap=memory:10,cpu:10 nodeprops=Color:Blue
++50 cap=memory:1,cpu:1 nodeprops=Color:Red
++60 cap=memory:10,cpu:10 nodeprops=Color:Red
+Verify
+
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted1 TestPersistedStoreServiceType y 1 1 persist metrics=memory,Low,2,2 constraint=(Color==Red)
+
+!waitforstate FM.Replica.Role.fabric:/persisted1.60 Primary
+Verify
+
+!var UserServiceFTID FM.FT.PartitionId.fabric:/persisted1
+
+set ConstraintCheckEnabled false
+
+moveprimaryclient 50 <var.UserServiceFTID> FORCE
+!waitforstate FM.Replica.Role.fabric:/persisted1.50 Primary
+Verify
+
+-60
+verify
+
+set ConstraintCheckEnabled true
+
++60 cap=memory:1,cpu:1 nodeprops=Color:Red
+
+verify
+
+!pause 22
+
+queryhealth cluster
+
+queryhealth cluster expectedhealthstate=warning
+
+!q

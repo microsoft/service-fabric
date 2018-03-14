@@ -1,0 +1,630 @@
+#
+# [owner:hulyap]
+# This test validates the data loss scenarios
+# when service reports "state changed"
+#
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+set StoreClientTimeout 10
+set StoreReplicationTimeout 10
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
++70 nodeprops=system:false
++80 nodeprops=system:false
+verify
+
+#
+# Case 1: Service reports state changed on data loss
+# with the current progress
+#
+
+#
+# 1.a. Stateful persisted
+#
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.80 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+
+addbehavior b1 * 40 ReplicationOperation
+clientput fabric:/test1 10 10Data1
+!wait
+
+clientget fabric:/test1 10 10Data1
+!wait
+
+addbehavior b2 * 50 ReplicationOperation
+clientput fabric:/test1 20 20Data1
+!wait
+
+clientget fabric:/test1 20 20Data1
+!wait
+
+#This will allow new primary at 50 to report statechanged during data loss
+setsignal 50 fabric:/test1 provider.statechangedondataloss
+
+addbehavior b3 * * StatefulServiceReopenReply
+
+-80 removedata
+-70 removedata
+-60 removedata
+!wait
+
+nodestateremoved 80
+nodestateremoved 70
+nodestateremoved 60
+removebehavior b1
+removebehavior b2
+
+!waitforstate FM.Replica.Role.fabric:/test1.50 Primary
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 None
+
+# 40 should be restarted and eventually brought back into the replica set
+addbehavior bx * * UpdateConfigurationReply
+removebehavior b3
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 Phase2_Catchup
+removebehavior bx
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 None
+
+# Pause FM state machine processing
+set MaxActionsPerIteration 0
++60 nodeprops=system:false
++70 nodeprops=system:false
++80 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.60 true
+!waitforstate FM.Node.IsUp.70 true
+!waitforstate FM.Node.IsUp.80 true
+
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.State.fabric:/test1.40 Ready
+!waitforstate FM.Replica.State.fabric:/test1.50 Ready
+!waitforstate FM.Replica.State.fabric:/test1.60 Ready
+!waitforstate FM.Replica.State.fabric:/test1.70 Ready
+!waitforstate FM.Replica.State.fabric:/test1.80 Ready
+verify
+
+# First data should still be retrievable
+clientget fabric:/test1 10 10Data1
+!wait
+verify 
+
+clientput fabric:/test1 20 20Data2
+clientput fabric:/test1 30 30Data2
+clientput fabric:/test1 40 40Data2
+!wait
+clientget fabric:/test1 20 20Data2
+clientget fabric:/test1 30 30Data2
+clientput fabric:/test1 40 40Data2
+!wait
+verify
+
+deleteservice fabric:/test1
+verify
+
+#
+# 1.b. Stateful volatile
+#
+createservice fabric:/test2 TestStoreServiceType y 1 5 constraint=(system!=true)
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test2.80 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.40 Secondary
+
+addbehavior b1 * 40 ReplicationOperation
+clientput fabric:/test2 10 10Data1
+!wait
+
+clientget fabric:/test2 10 10Data1
+!wait
+
+addbehavior b2 * 50 ReplicationOperation
+clientput fabric:/test2 20 20Data1
+!wait
+
+clientget fabric:/test2 20 20Data1
+!wait
+
+#This will allow new primary at 50 to report statechanged during data loss
+setsignal 50 fabric:/test2 provider.statechangedondataloss
+
+addbehavior b3 * 40 Deactivate
+
+-80 removedata
+-70 removedata
+-60 removedata
+!wait
+
+nodestateremoved 80
+nodestateremoved 70
+nodestateremoved 60
+removebehavior b1
+removebehavior b2
+
+!waitforstate FM.Replica.Role.fabric:/test2.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.40 Secondary
+
+# Pause FM state machine processing
+set MaxActionsPerIteration 0
++60  nodeprops=system:false
++70  nodeprops=system:false
++80  nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.60 true
+!waitforstate FM.Node.IsUp.70 true
+!waitforstate FM.Node.IsUp.80 true
+
+set MaxActionsPerIteration 500
+
+removebehavior b3
+
+# 40 should be dropped
+!waitforstate FM.Replica.State.fabric:/test2.40 Dropped|Ready
+
+!waitforstate FM.Replica.State.fabric:/test2.40 Ready
+!waitforstate FM.Replica.State.fabric:/test2.50 Ready
+!waitforstate FM.Replica.State.fabric:/test2.60 Ready
+!waitforstate FM.Replica.State.fabric:/test2.70 Ready
+!waitforstate FM.Replica.State.fabric:/test2.80 Ready
+verify
+
+# First data should still be retrievable
+clientget fabric:/test2 10 10Data1
+!wait
+
+clientput fabric:/test2 20 20Data2
+clientput fabric:/test2 30 30Data2
+clientput fabric:/test2 40 40Data2
+!wait
+clientget fabric:/test2 20 20Data2
+clientget fabric:/test2 30 30Data2
+clientput fabric:/test2 40 40Data2
+!wait
+
+verify 
+
+deleteservice fabric:/test2
+verify
+
+#
+# Case 2: Service reports state changed on data loss
+# with a lower current progress than remaning replica
+#
+
+#
+# 2.a. Stateful persisted
+#
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test3.80 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.40 Secondary
+
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+!wait
+clientget fabric:/test3 10 10Data1
+clientget fabric:/test3 20 20Data1
+!wait
+
+addbehavior b1 * 40 ReplicationOperation
+addbehavior b2 * 50 ReplicationOperation
+clientput fabric:/test3 30 30Data1
+!wait
+clientget fabric:/test3 30 30Data1
+!wait
+
+#This will allow new primary at 50 to report statechanged during data loss and lower progress 
+# than the other replicas
+setsignal 50 fabric:/test3 provider.statechangedondataloss.decrementprogress
+
+# Pause FM state machine processing
+set MaxActionsPerIteration 0
+
+-80 removedata
+-70 removedata
+-60 removedata
+!wait
+
+nodestateremoved 80
+nodestateremoved 70
+nodestateremoved 60
+removebehavior b1
+removebehavior b2
+
++60 nodeprops=system:false
++70 nodeprops=system:false
++80 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.60 true
+!waitforstate FM.Node.IsUp.70 true
+!waitforstate FM.Node.IsUp.80 true
+
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/test3.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.40 Secondary
+
+!waitforstate FM.Replica.State.fabric:/test3.40 Ready
+!waitforstate FM.Replica.State.fabric:/test3.50 Ready
+!waitforstate FM.Replica.State.fabric:/test3.60 Ready
+!waitforstate FM.Replica.State.fabric:/test3.70 Ready
+!waitforstate FM.Replica.State.fabric:/test3.80 Ready
+verify
+
+# First data should still be retrievable
+clientget fabric:/test3 10 10Data1
+!wait
+verify 
+
+clientput fabric:/test3 20 20Data2
+clientput fabric:/test3 30 30Data2
+clientput fabric:/test3 40 40Data2
+!wait
+clientget fabric:/test3 20 20Data2
+clientget fabric:/test3 30 30Data2
+clientput fabric:/test3 40 40Data2
+!wait
+
+verify 
+
+deleteservice fabric:/test3
+verify
+
+#
+# 2.b. Stateful volatile
+#
+createservice fabric:/test4 TestStoreServiceType y 1 5 constraint=(system!=true)
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test4.80 Primary
+!waitforstate FM.Replica.Role.fabric:/test4.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/test4.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/test4.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test4.40 Secondary
+
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+!wait
+clientget fabric:/test4 10 10Data1
+clientget fabric:/test4 20 20Data1
+!wait
+
+addbehavior b1 * 40 ReplicationOperation
+addbehavior b2 * 50 ReplicationOperation
+clientput fabric:/test4 30 30Data1
+!wait
+clientget fabric:/test4 30 30Data1
+!wait
+
+#This will allow new primary at 50 to report statechanged during data loss and lower progress 
+# than the other replicas
+setsignal 50 fabric:/test4 provider.statechangedondataloss.decrementprogress
+
+addbehavior b3 * 40 Deactivate
+
+-80 removedata
+-70 removedata
+-60 removedata
+!wait
+
+nodestateremoved 80
+nodestateremoved 70
+nodestateremoved 60
+removebehavior b1
+removebehavior b2
+
+!waitforstate FM.Replica.Role.fabric:/test4.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test4.40 Secondary
+
+
+# Pause FM state machine processing
+set MaxActionsPerIteration 0
++60 nodeprops=system:false
++70 nodeprops=system:false
++80 nodeprops=system:false
+
+!waitforstate FM.Node.IsUp.60 true
+!waitforstate FM.Node.IsUp.70 true
+!waitforstate FM.Node.IsUp.80 true
+
+!wait
+set MaxActionsPerIteration 500
+
+removebehavior b3
+
+# 40 should be dropped
+!waitforstate FM.Replica.State.fabric:/test4.40 Dropped|Ready
+
+!waitforstate FM.Replica.State.fabric:/test4.40 Ready
+!waitforstate FM.Replica.State.fabric:/test4.50 Ready
+!waitforstate FM.Replica.State.fabric:/test4.60 Ready
+!waitforstate FM.Replica.State.fabric:/test4.70 Ready
+!waitforstate FM.Replica.State.fabric:/test4.80 Ready
+verify
+
+# First data should still be retrievable
+clientget fabric:/test4 10 10Data1
+!wait
+verify 
+
+clientput fabric:/test4 20 20Data2
+clientput fabric:/test4 30 30Data2
+clientput fabric:/test4 40 40Data2
+!wait
+clientget fabric:/test4 20 20Data2
+clientget fabric:/test4 30 30Data2
+clientput fabric:/test4 40 40Data2
+!wait
+
+verify 
+
+deleteservice fabric:/test4
+verify
+
+#
+# Case 3: Primary reports state changed on data loss
+# during replica open
+#
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test5.80 Primary
+!waitforstate FM.Replica.Role.fabric:/test5.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.40 Secondary
+
+addbehavior b1 * 40 ReplicationOperation
+clientput fabric:/test5 10 10Data1
+!wait
+clientget fabric:/test5 10 10Data1
+!wait
+
+# Pause FM state machine processing
+set MaxActionsPerIteration 0
+
+#This will allow new primary at 50 to report statechanged during data loss
+setsignal 50 fabric:/test5 provider.statechangedondataloss
+
+-80 removedata
+-70 removedata
+-60 removedata
+-50 removedata
+-40 removedata
+!wait
+
+nodestateremoved 80
+nodestateremoved 70
+nodestateremoved 60
+nodestateremoved 50
+nodestateremoved 40
+!wait
+
++50  nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.50 true
+
+# resume FM state machine processing
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/test5.50 Primary
+
++40  nodeprops=system:false
+!wait
+
+removebehavior b1
+removebehavior b2
+
++60 nodeprops=system:false
++70 nodeprops=system:false
++80 nodeprops=system:false
+verify
+
+clientput fabric:/test5 20 20Data2
+clientput fabric:/test5 30 30Data2
+clientput fabric:/test5 40 40Data2
+!wait
+clientget fabric:/test5 20 20Data2
+clientget fabric:/test5 30 30Data2
+clientput fabric:/test5 40 40Data2
+!wait
+verify
+
+deleteservice fabric:/test5
+verify
+
+#
+# Case 4: On data loss call returns failure during Open
+#
+
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test6.80 Primary
+!waitforstate FM.Replica.Role.fabric:/test6.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.40 Secondary
+
+addbehavior b1 * 40 ReplicationOperation
+clientput fabric:/test6 10 10Data1
+!wait
+clientget fabric:/test6 10 10Data1
+!wait
+
+# Pause FM state machine processing
+set MaxActionsPerIteration 0
+
+# Inject dataloss failure
+injectfailure 50 fabric:/test6 provider.endondataloss
+
+-80 removedata
+-70 removedata
+-60 removedata
+-50 removedata
+-40 removedata
+!wait
+
+nodestateremoved 80
+nodestateremoved 70
+nodestateremoved 60
+nodestateremoved 50
+nodestateremoved 40
+!wait
+
++50 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.50 true
+
+# resume FM state machine processing
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/test6.50 Primary
+
++40 nodeprops=system:false
+!wait
+
+removebehavior b1
+removebehavior b2
+
++60 nodeprops=system:false
++70 nodeprops=system:false
++80 nodeprops=system:false
+
+removefailure 50 fabric:/test6 provider.endondataloss
+
+verify
+
+clientput fabric:/test6 20 20Data2
+clientput fabric:/test6 30 30Data2
+clientput fabric:/test6 40 40Data2
+!wait
+clientget fabric:/test6 20 20Data2
+clientget fabric:/test6 30 30Data2
+clientput fabric:/test6 40 40Data2
+!wait
+verify
+
+deleteservice fabric:/test6
+verify
+
+#
+# Case 5. On data loss call returns failure during S->P
+#
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test7.80 Primary
+!waitforstate FM.Replica.Role.fabric:/test7.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.40 Secondary
+
+addbehavior b1 * 40 ReplicationOperation
+clientput fabric:/test7 10 10Data1
+!wait
+
+clientget fabric:/test7 10 10Data1
+!wait
+
+addbehavior b2 * 50 ReplicationOperation
+clientput fabric:/test7 20 20Data1
+!wait
+
+clientget fabric:/test7 20 20Data1
+!wait
+
+#Inject dataloss failure
+injectfailure 50 fabric:/test7 provider.endondataloss
+
+-80 removedata
+-70 removedata
+-60 removedata
+!wait
+
+nodestateremoved 80
+nodestateremoved 70
+nodestateremoved 60
+removebehavior b1
+removebehavior b2
+
+!waitforstate FM.Replica.Role.fabric:/test7.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test7.40 Secondary
+
+# Pause FM state machine processing
+set MaxActionsPerIteration 0
++60 nodeprops=system:false
++70 nodeprops=system:false
++80 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.60 true
+!waitforstate FM.Node.IsUp.70 true
+!waitforstate FM.Node.IsUp.80 true
+
+set MaxActionsPerIteration 500
+
+!pause 5
+removefailure 50 fabric:/test7 provider.endondataloss
+
+!waitforstate FM.Replica.State.fabric:/test7.40 Ready
+!waitforstate FM.Replica.State.fabric:/test7.50 Ready
+!waitforstate FM.Replica.State.fabric:/test7.60 Ready
+!waitforstate FM.Replica.State.fabric:/test7.70 Ready
+!waitforstate FM.Replica.State.fabric:/test7.80 Ready
+verify
+
+# First data should still be retrievable
+clientget fabric:/test7 10 10Data1
+!wait
+verify 
+
+clientput fabric:/test7 20 20Data2
+clientput fabric:/test7 30 30Data2
+clientput fabric:/test7 40 40Data2
+!wait
+clientget fabric:/test7 20 20Data2
+clientget fabric:/test7 30 30Data2
+clientput fabric:/test7 40 40Data2
+!wait
+verify
+!q 

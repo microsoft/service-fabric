@@ -1,0 +1,123 @@
+# 
+# Test that triggers a lot of HM load:
+# Creates a lot of entities and at the same time queries for them
+# until all are created and queried.
+# Sets throttle operation count to a small value to test
+# the throttle logic in HM:
+# Replicated store notifies the HM job queue manager when it's throttled, 
+# and only queries are allowed to execute during that time.
+# 
+
+votes 10
+
+cmservice 3 1
+namingservice 5 1 1
+fmservice 3 1
+
+set DummyPLBEnabled true
+
+set GracefulReplicaShutdownMaxDuration 0
+
+set HealthOperationTimeout 30
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 300
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+set HealthReportSendBackOffStepInSeconds 1
+set HealthReportSendMaxBackOffInterval 2
+set HealthStoreCleanupInterval 1
+set HealthStoreThrottleOperationCount 50
+set HealthStoreCleanupGraceInterval 120
+set QueryOperationRetryDelay 10
+set QueryOperationRetryCount 30
+
+# The test checks expected number of replicas for System services, so make sure no additional SB replicas are created
+set SystemStandByReplicaKeepDuration 1
+set SystemReplicaRestartWaitDuration 3600
+set UserStandByReplicaKeepDuration 1
+set UserReplicaRestartWaitDuration 3600
+
+# The max number of health reports the health client can queue
+set MaxNumberOfHealthReports 400
+# The max number of messages sent to HM in one trip
+set MaxNumberOfHealthReportsPerMessage 200
+
+###########################################
+# Testcase 1: throttle reports using size
+###########################################
+
+set EnableMaxPendingHealthReportSizeEstimation true
+set MaxPendingHealthReportSizeBytes 50000
+
+set MaxPendingHealthQueryCount 100
+set MaxPendingHealthCleanupJobCount 50
+
+cleantest
++10
++20
++30
++40
++50
++60
+verify 
+
+checkhm replicas expectedcount=11
+
+reporthealthinternal node nodeid=1313 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FM
+queryhealth node nodeid=1313 expectedhealthstate=ok
+
+# Create many service/partition/replica health entities and query until all of them appear in HM
+# The entities are "dummy", no load is put on the system services.
+# The replicas are "placed" on the specified node
+hmload serviceCount=100 subname=HMLoadTestCreatedName partitionCount=1 replicaCount=3 nodeid=1313
+
+# Replica count: 3 (FM) + 5 (Naming) + 3 (CM) + serviceCount * partitionCount * replicaCount
+checkhm replicas expectedcount=311
+
+queryhealth cluster stats=apps-ok:1;services-ok:100;partitions-ok:100;replicas-ok:300;nodes-ok:7
+
+# Change the caching min time to test caching the health stats
+set MaxStatisticsDurationBeforeCaching 0.02
+
+# First query is executed and the result is cached. A timer is set to fire to update the data.
+queryhealth cluster stats=apps-ok:1;services-ok:100;partitions-ok:100;replicas-ok:300;nodes-ok:7
+
+# Following queries return cached data
+queryhealth cluster stats=apps-ok:1;services-ok:100;partitions-ok:100;replicas-ok:300;nodes-ok:7
+queryhealth cluster stats=apps-ok:1;services-ok:100;partitions-ok:100;replicas-ok:300;nodes-ok:7
+
+# Increase the threshold for caching, the timer is canceled and each query is evaluated on receive
+set MaxStatisticsDurationBeforeCaching 1
+queryhealth cluster stats=apps-ok:1;services-ok:100;partitions-ok:100;replicas-ok:300;nodes-ok:7
+queryhealth cluster stats=apps-ok:1;services-ok:100;partitions-ok:100;replicas-ok:300;nodes-ok:7
+
+# Remove the node where the replicas are "placed", which will trigger cleanup tasks
+# All replicas on that node will be cleaned up due to parent state
+deletehealth node nodeid=1313 sequencenumber=2 sourceid=System.FM
+queryhealth node nodeid=1313 expectempty=true 
+
+# The cleanup must be performed on multiple cleanup intervals because of throttle, but eventually all jobs should succeed
+checkhm replicas expectedcount=11
+
+###########################################
+# Testcase 2: throttle reports using count
+###########################################
+set EnableMaxPendingHealthReportSizeEstimation false
+set MaxPendingHealthReportCount 100
+
+set HealthStoreThrottleOperationCount 1500
+
+checkhm replicas expectedcount=11
+
+reporthealthinternal node nodeid=2323 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FM
+queryhealth node nodeid=2323 expectedhealthstate=ok
+
+# Create many service/partition/replica health entities and query until all of them appear in HM
+# The entities are "dummy", no load is put on the system services.
+# The replicas are "placed" on the specified node
+hmload serviceCount=50 subname=HMLoadTestCreatedName partitionCount=1 replicaCount=3 nodeid=2323
+
+# Replica count: 3 (FM) + 5 (Naming) + 3 (CM) + serviceCount * partitionCount * replicaCount
+checkhm replicas expectedcount=161
+
+!q

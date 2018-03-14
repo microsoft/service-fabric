@@ -1,0 +1,119 @@
+{
+   "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "ActorWriteKVS3NV2(D4)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Write KVS 3N V2 (D4)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults-V2.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-3Node-D4-V2.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ActorRead3NV2(D4)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Read 3N V2 (D4)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults-V2.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-3Node-D4-V2.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ActorDataSizeKVS3NV2(D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorDSPerfKvs-3Node-D4-V2.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ActorWriteKVS36NV2(D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-36Node-D4-V2.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ActorRead36NV2(D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-36Node-D4-V2.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ActorWriteKVS3NV2WCF(D4)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Write KVS 3N V2 WCF (D4)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults-WCF-V2.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-3Node-D4-V2-Wcf.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ActorRead3NV2WCF(D4)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Read 3N V2 WCF (D4)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults-WCF-V2.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-3Node-D4-V2-Wcf.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    }   
+  ]
+}

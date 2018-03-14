@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="WorkingFolderTestService" 
+    Version="1.0" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <ServiceTypes>
+        <StatelessServiceType ServiceTypeName="ImplicitServiceType-1" UseImplicitHost="true"/>
+        <StatelessServiceType ServiceTypeName="ImplicitServiceType-2" UseImplicitHost="true" />
+        <StatelessServiceType ServiceTypeName="Test-Default" />
+        <StatelessServiceType ServiceTypeName="Test-Work" />
+        <StatelessServiceType ServiceTypeName="Test-CodePackage-1" />
+        <StatelessServiceType ServiceTypeName="Test-CodePackage-2" />
+        <StatelessServiceType ServiceTypeName="Test-CodeBase-1" />
+        <StatelessServiceType ServiceTypeName="Test-CodeBase-2" />
+    </ServiceTypes>
+    <CodePackage Name="Test-Default" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-Default -setupEntryPoint</Arguments>
+                <ConsoleRedirection FileRetentionCount="1" FileMaxSizeInKb="1024"/>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <ExeHost>
+                <Program>WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-Default</Arguments>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <CodePackage Name="Test-Work" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-Work -setupEntryPoint</Arguments>
+                <WorkingFolder>Work</WorkingFolder>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <ExeHost>
+                <Program>WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-Work</Arguments>
+                <WorkingFolder>Work</WorkingFolder>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <CodePackage Name="Test-CodePackage-1" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-CodePackage-1 -setupEntryPoint</Arguments>
+                <WorkingFolder>CodePackage</WorkingFolder>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <ExeHost>
+                <Program>WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-CodePackage-1</Arguments>
+                <WorkingFolder>CodePackage</WorkingFolder>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <CodePackage Name="Test-CodePackage-2" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>SubFolder\WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-CodePackage-2 -setupEntryPoint</Arguments>
+                <WorkingFolder>CodePackage</WorkingFolder>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <ExeHost>
+                <Program>SubFolder\WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-CodePackage-2</Arguments>
+                <WorkingFolder>CodePackage</WorkingFolder>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <CodePackage Name="Test-CodeBase-1" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-CodeBase-1 -setupEntryPoint</Arguments>
+                <WorkingFolder>CodeBase</WorkingFolder>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <ExeHost>
+                <Program>WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-CodeBase-1</Arguments>
+                <WorkingFolder>CodeBase</WorkingFolder>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <CodePackage Name="Test-CodeBase-2" Version="1.0">
+        <SetupEntryPoint>
+            <ExeHost>
+                <Program>SubFolder\WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-CodeBase-2 -setupEntryPoint</Arguments>
+                <WorkingFolder>CodeBase</WorkingFolder>
+            </ExeHost>
+        </SetupEntryPoint>
+        <EntryPoint>
+            <ExeHost>
+                <Program>SubFolder\WorkingFolderTestHost.exe</Program>
+                <Arguments>-testName:Test-CodeBase-2</Arguments>
+                <WorkingFolder>CodeBase</WorkingFolder>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <Resources>
+      <Endpoints>
+        <Endpoint Name="Endpoint1" Protocol="https" Type="Input" Port="1000" CodePackageRef="Test-Default"/>
+        <Endpoint Name="Endpoint2" Protocol="https" Type="Internal" CertificateRef="text2" Port="1000" />
+        <Endpoint Name="Endpoint3" Protocol="https" Type="Input" Port="1000" CodePackageRef="Test-Work"/>
+      </Endpoints>
+    </Resources>
+</ServiceManifest>

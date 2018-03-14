@@ -1,0 +1,150 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "E2E Perf NoDynam (D3)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "E2E Perf NoDynam (D3)",
+        "ExpectedResultsFileName": "E2EPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\E2EPerfTestConfig.txt",
+        "TaskName": "E2EPerfSmallPaaS-NoDyn.test",        
+        "ExecutionTimeout": "25200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Perf LowDynam (D3)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "E2E Perf LowDynam (D3)",
+        "ExpectedResultsFileName": "E2EPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\E2EPerfTestConfig.txt",
+        "TaskName": "E2EPerfSmallPaaS-LoDyn.test",        
+        "ExecutionTimeout": "25200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Perf MedDynam (D3)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "E2E Perf MedDynam (D3)",
+        "ExpectedResultsFileName": "E2EPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\E2EPerfTestConfig.txt",
+        "TaskName": "E2EPerfSmallPaaS-MedDyn.test",        
+        "ExecutionTimeout": "25200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Perf HiDynam (D3)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "E2E Perf HiDynam (D3)",
+        "ExpectedResultsFileName": "E2EPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\E2EPerfTestConfig.txt",
+        "TaskName": "E2EPerfSmallPaaS-HiDyn.test",        
+        "ExecutionTimeout": "25200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Management_ImageStoreScale (D3)",
+      "Type": "V2_Dll_Perf_Test",
+      "Owners": "iyyappam,mialu,oanapl",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "1200",
+        "PerfTestTaskName": "Management_ImageStoreScale (D3)",
+        "ExpectedResultsFileName": "ImageStoreScaleExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\Suite_ImageStoreScale.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ImageStoreTestCases",
+        "TaskName": "Management_ImageStoreScale",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\ImageStoreScaleInstalledFeatures.txt",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "Naming_NamingServiceScale (LAB)",
+      "Type": "V2_Dll_Perf_Test",
+      "Owners": "bharatn",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=Management_Perf",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Naming_NamingServiceScale (LAB)",
+        "ExpectedResultsFileName": "ManagementScaleExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\Suite_ManagementScale.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NamingTestCases",
+        "TaskName": "Naming_NamingServiceScale",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\ManagementScaleInstalledFeatures.txt",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "Health_HealthServiceScale (LAB)",
+      "Type": "V2_Dll_Perf_Test",
+      "Owners": "oanapl",
+      "Environment": "Iaas",     
+      "ResourcesRequired": "Server:5;Group=Management_Perf",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Health_HealthServiceScale (LAB)",
+        "ExpectedResultsFileName": "HealthScaleExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\Suite_HealthScale.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "HealthTestCases",
+        "TaskName": "Health_HealthServiceScale",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\HealthScaleInstalledFeatures.txt",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "ReliabilityPerformance",
+      "Type": "ReliabilityPerformance_PLB",
+      "Owners": "miradic,nipuzovi",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",        
+        "TaskName": "",
+        "ExecutionTimeout": "25200",
+        "CleanupTimeout": "3600"
+      }
+    }
+  ]
+}

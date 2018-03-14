@@ -1,0 +1,109 @@
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# NuGet Packages
+*.nupkg
+
+# Python intermediate file
+*.pyc
+
+# Service Fabric output directory
+out/
+
+# The patch files are too big for Git.
+*.tgz
+
+# vscode project files
+.vscode
+
+###
+Repository Bloat Risks
+###
+*.exe
+*.dll
+*.lib
+*.pdb
+*.wim
+*.zip
+*.gz
+
+###
+Secret Disclosure Risks
+From: AzSec@microsoft.com
+###
+
+# *.pfx
+*.[Pp][Ff][Xx]
+
+# *.key
+*.[Kk][Ee][Yy]
+
+# *.sst
+*.[Ss][Ss][Tt]
+
+# *.p12
+*.[Pp]12
+
+# *.pvk
+*.[Pp][Vv][Kk]
+
+# wdsconfig.xml
+[Ww][Dd][Ss][Cc][Oo][Nn][Ff][Ii][Gg].[Xx][Mm][Ll]
+
+# wdsdeploy.xml
+[Ww][Dd][Ss][Dd][Ee][Pp][Ll][Oo][Yy].[Xx][Mm][Ll]
+
+# accounts.xml
+[Aa][Cc][Cc][Oo][Uu][Nn][Tt][Ss].[Xx][Mm][Ll]
+
+# deploymentsecrets.xml
+[Dd][Ee][Pp][Ll][Oo][Yy][Mm][Ee][Nn][Tt][Ss][Ee][Cc][Rr][Ee][Tt][Ss].[Xx][Mm][Ll]
+[Ss][Yy][Ss][Pp][Rr][Ee][Pp].[Ii][Nn][Ff]
+
+# Linux external folder
+external/
+
+# VS generated files
+**/.vscode/*
+**/.vs/*
+
+.idea
+
+# gvim generated file
+*~
+*.swp
+*.swo
+*.swn
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.dll
+*.so
+*.opendb
+
+# Genric property/config files.
+*.conf
+
+# Third party dependency folder
+deps/

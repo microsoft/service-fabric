@@ -1,0 +1,53 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase2_Deactivate
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Phase2_Deactivate restarts all replicas when state is changed
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+#Take down a quorum of replicas 60, 50, 40
+addbehavior b1 * * DoReconfiguration
+
+reportfault 60 fabric:/test1 permanent
+reportfault 50 fabric:/test1 permanent
+reportfault 40 fabric:/test1 permanent
+
+setsignal 30 fabric:/test1 provider.statechangedondataloss
+addbehavior b2 * * UpdateConfiguration
+removebehavior b1
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.30 Phase2_Catchup
+removebehavior b2
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.30 None
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q

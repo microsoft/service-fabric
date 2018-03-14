@@ -1,0 +1,178 @@
+votes 10
+cleantest
+
+fmservice 1 1
+cmservice 1 1
+namingservice 1 1 1
+
+set EnableDefaultServicesUpgrade true
+set NamingOperationTimeout 15
+set NamingOperationRetryTimeout 60
+
++10
+verify
+
+
+app.add version0 TestApp v0
+app.clear version0
+app.servicepack version0 ServicePackageA version=v0
+app.servicetypes version0 ServicePackageA ServiceTypeA stateless
+app.codepack version0 ServicePackageA CodeA types=ServiceTypeA version=v0
+app.reqservices version0 serviceA ServiceTypeA stateless namedpartition partitionnames=pA;pB replica=1 minreplicasetsize=1
+app.upload version0
+provisionapp version0
+
+createapp fabric:/app TestApp v0
+verify
+
+getservicedescription fabric:/app/serviceA verify partitionnames=pA,pB
+
+resolve fabric:/app/serviceA pA savecuid
+resolve fabric:/app/serviceA pB savecuid
+resolve fabric:/app/serviceA pX error=InvalidServicePartition
+
+#
+# Testcase Error 1: Cannot Add+Remove in the same upgrade
+#
+
+app.add versionE1 TestApp vE1
+app.clear versionE1
+app.servicepack versionE1 ServicePackageA version=vE1
+app.servicetypes versionE1 ServicePackageA ServiceTypeA stateless
+app.codepack versionE1 ServicePackageA CodeA types=ServiceTypeA version=vE1
+app.reqservices versionE1 serviceA ServiceTypeA stateless namedpartition partitionnames=pA;pX replica=1 minreplicasetsize=1
+app.upload versionE1
+provisionapp versionE1
+
+upgradeapp fabric:/app vE1 Rolling upgrademode=auto errors=ApplicationUpgradeValidationError
+
+getservicedescription fabric:/app/serviceA verify partitionnames=pA,pB
+
+resolve fabric:/app/serviceA pA verifycuid
+resolve fabric:/app/serviceA pB verifycuid
+resolve fabric:/app/serviceA pX error=InvalidServicePartition
+
+#
+# Testcase Error 2: Cannot remove all partitions
+#
+
+app.add versionE2 TestApp vE2
+app.clear versionE2
+app.servicepack versionE2 ServicePackageA version=vE2
+app.servicetypes versionE2 ServicePackageA ServiceTypeA stateless
+app.codepack versionE2 ServicePackageA CodeA types=ServiceTypeA version=vE2
+app.reqservices versionE2 serviceA ServiceTypeA stateless namedpartition partitionnames= replica=1 minreplicasetsize=1
+app.upload versionE2
+provisionapp versionE2 ImageBuilderValidationError
+
+getservicedescription fabric:/app/serviceA verify partitionnames=pA,pB
+
+resolve fabric:/app/serviceA pA verifycuid
+resolve fabric:/app/serviceA pB verifycuid
+resolve fabric:/app/serviceA pX error=InvalidServicePartition
+
+#
+# Testcase Error 3: Cannot change partition scheme
+#
+
+app.add versionE3 TestApp vE3
+app.clear versionE3
+app.servicepack versionE3 ServicePackageA version=vE3
+app.servicetypes versionE3 ServicePackageA ServiceTypeA stateless
+app.codepack versionE3 ServicePackageA CodeA types=ServiceTypeA version=vE3
+app.reqservices versionE3 serviceA ServiceTypeA stateless partition=2 replica=1 minreplicasetsize=1
+app.upload versionE3
+provisionapp versionE3
+
+upgradeapp fabric:/app vE3 Rolling upgrademode=auto errors=ApplicationUpgradeValidationError
+
+getservicedescription fabric:/app/serviceA verify partitionnames=pA,pB
+
+resolve fabric:/app/serviceA pA verifycuid
+resolve fabric:/app/serviceA pB verifycuid
+resolve fabric:/app/serviceA pX error=InvalidServicePartition
+
+#
+# Testcase Error 4: Cannot re-partition ranges
+#
+
+app.add versionE4a TestApp vE4a
+app.clear versionE4a
+app.servicepack versionE4a ServicePackageA version=vE4a
+app.servicetypes versionE4a ServicePackageA ServiceTypeA stateless
+app.codepack versionE4a ServicePackageA CodeA types=ServiceTypeA version=vE4a
+app.reqservices versionE4a serviceA ServiceTypeA stateless partition=2 lowkey=0 highkey=1 replica=1 minreplicasetsize=1
+app.upload versionE4a
+provisionapp versionE4a
+
+app.add versionE4b TestApp vE4b
+app.clear versionE4b
+app.servicepack versionE4b ServicePackageA version=vE4b
+app.servicetypes versionE4b ServicePackageA ServiceTypeA stateless
+app.codepack versionE4b ServicePackageA CodeA types=ServiceTypeA version=vE4b
+app.reqservices versionE4b serviceA ServiceTypeA stateless partition=3 lowkey=0 highkey=3 replica=1 minreplicasetsize=1
+app.upload versionE4b
+provisionapp versionE4b
+
+createapp fabric:/appE4 TestApp vE4a
+
+resolve fabric:/appE4/serviceA 0 savecuid
+resolve fabric:/appE4/serviceA 1 savecuid
+resolve fabric:/appE4/serviceA 2 error=InvalidServicePartition
+
+upgradeapp fabric:/appE4 vE4b Rolling upgrademode=auto errors=ApplicationUpgradeValidationError
+
+resolve fabric:/appE4/serviceA 0 verifycuid
+resolve fabric:/appE4/serviceA 1 verifycuid
+resolve fabric:/appE4/serviceA 2 error=InvalidServicePartition
+
+#
+# Testcase1: Add partitions through upgrade
+#
+
+app.add version1 TestApp v1
+app.clear version1
+app.servicepack version1 ServicePackageA version=v1
+app.servicetypes version1 ServicePackageA ServiceTypeA stateless
+app.codepack version1 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.reqservices version1 serviceA ServiceTypeA stateless namedpartition partitionnames=pA;pB;p0;pA2;pX replica=1 minreplicasetsize=1
+app.upload version1
+provisionapp version1
+
+upgradeapp fabric:/app v1 Rolling upgrademode=auto
+verifyupgradeapp fabric:/app
+
+getservicedescription fabric:/app/serviceA verify partitionnames=p0,pA,pA2,pB,pX
+
+resolve fabric:/app/serviceA pA verifycuid
+resolve fabric:/app/serviceA pB verifycuid
+resolve fabric:/app/serviceA p0 savecuid
+resolve fabric:/app/serviceA pA2 savecuid
+resolve fabric:/app/serviceA pX savecuid
+
+#
+# Testcase2: Remove partitions through upgrade
+#
+
+app.add version2 TestApp v2
+app.clear version2
+app.servicepack version2 ServicePackageA version=v2
+app.servicetypes version2 ServicePackageA ServiceTypeA stateless
+app.codepack version2 ServicePackageA CodeA types=ServiceTypeA version=v2
+app.reqservices version2 serviceA ServiceTypeA stateless namedpartition partitionnames=p0;pA2 replica=1 minreplicasetsize=1
+app.upload version2
+provisionapp version2
+
+upgradeapp fabric:/app v2 Rolling upgrademode=auto
+verifyupgradeapp fabric:/app
+
+getservicedescription fabric:/app/serviceA verify partitionnames=p0,pA2
+
+resolve fabric:/app/serviceA pA noverify error=InvalidServicePartition
+resolve fabric:/app/serviceA pB noverify error=InvalidServicePartition
+resolve fabric:/app/serviceA p0 noverify verifycuid
+resolve fabric:/app/serviceA pA2 noverify verifycuid
+resolve fabric:/app/serviceA pX noverify error=InvalidServicePartition
+
+-*
+!q

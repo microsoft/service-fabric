@@ -1,0 +1,12 @@
+LIBRARY KPhysicalLogDLL
+EXPORTS
+    KCreateKBuffer 
+    KCreateKIoBufferElement 
+    KCreateEmptyKIoBuffer
+    KCreateSimpleKIoBuffer
+    KCreateGuidIKArray
+    KCreateLogRecordMetadataIKArray
+    KCreatePhysicalLogManager
+    KCopyMemory
+    KCrc64
+    QueryUserBuildInformation

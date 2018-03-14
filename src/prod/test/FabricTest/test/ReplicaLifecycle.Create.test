@@ -1,0 +1,366 @@
+#
+# [owner] aprameyr
+# Test scenarios around Replica Creation
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set RAPMessageRetryInterval 0.5
+set FMMessageRetryInterval 2
+set FMPlacementConstraints system==true
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 7: Have IB replica on the node
+# Induce a reconfiguration -> the replica should stay IB 
+# Test code paths where for IB replica the epoch changes without replica id change
+#####################################################
+
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * ReplicaUp
+reportfault 20 fabric:/test7 transient
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test7.20 true
+
+addbehavior b2 * * ReplicaOpen
+removebehavior b1
+
+!waitforstate RA.Replica.State.fabric:/test7.40.20 IC
+!waitforstate RA.Replica.State.fabric:/test7.20.20 IC
+
+addbehavior b3 * * DoReconfiguration
+
+-40
+!waitforstate FM.Node.IsUp.40 false
+
+# Let open finish and let it be IB
+removebehavior b2
+!waitforstate RA.Replica.State.fabric:/test7.20.20 IB
+
+# now the new primary will see S/S IB for this replica in a newer epoch
+addbehavior b4 * * UpdateConfiguration
+removebehavior b3
+
+# manually verify that the new replica restarts 
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.30 Phase2_Catchup
+removebehavior b4
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.30 None
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test7
+verify
+
+#####################################################
+# Scenario 6: Create Replica when SB replica already on the node
+# Replica is created during DoReconfiguration
+# Change Role (I) fails
+# Replica should get dropped on the node after warnings
+#####################################################
+
+set ReplicaReopenFailureMaxRetryThreshold 2
+
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+# Block catchup
+addbehavior b1 * * UpdateConfiguration
+-40
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.30 Phase2_Catchup
+
+# restart idle replica
+# Block the replica open message to cause it to be stuck in IC
+addbehavior b2 * * ReplicaOpen
+reportfault 20 fabric:/test6 transient
+!waitforstate RA.Replica.State.fabric:/test6.20.20 IC
+!waitforstate RA.Replica.State.fabric:/test6.30.20 IC
+
+addbehavior b3 * * ReplicaClose
+injectfailure 20 fabric:/test6 service.beginchangerole
+removebehavior b2
+!waitforstate RA.Replica.State.fabric:/test6.20.20 ID
+
+addbehavior b3 * * ReplicaUp
+removebehavior b2
+removefailure 20 fabric:/test6 service.beginchangerole
+!waitforstate RA.FT.State.fabric:/test6.20 Closed
+
+#primary should be told that 20 is dropped
+removebehavior b3
+!waitforstate RA.Replica.State.fabric:/test6.30.20 DD
+
+removebehavior b1
++40 nodeprops=system:false
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.30 None
+verify
+
+deleteservice fabric:/test6
+verify
+
+set ReplicaReopenFailureMaxRetryThreshold 40000
+
+#####################################################
+# Scenario 5: Create Replica when SB replica already on the node
+# Replica is created outside of DoReconfiguration
+# Change Role (I) fails
+# Replica should get dropped on the node after warnings
+#####################################################
+
+set ReplicaReopenFailureMaxRetryThreshold 2
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+# restart idle replica
+# Block the replica open message to cause it to be stuck in IC
+addbehavior b1 * * ReplicaOpen
+reportfault 20 fabric:/test5 transient
+!waitforstate RA.Replica.State.fabric:/test5.20.20 IC
+!waitforstate RA.Replica.State.fabric:/test5.40.20 IC
+
+addbehavior b2 * * ReplicaClose
+injectfailure 20 fabric:/test5 service.beginchangerole
+removebehavior b1
+!waitforstate RA.Replica.State.fabric:/test5.20.20 ID
+
+addbehavior b3 * * ReplicaUp
+removebehavior b2
+removefailure 20 fabric:/test5 service.beginchangerole
+!waitforstate RA.FT.State.fabric:/test5.20 Closed
+
+removebehavior b3
+
+verify
+
+deleteservice fabric:/test5
+verify
+
+set ReplicaReopenFailureMaxRetryThreshold 40000
+
+#####################################################
+# Scenario 4: Create Replica when SB replica already on the node
+# Replica is created outside of DoReconfiguration
+# Replica is added as N/S IB by FM
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+# restart idle replica
+# Block the replica open message to cause it to be stuck in IC
+addbehavior b1 * * ReplicaOpen
+reportfault 20 fabric:/test4 transient
+!waitforstate RA.Replica.State.fabric:/test4.20.20 IC
+!waitforstate RA.Replica.State.fabric:/test4.40.20 IC
+
+addbehavior b2 * * CreateReplicaReply
+removebehavior b1
+!waitforstate RA.Replica.State.fabric:/test4.20.20 IB
+
+addbehavior b3 * * Activate
+removebehavior b2
+!waitforstate RA.Replica.State.fabric:/test4.40.20 RD
+
+#block UC to RAP for CR (S)
+addbehavior b4 * * ActivateReply
+removebehavior b3
+!waitforstate RA.Replica.State.fabric:/test4.20.20 RD
+
+removebehavior b4
+!waitforstate FM.Replica.State.fabric:/test4.20 Ready
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 3: Multiple change Role to Primary failure during AddPrimary
+# causes SB replica to be dropped and ReplicaDropped to be sent to FM
+# Regression test for 1184423
+#####################################################
+
+set ReplicaReopenFailureMaxRetryThreshold 2
+
+addbehavior b0 * * AddPrimaryReply
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+!waitforstate RA.Replica.State.fabric:/test3.40.40 RD
+
+addbehavior b1 * * StatefulServiceReopenReply
+reportfault 40 fabric:/test3 transient
+!waitforstate RA.Replica.State.fabric:/test3.40.40 SB
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test3.40 false
+
+addbehavior b2 * * ReplicaUp
+removebehavior b1
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test3.40 true
+
+# On removing the ReplicaUp block FM will try to place the primary here via AddPrimary
+addbehavior b3 * * ReplicaOpen
+removebehavior b2
+!waitforstate RA.Replica.State.fabric:/test3.40.40 IC
+
+# fail change role on the service
+injectfailure 40 fabric:/test3 service.beginchangerole
+
+# block replica close to verify ID
+addbehavior b4 * * ReplicaClose
+removebehavior b3
+
+!waitforstate RA.Replica.State.fabric:/test3.40.40 ID
+
+# Block ReplicaUp to FM
+# Remove ReplicaClose block and remove failure to CR(None)
+addbehavior b5 * * ReplicaUp
+removefailure 40 fabric:/test3 service.beginchangerole
+removebehavior b4
+!waitforstate RA.FT.State.fabric:/test3.40 Closed
+!waitforstate FM.Replica.State.fabric:/test3.40 InBuild
+
+removebehavior b5
+removebehavior b0
+verify
+
+deleteservice fabric:/test3
+verify
+
+ #Reset config change
+ set ReplicaOpenFailureMaxRetryThreshold 40
+
+#####################################################
+# Scenario 3: Multiple change Role to Primary failure during AddPrimary
+# causes SB replica to be dropped and ReplicaDropped to be sent to FM
+# Regression test for 1184423
+#####################################################
+
+set ReplicaOpenFailureMaxRetryThreshold 2
+
+addbehavior b0 * * AddPrimaryReply
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+!waitforstate RA.Replica.State.fabric:/test3.40.40 RD
+
+addbehavior b1 * * StatefulServiceReopenReply
+reportfault 40 fabric:/test3 transient
+!waitforstate RA.Replica.State.fabric:/test3.40.40 SB
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test3.40 false
+
+addbehavior b2 * * ReplicaUp
+removebehavior b1
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test3.40 true
+
+# On removing the ReplicaUp block FM will try to place the primary here via AddPrimary
+addbehavior b3 * * ReplicaOpen
+removebehavior b2
+!waitforstate RA.Replica.State.fabric:/test3.40.40 IC
+
+# Block ReplicaUp to FM now that new primary has been placed
+# otherwise ReplicaDropped will end up being sent
+addbehavior b5 * * ReplicaUp
+
+# fail change role on the service
+injectfailure 40 fabric:/test3 service.beginchangerole
+
+# block replica close to verify ID
+addbehavior b4 * * ReplicaClose
+removebehavior b3
+
+!waitforstate RA.Replica.State.fabric:/test3.40.40 ID
+
+# Remove ReplicaClose block and remove failure to CR(None)
+removefailure 40 fabric:/test3 service.beginchangerole
+removebehavior b4
+!waitforstate RA.FT.State.fabric:/test3.40 Closed
+!waitforstate FM.Replica.State.fabric:/test3.40 InBuild
+
+removebehavior b5
+removebehavior b0
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 2: AddPrimary when SB replica is present on the node
+# Equivalent to executing CR(P) on SB replica via ReplicaOpen
+#####################################################
+
+# FM hasn't finished placing initial primary due to this block
+addbehavior b0 * * AddPrimaryReply
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+!waitforstate RA.Replica.State.fabric:/test2.40.40 RD
+
+addbehavior b1 * * StatefulServiceReopenReply
+reportfault 40 fabric:/test2 transient
+!waitforstate RA.Replica.State.fabric:/test2.40.40 SB
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test2.40 false
+
+addbehavior b2 * * ReplicaUp
+removebehavior b1
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test2.40 true
+
+# On removing the ReplicaUp block FM will try to place the primary here via AddPrimary
+addbehavior b3 * * ReplicaOpen
+removebehavior b2
+!waitforstate RA.Replica.State.fabric:/test2.40.40 IC
+
+# remove all blocks and verify roles
+removebehavior b3
+!waitforstate RA.Replica.State.fabric:/test2.40.40 RD
+
+removebehavior b0
+!waitforstate FM.Replica.State.fabric:/test2.40 Ready
+verify
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 1: DoReconfiguration when SB replica is present on the node
+# Equivalent to executing CR(P) on SB replica via UC Catchup
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * StatefulServiceReopenReply
+reportfault 40 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.40.40 SB
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test1.40 false
+
+addbehavior b2 * * ReplicaUp
+removebehavior b1
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test1.40 true
+
+# On removing the ReplicaUp block FM will try to place the primary here
+addbehavior b3 * * UpdateConfiguration
+removebehavior b2
+!waitforstate RA.Replica.State.fabric:/test1.40.40 IB
+
+# remove all blocks and verify roles
+removebehavior b3
+!waitforstate RA.Replica.State.fabric:/test1.40.40 RD
+!waitforstate FM.Replica.State.fabric:/test1.40 Ready
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q

@@ -1,0 +1,44 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase3_Deactivate
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+set EnablePhase3Phase4InParallel false
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: With optimization disabled phase3 deactivate is performed
+######################################################
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+addbehavior b0 * * Deactivate
+swapprimary fabric:/test1 60 50
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 Phase3_Deactivate
+removebehavior b0
+
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q

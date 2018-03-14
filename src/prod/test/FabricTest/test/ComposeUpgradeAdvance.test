@@ -1,0 +1,147 @@
+# This test covers the advanced scenario of compose deployment upgrade:
+# Note that we mock application package in CM instead of activating a real container since there is no docker daemon on the test environment.
+
+set TestComposeDeploymentTestMode true
+set DummyPLBEnabled true
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
+verify
+
+# AppType
+app.add type1 type1 v1
+app.clear type1
+app.servicepack type1 ServicePackageA version=v1
+app.servicetypes type1 ServicePackageA StatelessServiceType stateless
+app.codepack type1 ServicePackageA CodeA types=StatelessServiceType version=v1
+app.reqservices type1 ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type1
+
+app.add type2 type1 v2
+app.clear type2
+app.servicepack type2 ServicePackageA version=v2
+app.servicetypes type2 ServicePackageA StatelessServiceType stateless
+app.codepack type2 ServicePackageA CodeA1 types=StatelessServiceType version=v2
+app.reqservices type2 ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type2
+
+createcompose app type1 type1 v1 verify
+upgradeappmovenext fabric:/app error=ApplicationNotUpgrading
+
+##############################################################
+# Test Case 1:
+# Upgrade compose from v1 to vFail and failed at provision
+# Upgrade would end up in Failed state
+# Upgrade would be able to resume to v2
+##############################################################
+
+# Application version vFail
+# Add fake user which will fail the upgrade
+app.add typeFail type1 vFail
+app.clear typeFail
+app.user typeFail FakeUser type=DomainUser name=redmond\fake password=fake
+app.servicepack typeFail ServicePackageA version=vFail
+app.servicetypes typeFail ServicePackageA ServiceTypeA1 stateful persist
+app.codepack typeFail ServicePackageA CodeA1 types=StatefulServiceType version=vFail
+app.reqservices typeFail ServiceA1 StatefulServiceType stateful partition=1 replica=3
+app.upload typeFail
+
+upgradecompose app typeFail type1 vFail upgrademode=manual expectUpgradeNotStart
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=Failed,TargetApplicationTypeVersion=vFail
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=vFail expectempty=true
+
+# Continue upgrade with the correct application type
+upgradecompose app type2 type1 v2
+verifyupgradeapp fabric:/app
+verify
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v1 expectempty=true
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v2 verify ApplicationTypeName=type1,ApplicationTypeVersion=v2
+
+##############################################################
+# Test Case 2:
+# Upgrade compose from v2 to vFail2 and failed at app upgrade
+##############################################################
+
+# Application version vFail2
+# Default service kind is changed
+app.add typeFail2 type1 vFail2
+app.clear typeFail2
+app.servicepack typeFail2 ServicePackageA version=vFail2
+app.servicetypes typeFail2 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes typeFail2 ServicePackageA StatelessServiceType stateless
+app.codepack typeFail2 ServicePackageA CodeA1 types=ServiceTypeA version=vFail2
+app.reqservices typeFail2 ServiceA ServiceTypeA stateful partition=1 replica=3
+app.upload typeFail2
+
+upgradecompose app typeFail2 type1 vFail2 upgrademode=manual expectUpgradeNotStart
+
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=Failed,TargetApplicationTypeVersion=vFail2
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v2 verify ApplicationTypeName=type1,ApplicationTypeVersion=v2
+# The vFail2 application type would still exist in the cluster until compose is deleted
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=vFail2 verify ApplicationTypeName=type1,ApplicationTypeVersion=vFail2
+
+# Continue upgrade with the correct application type
+upgradecompose app type1 type1 v1
+verifyupgradeapp fabric:/app
+verify
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v1 verify ApplicationTypeName=type1,ApplicationTypeVersion=v1
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v2 expectempty=true
+
+##############################################################
+# Test Case 3:
+# Upgrade compose from v1 to v2 in monitored mode and rollback
+##############################################################
+
+reporthealth application appname=fabric:/app sequencenumber=1 healthstate=error
+queryhealth application appname=fabric:/app expectedhealthstate=error
+
+upgradecompose app type2 type1 v2 upgrademode=monitored failaction=rollback healthcheckretry=0 healthcheckstable=0
+# Inform test that a rollback is expected for the application so that the verify validates that it is in original version
+setrollbackapp fabric:/app v1 failurereason=HealthCheck
+verifyupgradeapp fabric:/app
+verify
+
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingBackCompleted,TargetApplicationTypeVersion=v1
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v1 verify ApplicationTypeName=type1,ApplicationTypeVersion=v1
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v2 expectempty=true
+
+# Reset application health
+reporthealth application appname=fabric:/app sequencenumber=2 healthstate=ok
+queryhealth application appname=fabric:/app expectedhealthstate=ok
+
+##############################################################
+# Test Case 4:
+# Upgrade compose from v1 to v2 while node is down
+##############################################################
+
+-10
+verify
+
+upgradecompose app type2 type1 v2
+verifyupgradeapp fabric:/app
+verify
+
+# Restart node
++10
+
+deletecompose app verify
+verify
+
+# Make sure everything is cleaned
+# Known bug: app type vFail2 is not cleaned
+# query getapplicationtypepagedlist ApplicationTypeName=type1 expectempty=true
+query getapplicationlist expectempty=true
+
+createcompose app type1 type1 v1 verify
+verify
+
+!q

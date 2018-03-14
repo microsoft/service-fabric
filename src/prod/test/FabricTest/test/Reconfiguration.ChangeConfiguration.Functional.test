@@ -1,0 +1,38 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase4_Activate for a reconfig that promotes a replica
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 5
+set RemoteReplicaProgressQueryWaitDuration 15
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Change Configuration because local replica does not respond to get lsn
+# after swap primary and the wait duration for get lsn expires
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior b0 30 * ReplicatorUpdateEpochAndGetStatus
+
+swapprimary fabric:/test1 40 30
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.30 Phase1_GetLSN
+
+addbehavior b2 * * UpdateConfiguration
+
+# at this point 30 should fault transient and 40 become the primary again
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 Phase2_Catchup
+
+removebehavior b0
+removebehavior b2
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q

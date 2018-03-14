@@ -1,0 +1,70 @@
+#
+# [owner] aprameyr
+# Verify that rollback while replica is being closed works during fab upg
+# 
+set DummyPLBEnabled true
+set NamingOperationTimeout 10
+set RAPMessageRetryInterval 1
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+set CMPlacementConstraints system==true
+set NamingPlacementConstraints system==true
+set FabricUpgradeUpgradeRetryInterval 3
+
+votes 60 70 80
+cmservice 3 3
+fmservice 3 3
+namingservice 1 3 3
+cleantest
+
++10 nodeprops=system:false ud=ud0
++20 nodeprops=system:false ud=ud1
++30 nodeprops=system:false ud=ud2
++40 nodeprops=system:false ud=ud3
++50 nodeprops=system:false ud=ud4
++60 nodeprops=system:true ud=ud5
++70 nodeprops=system:true ud=ud6
++80 nodeprops=system:true ud=ud7
+verify
+
+prepareupgradefabric code=4.2.762.0 config=version2
+provisionfabric code=4.2.762.0 config=version2
+
+prepareupgradefabric code=4.2.763.0 config=version3
+provisionfabric code=4.2.763.0 config=version3
+
+#######################################################################
+#create a service with replicas on each node
+#block close on 20
+#let the upgrade get stuck on node 20
+#now start a rollback
+#this will succeed on 10
+#then 20 will start to get rollback
+#RA should not assert but allow rollback to continue after the close completes
+#######################################################################
+
+#first upgrade
+upgradefabric code=4.2.762.0 config=version2 Rolling 
+verifyupgradefabric 
+
+addbehavior b1 20 * ReplicaClose
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify 
+
+upgradefabric code=4.2.763.0 config=version3 Rolling 
+verifyupgradefabric upgradedomains=ud0
+
+!waitforstate RA.Upgrade.fabric:/System.20 FabricUpgrade_CloseReplicas
+
+rollbackfabric code=4.2.762.0 config=version2 
+upgradefabric code=4.2.762.0 config=version2 Rolling timeout=30 error=Timeout
+-10
+!waitforstate FM.Node.IsUp.10 false
+
+!pause 10
+removebehavior b1
+verify
+
+!q

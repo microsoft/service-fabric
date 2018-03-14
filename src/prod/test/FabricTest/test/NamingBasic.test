@@ -1,0 +1,146 @@
+votes 10
+cmservice 0 0
+namingservice 5 1 1
+cleantest
++10
++20
++30
++40
++50
+verify
+
+createname fabric:/naming_custom_scenario
+scenario ParallelCreateDeleteEnumerateNames fabric:/naming_custom_scenario
+
+#
+createname fabric:/a
+createname fabric:/a/x
+createname fabric:/a/y
+createname fabric:/a/z
+createname fabric:/bb
+createname fabric:/ccc
+createname fabric:/ccc/x
+createname fabric:/ccc/x/y
+createname fabric:/ccc/x/y/z
+createname fabric:/dddd
+createname fabric:/dddd/x
+createname fabric:/dddd/y
+createname fabric:/dddd/x/z
+createname fabric:/dddd/y/z
+createname fabric:/dddd/x/x
+createname fabric:/dddd/y/y
+createname fabric:/dddd/x/y
+createname fabric:/dddd/y/x
+#
+nameexists fabric:/a true
+nameexists fabric:/a/x true
+nameexists fabric:/a/yy false
+nameexists fabric:/bb true
+nameexists fabric:/bb/x false
+nameexists fabric:/ccc true
+nameexists fabric:/ccc/x true
+nameexists fabric:/ccc/y false
+nameexists fabric:/dddd true
+nameexists fabric:/dddd/x/y true
+nameexists fabric:/dddd/y/x true
+nameexists fabric:/dddd/z/z false
+nameexists fabric:/huh false
+#
+enumnames fabric:/a expectedCount=3 recursive=false
+enumnames fabric:/a expectedCount=3 recursive=true
+enumnames fabric:/bb expectedCount=0 recursive=false
+enumnames fabric:/bb expectedCount=0 recursive=true
+enumnames fabric:/ccc expectedCount=1 recursive=false
+enumnames fabric:/ccc expectedCount=3 recursive=true
+enumnames fabric:/dddd expectedCount=2 recursive=false
+enumnames fabric:/dddd expectedCount=8 recursive=true
+enumnames fabric:/huh expectedCount=0 recursive=false error=NameNotFound
+enumnames fabric:/huh expectedCount=0 recursive=true error=NameNotFound
+#
+getproperty fabric:/a PropertyA xxx error=PropertyNotFound
+getproperty fabric:/a/x PropertyA xxx error=PropertyNotFound
+getproperty fabric:/bb PropertyCCC xxx error=PropertyNotFound
+getproperty fabric:/ccc/x/y PropertyCCC xxx error=PropertyNotFound
+getproperty fabric:/ccc/x/y/z PropertyCCC xxx error=PropertyNotFound
+getproperty fabric:/dddd/y/x PropertyDDDD xxx error=PropertyNotFound
+getproperty fabric:/dddd/x/y PropertyDDDD xxx error=PropertyNotFound
+#
+getproperty fabric:/huh PropertyA error=NameNotFound
+#
+putproperty fabric:/a PropertyA HelloThisIsPropertyA
+putcustomproperty fabric:/a PropertyB HelloThisIsPropertyB CustomTypeForB
+putcustomproperty fabric:/a PropertyC HelloThisIsPropertyC CustomTypeForC
+putproperty fabric:/bb PropertyCCC HelloThisIsPropertyCCCAtBB
+putproperty fabric:/ccc/x/y PropertyCCC HelloThisIsPropertyCCC
+putproperty fabric:/dddd/y/x PropertyDDDD dataforpropertydddd 
+
+#
+putproperty fabric:/huh PropertyA data error=NameNotFound
+putproperty fabric:/a/x/y PropertyA HelloThisIsPropertyA error=NameNotFound
+putproperty fabric:/ccc/y PropertyC HelloThisIsPropertyA error=NameNotFound
+#
+getproperty fabric:/a PropertyA HelloThisIsPropertyA
+getproperty fabric:/a PropertyB HelloThisIsPropertyB customTypeId=CustomTypeForB
+getproperty fabric:/bb PropertyCCC HelloThisIsPropertyCCCAtBB
+getproperty fabric:/ccc/x/y PropertyCCC HelloThisIsPropertyCCC
+getproperty fabric:/dddd/y/x PropertyDDDD dataforpropertydddd
+#
+getproperty fabric:/a/x PropertyA xxx error=PropertyNotFound
+getproperty fabric:/ccc PropertyCCC xxx error=PropertyNotFound
+getproperty fabric:/ccc/x/y/z PropertyCCC xxx error=PropertyNotFound
+getproperty fabric:/dddd/x/y PropertyDDDD xxx error=PropertyNotFound
+#
+getmetadata fabric:/a/x PropertyA error=PropertyNotFound
+getmetadata fabric:/ccc PropertyCCC error=PropertyNotFound
+getmetadata fabric:/ccc/x/y/z PropertyCCC error=PropertyNotFound
+getmetadata fabric:/dddd/x/y PropertyDDDD error=PropertyNotFound
+#
+getmetadata fabric:/a PropertyA
+getmetadata fabric:/a PropertyB customTypeId=CustomTypeForB
+getmetadata fabric:/a PropertyC customTypeId=CustomTypeForC
+getmetadata fabric:/ccc/x/y PropertyCCC
+getmetadata fabric:/dddd/y/x PropertyDDDD
+#
+deleteproperty fabric:/a/x PropertyA error=PropertyNotFound
+deleteproperty fabric:/a PropertyA
+deleteproperty fabric:/a PropertyB
+deleteproperty fabric:/a PropertyC
+deleteproperty fabric:/ccc PropertyCCC error=PropertyNotFound
+deleteproperty fabric:/bb PropertyCCC
+deleteproperty fabric:/ccc/x/y/z PropertyCCC error=PropertyNotFound
+deleteproperty fabric:/ccc/x/y PropertyCCC
+deleteproperty fabric:/dddd/y PropertyDDDD error=PropertyNotFound
+#
+deletename fabric:/dddd/y/x NameNotEmpty
+deleteproperty fabric:/dddd/y/x PropertyDDDD
+#
+deletename fabric:/a/x
+deletename fabric:/a/y
+deletename fabric:/a/z
+deletename fabric:/a
+deletename fabric:/bb
+deletename fabric:/ccc/x/y/z
+deletename fabric:/ccc/x/y
+deletename fabric:/ccc/x
+deletename fabric:/ccc
+deletename fabric:/dddd/x/x
+deletename fabric:/dddd/x/y
+deletename fabric:/dddd/x/z
+deletename fabric:/dddd/x
+deletename fabric:/dddd/y/x
+deletename fabric:/dddd/y/y
+deletename fabric:/dddd/y/z
+deletename fabric:/dddd/y
+deletename fabric:/dddd
+#
+nameexists fabric:/a false
+nameexists fabric:/bb false
+nameexists fabric:/ccc false
+nameexists fabric:/dddd false
+#
+-50
+-40
+-30
+-20
+-10
+!q

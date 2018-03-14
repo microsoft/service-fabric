@@ -1,0 +1,56 @@
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set SendLoadReportInterval 1
+set PeriodicLoadPersistInterval 1
+
++10
++20
++30
+verify
+
+set DummyPLBEnabled true
+
+createname fabric:/test0
+createservice fabric:/test0 TestStoreServiceType y 1 2 defaultmovecost=1
+!waitforstate FM.Replica.Role.fabric:/test0.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/test0.30 Primary
+
+# Verify default move cost values
+verifymovecostvalue fabric:/test0 Primary 1
+verifymovecostvalue fabric:/test0 Secondary 1
+
+# Verify default move cost values after default move cost update
+updateservice fabric:/test0 Stateful defaultmovecost=2
+!pause 5
+verifymovecostvalue fabric:/test0 Primary 2
+verifymovecostvalue fabric:/test0 Secondary 2
+
+# Report move cost with plb config UseSeparateSecondaryLoad set to false
+set UseSeparateSecondaryLoad false
+reportmovecost fabric:/test0 20 3
+reportmovecost fabric:/test0 30 3
+!pause 5
+# Verify reported move cost values
+verifymovecostvalue fabric:/test0 Primary 3
+verifymovecostvalue fabric:/test0 Secondary 3
+
+# Report move cost with plb config UseSeparateSecondaryLoad set to true
+set UseSeparateSecondaryLoad true
+reportmovecost fabric:/test0 20 2
+reportmovecost fabric:/test0 30 2
+!pause 5
+# Verify reported move cost values
+verifymovecostvalue fabric:/test0 Primary 2
+verifymovecostvalue fabric:/test0 Secondary 2
+
+# Verify reported move cost values after default move cost update
+updateservice fabric:/test0 Stateful defaultmovecost=1
+!pause 5
+verifymovecostvalue fabric:/test0 Primary 2
+verifymovecostvalue fabric:/test0 Secondary 2
+
+!q

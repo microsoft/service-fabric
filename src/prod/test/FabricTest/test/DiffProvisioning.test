@@ -1,0 +1,165 @@
+#
+# Tests diff provisioning by creating application versions with changes to only some service and code packages.
+#
+
+set DummyPLBEnabled true
+set ConstraintCheckEnabled false
+
+votes 10 20 30
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+set UpgradeHealthCheckInterval 5
+set UserReplicaRestartWaitDuration 9999
+set GracefulReplicaShutdownMaxDuration 0
+
++10 ud=ud_1
++20 ud=ud_2
++30 ud=ud_3
++40 ud=ud_1
++50 ud=ud_2
++60 ud=ud_2
+verify
+
+######################################################
+# Test case: diff provisioning for app with 2 service packages,
+# with one service unchanged
+######################################################
+
+#
+# Application version 1.0
+#
+app.add TestAppV10 TestApp 1.0
+app.clear TestAppV10 
+# ServicePackageA with code package CodeA1 and CodeA2
+app.servicepack TestAppV10 ServicePackageA version=1.0
+app.servicetypes TestAppV10 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes TestAppV10 ServicePackageA ServiceTypeA2 stateful
+app.servicetypes TestAppV10 ServicePackageA ServiceTypeA3 stateless
+app.codepack TestAppV10 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeA2 version=1.0
+app.codepack TestAppV10 ServicePackageA CodeA2 types=ServiceTypeA3 version=1.0
+# ServicePackageB with code packages CodeB1 and CodeB2
+app.servicepack TestAppV10 ServicePackageB version=1.0
+app.servicetypes TestAppV10 ServicePackageB ServiceTypeB1 stateless
+app.servicetypes TestAppV10 ServicePackageB ServiceTypeB2 stateful
+app.codepack TestAppV10 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0
+app.codepack TestAppV10 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0
+app.reqservices TestAppV10 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.reqservices TestAppV10 ServiceA2 ServiceTypeA2 stateful partition=1 replica=3
+app.reqservices TestAppV10 ServiceA3 ServiceTypeA3 stateless partition=1 instance=3
+app.reqservices TestAppV10 ServiceB1 ServiceTypeB1 stateless partition=1 instance=4
+app.upload TestAppV10 
+
+# Provision application version 1.0
+provisionapp TestAppV10 
+
+# Create application version 1.0
+createapp fabric:/test/MyApp TestApp 1.0
+verify
+
+#
+# Application version 1.1
+#
+app.add TestAppV11 TestApp 1.1 
+app.clear TestAppV11 
+app.servicepack TestAppV11 ServicePackageA version=1.1 
+app.servicetypes TestAppV11 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes TestAppV11 ServicePackageA ServiceTypeA2 stateful
+app.servicetypes TestAppV11 ServicePackageA ServiceTypeA3 stateless
+app.servicetypes TestAppV11 ServicePackageA ServiceTypeA4 stateless
+# Change code package CodeA1
+app.codepack TestAppV11 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeA2 version=1.1
+# CodeA2 unchanged, skip upload
+app.codepack TestAppV11 ServicePackageA CodeA2 types=ServiceTypeA3 version=1.0 skipupload=true
+# Add new code package
+app.codepack TestAppV11 ServicePackageA CodeA3 types=ServiceTypeA4 version=1.0
+# Skip uploading ServicePackageB, no changes done to it
+app.servicepack TestAppV11 ServicePackageB version=1.0 skipupload=true
+app.servicetypes TestAppV11 ServicePackageB ServiceTypeB1 stateless
+app.servicetypes TestAppV11 ServicePackageB ServiceTypeB2 stateful
+app.codepack TestAppV11 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0
+app.codepack TestAppV11 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0
+app.reqservices TestAppV11 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.reqservices TestAppV11 ServiceA2 ServiceTypeA2 stateful partition=1 replica=3
+app.reqservices TestAppV11 ServiceA3 ServiceTypeA3 stateless partition=1 instance=3
+app.reqservices TestAppV11 ServiceB1 ServiceTypeB1 stateless partition=1 instance=4
+app.upload TestAppV11
+
+# Provision application version 1.1
+provisionapp TestAppV11
+
+createapp fabric:/test/MyApp2 TestApp 1.1
+verify
+
+upgradeapp fabric:/test/MyApp 1.1 Rolling upgrademode=monitored healthcheckwait=5 healthcheckretry=10 failaction=rollback healthcheckstable=0
+verifyupgradeapp fabric:/test/MyApp
+verify
+
+######################################################
+# Test case: diff provisioning for app with 2 service packages,
+# and no data packages
+######################################################
+#
+# Application version 1.0
+#
+app.add TestAppNoDataV10 TestAppNoData 1.0
+app.clear TestAppNoDataV10 
+app.servicepack TestAppNoDataV10 ServicePackageA version=1.0 skipData=true
+app.servicetypes TestAppNoDataV10 ServicePackageA ServiceTypeA stateful persist
+app.codepack TestAppNoDataV10 ServicePackageA CodeA types=ServiceTypeA version=1.0
+# ServicePackageB with code package CodeB
+app.servicepack TestAppNoDataV10 ServicePackageB version=1.0 skipData=true
+app.servicetypes TestAppNoDataV10 ServicePackageB ServiceTypeB stateless
+app.codepack TestAppNoDataV10 ServicePackageB CodeB types=ServiceTypeB version=1.0
+app.reqservices TestAppNoDataV10 ServiceA ServiceTypeA stateful partition=1 replica=3
+app.reqservices TestAppNoDataV10 ServiceB ServiceTypeB stateless partition=1 instance=1
+app.upload TestAppNoDataV10 
+
+provisionapp TestAppNoDataV10 
+
+#
+# Application version 2.0. Do not upload first package, only change second service package.
+#
+app.add TestAppNoDataV20 TestAppNoData 2.0 
+app.clear TestAppNoDataV20 
+app.servicepack TestAppNoDataV20 ServicePackageA version=1.0 skipupload=true skipData=true
+app.servicetypes TestAppNoDataV20 ServicePackageA ServiceTypeA stateful persist
+app.codepack TestAppNoDataV20 ServicePackageA CodeA types=ServiceTypeA version=1.0
+
+# Change code package for B
+app.servicepack TestAppNoDataV20 ServicePackageB version=2.0  skipData=true
+app.servicetypes TestAppNoDataV20 ServicePackageB ServiceTypeB stateless
+app.codepack TestAppNoDataV20 ServicePackageB CodeB types=ServiceTypeB version=2.0
+
+app.reqservices TestAppNoDataV20 ServiceA ServiceTypeA stateful partition=1 replica=3
+app.reqservices TestAppNoDataV20 ServiceB ServiceTypeB stateless partition=1 instance=1
+app.upload TestAppNoDataV20
+
+provisionapp TestAppNoDataV20
+
+# Create application version 1.0
+createapp fabric:/MyAppWithNoData TestAppNoData 1.0
+verify
+
+gfum
+
+# Upgrade application to version 2.0
+# The health check is not done for the UDs where there is no change.
+# There will be one check for the UD where the modified service is and one at the end of the upgrade.
+upgradeapp fabric:/MyAppWithNoData  2.0 Rolling upgrademode=monitored healthcheckwait=0 healthcheckretry=10 failaction=rollback healthcheckstable=30 timeout=120
+verifyupgradeapp fabric:/MyAppWithNoData timeout=120
+verify
+
+
+# Do not close all the nodes. When nodes close gracefully, they close the replicas.
+# If a replica is blocking close, we terminate the host for that replica.
+# Since all replicas in fabrictest are hosted in the same process the test process is killed.
+# A replica could be blocking close if some replica close is taking a long time,
+# or there is some build going on and the first close message cancels that and the second close message actually closes the replica.
+#-*
+
+!q
+

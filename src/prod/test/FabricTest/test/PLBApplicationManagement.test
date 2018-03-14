@@ -1,0 +1,138 @@
+###############################################################################
+# Test: PLBApplicationManagement.test
+# Owners: nipuzovi, yangli, anuragg
+# This test verifies the flow of information from the client to PLB, and tests
+# CM, FM and PLB workflows for creating/updating/deleting an application. 
+###############################################################################
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+
+set DefragmentationMetrics MEMORY true
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
+verify
+
+###############################################################################
+#
+# Test Case: create application
+#
+###############################################################################
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+app.servicepack versionTC1 ServicePackageA version=v1
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.reqservices versionTC1 defaultservice1 ServiceTypeA stateful partition=1 replica=2
+
+app.upload versionTC1
+
+provisionapp versionTC1
+createapp fabric:/testcase1 TestAppTC1 vTC1 scaleout=1,3,CPU,10,100,300
+
+verifyapplicationload  fabric:/testcase1 minimumNodes=1 maximumNodes=3
+
+verify
+nameexists fabric:/testcase1 true
+
+###############################################################################
+#
+# Test Case: update application
+#
+###############################################################################
+
+# This is a valid update
+updateapp fabric:/testcase1 minCount=1 maxCount=1 metrics=CPU,100,100,300,Memory,200,200,600
+
+verifyapplicationload  fabric:/testcase1 minimumNodes=1 maximumNodes=1
+
+# This is invalid update because new minCount is smaller than old maxCount.
+# This check is done in CM.
+updateapp fabric:/testcase1 error=InvalidArgument minCount=3
+
+# New mincount is greater than new maxCount. Check done in ServiceModel
+updateapp fabric:/testcase1 error=InvalidArgument minCount=3 maxCount=1
+
+# New reservation capacity is greater than maximum node capacity. Check done in ServiceModel
+updateapp fabric:/testcase1 error=InvalidArgument metrics=CPU,200,100,600
+
+# New maxcount is such that MaximumNodeCapacity * MaximumNodes > TotalApplicationCapacity
+updateapp fabric:/testcase1 error=InvalidArgument maxCount=5
+
+updateapp fabric:/testcase1 maxCount=3
+
+verifyapplicationload  fabric:/testcase1 maximumNodes=3
+
+updateapp fabric:/testcase1 minCount=3
+
+updateapp fabric:/testcase1 minCount=1 maxCount=1 metrics=CPU,100,100,300
+
+verifyapplicationload  fabric:/testcase1 minimumNodes=1 maximumNodes=1
+
+updateapp fabric:/testcase1 minCount=1 maxCount=1 metrics=
+
+verifyapplicationload  fabric:/testcase1 minimumNodes=1 maximumNodes=1
+
+updateapp fabric:/testcase1 removeScaleout=true
+
+verifyapplicationload  fabric:/testcase1 minimumNodes=0 maximumNodes=0
+
+###############################################################################
+#
+# Test Case: Update application while upgrade is in progress
+#
+###############################################################################
+
+#
+# Add version 2 of the application
+#
+app.add versionTC2 TestAppTC1 vTC2
+app.clear versionTC2
+app.servicepack versionTC2 ServicePackageA version=v2
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC2 ServicePackageA CodeA types=ServiceTypeA version=v2
+app.reqservices versionTC2 defaultservice1 ServiceTypeA stateful partition=1 replica=2
+app.upload versionTC2
+provisionapp versionTC2
+
+#
+# Update the application, and interleave with updates
+#
+upgradeapp fabric:/testcase1 vTC2 Rolling upgrademode=manual
+
+updateapp fabric:/testcase1 minCount=1 maxCount=1 metrics=
+
+verifyupgradeapp fabric:/testcase1 upgradedomains=UD1
+upgradeappmovenext fabric:/testcase1
+
+verifyapplicationload  fabric:/testcase1 minimumNodes=1 maximumNodes=1
+
+updateapp fabric:/testcase1 maxCount=2
+verifyapplicationload  fabric:/testcase1 minimumNodes=1 maximumNodes=2
+
+verifyupgradeapp fabric:/testcase1 upgradedomains=UD1,UD2
+upgradeappmovenext fabric:/testcase1
+
+verifyupgradeapp fabric:/testcase1 upgradedomains=UD1,UD2,UD3
+
+verifyupgradeapp fabric:/testcase1
+
+verify
+
+#
+# Delete the application
+#
+deleteapp fabric:/testcase1
+unprovisionapp TestAppTC1 vTC1
+
+verify
+nameexists fabric:/testcase1 false
+
+!q

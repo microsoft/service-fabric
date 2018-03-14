@@ -1,0 +1,1431 @@
+FabricTest Commands
+
+Command:createservice
+Description: Used to create Stateful/Stateless services
+Usage: createservice <name> <type> <isStateful> <numOfPartitions> <numOfInstances|numOfReplicas> [options]*
+Options: 
+persist - has persisted state (bool)
+serviceCorrelations - service correlations (vector)
+constraint - placement constraints (string)
+xconstraint - override constraints with values from manifest (bool)
+scalecount - scale count (int)
+minreplicasetsize - min replica set size (int)
+errors - expected errors (vector)
+metrics - service description metrics (vector)
+defaultmovecost - service default move cost (double)
+partitionnames - list of partition names (vector)
+lowRange - low range for uniform partitioned service (int)
+highRange - high range for uniform partitioned service (int)
+forceUpdatePsd - update PSD stored by FabricTest regardless of returned error (bool)
+appname - name of application to create this service under (string)
+client - use a named client for the operation (string)
+initdata - initialization_data_for_the_service_being_created(string)
+servicePackageActivationMode - activation mode to use for this service (enum). Allowed values: SharedProcess|ExclusiveProcess
+serviceDnsName - service DNS name (string)
+
+Command:updateservice
+Description: Used to update Stateful/Stateless services
+Usage: updateservice <serviceName> Stateless|Stateful <settings> [options]*
+Options: 
+error - expected error
+
+Command:updatespvi
+Description: Used to set the service package version instance for a replica on the fm to 1.0.0.0
+Usage: updatespvi <nodeid> <service>
+
+Command:createservicefromtemplate
+Description: Used to create services from template specified in manifest
+Usage: createservice <name> <servicetype> <appname> [options]*
+Options: 
+error - expected error
+
+Command:deleteservice
+Description: Used to delete Stateful/Stateless services
+Usage: deleteservice <name> [options]*
+Options: 
+isForce - is forceful delete (bool) 
+errors - expected errors (vector)
+nodeconfig - <nodeId>: creates a local fabric client using the FabricNodeConfig of the specified node
+
+Command:+ (Add node)
+Description: creates and opens a FabricNode
+Usage: +<nodeId> [options]*
+Options: 
+fail - node is expected to fail (bool)
+skipruntime - Load balancing domain name (bool)
+error - error code string
+retryerrors - Comma separated list of errors on which to retry open
+ud - upgrade domain it belongs to
+security - comma separated list of the security settings in the order
+	ClusterX509FindType,ClusterX509FindValue,ClusterX509StoreName,ClusterX509StoreLocation
+	The last 2 are optional and default to My and LocalMachine respectively
+nodeprops - comma separated list of node properties
+cap - comma separated list of node capacity limits, for example cap=CPU:100,Memory:1024
+idempotent - just succeed (no-op) if the node alread exists (bool)
+
+Command:- (remove node)
+Description: Removes and Closes a FabricNode
+Usage: -<nodeId | *>
+
+Command:abort
+Description: Removes and Aborts a FabricNode
+Usage: abort <nodeId>
+
+Command:clearticket
+Description: Deletes all sitenode ticket files
+Usage: clearticket [nodeId]*
+
+Command:resetstore
+Description: Deletes all the store files (FM, Naming, RA, TestPersistedStore)
+Usage: resetstore [options]*
+Options: 
+nodes - List of node ids which for which the data needs to be deleted
+type - Directory under node working that needs to be deleted. E.g. NS, FM, Applications etc. If not specified the entire node working directory is deleted.
+
+Command:cleantest
+Description: calls clearticket and resetstore internally
+Usage: cleantest
+
+Command:nativeimagestore
+Description: enables the native image store service
+Usage: nativeimagestore
+
+Command:verifyimagestore
+Description: verifies that the image store directory is empty
+Usage: verifyimagestore
+
+Command:votes
+Description: Sets the votes for the ring
+Usage: votes <vote>*
+
+Command:fmservice
+Description: Defines the Failover Manager service
+Usage: fmservice <target replica set size> <min replica set size>
+
+Command:namingservice
+Description: Defines the Naming Store service
+Usage: namingservice <partition count> <target replica set size> <min replica set size>
+
+Command:cmservice
+Description: Defines the Cluster Manager service
+Usage: cmservice <target replica set size> <min replica set size>
+
+Command:infraservice
+Description: Defines the Infrastructure service
+Usage: infraservice <target replica set size> <min replica set size> [instance name]
+
+Command:removeinfraservice
+Description: Removes the Infrastructure service
+Usage: removeinfraservice [instance name]
+
+Command:rmservice
+Description: Defines the Repair Manager service
+Usage: rmservice <target replica set size> <min replica set size> [upgrade]
+Options:
+upgrade - allows the command to be specified after the first node has been opened, to test upgrade
+
+Command:mockimagebuilder
+Description: Defines the mock ImageBuilder to test compose application deployment path
+Usage: mockimagebuilder <build path> <app type name> <app type version>
+
+Command:createcompose
+Description: Create a compose deployment instance
+Usage: createcompose <deploymentname> <appbuild path> <type name> <type version> [options]*
+Options:
+isSkipSetIB - skip setting mock image builder parameter
+verify - verify if compose creation completes
+asyncverify - verify at background
+error - expected error (string)
+
+Command:deletecompose
+Description: Delete a compose deployment instance
+Usage: deletecompose <deploymentname> [options]*
+Options:
+verify - verify if compose deployment deletion completes
+noapp - no Service Fabric application is expected to be deleted
+error = expected error (string)
+
+Command:set
+Description: Sets specified properties
+Usage: set <propertyName> <value>
+Properties: 
+Full list on FabricTest::ConfigurationSetter.cpp
+TestNodeOpenTimeout, DroppedReplicaKeepDuration, OfflineReplicaKeepDuration, QuorumLossWaitDuration, FMPlacementConstraints, NodeFaultDomainIds, NodeProperties, NodeCapacityRatios, NodeCapacities,
+SendToFMTimeout, ReplicaUpDownMessageRetryInterval, UserReplicaRestartWaitDuration, DummyPLBEnabled, ReconfigurationMessageRetryInterval,ServiceLocationBroadcastInterval,
+NamingOperationTimeout, NamingOperationRetryTimeout, NamingResolveRetryTimeout, NamingOperationRetryDelay, NamingServiceChangePollInterval, RepairOperationTimeout, RepairInterval, UpgradeStatusPollInterval, FabricUpgradeStatusPollInterval, UpgradeHealthCheckInterval, FabricUpgradeHealthCheckInterval, 
+TaskProcessingInterval, InfrastructureTaskHealthCheckWaitDuration,
+InfrastructureTaskHealthCheckStableDuration, InfrastructureTaskHealthCheckRetryTimeout,
+ConsiderWarningAsError, MaxPercentUnhealthyNodes, MaxPercentUnhealthyApplications,
+NamingMaxMessageSize, NamingMaxPropertySize, NamingMaxPropertyNameLength, NamingMaxNamingUriLength, NamingMaxServiceChangePollBatchedRequests, NamingMaxNotificationReplyEntryCount, NamingPlacementConstraints, NamingMaxOperationTimeout,
+RETombstoneCleanupLimit,ClusterWideCredentials,ClientCredentials
+MaxApiDelayInterval, MinApiDelayInterval
+
+Command:fmservice
+Description: Sets the service properties for the failover manager service
+Usage: fmservice <ReplicaCount> <MinReplicaSetSize>
+
+Command:namingservice
+Description: Sets the description for the naming service
+Usage: namingservice <PartitionCount> <ReplicaCount> <MinReplicaSetSize>
+
+Command:cmservice
+Description: Sets the description for the cluster manager service
+Usage: cmservice <PartitionCount> <ReplicaCount> <MinReplicaSetSize>
+
+Command:list
+Description: Lists all the node ids of the FabricNodes in the system
+Usage: list
+
+Command:listbehaviors
+Description: Lists all the unreliable transport behaviors
+Usage: listbehaviors
+
+Command:addbehavior
+Description: Adds a behavior to unreliable transport
+Usage: addbehavior [name] [nodeId | *] [destinationFilter | *] [actionFilter | *] [applyRate(0-1.0]] [delay in seconds | Max] [delay span in seconds(default: 0)] [priority(default: 0)]
+
+Command:removebehavior
+Description: Removes behavior from unreliable transport
+Usage: removebehavior <name>
+
+Command:client.addbehavior
+Description: Adds an unreliable transport behavior to a specific node.
+Usage: client.addbehavior [name] [nodeName] [destinationFilter | *] [actionFilter | *] [applyRate(0-1.0]] [delay in seconds | Max] [delay span in seconds(default: 0)] [priority(default: 0)] [apply count(default:-1)]
+
+Command:client.removebehavior
+Description: Removes an unreliable transport behavior of a specific node.
+Usage: client.removebehavior [name | *] [nodeName]
+
+Command:checkunreliabletransportisdisabled
+Description: Checks against the expected value if unreliable transport is disabled. It fails in case it is different from expected.
+Usage: checkunreliabletransportisdisabled [expected=true|false]
+
+Command:fm
+Description: Prints out the current location of the FM
+Usage: fm
+
+Command:nodes
+Description: Prints out the GFUM node table
+Usage: nodes
+
+Command:gfum
+Description: Prints out all the Failover units in the GFUM
+Usage: gfum
+
+Command:lfum
+Description: Prints out all the Failover units in the LFUM
+Usage: lfum [all | <nodeid>] [fuid]
+
+Command:regtable
+Description: Prints out the registration table from the RuntimeManager
+Usage: regtable
+
+Command:activeservices
+Description: Prints out all the active services on all nodes or a specific node id
+Usage: activeservices [nodeId]
+
+Command:loadmetrics
+Description: Prints out all the load metrics
+Usage: loadmetrics
+
+Command:service
+Description: Prints out all the services from the GFUM
+Usage: service
+
+Command:enumnames
+Description: Enumerates the names
+Usage: enumnames <parent name> [options]*
+Options:
+client - used named fabric client
+expectedCount - verify the number of expected subnames is enumerated (int)
+recursive - enumerate recursively (bool)
+error - verify the expected error is returned (string)
+bestEffort - verify the resulting enumeration status is best effort (bool)
+moreData - verify the resulting enumeration status is not finished (bool)
+maxResults - stop continuation after this many results are returned (int)
+verifyExpectedNames - verify the list of resulting names specified in 'expectedNames' (bool)
+expectedNames - a list of names to verify if 'verifyExpectedNames' is true (list)
+
+Command:verify
+Description: Verifies the FM, GFUM, LFUM placement of services etc.
+Usage: verify [timeout] [options]*
+Options:
+fm - only verify the FM placement
+
+Command:verifyplbandlrmsync
+Description: Verifies that PLB and LRM see the same resource usage, and that LRM sees usage of all deployed service packages.
+Usage: verifyplbandlrmsync
+Options:
+
+Command:createname
+Description: Creates a name at the store service.
+Usage: createname <name> [error] [options]*
+Options:
+client - used named fabric client
+
+Command:deletename
+Description: Delete an existing name at the store service.
+Usage: deletename <name> [error] [options]*
+Options:
+client - used named fabric client
+
+Command:nameexists
+Description: Checks whether a name exists at the store service.
+Usage: nameexists <name> <expectedExists> [error] [options]*
+Options:
+client - used named fabric client
+
+Command:putproperty
+Description: Puts the specified property under a name at the store service.
+Usage: putproperty <naming name> <property name> <<data string> | <data size>> [options]*
+Options: 
+error - the expected error result (string)
+
+Command:putcustomproperty
+Description: Puts the specified property under a name at the store service.
+Usage: putproperty <naming name> <property name> <<data string> | <data size>> <customTypeId> [options]*
+Options: 
+error - the expected error result (string)
+
+Command:deleteproperty
+Description: Deletes the specified property.
+Usage: deleteproperty <naming name> <property name> [options]*
+Options: 
+error - the expected error result (string)
+
+Command:getproperty
+Description: Gets the specified property from the store service.
+Usage: getproperty <naming name> <property name> <expected data> [options]*
+Options: 
+error - the expected error result (string)
+customTypeId - the custom type id of the data (string)
+
+Command:getmetadata
+Description: Gets the metadata for the specified property.
+Usage: getmetadata <naming name> <property name> [options]*
+Options: 
+error - the expected error result (string)
+customTypeId - the custom type id of the data (string)
+
+Command:submitbatch
+Description: Submits a batch formed by multiple property related operations.
+Usage: submitbatch <naming name> [options]*
+Options: 
+ops - the list of operations (vector). At least one operation must be provided. Each operation can be of the following type:
+    put:<property name>:<<data string>|<data size>>[:<customTypeId>]
+    get:<property name>
+    getmetadata:<property name>
+    delete:<property name>	
+    checkexists:<property name>:<expected exists>
+    checksequence:<property name>:<sequence #>
+    checkvalue:<property name>:<<data string>|<data size>>
+result - the batch operation result (vector). Each entry can be of the following form:
+    <get operation index>:<expected property name>:<<expected data string> | <expected data size>>[:<expected customTypeId>]
+    <get operation index>:<error>
+error - the batch expected error result (string)
+failedindex - the index of the failed operation in the batch (int). If present, error should also be specified. Default: -1 (no error)
+client - use named fabric client
+
+Command:enumproperties
+Description: enumerates properties at a name
+Usage: enumproperties <naming name> [options]*
+Options:
+includeValues - flag to include property values in enumerated result (default=false)
+maxResults - stop enumerating once this many results has been read (enumeration token will be saved for subsequent calls on this name)
+bestEffort - flag to indicate whether the expected result should be consistent (default=false)
+moreData - flag to indicate whether the expected result should be finished (default=false)
+error - expected error
+
+Command:verifypropertyenumeration
+Description: verifies the correctness of a previous enumproperties command
+Usage: verifyenumeration <naming name> [options]*
+Options:
+includeValues - include property value in verification (default=false)
+
+Command:startnamingclient
+Description: Starts the naming client threads which perform creates/puts/deletes on names and properties.
+Usage: startnamingclient <thread> <nameCount> <propertiesPerName> <operationInterval>
+
+Command:stopnamingclient
+Description: Stops the naming client threads.
+Usage: stopnamingclient
+
+Command::perftest
+Description: Runs targeted performance tests
+Usage: perftest <test number> [test-specific options]*
+
+Command:resolve
+Description: Resolves the replica location(s) for a service.
+Usage: resolve <name> <partition key | false> [expected error] [options]*
+Options:
+noverify - <bool> wait for verification of GFUM before attempting to resolve
+skipverifyresults - <bool> once Resolve returns a result, use it without checking whether the location is valid with FM
+nodeconfig - <nodeId>: creates a local fabric client using the FabricNodeConfig of the specified node
+error - <string> expected error
+
+Command:resolveusingclient
+Description: Resolves the replica location(s) for a service using a named client created via createclient command and names the returned entry for future use.
+Usage: resolveusingclient <client_name> <name> <partition key | false> [options]*
+options:
+cache - <string> The cache name for the entry. If specified, the entry already in the cache is used to call resolve, so the entry is refreshed. If no entry exists, pass NULL to Resolve and save the returned value for future use.
+error - <string> expected error
+
+Command:resolvewithevents
+Description: Resolves a the location for a service using service location change notification callback.
+Usage: resolvewithevents <name> <partition key | false> [expected error]
+
+Command:getservicedescription
+Description: Gets the service description for a created service.
+Usage: getservicedescription <serviceName> [error]
+
+Command:getservicedescriptionusingclient
+Description: Gets the service description for a created service using a named client.
+Usage: getservicedescriptionusingclient <client_name> <serviceName> [error]
+
+Command:createorupdatelbdomain
+Description: Creates a load balancing domain. Update not supported yet.
+Usage: createorupdatelbdomain <domainName> [metrics*]
+
+Command:deletelbdomain
+Description: Deletes a load balancing domain.
+Usage: deletelbdomain <domainName>
+
+Command: deactivatenode
+Description: Deactivate a node for shutting down.
+Usage: deactivatenode <nodeId> <deactivationMode> <expectedError>
+
+Command: activatenode
+Description: Activates a node for replica placement.
+Usage: activatenode <nodeId>
+
+Command: deactivatenodes
+Description: Deactivates a batch of nodes
+Usage: DeactivateNodes <batchId> vector(<Nodes:Intent>) [*options]
+options: 
+error - <string> expected error
+
+Command: removenodedeactivation
+Description: Removes node deactivation for the specified batch
+Usage: RemoveNodeDeactivation <batchId> [*options]
+options: 
+error - <string> expected error
+
+Command: verifynodedeactivationstatus
+Description: Verifies the node deactivation status for the specified batch
+Usage: VerifyNodeDeactivationStatus <batchId> <status> [*options]
+options: 
+timeout - <seconds> verify timeout
+
+Command:nodestateremoved
+Description: Removes the state at the FM for the specified node.
+Usage: nodestateremoved <nodeName> [expectedError]
+
+Command:recoverpartitions
+Description: Brings all system and user service partitions out of quorum loss
+Usage: recoverpartitions [expectedError]
+
+Command:recoverpartition
+Description: Brings the specified partition out of quorum loss
+Usage: recoverpartition <partitionId> [expectedError]
+
+Command:recoverservicepartitions
+Description: Brings all partitions of the specified service out of quorum loss
+Usage: recoverservicepartitions <serviceName> [expectedError]
+
+Command:recoversystempartitions
+Description: Brings all system service partitions out of quorum loss
+Usage: recoversystempartitions [expectedError]
+
+Command:clientput
+Description: Asynchronously puts data into the test store service.
+Usage: clientput <serviceName> <partitionKey> <value> <noverify>
+Options:
+noverify - skip verification for this operation
+
+Command:clientget
+Description: Asynchronously reads data into the test store service.
+Usage: clientget <serviceName> <partitionKey> [expectedValue]
+
+Command:startclient
+Description: Starts all test client threads which talk to the store service.
+Usage: startclient <threads> <putRatio> <ClientOperationInterval>
+
+Command:stopclient
+Description: Stops all the test client threads.
+Usage: stopclient
+
+Command:clientbackup
+Description: Takes a backup from the persisted test store service
+Usage: clientbackup <serviceName> <partitionKey> <directory> [options]
+Options:
+error        - expected error (string)
+backupOption - (string). Full, Incremental or TruncateLogsOnly. Default is Full.
+               If TruncateLogsOnly is used, <directory> parameter is ignored
+
+Command:clientrestore
+Description: Restores persisted test store service from a backup
+Usage: clientrestore <serviceName> <partitionKey> <directory> [options]
+Options:
+error - expected error (string)
+
+Command:clientcompression
+Description: Runs compressed replication operations test 
+Usage: clientcompression <serviceName> <partitionKey> <test args> [options]
+Options:
+error - expected error (string)
+
+Command:usebackwardscompatibleclients
+Description: For client interfaces that have been versioned, use the older version API.
+Usage: usebackwardscompatibleclients [true | false]
+Options: true if boolean value is not provided
+
+Command:addruntime
+Description: Adds a runtime to the specified node.
+Usage: addruntime <nodeId> <isStateful>
+
+Command:removeruntime
+Description: Removes the runtime from the specified node.
+Usage: removeruntime <nodeId> <isStateful>
+
+Command:unregisterruntime
+Description: Unregisters the runtime from the specified node, used for runtime down scenarios.
+Usage: unregisterruntime <nodeId> <isStateful>
+
+Command:addservicetype
+Description: Registers a service type at the specified node.
+Usage: addservicetype <nodeId> <isStateful> [serviceTypes*]
+
+Command:enableservicetype
+Description: Invokes the EnableServiceType message processing at the RA of a specified node.
+Usage: enableservicetype <nodeId> [serviceTypes*]
+
+Command:disableservicetype
+Description: Invokes the DisableServiceType message processing at the RA of a specified node.
+Usage: disableservicetype <nodeId> [serviceTypes*]
+
+Command:swapprimary
+Description: Performs swap primary operation betweem specified nodes when using dummy PLB
+Usage: swapprimary <failoverunit> <currentPrimary> <newPrimary> [options]*
+Options:
+FORCE 
+SKIPVERIFY
+
+Command:promotetoprimary
+Description: Promotes a replica to primary role when using dummy PLB
+Usage: promotetoprimary <failoverunit> <newPrimary> [options]*
+
+Command:httpgateway
+Description: Create or close an instance of HttpGateway
+Usage: httpgateway <nodeid | "close"> [options]*
+Options:
+port - <int> use specific port
+
+Command:createclient
+Description: Create a named fabric client for future use.
+Usage: createclient <client_name> [options]
+Options:
+nodeconfig - <nodeId>: creates a local fabric client using the FabricNodeConfig of the specified node
+ipaddresses - <list of addresses>: creates fabric client using the specified list of addresses
+
+Command:deleteclient
+Description: Delete a named fabric client.
+Usage: deleteclient <client_name>
+
+Command:registercallback
+Description: Register a callback for a named client. In order to receive callbacks, waitforcallback must be called.
+Usage: registercallback <client_name> <callback_name> <service_name> <partition key | false> [options]
+Options:
+error - expected error (string)
+
+Command:unregistercallback
+Description: Unregister a callback for a named client.
+Usage: unregistercallback <client_name> <callback_name>
+
+Command:waitforcallback
+Description: Wait until callback is called since last markcallback command.
+Usage: waitforcallback <client_name> <callback_name> [options]
+Options:
+timeout - the amount of time to wait (double, seconds)
+error - expected error (string)
+
+Command:removecachedserviceresolution
+Description: Delete cached service resolution from a client.
+Usage: removecachedserviceresolution <client_name> <cache_name>
+
+Command:verifycachedserviceresolution
+Description: Verify the cached service resolution against GFUM.
+Usage: verifycachedserviceresolution <client_name> <cache_name> expecting_success=<true | false>
+
+Command:createservicegroup
+Description: Create a service group
+Usage: createservicegroup <name> <type> <isStateful> <numOfPartitions> <numOfInstances|numOfReplicas> <numOfServices> <serviceName1> <serviceType1> ... [options]*
+Options: 
+persist - has persisted state (bool)
+lbdomain - Load balancing domain name (string)
+constraint - placement constraints (string)
+scalecount - scale count (int)
+minreplicasetsize - min replica set size (int)
+error - expected error (string)
+metrics - service description metrics (vector)
+forceUpdatePsd - update PSD stored by FabricTest regardless of returned error (bool)
+servicePackageActivationMode - activation mode to use for this service (enum). Allowed values: SharedProcess|ExclusiveProcess
+
+Command:updateservicegroup
+Description: Used to update Stateful/Stateless service groups
+Usage: updateservicegroup <serviceGroupName> Stateless|Stateful <settings> [options]
+
+Command:setsignal
+Description: Set a signal for a specific operation. 
+Usage: setsignal <nodeId> <serviceName> <signal>
+Note: serviceName is the name of a service in a service group
+signal is of format component.operationName.[timing].flag
+Check src\fabric\test\fabrictest\ApiSignalHelper.h for all available combination of operationnames and actions.
+
+Command:resetsignal
+Description: Remove an injected signal for a specific operation. please refer to setsignal
+Usage: resetsignal <nodeId> <serviceName> <signal>
+
+Command:waitforsignalhit
+Description: Waits until a specific signal (which has been set) has been hit
+
+Command:injectfailure
+Description: Inject a failure for a specific operation. The failure is removed automatically after the timeout. Default timeout is int.MAXVALUE
+Usage: injectfailure <nodeId> <serviceName> <component.operationName[.faulttype]> <TimeoutInSeconds>
+Note: serviceName is the name of a service in a service group
+component could be one of:
+service
+provider
+replicator
+operationName could be one of:
+beginopen
+endopen
+beginchangerole
+endchangerole
+beginclose
+endclose
+getcurrentprogress
+beginondataloss
+endondataloss
+getcopycontext
+begingetnextcopycontext
+endgetnextcopycontext
+getcopystate
+begingetnextcopystate
+endgetnextcopystate
+etc. 
+An fault type could be one of:
+reportfault.permanent
+reportfault.transient
+delay
+If an fault type is missing, it defaults to failure. 
+
+Command:removefailure
+Description: Remove an injected action for a specific operation. please refer to injectfailure
+Usage: removefailure <nodeId> <serviceName> <component.operationName[.faulttype]>
+
+Command:deleteservicegroup
+Description: Delete a service group
+Usage: deleteservicegroup <name>
+errors - expected errors (vector)
+
+Command:prepareupgradefabric
+Description: Prepare msp file and clustermanifest file for fabric code/config upgrade testing. Code and config are independent but at least one must be provided.  
+Usage: prepareupgradefabric [code=<codeVersion>] [config=<configVersion>] 
+
+Command:provisionfabric
+Description: Provision a fabric code/config upgrade. Code and config are independent but at least one must be provided
+Usage: provisionfabric [code=<codeVersion>] [config=<configVersion>] [error]
+
+Command:unprovisionfabric
+Description: Unprovision a fabric code/config upgrade. Code and config are independent but at least one must be provided
+Usage: unprovisionfabric [code=<codeVersion>] [config=<configVersion>] [error]
+
+Command:upgradefabric  
+Description: Upgrade fabric code or cluster manifest. Code and config are independent but at least one must be provided.
+Usage: upgradefabric [code=<codeVersion>] [config=<configVersion>] <upgradeType> [options]*
+Options: 
+upgrademode - "auto" (default), "manual", or "monitored"
+restart - Force a restart for all services (bool)
+error - expected error (string)
+timeout - override default operation timeout in seconds
+replicacheck = ReplicaSetCheckTimeoutInSeconds
+upgradeType - currently only "Rolling" is supported
+xpolicy - use defaults for the policies below
+failaction - "manual" (default), "rollback"
+healthcheckwait - time to wait after completing a UD before starting health checks (seconds)
+healthcheckstable - time to wait for consecutive successful health checks (seconds)
+healthcheckretry - time allowed for retries if health checking fails (seconds)
+upgradetimeout - timeout for overall upgrade before taking failure action (seconds)
+udtimeout - timeout for each UD before taking failure action (seconds)
+jsonpolicy - specify the health aggregation policy in JSON format
+apphealthpolicies - specify ApplicationHealthPolicyMap in JSON format
+
+Command:updatefabricupgrade  
+Description: Modify fabric upgrade parameters
+Usage: updatefabricupgrade [options]*
+Options: 
+error - expected error (string)
+upgrademode - "auto" (default), "manual", or "monitored"
+restart - Force a restart for all services (bool)
+replicacheck = ReplicaSetCheckTimeoutInSeconds
+failaction - "manual" (default), "rollback"
+healthcheckwait - time to wait after completing a UD before starting health checks (seconds)
+healthcheckstable - time to wait for consecutive successful health checks (seconds)
+healthcheckretry - time allowed for retries if health checking fails (seconds)
+upgradetimeout - timeout for overall upgrade before taking failure action (seconds)
+udtimeout - timeout for each UD before taking failure action (seconds)
+xpolicy - use defaults for the policies below
+jsonpolicy - specify the health aggregation policy in JSON format
+apphealthpolicies - specify ApplicationHealthPolicyMap in JSON format
+
+Command:verifyfabricupgradedesc
+Description: Verify fabric upgrade description parameters 
+Usage: verifyfabricupgradedesc [options]*
+Options: 
+code - upgrade target code version
+config - upgrade target config version
+upgrademode - "auto" (default), "manual", or "monitored"
+restart - Force a restart for all services (bool)
+error - expected error (string)
+replicacheck = ReplicaSetCheckTimeoutInSeconds
+failaction - "manual" (default), "rollback"
+healthcheckwait - time to wait after completing a UD before starting health checks (seconds)
+healthcheckstable - time to wait for consecutive successful health checks (seconds)
+healthcheckretry - time allowed for retries if health checking fails (seconds)
+upgradetimeout - timeout for overall upgrade before taking failure action (seconds)
+udtimeout - timeout for each UD before taking failure action (seconds)
+xpolicy - specify null health policy
+jsonpolicy - specify the health aggregation policy in JSON format
+apphealthpolicies - specify ApplicationHealthPolicyMap in JSON format
+
+Command:upgradefabricstatus
+Description: Display the status of fabric upgrade
+Usage: upgradefabricstatus [options]*
+Options:
+details - show fabric upgrade description details (bool)
+error - expected error (string)
+
+Command:upgradefabricmovenext
+Description: Moves a manual upgrade to the next upgrade domain
+Usage: upgradefabricmovenext [options]*
+Options:
+error - expected error (string)
+overload - use the overloaded RESTful move next API (bool)
+
+Command:verifyupgradefabric
+Description: Waits until upgrade fabric is complete
+Usage: verifyupgradefabric [options]*
+Options:
+timeout - time to wait for verification
+upgradedomains - a comma-separated list of upgrade domains to verify against
+upgrademode - verifies upgrade is in the specifed upgrade mode. "auto", "manual", or "monitored"
+upgradestate - verifies upgrade is in the specifed upgrade state(s). "rollbackinprogress", "rollbackcompleted", "rollforwardpending", "rollforwardinprogress", "rollforwardcompleted"
+
+Command:provisionapp
+Description: Provision an application type
+Usage: provisionapp <appBuildPath|externalSfpkgPath> [error] [options]*
+buildPath is a relative path in image store.
+externalSfpkgPath is the path to an external store where the .sfpkg is contained.
+Options:
+async - whether the provision is async.
+externalPath - set to true if the package is contained in an external store and must be downloaded.
+
+Command:unprovisionapp
+Description: Unprovision an application type
+Usage: unprovisionapp <appTypeName> <appTypeVersion> [error] [options]*
+Options:
+async - whether the provision is async.
+
+Command:createapp
+Description: Create an application instance
+Usage: createapp <name> <type> <version> [options]*
+Options: 
+appparam - application parameters (name value) e.g. appparam=Name1:Value1,Name2:Value2
+scaleout - application capacity parameters scaleout=minCount,maxCount,Metric1Name,Metric1Reservation,Metric1MaxNodeCapacity,Metric1TotalAppCapacity
+error - expected error (string)
+
+Command:updateapp
+Description: Updates an application instance with PLB parameters.
+Usage: updateapp <name> [options]*
+Options:
+minCount - minimum node count (integer)
+maxCount - maximum node count (integer)
+metrics - application capacity parameters metrics=MetricName1,Metric1Reservation,Metric1MaxNodeCapacity,Metric1TotalAppCapacity
+error - expected error (string)
+
+Command:upgradeapp
+Description: Upgrade an application instance
+Usage: upgradeapp <appName> <targetVersion> <upgradeType> [options]*
+Options: 
+appparam - application parameters (name value) e.g. appparam=Name1:Value1,Name2:Value2
+upgrademode - "auto" (default), "manual", or "monitored"
+restart - Force a restart for all services (bool)
+error - expected error (string)
+timeout - override default operation timeout in seconds
+replicacheck = ReplicaSetCheckTimeoutInSeconds
+xpolicy - use defaults for the policies below
+failaction - "manual" (default), "rollback"
+healthcheckwait - time to wait after completing a UD before starting health checks (seconds)
+healthcheckstable - time to wait for consecutive successful health checks (seconds)
+healthcheckretry - time allowed for retries if health checking fails (seconds)
+upgradetimeout - timeout for overall upgrade before taking failure action (seconds)
+udtimeout - timeout for each UD before taking failure action (seconds)
+jsonpolicy - specify the health aggregation policy in JSON format
+
+Command:updateappupgrade
+Description: Modify application upgrade parameters 
+Usage: updateappupgrade <appName> [options]*
+Options: 
+error - expected error (string)
+upgrademode - "auto" (default), "manual", or "monitored"
+restart - Force a restart for all services (bool)
+replicacheck = ReplicaSetCheckTimeoutInSeconds
+failaction - "manual" (default), "rollback"
+healthcheckwait - time to wait after completing a UD before starting health checks (seconds)
+healthcheckstable - time to wait for consecutive successful health checks (seconds)
+healthcheckretry - time allowed for retries if health checking fails (seconds)
+upgradetimeout - timeout for overall upgrade before taking failure action (seconds)
+udtimeout - timeout for each UD before taking failure action (seconds)
+xpolicy - specify null health policy
+jsonpolicy - specify the health aggregation policy in JSON format
+
+Command:verifyappupgradedesc
+Description: Verify application upgrade description parameters 
+Usage: verifyappupgradedesc <appName> [options]*
+Options: 
+version - upgrade target version
+appparam - application parameters (name value) e.g. appparam=Name1:Value1,Name2:Value2
+upgrademode - "auto" (default), "manual", or "monitored"
+restart - Force a restart for all services (bool)
+error - expected error (string)
+replicacheck = ReplicaSetCheckTimeoutInSeconds
+failaction - "manual" (default), "rollback"
+healthcheckwait - time to wait after completing a UD before starting health checks (seconds)
+healthcheckstable - time to wait for consecutive successful health checks (seconds)
+healthcheckretry - time allowed for retries if health checking fails (seconds)
+upgradetimeout - timeout for overall upgrade before taking failure action (seconds)
+udtimeout - timeout for each UD before taking failure action (seconds)
+xpolicy - specify null health policy
+jsonpolicy - specify the health aggregation policy in JSON format
+
+Command:upgradeappstatus
+Description: Display the status of an application upgrade
+Usage: upgradeappstatus <appName> [options]*
+Options:
+details - show application upgrade description details (bool)
+error - expected error (string)
+
+Command:upgradeappmovenext
+Description: Moves a manual upgrade to the next upgrade domain
+Usage: upgradeappmovenext <appName> [options]*
+Options:
+error - expected error (string)
+
+Command:verifyupgradeapp
+Description: Waits until upgrade for the specified app is complete
+Usage: verifyupgradeapp <appName> [options]*
+Options:
+timeout - time to wait for verification
+upgradedomains - a comma-separated list of upgrade domains to verify against
+upgrademode - verifies upgrade is in the specifed upgrade mode. "auto", "manual", or "monitored"
+upgradestate - verifies upgrade is in the specifed upgrade state(s). "rollbackinprogress", "rollbackcompleted", "rollforwardpending", "rollforwardinprogress", "rollforwardcompleted"
+
+Command:deleteapp
+Description: Delete an application instance
+Usage: deleteapp <name> [options]*
+Options:
+isForce - is forceful delete (bool) 
+error - expected error
+
+Command:killcodep
+Description: Kills the code package. In case of single package host process is killed. For multipackage the runtime is released.
+If no CodePackageId is provided a one of the code packages is killed on specified nodeId. If code package and killdllhost is 
+specified then the dll host with that code package is killed.
+Usage: killcodep <nodeId> [options]*
+cp - The code package to be killed. cp is applicationId + servicePackageName + codePackageName. The code package id can also be 
+specified by using state command. eg. killHost <CodePackId.AppName.ServicePackageName.CodePackageName> 70
+killhost - it is a bool specifying that the host should be killed. Applicable only to high density hosts
+
+Command:app.add
+Description: adds data for application builder with specified app type alias
+Usage: app.add <appAlias> <appTypeName> <AppTypeVersion>
+or
+Usage: app.add <appAlias> <appTypeName> <AppTypeVersion> <AppToCloneFrom>
+or
+Usage: app.add <appAlias> (version will be default 1.0 and appTypeName=appAlias)
+
+Command:app.clear
+Description: clears all data for application builder with specified app type alias
+Usage: app.clear <appAlias>
+
+Command:app.upload
+Description: Uploads manifests for application builder with specified type alias. The app will be uploaded to incoming/appAlias
+Usage: app.upload <appAlias> [options]*
+Options:
+node - when native image store is enabled, upload using a client connected to this node (node ID)
+compress - compresses the application package (bool)
+
+Command:app.servicetemplate
+Description: Sets the service templates for the application. If ClearAll is specified instead of service type name all existing templates are cleared
+else the specified template will be added to current list
+Usage: app.servicetemplate <appAlias> <serviceTypeName | clearall> [options]*
+stateful - is statelful (bool)
+singlepartition - is single partition (bool)
+uniformpartition - is UniformInt64 partition (bool)
+namedpartition - is named partition (bool)
+partition - partition count (int)
+lowkey (int)
+highkey (int)
+replica - target replica count (int)
+minreplica - min write quorum (int)
+instance - instance count (int)
+partitionnames - partition names (string, can't contain ';')
+
+Command:app.reqservices
+Description: Sets the required services for the application. If ClearAll is specified instead of service name all existing required services are cleared
+else the specified service will be added to current list
+Usage: app.reqservices <appAlias> <serviceName | clearall> <serviceTypeName> [options]*
+stateful - is statelful (bool)
+singlepartition - is single partition (bool)
+uniformpartition - is UniformInt64 partition (bool)
+namedpartition - is named partition (bool)
+partition - partition count (int)
+lowkey (int)
+highkey (int)
+replica - target replica count (int)
+minreplica - min write quorum (int)
+instance - instance count (int)
+partitionnames - partition names (string, can't contain ';')
+servicePackageActivationMode - activation mode to use for this service (enum). Allowed values: SharedProcess|ExclusiveProcess
+
+Command:app.servicepack
+Description: Sets the service package for the application. If ClearAll is specified instead of service package name all existing services manifests are cleared
+else the specified pack will be added to current list
+Usage: app.servicepack <appAlias> <servicePackName | clearall> [options]*
+version (wstring)
+configname - config package name (wstring)
+configversion - config package version name (wstring)
+dataname - data package name (wstring)
+dataversion - data package version name (wstring)
+
+Command:app.servicetypes
+Description: Sets the supported service types for the service package. If ClearAll is specified instead of service type name all existing services types are cleared
+else the specified type will be added to current list
+Usage: app.servicetypes <appAlias> <servicePackName> <serviceTypeName | clearall> [options]*
+stateful - is stateful (bool)
+persist - has persisted state (bool)
+
+Command:app.codepack
+Description: Sets the code packages for the service package. If ClearAll is specified instead of code package name all existing code packages are cleared
+else the specified code package will be added to current list
+Usage: app.codepack <appAlias> <servicePackName> <codePackageName	 | clearall> [options]*
+version - code package version (wstring)
+entry - code package entry point (wstring)
+entrytype - code package entry point type (wstring)
+runtype - code package run frequency type (wstring)
+isolationtype - code package isolation policy type (wstring)
+interval - code package periodic interval (wstring)
+isshared - code package IsShared attribute (wstring)
+types - comma separated list of servictypes this code package should supports(wstring)
+
+Command:app.parameters
+Description: Sets the application parameters and default values in the application manifest.
+Usage: app.parameters <appAlias> <ParameterName1>:<DefaultValue1>,<ParameterName2>:<DefaultValue2>,...
+
+Command:killservice
+Description: Removes all nodes running replicas of the specified service
+Usage: killservice <service name> [options]*
+Options:
+cleardb - also delete database files
+primaryOnly - kill only primary replica
+secondariesOnly - kill only secondary replicas
+
+Command:killnamingservice
+Description: Removes all nodes running replicas of the Naming Service
+Usage: killnamingservice [options]*
+Options:
+cleardb - also delete database files
+primaryOnly - kill only primary replica
+secondariesOnly - kill only secondary replicas
+
+Command:killfmservice
+Description: Removes all nodes running replicas of the Failover Manager Service
+Usage: killfmservice [options]*
+Options:
+cleardb - also delete database files
+primaryOnly - kill only primary replica
+secondariesOnly - kill only secondary replicas
+
+Command:reportfault
+Decription: Triggers ReportFault on the specified service
+Usage: reportfault <nodeId> <serviceName> <permanent|transient>
+
+Command:reportload
+Decription: Triggers ReportLoad on the specified service, metric-value pairs separated by commas
+Usage: reportload <serviceName> <nodeId> <metric1=value1>,<metric2=value2>,...
+
+Command:verifyloadreport
+Decription: Validates the # of reportload received by PLB
+Usage: verifyloadreport <serviceName> <numberOfReportsExpected>
+
+Command:verifyloadvalue
+Decription: Validates the load value in PLB
+Usage: verifyloadvalue <serviceName> <metricName> <role> <value>
+
+Command:reportmovecost
+Decription: Triggers ReportMoveCost on the specified service
+Usage: reportmovecost <serviceName> <nodeId> <value>
+
+Command:verifymovecostvalue
+Decription: Validates the move cost value in PLB
+Usage: verifymovecostvalue <serviceName> <role> <value>
+
+Command:verifyreadwritestatus
+Description verifies read write status 
+Usage: verifyreadwritestatus <nodeid> <servicename> <read_status> <write_status>
+
+Command:!waitforstate IsInRebuild
+Description: Checks if a service is in rebuild.
+Usage: !waitforstate IsInRebuild.<service name> <true | false> <timeout>
+Options:
+timeout: Time interval in seconds to retry the validations, default value is 100 seconds.
+
+Command: reporthealthinternal
+Description: Invokes internal FabricClient.InternalReportHealth API with health information and attributes
+Usage: reporthealthinternal <cluster|node|replica|instance|partition|deployedapplication|deployedservicepackage|application|service> healthstate=<ok|warning|error> [options]*
+Options:
+sequencenumber:report sequencenumber
+property:report property
+timetoliveseconds=report timetoliveseconds
+sourceid=report sourceid
+description=report description
+transient=whether the report should be removed after expiration
+<additional_params> (required): 
+   type=cluster -->
+   type=node --> nodeid=<nodeid> node.instanceid=<node instance id>.
+         Attributes:
+         ipaddressorfqdn=ip Address or FQDN
+         fd=fault domain
+                 ud=upgrade domain
+   type=partition --> partitionguid= partition guid (required). The following attributes can also be passed in:
+              appname=application name
+              servicetypename=service type name
+              servicename=service name
+              type=stateless|stateful|persistent
+   type=replica --> replica.id=<replicaId> replica.instanceid=<instanceid> partitionguid=<partition guid>. Attributes:
+            nodeid=<nodeid> node.instanceid=<node instance id>
+   type=instance --> replica.id=<replicaId> partitionguid=<partition guid>. Attributes:
+            nodeid=<nodeid> node.instanceid=<node instance id>
+   type=deployedservicepackage --> nodeid=<nodeid> node.instanceid=<node instance id> appname=<appname> servicepackagename=<servicePackageName> servicepackageinstanceid=<servicePackageInstanceId>
+   type=deployedapplication --> nodeid=<nodeid> node.instanceid=<node instance id> appname=<appname> appinstanceid=<appInstanceId>
+   type=application --> appname=<appname> 
+   type=service --> servicename=<servicename> 
+
+Command: reporthealth
+Description: Invokes FabricClient.ReportHealth API with the provided information
+Usage: reporthealth <cluster|node|replica|instance|partition|deployedapplication|deployedservicepackage|application|service> healthstate=<ok|warning|error> [options]*
+Options:
+sequencenumber:report sequencenumber
+property:report property
+timetoliveseconds=report timetoliveseconds
+sourceid=report sourceid
+description=report description
+transient=whether the report should be removed after expiration
+<additional_params> (required): 
+   type=cluster -->
+   type=node --> nodeid=<nodeid>
+   type=partition --> partitionid=<servicename#partition_index>
+   type=replica --> replicaid=<servicename#partition_index#replica_index> OR 
+            replica.id=<replicaId> partitionguid=<partition guid>
+   type=servicetype --> nodeid=<nodeid> servicetypename=<servicetypename> appname=<appname>
+   type=instance --> instanceid=<servicename#partition_index#replica_index> 
+   type=deployedservicepackage --> nodeid=<nodeid> servicepackagename=<servicepackagename> appname=<appname> servicePackageActivationId=<needed if ServicePackage was activated in ExclusiveProcess mode>
+   type=deployedapplication --> nodeid=<nodeid> appname=<appname>
+   type=application --> appname=<appname> 
+   type=service --> servicename=<servicename> 
+
+Command: deletehealth
+Description: Invokes internal FabricClient.InternalReportHealth API with health information for delete report
+Usage: deletehealth <node|replica|instance|partition|deployedapplication|deployedservicepackage|servicetype> [options]*
+Options:
+sequencenumber:report sequencenumber
+sourceid=report sourceid
+<additional_params> (required): 
+   type=node --> nodeid=<nodeid>. Optional: node.instanceid=<node instance id>
+   type=partition --> partitionguid= partition guid (required).
+   type=replica --> replica.id=<replicaId> replica.instanceid=<instanceid> partitionguid=<partition guid>
+   type=instance --> replica.id=<replicaId> partitionguid=<partition guid>
+   type=servicetype --> nodeid=<nodeid> servicetypename=<servicetypename> appname=<appname> servicetypehostinstanceid=<service type host instance id>
+   type=deployedservicepackage --> nodeid=<nodeid> servicepackagename=<servicepackagename> appname=<appname> servicepackageinstanceid=<servicePackageInstanceId>
+   type=deployedapplication --> nodeid=<nodeid> appname=<appname> appinstanceid=<appInstanceId>
+
+command:queryhealthstatechunk
+Description: Queries/validates health information for an entity
+Usage: querythealthstatechunk <cluster> [Options]*
+Options:
+expectedstates=expression used to validate the health states of the children. expectedstates=(<type>[;])+. Per type info can be either the total count, total count per states (ok/warning/error) or count and count per states for each type (nodes, apps etc). Example: 
+	expectedstates=10
+        expectedstates=ok:4,warning:6
+	expectedstates=nodes-4;apps-ok:5,warning:2,error:1
+expectedhealthstate=<ok|warning|error>
+expectedreason=expected health evaluation reasons. Value can be one of the following:
+     event,<source>,<property>
+     [replicas|partitions|nodes|deployedservicepackages|deployedapplications|applications],<count>,<maxPercentUnhealthy>
+     services,<servicetypename>,<count>,<maxPercentUnhealthy>
+     systemapp
+     nodesperud,<udname>,<count>,<maxPercentUnhealthy>
+     deployedapplicationsperud,<udname>,<count>,<maxPercentUnhealthy>
+nodefilters=json representation of node filters
+applicationfilters=json representation of application filters
+apphealthpolicies=json representation of ApplicationHealthPolicyMap
+expectedapps=expression used to validate apps returned by the command. expectedapps=(<appinfo>[;])+
+    appinfo=<appname>,<apptype>,<healthstate>
+
+command: queryhealth
+Description: Queries/validates health information for an entity
+Usage: querythealth <cluster|node|replica|partition|servicetype|appservicetype|service|application|deployedservicepackage|deployedapplication> <additional_params> [Options]*
+Options:
+expectedstates=expression used to validate the health states of the children. expectedstates=(<type>[;])+. Per type info can be either the total count, total count per states (ok/warning/error) or count and count per states for each type (nodes, apps etc). Example: 
+	expectedstates=10
+        expectedstates=ok:4,warning:6
+	expectedstates=nodes-4;apps-ok:5,warning:2,error:1
+expectedhealthstate=<ok|warning|error>
+expecteddesc=expected report descriptions, separated by ';'. Each description has format propertyName:description
+expectedevents=expected events, separated by ';'. Each event has format source,property[,healthstate[,previousHealthState[,latestHealthState]]]
+expectedeventcount=expected number of events
+expectedreason=expected health evaluation reasons. Value can be one of the following:
+     event,<source>,<property>
+     [replicas|partitions|nodes|deployedservicepackages|deployedapplications|applications],<count>,<maxPercentUnhealthy>
+     services,<servicetypename>,<count>,<maxPercentUnhealthy>
+     systemapp
+     nodesperud,<udname>,<count>,<maxPercentUnhealthy>
+     deployedapplicationsperud,<udname>,<count>,<maxPercentUnhealthy>
+filterstate=<ok|warning|error>. If direct query is used, return only events with this state.
+filterproperty=if direct query is used, return only events with this property
+<health_policy> (optional): description of health policy applied for query. If not present, warningaserror default to false. 
+    [nodepolicy]=<warningaserror>?[,]<maxunhealthynodespercent:DWORD>?[,]<maxunhealthyappspercent:DWORD>?
+    [apppolicy]=<warningaserror>?[,]<maxunhealthyreplicaspercent:DWORD>?[,]<maxunhealthypartitionspercent:DWORD>?[,]<maxunhealthyservicespercent:DWORD>?
+    [apphealthpolicies]=<json representation of ApplicationHealthPolicyMap>
+
+<additional_params> (required): 
+   type=node --> nodeid=<nodeid> 
+   type=partition --> partitionid=<servicename#partition_index>    
+   type=replica --> replicaid=<servicename#partition_index#replica_index> OR
+            replica.id=<replicaId> replica.instanceid=<instanceid> partitionguid=<partition guid>
+   type=servicetype --> nodeid=<nodeid> servicetypename=<servicetypename> appname=<appname>    
+   type=appservicetype --> servicetypename=<servicetypename> appname=<appname>
+   type=service --> servicename=<servicename>
+   type=application --> appname=<appname>
+   type=deployedservicepackage --> nodeid=<nodeid> servicepackagename=<servicepackagename> appname=<appname> 
+   type=deployedapplication --> nodeid=<nodeid> appname=<appname>
+
+<additional_params> (optional)
+   type=deployedservicepackage --> servicePackageActivationId=<Needed for ServicePackage activated in ExclusiveProcess mode.>
+      
+command: queryhealthlist
+Description: Queries/validates aggregated health for a list of entities
+Usage: querythealthlist <nodes|replicas|partitions|servicetypes|appservicetypes|services|applications|deployedapplications|deployedservicepackages> [Options]*
+Options:
+expectedstates=the expected entries. Uses same format as queryhealth expectedstates parameter.
+healthpolicy=description of health policy applied for query (see above for format)
+<additional_params>: 
+   type=nodes --> 
+   type=partitions --> servicename=<servicename> 
+   type=replicas --> partitionid=<servicename#partition_index> 
+   type=services --> appname=<appname>
+   type=applications --> 
+   type=deployedapplications --> appname=<appname> 
+   type=deployedservicepackages --> appname=<appname> nodeid=<nodeid>
+
+Command: checkhm
+Description: Checks that the HM state matches desired
+Usage: checkhm [options]* 
+Options:
+cache=<nodes|replicas|partitions|services|applications|deployedapplications|deployedservicepackages> - the cache to check
+expectedcount = the number of entities in the specified cache
+
+Command: checkhmentity
+Description: Checks that the state of the specified entity on HM matches desired
+Usage: checkhmentity <node|replica|partition|service|application|deployedapplication|deployedservicepackage> [options]* 
+Options:
+state (required) - <ok|deleted|cleanedup|nosystemreport>
+expectedeventcount (optional) - the number of expected events
+expectedentitystate (optional) - the entity health state, eg. Ready, PendingFirstReport, PendingWriteToStore etc.
+<additional_params> (required): 
+   type=node --> nodeid=<nodeid> node.instanceid=<node instance id>.
+         Attributes:
+         ipaddressorfqdn=ip Address or FQDN
+         fd=fault domain
+                 ud=upgrade domain
+   type=partition --> partitionguid= partition guid (required). The following attributes can also be passed in:
+              appname=application name
+              servicetypename=service type name
+              servicename=service name
+              type=stateless|stateful|persistent
+   type=replica --> replica.id=<replicaId> replica.instanceid=<instanceid> partitionguid=<partition guid>. Attributes:
+            nodeid=<nodeid> node.instanceid=<node instance id>
+   type=instance --> replica.id=<replicaId> partitionguid=<partition guid>. Attributes:
+            nodeid=<nodeid> node.instanceid=<node instance id>
+   type=service --> servicename=<servicename>. Attributes:
+              appname=application name
+              servicetypename=service type name
+   type=application --> appname=<appname>
+   type=deployedservicepackage --> appname=<appname> servicepackagename=<servicepackagename> nodeid=<nodeid> node.instanceid=<node instance id>
+   type=deployedapplication --> appname=<appname> nodeid=<nodeid> node.instanceid=<node instance id>
+
+Command: corrupthmentity
+Description: Introduces corruption in HM in-memory health state of the entity.
+Usage: corrupthmentity <node|replica|partition|service|application|deployedapplication|deployedservicepackage> [options]* 
+Options:
+changeentitystate (optional) - if specified, changes the in-memory entity state.
+addevents (optional) - specifies events to be added in-memory only. The events are separated by ";" and each event can specify source, property, state.
+removeevents (optional) - specifies events to be removed from in-memory only. The events are separated by ";" and each event can specify source, property, state.
+scrambleevents (optional) - specifies events to be scrambled - their health state is changed in-memory only. The events are separated by ";" and each event can specify source, property, state.
+expectedentitystate (optional) - the expected entity health state after corruption, eg. Ready, PendingFirstReport, PendingWriteToStore etc.
+expectedeventcount (optional) - the number of expected events after the corruption was introduced.
+<additional_params> (required): 
+   type=node --> nodeid=<nodeid> node.instanceid=<node instance id>.
+   type=partition --> partitionguid= partition guid (required).
+   type=replica --> replica.id=<replicaId> replica.instanceid=<instanceid> partitionguid=<partition guid>.
+   type=instance --> replica.id=<replicaId> partitionguid=<partition guid>.
+   type=service --> servicename=<servicename>.
+   type=application --> appname=<appname>
+   type=deployedservicepackage --> appname=<appname> servicepackagename=<servicepackagename> nodeid=<nodeid> node.instanceid=<node instance id>
+   type=deployedapplication --> appname=<appname> nodeid=<nodeid> node.instanceid=<node instance id>
+
+Commnad: checkhealthclient [Options]
+Description: Checks conditions on health reporting component.
+Options:
+reportcount - the number of expected queued reports.
+
+Command: hmload
+Description: Creates and queries services to trigger HM load
+Usage: hmload [options]*
+Options:
+serviceCount - the number of services to be created
+name - the service name to be created
+subname - the subname prefix that will be appended to the name
+depthCount - the number of times the subname will be appended to the name, to test longer service names
+replicaCount - the number of replicas to be created for each partition
+
+Command: setclientsettings
+Description: Sets fabric client settings
+Usage: setclientsettings [options]* 
+Options:
+keepalive - keepAliveIntervalInSeconds (ULONG)
+connectioninitializationtimeout - connectionInitializationTimeoutInSeconds (ULONG)
+pollinterval - ServiceChangePollIntervalInSeconds (ULONG)
+cachesize - PartitionLocationCacheLimit (ULONG)
+healthreportsendinterval - HealthReportSendIntervalInSeconds (ULONG)
+healthoperationtimeout - HealthOperationTimeoutInSeconds (ULONG)
+error - expected error
+forceopen - if true, causes a naming operation to execute to open the naming client before passing in the new settings
+
+Command:infra
+Description: Send a command to the Infrastructure Service
+Usage:infra <command string> [options]*
+Options:
+clientapi - use client api directly to CM rather than going through IS (bool)
+error - verify the expected error is returned from the command API (string)
+queryerror - verify the expected error is returned from the query API (string)
+target - target partition ID of IS instance (Guid as string)
+
+Command: hm
+Description: List the contents of HM cache
+Usage: hm <nodes|partitions|servicetypes|replicas|applications|services> [count | pattern]
+Options:
+count - Prints only the number of entities.
+Pattern - Prints only entities that match the pattern. 
+
+Command: queryex
+Description: Runs a random query handler and validates the query result
+Usage: hm [Options]*
+Options:
+count = number of queries to run. A random query is chosen every iteration
+queries = You can specify a smaller set of queries to choose from using this option
+          instead of all queries. It is a comma separated list. You can also specify the 
+          weight for every query if needed. 
+          e.g. 'queries=nodes,health' will have 50% odds for selecting health or node
+               'queries=nodes:20,health:80' will select health 80% of the times
+          
+Command: scenario
+Description: Runs a custom test scenario too complex to script directly
+Usage: scenario <scenario name>
+
+Command:clientreportfault
+Description: Uses fabric client api to report fault
+Usage: clientreportfault NodeId PartitionId ReplicaId <permanent|transient> [isForce = false] [expectederrors]
+
+Command:createrepair
+Description: Creates a repair request
+Usage: createrepair [options]*
+Options:
+id - repair task ID (string)
+version - repair task version (int)
+description - repair task description (string)
+state - repair task state (int)
+flags - repair task flags (int)
+action - repair action (string)
+targets - repair targets (comma-separated string list)
+executor - repair executor name (string)
+executordata - repair executor private data (string)
+result - kind of result: Completed, Cancelled, Failed, etc. (int)
+resultcode - HRESULT of the repair (int)
+resultdetail - human-readable result description (string)
+error - expected error (string)
+
+Command:cancelrepair
+Description: Cancels a repair request
+Usage: cancelrepair [options]*
+Options:
+id - repair task ID (string, required)
+version - repair task version (int)
+abort - request abort (bool)
+error - expected error (string)
+
+Command:forceapproverepair
+Description: Forces approval of a repair request, bypassing safety checks
+Usage: forceapproverepair [options]*
+Options:
+id - repair task ID (string, required)
+version - repair task version (int)
+error - expected error (string)
+
+Command:deleterepair
+Description: Deletes a completed repair request
+Usage: deleterepair [options]*
+Options:
+id - repair task ID (string, required)
+version - repair task version (int)
+error - expected error (string)
+
+Command:updaterepair
+Description: Updates a repair request
+Usage: updaterepair [options]*
+Options:
+id - repair task ID (string)
+version - repair task version (int)
+description - repair task description (string)
+state - repair task state (int)
+flags - repair task flags (int)
+action - repair action (string)
+targets - repair targets (comma-separated string list)
+executor - repair executor name (string)
+executordata - repair executor private data (string)
+result - kind of result: Completed, Cancelled, Failed, etc. (int)
+resultcode - HRESULT of the repair (int)
+resultdetail - human-readable result description (string)
+error - expected error (string)
+
+Command:repairs
+Description: Prints out the list of repair requests in the Repair Manager, and optionally verifies count
+Usage: repairs
+Options:
+id - repair task ID prefix filter (string)
+state - state mask (int)
+executor - executor filter (string)
+expectedcount - expected result count (int)
+
+Command: updaterepairhealthpolicy
+Description: Updates the repair health policy of a repair task
+Usage: updaterepairhealthpolicy id={repair_task_id} [options]*
+Options:
+id - repair task Id (string) (required)
+performpreparinghealthcheck - whether to perform health check in the Preparing stage (optional) (bool)
+performrestoringhealthcheck - whether to perform health check in the Restoring stage (optional) (bool)
+flags - determine if the above 2 flags must be updated from their default values (optional) (ulong)
+        The values this switch can take are
+        0UL - update none
+        1UL - update PerformPreparingHealthCheck property of the repair task
+        2UL - update PerformRestoringHealthCheck property of the repair task
+        3UL - update both PerformPreparingHealthCheck and PerformRestoringHealthCheck properties        
+version - repair task version (int) (optional)
+error - expected error (string)
+Example(s):
+updaterepairhealthpolicy id=RepairA performrestoringhealthcheck=true flags=2UL
+updaterepairhealthpolicy id=RepairA performpreparinghealthcheck=true performrestoringhealthcheck=true flags=3UL
+
+Command: getrepair
+Description: Gets details about a particular repair task.
+Usage: getrepair id={repair_task_Id} [propertyname={name} expectedpropertyvalue={value}]
+Options:
+id - repair task Id (string) (required)
+propertyname - name of a property of the repair task. 
+               Currently, only the following are supported:
+               State, PreparingHealthCheckstate, RestoringHealthCheckState, 
+               PerformPreparingHealthCheck, PerformRestoringHealthCheck
+expectedpropertyvalue - expected value of the property (string)
+Example(s):
+getrepair id=RepairA
+getrepair id=RepairA propertyname=State expectedpropertyvalue=1
+
+Command:xcopy
+Description: Copies a directory to another directory. If the destination directory doesn't exist, it is created.
+Usage: xcopy SourceDir DestinationDir [options]*
+Options:
+overwrite - overwrites contents if the destination directory exists.
+
+Command:deployservicepackagetonode
+Description: Copies packages from specified ServiceManifest for an ApplicationType and Version to destination node
+Usage: DeployServicePackageToNode ApplicationTypeName=<ApplicationTypeName> ApplicationTypeVersion=<ApplicationTypeVersion> ServiceManifestName=<ServiceManifestName> NodeId=<NodeId> [options]*
+Options:
+SharingScope=[All|Code|Config|Data]
+SharedPackages=[Names of packages to be shared]
+
+Command:notificationclient
+Description: Creates a client registered for service notifications at the given list of nodes
+Usage: notificationclient [clientname=<name>] nodes=<list of node IDs>
+
+Command:notification+
+Description: Adds a service notification filter
+Usage: notification+ [clientname=<name>] uri=<naming uri> [options]*
+Options:
+prefix - adds the prefix filter flag (bool)
+primary - adds the primary only filter flag (bool)
+
+Command:notification-
+Description: Removes a service notification filter
+Usage: notification- [clientname=<name>] filterid=<id> [options]*
+Options:
+prefix - adds the prefix filter flag (bool)
+primary - adds the primary only filter flag (bool)
+
+Command:setnotificationwait 
+Description: Sets the list of names on which notifications are expected
+Usage: setnotificationwait [clientname=<name>] names=<list of names>
+
+Command:notificationwait 
+Description: Waits for at least one notification on each name set by the previous setnotificationwait command
+Usage: notificationwait [clientname=<name>] [timeout=<seconds>]
+
+Command::injecterror
+Description: Injects an error to be consumed and handled by a component
+Usage: injecterror <tag> <error>
+
+Command:adddiskdrivefolders
+Description: adds the directories specified by the list of dirnames per application. for ex: ApplicationCheckpointFiles\TestAppA_App0
+Usage: adddiskdrivefolders dirname=<list of directory names>
+
+Command:verifydeleteddiskdrivefolders
+Description: verify that all directories created from comman adddiskdrivefolders doesnot have any subdirectories. for ex: ApplicationCheckpointFiles\TestAppA_App0 shouldn't exist
+Usage: verifydeleteddiskdrivefolders
+
+Command:waitforalltoapplylsn
+Description: wait for all replicas to apply and acknowledge a given lsn
+Usage: waitforalltoapplylsn <servicename> <nodename> <lsn>
+
+Command::requestcheckpoint
+Decription: Triggers a checkpoint on the replica (first partitionId, if there is more than 1) represented by the service name and node id
+Usage: requestcheckpoint <serviceName> <nodeId>
+
+Command:checkcontainers
+Description: checks whether containers are supported on the machine, if not the test exits with success
+Usage: checkcontainers
+
+Command:verifylimits
+Description: does a query of job object / cgroup / docker to verify that proper RG limits are set
+Usage: verifylimits cpcpu=<expected cpu loads for all CPs> cpmemory=<expected memory loads for all CPs>
+
+Command:verifypods
+Description: checks that container groups are setup properly by checking namespaces and cgroup parent settings
+Usage: verifypods <list of container group sizes>

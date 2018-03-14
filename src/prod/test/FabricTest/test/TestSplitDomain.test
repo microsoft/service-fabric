@@ -1,0 +1,103 @@
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set SendLoadReportInterval 1
+set PeriodicLoadPersistInterval 1
+set DummyPLBEnabled true
+
++10 cap=memory:1000,disk:10000
++20 cap=memory:1000,disk:10000
++30 cap=memory:1000,disk:10000
+verify
+
+createname fabric:/test1
+createname fabric:/test2
+createname fabric:/test3
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist metrics=memory,Medium,95,25
+!waitforstate FM.Replica.Role.fabric:/test1.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary|Secondary
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist metrics=memory,Medium,95,25,disk,High,950,250
+!waitforstate FM.Replica.Role.fabric:/test2.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.30 Primary|Secondary
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist metrics=disk,High,950,250
+!waitforstate FM.Replica.Role.fabric:/test3.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.30 Primary|Secondary
+
+verify
+
+#report load from fabric:/test1 
+reportload fabric:/test1 10 memory=200
+reportload fabric:/test1 20 memory=200
+reportload fabric:/test1 30 memory=200
+
+!pause 5
+
+verifyloadvalue fabric:/test1 memory primary 200
+verifyloadvalue fabric:/test1 memory secondary 200 20
+
+#report load from fabric:/test3 
+reportload fabric:/test3 10 disk=2000
+reportload fabric:/test3 20 disk=2000
+reportload fabric:/test3 30 disk=2000
+
+!pause 5
+
+verifyloadvalue fabric:/test3 disk primary 2000 
+verifyloadvalue fabric:/test3 disk secondary 2000 20
+
+#delete service2 should not cause any change on load, let's verify it again
+deleteservice fabric:/test2
+
+verifyloadvalue fabric:/test1 memory primary 200
+verifyloadvalue fabric:/test1 memory secondary 200 20
+verifyloadvalue fabric:/test3 disk primary 2000
+verifyloadvalue fabric:/test3 disk secondary 2000 20
+
+!pause 5
+# split domain also affect update logic
+updateservice fabric:/test1 Stateful metrics=memory,High,2,2
+# if the load is reported, then default load will not be changed
+verifyloadvalue fabric:/test1 memory primary 200
+verifyloadvalue fabric:/test1 memory secondary 200 20
+
+#add a new metric for test3 metrics
+updateservice fabric:/test3 Stateful metrics=memory,High,2,2
+
+!pause 5
+verifyloadvalue fabric:/test3 memory primary 2
+verifyloadvalue fabric:/test3 memory secondary 2 20
+# change the default load
+updateservice fabric:/test3 Stateful metrics=memory,High,4,4
+
+!pause 5
+# the load will be changed because it is using the default load
+verifyloadvalue fabric:/test3 memory primary 4
+verifyloadvalue fabric:/test3 memory secondary 4 20
+# report some load
+reportload fabric:/test3 10 memory=10
+reportload fabric:/test3 20 memory=10
+reportload fabric:/test3 30 memory=10
+
+!pause 5
+# load should be updated
+verifyloadvalue fabric:/test3 memory primary 10
+verifyloadvalue fabric:/test3 memory secondary 10 20
+
+!pause 5
+# update the default load
+updateservice fabric:/test3 Stateful metrics=memory,High,6,6
+
+!pause 5
+# the service is using the reported load even default load is changed
+verifyloadvalue fabric:/test3 memory primary 10
+verifyloadvalue fabric:/test3 memory secondary 10 20
+!q

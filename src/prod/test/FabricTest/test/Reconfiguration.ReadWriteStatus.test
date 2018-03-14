@@ -1,0 +1,911 @@
+#
+# [owner] aprameyr
+# Test scenarios around Read/Write status
+!load FailoverCITInitialization.test
+set IsPreWriteStatusRevokeCatchupEnabled false
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 120
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1a: Add Primary scenarios
+#####################################################
+
+setsignal 60 fabric:/test1a service.beginchangerole.block
+setsignal 60 fabric:/test1a replicator.beginopen.block
+setsignal 60 fabric:/test1a replicator.beginchangerole.block
+
+createservice fabric:/test1a TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+
+waitforsignalhit 60 fabric:/test1a replicator.beginopen.block
+verifyreadwritestatus 60 fabric:/test1a TryAgain TryAgain
+resetsignal 60 fabric:/test1a replicator.beginopen.block
+
+waitforsignalhit 60 fabric:/test1a replicator.beginchangerole.block
+verifyreadwritestatus 60 fabric:/test1a TryAgain TryAgain
+resetsignal 60 fabric:/test1a replicator.beginchangerole.block
+
+waitforsignalhit 60 fabric:/test1a service.beginchangerole.block
+verifyreadwritestatus 60 fabric:/test1a TryAgain TryAgain
+resetsignal 60 fabric:/test1a service.beginchangerole.block
+
+!waitforstate RA.Replica.State.fabric:/test1a.60.60 RD
+verifyreadwritestatus 60 fabric:/test1a Granted Granted
+
+deleteservice fabric:/test1a
+verify
+
+#####################################################
+# Scenario 1b: Add Primary/NWQ 
+# Also test AddPrimary with data loss
+#####################################################
+
+addbehavior b1 * * AddReplica
+createservice fabric:/test1b TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test1b.60.60 RD
+verifyreadwritestatus 60 fabric:/test1b Granted NoWriteQuorum
+
+deleteservice fabric:/test1b
+removebehavior b1
+verify
+
+createservice fabric:/test1b TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+setsignal 60 fabric:/test1b replicator.beginondataloss.block
+reportfault 60 fabric:/test1b permanent
+
+waitforsignalhit 60 fabric:/test1b replicator.beginondataloss.block
+verifyreadwritestatus 60 fabric:/test1b TryAgain TryAgain
+resetsignal 60 fabric:/test1b replicator.beginondataloss.block
+
+deleteservice fabric:/test1b
+verify
+
+#####################################################
+# Scenario 1ba: Add Primary with failures during CR(P) on primary
+# Add primary with failures during OnDataLoss
+#####################################################
+
+addbehavior bx * * RAReportFault
+setsignal 60 fabric:/test1ba service.beginchangerole.block
+injectfailure 60 fabric:/test1ba service.beginchangerole
+createservice fabric:/test1ba TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+
+waitforsignalhit 60 fabric:/test1ba service.beginchangerole.block
+resetsignal 60 fabric:/test1ba service.beginchangerole.block
+removefailure 60 fabric:/test1ba service.beginchangerole
+
+verify
+
+deleteservice fabric:/test1ba
+verify
+
+removebehavior bx
+
+#####################################################
+# Scenario 1bb: Add primary with failures during OnDataLoss
+#####################################################
+
+createservice fabric:/test1bb TestStoreServiceType y 1 1 constraint=(system!=true)
+verify
+
+addbehavior b1 * * AddPrimary
+reportfault 60 fabric:/test1bb permanent
+!waitforstate RA.FT.State.fabric:/test1bb.60 Closed
+
+addbehavior bx * * RAReportFault
+setsignal 60 fabric:/test1bb replicator.beginondataloss.block
+injectfailure 60 fabric:/test1bb provider.endondataloss
+removebehavior b1
+
+waitforsignalhit 60 fabric:/test1bb replicator.beginondataloss.block
+resetsignal 60 fabric:/test1bb replicator.beginondataloss.block
+removefailure 60 fabric:/test1bb provider.endondataloss
+verify
+
+deleteservice fabric:/test1bb
+verify
+
+removebehavior bx
+
+#####################################################
+# Scenario 1c: Primary close 
+#####################################################
+createservice fabric:/test1c TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+#Verify close
+setsignal 60 fabric:/test1c replicator.beginclose.block
+setsignal 60 fabric:/test1c service.beginclose.block
+
+reportfault 60 fabric:/test1c transient
+
+waitforsignalhit 60 fabric:/test1c replicator.beginclose.block
+verifyreadwritestatus 60 fabric:/test1c NotPrimary NotPrimary
+resetsignal 60 fabric:/test1c replicator.beginclose.block
+
+waitforsignalhit 60 fabric:/test1c service.beginclose.block
+verifyreadwritestatus 60 fabric:/test1c NotPrimary NotPrimary
+resetsignal 60 fabric:/test1c service.beginclose.block
+
+deleteservice fabric:/test1c
+verify
+
+
+
+#####################################################
+# Scenario 2: CR (U->I) (I->S) (I->N) (S->N) Idle close, secondary close
+# Scenario 2a: CR (U->I) (I->S) (S->Close) 
+#####################################################
+
+addbehavior b1 * * AddReplica
+addbehavior b2 * * Activate
+createservice fabric:/test2a TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+
+setsignal 50 fabric:/test2a replicator.beginopen.block
+setsignal 50 fabric:/test2a service.beginchangerole.block
+setsignal 50 fabric:/test2a replicator.beginchangerole.block
+
+removebehavior b1
+!waitforstate RA.Replica.State.fabric:/test2a.50.50 IC
+
+#Verify (U->I)
+waitforsignalhit 50 fabric:/test2a replicator.beginopen.block
+verifyreadwritestatus 50 fabric:/test2a NotPrimary NotPrimary
+resetsignal 50 fabric:/test2a replicator.beginopen.block
+
+waitforsignalhit 50 fabric:/test2a replicator.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test2a NotPrimary NotPrimary
+resetsignal 50 fabric:/test2a replicator.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test2a service.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test2a NotPrimary NotPrimary
+resetsignal 50 fabric:/test2a service.beginchangerole.block
+
+#Verify (I->S)
+!waitforstate RA.FT.ReconfigStage.fabric:/test2a.60 Phase4_Activate
+
+setsignal 50 fabric:/test2a service.beginchangerole.block
+setsignal 50 fabric:/test2a replicator.beginchangerole.block
+
+removebehavior b2
+
+waitforsignalhit 50 fabric:/test2a replicator.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test2a NotPrimary NotPrimary
+resetsignal 50 fabric:/test2a replicator.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test2a service.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test2a NotPrimary NotPrimary
+resetsignal 50 fabric:/test2a service.beginchangerole.block
+verify
+
+#Verify Close (S)
+setsignal 50 fabric:/test2a replicator.beginclose.block
+setsignal 50 fabric:/test2a service.beginclose.block
+
+reportfault 50 fabric:/test2a transient
+
+waitforsignalhit 50 fabric:/test2a replicator.beginclose.block
+verifyreadwritestatus 50 fabric:/test2a NotPrimary NotPrimary
+resetsignal 50 fabric:/test2a replicator.beginclose.block
+
+waitforsignalhit 50 fabric:/test2a service.beginclose.block
+verifyreadwritestatus 50 fabric:/test2a NotPrimary NotPrimary
+resetsignal 50 fabric:/test2a service.beginclose.block
+
+deleteservice fabric:/test2a
+verify
+
+#####################################################
+# Scenario 2b: S->N
+#####################################################
+
+createservice fabric:/test2b TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+#At this time S should be back
+#Verify S->N
+setsignal 50 fabric:/test2b replicator.beginchangerole.block
+setsignal 50 fabric:/test2b service.beginchangerole.block
+setsignal 50 fabric:/test2b replicator.beginclose.block
+setsignal 50 fabric:/test2b service.beginclose.block
+
+deleteservice fabric:/test2b errors=Timeout
+
+waitforsignalhit 50 fabric:/test2b replicator.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test2b NotPrimary NotPrimary
+resetsignal 50 fabric:/test2b replicator.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test2b service.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test2b NotPrimary NotPrimary
+resetsignal 50 fabric:/test2b service.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test2b replicator.beginclose.block
+verifyreadwritestatus 50 fabric:/test2b NotPrimary NotPrimary
+resetsignal 50 fabric:/test2b replicator.beginclose.block
+
+waitforsignalhit 50 fabric:/test2b service.beginclose.block
+verifyreadwritestatus 50 fabric:/test2b NotPrimary NotPrimary
+resetsignal 50 fabric:/test2b service.beginclose.block
+
+deleteservice fabric:/test2b errors=ServiceNotFound
+verify
+
+#####################################################
+# Scenario 2c: Idle -> Close
+#####################################################
+
+addbehavior b1 * * CreateReplicaReply
+
+createservice fabric:/test2c TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test2c.50.50 IB
+
+#Verify Close (I)
+setsignal 50 fabric:/test2c replicator.beginclose.block
+setsignal 50 fabric:/test2c service.beginclose.block
+
+reportfault 50 fabric:/test2c transient
+
+waitforsignalhit 50 fabric:/test2c replicator.beginclose.block
+verifyreadwritestatus 50 fabric:/test2c NotPrimary NotPrimary
+resetsignal 50 fabric:/test2c replicator.beginclose.block
+
+waitforsignalhit 50 fabric:/test2c service.beginclose.block
+verifyreadwritestatus 50 fabric:/test2c NotPrimary NotPrimary
+resetsignal 50 fabric:/test2c service.beginclose.block
+
+removebehavior b1
+verify
+
+deleteservice fabric:/test2c
+verify
+
+#####################################################
+# Scenario 2d: Idle -> None
+#####################################################
+
+addbehavior b1 * * CreateReplicaReply
+
+createservice fabric:/test2d TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test2d.50.50 IB
+
+#Verify CR(N)
+setsignal 50 fabric:/test2d replicator.beginchangerole.block
+setsignal 50 fabric:/test2d service.beginchangerole.block
+setsignal 50 fabric:/test2d replicator.beginclose.block
+setsignal 50 fabric:/test2d service.beginclose.block
+
+deleteservice fabric:/test2d errors=Timeout
+
+waitforsignalhit 50 fabric:/test2d replicator.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test2d NotPrimary NotPrimary
+resetsignal 50 fabric:/test2d replicator.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test2d service.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test2d NotPrimary NotPrimary
+resetsignal 50 fabric:/test2d service.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test2d replicator.beginclose.block
+verifyreadwritestatus 50 fabric:/test2d NotPrimary NotPrimary
+resetsignal 50 fabric:/test2d replicator.beginclose.block
+
+waitforsignalhit 50 fabric:/test2d service.beginclose.block
+verifyreadwritestatus 50 fabric:/test2d NotPrimary NotPrimary
+resetsignal 50 fabric:/test2d service.beginclose.block
+
+removebehavior b1
+deleteservice fabric:/test2d errors=ServiceNotFound
+verify
+
+
+#####################################################
+# Scenario 3: P/P reconfiguration 
+# Verify R/W status during
+#  - Catchup
+#  - Activate prior to all Up+Ready is both PC and CC
+#  - Activate after all Up+Ready is CC only
+#####################################################
+
+addbehavior b1 * 40 CreateReplica
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+
+addbehavior b3 * * UpdateConfigurationReply
+addbehavior b2 * * UpdateConfiguration
+
+!waitforstate FM.Replica.Role.fabric:/test3.60 Primary
+!waitforstate FM.Replica.State.fabric:/test3.60 Ready
+!waitforstate FM.Replica.Role.fabric:/test3.50 Secondary
+!waitforstate FM.Replica.State.fabric:/test3.50 Ready
+!waitforstate RA.Replica.State.fabric:/test3.60.40 IC
+
+removebehavior b1
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.60 Phase2_Catchup
+
+setsignal 60 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+setsignal 60 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+
+removebehavior b2
+
+#Verify R/W status during catchup
+#At this time reconfig is [P/P] [S/S] [I/S]
+waitforsignalhit 60 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+verifyreadwritestatus 60 fabric:/test3 Granted Granted
+resetsignal 60 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 60 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+verifyreadwritestatus 60 fabric:/test3 Granted Granted
+resetsignal 60 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+
+#Proceed to phase3 and verify
+addbehavior b4 * * Deactivate
+removebehavior b3
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.60 Phase3_Deactivate
+verifyreadwritestatus 60 fabric:/test3 Granted Granted
+
+#Proceed to phase4 and verify
+addbehavior b5 * * Activate
+removebehavior b4
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.60 Phase4_Activate
+verifyreadwritestatus 60 fabric:/test3 Granted Granted
+
+#Validate that R/W status is correct during update current config
+#Configuration is [P/P] [S/S] [I/S]
+#Take down S/S replica, complete activate on I/S. 
+#At update current write status should be granted because CC has quorum
+-50
+!waitforstate RA.Replica.IsUp.fabric:/test3.60.50 false
+setsignal 60 fabric:/test3 replicator.updatecurrentreplicasetconfiguration.block
+removebehavior b5
+waitforsignalhit 60 fabric:/test3 replicator.updatecurrentreplicasetconfiguration.block
+verifyreadwritestatus 60 fabric:/test3 Granted Granted
+resetsignal 60 fabric:/test3 replicator.updatecurrentreplicasetconfiguration.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.60 None
++50 nodeprops=system:false
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: P/P reconfiguration 
+# Verify R/W status during
+#  - Catchup (should be to both PC and CC)
+#####################################################
+addbehavior b1 * 40 CreateReplica
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+
+!waitforstate FM.Replica.Role.fabric:/test4.60 Primary
+!waitforstate FM.Replica.State.fabric:/test4.60 Ready
+!waitforstate FM.Replica.Role.fabric:/test4.50 Secondary
+!waitforstate FM.Replica.State.fabric:/test4.50 Ready
+
+!waitforstate RA.Replica.State.fabric:/test4.60.60 RD
+!waitforstate RA.Replica.State.fabric:/test4.60.50 RD
+
+!waitforstate FM.FT.Reconfig.fabric:/test4 false
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 None
+
+!waitforstate RA.Replica.State.fabric:/test4.60.40 IC
+
+addbehavior b3 * * UpdateConfigurationReply
+addbehavior b2 * * UpdateConfiguration
+removebehavior b1
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 Phase2_Catchup
+
+#Block wait for quorum catchup
+setsignal 60 fabric:/test4 replicator.beginwaitforcatchupquorum.block
+
+removebehavior b2
+
+#Verify R/W status during catchup
+waitforsignalhit 60 fabric:/test4 replicator.beginwaitforcatchupquorum.block
+resetsignal 60 fabric:/test4 replicator.beginwaitforcatchupquorum.block
+
+#Take down 50
+#now PC is in QL [P/P] [S/S D] [I/S]
+#write status should change to Granted/NWQ
+setsignal 60 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+-50 
+waitforsignalhit 60 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+verifyreadwritestatus 60 fabric:/test4 Granted NoWriteQuorum
+resetsignal 60 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+
+#allow reconfig to progress to phase4
+addbehavior b4 * * Activate
+removebehavior b3
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 Phase4_Activate
+
+#once activate of up+ready replica completes only CC should count which has write quorum
+#write status should be given at that point
+setsignal 60 fabric:/test4 replicator.updatecurrentreplicasetconfiguration.block
+removebehavior b4
+waitforsignalhit 60 fabric:/test4 replicator.updatecurrentreplicasetconfiguration.block
+verifyreadwritestatus 60 fabric:/test4 Granted Granted
+resetsignal 60 fabric:/test4 replicator.updatecurrentreplicasetconfiguration.block
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 None
+
++50 nodeprops=system:false
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 5: S/P reconfiguration 
+# Verify R/W status during
+#  - CR(P)
+#  - Catchup (Should be TryAgain/TryAgain)
+#  - Deactivate (Should be Granted/TryAgain)
+#  - Activate 
+#####################################################
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * Deactivate
+#Verify R/W status during catchup
+
+setsignal 50 fabric:/test5 replicator.beginchangerole.block
+setsignal 50 fabric:/test5 service.beginchangerole.block
+setsignal 50 fabric:/test5 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 50 fabric:/test5 replicator.beginwaitforcatchupquorum.block
+-60
+
+waitforsignalhit 50 fabric:/test5 replicator.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test5 TryAgain TryAgain
+resetsignal 50 fabric:/test5 replicator.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test5 service.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test5 TryAgain TryAgain
+resetsignal 50 fabric:/test5 service.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test5 replicator.updatecatchupreplicasetconfiguration.block
+verifyreadwritestatus 50 fabric:/test5 TryAgain TryAgain
+resetsignal 50 fabric:/test5 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 50 fabric:/test5 replicator.beginwaitforcatchupquorum.block
+verifyreadwritestatus 50 fabric:/test5 TryAgain TryAgain
+resetsignal 50 fabric:/test5 replicator.beginwaitforcatchupquorum.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.50 Phase3_Deactivate
+verifyreadwritestatus 50 fabric:/test5 Granted TryAgain
+
+#Proceed to phase4 and verify
+addbehavior b2 * * Activate
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.50 Phase4_Activate
+verifyreadwritestatus 50 fabric:/test5 Granted TryAgain
+
+#block UCReply and wait until update current is called 
+#at this point it should get granted
+setsignal 50 fabric:/test5 replicator.updatecurrentreplicasetconfiguration.block
+removebehavior b2
+
+waitforsignalhit 50 fabric:/test5 replicator.updatecurrentreplicasetconfiguration.block
+verifyreadwritestatus 50 fabric:/test5 Granted Granted
+resetsignal 50 fabric:/test5 replicator.updatecurrentreplicasetconfiguration.block
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.50 None
+
++60 nodeprops=system:false
+verify
+
+deleteservice fabric:/test5
+verify
+
+
+#####################################################
+# Scenario 6: U/P reconfiguration 
+#####################################################
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+addbehavior b1 * * Activate
+#Verify R/W status during catchup
+
+setsignal 50 fabric:/test6 replicator.beginchangerole.block
+setsignal 50 fabric:/test6 service.beginchangerole.block
+setsignal 50 fabric:/test6 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 50 fabric:/test6 replicator.beginwaitforcatchupquorum.block
+
+#Take down the replica set one at a time to achieve a reconfig
+#where all the replicas have restarted and 50 is the preferred primary on FM
+addbehavior b0 * * DoReconfiguration
+-60
+!waitforstate FM.FT.Reconfig.fabric:/test6 true
+-40
+!waitforstate FM.Replica.IsUp.fabric:/test6.40 false
+
+#restart 50
+reportfault 50 fabric:/test6 transient
+!waitforstate FM.FT.QuorumLost.fabric:/test6 true
+!waitforstate FM.Replica.IsUp.fabric:/test6.50 true
+!waitforstate FM.Replica.State.fabric:/test6.50 StandBy
+
++60 nodeprops=system:false
++40 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test6.40 true
+!waitforstate FM.Replica.IsUp.fabric:/test6.60 true
+removebehavior b0
+
+waitforsignalhit 50 fabric:/test6 replicator.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test6 TryAgain TryAgain
+resetsignal 50 fabric:/test6 replicator.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test6 service.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test6 TryAgain TryAgain
+resetsignal 50 fabric:/test6 service.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test6 replicator.updatecatchupreplicasetconfiguration.block
+verifyreadwritestatus 50 fabric:/test6 TryAgain TryAgain
+resetsignal 50 fabric:/test6 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 50 fabric:/test6 replicator.beginwaitforcatchupquorum.block
+verifyreadwritestatus 50 fabric:/test6 TryAgain TryAgain
+resetsignal 50 fabric:/test6 replicator.beginwaitforcatchupquorum.block
+
+#Proceed to phase4 and verify
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.50 Phase4_Activate
+verifyreadwritestatus 50 fabric:/test6 Granted TryAgain
+
+#block UCReply and wait until update current is called 
+#at this point it should get granted
+setsignal 50 fabric:/test6 replicator.updatecurrentreplicasetconfiguration.block
+removebehavior b1
+
+waitforsignalhit 50 fabric:/test6 replicator.updatecurrentreplicasetconfiguration.block
+verifyreadwritestatus 50 fabric:/test6 Granted Granted
+resetsignal 50 fabric:/test6 replicator.updatecurrentreplicasetconfiguration.block
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.50 None
+
+deleteservice fabric:/test6
+verify
+
+#####################################################
+# Scenario 7: I/P reconfiguration 
+#####################################################
+addbehavior b1 * * Activate
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+
+!waitforstate FM.Replica.Role.fabric:/test7.60 Primary
+!waitforstate FM.FT.Reconfig.fabric:/test7 true
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.60 Phase4_Activate
+
+#Drop 60
+#This will cause DoReconfiguration I/P with data loss
+setsignal 50 fabric:/test7 replicator.beginchangerole.block
+setsignal 50 fabric:/test7 service.beginchangerole.block
+setsignal 50 fabric:/test7 replicator.beginondataloss.block
+setsignal 50 fabric:/test7 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 50 fabric:/test7 replicator.beginwaitforcatchupquorum.block
+setsignal 50 fabric:/test7 replicator.updatecurrentreplicasetconfiguration.block
+
+reportfault 60 fabric:/test7 permanent
+
+waitforsignalhit 50 fabric:/test7 replicator.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test7 TryAgain TryAgain
+resetsignal 50 fabric:/test7 replicator.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test7 service.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test7 TryAgain TryAgain
+resetsignal 50 fabric:/test7 service.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test7 replicator.beginondataloss.block
+verifyreadwritestatus 50 fabric:/test7 TryAgain TryAgain
+resetsignal 50 fabric:/test7 replicator.beginondataloss.block
+
+waitforsignalhit 50 fabric:/test7 replicator.updatecatchupreplicasetconfiguration.block
+verifyreadwritestatus 50 fabric:/test7 TryAgain TryAgain
+resetsignal 50 fabric:/test7 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 50 fabric:/test7 replicator.beginwaitforcatchupquorum.block
+verifyreadwritestatus 50 fabric:/test7 TryAgain TryAgain
+resetsignal 50 fabric:/test7 replicator.beginwaitforcatchupquorum.block
+
+waitforsignalhit 50 fabric:/test7 replicator.updatecurrentreplicasetconfiguration.block
+verifyreadwritestatus 50 fabric:/test7 Granted NoWriteQuorum
+
+#block DoReconfigurationReply
+addbehavior b2 * * DoReconfigurationReply
+
+resetsignal 50 fabric:/test7 replicator.updatecurrentreplicasetconfiguration.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.50 None
+verifyreadwritestatus 50 fabric:/test7 Granted NoWriteQuorum
+
+removebehavior b1
+removebehavior b2
+verify
+
+deleteservice fabric:/test7
+verify
+
+#####################################################
+# Scenario 8: Promote to primary
+#####################################################
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+addbehavior b0 * * DoReconfigurationReply
+
+setsignal 50 fabric:/test8 replicator.beginchangerole.block
+setsignal 50 fabric:/test8 service.beginchangerole.block
+
+swapprimary fabric:/test8 60 50
+
+waitforsignalhit 50 fabric:/test8 replicator.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test8 TryAgain TryAgain
+resetsignal 50 fabric:/test8 replicator.beginchangerole.block
+
+waitforsignalhit 50 fabric:/test8 service.beginchangerole.block
+verifyreadwritestatus 50 fabric:/test8 TryAgain TryAgain
+resetsignal 50 fabric:/test8 service.beginchangerole.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.50 None
+verifyreadwritestatus 50 fabric:/test8 Granted Granted
+
+removebehavior b0
+verify
+
+deleteservice fabric:/test8
+verify
+
+#####################################################
+# Scenario 9: Swap Primary on the current primary
+#####################################################
+createservice fabric:/test9 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 60 fabric:/test9 replicator.beginupdateepoch.block
+
+setsignal 60 fabric:/test9 replicator.beginwaitforcatchupquorum.block
+setsignal 60 fabric:/test9 replicator.beginchangerole.block
+setsignal 60 fabric:/test9 service.beginchangerole.block
+
+swapprimary fabric:/test9 60 50
+
+waitforsignalhit 60 fabric:/test9 replicator.beginupdateepoch.block
+verifyreadwritestatus 60 fabric:/test9 Granted TryAgain
+resetsignal 60 fabric:/test9 replicator.beginupdateepoch.block
+
+waitforsignalhit 60 fabric:/test9 replicator.beginwaitforcatchupquorum.block
+verifyreadwritestatus 60 fabric:/test9 Granted TryAgain
+resetsignal 60 fabric:/test9 replicator.beginwaitforcatchupquorum.block
+
+waitforsignalhit 60 fabric:/test9 replicator.beginchangerole.block
+verifyreadwritestatus 60 fabric:/test9 NotPrimary NotPrimary
+resetsignal 60 fabric:/test9 replicator.beginchangerole.block
+
+waitforsignalhit 60 fabric:/test9 service.beginchangerole.block
+verifyreadwritestatus 60 fabric:/test9 NotPrimary NotPrimary
+resetsignal 60 fabric:/test9 service.beginchangerole.block
+
+deleteservice fabric:/test9
+verify
+
+#####################################################
+# Scenario 10: Swap Primary on the current primary
+# Failure of new primary after role has changed
+#####################################################
+createservice fabric:/test10 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+setsignal 60 fabric:/test10 replicator.beginwaitforcatchupquorum.block
+
+addbehavior b1 * * Activate
+swapprimary fabric:/test10 60 50
+
+waitforsignalhit 60 fabric:/test10 replicator.beginwaitforcatchupquorum.block
+verifyreadwritestatus 60 fabric:/test10 Granted TryAgain
+
+#take down the new primary
+-50
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.60 Abort_Phase0_Demote
+resetsignal 60 fabric:/test10 replicator.beginwaitforcatchupquorum.block
+
+#wait for reconfig to go to deactivate
+#Write status will be granted after activate completes and deactivation info is propagated
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.60 Phase4_Activate
+verifyreadwritestatus 60 fabric:/test10 Granted TryAgain
+
+addbehavior b3 * * DoReconfigurationReply
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.60 None
+verifyreadwritestatus 60 fabric:/test10 Granted Granted
+removebehavior b3
+
++50 nodeprops=system:false
+deleteservice fabric:/test10
+verify
+
+#####################################################
+# Scenario 11: Swap Primary on the current primary
+# Failure of new primary during catchup all
+#####################################################
+createservice fabric:/test11 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+#block replication to 50 and replicate
+#cause catchup all to get stuck
+addbehavior b1 * 50 ReplicationOperation
+clientput fabric:/test11 10 10
+!wait
+
+setsignal 60 fabric:/test11 replicator.beginwaitforcatchupquorum.block
+
+swapprimary fabric:/test11 60 50
+
+waitforsignalhit 60 fabric:/test11 replicator.beginwaitforcatchupquorum.block
+resetsignal 60 fabric:/test11 replicator.beginwaitforcatchupquorum.block
+
+#replica set is now stuck in catchup all
+addbehavior b2 * * CancelCatchupReplicaSet
+-50
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.60 Abort_Phase0_Demote
+
+addbehavior b4 * * Activate
+removebehavior b2
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.60 Phase4_Activate
+verifyreadwritestatus 60 fabric:/test11 Granted TryAgain
+
+addbehavior b5 * * DoReconfigurationReply
+removebehavior b4
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.60 None
+verifyreadwritestatus 60 fabric:/test11 Granted Granted
+removebehavior b5
+
++50 nodeprops=system:false
+deleteservice fabric:/test11
+verify
+
+#####################################################
+# Scenario 12: S/I IB replica and update service
+#####################################################
+ 
+# NOTE: 
+# This scenario assumes 50 will become the new primary
+# but there does not seem to be anything guaranteeing this.
+# With the native store stack, sometimes 40 becomes the
+# new primary instead of 50.
+
+seteseonly
+
+createservice fabric:/test12 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify 
+
+#restart primary
+addbehavior b1 * * UpdateConfiguration
+reportfault 60 fabric:/test12 transient
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test12.50 Phase2_Catchup
+
+#restart another replica for S/I IB state
+#add a block in the create replica reply so RAP completes open
+addbehavior b2 40 * CreateReplicaReply
+reportfault 40 fabric:/test12 transient
+
+!waitforstate RA.Replica.State.fabric:/test12.50.40 IC
+!waitforstate RA.Replica.State.fabric:/test12.40.40 IB
+
+#update the service at this time
+updateService fabric:/test12 Stateful MinReplicaSetSize=1
+
+#wait until the update propagates
+!pause 10
+
+#the code should not assert
+removebehavior b2
+removebehavior b1
+verify
+
+deleteservice fabric:/test12
+verify
+
+cleareseonly
+
+#####################################################
+# Scenario 13: I/S replica and update service
+#####################################################
+
+createservice fabric:/test13 TestPersistedStoreServiceType y 1 2 minreplicasetsize=2 persist constraint=(system!=true)
+verify 
+
+updateservice fabric:/test13 Stateful MinReplicaSetSize=1
+!pause 10
+
+verifyreadwritestatus 50 fabric:/test13 NotPrimary NotPrimary
+
+deleteservice fabric:/test13
+verify
+
+#####################################################
+# Scenario 14: S/S IB replica during a reconfig where primary is changing
+# Read/Write status on the remote replica should be NotPrimary
+#####################################################
+
+createservice fabric:/test14 TestPersistedStoreServiceType y 1 2 minreplicasetsize=2 persist constraint=(system!=true)
+verify 
+
+addbehavior b0 * * DoReconfiguration
+reportfault 50 fabric:/test14 transient
+!waitforstate FM.FT.Reconfig.fabric:/test14 true
+!waitforstate FM.Replica.State.fabric:/test14.50 InBuild
+
+addbehavior b1 * * ReplicaUp
+reportfault 60 fabric:/test14 transient
+
+!waitforstate RA.FT.FMMessageStage.fabric:/test14.60 ReplicaUp
+removebehavior b1
+
+!waitforstate FM.Replica.State.fabric:/test14.60 InBuild
+!waitforstate FM.Replica.Role.fabric:/test14.60 Primary
+
+# Reconfig should be e0/e1 [P/P IB] [S/S IB]
+# now let the reconfig complete
+removebehavior b0
+removebehavior b1
+!waitforstate FM.FT.Reconfig.fabric:/test14 false
+verify
+
+updateservice fabric:/test14 Stateful MinReplicaSetSize=1
+!pause 10
+
+verifyreadwritestatus 50 fabric:/test14 NotPrimary NotPrimary
+
+deleteservice fabric:/test14
+verify
+
+#####################################################
+# Scenario 15: Consecutive swap primary
+#####################################################
+createservice fabric:/test15 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+swapprimary fabric:/test15 60 50
+!waitforstate FM.Replica.Role.fabric:/test15.50 Primary
+verify
+
+swapprimary fabric:/test15 50 60
+!waitforstate FM.Replica.Role.fabric:/test15.60 Primary
+verify
+
+setsignal 60 fabric:/test15 replicator.beginupdateepoch.block
+setsignal 60 fabric:/test15 replicator.beginwaitforcatchupquorum.block
+setsignal 60 fabric:/test15 replicator.beginchangerole.block
+setsignal 60 fabric:/test15 service.beginchangerole.block
+
+swapprimary fabric:/test15 60 50
+
+waitforsignalhit 60 fabric:/test15 replicator.beginupdateepoch.block
+verifyreadwritestatus 60 fabric:/test15 Granted TryAgain
+resetsignal 60 fabric:/test15 replicator.beginupdateepoch.block
+
+waitforsignalhit 60 fabric:/test15 replicator.beginwaitforcatchupquorum.block
+verifyreadwritestatus 60 fabric:/test15 Granted TryAgain
+resetsignal 60 fabric:/test15 replicator.beginwaitforcatchupquorum.block
+
+waitforsignalhit 60 fabric:/test15 replicator.beginchangerole.block
+verifyreadwritestatus 60 fabric:/test15 NotPrimary NotPrimary
+resetsignal 60 fabric:/test15 replicator.beginchangerole.block
+
+waitforsignalhit 60 fabric:/test15 service.beginchangerole.block
+verifyreadwritestatus 60 fabric:/test15 NotPrimary NotPrimary
+resetsignal 60 fabric:/test15 service.beginchangerole.block
+
+deleteservice fabric:/test15
+verify
+
+
+!q

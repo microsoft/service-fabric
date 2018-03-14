@@ -1,0 +1,83 @@
+# This is a ring certificate security test. The SecurityDomain will be set to WinFabricRing.Rings.WinFabricTestDomain.com for this test.
+# For this test to pass, the following certificates need to be installed on the machine:
+#1. CN = WinFabric-Test-SAN1-Alice, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#2. CN = WinFabric-Test-SAN1-Bob, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#3. CN = WinFabric-Test-SAN2-Charlie, SAN = WinFabricRing2.Rings.WinFabricTestDomain.com
+#4. CN = WinFabric-Test-SAN3-Oscar, SAN = WinFabricRing3.Rings.WinFabricTestDomain2.com
+#5. CN = WinFabric-Test-SAN4-Wildcard, SAN = *.Rings.WinFabricTestDomain.com
+#6. CN = WinFabric-Test-SAN5-Wildcard2, SAN = *.WinFabricRing.Rings.WinFabricTestDomain.com
+#7. CN = WinFabric-Test-SAN6-Wildcard3, SAN = *.WinFabricTestDomain.com
+#8. CN = WinFabric-Test-SAN7-Wildcard4, SAN = *.WinFabricTestDomain2.com
+#9. CN = WinFabric-Test-SAN9-Revoked, SAN = WinFabricRing5.Rings.WinFabricTestDomain.com
+#10. CN = WinFabric-Test-Expired
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+enablenativeimagestore
+
+cleantest
+
+!setcfg Security.SessionExpiration=60
+!setcfg Security.ServerAuthCredentialType=X509
+!setcfg Security.ClientRoleEnabled=false
+!setcfg Security.ClientClaimAuthEnabled=false
+
+set NamingOperationTimeout 30
+
+set DefaultNodeCredentials None
+set ClusterWideCredentials X509:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com,WinFabricRing2.Rings.WinFabricTestDomain.com,WinFabric-Test-SAN9-Revoked:WinFabricRing.Rings.WinFabricTestDomain.com,Client.WinFabricTestDomain.com:WinFabricRing.Rings.WinFabricTestDomain.com,WinFabricRing2.Rings.WinFabricTestDomain.com
+
+# Open nodes using different certificates but with a common subject alternative name, matching the SecurityDomain
++10 security=FindByThumbprint,78:12:20:5a:39:d2:23:76:da:a0:37:f0:5a:ed:e3:60:1a:7e:64:bf,My,LocalMachine
++20 security=FindByThumbprint,9dc906b169dc4faffd1697ac781e806790749d2f,My,LocalMachine
++30 security=FindByThumbprint,78:12:20:5a:39:d2:23:76:da:a0:37:f0:5a:ed:e3:60:1a:7e:64:bf,My,LocalMachine
+verify
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageA version=V1
+
+app.servicetypes versionV1 ServicePackageA ServiceTypeA1 stateful persist
+
+app.codepack versionV1 ServicePackageA CodeA1 types=ServiceTypeA1 version=V1
+
+app.upload versionV1 node=10
+
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Alice:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com
+
+provisionapp versionV1
+
+!updatecfg Security.ServerAuthAllowedCommonNames=WinFabricRing.Rings.WinFabricTestDomain.com Security.ClientAuthAllowedCommonNames=WinFabric-Test-SAN1-Alice
+!pause 10
+
+createapp fabric:/app1/nativeimagestore.test TestApp V1
+
+verify
+
+createservice fabric:/app1/nativeimagestore.test/instance.test ServiceTypeA1 y 3 3 persist appname=fabric:/app1/nativeimagestore.test
+
+verify
+
+deleteservice fabric:/app1/nativeimagestore.test/instance.test
+
+verify
+
+deleteapp fabric:/app1/nativeimagestore.test
+
+verify
+
+unprovisionapp TestApp V1
+
+verify
+
+-*
+
+!q

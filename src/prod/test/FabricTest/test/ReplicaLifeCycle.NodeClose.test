@@ -1,0 +1,91 @@
+#
+# [owner] aprameyr
+# Test scenarios around node going down and replicas being closed
+set ServiceTypeDisableGraceInterval 100000
+set NamingOperationTimeout 10
+set GracefulReplicaShutdownMaxDuration 60
+set AsyncNodeCloseEnabled true
+set StartNodeCloseOnSeparateThread true
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.upload version10
+provisionapp version10
+
+createapp fabric:/app TestApp 1.0
+verify
+
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Replica down should be sent to FM 
+#####################################################
+createservice fabric:/app/test1a TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 1 persist constraint=(system!=true) appname=fabric:/app
+createservice fabric:/app/test1b TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 1 persist constraint=(system!=true) appname=fabric:/app
+verify
+
+!var PartitionIdService1a FM.FT.PartitionId.fabric:/app/test1a
+
+client.addbehavior b0 40 * ReplicaClose 1.0 Max 0.0 0 -1 filters=PartitionId:<var.PartitionIdService1a>
+!pause 5
+
+# take down the node. 
+# the logic here is relying on an implementation detail
+# test1b is in a fabric test factory so it will be shutdown prior to the 
+-40
+!waitforstate FM.Replica.IsUp.fabric:/app/test1b.40 false
+!waitforstate FM.Replica.IsUp.fabric:/app/test1a.40 true
+!waitforstate FM.Node.IsUp.40 true
+
+# the node close should still be blocked at RA
+!pause 30
+!waitforstate FM.Node.IsUp.40 true
+
+# now remove the block
+client.removebehavior * 40
+!waitforstate FM.Node.IsUp.40 false
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/app/test1a 
+deleteservice fabric:/app/test1b 
+verify
+
+#####################################################
+# Scenario 2: Node close should not be blocked for past the duration
+#####################################################
+createservice fabric:/app/test2 TestApp_App0:ServicePackageA:ServiceTypeA1 y 1 1 persist constraint=(system!=true) appname=fabric:/app
+verify
+
+client.addbehavior b0 40 * ReplicaClose 1.0 Max 0.0 0 -1 filters=PartitionId:<var.PartitionIdService1a>
+!pause 5
+
+-40
+!waitforstate FM.Node.IsUp.40 true
+
+# the node close should still be blocked at RA
+!pause 90
+!waitforstate FM.Node.IsUp.40 false
+
++40 nodeprops=system:false
+verify
+
+client.removebehavior * 40
+deleteservice fabric:/app/test2 
+verify
+
+!q

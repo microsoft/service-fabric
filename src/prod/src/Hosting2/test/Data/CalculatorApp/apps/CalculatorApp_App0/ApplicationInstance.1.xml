@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationInstance xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" NameUri="fabric:/calc" ApplicationId="CalculatorApp_App0" Version="1" ApplicationTypeName="CalculatorApp" ApplicationTypeVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <ApplicationPackageRef RolloutVersion="1.0"/>
+  <ServicePackageRef Name="CalculatorServicePackage" RolloutVersion="1.0" />  
+    <ServiceTemplates>
+      <StatelessService ServiceTypeName="CalculatorService" InstanceCount="5"><SingletonPartition /></StatelessService>
+    </ServiceTemplates>  
+    <DefaultServices><Service Name="RequiredCalcService">
+      <StatelessService ServiceTypeName="CalculatorService" InstanceCount="3"><SingletonPartition /></StatelessService></Service>
+    </DefaultServices>   
+</ApplicationInstance>

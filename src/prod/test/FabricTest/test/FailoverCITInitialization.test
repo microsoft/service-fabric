@@ -1,0 +1,10 @@
+!load FailoverCITConfigurationInitialization.test
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify

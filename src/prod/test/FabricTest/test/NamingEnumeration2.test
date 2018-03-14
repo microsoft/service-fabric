@@ -1,0 +1,318 @@
+votes 10
+cmservice 0 0
+namingservice 3 1 1
+cleantest
+
++10
++20
++30
+
+verify
+
+#######################################
+# 0) Basic enumeration correctness
+#######################################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase0
+createname fabric:/testcase0/a
+createname fabric:/testcase0/a/b
+createname fabric:/testcase0/b/c
+createname fabric:/testcase0/b/d
+createname fabric:/testcase0/b.c
+
+enumnames fabric:/testcase0 verifyExpectedNames expectedNames=fabric:/testcase0/a,fabric:/testcase0/b,fabric:/testcase0/b.c
+enumnames fabric:/testcase0/a verifyExpectedNames expectedNames=fabric:/testcase0/a/b
+enumnames fabric:/testcase0/b verifyExpectedNames expectedNames=fabric:/testcase0/b/c,fabric:/testcase0/b/d
+enumnames fabric:/testcase0/b.c verifyExpectedNames
+enumnames fabric:/testcase0/a recursive verifyExpectedNames expectedNames=fabric:/testcase0/a/b
+enumnames fabric:/testcase0 recursive verifyExpectedNames expectedNames=fabric:/testcase0/a,fabric:/testcase0/a/b,fabric:/testcase0/b,fabric:/testcase0/b/c,fabric:/testcase0/b/d,fabric:/testcase0/b.c
+
+##################
+# 1) Special cases
+##################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase1
+
+enumnames fabric:/testcase1 expectedCount=0
+
+createname fabric:/testcase1/child01
+
+enumnames fabric:/testcase1/child01 expectedCount=0
+
+###########################################
+# 2) Multiple continuations (non-recursive)
+###########################################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase2
+createname fabric:/testcase2/child01
+createname fabric:/testcase2/child02
+createname fabric:/testcase2/child03
+createname fabric:/testcase2/child04
+createname fabric:/testcase2/child05
+createname fabric:/testcase2/child06
+createname fabric:/testcase2/child07
+createname fabric:/testcase2/child08
+createname fabric:/testcase2/child09
+createname fabric:/testcase2/child10
+createname fabric:/testcase2/child11
+createname fabric:/testcase2/child12
+createname fabric:/testcase2/child13
+createname fabric:/testcase2/child14
+createname fabric:/testcase2/child15
+createname fabric:/testcase2/child16
+createname fabric:/testcase2/child17
+createname fabric:/testcase2/child18
+
+enumnames fabric:/testcase2 expectedCount=18
+enumnames fabric:/testcase2 expectedCount=18 recursive
+
+#######################################
+# 3) Multiple continuations (recursive)
+#######################################
+
+set NamingMaxMessageSize 1032
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase3
+createname fabric:/testcase3/child01
+createname fabric:/testcase3/segment1/child02
+createname fabric:/testcase3/segment1/segment2/child03
+createname fabric:/testcase3/segment1/segment2/segment3/child04
+createname fabric:/testcase3/segment1/segment22/child05
+createname fabric:/testcase3/segment1/segment22/child06
+createname fabric:/testcase3/segment11/segment22/segment33/child07
+createname fabric:/testcase3/segment11/segment22/child08
+createname fabric:/testcase3/segment1/segment2/child09
+createname fabric:/testcase3/segment1/child10
+
+enumnames fabric:/testcase3 expectedCount=3
+enumnames fabric:/testcase3 expectedCount=17 recursive
+
+#########################
+# 4) Non-contiguous names
+#########################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase4
+createname fabric:/testcase4/a
+createname fabric:/testcase4/a/b
+createname fabric:/testcase4/a/b.c
+createname fabric:/testcase4/a/b/c
+createname fabric:/testcase4/a/b/d
+createname fabric:/testcase4/a/b-d
+createname fabric:/testcase4/a/b/e
+createname fabric:/testcase4/a/b/e.f
+createname fabric:/testcase4/a/b_f
+createname fabric:/testcase4/a/b/f
+createname fabric:/testcase4/a/b/f/g
+createname fabric:/testcase4/a/b/f/g.h
+
+enumnames fabric:/testcase4/a expectedCount=4
+enumnames fabric:/testcase4/a/b expectedCount=5
+enumnames fabric:/testcase4 expectedCount=12 recursive
+
+##############################################
+# 5) Best-Effort status
+#    Services and properties should not affect
+#    enumeration status
+##############################################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase5
+createname fabric:/testcase5/long_child_segment_name_01
+createname fabric:/testcase5/long_child_segment_name_02
+createname fabric:/testcase5/long_child_segment_name_03
+createname fabric:/testcase5/long_child_segment_name_04
+createname fabric:/testcase5/long_child_segment_name_05
+createname fabric:/testcase5/long_child_segment_name_06
+createname fabric:/testcase5/long_child_segment_name_07
+createname fabric:/testcase5/long_child_segment_name_08
+createname fabric:/testcase5/long_child_segment_name_09
+createname fabric:/testcase5/long_child_segment_name_10
+createname fabric:/testcase5/long_child_segment_name_11
+createname fabric:/testcase5/long_child_segment_name_12
+createname fabric:/testcase5/long_child_segment_name_13
+createname fabric:/testcase5/long_child_segment_name_14
+createname fabric:/testcase5/long_child_segment_name_15
+createname fabric:/testcase5/long_child_segment_name_16
+createname fabric:/testcase5/long_child_segment_name_17
+createname fabric:/testcase5/long_child_segment_name_18
+
+enumnames fabric:/testcase5 bestEffort=false moreData=true maxResults=1
+
+createservice fabric:/testcase5 CalculatorServiceType n 0 1
+
+enumnames fabric:/testcase5 bestEffort=false moreData=true maxResults=1
+
+putproperty fabric:/testcase5 my_property 16
+
+enumnames fabric:/testcase5 bestEffort=false moreData=true maxResults=1
+
+deletename fabric:/testcase5/long_child_segment_name_04
+
+enumnames fabric:/testcase5 bestEffort=true moreData=true maxResults=1
+
+createname fabric:/testcase5/long_child_segment_name_04
+
+enumnames fabric:/testcase5 bestEffort=true moreData=false
+
+#############################################
+# 6) Best-Effort status
+#    Status changes isolated between siblings
+#############################################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase6
+createname fabric:/testcase6/childA/long_child_segment_name_01
+createname fabric:/testcase6/childA/long_child_segment_name_02
+createname fabric:/testcase6/childA/long_child_segment_name_03
+createname fabric:/testcase6/childA/long_child_segment_name_04
+createname fabric:/testcase6/childA/long_child_segment_name_05
+createname fabric:/testcase6/childA/long_child_segment_name_06
+createname fabric:/testcase6/childA/long_child_segment_name_07
+createname fabric:/testcase6/childA/long_child_segment_name_08
+createname fabric:/testcase6/childA/long_child_segment_name_09
+
+createname fabric:/testcase6/childB/long_child_segment_name_01
+createname fabric:/testcase6/childB/long_child_segment_name_02
+createname fabric:/testcase6/childB/long_child_segment_name_03
+createname fabric:/testcase6/childB/long_child_segment_name_04
+createname fabric:/testcase6/childB/long_child_segment_name_05
+createname fabric:/testcase6/childB/long_child_segment_name_06
+createname fabric:/testcase6/childB/long_child_segment_name_07
+createname fabric:/testcase6/childB/long_child_segment_name_08
+createname fabric:/testcase6/childB/long_child_segment_name_09
+
+enumnames fabric:/testcase6/childA bestEffort=false moreData=true maxResults=1
+enumnames fabric:/testcase6/childB bestEffort=false moreData=true maxResults=1
+
+createname fabric:/testcase6/childA/long_child_segment_name_02A
+
+enumnames fabric:/testcase6/childA bestEffort=true moreData=true maxResults=1
+enumnames fabric:/testcase6/childB bestEffort=false moreData=true maxResults=1
+
+deletename fabric:/testcase6/childA/long_child_segment_name_02A
+
+enumnames fabric:/testcase6/childA bestEffort=true moreData=false
+enumnames fabric:/testcase6/childB bestEffort=false moreData=false
+
+#################################################
+# 7) Best-Effort status
+#    Status changes isolated between parent/child
+#    Change child status
+#################################################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase7
+createname fabric:/testcase7/childA/long_child_segment_name_01
+createname fabric:/testcase7/childA/long_child_segment_name_02
+createname fabric:/testcase7/childA/long_child_segment_name_03
+createname fabric:/testcase7/childA/long_child_segment_name_04
+createname fabric:/testcase7/childA/long_child_segment_name_05
+createname fabric:/testcase7/childA/long_child_segment_name_06
+createname fabric:/testcase7/childA/long_child_segment_name_07
+createname fabric:/testcase7/childA/long_child_segment_name_08
+createname fabric:/testcase7/childA/long_child_segment_name_09
+
+createname fabric:/testcase7/long_child_segment_name_01
+createname fabric:/testcase7/long_child_segment_name_02
+createname fabric:/testcase7/long_child_segment_name_03
+createname fabric:/testcase7/long_child_segment_name_04
+createname fabric:/testcase7/long_child_segment_name_05
+createname fabric:/testcase7/long_child_segment_name_06
+createname fabric:/testcase7/long_child_segment_name_07
+createname fabric:/testcase7/long_child_segment_name_08
+createname fabric:/testcase7/long_child_segment_name_09
+
+enumnames fabric:/testcase7/childA bestEffort=false moreData=true maxResults=1
+enumnames fabric:/testcase7 bestEffort=false moreData=true maxResults=1
+
+createname fabric:/testcase7/childA/long_child_segment_name_02A
+
+enumnames fabric:/testcase7/childA bestEffort=true moreData=true maxResults=1
+enumnames fabric:/testcase7 bestEffort=false moreData=true maxResults=1
+
+deletename fabric:/testcase7/childA/long_child_segment_name_02A
+
+enumnames fabric:/testcase7/childA bestEffort=true moreData=false
+enumnames fabric:/testcase7 bestEffort=false moreData=false
+
+#################################################
+# 8) Best-Effort status
+#    Status changes isolated between parent/child
+#    Change parent status
+#################################################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase8
+createname fabric:/testcase8/childA/long_child_segment_name_01
+createname fabric:/testcase8/childA/long_child_segment_name_02
+createname fabric:/testcase8/childA/long_child_segment_name_03
+createname fabric:/testcase8/childA/long_child_segment_name_04
+createname fabric:/testcase8/childA/long_child_segment_name_05
+createname fabric:/testcase8/childA/long_child_segment_name_06
+createname fabric:/testcase8/childA/long_child_segment_name_07
+createname fabric:/testcase8/childA/long_child_segment_name_08
+createname fabric:/testcase8/childA/long_child_segment_name_09
+
+createname fabric:/testcase8/long_child_segment_name_01
+createname fabric:/testcase8/long_child_segment_name_02
+createname fabric:/testcase8/long_child_segment_name_03
+createname fabric:/testcase8/long_child_segment_name_04
+createname fabric:/testcase8/long_child_segment_name_05
+createname fabric:/testcase8/long_child_segment_name_06
+createname fabric:/testcase8/long_child_segment_name_07
+createname fabric:/testcase8/long_child_segment_name_08
+createname fabric:/testcase8/long_child_segment_name_09
+
+enumnames fabric:/testcase8/childA bestEffort=false moreData=true maxResults=1
+enumnames fabric:/testcase8 bestEffort=false moreData=true maxResults=1
+
+createname fabric:/testcase8/long_child_segment_name_02A
+
+enumnames fabric:/testcase8/childA bestEffort=false moreData=true maxResults=1
+enumnames fabric:/testcase8 bestEffort=true moreData=true maxResults=1
+
+deletename fabric:/testcase8/long_child_segment_name_02A
+
+enumnames fabric:/testcase8/childA bestEffort=false moreData=false
+enumnames fabric:/testcase8 bestEffort=true moreData=false
+
+!q

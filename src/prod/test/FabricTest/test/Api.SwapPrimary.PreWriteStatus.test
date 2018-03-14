@@ -1,0 +1,110 @@
+#
+# [owner] aprameyr
+# Test all the api calls during swap primary
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 5
+set IsPreWriteStatusRevokeCatchupEnabled true
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Swap primary on the old api should call the correct api
+# Verify UC current is never called on the old primary
+#####################################################
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test1 replicator.beginupdateepoch.block
+setsignal 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+setsignal 40 fabric:/test1 replicator.beginchangerole.block
+setsignal 40 fabric:/test1 service.beginchangerole.block
+setsignal 40 fabric:/test1 replicator.updatecurrentreplicasetconfiguration.block
+
+swapprimary fabric:/test1 40 30
+
+waitforsignalhit 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+resetsignal 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+
+waitforsignalhit 40 fabric:/test1 replicator.beginupdateepoch.block
+setsignal 40 fabric:/test1 replifabcator.updatecatchupreplicasetconfiguration.block
+setsignal 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+resetsignal 40 fabric:/test1 replicator.beginupdateepoch.block
+
+waitforsignalhit 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+resetsignal 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+
+waitforsignalhit 40 fabric:/test1 replicator.beginchangerole.block
+resetsignal 40 fabric:/test1 replicator.beginchangerole.block
+
+waitforsignalhit 40 fabric:/test1 service.beginchangerole.block
+resetsignal 40 fabric:/test1 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2: Failure in first UC call
+#####################################################
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 40 fabric:/test2 replicator.beginwaitforcatchupquorum.block
+
+swapprimary fabric:/test2 40 30
+
+waitforsignalhit 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration.block
+injectfailure 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration
+resetsignal 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration.block
+
+!pause 5
+setsignal 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration.block
+removefailure 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration
+resetsignal 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 40 fabric:/test2 replicator.beginwaitforcatchupquorum.block
+resetsignal 40 fabric:/test2 replicator.beginwaitforcatchupquorum.block
+
+verify
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 3: Failure in catchup
+#####################################################
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+
+swapprimary fabric:/test3 40 30
+
+waitforsignalhit 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+injectfailure 40 fabric:/test3 replicator.beginwaitforcatchupquorum
+resetsignal 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+
+!pause 5
+setsignal 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+
+waitforsignalhit 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+removefailure 40 fabric:/test3 replicator.beginwaitforcatchupquorum
+resetsignal 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+
+verify
+
+deleteservice fabric:/test3
+verify
+
+!q

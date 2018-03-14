@@ -1,0 +1,325 @@
+#
+# This test exercises the UpdateService API. It calls the API for all three types of services with
+# varying inputs. The test simulates multiple scenarios when calling UpdateService and doing the
+# subsequent verification. The verification is done by ensuring that the ServiceUpdateVersion matches
+# between FM and RA.
+#
+
+set DummyPLBEnabled true
+votes 10 20 30
+fmservice 3 1
+cmservice 0 0
+namingservice 1 5 2
+set ExpectedClusterSize 2
+cleantest
+
+set FMPlacementConstraints fmservice==true
+
++10 nodeprops=fmservice:true
++20 nodeprops=fmservice:true
+verify
+
++30 nodeprops=fmservice:true
++40
++50
+verify
+
+!waitforstate FM.Replica.Role.FMService.20 Primary
+!waitforstate FM.Replica.Role.FMService.10 Secondary
+!waitforstate FM.Replica.Role.FMService.30 Secondary
+
+createservice fabric:/stateless CalculatorServiceType n 1 3
+createservice fabric:/volatile TestStoreServiceType y 1 3 minreplicasetsize=2
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2 standbyreplicakeepduration=200
+!waitforstate FM.Service.StandByReplicaKeepDuration.fabric:/persisted 200
+verify
+
+gfum
+
+#
+# Scenario 0: Validate against invalid updates
+#
+
+updateservice fabric:/stateless Stateful InstanceCount=5 error=InvalidArgument
+updateservice fabric:/persisted Stateless TargetReplicaSetSize=5 error=InvalidArgument
+
+updateservice fabric:/stateless Stateless InstanceCount=-2 error=InvalidArgument
+updateservice fabric:/stateless Stateless InstanceCount=0 error=InvalidArgument
+
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=-2 error=InvalidArgument
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=1 error=InvalidArgument
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=0 error=InvalidArgument
+updateservice fabric:/volatile Stateful MinReplicaSetSize=0 error=InvalidArgument
+updateservice fabric:/volatile Stateful MinReplicaSetSize=-1 error=InvalidArgument
+updateservice fabric:/volatile Stateful MinReplicaSetSize=4 error=InvalidArgument
+
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=-2 error=InvalidArgument
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=1 error=InvalidArgument
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=0 error=InvalidArgument
+updateservice fabric:/persisted Stateful MinReplicaSetSize=0 error=InvalidArgument
+updateservice fabric:/persisted Stateful MinReplicaSetSize=-1 error=InvalidArgument
+updateservice fabric:/persisted Stateful MinReplicaSetSize=4 error=InvalidArgument
+
+#
+# Scenario 1: Reduce the TargetReplicaSetSize to 2
+#
+
+updateservice fabric:/stateless Stateless InstanceCount=2
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=2
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=2
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/stateless 2
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 2
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 2
+
+verify
+
+#
+# Scenario 2: Update the ReplicaRestartWaitDuration to 30
+#
+
+updateservice fabric:/persisted Stateful ReplicaRestartWaitDuration=30
+
+!waitforstate FM.Service.ReplicaRestartWaitDuration.fabric:/persisted 30
+
+verify
+
+#
+# Scenario 3: Update the QuorumLossWaitDuration to 60
+#
+
+updateservice fabric:/persisted Stateful QuorumLossWaitDuration=60
+
+!waitforstate FM.Service.QuorumLossWaitDuration.fabric:/persisted 60
+
+verify
+
+#
+# Scenario 4: Update the StandByReplicaKeepDuration to 300
+#
+
+updateservice fabric:/persisted Stateful StandByReplicaKeepDuration=300
+
+!waitforstate FM.Service.StandByReplicaKeepDuration.fabric:/persisted 300
+
+verify
+
+#
+# Scenario 5: Update TargetReplicaSetSize and ReplicaRestartWaitDuration
+#
+
+updateservice fabric:/stateless Stateless InstanceCount=5
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=5
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=5 ReplicaRestartWaitDuration=10
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/stateless 5
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 5
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 5
+!waitforstate FM.Service.ReplicaRestartWaitDuration.fabric:/persisted 10
+
+verify
+
+#
+# Scenario 6: Failover the FM while the service update is in progress
+#
+
+# Prevent node 40 from getting the updated ServiceDescription
+addbehavior b1 * 40 NodeUpdateServiceRequest
+
+updateservice fabric:/stateless Stateless InstanceCount=4
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=4
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=4 QuorumLossWaitDuration=3600
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/stateless 4
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 4
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 4
+!waitforstate FM.Service.QuorumLossWaitDuration.fabric:/persisted 3600
+
+# Bring the node with FM primary down
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+# Allow UpdateService to complete
+removebehavior b1
+
+# Add node 20 back
++20 nodeprops=fmservice:true
+
+verify
+
+#
+# Scenario 7: Trigger full rebuild while the service update is in progress
+#
+
+# Bring down node 40 and bring it back up after rebuild
+-40
+verify
+
+updateservice fabric:/stateless Stateless InstanceCount=3
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=3
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=3 ReplicaRestartWaitDuration=15 QuorumLossWaitDuration=1800 StandByReplicaKeepDuration=3600
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/stateless 3
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 3
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 3
+!waitforstate FM.Service.ReplicaRestartWaitDuration.fabric:/persisted 15
+!waitforstate FM.Service.QuorumLossWaitDuration.fabric:/persisted 1800
+!waitforstate FM.Service.StandByReplicaKeepDuration.fabric:/persisted 3600
+
+verify
+
+# Bring FMService into quorum loss
+addbehavior b2 * * DoReconfiguration
+-30
+-20
+!waitforstate FM.FT.QuorumLost.FMService true
+removebehavior b2
+
+# Bring node 40 back up
++40
+
+# Trigger full rebuild
+recoverpartitions
+
+!waitforstate FM.Replica.Role.FMService.10 Primary
+!waitforstate FM.Replica.State.FMService.10 Ready
+
+# Bring back nodes 20 and 30 so that the FMService can be placed
++20 nodeprops=fmservice:true
++30 nodeprops=fmservice:true
+
+verify
+
+#
+# Scenario 8: Test instance count of -1 for stateless services
+#
+
+updateservice fabric:/stateless Stateless InstanceCount=-1
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/stateless -1
+
+verify
+
+#
+# Scenario 9: Perform another update before the previous update completes
+#
+
+# Prevent node 40 from getting the updated ServiceDescription
+addbehavior b1 * 40 NodeUpdateServiceRequest
+
+# Perform the first update
+updateservice fabric:/stateless Stateless InstanceCount=4
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=4
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=4
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/stateless 4
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 4
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 4
+
+# Perform another update while the previous update is still going on
+updateservice fabric:/stateless Stateless InstanceCount=7
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=7
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=7
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/stateless 7
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 7
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 7
+
+# Let the update complete
+removebehavior b1
+
+verify
+
+#
+# Scenario 10: Update system services
+#
+
+updateservice fabric:/System/FailoverManagerService Stateful ReplicaRestartWaitDuration=30
+updateservice fabric:/System/NamingService Stateful TargetReplicaSetSize=3
+
+!waitforstate FMM.Service.ReplicaRestartWaitDuration.FMService 30
+!waitforstate FM.Service.TargetReplicaSetSize.NamingService 3
+
+verify
+
+#
+# Scenario 11: Validate against invalid updates for system services
+#
+
+updateservice fabric:/System/FailoverManagerService Stateful TargetReplicaSetSize=-2 error=InvalidArgument
+updateservice fabric:/System/NamingService Stateful TargetReplicaSetSize=1 error=InvalidArgument
+
+verify
+
+#
+# Scenario 12: Reduce the MinReplicaSetSize to 1
+#
+
+UpdateService fabric:/volatile Stateful MinReplicaSetSize=1
+UpdateService fabric:/persisted Stateful MinReplicaSetSize=1
+
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/volatile 1
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/persisted 1
+
+verify
+
+#
+# Scenario 13: Increase the MinReplicaSetSize to 3
+#
+
+UpdateService fabric:/volatile Stateful MinReplicaSetSize=3
+UpdateService fabric:/persisted Stateful MinReplicaSetSize=3
+
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/volatile 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/persisted 3
+
+verify
+
+#
+# Scenario 14: Update TargetReplicaSetSize and MinReplicaSetSize
+#
+
+UpdateService fabric:/volatile Stateful TargetReplicaSetSize=5 MinReplicaSetSize=2
+UpdateService fabric:/persisted Stateful TargetReplicaSetSize=5 MinReplicaSetSize=2
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 5
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 5
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/volatile 2
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/persisted 2
+
+verify
+
+UpdateService fabric:/volatile Stateful TargetReplicaSetSize=1 MinReplicaSetSize=1
+UpdateService fabric:/persisted Stateful TargetReplicaSetSize=1 MinReplicaSetSize=1
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 1
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 1
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/volatile 1
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/persisted 1
+
+verify
+
+UpdateService fabric:/volatile Stateful TargetReplicaSetSize=3 MinReplicaSetSize=3
+UpdateService fabric:/persisted Stateful TargetReplicaSetSize=3 MinReplicaSetSize=3
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/volatile 3
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/persisted 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/volatile 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/persisted 3
+
+verify
+
+#
+# Scenario 14: Update the MinReplicaSetSize for system services
+#
+
+UpdateService fabric:/System/FailoverManagerService Stateful MinReplicaSetSize=2
+UpdateService fabric:/System/NamingService Stateful MinReplicaSetSize=3
+
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 2
+!waitforstate FM.Service.MinReplicaSetSize.NamingService 3
+
+verify
+
+-*
+!q

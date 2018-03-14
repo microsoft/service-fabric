@@ -1,0 +1,76 @@
+#
+# [owner:aprameyr]
+# This test ensures that a phase1_deactivate message is not treated as a stale phase3_deactivate
+# Associated bug#1179486
+#
+set DummyPLBEnabled true
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
+verify
+
+###########################################
+
+# create service - it is on 30, 20
+
+addbehavior b1 * * DoReconfiguration
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=1 constraint=(StringProperty!=SeedNode)
+
+#there should be P, S on FM and FM should be doing P->P and I->S
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+
+addbehavior b2 * * ReplicationOperation
+addbehavior b3 * * CopyOperation
+
+#put an operation and wait for this to be committed by the primary (currently on the RA the replica set is just P as DoReconfig is blocked)
+clientput fabric:/test1 1 1
+!wait 
+
+#reconfig stuck in catchup
+removebehavior b1
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.30 Phase2_Catchup
+
+#now take down both the nodes
+#when they are both brought up the FM should do a reconfig where both P and I are IB
+#this should cause RA to send Phase1_Deactivate message to I to restart it
+#so that it can be rebuilt from the primary 
+#it cannot be caught up because we restart the primary and that should cause the replicator to lose catchup capability
+-20
+!wait
+!waitforstate FM.Replica.IsUp.fabric:/test1.20 false
+
+#
+-30
+!wait
+!waitforstate FM.Replica.IsUp.fabric:/test1.30 false
+
+
++20
+!wait
+!waitforstate FM.Replica.State.fabric:/test1.20 StandBy
+
+addbehavior b4 * * DoReconfiguration
+  
++30
+!wait
+
+!waitforstate FM.Replica.State.fabric:/test1.20 InBuild
+!waitforstate FM.Replica.State.fabric:/test1.30 InBuild
+
+removebehavior b2
+removebehavior b3
+removebehavior b4
+
+verify
+!q

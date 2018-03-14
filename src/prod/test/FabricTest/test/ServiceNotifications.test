@@ -1,0 +1,330 @@
+#
+# This script primarily tests that the native API has been integrated
+# correctly. More functional testing of the feature occurs in TAEF 
+# unit tests where there is more control over the input test data.
+#
+
+votes 10 20 30 40 50 60 70
+cmservice 0 0
+namingservice 1 7 3
+fmservice 7 3
+cleantest
+
+set ServiceNotificationTimeout 3
+
++10 nodeprops=userservice:1
++20 nodeprops=userservice:1
++30 nodeprops=userservice:1
++40 nodeprops=userservice:1
++50 nodeprops=userservice:0
++60 nodeprops=userservice:0
++70 nodeprops=userservice:0
+verify
+
+#
+# Testcase 0:
+# Tests service creation
+#
+
+notificationclient nodes=50 clientname=TestClient1
+notificationclient nodes=60 clientname=TestClient2
+notificationclient nodes=70 clientname=TestClient3
+
+notification+ clientname=TestClient1 uri=fabric:/testp prefix
+notification+ clientname=TestClient2 uri=fabric:/testx/stateful
+notification+ clientname=TestClient3 uri=fabric:/testr prefix primary
+
+setnotificationwait clientname=TestClient1 names=fabric:/testp/stateful,fabric:/testp/stateless
+setnotificationwait clientname=TestClient2 names=fabric:/testx/stateful
+setnotificationwait clientname=TestClient3 names=fabric:/testr/stateful,fabric:/testr/stateless
+
+createservice fabric:/testp/stateful TestPersistedStoreServiceType y 1 4 persist constraint=userservice==1
+createservice fabric:/testp/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+createservice fabric:/testx/stateful TestPersistedStoreServiceType y 2 4 persist constraint=userservice==1
+createservice fabric:/testx/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+createservice fabric:/testr/stateful TestPersistedStoreServiceType y 1 4 persist constraint=userservice==1
+createservice fabric:/testr/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+verify
+
+notificationwait clientname=TestClient1 timeout=15
+notificationwait clientname=TestClient2 timeout=15
+notificationwait clientname=TestClient3 timeout=15
+
+#
+# Testcase 1:
+# Tests service changes while clients are disconnected
+
+setnotificationwait clientname=TestClient1 names=fabric:/testp/stateful,fabric:/testp/stateless
+setnotificationwait clientname=TestClient2 names=fabric:/testx/stateful
+
+-50
+-60
+verify
+
+-40
+verify
+
++40 nodeprops=userservice:1
++50 nodeprops=userservice:0
++60 nodeprops=userservice:0
+verify
+
+notificationwait clientname=TestClient1 timeout=15
+notificationwait clientname=TestClient2 timeout=15
+
+#
+# Testcase 2:
+# Tests service deletion
+#
+
+setnotificationwait clientname=TestClient1 names=fabric:/testp/stateful,fabric:/testp/stateless
+setnotificationwait clientname=TestClient2 names=fabric:/testx/stateful
+setnotificationwait clientname=TestClient3 names=fabric:/testr/stateful,fabric:/testr/stateless
+
+deleteservice fabric:/testp/stateful
+deleteservice fabric:/testp/stateless
+
+deleteservice fabric:/testx/stateful
+deleteservice fabric:/testx/stateless
+
+deleteservice fabric:/testr/stateful
+deleteservice fabric:/testr/stateless
+
+verify
+
+notificationwait clientname=TestClient1 timeout=15
+notificationwait clientname=TestClient2 timeout=15
+notificationwait clientname=TestClient3 timeout=15
+
+#
+# Testcase 3:
+# Tests service deletion while clients are disconnected
+#
+
+setnotificationwait clientname=TestClient1 names=fabric:/testp/stateful,fabric:/testp/stateless
+setnotificationwait clientname=TestClient2 names=fabric:/testx/stateful
+setnotificationwait clientname=TestClient3 names=fabric:/testr/stateful,fabric:/testr/stateless
+
+createservice fabric:/testp/stateful TestPersistedStoreServiceType y 1 4 persist constraint=userservice==1
+createservice fabric:/testp/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+createservice fabric:/testx/stateful TestPersistedStoreServiceType y 2 4 persist constraint=userservice==1
+createservice fabric:/testx/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+createservice fabric:/testr/stateful TestPersistedStoreServiceType y 1 4 persist constraint=userservice==1
+createservice fabric:/testr/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+verify
+
+notificationwait clientname=TestClient1 timeout=15
+notificationwait clientname=TestClient2 timeout=15
+notificationwait clientname=TestClient3 timeout=15
+
+-50
+-60
+-70
+verify
+
+deleteservice fabric:/testp/stateful
+deleteservice fabric:/testp/stateless
+
+deleteservice fabric:/testx/stateful
+deleteservice fabric:/testx/stateless
+
+deleteservice fabric:/testr/stateful
+deleteservice fabric:/testr/stateless
+
+verify
+
+setnotificationwait clientname=TestClient1 names=fabric:/testp/stateful,fabric:/testp/stateless
+setnotificationwait clientname=TestClient2 names=fabric:/testx/stateful
+setnotificationwait clientname=TestClient3 names=fabric:/testr/stateful,fabric:/testr/stateless
+
++50 nodeprops=userservice:0
++60 nodeprops=userservice:0
++70 nodeprops=userservice:0
+verify
+
+notificationwait clientname=TestClient1 timeout=15
+notificationwait clientname=TestClient2 timeout=15
+notificationwait clientname=TestClient3 timeout=15
+
+#
+# Testcase 4:
+# Multiple-filters from a single client
+#
+
+notificationclient nodes=70 clientname=TestClient4
+
+notification+ clientname=TestClient4 uri=fabric:/testp prefix
+notification+ clientname=TestClient4 uri=fabric:/testx/stateful
+notification+ clientname=TestClient4 uri=fabric:/testr prefix primary
+
+setnotificationwait clientname=TestClient4 names=fabric:/testp/stateful,fabric:/testp/stateless,fabric:/testx/stateful,fabric:/testr/stateful,fabric:/testr/stateless
+
+createservice fabric:/testp/stateful TestPersistedStoreServiceType y 1 4 persist constraint=userservice==1
+createservice fabric:/testp/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+createservice fabric:/testx/stateful TestPersistedStoreServiceType y 2 4 persist constraint=userservice==1
+createservice fabric:/testx/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+createservice fabric:/testr/stateful TestPersistedStoreServiceType y 1 4 persist constraint=userservice==1
+createservice fabric:/testr/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+verify
+
+notificationwait clientname=TestClient4 timeout=15
+
+#
+# Testcase 4b:
+# Unregistering filters
+#
+
+notification- clientname=TestClient4 filterid=1
+notification- clientname=TestClient4 filterid=3
+
+setnotificationwait clientname=TestClient4 names=fabric:/testx/stateful
+
+-30
+verify
+
++30 nodeprops=userservice:1
+verify
+
+notificationwait clientname=TestClient4 timeout=15
+
+#
+# Testcase 5:
+# Tests client reconnection to different nodes
+#
+
+notificationclient nodes=40,50,60,70 clientname=TestClient5
+
+notification+ clientname=TestClient5 uri=fabric:/testp prefix
+
+setnotificationwait clientname=TestClient5 names=fabric:/testp/stateful,fabric:/testp/stateless
+
+-40
+verify
+
++40 nodeprops=userservice:1
+verify
+
+notificationwait clientname=TestClient5 timeout=15
+
+setnotificationwait clientname=TestClient5 names=fabric:/testp/stateful,fabric:/testp/stateless
+
+-10
+-50
+verify
+
++10 nodeprops=userservice:1
++50 nodeprops=userservice:0
+verify
+
+notificationwait clientname=TestClient5 timeout=15
+
+setnotificationwait clientname=TestClient5 names=fabric:/testp/stateful,fabric:/testp/stateless
+
+-20
+-60
+verify
+
++20 nodeprops=userservice:1
++60 nodeprops=userservice:0
+verify
+
+notificationwait clientname=TestClient5 timeout=15
+
+setnotificationwait clientname=TestClient5 names=fabric:/testp/stateful,fabric:/testp/stateless
+
+-30
+-70
+verify
+
++30 nodeprops=userservice:1
++70 nodeprops=userservice:0
+verify
+
+notificationwait clientname=TestClient5 timeout=15
+
+#
+# Testcase 6:
+# Tests primary-only filter
+#
+
+notificationclient nodes=70 clientname=TestClient6
+
+notification+ clientname=TestClient6 uri=fabric:/testr2 prefix primary
+
+setnotificationwait clientname=TestClient6 names=fabric:/testr2/stateless primaries=fabric:/testr2/stateful
+
+createservice fabric:/testr2/stateful TestPersistedStoreServiceType y 1 4 persist constraint=userservice==1
+createservice fabric:/testr2/stateless CalculatorServiceType n 0 4 constraint=userservice==1
+
+verify
+
+notificationwait clientname=TestClient6 timeout=15
+
+setnotificationwait clientname=TestClient6 names=fabric:/testr2/stateless
+
+killservice fabric:/testr2/stateful secondariesOnly
+
+notificationwait clientname=TestClient6 timeout=15
+
+setnotificationwait clientname=TestClient6 names=fabric:/testr2/stateless
+
+# don't know where secondaries were - just try to restart all potential nodes
++10 nodeprops=userservice:1 idempotent
++20 nodeprops=userservice:1 idempotent
++30 nodeprops=userservice:1 idempotent
++40 nodeprops=userservice:1 idempotent
+verify
+
+notificationwait clientname=TestClient6 timeout=15
+
+setnotificationwait clientname=TestClient6 names=fabric:/testr2/stateful,fabric:/testr2/stateless
+
+killservice fabric:/testr/stateful primaryOnly
+
+# make sure all nodes are back up after killing primary
++10 nodeprops=userservice:1 idempotent
++20 nodeprops=userservice:1 idempotent
++30 nodeprops=userservice:1 idempotent
++40 nodeprops=userservice:1 idempotent
+verify
+
+notificationwait clientname=TestClient6 timeout=15
+
+deleteservice fabric:/testr2/stateful
+deleteservice fabric:/testr2/stateless
+
+verify
+
+#
+# Testcase 7:
+# Tests delayed service creation reply from FM
+#
+notificationclient nodes=70 clientname=TestClient7
+
+notification+ clientname=TestClient7 uri=fabric:/test7 prefix
+
+setnotificationwait clientname=TestClient7 names=fabric:/test7/stateful
+
+set NamingOperationTimeout 5
+set NamingOperationRetryTimeout 5
+
+addbehavior b1 * * CreateServiceReply
+
+createservice fabric:/test7/stateful TestPersistedStoreServiceType y 1 4 persist constraint=userservice==1 errors=Timeout
+
+notificationwait clientname=TestClient7 timeout=15
+
+removebehavior b1
+
+-*
+
+!q

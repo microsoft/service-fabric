@@ -1,0 +1,107 @@
+{
+  "Default": {
+    "IsCit": "true"
+  },
+  "Tests": [
+    {
+      "Name": "EndToEndSmokeBvt",
+      "Type": "V2_ScriptTest",
+      "Owners": "anmola,rsinha",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {        
+        "SetupType": "Exe",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "EndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTestStandalone",
+      "Type": "V2_ScriptTest",
+      "Owners": "maburlik,ratando,anmola,rsinha",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DistributedCollections",
+      "Type": "V2_ScriptTest",
+      "Owners": "tyadam,rajak",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "DCollections.test",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Backup-CIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun,rajak",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "Backup-CIT.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementConstraint",
+      "Type": "V2_DllTest",
+      "Owners": "chanli",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementConstraint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Unreliable_Random",
+      "Type": "RandomTest",
+      "Owners": "aprameyr,anuragg",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_338_UnreliableRandom_Bvt.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Unreliable",
+        "ExecutionTimeout": "7200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "AzureChaosTest",
+      "Type": "Azure_Chaos",
+      "Owners": "motanv,anmola",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ServiceTimeout": "2700",
+        "ConfigName": "WinFabricTest\\Config\\Azure_Chaos_Bvt.txt",
+        "ExecutionTimeout": "5400",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

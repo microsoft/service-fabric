@@ -1,0 +1,55 @@
+{
+"Default": {
+     "RunLocally": "false"
+    },
+    "Tests": [
+        {
+            "Name": "BackupCreation_None",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup",
+            "ResourcesRequired": "Server:5",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "BackupCreation.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "BackupCreation_X509",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup",
+            "ResourcesRequired": "Server:5",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "BackupCreationX509.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "BackupCreation_WinCore",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup",
+            "ResourcesRequired": "Server:5",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "BackupCreationWinCore.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        }
+    ]
+}

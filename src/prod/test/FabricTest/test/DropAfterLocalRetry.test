@@ -1,0 +1,319 @@
+#
+# [owner] aprameyr
+# Validate local retry and health reports for replica creation
+# 
+set DummyPLBEnabled true
+set RAPMessageRetryInterval 3
+set ReplicaOpenFailureMaxRetryThreshold 2
+set ReplicaReopenFailureMaxRetryThreshold 2
+
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+#######################################
+#Verify that failures on reopen in service result in drop
+#######################################
+
+#Block ReplicaUp to verify state on RA
+addbehavior b1 * * ReplicaUp
+
+#Create the service
+createservice fabric:/testspr TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+verify
+
+#Report Fault Transient and inject begin failure
+#Due to reopen block health should still be ok
+injectfailure 40 fabric:/testspr service.beginopen
+reportfault 40 fabric:/testspr transient
+
+!waitforstate RA.FT.State.fabric:/testspr.40 Closed
+
+removefailure 40 fabric:/testspr service.beginopen
+removebehavior b1
+
+verify
+
+deleteservice fabric:/testspr
+verify 
+
+#######################################
+#Verify that failures on reopen in replicator result in drop
+#######################################
+
+#Block ReplicaUp to verify state on RA
+addbehavior b1 * * ReplicaUp
+
+#Create the service
+createservice fabric:/testspr TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+verify
+
+#Report Fault Transient and inject begin failure
+#Due to reopen block health should still be ok
+reportfault 40 fabric:/testspr transient
+injectfailure 40 fabric:/testspr replicator.endopen
+
+!waitforstate RA.FT.State.fabric:/testspr.40 Closed
+
+removefailure 40 fabric:/testspr replicator.endopen
+removebehavior b1
+
+verify
+
+deleteservice fabric:/testspr
+verify
+
+
+#######################################
+#Verify that service failures on add primary result in drop and CreateReplica result in drop
+#######################################
+
+#Block AddReplica so that the replica set does not add the secondary
+addbehavior ba * * AddReplica
+
+#Block AddPrimaryReply to inspect state on RA
+addbehavior b1 * * AddPrimaryReply
+addbehavior bd * * ReplicaUp
+
+addbehavior bo * * ReplicaOpen
+
+#Add a failure in Open and Create the service
+createservice fabric:/testsp TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/testsp.40 InBuild
+!waitforstate RA.Replica.State.fabric:/testsp.40.40 IC
+
+injectfailure 40 fabric:/testsp service.beginopen
+removebehavior bo
+
+!waitforstate RA.FT.State.fabric:/testsp.40 Closed
+
+#Remove the failures for 40 and let FM build a new replica
+removefailure 40 fabric:/testsp service.beginopen
+removebehavior b1
+removebehavior bd
+
+!waitforstate FM.Replica.State.fabric:/testsp.30 InBuild
+
+#Unblock addreplica but block CreateReplicaReply to see verify RA State
+addbehavior b2 * * CreateReplicaReply
+addbehavior bo * * ReplicaOpen
+removebehavior ba
+
+!waitforstate RA.Replica.State.fabric:/testsp.30.30 IC
+
+injectfailure 30 fabric:/testsp service.beginopen
+removebehavior bo
+
+!waitforstate RA.FT.State.fabric:/testsp.30 Closed
+
+#Remove the failure, unblock the reply and let everything stabilize
+removefailure 30 fabric:/testsp service.beginopen
+removebehavior b2
+
+verify
+
+deleteservice fabric:/testsp
+verify
+
+#######################################
+#Verify that replicator failures on add primary result in drop and CreateReplica result in drop
+#######################################
+
+#Block AddReplica so that the replica set does not add the secondary
+addbehavior ba * * AddReplica
+
+#Block AddPrimaryReply to inspect state on RA
+addbehavior b1 * * AddPrimaryReply
+addbehavior bd * * ReplicaUp
+
+addbehavior bo * * ReplicaOpen
+
+#Add a failure in Open and Create the service
+createservice fabric:/testsp TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/testsp.40 InBuild
+!waitforstate RA.Replica.State.fabric:/testsp.40.40 IC
+
+injectfailure 40 fabric:/testsp replicator.endopen
+removebehavior bo
+
+!waitforstate RA.FT.State.fabric:/testsp.40 Closed
+
+#Remove the failures for 40 and let FM build a new replica
+removefailure 40 fabric:/testsp replicator.endopen
+removebehavior b1
+removebehavior bd
+
+!waitforstate FM.Replica.State.fabric:/testsp.30 InBuild
+
+#Unblock addreplica but block CreateReplicaReply to see verify RA State
+addbehavior b2 * * CreateReplicaReply
+addbehavior bo * * ReplicaOpen
+removebehavior ba
+
+!waitforstate RA.Replica.State.fabric:/testsp.30.30 IC
+
+injectfailure 30 fabric:/testsp replicator.endopen
+removebehavior bo
+
+!waitforstate RA.FT.State.fabric:/testsp.30 Closed
+
+#Remove the failure, unblock the reply and let everything stabilize
+removefailure 30 fabric:/testsp replicator.endopen
+removebehavior b2
+
+verify
+
+deleteservice fabric:/testsp
+verify
+
+
+#######################################
+#Verify that failures on add primary result in drop and CreateReplica result in drop
+#######################################
+
+#Block AddReplica so that the replica set does not add the secondary
+addbehavior ba * * AddReplica
+
+#Block AddPrimaryReply to inspect state on RA
+addbehavior b1 * * AddPrimaryReply
+addbehavior bd * * ReplicaUp
+
+addbehavior bo * * ReplicaOpen
+
+#Add a failure in Open and Create the service
+createservice fabric:/testsv TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/testsv.40 InBuild
+!waitforstate RA.Replica.State.fabric:/testsv.40.40 IC
+
+injectfailure 40 fabric:/testsv service.beginopen
+removebehavior bo
+
+!waitforstate RA.FT.State.fabric:/testsv.40 Closed
+
+#Remove the failures for 40 and let FM build a new replica
+removefailure 40 fabric:/testsv service.beginopen
+removebehavior b1
+removebehavior bd
+
+!waitforstate FM.Replica.State.fabric:/testsv.30 InBuild
+
+#Unblock addreplica but block CreateReplicaReply to see verify RA State
+addbehavior b2 * * CreateReplicaReply
+addbehavior bo * * ReplicaOpen
+removebehavior ba
+
+!waitforstate RA.Replica.State.fabric:/testsv.30.30 IC
+
+injectfailure 30 fabric:/testsv service.beginopen
+removebehavior bo
+
+!waitforstate RA.FT.State.fabric:/testsv.30 Closed
+
+#Remove the failure, unblock the reply and let everything stabilize
+removefailure 30 fabric:/testsv service.beginopen
+removebehavior b2
+
+verify
+
+deleteservice fabric:/testsv
+verify
+
+#######################################
+#Verify that failures on add primary result in drop and CreateReplica result in drop
+#######################################
+
+#Block AddReplica so that the replica set does not add the secondary
+addbehavior ba * * AddReplica
+
+#Block AddPrimaryReply to inspect state on RA
+addbehavior b1 * * AddPrimaryReply
+addbehavior bd * * ReplicaUp
+
+addbehavior bo * * ReplicaOpen
+
+#Add a failure in Open and Create the service
+createservice fabric:/testsv TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/testsv.40 InBuild
+!waitforstate RA.Replica.State.fabric:/testsv.40.40 IC
+
+injectfailure 40 fabric:/testsv service.beginopen
+removebehavior bo
+
+!waitforstate RA.FT.State.fabric:/testsv.40 Closed
+
+#Remove the failures for 40 and let FM build a new replica
+removefailure 40 fabric:/testsv service.beginopen
+removebehavior b1
+removebehavior bd
+
+!waitforstate FM.Replica.State.fabric:/testsv.30 InBuild
+
+#Unblock addreplica but block CreateReplicaReply to see verify RA State
+addbehavior b2 * * CreateReplicaReply
+addbehavior bo * * ReplicaOpen
+removebehavior ba
+
+!waitforstate RA.Replica.State.fabric:/testsv.30.30 IC
+
+injectfailure 30 fabric:/testsv service.beginopen
+removebehavior bo
+
+!waitforstate RA.FT.State.fabric:/testsv.30 Closed
+
+#Remove the failure, unblock the reply and let everything stabilize
+removefailure 30 fabric:/testsv service.beginopen
+removebehavior b2
+
+verify
+
+deleteservice fabric:/testsv
+verify
+
+#######################################
+#Verify that failures on add instance result in drop
+#######################################
+
+addbehavior bx * * AddInstanceReply
+addbehavior by * * ReplicaUp
+addbehavior b1 * * ReplicaOpen
+
+injectfailure 40 fabric:/testsl service.beginopen
+createservice fabric:/testsl CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/testsl.40 InBuild
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/testsl#0#0 expectedhealthstate=ok
+
+#Unblock Open. The replica will fail open and RA should report warning
+removebehavior b1
+
+!waitforstate RA.FT.State.fabric:/testsl.40 Closed
+
+removebehavior bx 
+removebehavior by
+
+#Now remove the failure and allow the replica to open
+removefailure 40 fabric:/testsl service.beginopen
+
+verify
+
+deleteservice fabric:/testsl
+verify
+
+!q

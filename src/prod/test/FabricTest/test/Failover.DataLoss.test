@@ -1,0 +1,518 @@
+#
+# [owner] MMohsin, AprameyR, AnuragG
+#
+# This CIT covers various scenarios involving data loss detection.
+#
+votes 10 20 30
+cleantest
+
+cmservice 3 2
+namingservice 1 3 2
+fmservice 3 2
+
+set DummyPLBEnabled true
+set UserMaxStandByReplicaCount 3
+set ReplicaOpenFailureMaxRetryThreshold 1
+
++10
++20
++30
+verify
+
+createservice fabric:/foo TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+verify
+
+################################################################################
+# Scenario 1
+# ----------
+# The scenario consists of the following steps:
+# 1. A secondary gets dropped.
+# 2. We start creating a new secondary.
+# 3. Another secondary goes down.
+# 4. The primary gets dropped.
+# 5. Data loss should be detected.
+################################################################################
+
+addbehavior b1 * * CreateReplicaReply
+
+reportfault 10 fabric:/foo permanent
+!waitforstate FM.Replica.State.fabric:/foo.10 InBuild
+
+-20
+!waitforstate FM.Replica.IsUp.fabric:/foo.20 false
+
+reportfault 30 fabric:/foo permanent
+!waitforstate FM.Replica.State.fabric:/foo.30 Dropped
+
+removebehavior b1
+
+setsignal 20 fabric:/foo replicator.beginondataloss.block
+
++20
+
+waitforsignalhit 20 fabric:/foo replicator.beginondataloss.block
+resetsignal 20 fabric:/foo replicator.beginondataloss.block
+
+verify
+
+################################################################################
+# Scenario 2
+# ----------
+# The scenario consists of the following steps:
+# 1. A secondary goes down.
+# 2. The remaining replicas get dropped.
+# 3. Data loss should be detected.
+################################################################################
+
+-20
+verify
+
+reportfault 10 fabric:/foo permanent
+reportfault 30 fabric:/foo permanent
+
+setsignal 20 fabric:/foo replicator.beginondataloss.block
+
++20
+
+waitforsignalhit 20 fabric:/foo replicator.beginondataloss.block
+resetsignal 20 fabric:/foo replicator.beginondataloss.block
+
+verify
+
+################################################################################
+# Scenario 3
+# ----------
+# The scenario consists of the following steps:
+# 1. Both the replicas go down.
+# 2. The secondary gets dropped.
+# 3. The primary comes back up.
+# 4. We start creating a new secondary.
+# 5. The primary goes down again.
+# 6. The primary gets dropped.
+# 7. Data loss should be detected.
+################################################################################
+
++40
++50
+verify
+
+createservice fabric:/scenario3 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2
+verify
+
+!waitforstate FM.Replica.Role.fabric:/scenario3.50 Primary
+!waitforstate FM.Replica.Role.fabric:/scenario3.40 Secondary
+
+-50
+!waitforstate FM.Replica.IsUp.fabric:/scenario3.50 false
+
+-40 removedata
+!waitforstate FM.Replica.IsUp.fabric:/scenario3.40 false
+
+set MaxActionsPerIteration 0
+
+nodestateremoved 40
+!waitforstate FM.Replica.State.fabric:/scenario3.40 Dropped
+
++40
+!waitforstate FM.Node.IsUp.40 true
+
+set MaxActionsPerIteration 500
+
+addbehavior b1 * * CreateReplicaReply
+
++50
+!waitforstate FM.Replica.IsUp.fabric:/scenario3.50 true
+
+!waitforstate FM.Replica.State.fabric:/scenario3.50 Ready
+!waitforstate FM.Replica.State.fabric:/scenario3.40 InBuild
+
+-50 removedata
+!waitforstate FM.Replica.IsUp.fabric:/scenario3.50 false
+
+removebehavior b1
+
+setsignal 40 fabric:/scenario3 replicator.beginondataloss.block
+
+nodestateremoved 50
+
+waitforsignalhit 40 fabric:/scenario3 replicator.beginondataloss.block
+resetsignal 40 fabric:/scenario3 replicator.beginondataloss.block
+
++50
+verify
+
+deleteservice fabric:/scenario3
+verify
+
+################################################################################
+# Scenario 4
+# ----------
+# The scenario consists of the following steps:
+# 1. All the replicas in the configuration are dropped.
+# 2. A single idle SB replica is up.
+################################################################################
+
+createservice fabric:/scenario4 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+verify
+
+-50
+verify
+
++50
+!waitforstate FM.Replica.IsUp.fabric:/scenario4.50 true
+verify
+
+setsignal 50 fabric:/scenario4 replicator.beginondataloss.block
+
+addbehavior b1 * * DoReconfiguration
+
+reportfault 20 fabric:/scenario4 permanent
+!waitforstate FM.Replica.State.fabric:/scenario4.20 Dropped
+
+reportfault 30 fabric:/scenario4 permanent
+!waitforstate FM.Replica.State.fabric:/scenario4.30 Dropped
+
+reportfault 40 fabric:/scenario4 permanent
+!waitforstate FM.Replica.State.fabric:/scenario4.40 Dropped
+
+!waitforstate FM.Replica.Role.fabric:/scenario4.50 Primary
+!waitforstate FM.Replica.State.fabric:/scenario4.50 InBuild
+
+removebehavior b1
+
+waitforsignalhit 50 fabric:/scenario4 replicator.beginondataloss.block
+resetsignal 50 fabric:/scenario4 replicator.beginondataloss.block
+
+verify
+
+deleteservice fabric:/scenario4
+verify
+
+################################################################################
+# Scenario 5
+# ----------
+# The scenario consists of the following steps:
+# 1. All the replicas in the configuration are dropped.
+# 2. All idle replicas are up.
+# 3. The idle SB replicas have different progress.
+# 4. The replica with the highest LSN should be elected as the new primary.
+################################################################################
+
++60
+verify
+
+createservice fabric:/scenario5 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+verify
+
+-60
+verify
+
+clientput fabric:/scenario5 10 10Data1
+!wait
+
+-50
+verify
+
+clientput fabric:/scenario5 20 20Data2
+!wait
+
+-40
+verify
+
++40
++50
++60
+
+!waitforstate FM.Replica.IsUp.fabric:/scenario5.40 true
+!waitforstate FM.Replica.IsUp.fabric:/scenario5.50 true
+!waitforstate FM.Replica.IsUp.fabric:/scenario5.60 true
+verify
+
+setsignal 40 fabric:/scenario5 replicator.beginondataloss.block
+
+addbehavior b1 * * DoReconfiguration
+
+reportfault 10 fabric:/scenario5 permanent
+!waitforstate FM.Replica.State.fabric:/scenario5.10 Dropped
+
+reportfault 20 fabric:/scenario5 permanent
+!waitforstate FM.Replica.State.fabric:/scenario5.20 Dropped
+
+reportfault 30 fabric:/scenario5 permanent
+!waitforstate FM.Replica.State.fabric:/scenario5.30 Dropped
+
+removebehavior b1
+
+waitforsignalhit 40 fabric:/scenario5 replicator.beginondataloss.block
+resetsignal 40 fabric:/scenario5 replicator.beginondataloss.block
+
+verify
+
+deleteservice fabric:/scenario5
+verify
+
+################################################################################
+# Scenario 6
+# ----------
+# The scenario consists of the following steps:
+# 1. All the replicas in the configuration are dropped.
+# 2. Not all idle replicas are up.
+################################################################################
+
+set RecoverOnDataLossWaitDuration 3600
+
+createservice fabric:/scenario6 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+verify
+
+-60
+verify
+
+clientput fabric:/scenario6 10 10Data1
+!wait
+
+-50
+verify
+
+clientput fabric:/scenario6 20 20Data2
+!wait
+
+-40
+verify
+
++40
+!waitforstate FM.Replica.IsUp.fabric:/scenario6.40 true
++50
+!waitforstate FM.Replica.IsUp.fabric:/scenario6.50 true
+verify
+
+setsignal 40 fabric:/scenario6 replicator.beginondataloss.block
+
+addbehavior b1 * * DoReconfiguration
+
+reportfault 10 fabric:/scenario6 permanent
+!waitforstate FM.Replica.State.fabric:/scenario6.10 Dropped
+
+reportfault 20 fabric:/scenario6 permanent
+!waitforstate FM.Replica.State.fabric:/scenario6.20 Dropped
+
+reportfault 30 fabric:/scenario6 permanent
+!waitforstate FM.Replica.State.fabric:/scenario6.30 Dropped
+
+!waitforstate FM.Replica.Role.fabric:/scenario6.40 Idle
+!waitforstate FM.Replica.Role.fabric:/scenario6.50 Idle
+
+!pause 5
+
+!waitforstate FM.Replica.Role.fabric:/scenario6.40 Idle
+!waitforstate FM.Replica.Role.fabric:/scenario6.50 Idle
+
+set RecoverOnDataLossWaitDuration 0
+
+removebehavior b1
+
+waitforsignalhit 40 fabric:/scenario6 replicator.beginondataloss.block
+resetsignal 40 fabric:/scenario6 replicator.beginondataloss.block
+
+verify
+
++60
+verify
+
+deleteservice fabric:/scenario6
+verify
+
+################################################################################
+# Scenario 7
+# ----------
+# The scenario consists of the following steps:
+# 1. Primary is dropped before the idle replicas can be promoted to secondary
+################################################################################
+
+addbehavior b1 * * AddReplicaReply
+
+createservice fabric:/scenario7 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+
+!waitforstate RA.Replica.State.fabric:/scenario7.60.40 RD
+!waitforstate RA.Replica.State.fabric:/scenario7.60.50 RD
+
+reportfault 60 fabric:/scenario7 permanent
+
+!waitforstate FM.Replica.State.fabric:/scenario7.40 Ready
+!waitforstate FM.Replica.State.fabric:/scenario7.50 Ready
+
+removebehavior b1
+
+verify
+
+deleteservice fabric:/scenario7
+verify
+
+################################################################################
+# Scenario 8
+# ----------
+# The scenario consists of the following steps:
+# 1. Primary is dropped before the idle replicas can be created on the node
+# 2. These idle replicas exist at the FM as IB
+################################################################################
+
+addbehavior b1 * * AddReplica
+
+createservice fabric:/scenario8 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+
+!waitforstate FM.Replica.State.fabric:/scenario8.40 InBuild
+!waitforstate FM.Replica.State.fabric:/scenario8.50 InBuild
+
+reportfault 60 fabric:/scenario8 permanent
+
+!waitforstate FM.Replica.Role.fabric:/scenario8.60 Primary
+!waitforstate FM.Replica.State.fabric:/scenario8.60 Ready
+
+removebehavior b1
+
+!waitforstate FM.Replica.State.fabric:/scenario8.40 Ready
+!waitforstate FM.Replica.State.fabric:/scenario8.50 Ready
+
+verify
+
+deleteservice fabric:/scenario8
+verify
+
+################################################################################
+# Scenario 9
+# ----------
+# The scenario consists of the following steps:
+# 1. All the replicas in the configuration are dropped
+# 2. There are no other replicas
+################################################################################
+
+createservice fabric:/scenario9 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+verify
+
+addbehavior b1 * * DoReconfiguration
+
+setsignal 60 fabric:/scenario9 replicator.beginondataloss.block
+
+reportfault 40 fabric:/scenario9 permanent
+reportfault 50 fabric:/scenario9 permanent
+reportfault 60 fabric:/scenario9 permanent
+
+waitforsignalhit 60 fabric:/scenario9 replicator.beginondataloss.block
+resetsignal 60 fabric:/scenario9 replicator.beginondataloss.block
+
+removebehavior b1
+
+verify
+
+deleteservice fabric:/scenario9
+verify
+
+################################################################################
+# Scenario 10
+# -----------
+# The scenario consists of the following steps:
+# 1. All the replicas in the configuration are dropped
+# 2. All the other replicas are down
+################################################################################
+
+set RecoverOnDataLossWaitDuration 3600
+
+createservice fabric:/scenario10 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+verify
+
+-40
+verify
+
+-50
+verify
+
+-60
+verify
+
+addbehavior b1 * * DoReconfiguration
+
+setsignal 30 fabric:/scenario10 replicator.beginondataloss.block
+
+reportfault 10 fabric:/scenario10 permanent
+reportfault 20 fabric:/scenario10 permanent
+reportfault 30 fabric:/scenario10 permanent
+
+!waitforstate FM.Replica.IsUp.fabric:/scenario10.30 false
+!waitforstate FM.Replica.Role.fabric:/scenario10.30 None
+
+!pause 5
+
+!waitforstate FM.Replica.IsUp.fabric:/scenario10.30 false
+!waitforstate FM.Replica.Role.fabric:/scenario10.30 None
+
+set RecoverOnDataLossWaitDuration 0
+
+waitforsignalhit 30 fabric:/scenario10 replicator.beginondataloss.block
+resetsignal 30 fabric:/scenario10 replicator.beginondataloss.block
+
+removebehavior b1
+
+verify
+
++40
++50
++60
+verify
+
+deleteservice fabric:/scenario10
+verify
+
+################################################################################
+# Scenario 11
+# -----------
+# The scenario consists of the following steps:
+# 1. A partitition loses all its replicas.
+# 2. Dataloss is declared and a new primary is being placed.
+# 3. Before the new primary can be successfully placed, it also gets dropped.
+# 4. A yet another new primary is placed, and this new primary should get the
+#    data loss call.
+################################################################################
+
+createservice fabric:/scenario11 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 replicarestartwaitduration=3600
+verify
+
+addbehavior b1 * * AddPrimary
+
+reportfault 40 fabric:/scenario11 permanent
+reportfault 50 fabric:/scenario11 permanent
+reportfault 60 fabric:/scenario11 permanent
+
+# Esnure that FM has started placement of new primary on node 60
+!waitforstate FM.Replica.Role.fabric:/scenario11.60 Primary
+!waitforstate FM.Replica.State.fabric:/scenario11.60 InBuild
+
+# Bring down node 60 so that the replica is Down at FM
+-60 removedata
+!waitforstate FM.Replica.IsUp.fabric:/scenario11.60 false
+
+setsignal 50 fabric:/scenario11 replicator.beginondataloss.block
+
+# Drop the replica on node 60
+nodestateremoved 60
+!waitforstate FM.Replica.State.fabric:/scenario11.60 Dropped
+
+# Ensure that the new primary is getting created on node 50
+!waitforstate FM.Replica.Role.fabric:/scenario11.50 Primary
+!waitforstate FM.Replica.State.fabric:/scenario11.50 InBuild
+
+# Add node 60 back
++60
+!waitforstate FM.Node.IsUp.60 true
+
+removebehavior b1
+
+waitforsignalhit 50 fabric:/scenario11 replicator.beginondataloss.block
+resetsignal 50 fabric:/scenario11 replicator.beginondataloss.block
+
+verify
+
+deleteservice fabric:/scenario11
+verify
+
+-*
+
+!q

@@ -1,0 +1,81 @@
+#
+# [owner] MMohsin
+#
+# This test case covers the scenario where the entries having the highest sequence number are deleted. This happens
+# when one or more services (and hence the corresponding partitions) are deleted. For each health entity type, FM
+# should keep the entry with highest health sequence number. This is to ensure that after a FM failover, the new FM
+# has the latest health sequence number available when it loads the state from disk.
+#
+
+votes 10 20 30
+fmservice 3 2
+cmservice 3 2
+namingservice 1 3 2
+cleantest
+
+set DummyPLBEnabled true
+set ExpectedClusterSize 3
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+set HealthStoreCleanupInterval 1
+set PeriodicStateCleanupScanInterval 1
+
+# Block creation of system services until the FM service replicas are stabalized
+addbehavior b1 * * CreateService
+
++10 SystemServiceInitializationTimeout=5 SystemServiceInitializationRetryInterval=5
++20 SystemServiceInitializationTimeout=5 SystemServiceInitializationRetryInterval=5
++30 SystemServiceInitializationTimeout=5 SystemServiceInitializationRetryInterval=5
+
+!waitforstate FM.Replica.Role.FMService.10 Secondary
+!waitforstate FM.Replica.Role.FMService.20 Secondary
+!waitforstate FM.Replica.Role.FMService.30 Primary
+
+!waitforstate FM.FT.Reconfig.FMService false
+!waitforstate FM.IsReady true
+
+# Ensure that that node view is updated in PLB and there is sufficient capacity
+# to create services
+ProcessPendingPlbUpdates
+
+# Allow creation of system services
+removebehavior b1
+
+verify
+
+createservice fabric:/stateless1 CalculatorServiceType n 1 3
+createservice fabric:/stateless2 CalculatorServiceType n 1 3
+createservice fabric:/stateless3 CalculatorServiceType n 1 3
+verify
+
+healthgetprogress service sourceid=System.FM expectedprogress=5
+healthgetprogress partition sourceid=System.FM expectedprogress=5
+
+deleteservice fabric:/stateless2
+verify
+
+deleteservice fabric:/stateless3
+verify
+
+# Ensure that fabric:/stateless2 has been removed at the FM
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/stateless2 NULL
+
+# Give some time to attempt to remove fabric:/stateless3. This should not happen
+# because fabric:/stateless3 has the highest sequence number.
+!pause,10
+
+healthgetprogress service sourceid=System.FM expectedprogress=7
+healthgetprogress partition sourceid=System.FM expectedprogress=9
+
+# Failover the FM primary
+-30
+verify
+
+# Give some time to the new FM to send any health reports. There should be none.
+!pause,10
+
+healthgetprogress service sourceid=System.FM expectedprogress=7
+healthgetprogress partition sourceid=System.FM expectedprogress=9
+
+
+!q

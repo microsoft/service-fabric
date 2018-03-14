@@ -1,0 +1,108 @@
+votes 10 20 30
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
++10 nodeprops=Prop1:1 fd=fd:/r1/n1
++20 nodeprops=Prop2:2 fd=fd:/r1/n1
++30 nodeprops=Prop3:3 fd=fd:/r1/n1
+
+verify
+
+#
+# This script can be used to manually verify the behavior of manifest overrides by 
+# filtering traces on "type~Reliability.AdminAPI@CreateService".
+#
+# Current behavior:
+#
+# Placement constraints:
+# 
+# - If specified during CreateService but empty, they override all of the placement constraints defined in the manifest.
+#   (as if there are no constraints for this service)
+# - If specified during CreateService, but non-empty, they override all of the placement constraints defined in the manifest.
+# - If not specified (NULL) in CreateService, the placement constraints defined in the manifest are used.
+#
+# IsStateful flag:
+# HasPersistence flag:
+#
+# - A ServiceTypeMismatch error is returned if the flag specified through CreateService is different from the value in the manifest
+#
+# Load-balancing metrics:
+#
+# - If the values specified through CreateService are empty, then all load metrics are overridden with values from the manifest
+#
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageX version=V1
+
+app.servicetypes versionV1 ServicePackageX ServiceTypeA stateless
+app.servicetypes versionV1 ServicePackageX ServiceTypeB stateless constraint=(Prop1==1) metrics=M1,zero,1,0
+app.servicetypes versionV1 ServicePackageX ServiceTypeC stateful
+app.servicetypes versionV1 ServicePackageX ServiceTypeD stateful persist constraint=(Prop2==2||Prop3==3) metrics=M2,low,3,4,M3,medium,5,6,M4,high,7,8
+
+app.codepack versionV1 ServicePackageX CodeA types=ServiceTypeA version=V1
+app.codepack versionV1 ServicePackageX CodeB types=ServiceTypeB version=V1
+app.codepack versionV1 ServicePackageX CodeC types=ServiceTypeC version=V1
+app.codepack versionV1 ServicePackageX CodeD types=ServiceTypeD version=V1
+
+app.upload versionV1
+
+#
+# Provision application version V1
+#
+provisionapp versionV1
+
+#
+# Create application version V1
+#
+createapp fabric:/testapp TestApp V1
+
+verify
+
+createservice fabric:/testapp/serviceA1 ServiceTypeA y 1 1 appname=fabric:/testapp errors=ServiceTypeMismatch
+createservice fabric:/testapp/serviceA2 ServiceTypeA n 1 1 appname=fabric:/testapp
+createservice fabric:/testapp/serviceA3 ServiceTypeA n 1 1 appname=fabric:/testapp xconstraint
+createservice fabric:/testapp/serviceA4 ServiceTypeA n 1 1 appname=fabric:/testapp constraint=(Prop1==1)
+createservice fabric:/testapp/serviceA5 ServiceTypeA n 1 1 appname=fabric:/testapp xconstraint metrics=MA5a,low,9,0
+createservice fabric:/testapp/serviceA6 ServiceTypeA n 1 1 appname=fabric:/testapp constraint=(Prop2==2) metrics=MA5b,zero,10,0
+
+createservice fabric:/testapp/serviceB1 ServiceTypeB y 1 1 appname=fabric:/testapp errors=ServiceTypeMismatch
+createservice fabric:/testapp/serviceB2 ServiceTypeB n 1 1 appname=fabric:/testapp
+createservice fabric:/testapp/serviceB3 ServiceTypeB n 1 1 appname=fabric:/testapp xconstraint
+createservice fabric:/testapp/serviceB4 ServiceTypeB n 1 1 appname=fabric:/testapp constraint=(Prop2==2)
+createservice fabric:/testapp/serviceB5 ServiceTypeB n 1 1 appname=fabric:/testapp xconstraint metrics=MB5a,low,9,0,MB5b,medium,10,0
+createservice fabric:/testapp/serviceB6 ServiceTypeB n 1 1 appname=fabric:/testapp constraint=(Prop3==3) metrics=MB6a,zero,11,0,MB6b,high,12,0
+
+createservice fabric:/testapp/serviceC1 ServiceTypeC n 1 1 appname=fabric:/testapp errors=ServiceTypeMismatch
+createservice fabric:/testapp/serviceC2 ServiceTypeC y 1 1 persist appname=fabric:/testapp errors=ServiceTypeMismatch
+createservice fabric:/testapp/serviceC2 ServiceTypeC y 1 1 appname=fabric:/testapp
+createservice fabric:/testapp/serviceC3 ServiceTypeC y 1 1 appname=fabric:/testapp xconstraint
+createservice fabric:/testapp/serviceC4 ServiceTypeC y 1 1 appname=fabric:/testapp constraint=(Prop1==1)
+createservice fabric:/testapp/serviceC5 ServiceTypeC y 1 1 appname=fabric:/testapp xconstraint metrics=MC5a,low,9,10,MC5b,medium,10,11
+createservice fabric:/testapp/serviceC6 ServiceTypeC y 1 1 appname=fabric:/testapp constraint=(Prop2==2) metrics=MC6a,zero,10,11,MC6b,high,12,13
+createservice fabric:/testapp/serviceC7 ServiceTypeC y 1 1 appname=fabric:/testapp constraint=(Prop2==2) metrics=MC5b,zero,10,11
+
+createservice fabric:/testapp/serviceD1 ServiceTypeD n 1 1 appname=fabric:/testapp errors=ServiceTypeMismatch
+createservice fabric:/testapp/serviceD2 ServiceTypeD y 1 1 appname=fabric:/testapp errors=ServiceTypeMismatch
+createservice fabric:/testapp/serviceD2 ServiceTypeD y 1 1 persist appname=fabric:/testapp 
+createservice fabric:/testapp/serviceD3 ServiceTypeD y 1 1 persist appname=fabric:/testapp xconstraint
+createservice fabric:/testapp/serviceD4 ServiceTypeD y 1 1 persist appname=fabric:/testapp constraint=(Prop1==1)
+createservice fabric:/testapp/serviceD5 ServiceTypeD y 1 1 persist appname=fabric:/testapp xconstraint metrics=MD6a,low,9,0
+createservice fabric:/testapp/serviceD6 ServiceTypeD y 1 1 persist appname=fabric:/testapp constraint=(Prop2==2) metrics=MD6a,zero,10,0
+createservice fabric:/testapp/serviceD7 ServiceTypeD y 1 1 persist appname=fabric:/testapp constraint=(Prop2==2) metrics=MD6b,zero,10,0
+
+# Placement policies override test
+# To test that the placement constraints override works with appending policies
+createservice fabric:/testapp/serviceE2 ServiceTypeD y 1 1 persist appname=fabric:/testapp placementPolicies=fd:/r1,requiredDomain
+createservice fabric:/testapp/serviceE3 ServiceTypeD y 1 1 persist appname=fabric:/testapp xconstraint placementPolicies=fd:/r1,requiredDomain
+createservice fabric:/testapp/serviceE4 ServiceTypeD y 1 1 persist appname=fabric:/testapp constraint=(Prop1==1) placementPolicies=fd:/r1,requiredDomain
+
+-*
+
+!q

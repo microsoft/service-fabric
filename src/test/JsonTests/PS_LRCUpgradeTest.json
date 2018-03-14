@@ -1,0 +1,34 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "LRC0native-UpgradeTest",
+      "Type": "LRCPSScriptTest",
+      "Owners": "v-mnagar,roroutra",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "Msi",
+        "SetupTimeout": "900",
+        "ClusterEndPoint": "lrc0native.cloudapp.net:19000",
+        "CodePkgPathListFile": "\\\\winfabfs\\public\\LRC\\LrcUpgradeTests\\LRC0native-CodePackagePathList.txt",
+        "ExecutionTimeout": "72000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "LRC1native-UpgradeTest",
+      "Type": "LRCPSScriptTest",
+      "Owners": "v-mnagar,roroutra",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "Msi",
+        "SetupTimeout": "900",
+        "ClusterEndPoint": "lrc1native.cloudapp.net:19000",
+        "CodePkgPathListFile": "\\\\winfabfs\\public\\LRC\\LrcUpgradeTests\\LRC1native-CodePackagePathList.txt",
+        "ExecutionTimeout": "72000",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

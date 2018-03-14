@@ -1,0 +1,185 @@
+#
+# [owner] aprameyr
+# Scenario test for host termination during deactivate node
+# 
+!load FailoverCITConfigurationInitialization.test
+set NodeDeactivationMaxReplicaCloseDuration 10
+set IsSingletonReplicaMoveAllowedDuringUpgrade false
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 120
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
+#
+# Create app
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful persist
+
+app.servicepack version10 ServicePackageB version=1.0
+app.servicetypes version10 ServicePackageB ServiceTypeB stateless
+
+app.servicepack version10 ServicePackageC version=1.0
+app.servicetypes version10 ServicePackageC ServiceTypeC stateful
+
+app.servicepack version10 ServicePackageD version=1.0
+app.servicetypes version10 ServicePackageD ServiceTypeD stateful persist
+
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA version=1.0
+app.codepack version10 ServicePackageB CodeB1 types=ServiceTypeB version=1.0
+app.codepack version10 ServicePackageC CodeC1 types=ServiceTypeC version=1.0
+app.codepack version10 ServicePackageD CodeD1 types=ServiceTypeD version=1.0
+app.upload version10
+provisionapp version10
+
++20 nodeprops=system:false
+verify
+
+###########################################
+# Scenario 0: The terminate duration is set to a low value
+# RA should terminate the host and node deactivation should complete
+# Validate for SL, SP, SV
+# Validate for services that are being dropped as well (D)
+###########################################
+createapp fabric:/app1 TestApp 1.0
+verify 
+
+createservice fabric:/app1/testA TestApp_App0:ServicePackageA:ServiceTypeA y 1 1 persist constraint=(system!=true) appname=fabric:/app1
+createservice fabric:/app1/testB TestApp_App0:ServicePackageB:ServiceTypeB n 1 1 constraint=(system!=true) appname=fabric:/app1
+createservice fabric:/app1/testC TestApp_App0:ServicePackageC:ServiceTypeC y 1 1 constraint=(system!=true) appname=fabric:/app1
+createservice fabric:/app1/testD TestApp_App0:ServicePackageD:ServiceTypeD y 1 1 persist constraint=(system!=true) appname=fabric:/app1
+verify
+
+setcodepackagekillpending 20 TestApp_App0:ServicePackageA#CodeA1
+setcodepackagekillpending 20 TestApp_App0:ServicePackageB#CodeB1
+setcodepackagekillpending 20 TestApp_App0:ServicePackageC#CodeC1
+setcodepackagekillpending 20 TestApp_App0:ServicePackageD#CodeD1
+
+addbehavior b1 20 * ReplicaClose
+
+deleteservice fabric:/app1/testD errors=Timeout
+!waitforstate RA.Replica.State.fabric:/app1/testD.20.20 ID
+
+#deactivate node and wait for the ra to terminate the host
+deactivatenode 20 Restart
+!waitforstate RA.Replica.IsUp.fabric:/app1/testA.20.20 false
+!waitforstate RA.FT.State.fabric:/app1/testB.20 Closed
+!waitforstate RA.FT.State.fabric:/app1/testC.20 Closed
+!waitforstate RA.Replica.IsUp.fabric:/app1/testD.20.20 false
+
+removebehavior b1
+activatenode 20
+deleteservice fabric:/app1/testD errors=UserServiceNotFound
+verify
+
+deleteapp fabric:/app1
+verify
+
+###########################################
+# Scenario 1: The terminate duration is set to a low value
+# but the node is activated before the terminate can happen
+# the terminate should be cancelled
+###########################################
+createapp fabric:/app2 TestApp 1.0
+verify 
+
+createservice fabric:/app2/test TestApp_App1:ServicePackageA:ServiceTypeA y 1 1 persist constraint=(system!=true) appname=fabric:/app2
+verify
+
+addbehavior b1 20 * ReplicaClose
+
+#deactivate node and wait for the ra to terminate the host
+deactivatenode 20 Restart
+!waitforstate RA.Replica.IsUp.fabric:/app1/testA.20.20 false
+
+removebehavior b1
+activatenode 20
+verify
+
+deleteapp fabric:/app2
+verify
+
+###########################################
+# Scenario 3: The terminate duration is set to a low value
+# deactivate, activate and deactivate again
+# let the replica close complete the second time
+###########################################
+createapp fabric:/app3 TestApp 1.0
+verify 
+
+createservice fabric:/app3/test TestApp_App2:ServicePackageA:ServiceTypeA y 1 1 persist constraint=(system!=true) appname=fabric:/app3
+verify
+
+addbehavior b1 20 * ReplicaClose
+
+deactivatenode 20 Restart
+!waitforstate FM.Node.DeactivationStatus.20 DeactivationSafetyCheckComplete
+
+activatenode 20
+!waitforstate FM.Node.DeactivationStatus.20 None
+
+deactivatenode 20 Restart
+removebehavior b1
+
+activatenode 20
+!waitforstate FM.Node.DeactivationStatus.20 None
+
+verify
+
+deleteapp fabric:/app3
+verify
+
+###########################################
+# Scenario 4: The terminate duration is set to a low value
+# Take down the node and bring it back up
+###########################################
+createapp fabric:/app4 TestApp 1.0
+verify 
+
+createservice fabric:/app4/test TestApp_App3:ServicePackageA:ServiceTypeA y 1 1 persist constraint=(system!=true) appname=fabric:/app4
+verify
+
+addbehavior b1 20 * ReplicaClose
+
+deactivatenode 20 Restart
+!waitforstate FM.Node.DeactivationStatus.20 DeactivationSafetyCheckComplete
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
++20 nodeprops=system:false
+!waitforstate FM.Node.IsUp.20 true
+verify
+
+activatenode 20
+removebehavior b1
+verify
+
+activatenode 20
+verify
+
+deleteapp fabric:/app4
+verify
+	
+###########################################
+# Scenario 5: Sanity test for nodes without replicas
+###########################################
+
++30 nodeprops=system:false
+verify
+
+deactivatenode 30 Restart
+verify
+
+activatenode 30 
+verify
+!q

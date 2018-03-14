@@ -1,0 +1,97 @@
+#
+# [owner:hulyap]
+# This test validates the scenario where an application is upgraded
+# when it is under quorum loss 
+#
+set DummyPLBEnabled true
+votes 20 30
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+
++10
++20
++30
+verify
+
++40
++50
++60
+verify
+
+# 
+# Application version 1.0
+#
+
+app.add version10 TestApp 1.0
+app.clear version10
+
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful persist
+app.codepack version10 ServicePackageA CodeA types=ServiceTypeA version=1.0
+app.reqservices version10 ServiceA ServiceTypeA stateful partition=1 replica=3
+
+app.upload version10
+
+# 
+# Application version 1.1 
+#
+
+app.add version11 TestApp 1.1
+app.clear version11
+
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA stateful persist
+app.codepack version11 ServicePackageA CodeA types=ServiceTypeA version=1.1
+app.reqservices version11 ServiceA ServiceTypeA stateful partition=1 replica=3
+
+app.upload version11
+
+# Provision application version 1.0
+#
+provisionapp version10
+
+#
+# Provision application version 1.1
+#
+provisionapp version11
+
+#
+# Create application version 1.0
+#
+createapp fabric:/app1 TestApp 1.0
+verify
+
+#
+# Wait for service to be placed
+# Kill the primary node 
+# Create quorum loss wait for new primary to get stuck in 
+# Phase2_Catchup 
+#
+!waitforstate FM.Replica.Role.fabric:/app1/ServiceA.60 Primary
+!waitforstate FM.Replica.Role.fabric:/app1/ServiceA.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/app1/ServiceA.40 Secondary
+
+addbehavior b1 * * GetLSN
+-60
+!waitforstate FM.Replica.Role.fabric:/app1/ServiceA.50 Primary
+-40
+removebehavior b1
+!waitforstate FM.FT.QuorumLost.fabric:/app1/ServiceA true
+!waitforstate RA.FT.ReconfigStage.fabric:/app1/ServiceA.50 Phase1_GetLSN
+
++60
+!waitforstate RA.FT.ReconfigStage.fabric:/app1/ServiceA.50 Phase2_Catchup
+!waitforstate FM.FT.QuorumLost.fabric:/app1/ServiceA true
+
+#
+# Upgrade application from version 1.0 to 1.1
+#
+upgradeapp fabric:/app1 1.1 Rolling replicacheck=1
+verifyupgradeapp fabric:/app1
+verify
+
+!q

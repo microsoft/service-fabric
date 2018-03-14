@@ -1,0 +1,58 @@
+enablenativeimagestore
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
++10
++20
++30
+verify
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageA version=V1
+
+app.servicetypes versionV1 ServicePackageA ServiceTypeA1 stateful persist
+
+app.codepack versionV1 ServicePackageA CodeA1 types=ServiceTypeA1 version=V1
+
+app.upload versionV1 node=10
+
+############################
+# Testcase1: 
+#
+# Basic application workflow
+# No faults
+#
+############################
+
+provisionapp versionV1
+
+createapp fabric:/app1/nativeimagestore.test TestApp V1
+
+verify
+
+createservice fabric:/app1/nativeimagestore.test/instance.test ServiceTypeA1 y 3 3 persist appname=fabric:/app1/nativeimagestore.test
+
+verify
+
+deleteservice fabric:/app1/nativeimagestore.test/instance.test
+
+verify
+
+deleteapp fabric:/app1/nativeimagestore.test
+
+verify
+
+unprovisionapp TestApp V1
+
+verify
+
+-*
+
+!q

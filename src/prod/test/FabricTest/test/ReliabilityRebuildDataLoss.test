@@ -1,0 +1,110 @@
+#
+# [owner:hulyap]
+# This test validates the scenario where dataloss is reported for a failover unit after rebuild
+# happens and the primary with the actual data is down.
+#
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
+cleantest
+set FullRebuildWaitDuration 1
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 50
+set AllowServiceAndFULossOnRebuild true
+set FMPlacementConstraints fmservice==true
+set NamingPlacementConstraints namingservice==true
+set RAPMessageRetryInterval 2
+
++10 nodeprops=fmservice:true
++20 nodeprops=namingservice:true
+!waitforstate FM.Replica.Role.FMService.10 Primary
++30 nodeprops=fmservice:true
+verify
+
++40
++50
++60
+verify
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist replicarestartwaitduration=10000
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+
+clientput fabric:/test1 10 10Data1
+!wait
+
+clientget fabric:/test1 10 10Data1
+!wait
+
+# Kill 40 and 50 so that replica set only contains 60
+-40
+!waitforstate RA.Replica.IsUp.fabric:/test1.60.40 false
+!waitforstate FM.FT.Reconfig.fabric:/test1 false
+
+-50
+!waitforstate RA.Replica.IsUp.fabric:/test1.60.50 false
+!waitforstate FM.FT.Reconfig.fabric:/test1 false
+
+# Put data at 60 which will be acked and lost later when 60 is dropped
+clientput fabric:/test1 10 10Data2
+!wait
+
+# kill 60 and the Primary FM so that full rebuild is induced
+-60
+-10
+!wait
+!waitforstate FM.Replica.Role.FMService.30 Primary
+
+# Bring back 50 and 40 such that we get the lost persisted failover unit back
++50
++40
+!wait
+!waitforstate FM.Node.IsUp.50 true
+!waitforstate FM.Node.IsUp.40 true
+
+# The service will be stuck in Quorum loss
+!waitforstate FM.FT.IsInRebuild.fabric:/test1 true
+
+# Wait until FM has processed rebuild messages from all replicas
+!waitforstate FM.Node.IsReplicaUploaded.50 true
+!waitforstate FM.Node.IsReplicaUploaded.40 true
+
+# Call RecoverPartitions API so that rebuild completes for this and 50 is chosen as Primary
+# Wait until RA has opened the replicas and then pause for 10s so that FM receives replica up
+# Otherwise FM will drop 50 and 40 which will cause validation to fail
+!waitforstate RA.Replica.IsUp.fabric:/test1.50.50 true
+!waitforstate RA.Replica.IsUp.fabric:/test1.40.40 true
+!waitforstate RA.Replica.State.fabric:/test1.50.50 SB
+!waitforstate RA.Replica.State.fabric:/test1.40.40 SB
+!pause 10
+
+recoverpartitions
+!waitforstate FM.Replica.Role.fabric:/test1.50 Primary
+
+# Wait until the service is stable
+!waitforstate FM.FT.QuorumLost.fabric:/test1 false
+verify
+
+# This command will confirm that 10Data2 is lost by expecting 10Data1
+# As part of validation it will check whether the data loss
+# has been correctly reported
+
+clientget fabric:/test1 10 10Data1
+!wait 
+
+# Check further puts/gets succeed
+clientput fabric:/test1 20 20Data1
+!wait
+
+clientget fabric:/test1 20 20Data1
+!wait
+
+verify 
+
+!q

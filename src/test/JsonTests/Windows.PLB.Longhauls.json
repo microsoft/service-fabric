@@ -1,0 +1,74 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "PLB_LongHaul_V2",
+      "Type": "V2_DllTest",
+      "Owners": "chanli",
+      "ResourcesRequired": "Server:7;",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\PLB_LongHaul_V2.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_LongHaul",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Rg0",
+      "Type": "RandomTest",
+      "Owners": "miradic,nipuzovi,mocolic,yangli",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\PLB_RgRandom.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Rg",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Rg1",
+      "Type": "RandomTest",
+      "Owners": "miradic,nipuzovi,mocolic,yangli",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\PLB_RgRandom.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Rg",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Rg2",
+      "Type": "RandomTest",
+      "Owners": "miradic,nipuzovi,mocolic,yangli",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\PLB_RgRandom.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Rg",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+set DummyPLBEnabled true
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 30
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+dnsservice true
+cleantest
+
++10
+
+verify
+
+################################################################
+#
+# Testcase 1: Create service with DNS name
+#
+################################################################
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+
+app.servicepack versionTC1 ServicePackageA version=v1
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.upload versionTC1
+
+provisionapp versionTC1
+createapp fabric:/testcase1 TestAppTC1 vTC1
+createservice fabric:/testcase1/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase1 serviceDnsName=service1.foo
+
+nameexists fabric:/testcase1 true
+#getproperty fabric:/System/DnsService service1.foo fabric:/testcase1/service1
+
+deleteservice fabric:/testcase1/service1
+deleteapp fabric:/testcase1
+
+nameexists fabric:/testcase1 false
+getproperty fabric:/System/DnsService service1.foo xxx error=PropertyNotFound
+
+################################################################
+#
+# Testcase 2: Cannot have 2 services with same DNS name
+#
+################################################################
+
+createapp fabric:/testcase2 TestAppTC1 vTC1
+createservice fabric:/testcase2/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase2 serviceDnsName=service2.foo
+
+nameexists fabric:/testcase2 true
+nameexists fabric:/System/DnsService true
+
+createservice fabric:/testcase2/service2 ServiceTypeA y 1 1 persist appname=fabric:/testcase2 serviceDnsName=service2.foo errors=DnsNameInUse
+
+createservice fabric:/testcase2/service3 ServiceTypeA y 1 1 persist appname=fabric:/testcase2 serviceDnsName=SERVICE2.foo errors=DnsNameInUse
+
+createservice fabric:/testcase2/service4 ServiceTypeA y 1 1 persist appname=fabric:/testcase2 serviceDnsName=sERViCE2.fOo errors=DnsNameInUse
+
+deleteservice fabric:/testcase2/service1
+deleteapp fabric:/testcase2
+
+
+################################################################
+#
+# Testcase 3: Invalid DNS name
+#
+################################################################
+
+createapp fabric:/testcase3 TestAppTC1 vTC1
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=.startswithdot errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=two..dots errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=label.longerthan63chars.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=name.longerthan255chars.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxx errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar{ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar| errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar} errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar~ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar[ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar] errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar\ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar^ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar: errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar; errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar< errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar> errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar= errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar? errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar& errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar@ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar! errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar# errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar% errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar^ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar( errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar) errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar+ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar/ errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar, errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+createservice fabric:/testcase3/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase3 serviceDnsName=invalidchar* errors=InvalidDnsName
+nameexists fabric:/testcase3/service1 false
+deleteapp fabric:/testcase3
+
+################################################################
+#
+# Testcase 4: DNS name is always converted to lowercase
+#
+################################################################
+
+createapp fabric:/testcase4 TestAppTC1 vTC1
+createservice fabric:/testcase4/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase4 serviceDnsName=Service.foo
+
+nameexists fabric:/testcase4 true
+nameexists fabric:/testcase4/service1 true
+getmetadata fabric:/System/DnsService service.foo
+getmetadata fabric:/System/DnsService Service.foo  error=PropertyNotFound
+
+deleteservice fabric:/testcase4/service1
+deleteapp fabric:/testcase4
+
+################################################################
+#
+# Testcase 5: Non-RFC name is allowed
+#
+################################################################
+
+createapp fabric:/testcase5 TestAppTC1 vTC1
+createservice fabric:/testcase5/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase5 serviceDnsName=host._mydomain.bar
+
+nameexists fabric:/testcase5 true
+nameexists fabric:/testcase5/service1 true
+getmetadata fabric:/System/DnsService host._mydomain.bar
+
+deleteservice fabric:/testcase5/service1
+deleteapp fabric:/testcase5
+
+unprovisionapp TestAppTC1 vTC1
+
+!q

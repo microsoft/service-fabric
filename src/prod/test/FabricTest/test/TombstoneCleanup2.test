@@ -1,0 +1,145 @@
+#
+# This script covers transitive correctness of tombstone pruning
+# with respect to partial copies.
+# That is, if replica A copies to replica B after
+# performing tombstone prunes, then replica B subsequently
+# partial copies to replica C correctly.
+#
+
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 1 
+fmservice 1 1
+cleantest
+
+set FMPlacementConstraints fm==1
+set NamingPlacementConstraints naming==1
+set RETombstoneCleanupLimit 10
+
++10 nodeprops=fm:1,naming:0 
+
++20 nodeprops=fm:0,naming:1
++30 nodeprops=fm:0,naming:1
++40 nodeprops=fm:0,naming:1
+
+verify
+createname fabric:/tombstone_test/stabilize_0
+
+perftest 0 nameCount=10 name=fabric:/tombstone_test subname=subname_
+
+nameexists fabric:/tombstone_test/subname_0 true
+nameexists fabric:/tombstone_test/subname_1 true
+nameexists fabric:/tombstone_test/subname_2 true
+nameexists fabric:/tombstone_test/subname_3 true
+nameexists fabric:/tombstone_test/subname_4 true
+nameexists fabric:/tombstone_test/subname_5 true
+nameexists fabric:/tombstone_test/subname_6 true
+nameexists fabric:/tombstone_test/subname_7 true
+nameexists fabric:/tombstone_test/subname_8 true
+nameexists fabric:/tombstone_test/subname_9 true
+
+# All three Naming replicas have live entries.
+# Forcefully create a 4th replica (50) with live entries
+# (it will be used to maintain quorum while covering
+# the desired scenario).
+
+-30 removedata
+verify
+nodestateremoved 30
+!waitforstate FM.Replica.State.NamingService.30 Dropped
+
++50 nodeprops=fm:0,naming:1
+!waitforstate FM.Replica.State.NamingService.50 Ready
+
+# Take down two of the replicas (40, 50).
+# We will bring them back later and perform
+# partial copies to them.
+
+-40
+!waitforstate FM.Replica.IsUp.NamingService.40 false
+
++60 nodeprops=fm:0,naming:1
+!waitforstate FM.Replica.State.NamingService.60 Ready
+
+-50
+!waitforstate FM.Replica.IsUp.NamingService.50 false
+
+# Trigger tombstone pruning with a "bulk" delete.
+# Replicas 20 and 60 have observed the tombstone
+# prune but not the down replicas 30, 40, 50.
+
+verify
+createname fabric:/tombstone_test/stabilize_1
+
+perftest 0 nameCount=10 name=fabric:/tombstone_test subname=subname_ delete
+
+nameexists fabric:/tombstone_test/subname_0 false
+nameexists fabric:/tombstone_test/subname_1 false
+nameexists fabric:/tombstone_test/subname_2 false
+nameexists fabric:/tombstone_test/subname_3 false
+nameexists fabric:/tombstone_test/subname_4 false
+nameexists fabric:/tombstone_test/subname_5 false
+nameexists fabric:/tombstone_test/subname_6 false
+nameexists fabric:/tombstone_test/subname_7 false
+nameexists fabric:/tombstone_test/subname_8 false
+nameexists fabric:/tombstone_test/subname_9 false
+
+# Build 30 from either 20 or 60. The tombstone low
+# watermark should also be copied to 30 in order
+# for it to subsequently build replicas correctly.
+
++30 nodeprops=fm:0,naming:1 
+!waitforstate FM.Replica.State.NamingService.30 Ready
+
+# Clear state on 60 and take down 20. The only
+# remaining record of the tombstone low watermark is on 30,
+# which is not one of replicas that observed the original
+# tombstone prune.
+
+-60 removedata
+verify
+nodestateremoved 60
+!waitforstate FM.Replica.State.NamingService.60 Dropped
+
++60 nodeprops=fm:0,naming:1 
+!waitforstate FM.Replica.State.NamingService.60 Ready
+
+-20 removedata
+verify
+nodestateremoved 20
+!waitforstate FM.Replica.State.NamingService.20 Dropped
+
+# Partial copy to 40 from 30 or 60, both of which have
+# tombstone low watermarks that were copied rather
+# than generated locally.
+
++40 nodeprops=fm:0,naming:1
+!waitforstate FM.Replica.State.NamingService.40 Ready
+
+-30
+
+# Partial copy to 50 from 40 or 60
+
++50 nodeprops=fm:0,naming:1
+!waitforstate FM.Replica.State.NamingService.50 Ready
+
+-60
+
+# Both 40 and 50 were built through partial copies
+# and furthermore, copied the tombstone low
+# watermark transitively from the replicas that
+# originally performed the prune (20, 60)
+
+nameexists fabric:/tombstone_test/subname_0 false
+nameexists fabric:/tombstone_test/subname_1 false
+nameexists fabric:/tombstone_test/subname_2 false
+nameexists fabric:/tombstone_test/subname_3 false
+nameexists fabric:/tombstone_test/subname_4 false
+nameexists fabric:/tombstone_test/subname_5 false
+nameexists fabric:/tombstone_test/subname_6 false
+nameexists fabric:/tombstone_test/subname_7 false
+nameexists fabric:/tombstone_test/subname_8 false
+nameexists fabric:/tombstone_test/subname_9 false
+
+-*
+!q

@@ -1,0 +1,217 @@
+#
+# Tests Health Reporting in the primary replicator
+# Since the fabrictest.exe.cfg is configured to use "QueueHealthWarningAtUsage" to be 50, we can expect warnings after reaching 50% queue full
+# 
+set DummyPLBEnabled true
+
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:8;RE_MaxSecondaryReplicationQueueSize:16
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test.30 Secondary 
+
+##########################################################################
+# Test1:
+# Primary Queue Full Basic
+##########################################################################
+addbehavior blockREPL 40 * ReplicationOperation
+clientput fabric:/test 10 10Data1
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning
+
+removebehavior blockREPL
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+
+##########################################################################
+# Test2:
+# Primary Queue Full during change role - Verify that health is warning
+##########################################################################
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test.30 Secondary 
+
+addbehavior blockREPL 40 * ReplicationOperation
+clientput fabric:/test 10 10Data1
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning
+
+removebehavior blockREPL
+swapprimary fabric:/test 40 30
+!wait
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+
+# swap back the primary to the original config
+swapprimary fabric:/test 30 40
+!wait
+verify
+##########################################################################
+# Test3:
+# Primary Queue Full and then report fault transient
+##########################################################################
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test.30 Secondary 
+
+addbehavior blockREPL 40 * ReplicationOperation
+clientput fabric:/test 10 10Data1
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning
+
+reportfault 40 fabric:/test transient
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+removebehavior blockREPL 
+
+# revert back primary
+swapprimary fabric:/test 30 40 
+!wait
+verify
+##########################################################################
+# Test4:
+# Primary Queue Full and progress and again queue full
+##########################################################################
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test.30 Secondary 
+
+addbehavior blockREPL 40 * ReplicationOperation
+clientput fabric:/test 10 10Data1
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning
+
+removebehavior blockREPL
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+
+addbehavior blockREPL 40 * ReplicationOperation
+clientput fabric:/test 10 10Data1
+clientput fabric:/test 20 20Data1
+clientput fabric:/test 30 30Data1 
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning
+
+removebehavior blockREPL
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+
+verify  
+
+##########################################################################
+# Test5:
+# GetCopyState Blocked should generate warning health report
+##########################################################################
++20 nodeprops=StringProperty:NormalNode
++50 nodeprops=StringProperty:NormalNode
++60 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test2 TestStoreServiceType y 1 5 constraint=(StringProperty!=SeedNode) 
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test2.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test2.40 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test2.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test2.20 Secondary 
+
+setsignal 60 fabric:/test2 provider.begingetnextcopystate.block
+
+reportfault 50 fabric:/test2 transient 
+
+#Verify Health Event is warning
+queryhealth replica replicaid=fabric:/test2#0#0 expectedhealthstate=warning
+
+resetsignal 60 fabric:/test2 provider.begingetnextcopystate.block
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test2#0#0 expectedhealthstate=ok
+
+verify
+
+##########################################################################
+# Test7:
+# TargetReplicaSetSize 3, MinReplicaSetsize 2 - p1, s1, s2
+# - Block replication acknowledgement from secondary s2
+# - Add key to service, ensure primary replication queue usage warning
+# - s1, p1 ack operation, s2 blocked
+# - Swap primary from p1 -> s1
+# - Health report not cleared during swap as secondary s2 has not ack'd 
+#
+# Fix: Clear primary replication queue warning in ReplicaManager close
+#      Also fixed by clearing warning in BatchedHealthReported::Close
+##########################################################################
+createservice fabric:/test3 TestPersistedStoreServiceType y 2 3 persist constraint=(StringProperty!=SeedNode) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:8;RE_MaxSecondaryReplicationQueueSize:16
+
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test3.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.40 Secondary
+
+queryhealth replica replicaid=fabric:/test3#0#0 expectedhealthstate=ok
+
+# Block replication ack from node 40
+addbehavior blockREPL 40 * ReplicationAck
+
+# Add operations to the primary queue
+clientput fabric:/test3 10 10Data0
+
+# Confirm the primary replication queue warning is reported
+queryhealth replica replicaid=fabric:/test3#0#0 expectedhealthstate=warning
+
+# Initiate a swap primary operation
+swapprimary fabric:/test3 60 50
+
+# Verify swap succeeded
+!waitforstate FM.Replica.Role.fabric:/test3.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.60 Secondary 
+
+# Verify partition is healthy after successful swap
+# Confirm primary replication queue status warning has been cleared
+queryhealth replica replicaid=fabric:/test3#0#0 expectedhealthstate=ok
+
+# Allow replication acks from node 40 
+removebehavior blockREPL
+
+# swap back the primary to the original config
+swapprimary fabric:/test3 50 60
+verify
+
+# Validate that the partition is healthy
+queryhealth replica replicaid=fabric:/test3#0#0 expectedhealthstate=ok
+
+verify
+!q

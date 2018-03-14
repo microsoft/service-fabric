@@ -1,0 +1,1162 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "PLB_Negative_Func",
+      "Type": "V2_DllTest",
+      "Owners": "v-anatra",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_Negative",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_GeoReplication_Func",
+      "Type": "V2_DllTest",
+      "Owners": "v-ivned",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_GeoReplication",
+        "ExecutionTimeout": "6000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_LoadBalancingThrottle_Func",
+      "Type": "V2_DllTest",
+      "Owners": "chanli",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_LoadBalancingThrottle",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementConstraint_Func",
+      "Type": "V2_DllTest",
+      "Owners": "chanli",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementConstraint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_LoadQuery_Func",
+      "Type": "V2_DllTest",
+      "Owners": "mocolic",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_LoadQuery",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_UpdateService_Func",
+      "Type": "V2_DllTest",
+      "Owners": "v-drmark",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_UpdateService",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_Threshold_Func",
+      "Type": "V2_DllTest",
+      "Owners": "v-bogmar",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_Threshold",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_BuiltInMetrics_Func",
+      "Type": "V2_DllTest",
+      "Owners": "yangli",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_BuiltInMetrics",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_CustomMetrics_Func",
+      "Type": "V2_DllTest",
+      "Owners": "apopadic",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_CustomMetrics",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_AppGroups_Func",
+      "Type": "V2_DllTest",
+      "Owners": "nipuzovi",
+      "ResourcesRequired": "Server:10",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_AppGroups",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_ServiceAffinity_Func",
+      "Type": "V2_DllTest",
+      "Owners": "miradic",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_ServiceAffinity",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_SetupEntryPoint_Func",
+      "Type": "V2_DllTest",
+      "Owners": "tugup, harahma, vaishnav, vipulm",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_SetupEntryPoint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_HealthRestApi_Func",
+      "Type": "V2_DllTest",
+      "Owners": "mialu,iyyappam",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_HealthRestApi",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_DiffProvision_Func",
+      "Type": "V2_DllTest",
+      "Owners": "mialu,iyyappam",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_DiffProvision",
+        "ExecutionTimeout": "4800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_LargeApplicationDeployment_Func",
+      "Type": "V2_DllTest",
+      "Owners": "mialu,iyyappam",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "1200",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_LargeApplicationDeployment",
+        "ExecutionTimeout": "9800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_ImageStoreRestApi_Func",
+      "Type": "V2_DllTest",
+      "Owners": "mialu,iyyappam",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "1200",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_ImageStoreRestApi",
+        "ExecutionTimeout": "9000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementOnEveryNode_Func",
+      "Type": "V2_DllTest",
+      "Owners": "mmicic",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementOnEveryNode",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FSSWithFaults_Func",
+      "Type": "V2_DllTest",
+      "Owners": "tugup,iyyappam,mialu",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "HostingTestCases",
+        "TaskName": "Hosting_FSSWithFaults",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FSS_Func",
+      "Type": "V2_DllTest",
+      "Owners": "tugup,iyyappam,mialu",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "HostingTestCases",
+        "TaskName": "Hosting_NativeImageStore",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_ResourceGovernance_Func",
+      "Type": "Azure_DllTest",
+      "Owners": "nipuzovi, miradic",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_ResourceGovernance",
+        "ExecutionTimeout": "15000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_GeoReplication_X509",
+      "Type": "V2_DllTest",
+      "Owners": "v-ivned",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_GeoReplication",
+        "ExecutionTimeout": "6000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_LoadBalancingThrottle_X509",
+      "Type": "V2_DllTest",
+      "Owners": "chanli",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_LoadBalancingThrottle",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementConstraint_X509",
+      "Type": "V2_DllTest",
+      "Owners": "chanli",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementConstraint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_LoadQuery_X509",
+      "Type": "V2_DllTest",
+      "Owners": "mocolic",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_LoadQuery",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_SetupEntryPoint_X509",
+      "Type": "V2_DllTest",
+      "Owners": "tugup, harahma, vaishnav, vipulm",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_SetupEntryPoint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_ServiceAffinity_X509",
+      "Type": "V2_DllTest",
+      "Owners": "miradic",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_ServiceAffinity",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementOnEveryNode_X509",
+      "Type": "V2_DllTest",
+      "Owners": "mmicic",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementOnEveryNode",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FSS_X509",
+      "Type": "V2_DllTest",
+      "Owners": "tugup,iyyappam,mialu",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "HostingTestCases",
+        "TaskName": "Hosting_NativeImageStore",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FSSWithFaults_X509",
+      "Type": "V2_DllTest",
+      "Owners": "tugup,iyyappam,mialu",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_335_V2FunctionalSuite7M_X509.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "HostingTestCases",
+        "TaskName": "Hosting_FSSWithFaults",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_GeoReplication_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "v-ivned",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_GeoReplication",
+        "ExecutionTimeout": "6000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_LoadBalancingThrottle_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "chanli",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_LoadBalancingThrottle",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementConstraint_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "chanli",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementConstraint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_LoadQuery_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "mocolic",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_LoadQuery",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_SetupEntryPoint_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "tugup, harahma, vaishnav, vipulm",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_SetupEntryPoint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_ServiceAffinity_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "nipuzovi",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_ServiceAffinity",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementOnEveryNode_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "mmicic",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementOnEveryNode",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FSS_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "tugup,iyyappam,mialu",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "HostingTestCases",
+        "TaskName": "Hosting_NativeImageStore",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FSSWithFaults_Kerberos_FQDN",
+      "Type": "V2_DllTest_Kerberos",
+      "Owners": "tugup,iyyappam,mialu",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "HostingTestCases",
+        "TaskName": "Hosting_FSSWithFaults",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+            "Name": "FailoverBasicTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "aprameyr,anmola,anuragg",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "FailoverBasic.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "UnmonitoredAutoAppUpgradeTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "alexwun,vaishnav,mmohsin",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "UnmonitoredAutoAppUpgrade.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "UnmonitoredManualAppUpgradeTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "alexwun,vaishnav,mmohsin",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "UnmonitoredManualAppUpgrade.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "MonitoredAppUpgradeTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "alexwun,vaishnav,mmohsin",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "MonitoredAppUpgrade.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "EndToEndSmokeTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "anmola,rsinha",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "EndToEnd.Smoke.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "SfrpWindowsSmokeTest",
+            "Type": "Windows_SFRP_ScriptTest",
+            "Owners": "roroutra,anmola",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "SfrpWindows.Smoke.Test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "FabricVoteUpgradeTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "anmola,rsinha",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "FabricVoteUpgrade.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "RingRestartTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "aprameyr,anmola,anuragg",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "RingRestart.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "ServiceGroupBasicTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "sumukhs,anuragg",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "ServiceGroupBasic.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "AppProvisionTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "oanapl,alexwun,iyyappam",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "AppProvision.test",
+                "ExecutionTimeout": "3000",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "RepairPolicyEngineTest",
+            "Type": "V2_ScriptTest_NoNativeStore",
+            "Owners": "danmas,toddpf,jimjohn",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "FabricPE.test",
+                "ExecutionTimeout": "7200",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "ProfilerApplicationTest",
+            "Type": "V2_ScriptTest",
+            "Owners": "abhisram",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupType": "XCopy",
+                "SetupTimeout": "900",
+                "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+                "TaskName": "ProfilerBasic.test",
+                "ExecutionTimeout": "7200",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "FSSCursor.test",
+            "Type": "V2_ScriptTest",
+            "Owners": "iyyappam,mialu,oanapl,vaishnav",
+            "Tags": "Admin,ImageStore,EndToEnd",
+            "TestExecutionParameters": {
+              "TaskName": "FSSCursor.test",
+              "SetupType": "XCopy",
+              "ExecutionTimeout": "3000",
+              "CleanupTimeout": "2100"
+          }
+        },
+        {
+          "Name": "FSSCNUpgrade.test",
+          "Type": "V2_ScriptTest",
+          "Owners": "iyyappam,mialu,oanapl,liphigao,ratando",
+          "Tags": "Admin,ImageStore,EndToEnd",
+          "TestExecutionParameters": {
+            "TaskName": "FSSCNUpgrade.test",
+            "SetupType": "XCopy",
+            "ExecutionTimeout": "7200",
+            "CleanupTimeout": "2100"
+          }
+        },
+        {
+      "Name": "AzureWithoutMR",
+      "Type": "AzureDeploymentType",
+      "Owners": "danmas",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "AzureClusterCreateWithoutMR.test",
+        "ExecutionTimeout": "36000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+            "Name": "AzureWithMR",
+            "Type": "AzureDeploymentType",
+            "Owners": "danmas",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "TaskName": "AzureClusterCreateScaleWithMR1.test",
+              "ExecutionTimeout": "36000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-ARABIC",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-ARABIC",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-CHINESE",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-CZECH",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-CZECH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-GERMAN",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-GREEK",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-GREEK",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-HEBREW",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-HEBREW",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-JAPANESE",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-KOREAN",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-KOREAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-RUSSIAN",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-SPANISH",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-SPANISH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-THAI",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-THAI",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTest-TURKISH",
+      "Type": "V2_ScriptTest",
+      "Owners": "roroutra,lemai,v-mnagar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Local_test_Params.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTestIPv6",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\IPv6.txt",
+        "TaskName": "EndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatefulActorKvs",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt,[BINS]\\WinFabricTest\\Config\\IPv6.txt",
+        "TaskName": "BasicStatefulActorKvs.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorSecurecommunication",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt,[BINS]\\WinFabricTest\\Config\\IPv6.txt",
+        "TaskName": "ActorSecureCommunication.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ServiceProxyCIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt,[BINS]\\WinFabricTest\\Config\\IPv6.txt",
+        "TaskName": "ServiceProxyTest.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ServiceProxyCITusingWCF",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt,[BINS]\\WinFabricTest\\Config\\IPv6.txt",
+        "TaskName": "ServiceProxyTest-Wcf.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatefulActorKvs2",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt,[BINS]\\WinFabricTest\\Config\\IPv6.txt",
+        "TaskName": "BasicStatefulActorKvs.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

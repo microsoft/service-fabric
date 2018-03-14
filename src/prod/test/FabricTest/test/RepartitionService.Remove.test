@@ -1,0 +1,108 @@
+votes 10
+cleantest
+
+fmservice 1 1
+cmservice 1 1
+namingservice 1 1 1
+
+set NamingOperationTimeout 15
+set NamingOperationRetryTimeout 60
+
++10
+verify
+
+#
+# Stateful service
+#
+
+createservice fabric:/stateful TestPersistedStoreServiceType y 5 1 persist partitionnames=A,B,C,D,E
+verify
+
+resolve fabric:/stateful A savecuid
+resolve fabric:/stateful B savecuid
+resolve fabric:/stateful C savecuid
+resolve fabric:/stateful D savecuid
+resolve fabric:/stateful E savecuid
+
+getservicedescription fabric:/stateful verify partitionnames=A,B,C,D,E
+
+updateservice fabric:/stateful Stateful removednames=B,D
+verify
+
+resolve fabric:/stateful A verifycuid
+resolve fabric:/stateful B error=InvalidServicePartition
+resolve fabric:/stateful C verifycuid
+resolve fabric:/stateful D error=InvalidServicePartition
+resolve fabric:/stateful E verifycuid
+
+getservicedescription fabric:/stateful verify partitionnames=A,C,E
+
+#
+# Stateless service
+#
+
+createservice fabric:/stateless CalculatorServiceType n 5 1 partitionnames=A,B,C,D,E
+verify
+
+resolve fabric:/stateless A savecuid
+resolve fabric:/stateless B savecuid
+resolve fabric:/stateless C savecuid
+resolve fabric:/stateless D savecuid
+resolve fabric:/stateless E savecuid
+
+getservicedescription fabric:/stateless verify partitionnames=A,B,C,D,E
+
+updateservice fabric:/stateless Stateless removednames=A,E
+verify
+
+resolve fabric:/stateless A error=InvalidServicePartition
+resolve fabric:/stateless B verifycuid
+resolve fabric:/stateless C verifycuid
+resolve fabric:/stateless D verifycuid
+resolve fabric:/stateless E error=InvalidServicePartition
+
+getservicedescription fabric:/stateless verify partitionnames=B,C,D
+
+#
+# Stateful service notifications
+#
+
+notificationclient nodes=10 clientname=client1
+notification+ clientname=client1 uri=fabric:/stateful
+setnotificationwait clientname=client1 names=fabric:/stateful allowNullPartitionInfo
+
+updateservice fabric:/stateful Stateful removednames=A
+verify
+
+notificationwait clientname=client1 timeout=15
+
+#
+# Stateless service notifications
+#
+
+notificationclient nodes=10 clientname=client2
+notification+ clientname=client2 uri=fabric:/stateless
+setnotificationwait clientname=client2 names=fabric:/stateless allowNullPartitionInfo
+
+updateservice fabric:/stateless Stateless removednames=B
+verify
+
+notificationwait clientname=client2 timeout=15
+
+#
+# Errors
+#
+
+updateservice fabric:/stateful Stateless removednames=Z error=InvalidArgument
+getservicedescription fabric:/stateful verify partitionnames=C,E
+
+updateservice fabric:/stateless Stateful removednames=Z error=InvalidArgument
+getservicedescription fabric:/stateless verify partitionnames=C,D
+
+createservice fabric:/singleton CalculatorServiceType n 0 1
+updateservice fabric:/singleton Stateless removednames=Z error=InvalidArgument
+
+createservice fabric:/int64 CalculatorServiceType n 3 1 lowRange=0 highRange=2
+updateservice fabric:/int64 Stateless removednames=Z error=InvalidArgument
+
+!q

@@ -1,0 +1,42 @@
+# -----------------------------------------------------------------------
+# Test - Fabric Timer (TTL)
+# -----------------------------------------------------------------------
+
+#
+# The concept of "fabric time" does not exist for KVS/TStore
+#
+
+seteseonly
+
+set DummyPLBEnabled true
+set UserReplicaRestartWaitDuration 10
+votes 20
+cmservice 0 0
+namingservice 3 3 2
+cleantest
++10
++20
++30
+verify
+#
+# Add a persisted service.  It will be placed on 10,20,30
+#
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist fabrictimepersistinterval=1000
+verify
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.10 Secondary
+
+# -----------------------------------------------------------------------
+# Primary should see time forwarding
+# -----------------------------------------------------------------------
+
+verifyfabrictime fabric:/test1 30
+verifyfabrictime fabric:/test1 20 error=NotPrimary
+verifyfabrictime fabric:/test1 10 error=NotPrimary
+verifyfabrictime fabric:/test1 30
+
+cleareseonly
+
+!q

@@ -1,0 +1,94 @@
+##############################################################################################################################
+# Test for Bug Repro - 1632051
+# [owner - sumukhs]
+#
+# Scenario- (precondition - SecondaryClearAcknowledgedOperations = true)
+#   1. S->P transition where secondary has no operations in its queue due to the above flag
+#   2. After change role it gets its first Update Catchup Config call
+#   3. Leads to creating new sessions for all replicas in PC and CC 
+#   4. If one of the replicas in PC has its progress lesser than the catchup capability of the Primary, we assert
+#
+# Fix
+#   Instead of asserting, ignore the replica in PC-(Make it go into paused state where it doesnt send any repl ops)
+##############################################################################################################################
+
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set UserReplicaRestartWaitDuration 1
+set MaxApiDelayInterval 10
+set MinApiDelayInterval 10
+
++10
++20
++30
+verify
++40
++50
++60
+verify 
+
+
+# This test requires for services to ACK operations on the secondary
+createname fabric:/test1
+createservice fabric:/test1 TestStoreServiceType y 1 5 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true;RE_SecondaryClearAcknowledgedOperations:true
+verify
+
+# Block repl operations to node 20 
+addbehavior b1 * 20 ReplicationOperation 
+
+# do some replication operations on the primary 
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 10Data2
+!wait
+
+
+
+addbehavior b2 * * DoReconfiguration
+
+# move secondary from 20 to 10 -> This will initiate S->N for node 20
+movesecondary fabric:/test1 20 10 
+!waitforstate FM.Replica.Role.fabric:/test1.20 None
+
+# blocked thread of UpdateCurrentReplicaSetConfiguration when 50 transitions to primary
+injectfailure 50 fabric:/test1 replicator.UpdateCurrentReplicaSetConfiguration.delay
+
+# report fault on primary replica 60
+reportfault 60 fabric:/test1 transient
+
+# Wait for FM to know the primary went down
+!waitforstate FM.Replica.IsUp.fabric:/test1.60 false 
+
+# unblock the reconfiguration
+removebehavior b2
+
+# Do some client operations while reconfig is stuck in phase4_activate
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 Phase4_Activate
+!pause 2
+
+# These puts will happen while the reconfig is stuck due to the 
+# blocked thread of UpdateCurrentReplicaSetConfiguration
+clientput fabric:/test1 30 10Data3
+clientput fabric:/test1 40 10Data4
+!wait
+
+# Once the above are quorum ACK'd, it means that the current replica set
+# configuration is updated
+
+# These puts will happen post the reconfig being complete
+clientput fabric:/test1 50 10Data5
+clientput fabric:/test1 60 10Data6
+!wait
+
+removebehavior b1
+
+verify
+
+# The pause is to just give some time for all replicas to ack
+!pause 10 
+!q

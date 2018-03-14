@@ -1,0 +1,548 @@
+votes 10
+cmservice 0 0
+namingservice 5 1 1
+cleantest
++10
++20
++30
++40
++50
+verify
+
+########################################################################
+#
+# In these basic testcases, batches contain at most one check operation, 
+# one write operation, and one read operation for a maximum batch size 
+# of three operations.
+#
+# Note that the sequence number is based on the replication LSN and
+# that hashing of a name to a Naming Service partition is deterministic
+#
+########################################################################
+
+#
+# Testcase0: AccessDenied
+#
+submitbatch fabric: ops=put:PropA:DataA error=AccessDenied
+submitbatch fabric: ops=get:PropA error=AccessDenied
+submitbatch fabric: ops=getmetadata:PropA error=AccessDenied
+submitbatch fabric: ops=delete:PropA error=AccessDenied
+submitbatch fabric: ops=checkexists:PropA:true error=AccessDenied
+submitbatch fabric: ops=checksequence:PropA:1 error=AccessDenied
+
+#
+# Testcase1: NameNotFound
+#
+submitbatch fabric:/testcase1 ops=put:PropA:DataA error=NameNotFound
+submitbatch fabric:/testcase1 ops=get:PropA error=NameNotFound
+submitbatch fabric:/testcase1 ops=getmetadata:PropA error=NameNotFound
+submitbatch fabric:/testcase1 ops=delete:PropA error=NameNotFound
+submitbatch fabric:/testcase1 ops=checkexists:PropA:true error=NameNotFound
+submitbatch fabric:/testcase1 ops=checksequence:PropA:1 error=NameNotFound
+
+createname fabric:/testcase1
+
+submitbatch fabric:/testcase1/subname ops=put:PropA:DataA error=NameNotFound
+submitbatch fabric:/testcase1/subname ops=get:PropA error=NameNotFound
+submitbatch fabric:/testcase1/subname ops=getmetadata:PropA error=NameNotFound
+submitbatch fabric:/testcase1/subname ops=delete:PropA error=NameNotFound
+submitbatch fabric:/testcase1/subname ops=checkexists:PropA:true error=NameNotFound
+submitbatch fabric:/testcase1/subname ops=checksequence:PropA:1 error=NameNotFound
+
+#
+# testcase2a: InvalidArgument (get)
+#
+
+createname fabric:/testcase2a/subname
+
+submitbatch fabric:/testcase2a ops=get:PropA result=1:InvalidArgument
+submitbatch fabric:/testcase2a ops=put:PropB:DataB,get:PropA result=2:InvalidArgument
+submitbatch fabric:/testcase2a ops=checkexists:PropB:true,delete:PropB,get:PropA result=3:InvalidArgument
+submitbatch fabric:/testcase2a ops=checkexists:PropB:false,put:PropB:DataB,get:PropA result=1:InvalidArgument
+submitbatch fabric:/testcase2a ops=checkexists:PropB:true,delete:PropB,get:PropA result=0:InvalidArgument
+
+submitbatch fabric:/testcase2a/subname ops=get:PropA result=1:InvalidArgument
+submitbatch fabric:/testcase2a/subname ops=put:PropB:DataB,get:PropA result=2:InvalidArgument
+submitbatch fabric:/testcase2a/subname ops=checkexists:PropB:true,delete:PropB,get:PropA result=3:InvalidArgument
+submitbatch fabric:/testcase2a/subname ops=checkexists:PropB:false,put:PropB:DataB,get:PropA result=1:InvalidArgument
+submitbatch fabric:/testcase2a/subname ops=checkexists:PropB:true,delete:PropB,get:PropA result=0:InvalidArgument
+
+#
+# testcase2b: InvalidArgument (getmetadata)
+#
+
+createname fabric:/testcase2b/subname
+
+submitbatch fabric:/testcase2b ops=getmetadata:PropA result=1:InvalidArgument
+submitbatch fabric:/testcase2b ops=put:PropB:DataB,getmetadata:PropA result=2:InvalidArgument
+submitbatch fabric:/testcase2b ops=checkexists:PropB:true,delete:PropB,getmetadata:PropA result=3:InvalidArgument
+submitbatch fabric:/testcase2b ops=checkexists:PropB:false,put:PropB:DataB,getmetadata:PropA result=1:InvalidArgument
+submitbatch fabric:/testcase2b ops=checkexists:PropB:true,delete:PropB,getmetadata:PropA result=0:InvalidArgument
+
+submitbatch fabric:/testcase2b/subname ops=getmetadata:PropA result=1:InvalidArgument
+submitbatch fabric:/testcase2b/subname ops=put:PropB:DataB,getmetadata:PropA result=2:InvalidArgument
+submitbatch fabric:/testcase2b/subname ops=checkexists:PropB:true,delete:PropB,getmetadata:PropA result=3:InvalidArgument
+submitbatch fabric:/testcase2b/subname ops=checkexists:PropB:false,put:PropB:DataB,getmetadata:PropA result=1:InvalidArgument
+submitbatch fabric:/testcase2b/subname ops=checkexists:PropB:true,delete:PropB,getmetadata:PropA result=0:InvalidArgument
+
+#
+# testcase3a: PropertyNotFound (get, index=0)
+#
+
+createname fabric:/testcase3a/subname
+
+submitbatch fabric:/testcase3a ops=get:PropA result=0:PropertyNotFound
+submitbatch fabric:/testcase3a ops=get:PropA,put:PropB:DataB result=0:PropertyNotFound
+submitbatch fabric:/testcase3a ops=get:PropA,checkexists:PropB:true result=0:PropertyNotFound
+submitbatch fabric:/testcase3a ops=get:PropA,delete:PropB result=0:PropertyNotFound
+
+submitbatch fabric:/testcase3a/subname ops=get:PropA result=0:PropertyNotFound
+submitbatch fabric:/testcase3a/subname ops=get:PropA,put:PropB:DataB result=0:PropertyNotFound
+submitbatch fabric:/testcase3a/subname ops=get:PropA,checkexists:PropB:true result=0:PropertyNotFound
+submitbatch fabric:/testcase3a/subname ops=get:PropA,delete:PropB result=0:PropertyNotFound
+
+#
+# testcase3b: PropertyNotFound (getmetadata, index=0)
+#
+
+createname fabric:/testcase3b/subname
+
+submitbatch fabric:/testcase3b ops=getmetadata:PropA result=0:PropertyNotFound
+submitbatch fabric:/testcase3b ops=getmetadata:PropA,put:PropB:DataB result=0:PropertyNotFound
+submitbatch fabric:/testcase3b ops=getmetadata:PropA,checkexists:PropB:true result=0:PropertyNotFound
+submitbatch fabric:/testcase3b ops=getmetadata:PropA,delete:PropB result=0:PropertyNotFound
+
+submitbatch fabric:/testcase3b/subname ops=getmetadata:PropA result=0:PropertyNotFound
+submitbatch fabric:/testcase3b/subname ops=getmetadata:PropA,put:PropB:DataB result=0:PropertyNotFound
+submitbatch fabric:/testcase3b/subname ops=getmetadata:PropA,checkexists:PropB:true result=0:PropertyNotFound
+submitbatch fabric:/testcase3b/subname ops=getmetadata:PropA,delete:PropB result=0:PropertyNotFound
+
+#
+# testcase3c: PropertyNotFound (get, index=1)
+#
+
+createname fabric:/testcase3c/subname
+
+submitbatch fabric:/testcase3c ops=put:PropB:DataB,get:PropA result=1:PropertyNotFound
+submitbatch fabric:/testcase3c ops=checkexists:PropB:true,get:PropA result=1:PropertyNotFound
+submitbatch fabric:/testcase3c ops=delete:PropB,get:PropA result=1:PropertyNotFound
+
+submitbatch fabric:/testcase3c/subname ops=put:PropB:DataB,get:PropA result=1:PropertyNotFound
+submitbatch fabric:/testcase3c/subname ops=checkexists:PropB:true,get:PropA result=1:PropertyNotFound
+submitbatch fabric:/testcase3c/subname ops=delete:PropB,get:PropA result=1:PropertyNotFound
+
+#
+# testcase3d: PropertyNotFound (getmetadata, index=1)
+#
+
+createname fabric:/testcase3d/subname
+
+submitbatch fabric:/testcase3d ops=put:PropB:DataB,getmetadata:PropA result=1:PropertyNotFound
+submitbatch fabric:/testcase3d ops=checkexists:PropB:true,getmetadata:PropA result=1:PropertyNotFound
+submitbatch fabric:/testcase3d ops=delete:PropB,getmetadata:PropA result=1:PropertyNotFound
+
+submitbatch fabric:/testcase3d/subname ops=put:PropB:DataB,getmetadata:PropA result=1:PropertyNotFound
+submitbatch fabric:/testcase3d/subname ops=checkexists:PropB:true,getmetadata:PropA result=1:PropertyNotFound
+submitbatch fabric:/testcase3d/subname ops=delete:PropB,getmetadata:PropA result=1:PropertyNotFound
+
+#
+# testcase3e: PropertyNotFound (get, index=2)
+#
+
+createname fabric:/testcase3e/subname
+
+submitbatch fabric:/testcase3e ops=put:PropB:DataB
+submitbatch fabric:/testcase3e ops=checkexists:PropB:true,put:PropC:DataC,get:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3e ops=delete:PropC,checkexists:PropB:true,get:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3e ops=checkexists:PropB:true,put:PropD:DataD,get:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3e ops=delete:PropD,checkexists:PropB:true,get:PropA result=2:PropertyNotFound
+
+submitbatch fabric:/testcase3e/subname ops=put:PropB:DataB
+submitbatch fabric:/testcase3e/subname ops=checkexists:PropB:true,put:PropC:DataC,get:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3e/subname ops=delete:PropC,checkexists:PropB:true,get:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3e/subname ops=checkexists:PropB:true,put:PropD:DataD,get:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3e/subname ops=delete:PropD,checkexists:PropB:true,get:PropA result=2:PropertyNotFound
+
+#
+# testcase3f: PropertyNotFound (getmetadata, index=2)
+#
+
+createname fabric:/testcase3f/subname
+
+submitbatch fabric:/testcase3f ops=put:PropB:DataB
+submitbatch fabric:/testcase3f ops=checkexists:PropB:true,put:PropC:DataC,getmetadata:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3f ops=delete:PropC,checkexists:PropB:true,getmetadata:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3f ops=checkexists:PropB:true,put:PropD:DataD,getmetadata:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3f ops=delete:PropD,checkexists:PropB:true,getmetadata:PropA result=2:PropertyNotFound
+
+submitbatch fabric:/testcase3f/subname ops=put:PropB:DataB
+submitbatch fabric:/testcase3f/subname ops=checkexists:PropB:true,put:PropC:DataC,getmetadata:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3f/subname ops=delete:PropC,checkexists:PropB:true,getmetadata:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3f/subname ops=checkexists:PropB:true,put:PropD:DataD,getmetadata:PropA result=2:PropertyNotFound
+submitbatch fabric:/testcase3f/subname ops=delete:PropD,checkexists:PropB:true,getmetadata:PropA result=2:PropertyNotFound
+
+#
+# testcase4a: PropertyCheckFailed (checkexistence, index=0) 
+#
+
+createname fabric:/testcase4a/subname
+
+submitbatch fabric:/testcase4a ops=checkexists:PropA:true index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase4a ops=checkexists:PropA:true,put:PropA:DataA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase4a ops=checkexists:PropA:true,put:PropA:DataA,get:PropA index=0 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4a ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase4a ops=checkexists:PropA:false index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase4a ops=checkexists:PropA:false,delete:PropA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase4a ops=checkexists:PropA:false,delete:PropA,get:PropA index=0 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4a ops=get:PropA,delete:PropA result=0:PropA:DataA
+
+submitbatch fabric:/testcase4a/subname ops=checkexists:PropA:true index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase4a/subname ops=checkexists:PropA:true,put:PropA:DataA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase4a/subname ops=checkexists:PropA:true,put:PropA:DataA,get:PropA index=0 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4a/subname ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase4a/subname ops=checkexists:PropA:false index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase4a/subname ops=checkexists:PropA:false,delete:PropA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase4a/subname ops=checkexists:PropA:false,delete:PropA,get:PropA index=0 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4a/subname ops=get:PropA,delete:PropA result=0:PropA:DataA
+
+#
+# testcase4b: PropertyCheckFailed (checkexistence, index=1) 
+#
+
+createname fabric:/testcase4b/subname
+
+submitbatch fabric:/testcase4b ops=put:PropA:DataA,checkexists:PropX:true index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase4b ops=get:PropA,checkexists:PropA:true,put:PropA:DataA index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase4b ops=getmetadata:PropA,checkexists:PropA:true,put:PropA:DataA index=1 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4b ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase4b ops=get:PropA,checkexists:PropA:false,delete:PropA index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase4b ops=getmetadata:PropA,checkexists:PropA:false,delete:PropA index=1 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4b ops=get:PropA,delete:PropA result=0:PropA:DataA
+
+submitbatch fabric:/testcase4b/subname ops=put:PropA:DataA,checkexists:PropX:true index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase4b/subname ops=get:PropA,checkexists:PropA:true,put:PropA:DataA index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase4b/subname ops=getmetadata:PropA,checkexists:PropA:true,put:PropA:DataA index=1 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4b/subname ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase4b/subname ops=get:PropA,checkexists:PropA:false,delete:PropA, index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase4b/subname ops=getmetadata:PropA,checkexists:PropA:false,delete:PropA, index=1 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4b/subname ops=get:PropA,delete:PropA result=0:PropA:DataA
+
+#
+# testcase4c: PropertyCheckFailed (checkexistence, index=2) 
+#
+
+createname fabric:/testcase4c/subname
+
+submitbatch fabric:/testcase4c ops=put:PropA:DataA,get:PropA,checkexists:PropX:true index=2 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4c ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase4c ops=put:PropB:DataB,get:PropA,checkexists:PropA:false index=2 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4c ops=get:PropB,delete:PropA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase4c/subname ops=put:PropA:DataA,get:PropA,checkexists:PropX:true index=2 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4c/subname ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase4c/subname ops=put:PropB:DataB,get:PropA,checkexists:PropA:false index=2 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4c/subname ops=get:PropB,delete:PropA result=0:PropertyNotFound
+
+#
+# testcase5a: PropertyCheckFailed (checksequence, index=0)
+#
+
+createname fabric:/testcase5a/subname
+
+submitbatch fabric:/testcase5a ops=checksequence:PropX:-1,put:PropA:DataA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a ops=checksequence:PropX:0,put:PropA:DataA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a ops=checksequence:PropX:1,put:PropA:DataA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5a ops=checksequence:PropA:1,put:PropA:DataA0 index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a ops=checksequence:PropA:2,put:PropA:DataA2 index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a ops=get:PropA result=0:PropA:DataA
+submitbatch fabric:/testcase5a ops=put:PropA:DataAA 
+
+getproperty fabric:/testcase5a PropA DataAA seqvar=SN_PropA
+submitbatch fabric:/testcase5a ops=checksequence:PropA:$SN_PropA,put:PropA:DataA1
+submitbatch fabric:/testcase5a ops=get:PropA result=0:PropA:DataA1
+
+submitbatch fabric:/testcase5a ops=checksequence:PropA:$SN_PropA,put:PropA:DataA3 index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a ops=get:PropA result=0:PropA:DataA1
+
+getproperty fabric:/testcase5a PropA DataA1 seqvar=SN_PropA
+submitbatch fabric:/testcase5a ops=checksequence:PropA:$SN_PropA,put:PropA:DataA22
+submitbatch fabric:/testcase5a ops=get:PropA result=0:PropA:DataA22
+
+submitbatch fabric:/testcase5a ops=checksequence:PropA:$SN_PropA,delete:PropA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a ops=get:PropA result=0:PropA:DataA22
+
+getproperty fabric:/testcase5a PropA DataA22 seqvar=SN_PropA
+submitbatch fabric:/testcase5a ops=checksequence:PropA:$SN_PropA,delete:PropA
+submitbatch fabric:/testcase5a ops=get:PropA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropX:-1,put:PropA:DataA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropX:0,put:PropA:DataA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropX:1,put:PropA:DataA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a/subname ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropA:1,put:PropA:DataA0 index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropA:2,put:PropA:DataA2 index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a/subname ops=get:PropA result=0:PropA:DataA
+
+getproperty fabric:/testcase5a/subname PropA DataA seqvar=SN_PropA
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropA:$SN_PropA,put:PropA:DataA1
+submitbatch fabric:/testcase5a/subname ops=get:PropA result=0:PropA:DataA1
+
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropA:$SN_PropA,put:PropA:DataA11 index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a/subname ops=get:PropA result=0:PropA:DataA1
+
+getproperty fabric:/testcase5a/subname PropA DataA1 seqvar=SN_PropA
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropA:$SN_PropA,put:PropA:DataA22
+submitbatch fabric:/testcase5a/subname ops=get:PropA result=0:PropA:DataA22
+
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropA:$SN_PropA,delete:PropA index=0 error=PropertyCheckFailed
+submitbatch fabric:/testcase5a/subname ops=get:PropA result=0:PropA:DataA22
+
+getproperty fabric:/testcase5a/subname PropA DataA22 seqvar=SN_PropA
+submitbatch fabric:/testcase5a/subname ops=checksequence:PropA:$SN_PropA,delete:PropA
+submitbatch fabric:/testcase5a/subname ops=get:PropA result=0:PropertyNotFound
+
+#
+# testcase5b: PropertyCheckFailed (checksequence, index=1)
+#
+
+createname fabric:/testcase5b/subname
+
+submitbatch fabric:/testcase5b ops=put:PropA:DataA,checksequence:PropX:-1 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b ops=put:PropA:DataA,checksequence:PropX:0 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b ops=put:PropA:DataA,checksequence:PropX:1 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5b ops=put:PropA:DataA1,checksequence:PropA:1 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b ops=put:PropA:DataA3,checksequence:PropA:2 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b ops=get:PropA result=0:PropA:DataA
+submitbatch fabric:/testcase5b ops=put:PropA:DataAA
+
+getproperty fabric:/testcase5b PropA DataAA seqvar=SN_PropA
+submitbatch fabric:/testcase5b ops=put:PropA:DataA2,checksequence:PropA:$SN_PropA
+submitbatch fabric:/testcase5b ops=get:PropA result=0:PropA:DataA2
+
+submitbatch fabric:/testcase5b ops=put:PropA:DataA22,checksequence:PropA:$SN_PropA index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b ops=get:PropA result=0:PropA:DataA2
+
+getproperty fabric:/testcase5b PropA DataA2 seqvar=SN_PropA
+submitbatch fabric:/testcase5b ops=put:PropA:DataA3,checksequence:PropA:$SN_PropA
+submitbatch fabric:/testcase5b ops=get:PropA result=0:PropA:DataA3
+
+submitbatch fabric:/testcase5b ops=delete:PropA,checksequence:PropA:$SN_PropA index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b ops=get:PropA result=0:PropA:DataA3
+
+submitbatch fabric:/testcase5b ops=delete:PropA,checkexists:PropA:false
+submitbatch fabric:/testcase5b ops=get:PropA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5b/subname ops=put:PropA:DataA,checksequence:PropX:-1 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=put:PropA:DataA,checksequence:PropX:0 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=put:PropA:DataA,checksequence:PropX:1 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5b/subname ops=put:PropA:DataA1,checksequence:PropA:1 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=put:PropA:DataA3,checksequence:PropA:2 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=get:PropA result=0:PropA:DataA
+
+getproperty fabric:/testcase5b/subname PropA DataA seqvar=SN_PropA
+submitbatch fabric:/testcase5b/subname ops=put:PropA:DataA2,checksequence:PropA:$SN_PropA
+submitbatch fabric:/testcase5b/subname ops=get:PropA result=0:PropA:DataA2
+
+submitbatch fabric:/testcase5b/subname ops=put:PropA:DataA22,checksequence:PropA:$SN_PropA index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=get:PropA result=0:PropA:DataA2
+
+getproperty fabric:/testcase5b/subname PropA DataA2 seqvar=SN_PropA
+submitbatch fabric:/testcase5b/subname ops=put:PropA:DataA3,checksequence:PropA:$SN_PropA
+submitbatch fabric:/testcase5b/subname ops=get:PropA result=0:PropA:DataA3
+
+submitbatch fabric:/testcase5b/subname ops=delete:PropA,checksequence:PropA:$SN_PropA index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=get:PropA result=0:PropA:DataA3
+
+submitbatch fabric:/testcase5b/subname ops=delete:PropA,checksequence:PropA:-1 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=delete:PropA,checksequence:PropA:0 index=1 error=PropertyCheckFailed
+submitbatch fabric:/testcase5b/subname ops=delete:PropA,checkexists:PropA:false
+submitbatch fabric:/testcase5b/subname ops=get:PropA result=0:PropertyNotFound
+
+#
+# testcase5c: PropertyCheckFailed (checksequence, index=2)
+#
+
+createname fabric:/testcase5c
+createname fabric:/testcase5c/subname
+
+submitbatch fabric:/testcase5c ops=put:PropA:DataA,get:PropA,checksequence:PropX:-1 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c ops=put:PropA:DataA,get:PropA,checksequence:PropX:0 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c ops=put:PropA:DataA,get:PropA,checksequence:PropX:1 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5c ops=get:PropA,put:PropA:DataA1,checksequence:PropA:1 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c ops=get:PropA,put:PropA:DataA3,checksequence:PropA:2 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c ops=get:PropA result=0:PropA:DataA
+
+getproperty fabric:/testcase5c PropA DataA seqvar=SN_PropA
+submitbatch fabric:/testcase5c ops=get:PropA,put:PropA:DataA2,checksequence:PropA:$SN_PropA result=0:PropA:DataA
+submitbatch fabric:/testcase5c ops=get:PropA result=0:PropA:DataA2
+
+submitbatch fabric:/testcase5c ops=get:PropA,put:PropA:DataA22,checksequence:PropA:$SN_PropA index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c ops=get:PropA result=0:PropA:DataA2
+
+getproperty fabric:/testcase5c PropA DataA2 seqvar=SN_PropA
+submitbatch fabric:/testcase5c ops=get:PropA,put:PropA:DataA3,checksequence:PropA:$SN_PropA result=0:PropA:DataA2
+submitbatch fabric:/testcase5c ops=get:PropA result=0:PropA:DataA3
+
+submitbatch fabric:/testcase5c ops=get:PropA,delete:PropA,checksequence:PropA:$SN_PropA index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c ops=get:PropA result=0:PropA:DataA3
+
+submitbatch fabric:/testcase5c ops=get:PropA,delete:PropA,checkexists:PropA:false result=0:PropA:DataA3
+submitbatch fabric:/testcase5c ops=get:PropA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5c/subname ops=put:PropA:DataA,get:PropA,checksequence:PropX:-1 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c/subname ops=put:PropA:DataA,get:PropA,checksequence:PropX:0 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c/subname ops=put:PropA:DataA,get:PropA,checksequence:PropX:1 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c/subname ops=get:PropA,put:PropA:DataA result=0:PropertyNotFound
+
+submitbatch fabric:/testcase5c/subname ops=get:PropA,put:PropA:DataA1,checksequence:PropA:1 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c/subname ops=get:PropA,put:PropA:DataA3,checksequence:PropA:2 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c/subname ops=get:PropA result=0:PropA:DataA
+
+getproperty fabric:/testcase5c/subname PropA DataA seqvar=SN_PropA
+submitbatch fabric:/testcase5c/subname ops=get:PropA,put:PropA:DataA2,checksequence:PropA:$SN_PropA result=0:PropA:DataA
+submitbatch fabric:/testcase5c/subname ops=get:PropA result=0:PropA:DataA2
+
+submitbatch fabric:/testcase5c/subname ops=get:PropA,put:PropA:DataA22,checksequence:PropA:$SN_PropA index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c/subname ops=get:PropA result=0:PropA:DataA2
+
+getproperty fabric:/testcase5c/subname PropA DataA2 seqvar=SN_PropA
+submitbatch fabric:/testcase5c/subname ops=get:PropA,put:PropA:DataA3,checksequence:PropA:$SN_PropA result=0:PropA:DataA2
+submitbatch fabric:/testcase5c/subname ops=get:PropA result=0:PropA:DataA3
+
+submitbatch fabric:/testcase5c/subname ops=get:PropA,delete:PropA,checksequence:PropA:-1 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c/subname ops=get:PropA,delete:PropA,checksequence:PropA:0 index=2 error=PropertyCheckFailed
+submitbatch fabric:/testcase5c/subname ops=get:PropA result=0:PropA:DataA3
+
+submitbatch fabric:/testcase5c/subname ops=get:PropA,delete:PropA,checkexists:PropA:false result=0:PropA:DataA3
+submitbatch fabric:/testcase5c/subname ops=get:PropA result=0:PropertyNotFound
+
+#
+# testcase6a: (get)
+#
+# Permutations of Read/Write/Check order (Reads and Checks will see the results of preceding Writes in the batch)
+#
+
+createname fabric:/testcase6a/subname
+
+submitbatch fabric:/testcase6a ops=get:PropA,put:PropA:DataA,checksequence:PropA:0 result=0:PropertyNotFound
+getproperty fabric:/testcase6a PropA DataA seqvar=SN_PropA
+submitbatch fabric:/testcase6a ops=get:PropA,checksequence:PropA:$SN_PropA,put:PropA:DataA1 result=0:PropA:DataA
+getproperty fabric:/testcase6a PropA DataA1 seqvar=SN_PropA
+submitbatch fabric:/testcase6a ops=checksequence:PropA:$SN_PropA,put:PropA:DataA1
+
+getproperty fabric:/testcase6a PropA DataA1 seqvar=SN_PropA
+submitbatch fabric:/testcase6a ops=put:PropA:DataA3:CustomType6A1,get:PropA,checksequence:PropA:$SN_PropA result=1:PropA:DataA3:CustomType6A1
+getproperty fabric:/testcase6a PropA DataA3 customTypeId=CustomType6A1 seqvar=SN_PropA
+submitbatch fabric:/testcase6a ops=put:PropA:DataA4:112,checksequence:PropA:$SN_PropA,get:PropA result=2:PropA:DataA4:112
+
+getproperty fabric:/testcase6a PropA DataA4 customTypeId=112 seqvar=SN_PropA
+submitbatch fabric:/testcase6a ops=checksequence:PropA:$SN_PropA,get:PropA,put:PropA:DataA5 result=1:PropA:DataA4:112
+getproperty fabric:/testcase6a PropA DataA5 seqvar=SN_PropA
+submitbatch fabric:/testcase6a ops=checksequence:PropA:$SN_PropA,put:PropA:DataA6,get:PropA result=2:PropA:DataA6
+
+submitbatch fabric:/testcase6a/subname ops=get:PropA,put:PropA:DataA,checksequence:PropA:0 result=0:PropertyNotFound
+getproperty fabric:/testcase6a/subname PropA DataA seqvar=SN_PropA
+submitbatch fabric:/testcase6a/subname ops=get:PropA,checksequence:PropA:$SN_PropA,put:PropA:DataA2 result=0:PropA:DataA
+
+getproperty fabric:/testcase6a/subname PropA DataA2 seqvar=SN_PropA
+submitbatch fabric:/testcase6a/subname ops=put:PropA:DataA3,get:PropA,checksequence:PropA:$SN_PropA result=1:PropA:DataA3
+getproperty fabric:/testcase6a/subname PropA DataA3 seqvar=SN_PropA
+submitbatch fabric:/testcase6a/subname ops=put:PropA:DataA4,checksequence:PropA:$SN_PropA,get:PropA result=2:PropA:DataA4
+
+getproperty fabric:/testcase6a/subname PropA DataA4 seqvar=SN_PropA
+submitbatch fabric:/testcase6a/subname ops=checksequence:PropA:$SN_PropA,get:PropA,put:PropA:DataA5 result=1:PropA:DataA4
+getproperty fabric:/testcase6a/subname PropA DataA5 seqvar=SN_PropA
+submitbatch fabric:/testcase6a/subname ops=checksequence:PropA:$SN_PropA,put:PropA:DataA6,get:PropA result=2:PropA:DataA6
+
+#
+# testcase6b: (getmetadata)
+#
+# Permutations of Read/Write/Check order (Reads and Checks will see the results of preceding Writes in the batch)
+#
+
+createname fabric:/testcase6b/subname
+
+submitbatch fabric:/testcase6b ops=getmetadata:PropA,put:PropA:13,checksequence:PropA:0 result=0:PropertyNotFound
+getproperty fabric:/testcase6b PropA 13 seqvar=SN_PropA
+submitbatch fabric:/testcase6b ops=getmetadata:PropA,checksequence:PropA:$SN_PropA,put:PropA:16 result=0:PropA:13
+getproperty fabric:/testcase6b PropA 16 seqvar=SN_PropA
+submitbatch fabric:/testcase6b ops=getmetadata:PropA,checksequence:PropA:$SN_PropA,put:PropA:17 result=0:PropA:16
+
+getproperty fabric:/testcase6b PropA 17 seqvar=SN_PropA
+submitbatch fabric:/testcase6b ops=put:PropA:19,getmetadata:PropA,checksequence:PropA:$SN_PropA result=1:PropA:19
+getproperty fabric:/testcase6b PropA 19 seqvar=SN_PropA
+submitbatch fabric:/testcase6b ops=put:PropA:23,checksequence:PropA:$SN_PropA,getmetadata:PropA result=2:PropA:23
+
+getproperty fabric:/testcase6b PropA 23 seqvar=SN_PropA
+submitbatch fabric:/testcase6b ops=checksequence:PropA:$SN_PropA,getmetadata:PropA,put:PropA:29 result=1:PropA:23
+getproperty fabric:/testcase6b PropA 29 seqvar=SN_PropA
+submitbatch fabric:/testcase6b ops=checksequence:PropA:$SN_PropA,put:PropA:31,getmetadata:PropA result=2:PropA:31
+
+submitbatch fabric:/testcase6b/subname ops=getmetadata:PropA,put:PropA:13,checksequence:PropA:0 result=0:PropertyNotFound
+getproperty fabric:/testcase6b/subname PropA 13 seqvar=SN_PropA
+submitbatch fabric:/testcase6b/subname ops=getmetadata:PropA,checksequence:PropA:$SN_PropA,put:PropA:17 result=0:PropA:13
+
+getproperty fabric:/testcase6b/subname PropA 17 seqvar=SN_PropA
+submitbatch fabric:/testcase6b/subname ops=put:PropA:19,getmetadata:PropA,checksequence:PropA:$SN_PropA result=1:PropA:19
+getproperty fabric:/testcase6b/subname PropA 19 seqvar=SN_PropA
+submitbatch fabric:/testcase6b/subname ops=put:PropA:23,checksequence:PropA:$SN_PropA,getmetadata:PropA result=2:PropA:23
+
+getproperty fabric:/testcase6b/subname PropA 23 seqvar=SN_PropA
+submitbatch fabric:/testcase6b/subname ops=checksequence:PropA:$SN_PropA,getmetadata:PropA,put:PropA:29 result=1:PropA:23
+getproperty fabric:/testcase6b/subname PropA 29 seqvar=SN_PropA
+submitbatch fabric:/testcase6b/subname ops=checksequence:PropA:$SN_PropA,put:PropA:31,getmetadata:PropA result=2:PropA:31
+
+submitbatch fabric:/testcase6b/subname ops=put:PropB:test,checkvalue:PropB:test,get:PropB result=2:PropB:test
+submitbatch fabric:/testcase6b/subname ops=put:PropC:test,checkvalue:PropC:anothervalue,get:PropB error=PropertyCheckFailed
+
+#
+# testcase7:  PropertyTooLarge (1024 * 1024  + 1)
+#
+
+createname fabric:/testcase7
+
+submitbatch fabric:/testcase7 ops=put:PropA:1048577,put:PropB:DataB,put:PropC:DataC index=0 error=PropertyTooLarge
+submitbatch fabric:/testcase7 ops=put:PropA:DataA,put:PropB:1048577,put:PropC:DataC index=1 error=PropertyTooLarge
+submitbatch fabric:/testcase7 ops=put:PropA:DataA,put:PropB:DataB,put:PropC:1048577 index=2 error=PropertyTooLarge
+submitbatch fabric:/testcase7 ops=get:PropA result=0:PropertyNotFound
+submitbatch fabric:/testcase7 ops=get:PropB result=0:PropertyNotFound
+submitbatch fabric:/testcase7 ops=get:PropC result=0:PropertyNotFound
+
+#
+# testcase7:  Put/Get with different custom value types
+#
+
+submitbatch fabric:/testcase7 ops=put:Prop7A:Data7A1:34,get:Prop7A result=1:Prop7A:Data7A1:34
+submitbatch fabric:/testcase7 ops=put:Prop7A:Data7A2:35,get:Prop7A result=1:Prop7A:Data7A2:35
+submitbatch fabric:/testcase7 ops=get:Prop7A,put:Prop7A:Data7A3:0,get:Prop7A result=0:Prop7A:Data7A2:35,2:Prop7A:Data7A3:0
+
+
+
+!q

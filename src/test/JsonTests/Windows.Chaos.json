@@ -1,0 +1,49 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "AzureChaosTest",
+      "Type": "Azure_Chaos",
+      "Owners": "motanv,anmola,likevi",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ServiceTimeout": "64800",
+        "ConfigName": "WinFabricTest\\Config\\Azure_Chaos.txt",
+        "ExecutionTimeout": "70000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "AzureChaosTestWithGlobalUnreliableTransport_All_OneInAHundred_1_59",
+      "Type": "Azure_Chaos",
+      "Owners": "motanv,anmola,likevi",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ServiceTimeout": "64800",
+        "ConfigName": "WinFabricTest\\Config\\AzureChaosTestWithGlobalUnreliableTransport_All_OneInAHundred_1_59.txt",
+        "ExecutionTimeout": "70000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+	{
+      "Name": "RandomTestDefault",
+      "Type": "Server_Chaos",
+      "Owners": "motanv,anmola,likevi",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ServiceTimeout": "64800",
+        "ConfigName": "WinFabricTest\\Config\\Server_Chaos.txt",
+        "ExecutionTimeout": "70000",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

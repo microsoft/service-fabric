@@ -1,0 +1,42 @@
+!updatecfg Federation.GlobalTimeUncertaintyIntervalUpperBound=0.3
+!updatecfg Federation.GlobalTimeClockDriftRatio=128
+!updatecfg Federation.GlobalTimeNewEpochWaitInterval=10
+!updatecfg Federation.VoterStoreRetryInterval=3
+!updatecfg Federation.GlobalTimeTraceInterval=5
+VerifyOption T
+votes 100 200 300 400 500
+clearticket
++100
++200
++300
+verify
+!waitforstate gt.200 1
+-100
+verify
+!waitforstate gt.200 2
+verify
++0
+verify
+!state gt.0 2
+verify
++400
+verify
+-200
+-300
+verify
++100
++500
+verify
+!waitforstate gt.0 3
+!waitforstate gt.100 3
+-0
+verify
+!state gt.100 3
+verify
+-400
+verify
++50
++400
+verify
+!waitforstate gt.50 4
+!q

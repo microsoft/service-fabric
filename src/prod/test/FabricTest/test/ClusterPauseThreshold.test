@@ -1,0 +1,70 @@
+#
+# [owner] MMohsin
+#
+# This test case verifies that the cluster is puased when the number of nodes go below the ClusterPauseThreshold.
+#
+
+votes 10 20 30
+
+fmservice 3 2
+cmservice 3 2
+namingservice 1 3 2
+cleantest
+
+set DummyPLBEnabled true
+
++10
++20
++30
+verify
+
++40
++50
+verify
+
+createservice fabric:/stateless CalculatorServiceType n 1 3
+createservice fabric:/volatile TestStoreServiceType y 1 3 minreplicasetsize=2
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2
+verify
+
+# Ensure that user service replicas are present on node 50
+!waitforstate FM.Replica.IsUp.fabric:/stateless.50 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile.50 true
+!waitforstate FM.Replica.IsUp.fabric:/persisted.50 true
+
+# Set ClusterParuseThreshold to 5
+set ClusterPauseThreshold 5
+
+# Block ReplicaUp messages so that the FM can only find out about down replicas via node down
+addbehavior b1 * * ReplicaUp
+
+# Bring down node 50 to bring the cluster into the "Pause" state
+-50
+
+# Give some time for the FM state machine to run
+!pause,10
+
+# Allow ReplicaUp messages
+removebehavior b1
+
+# Verify that the FM state machine has not run and all the replicas on node 50 are still "Up"
+!waitforstate FM.Replica.IsUp.fabric:/stateless.50 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile.50 true
+!waitforstate FM.Replica.IsUp.fabric:/persisted.50 true
+
+# Attempt to create a new service
+createservice fabric:/foo CalculatorServiceType n 1 3
+
+# Give some time for the replicas for the new service to get placed
+!pause,10
+
+# Verify that no replica is created for a newly created service
+!waitforstate FM.FT.ReplicaCount.fabric:/foo 0
+
+# Bring back node 50. The should now resume from the "Puase" state.
++50
+verify
+
+-*
+
+!q

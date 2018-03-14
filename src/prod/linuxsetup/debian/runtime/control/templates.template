@@ -1,0 +1,13 @@
+Template: servicefabric/presenteula
+Type: note
+Description: Microsoft Azure Service Fabric EULA
+REPLACE_COPYRIGHT_BUILDTIME
+
+Template: servicefabric/accepted-eula-ga
+Type: boolean
+Description: Do you accept the EULA license terms?
+ In order to install this package, you must accept the license terms for "Microsoft Azure Service Fabric EULA". Not accepting will cancel the installation
+
+Template: servicefabric/accepted-all-eula
+Type: boolean
+Description: If this value is set in debconf all versions of the eula are acknowledged as accepted

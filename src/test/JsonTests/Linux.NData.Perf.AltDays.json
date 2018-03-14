@@ -1,0 +1,166 @@
+{
+    "Default": {
+    },
+    "Tests": [
+      {
+        "Name": "NW-V1Repl-3R-6P-PaaS-Linux (D3)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Volatile-Perf-3R-6P-PaaS-D3-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-V1Repl-3R-6P-PaaS-Linux (D3)"
+        }
+      },
+      {
+        "Name": "NW-V1Repl-3R-1P-PaaS-Linux (D3)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Volatile-Perf-3R-1P-PaaS-D3-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-V1Repl-3R-1P-PaaS-Linux (D3)"
+        }
+      },
+      {
+        "Name": "NW-V1Repl-3R-6P-PaaS-Linux (D14)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Volatile-Perf-3R-6P-PaaS-D14-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-V1Repl-3R-6P-PaaS-Linux (D14)"
+        }
+      },
+      {
+        "Name": "NW-V1Repl-3R-1P-PaaS-Linux (D14)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Volatile-Perf-3R-1P-PaaS-D14-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-V1Repl-3R-1P-PaaS-Linux (D14)"
+        }
+      },
+      {
+        "Name": "NW-TXR-3R-6P-PaaS-Linux (D3)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Perf-3R-6P-PaaS-D3-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-TXR-3R-6P-PaaS-Linux (D3)"
+        }
+      },
+      {
+        "Name": "NW-TXR-3R-1P-PaaS-Linux (D3)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Perf-3R-1P-PaaS-D3-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-TXR-3R-1P-PaaS-Linux (D3)"
+        }
+      },
+      {
+        "Name": "NW-TXR-1R-1P-PaaS-Linux (D3)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Perf-1R-1P-PaaS-D3-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-TXR-1R-1P-PaaS-Linux (D3)"
+        }
+      },
+      {
+        "Name": "NW-TXR-3R-6P-PaaS-Linux (D14)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Perf-3R-6P-PaaS-D14-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-TXR-3R-6P-PaaS-Linux (D14)"
+        }
+      },
+      {
+        "Name": "NW-TXR-3R-1P-PaaS-Linux (D14)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Perf-3R-1P-PaaS-D14-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-TXR-3R-1P-PaaS-Linux (D14)"
+        }
+      },
+      {
+        "Name": "NW-TXR-1R-1P-PaaS-Linux (D14)",
+        "Type": "Linux_ScriptTest_Perf",
+        "Owners": "ImanG, HaNagar, SumukhS",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "PaaS\\NightWatch-Perf-1R-1P-PaaS-D14-Linux.test",
+          "ExpectedResultsFileName": "TXRNightWatchExpectedResults.xml",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100",
+          "PerfTestTaskName": "NW-TXR-1R-1P-PaaS-Linux (D14)"
+        }
+      }
+    ]
+}

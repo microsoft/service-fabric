@@ -1,0 +1,87 @@
+#
+# [owner] MMohsin
+#
+# This test case verifies the replica placement when a node is deactivated with intent Restart.
+#
+
+votes 10 20 30
+
+fmservice 3 2
+cmservice 3 2
+namingservice 1 3 2
+cleantest
+
+set DummyPLBEnabled true
+set ConstraintCheckEnabled false
+set ExpectedClusterSize 3
+set UserReplicaRestartWaitDuration 99999
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+
++10
++20
++30
+verify
+
++40
++50
+verify
+
+createservice fabric:/stateless1 CalculatorServiceType n 1 3
+createservice fabric:/volatile1 TestStoreServiceType y 1 1
+createservice fabric:/volatile2 TestStoreServiceType y 1 2
+createservice fabric:/volatile3 TestStoreServiceType y 1 3 minreplicasetsize=2
+createservice fabric:/volatile4 TestStoreServiceType y 1 3 minreplicasetsize=3
+createservice fabric:/persisted1 TestPersistedStoreServiceType y 1 1 persist
+createservice fabric:/persisted2 TestPersistedStoreServiceType y 1 2 persist
+createservice fabric:/persisted3 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2
+createservice fabric:/persisted4 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+verify
+
+# Verify the initial replica count on each node
+!waitforstate FM.UpReplicaCount.10 2
+!waitforstate FM.UpReplicaCount.20 2
+!waitforstate FM.UpReplicaCount.30 7
+!waitforstate FM.UpReplicaCount.40 7
+!waitforstate FM.UpReplicaCount.50 9
+
+# Do not allow closing of replicas due to node deactivation
+addbehavior b1 * * NodeDeactivateRequest
+
+# Deactivate node 50 with intent Restart
+DeactivateNode 50 Restart
+!waitforstate FM.Node.DeactivationIntent.50 Restart
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationSafetyCheckComplete
+
+# Ensure no replica has been added/removed on node 50
+# The only exception is a stateful service replica for which TargetReplicaSetSize=1
+!waitforstate FM.UpReplicaCount.50 7
+
+# Create some more services
+createservice fabric:/stateless2 CalculatorServiceType n 1 -1
+createservice fabric:/volatile5 TestStoreServiceType y 1 4 minreplicasetsize=3
+createservice fabric:/persisted5 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=3
+!wait
+
+# Give some time for the replicas to get placed
+!pause,5
+
+# No new replica should  have been placed on node 50
+!waitforstate FM.UpReplicaCount.50 7
+
+# Allow node deactivation to proceed
+removebehavior b1
+
+# Verify that the up replica count for node 50 is zero
+!waitforstate FM.UpReplicaCount.10 5
+!waitforstate FM.UpReplicaCount.20 8
+!waitforstate FM.UpReplicaCount.30 11
+!waitforstate FM.UpReplicaCount.40 12
+!waitforstate FM.UpReplicaCount.50 0
+
+# The persisted service replicas on node 50 should get closed.
+# Verify the offline replica count for node 50.
+!waitforstate FM.OfflineReplicaCount.50 3
+
+-*
+
+!q

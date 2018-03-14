@@ -1,0 +1,54 @@
+#
+# [owner] yangli, nipuzovi
+#
+
+votes 10 20 30
+fmservice 3 2
+cmservice 3 2
+namingservice 2 3 2
+cleantest
+
++10 cap=CPU:100,MEMORY:100
++20 cap=CPU:100,MEMORY:100
++30 cap=CPU:100,MEMORY:100
++40 cap=CPU:100,MEMORY:100
++50 cap=CPU:100,MEMORY:100
++60 cap=CPU:100,MEMORY:100
+
+verify
+
+#
+# Create an application with scaleout and capacity
+#
+app.add version10 MyApp 1.0
+app.clear version10
+app.servicepack version10 MyServicePackage version=1.0
+app.servicetypes version10 MyServicePackage StatelessServiceType stateless
+app.servicetypes version10 MyServicePackage VolatileServiceType stateful
+app.servicetypes version10 MyServicePackage PersistedServiceType stateful persist
+app.codepack version10 MyServicePackage StatelessCode types=StatelessServiceType version=1.0
+app.codepack version10 MyServicePackage VolatileCode types=VolatileServiceType version=1.0
+app.codepack version10 MyServicePackage PersistedCode types=PersistedServiceType version=1.0
+app.upload version10
+provisionapp version10
+createapp fabric:/MyApp MyApp 1.0 scaleout=1,3,CPU,0,40,120
+verify
+
+# Create some services for the application
+createservice fabric:/MyApp/Stateless StatelessServiceType n 1 3 appname=fabric:/MyApp
+createservice fabric:/MyApp/Volatile VolatileServiceType y 1 3 minreplicasetsize=2 appname=fabric:/MyApp metrics=CPU,High,20,20
+createservice fabric:/MyApp/Persisted PersistedServiceType y 1 3 persist minreplicasetsize=2 appname=fabric:/MyApp metrics=CPU,High,20,20
+verify
+
+gfum
+
+# Total load in the cluster for metric CPU is 120, remaining space is 380
+# New application: Request 4 nodes at minimum, each with reservation of 200 - total reserved capacity requested == 800 (>500)
+createapp fabric:/MyApp314 MyApp 1.0 scaleout=4,4,CPU,200,200,800 error=InsufficientClusterCapacity
+
+# Try to update the application to have reservation of 800 (4 * 250) and expect to fail.
+updateapp fabric:/MyApp minCount=4 maxCount=5 metrics=CPU,200,200,1000 error=InsufficientClusterCapacity
+
+-*
+
+!q

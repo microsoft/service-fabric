@@ -1,0 +1,67 @@
+{
+    "RequiredParameters": [ "TaskName", "DllPath", "ClassName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "ConfigName": "",
+        "Machines": "",
+        "InstalledFeaturesFile": "",
+        "CredentialType": "",
+        "CleanupType": "",
+        "SetupTimeout": "900",
+        "ExecutionTimeout": "4200",
+		"NativeStoreEnabled": "",
+        "EseStoreEnabled": "",
+        "CleanupTimeout": "2100"
+    },
+
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPTYPE] [SETUPARGS]",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabricTestRunner.exe",
+            "Arguments": "/sfrpwindows /serviceName:[AZURERESOURCES] /DllPath:[DLLPATH] /ClassName:[CLASSNAME] /TestCaseName:[TASKNAME] %/TestParamFile:[CONFIGNAME]% /auto:true [INSTALLEDFEATURESFILE] %/security:[CREDENTIALTYPE]% /notestdir:true %/nativestore:[NATIVESTOREENABLED]% %/ese:[ESESTOREENABLED]% /togglestore",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+            {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabric.TestInfra.PerfUploader.exe",
+            "Arguments": "",
+            "WorkingDirectory": "[BINS]",
+            "MaxExecutionTimeInSeconds": "300"  
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.xml$,.*\\.json$,.*\\.man$"
+    }
+}

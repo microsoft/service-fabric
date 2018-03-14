@@ -1,0 +1,3 @@
+LIBRARY ReliableCollectionService
+EXPORTS
+    ReliableCollectionService_Initialize    

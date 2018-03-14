@@ -1,0 +1,150 @@
+#
+# [owner] MMohsin, AnuragG
+#
+# This test case covers the scenario where the following sequence of events happen:
+#
+# 1. For some application A, Node N has only one replica of that application belonging to FT1 and service S1.
+# 2. Node N goes down.
+# 3. Service S1 is deleted. FT1 becomes orphaned because the replica on node N is not dropped yet.
+# 4. Upgrade starts for application A.
+# 5. When the upgrade proceeds to the UD of node N, the node N comes up.
+# 6. FM sends the upgrade message to node N and marks it as PendingClose.
+# 7. Before the NodeUpgradeReply message is received by the FM, the orphaned replica on node N gets deleted and removed
+#    at the FM.
+# 8. Upgrade completes.
+# 9. For some other FT2 of application A, a new replica is created at node N.
+#
+# In order for step 8 to be true, the node PendingClose flag for node N must have been cleared. Otherwise, it will
+# prevent any new replica creation at step 9.
+#
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set DummyPLBEnabled true
+set UpgradeStatusPollInterval 5
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
++40 ud=UD1
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful persist
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA version=1.0
+app.upload version10
+provisionapp version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA stateful persist
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA version=1.1
+app.upload version11
+provisionapp version11
+
+# Create application version 1.0
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+# Create services
+createservice fabric:/MyApp/Persisted1 ServiceTypeA y 1 5 persist appname=fabric:/MyApp replicarestartwaitduration=600
+createservice fabric:/MyApp/Persisted2 ServiceTypeA y 1 4 persist appname=fabric:/MyApp replicarestartwaitduration=600
+verify
+
++50 ud=UD2
+verify
+
+# A new replica should be placed on node 50 for service fabric:/MyApp/Persisted1
+!waitforstate FM.Replica.State.fabric:/MyApp/Persisted1.50 Ready
+
+-50
+verify
+
+# The replica on node 50 should be down
+!waitforstate FM.Replica.IsUp.fabric:/MyApp/Persisted1.50 false
+
+deleteservice fabric:/MyApp/Persisted1
+verify
+
+# Becasue the replica on node 50 was down, the FailoverUnit for the deleted service will become orphaned.
+# Verify that that the replica is still there as down but not dropped
+!waitforstate FM.Replica.State.fabric:/MyApp/Persisted1.50 Ready|InBuild
+!waitforstate FM.Replica.IsUp.fabric:/MyApp/Persisted1.50 false
+
+# Create another service so that the deleted service does not has the hightest health sequence.
+createservice fabric:/MyApp/Persisted3 ServiceTypeA y 1 4 persist appname=fabric:/MyApp replicarestartwaitduration=600
+verify
+
+#
+# Perform application upgrade from version 1.0 to 1.1
+#
+upgradeapp fabric:/MyApp 1.1 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1
+
+# Block DeleteReplica and ReplicaUpReply to prevent the replica from getting
+# dropped and deleted on RA on node 50
+addbehavior b1 * * DeleteReplica
+addbehavior b2 * * ReplicaUpReply
+
+# Block NodeUpgradeReply message from node 50 so that the PendingClose flag does not get cleared
+addbehavior b3 50 * NodeUpgradeReply
+
++50 ud=UD2
+!wait
+
+# The replica on node 50 should be up
+!waitforstate RA.Replica.IsUp.fabric:/MyApp/Persisted1.50.50 true
+!waitforstate RA.Replica.State.fabric:/MyApp/Persisted1.50.50 SB
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/MyApp/Persisted1.50 true
+
+upgradeappmovenext fabric:/MyApp
+
+# Ensure that upgrade is completed on node 50. This implies that the
+# PendingClose flag is set for this node a the FM.
+!waitforstate RA.Upgrade.fabric:/MyApp.50 ApplicationUpgrade_WaitForReplicaDownCompletionCheck
+
+# Let the replica for fabric:/MyApp/Persisted1 get deleted at the FM. The
+# replica should only be removed at the FM once the NodeUpgradeReply message
+# has been received.
+removebehavior b1
+removebehavior b2
+
+# Since NodeUpgradeReply is blocked, upgrade should not be considered
+# complete on node 50
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2 timeout=30 expectTimeout
+
+# Allow NodeUpgradeReply messages
+removebehavior b3
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2
+upgradeappmovenext fabric:/MyApp
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3
+
+# Update the TargetReplicaSetSize for service fabric:/MyApp/Persisted2 to 5.
+# This should create a new replica on node 50.
+updateservice fabric:/MyApp/Persisted2 Stateful TargetReplicaSetSize=5
+verify
+
+# Verify that a new replica has been created on node 50
+!waitforstate FM.Replica.State.fabric:/MyApp/Persisted2.50 Ready
+
+verify
+
+-*
+
+!q

@@ -1,0 +1,80 @@
+set CheckForLeak false
+set BootstrapTicketLeaseDuration 20
+set BootstrapTicketAcquireLimit 5
+set GlobalTicketLeaseDuration 60
+set PingInterval 1
+set UpdateInterval 1
+votes 100 200 300 400 500
+clearticket
++100 5001
++200 5002 expectfailure
++300 5003
++400 5004 expectfailure
++500 5005
+verify
++600 5006 expectfailure
++700 5007
++800 5008 expectfailure
++900 5009
++1000 5010 expectfailure
+verify
++1100 5011
++1200 5012 expectfailure
++1300 5013
++1400 5014 expectfailure
++1500 5015
+verify
++1600 5016 expectfailure
++1700 5017
++1800 5018 expectfailure
++1900 5019
++2000 5020 expectfailure
+verify
++2100 5021 
++2200 5022 expectfailure
++2300 5023
++2400 5024 expectfailure
++2500 5025
+verify
+!pause 30
+addbehavior dropArbit2 200 * ArbitrateRequest 1 Max
+addbehavior dropArbit4 400 * ArbitrateRequest 1 Max
+addbehavior dropArbit6 600 * ArbitrateRequest 1 Max
+addbehavior dropArbit8 800 * ArbitrateRequest 1 Max
+addbehavior dropArbit10 1000 * ArbitrateRequest 1 Max
+addbehavior dropArbit12 1200 * ArbitrateRequest 1 Max
+addbehavior dropArbit14 1400 * ArbitrateRequest 1 Max
+addbehavior dropArbit16 1600 * ArbitrateRequest 1 Max
+addbehavior dropArbit18 1800 * ArbitrateRequest 1 Max
+addbehavior dropArbit20 2000 * ArbitrateRequest 1 Max
+addbehavior dropArbit22 2200 * ArbitrateRequest 1 Max
+addbehavior dropArbit24 2400 * ArbitrateRequest 1 Max
+!expect,Node 200 Failed
+!expect,Node 400 Failed
+!expect,Node 600 Failed
+!expect,Node 800 Failed
+!expect,Node 1000 Failed
+!expect,Node 1200 Failed
+!expect,Node 1400 Failed
+!expect,Node 1600 Failed
+!expect,Node 1800 Failed
+!expect,Node 2000 Failed
+!expect,Node 2200 Failed
+!expect,Node 2400 Failed
+blockleaseagent 5002
+blockleaseagent 5004
+blockleaseagent 5006
+blockleaseagent 5008
+blockleaseagent 5010
+blockleaseagent 5012
+blockleaseagent 5014
+blockleaseagent 5016
+blockleaseagent 5018
+blockleaseagent 5020
+blockleaseagent 5022
+blockleaseagent 5024
+verify
+!pause 90
+verify
+-*
+!q

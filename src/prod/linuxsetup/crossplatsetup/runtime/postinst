@@ -1,0 +1,126 @@
+#!/bin/bash
+echo In PostInst - $@
+
+# NOTE: Any changes in this file have to be compatible for both DEB and RPM distros 
+# as it is used in both installers. Use conditionals where necessary.
+
+GetDistroInstaller()
+{
+    local __resultvar=$1
+
+    /usr/bin/dpkg --search /usr/bin/dpkg >/dev/null 2>&1
+    if [ $? = 0 ]; then
+        eval $__resultvar="DEB"
+    else
+        /usr/bin/rpm -q -f /usr/bin/rpm >/dev/null 2>&1
+        if [ $? = 0 ]; then
+            eval $__resultvar="RPM"
+        else
+            eval $__resultvar="UNKNOWN"
+        fi
+    fi
+}
+
+GetDistroInstaller DISTROINSTALLER
+
+echo Creating sfuser
+groupadd -r sfuser >/dev/null 2>&1
+id -u sfuser >/dev/null 2>&1
+if [ $? != 0 ]; then
+    useradd -r -M sfuser -g sfuser
+    if [ $? != 0 ]; then
+        echo "Error: Failed to create sfuser"
+        exit 1
+    fi
+fi
+
+echo Creating sfappsuser
+id -u sfappsuser >/dev/null 2>&1
+if [ $? != 0 ]; then
+    useradd -r -M sfappsuser -g sfuser
+    if [ $? != 0 ]; then
+        echo "Error: Failed to create sfappsuser"
+        exit 1
+    fi
+fi
+
+echo Configuring block devices for system services
+for i in `lsblk -l | cut -d' ' -f1 |grep -v NAME`
+do 
+    setfacl -m "u:sfuser:rw-" /dev/${i}
+done
+
+sfgrp_exists=false
+getent group ServiceFabricAllowedUsers >/dev/null 2>&1 && sfgrp_exists=true
+if $sfgrp_exists; then
+   echo "ServiceFabricAllowedUsers exists..."
+else
+   groupadd -r ServiceFabricAllowedUsers
+   groupadd -r ServiceFabricAdministrators
+fi
+usermod -a -G ServiceFabricAllowedUsers sfuser
+usermod -a -G ServiceFabricAllowedUsers sfappsuser
+
+echo "Enabling password authentication for FileStoreService accounts"
+MatchStatement='Match User P_FSSUserffffffff,S_FSSUserffffffff'
+PasswordAuth='PasswordAuthentication yes'
+SshdConfigFile="/etc/ssh/sshd_config"
+
+if ! grep -q "$MatchStatement" $SshdConfigFile; then
+    echo                           >> $SshdConfigFile
+    echo "#ServiceFabric Settings" >> $SshdConfigFile
+    echo $MatchStatement           >> $SshdConfigFile
+    echo $PasswordAuth             >> $SshdConfigFile
+    echo                           >> $SshdConfigFile
+	
+	# reload sshd to reload config
+    systemctl reload sshd
+fi
+
+echo "Copying servicefabric.service file to systemd"
+cp -f --preserve usr/share/servicefabric/scripts/servicefabric.service /etc/systemd/system/servicefabric.service
+if [ $? != 0 ]; then
+    echo Error: Failed to copy servicefabric.service file to systemd folder
+    exit 1
+fi
+
+echo "Copying servicefabricupdater.service file to systemd"
+cp -f --preserve usr/share/servicefabric/scripts/servicefabricupdater.service /etc/systemd/system/servicefabricupdater.service
+if [ $? != 0 ]; then
+    echo Error: Failed to copy servicefabricupdater.service file to systemd folder
+    exit 1
+fi
+
+echo "Setting sfuser as owner of FabricBinRoot"
+chown -R sfuser:sfuser /opt/microsoft/servicefabric/bin/
+if [ $? != 0 ]; then
+    echo Error: Failed to set sfuser as owner of fabric bin root
+    exit 1
+fi
+
+# set up and start atop
+if [ -f /usr/bin/atop ]; then
+    AtopConfigPath=
+    if [ $DISTROINSTALLER = "DEB" ]; then
+        AtopConfigPath=/etc/default/atop
+    elif [ $DISTROINSTALLER = "RPM" ]; then
+        AtopConfigPath=/etc/sysconfig/atop
+    fi
+
+    sed -i "s/INTERVAL=.*$/INTERVAL=10/" ${AtopConfigPath}
+    if [ $? != 0 ]; then
+        echo Could not write atop config at ${AtopConfigPath}
+    fi
+
+    # restart instead of start in case atop is already running
+    systemctl restart atop.service
+    if [ $? != 0 ]; then
+        echo Error: Failed to restart atop.service
+        exit 1
+    fi
+else
+    echo "atop not installed, so not configured."
+fi
+
+exit 0
+

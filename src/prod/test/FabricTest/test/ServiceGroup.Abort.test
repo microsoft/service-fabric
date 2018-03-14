@@ -1,0 +1,53 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+
+##############################################################
+######## Report Fault after BeginCommitAtomicGroup    ########
+##############################################################
+
+# stalls completion of inflight atomic group
+# abort will block until atomic group finished replicating
+# after report fault the service may go into data loss, 
+# if replication happens during data loss it will fail, we ignore this
+
+createname fabric:/servicegroup4
+
+injectfailure 60 fabric:/servicegroup4#test1 servicegroup.after.begincommit.reportfault.permanent
+
+createservicegroup fabric:/servicegroup4 SGStatefulServiceFactory y 1 3 \
+    1 \
+    fabric:/servicegroup4#test1 SGStatefulService \
+    init fabric:/servicegroup4#test1 \
+        atomicgroupstateprovider \
+        replicateatomic \
+        endcommit.delay=20 \
+        ignore.replicationerror \
+    endinit \
+    persist
+
+!pause,30
+
+removefailure 60 fabric:/servicegroup4#test1 servicegroup.after.begincommit.reportfault.permanent
+
+!pause,10
+
+verify
+
+deleteservicegroup fabric:/servicegroup4
+deletename fabric:/servicegroup4
+verify
+
+!q

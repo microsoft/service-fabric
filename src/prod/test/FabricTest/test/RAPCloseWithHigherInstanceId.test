@@ -1,0 +1,41 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1786520
+# Validate that RAP successfully handles a ReplicaClose message with a higher instance id
+# This can happen in the scenario in which RA decides to reopen the replica and 
+# immediately closes it and the reopen message is dropped
+# 
+set DummyPLBEnabled true
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+verify
+
+addbehavior b0 * * ReplicaUp
+addbehavior b1 * * StatefulServiceReopen
+reportfault 30 fabric:/test transient
+
+!waitforstate RA.Replica.State.fabric:/test.30.30 SB
+
+deactivatenode 30 Restart
+!wait
+
+!waitforstate RA.Replica.IsUp.fabric:/test.30.30 false
+
+removebehavior b0
+!waitforstate FM.Replica.IsUp.fabric:/test.30 false
+
+!q

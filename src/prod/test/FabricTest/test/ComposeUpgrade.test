@@ -1,0 +1,116 @@
+# This test case covers the scenario of compose deployment upgrade:
+# Note that we mock application package in CM instead of activating a real container since there is no docker daemon on the test environment.
+
+set TestComposeDeploymentTestMode true
+!setcfg Management.CleanupApplicationPackageOnProvisionSuccess=false
+set DummyPLBEnabled true
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
+verify
+
+# AppType
+app.add type1 type1 v1
+app.clear type1
+app.servicepack type1 ServicePackageA version=v1
+app.servicetypes type1 ServicePackageA StatelessServiceType stateless
+app.codepack type1 ServicePackageA CodeA types=StatelessServiceType version=v1
+app.reqservices type1 ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type1
+
+app.add type2 type1 v2
+app.clear type2
+app.servicepack type2 ServicePackageA version=v2
+app.servicetypes type2 ServicePackageA StatelessServiceType stateless
+app.codepack type2 ServicePackageA CodeA1 types=StatelessServiceType version=v2
+app.reqservices type2 ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type2
+
+nameexists fabric:/app false
+createcompose app type1 type1 v1 verify
+
+# Test case 1:
+# Auto mode upgrading to v2
+# Not started = Rollforward completed
+
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardCompleted,TargetApplicationTypeVersion=v1
+
+upgradecompose app type2 type1 v2
+verifyupgradeapp fabric:/app
+verify
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardCompleted,TargetApplicationTypeVersion=v2
+
+query GetApplicationTypePagedList verify ApplicationTypeName=type1,ApplicationTypeVersion=v2
+query GetApplicationTypePagedList ApplicationTypeName=type1 ApplicationTypeVersion=v1 expectempty=true
+
+# Test case 2:
+# Manual mode upgrading to v1
+
+upgradecompose app type1 type1 v1 upgrademode=manual
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardPending,TargetApplicationTypeVersion=v1
+verifyupgradeapp fabric:/app upgradedomains=UD1
+
+# Check both application types exsit
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v1 verify ApplicationTypeName=type1,ApplicationTypeVersion=v1
+query getapplicationtypepagedlist ApplicationTypeName=type1 ApplicationTypeVersion=v2 verify ApplicationTypeName=type1,ApplicationTypeVersion=v2
+
+upgradeappmovenext fabric:/app
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardPending,TargetApplicationTypeVersion=v1
+verifyupgradeapp fabric:/app upgradedomains=UD1,UD2
+
+upgradeappmovenext fabric:/app
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardPending,TargetApplicationTypeVersion=v1
+verifyupgradeapp fabric:/app upgradedomains=UD1,UD2,UD3
+
+verify
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardCompleted,TargetApplicationTypeVersion=v1
+
+query GetApplicationTypePagedList verify ApplicationTypeName=type1,ApplicationTypeVersion=v1
+query GetApplicationTypePagedList ApplicationTypeName=type1 ApplicationTypeVersion=v2 expectempty=true
+
+# Test case 3:
+# Concurrent compose upgrade
+
+app.add type1a type1a v1
+app.clear type1a
+app.servicepack type1a ServicePackageA version=v1
+app.servicetypes type1a ServicePackageA StatelessServiceType stateless
+app.codepack type1a ServicePackageA CodeA types=StatelessServiceType version=v1
+app.reqservices type1a ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type1a
+
+app.add type2a type1a v2
+app.clear type2a
+app.servicepack type2a ServicePackageA version=v2
+app.servicetypes type2a ServicePackageA StatelessServiceType stateless
+app.codepack type2a ServicePackageA CodeA1 types=StatelessServiceType version=v2
+app.reqservices type2a ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type2a
+
+nameexists fabric:/appa false
+createcompose appa type1a type1a v1 verify
+
+upgradecompose app type2 type1 v2
+upgradecompose appa type2a type1a v2
+verifyupgradeapp fabric:/app
+verifyupgradeapp fabric:/appa
+verify
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardCompleted,TargetApplicationTypeVersion=v2
+query getcomposedeploymentupgradeprogress DeploymentName=appa verify DeploymentName=appa,Status=RollingForwardCompleted,TargetApplicationTypeVersion=v2
+
+deleteapp fabric:/app error=OperationFailed
+deleteapp fabric:/appa error=OperationFailed
+deletecompose app verify 
+deletecompose appa verify
+verify
+
+!q

@@ -1,0 +1,410 @@
+#
+# [owner] linggeng
+# Test scenarios around upgrading default services
+# Design doc: https://microsoft.sharepoint.com/teams/WindowsFabric/_layouts/OneNote.aspx?id=%2Fteams%2FWindowsFabric%2FNotebooks%2FWindows%20Fabric%20Design%20Notes&wd=target%28ClusterManager.one%7CBE48945C-624A-4B0C-AF5C-4F4EF0315951%2FRDBug%206528112%20%3A%20%5BDCR%5D%20Changes%20to%20default%20service%20definitions%7CDC5CAA6D-1EEB-456A-BA17-21C24026ACF0%2F%29
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+fmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+set EnableDefaultServicesUpgrade true
+set IsStrongSafetyCheckEnabled false
+
++10 ud=UD1 nodeprops=servicenode:1 fd=fd:/dc0/r0
++20 ud=UD2 nodeprops=servicenode:1 fd=fd:/dc0/r1
++30 ud=UD3 fd=fd:/dc1/r0
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeB stateless
+app.codepack version10 ServicePackageA CodeA types=ServiceTypeA,ServiceTypeB version=1.0
+
+# defaultservice1/1b to update
+app.reqservices version10 defaultservice1 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version10 defaultservice1b ServiceTypeB stateless partition=1 instance=2 metrics=MetricA,Low,0,0
+
+# defaultservicestatic
+app.reqservices version10 defaultservicestatic ServiceTypeB stateless partition=1 instance=1
+
+# defaultservice2/2notactive to delete
+app.reqservices version10 defaultservice2 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version10 defaultservice2notactive ServiceTypeB stateless partition=1 instance=1
+
+app.reqservices version10 defaultservice3in10 ServiceTypeB stateless partition=1 instance=2
+
+app.upload version10
+provisionapp version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes version11 ServicePackageA ServiceTypeB stateless
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA,ServiceTypeB version=1.1
+
+app.reqservices version11 defaultservice1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 replicarestartwaitduration=7 quorumlosswaitduration=801 standbyreplicakeepduration=88 metrics=MetricA,Low,0,0
+app.reqservices version11 defaultservice1b ServiceTypeB stateless partition=1 instance=1 servicecorrelations=fabric:/MyApp/defaultservice3,affinity defaultmovecost=Low constraint=servicenode==1 placementPolicies=fd:/dc0,requiredDomain
+app.reqservices version11 defaultservicestatic ServiceTypeB stateless partition=1 instance=1
+app.reqservices version11 MySvc1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 placementPolicies=fd:/dc0,requiredDomain quorumlosswaitduration=801
+# defaultservice3/3in10 to create
+app.reqservices version11 defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version11 defaultservice3in10 ServiceTypeB stateless partition=1 instance=2
+
+app.upload version11
+provisionapp version11
+
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+##############################################################
+# Testcase 1:
+#   Perform application upgrade from 1.0 to 1.1
+#   Normal workflow. 
+#   Default service overriden by 1.1
+##############################################################
+
+# MySvc1 would be updated and not deleted
+createservice fabric:/MyApp/MySvc1 ServiceTypeA y 1 3 persist appname=fabric:/MyApp
+
+deleteservice fabric:/MyApp/defaultservice2notactive
+deleteservice fabric:/MyApp/defaultservice3in10
+updateservice fabric:/MyApp/defaultservice1 Stateful MinReplicaSetSize=1
+verify
+
+# block get description, CM should retry and Timeout
+addbehavior b1 * * ServiceExistsRequest
+upgradeapp fabric:/MyApp 1.1 Rolling upgrademode=auto errors=Timeout
+removebehavior b1
+
+upgradeapp fabric:/MyApp 1.1 Rolling upgrademode=auto
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice1 2
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice1 2
+verifyupgradeapp fabric:/MyApp
+
+# defaultservice3 created, defaultservice2 gone.
+verify
+
+# verify updated description
+getservicedescription fabric:/MyApp/defaultservice1 verify replicarestartwaitduration=7 quorumlosswaitduration=801 standbyreplicakeepduration=88
+getservicedescription fabric:/MyApp/defaultservice1b verify
+getservicedescription fabric:/MyApp/MySvc1 verify quorumlosswaitduration=801
+
+#  out of bound service
+createservice fabric:/MyApp/MySvc2 ServiceTypeA y 1 3 persist appname=fabric:/MyApp
+verify
+
+##############################################################
+# Testcase 2.1:
+#   Perform application upgrade failure from 1.1 to invalid
+#   change service kind
+#   fail at preparation stage
+##############################################################
+
+#
+# Application version invalid
+#
+app.add versioninvalid TestApp invalid
+app.clear versioninvalid
+app.servicepack versioninvalid ServicePackageA version=invalid
+app.servicetypes versioninvalid ServicePackageA ServiceTypeA stateful persist
+app.servicetypes versioninvalid ServicePackageA ServiceTypeB stateless
+app.codepack versioninvalid ServicePackageA CodeA types=ServiceTypeA version=invalid
+
+app.reqservices versioninvalid defaultservice1 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=3 replicarestartwaitduration=20 quorumlosswaitduration=900 standbyreplicakeepduration=90
+app.reqservices versioninvalid defaultservice3 ServiceTypeB stateless partition=1 instance=2 metrics=MetricA,Low,0,0 constraint=AppRPAdminAllowed==true
+
+app.upload versioninvalid
+provisionapp versioninvalid
+
+upgradeapp fabric:/MyApp invalid Rolling upgrademode=manual errors=ApplicationUpgradeValidationError
+verify
+
+##############################################################
+# Testcase 2.2:
+#   Perform application upgrade failure from 1.1 to invalidpartition
+#   change partition count
+#   fail at preparation stage
+##############################################################
+
+#
+# Application version invalidpartition
+#
+
+app.add versioninvalidpartition TestApp invalidpartition
+app.clear versioninvalidpartition
+app.servicepack versioninvalidpartition ServicePackageA version=invalidpartition
+app.servicetypes versioninvalidpartition ServicePackageA ServiceTypeA stateful persist
+app.servicetypes versioninvalidpartition ServicePackageA ServiceTypeB stateless
+app.codepack versioninvalidpartition ServicePackageA CodeA1 types=ServiceTypeA,ServiceTypeB version=invalidpartition
+
+app.reqservices versioninvalidpartition defaultservice1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 replicarestartwaitduration=7 quorumlosswaitduration=801 standbyreplicakeepduration=88 metrics=MetricA,Low,0,0
+app.reqservices versioninvalidpartition defaultservice3 ServiceTypeA stateful partition=2 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+app.upload versioninvalidpartition
+provisionapp versioninvalidpartition
+
+upgradeapp fabric:/MyApp invalidpartition Rolling upgrademode=manual errors=ApplicationUpgradeValidationError
+verify
+
+##############################################################
+# Testcase 2.3:
+#   Perform application upgrade failure from 1.1 to invalidpersist
+#   change persist state
+#   fail at preparation stage
+##############################################################
+#
+# Application version invalidpersist
+#
+app.add versioninvalidpersist TestApp invalidpersist
+app.clear versioninvalidpersist
+app.servicepack versioninvalidpersist ServicePackageA version=invalidpersist
+app.servicetypes versioninvalidpersist ServicePackageA ServiceTypeA stateful
+app.servicetypes versioninvalidpersist ServicePackageA ServiceTypeB stateless
+app.codepack versioninvalidpersist ServicePackageA CodeA1 types=ServiceTypeA,ServiceTypeB version=invalidpersist
+
+app.reqservices versioninvalidpersist defaultservice1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 replicarestartwaitduration=7 quorumlosswaitduration=801 standbyreplicakeepduration=88 metrics=MetricA,Low,0,0
+app.reqservices versioninvalidpersist defaultservice1b ServiceTypeB stateless partition=1 instance=1 servicecorrelations=fabric:/MyApp/defaultservice3,affinity defaultmovecost=Low constraint=servicenode==1 placementPolicies=fd:/dc0,requiredDomain
+app.reqservices versioninvalidpersist defaultservicestatic ServiceTypeB stateless partition=1 instance=1
+app.reqservices versioninvalidpersist MySvc1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 placementPolicies=fd:/dc0,requiredDomain quorumlosswaitduration=801
+# defaultservice3/3in10 to create
+app.reqservices versioninvalidpersist defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices versioninvalidpersist defaultservice3in10 ServiceTypeB stateless partition=1 instance=2
+
+app.upload versioninvalidpersist
+provisionapp versioninvalidpersist
+
+upgradeapp fabric:/MyApp invalidpersist Rolling upgrademode=manual errors=ApplicationUpgradeValidationError
+verify
+
+##############################################################
+# Testcase 2.4:
+#   Perform application upgrade failure from 1.1 to invalidpartitionname
+#   change persist state
+#   fail at preparation stage
+##############################################################
+#
+# Application version invalidpartitionname
+#
+app.add versioninvalidpartitionname TestApp invalidpartitionname
+app.clear versioninvalidpartitionname
+app.servicepack versioninvalidpartitionname ServicePackageA version=invalidpartitionname
+app.servicetypes versioninvalidpartitionname ServicePackageA ServiceTypeA stateful persist
+app.servicetypes versioninvalidpartitionname ServicePackageA ServiceTypeB stateless
+app.codepack versioninvalidpartitionname ServicePackageA CodeA1 types=ServiceTypeA,ServiceTypeB version=invalidpartitionname
+
+app.reqservices versioninvalidpartitionname defaultservice1 ServiceTypeA stateful partition=1 replica=2 namedpartition partitionnames=random1
+app.reqservices versioninvalidpartitionname defaultservice1b ServiceTypeB stateless partition=1 instance=1 servicecorrelations=fabric:/MyApp/defaultservice3,affinity defaultmovecost=Low constraint=servicenode==1 placementPolicies=fd:/dc0,requiredDomain
+app.reqservices versioninvalidpartitionname defaultservicestatic ServiceTypeB stateless partition=1 instance=1
+app.reqservices versioninvalidpartitionname MySvc1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 placementPolicies=fd:/dc0,requiredDomain quorumlosswaitduration=801
+# defaultservice3/3in10 to create
+app.reqservices versioninvalidpartitionname defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices versioninvalidpartitionname defaultservice3in10 ServiceTypeB stateless partition=1 instance=2
+
+app.upload versioninvalidpartitionname
+provisionapp versioninvalidpartitionname
+
+upgradeapp fabric:/MyApp invalidpartitionname Rolling upgrademode=manual errors=ApplicationUpgradeValidationError
+verify
+
+##############################################################
+# Testcase 2.5:
+#   Perform application upgrade failure from 1.1 to invalid1
+#   Change ServicePackageActivationMode to ExclusiveProcess
+#   Fail at preparation stage
+##############################################################
+
+#
+# Application version invalid1
+#
+app.add versioninvalid1 TestApp invalid1
+app.clear versioninvalid1
+app.servicepack versioninvalid1 ServicePackageA version=invalid1
+app.servicetypes versioninvalid1 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes versioninvalid1 ServicePackageA ServiceTypeB stateless
+app.codepack versioninvalid1 ServicePackageA CodeA types=ServiceTypeA version=invalid1
+
+app.reqservices versioninvalid1 defaultservice1 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=3 replicarestartwaitduration=20 quorumlosswaitduration=900 standbyreplicakeepduration=90
+app.reqservices versioninvalid1 defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=2 servicePackageActivationMode=ExclusiveProcess replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+app.upload versioninvalid1
+provisionapp versioninvalid1
+
+upgradeapp fabric:/MyApp invalid1 Rolling upgrademode=manual errors=ApplicationUpgradeValidationError
+verify
+
+##############################################################
+# Testcase 3:
+#   Perform application upgrade failure from 1.1 to invalid2
+#   invalid placementConstraints
+#   fail at updating stage. Automatically rollback
+##############################################################
+
+#
+# Application version invalid2
+#
+
+app.add versioninvalid2 TestApp invalid2
+app.clear versioninvalid2
+app.servicepack versioninvalid2 ServicePackageA version=invalid2
+app.servicetypes versioninvalid2 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes versioninvalid2 ServicePackageA ServiceTypeB stateless
+app.codepack versioninvalid2 ServicePackageA CodeA1 types=ServiceTypeA,ServiceTypeB version=invalid2
+
+app.reqservices versioninvalid2 defaultservice1 ServiceTypeA stateful partition=1 replica=2 servicecorrelations=fabric:/MyApp/defaultservice3,affinity minreplicasetsize=1 replicarestartwaitduration=7 quorumlosswaitduration=802 standbyreplicakeepduration=88 metrics=MetricA,Low,0,0
+app.reqservices versioninvalid2 defaultservice1b ServiceTypeB stateless partition=1 instance=1 defaultmovecost=Low constraint=servicenode==1 placementPolicies=fd:/dc0,requiredDomain
+app.reqservices versioninvalid2 MySvc1 ServiceTypeA stateful partition=1 replica=2 minreplicasetsize=2 placementPolicies=fd:/dc0,requiredDomain constraint=AppRPAdminAllowed==true
+app.reqservices versioninvalid2 defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=1 replicarestartwaitduration=8 quorumlosswaitduration=802 standbyreplicakeepduration=80
+
+app.upload versioninvalid2
+provisionapp versioninvalid2
+
+upgradeapp fabric:/MyApp invalid2 Rolling upgrademode=manual
+setrollbackapp fabric:/MyApp 1.1
+verifyupgradeapp fabric:/MyApp
+
+# verify description is reverted
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice1 2
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice1 2
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice3 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice3 2
+
+getservicedescription fabric:/MyApp/defaultservice1 verify replicarestartwaitduration=7 quorumlosswaitduration=801 standbyreplicakeepduration=88
+getservicedescription fabric:/MyApp/defaultservice1b verify
+getservicedescription fabric:/MyApp/MySvc1 verify quorumlosswaitduration=801
+getservicedescription fabric:/MyApp/defaultservice3in10 verify
+
+verify
+
+##############################################################
+# Testcase 4:
+#   Perform application upgrade from 1.1 to 1.2 interruption
+#   update default service can keep retrying
+#   update default service is prior to upgrade UD
+#   rollback to original default service descriptions
+##############################################################
+
+set MaxCommunicationTimeout 30
+
+#
+# Application version 1.2
+#
+app.add version12 TestApp 1.2
+app.clear version12
+app.servicepack version12 ServicePackageA version=1.2
+app.servicetypes version12 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes version12 ServicePackageA ServiceTypeB stateless
+app.codepack version12 ServicePackageA CodeA types=ServiceTypeA version=1.2
+
+app.reqservices version12 defaultservice1 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=3 replicarestartwaitduration=10 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version12 defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=3 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+app.upload version12
+provisionapp version12
+
+updateservice fabric:/MyApp/defaultservice1 Stateful MinReplicaSetSize=1
+
+# Update Service keeps retrying
+addbehavior b1 * * UpdateServiceRequest
+
+# Perform application upgrade from 1.1 to 1.2
+upgradeapp fabric:/MyApp 1.2 Rolling upgrademode=manual
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1 timeout=40 expectTimeout
+removebehavior b1
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice1 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice1 3
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice3 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice3 3
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1
+
+# Rollback update Service keeps retrying
+addbehavior b1 * * UpdateServiceRequest
+
+# Rollback to 1.1, default service description should revert
+rollbackapp fabric:/MyApp
+updateappupgrade fabric:/MyApp upgrademode=auto
+setrollbackapp fabric:/MyApp 1.1 failurereason=Interrupted
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice1 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice1 3
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice3 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice3 3
+
+# Resume rollback update service and wait for retry
+!pause 35
+removebehavior b1
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice1 2
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice1 1
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/MyApp/defaultservice3 3
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/MyApp/defaultservice3 2
+
+verifyupgradeapp fabric:/MyApp
+getservicedescription fabric:/MyApp/defaultservice1 verify replicarestartwaitduration=7 quorumlosswaitduration=801 standbyreplicakeepduration=88
+
+verify
+
+##############################################################
+# Testcase 5:
+#   Perform application upgrade from 1.1 to 1.3
+#   create/delete default service can keep retrying
+#   update upgrade wouldn't break upgrade
+#   No entry point for rollback as soon as delete brings
+#   This test case is at the end since rollback doesn't actually take place
+##############################################################
+
+#
+# Application version 1.3
+#
+app.add version13 TestApp 1.3
+app.clear version13
+app.servicepack version13 ServicePackageA version=1.3
+app.servicetypes version13 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes version13 ServicePackageA ServiceTypeB stateless
+app.codepack version13 ServicePackageA CodeA types=ServiceTypeA version=1.3
+
+app.reqservices version13 defaultservice1 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=3 replicarestartwaitduration=10 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version13 defaultservice3 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=3 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.reqservices version13 defaultservice4 ServiceTypeA stateful partition=1 replica=3 minreplicasetsize=3 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+app.upload version13
+provisionapp version13
+
+addbehavior b1 * * DeleteServiceRequest
+addbehavior b2 * * CreateServiceRequest
+
+upgradeapp fabric:/MyApp 1.3 Rolling upgrademode=auto
+updateappupgrade fabric:/MyApp restart=true
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3
+
+!pause 45
+updateappupgrade fabric:/MyApp restart=false
+removebehavior b2
+
+!pause 45
+rollbackapp fabric:/MyApp
+
+updateappupgrade fabric:/MyApp restart=true upgrademode=auto
+removebehavior b1
+verifyupgradeapp fabric:/MyApp
+
+getservicedescription fabric:/MyApp/defaultservice4 verify replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+query GetApplicationServiceList ApplicationName=fabric:/MyApp ServiceName=fabric:/MyApp/defaultservice1b expectempty=true
+
+-*
+
+!q

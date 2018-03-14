@@ -1,0 +1,70 @@
+#
+# [owner] MMohsin
+#
+# This test covers the scenario where a load balancing movement is generated
+# after upgrade has been started (and hence load balancing is disabled).
+# In theory, this should not happen. However, if there is any scenario
+# which may lead to a similar situation then the FM should be resilient
+# enough to deal this situation.
+#
+
+votes 10 20 30
+fmservice 3 1
+namingservice 1 3 2
+cmservice 3 3
+cleantest
+
+set DummyPLBEnabled true
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 150
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+set DeletedReplicaKeepDuration 3
+
++10
++20
++30
+verify
+
+createservice fabric:/volatile TestStoreServiceType y 1 3 minreplicasetsize=3
+verify
+
++40
++50
+verify
+
+set MaxActionsPerIteration 0
+
+#
+# Prepare and privision for cluster upgrade
+#
+prepareupgradefabric code=4.2.765.0 config=version5
+provisionfabric code=4.2.765.0 config=version5
+
+#
+# Upgrade cluster
+#
+upgradefabric code=4.2.765.0 config=version5 Rolling upgrademode=manual
+
+# Generate a movement while upgrade is in progress
+movesecondary fabric:/volatile 10 40
+
+set MaxActionsPerIteration 500
+
+# Verify that the replica on node 10 is dropped, deleted, and removed
+# after the move-secondary movement
+!waitforstate FM.Replica.IsUp.fabric:/volatile.10 NullReplica
+
+verify
+
+updatefabricupgrade upgrademode=auto
+
+verifyupgradefabric
+
+verify
+
+-*
+
+!q

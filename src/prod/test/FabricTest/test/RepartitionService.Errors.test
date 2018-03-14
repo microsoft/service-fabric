@@ -1,0 +1,81 @@
+votes 10
+cleantest
+
+fmservice 1 1
+cmservice 1 1
+namingservice 1 1 1
+
+set NamingOperationTimeout 15
+set NamingOperationRetryTimeout 60
+
++10
+verify
+
+#
+# Testcase 1:
+#
+# Disallow removing all partitions
+#
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 2 1 persist partitionnames=A,B
+verify
+
+getservicedescription fabric:/test1 verify partitionnames=A,B
+
+updateservice fabric:/test1 Stateful removednames=A,B error=InvalidArgument
+verify
+
+getservicedescription fabric:/test1 verify partitionnames=A,B
+
+#
+# Testcase 2:
+#
+# Disallow adding duplicate partitions
+#
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 2 1 persist partitionnames=A,B
+verify
+
+getservicedescription fabric:/test2 verify partitionnames=A,B
+
+updateservice fabric:/test2 Stateful addednames=A error=InvalidArgument
+verify
+
+getservicedescription fabric:/test2 verify partitionnames=A,B
+
+#
+# Testcase 3:
+#
+# Disallow removing non-existent partitions
+#
+
+createservice fabric:/test3 CalculatorServiceType n 2 1 partitionnames=A,B
+verify
+
+getservicedescription fabric:/test3 verify partitionnames=A,B
+
+updateservice fabric:/test3 Stateful removednames=C error=InvalidArgument
+verify
+
+updateservice fabric:/test3 Stateful removednames=A,C error=InvalidArgument
+verify
+
+getservicedescription fabric:/test3 verify partitionnames=A,B
+
+#
+# Testcase 4:
+#
+# FM does not support adding and removing simultaneously in a single update.
+#
+
+createservice fabric:/test4 CalculatorServiceType n 2 1 partitionnames=A,B
+verify
+
+getservicedescription fabric:/test4 verify partitionnames=A,B
+
+updateservice fabric:/test4 Stateful addednames=X removednames=B error=InvalidArgument
+verify
+
+getservicedescription fabric:/test4 verify partitionnames=A,B
+
+!q

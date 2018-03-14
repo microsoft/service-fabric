@@ -1,0 +1,39 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+#
+# swap primary then drop primary
+#
+
+createname fabric:/test1
+createservice fabric:/test1 AtomicGroupService y 1 3
+verify
+
+call fabric:/test1 60 CreateAtomicGroup             ag1
+
+# this will trigger a rollback
+swapprimary fabric:/test1 60 50
+verify
+
+-50
+verify
+
+-60 
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q

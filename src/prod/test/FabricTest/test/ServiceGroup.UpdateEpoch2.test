@@ -1,0 +1,96 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+##########################################################################
+######## UpdateEpoch using drop replica and swapprimary           ########
+##########################################################################
+createname fabric:/servicegroup0
+
+createservicegroup \
+    fabric:/servicegroup0 SGStatefulServiceFactory y 1 5 \
+    1 \
+    fabric:/servicegroup0#test1 SGStatefulService \
+    init fabric:/servicegroup0#test1 \
+        atomicgroupstateprovider \
+        replicateatomic \
+        nocommit \
+        secondary.onclose.assert.previousEpochLastLsn=5 \
+    endinit \
+    persist \
+    minreplicasetsize=2 
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.20 Secondary
+
+!pause,5
+
+# trigger update epoch
+-60
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.50 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.40 Secondary
+
+!pause,5
+
+# trigger update epoch
+swapprimary fabric:/servicegroup0 50 40
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.40 Primary
+
+!pause,5
+
+# trigger update epoch
+swapprimary fabric:/servicegroup0 40 50
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.50 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.40 Secondary
+
+!pause,5
+
+#trigger update epoch
+-50
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.40 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.30 Secondary
+
+!pause,5
+
+#trigger update epoch
+-40
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.30 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup0.20 Secondary
+
+!pause,5
+
+deleteservicegroup fabric:/servicegroup0
+
+!pause,5
+
+deletename fabric:/servicegroup0
+
+verify
+
+!q

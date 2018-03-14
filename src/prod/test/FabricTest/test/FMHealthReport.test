@@ -1,0 +1,133 @@
+#Test FM system health report
+votes 100
+fmservice 1 1
+cmservice 3 1
+namingservice 1 3 1
+set DummyPLBEnabled true
+set HealthOperationTimeout 5
+set HealthReportSendInterval 3
+set HealthReportRetrySendInterval 5
+set HealthStoreCleanupInterval 1
+set HealthStoreEntityWithoutSystemReportKeptInterval 5
+set UseInternalHealthClient true
+set ReconfigurationTimeLimit 10
+set BuildReplicaTimeLimit 10
+set CreateInstanceTimeLimit 10
+set PlacementTimeLimit 10
+set FullRebuildWaitDuration 5
+set NamingOperationTimeout 10
+cleantest
++100
+!waitforstate FM.Location 100
++200
++300
+verify
+queryhealth partition partitionid=FMService#0 expectedhealthstate=ok
+
+# StartTest -1 target replicas (as many as possible) : regression for BUG 1266150
+addbehavior NoNewInstances * * AddInstance 1.0 Max 0 0
+createname fabric:/statlessAll
+createservice fabric:/statelessAll CalculatorServiceType n 1 -1
+queryhealth service servicename=fabric:/statelessAll expectedhealthstate=error
+removebehavior NoNewInstances
+queryhealth service servicename=fabric:/statelessAll expectedhealthstate=ok
+# EndTest
+
+createname fabric:/stateless
+createservice fabric:/stateless CalculatorServiceType n 1 4
+createname fabric:/stateful
+createservice fabric:/stateful TestStoreServiceType y 1 5
+createname fabric:/stateful2
+createservice fabric:/stateful2 TestStoreServiceType y 1 5 minreplicasetsize=5
+verify
+#Test event for placement stuck
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning "expecteddesc=State:Partition is below target replica or instance count."
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning "expecteddesc=State:Partition is below target replica or instance count."
+queryhealth partition partitionid=fabric:/stateful2#0 expectedhealthstate=error "expecteddesc=State:Partition is below target replica or instance count."
+#Next test build stuck
+addbehavior b1 * * AddInstance
+addbehavior b2 * * AddReplica
++400
+queryhealth node nodeid=400 expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning "expecteddesc=State:Partition is below target replica or instance count."
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning "expecteddesc=State:Partition is below target replica or instance count."
+queryhealth partition partitionid=fabric:/stateful2#0 expectedhealthstate=error "expecteddesc=State:Partition is below target replica or instance count."
++500
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning "expecteddesc=State:Partition is below target replica or instance count."
+removebehavior b1
+removebehavior b2
+verify
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/stateful2#0 expectedhealthstate=ok
+-400
+verify
+#Verify node up/down event
+resethealthclient
+queryhealth node nodeid=400 expectedhealthstate=error
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning "expecteddesc=State:Partition is below target replica or instance count."
++400
++600
+verify
+queryhealth node nodeid=400 expectedhealthstate=ok
+#Test quorum loss
+createname fabric:/test
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist
+verify
+addbehavior b3 * * DoReconfigurationReply
+-600
+resethealthclient
+queryhealth partition partitionid=fabric:/test#0 expectedhealthstate=warning "expecteddesc=State:Partition reconfiguration is taking longer than expected."
+-500
+removebehavior b3
+resethealthclient
+queryhealth partition partitionid=fabric:/test#0 expectedhealthstate=error "expecteddesc=State:Partition is in quorum loss."
++500
+queryhealth partition partitionid=fabric:/test#0 expectedhealthstate=ok
+queryhealth node nodeid=600 expectedhealthstate=error
+queryhealth node nodeid=500 expectedhealthstate=ok
+createname fabric:/test2
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 1 persist
+verify
+queryhealth partition partitionid=fabric:/test2#0 expectedhealthstate=ok
+!var FUID1 FM.FT.PartitionId.fabric:/test2#0
+gfum
+-100
+-*
+fmservice 3 1
+votes 100 200 300
++200
++300
+!waitforstate FM.Node.IsUp.200 true
+resethealthclient
+queryhealth node nodeid=200 expectedhealthstate=ok
+queryhealth node nodeid=300 expectedhealthstate=ok
+queryhealth partition partitionguid=<var.FUID1> expectempty=true
++500
+verify
+queryhealth node nodeid=500 expectedhealthstate=ok
+queryhealth partition partitionguid=<var.FUID1> expectedhealthstate=ok
++100
++600
+verify
+-100 removedata
+verify
+resethealthclient
+queryhealth node nodeid=100 expectedhealthstate=error
+#Test nodestateremoved
+addbehavior b4 * * ReportHealth
+nodestateremoved 100
+queryhealth node nodeid=100 expectedhealthstate=error
+-<FM.Location>
+verify 120 fm
+removebehavior b4
+resethealthclient
+queryhealth node nodeid=100 expectempty=true
+addbehavior b1 * * DeleteReplicaReply
+deleteservice fabric:/test errors=Timeout
+queryhealth partition partitionid=fabric:/test#0 expectedhealthstate=ok "Deletion in progress."
+removebehavior b1
+queryhealth partition partitionid=fabric:/test#0 expectempty=true
+deleteservice fabric:/test errors=UserServiceNotFound
+-*
+!q

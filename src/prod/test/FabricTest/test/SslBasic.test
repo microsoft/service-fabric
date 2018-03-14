@@ -1,0 +1,126 @@
+# This is a ring certificate security test. The SecurityDomain will be set to WinFabricRing.Rings.WinFabricTestDomain.com for this test.
+# For this test to pass, the following certificates need to be installed on the machine:
+#1. CN = WinFabric-Test-SAN1-Alice, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#2. CN = WinFabric-Test-SAN1-Bob, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#3. CN = WinFabric-Test-SAN2-Charlie, SAN = WinFabricRing2.Rings.WinFabricTestDomain.com
+#4. CN = WinFabric-Test-SAN3-Oscar, SAN = WinFabricRing3.Rings.WinFabricTestDomain2.com
+#5. CN = WinFabric-Test-SAN4-Wildcard, SAN = *.Rings.WinFabricTestDomain.com
+#6. CN = WinFabric-Test-SAN5-Wildcard2, SAN = *.WinFabricRing.Rings.WinFabricTestDomain.com
+#7. CN = WinFabric-Test-SAN6-Wildcard3, SAN = *.WinFabricTestDomain.com
+#8. CN = WinFabric-Test-SAN7-Wildcard4, SAN = *.WinFabricTestDomain2.com
+#9. CN = WinFabric-Test-SAN9-Revoked, SAN = WinFabricRing5.Rings.WinFabricTestDomain.com
+#10. CN = WinFabric-Test-Expired
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 10
+cmservice 0 0
+cleantest
+
+set DummyPLBEnabled true
+set DefaultNodeCredentials None
+set ClusterWideCredentials X509:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com,WinFabricRing2.Rings.WinFabricTestDomain.com,WinFabric-Test-SAN9-Revoked:WinFabricRing.Rings.WinFabricTestDomain.com,Client.WinFabricTestDomain.com:WinFabricRing.Rings.WinFabricTestDomain.com,WinFabricRing2.Rings.WinFabricTestDomain.com
+
+# Should enable CRL checking, as revoked certificate will be tested
+!setcfg Security.CrlCheckingFlag=0x40000000
+!setcfg Federation.X509CertChainFlags=0x40000000
+!setcfg CertificateMonitorInterval=10
+!setcfg CertificateHealthReportingInterval=10  
+
+# Open nodes using different certificates but with a common subject alternative name, matching the SecurityDomain
+set OpenTimeout 45 
++10 security=FindByThumbprint,78:12:20:5a:39:d2:23:76:da:a0:37:f0:5a:ed:e3:60:1a:7e:64:bf,My,LocalMachine
++20 security=FindByThumbprint,9dc906b169dc4faffd1697ac781e806790749d2f,My,LocalMachine
++30 security=FindBySubjectName,CN=WinFabric-Test-SAN1-Alice,My,LocalMachine
++40 security=FindBySubjectName,WinFabric-Test-SAN1-Bob,My,LocalMachine
+verify
+
+# Open a node using an expired certificate, which should fail at local credential expiration checking.
++41 error=InvalidCredentials security=FindByThumbprint,bc21ae9f0b88cf6ea9b4d6233f972a6063b225a9,Root,LocalMachine
+verify
+
+
+# Open a node using a revoked certificate, which should fail.
+set OpenTimeout 10 
++42 error=Timeout security=FindByThumbprint,9f1b740d5afc49ebcda962ddef65bc05b9572a7c,My,LocalMachine
+verify
+
+
+# Set client credentials to WinFabric-Test-SAN1-Alice which should work
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Alice:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com
+
+# verify that creating a service works
+createservice fabric:/test1 TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+
+# verify that a "locally" connected client works at all gateways
+resolve fabric:/test1 1 nodeconfig=10
+resolve fabric:/test1 2 nodeconfig=20
+resolve fabric:/test1 3 nodeconfig=30
+resolve fabric:/test1 1 nodeconfig=40
+
+# Set client credentials to WinFabric-Test-SAN6-Wildcard3 which should work
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN6-Wildcard3:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com
+createname fabric:/a
+
+# Set client credentials to WinFabric-Test-SAN1-Bob and allowed server name to "Invalid"
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Bob:EncryptAndSign:Invalid
+createname fabric:/b ServerAuthenticationFailed 
+
+# Set client credentials to WinFabric-Test-SAN7-Wildcard4 which should not work
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN7-Wildcard4:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com
+createname fabric:/c ConnectionDenied 
+
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Alice:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com
+
+nameexists fabric:/b false
+nameexists fabric:/c false
+
+# WinFabric-Test-SAN2-Charlie should be able to join since it is one of the alternative domains
+set OpenTimeout 45 
++50 security=FindByThumbprint,5e4a0ac68604f17a406012093218f524dba8d162,My,LocalMachine
+
+# Nodes with certs for different domains should not be able to join
+set OpenTimeout 10
++59 error=Timeout security=FindByThumbprint,3cc9671c7a3e011857b73858bc11198f1d45c3d6,My,LocalMachine
+verify
+
+#1 A node using the proper wildcard certificate should also be able to join
+set OpenTimeout 45 
++60 security=FindByThumbprint,fbbfa23ad2abde1017de526379200700346687f1,My,LocalMachine
+verify
+
+# These wildcards should not work however
+set OpenTimeout 10 
++70 error=Timeout security=FindByThumbprint,b22b3d4cfed5facc5a41db9fc95aff9633f349af,My,LocalMachine
++80 error=Timeout security=FindByThumbprint,5fdf1116b15ee687cb14c7ae3d67b166aad64f80,My,LocalMachine
++90 error=Timeout security=FindByThumbprint,416e15a1b238ded37c0bf1f0877e25eb986e4515,My,LocalMachine
+verify
+
+# Open a node with invalid security settings and open should fail with InvalidCredentials
++101 error=CertificateNotFound security=FindByThumbprint,12345678902d3f11f78a0ac32469aeff30dbffa9,My,LocalMachine
+
+verify
+
+# Open a node with no security settings and open should fail
+set ClusterWideCredentials None
+set OpenTimeout 10 
++110 error=Timeout
+verify
+
+# Open a node with invalid security provider and open should fail with InvalidCredentialType
+set ClusterWideCredentials InavalidCredentialType:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com:None:None
++120 error=InvalidCredentialType security=FindByThumbprint,CN=WinFabric-Test-SAN1-Alice,My,LocalMachine
+verify
+
+# Open a node with invalid protection level and open should fail with InvalidProtectionLevel
+set ClusterWideCredentials X509:InvalidProtectionLevel:WinFabricRing.Rings.WinFabricTestDomain.com:None:None
++130 error=InvalidProtectionLevel security=FindByThumbprint,CN=WinFabric-Test-SAN1-Alice,My,LocalMachine
+verify
+
+# Delay to prevent kernel lease agent reusing in different security setting
+-*
+!pause 30
+
+!q

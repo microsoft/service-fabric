@@ -1,0 +1,109 @@
+#
+# This is a regresstion test for defect 1342728.
+#
+# The test induces multiple reconfigurations and full rebuilds to end up in a state where
+# the primary is InBuild and no reconfiguration is going on. The correct behavior is that
+# the FM should send a DoReconfiguration message in that state.
+#
+
+set DummyPLBEnabled true
+votes 10
+cleantest
+
+fmservice 1 1
+cmservice 0 0
+namingservice 1 3 1
+
+set ExpectedClusterSize 2
+set FullRebuildWaitDuration 1
+
++10
++20
+verify
+
+# Verify the location of FM primary
+!waitforstate FM.Replica.Role.FMService.20 Primary
+
++30
++40
++50
++60
+verify
+
+# Create a persisted stateful service
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4
+verify
+
+# Verify the location of service replicas
+!waitforstate FM.Replica.Role.fabric:/persisted.60 Primary
+!waitforstate FM.Replica.Role.fabric:/persisted.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted.30 Secondary
+
+# Add another node (to host the FM primary after failover)
++70
+verify
+
+# Do not let the reconfiguration complete
+addbehavior b1 * * GetLSNReply
+
+-60
+!waitforstate FM.Replica.IsUp.fabric:/persisted.60 false
+
+-40
+!waitforstate FM.Replica.IsUp.fabric:/persisted.40 false
+
+-30
+!waitforstate FM.Replica.IsUp.fabric:/persisted.30 false
+
+# The FailoverUnit should now be in quorum loss
+!waitforstate FM.FT.QuorumLost.fabric:/persisted true
+
+# Add the old primary back
++60
+!waitforstate FM.Replica.IsUp.fabric:/persisted.60 true
+
+# Let the reconfiguration proceed. It will still not complete because of not having quorum.
+removebehavior b1
+
+# Wait for the replica on node 60 to get built
+!waitforstate RA.FT.ReconfigStage.fabric:/persisted.50 Phase2_Catchup
+!waitforstate RA.Replica.State.fabric:/persisted.50.60 RD
+
+# Remove the node with FM primary to trigger full rebuild
+-20
+
+# Verify the location of new FM primary
+!waitforstate FM.Replica.Role.FMService.70 Primary
+
+# The new primary should be ready
+!waitforstate FM.Replica.Role.fabric:/persisted.50 Primary
+!waitforstate FM.Replica.State.fabric:/persisted.50 Ready
+
+# The old primary should also be ready (because it completed the build)
+!waitforstate FM.Replica.Role.fabric:/persisted.60 Secondary
+!waitforstate FM.Replica.State.fabric:/persisted.60 Ready
+
+# Trigger another rebuild with the new primary being down
+# and the old replica being up.
+addbehavior b1 * * NodeUp
+addbehavior b2 * * ReplicaUp
+addbehavior b3 * * ChangeNotification
+-70
+-50
++40
++30
+!wait
+removebehavior b3
+removebehavior b2
+removebehavior b1
+
+# The FailoverUnit should recover and be in a stable state
+!waitforstate FM.FT.QuorumLost.fabric:/persisted false
+!waitforstate FM.FT.Reconfig.fabric:/persisted false
+
+verify
+
+-*
+
+!q

@@ -1,0 +1,214 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "BasicStatefulActorKvs",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BasicStatefulActorKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorEvents",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorEventsKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActGCtestonKvs",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorGCKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActReminderstestonKvs",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "RemindersKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActdirtystatehandlerKVStests",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DirtyActorStateKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorFailovertestKVS",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorFailoverKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Actorreentrancytest",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ReentrancyKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "GranularStateActorKvs",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "GranularStateActorKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryStatefulKVStest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQuerywithPagingStatefulKVStest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryPagingKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatefulActorKVStest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DeleteStatefulActorKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BackupRestoreActorKVS",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BackupRestoreActorKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ReminderContinuityKVS",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ReminderContinuityActorKvs2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

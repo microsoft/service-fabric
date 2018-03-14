@@ -1,0 +1,60 @@
+##############################################################################################################################
+# Test for Bug Repro - 1427038 
+# [owner - sumukhs]
+# Summary :
+#   UpdateEpoch on the Secondary is waiting on draining replication operations.
+#   However, the replica is not able to pump due to an error in the localstore. It reports fault, but that is not useful as the 
+#   replica ReOpen waits for the UpdateEpoch to complete
+#   The reconfiguration is stuck for ever in GetLSN
+#
+#
+#   Service1 exercises the reportfault.transient code path
+#   Service2 exercises the reportfault.permanent code path
+##############################################################################################################################
+
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+
++10
++20
++30
+verify
++40
++50
+verify 
+
+# This test requires for services to ACK operations on the secondary
+createservice fabric:/test1 TestStoreServiceType y 1 3 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+createservice fabric:/test2 TestStoreServiceType y 1 3 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+verify
+# Block the pumping of replication operations on secondary node - 30
+setsignal 30 fabric:/test1 pump.replication.block
+setsignal 30 fabric:/test2 pump.replication.block
+
+clientput fabric:/test1 10 10Data1
+!wait
+clientput fabric:/test2 10 10Data1
+!wait
+
+# Inject a failure in the replication pump of node 30
+injectfailure 30 fabric:/test1 pump.replication.reportfault.transient
+injectfailure 30 fabric:/test2 pump.replication.reportfault.permanent
+
+-50
+!wait
++50 
+
+# After resetting this signal, the injected failure is surfaced and the service reports fault
+# Without the fix for this bug, the report fault does not help in re-opening the replica because the RAP waits
+# for the updateepoch call to complete on being cancelled and hence the partition is stuck in the GetLSN phase
+resetsignal 30 fabric:/test1 pump.replication.block 
+resetsignal 30 fabric:/test2 pump.replication.block 
+
+verify
+!q

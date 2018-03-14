@@ -1,0 +1,160 @@
+# [owner:abhic]
+#
+# This test validates ReportLoad scenarios
+#
+
+set DummyPLBEnabled true
+set SendLoadReportInterval 1
+set HealthOperationTimeout 5
+set HealthReportSendInterval 3
+set HealthReportRetrySendInterval 5
+set HealthStoreCleanupInterval 1
+set PeriodicStateCleanupScanInterval 1
+set UserReplicaRestartWaitDuration 300
+
+votes 10 20 30
+cmservice 3 2
+namingservice 1 3 2
+cleantest
+
++10
++20
++30
+verify
+
++40
+verify
+
+createname fabric:/statefulpersisted
+createservice fabric:/statefulpersisted TestPersistedStoreServiceType y 1 2 persist metrics=memory,Medium,95,25,disk,High,950,250
+
+createname fabric:/stateless
+createservice fabric:/stateless CalculatorServiceType n 1 3 metrics=memory,Low,33,0
+
+verify
+
+!waitforstate FM.Replica.Role.fabric:/statefulpersisted.40 Primary
+!waitforstate FM.Replica.Role.fabric:/statefulpersisted.30 Secondary
+
+!waitforstate FM.Replica.State.fabric:/stateless.20 Ready
+!waitforstate FM.Replica.State.fabric:/stateless.30 Ready
+!waitforstate FM.Replica.State.fabric:/stateless.40 Ready
+
+set MaxNumberOfLoadReportsPerMessage 10
+
+# Disable the load persistence at the FM
+set PeriodicLoadPersistInterval 9999
+
+# RA and FM batching
+reportload fabric:/statefulpersisted 40 memory=100,disk=1000
+reportload fabric:/statefulpersisted 40 memory=200,disk=900
+reportload fabric:/statefulpersisted 40 memory=150,disk=1050
+reportload fabric:/statefulpersisted 30 memory=20
+reportload fabric:/statefulpersisted 30 memory=30
+reportload fabric:/stateless 20 memory=10
+reportload fabric:/stateless 30 memory=20
+reportload fabric:/stateless 40 memory=30
+
+# Enable the load persistence at the FM
+set PeriodicLoadPersistInterval 1
+
+# Wait for the load reports to be persisted at the FM
+!pause 5
+
+# Report duplicate load values, FM should skip the update
+reportload fabric:/statefulpersisted 40 memory=150,disk=1050
+reportload fabric:/statefulpersisted 30 memory=30
+reportload fabric:/stateless 30 memory=30
+
+# Wait to ensure that the duplicate load reports are not persisted
+!pause 5
+
+verifyloadvalue fabric:/statefulpersisted memory primary 150
+verifyloadvalue fabric:/statefulpersisted memory secondary 30 30
+verifyloadvalue fabric:/statefulpersisted disk primary 1050
+verifyloadvalue fabric:/stateless memory none 30 30
+
+# Report new load values, FM should update again
+reportload fabric:/statefulpersisted 40 disk=2000
+reportload fabric:/statefulpersisted 30 memory=50
+reportload fabric:/stateless 20 memory=50
+
+# Wait for the load reports to be persisted at the FM
+!pause 5
+
+verifyloadvalue fabric:/statefulpersisted memory primary 150
+verifyloadvalue fabric:/statefulpersisted memory secondary 50 30
+verifyloadvalue fabric:/statefulpersisted disk primary 2000
+verifyloadvalue fabric:/stateless memory none 50 20
+
+# Delete existing services
+deleteservice fabric:/statefulpersisted
+deleteservice fabric:/stateless
+verify
+
+# Create new services
+createservice fabric:/statefulpersisted TestPersistedStoreServiceType y 1 2 persist metrics=memory,Medium,95,25,disk,High,950,250
+createservice fabric:/stateless CalculatorServiceType n 1 3 metrics=memory,Low,33,0
+verify
+
+# Report load for the new services
+reportload fabric:/statefulpersisted 30 memory=50
+reportload fabric:/statefulpersisted 40 memory=150,disk=2000
+reportload fabric:/stateless 20 memory=50
+
+# Wait for the load reports to be persisted at the FM
+!pause 5
+
+# Verify load for new services
+verifyloadvalue fabric:/statefulpersisted memory primary 150
+verifyloadvalue fabric:/statefulpersisted memory secondary 50 30
+verifyloadvalue fabric:/statefulpersisted disk primary 2000
+verifyloadvalue fabric:/stateless memory none 50 20
+
+# Failover the FM primary
+-30
+!wait
+
+!waitforstate FM.Replica.State.fabric:/stateless.10 Ready
+!waitforstate FM.Replica.State.fabric:/stateless.20 Ready
+!waitforstate FM.Replica.State.fabric:/stateless.40 Ready
+
++30
+verify
+
+!waitforstate FM.Replica.Role.fabric:/statefulpersisted.40 Primary
+!waitforstate FM.Replica.Role.fabric:/statefulpersisted.30 Secondary
+
+# Verify that the new FM has successfully read the persisted load values
+verifyloadvalue fabric:/statefulpersisted memory primary 150
+verifyloadvalue fabric:/statefulpersisted memory secondary 50 30
+verifyloadvalue fabric:/statefulpersisted disk primary 2000
+verifyloadvalue fabric:/stateless memory none 50 20
+
+# Report new load values, FM should update again
+reportload fabric:/statefulpersisted 30 disk=2001
+reportload fabric:/statefulpersisted 40 memory=51
+reportload fabric:/stateless 20 memory=51
+
+# Wait for the load reports to be persisted at the FM
+!pause 5
+
+verifyloadvalue fabric:/statefulpersisted memory primary 51
+verifyloadvalue fabric:/statefulpersisted memory secondary 50 30
+verifyloadvalue fabric:/statefulpersisted disk secondary 2001 30
+verifyloadvalue fabric:/stateless memory none 51 20
+
+# Report load values again, FM should update again
+reportload fabric:/statefulpersisted 30 disk=2002
+reportload fabric:/statefulpersisted 40 memory=52
+reportload fabric:/stateless 20 memory=52
+
+# Wait for the load reports to be persisted at the FM
+!pause 5
+
+verifyloadvalue fabric:/statefulpersisted memory primary 52
+verifyloadvalue fabric:/statefulpersisted memory secondary 50 30
+verifyloadvalue fabric:/statefulpersisted disk secondary 2002 30
+verifyloadvalue fabric:/stateless memory none 52 20
+
+!q

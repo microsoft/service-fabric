@@ -1,0 +1,71 @@
+{
+    "RequiredParameters": [ "TaskName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "ConfigName": "",
+        "Machines": "",
+        "CleanupType": "",
+        "CredentialType": "",
+        "SetupTimeout": "900",
+        "ExecutionTimeout": "70000",
+        "CleanupTimeout": "2100"
+    },
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPTYPE] [SETUPARGS] ",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabricTestRunner.exe",
+            "Arguments": " /auto:true /load:[TASKNAME] /vmsslinuxubuntu /serviceName:[AZURERESOURCES] %/TestParamFile:[CONFIGNAME]% %/security:[CREDENTIALTYPE]% /notestdir:true",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
+            "WorkingDirectory": ""
+        },
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\PerfTestResultValidator.exe",
+            "Arguments": "\"[PERFTESTTASKNAME]\" [EXPECTEDRESULTSFILENAME]",
+            "WorkingDirectory": "[BINS]",
+            "MaxExecutionTimeInSeconds": "300"
+        }
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+         {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabric.TestInfra.PerfUploader.exe",
+            "Arguments": "",
+            "WorkingDirectory": "[BINS]",
+            "MaxExecutionTimeInSeconds": "300"
+        },    
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.xml$,.*\\.json$,.*\\.man$"
+    }
+
+}

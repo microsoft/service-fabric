@@ -1,0 +1,16 @@
+votes 10
+fmservice 7 1
+cmservice 0 0
+namingservice 3 1 1
+cleantest
++10
+verify
+createname fabric:/test1
+#leave the slash on the add service call
+createservice fabric:/test1 CalculatorServiceType n 0 1
+verify
+resolve fabric:/test1 false
+resolve fabric:/test1 20 error=InvalidServicePartition
+deleteservice fabric:/test1
+verify
+!q

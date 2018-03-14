@@ -1,0 +1,27 @@
+LIBRARY FabricFaultAnalysisService
+EXPORTS
+    CreateFabricFaultAnalysisServiceAgent
+    wmemcmp
+    wmemchr
+    wmemmove
+    wmemcpy
+    wmemset
+    wcslen
+    wcsnlen
+    wcscmp
+    wcsicmp
+    wcscpy
+    wcsncmp
+    wcsncpy
+    wcschr
+    wcsstr
+    wcsspn
+    wcscspn
+    wcslwr
+    wcslwr_s
+    wcsncat
+    wcsrchr
+    wcsrev
+    wcscasecmp
+    wcstod
+

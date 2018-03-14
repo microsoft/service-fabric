@@ -1,0 +1,1 @@
+EndpointA;https;Input;30000;;;;CodeA;1.1.1.1,EndpointB;https;Internal;30001;text;;;;2.2.2.2

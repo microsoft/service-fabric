@@ -1,0 +1,157 @@
+###############################################################################
+# Test: RGSubcoreBasic.Test
+# Owners: nipuzovi, mocolic, anuragg
+# This test verifies the flow of information manifest to PLB and Hosting subsystems.
+# Focus is on subcore allocations.
+# Does not verify that Hosting is enforcing the actual limits.
+###############################################################################
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+set DefragmentationMetrics MEMORY true
+#use fast balancing
+set PLBActionRetryTimes 30
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange to 0
+
+# Do not check for available resources and do not enforce RG on the nodes
+# This is to be able to execute the test on any machine, regardless 
+set LocalResourceManagerTestMode true
+
+# We need to be able to move replicas while in upgrade
+set AllowConstraintCheckFixesDuringApplicationUpgrade true
+
++10 ud=UD1 cap=ServiceFabric:/_CpuCores:1,ServiceFabric:/_MemoryInMB:6000
++20 ud=UD2 cap=ServiceFabric:/_CpuCores:1,ServiceFabric:/_MemoryInMB:6000
++30 ud=UD3 cap=ServiceFabric:/_CpuCores:1,ServiceFabric:/_MemoryInMB:6000
+verify
+
+###############################################################################
+#
+# Create several applications of the same type.
+#
+###############################################################################
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+# ServicePackageA - 0.5 cores, 2000 MB memory, Service Types: ServiceTypeA1, ServiceTypeA2
+app.servicepack versionTC1 ServicePackageA version=v1 resources=CPU,0.5
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA2 stateful persist
+app.codepack versionTC1 ServicePackageA CodeA1 types=ServiceTypeA1 version=v1 rgpolicies=MemoryInMB;1000
+app.codepack versionTC1 ServicePackageA CodeA2 types=ServiceTypeA2 version=v1 rgpolicies=MemoryInMB;1000
+# ServicePackageB - 0.314 cores, 4000 MB Memory, Service Types: ServiceTypeB
+app.servicepack versionTC1 ServicePackageB version=v1 resources=CPU,0.314,MemoryInMB,4000
+app.servicetypes versionTC1 ServicePackageB ServiceTypeB stateful persist
+app.codepack versionTC1 ServicePackageB CodeB types=ServiceTypeB version=v1
+app.upload versionTC1
+provisionapp versionTC1
+
+# App - version2
+app.add versionTC2 TestAppTC1 vTC2 versionTC1
+app.clear versionTC2
+# ServicePackageA - 0.9 cores, 1500 MB memory, Service Types: ServiceTypeA1, ServiceTypeA2
+app.servicepack versionTC2 ServicePackageA version=v2 resources=CPU,0.9
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA2 stateful persist
+app.codepack versionTC2 ServicePackageA CodeA1 types=ServiceTypeA1 version=v2 rgpolicies=MemoryInMB;1000
+app.codepack versionTC2 ServicePackageA CodeA2 types=ServiceTypeA2 version=v2 rgpolicies=MemoryInMB;500
+# ServicePackageB - 0.25 cores, 3000 MB Memory, Service Types: ServiceTypeB
+app.servicepack versionTC2 ServicePackageB version=v2 resources=CPU,0.25,MemoryInMB,3000
+app.servicetypes versionTC2 ServicePackageB ServiceTypeB stateful persist
+app.codepack versionTC2 ServicePackageB CodeB types=ServiceTypeB version=v2
+app.upload versionTC2
+provisionapp versionTC2
+
+
+# Create the application.
+createapp fabric:/app1 TestAppTC1 vTC1
+verify
+
+#########################################################################################
+#
+# Test case1: Create two services of the same type, they should go to same host.
+#            There should be no load increase on the node when second service is created.
+#
+#########################################################################################
+
+# app1 - small service, 1 partition, 3 replicas
+createservice fabric:/app1/smallservice ServiceTypeA1 y 1 3 persist metrics=dummy,Low,0,0 appname=fabric:/app1 standbyreplicakeepduration=0
+verify
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 1 0.5
+verifynodeload nodeid:20 servicefabric:/_CpuCores 1 0.5
+verifynodeload nodeid:30 servicefabric:/_CpuCores 1 0.5
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 0.5
+verifyresourceonnode 20 servicefabric:/_CpuCores 0.5
+verifyresourceonnode 30 servicefabric:/_CpuCores 0.5
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 2000
+
+verifyplbandlrmsync
+
+verifyclusterload servicefabric:/_CpuCores 2 1 1 -1 1.5 0.5 0.5
+verifyclusterload servicefabric:/_MemoryInMB 6000 2000 2000 -1 6000.0 2000.0 2000.0
+
+#########################################################################################
+#
+# Test case2: Create third exclusive service from the same application and check node and cluster load.
+#             Loads should be increased as it's exclusive service package.
+#
+#########################################################################################
+
+# app1 - big service, 1 partition, 3 replicas
+createservice fabric:/app1/bigservice ServiceTypeB y 1 3 persist appname=fabric:/app1 standbyreplicakeepduration=0
+verify
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 1 0.814
+verifynodeload nodeid:20 servicefabric:/_CpuCores 1 0.814
+verifynodeload nodeid:30 servicefabric:/_CpuCores 1 0.814
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 6000
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 6000
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 6000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 0.814
+verifyresourceonnode 20 servicefabric:/_CpuCores 0.814
+verifyresourceonnode 30 servicefabric:/_CpuCores 0.814
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 6000
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 6000
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 6000
+
+verifyplbandlrmsync
+
+verifyclusterload servicefabric:/_CpuCores 3 1 1 -1 2.442 0.814 0.814
+verifyclusterload servicefabric:/_MemoryInMB 18000 6000 6000 -1 18000.0 6000.0 6000.0
+
+# delete big service
+deleteservice fabric:/app1/bigservice
+verify
+
+verifyclusterload servicefabric:/_CpuCores 2 1 1 -1 1.5 0.5 0.5
+verifyclusterload servicefabric:/_MemoryInMB 6000 2000 2000 -1 6000.0 2000.0 2000.0
+
++40 ud=UD4
+verify
+
+#
+# Upgrade application from version vTC1 to vTC2
+#
+upgradeapp fabric:/app1 vTC2 Rolling
+verifyupgradeapp fabric:/app1
+verify
+
+verifyclusterload servicefabric:/_CpuCores 3 1 0 -1 2.7 0.9 0.0
+verifyclusterload servicefabric:/_MemoryInMB 4500 1500 0
+
+verifyplbandlrmsync
+
+!q

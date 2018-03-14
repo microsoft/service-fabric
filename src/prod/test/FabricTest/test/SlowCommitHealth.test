@@ -1,0 +1,34 @@
+#
+# This test validates slow commit health reporting
+#
+votes 10
+fmservice 1 1
+cmservice 1 1
+namingservice 1 1 1
+set HealthOperationTimeout 5
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+set QueryOperationRetryCount 10
+set EnableSlowCommitTest true
+cleantest
++10
+verify
+
+!pause 5
+
+queryhealthlist partitions servicename=fabric:/System/FailoverManagerService expectedstates=ok:1
+queryhealthlist partitions servicename=fabric:/System/NamingService expectedstates=ok:1
+queryhealthlist partitions servicename=fabric:/System/ClusterManagerService expectedstates=ok:1
+
+createname fabric:/perftest
+perftest 0 nameCount=100 name=fabric:/perftest subname=subname_
+perftest 1 propertiesCount=100 name=fabric:/perftest subname=subname_
+perftest 2 serviceCount=100 name=fabric:/perftest subname=subname_
+
+!pause 5
+
+queryhealthlist partitions servicename=fabric:/System/FailoverManagerService expectedstates=warning:1
+queryhealthlist partitions servicename=fabric:/System/NamingService expectedstates=warning:1
+queryhealthlist partitions servicename=fabric:/System/ClusterManagerService expectedstates=warning:1
+
+!q

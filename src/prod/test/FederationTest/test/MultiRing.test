@@ -1,0 +1,47 @@
+!updatecfg Federation.ExternalRingPingInterval=5
+votes 0@r0:SeedNode:11001 0@r1:SeedNode:11002
+clearticket
++0
++20
+verify
+cr r1
++0
+verify
++30
++50
+verify
+routereq 30 20@r0
+routereq 30 5@r0
+verify
+cr r0
+-0
+verify
+cr r1
+routereq 30 20@r0
+verify
+show 30
+cr r0
+-20
+ticketstore 0 0 0
++0
+verify
+cr r1
+routereq 30 20@r0
+verify
+cr r0
+routeone 0 100@r1
+verify
+!updatecfg Votes= Votes.0@r0=SeedNode,127.0.0.1:11001 Votes.0@r1=SeedNode,127.0.0.1:11002 Votes.0@r2=SeedNode,127.0.0.1:11003
+broadcastreliable 0 *
+cr r2
++0
+verify
+cr r0
+verify
+cr r2
++200
+verify
+cr r1
+broadcastreliable 30 *
+verify
+!q

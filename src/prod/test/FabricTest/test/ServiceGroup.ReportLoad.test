@@ -1,0 +1,63 @@
+votes 10 20 30
+cmservice 0 0
+namingservice 3 3 2
+set LoadBalancingEnabled false
+cleantest
++10
++20
++30
+verify
+
+###############################################
+######## Stateless Reportload        ##########
+###############################################
+createname fabric:/servicegroup3
+createservicegroup fabric:/servicegroup3 SGStatelessServiceFactory n 1 2 \
+    2 \
+    fabric:/servicegroup3#test1 SGStatelessService \
+    fabric:/servicegroup3#test2 SGStatelessService \
+    init fabric:/servicegroup3#test1 \
+        reportload \
+    endinit \
+    init fabric:/servicegroup3#test2 \
+        reportload \
+    endinit
+
+verify
+
+!pause,10
+
+verify
+
+deleteservicegroup fabric:/servicegroup3
+deletename fabric:/servicegroup3
+
+verify
+
+###############################################
+######## Stateful Reportload         ##########
+###############################################
+createname fabric:/servicegroup4
+createservicegroup fabric:/servicegroup4 SGStatefulServiceFactory y 1 2 \
+    2 \
+    fabric:/servicegroup4#test1 SGStatefulService \
+    fabric:/servicegroup4#test2 SGStatefulService \
+    init fabric:/servicegroup4#test1 \
+        primary.reportmetrics \
+    endinit \
+    init fabric:/servicegroup4#test2 \
+        primary.reportmetrics \
+    endinit
+
+verify
+
+!pause,10
+
+verify
+
+deleteservicegroup fabric:/servicegroup4
+deletename fabric:/servicegroup4
+
+verify
+
+!q

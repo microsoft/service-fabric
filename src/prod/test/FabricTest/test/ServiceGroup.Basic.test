@@ -1,0 +1,103 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+#########
+createname fabric:/servicegroup0
+createservicegroup fabric:/servicegroup0 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup0#test1 SGStatefulService fabric:/servicegroup0#test2 SGStatefulService fabric:/servicegroup0#test3 SGStatefulService persis
+verify
+getservicegroupdescription fabric:/servicegroup0
+getservicegroupdescription fabric:/servicegroup0#test1
+getservicegroupdescription fabric:/servicegroup0#test2
+getservicegroupdescription fabric:/servicegroup0#test3
+getservicedescription fabric:/servicegroup0#test1
+getservicedescription fabric:/servicegroup0#test2
+getservicedescription fabric:/servicegroup0#test3
+getservicedescription fabric:/servicegroup0#test4 NameNotFound
+getservicedescription fabric:/servicegroup0 AccessDenied
+deleteservicegroup fabric:/servicegroup0
+deletename fabric:/servicegroup0
+
+#########
+createname fabric:/servicegroup1
+createservicegroup fabric:/servicegroup1 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup1#test1 SGStatefulServiceNCC fabric:/servicegroup1#test2 SGStatefulServiceNCC fabric:/servicegroup1#test3 SGStatefulServiceNCC persist
+verify
+deleteservicegroup fabric:/servicegroup1
+deletename fabric:/servicegroup1
+
+#########
+createname fabric:/servicegroup2
+createservicegroup fabric:/servicegroup2 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup2#test1 SGStatefulServiceECC fabric:/servicegroup2#test2 SGStatefulServiceECC fabric:/servicegroup2#test3 SGStatefulServiceECC persist
+verify
+deleteservicegroup fabric:/servicegroup2
+deletename fabric:/servicegroup2
+
+#########
+createname fabric:/servicegroup3
+createservicegroup fabric:/servicegroup3 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup3#test1 SGStatefulServiceNCS fabric:/servicegroup3#test2 SGStatefulServiceNCS fabric:/servicegroup3#test3 SGStatefulServiceNCS persist
+verify
+deleteservicegroup fabric:/servicegroup3
+deletename fabric:/servicegroup3
+
+#########
+createname fabric:/servicegroup4
+createservicegroup fabric:/servicegroup4 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup4#test1 SGStatefulServiceECS fabric:/servicegroup4#test2 SGStatefulServiceECS fabric:/servicegroup4#test3 SGStatefulServiceECS persist
+verify
+deleteservicegroup fabric:/servicegroup4
+deletename fabric:/servicegroup4
+
+#########
+createname fabric:/servicegroup5
+createservicegroup fabric:/servicegroup5 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup5#test1 SGStatefulService fabric:/servicegroup5#test2 SGStatefulServiceECC fabric:/servicegroup5#test3 SGStatefulServiceNCS persist
+verify
+deleteservicegroup fabric:/servicegroup5
+deletename fabric:/servicegroup5
+
+#########
+createname fabric:/servicegroup6
+createservicegroup fabric:/servicegroup6 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup6#test1 SGStatefulServiceNCC fabric:/servicegroup6#test2 SGStatefulServiceECS fabric:/servicegroup6#test3 SGStatefulService persist
+verify
+deleteservicegroup fabric:/servicegroup6
+deletename fabric:/servicegroup6
+
+verify
+
+#############################################################################################################################
+# After close call methods on partition and statereplicator objects and validate that they fail with COR_E_INVALIDOPERATION #
+#############################################################################################################################
+
+createname fabric:/servicegroup7
+createservicegroup fabric:/servicegroup7 SGStatefulServiceFactory y 1 3 \
+    3 \
+    fabric:/servicegroup7#test1 SGStatefulService \
+    fabric:/servicegroup7#test2 SGStatefulService \
+    fabric:/servicegroup7#test3 SGStatefulService \
+    init fabric:/servicegroup7#test1 \
+        atomicgroupstateprovider \
+        replicateatomic \
+        after.close.check \
+    endinit \
+    init fabric:/servicegroup7#test3 \
+        atomicgroupstateprovider \
+        replicateatomic \
+        after.close.check \
+    endinit \
+    persist
+
+verify
+deleteservicegroup fabric:/servicegroup7
+!pause,15
+deletename fabric:/servicegroup7
+verify
+
+!q

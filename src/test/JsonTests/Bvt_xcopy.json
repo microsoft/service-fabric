@@ -1,0 +1,53 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Mgmt_SetupEntryPoint_XCopy",
+      "Type": "V2_DllTest",
+      "Owners": "maburlik,vaishnav,vipulm",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt",
+        "DllPath": "ms.test.winfabric.cases.dll",
+        "ClassName": "SecurityTestCases",
+        "TaskName": "Security_KerberosPrepare",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Backup-CIT_XCopy_InstallScripts",
+      "Type": "V2_ScriptTest",
+      "Owners": "maburlik,rsinha,ratando",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "Backup-CIT.test",
+        "ExecutionTimeout": "3600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "VerifyAzureInstallUsingXCopyTest",
+      "Type": "Azure_ScriptTest",
+      "Owners": "maburlik,rsinha",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "VerifyAzureInstallUsingXCopy.test",
+        "ExecutionTimeout": "14400",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

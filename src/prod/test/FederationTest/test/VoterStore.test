@@ -1,0 +1,136 @@
+#Use in-memory transport so that we can delay a message after the sender is down
+!updatecfg Federation.InMemoryTransportEnabled=true
+!updatecfg Federation.VoterStoreBootstrapWaitInterval=10
+!updatecfg Federation.VoterStoreRetryInterval=1
+votes 100:SeedNode:12001 200:SeedNode:12002 300:SeedNode:12003 400:SeedNode:12004 500:SeedNode:12005
+clearticket
+addbehavior b1 200 * VoterStoreIntroduceRequest
+addbehavior b2 200 * VoterStoreIntroduceReply
+addbehavior b3 200 * VoterStoreConfigQueryRequest
+addbehavior b4 300 * VoterStoreIntroduceRequest
+addbehavior b5 300 * VoterStoreIntroduceReply
+addbehavior b6 300 * VoterStoreConfigQueryRequest
++100
++300
++500
+verify -st
+!state store.phase.100 I
+addbehavior b7 400 * VoterStoreIntroduceReply
++400
+verify -st
+!state store.phase.100 I
+removebehavior b1
+removebehavior b2
+removebehavior b3
+removebehavior b4
+removebehavior b5
+removebehavior b6
+!pause,10
+!state store.phase.100 I
+addbehavior b8 400 * VoterStoreBootstrapReply
+removebehavior b7
+!pause,5
+!state store.phase.100 s
+!waitforstate store.phase.100 B
+!waitforstate store.phase.300 s
+!waitforstate store.phase.400 s
+!waitforstate store.phase.500 s
+addbehavior b9 * * VoterStoreWriteRequest
+removebehavior b8
+verify -t
+-100
+verify -t
+addbehavior b10 * * VoterStoreSyncRequest
++200
+verify -st
++100
+verify -st
+!pause,5
+-400
+-300
+-500
+removebehavior b9
+removebehavior b10
++500
++300
++400
+verify
+readvoter 200 k1 0 0
+verify
+writevoter 300 k1 1
++600
+verify
+readvoter 600 k1 1
+verify
+-500
++500
+-100
+-300
+verify
+writevoter 600 k1 1 0 allowConflict
+verify
++100
+addbehavior b12 * * VoterStoreProgressReply
+-200
+!pause,5
+!state store.phase.400 p
+writevoter 600 k2 2
+-400
+removebehavior b12
+verify
++300
+verify
+readvoter 600 k1 1
+readvoter 600 k2 2
+verify
+-300
++300
+verify
+writevoter 300 k1 2
+verify
+readvoter 600 k1 2
+verify
+!updatecfg Votes.100=SeedNode,127.0.0.1:12001 Votes.200=SeedNode,127.0.0.1:12002 Votes.300=SeedNode,127.0.0.1:12003 Votes.500=SeedNode,127.0.0.1:12005 Votes.600=SeedNode,127.0.0.1:12006
+!waitforstate store.phase.600 S
+verify
+addbehavior b13 * * VoterStoreSyncRequest
+writevoter 600 k1 3
+!pause,5
+writevoter 100 k1 4
+removebehavior b13
+verify
+readvoter 600 k1 4
+verify
+addbehavior b13 * * VoterStoreSyncRequest
+writevoter 500 k1 5
+!pause,5
+writevoter 500 k1 6
+-100
+-300
+-600
+removebehavior b13
+verify
+readvoter 500 k1 6
+writevoter 500 k1 6
+writevoter 500 k1 5
+verify
+-*
+clearticket
+addbehavior b14 100 * VoterStoreSyncRequest 1 30 1
+addbehavior b15 200 * VoterStoreJoin
+addbehavior b16 300 * VoterStoreJoin
++100
++200
++300
++500
+verify -st
+!pause,15
+addbehavior b17 200 500 VoterStoreBootstrapRequest
+-100
+!pause,25
+removebehavior b14
+removebehavior b15
+removebehavior b16
+removebehavior b17
+verify
+!q

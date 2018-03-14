@@ -1,0 +1,174 @@
+{
+  "Default": {
+  },
+  "Tests": [
+      {
+            "Name": "DevClusterSetupSecure",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentTest.ps1",
+                "Arguments": "-Secure $True -RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+       },
+       {
+            "Name": "DevClusterSetupNonSecure",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentTest.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "SetLocalClusterReadyOneNode",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentTestSetLocalClusterReady.ps1",
+                "Arguments": "-OneNode -RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "SetLocalClusterReadyFiveNode",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentTestSetLocalClusterReady.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "DevClusterSetupRuntimeBlockSDK",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentRuntimeBlockSDK.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "DevClusterSetupSDKBlockRuntime",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentSDKBlockRuntime.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "DevClusterSetupSDKNoJsonFile",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentSDKNoJsonInstallRuntime.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "DevClusterSetupRuntimeNoJsonFile",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentRuntimeNoJsonInstallSDK.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "DevClusterSetupRuntimeNoVersion",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentRuntimeNoVersionBlockSDK.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "DevClusterSetupSDKNoVersion",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentSDKNoVersionBlockRuntime.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "DevClusterSetupRuntimeHighSDKLow",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentRuntimeHighInstallSDKLow.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        },
+        {
+            "Name": "DevClusterSetupSDKRuntimeDowngrade",
+            "Type": "PowershellTest",
+            "Owners": "amanbha,harahma,taxi,liphigao",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+                "SetupTimeout": "600",
+                "PSScriptName": "WinFabricTest\\ClusterDeploymentSDKRuntimeDowngrade.ps1",
+                "Arguments": "-RuntimeFolder [BINS]\\ServiceFabricSDKDrop\\sfExe -SDKFolder [BINS]\\ServiceFabricSDKDrop",
+                "ExecutionTimeout": "3600",
+                "CleanupType": "XCopy",
+                "CleanupTimeout": "2100"
+            }
+        }
+  ]
+}

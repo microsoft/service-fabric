@@ -1,0 +1,175 @@
+#
+# [owner] MMicic
+#
+# This test case covers scenarios with application upgrade and SF upgrade while
+# all partitions use quorum based FD/UD replica distribution among domains.
+#
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 150
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+set DeletedReplicaKeepDuration 1
+set QuorumBasedReplicaDistributionPerUpgradeDomains true
+set QuorumBasedReplicaDistributionPerFaultDomains true
+set BalancingDelayAfterNewNode 1
+
++10 ud=UD2 fd=fd:/dc0/dc00/r0/x0
++20 ud=UD3 fd=fd:/dc0/dc00/r0/x1
+
++30 ud=UD1 fd=fd:/dc0/dc00/r1/x0
++40 ud=UD3 fd=fd:/dc0/dc00/r1/x1/y0
++50 ud=UD1 fd=fd:/dc0/dc00/r1/x1/y1
+
++60 ud=UD2 fd=fd:/dc0/dc00/r2/x0
+
++70 ud=UD1 fd=fd:/dc0/dc00/r3
+
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+
+app.servicepack version10 StatelessServicePackage version=1.0
+app.servicepack version10 StatefulVolatileServicePackage version=1.0
+app.servicepack version10 StatefulPersistedServicePackage version=1.0
+
+app.servicetypes version10 StatelessServicePackage StatelessServiceType stateless
+app.servicetypes version10 StatefulVolatileServicePackage StatefulVolatileServiceType stateful
+app.servicetypes version10 StatefulPersistedServicePackage StatefulPersistedServiceType stateful persist
+
+app.codepack version10 StatelessServicePackage CodeA1 types=StatelessServiceType version=1.0
+app.codepack version10 StatefulVolatileServicePackage CodeB1 types=StatefulVolatileServiceType version=1.0
+app.codepack version10 StatefulPersistedServicePackage CodeB1 types=StatefulPersistedServiceType version=1.0
+
+app.upload version10
+provisionapp version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1
+app.clear version11
+
+app.servicepack version11 StatelessServicePackage version=1.1
+app.servicepack version11 StatefulVolatileServicePackage version=1.1
+app.servicepack version11 StatefulPersistedServicePackage version=1.1
+
+app.servicetypes version11 StatelessServicePackage StatelessServiceType stateless
+app.servicetypes version11 StatefulVolatileServicePackage StatefulVolatileServiceType stateful
+app.servicetypes version11 StatefulPersistedServicePackage StatefulPersistedServiceType stateful persist
+
+app.codepack version11 StatelessServicePackage CodeA1 types=StatelessServiceType version=1.1
+app.codepack version11 StatefulVolatileServicePackage CodeB1 types=StatefulVolatileServiceType version=1.1
+app.codepack version11 StatefulPersistedServicePackage CodeB1 types=StatefulPersistedServiceType version=1.1
+
+app.upload version11
+provisionapp version11
+
+# Create application version 1.0
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+# Create services
+createservice fabric:/MyApp/Volatile1  StatefulVolatileServiceType y 2 1 appname=fabric:/MyApp minreplicasetsize=1
+createservice fabric:/MyApp/Volatile21 StatefulVolatileServiceType y 2 2 appname=fabric:/MyApp minreplicasetsize=1
+createservice fabric:/MyApp/Volatile22 StatefulVolatileServiceType y 2 2 appname=fabric:/MyApp minreplicasetsize=2
+createservice fabric:/MyApp/Volatile3  StatefulVolatileServiceType y 2 3 appname=fabric:/MyApp minreplicasetsize=2
+createservice fabric:/MyApp/Volatile42 StatefulVolatileServiceType y 2 4 appname=fabric:/MyApp minreplicasetsize=2
+createservice fabric:/MyApp/Volatile43 StatefulVolatileServiceType y 2 4 appname=fabric:/MyApp minreplicasetsize=3
+createservice fabric:/MyApp/Volatile5  StatefulVolatileServiceType y 2 5 appname=fabric:/MyApp minreplicasetsize=2
+createservice fabric:/MyApp/Volatile63 StatefulVolatileServiceType y 2 6 appname=fabric:/MyApp minreplicasetsize=3
+createservice fabric:/MyApp/Volatile64 StatefulVolatileServiceType y 2 6 appname=fabric:/MyApp minreplicasetsize=4
+createservice fabric:/MyApp/Volatile7  StatefulVolatileServiceType y 2 7 appname=fabric:/MyApp minreplicasetsize=2
+
+createservice fabric:/MyApp/Persisted1  StatefulPersistedServiceType y 2 1 appname=fabric:/MyApp minreplicasetsize=1 persist
+createservice fabric:/MyApp/Persisted21 StatefulPersistedServiceType y 2 2 appname=fabric:/MyApp minreplicasetsize=1 persist
+createservice fabric:/MyApp/Persisted22 StatefulPersistedServiceType y 2 2 appname=fabric:/MyApp minreplicasetsize=2 persist
+createservice fabric:/MyApp/Persisted3  StatefulPersistedServiceType y 2 3 appname=fabric:/MyApp minreplicasetsize=2 persist
+createservice fabric:/MyApp/Persisted42 StatefulPersistedServiceType y 2 4 appname=fabric:/MyApp minreplicasetsize=2 persist
+createservice fabric:/MyApp/Persisted43 StatefulPersistedServiceType y 2 4 appname=fabric:/MyApp minreplicasetsize=3 persist
+createservice fabric:/MyApp/Persisted5  StatefulPersistedServiceType y 2 5 appname=fabric:/MyApp minreplicasetsize=2 persist
+createservice fabric:/MyApp/Persisted63 StatefulPersistedServiceType y 2 6 appname=fabric:/MyApp minreplicasetsize=3 persist
+createservice fabric:/MyApp/Persisted64 StatefulPersistedServiceType y 2 6 appname=fabric:/MyApp minreplicasetsize=4 persist
+createservice fabric:/MyApp/Persisted7  StatefulPersistedServiceType y 2 7 appname=fabric:/MyApp minreplicasetsize=2 persist
+
+createservice fabric:/MyApp/Stateless1  StatelessServiceType n 2 1 appname=fabric:/MyApp
+createservice fabric:/MyApp/Stateless2  StatelessServiceType n 2 2 appname=fabric:/MyApp
+createservice fabric:/MyApp/Stateless3  StatelessServiceType n 2 3 appname=fabric:/MyApp
+createservice fabric:/MyApp/Stateless4  StatelessServiceType n 2 4 appname=fabric:/MyApp
+createservice fabric:/MyApp/Stateless5  StatelessServiceType n 2 5 appname=fabric:/MyApp
+createservice fabric:/MyApp/Stateless6  StatelessServiceType n 2 6 appname=fabric:/MyApp
+createservice fabric:/MyApp/Stateless7  StatelessServiceType n 2 7 appname=fabric:/MyApp
+createservice fabric:/MyApp/Stateless-1 StatelessServiceType n 2 -1 appname=fabric:/MyApp
+
+verify
+
+
+# wait for 2 balancing rounds
+!pause 15
+
+
+#
+# Perform application upgrade from version 1.0 to 1.1
+#
+upgradeapp fabric:/MyApp 1.1 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1
+
+upgradeappmovenext fabric:/MyApp
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2
+
+upgradeappmovenext fabric:/MyApp
+verifyupgradeapp fabric:/MyApp upgradedomains=UD1,UD2,UD3
+
+verify
+
+
+# wait for 2 balancing rounds
+!pause 15
+
+
+#
+# Prepare and privision for cluster upgrade
+#
+prepareupgradefabric code=5.6.765.0 config=version5
+provisionfabric code=5.6.765.0 config=version5
+
+#
+# Upgrade cluster
+#
+upgradefabric code=5.6.765.0 config=version5 Rolling upgrademode=manual
+
+verifyupgradefabric upgradedomains=UD1
+
+upgradefabricmovenext
+verifyupgradefabric upgradedomains=UD1,UD2
+
+upgradefabricmovenext
+verifyupgradefabric upgradedomains=UD1,UD2,UD3
+
+verifyupgradefabric
+
+verify
+
+
+# wait for 2 balancing rounds
+!pause 15
+
+
+verify
+
+-*
+
+!q

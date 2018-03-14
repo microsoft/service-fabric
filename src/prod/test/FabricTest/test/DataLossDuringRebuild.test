@@ -1,0 +1,62 @@
+set DummyPLBEnabled true
+set FMPlacementConstraints fmservice==true
+
+votes 40 50 60
+cmservice 0 0
+namingservice 1 3 1
+set FullRebuildWaitDuration 1
+fmservice 1 1
+set UserReplicaRestartWaitDuration 99999
+cleantest
+
+# Use placement constraint to make sure 40 is chosen as primary
+
++40 nodeprops=fmservice:true
++50 
+!wait
+
+!waitforstate FM.Replica.Role.FMService.40 Primary
+
+verify
+
++60 nodeprops=fmservice:true
+verify
+
++70
++80
+verify
+
+# Create a volatile stateful service
+createname fabric:/volatile
+createservice fabric:/volatile TestStoreServiceType y 1 3
+
+# Create a persisted stateful service
+createname fabric:/persisted
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 3 persist
+verify
+
+# Disable NodeDown notifications to FM{M}
+addbehavior b1 * * ChangeNotification
+
+-40
+-70 removedata
+-80 removedata
+
+# Start the full rebuild
+removebehavior b1
+
+!waitforstate FM.Replica.Role.FMService.60 Primary
+
+setsignal 60 fabric:/persisted replicator.beginondataloss.block
+
+nodestateremoved 70
+nodestateremoved 80
+
+waitforsignalhit 60 fabric:/persisted replicator.beginondataloss.block
+resetsignal 60 fabric:/persisted replicator.beginondataloss.block
+
+verify
+
+-*
+
+!q

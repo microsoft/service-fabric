@@ -1,0 +1,93 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+#
+# Replicate and rollback (swap primary) simple atomic group
+#
+
+createname fabric:/test1
+createservice fabric:/test1 AtomicGroupService y 1 3
+verify
+
+call fabric:/test1 60 CreateAtomicGroup             ag1
+call fabric:/test1 60 ReplicateAtomicGroupOperation ag1 ag1 ag1redoInfo ag1undoInfo
+
+# this will trigger a rollback
+swapprimary fabric:/test1 60 50
+verify
+
+call fabric:/test1 60 VerifyState ag1 rolledback ag1redoInfo ag1undoInfo
+call fabric:/test1 50 VerifyState ag1 rolledback ag1redoInfo ag1undoInfo
+call fabric:/test1 40 VerifyState ag1 rolledback ag1redoInfo ag1undoInfo
+
+deleteservice fabric:/test1
+verify
+
+#
+# Replicate and rollback (failover) simple atomic group
+#
+
+createname fabric:/test2
+createservice fabric:/test2 AtomicGroupService y 1 3
+verify
+
+call fabric:/test2 60 CreateAtomicGroup             ag1
+call fabric:/test2 60 ReplicateAtomicGroupOperation ag1 ag1 ag1redoInfo ag1undoInfo
+
+# this will trigger a rollback
+-60
+verify
+
+call fabric:/test2 50 VerifyState ag1 rolledback ag1redoInfo ag1undoInfo
+call fabric:/test2 40 VerifyState ag1 rolledback ag1redoInfo ag1undoInfo
+
+deleteservice fabric:/test2
+verify
+
+#
+# Create and rollback (swap primary) simple atomic group
+#
+
+createname fabric:/test3
+createservice fabric:/test3 AtomicGroupService y 1 3
+verify
+
+call fabric:/test3 50 CreateAtomicGroup             ag1
+
+# this will trigger a rollback
+swapprimary fabric:/test3 50 40
+verify
+
+deleteservice fabric:/test3
+verify
+
+#
+# Create and rollback (failover) simple atomic group
+#
+
+createname fabric:/test4
+createservice fabric:/test4 AtomicGroupService y 1 3
+verify
+
+call fabric:/test4 50 CreateAtomicGroup             ag1
+
+# this will trigger a rollback
+-50
+verify
+
+deleteservice fabric:/test4
+verify
+
+!q

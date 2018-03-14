@@ -1,0 +1,72 @@
+set GlobalTicketLeaseDuration 60
+votes 0 10 20
+clearticket
++0
++20
+verify
++30
++40
++50
++60
+verify
++70
++80
++90
+verify
++100
++200
++300
+verify
++400
++500
++600
+verify
++700
++800
++900
+verify
++a00
++b00
++c00
+verify
++d00
++e00
++f00
+verify
+addbehavior BlockAll
+abort 200
+abort 300
+abort 400
+abort 500
+abort 600
+abort 700
+abort 800
+removebehavior BlockAll
+verify
++200
++300
++400
++500
++600
++700
++800
+verify
+addbehavior BlockAll
+abort 100
+abort 200
+abort 300
+abort 400
+abort 500
+abort 600
+abort 700
+abort 800
+abort 900
+removebehavior BlockAll
+!pause,40
+-20
++20
+verify 600
+!pause,60
++100
+verify
+!q

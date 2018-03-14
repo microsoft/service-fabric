@@ -1,0 +1,187 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set NamingServiceChangePollInterval 30
+
++10
++20
++30
+verify
++40
++50
++60
++70
++80
++90
+verify
+
+#
+# Add a persisted service.  It will be placed on 90,80,70,60.
+#
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 4 persist
+verify
+
+###########################################
+## Case 1: Callback is called after reconfiguration
+###########################################
+createclient c1 nodeconfig=10
+!pause,2
+resolveusingclient c1 fabric:/test1 30 cache=cache1 
+verifycachedserviceresolution c1 cache1 true
+
+registercallback c1 cb1 fabric:/test1 30 
+waitforcallback c1 cb1
+swapprimary fabric:/test1 90 70
+waitforcallback c1 cb1
+
+verifycachedserviceresolution c1 cache1 false
+removecachedserviceresolution c1 cache1
+
+# Resolve without previous value; the cached value brought by the notification should be used
+resolveusingclient c1 fabric:/test1 30 cache=cache2
+verifycachedserviceresolution c1 cache2 true
+
+unregistercallback c1 cb1
+deleteclient c1
+
+
+###########################################
+## Case 2: Test Refresh
+###########################################
+createclient c2 nodeconfig=20
+!pause,2
+
+resolveusingclient c2 fabric:/test1 30 cache=cache1 
+verifycachedserviceresolution c2 cache1 true
+
+swapprimary fabric:/test1 70 80
+verify
+
+!pause,5
+resolveusingclient c2 fabric:/test1 30 cache=cache1 
+
+resolveusingclient c2 fabric:/test1 30 cache=cache2 
+verifycachedserviceresolution c2 cache2 true
+verifycachedserviceresolution c2 cache1 true
+
+removecachedserviceresolution c2 cache1
+removecachedserviceresolution c2 cache2
+
+deleteclient c2
+
+###########################################
+## Case 3: Test resolvewithevents command
+###########################################
+
+# 
+# Register for notification with wrong partition key:
+# No entry in the cache, go to gateway and return error
+# 
+resolvewithevents fabric:/test1 false InvalidServicePartition
+
+# 
+# Register for notification for existent service, get addresses
+#
+resolvewithevents fabric:/test1 0
+resolvewithevents fabric:/test1 20
+resolvewithevents fabric:/test1 90
+
+createname fabric:/auth
+createname fabric:/auth/svc0
+verify
+
+# 
+# Register for notification for non-existent service
+#
+resolvewithevents fabric:/auth/svc0 2 UserServiceNotFound
+
+# 
+# Create service and register multiple callbacks for different keys belonging to 
+# the same partition and to different partitions.
+# All handler should receive the address.
+# 
+createservice fabric:/auth/svc0 CalculatorServiceType n 2 5
+verify
+resolvewithevents fabric:/auth/svc0 20
+resolvewithevents fabric:/auth/svc0 21
+resolvewithevents fabric:/auth/svc0 60
+resolvewithevents fabric:/auth/svc0 90
+
+# 
+# Delete service and receive error
+#
+deleteservice fabric:/auth/svc0 
+verify
+
+resolvewithevents fabric:/auth/svc0 20 UserServiceNotFound
+resolvewithevents fabric:/auth/svc0 21 UserServiceNotFound
+resolvewithevents fabric:/auth/svc0 60 UserServiceNotFound
+resolvewithevents fabric:/auth/svc0 90 UserServiceNotFound
+
+###########################################
+## Case 4: Create, delete and re-create a service,
+## and wait for callback to be invoked
+###########################################
+
+##
+## Use a client that didn't have a previously registered callback
+##
+
+createclient c3 nodeconfig=40
+!pause,2
+
+#
+# Delete service using  gateway on node 20
+#
+deleteservice fabric:/test1 nodeconfig=20
+verify
+
+registercallback c3 cb3 fabric:/test1 30
+waitforcallback c3 cb3 error=UserServiceNotFound
+
+# Gateway on 10 has old PSD entry,
+# which must be removed when the service is deleted
+createclient c3-1 nodeconfig=10
+!pause,2
+registercallback c3-1 cb3-1 fabric:/test1 30
+waitforcallback c3-1 cb3-1 error=UserServiceNotFound
+
+#
+# Re-create service. It will be placed on 90, 80, 70, 60
+#
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 4 persist
+verify
+
+waitforcallback c3 cb3
+waitforcallback c3-1 cb3-1 
+
+swapprimary fabric:/test1 90 70
+waitforcallback c3 cb3
+waitforcallback c3-1 cb3-1 
+verify
+
+##
+## Use a client that had a previously registered callback
+##
+
+createclient c4 nodeconfig=10
+registercallback c4 cb4 fabric:/test1 30
+waitforcallback c4 cb4
+
+swapprimary fabric:/test1 70 80
+waitforcallback c4 cb4
+
+unregistercallback c3 cb3
+unregistercallback c3-1 cb3-1
+unregistercallback c4 cb4
+
+deleteclient c3
+deleteclient c3-1
+deleteclient c4
+
+!q

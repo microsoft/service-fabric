@@ -1,0 +1,204 @@
+votes 10 20 30
+set LoadBalancingEnabled true
+set DeletedReplicaKeepDuration 3
+# Service creation cannot be done with hard FD constraint and following node distribution across FDs
+set FaultDomainConstraintPriority 1
+
+cleantest
+cmservice 3 1
+namingservice 1 3 2
++10 nodeprops=StringProperty:TestString1,NumericProperty:10.0 cap=CPU:10,MEMORY:10,DISK:1 fd=fd:/dc0/r0
+
++20 nodeprops=StringProperty:TestString2,NumericProperty:20.0 cap=CPU:10,MEMORY:1,DISK:10 fd=fd:/dc0/r1
+
++30 nodeprops=StringProperty:TestString1,NumericProperty:30.0 cap=CPU:1,MEMORY:1,DISK:1 fd=fd:/dc1/r0
+
++40 nodeprops=StringProperty:TestString2,NumericProperty:40.0 cap=CPU:1,MEMORY:1,DISK:10 fd=fd:/dc1/r1
+
++50 nodeprops=StringProperty:TestString2,NumericProperty:50.0 cap=CPU:1,MEMORY:10,DISK:1 fd=fd:/dc2/r1
+
+verify
+
+createname fabric:/test1
+# Scenario 1, Dynamic placement constraint
+createservice fabric:/test1 TestStoreServiceType y 1 2 constraint=NumericProperty<21
+!pause 5
+gfum
+!waitforstate FM.Replica.Role.fabric:/test1.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Primary|Secondary
+
+
+# now change constraint
+updateservice fabric:/test1 Stateful constraint=NumericProperty>31
+!pause 5
+gfum
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.50 Primary|Secondary
+# changed it back
+
+updateservice fabric:/test1 Stateful constraint=NumericProperty<21
+
+!pause 5
+gfum
+!waitforstate FM.Replica.Role.fabric:/test1.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Primary|Secondary
+
+# Scenario 2, Dynamic Metrics
+createname fabric:/test2
+createservice fabric:/test2 TestStoreServiceType y 1 2 metrics=CPU,High,2,2
+!pause 5
+!waitforstate FM.Replica.Role.fabric:/test2.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.20 Primary|Secondary
+# change to memory
+updateservice fabric:/test2 Stateful metrics=MEMORY,High,2,2
+!pause 5
+gfum
+!waitforstate FM.Replica.Role.fabric:/test2.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.50 Primary|Secondary
+# change to disk
+updateservice fabric:/test2 Stateful metrics=DISK,High,2,2
+!pause 5
+gfum
+!waitforstate FM.Replica.Role.fabric:/test2.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.40 Primary|Secondary
+
+# Scenario 3, Dynamic Placement Policies
+createname fabric:/test3
+createservice fabric:/test3 TestStoreServiceType y 1 2 placementPolicies=fd:/dc0,requiredDomain
+!pause 5
+!waitforstate FM.Replica.Role.fabric:/test3.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.20 Primary|Secondary
+updateservice fabric:/test3 Stateful placementPolicies=fd:/dc1,requiredDomain
+!pause 5
+!waitforstate FM.Replica.Role.fabric:/test3.30 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.40 Primary|Secondary
+updateservice fabric:/test3 Stateful placementPolicies=fd:/dc0,requiredDomain
+!pause 5
+!waitforstate FM.Replica.Role.fabric:/test3.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.20 Primary|Secondary
+
+# Scenario 4, Dynamic Affinity
+createname fabric:/test4
+createservice fabric:/test4 TestStoreServiceType y 1 2 servicecorrelations=fabric:/test1,affinity
+!pause 5
+!waitforstate FM.Replica.Role.fabric:/test4.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test4.20 Primary|Secondary
+gfum
+updateservice fabric:/test4 Stateful servicecorrelations=fabric:/test2,affinity
+!pause 5
+!waitforstate FM.Replica.Role.fabric:/test4.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test4.40 Primary|Secondary
+
+#clear previous services
+deleteservice fabric:/test1
+deleteservice fabric:/test2
+deleteservice fabric:/test3
+deleteservice fabric:/test4
+!pause 5
+
+# Scenario 5, clear placement constraint
+createservice fabric:/test5 TestStoreServiceType y 1 5 constraint=NumericProperty<21
+!waitforstate FM.Replica.Role.fabric:/test5.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.30 NullReplica
+!waitforstate FM.Replica.Role.fabric:/test5.40 NullReplica
+!waitforstate FM.Replica.Role.fabric:/test5.50 NullReplica
+!pause 5
+#clear constraint
+updateservice fabric:/test5 Stateful constraint=
+!pause 5
+!waitforstate FM.Replica.Role.fabric:/test5.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.30 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.40 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.50 Primary|Secondary
+getservicedescription fabric:/test5
+
+# Scenario 6, Clear placement policy
+createservice fabric:/test6 TestStoreServiceType y 1 5 placementPolicies=fd:/dc9,requiredDomain
+!waitforstate FM.Replica.Role.fabric:/test6.10 NullReplica
+!waitforstate FM.Replica.Role.fabric:/test6.20 NullReplica
+!waitforstate FM.Replica.Role.fabric:/test6.30 NullReplica
+!waitforstate FM.Replica.Role.fabric:/test6.40 NullReplica
+!waitforstate FM.Replica.Role.fabric:/test6.50 NullReplica
+!pause 5
+updateservice fabric:/test6 Stateful placementPolicies=
+!pause 5
+#after clear placement policies, this service is placed on all nodes.
+!waitforstate FM.Replica.Role.fabric:/test6.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.30 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.40 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test6.50 Primary|Secondary
+getservicedescription fabric:/test6
+
+# Scenario 7, Clear metrics
+createservice fabric:/test7 TestStoreServiceType y 1 5 metrics=CPU,High,2,2
+!pause 5
+updateservice fabric:/test7 Stateful metrics=
+!pause 5
+#after clear metrics, this service can be placed on all nodes!q
+!waitforstate FM.Replica.Role.fabric:/test7.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.30 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.40 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.50 Primary|Secondary
+getservicedescription fabric:/test7
+
+# Scenario 8, Clear affinity
+createservice fabric:/test8 TestStoreServiceType y 1 1 servicecorrelations=fabric:/test7,affinity constraint=NumericProperty>51
++60 nodeprops=StringProperty:TestString2,NumericProperty:60.0 cap=CPU:1,MEMORY:10,DISK:1 fd=fd:/dc2/r1
+!waitforstate FM.Replica.Role.fabric:/test8.60 Primary
+!pause 5
+updateservice fabric:/test8 Stateful servicecorrelations=
+!pause 5
++70 nodeprops=StringProperty:TestString2,NumericProperty:70.0 cap=CPU:1,MEMORY:10,DISK:1 fd=fd:/dc2/r1
+createservice fabric:/test9 TestStoreServiceType y 1 1 constraint=NumericProperty>61
+# fabric:/test8 still stays in 60 because affinity is cleared
+!waitforstate FM.Replica.Role.fabric:/test9.70 Primary
+!waitforstate FM.Replica.Role.fabric:/test8.60 Primary
+getservicedescription fabric:/test8
+
+# Scenario 9, Attempt to create affinity chain
+createservice fabric:/test10 CalculatorServiceType n 0 1
+createservice fabric:/test11 CalculatorServiceType n 0 1 servicecorrelations=fabric:/test10,affinity
+# Cannot create service with affinity chain
+createservice fabric:/test12 CalculatorServiceType n 0 1 servicecorrelations=fabric:/test11,affinity errors=ServiceAffinityChainNotSupported
+# Cannot update service to have affinity chain neither
+createservice fabric:/test12 CalculatorServiceType n 0 1
+updateservice fabric:/test12 Stateless servicecorrelations=fabric:/test11,affinity error=ServiceAffinityChainNotSupported
+# Force update of service in PLB
+plbupdateservice fabric:/test12 affinity=fabric:/test11 force=true
+# There should be health error
+!pause 17
+# Update the correlations back to none, and expect health state back to OK
+updateservice fabric:/test12 Stateless servicecorrelations=
+!pause 17
+queryhealth service servicename=fabric:/test12 expectedhealthstate=ok
+deleteservice fabric:/test10
+deleteservice fabric:/test11
+deleteservice fabric:/test12
+
+# Scenario 10, Update Metrics for stateless service
+# Covering a bug 6103425: Update Stateless Service should update secondary load entries internally instead of primary load entries
+createservice fabric:/test13 CalculatorServiceType n 2 2 constraint=NumericProperty<21
+!pause 5
+updateservice fabric:/test13 Stateless metrics=Metric1,High,2,0
+verifyclusterload Metric1 8 4 0 0
+verifynodeload nodeid:10 Metric1 4
+verifynodeload nodeid:20 Metric1 4
+deleteservice fabric:/test13
+
+createservice fabric:/test14 CalculatorServiceType n 2 2 constraint=NumericProperty<21 metrics=CPU,High,4,0
+!pause 5
+verifyclusterload CPU 16 8 0 0
+verifynodeload nodeid:10 CPU 8
+verifynodeload nodeid:20 CPU 8
+!pause 5
+updateservice fabric:/test14 Stateless metrics=CPU,High,2,0
+verifyclusterload CPU 8 4 0 0
+verifynodeload nodeid:10 CPU 4
+verifynodeload nodeid:20 CPU 4
+deleteservice fabric:/test14
+
+!q

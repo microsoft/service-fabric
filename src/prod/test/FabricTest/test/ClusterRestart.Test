@@ -1,0 +1,109 @@
+votes 10 20 30
+cleantest
+fmservice 5 1
+cmservice 3 3
+namingservice 1 3 1
+
+set DummyPLBEnabled true
+
++10
++20
++30
+verify
+
++40
++50
+verify
+
+# Create some services
+createservice fabric:/stateless CalculatorServiceType n 1 3
+createservice fabric:/volatile TestStoreServiceType y 1 3
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 3 persist
+verify
+
+################################################################################
+# Scenario 1: Not all nodes come up after restart, and the system has to go
+#             through a rebuild
+################################################################################
+
+addbehavior b1 * * ChangeNotification
+addbehavior b2 * * ReplicaUp
+-50
+-40
+-30
+-20
+-10
+!wait
+removebehavior b1
+removebehavior b2
+
+!pause 1
+clearticket
+
+set FullRebuildWaitDuration 5
+
++10
++20
+!wait
+
+!waitforstate FM.FT.IsInRebuild.NamingService false
+
++30
++40
++50
+verify
+
+set FullRebuildWaitDuration 3600
+
+################################################################################
+# Scenario 2: All nodes go down at once (power failure) and come back in the
+#             wrong version
+################################################################################
+
+-50
+-40
+-30
+-20
+-10
+!wait
+
+!pause 1
+clearticket
+
++10 version=1.0.960.0:config1
++20 version=1.0.960.0:config1
++30 version=1.0.960.0:config1
++40 version=1.0.960.0:config1
++50 version=1.0.960.0:config1
+
+# Because the nodes come back in the wrong version, they will not be able to
+# join the system. Verify that all the nodes are marked as down by the FM.
+
+!waitforstate FM.Node.IsUp.10 false
+!waitforstate FM.Node.IsUp.20 false
+!waitforstate FM.Node.IsUp.30 false
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate FM.Node.IsUp.50 false
+
+# After restarting with the correct version, the nodes should be able to join
+# the system.
+
+-50
+-40
+-30
+-20
+-10
+!wait
+
+!pause 1
+clearticket
+
++10 version=1.0.960.0:__default__
++20 version=1.0.960.0:__default__
++30 version=1.0.960.0:__default__
++40 version=1.0.960.0:__default__
++50 version=1.0.960.0:__default__
+
+verify
+
+!q

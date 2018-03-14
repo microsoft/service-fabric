@@ -1,0 +1,197 @@
+#
+# Checks cluster health in different scenarions regarding application type health evaluation.
+# Health reporting happens directly through HM, bypassing health client for simplicity.
+#
+votes 10 20 30
+
+cmservice 3 1
+namingservice 3 1 1
+fmservice 6 1
+set DummyPLBEnabled true
+set ConstraintCheckEnabled false
+set HealthOperationTimeout 30
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+set QueryOperationRetryDelay 1
+set ReportHealthThroughHMPrimary true
+
+cleantest
+
++10 ud=ud0
++20 ud=ud0
++30 ud=ud0
++40 ud=ud1
++50 ud=ud2
++60 ud=ud3
+verify
+
+# Wait for system reports to arrive at HM
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:6;apps-ok:1
+
+#
+# Create 12 dummy applications with no app type set
+#
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks0 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks2 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks3 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks4 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks5 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks6 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks7 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks8 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks9 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks10 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks11 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+
+# Check cluster health with no app type policies
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:6;apps-ok:13
+
+# Report error against some of the apps
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks0 sequencenumber=2 healthstate=error
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks10 sequencenumber=2 healthstate=error
+queryhealth cluster expectedhealthstate=error expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,0,12
+
+#
+# Check cluster health with app type policies and no app types set.
+#
+
+# Health policy with no app types
+!string jsonpolicy0 {"ConsiderWarningAsError":false,"MaxPercentUnhealthyNodes":0,"MaxPercentUnhealthyApplications":17}
+
+# Health policy with strict policies in AT1 and AT2
+!string jsonpolicy1 {"ConsiderWarningAsError":false,"MaxPercentUnhealthyNodes":0,"MaxPercentUnhealthyApplications":17,"ApplicationTypeHealthPolicyMap":[{"Key":"AT1","Value":0},{"Key":"AT2","Value":0}]}
+
+# Health policy with strict policy for AT1 (AT2 evaluated with global policy)
+!string jsonpolicy2 {"ConsiderWarningAsError":false,"MaxPercentUnhealthyNodes":0,"MaxPercentUnhealthyApplications":17,"ApplicationTypeHealthPolicyMap":[{"Key":"AT1","Value":0}]}
+
+# Health policy with less strict global policy and strict AT2 policy (AT1 evaluated with global policy)
+!string jsonpolicy3 {"ConsiderWarningAsError":false,"MaxPercentUnhealthyNodes":0,"MaxPercentUnhealthyApplications":20,"ApplicationTypeHealthPolicyMap":[{"Key":"AT2","Value":0}]}
+
+# Health policy with strict global policy and less strict AT1 policy (AT2 evaluated with global policy)
+!string jsonpolicy4 {"ConsiderWarningAsError":false,"MaxPercentUnhealthyNodes":0,"MaxPercentUnhealthyApplications":0,"ApplicationTypeHealthPolicyMap":[{"Key":"AT1","Value":20}]}
+
+set EnableApplicationTypeHealthEvaluation false
+# When evaluating cluster health with app type disabled, all applications are evaluated against the global number
+queryhealth cluster jsonpolicy=<string.jsonpolicy0> expectedhealthstate=warning expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,17,12
+queryhealth cluster jsonpolicy=<string.jsonpolicy1> expectedhealthstate=warning expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,17,12
+queryhealth cluster jsonpolicy=<string.jsonpolicy2> expectedhealthstate=warning expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,17,12
+queryhealth cluster jsonpolicy=<string.jsonpolicy3> expectedhealthstate=warning expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,20,12
+queryhealth cluster jsonpolicy=<string.jsonpolicy4> expectedhealthstate=error expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,0,12
+
+# CheckIsClusterHealthy always requests CM the app type for apps without app type set
+checkisclusterhealthy upgradedomains=ud0,ud1 expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy0> expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy1> expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy2> expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy3> expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy4> expectedappswithoutapptypecount=12
+
+set EnableApplicationTypeHealthEvaluation true
+
+# When evaluating cluster health, if no app type is found applications are evaluated against the global number
+queryhealth cluster jsonpolicy=<string.jsonpolicy0> expectedhealthstate=warning expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,17,12
+queryhealth cluster jsonpolicy=<string.jsonpolicy1> expectedhealthstate=warning expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,17,12
+queryhealth cluster jsonpolicy=<string.jsonpolicy2> expectedhealthstate=warning expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,17,12
+queryhealth cluster jsonpolicy=<string.jsonpolicy3> expectedhealthstate=warning expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,20,12
+queryhealth cluster jsonpolicy=<string.jsonpolicy4> expectedhealthstate=error expectedstates=nodes-ok:6;apps-ok:11,error:2 expectedreason=applications,2,0,12
+
+checkisclusterhealthy upgradedomains=ud0,ud1 expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy0> expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy1> expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy2> expectedappswithoutapptypecount=12
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy3> expectedappswithoutapptypecount=12
+
+# Set app type for some applications and evaluate. Returns error since there are more apps without app type set.
+
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks0 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks5 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks10 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy1> expectedappswithoutapptypecount=9
+
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks1 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy2> expectedappswithoutapptypecount=8
+
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks2 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy3> expectedappswithoutapptypecount=7
+
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks3 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy1> expectedappswithoutapptypecount=6
+
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks4 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy2> expectedappswithoutapptypecount=5
+
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks9 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy3> expectedappswithoutapptypecount=4
+
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks6 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy1> expectedappswithoutapptypecount=3
+
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks7 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy2> expectedappswithoutapptypecount=2
+
+# Globally, 2 out of 12 = 16.7%, less than the 17% allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy0> expectedhealthstate=warning expectedreason=applications,2,17,12
+
+# In AT1, 2 out of 10 = 20%, more than allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy1> expectedhealthstate=error expectedreason=apptypeapplications,AT1,2,0,10
+
+# In AT1, 2 out of 10 = 20%, more than allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy2> expectedhealthstate=error expectedreason=apptypeapplications,AT1,2,0,10
+
+# All apps are evaluated with global policy, 2 out of 12 = 16.67%, less than allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy3> expectedhealthstate=warning expectedreason=applications,2,20,12
+
+# In AT1, 2 out of 10 = 20%, less than allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy4> expectedhealthstate=warning expectedreason=apptypeapplications,AT1,2,20,10
+
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy0> expectedappswithoutapptypecount=2
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy1> expectedappswithoutapptypecount=2
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy2> expectedappswithoutapptypecount=2
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy3> expectedappswithoutapptypecount=2
+
+# Set app type for all applications:
+# 10 applications with type AT1 (9 ok and 1 error) and 1 application with type AT2
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks8 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT1
+reporthealthinternal application appname=fabric:/ClusterAppTypeHealthChecks11 appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default apptype=AT2
+
+# 2 out of 12 = 16.7%, less than the 17% allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy0> expectedhealthstate=warning expectedreason=applications,2,17,12
+
+# In AT1, 2 out of 11 = 18.81%, more than allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy1> expectedhealthstate=error expectedreason=apptypeapplications,AT1,2,0,11
+
+# In AT1, 2 out of 11 = 18.81%, more than allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy2> expectedhealthstate=error expectedreason=apptypeapplications,AT1,2,0,11
+
+# All AT1 are evaluated with global policy, 2 out of 11 = 18.81%, less than allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy3> expectedhealthstate=warning expectedreason=applications,2,20,11
+
+# In AT1, 2 out of 11 = 18.81%, less than allowed
+queryhealth cluster jsonpolicy=<string.jsonpolicy4> expectedhealthstate=warning expectedreason=apptypeapplications,AT1,2,20,11
+
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy0> expectedhealthy=true
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy1> expectedhealthy=false expectedreason=apptypeapplications,AT1,2,0,11
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy2> expectedhealthy=false expectedreason=apptypeapplications,AT1,2,0,11
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy3> expectedhealthy=true
+checkisclusterhealthy upgradedomains=ud0,ud1 jsonpolicy=<string.jsonpolicy4> expectedhealthy=true
+
+#######################################################
+# Check evaluation order: cluster events, nodes, system app
+#######################################################
+
+# Report system error, check reason
+reporthealthinternal application appname=fabric:/System sequencenumber=1 healthstate=error
+queryhealth application appname=fabric:/System expectedhealthstate=error
+queryhealth cluster jsonpolicy=<string.jsonpolicy1> expectedhealthstate=error expectedreason=systemapp
+
+# Report node error, check reason
+reporthealthinternal node nodeid=50 sequencenumber=1 healthstate=error
+queryhealth cluster jsonpolicy=<string.jsonpolicy2> expectedhealthstate=error expectedreason=nodes,1,0
+
+# Report cluster error, check reason
+reporthealthinternal cluster sequencenumber=1 healthstate=error
+queryhealth cluster jsonpolicy=<string.jsonpolicy3> expectedhealthstate=error expectedreason=event,FabricTest_Source,FabricTest_Property
+
+
+!q

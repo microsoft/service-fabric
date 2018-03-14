@@ -1,0 +1,43 @@
+{
+  "Default": {    
+  },
+  "Tests": [
+    {
+        "Name": "Logical Log Perf (IAAS)",
+        "Type": "Generic",
+        "Owners": "alanwar,richhas",
+        "Tags": "",
+        "TestExecutionParameters": {
+          "TaskName": "FabricUnitTests\\loglogperf.exe",
+          "Params": "d: d: 1 180 false 0 true",
+          "SetupType": "XCopy"
+        }
+    },
+    {
+        "Name": "Ktl Logger Perf On SSD (LAB)",
+        "Type": "Generic",
+        "Owners": "alanwar,richhas",
+        "Environment": "Iaas",
+        "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
+        "Tags": "",
+        "TestExecutionParameters": {
+          "TaskName": "FabricUnitTests\\ktlloggerperf.exe",
+          "Params": "-l:16 -f:\\??\\e:\\aa -s:\\??\\d:\\bb -n:16 -t:180 -a:Results.perf",
+          "SetupType": "XCopy"
+        }
+    },
+    {
+        "Name": "Ktl Logger Perf On Spinning (LAB)",
+        "Type": "Generic",
+        "Owners": "alanwar,richhas",
+        "Environment": "Iaas",
+        "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
+        "Tags": "",
+        "TestExecutionParameters": {
+          "TaskName": "FabricUnitTests\\ktlloggerperf.exe",
+          "Params": "-l:16 -f:\\??\\d:\\aa -s:\\??\\e:\\bb -n:16 -t:180 -a:Results.perf",
+          "SetupType": "XCopy"
+        }
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="ServicePackage" Version="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <ServiceTypes>
+    <StatefulServiceGroupType ServiceGroupTypeName="StatefulServiceGroupType" UseImplicitFactory="true" HasPersistedState="true">
+      <ServiceGroupMembers>
+        <ServiceGroupTypeMember ServiceTypeName="StatefulServiceGroupTypeA">
+          <LoadMetrics>
+            <LoadMetric Name="MetricA" PrimaryDefaultLoad="8" SecondaryDefaultLoad="5" Weight="Medium"/>
+            <LoadMetric Name="MetricC" PrimaryDefaultLoad="9" SecondaryDefaultLoad="5" Weight="High"/>
+          </LoadMetrics>
+        </ServiceGroupTypeMember>
+        <ServiceGroupTypeMember ServiceTypeName="StatefulServiceGroupTypeB">
+          <LoadMetrics>
+            <LoadMetric Name="MetricD" PrimaryDefaultLoad="3" SecondaryDefaultLoad="5" Weight="Medium"/>
+          </LoadMetrics>
+        </ServiceGroupTypeMember>
+      </ServiceGroupMembers>
+      <Extensions>
+        <Extension Name="Extension">
+          <ExtensionValue FakeAttr="AttrValue" xmlns="http://schemas.microsoft.com/Extension">SGExtension</ExtensionValue>
+        </Extension>
+      </Extensions>
+    </StatefulServiceGroupType>
+    <StatefulServiceType ServiceTypeName="StatefulType" HasPersistedState="true">
+      <LoadMetrics>
+        <LoadMetric Name="MetricB" PrimaryDefaultLoad="6" SecondaryDefaultLoad="3" Weight="High"/>
+        <LoadMetric Name="MetricC" PrimaryDefaultLoad="8" SecondaryDefaultLoad="2" Weight="Zero"/>
+      </LoadMetrics>
+      <PlacementConstraints>StatefulType PlacementConstraint</PlacementConstraints>
+    </StatefulServiceType>
+    <StatelessServiceType ServiceTypeName="StatelessType">
+      <LoadMetrics>
+        <LoadMetric Name="MetricA" PrimaryDefaultLoad="3" />
+        <LoadMetric Name="MetricB" PrimaryDefaultLoad="4" Weight="Low"/>
+      </LoadMetrics>
+      <Extensions>
+        <Extension Name="Extention1">
+          <ExtensionValue FakeAttr="AttrValue" xmlns="http://schemas.microsoft.com/Extension">Extension1</ExtensionValue>
+        </Extension>
+        <Extension Name="Extention2">
+          <ExtensionValue FakeAttr="AttrValue" xmlns="http://schemas.microsoft.com/Extension">Extension2</ExtensionValue>
+        </Extension>
+      </Extensions>
+    </StatelessServiceType>
+  </ServiceTypes>
+  <CodePackage Name="CodeA" Version="1.0" IsShared="true">
+    <SetupEntryPoint>
+        <ExeHost>
+            <Program>SetupA.exe</Program>
+        </ExeHost>
+    </SetupEntryPoint>
+    <EntryPoint>
+        <ExeHost>
+            <Program>CodeA.exe</Program>
+        </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <CodePackage Name="CodeB" Version="1.0">
+    <SetupEntryPoint>
+       <ExeHost>
+          <Program>SetupB.exe</Program>
+       </ExeHost>
+    </SetupEntryPoint>
+    <EntryPoint>
+        <DllHost IsolationPolicy="SharedDomain">
+          <ManagedAssembly>CodeBManaged.dll</ManagedAssembly>
+          <UnmanagedDll>CodeBUnManaged.dll</UnmanagedDll>
+        </DllHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="ConfigA" Version="1.0" />
+  <ConfigPackage Name="ConfigB" Version="1.0" />
+  <DataPackage Name="DataA" Version="1.0" />
+  <DataPackage Name="DataB" Version="1.0" />
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="EndpointA" Protocol="https" Type="Input" Port="1000" CodePackageRef="CodeA"/>
+      <Endpoint Name="EndpointB" Protocol="https" Type="Internal" CertificateRef="text" Port="1000" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

@@ -1,0 +1,45 @@
+votes 10 20 30
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+set DummyPLBEnabled true
+set SendLoadReportInterval 1
+set HealthOperationTimeout 30
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 10
+set PLBHealthEventTTL false
+
+
+cleantest
++10 nodeprops=StringProperty:TestString1 fd=fd:/dc0
++20 nodeprops=StringProperty:TestString1 fd=fd:/dc0
++30 nodeprops=StringProperty:TestString1 fd=fd:/dc1
++40 nodeprops=StringProperty:TestString1 fd=fd:/dc2
++50 nodeprops=StringProperty:TestString1 fd=fd:/dc2
++60 nodeprops=StringProperty:TestString1 fd=fd:/dc2
+Verify
+
+# Turn off Unplaced Replica health reporting
+toggleverboseserviceplacementhealthreporting false
+
+# Create an unplaceable replica and then a placeable replica with only fault domain restrictions in quick succession
+# If the diagnostics that reruns when we have an unplaceable replica modifies the solution by placing with only hard constraints, this will cause an FD violation
+createname fabric:/servicethatwontgetplaced
+createservice fabric:/servicethatwontgetplaced CalculatorServiceType n 1 3 constraint=(StringProperty==TestString2)
+
+createname fabric:/servicethatgetsmisplaced
+createservice fabric:/servicethatgetsmisplaced CalculatorServiceType n 1 3
+
+!pause 5
+
+gfum
+
+#Turning the PLB back on so that any FD Violation will generate a health warning, one that won't expire, since PLBHealthEventTTL is set to False
+set DummyPLBEnabled false
+
+!pause 5
+
+gfum
+
+queryhealth service servicename=fabric:/servicethatgetsmisplaced  expectedhealthstate=ok
+!q

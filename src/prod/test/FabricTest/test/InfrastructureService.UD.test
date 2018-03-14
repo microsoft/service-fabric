@@ -1,0 +1,326 @@
+#
+# [owner] MMohsin, AlexWun
+#
+# In this test case, we deactivate all the nodes in the cluster UD by UD
+# with intents Restart and RemoveData respectively.
+#
+
+set RunAsPolicyEnabled true
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 3
+infraservice 3 2
+
+cleantest
+
+set UserReplicaRestartWaitDuration 9999
+
+set InfrastructureTaskProcessingInterval 5
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 300
+set PLBActionRetryTimes 30
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
++40 ud=UD1
++50 ud=UD2
++60 ud=UD3
+verify
+
++70 ud=UD1
++80 ud=UD2
++90 ud=UD3
++100 ud=UD1
++110 ud=UD2
++120 ud=UD3
+verify
+
++130 ud=UD1
++140 ud=UD2
++150 ud=UD3
++160 ud=UD4
++170 ud=UD4
++180 ud=UD4
+verify
+
+createservice fabric:/stateless1 CalculatorServiceType n 3 3
+createservice fabric:/stateless2 CalculatorServiceType n 1 -1
+createservice fabric:/stateless3 CalculatorServiceType n 3 5
+
+createservice fabric:/volatile1 TestStoreServiceType y 3 1
+createservice fabric:/volatile2 TestStoreServiceType y 3 2
+createservice fabric:/volatile3 TestStoreServiceType y 3 3
+createservice fabric:/volatile4 TestStoreServiceType y 3 3 minreplicasetsize=2
+createservice fabric:/volatile5 TestStoreServiceType y 3 3 minreplicasetsize=3
+
+createservice fabric:/persisted1 TestPersistedStoreServiceType y 3 1 persist
+createservice fabric:/persisted2 TestPersistedStoreServiceType y 3 2 persist
+createservice fabric:/persisted3 TestPersistedStoreServiceType y 3 3 persist
+createservice fabric:/persisted4 TestPersistedStoreServiceType y 3 3 persist minreplicasetsize=2
+createservice fabric:/persisted5 TestPersistedStoreServiceType y 3 3 persist minreplicasetsize=3
+
+verify
+
+# Give some time to PLB to balance the cluster
+!pause 15
+
+verify
+
+################################################################################
+# Scenario 1: Deactivate nodes UD by UD with intent Restart
+################################################################################
+
+#
+# UD1
+#
+
+infra start:Task1a:10:restart:40:restart:70:restart:100:restart:130:restart
+
+!waitforstate FM.UpReplicaCount.10 0
+!waitforstate FM.UpReplicaCount.40 0
+!waitforstate FM.UpReplicaCount.70 0
+!waitforstate FM.UpReplicaCount.100 0
+!waitforstate FM.UpReplicaCount.130 0
+
+-10
+-40
+-70
+-100
+-130
+
+!waitforstate FM.Node.IsUp.10 false
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate FM.Node.IsUp.70 false
+!waitforstate FM.Node.IsUp.100 false
+!waitforstate FM.Node.IsUp.130 false
+
++10 ud=UD1
++40 ud=UD1
++70 ud=UD1
++100 ud=UD1
++130 ud=UD1
+
+infra finish:Task1a
+
+#
+# UD2
+#
+infra start:Task1b:20:restart:50:restart:80:restart:110:restart:140:restart
+
+!waitforstate FM.UpReplicaCount.20 0
+!waitforstate FM.UpReplicaCount.50 0
+!waitforstate FM.UpReplicaCount.80 0
+!waitforstate FM.UpReplicaCount.110 0
+!waitforstate FM.UpReplicaCount.140 0
+
+-20
+-50
+-80
+-110
+-140
+
+!waitforstate FM.Node.IsUp.20 false
+!waitforstate FM.Node.IsUp.50 false
+!waitforstate FM.Node.IsUp.80 false
+!waitforstate FM.Node.IsUp.110 false
+!waitforstate FM.Node.IsUp.140 false
+
++20 ud=UD2
++50 ud=UD2
++80 ud=UD2
++110 ud=UD2
++140 ud=UD2
+
+infra finish:Task1b
+
+#
+# UD3
+#
+
+infra start:Task1c:30:restart:60:restart:90:restart:120:restart:150:restart
+
+!waitforstate FM.UpReplicaCount.30 0
+!waitforstate FM.UpReplicaCount.60 0
+!waitforstate FM.UpReplicaCount.90 0
+!waitforstate FM.UpReplicaCount.120 0
+!waitforstate FM.UpReplicaCount.150 0
+
+-30
+-60
+-90
+-120
+-150
+
+!waitforstate FM.Node.IsUp.30 false
+!waitforstate FM.Node.IsUp.60 false
+!waitforstate FM.Node.IsUp.90 false
+!waitforstate FM.Node.IsUp.120 false
+!waitforstate FM.Node.IsUp.150 false
+
++30 ud=UD3
++60 ud=UD3
++90 ud=UD3
++120 ud=UD3
++150 ud=UD3
+
+infra finish:Task1c
+
+verify
+
+#
+# UD4
+#
+
+infra start:Task1d:160:restart:170:restart:180:restart
+
+!waitforstate FM.UpReplicaCount.160 0
+!waitforstate FM.UpReplicaCount.170 0
+!waitforstate FM.UpReplicaCount.180 0
+
+-160
+-170
+-180
+
+!waitforstate FM.Node.IsUp.160 false
+!waitforstate FM.Node.IsUp.170 false
+!waitforstate FM.Node.IsUp.180 false
+
++160 ud=UD4
++170 ud=UD4
++180 ud=UD4
+
+infra finish:Task1d
+
+verify
+
+################################################################################
+# Scenario 2: Deactivate nodes UD by UD with intent RemoveData
+################################################################################
+
+#
+# UD1
+#
+
+infra start:Task2a:10:relocate:40:relocate:70:relocate:100:relocate:130:relocate
+
+!waitforstate FM.UpReplicaCount.10 0
+!waitforstate FM.UpReplicaCount.40 0
+!waitforstate FM.UpReplicaCount.70 0
+!waitforstate FM.UpReplicaCount.100 0
+!waitforstate FM.UpReplicaCount.130 0
+
+-10
+-40
+-70
+-100
+-130
+
+!waitforstate FM.Node.IsUp.10 false
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate FM.Node.IsUp.70 false
+!waitforstate FM.Node.IsUp.100 false
+!waitforstate FM.Node.IsUp.130 false
+
++10 ud=UD1
++40 ud=UD1
++70 ud=UD1
++100 ud=UD1
++130 ud=UD1
+
+infra finish:Task2a
+
+#
+# UD2
+#
+infra start:Task2b:20:relocate:50:relocate:80:relocate:110:relocate:140:relocate
+
+!waitforstate FM.UpReplicaCount.20 0
+!waitforstate FM.UpReplicaCount.50 0
+!waitforstate FM.UpReplicaCount.80 0
+!waitforstate FM.UpReplicaCount.110 0
+!waitforstate FM.UpReplicaCount.140 0
+
+-20
+-50
+-80
+-110
+-140
+
+!waitforstate FM.Node.IsUp.20 false
+!waitforstate FM.Node.IsUp.50 false
+!waitforstate FM.Node.IsUp.80 false
+!waitforstate FM.Node.IsUp.110 false
+!waitforstate FM.Node.IsUp.140 false
+
++20 ud=UD2
++50 ud=UD2
++80 ud=UD2
++110 ud=UD2
++140 ud=UD2
+
+infra finish:Task2b
+
+#
+# UD3
+#
+
+infra start:Task2c:30:relocate:60:relocate:90:relocate:120:relocate:150:relocate
+
+!waitforstate FM.UpReplicaCount.30 0
+!waitforstate FM.UpReplicaCount.60 0
+!waitforstate FM.UpReplicaCount.90 0
+!waitforstate FM.UpReplicaCount.120 0
+!waitforstate FM.UpReplicaCount.150 0
+
+-30
+-60
+-90
+-120
+-150
+
+!waitforstate FM.Node.IsUp.30 false
+!waitforstate FM.Node.IsUp.60 false
+!waitforstate FM.Node.IsUp.90 false
+!waitforstate FM.Node.IsUp.120 false
+!waitforstate FM.Node.IsUp.150 false
+
++30 ud=UD3
++60 ud=UD3
++90 ud=UD3
++120 ud=UD3
++150 ud=UD3
+
+infra finish:Task2c
+
+#
+# UD4
+#
+
+infra start:Task2d:160:relocate:170:relocate:180:relocate
+
+!waitforstate FM.UpReplicaCount.160 0
+!waitforstate FM.UpReplicaCount.170 0
+!waitforstate FM.UpReplicaCount.180 0
+
+-160
+-170
+-180
+
+!waitforstate FM.Node.IsUp.160 false
+!waitforstate FM.Node.IsUp.170 false
+!waitforstate FM.Node.IsUp.180 false
+
++160 ud=UD4
++170 ud=UD4
++180 ud=UD4
+
+infra finish:Task2d
+
+verify
+
+-*
+
+!q

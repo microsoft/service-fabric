@@ -1,0 +1,96 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "EndToEndSmokeTestBvtWin10",
+      "Type": "V2_ScriptTest",
+      "Owners": "anmola,rsinha",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=Win10Test",
+      "TestExecutionParameters": {        
+        "SetupType": "Exe",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "EndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTestStandalone",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao,ratando,anmola,rsinha",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=Win10Test",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "StandaloneEndToEnd.Smoke.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DistributedCollections",
+      "Type": "V2_ScriptTest",
+      "Owners": "tyadam, richhas",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=Win10Test",
+      "TestExecutionParameters": {
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "DCollections.test",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Backup-CIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, richhas",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=Win10Test",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "Backup-CIT.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Unreliable_Random",
+      "Type": "RandomTest",
+      "Owners": "aprameyr,anuragg",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=Win10Test",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_338_UnreliableRandom_Bvt.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_Unreliable",
+        "ExecutionTimeout": "7200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "AzureChaosTest",
+      "Type": "Azure_Chaos",
+      "Owners": "motanv,anmola",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=Win10Test&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ServiceTimeout": "2700",
+        "ConfigName": "WinFabricTest\\Config\\Azure_Chaos_Bvt.txt",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

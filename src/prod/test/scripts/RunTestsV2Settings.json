@@ -1,0 +1,48 @@
+﻿{
+    "Providers": {
+        "UploadBuildProvider": {
+            "ProviderName": "DefaultUploadBuildProvider",
+            "ProviderType": "UploadBuildV2.BasicUploadBuild, UploadBuildV2"
+        },
+
+        "TestTypeProviders": [
+            {
+                "ProviderName": "DefaultTestTypeProvider",
+                "ProviderType": "JsonTestTypeProvider.JSONTestTypeProvider, JsonTestTypeProvider"
+            }
+        ]
+    },
+
+    "TestTypeExecutionMode": {
+        "ParallelTestTypes": "ExeTest, Azure_Chaos, FabricTest, FederationTest, TAEFTest,LBSimulator,FabricTraceTest",
+        "SequentialTestTypes": "ExeTest_Sequential, FabricTest_Sequential, TAEFTest_Sequential, V2_DllTest, V2_ScriptTest"
+    },
+
+    "AppSettings": {
+        "JSONTestsPath": "JsonTests",
+        "JSONTestTypesPath": "JsonTestTypes",
+        "LogsFolderPath": "RunTests\\log",
+        "FabricSetupExe": "FabricUnitTests\\FabricSetup.exe",
+        "RingCertSetupExe": "FabricUnitTests\\RingCertSetup.exe",
+        "NumberOfTestsPerGroup": "25",
+        "NumberOfGroups": "20",
+        "RuntimeConfigFileName": "CITRuntimes.csv",
+        "RunTestsExe": "RunTests\\RunTests.exe",
+        "CloudBuildPath": "BinCache\\bins",
+        "DefaultFileSharePath": "\\\\winfabfs\\scratch2\\WinFabCITLogs",
+        "SkippedTestTypes": "",
+        "SkippedTests": "",
+        "ConfigFilesPath": "FabricUnitTests",
+        "NonGroupableTestTypes": "V2_ScriptTest,V2_DllTest,PowershellTest,PowershellTest_Glob,PowershellTest_Glob_Secure,RandomTest",
+        "AnalysisTestTypes": "FabricTest",
+        "AzCopyBinaryPath": "C:\\MCRoot\\Tools\\AzCopy.exe",        
+        "RunTestsAdapterDllPath": "FabricUnitTests\\RunTests.Adapter.dll",
+        "TimeToWaitForWERFaultExitInSeconds": "900",
+        "NTServicesToStop": "FabricHostSvc",
+        "NTServiceStopTimeoutInSeconds": "120",
+        "ProcessImageNamesToKillAfterTest": "FabricHost,FabricTest,FederationTest,FabricTestHost,Fabric,TE,WinFabricTestRunner,Common.Test,Transport.Test,Naming.Test,Hosting2.Test",
+        "LinuxSuiteWhitelist": "SingleMachine-CIT.json,SingleMachine-Functional.json",
+        "TestTypesToExcludeFromRetailBuildRuns": "V2_ScriptTest_DebugOnly,Azure_ScriptTest_DebugOnly",
+        "TestTypesToExcludeFromDebugBuildRuns": "V2_ScriptTest_RetailOnly,Azure_ScriptTest_RetailOnly,FabricTest_RetailOnly"
+    }
+}

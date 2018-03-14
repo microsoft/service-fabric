@@ -1,0 +1,97 @@
+#######################################################################
+# test coverage for RDBug 9540462*:Default client cert is not assigned
+# admin role after dynamic config update when ClientClaimAuthEnabled is
+# set without setting ClientRoleEnabled explicitly
+#######################################################################
+# This is a ring certificate security test. The SecurityDomain will be set to WinFabricRing.Rings.WinFabricTestDomain.com for this test.
+# For this test to pass, the following certificates need to be installed on the machine:
+# cluster node certificate: CN = WinFabric-Test-SAN3-Oscar, SAN = WinFabricRing3.Rings.WinFabricTestDomain2.com
+# Client certificates:
+#1. CN = WinFabric-Test-SAN1-Alice, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#2. CN = WinFabric-Test-SAN1-Bob, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#3. CN = WinFabric-Test-SAN2-Charlie, SAN = WinFabricRing2.Rings.WinFabricTestDomain.com
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 10
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
+cleantest
+
+set DummyPLBEnabled true
+
+!setcfg Security.SessionExpiration=60
+!setcfg Security.ClusterCredentialType=X509
+!setcfg Security.ClusterAllowedCommonNames=WinFabric-Test-SAN3-Oscar
+!setcfg Security.ServerAuthCredentialType=X509
+!setcfg Security.ClientAuthAllowedCommonNames=WinFabric-Test-SAN1-Alice,WinFabric-Test-SAN1-Bob
+# set ImplicitClientRole.test should enable client role implicitly
+!setcfg Security.ClientClaimAuthEnabled=true
+!setcfg Security.ClientClaims=t1=v1&&t2=v2||t3=v3
+!setcfg Security.AdminClientClaims=t4=v4&&t5=v5
+
+# Initially, assign admin role to Alice, but not to Bob
+!setcfg Security.AdminClientCommonNames=WinFabric-Test-SAN1-Alice
+
+# Default node credential uses certificate CN=WinFabric-Test-SAN3-Oscar
+set DefaultNodeCredentials FindBySubjectName,CN=WinFabric-Test-SAN3-Oscar,My,LocalMachine
+set ClusterWideCredentials X509:EncryptAndSign:WinFabric-Test-SAN3-Oscar:WinFabric-Test-SAN1-Alice,WinFabric-Test-SAN1-Bob:WinFabric-Test-SAN3-Oscar
+
+# start the cluster 
++10 
++20
++30
+verify
+
+# Set client credentials to use default client certificate WinFabric-Test-SAN3-Oscar, verify both read and write operations are allowed
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN3-Oscar:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+createservice fabric:/test1 TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+# Set client credentials to WinFabric-Test-SAN1-Bob, verify that, as non-admin, Bob can only do read operations
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Bob:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+# verify read operation
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+# verify write operation will fail
+createname fabric:/b AccessDenied
+deleteservice fabric:/test1 errors=AccessDenied
+deletename fabric:/test1 AccessDenied
+
+# trigger dynamic configuration updates
+!updatecfg Security.ClientClaims=t5=v5
+
+# wait for async config update to complete 
+!pause 10
+
+# Set client credentials to use default client certificate
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN3-Oscar:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+# after config update, default client should still have both read and write access
+createname fabric:/createnameafterconfigupdate
+!pause 5
+nameexists fabric:/createnameafterconfigupdate true
+
+# Set client credentials to WinFabric-Test-SAN1-Bob, verify that, as non-admin, Bob can only do read operations
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Bob:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+# Bob should still have read access, but not write access
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+deletename fabric:/test1 AccessDenied
+
+# Delay to prevent kernel lease agent reusing in different security setting
+-*
+!pause 30
+
+!q

@@ -1,0 +1,623 @@
+#
+# [owner]- preethas, yihzhang
+# Functional tests for tstore
+# 
+
+!load FailoverCITInitialization.test
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify  
+
+##############################################################################################
+#
+# TestCase 1 - Put and get
+#
+##############################################################################################
+
+createservice fabric:/test1 TStoreServiceType y 1 1 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+verify 
+
+clientput fabric:/test1 0 a keycount=10
+!wait
+clientput fabric:/test1 10 b keycount=10
+!wait
+clientput fabric:/test1 20 c keycount=10
+!wait
+clientput fabric:/test1 30 d keycount=10
+!wait
+clientput fabric:/test1 40 e keycount=10
+!wait
+clientput fabric:/test1 50 f keycount=10
+!wait
+clientput fabric:/test1 60 g keycount=10
+!wait
+clientput fabric:/test1 70 h keycount=10
+!wait
+clientput fabric:/test1 80 i keycount=10
+!wait
+clientput fabric:/test1 90 j keycount=10
+!wait
+
+clientget fabric:/test1 0 a keycount=10
+!wait
+clientget fabric:/test1 10 b keycount=10
+!wait
+clientget fabric:/test1 20 c keycount=10
+!wait
+clientget fabric:/test1 30 d keycount=10
+!wait
+clientget fabric:/test1 40 e keycount=10
+!wait
+clientget fabric:/test1 50 f keycount=10
+!wait
+clientget fabric:/test1 60 g keycount=10
+!wait
+clientget fabric:/test1 70 h keycount=10
+!wait
+clientget fabric:/test1 80 i keycount=10
+!wait
+clientget fabric:/test1 90 j keycount=10
+!wait
+
+deleteservice fabric:/test1
+verify 
+
+# This ensures app host is removed and hence ktl system is shutdown
+removeruntime 40 y
+!wait
+
+addruntime 40 y
+!wait
+
+
+##############################################################################################
+#
+# TestCase 2 - Report Fault transient on primary
+#
+##############################################################################################
+
+createservice fabric:/test2 TStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test2.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.20 Secondary
+
+verify 
+!pause 3
+
+clientput fabric:/test2 0 a keycount=10
+!wait
+clientput fabric:/test2 10 b keycount=10
+!wait
+clientput fabric:/test2 20 c keycount=10
+!wait
+clientput fabric:/test2 30 d keycount=10
+!wait
+clientput fabric:/test2 40 e keycount=10
+!wait
+clientput fabric:/test2 50 f keycount=10
+!wait
+clientput fabric:/test2 60 g keycount=10
+!wait
+clientput fabric:/test2 70 h keycount=10
+!wait
+clientput fabric:/test2 80 i keycount=10
+!wait
+clientput fabric:/test2 90 j keycount=10
+!wait
+
+reportfault 40 fabric:/test2 transient
+!waitforstate RA.Replica.State.fabric:/test2.30.40 RD
+verify
+
+clientget fabric:/test2 0 a keycount=10
+!wait
+clientget fabric:/test2 10 b keycount=10
+!wait
+clientget fabric:/test2 20 c keycount=10
+!wait
+clientget fabric:/test2 30 d keycount=10
+!wait
+clientget fabric:/test2 40 e keycount=10
+!wait
+clientget fabric:/test2 50 f keycount=10
+!wait
+clientget fabric:/test2 60 g keycount=10
+!wait
+clientget fabric:/test2 70 h keycount=10
+!wait
+clientget fabric:/test2 80 i keycount=10
+!wait
+clientget fabric:/test2 90 j keycount=10
+!wait
+
+deleteservice fabric:/test2
+verify 
+
+# This ensures app host is removed and hence ktl system is shutdown
+removeruntime 40 y
+removeruntime 30 y
+removeruntime 20 y
+!wait
+
+addruntime 40 y
+addruntime 30 y
+addruntime 20 y
+!wait
+
+##############################################################################################
+#
+# TestCase 3 - Concurrent put/get on Primary
+#
+##############################################################################################
+
+createservice fabric:/test3 TStoreServiceType y 1 1 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test3.40 Primary
+verify 
+
+clientput fabric:/test3 0 a keycount=10
+!wait
+clientput fabric:/test3 10 b keycount=10
+clientput fabric:/test3 20 c keycount=10
+clientput fabric:/test3 30 d keycount=10
+clientput fabric:/test3 40 e keycount=10
+clientput fabric:/test3 50 f keycount=10
+clientput fabric:/test3 60 g keycount=10
+clientput fabric:/test3 70 h keycount=10
+clientput fabric:/test3 80 i keycount=10
+clientput fabric:/test3 90 j keycount=10
+
+!wait
+
+clientget fabric:/test3 0 a keycount=10
+clientget fabric:/test3 10 b keycount=10
+clientget fabric:/test3 20 c keycount=10
+clientget fabric:/test3 30 d keycount=10
+clientget fabric:/test3 40 e keycount=10
+clientget fabric:/test3 50 f keycount=10
+clientget fabric:/test3 60 g keycount=10
+clientget fabric:/test3 70 h keycount=10
+clientget fabric:/test3 80 i keycount=10
+clientget fabric:/test3 90 j keycount=10
+
+!wait
+
+deleteservice fabric:/test3
+verify 
+
+# This ensures app host is removed and hence ktl system is shutdown
+removeruntime 40 y
+!wait
+
+addruntime 40 y
+!wait
+
+##############################################################################################
+#
+# TestCase 9 - Enumeratioin
+#
+##############################################################################################
+
+createservice fabric:/test9 TStoreServiceType y 1 1 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test9.40 Primary
+verify 
+
+clientput fabric:/test9 0 a
+!wait
+clientput fabric:/test9 1 b
+!wait
+clientput fabric:/test9 2 c
+!wait
+clientput fabric:/test9 3 d
+!wait
+clientput fabric:/test9 6 g
+!wait
+clientput fabric:/test9 5 f
+!wait
+clientput fabric:/test9 4 e
+!wait
+clientgetall fabric:/test9 (0:a,1:b,2:c,3:d,4:e,5:f,6:g)
+!wait
+clientgetkeys fabric:/test9 3 6 (3,4,5,6)
+!wait
+
+deleteservice fabric:/test9
+verify 
+
+# This ensures app host is removed and hence ktl system is shutdown
+removeruntime 40 y
+!wait
+
+addruntime 40 y
+!wait
+
+##############################################################################################
+#
+# TestCase 10 - Large string value
+#
+##############################################################################################
+
+createservice fabric:/test10 TStoreServiceType y 1 1 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test10.40 Primary
+verify 
+
+clientput fabric:/test10 0 a keycount=10 valsize=1048576
+!wait
+clientput fabric:/test10 10 b keycount=10 valsize=1048576
+!wait
+clientput fabric:/test10 20 c keycount=10 valsize=1048576
+!wait
+clientput fabric:/test10 30 d keycount=10 valsize=1048576
+!wait
+clientput fabric:/test10 40 e keycount=10 valsize=1048576
+!wait
+clientput fabric:/test10 50 f keycount=10 valsize=1048576
+!wait
+clientput fabric:/test10 60 g keycount=10 valsize=1048576
+!wait
+
+clientget fabric:/test10 0 a keycount=10 valsize=1048576
+!wait
+clientget fabric:/test10 10 b keycount=10 valsize=1048576
+!wait
+clientget fabric:/test10 20 c keycount=10 valsize=1048576
+!wait
+clientget fabric:/test10 30 d keycount=10 valsize=1048576
+!wait
+clientget fabric:/test10 40 e keycount=10 valsize=1048576
+!wait
+clientget fabric:/test10 50 f keycount=10 valsize=1048576
+!wait
+clientget fabric:/test10 60 g keycount=10 valsize=1048576
+!wait
+
+deleteservice fabric:/test10
+verify 
+
+# This ensures app host is removed and hence ktl system is shutdown
+removeruntime 40 y
+!wait
+
+addruntime 40 y
+!wait
+
+
+#########################################################################################################
+#
+# TestCase 4 - Add, Checkpoint, Report Fault transient on primary, and recover from checkpoint.
+#
+#########################################################################################################
+
+createservice fabric:/test4 TStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test4.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test4.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test4.20 Secondary
+verify 
+
+clientput fabric:/test4 10 ten
+!wait
+clientput fabric:/test4 20 twenty
+!wait
+clientput fabric:/test4 30 thirty
+!wait
+
+requestcheckpoint fabric:/test4 40
+requestcheckpoint fabric:/test4 30
+requestcheckpoint fabric:/test4 20
+
+clientget fabric:/test4 10 ten
+!wait
+clientget fabric:/test4 20 twenty
+!wait
+clientget fabric:/test4 30 thirty
+!wait 
+
+!pause 3
+
+reportfault 40 fabric:/test4 transient
+!waitforstate FM.Replica.Role.fabric:/test4.30 Primary
+!waitforstate RA.Replica.State.fabric:/test4.30.40 RD
+verify
+
+clientget fabric:/test4 10 ten
+!wait
+clientget fabric:/test4 20 twenty
+!wait
+clientget fabric:/test4 30 thirty
+!wait
+
+deleteservice fabric:/test4
+verify 
+
+
+####################################################################################################################
+#
+# TestCase 5 - Add, checkpoint, delete/update, report fault transient on primary, and recover from checkpoint.
+#
+####################################################################################################################
+
+createservice fabric:/test5 TStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test5.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test5.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test5.20 Secondary
+verify 
+
+clientput fabric:/test5 10 ten~
+!wait
+clientput fabric:/test5 20 twenty~
+!wait
+clientput fabric:/test5 30 thirty~
+!wait
+
+requestcheckpoint fabric:/test5 40
+requestcheckpoint fabric:/test5 30
+requestcheckpoint fabric:/test5 20
+
+clientdelete fabric:/test5 10
+!wait
+clientdelete fabric:/test5 20
+!wait
+clientdelete fabric:/test5 30
+!wait
+clientput fabric:/test5 30 thirty
+!wait
+
+!pause 3
+
+reportfault 40 fabric:/test5 transient
+!waitforstate FM.Replica.Role.fabric:/test5.30 Primary
+!waitforstate RA.Replica.State.fabric:/test5.30.40 RD
+verify
+
+clientget fabric:/test5 10 KeyDoesNotExist
+!wait
+clientget fabric:/test5 20 KeyDoesNotExist
+!wait
+clientget fabric:/test5 30 thirty
+!wait 
+
+deleteservice fabric:/test5
+verify 
+
+
+##################################################################################################
+#
+# TestCase 6 - Add, Checkpoint, Report Fault transient on secondary, and recover from checkpoint.
+#
+##################################################################################################
+
+#createservice fabric:/test6 TStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+#!waitforstate FM.Replica.Role.fabric:/test6.40 Primary
+#!waitforstate FM.Replica.Role.fabric:/test6.30 Secondary
+#!waitforstate FM.Replica.Role.fabric:/test6.20 Secondary
+#verify 
+
+#clientput fabric:/test6 10 ten
+#!wait
+#clientput fabric:/test6 20 twenty
+#!wait
+#clientput fabric:/test6 30 thirty
+#!wait
+
+#requestcheckpoint fabric:/test6 40
+#requestcheckpoint fabric:/test6 30
+#requestcheckpoint fabric:/test6 20
+
+#clientget fabric:/test6 10 ten
+#!wait
+#clientget fabric:/test6 20 twenty
+#!wait
+#clientget fabric:/test6 30 thirty
+#!wait 
+
+#!pause 3
+
+#reportfault 30 fabric:/test6 transient
+#!waitforstate FM.Replica.State.fabric:/test6.30 StandBy|InBuild
+#!waitforstate FM.Replica.State.fabric:/test6.30 Ready
+#verify
+
+# swap to the secondary and check data
+#swapprimary fabric:/test6 40 30
+#!waitforstate FM.Replica.Role.fabric:/test6.30 Primary
+
+#clientget fabric:/test6 10 ten
+#!wait
+#clientget fabric:/test6 20 twenty
+#!wait
+#clientget fabric:/test6 30 thirty
+#!wait
+
+#deleteservice fabric:/test6
+#verify 
+
+
+######################################################################################################
+#
+# TestCase 7 - Add, Checkpoint, Report Fault transient on all secondaries, and recover from checkpoint.
+#
+######################################################################################################
+
+#createservice fabric:/test7 TStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+#!waitforstate FM.Replica.Role.fabric:/test7.40 Primary
+#!waitforstate FM.Replica.Role.fabric:/test7.30 Secondary
+#!waitforstate FM.Replica.Role.fabric:/test7.20 Secondary
+#verify 
+
+#clientput fabric:/test7 10 ten
+#!wait
+#clientput fabric:/test7 20 twenty
+#!wait
+#clientput fabric:/test7 30 thirty
+#!wait
+
+#requestcheckpoint fabric:/test7 40
+#requestcheckpoint fabric:/test7 30
+#requestcheckpoint fabric:/test7 20
+
+#clientget fabric:/test7 10 ten
+#!wait
+#clientget fabric:/test7 20 twenty
+#!wait
+#clientget fabric:/test7 30 thirty
+#!wait 
+
+#!pause 3
+
+#reportfault 30 fabric:/test7 transient
+#!waitforstate FM.Replica.State.fabric:/test7.30 StandBy|InBuild
+#!waitforstate FM.Replica.State.fabric:/test7.30 Ready
+#!pause 3
+#reportfault 20 fabric:/test7 transient
+#!waitforstate FM.Replica.State.fabric:/test7.20 StandBy|InBuild
+#!waitforstate FM.Replica.State.fabric:/test7.20 Ready
+#!pause 3
+
+#verify
+
+# swap to the 1st secondary and check data
+#swapprimary fabric:/test7 40 30
+#!waitforstate FM.Replica.Role.fabric:/test7.30 Primary
+
+#clientget fabric:/test7 10 ten
+#!wait
+#clientget fabric:/test7 20 twenty
+#!wait
+#clientget fabric:/test7 30 thirty
+#!wait
+
+# swap to the 2nd secondary and check data
+#swapprimary fabric:/test7 30 20
+#!waitforstate FM.Replica.Role.fabric:/test7.20 Primary
+
+#clientget fabric:/test7 10 ten
+#!wait
+#clientget fabric:/test7 20 twenty
+#!wait
+#clientget fabric:/test7 30 thirty
+#!wait
+
+#deleteservice fabric:/test7
+#verify 
+
+######################################################################################################
+#
+# TestCase 8 - Add, Checkpoint, Report Fault permanent on secondary, and recover.
+#
+######################################################################################################
+
+#createservice fabric:/test8 TStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+#!waitforstate FM.Replica.Role.fabric:/test8.40 Primary
+#!waitforstate FM.Replica.Role.fabric:/test8.30 Secondary
+#!waitforstate FM.Replica.Role.fabric:/test8.20 Secondary
+#verify 
+
+#clientput fabric:/test8 10 ten
+#!wait
+#clientput fabric:/test8 20 twenty
+#!wait
+#clientput fabric:/test8 30 thirty
+#!wait
+
+#requestcheckpoint fabric:/test8 40
+#requestcheckpoint fabric:/test8 30
+#requestcheckpoint fabric:/test8 20
+
+#clientget fabric:/test8 10 ten
+#!wait
+#clientget fabric:/test8 20 twenty
+#!wait
+#clientget fabric:/test8 30 thirty
+#!wait 
+
+#!pause 3
+
+# permanent fault on secondary
+#reportfault 30 fabric:/test8 permanent
+#!waitforstate FM.Replica.State.fabric:/test8.30 Dropped|InBuild
+#!waitforstate FM.Replica.State.fabric:/test8.30 Ready
+
+#verify
+
+#clientget fabric:/test8 10 ten
+#!wait
+#clientget fabric:/test8 20 twenty
+#!wait
+#clientget fabric:/test8 30 thirty
+#!wait
+
+# swap to the permanent fault secondary and check data
+#swapprimary fabric:/test8 40 30
+#!waitforstate FM.Replica.Role.fabric:/test8.30 Primary
+
+#clientget fabric:/test8 10 ten
+#!wait
+#clientget fabric:/test8 20 twenty
+#!wait
+#clientget fabric:/test8 30 thirty
+#!wait
+
+#deleteservice fabric:/test8
+#verify 
+
+######################################################################################################
+#
+# TestCase 11 - Add, Report Fault permanent on all secondaries, swap Primary, and read from primary
+#
+######################################################################################################
+
+#createservice fabric:/test11 TStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+#!waitforstate FM.Replica.Role.fabric:/test11.40 Primary
+#!waitforstate FM.Replica.Role.fabric:/test11.30 Secondary
+#!waitforstate FM.Replica.Role.fabric:/test11.20 Secondary
+#verify 
+
+#clientput fabric:/test11 10 ten
+#!wait
+#clientput fabric:/test11 20 twenty
+#!wait
+#clientput fabric:/test11 30 thirty
+#!wait
+
+#reportfault 30 fabric:/test11 permanent
+#reportfault 20 fabric:/test11 permanent
+#!waitforstate FM.Replica.State.fabric:/test11.30 Dropped|InBuild
+#!waitforstate FM.Replica.State.fabric:/test11.20 Dropped|InBuild
+#!waitforstate FM.Replica.State.fabric:/test11.30 Ready
+#!waitforstate FM.Replica.State.fabric:/test11.20 Ready
+#verify
+
+# swap to the 1st secondary and check data
+#swapprimary fabric:/test11 40 30
+#!waitforstate FM.Replica.Role.fabric:/test11.30 Primary
+#!waitforstate FM.Replica.Role.fabric:/test11.40 Secondary
+#!waitforstate FM.Replica.Role.fabric:/test11.20 Secondary
+#verify
+
+#clientget fabric:/test11 10 ten
+#!wait
+#clientget fabric:/test11 20 twenty
+#!wait
+#clientget fabric:/test11 30 thirty
+#!wait 
+
+# swap to the 2nd secondary and check data
+#swapprimary fabric:/test11 30 20
+#!waitforstate FM.Replica.Role.fabric:/test11.20 Primary
+#!waitforstate FM.Replica.Role.fabric:/test11.30 Secondary
+#!waitforstate FM.Replica.Role.fabric:/test11.40 Secondary
+#verify
+
+#clientget fabric:/test11 10 ten
+#!wait
+#clientget fabric:/test11 20 twenty
+#!wait
+#clientget fabric:/test11 30 thirty
+#!wait
+
+#deleteservice fabric:/test11
+#verify 
+
+!q

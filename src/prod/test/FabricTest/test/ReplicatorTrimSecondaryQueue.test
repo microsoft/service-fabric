@@ -1,0 +1,75 @@
+#
+# [owner] sumukhs
+# Test scenarios for trimming secondary queue based on ALL ACK on primary 
+#
+
+#
+# Replication behavior is different between KVS/ESE and KVS/TStore, so the resulting
+# LSNs will be different
+#
+
+seteseonly
+
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 5
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+# default primary and secondary queue size is 1024 and 2048 respectively
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify 
+
+!var FTID FM.FT.PartitionId.fabric:/test1#0
+!var PReplicaId RA.Replica.ReplicaId.fabric:/test1.60.60 
+!var S1ReplicaId RA.Replica.ReplicaId.fabric:/test1.60.40
+!var S2ReplicaId RA.Replica.ReplicaId.fabric:/test1.60.50
+
+# perform 5 operations 
+clientput fabric:/test1 10 10 
+clientput fabric:/test1 10 20 
+clientput fabric:/test1 10 30 
+clientput fabric:/test1 10 40 
+!wait
+!pause 5 
+clientput fabric:/test1 10 50 
+!wait
+!pause 5 
+
+# verify that all the secondary replicas have only operation 5 in their queue. 
+# this is because completedLSN info is only updated to a secondary when new replication operations are added
+query GetDeployedServiceReplicaDetail NodeName=nodeid:40 PartitionId=<var.FTID> ReplicaId=<var.S1ReplicaId> verify role=secondary,firstrepl=5,lastrepl=5 
+query GetDeployedServiceReplicaDetail NodeName=nodeid:50 PartitionId=<var.FTID> ReplicaId=<var.S2ReplicaId> verify role=secondary,firstrepl=5,lastrepl=5
+
+addbehavior b 60 50 ReplicationOperation  
+
+# perform 5 more operations 
+clientput fabric:/test1 10 10 
+clientput fabric:/test1 10 20 
+clientput fabric:/test1 10 30 
+clientput fabric:/test1 10 40 
+!wait 
+!pause 5 
+clientput fabric:/test1 10 50 
+!wait 
+
+# verify that secondary at 40 has operations from 6 to 10 in the queue
+query GetDeployedServiceReplicaDetail NodeName=nodeid:40 PartitionId=<var.FTID> ReplicaId=<var.S1ReplicaId> verify role=secondary,firstrepl=6,lastrepl=10
+
+removebehavior b
+!pause 5 
+
+clientput fabric:/test1 10 50 
+!wait  
+!pause 5
+# finally verify all secondary replicas have only operation 11
+query GetDeployedServiceReplicaDetail NodeName=nodeid:40 PartitionId=<var.FTID> ReplicaId=<var.S1ReplicaId> verify role=secondary,firstrepl=11,lastrepl=11
+query GetDeployedServiceReplicaDetail NodeName=nodeid:50 PartitionId=<var.FTID> ReplicaId=<var.S2ReplicaId> verify role=secondary,firstrepl=11,lastrepl=11
+
+cleareseonly
+
+!q

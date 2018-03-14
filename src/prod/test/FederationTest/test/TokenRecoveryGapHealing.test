@@ -1,0 +1,61 @@
+# TokenRecovery Gap Processing -- Test plan invariant (9)
+votes 0
+clearticket
++0
++100
++200
++300
++400
++500
+verify
+
+# Force a gap to be created by dropping the initial TokenTransfer as well as the
+# Token recovery messages too.  In this case there will be a gap between 350 and 400...
+addbehavior DropTokenTransferFrom400 400 * TokenTransfer 1.0 Max
+addbehavior DropTokenProbeFrom400 400 * TokenProbe 1.0 Max
+addbehavior DropTokenEchoFrom400 400 * TokenEcho 1.0 Max
+
++350
+
+# Node 350 should be in Routing but with only part of its token range (328, 380].
+# The full range should be (328, 3a8]
+!wait 30
+!state Phase.350 R
+!pause 2
+# Node 300 and 400 should have transferred parts of their range to 350 but the dropped messages
+# should prevent 350 from fully acquiring the entire token space. Verify the gap by trying to
+# route a message to the boundaries of the dead space. Also verify the key boundaries between what has
+# been transfered around 300, 350, and 400...
+set RouteTimeout 10.0
+routeone 0 381 expectTimeout
+routereq 0 381 expectTimeout
+routeone 0 3a8 expectTimeout
+routereq 0 3a8 expectTimeout
+routereq 0 328
+routereq 0 329
+routereq 0 380
+routereq 0 3aa
+!pause 12
+
+# Abort the node and let things heal...
+-350
+
+removebehavior DropTokenEchoFrom400
+verify
+
+# Sending messages to the previous dead space should now work as expected
+routeone 0 381
+routereq 0 381
+routeone 0 3a8
+routereq 0 3a8
+routereq 0 300
+routereq 0 301
+routereq 0 380
+routereq 0 381
+routereq 0 3FF
+routereq 0 400
+
+verify
+
+-*
+!q

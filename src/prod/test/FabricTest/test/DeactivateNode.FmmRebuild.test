@@ -1,0 +1,51 @@
+#
+# [owner] MMohsin, aprameyr
+#
+# This test verifies the scenario around fmm forgetting the node deactivation state after failover
+# 1. Node is deactivated from FM and FMM POV
+# 2. FMM failover happens and this causes it to forget the node deactivation state and it considers it activated
+# 3. Node gets activated. FM sends message to node to activate it but FMM does not because it already has it activated
+# 4. At this point system is inconsistent
+
+votes  20 30 40
+set FMPlacementConstraints system==true
+
+fmservice 3 3
+cmservice 3 3
+namingservice 1 3 3
+cleantest
+
++10
++20 nodeprops=system:true
++30 nodeprops=system:true
++40 nodeprops=system:true
+verify
+
++50 nodeprops=system:true
+verify
+
+-50 
+verify
+
+deactivatenode 50 Restart
+!pause 10
+
++50 nodeprops=system:true
+!waitforstate FMM.Node.50 true
+
+#now the node 50 is deactivated from FM and FMM pov
+#cause FMM rebuild
+-10
+!waitforstate FMM.Node.10 false
+
+-30 removedata
+!waitforstate FMM.Node.30 false
+nodestateremoved 30
+
+#at this time we have the loop between RA and FM
+#FMM will be placing the replicas on the node and RA will respond with error
+
+activatenode 50
+verify
+
+!q

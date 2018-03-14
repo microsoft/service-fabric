@@ -1,0 +1,4507 @@
+{
+  "Default": {
+    "IsCit": "true",
+    "RunLocally": "true"
+  },
+  "Tests": [
+    {
+      "Name": "Serialization.User.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Common",
+      "TestExecutionParameters": {
+        "TaskName": "Serialization.User.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Common.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "anmola,xunlu",
+      "Tags": "Admin,Security,Common",
+      "TestExecutionParameters": {
+        "TaskName": "Common.Test.exe",
+        "ExecutionTimeout": "1800",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Transport.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "leikong,suchia",
+      "Tags": "Admin,Security,Common",
+      "Environment": "Iaas",
+      "TestExecutionParameters": {
+        "TaskName": "Transport.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PerformanceCounterTest.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "Admin,Performance,Common",
+      "TestExecutionParameters": {
+        "TaskName": "PerformanceCounterTest.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "LeaseLayer.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "jefchen,yangli",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "LeaseLayer.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Federation.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "Federation.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Routing.test",
+      "Type": "FederationTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "Routing.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FederationKerberos.test",
+      "Type": "FederationTest",
+      "Owners": "leikong,xunlu",
+      "Environment": "Iaas",
+      "Tags": "Security,Federation",
+      "TestExecutionParameters": {
+        "TaskName": "FederationKerberos.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FederationSsl.test",
+      "Type": "FederationTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Admin,Security,Federation",
+      "TestExecutionParameters": {
+        "TaskName": "FederationSsl.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RoutingWithNodeClose.test",
+      "Type": "FederationTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "RoutingWithNodeClose.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RoutingWithRetries.test",
+      "Type": "FederationTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "RoutingWithRetries.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AbortNode.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "AbortNode.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Broadcast.test",
+      "Type": "FederationTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "Broadcast.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliableBroadcast.test",
+      "Type": "FederationTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "ReliableBroadcast.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Multicast.test",
+      "Type": "FederationTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "Multicast.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricScenario2.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "FabricScenario2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricScenario2c.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "FabricScenario2c.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TokenRecoveryGapHealing.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "TokenRecoveryGapHealing.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TokenRecoveryMessageDrops.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "TokenRecoveryMessageDrops.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TokenRecoveryPathChanges.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "TokenRecoveryPathChanges.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PartitionStress.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "PartitionStress.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NeighborhoodRecovery.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "NeighborhoodRecovery.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricVersion.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "FabricVersion.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "VoteUpdate.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu,leikong",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "VoteUpdate.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "IndirectLease.test",
+      "Type": "FederationTest",
+      "Owners": "jefchen,yangli",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "IndirectLease.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ImplicitLease.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "ImplicitLease.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "IndirectLeaseMaxLimit.test",
+      "Type": "FederationTest",
+      "Owners": "jefchen,yangli",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "IndirectLeaseMaxLimit.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MultiRing.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "MultiRing.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "VoterStore.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "VoterStore.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "GlobalTime.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "GlobalTime.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "OnewayAndOnewayArbitration.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "OnewayAndOnewayArbitration.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "OnewayAndTwowayArbitration.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "OnewayAndTwowayArbitration.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Arbitration.test",
+      "Type": "FederationTest",
+      "Owners": "xunlu",
+      "Environment": "Iaas",
+      "Tags": "Federation",
+      "TestExecutionParameters": {
+        "TaskName": "Arbitration.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BackupRestore.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,anupv",
+      "Tags": "Store,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "BackupRestore.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BackupRestore2.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,anupv",
+      "Tags": "Store,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "BackupRestore2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BackupRestore4.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,anupv",
+      "Tags": "Store,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "BackupRestore4.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicatedStoreRepairPolicy.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,anupv",
+      "Tags": "Store,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicatedStoreRepairPolicy.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Client.Test.exe",
+      "Type": "ExeTest_Sequential",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Client.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Naming.Test.exe",
+      "Type": "ExeTest_Sequential",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Naming.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingBasic.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingCache.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingCache.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingClientCache.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingClientCache.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingClientSettings.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingClientSettings.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingErrorPaths.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingErrorPaths.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingPropertyBatchBasic.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingPropertyBatchBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingPropertyBatchMultiOp.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingPropertyBatchMultiOp.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingQuorumLoss.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingQuorumLoss.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingRepair.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingRepair.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingRecursiveNames.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingRecursiveNames.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingDataloss.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingDataloss.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingServiceNotificationServiceOffline.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingServiceNotificationServiceOffline.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingNamedPartitions.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingNamedPartitions.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingUInt64Partitions.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingUInt64Partitions.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingServiceNotificationAndResolve.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingServiceNotificationAndResolve.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingServiceChangeNotification.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingServiceChangeNotification.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingServiceMultiChangeNotification.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingServiceMultiChangeNotification.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingServicePrimaryRecovery.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,oanapl",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingServicePrimaryRecovery.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingStaleMessages.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingStaleMessages.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingEnumeration.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingEnumeration.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NamingEnumeration2.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NamingEnumeration2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RepartitionService.Add.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RepartitionService.Add.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RepartitionService.Remove.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RepartitionService.Remove.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RepartitionService.Errors.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RepartitionService.Errors.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RepartitionService.Upgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin,linggeng",
+      "Tags": "Naming,Reliability,CM",
+      "TestExecutionParameters": {
+        "TaskName": "RepartitionService.Upgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FMDataloss.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FMDataloss.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TombstoneCleanup2.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,oanapl",
+      "Tags": "Naming,CM,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "TombstoneCleanup2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FMChangeBeforeNSBoot.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FMChangeBeforeNSBoot.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NonPartitionedService.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NonPartitionedService.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "GetServiceDescription.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "GetServiceDescription.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PrefixResolution.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,bharatn,oanapl",
+      "Tags": "Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PrefixResolution.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FM.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FM.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RA.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RA.Test.exe",
+        "SetupType": "XCopy",
+        "Params": "--detect_memory_leaks=0"
+      }
+    },
+    {
+      "Name": "Reliability.Common.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reliability.Common.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClientReportFault.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClientReportFault.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaUp.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaUp.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaUpReply1.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaUpReply1.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaUpReply2.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaUpReply2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaUpReply3.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaUpReply3.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaUpReply4.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaUpReply4.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaUpReply5.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaUpReply5.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaUpReply6.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaUpReply6.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RuntimeAndServiceType.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RuntimeAndServiceType.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios12.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios12.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios20.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios20.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios21.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios21.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios28.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios28.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios30.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios30.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios33.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios33.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios36.test",
+      "Type": "FabricTest",
+      "Owners": "sumukhs,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios36.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios37.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios37.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Replicator.UpdateEpoch.Fail.Stuck.test",
+      "Type": "FabricTest",
+      "Owners": "sumukhs, anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Replicator.UpdateEpoch.Fail.Stuck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Upgrade.ReplicaDownBlock.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Upgrade.ReplicaDownBlock.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Upgrade.Cancel.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Upgrade,Security,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Upgrade.Cancel.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade.Rollback.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade.Rollback.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterUpgrade.Rollback.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterUpgrade.Rollback.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Upgrade.Rollback.RA.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Upgrade.Rollback.RA.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Upgrade.TerminateHost.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Upgrade.TerminateHost.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ThrottleThresholdScenarios.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ThrottleThresholdScenarios.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "EndpointUpdate.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "EndpointUpdate.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeleteAppDuringDeactivate.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DeleteAppDuringDeactivate.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SlowReopenReplicaUpDuringRebuild.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "SlowReopenReplicaUpDuringRebuild.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "LocalRetryHealthEvents.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "LocalRetryHealthEvents.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DropAfterLocalRetry.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DropAfterLocalRetry.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios40.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,aprameyr",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios40.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios41.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,aprameyr",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios41.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios42.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,aprameyr",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios42.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AdvancedReliabilityScenarios44.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AdvancedReliabilityScenarios44.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "CancelUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "CancelUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RemoveReplica.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RemoveReplica.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RAHealthReport.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RAHealthReport.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RAPHealthReport.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RAPHealthReport.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RAPCloseWithHigherInstanceId.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RAPCloseWithHigherInstanceId.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RAPMonitoring1.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RAPMonitoring1.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RAPMonitoring2.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RAPMonitoring2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RAPMonitoring3.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RAPMonitoring3.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RAPMonitoring4.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RAPMonitoring4.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RAPMonitoring5.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RAPMonitoring5.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaLifeCycle.AppHostDown.test",
+      "Type": "FabricTest",
+      "Owners": "chuxin,anuragg",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaLifeCycle.AppHostDown.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaLifeCycle.ReplicaOpenMode.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,ReplicaLifeCycle,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaLifeCycle.ReplicaOpenMode.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaLifecycle.Create.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,ReplicaLifeCycle,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaLifecycle.Create.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaLifeCycle.Abort.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,ReplicaLifeCycle,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaLifeCycle.Abort.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaLifeCycle.Drop.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,ReplicaLifeCycle,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaLifeCycle.Drop.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaLifeCycle.NodeClose.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,ReplicaLifeCycle,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaLifeCycle.NodeClose.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaLifeCycle.Restart.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,ReplicaLifeCycle,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaLifeCycle.Restart.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaLifecycle.FSR.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,ReplicaLifeCycle,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaLifecycle.FSR.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.AddSecondary.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.AddSecondary.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.SwapPrimary.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.SwapPrimary.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.ReplicaChangeRoleHealthReport.test",
+      "Type": "FabricTest",
+      "Owners": "chuxin,aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.ReplicaChangeRoleHealthReport.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.SwapPrimary.Abort.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.SwapPrimary.Abort.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UnknownNodes.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UnknownNodes.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Api.SwapPrimary.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Api.SwapPrimary.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Api.SwapPrimary.Abort.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Api.SwapPrimary.Abort.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase1GetLSN.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase1GetLSN.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase1GetLSN.DataLoss.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase1GetLSN.DataLoss.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase1GetLSN.FalseProgress.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase1GetLSN.FalseProgress.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase1GetLSN.SlowRemoteReplica.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase1GetLSN.SlowRemoteReplica.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase1Deactivate.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase1Deactivate.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase2Catchup.PrimaryChange.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase2Catchup.PrimaryChange.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase2Catchup.SamePrimary.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase2Catchup.SamePrimary.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase2Deactivate.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase2Deactivate.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase3Deactivate.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase3Deactivate.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase4Activate.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase4Activate.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Phase4Activate.IdleToActive.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Phase4Activate.IdleToActive.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.ReadWriteStatus.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.ReadWriteStatus.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FMRebuildHealthReport.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FMRebuildHealthReport.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.ReadWriteStatusRevokeNotification.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.ReadWriteStatusRevokeNotification.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reconfiguration.Rebuild.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reconfiguration,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Reconfiguration.Rebuild.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaDroppedMessageDrop.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaDroppedMessageDrop.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliableMaster.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReliableMaster.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliabilityReportLoad.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReliabilityReportLoad.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliabilityDataLoss.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReliabilityDataLoss.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliabilityRebuildDataLoss.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReliabilityRebuildDataLoss.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliabilityAbort.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReliabilityAbort.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliabilityAbort2.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReliabilityAbort2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicatorReportFault2.test",
+      "Type": "FabricTest",
+      "Owners": "sumukhs,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicatorReportFault2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FullRebuild.Test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FullRebuild.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FullRebuild2.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FullRebuild2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Rebuild.Health.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg,oanapl",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Rebuild.Health.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Rebuild.AppInstanceDeleted.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Rebuild.AppInstanceDeleted.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterRestart.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterRestart.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "QuorumLoss.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "QuorumLoss.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RecoverPartitions.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RecoverPartitions.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RecoverPartition.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RecoverPartition.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RecoverPartition2.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,aprameyr",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RecoverPartition2.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RecoverServicePartitions.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RecoverServicePartitions.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RecoverSystemPartitions.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RecoverSystemPartitions.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNodes.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,IS,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNodes.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.HealthChecks.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Security,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.HealthChecks.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.TerminateHost.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.TerminateHost.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.Upgrade.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.Upgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RebuildFromReadySecondary.Test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RebuildFromReadySecondary.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DataLossDuringRebuild.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DataLossDuringRebuild.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicaOpenFailureHealth.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,oanapl",
+      "Tags": "Failover,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicaOpenFailureHealth.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FailoverUnitDeletion.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FailoverUnitDeletion.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MinReplicaSetSizeBasic.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "MinReplicaSetSizeBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MinReplicaSetSizeCreateSecondary.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "MinReplicaSetSizeCreateSecondary.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpdateService.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpdateService.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpdateFMService.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpdateFMService.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpdateService.RAP.test",
+      "Type": "FabricTest",
+      "Owners": "manojsi,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpdateService.RAP.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpdateServiceGroup.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpdateServiceGroup.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NodeStateRemoved.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NodeStateRemoved.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Failover.DataLoss.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,aprameyr,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Failover.DataLoss.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FM.SavedLookupVersion.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,alexwun,anuragg",
+      "Tags": "Failover,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FM.SavedLookupVersion.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.Pause.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "IS,ReliabilityFunctionals",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.Pause.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.Restart.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "IS,ReliabilityFunctionals",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.Restart.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.RemoveData.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "IS,ReliabilityFunctionals",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.RemoveData.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.RemoveNode.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "IS,ReliabilityFunctionals",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.RemoveNode.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeactivateNode.Placement.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "IS,ReliabilityFunctionals",
+      "TestExecutionParameters": {
+        "TaskName": "DeactivateNode.Placement.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "LoadBalancing.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "nipuzovi,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "LoadBalancing.Test.exe",
+        "ExecutionTimeout": "1200",
+        "Params": "--detect_memory_leak=0",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlacementConstraints.test",
+      "Type": "FabricTest",
+      "Owners": "yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlacementConstraints.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServiceAffinityChainErrors.test",
+      "Type": "FabricTest",
+      "Owners": "v-anatra,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceAffinityChainErrors.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BasicLBTestdata.test",
+      "Type": "LBSimulator",
+      "Owners": "v-ivned,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "BasicLBTestdata.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "LBTestdata1Metric.test",
+      "Type": "LBSimulator",
+      "Owners": "v-ivned,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "LBTestdata1Metric.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServicePlacementPolicy.test",
+      "Type": "FabricTest",
+      "Owners": "miradic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ServicePlacementPolicy.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServicePlacementOnEveryNode.test",
+      "Type": "FabricTest",
+      "Owners": "miradic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ServicePlacementOnEveryNode.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbCapacityViolationsWithStandByReplicas.test",
+      "Type": "FabricTest",
+      "Owners": "v-anatra,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbCapacityViolationsWithStandByReplicas.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbCapacityWithBufferNodePercentage.test",
+      "Type": "FabricTest",
+      "Owners": "v-anatra,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbCapacityWithBufferNodePercentage.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbDefragmentationBasic.test",
+      "Type": "FabricTest",
+      "Owners": "mmicic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbDefragmentationBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbDynamicProperties.test",
+      "Type": "FabricTest",
+      "Owners": "chanli,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbDynamicProperties.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbNodeLoad.test",
+      "Type": "FabricTest",
+      "Owners": "v-bogmar,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbNodeLoad.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbClusterLoad.test",
+      "Type": "FabricTest",
+      "Owners": "v-bogmar,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbClusterLoad.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBReportUndefinedMetricLoad.test",
+      "Type": "FabricTest",
+      "Owners": "v-ivned,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBReportUndefinedMetricLoad.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbOnEveryNode.test",
+      "Type": "FabricTest",
+      "Owners": "miradic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbOnEveryNode.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UnplacedReplicaReason.test",
+      "Type": "FabricTest",
+      "Owners": "yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UnplacedReplicaReason.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UnswappableUpgradePartition.test",
+      "Type": "FabricTest",
+      "Owners": "yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UnswappableUpgradePartition.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UnfixableConstraintViolationHealth.test",
+      "Type": "FabricTest",
+      "Owners": "yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UnfixableConstraintViolationHealth.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbDeactivate.test",
+      "Type": "FabricTest",
+      "Owners": "v-drmark,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbDeactivate.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBViolationCorrectionWithDownInBuildReplicas.test",
+      "Type": "FabricTest",
+      "Owners": "mocolic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBViolationCorrectionWithDownInBuildReplicas.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBViolationCorrectionWithDownStandbyReplicas.test",
+      "Type": "FabricTest",
+      "Owners": "v-bogmar,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBViolationCorrectionWithDownStandbyReplicas.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TestSplitDomain.test",
+      "Type": "FabricTest",
+      "Owners": "chanli,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "TestSplitDomain.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBHealthReporting.test",
+      "Type": "FabricTest",
+      "Owners": "v-drmark,yangli,anuragg",
+      "Tags": "LoadBalancing,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBHealthReporting.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BalancingFailureHealth.test",
+      "Type": "FabricTest",
+      "Owners": "v-drmark,yangli,anuragg",
+      "Tags": "LoadBalancing,Health,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "BalancingFailureHealth.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbDroppingExtraReplicas.test",
+      "Type": "FabricTest",
+      "Owners": "mocolic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PlbDroppingExtraReplicas.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliabilityReportMoveCost.test",
+      "Type": "FabricTest",
+      "Owners": "mocolic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReliabilityReportMoveCost.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBSchedulerStressTest.test",
+      "Type": "FabricTest",
+      "Owners": "nipuzovi,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBSchedulerStressTest.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBApplicationManagement.test",
+      "Type": "FabricTest",
+      "Owners": "yangli,nipuzovi,anuragg",
+      "Tags": "LoadBalancing,Admin,CM,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBApplicationManagement.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBApplicationLoad.test",
+      "Type": "FabricTest",
+      "Owners": "nipuzovi,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBApplicationLoad.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBApplicationGroupBasic.test",
+      "Type": "FabricTest",
+      "Owners": "nipuzovi,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBApplicationGroupBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBPlacementDuringNodeDeactivationRestart.test",
+      "Type": "FabricTest",
+      "Owners": "mmicic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBPlacementDuringNodeDeactivationRestart.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBAppUpgradeOfStatelessVolatileDuringNodeDeactivation.test",
+      "Type": "FabricTest",
+      "Owners": "apopadic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBAppUpgradeOfStatelessVolatileDuringNodeDeactivation.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBAppUpgradeOfStatelessVolatileDuringNodeDeactivation1.test",
+      "Type": "FabricTest",
+      "Owners": "apopadic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBAppUpgradeOfStatelessVolatileDuringNodeDeactivation1.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBAppUpgradeOfStatelessVolatileDuringNodeDeactivation2.test",
+      "Type": "FabricTest",
+      "Owners": "apopadic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBAppUpgradeOfStatelessVolatileDuringNodeDeactivation2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBNodeDeactivation.test",
+      "Type": "FabricTest",
+      "Owners": "mmicic,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "PLBNodeDeactivation.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgradeCompletedUDs.test",
+      "Type": "FabricTest",
+      "Owners": "yangli,mmohsin,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgradeCompletedUDs.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterUpgradeCompletedUDs.test",
+      "Type": "FabricTest",
+      "Owners": "yangli,mmohsin,anuragg",
+      "Tags": "LoadBalancing,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterUpgradeCompletedUDs.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PlbReduceReplicaCountWithQuorumBasedUdFd.test",
+      "Type": "FabricTest",
+      "Owners": "mmicic,yangli,anuragg",
+      "Tags": "LoadBalancing",
+      "TestExecutionParameters": {
+        "TaskName": "PlbReduceReplicaCountWithQuorumBasedUdFd.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RGBasic.test",
+      "Type": "FabricTest",
+      "Owners": "nipuzovi,mocolic,anuragg",
+      "Tags": "LoadBalancing,Reliability,ResourceGovernance",
+      "TestExecutionParameters": {
+        "TaskName": "RGBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RGExclusiveHost.test",
+      "Type": "FabricTest",
+      "Owners": "nipuzovi,miradic,anuragg",
+      "Tags": "LoadBalancing,Reliability,ResourceGovernance",
+      "TestExecutionParameters": {
+        "TaskName": "RGExclusiveHost.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RGBalancing.test",
+      "Type": "FabricTest",
+      "Owners": "miradic,nipuzovi,anuragg",
+      "Tags": "LoadBalancing,Reliability,ResourceGovernance",
+      "TestExecutionParameters": {
+        "TaskName": "RGBalancing.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RGUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "mocolic,nipuzovi,anuragg",
+      "Tags": "LoadBalancing,Reliability,ResourceGovernance",
+      "TestExecutionParameters": {
+        "TaskName": "RGUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RGExclusiveUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "miradic,nipuzovi,anuragg",
+      "Tags": "LoadBalancing,Reliability,ResourceGovernance",
+      "TestExecutionParameters": {
+        "TaskName": "RGExclusiveUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RGUpgradeMultipleApps.test",
+      "Type": "FabricTest",
+      "Owners": "nipuzovi,yangli,anuragg",
+      "Tags": "LoadBalancing,Reliability,ResourceGovernance",
+      "TestExecutionParameters": {
+        "TaskName": "RGUpgradeMultipleApps.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RGUpgradeNewPackage.test",
+      "Type": "FabricTest",
+      "Owners": "mocolic,nipuzovi,anuragg",
+      "Tags": "LoadBalancing,Reliability,ResourceGovernance",
+      "TestExecutionParameters": {
+        "TaskName": "RGUpgradeNewPackage.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RGRollbackUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "miradic,nipuzovi,anuragg",
+      "Tags": "LoadBalancing,Reliability,ResourceGovernance",
+      "TestExecutionParameters": {
+        "TaskName": "RGRollbackUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Replication.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "sumukhs,anuragg",
+      "Tags": "Replication,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Replication.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "replicatorscenario1.test",
+      "Type": "FabricTest",
+      "Owners": "sumukhs,anuragg",
+      "Tags": "Replication,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "replicatorscenario1.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicatorPrimaryHealthReporting.test",
+      "Type": "FabricTest",
+      "Owners": "hanagar,sumukhs,anuragg",
+      "Tags": "Replication,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicatorPrimaryHealthReporting.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReplicatorSecondaryHealthReporting.test",
+      "Type": "FabricTest",
+      "Owners": "hanagar,sumukhs,anuragg",
+      "Tags": "Replication,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ReplicatorSecondaryHealthReporting.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServiceGroup.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "jefchen,aprameyr,anuragg",
+      "Tags": "Reliability,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceGroup.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServiceGroup.Basic.test",
+      "Type": "FabricTest",
+      "Owners": "jefchen,aprameyr,anuragg",
+      "Tags": "Reliability,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceGroup.Basic.test",
+        "SetupType": "XCopy",
+        "ExecutionTimeout": "1500"
+      }
+    },
+    {
+      "Name": "ServiceGroup.Resolution.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,jefchen,anuragg",
+      "Tags": "ServiceGroup,Naming,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceGroup.Resolution.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServiceModel.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "vaishnav,vipulm",
+      "Tags": "Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceModel.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Upgrade.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,alexwun",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Upgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgradePLB.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,yangli,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgradePLB.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade1.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade1.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade2.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade3.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade3.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade4.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade4.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade5.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade5.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade6.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade6.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade7.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade7.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade.Rebuild.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade.Rebuild.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AppUpgrade.SwapPrimary.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,aprameyr,alexwun",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "AppUpgrade.SwapPrimary.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterUpgradePLB.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,yangli,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterUpgradePLB.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterUpgrade1.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterUpgrade1.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterUpgrade2.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterUpgrade2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterUpgrade3.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterUpgrade3.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterUpgrade4.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterUpgrade4.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterAndAppUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterAndAppUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricUpgradeSafetyCheck.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Upgrade,CM,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FabricUpgradeSafetyCheck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricUpgradeSeedCheck.test",
+      "Type": "FabricTest",
+      "Owners": "mmohsin,ratando",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FabricUpgradeSeedCheck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeInQuorumLoss.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,alexwun",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeInQuorumLoss.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeApplicationPackage.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "aprameyr,alexwun",
+      "Tags": "Admin,Upgrade,CM,Activation,RunAs,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeApplicationPackage.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeApplicationParameters.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,vipulm",
+      "Tags": "Admin,Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeApplicationParameters.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeNoActiveServices.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,alexwun",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeNoActiveServices.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeInterruption.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,aprameyr",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeInterruption.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServiceCreationDuringUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceCreationDuringUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RollbackApplicationUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,aprameyr",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RollbackApplicationUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RollbackFabricUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,aprameyr",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "RollbackFabricUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeWithDeletedServiceTypes.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,anuragg",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeWithDeletedServiceTypes.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeApplicationOpenFailure.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "vaishnav,vipulm",
+      "Tags": "Upgrade,CM,Activation,RunAs,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeApplicationOpenFailure.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeSkipDomains.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeSkipDomains.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ModifyUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ModifyUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DeleteApplicationDuringUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "DeleteApplicationDuringUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ModifyFabricUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "ModifyFabricUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NotificationOnlyUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,alexwun",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NotificationOnlyUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NotificationOnlyUpgrade2.test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,alexwun",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "NotificationOnlyUpgrade2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MonitoredUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,vaishnav,aprameyr",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "MonitoredUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MonitoredUpgrade2.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,vaishnav",
+      "Tags": "Upgrade,CM,Activation,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "MonitoredUpgrade2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MonitoredUpgradeRollback.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "vaishnav,vipulm",
+      "Tags": "Upgrade,CM,Activation,RunAs,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "MonitoredUpgradeRollback.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,aprameyr",
+      "Tags": "Upgrade,CM,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FabricUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricUpgradeDuringRebuild.Test",
+      "Type": "FabricTest",
+      "Owners": "aprameyr,alexwun",
+      "Tags": "Upgrade,CM,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "FabricUpgradeDuringRebuild.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MonitoredFabricUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,aprameyr",
+      "Tags": "Upgrade,CM,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "MonitoredFabricUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UnblockRollback.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,mmohsin",
+      "Tags": "Upgrade,CM,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UnblockRollback.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UpgradeUD.Test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,yangli,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UpgradeUD.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Upgrade.DynamicUD.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,anuragg",
+      "Tags": "Upgrade,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "Upgrade.DynamicUD.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SslBasic.test",
+      "Type": "FabricTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Admin,Security,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "SslBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SslAccessCtrl.test",
+      "Type": "FabricTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Admin,Security,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "SslAccessCtrl.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "X509SelfSigned.test",
+      "Type": "FabricTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Admin,Security,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "X509SelfSigned.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "CertIssuerCheck.test",
+      "Type": "FabricTest",
+      "Owners": "leikong,xunlu",
+      "Tags": "Admin,Security,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "CertIssuerCheck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "KerberosBasic.test",
+      "Type": "FabricTest",
+      "Owners": "leikong,xunlu",
+      "Environment": "Iaas",
+      "Tags": "Security,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "KerberosBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "KerberosBasic2.test",
+      "Type": "FabricTest",
+      "Owners": "leikong,xunlu",
+      "Environment": "Iaas",
+      "Tags": "Security,Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "KerberosBasic2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "UnreliableTransportUsingClient.test",
+      "Type": "FabricTest",
+      "Owners": "t-roamor,anmola",
+      "Tags": "Reliability",
+      "TestExecutionParameters": {
+        "TaskName": "UnreliableTransportUsingClient.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Hosting2.Test.exe",
+      "Type": "ExeTest_Sequential",
+      "Owners": "sfhosting,shkadam,dariopb,liphigao",
+      "Tags": "Admin,Management",
+      "TestExecutionParameters": {
+        "TaskName": "Hosting2.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "HostingBasic.test",
+      "Type": "FabricTest",
+      "Owners": "vaishnav,vipulm,tugup,harahma,rajeetn",
+      "Tags": "Management",
+      "TestExecutionParameters": {
+        "TaskName": "HostingBasic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RunAsPolicy.NTLMAuthEnabled.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "rajeetn,vipulm",
+      "Environment": "Iaas",
+      "Tags": "Admin,CM,Activation,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "RunAsPolicy.NTLMAuthEnabled.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RunAsPolicy.NTLMAuthDisabled.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "rajeetn,vipulm",
+      "Environment": "Iaas",
+      "Tags": "Admin,CM,Activation,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "RunAsPolicy.NTLMAuthDisabled.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PackageSharingPolicy.test",
+      "Type": "FabricTest",
+      "Owners": "rajeetn,vipulm",
+      "Tags": "Admin,Activation,Management",
+      "TestExecutionParameters": {
+        "TaskName": "PackageSharingPolicy.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterManager.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,vipulm",
+      "Tags": "CM,Activation,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManager.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterManagerDefaultService.test",
+      "Type": "FabricTest",
+      "Owners": "linggeng,alexwun",
+      "Tags": "CM,Upgrade,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManagerDefaultService.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterManagerDefaultServiceDisabled.test",
+      "Type": "FabricTest",
+      "Owners": "linggeng,alexwun",
+      "Tags": "CM,Upgrade,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManagerDefaultServiceDisabled.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterManagerErrors.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,vipulm",
+      "Tags": "CM,Activation,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManagerErrors.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterManagerStaleMessage.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,vipulm",
+      "Tags": "CM,Activation,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManagerStaleMessage.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterManagerServiceDnsName.test",
+      "Type": "FabricTest",
+      "Owners": "mivuko",
+      "Tags": "CM,Activation,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManagerServiceDnsName.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterManagerDeletePendingDefaultServices.test",
+      "Type": "FabricTest",
+      "Owners": "mivuko",
+      "Tags": "CM,Activation,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManagerDeletePendingDefaultServices.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DockerCompose.test",
+      "Type": "FabricTest",
+      "Owners": "linggeng,bharatn",
+      "Tags": "CM,Container,Management",
+      "TestExecutionParameters": {
+        "TaskName": "DockerCompose.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ComposeUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "linggeng,bharatn",
+      "Tags": "CM,Container,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ComposeUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Predeployment.test",
+      "Type": "FabricTest",
+      "Owners": "rajeetn,vipulm",
+      "Tags": "Admin,Activation,Management",
+      "TestExecutionParameters": {
+        "TaskName": "Predeployment.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ImageModel.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "vaishnav,vipulm",
+      "Tags": "Management",
+      "TestExecutionParameters": {
+        "TaskName": "ImageModel.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ImageStore.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "mialu,vipulm",
+      "Tags": "Management",
+      "TestExecutionParameters": {
+        "TaskName": "ImageStore.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "NativeImageStore.Scenario.Test",
+      "Type": "V2_ScriptTest",
+      "Owners": "mialu,oanapl",
+      "Tags": "Management,ImageStore",
+      "TestExecutionParameters": {
+        "TaskName": "NativeImageStore.Scenario.Test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Management.Test.dll",
+      "Type": "TAEFTest_Isolated",
+      "Owners": "vaishnav,vipulm",
+      "Tags": "Admin,Security,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricDCATests.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "DCA,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricDCATests.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TelemetryAggregationTests.dll",
+      "Type": "TAEFTest",
+      "Owners": "romend,mattrow",
+      "Tags": "DCA",
+      "TestExecutionParameters": {
+        "TaskName": "TelemetryAggregationTests.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "EtlProducer.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "DCA,Management",
+      "TestExecutionParameters": {
+        "TaskName": "EtlProducer.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AzureFileUploader.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "DCA,Management",
+      "TestExecutionParameters": {
+        "TaskName": "AzureFileUploader.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AzureTableUploader.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "DCA,Management",
+      "TestExecutionParameters": {
+        "TaskName": "AzureTableUploader.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "AzureUploaderCommon.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "DCA,Management",
+      "TestExecutionParameters": {
+        "TaskName": "AzureUploaderCommon.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MdsUploader.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "DCA,MDS,Management",
+      "TestExecutionParameters": {
+        "TaskName": "MdsUploader.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MdsUploader.TestConflict.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,shkadam",
+      "Tags": "DCA,MDS,Management",
+      "TestExecutionParameters": {
+        "TaskName": "MdsUploader.TestConflict.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricMdsAgentSvc.Tests.dll",
+      "Type": "TAEFTest",
+      "Owners": "unmeshk,edwardsa,mattrow",
+      "Tags": "MDS,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricMdsAgentSvc.Tests\\FabricMdsAgentSvc.Tests.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricMonSvc.Tests.dll",
+      "Type": "TAEFTest",
+      "Owners": "unmeshk,mattrow",
+      "Tags": "Monitoring,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricMonSvc.Tests\\Microsoft.ServiceFabric.Monitoring.Tests.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricQueryPaging.test",
+      "Type": "FabricTest",
+      "Owners": "bharatn,oanapl,bikang",
+      "Tags": "Query,Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricQueryPaging.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Query.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "vipulm",
+      "Tags": "Management",
+      "TestExecutionParameters": {
+        "TaskName": "Query.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Reprovision.test",
+      "Type": "FabricTest",
+      "Owners": "vaishnav,vipulm",
+      "Tags": "ImageBuilder,Management",
+      "TestExecutionParameters": {
+        "TaskName": "Reprovision.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DiffProvisioning.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,vaishnav",
+      "Tags": "ImageBuilder,Management",
+      "TestExecutionParameters": {
+        "TaskName": "DiffProvisioning.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ClusterManager.SingleNode.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "alexwun,vipulm",
+      "Tags": "CM,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ClusterManager.SingleNode.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ProvisionCaseSensitivity.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,vaishnav",
+      "Tags": "CM,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ProvisionCaseSensitivity.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ParallelProvision.test",
+      "Type": "FabricTest",
+      "Owners": "alexwun,vaishnav",
+      "Tags": "CM,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ParallelProvision.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ApplicationFail.test",
+      "Type": "FabricTest",
+      "Owners": "linggeng,alexwun",
+      "Tags": "CM,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ApplicationFail.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServiceFail.test",
+      "Type": "FabricTest",
+      "Owners": "linggeng,alexwun",
+      "Tags": "CM,Management",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceFail.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "InfrastructureService.Single.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "alexwun,vipulm",
+      "Tags": "Admin,CM,IS,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "InfrastructureService.Single.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "InfrastructureService.Multi1.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "alexwun,vipulm",
+      "Tags": "Admin,CM,IS,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "InfrastructureService.Multi1.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "InfrastructureService.Multi2.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "alexwun,vipulm",
+      "Tags": "Admin,CM,IS,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "InfrastructureService.Multi2.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "InfrastructureService.MultiInstance.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "danmas,richhas",
+      "Tags": "Admin,CM,IS,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "InfrastructureService.MultiInstance.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthAggregatedHealthCheck.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthAggregatedHealthCheck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthStateChunks.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthStateChunks.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthSkipPersistSameReports.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthSkipPersistSameReports.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthAdvancedScenarios.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthAdvancedScenarios.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealth.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealth.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthReportSystemNoInstance.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,vipulm",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthReportSystemNoInstance.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthReportingComponent.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthReportingComponent.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthFailover.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthFailover.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthSequenceStream.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthSequenceStream.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthStress.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthStress.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricHealthSystemUserReports.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricHealthSystemUserReports.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricClusterHealthChecks.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricClusterHealthChecks.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricClusterAppTypeHealthChecks.test",
+      "Type": "FabricTest",
+      "Owners": "oanapl,alexwun",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FabricClusterAppTypeHealthChecks.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FMHealthReport.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,mmohsin,oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FMHealthReport.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FMHealthSequence.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,oanapl",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FMHealthSequence.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FMPlacementHealth.test",
+      "Type": "FabricTest",
+      "Owners": "brcamina,mmohsin",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "FMPlacementHealth.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "HostingHealthReport.test",
+      "Type": "FabricTest",
+      "Owners": "vaishnav, vipulm",
+      "Tags": "Health,Management",
+      "TestExecutionParameters": {
+        "TaskName": "HostingHealthReport.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "HostingDeletionManager.test",
+      "Type": "FabricTest",
+      "Owners": "vaishnav, vipulm",
+      "Tags": "Management",
+      "TestExecutionParameters": {
+        "TaskName": "HostingDeletionManager.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "HttpGateway.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "bharatn,vipulm",
+      "Tags": "Management",
+      "TestExecutionParameters": {
+        "TaskName": "HttpGateway.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "vipulm,aprameyr",
+      "Tags": "Admin,Security,SystemFabric",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.InstallFabricRuntime.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "taxi,liphigao",
+      "Tags": "Standalone,DeployAnywhere,XCopy,Setup",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.InstallFabricRuntime.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.DeploymentManager.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "rsinha,maburlik,ratando,liphigao",
+      "Tags": "Standalone,DeployAnywhere,XCopy,Setup",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.DeploymentManager.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.ClusterManagementCommon.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "liphigao",
+      "Tags": "Standalone,DeployAnywhere,XCopy,Setup",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.ClusterManagementCommon.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "StandaloneLogCollector.Test.dll",
+      "Type": "TAEFTest_Isolated",
+      "Owners": "liphigao",
+      "Tags": "Standalone,DeployAnywhere,XCopy,StandaloneTools",
+      "TestExecutionParameters": {
+        "TaskName": "SaLogColTest\\StandaloneLogCollector.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServiceFabricUpdateService.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "liphigao",
+      "Tags": "Standalone,DeployAnywhere,XCopy,StandaloneTools",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceFabricUpdateService.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricSetup.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "rsinha",
+      "Tags": "Setup",
+      "TestExecutionParameters": {
+        "TaskName": "FabricSetup.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ConfigurationValidation.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "rsinha",
+      "Tags": "Setup",
+      "TestExecutionParameters": {
+        "TaskName": "ConfigurationValidation.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "IDLValidation.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "bharatn",
+      "Tags": "Setup",
+      "TestExecutionParameters": {
+        "TaskName": "IDLValidation.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Common.Tracing.TracingInitializationTest.dll",
+      "Type": "TAEFTest",
+      "Owners": "mattrow,toddpf",
+      "Tags": "SystemFabric",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Common.Tracing.TracingInitializationTest.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.Test.WinFabric.Analysis.UnitTest.dll",
+      "Type": "TAEFTest",
+      "Owners": "aprameyr",
+      "Tags": "TestUnitTest",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.Test.WinFabric.Analysis.UnitTest.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MS.Test.WinFabric.Test.Unit.Failover.dll",
+      "Type": "TAEFTest",
+      "Owners": "chuxin,aprameyr",
+      "Tags": "TestUnitTest",
+      "TestExecutionParameters": {
+        "TaskName": "MS.Test.WinFabric.Test.Unit.Failover.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.Quark.UnitTest.dll",
+      "Type": "TAEFTest",
+      "Owners": "aprameyr",
+      "Tags": "Quark",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Quark.UnitTest.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "SwapPrimaryReplica.Basic.test",
+      "Type": "FabricTest",
+      "Owners": "abhaym,anmola",
+      "Tags": "PLB,Testability",
+      "TestExecutionParameters": {
+        "TaskName": "SwapPrimaryReplica.Basic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ConfigOnlyFabricUpgrade.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "vaishnav,anmola",
+      "Tags": "Admin,EndToEnd",
+      "TestExecutionParameters": {
+        "TaskName": "ConfigOnlyFabricUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "EndToEnd.Smoke.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "anmola,lemai",
+      "Tags": "Admin,EndToEnd",
+      "TestExecutionParameters": {
+        "TaskName": "EndToEnd.Smoke.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "LeaseHeartbeatConfigOnlyUpgrade.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "jefchen,yangli",
+      "Tags": "Lease,EndToEnd",
+      "TestExecutionParameters": {
+        "TaskName": "LeaseHeartbeatConfigOnlyUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Health.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "oanapl,bharatn",
+      "Tags": "Admin,Health,EndToEnd",
+      "TestExecutionParameters": {
+        "TaskName": "Health.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Collections.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "tyadam,mcoskun,hanagar,richhas",
+      "Tags": "V2Replicator",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Collections.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Data.Collections.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "tyadam,mcoskun,richhas",
+      "Tags": "V2Replicator",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Data.Collections.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Store.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "preethas,zuparvez",
+      "Tags": "V2Replicator",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Store.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Replicator.Test.dll",
+      "Type": "TAEFTest_V2Repl",
+      "Owners": "mcoskun,sumukhs,hanagar,preethas",
+      "Tags": "V2Replicator",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Replicator.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.ReplicatorStack.Test.dll",
+      "Type": "TAEFTest_V2Repl",
+      "Owners": "mcoskun,preethas,sumukhs,hanagar",
+      "Tags": "V2Replicator",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.ReplicatorStack.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Common.Monitoring.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "hanagar,sumukhs,anuragg",
+      "Tags": "V2Replicator",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Common.Monitoring.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.Upgrade.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "hanagar,preethas,mcoskun,anuragg",
+      "IsEnabled": "false",
+      "Tags": "V2Replicator",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Upgrade.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Backup-Nano.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun,richhas",
+      "Tags": "Admin,V2Replicator",
+      "TestExecutionParameters": {
+        "TaskName": "Backup-Nano.test",
+        "ExecutionTimeout": "3600",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RM.Basic.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "danmas,alexwun",
+      "Tags": "RM,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "RM.Basic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RM.NodeImpact.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "danmas,alexwun",
+      "Tags": "RM,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "RM.NodeImpact.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RM.NodeListRefresh.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "danmas,alexwun",
+      "Tags": "RM,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "RM.NodeListRefresh.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RM.Upgrade.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "danmas,alexwun",
+      "Tags": "RM,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "RM.Upgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "RM.UpdateHealthPolicy.test",
+      "Type": "FabricTest_Sequential",
+      "Owners": "anupv,danmas,toddpf",
+      "Tags": "RM,RunAs,Management",
+      "TestExecutionParameters": {
+        "TaskName": "RM.UpdateHealthPolicy.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FailSecondaryReplicatorGetLSN.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FailSecondaryReplicatorGetLSN.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BlockDoReconfigurationRequest.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "BlockDoReconfigurationRequest.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BlockDoReconfigurationReply.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "BlockDoReconfigurationReply.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FMLockFailure.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FMLockFailure.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BlockGetLSNReply.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "BlockGetLSNReply.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FailPrimaryReplicatorGetLSN.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FailPrimaryReplicatorGetLSN.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BlockDeactivateReply.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "BlockDeactivateReply.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BlockReplicaCloseReply.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "BlockReplicaCloseReply.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FailSecondaryChangeRole.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FailSecondaryChangeRole.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FailPrimaryChangeRole.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FailPrimaryChangeRole.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FailOpenInstance.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FailOpenInstance.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FailOpenReplica.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FailOpenReplica.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BlockReplicationDuringCatchUp.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "BlockReplicationDuringCatchUp.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "BlockCopy.test",
+      "Type": "FabricTraceTest",
+      "Owners": "xunlu",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "BlockCopy.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ApplicationUpgradeBitsDownloadFailed.test",
+      "Type": "FabricTraceTest",
+      "Owners": "motanv",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "ApplicationUpgradeBitsDownloadFailed.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ApplicationUpgradeBitsDownloadStuck.test",
+      "Type": "FabricTraceTest",
+      "Owners": "motanv",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "ApplicationUpgradeBitsDownloadStuck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricUpgradeBitsUpgradeStuck.test",
+      "Type": "FabricTraceTest",
+      "Owners": "motanv",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FabricUpgradeBitsUpgradeStuck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricUpgradeReplicaCloseStuck.test",
+      "Type": "FabricTraceTest",
+      "Owners": "motanv",
+      "IsEnabled": "false",
+      "Tags": "Trace",
+      "TestExecutionParameters": {
+        "TaskName": "FabricUpgradeReplicaCloseStuck.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ActorConcurrencyLockUnitTests",
+      "Type": "XUnit",
+      "Owners": "rajeetn",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-class Microsoft.ServiceFabric.Actors.Tests.Runtime.ActorConcurrencyLockTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ActorManagerUnitTests",
+      "Type": "XUnit",
+      "Owners": "harahma",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-class Microsoft.ServiceFabric.Actors.Tests.ActorManagerTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ActorCustomSerializerUnitTests",
+      "Type": "XUnit",
+      "Owners": "harahma",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-class Microsoft.ServiceFabric.Actors.Tests.Runtime.CustomSerializerTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ActorTracingUnitTests",
+      "Type": "XUnit",
+      "Owners": "mattrow",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-class Microsoft.ServiceFabric.Actors.Tests.Runtime.TracingTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ActorIdleObjectGcHandleUnitTests",
+      "Type": "XUnit",
+      "Owners": "amanbha",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-class Microsoft.ServiceFabric.Actors.Tests.Runtime.IdleObjectGcHandleTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ActorIdUnitTests",
+      "Type": "XUnit",
+      "Owners": "amanbha",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-class Microsoft.ServiceFabric.Actors.Tests.ActorIdTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ActorDIUnitTests",
+      "Type": "XUnit",
+      "Owners": "harahma",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-class Microsoft.ServiceFabric.Actors.Tests.DependencyInjectionTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ActorNameFormatUnitTests",
+      "Type": "XUnit",
+      "Owners": "amanbha",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-class Microsoft.ServiceFabric.Actors.Tests.Generator.ActorNameFormatTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "VolatileActorStateProviderUnitTests",
+      "Type": "XUnit",
+      "Owners": "alexwun",
+      "Tags": "FabActTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Actors.Tests.dll",
+        "Params": "-namespace Microsoft.ServiceFabric.Actors.Tests.Runtime.Volatile",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.Services.Tests",
+      "Type": "XUnit",
+      "Owners": "harahma",
+      "Tags": "FabSrvTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Services.Tests.dll",
+        "Params": "-parallel none",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.Services.Remoting.Tests",
+      "Type": "XUnit",
+      "Owners": "amanbha",
+      "Tags": "FabSrvTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Services.Remoting.Tests.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.Services.Remoting.V2.Test",
+      "Type": "XUnit",
+      "Owners": "amanbha,harahma",
+      "Tags": "FabSrvTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Services.Remoting.V2.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TcpServiceCommunication.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "amanbha,harahma",
+      "Tags": "Security,FabSrvTests",
+      "TestExecutionParameters": {
+        "TaskName": "TcpServiceCommunication.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.ServiceFabric.FabricTransport.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "amanbha,harahma",
+      "Tags": "Security,FabSrvTests",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.FabricTransport.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricIS.AP.Test.exe",
+      "Type": "TAEFTest",
+      "Owners": "danmas,toddpf,anupv",
+      "Tags": "InfrastructureService",
+      "TestExecutionParameters": {
+        "TaskName": "AutopilotIS\\FabricIS.AP.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricIS.serial.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "anupv,danmas,toddpf",
+      "Tags": "InfrastructureService,Management",
+      "TestExecutionParameters": {
+        "TaskName": "__FabricSystem_App4294967295\\IS.Code.Current\\FabricIS.serial.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricIS.common.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "anupv,danmas,toddpf",
+      "Tags": "InfrastructureService,Management",
+      "TestExecutionParameters": {
+        "TaskName": "__FabricSystem_App4294967295\\IS.Code.Current\\FabricIS.common.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "FabricIS.parallel.Test.exe",
+      "Type": "TAEFTest",
+      "Owners": "anupv,danmas,toddpf",
+      "Tags": "InfrastructureService,Management",
+      "TestExecutionParameters": {
+        "TaskName": "__FabricSystem_App4294967295\\IS.Code.Current\\FabricIS.parallel.Test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TerminateHostAndFabric.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "tugup,harahma",
+      "Tags": "Admin,Management",
+      "TestExecutionParameters": {
+        "TaskName": "TerminateHostAndFabric.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "logicallog.test.exe",
+      "Type": "ExeTest_Sequential",
+      "Owners": "tyadam,alanwar",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "logicallog.test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "loggingreplicator.test.exe",
+      "Type": "ExeTest",
+      "Owners": "hanagar,imang,sumukhs,mcoskun",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "loggingreplicator.test.exe",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"
+      }
+    },
+    {
+      "Name": "txnreplicator.test.exe",
+      "Type": "ExeTest",
+      "Owners": "zhol,mcoskun,sumukhs",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "txnreplicator.test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "data.utilities.test.exe",
+      "Type": "ExeTest",
+      "Owners": "mcoskun,preethas,sumukhs",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "data.utilities.test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "data.integration.test.exe",
+      "Type": "ExeTest",
+      "Owners": "mcoskun,sumukhs,zhol",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "data.integration.test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "data.integration.upgrade.test.exe",
+      "Type": "ExeTest",
+      "Owners": "hanagar,mcoskun,sumukhs",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "data.integration.upgrade.test.exe",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"
+      }
+    },
+    {
+      "Name": "statemanager.test.exe",
+      "Type": "ExeTest",
+      "Owners": "mcoskun,zhol",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "statemanager.test.exe",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"
+      }
+    },
+    {
+      "Name": "TStore.Test.exe",
+      "Type": "ExeTest",
+      "Owners": "preethas,zuparvez",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "TStore.Test.exe",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"
+      }
+    },
+    {
+      "Name": "TXRAddRemove.test",
+      "Type": "FabricTest",
+      "Owners": "hanagar,imang,sumukhs",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "TXRAddRemove.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TXRStateProviderFaults.test",
+      "Type": "FabricTest",
+      "Owners": "zhol,hanagar,mcoskun,sumukhs",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "TXRStateProviderFaults.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TXRBackupRestore.Basic.test",
+      "Type": "FabricTest",
+      "Owners": "zhol,mcoskun",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "TXRBackupRestore.Basic.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "TStore.test",
+      "Type": "FabricTest",
+      "Owners": "preethas,zuparvez",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "TStore.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliableCollectionRuntimeImpl.test",
+      "Type": "ExeTest",
+      "Owners": "rahku",
+      "Tags": "V2StackPort",
+      "TestExecutionParameters": {
+        "TaskName": "ReliableCollectionRuntimeImpl.test.exe",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "System.Fabric.Test.CoreClr",
+      "Type": "DotNetStdWinTest",
+      "Tags": "Admin,Security,SystemFabric",
+      "Owners": "asnegi,vipulm,aprameyr",
+      "TestExecutionParameters": {
+        "TaskName": "w\\System.Fabric.Test\\System.Fabric.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "KtlLogBvtKernel.Test.dll",
+      "Type": "TAEFTest_Isolated",
+      "Owners": "alanwar,tyadam",
+      "Tags": "Admin,KtlLogger",
+      "TestExecutionParameters": {
+	    "TaskName": "KtlLogBvtKernel.Test.dll",
+    	"ExecutionTimeout": "900",
+	    "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBDropReplicaDuringUpgrade.test",
+      "Type": "FabricTest",
+      "Owners": "v-bogmar,yangli,anuragg",
+      "Tags": "LoadBalancing",
+      "TestExecutionParameters": {
+        "TaskName": "PLBDropReplicaDuringUpgrade.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBReportLoad.test",
+      "Type": "FabricTest",
+      "Owners": "v-bogmar,yangli,anuragg",
+      "Tags": "LoadBalancing",
+      "TestExecutionParameters": {
+        "TaskName": "PLBReportLoad.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBPromoteToPrimary.test",
+      "Type": "FabricTest",
+      "Owners": "v-bogmar,yangli,anuragg",
+      "Tags": "LoadBalancing",
+      "TestExecutionParameters": {
+        "TaskName": "PLBPromoteToPrimary.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "PLBResetPartitionLoad.test",
+      "Type": "FabricTest",
+      "Owners": "v-bogmar,yangli,anuragg",
+      "Tags": "LoadBalancing",
+      "TestExecutionParameters": {
+        "TaskName": "PLBResetPartitionLoad.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "MS.Test.WinFabric.TestRunnerTests",
+      "Type": "DotNetStdWinTest",
+      "Tags": "TestRunnerService",
+      "Owners": "asnegi",
+      "TestExecutionParameters": {
+        "TaskName": "w\\MS.Test.WinFabric.TestRunnerTests\\MS.Test.WinFabric.TestRunnerTests.dll",
+        "SetupType": "XCopy"
+      }
+     },
+    {
+      "Name": "BasicBRSE2E.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "aagup,hrushib,raunakp",
+      "Tags": "BackupRestore",
+      "IsEnabled": "false",
+      "TestExecutionParameters": {
+        "TaskName": "BasicBRSE2E.test",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DotNetCoreCompatVerifier.test",
+      "Type": "ExeTest",
+      "Owners": "hrushib,raunakp",
+      "Tags": "NetStd",
+      "TestExecutionParameters": {
+        "TaskName": "DotNetCoreCompatVerifier.test.exe",
+        "SetupType": "XCopy",
+        "Params": "/detect [BINS]",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"
+      }
+    }
+  ]
+}

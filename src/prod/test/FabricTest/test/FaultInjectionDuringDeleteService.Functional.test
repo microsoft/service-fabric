@@ -1,0 +1,104 @@
+#
+# Scenario : Inject fault patterns during DeleteService
+# This will cause reconfigurations, inject faults during 'DeleteReplica'
+# (a) - Bring down the FM
+# (b) - Bring down the PrimaryRA
+# (c) - Bring down SecondaryRA 
+# 
+
+set DummyPLBEnabled true
+set NamingOperationTimeout 10
+votes 10 20 30
+namingservice 1 3 2
+cleantest
+
+set ExpectedClusterSize 3
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+
++10
++20
++30
+verify
+# this will ensure all system services (esp naming) is placed on these 3 nodes
+
++40
++50
++60
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2
+
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+
+addbehavior b1 * * DeleteReplica
+deleteservice fabric:/test1 errors=Timeout
+
+# (A) Bring down the FM
+abort 30
+!waitforstate FM.Replica.IsUp.FMService.30 false
+removebehavior b1
+
+deleteservice fabric:/test1 errors=UserServiceNotFound
+
+# Let reconfiguration of FM service finish
+!waitforstate FM.Replica.Role.FMService.60 Primary
+
+!waitforstate FM.Replica.State.fabric:/test1.60 Dropped
+!waitforstate FM.Replica.State.fabric:/test1.50 Dropped
+!waitforstate FM.Replica.State.fabric:/test1.40 Dropped
+
++70
+verify
+
+createname fabric:/test2
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2
+
+!waitforstate FM.Replica.Role.fabric:/test2.70 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.50 Secondary
+
+deleteservice fabric:/test2
+# Block DeleteReplica message
+addbehavior b1 * * DeleteReplica
+
+# (B) Bring down the Primary
+-70
+removebehavior b1
+
+!waitforstate FM.Replica.State.fabric:/test2.60 Dropped
+!waitforstate FM.Replica.State.fabric:/test2.50 Dropped
+
++70
+!waitforstate FM.Replica.State.fabric:/test2.70 Dropped
+verify
+
++30
++80
+verify
+createname fabric:/test3
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2
+
+!waitforstate FM.Replica.Role.fabric:/test3.80 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3.60 Secondary
+
+deleteservice fabric:/test3
+# Block DeleteReplica, and bring down the secondary 
+addbehavior b1 70 * DeleteReplica
+
+# (C) Bring down one of the secondary replicas
+-70
+!waitforstate FM.Replica.State.fabric:/test3.60 Dropped
+!waitforstate FM.Replica.State.fabric:/test3.80 Dropped
+
+removebehavior b1
++70
+!waitforstate FM.Replica.State.fabric:/test3.70 Dropped
+verify
+
+!q
+

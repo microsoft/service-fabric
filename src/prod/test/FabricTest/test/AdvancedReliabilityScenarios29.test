@@ -1,0 +1,100 @@
+#
+# Regression test for bug 1277608
+#
+
+set DummyPLBEnabled true
+votes 10
+fmservice 1 1
+cmservice 0 0
+namingservice 1 3 1
+cleantest
+
+set ExpectedClusterSize 2
+set FullRebuildWaitDuration 1
+
++10
++20
+verify
+
+# Verify that FM primary is placed on node 20
+!waitforstate FM.Replica.Role.FMService.20 Primary
+
++30
++40
++50
+verify
+
+# Create a persisted stateful service
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2
+verify
+
+# Verify that the service replicas are placed on nodes 50 and 40
+!waitforstate FM.Replica.Role.fabric:/persisted.50 Primary
+!waitforstate FM.Replica.Role.fabric:/persisted.40 Secondary
+
+# Disable ActivateReply messages so that a reconfiguration would complete on a 
+# remove replica but not complete on the initiating primary replica
+addbehavior b0 * * GetLSN
+addbehavior b1 * * DoReconfigurationReply
+
+# Trigger a swap-primary from node 50 to 40
+swapprimary fabric:/persisted 50 40
+
+# Verify that reconfiguration is running on node 40
+!waitforstate RA.FT.ReconfigStage.fabric:/persisted.40 Phase1_GetLSN
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/persisted.40 None
+
+addbehavior b2 * * DoReconfiguration
+
+# Bring node 50 down
+-50
+!waitforstate FM.Replica.IsUp.fabric:/persisted.50 false
+
+# Bring node 40 down
+-40
+!waitforstate FM.Replica.IsUp.fabric:/persisted.40 false
+
+# Verify that the FailoverUnit is in quorum loss state
+!waitforstate FM.FT.QuorumLost.fabric:/persisted true
+
+# Bring down the node with FM primary to trigger full rebuild
+-20
+
+# Verifty that the new FM primary is no node 30
+!waitforstate FM.Replica.Role.FMService.30 Primary
+
+# Bring back nodes 40 and 50
++40
++50
+
+# Verifty that the replica on nodes 40 and 50 are Up on the FM
+!waitforstate FM.Replica.IsUp.fabric:/persisted.40 true
+!waitforstate FM.Replica.IsUp.fabric:/persisted.50 true
+
+# Bring node 40 down
+-40
+
+# Verify that the replica on node 40 is Down on the FM
+!waitforstate FM.Replica.IsUp.fabric:/persisted.40 false
+
+# Enable DoReconfiguration messages from FM to RA
+removebehavior b0
+removebehavior b1
+removebehavior b2
+
+# Verify that reconfiguration is in Phase2_Catchup on node 50
+!waitforstate RA.FT.ReconfigStage.fabric:/persisted.50 Phase2_Catchup
+
+# Bring down the node with FM primary to trigger full rebuild
+-30
+
+# Verifty that the new FM primary is on node 50
+!waitforstate FM.Replica.Role.FMService.50 Primary
+
++30
++40
+
+verify
+
+!q

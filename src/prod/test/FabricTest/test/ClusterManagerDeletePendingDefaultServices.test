@@ -1,0 +1,41 @@
+####################################################
+# Create app with default a service and make sure
+# that createservice fails. That will ensure that
+# we have at least one PendingDefaultService.
+# Then call delete app and verify that the process
+# doesn't crash.
+####################################################
+
+votes 10 20 30
+fmservice 3 2
+cmservice 3 2
+namingservice 2 3 2
+cleantest
+
++10 cap=CPU:10,MEMORY:10,DISK:10
++20 cap=CPU:10,MEMORY:10,DISK:10
++30 cap=CPU:10,MEMORY:10,DISK:10
++40 cap=CPU:10,MEMORY:10,DISK:10
++50 cap=CPU:10,MEMORY:10,DISK:10
++60 cap=CPU:10,MEMORY:10,DISK:10
+
+verify
+
+app.add version10 MyApp 1.0
+app.clear version10
+app.servicepack version10 MyServicePackage version=1.0
+app.servicetypes version10 MyServicePackage PersistedServiceType stateful persist
+app.codepack version10 MyServicePackage PersistedCode types=PersistedServiceType version=1.0
+
+app.reqservices version10 defaultservice1 PersistedServiceType stateful partition=1 replica=3 minreplicasetsize=2  metrics=CPU,High,2,2,MEMORY,High,2,2,DISK,High,2,2
+app.reqservices version10 defaultservice2 PersistedServiceType stateful partition=1 replica=3 minreplicasetsize=2  metrics=CPU,High,200,200,MEMORY,High,200,200,DISK,High,200,200
+
+app.upload version10
+provisionapp version10
+createapp fabric:/MyApp314 MyApp 1.0 error=InsufficientClusterCapacity
+
+# App should already be deleted due to unsuccessful creation
+deleteapp fabric:/MyApp314 error=ApplicationNotFound
+
+!q
+

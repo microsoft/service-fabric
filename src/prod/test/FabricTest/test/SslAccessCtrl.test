@@ -1,0 +1,275 @@
+# This is a ring certificate security test. The SecurityDomain will be set to WinFabricRing.Rings.WinFabricTestDomain.com for this test.
+# For this test to pass, the following certificates need to be installed on the machine:
+# cluster node certificate: CN = WinFabric-Test-SAN3-Oscar, SAN = WinFabricRing3.Rings.WinFabricTestDomain2.com
+# Client certificates:
+#1. CN = WinFabric-Test-SAN1-Alice, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#2. CN = WinFabric-Test-SAN1-Bob, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#3. CN = WinFabric-Test-SAN2-Charlie, SAN = WinFabricRing2.Rings.WinFabricTestDomain.com
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 10
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
+cleantest
+
+set DummyPLBEnabled true
+
+!setcfg Security.SessionExpiration=60
+!setcfg Security.ClusterCredentialType=X509
+!setcfg Security.ClusterAllowedCommonNames=WinFabric-Test-SAN3-Oscar
+!setcfg Security.ServerAuthCredentialType=X509
+!setcfg Security.ClientAuthAllowedCommonNames=WinFabric-Test-SAN1-Alice,WinFabric-Test-SAN1-Bob
+!setcfg Security.ClientRoleEnabled=true
+!setcfg Security.ClientClaimAuthEnabled=true
+!setcfg Security.ClientClaims=t1=v1&&t2=v2||t3=v3
+!setcfg Security.AdminClientClaims=t4=v4&&t5=v5
+
+# Initially, assign admin role to Alice, but not to Bob
+!setcfg Security.AdminClientCommonNames=WinFabric-Test-SAN1-Alice
+
+# Default node credential uses certificate CN=WinFabric-Test-SAN3-Oscar
+set DefaultNodeCredentials FindBySubjectName,CN=WinFabric-Test-SAN3-Oscar,My,LocalMachine
+set ClusterWideCredentials X509:EncryptAndSign:WinFabric-Test-SAN3-Oscar:WinFabric-Test-SAN1-Alice,WinFabric-Test-SAN1-Bob:WinFabric-Test-SAN3-Oscar
+
+# start the cluster 
++10 
++20
++30
+verify
+
+set OpenTimeout 10
++40 error=Timeout security=FindBySubjectName,WinFabric-Test-SAN2-Charlie,My,LocalMachine
+verify
+
+# allow WinFabric-Test-SAN2-Charlie to join cluster by ClusterCertThumbprints
+!updatecfg Security.ClusterCertThumbprints=5e4a0ac68604f17a406012093218f524dba8d162
+!pause 10 
+
+set OpenTimeout 45
++50 error=Success security=FindBySubjectName,WinFabric-Test-SAN2-Charlie,My,LocalMachine
+verify
+
+# remove 50 to simplify server identity settings for the following client-server tests
+-50 
+verify
+
+# Set client credentials to WinFabric-Test-SAN1-Alice, verify that, as admin, Alice can do both read and write operations
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Alice:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+# verify write operation
+createservice fabric:/test1 TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+updateservice fabric:/test1 Stateful TargetReplicaSetSize=5
+verify
+
+# verify read operation, cannot test "resolve" as "resolve" always uses default fabric client
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+# Set client credentials to use default client certificate WinFabric-Test-SAN3-Oscar, verify both read and write operations are allowed
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN3-Oscar:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+# verify write operation
+createservice fabric:/test1DefaultClient TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+updateservice fabric:/test1DefaultClient Stateful TargetReplicaSetSize=5
+verify
+
+# verify read operation
+resolve fabric:/test1DefaultClient 1
+getservicedescription fabric:/test1DefaultClient
+nameexists fabric:/test1DefaultClient true
+nameexists fabric:/NoSuchName false
+
+# Set client credentials to WinFabric-Test-SAN1-Bob, verify that, as non-admin, Bob can only do read operations
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Bob:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+# verify read operation
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+# verify write operation will fail
+createname fabric:/b AccessDenied
+deleteservice fabric:/test1 errors=AccessDenied
+deletename fabric:/test1 AccessDenied
+
+# Test server authentication failure with incorrect server certificate thumbprint
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Bob:EncryptAndSign:::bad0bad1bad2bad3bad4bad5bad6bad7bad8bad9
+nameexists fabric:/test1 true ServerAuthenticationFailed
+
+# Set client credentials to WinFabric-Test-SAN2-Charlie, verify that Charlie cannot even connect 
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN2-Charlie:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+getservicedescription fabric:/test1 ConnectionDenied 
+nameexists fabric:/NoSuchName false ConnectionDenied 
+createname fabric:/b ConnectionDenied
+
+# test multiple operations on the same unauthorized client instance
+createclient unauthorizedClient
+resolveusingclient unauthorizedClient fabric:/test1 10 error=ConnectionDenied
+resolveusingclient unauthorizedClient fabric:/test2 10 error=ConnectionDenied
+resolveusingclient unauthorizedClient fabric:/test3 10 error=ConnectionDenied
+
+# Test unauthorized clients WinFabric-Test-User@microsoft.com and WinFabric-Test-UnAuthorizedUser@microsoft.com 
+set ClientCredentials X509:LocalMachine:My:FindByThumbprint:6f4aa9618aea95ab5dce8c77260938653ee15fd7:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+getservicedescription fabric:/test1 ConnectionDenied 
+
+set ClientCredentials X509:LocalMachine:My:FindByThumbprint:85469332971a85b8f382b7795a17cc0ee575df6f:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+getservicedescription fabric:/test1 ConnectionDenied 
+
+#
+# test claim based authentication
+#
+set ClientCredentials Claims:t1=v1&&t2=v2:WinFabric-Test-SAN3-Oscar:EncryptAndSign
+
+# verify read operation
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+# verify write operation will fail
+createname fabric:/b AccessDenied
+deleteservice fabric:/test1 errors=AccessDenied
+deletename fabric:/test1 AccessDenied
+
+set ClientCredentials Claims:t3=v3&&tExtra=vExtra:WinFabric-Test-SAN3-Oscar:EncryptAndSign
+
+# verify read operation
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+# verify write operation will fail
+createname fabric:/b AccessDenied
+deleteservice fabric:/test1 errors=AccessDenied
+deletename fabric:/test1 AccessDenied
+
+# test unauthorized client
+set ClientCredentials Claims:tExtra=vExtra&&t1=v1:WinFabric-Test-SAN3-Oscar:EncryptAndSign
+getservicedescription fabric:/test1 ConnectionDenied 
+nameexists fabric:/NoSuchName false ConnectionDenied 
+createname fabric:/b ConnectionDenied 
+
+# test admin claims
+set ClientCredentials Claims:T5=v5&&tExtra=vExtra&&t4=V4:WinFabric-Test-SAN3-Oscar:EncryptAndSign
+
+createservice fabric:/testClaim TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+updateservice fabric:/testClaim Stateful TargetReplicaSetSize=5
+verify
+
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+# Test config updates:
+# 1. Assign admin role to Charlie and remove Alice's admin role
+# 2. Add Charlie to allowed clients and remove Bob from allowed clients
+# 3. Update ClientClaims and AdminClientClaims
+# 4. Allow non-admin user to create names 
+!updatecfg Security.AdminClientCommonNames=WinFabric-Test-SAN2-Charlie Security.ClientAuthAllowedCommonNames=WinFabric-Test-SAN1-Alice Security.ClientClaims=t5=v5 Security.AdminClientClaims=t1=v1 Security/ClientAccess.CreateName=Admin||User Security.ClientCertThumbprints=85469332971a85b8f382b7795a17cc0ee575df6f Security.AdminClientCertThumbprints=6f4aa9618aea95ab5dce8c77260938653ee15fd7
+
+# wait for async config update to complete 
+!pause 10
+
+# Now Bob should have neither read nor write access
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Bob:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+nameexists fabric:/NoSuchName false ConnectionDenied
+createname fabric:/AnotherName ConnectionDenied 
+
+# Now Charlie has both read and write access
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN2-Charlie:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+createservice fabric:/test2 TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+updateservice fabric:/test2 Stateful TargetReplicaSetSize=5
+verify
+
+getservicedescription fabric:/test1
+getservicedescription fabric:/test2
+nameexists fabric:/test1 true
+nameexists fabric:/test2 true
+nameexists fabric:/NoSuchName false
+
+deleteservice fabric:/test1
+verify
+
+getservicedescription fabric:/test1 UserServiceNotFound
+nameexists fabric:/test1 false
+
+# Now Alice has read access and can create name (allowed by config update above)
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Alice:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+getservicedescription fabric:/test1 UserServiceNotFound 
+getservicedescription fabric:/test2
+nameexists fabric:/test1 false
+nameexists fabric:/test2 true
+nameexists fabric:/NoSuchName false
+
+# create name should be allowed for non-admin role now, given the config update above
+createname fabric:/AliceWriteShouldWork
+nameexists fabric:/AliceWriteShouldWork true 
+
+# delete service is still not allowed for non-admin role 
+deleteservice fabric:/test2 errors=AccessDenied
+deletename fabric:/test2 AccessDenied
+
+# Now WinFabric-Test-User@microsoft.com should have admin access 
+set ClientCredentials X509:LocalMachine:My:FindByThumbprint:6f4aa9618aea95ab5dce8c77260938653ee15fd7:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+createname fabric:/TestUserWriteShouldWork
+nameexists fabric:/TestUserWriteShouldWork true 
+
+# Now WinFabric-Test-UnAuthorizedUser@microsoft.com should have read-only access
+set ClientCredentials X509:LocalMachine:My:FindByThumbprint:85469332971a85b8f382b7795a17cc0ee575df6f:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+nameexists fabric:/TestUserWriteShouldWork true 
+deletename fabric:/TestUserWriteShouldWork AccessDenied
+
+#
+# test claim based authentication
+# 
+
+# test unauthorized client
+set ClientCredentials Claims:t3=v3&&tExtra=vExtra:WinFabric-Test-SAN3-Oscar:EncryptAndSign
+getservicedescription fabric:/test2 ConnectionDenied 
+nameexists fabric:/NoSuchName false ConnectionDenied 
+createname fabric:/b ConnectionDenied
+
+# test readonly client
+set ClientCredentials Claims:t5=v5:WinFabric-Test-SAN3-Oscar:EncryptAndSign
+
+getservicedescription fabric:/test2
+nameexists fabric:/test2 true
+nameexists fabric:/NoSuchName false
+# previous config update allows non-admin clients to create names 
+createname fabric:/claim
+deleteservice fabric:/test2 errors=AccessDenied
+deletename fabric:/test2 AccessDenied
+
+# t1=v1 qualifies as admin now
+set ClientCredentials Claims:tExtra=vExtra&&t1=v1:WinFabric-Test-SAN3-Oscar:EncryptAndSign
+
+createservice fabric:/testClaim TestStoreServiceType y 3 3 lowRange=1 highRange=3 errors=UserServiceAlreadyExists
+createservice fabric:/testClaim2 TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+updateservice fabric:/testClaim2 Stateful TargetReplicaSetSize=5
+verify
+
+getservicedescription fabric:/test1 UserServiceNotFound 
+getservicedescription fabric:/test2
+nameexists fabric:/test1 false
+nameexists fabric:/test2 true
+nameexists fabric:/NoSuchName false
+
+deleteservice fabric:/test2
+verify
+
+nameexists fabric:/test2 false 
+
+# Delay to prevent kernel lease agent reusing in different security setting
+-*
+!pause 30
+
+!q

@@ -1,0 +1,340 @@
+#
+# [owner] aprameyr
+# Validate local retry and health reports for replica creation
+# 
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set RAPMessageRetryInterval 3
+set ReplicaOpenFailureWarningReportThreshold 2
+set ReplicaOpenFailureMaxRetryThreshold 40000
+set ReplicaReopenFailureWarningReportThreshold 2
+set ReplicaReopenFailureMaxRetryThreshold 40000
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 1
+set HealthReportRetrySendInterval 5
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+#######################################
+# Scenario 7: Verify that failures on rebuild of a primary replica result in warning which is cleared
+#######################################
+
+#Block reopen to RAP
+#Inject failure in BeginOpen to RF transient to restart the replica
+
+addbehavior b0 * * AddPrimaryReply
+
+addbehavior b1 * * StatefulServiceReopen
+
+injectfailure 40 fabric:/test7 service.beginopen.reportfault.transient
+
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+
+!waitforstate RA.Replica.State.fabric:/test7.40.40 SB
+removefailure 40 fabric:/test7 service.beginopen.reportfault.transient
+
+# Allow reopen to complete now
+addbehavior b2 * * ReplicaOpen
+removebehavior b1
+
+# Removing block on reopen should cause reopen to complete
+# RA to send ReplicaUp
+# FM to send AddPrimary again with new instance (RA is now SB)
+# RA is now stuck IC
+!waitforstate RA.Replica.State.fabric:/test7.40.40 IC
+
+# Fail CR (P)
+injectfailure 40 fabric:/test7 service.beginchangerole
+
+# verify health report -> should be warning because open has failed
+removebehavior b2
+queryhealth replica replicaid=fabric:/test7#0#0 expectedhealthstate=warning description=nodeid:40
+
+# remove failure and allow completion
+# health should be ok
+removefailure 40 fabric:/test7 service.beginchangerole
+removebehavior b0
+
+queryhealth replica replicaid=fabric:/test7#0#0 expectedhealthstate=ok description=nodeid:40
+verify
+
+deleteservice fabric:/test7
+verify
+
+#######################################
+# Scenario 6 (SP): Verify that failures on reopen (OpenReplicator) result in warning which is cleared
+#######################################
+
+#Block open to test initial OK health event to HM
+addbehavior b1 * * StatefulServiceReopen
+
+#Create the service
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+verify
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test6#0#0 expectedhealthstate=ok
+
+#Report Fault Transient and inject begin failure
+#Due to reopen block health should still be ok
+injectfailure 40 fabric:/test6 replicator.beginopen
+reportfault 40 fabric:/test6 transient
+
+queryhealth replica replicaid=fabric:/test6#0#0 expectedhealthstate=ok
+
+#Unblock - the replica will fail open and RA will report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test6#0#0 expectedhealthstate=warning description=nodeid:40
+
+#Now remove the failure and allow the replica to open
+#Health should be ok for the replica
+removefailure 40 fabric:/test6 replicator.beginopen
+queryhealth replica replicaid=fabric:/test6#0#0 expectedhealthstate=ok description=nodeid:40
+
+verify
+
+deleteservice fabric:/test6
+verify
+
+#######################################
+# Scenario 5 (SP): Verify that failures on reopen (OpenReplica) result in warning which is cleared
+#######################################
+
+#Block open to test initial OK health event to HM
+addbehavior b1 * * StatefulServiceReopen
+
+#Create the service
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+verify
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test5#0#0 expectedhealthstate=ok
+
+#Report Fault Transient and inject begin failure
+#Due to reopen block health should still be ok
+injectfailure 40 fabric:/test5 service.beginopen
+reportfault 40 fabric:/test5 transient
+
+
+queryhealth replica replicaid=fabric:/test5#0#0 expectedhealthstate=ok
+
+#Unblock - the replica will fail open and RA will report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test5#0#0 expectedhealthstate=warning description=testerror
+
+#Now remove the failure and allow the replica to open
+#Health should be ok for the replica
+removefailure 40 fabric:/test5 service.beginopen
+queryhealth replica replicaid=fabric:/test5#0#0 expectedhealthstate=ok
+
+verify
+
+deleteservice fabric:/test5
+verify
+
+#######################################
+#Scenario 4 (SV): Verify that failures (OpenReplicator) on add primary result in retry and a health warning and warning is cleared after success for persisted
+#######################################
+
+#Block AddReplica so that the replica set does not add the secondary
+addbehavior ba * * AddReplica
+
+#Block open to test initial OK health event to HM
+addbehavior b1 * * ReplicaOpen
+
+#Add a failure in Open and Create the service
+injectfailure 40 fabric:/test4 replicator.beginopen
+createservice fabric:/test4 TestStoreServiceType y 1 2 constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/test4.40 InBuild
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test4#0#0 expectedhealthstate=ok
+
+#Unblock Open. The replica will fail open and RA should report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test4#0#0 expectedhealthstate=warning
+
+#Now remove the failure and allow the replica to open
+#Health should be ok for the replica
+removefailure 40 fabric:/test4 replicator.beginopen
+queryhealth replica replicaid=fabric:/test4#0#0 expectedhealthstate=ok
+
+#Now block ReplicaOpen again and allow AddReplica
+#Test this code path for creation of idles
+addbehavior b1 * * ReplicaOpen
+injectfailure 30 fabric:/test4 replicator.beginopen
+
+#Unblock add replica
+removebehavior ba
+
+!waitforstate FM.Replica.State.fabric:/test4.30 InBuild
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test4#0#1 expectedhealthstate=ok
+
+#Unblock Open. The replica will fail open and RA should report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test4#0#1 expectedhealthstate=warning
+
+#Now remove the failure and allow the replica to open
+#Health should be ok for the replica
+removefailure 30 fabric:/test4 replicator.beginopen
+queryhealth replica replicaid=fabric:/test4#0#1 expectedhealthstate=ok
+verify
+
+deleteservice fabric:/test4
+verify
+
+#######################################
+# Scenario 3 (SP): Verify that failures on add primary result in retry and a health warning and warning is cleared after success for persisted
+#######################################
+
+#Block AddReplica so that the replica set does not add the secondary
+addbehavior ba * * AddReplica
+
+#Block open to test initial OK health event to HM
+addbehavior b1 * * ReplicaOpen
+
+#Add a failure in Open and Create the service
+injectfailure 40 fabric:/test3 service.beginopen
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/test3.40 InBuild
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test3#0#0 expectedhealthstate=ok
+
+#Unblock Open. The replica will fail open and RA should report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test3#0#0 expectedhealthstate=warning
+
+#Now remove the failure and allow the replica to open
+#Health should be ok for the replica
+removefailure 40 fabric:/test3 service.beginopen
+queryhealth replica replicaid=fabric:/test3#0#0 expectedhealthstate=ok
+
+#Now block ReplicaOpen again and allow AddReplica
+#Test this code path for creation of idles
+addbehavior b1 * * ReplicaOpen
+injectfailure 30 fabric:/test3 service.beginopen
+
+#Unblock add replica
+removebehavior ba
+
+!waitforstate FM.Replica.State.fabric:/test3.30 InBuild
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test3#0#1 expectedhealthstate=ok
+
+#Unblock Open. The replica will fail open and RA should report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test3#0#1 expectedhealthstate=warning
+
+#Now remove the failure and allow the replica to open
+#Health should be ok for the replica
+removefailure 30 fabric:/test3 service.beginopen
+queryhealth replica replicaid=fabric:/test3#0#1 expectedhealthstate=ok
+verify
+
+deleteservice fabric:/test3
+verify
+
+#######################################
+# Scenario 2 (SV): Verify that failures on add primary result in retry and a health warning and warning is cleared after success
+#######################################
+
+#Block AddReplica so that the replica set does not add the secondary
+addbehavior ba * * AddReplica
+
+#Block open to test initial OK health event to HM
+addbehavior b1 * * ReplicaOpen
+
+#Add a failure in Open and Create the service
+injectfailure 40 fabric:/test2 service.beginopen
+createservice fabric:/test2 TestStoreServiceType y 1 2 constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/test2.40 InBuild
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test2#0#0 expectedhealthstate=ok
+
+#Unblock Open. The replica will fail open and RA should report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test2#0#0 expectedhealthstate=warning
+
+#Now remove the failure and allow the replica to open
+#Health should be ok for the replica
+removefailure 40 fabric:/test2 service.beginopen
+queryhealth replica replicaid=fabric:/test2#0#0 expectedhealthstate=ok
+
+#Now block ReplicaOpen again and allow AddReplica
+#Test this code path for creation of idles
+addbehavior b1 * * ReplicaOpen
+injectfailure 30 fabric:/test2 service.beginopen
+
+#Unblock add replica
+removebehavior ba
+
+!waitforstate FM.Replica.State.fabric:/test2.30 InBuild
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test2#0#1 expectedhealthstate=ok
+
+#Unblock Open. The replica will fail open and RA should report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test2#0#1 expectedhealthstate=warning
+
+#Now remove the failure and allow the replica to open
+#Health should be ok for the replica
+removefailure 30 fabric:/test2 service.beginopen
+queryhealth replica replicaid=fabric:/test2#0#1 expectedhealthstate=ok
+verify
+
+deleteservice fabric:/test2
+verify
+
+#######################################
+# Scenario 1 (SL): Verify that failures on add instance result in retry and a health warning and warning is cleared after success
+#######################################
+
+addbehavior b1 * * ReplicaOpen
+
+injectfailure 40 fabric:/test1 service.beginopen
+createservice fabric:/test1 CalculatorServiceType n 1 1 constraint=(StringProperty!=SeedNode)
+
+!waitforstate FM.Replica.State.fabric:/test1.40 InBuild
+
+#Inital health report should be OK
+queryhealth replica replicaid=fabric:/test1#0#0 expectedhealthstate=ok
+
+#Unblock Open. The replica will fail open and RA should report warning
+removebehavior b1
+queryhealth replica replicaid=fabric:/test1#0#0 expectedhealthstate=warning
+
+#Now remove the failure and allow the replica to open
+#Health should be ok
+removefailure 40 fabric:/test1 service.beginopen
+queryhealth replica replicaid=fabric:/test1#0#0 expectedhealthstate=ok
+
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q

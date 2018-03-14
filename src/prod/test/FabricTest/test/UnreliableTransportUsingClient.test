@@ -1,0 +1,193 @@
+set DummyPLBEnabled true
+!setcfg Testability.UnreliableTransportRecurringTimer=15
+!setcfg Testability.UnreliableTransportWarningTimeout=30
+
+fmservice 3 1
+cmservice 3 1
+namingservice 1 3 1
+votes 10
+cleantest
++10
++20
++30
+verify
++40
++50
++60
++70
++80
++90
+verify
+
+
+#######################################
+# 1) Unreliable Transport should be
+#    disabled if there are no behaviors
+#    defined and enabled otherwise
+#######################################
+
+# unreliable transport should be disabled by default
+checkunreliabletransportisdisabled expected=true
+
+# when at least one behavior is added, unreliable transport
+# should be enabled
+reporthealth node nodeid=20 sequencenumber=1 healthstate=ok
+client.addbehavior NodeUpAck1 20 * NodeUpAck
+!pause 5
+checkunreliabletransportisdisabled expected=false
+CheckTransportBehaviorlist nodeId=20 timeOut=2000 expectedCount=1 expectedBehavior=NodeUpAck1=20*NodeUpAck1.000000922337203685.4780270.0000000-1
+!pause 45
+queryhealth cluster expectedhealthstate=warning 
+!pause 5
+
+-20
+verify
+
++20
+verify
+!pause 45
+CheckTransportBehaviorlist nodeId=20 timeOut=2000 expectedCount=1 expectedBehavior=NodeUpAck1=20*NodeUpAck1.000000922337203685.4780270.0000000-1
+queryhealth cluster expectedhealthstate=warning 
+!pause 5
+
+# if the only existing behavior is deleted,
+# unreliable transport should be disabled
+client.removebehavior NodeUpAck1 20
+!pause 5
+checkunreliabletransportisdisabled expected=true
+!pause 30
+queryhealth cluster expectedhealthstate=ok
+
+# checking the same two scenarios above with
+# more than one behavior and also checks if 
+# remove all removes only for the specified node
+client.addbehavior NodeUpAck2 20 * NodeUpAck
+client.addbehavior NodeUpAck3 20 * NodeUpAck
+client.addbehavior NodeUpAck4 20 * NodeUpAck
+
+client.addbehavior NodeUpAck1 10 * NodeUpAck
+client.addbehavior NodeUpAck2 10 * NodeUpAck
+client.addbehavior NodeUpAck3 10 * NodeUpAck
+
+!pause 5
+client.removebehavior * 20
+!pause 5
+# should be false because we still have all behaviors
+# from node 10
+checkunreliabletransportisdisabled expected=false
+
+client.removebehavior * 10
+# now all behaviors should be deleted and 
+# unreliable transport disabled
+!pause 5
+checkunreliabletransportisdisabled expected=true
+
+# removing a node should not remove the file monitor
+# This is specific for Fabric Test where all nodes
+# share the same UnreliableTransportConfig object
+-20
+verify
+client.addbehavior NodeUpAck4 10 * NodeUpAck
+!pause 5
+checkunreliabletransportisdisabled expected=false
+client.removebehavior * 10
++20
+verify
+
+########################################
+# 2) Testing if unreliable transport 
+#    behaviors are being properly
+#    written and loaded by checking if
+#    it gets stucked in a state
+########################################
+
+createservice fabric:/persistedtestcase1 TestPersistedStoreServiceType y 1 5 persist
+verify
+
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase1.90 Primary
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase1.80 Secondary
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase1.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase1.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase1.50 Secondary
+
+createservice fabric:/persistedtestcase2 TestPersistedStoreServiceType y 1 5 persist
+verify
+
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase2.90 Primary
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase2.80 Secondary
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase2.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase2.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/persistedtestcase2.50 Secondary
+
+!var PartitionIdService1 FM.FT.PartitionId.fabric:/persistedtestcase1
+!var PartitionIdService2 FM.FT.PartitionId.fabric:/persistedtestcase2
+
+##############################################################################
+# Testing Unreliable Transport for:
+# Federation - blocking GetLSN federation message for a specific partition so only that partition is stuck
+#              in reconfig in Phase1_GetLSN after primary is killed.
+##############################################################################
+
+client.addbehavior GetLSN1 80 * GetLSN 1.0 Max 0.0 0 -1 filters=PartitionId:<var.PartitionIdService1>
+!pause 5
+
+-90
+
+!waitforstate RA.FT.ReconfigStage.fabric:/persistedtestcase1.80 Phase1_GetLSN
+!pause 5
+!waitforstate RA.FT.ReconfigStage.fabric:/persistedtestcase1.80 Phase1_GetLSN
+
+!waitforstate RA.FT.ReconfigStage.fabric:/persistedtestcase2.80 None
+!pause 5
+!waitforstate RA.FT.ReconfigStage.fabric:/persistedtestcase2.80 None
+
+client.removebehavior GetLSN1 80
+verify
+
+##############################################################################
+# Testing Unreliable Transport for:
+#
+# 1: IPC         - block replica open IPC message only for a specific partition so that replica is stuck
+#                  in create state (IC) at the RA for that partition.
+#
+# 2: Replication - block start copy replication message for all partitions by specifying PartitionId filter so that
+#                  Primary cannot build the replica and gets stuck
+#                  in build (IB), then unblock start copy for one partition and verify that replica is ready (RD) for that partition
+#                  and the other partition is still in In Build (IB). Unblock start copy for the other partition and verify that replica is
+#                  ready for this partition as well.
+##############################################################################
+
+client.addbehavior StartCopyService1 80 30 StartCopy 1.0 Max 0.0 0 -1 filters=PartitionId:<var.PartitionIdService1>
+client.addbehavior StartCopyService2 80 30 StartCopy 1.0 Max 0.0 0 -1 filters=PartitionId:<var.PartitionIdService2>
+client.addbehavior ReplicaOpenService1 30 * ReplicaOpen 1.0 Max 0.0 0 -1 filters=PartitionId:<var.PartitionIdService1>
+!pause 5
+
+-40
+
+!waitforstate RA.Replica.State.fabric:/persistedtestcase2.80.30 IB
+!pause 5
+!waitforstate RA.Replica.State.fabric:/persistedtestcase2.80.30 IB
+
+!waitforstate RA.Replica.State.fabric:/persistedtestcase1.80.30 IC
+!pause 5
+!waitforstate RA.Replica.State.fabric:/persistedtestcase1.80.30 IC
+
+
+client.removebehavior ReplicaOpenService1 30
+!pause 5
+client.removebehavior StartCopyService2 80
+!pause 5
+!waitforstate RA.Replica.State.fabric:/persistedtestcase2.80.30 RD
+
+!waitforstate RA.Replica.State.fabric:/persistedtestcase1.80.30 IB
+!pause 5
+!waitforstate RA.Replica.State.fabric:/persistedtestcase1.80.30 IB
+
+client.removebehavior StartCopyService1 80
+
+!waitforstate RA.Replica.State.fabric:/persistedtestcase1.80.30 RD
+
+verify
+!q
+
+

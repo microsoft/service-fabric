@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest ApplicationTypeName="CalculatorApp" ApplicationTypeVersion="1.0" xsi:schemaLocation="http://schemas.microsoft.com/2011/01/fabric ServiceFabricServiceModel.xsd" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Description>This is a sample stateless calculator service provided by the Microsoft Azure Service Fabric</Description>
+<Parameters>
+    <Parameter Name="ServiceInstanceCount" DefaultValue="3"></Parameter>
+</Parameters>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="CalculatorServicePackage" ServiceManifestVersion="1.0"/>
+        <ConfigOverrides/>
+    </ServiceManifestImport>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="CalculatorGatewayPackage" ServiceManifestVersion="1.0"/>
+        <ConfigOverrides/>
+    </ServiceManifestImport>
+    <ServiceTemplates>
+    <StatelessService ServiceTypeName="CalculatorService" InstanceCount="5">
+        <SingletonPartition></SingletonPartition>
+    </StatelessService></ServiceTemplates>
+    <DefaultServices>
+        <Service Name="RequiredCalcService">
+            <StatelessService ServiceTypeName="CalculatorService" InstanceCount="[ServiceInstanceCount]">
+                <SingletonPartition></SingletonPartition>
+            </StatelessService>
+        </Service>
+    </DefaultServices>
+</ApplicationManifest>

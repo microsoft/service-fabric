@@ -1,0 +1,48 @@
+#
+# [owner] MMohsin, aprameyr
+#
+# This test verifies the scenario around fmm forgetting the node deactivation state after failover
+#1. Deactivation starts from FM and FMM for b1. FM is stuck
+#2. FMM failover
+#3. Deactivation starts for b2. FM is still stuck
+#4. Activation for b2 - FMM will send activate to node. node must not get activated here
+
+votes 20 
+set FMPlacementConstraints system==true
+
+fmservice 1 1
+cmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10
++20 nodeprops=system:true
+verify
+
++50 nodeprops=system:false
++60 nodeprops=system:false
++70 nodeprops=system:false
+verify
+
+addbehavior b1 20 * NodeDeactivateRequest 
+
+createservice fabric:/persisted3 TestPersistedStoreServiceType y 1 3 persist minrlicasetsize=3 constraint=(system!=true)
+verify
+
+deactivatenodes batch1 50:Restart
+verifynodedeactivationstatus batch1 DeactivationSafetyCheckInProgress
+
+#now deactivation is stuck because FM can't send message to node
+#failover fmm
+-10
+!waitforstate FMM.Node.10 false
+
+#now deactivate with another batch
+deactivatenodes batch2 50:Restart
+verifynodedeactivationstatus batch2 DeactivationSafetyCheckInProgress
+
+
+removenodedeactivation batch2
+removebehavior b1
+
+!q

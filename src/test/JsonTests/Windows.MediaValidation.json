@@ -1,0 +1,102 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "ServiceFabricClientPackageTest",
+      "Type": "PowershellTest",
+      "Owners": "v-mnagar,v-payc,roroutra",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LRC",
+      "TestExecutionParameters": {        
+        "SetupTimeout": "900",
+        "PSScriptName": "WinFabricTest\\ServiceFabricClientPackageVerification.ps1",
+        "Arguments": " sflrcpaas01.cloudapp.net:19000",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "MediaValidation_ServiceFabricClientPkg_SignedBinaryVerification",
+      "Type": "PowershellTest",
+      "Owners": "v-mnagar,v-payc,roroutra",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "PSScriptName": "WinFabricTest\\CheckDigitalSigning.ps1",
+        "Arguments": "-AllowedNotSignedListPath [BINS]\\WinFabricTest\\NonCoreAllowedNotSignedList.txt -ServiceFabricClientPkg",
+        "ExecutionTimeout": "4200"
+      }
+    },
+    {
+      "Name": "MediaValidation_ServiceFabric_SignedBinaryVerification",
+      "Type": "PowershellTest",
+      "Owners": "v-mnagar,v-payc,roroutra",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {        
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PSScriptName": "WinFabricTest\\CheckDigitalSigning.ps1",
+        "Arguments": "-AllowedNotSignedListPath [BINS]\\WinFabricTest\\CoreAllowedNotSignedList.txt",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "MediaValidation_ServiceFabric_SymbolsCheck",
+      "Type": "PowershellTest",
+      "Owners": "v-mnagar,v-payc,roroutra",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {       
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PSScriptName": "WinFabricTest\\CheckSymbols.ps1",
+        "Arguments": "-IgnoreListFilePath [BINS]\\WinFabricTest\\IgnoreSymbolCheckList.txt",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "MediaValidation_Xcopy_SignedBinaryVerification",
+      "Type": "PowershellTest",
+      "Owners": "v-mnagar,v-payc,roroutra",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "PSScriptName": "WinFabricTest\\CheckDigitalSigning.ps1",
+        "Arguments": "-AllowedNotSignedListPath [BINS]\\WinFabricTest\\CoreAllowedNotSignedList.txt -XcopyPkg",
+        "ExecutionTimeout": "4200"
+      }
+    },
+    {
+      "Name": "MediaValidation_Xcopy_SymbolsCheck",
+      "Type": "PowershellTest",
+      "Owners": "v-mnagar,v-payc,roroutra",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "PSScriptName": "WinFabricTest\\CheckSymbols.ps1",
+        "Arguments": "-IgnoreListFilePath [BINS]\\WinFabricTest\\IgnoreSymbolCheckList.txt -XcopyPkg",
+        "ExecutionTimeout": "4200"
+      }
+    },
+    {
+      "Name": "MediaValidation_ReleasePackageVerification",
+      "Type": "PowershellTest",
+      "Owners": "v-mnagar,v-payc,roroutra",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1",      
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PSScriptName": "WinFabricTest\\CheckReleasePackage.ps1",
+        "Arguments": "-ReleasePackagePath ..\\_buildinfo_",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

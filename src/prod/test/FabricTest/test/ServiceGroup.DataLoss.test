@@ -1,0 +1,116 @@
+#
+# Service group partition does not implement IFabricInternalStatefulServicePartition
+#
+seteseonly
+
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 50
+set EnableEndOfStreamAckOverride false
+
++10
++20
++30
+verify
++40
++50
++60
++70
++80
+verify
+
+#########################################
+########  OnDataloss Sanity      ########
+#########################################
+
+# verifies that that DataLoss behaviour for a single service member is identical to the non-servicegroup case
+createname fabric:/servicegroup2
+createservicegroup fabric:/servicegroup2 SGStatefulServiceFactory y 1 5 \
+    1 \
+    fabric:/servicegroup2#test3 TestPersistedStoreServiceType \
+    persist
+
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.80 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.40 Secondary
+
+addbehavior b1 * 40 ReplicationOperation
+clientput fabric:/servicegroup2#test3 10 10Data1
+!wait
+
+clientget fabric:/servicegroup2#test3 10 10Data1
+!wait
+
+addbehavior b2 * 50 ReplicationOperation
+clientput fabric:/servicegroup2#test3 20 20Data1
+!wait
+
+clientget fabric:/servicegroup2#test3 20 20Data1
+!wait
+
+#This will allow new primary at 50 to report statechanged during data loss
+setsignal 50 fabric:/servicegroup2#test3 provider.statechangedondataloss
+
+addbehavior b3 * * StatefulServiceReopenReply
+addbehavior b4 * * ReplicaDown
+-80 removedata
+-70 removedata
+-60 removedata
+
+nodestateremoved 80
+nodestateremoved 70
+nodestateremoved 60
+removebehavior b1
+removebehavior b2
+
+addbehavior b5 50 * DoReconfigurationReply
+
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.50 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.40 Secondary
+
+# 40 should be restarted
+!waitforstate RA.Replica.State.fabric:/servicegroup2.50.40 RD
+removebehavior b5
+removebehavior b3
+
+!waitforstate FM.Replica.State.fabric:/servicegroup2.10 Ready
+!waitforstate FM.Replica.State.fabric:/servicegroup2.20 Ready
+!waitforstate FM.Replica.State.fabric:/servicegroup2.30 Ready
+!waitforstate FM.Replica.State.fabric:/servicegroup2.40 Ready
+!waitforstate FM.Replica.State.fabric:/servicegroup2.50 Ready
+verify
+removebehavior b4
+
+# First data should still be retrievable
+clientget fabric:/servicegroup2#test3 10 10Data1
+!wait
+verify 
+
+clientput fabric:/servicegroup2#test3 20 20Data2
+clientput fabric:/servicegroup2#test3 30 30Data2
+clientput fabric:/servicegroup2#test3 40 40Data2
+!wait
+clientget fabric:/servicegroup2#test3 20 20Data2
+clientget fabric:/servicegroup2#test3 30 30Data2
+clientput fabric:/servicegroup2#test3 40 40Data2
+!wait
+verify
+
+deleteservicegroup fabric:/servicegroup2
+deletename fabric:/servicegroup2
+
+verify
+
+cleareseonly
+
+!q

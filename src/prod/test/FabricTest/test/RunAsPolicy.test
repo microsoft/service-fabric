@@ -1,0 +1,51 @@
+cmservice 3 1
+namingservice 1 3 1
+set DummyPLBEnabled true
+set RunAsPolicyEnabled true
+set OpenTimeout 180
+cleantest
+votes 10
++10
++20
++30
+verify
+# This will upload default app type with name FabTApp
+app.add FabTApp
+app.upload FabTApp
+
+provisionapp FabTApp
+createapp fabric:/App1 FabTApp 1.0 appparam=StatefulPartitionCount:1
+verify
+createapp fabric:/App2/Path FabTApp 1.0 appparam=ServiceInstanceCount:3,StatefulReplicaCount:4,StatefulPartitionCount:1
++40
++50
++60
+verify
+-20
+verify
+-30
++20
+verify
++30
+verify
+# Kill code package host on nodes
+killcodep 40
+killcodep 50
+killcodep 10
+killcodep 30
+killcodep 20
+verify
+-50
+verify
+deleteapp fabric:/App1
+-20
+verify
++50
++20
+verify
+deleteapp fabric:/App2/Path
+verify
+createapp fabric:/App1 FabTApp 1.0
+verify
+-*
+!q

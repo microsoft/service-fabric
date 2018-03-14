@@ -1,0 +1,18 @@
+set CredentialType Windows
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 100
+clearticket
++100
++200
+verify
+-200
+verify
+
+# Delay to prevent kernel lease agent reusing in different security setting
+-*
+!pause 30 
+
+!q

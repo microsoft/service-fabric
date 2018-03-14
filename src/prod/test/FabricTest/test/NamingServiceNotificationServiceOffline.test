@@ -1,0 +1,67 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set NamingServiceChangePollInterval 30
+set ServiceLocationBroadcastInterval 10
+
++10
++20
++30
+verify
++40
++50
++60
++70
++80
++90
+verify
+
+createname fabric:/test1
+
+createclient c1 nodeconfig=10
+!pause,2
+
+# Register callback for Int64 partition, wait for error
+registercallback c1 cbInt1 fabric:/test1 30 
+waitforcallback c1 cbInt1 error=UserServiceNotFound
+
+# Add behavior to drop open replica replies
+# to force the service to not be placed
+addbehavior b1 * * ReplicaOpen  
+
+#
+# Add a persisted service with 1 partition and 1 replica. 
+#
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 1 persist
+
+# Service is not placed, return error
+waitforcallback c1 cbInt1 error=ServiceOffline
+
+removebehavior b1
+
+# Service will be placed and the endpoints received
+waitforcallback c1 cbInt1
+
+verify
+
+# 
+# Remove the primary to trigger service offline;
+# then add the node back and get new address
+-90
+
+waitforcallback c1 cbInt1 error=ServiceOffline
+
++90
+
+# Service will be placed and the endpoints received
+waitforcallback c1 cbInt1
+
+# Delete client without unregistering the handlers;
+# callbacks should be cancelled on close.
+deleteclient c1
+
+!q

@@ -1,0 +1,53 @@
+votes 10 20 30
+fmservice 3 1
+cmservice 3 1
+namingservice 1 3 1
+cleantest
+
+set ExpectedNodeFabricUpgradeDuration 30
+set FabricUpgradeStatusPollInterval 2
+set FabricUpgradeHealthCheckInterval 2
+set DelayOpenAfterAbortNode 2
+set NamingOperationTimeout 60
+set NamingOperationRetryTimeout 180
+
++10
++20
++30
+verify
+
+!string jsonclusterpolicy \
+{\
+    "ConsiderWarningAsError":false,\
+    "MaxPercentUnhealthyNodes":35,\
+    "MaxPercentUnhealthyApplications":0\
+}\
+
+# Setup versions
+prepareupgradefabric code=5.0.0.0 config=v1
+prepareupgradefabric code=5.0.0.0 config=v2
+prepareupgradefabric code=6.0.0.0 config=v3
+
+provisionfabric code=5.0.0.0 config=v1
+provisionfabric code=5.0.0.0 config=v2
+provisionfabric code=6.0.0.0 config=v3
+
+# Baseline
+upgradefabric code=5.0.0.0 config=v1 Rolling upgrademode=auto
+verifyupgradefabric
+
+# Take down node 20
+-20
+verify
+
+# Upgrade should go through for Rolling_NotificationOnly
+upgradefabric code=5.0.0.0 config=v2 Rolling upgrademode=monitored failaction=rollback healthcheckretry=9 udtimeout=10 healthcheckstable=0 jsonpolicy=<string.jsonclusterpolicy>
+verifyupgradefabric
+
+# Upgrade should be blocked for Rolling kind due to seed node safety checks
+upgradefabric code=6.0.0.0 config=v3 Rolling upgrademode=monitored failaction=rollback healthcheckretry=9 udtimeout=10 healthcheckstable=0 jsonpolicy=<string.jsonclusterpolicy>
+setrollbackfabric code=5.0.0.0 config=v2 failurereason=UpgradeDomainTimeout jsonfailureprogress={"DomainName":"10_ud","NodeUpgradeProgressList":[{"NodeName":"nodeid:10","UpgradePhase":1,"PendingSafetyChecks":[{"SafetyCheck":{"Kind":1}}]}]}
+verifyupgradefabric
+
+-*
+!q

@@ -1,0 +1,350 @@
+#
+# [owner] MMohsin, YangLi
+#
+
+votes 10 20 30
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+set DeletedReplicaKeepDuration 1
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
++40 ud=UD1
++50 ud=UD2
++60 ud=UD3
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeA2 stateful
+app.servicetypes version10 ServicePackageA ServiceTypeA3 stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeA2,ServiceTypeA3 version=1.0
+app.reqservices version10 Persisted1 ServiceTypeA1 stateful partition=1 replica=2
+app.reqservices version10 Persisted2 ServiceTypeA1 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version10 Persisted3 ServiceTypeA1 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version10 Volatile1 ServiceTypeA2 stateful partition=1 replica=2
+app.reqservices version10 Volatile2 ServiceTypeA2 stateful partition=1 replica=3 minreplicasetsize=2
+app.reqservices version10 Volatile3 ServiceTypeA2 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version10 Stateless ServiceTypeA3 stateless partition=1 instance=3
+app.upload version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1 version10
+app.servicepack version11 ServicePackageA version=1.1 configversion=1.1 dataversion=1.0
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version11 ServicePackageA ServiceTypeA2 stateful
+app.servicetypes version11 ServicePackageA ServiceTypeA3 stateless
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeA2,ServiceTypeA3 version=1.1
+app.reqservices version11 Persisted1 ServiceTypeA1 stateful partition=1 replica=2
+app.reqservices version11 Persisted2 ServiceTypeA1 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version11 Persisted3 ServiceTypeA1 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version11 Volatile1 ServiceTypeA2 stateful partition=1 replica=2
+app.reqservices version11 Volatile2 ServiceTypeA2 stateful partition=1 replica=3 minreplicasetsize=2
+app.reqservices version11 Volatile3 ServiceTypeA2 stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version11 Stateless ServiceTypeA3 stateless partition=1 instance=3
+app.upload version11
+
+# Provision application version 1.0
+provisionapp version10
+
+# Provision application version 1.1
+provisionapp version11
+
+# Create application version 1.0
+createapp fabric:/test/MyApp TestApp 1.0
+verify
+
+# Give some time to PLB to balance the cluster
+!pause 10
+
+set DummyPLBEnabled true
+
+# Give some time for the PLB movements to complete and deleted replicas removed
+!pause 10
+
+verify
+
+!var Persisted1Role10 FM.Replica.Role.fabric:/test/MyApp/Persisted1.10
+!var Persisted1Role20 FM.Replica.Role.fabric:/test/MyApp/Persisted1.20
+!var Persisted1Role30 FM.Replica.Role.fabric:/test/MyApp/Persisted1.30
+!var Persisted1Role40 FM.Replica.Role.fabric:/test/MyApp/Persisted1.40
+!var Persisted1Role50 FM.Replica.Role.fabric:/test/MyApp/Persisted1.50
+!var Persisted1Role60 FM.Replica.Role.fabric:/test/MyApp/Persisted1.60
+
+!var Persisted2Role10 FM.Replica.Role.fabric:/test/MyApp/Persisted2.10
+!var Persisted2Role20 FM.Replica.Role.fabric:/test/MyApp/Persisted2.20
+!var Persisted2Role30 FM.Replica.Role.fabric:/test/MyApp/Persisted2.30
+!var Persisted2Role40 FM.Replica.Role.fabric:/test/MyApp/Persisted2.40
+!var Persisted2Role50 FM.Replica.Role.fabric:/test/MyApp/Persisted2.50
+!var Persisted2Role60 FM.Replica.Role.fabric:/test/MyApp/Persisted2.60
+
+!var Persisted3Role10 FM.Replica.Role.fabric:/test/MyApp/Persisted3.10
+!var Persisted3Role20 FM.Replica.Role.fabric:/test/MyApp/Persisted3.20
+!var Persisted3Role30 FM.Replica.Role.fabric:/test/MyApp/Persisted3.30
+!var Persisted3Role40 FM.Replica.Role.fabric:/test/MyApp/Persisted3.40
+!var Persisted3Role50 FM.Replica.Role.fabric:/test/MyApp/Persisted3.50
+!var Persisted3Role60 FM.Replica.Role.fabric:/test/MyApp/Persisted3.60
+
+!var Volatile1Role10 FM.Replica.Role.fabric:/test/MyApp/Volatile1.10
+!var Volatile1Role20 FM.Replica.Role.fabric:/test/MyApp/Volatile1.20
+!var Volatile1Role30 FM.Replica.Role.fabric:/test/MyApp/Volatile1.30
+!var Volatile1Role40 FM.Replica.Role.fabric:/test/MyApp/Volatile1.40
+!var Volatile1Role50 FM.Replica.Role.fabric:/test/MyApp/Volatile1.50
+!var Volatile1Role60 FM.Replica.Role.fabric:/test/MyApp/Volatile1.60
+
+!var Volatile2Role10 FM.Replica.Role.fabric:/test/MyApp/Volatile2.10
+!var Volatile2Role20 FM.Replica.Role.fabric:/test/MyApp/Volatile2.20
+!var Volatile2Role30 FM.Replica.Role.fabric:/test/MyApp/Volatile2.30
+!var Volatile2Role40 FM.Replica.Role.fabric:/test/MyApp/Volatile2.40
+!var Volatile2Role50 FM.Replica.Role.fabric:/test/MyApp/Volatile2.50
+!var Volatile2Role60 FM.Replica.Role.fabric:/test/MyApp/Volatile2.60
+
+!var Volatile3Role10 FM.Replica.Role.fabric:/test/MyApp/Volatile3.10
+!var Volatile3Role20 FM.Replica.Role.fabric:/test/MyApp/Volatile3.20
+!var Volatile3Role30 FM.Replica.Role.fabric:/test/MyApp/Volatile3.30
+!var Volatile3Role40 FM.Replica.Role.fabric:/test/MyApp/Volatile3.40
+!var Volatile3Role50 FM.Replica.Role.fabric:/test/MyApp/Volatile3.50
+!var Volatile3Role60 FM.Replica.Role.fabric:/test/MyApp/Volatile3.60
+
+!var Stateless10 FM.Replica.IsUp.fabric:/test/MyApp/Stateless.10
+!var Stateless20 FM.Replica.IsUp.fabric:/test/MyApp/Stateless.20
+!var Stateless30 FM.Replica.IsUp.fabric:/test/MyApp/Stateless.30
+!var Stateless40 FM.Replica.IsUp.fabric:/test/MyApp/Stateless.40
+!var Stateless50 FM.Replica.IsUp.fabric:/test/MyApp/Stateless.50
+!var Stateless60 FM.Replica.IsUp.fabric:/test/MyApp/Stateless.60
+
+#
+# Perform monitored application upgrade from version 1.0 to 1.1
+#
+upgradeapp fabric:/test/MyApp 1.1 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/test/MyApp upgradedomains=UD1
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.10 <var.Persisted1Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.20 <var.Persisted1Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.30 <var.Persisted1Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.40 <var.Persisted1Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.50 <var.Persisted1Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.60 <var.Persisted1Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.10 <var.Persisted2Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.20 <var.Persisted2Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.30 <var.Persisted2Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.40 <var.Persisted2Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.50 <var.Persisted2Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.60 <var.Persisted2Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.10 <var.Persisted3Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.20 <var.Persisted3Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.30 <var.Persisted3Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.40 <var.Persisted3Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.50 <var.Persisted3Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.60 <var.Persisted3Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.10 <var.Volatile1Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.20 <var.Volatile1Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.30 <var.Volatile1Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.40 <var.Volatile1Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.50 <var.Volatile1Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.60 <var.Volatile1Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.10 <var.Volatile2Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.20 <var.Volatile2Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.30 <var.Volatile2Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.40 <var.Volatile2Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.50 <var.Volatile2Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.60 <var.Volatile2Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.10 <var.Volatile3Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.20 <var.Volatile3Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.30 <var.Volatile3Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.40 <var.Volatile3Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.50 <var.Volatile3Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.60 <var.Volatile3Role60>
+
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.10 <var.Stateless10>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.20 <var.Stateless20>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.30 <var.Stateless30>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.40 <var.Stateless40>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.50 <var.Stateless50>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.60 <var.Stateless60>
+
+upgradeappmovenext fabric:/test/MyApp
+
+verifyupgradeapp fabric:/test/MyApp upgradedomains=UD1,UD2
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.10 <var.Persisted1Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.20 <var.Persisted1Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.30 <var.Persisted1Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.40 <var.Persisted1Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.50 <var.Persisted1Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.60 <var.Persisted1Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.10 <var.Persisted2Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.20 <var.Persisted2Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.30 <var.Persisted2Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.40 <var.Persisted2Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.50 <var.Persisted2Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.60 <var.Persisted2Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.10 <var.Persisted3Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.20 <var.Persisted3Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.30 <var.Persisted3Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.40 <var.Persisted3Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.50 <var.Persisted3Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.60 <var.Persisted3Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.10 <var.Volatile1Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.20 <var.Volatile1Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.30 <var.Volatile1Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.40 <var.Volatile1Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.50 <var.Volatile1Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.60 <var.Volatile1Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.10 <var.Volatile2Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.20 <var.Volatile2Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.30 <var.Volatile2Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.40 <var.Volatile2Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.50 <var.Volatile2Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.60 <var.Volatile2Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.10 <var.Volatile3Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.20 <var.Volatile3Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.30 <var.Volatile3Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.40 <var.Volatile3Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.50 <var.Volatile3Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.60 <var.Volatile3Role60>
+
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.10 <var.Stateless10>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.20 <var.Stateless20>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.30 <var.Stateless30>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.40 <var.Stateless40>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.50 <var.Stateless50>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.60 <var.Stateless60>
+
+upgradeappmovenext fabric:/test/MyApp
+
+verifyupgradeapp fabric:/test/MyApp upgradedomains=UD1,UD2,UD3
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.10 <var.Persisted1Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.20 <var.Persisted1Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.30 <var.Persisted1Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.40 <var.Persisted1Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.50 <var.Persisted1Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.60 <var.Persisted1Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.10 <var.Persisted2Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.20 <var.Persisted2Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.30 <var.Persisted2Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.40 <var.Persisted2Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.50 <var.Persisted2Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.60 <var.Persisted2Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.10 <var.Persisted3Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.20 <var.Persisted3Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.30 <var.Persisted3Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.40 <var.Persisted3Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.50 <var.Persisted3Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.60 <var.Persisted3Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.10 <var.Volatile1Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.20 <var.Volatile1Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.30 <var.Volatile1Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.40 <var.Volatile1Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.50 <var.Volatile1Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.60 <var.Volatile1Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.10 <var.Volatile2Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.20 <var.Volatile2Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.30 <var.Volatile2Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.40 <var.Volatile2Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.50 <var.Volatile2Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.60 <var.Volatile2Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.10 <var.Volatile3Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.20 <var.Volatile3Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.30 <var.Volatile3Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.40 <var.Volatile3Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.50 <var.Volatile3Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.60 <var.Volatile3Role60>
+
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.10 <var.Stateless10>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.20 <var.Stateless20>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.30 <var.Stateless30>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.40 <var.Stateless40>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.50 <var.Stateless50>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.60 <var.Stateless60>
+
+#
+# Perform automatic application upgrade from version 1.1 to 1.0
+#
+upgradeapp fabric:/test/MyApp 1.0 Rolling
+verifyupgradeapp fabric:/test/MyApp
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.10 <var.Persisted1Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.20 <var.Persisted1Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.30 <var.Persisted1Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.40 <var.Persisted1Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.50 <var.Persisted1Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted1.60 <var.Persisted1Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.10 <var.Persisted2Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.20 <var.Persisted2Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.30 <var.Persisted2Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.40 <var.Persisted2Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.50 <var.Persisted2Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted2.60 <var.Persisted2Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.10 <var.Persisted3Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.20 <var.Persisted3Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.30 <var.Persisted3Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.40 <var.Persisted3Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.50 <var.Persisted3Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Persisted3.60 <var.Persisted3Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.10 <var.Volatile1Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.20 <var.Volatile1Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.30 <var.Volatile1Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.40 <var.Volatile1Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.50 <var.Volatile1Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile1.60 <var.Volatile1Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.10 <var.Volatile2Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.20 <var.Volatile2Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.30 <var.Volatile2Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.40 <var.Volatile2Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.50 <var.Volatile2Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile2.60 <var.Volatile2Role60>
+
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.10 <var.Volatile3Role10>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.20 <var.Volatile3Role20>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.30 <var.Volatile3Role30>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.40 <var.Volatile3Role40>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.50 <var.Volatile3Role50>
+!waitforstate FM.Replica.Role.fabric:/test/MyApp/Volatile3.60 <var.Volatile3Role60>
+
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.10 <var.Stateless10>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.20 <var.Stateless20>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.30 <var.Stateless30>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.40 <var.Stateless40>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.50 <var.Stateless50>
+!waitforstate FM.Replica.IsUp.fabric:/test/MyApp/Stateless.60 <var.Stateless60>
+
+verify
+
+-*
+
+!q

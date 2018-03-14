@@ -1,0 +1,399 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase2_Catchup
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+set StoreClientTimeout 3
+set StoreReplicationTimeout 3
+set TStoreInitializationRetryDelay 1
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Primary is informed of down replicas during catchup
+# Ensure slow secondary does not block catchup
+# Block replication to 20
+# Put some data which should be on 30, 40
+# Take down 30
+# Primary should be stuck in Catchup because it cant catchup 20
+# Remove the block and catchup should go through
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+clientput fabric:/test1 10 10
+!wait
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 Phase2_Catchup
+
+#retry
+!pause 1
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 None
+
++30 nodeprops=system:false
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2: Primary is informed of dropped replicas during catchup
+# Block replication to 20
+# Put some data which should be on 30, 40
+# Drop 30
+# Primary should be stuck in Catchup because it cant catchup 20
+# Remove the block and catchup should go through
+#####################################################
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+clientput fabric:/test2 10 10
+!wait
+
+reportfault 30 fabric:/test2 permanent
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.40 Phase2_Catchup
+
+#retry
+!pause 1
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.40 None
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 3: Secondary goes down and comes back up and completes build
+# Block replication to 20
+# Put some data which should be on 30, 40
+# Restart 30 and get it back IB
+# Build completes and then UC should be sent to Replicator
+# presence of 30 should allow Reconfig to complete
+#####################################################
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test3 10 10
+!wait
+
+addbehavior b1 * * DoReconfiguration
+
+-30
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test3.20 false
+!waitforstate FM.Replica.IsUp.fabric:/test3.30 false
+
+#Catchup should be stuck
+removebehavior b1
+
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+
+#reconfig should complete as 30 gets built
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 None
+
++20 nodeprops=system:false
+removebehavior b1
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: Secondary goes down and comes back up IB. 
+# Restart IB. Incorrect idle instance should be removed and new instance built
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test4 10 10
+!wait
+
+addbehavior b1 * * DoReconfiguration
+
+-30
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test4.20 false
+!waitforstate FM.Replica.IsUp.fabric:/test4.30 false
+
+#Catchup should be stuck
+removebehavior b1
+
+addbehavior b2 * * CopyOperation
+
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+
+!waitforstate RA.Replica.State.fabric:/test4.40.30 IB
+
+#restart this secondary
+addbehavior b3 * * ReplicaUp
+reportfault 30 fabric:/test4 transient
+!waitforstate RA.Replica.State.fabric:/test4.30.30 SB
+removebehavior b3
+
+#allow retries
+!pause 1
+
+#reconfig should complete as 30 gets built
+removebehavior b2
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.40 None
+
++20 nodeprops=system:false
+removebehavior b1
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 5: Secondary goes down and comes back up IB. 
+# During Build it goes down again and stays down for rest of reconfig
+#####################################################
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test5 10 10
+!wait
+
+addbehavior b1 * * DoReconfiguration
+
+-30
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test5.20 false
+!waitforstate FM.Replica.IsUp.fabric:/test5.30 false
+
+#Catchup should be stuck
+removebehavior b1
+
+addbehavior b2 * * CopyOperation
+
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+
+!waitforstate RA.Replica.State.fabric:/test5.40.30 IB
+
+#take it down
+-30
+
+#allow retries
+!pause 1
+
+#reconfig should complete as 30 gets built
+!waitforstate RA.Replica.IsUp.fabric:/test5.40.30 false
+
+removebehavior b2
++20 nodeprops=system:false
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 None
+
++30 nodeprops=system:false
+verify
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Scenario 6: Secondary goes down and comes back up IB. 
+# During Build it gets dropped
+#####################################################
+
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test6 10 10
+!wait
+
+addbehavior b1 * * DoReconfiguration
+
+-30
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test6.20 false
+!waitforstate FM.Replica.IsUp.fabric:/test6.30 false
+
+#Catchup should be stuck
+removebehavior b1
+
+addbehavior b2 * * CopyOperation
+
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+
+!waitforstate RA.Replica.State.fabric:/test6.40.30 IB
+
+#drop it
+reportfault 30 fabric:/test6 permanent
+
+
+#reconfig should complete as 30 gets built
+!waitforstate RA.Replica.State.fabric:/test6.40.30 DD
+
+removebehavior b2
++20 nodeprops=system:false
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 None
+
+deleteservice fabric:/test6
+verify
+
+#####################################################
+# Scenario 7: Secondary goes down and comes back up and fails the build
+# Build should be retried
+#####################################################
+
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test7 10 10
+!wait
+
+addbehavior b1 * * DoReconfiguration
+
+-30
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test7.20 false
+!waitforstate FM.Replica.IsUp.fabric:/test7.30 false
+
+#Catchup should be stuck
+removebehavior b1
+
+injectfailure 40 fabric:/test7 replicator.BeginBuildReplica
+
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+
+!waitforstate RA.Replica.State.fabric:/test7.40.30 IB
+!pause 5
+
+removefailure 40 fabric:/test7 replicator.BeginBuildReplica
+
+#reconfig should complete as 30 gets built
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 None
+
++20 nodeprops=system:false
+removebehavior b1
+verify
+
+deleteservice fabric:/test7
+verify
+
+#####################################################
+# Scenario 8: Catchup calls should not be duplicated
+# Invoke catchup quorum and after catchup completes 
+# subsequent retry should not invoke catchup again
+#####################################################
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+
+!waitforstate FM.Replica.State.fabric:/test8.40 Ready
+!waitforstate FM.Replica.State.fabric:/test8.30 Ready
+
+addbehavior b1 * * UpdateConfiguration
+
++20 nodeprops=system:false
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 Phase2_Catchup
+
+#block the reply and let catchup complete
+#retry will happen from RA
+addbehavior b2 * * UpdateConfigurationReply
+removebehavior b1
+!pause 3
+
+#set a signal to block in catchup
+setsignal 40 fabric:/test8 replicator.beginwaitforquorumcatchup.block
+
+#remove UCReply
+#verify should succeed
+removebehavior b2
+verify
+
+deleteservice fabric:/test8
+verify
+
+#####################################################
+# Scenario 9: UC failure during catchup causes UC to be retried
+#####################################################
+
+createservice fabric:/test9 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+# In the native store stack, the primary of a new service must have write access in order
+# to initialize itself by replicating the creation of a new provider. Test scenarios
+# should not inject faults that block write access until the service has been
+# successfully initialized, which can be tested by simply performing an
+# application write.
+#
+clientput fabric:/test9 1 1
+!wait
+
+addbehavior b1 * * ReplicationOperation
+clientput fabric:/test9 10 10 error=Timeout
+!pause 10
+!wait
+
+setsignal 40 fabric:/test9 replicator.beginwaitforcatchupquorum.block
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.40 Phase2_Catchup
+!waitforstate RA.Replica.IsUp.fabric:/test9.40.30 false
+
+waitforsignalhit 40 fabric:/test9 replicator.beginwaitforcatchupquorum.block
+setsignal 40 fabric:/test9 replicator.updatecatchupreplicasetconfiguration.block
+
+resetsignal 40 fabric:/test9 replicator.beginwaitforcatchupquorum.block
+
+-20
+!waitforstate RA.Replica.IsUp.fabric:/test9.40.20 false
+
+waitforsignalhit 40 fabric:/test9 replicator.updatecatchupreplicasetconfiguration.block
+injectfailure 40 fabric:/test9 replicator.updatecatchupreplicasetconfiguration
+resetsignal 40 fabric:/test9 replicator.updatecatchupreplicasetconfiguration.block
+
+removebehavior b1
+
++30 nodeprops=system:false
+!waitforstate RA.Replica.State.fabric:/test9.40.30 RD
+
+#wait for retries
+!pause 10
+
+removefailure 40 fabric:/test9 replicator.updatecatchupreplicasetconfiguration
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.40 None
+verify
+
++20 nodeprops=system:false
+verify
+
+clientget fabric:/test9 10 10 error=Timeout
+!wait
+
+deleteservice fabric:/test9
+verify
+
+!q

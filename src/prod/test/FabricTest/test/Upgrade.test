@@ -1,0 +1,279 @@
+votes 20 30
+fmservice 7 2
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+
++10
++20
++30
+verify
+
+#
+# This test hits a stack overflow sometimes, register a vectored exception handler
+# so that we get a dump of the overflowed stack before the stack unwinds
+#
+registerstackoverflowdumpgenerator
+
+# 
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+
+app.servicepack version10 ServicePackageA version=1.0
+app.servicepack version10 ServicePackageB version=1.0
+
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version10 ServicePackageB ServiceTypeB1 stateful
+
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.codepack version10 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0
+
+app.reqservices version10 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.reqservices version10 ServiceB1 ServiceTypeB1 stateful partition=1 replica=3
+
+app.upload version10 compress
+
+# 
+# Application version 1.1 
+# Add a new service package, add  new code package to existing service package, add a 
+# new service type to existing service package and add a new required service and template
+#
+
+app.add version11 TestApp 1.1 version10
+
+app.servicepack version11 ServicePackageA version=1.1 configversion=1.1 dataversion=1.0
+app.servicepack version11 ServicePackageB version=1.1 configversion=1.1 dataversion=1.0
+app.servicepack version11 ServicePackageC version=1.0
+app.servicepack version11 ServicePackageD version=1.0
+
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version11 ServicePackageA ServiceTypeA2 stateful
+app.servicetypes version11 ServicePackageB ServiceTypeB1 stateful
+app.servicetypes version11 ServicePackageB ServiceTypeB2 stateless
+app.servicetypes version11 ServicePackageC ServiceTypeC1 stateless
+app.servicetypes version11 ServicePackageD ServiceTypeD1 stateful
+app.servicetypes version11 ServicePackageD ServiceTypeD2 stateless
+
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeA2 version=1.1
+app.codepack version11 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.1
+app.codepack version11 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0
+app.codepack version11 ServicePackageC CodeC1 types=ServiceTypeC1 version=1.0
+app.codepack version11 ServicePackageD CodeD1 types=ServiceTypeD1 version=1.0
+app.codepack version11 ServicePackageD CodeD2 types=ServiceTypeD2 version=1.0
+
+app.reqservices version11 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.reqservices version11 default_service/ServiceA2 ServiceTypeA2 stateful partition=1 replica=3
+app.reqservices version11 ServiceB1 ServiceTypeB1 stateful partition=1 replica=3
+app.reqservices version11 ServiceB2 ServiceTypeB2 stateless partition=1 instance=3
+app.reqservices version11 default_service/ServiceC1 ServiceTypeC1 stateless partition=2 instance=3
+app.reqservices version11 ServiceD1 ServiceTypeD1 stateful partition=1 replica=3
+
+app.servicetemplate version11 ServiceTypeA1 stateful partition=2 replica=2
+app.servicetemplate version11 ServiceTypeB2 stateless partition=1 instance=3
+
+app.upload version11 compress
+
+# 
+# Application version 1.2
+# Remove a service package, remove a code package, remove a service type 
+# new service type to existing service package and add a new required service and remove service template
+#
+
+app.add version12 TestApp 1.2
+app.clear version12
+
+app.servicepack version12 ServicePackageA version=1.2 configversion=1.2 dataversion=1.0
+app.servicepack version12 ServicePackageB version=1.2 configversion=1.2 dataversion=1.0
+app.servicepack version12 ServicePackageD version=1.2
+app.servicepack version12 ServicePackageD2 version=1.0
+
+app.servicetypes version12 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version12 ServicePackageB ServiceTypeB1 stateful
+app.servicetypes version12 ServicePackageB ServiceTypeB2 stateless
+app.servicetypes version12 ServicePackageD ServiceTypeD1 stateful
+app.servicetypes version12 ServicePackageD2 ServiceTypeD2 stateless
+
+app.codepack version12 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.2
+app.codepack version12 ServicePackageB CodeB2 types=ServiceTypeB1,ServiceTypeB2 version=1.1
+app.codepack version12 ServicePackageD CodeD1 types=ServiceTypeD1 version=1.0
+app.codepack version12 ServicePackageD2 CodeD2 types=ServiceTypeD2 version=1.0
+
+app.reqservices version12 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.reqservices version12 ServiceB1 ServiceTypeB1 stateful partition=1 replica=3
+app.reqservices version12 ServiceB2 ServiceTypeB2 stateless partition=1 instance=3
+app.reqservices version12 ServiceD1 ServiceTypeD1 stateful partition=1 replica=3
+
+app.upload version12 compress
+
+#
+# Provision application version 1.0
+#
+provisionapp version10
+
+#
+# Provision application version 1.1
+#
+provisionapp version11
+
+#
+# Provision application version 1.2
+#
+provisionapp version12
+
+#
+# Create application version 1.0
+#
+nameexists fabric:/app1 false
+nameexists fabric:/app1/upgrade.test false
+
+createapp fabric:/app1/upgrade.test TestApp 1.0
+verify
+
+# Reporting upgrade health for a non-upgrading application should fail
+upgradeappmovenext fabric:/app1/upgrade.test error=ApplicationNotUpgrading
+
+nameexists fabric:/app1/upgrade.test true
+
+#
+# Bring down node with replica version 1.0
+#
+-10
+verify
+
+createservice fabric:/app1/upgrade.test/instance.test ServiceTypeA1 y 1 1 persist appname=fabric:/app1/upgrade.test
+
+verify
+
+#
+# Upgrade application from version 1.0 to 1.1
+#
+upgradeapp fabric:/app1/upgrade.test 1.1 Rolling replicacheck=5
+verifyupgradeapp fabric:/app1/upgrade.test
+verify
+
+nameexists fabric:/app1/upgrade.test true
+
+deleteservice fabric:/app1/upgrade.test/instance.test
+
+verify
+
+#
+# Restart node
+#
++10
+
+nameexists fabric:/app1/upgrade.test/from_template false
+nameexists fabric:/app1/upgrade.test/from_template/ServiceA11 false
+nameexists fabric:/app1/upgrade.test/from_template/ServiceB22 false
+
+# create service using new templates
+createservicefromtemplate fabric:/app1/upgrade.test/from_template/ServiceA11 ServiceTypeA1 fabric:/app1/upgrade.test
+createservicefromtemplate fabric:/app1/upgrade.test/from_template/ServiceB22 ServiceTypeB2 fabric:/app1/upgrade.test
+verify
+
+nameexists fabric:/app1/upgrade.test/from_template/ServiceA11 true
+nameexists fabric:/app1/upgrade.test/from_template/ServiceB22 true
+
+# need to delete services before next upgrade
+deleteservice fabric:/app1/upgrade.test/default_service/ServiceA2
+deleteservice fabric:/app1/upgrade.test/default_service/ServiceC1
+verify
+
+nameexists fabric:/app1/upgrade.test true
+nameexists fabric:/app1/upgrade.test/default_service/ServiceA2 false
+nameexists fabric:/app1/upgrade.test/default_service/ServiceC1 false
+nameexists fabric:/app1/upgrade.test/default_service false
+
+# Verify that ServiceTypeD2 is usable
+createservice fabric:/app1/upgrade.test/during_upgrade/ServiceD2 ServiceTypeD2 n 2 3 appname=fabric:/app1/upgrade.test
+resolve fabric:/app1/upgrade.test/during_upgrade/ServiceD2 0
+deleteservice fabric:/app1/upgrade.test/during_upgrade/ServiceD2
+
+#
+# Upgrade application from version 1.1 to 1.2
+# using manual unmonitored upgrade
+#
+upgradeapp fabric:/app1/upgrade.test 1.2 Rolling upgrademode=manual
+
+# Cannot create a service for a type that will be removed in this upgrade
+createservice fabric:/app1/upgrade.test/during_upgrade/ServiceC1 ServiceTypeC1 n 2 3 appname=fabric:/app1/upgrade.test errors=ServiceTypeNotFound
+createservice fabric:/app1/upgrade.test/during_upgrade/ServiceA2 ServiceTypeA2 y 2 3 appname=fabric:/app1/upgrade.test errors=ServiceTypeNotFound
+
+# Cannot create a service for a type that is being moved between packages during the upgrade
+createservice fabric:/app1/upgrade.test/during_upgrade/ServiceD2 ServiceTypeD2 n 2 3 appname=fabric:/app1/upgrade.test errors=ServiceTypeNotFound
+
+# Can create a service for a type that is being upgraded
+createservice fabric:/app1/upgrade.test/during_upgrade/ServiceA1 ServiceTypeA1 y 1 3 persist appname=fabric:/app1/upgrade.test
+createservice fabric:/app1/upgrade.test/during_upgrade/ServiceB2 ServiceTypeB2 n 1 3 appname=fabric:/app1/upgrade.test
+
+# Can create a service for a type that is not being upgraded
+createservice fabric:/app1/upgrade.test/during_upgrade/ServiceD1 ServiceTypeD1 y 1 3 appname=fabric:/app1/upgrade.test
+
+verifyupgradeapp fabric:/app1/upgrade.test upgradedomains=10_ud
+
+upgradeappmovenext fabric:/app1/upgrade.test overload=true ud=10_ud error=UpgradeDomainAlreadyCompleted
+upgradeappmovenext fabric:/app1/upgrade.test
+
+# Can delete services during upgrade
+deleteservice fabric:/app1/upgrade.test/during_upgrade/ServiceB2
+deleteservice fabric:/app1/upgrade.test/during_upgrade/ServiceD1
+
+verifyupgradeapp fabric:/app1/upgrade.test upgradedomains=10_ud,20_ud
+
+upgradeappmovenext fabric:/app1/upgrade.test overload=true ud=20_ud error=UpgradeDomainAlreadyCompleted
+upgradeappmovenext fabric:/app1/upgrade.test
+
+verifyupgradeapp fabric:/app1/upgrade.test upgradedomains=10_ud,20_ud,30_ud
+
+verifyupgradeapp fabric:/app1/upgrade.test
+
+# Can create service for a type that was moved after the upgrade completes
+createservice fabric:/app1/upgrade.test/during_upgrade/ServiceD2 ServiceTypeD2 n 2 3 appname=fabric:/app1/upgrade.test
+
+verify
+
+resolve fabric:/app1/upgrade.test/during_upgrade/ServiceA1 0
+resolve fabric:/app1/upgrade.test/during_upgrade/ServiceD2 0
+
+nameexists fabric:/app1/upgrade.test/during_upgrade/ServiceB2 false
+nameexists fabric:/app1/upgrade.test/during_upgrade/ServiceC1 false
+nameexists fabric:/app1/upgrade.test/during_upgrade/ServiceD1 false
+nameexists fabric:/app1/upgrade.test true
+
+deleteapp fabric:/app1/upgrade.test
+nameexists fabric:/app1 false
+verify
+
+unprovisionapp TestApp 1.0
+
+createapp fabric:/app2/upgrade.test TestApp 1.0 error=ApplicationTypeNotFound
+createapp fabric:/app2/upgrade.test TestApp 1.1
+
+verify
+
+deleteapp fabric:/app2/upgrade.test
+nameexists fabric:/app2 false
+verify
+
+unprovisionapp TestApp 1.1
+
+createapp fabric:/app3/upgrade.test TestApp 1.1 error=ApplicationTypeNotFound
+createapp fabric:/app3/upgrade.test TestApp 1.2
+
+deleteapp fabric:/app3/upgrade.test
+nameexists fabric:/app3 false
+verify
+
+unprovisionapp TestApp 1.2
+
+createapp fabric:/app4/upgrade.test TestApp 1.2 error=ApplicationTypeNotFound
+
+nameexists fabric:/app4 false
+
+verifyimagestore
+
+!q

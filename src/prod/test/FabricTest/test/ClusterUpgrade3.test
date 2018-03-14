@@ -1,0 +1,140 @@
+#
+# [owner] MMohsin
+#
+# This test exercises the scenarios the node with having preferred location for
+# replicas does not come up during upgrade. After waiting for 
+# ExpectedNodeFabricUpgradeDuration, we should create replicas elsewhere and
+# move on.
+#
+
+votes 10 20 30
+fmservice 3 3
+namingservice 1 3 3
+cmservice 3 3
+cleantest
+
+set DummyPLBEnabled true
+set ConstraintCheckEnabled false
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 3600
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 150
+set ExpectedNodeFabricUpgradeDuration 10
+set UpgradeDomainConstraintPriority 0
+
++10 ud=UD1 version=4.2.0.0:v1
++20 ud=UD2 version=4.2.0.0:v1
++30 ud=UD3 version=4.2.0.0:v1
+verify
+
++40 ud=UD1 version=4.2.0.0:v1
++50 ud=UD2 version=4.2.0.0:v1
++60 ud=UD3 version=4.2.0.0:v1
+verify
+
+createservice fabric:/stateless CalculatorServiceType n 1 3
+createservice fabric:/volatile1 TestStoreServiceType y 1 2
+createservice fabric:/volatile2 TestStoreServiceType y 1 3 minreplicasetsize=2
+createservice fabric:/volatile3 TestStoreServiceType y 1 3 minreplicasetsize=3
+createservice fabric:/persisted1 TestPersistedStoreServiceType y 1 2 persist
+createservice fabric:/persisted2 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2
+createservice fabric:/persisted3 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3
+verify
+
+# Spread the primary replicas across multiple nodes
+swapprimary fabric:/volatile2 60 50
+swapprimary fabric:/volatile3 60 40
+swapprimary fabric:/persisted2 60 50
+swapprimary fabric:/persisted3 60 40
+verify
+
+#
+# Perform baseline upgrade for v1
+#
+prepareupgradefabric code=4.2.0.0 config=v1
+provisionfabric code=4.2.0.0 config=v1
+upgradefabric code=4.2.0.0 config=v1 Rolling
+verifyupgradefabric
+
+# Block NodeUp so that nodes in UD1 do not appear up to FM
+addbehavior b1 * * NodeUp
+
+#
+# Start monitored upgrade to v2
+#
+prepareupgradefabric code=5.2.0.0 config=v2
+provisionfabric code=5.2.0.0 config=v2
+upgradefabric code=5.2.0.0 config=v2 Rolling upgrademode=manual
+
+verifyupgradefabric upgradedomains=UD1
+
+# Verify that preferred replica location flags get cleared
+# and new replicas are created
+!waitforstate FM.Replica.IsUp.fabric:/stateless.30 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile2.30 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile3.30 true
+
+# Allow nodes in UD1 to join
+removebehavior b1
+
+verify
+
+# Block NodeUp so that nodes in UD2 do not appear up to FM
+addbehavior b1 * * NodeUp
+
+upgradefabricmovenext
+
+verifyupgradefabric upgradedomains=UD1,UD2
+
+# Verify that preferred replica location flags get cleared
+# and new replicas are created
+!waitforstate FM.Replica.IsUp.fabric:/stateless.40 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile1.40 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile2.40 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile3.40 true
+
+# Allow nodes in UD2 to join
+removebehavior b1
+
+verify
+
+# Do not start upgrade on node 30 until FM comes to know that the replicas are closed
+injectfailure 30 * hosting.fabricupgrade
+
+# Block NodeUp and ChangeNotification messages so that nodes in UD3
+# do not appear to go down to the FM. Replicas will still get closed
+# as part of the upgrade.
+addbehavior b1 * * NodeUp
+addbehavior b2 * * ChangeNotification
+
+upgradefabricmovenext
+
+# Verify that replicas in UD3 go down due to upgrade
+!waitforstate FM.Replica.IsUp.fabric:/stateless.30 false
+!waitforstate FM.Replica.IsUp.fabric:/volatile2.30 false
+!waitforstate FM.Replica.IsUp.fabric:/volatile3.30 false
+
+# Allow the upgrade to proceed on node 30
+removefailure 30 * hosting.fabricupgrade
+
+# Rollback the upgrade
+rollbackfabric
+setrollbackfabric code=4.2.0.0 config=v1 failurereason=Interrupted
+
+# Verify that preferred replica location flags get cleared
+# and new replicas are created
+!waitforstate FM.Replica.IsUp.fabric:/stateless.50 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile2.50 true
+!waitforstate FM.Replica.IsUp.fabric:/volatile3.50 true
+
+# Allow nodes to join and rollback to proceed
+removebehavior b2
+removebehavior b1
+
+verifyupgradefabric
+
+verify
+
+-*
+
+!q

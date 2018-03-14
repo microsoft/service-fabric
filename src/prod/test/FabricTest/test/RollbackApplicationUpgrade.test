@@ -1,0 +1,145 @@
+votes 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 2
+set UpgradeStatusPollInterval 5
+set UpgradeHealthCheckInterval 5
+
++10
++20
++30
+verify
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageX version=V1
+
+app.servicetypes versionV1 ServicePackageX ServiceTypeX stateful persist
+
+app.codepack versionV1 ServicePackageX CodeX types=ServiceTypeX version=V1
+
+app.reqservices versionV1 ServiceX ServiceTypeX stateful partition=1 replica=3
+
+app.upload versionV1
+
+# 
+# Application version V2 
+#
+
+app.add versionV2 TestApp V2
+
+app.clear versionV2
+
+app.servicepack versionV2 ServicePackageX version=V2
+
+app.servicetypes versionV2 ServicePackageX ServiceTypeX stateful persist
+
+app.codepack versionV2 ServicePackageX CodeX types=ServiceTypeX version=V2
+
+app.reqservices versionV2 ServiceX ServiceTypeX stateful partition=1 replica=3
+
+app.upload versionV2
+
+#
+# Provision application version V1
+#
+provisionapp versionV1
+
+#
+# Provision application version V2
+#
+provisionapp versionV2
+
+#######################################################
+# Testcase 1:
+#   Errors when application is not upgrading
+#######################################################
+
+rollbackapp fabric:/app1 error=ApplicationNotFound
+
+#
+# Create application version V1
+#
+createapp fabric:/app1 TestApp V1
+verify
+
+rollbackapp fabric:/app1 error=ApplicationNotUpgrading
+
+#######################################################
+# Testcase 2:
+#   Upgrade from V1 -> V2, rollback to V1
+#######################################################
+
+#
+# Upgrade application from version V1 to V2
+# 
+
+upgradeapp fabric:/app1 V2 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/app1 upgradedomains=10_ud
+
+upgradeappmovenext fabric:/app1
+
+verifyupgradeapp fabric:/app1 upgradedomains=10_ud,20_ud
+
+rollbackapp fabric:/app1
+
+# idempotent
+rollbackapp fabric:/app1
+
+updateappupgrade fabric:/app1 upgrademode=auto
+
+setrollbackapp fabric:/app1 V1 failurereason=Interrupted
+
+verifyupgradeapp fabric:/app1
+
+rollbackapp fabric:/app1 error=ApplicationNotUpgrading
+
+#######################################################
+# Testcase 3:
+#   Can continue upgrading after rollback
+#######################################################
+
+# sets state to RollforwardCompleted (no-op)
+upgradeapp fabric:/app1 V1 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/app1
+
+upgradeapp fabric:/app1 V1 Rolling upgrademode=manual error=ApplicationAlreadyInTargetVersion
+
+#######################################################
+# Testcase 4:
+#   Health check occurs after upgrading final UD
+#######################################################
+
+upgradeapp fabric:/app1 V2 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/app1 upgradedomains=10_ud
+
+upgradeappmovenext fabric:/app1
+
+verifyupgradeapp fabric:/app1 upgradedomains=10_ud,20_ud
+
+updateappupgrade fabric:/app1 upgrademode=monitored failaction=rollback healthcheckretry=10 healthcheckstable=10
+
+!pause 10
+
+updateappupgrade fabric:/app1 healthcheckstable=60
+
+reporthealth application appname=fabric:/app1 sequencenumber=1 healthstate=error
+
+setrollbackapp fabric:/app1 V1 failurereason=HealthCheck
+
+verifyupgradeapp fabric:/app1
+
+-*
+
+!q

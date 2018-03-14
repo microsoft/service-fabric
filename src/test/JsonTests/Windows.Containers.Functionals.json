@@ -1,0 +1,62 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "E2EContainerCert",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "ratando",      
+      "ResourcesRequired": "Server:1;Group=WS2016CT1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "ContainerCertMgmnt.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ComposeDeploymentCommunication",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "linggeng,bharatn",      
+      "ResourcesRequired": "Server:6;Group=WS2016CT1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "ComposeDeploymentTest.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "DockerHealthCheckIntegration",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "harahma,rajeetn",      
+      "ResourcesRequired": "Server:2;Group=WS2016CT1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ContainerHealthCheckTestConfig.txt",
+        "TaskName": "ContainerHealthCheck.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "EnlightenedContainerAppTest",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "roroutra,anmola",      
+      "ResourcesRequired": "Server:1;Group=WS2016CT1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "EnlightenedContainerAppTest.test",
+        "ExecutionTimeout": "10800",
+        "CleanupTimeout": "5400"
+      }
+    }
+  ]
+}

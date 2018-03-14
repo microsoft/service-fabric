@@ -1,0 +1,47 @@
+votes 10 20 30
+cleantest
+cmservice 5 3
+namingservice 1 5 3
++10 nodeprops=StringProperty:TestString1,NumericProperty:10.0
+
++20 nodeprops=StringProperty:TestString2,NumericProperty:20.0
+
++30 nodeprops=StringProperty:TestString1,NumericProperty:30.0
+
++40 nodeprops=StringProperty:TestString2,NumericProperty:35.0
+
++50 nodeprops=StringProperty:TestString2,NumericProperty:45.0
+
+verify
+
+createname fabric:/test1
+verify
+
+createservice fabric:/test1 TestStoreServiceType y 1 1 constraint=(NumericProperty<=15)
+verify
+gfum
+
++60 nodeprops=StringProperty:TestString2,NumericProperty:15.0
+verify
+
+# Deactivate node 10 with intent Restart
+deactivatenode 10 Restart
+!waitforstate FM.Node.DeactivationIntent.10 Restart
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+
+-10
+!waitforstate FM.Node.DeactivationIntent.10 Restart
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+!pause 10
++10 nodeprops=StringProperty:TestString1,NumericProperty:10.0
+!pause 10
+# Node 10 should still be deactivated with  intent Restart
+!waitforstate FM.Node.DeactivationIntent.10 Restart
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+
+activatenode 10
+!waitforstate FM.Node.DeactivationIntent.10 None
+!waitforstate FM.Node.DeactivationStatus.10 None
+gfum
+verify
+!q

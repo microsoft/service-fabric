@@ -1,0 +1,149 @@
+# [owner:anatra]
+# This test validates defragmentation by basic PLB operations
+
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set DefragmentationMetrics CPU false
+set BalancingDelayAfterNewNode 1
+set SendLoadReportInterval 1
+set ScoreImprovementThreshold 0.000001
+set UseMoveCostReports true
+set MaxNumberOfLoadReportsPerMessage 1
+set PLBActionRetryTimes 9999
+set MinLoadBalancingInterval 1
+
+# Scoped defrag configs
+set MetricActivityThresholds CPU 10000
+set MetricBalancingThresholds CPU 10000
+set MetricEmptyNodeThresholds CPU 0
+set GlobalMetricWeights CPU 1
+set DefragmentationScopedAlgorithmEnabled CPU true
+set DefragmentationEmptyNodeWeight CPU 1
+set DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold CPU 2
+set LoadBalancingEnabled true
+
+
+###################################################################################################################
+#
+#   Create three nodes and three replicas of parent and child service correlated with affinity.
+#   Check that parent and child replicas are on the same nodes.
+#
+###################################################################################################################
+
+set DummyPLBEnabled true
+
++10 cap=CPU:100 ud=ud1 fd=fd:/fd1
++20 cap=CPU:100 ud=ud2 fd=fd:/fd2
++30 cap=CPU:100 ud=ud3 fd=fd:/fd3
+verify
+
+# Create parent service with one partition and three replicas
+createname fabric:/parent
+createservice fabric:/parent TestStoreServiceType y 1 3 metrics=CPU,High,60,60
+verify
+
+# Place parent service
+!waitforstate FM.Replica.Role.fabric:/parent.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/parent.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/parent.30 Primary|Secondary
+verify
+
++40 cap=CPU:100 ud=ud4 fd=fd:/fd4
++50 cap=CPU:100 ud=ud5 fd=fd:/fd5
++60 cap=CPU:100 ud=ud6 fd=fd:/fd6
+verify
+
+# Create child service with one partition and three replicas
+createname fabric:/child
+createservice fabric:/child TestStoreServiceType y 1 3 metrics=CPU,High,20,20 servicecorrelations=fabric:/parent,affinity
+verify
+
+# Place child service
+!waitforstate FM.Replica.Role.fabric:/child.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/child.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/child.30 Primary|Secondary
+verify
+
+# Increase service move cost in order not to be moved by PLB
+reportmovecost fabric:/parent 10 3
+reportmovecost fabric:/parent 20 3
+reportmovecost fabric:/parent 30 3
+verify
+
+verifymovecostvalue fabric:/parent Primary 3
+verifymovecostvalue fabric:/parent Secondary 3
+
+###################################################################################################################
+#
+#   Now there are six nodes.
+#   Create test0 service with one replica and place it on the highest node.
+#   Create test1 service with four replicas and place them on the highest nodes.
+#   Turn defrag on with two empty nodes required and check that there actually are two existing empty nodes.
+#   The empty node will be node4 and node5, since weight of parent, child and test0 services are higher and we will prefer to move test1 service.
+#
+###################################################################################################################
+
+createname fabric:/test0
+createservice fabric:/test0 TestStoreServiceType y 1 1 metrics=CPU,High,80,80
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test0.60 Primary
+verify
+
+# Increase service move cost in order not to be moved by PLB
+reportmovecost fabric:/test0 60 3
+verify
+
+verifymovecostvalue fabric:/test0 Primary 3
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 4 persist metrics=CPU,High,10,10
+verify
+
+set DummyPLBEnabled false
+set DefragmentationMetrics CPU true
+
+# Place test1 service
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.50 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary|Secondary
+verify
+
+# Wait for perfect service placement 
+!pause 5
+
+# Check that parent service is not moved
+!waitforstate FM.Replica.Role.fabric:/parent.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/parent.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/parent.30 Primary|Secondary
+verify
+
+# Check that child service is not moved
+!waitforstate FM.Replica.Role.fabric:/child.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/child.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/child.30 Primary|Secondary
+verify
+
+# Check that test0 service is not moved
+!waitforstate FM.Replica.Role.fabric:/test0.60 Primary
+verify
+
+# Check that test1 service is moved
+!waitforstate FM.Replica.Role.fabric:/test1.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary|Secondary
+verify
+
+deleteservice fabric:/parent
+deleteservice fabric:/child
+deleteservice fabric:/test0
+deleteservice fabric:/test1
+verify
+
+!q

@@ -1,0 +1,7 @@
+define printv
+    set $ptr=$arg0.__begin_
+    while ($ptr < $arg0.__end_)
+        print *$ptr 
+        set $ptr++
+    end
+end

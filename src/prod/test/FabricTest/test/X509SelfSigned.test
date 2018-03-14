@@ -1,0 +1,60 @@
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 10
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
+cleantest
+
+set DummyPLBEnabled true
+
+!setcfg Security.ClusterCredentialType=X509
+!setcfg Security.ServerAuthCredentialType=X509
+!setcfg Security.ClientRoleEnabled=true
+!setcfg Security.SessionExpiration=60
+
+newcerts
+
+# start the cluster 
++10 
++20
++30
+verify
+
+# verify write operation
+createservice fabric:/test1 TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+updateservice fabric:/test1 Stateful TargetReplicaSetSize=5
+verify
+
+# verify read operation, cannot test "resolve" as "resolve" always uses default fabric client
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+#switch to readonly client
+usereadonlyclient
+
+#read should still work
+getservicedescription fabric:/test1
+nameexists fabric:/test1 true
+nameexists fabric:/NoSuchName false
+
+# verify write operation will fail
+createname fabric:/b AccessDenied
+deleteservice fabric:/test1 errors=AccessDenied
+deletename fabric:/test1 AccessDenied
+
+# switch back to admin client
+useadminclient
+
+# verify write operation will succeed now 
+createname fabric:/b
+deleteservice fabric:/test1
+
+# Delay to prevent kernel lease agent reusing in different security setting
+-*
+!pause 30
+
+!q

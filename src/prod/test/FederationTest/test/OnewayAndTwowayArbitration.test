@@ -1,0 +1,33 @@
+!setcfg Federation.LeaseDuration=10
+!setcfg Federation.MaxLeaseDuration=10
+!setcfg Federation.ArbitrationTimeout=10
+!setcfg Federation.MaxArbitrationTimeout=10
+votes 12
+clearticket
++12 10012
++22 10022
++32 10032
++42 10042
++52 10052
++62 10062
++72 10072
++82 10082
++92 10092
++102 10102
+verify
+!pause,10
+addleasebehavior * * indirect w1
+addleasebehavior 10052 10102 request w2
+addleasebehavior 10052 10102 response w3
+-62
+!pause 5
+addleasebehavior 10052 10102 ping w4
+addleasebehavior 10102 10052 ping w5
+!pause 20
+verify
+removeleasebehavior w1
+removeleasebehavior w2
+removeleasebehavior w3
+removeleasebehavior w4
+removeleasebehavior w5
+!q

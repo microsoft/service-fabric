@@ -1,0 +1,91 @@
+votes 10
+fmservice 1 1
+namingservice 1 1 1
+cmservice 1 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+
++10
+verify
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageA version=V1
+
+app.servicetypes versionV1 ServicePackageA ServiceTypeA stateful persist
+
+app.codepack versionV1 ServicePackageA CodeA types=ServiceTypeA version=V1
+
+app.upload versionV1
+
+# 
+# Application version V2 
+#
+
+app.add versionV2 TestApp V2
+
+app.clear versionV2
+
+app.servicepack versionV2 ServicePackageA version=V2
+
+app.servicetypes versionV2 ServicePackageA ServiceTypeA stateful persist
+
+app.codepack versionV2 ServicePackageA CodeA types=ServiceTypeA version=V2
+
+app.upload versionV2
+
+#
+# Provision application version V1
+#
+provisionapp versionV1
+
+#
+# Provision application version V2
+#
+provisionapp versionV2
+
+#
+# Create application version V1
+#
+createapp fabric:/testapp TestApp V1
+verify
+
+createservice fabric:/testapp/svc1 ServiceTypeA y 1 2 persist appname=fabric:/testapp initdata=RE_UseStreamFaults:true;Test_OnCopyCompletionDelaySeconds:30
+!pause 10
++20
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testapp/svc1.10 Primary
+
+#
+# Upgrade V1 application parameters
+# 
+upgradeapp fabric:/testapp V2 Rolling upgrademode=manual
+
+# Wait for swap out as first UD upgrades
+#
+!waitforstate FM.Replica.Role.fabric:/testapp/svc1.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testapp/svc1.20 Primary
+
+# Wait for swap back once first UD upgrade completes. This should
+# not trigger until the recently upgraded secondary has become
+# active again.
+#
+!waitforstate FM.Replica.Role.fabric:/testapp/svc1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testapp/svc1.10 Primary
+
+# Swap back reconfiguration should not trigger until the target
+# primary has completed processing OnCopyComplete. The partition
+# should complete reconfiguration immediately - validate that
+# it takes less time than the injected delay.
+#
+!waitforstate RA.FT.IsReconfiguring.fabric:/testapp/svc1.10 false 15
+!waitforstate RA.FT.IsReconfiguring.fabric:/testapp/svc1.20 false 15
+
+!q

@@ -1,0 +1,24 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "FMScale_SP3R",
+      "Type": "V2_DllTest",
+      "Owners": "chuxin",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:21;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "3600",
+        "ConfigName": "WinFabricTest\\Config\\Failover_Scale_Sanity.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SP3R",
+        "InstalledFeaturesFile": "Config\\FailoverScalePHWInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupTimeout": "28800"
+      }
+    }
+  ]
+}

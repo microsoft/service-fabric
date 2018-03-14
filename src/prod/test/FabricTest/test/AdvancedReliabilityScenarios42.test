@@ -1,0 +1,36 @@
+#
+# [owner] aprameyr
+# Verify LastReplicaUp while node is deactivated
+set DummyPLBEnabled true
+set ReopenSuccessWaitInterval 10
+set RAPMessageRetryInterval 3
+
+votes 10 
+cmservice 1 1 
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+verify
+
+deactivatenode 40 Restart
+!waitforstate FM.Node.DeactivationIntent.40 Restart
+!waitforstate FM.Node.DeactivationStatus.40 DeactivationComplete
+
+-40
+!waitforstate FM.Node.IsUp.40 false
+
++40
+!waitforstate FM.Node.IsReplicaUploaded.40 true
+!waitforstate RA.Replica.IsUp.fabric:/test.40.40 false
+
+!q

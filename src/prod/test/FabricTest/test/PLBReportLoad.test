@@ -1,0 +1,175 @@
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+
+set DummyPLBEnabled true
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set SendLoadReportInterval 1
+set PeriodicLoadPersistInterval 1
+
++10 
++20 
++30 
++40
++50
+
+verify
+
+set UseSeparateSecondaryLoad false
+
+createname fabric:/test1
+createservice fabric:/test1 TestStoreServiceType y 1 3 metrics=CPU,High,5,2,MEMORY,High,6,3
+!waitforstate FM.Replica.Role.fabric:/test1.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary
+
+verify
+
+# Capture the service's PartitionID
+!var test1PartitionId FM.FT.PartitionId.fabric:/test1
+
+# verify the initial load
+verifypartitionload <var.test1PartitionId> CPU 5 2
+verifypartitionload <var.test1PartitionId> MEMORY 6 3 
+
+# updateservice with new metrics
+updateservice fabric:/test1 Stateful metrics=CPU,High,15,12,MEMORY,High,16,13
+verify
+
+# verify new default load
+verifypartitionload <var.test1PartitionId> CPU 15 12
+verifypartitionload <var.test1PartitionId> MEMORY 16 13
+
+# report load values with default ones
+reportload fabric:/test1 50 CPU=15,MEMORY=16
+reportload fabric:/test1 40 CPU=12,MEMORY=13
+
+# verify reported values
+verifypartitionload <var.test1PartitionId> CPU 15 12
+verifypartitionload <var.test1PartitionId> MEMORY 16 13
+
+# updateservice with new metrics
+updateservice fabric:/test1 Stateful metrics=CPU,High,3,1,MEMORY,High,4,2
+verify
+
+# verify reported values 
+verifypartitionload <var.test1PartitionId> CPU 15 12
+verifypartitionload <var.test1PartitionId> MEMORY 16 13
+
+set UseSeparateSecondaryLoad true
+!pause 5
+
+# report load values
+reportload fabric:/test1 50 CPU=3,MEMORY=4
+reportload fabric:/test1 40 CPU=2,MEMORY=2
+reportload fabric:/test1 30 CPU=1,MEMORY=2
+
+# verify reported values 
+verifynodeload nodeid:50 CPU 3
+verifynodeload nodeid:40 CPU 2
+verifynodeload nodeid:30 CPU 1
+verifynodeload nodeid:50 MEMORY 4
+verifynodeload nodeid:40 MEMORY 2
+verifynodeload nodeid:30 MEMORY 2
+
+# updateservice with new metrics
+updateservice fabric:/test1 Stateful metrics=CPU,High,40,40,MEMORY,High,10,10
+verify
+
+# verify reported values 
+verifynodeload nodeid:50 CPU 3
+verifynodeload nodeid:40 CPU 2
+verifynodeload nodeid:30 CPU 1
+verifynodeload nodeid:50 MEMORY 4
+verifynodeload nodeid:40 MEMORY 2
+verifynodeload nodeid:30 MEMORY 2
+
+# updateservice - remove metric
+updateservice fabric:/test1 Stateful metrics=CPU,High,5,5
+verify
+
+# report load values
+reportload fabric:/test1 50 CPU=31
+reportload fabric:/test1 40 CPU=21
+reportload fabric:/test1 30 CPU=11
+
+# verify reported values 
+verifynodeload nodeid:50 CPU 31
+verifynodeload nodeid:40 CPU 21
+verifynodeload nodeid:30 CPU 11
+
+# Promote node 30 replica to primary
+moveprimaryclient 30 <var.test1PartitionId>
+# Verify the location of user service replicas
+!waitforstate FM.Replica.Role.fabric:/test1.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary
+
+# verify reported values 
+verifynodeload nodeid:40 CPU 21
+verifynodeload nodeid:30 CPU 31
+verifynodeload nodeid:50 CPU 11 
+
+# move primary 
+moveprimaryclient 20 <var.test1PartitionId>
+!waitforstate FM.Replica.Role.fabric:/test1.20 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 None
+!waitforstate FM.Replica.Role.fabric:/test1.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+
+# verify reported values 
+verifynodeload nodeid:40 CPU 21
+verifynodeload nodeid:50 CPU 11
+verifynodeload nodeid:20 CPU 31 
+
+# report load values
+reportload fabric:/test1 20 CPU=123
+reportload fabric:/test1 40 CPU=22
+reportload fabric:/test1 50 CPU=38
+
+# verify reported values 
+verifynodeload nodeid:20 CPU 123
+verifynodeload nodeid:40 CPU 22
+verifynodeload nodeid:50 CPU 38
+
+# move secondary to node 30 
+movesecondaryclient 50 30 <var.test1PartitionId>
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+
+# verify reported values 
+verifynodeload nodeid:20 CPU 123
+verifynodeload nodeid:40 CPU 22
+verifynodeload nodeid:30 CPU 38
+
+# updateservice
+updateservice fabric:/test1 Stateful metrics=CPU,High,5,5
+verify
+
+# verify reported values 
+verifynodeload nodeid:20 CPU 123
+verifynodeload nodeid:40 CPU 22
+verifynodeload nodeid:30 CPU 38
+
+# updateservice - add replica
+updateservice fabric:/test1 Stateful TargetReplicaSetSize=4
+
+!waitforstate FM.Replica.Role.fabric:/test1.50 Secondary
+verify
+
+# verify reported values 
+verifynodeload nodeid:50 CPU 30
+
+# updateservice
+updateservice fabric:/test1 Stateful metrics=CPU,High,5,5
+verify
+
+# verify reported values 
+verifynodeload nodeid:50 CPU 30
+
+
+!q
+

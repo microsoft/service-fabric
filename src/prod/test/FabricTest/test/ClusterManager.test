@@ -1,0 +1,164 @@
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+
++10
++20
++30
+verify
+
+########################################
+# Testcase 1: Basic application workflow
+#
+# No default services
+# No service templates
+########################################
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+
+app.servicepack versionTC1 ServicePackageA version=v1
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.upload versionTC1
+
+provisionapp versionTC1
+createapp fabric:/testcase1 TestAppTC1 vTC1
+createservice fabric:/testcase1/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase1
+
+verify
+nameexists fabric:/testcase1 true
+
+deleteservice fabric:/testcase1/service1
+deleteapp fabric:/testcase1
+unprovisionapp TestAppTC1 vTC1
+
+verify
+nameexists fabric:/testcase1 false
+ 
+############################################################
+# Testcase 2: Default services
+#
+# Multiple default services supported
+# Default services can be explicitly deleted
+# Default services under different applications are isolated
+# Delete application also deletes default services
+############################################################
+
+app.add versionTC2 TestAppTC2 vTC2
+app.clear versionTC2
+
+app.servicepack versionTC2 ServicePackageA version=v1
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC2 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.servicepack versionTC2 ServicePackageB version=v1
+app.servicetypes versionTC2 ServicePackageB ServiceTypeB stateful persist
+app.codepack versionTC2 ServicePackageB CodeB types=ServiceTypeB version=v1
+
+app.reqservices versionTC2 defaultservice1 ServiceTypeA stateful partition=1 replica=3
+app.reqservices versionTC2 defaultservice2 ServiceTypeA stateful partition=1 replica=3
+app.reqservices versionTC2 defaultservice3 ServiceTypeB stateful partition=1 replica=3
+app.reqservices versionTC2 defaultservice4 ServiceTypeB stateful partition=1 replica=3
+
+app.upload versionTC2
+
+provisionapp versionTC2
+createapp fabric:/testcase2A TestAppTC2 vTC2
+createapp fabric:/testcase2B TestAppTC2 vTC2
+
+verify
+
+deleteservice fabric:/testcase2A/defaultservice1
+verify
+resolve fabric:/testcase2A/defaultservice2 0
+resolve fabric:/testcase2A/defaultservice3 0
+resolve fabric:/testcase2A/defaultservice4 0
+resolve fabric:/testcase2B/defaultservice1 0
+resolve fabric:/testcase2B/defaultservice2 0
+resolve fabric:/testcase2B/defaultservice3 0
+resolve fabric:/testcase2B/defaultservice4 0
+
+deleteservice fabric:/testcase2A/defaultservice2
+verify
+resolve fabric:/testcase2A/defaultservice3 0
+resolve fabric:/testcase2A/defaultservice4 0
+resolve fabric:/testcase2B/defaultservice1 0
+resolve fabric:/testcase2B/defaultservice2 0
+resolve fabric:/testcase2B/defaultservice3 0
+resolve fabric:/testcase2B/defaultservice4 0
+
+deleteapp fabric:/testcase2A
+verify
+resolve fabric:/testcase2B/defaultservice1 0
+resolve fabric:/testcase2B/defaultservice2 0
+resolve fabric:/testcase2B/defaultservice3 0
+resolve fabric:/testcase2B/defaultservice4 0
+
+deleteapp fabric:/testcase2B
+unprovisionapp TestAppTC2 vTC2
+
+verify
+ 
+############################################################
+# Testcase 3: Service templates
+#
+# Multiple service instances per template
+# Templated services do not conflict with untemplated services
+############################################################
+
+app.add versionTC3 TestAppTC3 vTC3
+app.clear versionTC3
+
+app.servicepack versionTC3 ServicePackageA version=v1
+app.servicetypes versionTC3 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC3 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.servicepack versionTC3 ServicePackageB version=v1
+app.servicetypes versionTC3 ServicePackageB ServiceTypeB stateful persist
+app.codepack versionTC3 ServicePackageB CodeB types=ServiceTypeB version=v1
+
+app.servicetemplate versionTC3 ServiceTypeA stateful persist partition=1 replica=3
+app.servicetemplate versionTC3 ServiceTypeB stateful persist partition=1 replica=3
+
+app.reqservices versionTC3 defaultservice1 ServiceTypeA stateful partition=1 replica=3
+app.reqservices versionTC3 defaultservice2 ServiceTypeB stateful partition=1 replica=3
+
+app.upload versionTC3
+
+provisionapp versionTC3
+createapp fabric:/testcase3A TestAppTC3 vTC3
+createapp fabric:/testcase3B TestAppTC3 vTC3
+
+createservicefromtemplate fabric:/testcase3A/service3 ServiceTypeA fabric:/testcase3A
+createservicefromtemplate fabric:/testcase3A/service4 ServiceTypeB fabric:/testcase3A
+createservice fabric:/testcase3A/service5 ServiceTypeA y 1 1 persist appname=fabric:/testcase3A
+createservice fabric:/testcase3A/service6 ServiceTypeB y 1 1 persist appname=fabric:/testcase3A
+createservicefromtemplate fabric:/testcase3B/service3 ServiceTypeA fabric:/testcase3B
+createservicefromtemplate fabric:/testcase3B/service4 ServiceTypeB fabric:/testcase3B
+createservice fabric:/testcase3B/service5 ServiceTypeA y 1 1 persist appname=fabric:/testcase3B
+createservice fabric:/testcase3B/service6 ServiceTypeB y 1 1 persist appname=fabric:/testcase3B
+
+verify
+
+deleteservice fabric:/testcase3A/service3
+deleteservice fabric:/testcase3A/service4
+verify
+
+deleteapp fabric:/testcase3A
+verify
+
+deleteapp fabric:/testcase3B
+verify
+
+#############################
+# Testcase 4: Custom scenario
+#############################
+
+scenario ClusterManagerLargeKeys
+
+!q

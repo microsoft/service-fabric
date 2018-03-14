@@ -1,0 +1,195 @@
+#
+# Tests different fabric upgrades that should roll back due to per app type health checks.
+# Health reporting happens directly through HM, bypassing health client so the reports are processed immediately.
+#
+
+set DummyPLBEnabled true
+votes 10 20 30 40 50
+fmservice 6 2
+cmservice 3 1
+namingservice 1 3 2
+cleantest
+
+set ReportHealthThroughHMPrimary true
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 2
+set FabricUpgradeStatusPollInterval 5
+set FabricUpgradeHealthCheckInterval 5
+set NamingOperationTimeout 15
+set NamingOperationRetryTimeout 150
+
+# cluster health evaluation policies from cluster manifest
+set ConsiderWarningAsError false
+set MaxPercentUnhealthyNodes 0
+set MaxPercentUnhealthyApplications 0
+
++10 ud=ud_1 version=4.2.762.0:version1
++20 ud=ud_2 version=4.2.762.0:version1
++30 ud=ud_3 version=4.2.762.0:version1
++40 ud=ud_1 version=4.2.762.0:version1
++50 ud=ud_2 version=4.2.762.0:version1
++60 ud=ud_2 version=4.2.762.0:version1
+verify
+
+set EnableApplicationTypeHealthEvaluation true
+
+# 
+# Cluster baseline upgrade succeeds because there are no apps without app type created
+#
+prepareupgradefabric code=4.2.762.0 config=version1
+provisionfabric code=4.2.762.0 config=version1
+
+prepareupgradefabric code=4.2.763.0 config=version2
+provisionfabric code=4.2.763.0 config=version2
+
+upgradefabric code=4.2.762.0 config=version1 Rolling upgrademode=monitored failaction=rollback healthcheckwait=5 healthcheckretry=60 jsonpolicy=<string.jsonPolicyNoAppTypes> healthcheckstable=0
+verifyupgradefabric
+verify
+
+###################################
+# Compatibility test: create applications without reporting app type
+# Upgrades should fail because health checks fail with app type not set
+###################################
+
+set ReportHealthEntityApplicationType false
+
+# Create 2 app types, first with 4 applications and second with one.
+app.add TestAppOfAppType1V1 AppType1 1.0
+app.clear TestAppOfAppType1V1
+app.servicepack TestAppOfAppType1V1 ServicePackageA version=1.0
+app.servicetypes TestAppOfAppType1V1 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack TestAppOfAppType1V1 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.reqservices TestAppOfAppType1V1 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.upload TestAppOfAppType1V1
+provisionapp TestAppOfAppType1V1
+
+createapp fabric:/TestAppOfAppType1/App1 AppType1 1.0
+createapp fabric:/TestAppOfAppType1/App2 AppType1 1.0
+verify
+
+app.add TestAppOfAppType2V1 AppType2 1.0
+app.clear TestAppOfAppType2V1
+app.servicepack TestAppOfAppType2V1 ServicePackageA version=1.0
+app.servicetypes TestAppOfAppType2V1 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack TestAppOfAppType2V1 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.reqservices TestAppOfAppType2V1 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.upload TestAppOfAppType2V1
+provisionapp TestAppOfAppType2V1
+
+createapp fabric:/TestAppOfAppType2/App1 AppType2 1.0
+verify
+
+!string jsonPolicyNoAppTypes {"ConsiderWarningAsError":false,"MaxPercentUnhealthyApplications":20}
+!string jsonPolicyWithAppType2 {"ConsiderWarningAsError":false,"MaxPercentUnhealthyApplications":25,"ApplicationTypeHealthPolicyMap":[{"Key":"AppType2","Value":0}]}
+!string jsonPolicyWithAppType1 {"MaxPercentUnhealthyNodes":0,"MaxPercentUnhealthyApplications":88,"ApplicationTypeHealthPolicyMap":[{"Key":"AppType1","Value":24}]}
+!string jsonPolicyWithAppType1Permissive {"MaxPercentUnhealthyApplications":0,"ApplicationTypeHealthPolicyMap":[{"Key":"AppType1","Value":55}]}
+
+# Wait for reports to be received
+queryhealth application appname=fabric:/TestAppOfAppType1/App1 expectedhealthstate=ok
+queryhealth application appname=fabric:/TestAppOfAppType1/App2 expectedhealthstate=ok
+queryhealth application appname=fabric:/TestAppOfAppType2/App1 expectedhealthstate=ok
+
+#
+# Upgrade fails because of missing app types. Health checks fails with AppTypeNodeFound error and it retries until udtimeout is reached.
+#
+upgradefabric code=4.2.763.0 config=version2 Rolling upgrademode=monitored failaction=rollback healthcheckwait=0 healthcheckretry=10 udtimeout=20 jsonpolicy=<string.jsonPolicyWithAppType2> healthcheckstable=0
+setrollbackfabric code=4.2.762.0 config=version1 failurereason=UpgradeDomainTimeout 
+verifyupgradefabric
+verify
+
+#
+# Allow reporting the app type and start new upgrade. Should succeed, the missing app types should be populated automatically.
+#
+set ReportHealthEntityApplicationType true
+
+upgradefabric code=4.2.763.0 config=version2 Rolling upgrademode=monitored failaction=rollback healthcheckwait=0 healthcheckretry=60 jsonpolicy=<string.jsonPolicyWithAppType2> healthcheckstable=0
+verifyupgradefabric
+verify
+
+#
+# Create more applications with app type reporting disabled.
+#
+set ReportHealthEntityApplicationType false
+
+createapp fabric:/TestAppOfAppType1/App3 AppType1 1.0
+createapp fabric:/TestAppOfAppType1/App4 AppType1 1.0
+verify 
+
+queryhealth application appname=fabric:/TestAppOfAppType1/App3 expectedhealthstate=ok
+queryhealth application appname=fabric:/TestAppOfAppType1/App4 expectedhealthstate=ok
+
+#
+# Disable reporting the app type and start another upgrade. Should fail because some apps have no app types.
+#
+upgradefabric code=4.2.762.0 config=version1 Rolling upgrademode=monitored failaction=rollback healthcheckwait=0 healthcheckretry=10 udtimeout=20 jsonpolicy=<string.jsonPolicyWithAppType2> healthcheckstable=0
+setrollbackfabric code=4.2.763.0 config=version2 failurereason=UpgradeDomainTimeout 
+verifyupgradefabric
+verify
+
+#
+# Allow reporting the app type and start new upgrade. Should succeed, the missing app types should be populated automatically.
+#
+set ReportHealthEntityApplicationType true
+
+upgradefabric code=4.2.762.0 config=version1 Rolling upgrademode=monitored failaction=rollback healthcheckwait=0 healthcheckretry=60 jsonpolicy=<string.jsonPolicyWithAppType2> healthcheckstable=0
+verifyupgradefabric
+verify
+
+###################################
+# Upgrade scenarios with app types completely reported
+###################################
+
+#
+# Report error on 2 apps of type AppType1
+# 2 out of 5 => 40% unhealthy apps globally
+# 2 out of 4 => 50% unhealthy apps in AT1
+#
+reporthealthinternal application appname=fabric:/TestAppOfAppType1/App1 sequencenumber=1 healthstate=error
+reporthealthinternal application appname=fabric:/TestAppOfAppType1/App2 sequencenumber=1 healthstate=error
+queryhealth application appname=fabric:/TestAppOfAppType1/App1 expectedhealthstate=error
+queryhealth application appname=fabric:/TestAppOfAppType1/App2 expectedhealthstate=error
+
+###################################
+# Testcase: Rollback due to global app health, no per app type policy specified
+###################################
+
+upgradefabric code=4.2.763.0 config=version2 Rolling upgrademode=monitored failaction=rollback healthcheckwait=0 healthcheckretry=60 jsonpolicy=<string.jsonPolicyNoAppTypes> healthcheckstable=0
+setrollbackfabric code=4.2.762.0 config=version1 expectedreason=applications,2,20,5
+
+verifyupgradefabric
+verify
+
+###################################
+# Testcase: Rollback due to global app health, one app type specified
+# Number of global apps is reduced
+###################################
+
+upgradefabric code=4.2.763.0 config=version2 Rolling upgrademode=monitored failaction=rollback healthcheckwait=0 healthcheckretry=60 jsonpolicy=<string.jsonPolicyWithAppType2> healthcheckstable=0
+setrollbackfabric code=4.2.762.0 config=version1 expectedreason=applications,2,25,4
+
+verifyupgradefabric
+verify
+
+###################################
+# Testcase: Rollback due to health of AppType1
+###################################
+upgradefabric code=4.2.763.0 config=version2 Rolling upgrademode=monitored failaction=rollback healthcheckwait=0 healthcheckretry=60 jsonpolicy=<string.jsonPolicyWithAppType1> healthcheckstable=0
+setrollbackfabric code=4.2.762.0 config=version1 expectedreason=apptypeapplications,AppType1,2,24,4
+
+verifyupgradefabric
+verify
+
+###################################
+# Testcase: Start monitored upgrade with manual on failure.
+# Fail due to health of AppType1, move to manual.
+# Change policies to less strict, upgrade succeeds
+###################################
+upgradefabric code=4.2.763.0 config=version2 Rolling upgrademode=monitored failaction=manual healthcheckwait=0 healthcheckretry=60 jsonpolicy=<string.jsonPolicyWithAppType1> healthcheckstable=0
+
+verifyupgradefabric upgradedomains=ud_1
+updatefabricupgrade jsonpolicy=<string.jsonPolicyWithAppType1Permissive>
+
+verifyupgradefabric
+verify
+
+!q

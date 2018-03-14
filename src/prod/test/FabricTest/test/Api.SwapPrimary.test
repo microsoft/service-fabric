@@ -1,0 +1,211 @@
+#
+# [owner] aprameyr
+# Test all the api calls during swap primary
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 5
+set IsPreWriteStatusRevokeCatchupEnabled false
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Swap primary on the old api should call the correct api
+# Verify UC current is never called on the old primary
+#####################################################
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test1 replicator.beginupdateepoch.block
+setsignal 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+setsignal 40 fabric:/test1 replicator.beginchangerole.block
+setsignal 40 fabric:/test1 service.beginchangerole.block
+setsignal 40 fabric:/test1 replicator.updatecurrentreplicasetconfiguration.block
+
+swapprimary fabric:/test1 40 30
+
+waitforsignalhit 40 fabric:/test1 replicator.beginupdateepoch.block
+resetsignal 40 fabric:/test1 replicator.beginupdateepoch.block
+
+waitforsignalhit 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+resetsignal 40 fabric:/test1 replicator.beginwaitforcatchupquorum.block
+
+waitforsignalhit 40 fabric:/test1 replicator.beginchangerole.block
+resetsignal 40 fabric:/test1 replicator.beginchangerole.block
+
+waitforsignalhit 40 fabric:/test1 service.beginchangerole.block
+resetsignal 40 fabric:/test1 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 3: Failure in UC should call UC again and not UE
+#####################################################
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test2 replicator.beginupdateepoch.block
+setsignal 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 40 fabric:/test2 replicator.updatecurrentreplicasetconfiguration.block
+
+swapprimary fabric:/test2 40 30
+
+waitforsignalhit 40 fabric:/test2 replicator.beginupdateepoch.block
+injectfailure 40 fabric:/test2 replicator.beginupdateepoch
+resetsignal 40 fabric:/test2 replicator.beginupdateepoch.block
+
+setsignal 40 fabric:/test2 replicator.beginupdateepoch.block
+waitforsignalhit 40 fabric:/test2 replicator.beginupdateepoch.block
+removefailure 40 fabric:/test2 replicator.beginupdateepoch
+resetsignal 40 fabric:/test2 replicator.beginupdateepoch.block
+
+waitforsignalhit 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 40 fabric:/test2 replicator.updatecatchupreplicasetconfiguration.block
+verify
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 3: Failure in UC should call UC again and not UE
+#####################################################
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+setsignal 40 fabric:/test3 replicator.updatecurrentreplicasetconfiguration.block
+
+swapprimary fabric:/test3 40 30
+
+waitforsignalhit 40 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+injectfailure 40 fabric:/test3 replicator.updatecatchupreplicasetconfiguration
+resetsignal 40 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+
+#Block UE so that it is not called again
+setsignal 40 fabric:/test3 replicator.beginupdateepoch.block
+
+setsignal 40 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+waitforsignalhit 40 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+removefailure 40 fabric:/test3 replicator.updatecatchupreplicasetconfiguration
+resetsignal 40 fabric:/test3 replicator.updatecatchupreplicasetconfiguration.block
+
+waitforsignalhit 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+resetsignal 40 fabric:/test3 replicator.beginwaitforcatchupquorum.block
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: Failure in Catchup should call catchup again and not UC as there is no change
+#####################################################
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test4 replicator.beginwaitforcatchupquorum.block
+setsignal 40 fabric:/test4 replicator.beginchangerole.block
+
+swapprimary fabric:/test4 40 30
+
+#Block catchup and wait till it is hit
+#Add a block for UC to ensure test fails if RAP calls UC again
+#Now wait until QC is hit again, remove the failure and verify CR(S) is hit
+
+waitforsignalhit 40 fabric:/test4 replicator.beginwaitforcatchupquorum.block
+injectfailure 40 fabric:/test4 replicator.beginwaitforcatchupquorum
+
+#Block UE so that it is not hit again
+setsignal 40 fabric:/test4 replicator.beginupdateepoch.block
+setsignal 40 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 40 fabric:/test4 replicator.beginwaitforcatchupquorum.block
+
+#set the block in QC again and then let it pass
+setsignal 40 fabric:/test4 replicator.beginwaitforcatchupquorum.block
+removefailure 40 fabric:/test4 replicator.beginwaitforcatchupquorum
+resetsignal 40 fabric:/test4 replicator.beginwaitforcatchupquorum.block
+
+waitforsignalhit 40 fabric:/test4 replicator.beginchangerole.block
+resetsignal 40 fabric:/test4 replicator.beginchangerole.block
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 5: Failure in replicator CR should be retried
+#####################################################
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test5 replicator.beginchangerole.block
+setsignal 40 fabric:/test5 service.beginchangerole.block
+
+swapprimary fabric:/test5 40 30
+
+waitforsignalhit 40 fabric:/test5 replicator.beginchangerole.block
+injectfailure 40 fabric:/test5 replicator.beginchangerole
+
+#Block other APIs so that they are not hit again
+setsignal 40 fabric:/test5 replicator.beginupdateepoch.block
+setsignal 40 fabric:/test5 replicator.updatecatchupreplicasetconfiguration.block
+
+#BUG: RAP performs wait for quorum catchup twice if replicator fails CR(S)
+#hence the below cannot be blocked
+#setsignal 40 fabric:/test5 replicator.beginwaitforcatchupquorum.block
+
+resetsignal 40 fabric:/test5 replicator.beginchangerole.block
+
+#Set the block again on CR(S) and let it succeed
+setsignal 40 fabric:/test5 replicator.beginchangerole.block
+removefailure 40 fabric:/test5 replicator.beginchangerole
+resetsignal 40 fabric:/test5 replicator.beginchangerole.block
+
+waitforsignalhit 40 fabric:/test5 service.beginchangerole.block
+resetsignal 40 fabric:/test5 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Scenario 6: Failure in service CR should be retried
+#####################################################
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 2 persist  constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test6 service.beginchangerole.block
+
+swapprimary fabric:/test6 40 30
+
+waitforsignalhit 40 fabric:/test6 service.beginchangerole.block
+injectfailure 40 fabric:/test6 service.beginchangerole
+
+#Block other APIs so that they are not hit again
+setsignal 40 fabric:/test6 replicator.beginupdateepoch.block
+setsignal 40 fabric:/test6 replicator.updatecatchupreplicasetconfiguration.block
+setsignal 40 fabric:/test6 replicator.beginchangerole.block
+setsignal 40 fabric:/test6 replicator.beginwaitforcatchupquorum.block
+
+resetsignal 40 fabric:/test6 service.beginchangerole.block
+
+#Set the block again on CR(S) and let it succeed
+setsignal 40 fabric:/test6 service.beginchangerole.block
+removefailure 40 fabric:/test6 service.beginchangerole
+resetsignal 40 fabric:/test6 service.beginchangerole.block
+verify
+
+#otherwise CR(None) will get stuck
+resetsignal 40 fabric:/test6 replicator.beginchangerole.block
+
+deleteservice fabric:/test6
+verify
+
+!q

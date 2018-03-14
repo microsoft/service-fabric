@@ -1,0 +1,41 @@
+votes 10 20
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
++10
++20
++30
+verify
+
+app.add OkApp1 OkType OkVersion
+app.clear OkApp1
+
+app.servicepack OkApp1 ServicePackageA version=v1
+app.servicetypes OkApp1 ServicePackageA ServiceTypeA stateful persist
+app.codepack OkApp1 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.reqservices OkApp1 ServiceA ServiceTypeA stateful partition=1 replica=3
+
+app.upload OkApp1
+
+provisionapp OkApp1
+
+# Fail creating application
+addbehavior b1 * * InnerCreateNameRequest
+set MaxOperationTimeout 8
+set MinOperationTimeout 8
+set NamingOperationTimeout 120
+set NamingOperationRetryTimeout 120
+set RolloutFailureTimeout 1
+createapp fabric:/okapp OkType OkVersion error=CMOperationFailed
+query GetApplicationList verify ApplicationName=fabric:/okapp,ApplicationTypeName=OkType,ApplicationTypeVersion=OkVersion,ApplicationStatus=Failed
+
+# Resume creating application
+removebehavior b1
+set MaxOperationTimeout 120
+set MinOperationTimeout 120
+createapp fabric:/okapp OkType OkVersion
+query GetApplicationList verify ApplicationName=fabric:/okapp,ApplicationTypeName=OkType,ApplicationTypeVersion=OkVersion,ApplicationStatus=Ready,HealthState=ok
+
+-*
+!q

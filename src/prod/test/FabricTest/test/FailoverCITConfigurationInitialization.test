@@ -1,0 +1,7 @@
+# Set Common Failover Definitions and bring up a one node cluster with FM/CM/Naming
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+set PeriodicStateScanInterval 0.5

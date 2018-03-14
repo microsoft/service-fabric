@@ -1,0 +1,387 @@
+votes 10
+cmservice 0 0
+namingservice 3 1 1
+cleantest
+
++10
++20
++30
+
+verify
+
+#######################################
+# 1) Metadata only without continuation
+#    Include values with continuation
+#######################################
+
+set NamingMaxMessageSize 4096
+set NamingMaxPropertySize 1024
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 32
+
+createname fabric:/testcase1
+
+putproperty fabric:/testcase1 prop1 1024
+putproperty fabric:/testcase1 prop2 512
+putproperty fabric:/testcase1 prop3 630
+putproperty fabric:/testcase1 prop4 758
+putproperty fabric:/testcase1 prop5 1024
+putproperty fabric:/testcase1 prop6 748
+putproperty fabric:/testcase1 prop7 630
+putproperty fabric:/testcase1 prop8 512
+putproperty fabric:/testcase1 prop9 1024
+
+enumproperties fabric:/testcase1
+verifypropertyenumeration fabric:/testcase1
+
+enumproperties fabric:/testcase1 includeValues=true
+verifypropertyenumeration fabric:/testcase1 includeValues=true
+
+###############################
+# 2) Metadata with continuation
+#    and long property names
+###############################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 32
+
+createname fabric:/testcase2
+
+putproperty fabric:/testcase2 property-aaaaaaaaaa-1 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-2 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-3 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-4 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-5 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-6 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-7 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-8 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-9 1
+putproperty fabric:/testcase2 property-aaaaaaaaaa-10 1
+
+enumproperties fabric:/testcase2
+verifypropertyenumeration fabric:/testcase2
+
+###############################
+# 3) Metadata with continuation
+#    and long naming URIs
+###############################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 64
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 32
+
+createname fabric:/testcase3
+createname fabric:/testcase3/a
+createname fabric:/testcase3/a/b
+createname fabric:/testcase3/a/b/c
+createname fabric:/testcase3/a/b/c/d
+createname fabric:/testcase3/a/b/c/d/e
+createname fabric:/testcase3/a/b/c/d/e/f
+
+putproperty fabric:/testcase3/a/b/c/d/e/f p1 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p2 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p3 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p4 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p5 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p6 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p7 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p8 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p9 1
+putproperty fabric:/testcase3/a/b/c/d/e/f p10 1
+
+enumproperties fabric:/testcase3/a/b/c/d/e/f
+verifypropertyenumeration fabric:/testcase3/a/b/c/d/e/f
+
+###################################################
+# 4) Best effort status
+#    Service and subname creation should not affect
+#    consistency status
+###################################################
+
+set NamingMaxMessageSize 2048
+set NamingMaxPropertySize 1024
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 32
+
+createname fabric:/testcase4
+
+putproperty fabric:/testcase4 p1 640
+putproperty fabric:/testcase4 p2 640
+putproperty fabric:/testcase4 p3 640
+putproperty fabric:/testcase4 p4 640
+putproperty fabric:/testcase4 p5 640
+putproperty fabric:/testcase4 p6 640
+putproperty fabric:/testcase4 p7 640
+putproperty fabric:/testcase4 p8 640
+
+enumproperties fabric:/testcase4 includeValues=true maxResults=1 bestEffort=false moreData=true
+
+createservice fabric:/testcase4 CalculatorServiceType n 0 1
+
+enumproperties fabric:/testcase4 includeValues=true maxResults=1 bestEffort=false moreData=true
+
+createname fabric:/testcase4/childname
+
+enumproperties fabric:/testcase4 includeValues=true maxResults=1 bestEffort=false moreData=true
+
+putproperty fabric:/testcase4 p2b 1024
+
+enumproperties fabric:/testcase4 includeValues=true maxResults=1 bestEffort=true moreData=true
+
+deleteproperty fabric:/testcase4 p2b
+
+enumproperties fabric:/testcase4 includeValues=true maxResults=1 bestEffort=true moreData=true
+
+deleteproperty fabric:/testcase4 p6
+
+enumproperties fabric:/testcase4 includeValues=true maxResults=1 bestEffort=true moreData=true
+
+enumproperties fabric:/testcase4 includeValues=true maxResults=1 bestEffort=true moreData=false
+
+verifypropertyenumeration fabric:/testcase4
+
+###################################################
+# 5) Best effort status (Metadata only)
+#    Service and subname creation should not affect
+#    consistency status
+###################################################
+
+set NamingMaxMessageSize 1024
+set NamingMaxPropertySize 256
+set NamingMaxPropertyNameLength 128
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase5
+createname fabric:/testcase5/a
+createname fabric:/testcase5/a/b
+createname fabric:/testcase5/a/b/c
+createname fabric:/testcase5/a/b/c/d
+createname fabric:/testcase5/a/b/c/d/e
+createname fabric:/testcase5/a/b/c/d/e/f
+
+putproperty fabric:/testcase5/a/b/c/d/e/f p01-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p02-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p03-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p04-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p05-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p06-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p07-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p08-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p09-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p10-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p11-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p12-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p13-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p14-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p15-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p16-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p17-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p18-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p19-aaaaaaaa-bbbbbbbbbb 1
+putproperty fabric:/testcase5/a/b/c/d/e/f p20-aaaaaaaa-bbbbbbbbbb 1
+
+enumproperties fabric:/testcase5/a/b/c/d/e/f maxResults=1 bestEffort=false moreData=true
+
+createservice fabric:/testcase5/a/b/c/d/e/f CalculatorServiceType n 0 1
+
+enumproperties fabric:/testcase5/a/b/c/d/e/f maxResults=1 bestEffort=false moreData=true
+
+createname fabric:/testcase5/a/b/c/d/e/f/childname
+
+enumproperties fabric:/testcase5/a/b/c/d/e/f maxResults=1 bestEffort=false moreData=true
+
+putproperty fabric:/testcase5/a/b/c/d/e/f p02b 256
+
+enumproperties fabric:/testcase5/a/b/c/d/e/f maxResults=1 bestEffort=true moreData=true
+
+deleteproperty fabric:/testcase5/a/b/c/d/e/f p02b
+
+enumproperties fabric:/testcase5/a/b/c/d/e/f maxResults=1 bestEffort=true moreData=true
+
+deleteproperty fabric:/testcase5/a/b/c/d/e/f p17-aaaaaaaa-bbbbbbbbbb
+
+enumproperties fabric:/testcase5/a/b/c/d/e/f maxResults=1 bestEffort=true moreData=true
+
+enumproperties fabric:/testcase5/a/b/c/d/e/f maxResults=1 bestEffort=true moreData=false
+
+verifypropertyenumeration fabric:/testcase5/a/b/c/d/e/f
+
+###################################################
+# 6) Enumeration status should be isolated to
+#    sibling names
+###################################################
+
+set NamingMaxMessageSize 4096
+set NamingMaxPropertySize 1024
+set NamingMaxPropertyNameLength 32
+set NamingMaxNamingUriLength 32
+
+createname fabric:/testcase6
+createname fabric:/testcase6/childA
+createname fabric:/testcase6/childB
+
+putproperty fabric:/testcase6/childA prop1 64
+putproperty fabric:/testcase6/childA prop2 128
+putproperty fabric:/testcase6/childA prop3 256
+putproperty fabric:/testcase6/childA prop4 512
+putproperty fabric:/testcase6/childA prop5 512
+putproperty fabric:/testcase6/childA prop6 256
+putproperty fabric:/testcase6/childA prop7 128
+putproperty fabric:/testcase6/childA prop8 64
+
+putproperty fabric:/testcase6/childB prop1 64
+putproperty fabric:/testcase6/childB prop2 128
+putproperty fabric:/testcase6/childB prop3 256
+putproperty fabric:/testcase6/childB prop4 512
+putproperty fabric:/testcase6/childB prop5 512
+putproperty fabric:/testcase6/childB prop6 256
+putproperty fabric:/testcase6/childB prop7 128
+putproperty fabric:/testcase6/childB prop8 64
+
+enumproperties fabric:/testcase6/childA includeValues=true maxResults=4 bestEffort=false moreData=true
+
+enumproperties fabric:/testcase6/childB includeValues=true maxResults=4 bestEffort=false moreData=true
+
+deleteproperty fabric:/testcase6/childB prop2
+
+enumproperties fabric:/testcase6/childA includeValues=true bestEffort=false moreData=false
+
+enumproperties fabric:/testcase6/childB includeValues=true bestEffort=true moreData=false
+
+verifypropertyenumeration fabric:/testcase6/childA includeValues=true
+
+putproperty fabric:/testcase6/childB prop2 128
+
+verifypropertyenumeration fabric:/testcase6/childB includeValues=true
+
+###################################################
+# 7) Enumeration status should be isolated between
+#    parent and child names
+###################################################
+
+set NamingMaxMessageSize 4096
+set NamingMaxPropertySize 1024
+set NamingMaxPropertyNameLength 64
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase7
+createname fabric:/testcase7/childC
+createname fabric:/testcase7/childC/childD
+
+putproperty fabric:/testcase7/childC prop1 512
+putproperty fabric:/testcase7/childC prop2 256
+putproperty fabric:/testcase7/childC prop3 128
+putproperty fabric:/testcase7/childC prop4 512
+putproperty fabric:/testcase7/childC prop5 512
+putproperty fabric:/testcase7/childC prop6 128
+putproperty fabric:/testcase7/childC prop7 256
+putproperty fabric:/testcase7/childC prop8 512
+putproperty fabric:/testcase7/childC prop9 512
+putproperty fabric:/testcase7/childC propA 128
+putproperty fabric:/testcase7/childC propB 256
+putproperty fabric:/testcase7/childC propC 512
+putproperty fabric:/testcase7/childC propD 128
+
+putproperty fabric:/testcase7/childC/childD prop1 512
+putproperty fabric:/testcase7/childC/childD prop2 128
+putproperty fabric:/testcase7/childC/childD prop3 256
+putproperty fabric:/testcase7/childC/childD prop4 512
+putproperty fabric:/testcase7/childC/childD prop5 512
+putproperty fabric:/testcase7/childC/childD prop6 256
+putproperty fabric:/testcase7/childC/childD prop7 128
+putproperty fabric:/testcase7/childC/childD prop8 512
+putproperty fabric:/testcase7/childC/childD prop9 512
+putproperty fabric:/testcase7/childC/childD propA 128
+putproperty fabric:/testcase7/childC/childD propB 256
+putproperty fabric:/testcase7/childC/childD propC 512
+
+enumproperties fabric:/testcase7/childC includeValues=true maxResults=4 bestEffort=false moreData=true
+
+enumproperties fabric:/testcase7/childC/childD includeValues=true maxResults=4 bestEffort=false moreData=true
+
+deleteproperty fabric:/testcase7/childC prop2
+
+enumproperties fabric:/testcase7/childC includeValues=true maxResults=4 bestEffort=true moreData=true
+
+enumproperties fabric:/testcase7/childC/childD includeValues=true maxResults=4 bestEffort=false moreData=true
+
+deleteproperty fabric:/testcase7/childC propC
+
+enumproperties fabric:/testcase7/childC includeValues=true bestEffort=true moreData=false
+
+putproperty fabric:/testcase7/childC prop2 256
+
+enumproperties fabric:/testcase7/childC/childD includeValues=true bestEffort=false moreData=false
+
+verifypropertyenumeration fabric:/testcase7/childC
+
+verifypropertyenumeration fabric:/testcase7/childC/childD
+
+###################################################
+# 8) Variation of testcase 7) - delete properties
+#    at child name instead of parent
+###################################################
+
+set NamingMaxMessageSize 4096
+set NamingMaxPropertySize 1024
+set NamingMaxPropertyNameLength 64
+set NamingMaxNamingUriLength 64
+
+createname fabric:/testcase8
+createname fabric:/testcase8/childE
+createname fabric:/testcase8/childE/childF
+
+putproperty fabric:/testcase8/childE prop1 512
+putproperty fabric:/testcase8/childE prop2 256
+putproperty fabric:/testcase8/childE prop3 128
+putproperty fabric:/testcase8/childE prop4 512
+putproperty fabric:/testcase8/childE prop5 512
+putproperty fabric:/testcase8/childE prop6 128
+putproperty fabric:/testcase8/childE prop7 256
+putproperty fabric:/testcase8/childE prop8 512
+putproperty fabric:/testcase8/childE prop9 512
+putproperty fabric:/testcase8/childE propA 128
+putproperty fabric:/testcase8/childE propB 256
+putproperty fabric:/testcase8/childE propC 512
+
+putproperty fabric:/testcase8/childE/childF prop1 512
+putproperty fabric:/testcase8/childE/childF prop2 128
+putproperty fabric:/testcase8/childE/childF prop3 256
+putproperty fabric:/testcase8/childE/childF prop4 512
+putproperty fabric:/testcase8/childE/childF prop5 512
+putproperty fabric:/testcase8/childE/childF prop6 256
+putproperty fabric:/testcase8/childE/childF prop7 128
+putproperty fabric:/testcase8/childE/childF prop8 512
+putproperty fabric:/testcase8/childE/childF prop9 512
+putproperty fabric:/testcase8/childE/childF propA 128
+putproperty fabric:/testcase8/childE/childF propB 256
+putproperty fabric:/testcase8/childE/childF propC 512
+putproperty fabric:/testcase8/childE/childF propD 512
+putproperty fabric:/testcase8/childE/childF propE 512
+
+enumproperties fabric:/testcase8/childE includeValues=true maxResults=4 bestEffort=false moreData=true
+
+enumproperties fabric:/testcase8/childE/childF includeValues=true maxResults=4 bestEffort=false moreData=true
+
+deleteproperty fabric:/testcase8/childE/childF prop2
+
+enumproperties fabric:/testcase8/childE includeValues=true maxResults=4 bestEffort=false moreData=true
+
+enumproperties fabric:/testcase8/childE/childF includeValues=true maxResults=4 bestEffort=true moreData=true
+
+putproperty fabric:/testcase8/childE/childF prop2 256
+
+deleteproperty fabric:/testcase8/childE/childF propD
+
+enumproperties fabric:/testcase8/childE includeValues=true bestEffort=false moreData=false
+
+enumproperties fabric:/testcase8/childE/childF includeValues=true bestEffort=true moreData=false
+
+verifypropertyenumeration fabric:/testcase8/childE
+
+verifypropertyenumeration fabric:/testcase8/childE/childF
+
+!q

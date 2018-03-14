@@ -1,0 +1,4 @@
+add_subdirectory(ReliableCollectionRuntime)
+add_subdirectory(ReliableCollectionRuntimeImpl)
+add_subdirectory(ReliableCollectionService)
+add_subdirectory(ReliableCollectionServiceStandalone)

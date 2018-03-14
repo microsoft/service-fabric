@@ -1,0 +1,295 @@
+set DummyPLBEnabled true
+set FullRebuildWaitDuration 5
+set UserReplicaRestartWaitDuration 9999
+set SendToFMTimeout 3
+set FMPlacementConstraints fmservice==true
+
+votes 5 10 20
+cmservice 0 0
+namingservice 1 5 1
+fmservice 1 1
+cleantest
+
+# Use placement constraint to make sure 10 is chosen as primary
+
++10 nodeprops=fmservice:true
++20 
+
+!wait
+!waitforstate FM.Replica.Role.FMService.10 Primary
+verify
+
++5 nodeprops=fmservice:true
++30 nodeprops=fmservice:true
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
+verify
+
+##########################################
+# Case 1 Summary: service with 2 replicas, down 1 replica, cause rebuild, check the failover unit is stuck in rebuild
+#
+
+# Create a persisted stateful service with 2 replicas
+createname fabric:/persisted_Case1
+createservice fabric:/persisted_Case1 TestPersistedStoreServiceType y 1 2 persist
+verify
+
+!waitforstate FM.Replica.Role.fabric:/persisted_Case1.50 Primary
+!waitforstate FM.Replica.Role.fabric:/persisted_Case1.40 Secondary
+
+clientput fabric:/persisted_Case1 10 10Data1
+!wait 
+
+# Block DoReconfiguration sent from possible FM (but not FMM) locations so that 40 stays a secondary
+addbehavior aaa 10 * DoReconfiguration
+addbehavior bbb 60 * DoReconfiguration
+
+-50
+
+# Down 40 and bring it back up so that it doesn't have a ready secondary on it so we
+# can check if the failover unit is stuck in rebuild in a few statements
+-40
++40
+!wait
+
+# Add other node so FM's next location won't overlap the service's locations (in particular, node 50)
++60 nodeprops=fmservice:true
+!wait
+
+# Down FM to cause a rebuild (there's only 1 FM replica)
+-10
+
+!waitforstate FM.Replica.Role.FMService.60 Primary
+removebehavior aaa
+removebehavior bbb
+
+!waitforstate FM.FT.IsInRebuild.fabric:/persisted_Case1 true
+
+
+# Add the nodes back, bring down the up replica
+addbehavior b4 * * NodeUp
+addbehavior b5 * * ReplicaUp
+
+# Another rebuild, swap the test service's replicas
+-60
+-40
++50
+!waitforstate FM.Replica.Role.FMService.30 Primary
+
+removebehavior b4
+removebehavior b5
+
+!pause, 5
+
+# Bring everything back up
++40
++10
+!waitforstate FM.FT.Reconfig.fabric:/persisted_Case1 false
+verify
+clientget fabric:/persisted_Case1 10 10Data1
+!wait
+clientput fabric:/persisted_Case1 40 40Data1
+!wait
+
+deleteservice fabric:/persisted_Case1
+
+verify
+
+#################################################
+# Case 2 Summary: similar case as above, but with 3 replicas so conditions and expected results change
+#
+
+-20
++20 nodeprops=fmservice:true
+!waitforstate FM.Node.IsUp.20 true
+!waitforstate FMM.Node.20 true
+
+# Move the fm primary over to 20 for the next case
+-50
+-40
+-30
+!waitforstate FM.Replica.Role.FMService.20 Primary
+
++30 nodeprops=fmservice:true
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
+!wait
+verify
+
+# Create a persisted stateful service with 3 replicas
+createname fabric:/persisted_Case2
+createservice fabric:/persisted_Case2 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+!waitforstate FM.Replica.Role.fabric:/persisted_Case2.50 Primary
+!waitforstate FM.Replica.Role.fabric:/persisted_Case2.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted_Case2.30 Secondary
+
+clientput fabric:/persisted_Case2 10 10Data1
+!wait 
+
+# Remove nodes 40 and 30 which will cause quorum loss for fabric:/persisted_Case2
+set MaxActionsPerIteration 0
+addbehavior b6 * * ChangeNotification
+addbehavior b7 * * ReplicaUp
+-40
+-30
+
+removebehavior b6
+removebehavior b7
+
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate FM.Node.IsUp.30 false
+
+!pause, 5
+set MaxActionsPerIteration 500
+
+!waitforstate FM.FT.QuorumLost.fabric:/persisted_Case2 true
+!waitforstate RA.FT.ReconfigStage.fabric:/persisted_Case2.50 Phase3_Deactivate
+
+# Add node 60 so that FM will be placed there when the FM is downed in the next step
++60 nodeprops=fmservice:true
+!wait
+
+# Cause a rebuild
+-20
+!waitforstate FM.Replica.Role.FMService.60 Primary
++20 nodeprops=fmservice:true
+!wait
+
+# Bring back up the 2 downed replicas of fabric:/persisted_Case2, down the Up one
+set MaxActionsPerIteration 0
+addbehavior b8 * * NodeUp
+addbehavior b9 * * ReplicaUp
+addbehavior b10 * * ChangeNotification
+
++30 nodeprops=fmservice:true
++40 nodeprops=fmservice:true
+-50
+
+removebehavior b8
+removebehavior b9
+removebehavior b10
+
+!pause, 5
+set MaxActionsPerIteration 500
+
+# Add node 70 so that FM will be placed there when the FM is downed in the next step
++70 nodeprops=fmservice:true
+!wait
+
+# Cause a rebuild
+-60
+!waitforstate FM.Replica.Role.FMService.70 Primary
++60
+!wait
+
+# Bring everything back
++50 nodeprops=fmservice:true
+
+!waitforstate FM.FT.QuorumLost.fabric:/persisted_Case2 false
+verify
+
+
+clientget fabric:/persisted_Case2 10 10Data1
+clientput fabric:/persisted_Case2 40 40Data1
+!wait
+
+deleteservice fabric:/persisted_Case2
+
+verify
+
+
+-5
+-10
+-20
+-30
+-40
+-50
+-60
+-70
+!pause, 5
+#####################################
+# Case 3 Summary - 3 replicas, down all, cause rebuild, bring them back 1 by 1.
+# Check it is stuck in rebuild when only a single S is reporting.
+#
+
+cleantest
+set DummyPLBEnabled true
+set FullRebuildWaitDuration 5
+set UserReplicaRestartWaitDuration 9999
+set FMPlacementConstraints fmservice==true
+votes 5 10 20
+cmservice 0 0
+namingservice 1 3 1
+fmservice 1 1
+
+# Use placement constraint to make sure 10 is chosen as primary
+
++10 nodeprops=fmservice:true
++20 
+
+!wait
+!waitforstate FM.Replica.Role.FMService.10 Primary
+verify
+
++5 nodeprops=fmservice:true
++30 nodeprops=fmservice:true
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
++60 nodeprops=fmservice:true
++70 nodeprops=fmservice:true
+verify
+
+# Create another persisted stateful service with 3 replicas
+createname fabric:/persisted_Case3
+createservice fabric:/persisted_Case3 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+!waitforstate FM.Replica.Role.fabric:/persisted_Case3.70 Primary
+!waitforstate FM.Replica.Role.fabric:/persisted_Case3.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted_Case3.50 Secondary
+
+
+clientput fabric:/persisted_Case3 10 10Data1
+!wait
+# Down all replicas
+addbehavior b12 * * ChangeNotification
+addbehavior b13 * * ReplicaUp
+
+-70
+-60
+-50
+
+#FM
+-10
+
+removebehavior b12
+removebehavior b13
+
+!waitforstate FM.Replica.Role.FMService.40 Primary
+
+# Bring back a secondary
++50 nodeprops=fmservice:true
+!waitforstate FM.FT.IsInRebuild.fabric:/persisted_Case3 true
+
+# Bring back another secondary.  This is write quorum now so the failover unit should be generated
++60 nodeprops=fmservice:true
+!waitforstate FM.FT.IsInRebuild.fabric:/persisted_Case3 false
+
+!pause, 5
+
++70 nodeprops=fmservice:true
++10 nodeprops=fmservice:true
+!wait 
+!waitforstate FM.FT.Reconfig.fabric:/persisted_Case3 false
+verify
+clientput fabric:/persisted_Case3 20 20Data1
+!wait
+
+clientget fabric:/persisted_Case3 10 10Data1
+clientget fabric:/persisted_Case3 20 20Data1
+!wait
+verify
+!q
+

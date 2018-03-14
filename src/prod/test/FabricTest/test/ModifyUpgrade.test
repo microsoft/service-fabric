@@ -1,0 +1,427 @@
+votes 10 20 30
+fmservice 7 2
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+set UpgradeStatusPollInterval 5
+set UpgradeHealthCheckInterval 5
+
+set NamingOperationTimeout 60
+set NamingOperationRetryTimeout 180
+
++10
++20
++30
+verify
+
+httpgateway 10
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageA version=V1
+
+app.servicetypes versionV1 ServicePackageA ServiceTypeA1 stateful persist
+
+app.codepack versionV1 ServicePackageA CodeA1 types=ServiceTypeA1 version=V1
+
+app.reqservices versionV1 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+
+app.parameters versionV1 A:0,C:0
+
+app.upload versionV1
+
+# 
+# Application version V2 
+#
+
+app.add versionV2 TestApp V2 versionV1
+
+app.servicepack versionV2 ServicePackageA version=V2
+
+app.servicetypes versionV2 ServicePackageA ServiceTypeA1 stateful persist
+
+app.codepack versionV2 ServicePackageA CodeA1 types=ServiceTypeA1 version=V2
+
+app.parameters versionV2 A:0,C:0
+
+app.upload versionV2
+
+# 
+# Application version V3 
+#
+
+app.add versionV3 TestApp V3 versionV2
+
+app.servicepack versionV3 ServicePackageA version=V3
+
+app.servicetypes versionV3 ServicePackageA ServiceTypeA1 stateful persist
+
+app.codepack versionV3 ServicePackageA CodeA1 types=ServiceTypeA1 version=V3
+
+app.parameters versionV3 A:0,C:0
+
+app.upload versionV3
+
+# 
+# Application version V4 
+#
+
+app.add versionV4 TestApp V4 versionV3
+
+app.servicepack versionV4 ServicePackageA version=V4
+
+app.servicetypes versionV4 ServicePackageA ServiceTypeA1 stateful persist
+
+app.codepack versionV4 ServicePackageA CodeA1 types=ServiceTypeA1 version=V4
+
+app.parameters versionV4 A:0,C:0
+
+app.upload versionV4
+
+#
+# Provision all versions upfront
+#
+
+provisionapp versionV1
+provisionapp versionV2
+provisionapp versionV3
+provisionapp versionV4
+
+####################################################
+#
+# Testcase 1: Cannot update non-existent application
+#             Cannot update non-upgrading application
+#
+####################################################
+
+updateappupgrade fabric:/modifyupgradetest restart=true error=ApplicationNotFound healthcheckstable=0
+
+createapp fabric:/modifyupgradetest TestApp V1
+verify
+
+upgradeappstatus fabric:/modifyupgradetest details=true
+
+updateappupgrade fabric:/modifyupgradetest restart=true error=ApplicationNotUpgrading
+
+upgradeappstatus fabric:/modifyupgradetest details=true
+
+####################################################
+#
+# Testcase 2: Basic parameters:
+#               ForceRestart
+#               ReplicaSetCheck
+#
+#             Target version and application parameters
+#             should never be affected.
+#
+####################################################
+
+upgradeapp fabric:/modifyupgradetest V2 Rolling upgrademode=manual restart=false replicacheck=5 appparam=A:B,C:D
+
+upgradeappstatus fabric:/modifyupgradetest details=true
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=5
+
+updateappupgrade fabric:/modifyupgradetest restart=true
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=true replicacheck=5
+
+updateappupgrade fabric:/modifyupgradetest restart=false replicacheck=20
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=20
+
+updateappupgrade fabric:/modifyupgradetest replicacheck=0
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+####################################################
+#
+# Testcase 3: Monitored upgrade parameters
+#
+####################################################
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=monitored healthcheckstable=0 failaction=Invalid error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=monitored failaction=Invalid healthcheckwait=9999 error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=monitored healthcheckwait=9999 failaction=manual healthcheckstable=0
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=false replicacheck=0 failaction=manual healthcheckwait=9999 healthcheckretry=600 healthcheckstable=0 upgradetimeout=-1 udtimeout=-1 xpolicy
+
+updateappupgrade fabric:/modifyupgradetest healthcheckretry=42
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=false replicacheck=0 failaction=manual healthcheckwait=9999 healthcheckretry=42 healthcheckstable=0 upgradetimeout=-1 udtimeout=-1 xpolicy
+
+updateappupgrade fabric:/modifyupgradetest healthcheckstable=34
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=false replicacheck=0 failaction=manual healthcheckwait=9999 healthcheckretry=42 healthcheckstable=34 upgradetimeout=-1 udtimeout=-1 xpolicy
+
+updateappupgrade fabric:/modifyupgradetest udtimeout=19998
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=false replicacheck=0 failaction=manual healthcheckwait=9999 healthcheckretry=42 healthcheckstable=34 upgradetimeout=-1 udtimeout=19998 xpolicy
+
+updateappupgrade fabric:/modifyupgradetest upgradetimeout=19999
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=false replicacheck=0 failaction=manual healthcheckwait=9999 healthcheckretry=42 healthcheckstable=34 upgradetimeout=19999 udtimeout=19998 xpolicy
+
+!string jsonpolicyapi {"MaxPercentUnhealthyDeployedApplications":77}
+
+updateappupgrade fabric:/modifyupgradetest jsonpolicy=<string.jsonpolicyapi>
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=false replicacheck=0 failaction=manual healthcheckwait=9999 healthcheckretry=42 healthcheckstable=34 upgradetimeout=19999 udtimeout=19998 jsonpolicy=<string.jsonpolicyapi>
+
+####################################################
+#
+# Testcase 4: Monitored upgrade parameters do not
+#             apply unless the current upgrade is 
+#             monitored.
+#
+####################################################
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=manual
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest failaction=rollback error=ApplicationUpgradeValidationError
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest healthcheckwait=0 error=ApplicationUpgradeValidationError
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest healthcheckretry=0 error=ApplicationUpgradeValidationError
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest healthcheckstable=0 error=ApplicationUpgradeValidationError
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest upgradetimeout=0 error=ApplicationUpgradeValidationError
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest udtimeout=0 error=ApplicationUpgradeValidationError
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+!string jsonpolicyapi2 {"MaxPercentUnhealthyDeployedApplications":0}
+
+updateappupgrade fabric:/modifyupgradetest jsonpolicy=<string.jsonpolicyapi2> error=ApplicationUpgradeValidationError
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=false replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest restart=true
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=true replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest replicacheck=3
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=manual restart=true replicacheck=3
+
+# switch back to monitored - all parameters from previous are preserved
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=monitored
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=true replicacheck=3 failaction=manual healthcheckwait=9999 healthcheckretry=42 healthcheckstable=34 upgradetimeout=19999 udtimeout=19998 jsonpolicy=<string.jsonpolicyapi>
+
+updateappupgrade fabric:/modifyupgradetest restart=false
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=false replicacheck=3 failaction=manual healthcheckwait=9999 healthcheckretry=42 healthcheckstable=34 upgradetimeout=19999 udtimeout=19998 jsonpolicy=<string.jsonpolicyapi>
+
+####################################################
+#
+# Testcase 5: Test validations against invalid
+#             upgrade parameters.
+#
+#             ApplicationUpgradeValidationError for
+#             server-side validation.
+#
+#             InvalidArgument for upfront client-side
+#             validation.
+#
+####################################################
+
+updateappupgrade fabric:/modifyupgradetest error=InvalidArgument
+
+updateappupgrade fabric:/modifyupgradetest upgradetimeout=9 healthcheckwait=5 healthcheckretry=5 error=ApplicationUpgradeValidationError
+updateappupgrade fabric:/modifyupgradetest udtimeout=9 healthcheckwait=5 healthcheckretry=5 error=ApplicationUpgradeValidationError
+updateappupgrade fabric:/modifyupgradetest upgradetimeout=9 healthcheckwait=5 healthcheckstable=5 error=ApplicationUpgradeValidationError
+updateappupgrade fabric:/modifyupgradetest udtimeout=9 healthcheckwait=5 healthcheckstable=5 error=ApplicationUpgradeValidationError
+updateappupgrade fabric:/modifyupgradetest upgradetimeout=9 udtimeout=10 error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest jsonpolicy={"MaxPercentUnhealthyDeployedApplications":101} error=InvalidArgument
+
+updateappupgrade fabric:/modifyupgradetest jsonpolicy={"DefaultServiceTypeHealthPolicy":{"MaxPercentUnhealthyServices":101}} error=InvalidArgument
+updateappupgrade fabric:/modifyupgradetest jsonpolicy={"DefaultServiceTypeHealthPolicy":{"MaxPercentUnhealthyPartitionsPerService":101}} error=InvalidArgument
+updateappupgrade fabric:/modifyupgradetest jsonpolicy={"DefaultServiceTypeHealthPolicy":{"MaxPercentUnhealthyReplicasPerPartition":101}} error=InvalidArgument
+
+# TODO: [] seems to be messing with FabricTest's command parsing
+#
+#updateappupgrade fabric:/modifyupgradetest jsonpolicy={"ServiceTypeHealthPolicyMap":[{"Key":"MyType", "Value":{"MaxPercentUnhealthyServices":101}}]} error=InvalidArgument
+#updateappupgrade fabric:/modifyupgradetest jsonpolicy={"ServiceTypeHealthPolicyMap":[{"Key":"MyType", "Value":{"MaxPercentUnhealthyPartitionsPerService":101}}]} error=InvalidArgument
+#updateappupgrade fabric:/modifyupgradetest jsonpolicy={"ServiceTypeHealthPolicyMap":[{"Key":"MyType", "Value":{"MaxPercentUnhealthyReplicasPerPartition":101}}]} error=InvalidArgument
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=monitored restart=false replicacheck=3 failaction=manual healthcheckwait=9999 healthcheckretry=42 healthcheckstable=34 upgradetimeout=19999 udtimeout=19998 jsonpolicy=<string.jsonpolicyapi>
+
+####################################################
+#
+# Testcase 6: Complete first UD in manual mode
+#
+####################################################
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=manual
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud
+
+upgradeappstatus fabric:/modifyupgradetest details=true
+
+upgradeappmovenext fabric:/modifyupgradetest
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud,20_ud
+
+####################################################
+#
+# Testcase 7: Modify to auto and finish upgrade
+#
+####################################################
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=auto restart=true replicacheck=0
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V2 appparam=A:B,C:D upgrademode=auto restart=true replicacheck=0
+
+verifyupgradeapp fabric:/modifyupgradetest
+
+####################################################
+#
+# Testcase 8: Modify health policies during health check
+#
+####################################################
+
+# these won't affect health evaluation results - just cover that the policies get updated in HM
+!string jsonpolicyfail {"ConsiderWarningAsError":true,"MaxPercentUnhealthyDeployedApplications":1}
+!string jsonpolicypass {"MaxPercentUnhealthyDeployedApplications":99}
+
+upgradeapp fabric:/modifyupgradetest V3 Rolling upgrademode=manual restart=false replicacheck=5
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V3 upgrademode=manual restart=false replicacheck=5 
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=monitored failaction=manual healthcheckstable=0 healthcheckwait=8888 jsonpolicy=<string.jsonpolicypass> 
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V3 upgrademode=monitored restart=false replicacheck=5 failaction=manual healthcheckwait=8888 healthcheckretry=600 healthcheckstable=0 upgradetimeout=-1 udtimeout=-1 jsonpolicy=<string.jsonpolicypass>
+
+reporthealth application appname=fabric:/modifyupgradetest sequencenumber=1 healthstate=error timetoliveseconds=9999
+queryhealth application appname=fabric:/modifyupgradetest expectedhealthstate=error
+
+# wait for health check polling to start
+!pause,10
+
+# intentionally fail monitored upgrade
+updateappupgrade fabric:/modifyupgradetest healthcheckwait=0 healthcheckretry=5 healthcheckstable=0 jsonpolicy=<string.jsonpolicyfail>
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V3 upgrademode=monitored restart=false replicacheck=5 failaction=manual healthcheckwait=0 healthcheckretry=5 healthcheckstable=0 upgradetimeout=-1 udtimeout=-1 jsonpolicy=<string.jsonpolicyfail>
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud upgrademode=manual
+
+reporthealth application appname=fabric:/modifyupgradetest sequencenumber=2 healthstate=ok timetoliveseconds=9999
+queryhealth application appname=fabric:/modifyupgradetest expectedhealthstate=ok
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=monitored healthcheckretry=60 jsonpolicy=<string.jsonpolicypass>
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V3 upgrademode=monitored restart=false replicacheck=5 failaction=manual healthcheckwait=0 healthcheckretry=60 healthcheckstable=0 upgradetimeout=-1 udtimeout=-1 jsonpolicy=<string.jsonpolicypass>
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud upgrademode=monitored
+
+verifyupgradeapp fabric:/modifyupgradetest
+
+####################################################
+#
+# Testcase 9: Modify applicable policies (FM) during
+#             rollback
+#
+####################################################
+
+upgradeapp fabric:/modifyupgradetest V4 Rolling upgrademode=manual restart=false replicacheck=5
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud
+
+upgradeappmovenext fabric:/modifyupgradetest
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud,20_ud
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V4 upgrademode=manual restart=false replicacheck=5 
+
+updateappupgrade fabric:/modifyupgradetest healthcheckstable=0 upgrademode=monitored failaction=manual healthcheckwait=8888 jsonpolicy=<string.jsonpolicypass>
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V4 upgrademode=monitored restart=false replicacheck=5 failaction=manual healthcheckwait=8888 healthcheckretry=600 healthcheckstable=0 upgradetimeout=-1 udtimeout=-1 jsonpolicy=<string.jsonpolicypass>
+
+reporthealth application appname=fabric:/modifyupgradetest sequencenumber=3 healthstate=error timetoliveseconds=9999
+queryhealth application appname=fabric:/modifyupgradetest expectedhealthstate=error
+
+# wait for health check polling to start
+!pause,10
+
+# intentionally fail monitored upgrade
+addbehavior b1 * 20 NodeUpgradeRequest
+
+updateappupgrade fabric:/modifyupgradetest failaction=rollback healthcheckwait=10 healthcheckretry=5 jsonpolicy=<string.jsonpolicyfail> 
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V4 upgrademode=monitored restart=false replicacheck=5 failaction=rollback healthcheckwait=10 healthcheckretry=5 healthcheckstable=0 upgradetimeout=-1 udtimeout=-1 jsonpolicy=<string.jsonpolicyfail>
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud upgrademode=auto upgradestate=rollbackinprogress
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=manual
+
+# wait for manual mode to take effect
+!pause,15
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud upgrademode=manual upgradestate=rollbackinprogress
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=monitored error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest failaction=rollback error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest healthcheckwait=9999 error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest healthcheckretry=9999 error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest healthcheckstable=9999 error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest upgradetimeout=9999 error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest udtimeout=9999 error=ApplicationUpgradeValidationError
+
+updateappupgrade fabric:/modifyupgradetest jsonpolicy=<string.jsonpolicypass> error=ApplicationUpgradeValidationError
+
+# FabricTest service host verification doesn't seem to handle force restart
+#updateappupgrade fabric:/modifyupgradetest restart=true replicacheck=0
+
+updateappupgrade fabric:/modifyupgradetest restart=false replicacheck=0
+
+verifyappupgradedesc fabric:/modifyupgradetest version=V3 upgrademode=manual restart=false replicacheck=0
+
+removebehavior b1
+
+upgradeappmovenext fabric:/modifyupgradetest
+
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud,20_ud
+
+updateappupgrade fabric:/modifyupgradetest upgrademode=auto
+
+setrollbackapp fabric:/modifyupgradetest V3 failurereason=HealthCheck
+
+verifyupgradeapp fabric:/modifyupgradetest
+
+-*
+
+!q

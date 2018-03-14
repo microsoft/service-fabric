@@ -1,0 +1,233 @@
+#
+# This test validates Health Subsystem basic scenarios
+#
+votes 10
+fmservice 3 1
+cmservice 3 1
+namingservice 5 1 1
+set HealthOperationTimeout 5
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+set DummyPLBEnabled true
+
+# The test checks expected number of replicas for System services, so make sure no additional SB replicas are created
+set SystemStandByReplicaKeepDuration 1
+set SystemReplicaRestartWaitDuration 3600
+set UserStandByReplicaKeepDuration 1
+set UserReplicaRestartWaitDuration 3600
+
+cleantest
++10
++20
++30
++40
++50
+verify
+
+httpgateway 10
+
+# Cluster has 5 nodes and system application
+# This makes sure that the system reports are received by HealthManager.
+# When reporting through the public API, some fields (like replicaInstanceId and attributes) are not included.
+# Need to make sure the system reports arrive first, or the test reports will be deleted.
+#
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:5;apps-ok:1 includeSystemAppStats=true stats=nodes-ok:5;apps-1;services-ok:3;partitions-ok:7;replicas-ok:11
+queryhealth cluster expectedhealthstate=ok excludeHealthStats=true expectedstates=nodes-ok:5;apps-ok:1 stats=0
+queryhealth cluster expectedhealthstate=ok includeSystemAppStats=false stats=nodes-ok:5;apps-0;services-0;partitions-0;replicas-0
+queryhealth cluster expectedhealthstate=ok stats=nodes-ok:5;apps-0;services-0;partitions-0;replicas-0
+
+#
+# Create app and a stateless service and a stateful service
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicepack version10 ServicePackageB version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful
+app.servicetypes version10 ServicePackageB ServiceTypeB1 stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.codepack version10 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0
+app.reqservices version10 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.reqservices version10 ServiceB1 ServiceTypeB1 stateless partition=1 instance=3
+app.upload version10
+provisionapp version10
+createapp fabric:/app1/FabricHealth_test TestApp 1.0 
+verify
+
+# Cluster has 5 nodes, system application and TestApp
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:5;apps-ok:2 includeSystemAppStats=false \
+    stats=apps-ok:1;services-ok:2;partitions-ok:2;replicas-ok:6;deployedapps-ok:3;deployedservicepackages-ok:6;nodes-ok:5
+
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=ok \
+    stats=services-ok:2;partitions-ok:2;replicas-ok:6;deployedapps-ok:3
+
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=ok excludeHealthStats=true stats=0
+
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=ok excludeHealthStats=false \
+    stats=services-ok:2;partitions-ok:2;replicas-ok:6
+
+# 3 system services
+queryhealth application appname=fabric:/System expectedstates=services-ok:3 \
+    stats=services-ok:3;partitions-ok:7;replicas-ok:11
+
+#
+# Add ad-hoc stateless service
+#
+createservice fabric:/stateless CalculatorServiceType n 1 3
+verify
+
+#
+# Add stateful service
+#
+createservice fabric:/stateful TestStoreServiceType y 2 2
+verify
+
+# Cluster has 5 nodes, system application and TestApp
+# Ad-hoc app is also returned
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:5;apps-ok:3 \
+    stats=apps-ok:2;services-ok:4;partitions-ok:5;replicas-ok:13;deployedapps-ok:3;deployedservicepackages-ok:6;nodes-ok:5
+
+!var SvcTypeNode1 FM.Replica.NodeId.fabric:/app1/FabricHealth_test/ServiceA1#0#0
+!var SvcTypeNode2 FM.Replica.NodeId.fabric:/app1/FabricHealth_test/ServiceB1#0#0
+
+queryhealth partition partitionid=fabric:/stateless#0 expectedstates=3 stats=replicas-ok:3
+queryhealth partition partitionid=fabric:/stateful#0 expectedstates=2 excludeHealthStats=true stats=0
+queryhealth partition partitionid=fabric:/stateful#1 expectedstates=2 excludeHealthStats=false stats=replicas-ok:2
+
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 \
+    expectedstates=1 expectedhealthstate=ok stats=partitions-ok:1;replicas-ok:3
+
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceB1 \
+    expectedstates=1 expectedhealthstate=ok excludeHealthStats=true stats=0
+
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceB1 \
+    expectedstates=1 expectedhealthstate=ok excludeHealthStats=false stats=partitions-ok:1;replicas-ok:3
+
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedstates=services-2;deployedapps-3 \
+    expectedhealthstate=ok stats=services-ok:2;partitions-ok:2;replicas-ok:6;deployedapps-ok:3;deployedservicepackages-ok:6
+
+# Check that CM set application type name
+checkhmentity application appname=fabric:/app1/FabricHealth_test apptype=TestApp state=ok
+
+queryhealth cluster expectedstates:apps-3
+
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=30 expectedstates=2 \
+    stats=deployedservicepackages-ok:2
+
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=30 expectedstates=2 excludeHealthStats=false \
+    stats=deployedservicepackages-ok:2
+
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=30 expectedstates=2 excludeHealthStats=true stats=0
+
+# Report event at cluster level
+reporthealth cluster sequencenumber=1 healthstate=warning property=cert description=certificateinfo
+queryhealth cluster expectedhealthstate=warning expectedstates=ok:8 expecteddesc=cert:certificateinfo
+
+# Replace with event with healthstate ok, replace description too
+reporthealth cluster sequencenumber=2 healthstate=ok property=cert description=certificateinfo2
+queryhealth cluster expectedhealthstate=ok expectedstates=ok:8 expecteddesc=cert:certificateinfo2
+
+#
+# Report health with different description count and validate description.
+# Above max accepted limit, the description is truncated.
+#
+
+# Set report interval high and send immediately, check that reports are received appropriately
+set HealthReportSendInterval 360
+set HealthReportRetrySendInterval 360
+resethealthclient
+
+reporthealth cluster sequencenumber=1 property=prop1 healthstate=ok descriptionlength=4096 immediate=true
+queryhealth cluster expectedhealthstate=ok expecteddesclength=prop1:4096
+
+reporthealth cluster sequencenumber=2 property=prop1 healthstate=ok descriptionlength=4095 immediate=true
+queryhealth cluster expectedhealthstate=ok expecteddesclength=prop1:4095
+
+reporthealth cluster sequencenumber=3 property=prop1 healthstate=ok descriptionlength=4097 immediate=true
+queryhealth cluster expectedhealthstate=ok expecteddesclength=prop1:4096 expecteddesc=prop1:Truncated
+
+reporthealth cluster sequencenumber=4 property=prop1 healthstate=ok descriptionlength=263 immediate=true
+queryhealth cluster expectedhealthstate=ok expecteddesclength=prop1:263
+
+reporthealth cluster sequencenumber=5 property=prop1 healthstate=ok descriptionlength=5643 immediate=true
+queryhealth cluster expectedhealthstate=ok expecteddesclength=prop1:4096 expecteddesc=prop1:Truncated
+
+# Report health data on different entities.
+# Add reports without immediate and they are not sent, since the send interval is high.
+# Add last report with immediate true and all reports are sent.
+reporthealth replica replicaid=fabric:/stateful#0#0 sequencenumber=1 healthstate=error immediate=false
+reporthealth partition partitionid=fabric:/stateless#0 sequencenumber=2 healthstate=warning
+reporthealth instance instanceid=fabric:/stateless#0#0 sequencenumber=3 healthstate=ok immediate=false
+!pause,5
+# Reports are not yet received
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/stateless#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/stateful#0#0 expectedhealthstate=ok
+
+# Send another report with immediate true and all reports should be sent
+reporthealth node nodeid=10 sequencenumber=1 healthstate=ok immediate=true
+
+# Query and verify the health 
+queryhealth node nodeid=10 expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning
+queryhealth replica replicaid=fabric:/stateless#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/stateful#0#0 expectedhealthstate=error
+
+queryhealth cluster expectedhealthstate=error expectedreason=applications,1,0 \
+    stats=apps-ok:1,error:1;services-ok:2,warning:1,error:1;partitions-ok:3,warning:1,error:1;replicas-ok:12,error:1;deployedapps-ok:3;deployedservicepackages-ok:6;nodes-ok:5
+
+reporthealth replica replicaid=fabric:/stateful#0#0 sequencenumber=2 healthstate=warning immediate=true
+queryhealth cluster expectedhealthstate=warning expectedreason=applications,1,0 includeSystemAppStats=false \
+    stats=apps-ok:1,warning:1;services-ok:2,warning:2;partitions-ok:3,warning:2;replicas-ok:12,warning:1;deployedapps-ok:3;deployedservicepackages-ok:6;nodes-ok:5
+
+# Report system app unhealthy
+reporthealth application appname=fabric:/System sequencenumber=1 healthstate=error immediate=true
+queryhealth cluster expectedhealthstate=error expectedreason=systemapp includeSystemAppStats=false \
+    stats=apps-ok:1,warning:1;services-ok:2,warning:2;partitions-ok:3,warning:2;replicas-ok:12,warning:1;deployedapps-ok:3;deployedservicepackages-ok:6;nodes-ok:5
+
+# Reset client
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 7
+resethealthclient
+
+# Report stale data with lower sequencenumber and a report with sequence number 0, which should be accepted
+reporthealth node nodeid=10 sequencenumber=1 healthstate=warning
+reporthealth partition partitionid=fabric:/stateless#0 sequencenumber=1 healthstate=error
+reporthealth instance instanceid=fabric:/stateless#0#0 sequencenumber=1 healthstate=error
+reporthealth replica replicaid=fabric:/stateful#0#0 sequencenumber=1 healthstate=ok
+reporthealth node nodeid=10 sequencenumber=0 healthstate=error
+
+# Query should return earlier results
+# First make sure the last report is received
+queryhealth node nodeid=10 expectedhealthstate=error
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning
+queryhealth replica replicaid=fabric:/stateless#0#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/stateful#0#0 expectedhealthstate=warning
+
+# Delete health data
+# To avoid unexpected results to hierarchy processing, the order of delete is important (first children, then parents)
+deletehealth partition partitionid=fabric:/stateless#0 sequencenumber=9 sourceid=System.FabricTest
+deletehealth instance instanceid=fabric:/stateless#0#0 sequencenumber=10 sourceid=System.FabricTest
+deletehealth replica replicaid=fabric:/stateful#0#0 sequencenumber=10 sourceid=System.FabricTest
+deletehealth node nodeid=10 sequencenumber=8 sourceid=System.FabricTest
+
+# Query after delete
+queryhealth node nodeid=10 expectempty=true
+queryhealth partition partitionid=fabric:/stateless#0 expectempty=true
+queryhealth replica replicaid=fabric:/stateless#0#0 expectempty=true
+queryhealth replica replicaid=fabric:/stateful#0#0 expectempty=true
+
+# Report after delete, the reports should be rejected
+reporthealth node nodeid=10 sequencenumber=12 healthstate=ok
+reporthealth partition partitionid=fabric:/stateless#0 sequencenumber=13 healthstate=warning
+reporthealth replica replicaid=fabric:/stateful#0#0 sequencenumber=14 healthstate=error
+reporthealth instance instanceid=fabric:/stateless#0#0 sequencenumber=14 healthstate=error
+
+# Query and verify the health 
+queryhealth node nodeid=10 expectempty=true
+queryhealth partition partitionid=fabric:/stateless#0 expectempty=true
+queryhealth replica replicaid=fabric:/stateless#0#0 expectempty=true
+queryhealth replica replicaid=fabric:/stateful#0#0 expectempty=true
+
+
+!q

@@ -1,0 +1,23 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Mgmt_LongHaul",
+      "Type": "V2_DllTest",
+      "Owners": "mialu",
+      "ResourcesRequired": "Server:8",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_332_Management_LongHaulV2_7M.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_LongHaul",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

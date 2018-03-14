@@ -1,0 +1,79 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1455219
+# RA should treat DeleteReplica as an acknowledgement of ReplicaUp from FM
+# In this test there is on the node 40
+# - Closed volatile replica R1
+# - Open Persisted replica R2
+# - A persisted IB primary on the FM for which AddPrimary has not been received by RA R3
+# The node is taken down and the service for R1 is deleted
+# When the node comes up Reopen is blocked which will prevent ReplicaUp with IsLast = true from being sent because R2 is not reopened
+# RA will send R1 in ReplicaUp. ReplicaUpReply is blocked
+# FM will send DeleteReplica to RA. RA will mark the replica as deleted
+# Now unblock reopen and addprimary and replica up reply
+# At this point R3 should get built if everything is correct
+# Due to the bug, the delete replica when processed will not clear the ReplicaUpReply pending flag which will cause RA to not send LastReplicaUp
+set DummyPLBEnabled true
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+# create a service on node 40
+# this service will be the one that is deleted on the node
+createservice fabric:/testDeleted TestStoreServiceType y 1 3 
+verify
+
+# create another service on 40
+# this persisted service will be used to delay LastReplicaUp
+createservice fabric:/testReopen TestPersistedStoreServiceType y 1 3 persist
+verify
+
+# create another service on 40 but make sure that the primary does not get placed
+# the FM will think this is still IB and keep retrying
+# when the node comes up this service will cause verification to fail
+addbehavior b1 10 40 AddPrimary
+createservice fabric:/testBugSymptom TestPersistedStoreServiceType y 1 3 persist 
+
+# wait for it to be IB on 40
+!waitforstate FM.Replica.State.fabric:/testBugSymptom.40 InBuild
+
+# take down 40
+-40
+!wait
+
+# delete the service test1 - this will cause FM to send DeleteReplica for this
+deleteservice fabric:/testDeleted
+
+# block reopen and replica up reply (test that delete replica also resets this flag)
+addbehavior b0 * * ReplicaUpReply
+addbehavior b2 * * StatefulServiceReopen
+
+# bring up 40
++40
+!wait
+
+#wait for the service testDeleted to be deleted from the RA
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/testDeleted.40 true
+
+#unblock reopen and add primary 
+#verify should succeed
+removebehavior b2
+removebehavior b1
+removebehavior b0
+
+!waitforstate FM.Replica.State.fabric:/testBugSymptom.40 Ready
+
+verify
+
+!q

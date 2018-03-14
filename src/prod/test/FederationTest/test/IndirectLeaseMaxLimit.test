@@ -1,0 +1,27 @@
+votes 10
+clearticket
++10 15010
++20 15020
++30 15030
++40 15040
++50 15050
+
+verify
+
+# pause to wait for arbitrator to be ready
+!pause,60
+
+addbehavior block30 30 * ArbitrateRequest
+!expect,Node 30 Failed
+
+blockleaseconnection 15020 15030
+
+# Wait 3 lease cycles for the expected failure
+!wait 90
+
+-*
+
+unblockleaseconnection 15020 15030
+removebehavior block30
+
+!q

@@ -1,0 +1,272 @@
+#
+# Checks cluster health in different scenarions, covering both global and per UD evalaution.
+# Health reporting happens directly through HM, bypassing health client for simplicity.
+#
+votes 10 20 30
+
+cmservice 3 1
+namingservice 3 1 1
+fmservice 6 1
+set DummyPLBEnabled true
+set HealthOperationTimeout 30
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+set QueryOperationRetryDelay 1
+set ReportHealthThroughHMPrimary true
+
+cleantest
+
+# Add 6 nodes in ud_0
+# The health for these nodes is not changed by the test
++10 ud=ud0
++20 ud=ud0
++30 ud=ud0
++40 ud=ud0
++50 ud=ud0
++60 ud=ud0
+verify
+
+# Wait for system reports to arrive at HM
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:6;apps-ok:1
+
+#
+# Create dummy node entities in different UDs to check cluster health with per UD evaluation.
+# Total nodes: 40
+# Map of UDs:
+# ud0 | 6 nodes
+# ud1 | 8 nodes 1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007
+# ud2 | 4 nodes 2000, 2001, 2002, 2003
+# ud3 | 3 nodes 3000, 3001, 3002
+# ud4 | 12 nodes 4000, 4001, 4002, 4003, 4004, 4005, 4006, 4007, 4008, 4009, 4010, 4011
+# ud5 | 7 nodes 5000, 5001, 5002, 5003, 5004, 5005, 5006, 5007
+#
+
+# Nodes in ud1
+reporthealthinternal node nodeid=1000 node.instanceid=1 sequencenumber=1 healthstate=ok \
+    ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:1000 sourceid=System.FM
+reporthealthinternal node nodeid=1001 node.instanceid=1 sequencenumber=1 healthstate=ok \
+    ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:1001 sourceid=System.FM
+reporthealthinternal node nodeid=1002 node.instanceid=1 sequencenumber=2 healthstate=ok \
+    ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:1002 sourceid=System.FM
+reporthealthinternal node nodeid=1003 node.instanceid=1 sequencenumber=3 healthstate=ok \
+    ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:1003 sourceid=System.FM
+reporthealthinternal node nodeid=1004 node.instanceid=1 sequencenumber=4 healthstate=ok \
+    ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:1004 sourceid=System.FM
+reporthealthinternal node nodeid=1005 node.instanceid=1 sequencenumber=5 healthstate=ok \
+    ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:1005 sourceid=System.FM
+reporthealthinternal node nodeid=1006 node.instanceid=1 sequencenumber=6 healthstate=ok \
+    ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:1006 sourceid=System.FM
+reporthealthinternal node nodeid=1007 node.instanceid=1 sequencenumber=7 healthstate=ok \
+    ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:1007 sourceid=System.FM
+
+# Nodes in ud2
+reporthealthinternal node nodeid=2000 node.instanceid=1 sequencenumber=8 healthstate=ok \
+    ud=ud2 fd=fd2 ipaddressorfqdn=127.0.0.1:2000 sourceid=System.FM
+reporthealthinternal node nodeid=2001 node.instanceid=1 sequencenumber=9 healthstate=ok \
+    ud=ud2 fd=fd2 ipaddressorfqdn=127.0.0.1:2001 sourceid=System.FM
+reporthealthinternal node nodeid=2002 node.instanceid=1 sequencenumber=10 healthstate=ok \
+    ud=ud2 fd=fd2 ipaddressorfqdn=127.0.0.1:2002 sourceid=System.FM
+reporthealthinternal node nodeid=2003 node.instanceid=1 sequencenumber=11 healthstate=ok \
+    ud=ud2 fd=fd2 ipaddressorfqdn=127.0.0.1:2003 sourceid=System.FM
+
+# Nodes in ud3
+reporthealthinternal node nodeid=3000 node.instanceid=1 sequencenumber=12 healthstate=ok \
+    ud=ud3 fd=fd1 ipaddressorfqdn=127.0.0.1:3000 sourceid=System.FM
+reporthealthinternal node nodeid=3001 node.instanceid=1 sequencenumber=13 healthstate=ok \
+    ud=ud3 fd=fd1 ipaddressorfqdn=127.0.0.1:3001 sourceid=System.FM
+reporthealthinternal node nodeid=3002 node.instanceid=1 sequencenumber=14 healthstate=ok \
+    ud=ud3 fd=fd1 ipaddressorfqdn=127.0.0.1:3002 sourceid=System.FM
+
+# Nodes in ud4
+reporthealthinternal node nodeid=4000 node.instanceid=1 sequencenumber=15 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4000 sourceid=System.FM
+reporthealthinternal node nodeid=4001 node.instanceid=1 sequencenumber=16 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4001 sourceid=System.FM
+reporthealthinternal node nodeid=4002 node.instanceid=1 sequencenumber=17 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4002 sourceid=System.FM
+reporthealthinternal node nodeid=4003 node.instanceid=1 sequencenumber=18 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4003 sourceid=System.FM
+reporthealthinternal node nodeid=4004 node.instanceid=1 sequencenumber=19 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4004 sourceid=System.FM
+reporthealthinternal node nodeid=4005 node.instanceid=1 sequencenumber=20 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4005 sourceid=System.FM
+reporthealthinternal node nodeid=4006 node.instanceid=1 sequencenumber=21 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4006 sourceid=System.FM
+reporthealthinternal node nodeid=4007 node.instanceid=1 sequencenumber=22 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4007 sourceid=System.FM
+reporthealthinternal node nodeid=4008 node.instanceid=1 sequencenumber=23 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4008 sourceid=System.FM
+reporthealthinternal node nodeid=4009 node.instanceid=1 sequencenumber=24 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4009 sourceid=System.FM
+reporthealthinternal node nodeid=4010 node.instanceid=1 sequencenumber=25 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4010 sourceid=System.FM
+reporthealthinternal node nodeid=4012 node.instanceid=1 sequencenumber=26 healthstate=ok \
+    ud=ud4 fd=fd4 ipaddressorfqdn=127.0.0.1:4012 sourceid=System.FM
+
+# Nodes in ud5
+reporthealthinternal node nodeid=5000 node.instanceid=1 sequencenumber=27 healthstate=ok \
+    ud=ud5 fd=fd5 ipaddressorfqdn=127.0.0.1:5000 sourceid=System.FM
+reporthealthinternal node nodeid=5001 node.instanceid=1 sequencenumber=28 healthstate=ok \
+    ud=ud5 fd=fd5 ipaddressorfqdn=127.0.0.1:5001 sourceid=System.FM
+reporthealthinternal node nodeid=5002 node.instanceid=1 sequencenumber=29 healthstate=ok \
+    ud=ud5 fd=fd5 ipaddressorfqdn=127.0.0.1:5002 sourceid=System.FM
+reporthealthinternal node nodeid=5003 node.instanceid=1 sequencenumber=30 healthstate=ok \
+    ud=ud5 fd=fd5 ipaddressorfqdn=127.0.0.1:5003 sourceid=System.FM
+reporthealthinternal node nodeid=5004 node.instanceid=1 sequencenumber=31 healthstate=ok \
+    ud=ud5 fd=fd5 ipaddressorfqdn=127.0.0.1:5004 sourceid=System.FM
+reporthealthinternal node nodeid=5005 node.instanceid=1 sequencenumber=32 healthstate=ok \
+    ud=ud5 fd=fd5 ipaddressorfqdn=127.0.0.1:5005 sourceid=System.FM
+reporthealthinternal node nodeid=5006 node.instanceid=1 sequencenumber=33 healthstate=ok \
+    ud=ud5 fd=fd5 ipaddressorfqdn=127.0.0.1:5006 sourceid=System.FM
+
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:40;apps-ok:1
+checkhm nodes expectedcount=40
+
+!string jsonclusterupgradepolicy {"MaxPercentDeltaUnhealthyNodes":7,"MaxPercentUpgradeDomainDeltaUnhealthyNodes":14}
+!string jsonclusterpolicy {"ConsiderWarningAsError":false,"MaxPercentUnhealthyNodes":30,"MaxPercentUnhealthyApplications":0}
+!string jsonsystemapppolicies {"ApplicationHealthPolicyMap":[{"Key":"fabric:/System","Value":{"ConsiderWarningAsError":true}}]}
+
+######################################################
+# Check application policies
+######################################################
+# No application policies
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 expectedhealthy=true
+
+# System application policies
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 apphealthpolicies=<string.jsonsystemapppolicies> expectedhealthy=true
+
+# Report warning on a fabric:/System service
+reporthealthinternal service servicename=fabric:/System/ClusterManagerService sequencenumber=1 healthstate=warning serviceinstanceid=-1
+
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 expectedhealthy=true
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 apphealthpolicies=<string.jsonsystemapppolicies> expectedhealthy=false expectedreason=systemapp
+
+reporthealthinternal service servicename=fabric:/System/ClusterManagerService sequencenumber=2 healthstate=ok serviceinstanceid=-1
+
+######################################################
+# Take snapshots and check health
+######################################################
+
+#
+# Check is cluster healthy, no failures
+#
+takeclusterhealthsnapshot expected=0/40,ud0:0/6,ud1:0/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 \
+    baseline=0/40,ud0:0/6,ud1:0/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7 expectedhealthy=true 
+
+#
+# Nodes without node name are not taken into consideration when evaluating health or when taking snapshot
+#
+# In HM, the node will have another node id, which is generated from the node name (empty)
+reporthealthinternal node nodeid=5007 nodename= node.instanceid=1 sequencenumber=34 healthstate=ok \
+    ud=ud5 fd=fd5 ipaddressorfqdn=127.0.0.1:5007 sourceid=System.FM
+
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:40;apps-ok:1
+checkhm nodes expectedcount=41
+takeclusterhealthsnapshot expected=0/40,ud0:0/6,ud1:0/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7
+
+######################################################
+# Test ud delta check
+######################################################
+
+#
+# Report errors on some nodes and check health
+#
+# ud1 - 1 out 8 unhealthy
+# Unhealthy percentages: Global = 2.5%, ud1 = 12.5%
+
+reporthealthinternal node nodeid=1000 node.instanceid=1 sequencenumber=1 healthstate=error
+takeclusterhealthsnapshot expected=1/40,ud0:0/6,ud1:1/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 \
+    baseline=0/40,ud0:0/6,ud1:0/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7 \
+    expectedhealthy=true \
+    jsonpolicy=<string.jsonclusterpolicy> jsonupgradepolicy=<string.jsonclusterupgradepolicy>
+
+# ud1 - 2 out of 8 unhealthy
+# Unhealthy percentages: Global = 5%, ud1 = 25%
+reporthealthinternal node nodeid=1001 node.instanceid=1 sequencenumber=2 healthstate=error
+takeclusterhealthsnapshot expected=2/40,ud0:0/6,ud1:2/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7
+
+# Check health in all uds except the one with errors, cluster is healthy
+checkisclusterhealthy upgradedomains=ud0,ud2,ud3,ud4,ud5 \
+    baseline=0/40,ud0:0/6,ud1:0/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7 expectedhealthy=true \
+    jsonpolicy=<string.jsonclusterpolicy> jsonupgradepolicy=<string.jsonclusterupgradepolicy>
+
+# Check health in the UD with errors, unhealthy because of delta per ud
+checkisclusterhealthy upgradedomains=ud1 \
+    baseline=0/40,ud0:0/6,ud1:0/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7 \
+    expectedhealthy=false expectedreason=uddelta,ud1,0,8,2,8,14 \
+    jsonpolicy=<string.jsonclusterpolicy> jsonupgradepolicy=<string.jsonclusterupgradepolicy>
+
+# Check health with different baseline, healthy
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 \
+    baseline=1/40,ud0:0/6,ud1:1/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7 \
+    expectedhealthy=true \
+    jsonpolicy=<string.jsonclusterpolicy> jsonupgradepolicy=<string.jsonclusterupgradepolicy>
+
+# check health with an UD with 0 nodes
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5,ud6 \
+    baseline=1/40,ud0:0/6,ud1:1/8,ud2:0/4,ud3:0/3,ud4:0/12,ud5:0/7,ud6:0/0 \
+    expectedhealthy=true \
+    jsonpolicy=<string.jsonclusterpolicy> jsonupgradepolicy=<string.jsonclusterupgradepolicy>
+
+######################################################
+# Test global delta check
+######################################################
+
+!string jsonclusterupgradepolicy2 {"MaxPercentDeltaUnhealthyNodes":6,"MaxPercentUpgradeDomainDeltaUnhealthyNodes":15}
+
+# Clear one error in ud1 so cluster is healthy per policy
+# Report errors in other uds in the limits of the policy
+#
+# ud1 - 1 out 8 unhealthy, 12.5%
+# ud4 - 3 out 12 unhealthy, 25%. Baseline 2/12
+# ud5 - 1 out 7 unhealthy, 14.2%. Baseline 1/7
+# Global: 5/40: 12.5%, baseline 3/40: 7.5
+#
+reporthealthinternal node nodeid=1001 node.instanceid=1 sequencenumber=3 healthstate=ok
+reporthealthinternal node nodeid=4001 node.instanceid=1 sequencenumber=4 healthstate=error
+reporthealthinternal node nodeid=4002 node.instanceid=1 sequencenumber=5 healthstate=error
+reporthealthinternal node nodeid=4003 node.instanceid=1 sequencenumber=6 healthstate=error
+reporthealthinternal node nodeid=5001 node.instanceid=1 sequencenumber=7 healthstate=error
+
+takeclusterhealthsnapshot expected=5/40,ud0:0/6,ud1:1/8,ud2:0/4,ud3:0/3,ud4:3/12,ud5:1/7
+
+# All delta respected
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 \
+    baseline=3/40,ud0:0/6,ud1:1/8,ud2:0/4,ud3:0/3,ud4:2/12,ud5:1/7 \
+    expectedhealthy=true \
+    jsonpolicy=<string.jsonclusterpolicy> jsonupgradepolicy=<string.jsonclusterupgradepolicy2>
+
+# Baseline has less errors, ud delta respected
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 \
+    baseline=2/40,ud0:0/6,ud1:0/8,ud2:0/4,ud3:0/3,ud4:2/12,ud5:0/7 \
+    expectedhealthy=false expectedreason=delta,2,40,5,40,6 \
+    jsonpolicy=<string.jsonclusterpolicy> jsonupgradepolicy=<string.jsonclusterupgradepolicy2>
+
+######################################################
+# Test nodes per UD check
+######################################################
+!string jsonclusterpolicy2 {"ConsiderWarningAsError":false,"MaxPercentUnhealthyNodes":15,"MaxPercentUnhealthyApplications":0}
+
+# Do not use delta, use MaxPercentUnhealthyNodes per UD as well 
+# ud4 - 3 out 12 unhealthy, 25%. Baseline 2/12
+
+# Check in all UDs except ud4, cluster is healthy
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud5 \
+    expectedhealthy=true \
+    jsonpolicy=<string.jsonclusterpolicy2> 
+
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 \
+    expectedhealthy=false expectedreason=nodesperud,ud4,3,15 \
+    jsonpolicy=<string.jsonclusterpolicy2> 
+
+######################################################
+# Test global nodes check
+######################################################
+!string jsonclusterpolicy3 {"ConsiderWarningAsError":false,"MaxPercentUnhealthyNodes":9,"MaxPercentUnhealthyApplications":0}
+checkisclusterhealthy upgradedomains=ud0,ud1,ud2,ud3,ud4,ud5 \
+    expectedhealthy=false expectedreason=nodes,5,9 \
+    jsonpolicy=<string.jsonclusterpolicy3> 
+
+!q

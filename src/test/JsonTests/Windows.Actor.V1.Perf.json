@@ -1,0 +1,378 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Actor Write KVS 3N (A3)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Write KVS 3N (A3)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-3Node-A3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Read 3N (A3)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Read 3N (A3)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-3Node-A3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Write KVS 6N (A3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-6Node-A3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Read 6N (A3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-6Node-A3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Data Size KVS 3N (A3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorDSPerfKvs-3Node-A3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Basic KVS 3N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorPerfBasicKvs-3Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Basic KVS 6N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorPerfBasicKvs-6Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Write KVS 3N (D4)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Write KVS 3N (D4)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-3Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Read 3N (D4)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Read 3N (D4)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-3Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Write KVS 6N (D4)",
+      "Type": "Azure_ScriptTest",
+       "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-6Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Read 6N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-6Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Data Size KVS 3N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorDSPerfKvs-3Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Write KVS 36N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-36Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Read 36N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-36Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ActorWriteKVS3NWCF(D4)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Write KVS 3N WCF (D4)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults-WCF.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsWrite-3Node-D4-Wcf.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ActorRead3NWCF(D4)",
+      "Type": "Azure_ScriptTest_Perf",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "Actor Read 3N WCF (D4)",
+        "ExpectedResultsFileName": "ActorPerfExpectedResults-WCF.xml",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfKvsRead-3Node-D4-Wcf.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Basic RD 3N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorPerfBasicRD-3Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Basic RD 6N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorPerfBasicRD-6Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Write RD 3N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfRDWrite-3Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Read RD 3N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfRDRead-3Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Write RD 6N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfRDWrite-6Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Read RD 6N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfRDRead-6Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Write RD 36N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfRDWrite-36Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "Actor Read RD 36N (D4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "amanbha,harahma,suchia,abhisram",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabActPerfTestConfig.txt",
+        "TaskName": "ActorRWPerfRDRead-36Node-D4.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    }
+  ]
+}

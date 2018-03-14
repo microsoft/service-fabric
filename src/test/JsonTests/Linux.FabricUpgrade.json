@@ -1,0 +1,20 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Linux.FabricUpgrade",
+      "Type": "Linux_ScriptTest",
+      "Owners": "maburlik,anmola",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "Linux.FabricUpgrade.Test",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

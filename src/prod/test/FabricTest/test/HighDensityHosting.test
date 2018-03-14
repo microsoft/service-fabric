@@ -1,0 +1,87 @@
+cmservice 5 1
+namingservice 1 5 1
+cleantest
+votes 10
++10
++20
++30
++40
++50
+verify
+
+# This will create a default app and add clear all data
+app.add HighDensityApp
+app.clear HighDensityApp
+
+# Add al service manifests
+app.servicepack HighDensityApp PackageA
+app.servicepack HighDensityApp PackageB
+app.servicepack HighDensityApp PackageC
+app.servicepack HighDensityApp PackageD
+
+# Add supported service types to manifests
+app.servicetypes HighDensityApp PackageA PackageAType1
+app.servicetypes HighDensityApp PackageA PackageAType2
+app.servicetypes HighDensityApp PackageB PackageBType1
+app.servicetypes HighDensityApp PackageB PackageBType2
+app.servicetypes HighDensityApp PackageC PackageCType1 stateful
+app.servicetypes HighDensityApp PackageC PackageCType2 stateful persist
+app.servicetypes HighDensityApp PackageD PackageDType1 stateful
+app.servicetypes HighDensityApp PackageD PackageDType2 stateful persist
+
+# Add code packages to manifests
+app.codepack HighDensityApp PackageA Code1 entrytype=.Net isolationtype=SharedDomain types=PackageAType1
+app.codepack HighDensityApp PackageA Code2 entrytype=.Net isolationtype=SharedDomain types=PackageAType2
+app.codepack HighDensityApp PackageB Code1 entrytype=.Net isolationtype=SharedDomain types=PackageBType1
+app.codepack HighDensityApp PackageB Code2 entrytype=.Net isolationtype=SharedDomain types=PackageBType2
+app.codepack HighDensityApp PackageC Code1 entrytype=.Net isolationtype=SharedDomain types=PackageCType1
+app.codepack HighDensityApp PackageC Code2 entrytype=.Net isolationtype=SharedDomain types=PackageCType2
+app.codepack HighDensityApp PackageD Code1 entrytype=.Net isolationtype=SharedDomain types=PackageDType1
+app.codepack HighDensityApp PackageD Code2 entrytype=.Net isolationtype=SharedDomain types=PackageDType2
+
+# Set all required services
+app.reqservices HighDensityApp Service1 PackageAType1 singlepartition instance=5
+app.reqservices HighDensityApp Service2 PackageAType2 singlepartition instance=5
+app.reqservices HighDensityApp Service3 PackageBType1 singlepartition instance=5
+app.reqservices HighDensityApp Service4 PackageBType2 singlepartition instance=5
+app.reqservices HighDensityApp Service5 PackageCType1 stateful partition=2 replica=3
+app.reqservices HighDensityApp Service6 PackageCType2 stateful partition=1 replica=5
+app.reqservices HighDensityApp Service7 PackageDType1 stateful partition=2 replica=3
+app.reqservices HighDensityApp Service8 PackageDType2 stateful partition=1 replica=5
+
+# upload app type
+app.upload HighDensityApp
+
+provisionapp HighDensityApp
+createapp fabric:/App1/Path1 HighDensityApp 1.0
+verify
+
+killcodep 10
+killcodep 20
+killcodep 30
+verify
+
+killcodep 20 killhost
+verify
+
+createapp fabric:/App2/Path2 HighDensityApp 1.0
+verify
+killcodep 20 killhost
+verify
++60
+verify
+killcodep 10 killhost
+verify
+-20
+-30
+verify
+killcodep 50
+killcodep 50
+killcodep 60
+killcodep 60
+verify
+-40
+verify
+!q
+
+

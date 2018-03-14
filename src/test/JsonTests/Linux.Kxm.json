@@ -1,0 +1,16 @@
+{
+  "Default": {
+         "RunLocally" : "true"
+  },
+  "Tests": [
+    {
+      "Name": "KxmTest",
+      "Type": "Generic",
+      "Owners": "mevora,alanwar",
+      "TestExecutionParameters": {
+        "TaskName": "WinFabricTest\\Kxm\\KxmTest.exe",
+        "ExecutionTimeout": "7200",
+      }
+    }
+  ]
+}

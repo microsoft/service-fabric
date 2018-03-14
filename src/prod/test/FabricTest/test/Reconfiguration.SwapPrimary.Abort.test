@@ -1,0 +1,377 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase4_Activate for a reconfig that promotes a replica
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 5
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Fail new primary before catchup starts
+# Verify no GetLSN
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test1 10 10
+!wait
+
+addbehavior b0 * * GetLSN
+setsignal 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+
+swapprimary fabric:/test1 40 20
+waitforsignalhit 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 Abort_Phase0_Demote
+resetsignal 40 fabric:/test1 replicator.updatecatchupreplicasetconfiguration.block
+
+verify
+removebehavior b0
+
+clientput fabric:/test1 20 20
+!wait
+
+clientget fabric:/test1 10 10
+clientget fabric:/test1 20 20
+!wait
+
++20 nodeprops=system:false
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2a: Fail new primary after catchup
+# To simulate this fail CR(S) on the replicator
+# GetLSN should be performed
+#####################################################
+
+createservice fabric:/test2a TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test2a 10 10
+!wait
+
+addbehavior b0 * * GetLSN
+injectfailure 40 fabric:/test2a replicator.beginchangerole
+setsignal 40 fabric:/test2a replicator.beginchangerole.block
+setsignal 40 fabric:/test2a service.beginchangerole.block
+
+swapprimary fabric:/test2a 40 20
+waitforsignalhit 40 fabric:/test2a replicator.beginchangerole.block
+
+#disable retry from ra
+addbehavior b1 * * UpdateConfiguration
+
+#now let CR(S) fail
+resetsignal 40 fabric:/test2a replicator.beginchangerole.block
+
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test2a.40 Abort_Phase0_Demote
+
+removefailure 40 fabric:/test2a replicator.beginchangerole
+waitforsignalhit 40 fabric:/test2a replicator.beginchangerole.block
+resetsignal 40 fabric:/test2a replicator.beginchangerole.block
+
+waitforsignalhit 40 fabric:/test2a service.beginchangerole.block
+resetsignal 40 fabric:/test2a service.beginchangerole.block
+
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test2a.40 Phase1_GetLSN
+removebehavior b0
+removebehavior b1
+verify
+
++20 nodeprops=system:false
+verify
+
+clientput fabric:/test2a 20 20
+!wait
+
+clientget fabric:/test2a 10 10
+clientget fabric:/test2a 20 20
+!wait
+
+deleteservice fabric:/test2a
+verify
+
+#####################################################
+# Scenario 2b: Fail new primary after CR(S) on replicator 
+# GetLSN should be performed
+#####################################################
+
+createservice fabric:/test2b TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test2b 10 10
+!wait
+
+addbehavior b0 * * GetLSN
+setsignal 40 fabric:/test2b replicator.beginchangerole.block
+
+swapprimary fabric:/test2b 40 20
+waitforsignalhit 40 fabric:/test2b replicator.beginchangerole.block
+
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test2b.40 Abort_Phase0_Demote
+resetsignal 40 fabric:/test2b replicator.beginchangerole.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test2b.40 Phase1_GetLSN
+removebehavior b0
+verify
+
++20 nodeprops=system:false
+verify
+
+clientput fabric:/test2b 20 20
+!wait
+
+clientget fabric:/test2b 10 10
+clientget fabric:/test2b 20 20
+!wait
+
+deleteservice fabric:/test2b
+verify
+
+#####################################################
+# Scenario 3: Fail new primary before CR(S) but with build in progress
+#####################################################
+
++50 nodeprops=system:false
+verify
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior b0 * 40 ReplicationOperation
+
+clientput fabric:/test3 10 10
+!wait
+
+swapprimary fabric:/test3 50 40
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.50 Phase0_Demote
+
+reportfault 30 fabric:/test3 transient
+!waitforstate RA.Replica.State.fabric:/test3.50.30 SB
+
+addbehavior b1 * * CopyOperation
+addbehavior b2 * * ReplicationOperation
+
+reportfault 20 fabric:/test3 transient 
+!waitforstate RA.Replica.State.fabric:/test3.50.30 IB
+!waitforstate RA.Replica.State.fabric:/test3.50.20 IB
+!waitforstate RA.Replica.State.fabric:/test3.30.30 IB
+!waitforstate RA.Replica.State.fabric:/test3.20.20 IB
+
+-40
+!waitforstate FM.Replica.IsUp.fabric:/test3.40 false
+
+removebehavior b0
+removebehavior b1
+removebehavior b2
+verify
+
+clientput fabric:/test3 20 20
+!wait
+
+clientget fabric:/test3 10 10
+clientget fabric:/test3 20 20
+!wait
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test3
+verify
+
+-50 
+!waitforstate FM.Node.IsUp.50 false
+
+#####################################################
+# Scenario 4: Fail new primary before catchup starts (volatile)
+#####################################################
+
+createservice fabric:/test4 TestStoreServiceType y 1 3 minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test4 10 10
+!wait
+
+setsignal 40 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+
+swapprimary fabric:/test4 40 20
+waitforsignalhit 40 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.40 Abort_Phase0_Demote
+resetsignal 40 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+
+verify
+removebehavior b0
+
+clientput fabric:/test4 20 20
+!wait
+
+clientget fabric:/test4 10 10
+clientget fabric:/test4 20 20
+!wait
+
++20 nodeprops=system:false
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 5: Fail new primary after replicator demote
+#####################################################
+
+createservice fabric:/test5 TestStoreServiceType y 1 3 minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test5 10 10
+!wait
+
+addbehavior b0 * * GetLSN
+setsignal 40 fabric:/test5 replicator.beginchangerole.block
+
+swapprimary fabric:/test5 40 20
+waitforsignalhit 40 fabric:/test5 replicator.beginchangerole.block
+
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 Abort_Phase0_Demote
+resetsignal 40 fabric:/test5 replicator.beginchangerole.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 Phase1_GetLSN
+removebehavior b0
+verify
+
++20 nodeprops=system:false
+verify
+
+clientput fabric:/test5 20 20
+!wait
+
+clientget fabric:/test5 10 10
+clientget fabric:/test5 20 20
+!wait
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Scenario6: Fail new primary after CR(S) on replicator 
+# with service failing CR(S). abort swap should be stuck until service changes rol
+#####################################################
+
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test6 10 10
+!wait
+
+addbehavior b0 * * GetLSN
+injectfailure 40 fabric:/test6 service.beginchangerole
+setsignal 40 fabric:/test6 replicator.beginchangerole.block
+
+swapprimary fabric:/test6 40 20
+waitforsignalhit 40 fabric:/test6 replicator.beginchangerole.block
+
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Abort_Phase0_Demote
+resetsignal 40 fabric:/test6 replicator.beginchangerole.block
+
+#wait for retries - reconfig should stay stuck in abort
+!pause 15
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Abort_Phase0_Demote
+
+#remove failure
+removefailure 40 fabric:/test6 service.beginchangerole
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Phase1_GetLSN
+removebehavior b0
+verify
+
++20 nodeprops=system:false
+verify
+
+clientput fabric:/test6 20 20
+!wait
+
+clientget fabric:/test6 10 10
+clientget fabric:/test6 20 20
+!wait
+
+deleteservice fabric:/test6
+verify
+
+#####################################################
+# Scenario 7: Replicator Remove Idle during Swap abort
+#####################################################
+
++50 nodeprops=system:false
+verify
+
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior b0 * 40 ReplicationOperation
+
+clientput fabric:/test7 10 10
+!wait
+
+swapprimary fabric:/test7 50 40
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.50 Phase0_Demote
+
+reportfault 30 fabric:/test7 transient
+!waitforstate RA.Replica.State.fabric:/test7.50.30 SB
+
+addbehavior b1 * * CopyOperation
+addbehavior b2 * * ReplicationOperation
+addbehavior b3 * * ReplicatorBuildIdleReplica
+addbehavior b4 * * ReplicatorRemoveIdleReplica
+
+reportfault 20 fabric:/test7 transient
+!waitforstate RA.Replica.State.fabric:/test7.50.30 IB
+!waitforstate RA.Replica.State.fabric:/test7.50.20 IB
+
+-20
+!waitforstate RA.Replica.IsUp.fabric:/test7.50.20 false
+
+-40
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.50 Abort_Phase0_Demote|Phase2_Catchup
+
+removebehavior b0
+removebehavior b1
+removebehavior b2
+removebehavior b3
+removebehavior b4
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.50 Phase2_Catchup
++20 nodeprops=system:false
+
+verify
+
+clientput fabric:/test7 20 20
+!wait
+
+clientget fabric:/test7 10 10
+clientget fabric:/test7 20 20
+!wait
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test7
+verify
+
+-50 
+!waitforstate FM.Node.IsUp.50 false
+
+!q

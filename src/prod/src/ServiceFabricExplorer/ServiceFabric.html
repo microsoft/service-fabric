@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="0; url=./Explorer/index.html" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Service Fabric Explorer</title>
+    <link rel="icon" type="image/png" href="images/icon.png" />
+    <link href="lib/bootstrap.min.css" rel="stylesheet" />
+    <script type="text/javascript">
+        
+        window.location.href = "./Explorer/index.html"
+    
+    </script>
+    <style>
+	body{
+	    color: #fff;
+	}
+
+        h1, h2, h3{
+            font-weight: 200;
+        }
+
+        a, a:hover {
+            cursor: pointer;
+            color: #00BCF2;
+	    text-decoration: none;
+        }
+
+	.btn-primary {	
+	    border-radius: 0px;
+	}
+
+        #title {
+            font-size: 38px;
+            font-weight: 200;
+        }
+
+        h3 {
+            margin-top: 33px;
+            margin-bottom: 24px;
+            color: #AFAFAF;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            padding-top: 10px;
+            border-bottom: 1px solid grey;
+            font-size: 25px;
+        }
+
+        h4 {
+            margin-bottom: 20px;
+            color: #AFAFAF;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        body {
+            background-color: #262626;
+            font-family:  "Segoe UI", "sans-serif";
+        }
+
+        #left {
+            padding-left: 30px;
+            margin-top: 10px;
+        }
+
+        p {
+            padding-right: 40px;
+            line-height: 24px;
+	    font-size: 10pt;
+        }
+
+        .intro 
+        {
+            margin-bottom: 20px;
+        }
+
+        #logo{
+	        width: 500px;
+        }
+
+        #logo img{
+	        float:left;
+            margin-top: 12px;
+            margin-left: 15px;
+        }
+
+        #logo a{
+	        float: left;
+        }
+
+        #content {
+            margin-top: 80px;
+        }
+
+        #suggestion {
+            float: right;
+            margin-top: 15px;
+            margin-right: 20px;
+        }
+
+        .navbar-header {
+            width: 100%;
+	    background-color: black;
+            color: white;
+        }
+
+	.navbar-inverse .navbar-brand {
+	    color: white;
+            font-size: 14pt;
+            position: relative;
+            font-weight: lighter;
+            padding: 14px;
+	}
+
+        #bar {
+            margin-top: 100px;
+            height: 40px;
+            width: 100%;
+            background-color: #3d3d3d;
+        }
+
+        li {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .date {
+            margin-bottom: 6px;
+        }
+
+        .date span{
+            color: #AFAFAF;
+        }
+
+        .more {
+            margin-bottom: 18px;
+            pointer-events: none;
+            cursor: default;
+        }
+
+        #explore {
+            margin-top: 15px;
+        }
+
+        #privacy {
+            float: right;
+            margin-right: 30px;
+        }
+
+        .navbar-custom .navbar-brand.navbar-brand-azure {
+            background-color: #0075c9;
+        }
+
+        .navbar-custom .navbar-brand.navbar-brand-title {
+            margin-left: 0px;
+        }
+
+        .navbar-custom .navbar-brand.navbar-brand-title .navbar-brand-icon {
+            display: inline-block;
+            position: relative;
+            top: 47%;
+            transform: translateY(-50%);
+            height: 24px;
+            width: 24px;
+            margin-right: 10px;
+         }
+    </style>
+
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-inverse navbar-custom navbar-fixed-top" id="top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand navbar-brand-azure" href="http://aka.ms/portalsfx" target="_blank">Microsoft Azure</a>
+                <a class="navbar-brand navbar-brand-title" href="./Explorer/index.html"><img class="navbar-brand-icon" src="images/icon.png" alt="Service Fabric Explorer">Service Fabric Explorer</a>
+                <div id="suggestion">
+                    <a href="https://feedback.azure.com/forums/293901-service-fabric" target="_blank">Have a suggestion to improve the experience?</a>
+
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="content">
+        <!-- Left -->
+        <div id="left" class="col-md-6">
+            <span id="title">Welcome to Your Azure Service Fabric Cluster</span>
+            <h4>CONTOSO_WEST_CLUSTER</h4>
+            <p class="intro">Azure Service Fabric helps you build and manage scalable, always-on, and easily-managed applications for the cloud. Its sophisticated runtime enables you to create distributed, scalable, stateless and stateful microservices and take advantage of comprehensive application management capabilities for provisioning, deploying, monitoring, upgrading/patching, and deleting deployed applications. Service Fabric applications are composed of microservices that run at a very high density on a shared pool of machines known as a Service Fabric cluster. A cluster is a network connected set of virtual or physical machines into which application instances are deployed. Clusters can scale to thousands of machines. For a detailed overview about the full capabilities and features of Service Fabric, see <a id="link" target="_blank" href="http://go.microsoft.com/fwlink/?LinkId=708513">Azure Service Fabric</a>.</p>
+
+            <p class="intro">Now that you have created a Service Fabric cluster, you can choose links below to do things like explore your new cluster or open the cluster in the Azure Preview Portal. You can also run a chaos test on the cluster to simulate continuous interleaved faults, both graceful and ungraceful, throughout the entire cluster over extended periods of time. This process stress tests the cluster and highlights problem areas, which can help you significantly improve the cluster's reliability. See Testibility Scenarios for more information. To learn more about how Service Fabric works and how to get started and accomplish tasks with it, choose the Azure Service Fabric documentation link below.</p>
+            <a class="btn btn-primary btn-md" href="./Explorer/index.html" id="explore">Explore Cluster Now > </a>
+        </div>
+
+        <!-- Right -->
+        <div id="right" class="col-md-4">
+            <h2>Release Notes</h2>
+            <div class="date">
+                <span>OCTOBER 23, 2015</span>
+            </div>
+            <p></p>
+            <div class="more"><a style="color: grey">Read more</a></div>
+        </div>
+
+        <div id="bar" class="col-md-12"></div>
+
+        <!-- Bottom -->
+        <div id="bottom" class="col-md-12">
+
+            <div id="left-links" class="col-md-2">
+                <h3>Next Steps</h3>
+                <ul class="list-group">
+                    <li><a href="./Explorer/index.html">Explore Cluster</a></li>
+                    <li><a href="https://azure.microsoft.com/en-us/documentation/articles/service-fabric-testability-scenarios/" target="_blank">Run Chaos Test on this cluster</a></li>
+                    <li><a href="http://portal.azure.com" target="_blank">Open the Azure Preview Portal</a></li>
+                </ul>
+            </div>
+
+            <div id="right-links" class="col-md-6">
+                <h3>Learning Resources</h3>
+                <ul class="list-group">
+                    <li><a href="https://azure.microsoft.com/en-us/campaigns/service-fabric/" target="_blank">Azure Service Fabric Documentation</a></li>
+                    <li><a href="https://social.msdn.microsoft.com/Forums/en-US/home?forum=AzureServiceFabric" target="_blank">Discuss Azure Service Fabric on this forums</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-12"><a id="privacy" target="_blank" href="http://go.microsoft.com/fwlink/?LinkId=512132">Privacy and Cookies</a></div>
+    </div>
+</body>
+</html>

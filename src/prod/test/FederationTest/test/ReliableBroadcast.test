@@ -1,0 +1,73 @@
+!updatecfg Federation.BroadcastPropagationFactor=3
+votes 0
+clearticket
++0
+verify
+broadcastreq 0
+verify
++10
++20
++30
++40
++50
++60
++70
++80
++90
++100
++1000
++5000
+verify
+addbehavior dropSomeBroadcasted * * Broadcasted 0.45 Max
+broadcastreq 50
+!pause,2
+broadcastreq 10
+!pause,2
+broadcastreq 1000
+broadcastreq 80
+broadcastreq 5000
+broadcastreq 30
+!pause,2
+broadcastreq 50
+!pause,10
+removebehavior dropSomeBroadcasted
+verify
+-1000
+-5000
+verify
+# Reliable one-way test case 1
+addbehavior b1 50 60 Broadcasted
+broadcastreliable 100 60
+!pause,5
+-60
+verify
+removebehavior b1
+# Reliable one-way test case 2
+addbehavior b1 100 70 Broadcasted
+addbehavior b2 100 80 Broadcasted
+addbehavior b3 100 90 Broadcasted
+broadcastreliable 100 70,80,90
+!pause,5
+-70
+-80
+-90
+verify
+removebehavior b1
+removebehavior b2
+removebehavior b3
+# Reliable one-way test case 3
+addbehavior b1 100 40 Broadcasted
+addbehavior b2 100 50 Broadcasted
+addbehavior b3 20 50 Broadcasted
+addbehavior b4 30 20 Broadcasted
+broadcastreliable 100 40,50
+!pause,2
+-40
+-50
+!pause,10
+removebehavior b4
+removebehavior b3
+removebehavior b2
+removebehavior b1
+verify
+!q

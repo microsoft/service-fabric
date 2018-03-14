@@ -1,0 +1,65 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+set NamingServiceChangePollInterval 30
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+###############################################
+## Notification and resolve on same client
+###############################################
+createname fabric:/servicegroup1
+createservicegroup fabric:/servicegroup1 SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup1#test1 SGStatefulService fabric:/servicegroup1#test2 SGStatefulService fabric:/servicegroup1#test3 SGStatefulService persist
+verify
+
+createclient c1 
+
+# Populate cache with resolve results
+resolveusingclient c1 fabric:/servicegroup1#test1 10
+resolveusingclient c1 fabric:/servicegroup1#test2 10
+
+# register callback for just one of the service group members
+registercallback c1 cSG1 fabric:/servicegroup1#test1 10 
+waitforcallback c1 cSG1
+
+# Move service to trigger RSP refresh
+# secondaries are placed on 40 and 50, primary on 60
+!waitforstate FM.Replica.Role.fabric:/servicegroup1.50 Secondary
+movesecondary fabric:/servicegroup1 40 30
+
+# Notification for test1 is raised; this updates the cache for parent service group member
+waitforcallback c1 cSG1
+
+# resolve with same client without previous, should return newer version
+resolveusingclient c1 fabric:/servicegroup1#test1 10 
+resolveusingclient c1 fabric:/servicegroup1#test2 10 
+
+# delete the service
+deleteservicegroup fabric:/servicegroup1
+
+# Notification for #test1 should be fired
+waitforcallback c1 cSG1 error=UserServiceNotFound
+
+# Resolve without previous for #test2 returns error, not cached value
+resolveusingclient c1 fabric:/servicegroup1#test2 10 error=UserServiceNotFound
+
+resolveusingclient c1 fabric:/servicegroup1#test1 10 error=UserServiceNotFound
+
+deleteclient c1
+
+###############################################
+## End test
+###############################################
+
+verify
+!q
+

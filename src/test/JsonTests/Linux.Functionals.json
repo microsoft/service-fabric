@@ -1,0 +1,91 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Linux.Smoke",
+      "Type": "Linux_ScriptTest",
+      "Owners": "anmola,xunlu,chenxu,jefchen",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "Linux.Smoke.Test",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Linux.FaultAnalysisService",
+      "Type": "Linux_ScriptTest",
+      "Owners": "lemai,motanv,likevi,prbhutan",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "FaultAnalysisService.test",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+        "Name": "Linux.FSSCursor.test",
+        "Type": "Linux_ScriptTest",
+        "Owners": "iyyappam,mialu,oanapl,vaishnav",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "Tags": "Admin,ImageStore,EndToEnd",
+        "TestExecutionParameters": {
+          "SetupType": "XCopy",
+          "SetupTimeout": "900",
+          "TaskName": "FSSCursor.test",
+          "ExecutionTimeout": "7200",
+          "CleanupType": "XCopy",
+          "CleanupTimeout": "2100"
+		}
+	},
+    {
+      "Name": "SfrpLinuxUbuntu.Smoke.Test",
+      "Type": "Linux_SFRP_ScriptTest",
+      "Owners": "anmola,maburlik,chenxu",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "SfrpLinux.Smoke.Test",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SfrpLinuxRedhat.Smoke.Test",
+      "Type": "LinuxRedhat_SFRP_ScriptTest",
+      "Owners": "anmola,maburlik,chenxu",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "SfrpLinux.Smoke.Test",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+      {
+        "Name": "Linux.AppProvisionTest",
+        "Type": "Linux_ScriptTest",
+        "Owners": "oanapl,alexwun,iyyappam",
+        "ResourcesRequired": "Server:1&Azure:1",
+        "TestExecutionParameters": {
+            "SetupType": "XCopy",
+            "SetupTimeout": "900",
+            "TaskName": "AppProvision.test",
+            "ExecutionTimeout": "3000",
+            "CleanupType": "XCopy",
+            "CleanupTimeout": "2100"
+        }
+    }
+  ]
+}

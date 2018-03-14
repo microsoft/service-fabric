@@ -1,0 +1,141 @@
+votes 10 20 30
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+set DummyPLBEnabled false
+set SendLoadReportInterval 1
+set HealthOperationTimeout 30
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 10
+set DetailedVerboseHealthReportLimit 23
+
+
+cleantest
++10 cap=memory:10,disk:10,cpu:10,battery:10,metricthatblocksplacement:1 fd=fd:/dc0
++20 cap=memory:10,disk:10,cpu:10,battery:10,metricthatblocksplacement:1 fd=fd:/dc0
++30 cap=memory:10,disk:10,cpu:10,battery:100,metricthatblocksplacement:1 fd=fd:/dc0
++40 cap=memory:10,disk:10,cpu:100,battery:0,metricthatblocksplacement:1 fd=fd:/dc0
++50 cap=memory:10,disk:100,cpu:0,battery:0,metricthatblocksplacement:1 fd=fd:/dc0
++60 cap=memory:100,disk:0,cpu:0,battery:0,metricthatblocksplacement:1  fd=fd:/dc1
+Verify
+
+#Testing out Health Reporting when Service Replicas are Unabled to be Placed
+#Metrics = name,weight, primarydefaultload, secondarydefaultload
+createname fabric:/servicethatwontgetplaced
+createservice fabric:/servicethatwontgetplaced CalculatorServiceType n 2 3 metrics=metricthatblocksplacement,Low,2,0
+
+createname fabric:/statefulpersisted
+createservice fabric:/statefulpersisted TestPersistedStoreServiceType y 1 3 persist metrics=metricthatblocksplacement,Medium,2,0 placementPolicies=fd:/dc1,preferredPrimaryDomain
+
+createname fabric:/statefulpersisted2
+createservice fabric:/statefulpersisted2 TestPersistedStoreServiceType y 1 3 persist metrics=metricthatblocksplacement,Medium,2,2 placementPolicies=fd:/dc1,preferredPrimaryDomain
+
+!pause 10
+
+verifyunplacedreason fabric:/servicethatwontgetplaced NodeCapacity eliminated 6 possible node(s) for placement -- 0/6 node(s) remain.
+
+verifyunplacedreason fabric:/statefulpersisted ({5 Primary PlacementPolicy Nodes}, {0 PlacementConstraint Nodes}, {BlockList Nodes})'s set union eliminated 5 possible node(s) for placement -- 1/6 node(s) remain.
+
+
+
+#These are also dropped, because the primary is not able to be placed but the secondary is
+queryhealth partition partitionid=fabric:/statefulpersisted#0 expectedhealthstate=warning
+
+#These are just your usual Unplaced Ones
+queryhealth service servicename=fabric:/statefulpersisted2 expectedhealthstate=warning
+queryhealth service servicename=fabric:/servicethatwontgetplaced expectedhealthstate=warning
+
+#Will uncomment this after this product bug is fixed RDBug 6242526:Calling UpdateService on a stateless instance to change the default load for a metric doesn't change
+updateservice fabric:/servicethatwontgetplaced Stateless metrics=metricthatblocksplacement,Low,0,0
+updateservice fabric:/statefulpersisted Stateful metrics=metricthatblocksplacement,Low,0,0
+updateservice fabric:/statefulpersisted2 Stateful metrics=metricthatblocksplacement,Low,0,0
+
+verify
+
+!pause 15
+#Will uncomment this after this product bug is fixed RDBug 6242526:Calling UpdateService on a stateless instance to change the default load for a metric doesn't change
+queryhealth service servicename=fabric:/servicethatwontgetplaced expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/statefulpersisted#0 expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/statefulpersisted2#0 expectedhealthstate=ok
+
+
+deleteservice fabric:/statefulpersisted
+deleteservice fabric:/statefulpersisted2
+verify
+
+
+set DropAllPLBMovements true
+
+createname fabric:/servicethatwillgetplacedbutFMDrops
+createservice fabric:/servicethatwillgetplacedbutFMDrops CalculatorServiceType n 1 3 metrics=metricthatblocksplacement,Low,0,0
+
+!pause 10
+
+queryhealth partition partitionid=fabric:/servicethatwillgetplacedbutFMDrops#0 expectedhealthstate=warning
+queryhealth service servicename=fabric:/servicethatwillgetplacedbutFMDrops expectedhealthstate=warning
+
+!pause 10
+
+set DropAllPLBMovements false
+
+verify
+queryhealth partition partitionid=fabric:/servicethatwillgetplacedbutFMDrops#0 expectedhealthstate=ok
+queryhealth service servicename=fabric:/servicethatwillgetplacedbutFMDrops expectedhealthstate=ok
+
+###################################################################################################
+# Scenario: Test health reporting when CheckAffinityForUpgradePlacement is set to true.
+# Parent partition can be placed for upgrade on its own, but not together with child partition.
+# Health warning should be reported on the parent partition.
+###################################################################################################
+
+# Use dummy PLB to go to highest node - 60
+set DummyPLBEnabled true
+# Force creation of new replica during application upgrade
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+set CheckAffinityForUpgradePlacement true
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+app.servicepack versionTC1 ServicePackageA version=v1
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.reqservices versionTC1 parentService ServiceTypeA stateful partition=1 replica=1
+
+app.upload versionTC1
+
+provisionapp versionTC1
+createapp fabric:/parentApplication TestAppTC1 vTC1
+
+verify
+nameexists fabric:/parentApplication true
+
+!waitforstate FM.Replica.Role.fabric:/parentApplication/parentService.60 Primary
+
+# Create child service and constrain it to go to node 60 only
+createservice fabric:/childService TestStoreServiceType y 1 1 servicecorrelations=fabric:/parentApplication/parentService,affinity placementPolicies=fd:/dc1,requiredDomain
+
+!waitforstate FM.Replica.Role.fabric:/childService.60 Primary
+
+#
+# Add version 2 of the application
+#
+app.add versionTC2 TestAppTC1 vTC2
+app.clear versionTC2
+app.servicepack versionTC2 ServicePackageA version=v2
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC2 ServicePackageA CodeA types=ServiceTypeA version=v2
+app.reqservices versionTC2 parentService ServiceTypeA stateful partition=1 replica=1
+app.upload versionTC2
+provisionapp versionTC2
+
+# Upgrade the application: child partition can be only on node 60, so paren't can't be upgraded.
+upgradeapp fabric:/parentApplication vTC2 Rolling upgrademode=auto
+
+# There should be a health warning on the parent.
+queryhealth service servicename=fabric:/parentApplication/parentService expectedhealthstate=warning
+
+# and parent replica can't be placed
+verifyunplacedreason fabric:/parentApplication/parentService NodesBlockListed eliminated 5 possible node(s) for placement -- 1/6 node(s) remain.
+verifyunplacedreason fabric:/parentApplication/parentService FaultDomain eliminated 1 possible node(s) for placement -- 0/6 node(s) remain.
+
+!q

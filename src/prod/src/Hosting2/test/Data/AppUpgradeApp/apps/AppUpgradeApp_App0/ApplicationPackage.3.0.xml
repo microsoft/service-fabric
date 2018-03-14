@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    NameUri="fabric:/AppUpgrade" 
+    ApplicationId="AppUpgradeApp_App0" 
+    RolloutVersion="3.0" 
+    ApplicationTypeName="AppUpgradeApp" 
+    ContentChecksum="Test_Checksum"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <DigestedEnvironment RolloutVersion="3.0">
+    <Principals>
+	    <Users>
+         <User Name="TestUser"/>
+		</Users>
+	</Principals>
+    <Policies />
+    <Diagnostics />
+  </DigestedEnvironment>
+  <DigestedCertificates RolloutVersion="3.0"/>
+</ApplicationPackage>

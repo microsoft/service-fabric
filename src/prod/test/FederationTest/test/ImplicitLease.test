@@ -1,0 +1,63 @@
+!updatecfg Federation.ImplicitLeaseInterval=60
+!updatecfg Federation.MaxImplicitLeaseInterval=60
+!updatecfg Federation.LeaseDuration=10
+!updatecfg Federation.MaxLeaseDuration=10
+!updatecfg Federation.ArbitrationTimeout=10
+!updatecfg Federation.MaxArbitrationTimeout=10
+!updatecfg Federation.ArbitrationRequestDelay=0
+votes 10 20 30
+clearticket
+ 
++10 17010
++30 17030
+verify
++55 17055
++50 17050
++45 17045
++40 17040
++60 17060
++65 17065
++70 17070
++75 17075
++80 17080
++14 17014
++15 17015
++16 17016
++17 17017
++18 17018
++19 17019
++21 17021
++22 17022
++23 17023
++24 17024
++25 17025
++26 17026
+verify
+addleasebehavior * * indirect i1
+addleasebehavior 17060 * *~ i2
+-40
+-80
+abort 45
+abort 50
+abort 55
+abort 65
+abort 70
+abort 75
+!pause,5
+addbehavior b1 60 * *
+abort 60
+!pause,60
+addbehavior b2 10 * ArbitrateReply 1.0 2
+addbehavior b3 30 * ArbitrateReply 1.0 2
++20 17020
+verify 60
+removebehavior b1
+removebehavior b2
+removebehavior b3
+!expect,Node 25 Failed
+addleasebehavior 17025 * *~ i3
+verify
+removeleasebehavior i1
+removeleasebehavior i2
+removeleasebehavior i3
+!q

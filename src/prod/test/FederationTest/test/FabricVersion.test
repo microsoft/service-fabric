@@ -1,0 +1,23 @@
+##################################
+# Fabric Incompatible Version Test
+##################################
+
+# Old node unable to join new ring
+votes 100 200 300
+clearticket
++100
++200
+verify
++300 version=1.0.0.0 expectjoinerror
+verify
+-100
+-200
+
+# New node unable to join old ring
+votes 100
+clearticket
++100 version=1.0.0.0
+verify
++200 expectjoinerror
+verify
+!q

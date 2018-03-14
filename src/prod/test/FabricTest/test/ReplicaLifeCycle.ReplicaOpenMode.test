@@ -1,0 +1,126 @@
+#
+# [owner] aprameyr
+# Test scenarios around Replica Open Mode during Replica Creation
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set RAPMessageRetryInterval 0.5
+set FMMessageRetryInterval 2
+set FMPlacementConstraints system==true
+set NamingOperationTimeout 10
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 5: On Open during drop
+#####################################################
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+addbehavior b2 * * ReplicaUp
+addbehavior b1 * * ReplicaClose
+
+deleteservice fabric:/test5 errors=Timeout
+!waitforstate RA.Replica.State.fabric:/test5.40.40 ID
+
+removeruntime 40 y
+
+setsignal 40 fabric:/test5 service.beginopen.expectexistingopenmode
+
+addruntime 40 y
+!waitforstate RA.Replica.IsUp.fabric:/test5.40.40 true
+!waitforstate RA.Replica.State.fabric:/test5.40.40 ID
+
+removebehavior b1
+!waitforstate RA.FT.State.fabric:/test5.40 Closed
+
+removebehavior b2
+
+deleteservice fabric:/test5 errors=UserServiceNotFound
+verify
+
+#####################################################
+# Scenario 4: On Open failure in reopen
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test4 service.beginopen.expectexistingopenmode
+reportfault 40 fabric:/test4 transient
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 3: On CR failure in initial open 
+#####################################################
+
+injectfailure 40 fabric:/test3 service.endopen.block
+injectfailure 40 fabric:/test3 service.beginchangerole
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test3.40.40 IC
+
+#wait for the block on end open to be hit
+!pause 3
+
+#set the signal for open mode
+setsignal 40 fabric:/test3 service.beginopen.expectexistingopenmode
+
+#remove the block
+removefailure 40 fabric:/test3 service.endopen.block
+
+#let retry happen
+!pause 3
+
+removefailure 40 fabric:/test3 service.beginchangerole
+
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 2: On Open failure in initial open 
+#####################################################
+
+setsignal 40 fabric:/test2 service.beginopen.expectnewopenmode
+injectfailure 40 fabric:/test2 service.endopen
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test2.40.40 IC
+!pause 3
+removefailure 40 fabric:/test2 service.endopen
+verify
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 1: On initial open 
+#####################################################
+
+setsignal 40 fabric:/test1 service.beginopen.expectnewopenmode
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q

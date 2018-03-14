@@ -1,0 +1,21 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "ReplicaDensity(LAB)",
+      "Type": "V2_ScriptTest",
+      "Owners": "AlanWar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "ReplicaDensity.test",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

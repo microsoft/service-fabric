@@ -1,0 +1,31 @@
+#Default client is allowed implicitly by name matching with issuer pinning with public key
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 10
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
+cleantest
+
+set DummyPLBEnabled true
+set DefaultNodeCredentials None
+set ClusterWideCredentials X509:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com:EmptyListToAllowDefaultClientOnly:WinFabricRing.Rings.WinFabricTestDomain.com
+
+# use WinFabric-Test-SAN1-Bob as cluster, server and client certificate
++10 security=FindBySubjectName,WinFabric-Test-SAN1-Bob,My,LocalMachine
+verify
+
+# default client certificate is allowed implicitly 
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Bob:EncryptAndSign:WinFabricRing.Rings.WinFabricTestDomain.com
+
+# verify that creating a service works
+createname fabric:/a
+verify
+
+# Delay to prevent kernel lease agent reusing in different security setting
+-*
+!pause 30
+
+!q

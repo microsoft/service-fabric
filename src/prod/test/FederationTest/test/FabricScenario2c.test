@@ -1,0 +1,102 @@
+#########################
+# Fabric Test Scenario 2c
+#########################
+#
+#################################
+# 3) Test bootup and restart
+#    using 5 seed nodes
+#################################
+#
+set GlobalTicketLeaseDuration 20
+set GlobalTicketRenewInterval 3
+set BootstrapTicketLeaseDuration 20
+set BootstrapTicketAcquireLimit 5
+set PingInterval 2
+set OpenTimeout 30
+set CheckForLeak false
+votes 0 10 20 30 40
+# i. Verify super ticket can be transferred more than once
+#    Verify that a quorum of votes is sufficient for ring bootstrap
+ticketstore 0 0 0
+ticketstore 10 0 0
+ticketstore 20 0 0
+ticketstore 30 0 0
+ticketstore 40 0 0
++20
++10
+!pause,5
+!state Phase.10 B
+!state Phase.20 B
++0
+verify
++30
+verify
+!waitforstate Phase.0 R 45
+!waitforstate Phase.10 R 10
+!waitforstate Phase.30 R 10
+-30
+-10
+-20
+-0
+verify
+# ii. Allow 30 to issue its super ticket to 10
+#     Abort 30 and verify that the super ticket lease
+#     expires on 10, requiring the addition of 2
+#     more votes before the ring can boot 
+set OpenTimeout 60
+ticketstore 0 0 0
+ticketstore 10 0 0
+ticketstore 20 0 0
+ticketstore 30 0 0
+ticketstore 40 0 0
+addbehavior DropSuperTicketTransferFrom30 30 * VoteTransferReply
++30
++10
+!pause,10
++0
+!pause,5
+!state Phase.0 B
+!state Phase.10 B
++20
+!waitforstate Phase.0 R 10
+!waitforstate Phase.10 R 10
+!waitforstate Phase.20 R 10
+removebehavior DropSuperTicketTransferFrom30
+verify
++25
+verify
+!waitforstate Phase.25 R 45
+-0
+-10
+-20
+-25
+-30
+# iii. Test that bootup occurs quickly in the face
+#      of unavailable seed nodes
+clearticket
++30
++20
+!pause,5
+!state Phase.20 B
++10
+verify,10
+-30
+-20
+-10
+# iv. Renew of super ticket
+set BootstrapTicketAcquireLimit 2
+votes 0 10 20 30 40 50 60
+ticketstore 0 0 0
+ticketstore 10 0 0
+ticketstore 20 0 0
+ticketstore 30 0 0
+ticketstore 40 0 0
+ticketstore 50 0 0
+ticketstore 60 0 0
++10
++40
++50
+!pause,15
++30
+verify
+!q

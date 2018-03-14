@@ -1,0 +1,84 @@
+#########################
+# Fabric Test Scenario 2b
+#########################
+#
+#################################
+# 2) Test bootup and restart
+#    using 3 seed nodes
+#################################
+#
+set GlobalTicketLeaseDuration 20
+set GlobalTicketRenewInterval 3
+set BootstrapTicketLeaseDuration 20
+set BootstrapTicketAcquireLimit 10
+set PingInterval 2
+set OpenTimeout 30
+set CheckForLeak false
+votes 0 10 20
+#  i. Boot 2 seed nodes with one having active super ticket
+#     Verify votes can't form ring before super ticket expires
+#     Verify votes can still join even when there are fewer than quorum votes alive
+ticketstore 0 0 0
+ticketstore 10 0 10
+ticketstore 20 0 0
++20
++10
+!pause,5
+!state Phase.10 B
+!state Phase.20 B
++0
+# Ring should form now
+verify
++30
+verify
+# Verify no global lease loss occurs
+!waitforstate Phase.30 R 45
+-0
+verify
+-30
+-20
+-10
+verify
+#  ii. Set up one active global ticket in addition to active super ticket
+#      Verify booting 2 votes can't form the ring
+#      Verify booting 3rd seed after some delay still can't form the ring
+#      Verify that after ticket expiration, ring can be formed
+set OpenTimeout 60
+ticketstore 0 0 0
+ticketstore 10 30 0
+ticketstore 20 0 30
++0
++10
+!pause,5
+!state Phase.0 B
+!state Phase.10 B
++20
+!pause,10
+!state Phase.0 B
+!state Phase.10 B
+!state Phase.20 B
+verify
+-20
+-10
+-0
+verify
+# iii. One seed can't form the ring alone (missing quorum)
+#      Verify removing two votes will crash the ring due to lease loss
+set OpenTimeout 30
+ticketstore 0 0 0
+ticketstore 10 0 0
+ticketstore 20 0 0
++0
+!pause,5
+!state Phase.0 B
++10
+verify
++20 expectfailure
++30 expectfailure
+verify
+!expect,Node 20 Failed
+!expect,Node 30 Failed
+abort 0
+abort 10
+!wait 50
+!q

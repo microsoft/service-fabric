@@ -1,0 +1,64 @@
+Done Creating CodePackageActivationContext.
+ContextId = Application_App0:ServicePackage
+CodePackageName = CodeA
+CodePackageVersion = 1.0
+WorkDirectory = {0}\Applications\Application_App0\work
+LogDirectory = {0}\Applications\Application_App0\log
+TempDirectory = {0}\Applications\Application_App0\temp
+ApplicationName = fabric:/App1
+ApplicationTypeName = Application
+ServiceManifestName = ServicePackage
+ServiceManifestVersion = 1.0
+
+Enumerating ServiceTypes...
+StatefulTypeDescription: ServiceTypeName = StatefulType, PlacementConstraints = 'StatefulType PlacementConstraint', HasPersistedState = 1
+LoadMetrics: [ (Name = MetricB, PrimaryDefaultLoad = '6', SecondaryDefaultLoad = '3', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_HIGH')  (Name = MetricC, PrimaryDefaultLoad = '8', SecondaryDefaultLoad = '2', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_ZERO') ]
+StatelessTypeDescription: ServiceTypeName = StatelessType, PlacementConstraints = ''
+LoadMetrics: [ (Name = MetricA, PrimaryDefaultLoad = '3', SecondaryDefaultLoad = '0', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_LOW')  (Name = MetricB, PrimaryDefaultLoad = '4', SecondaryDefaultLoad = '0', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_LOW') ]
+Extensions: [ (Name = Extention1, Value = <ExtensionValue FakeAttr="AttrValue" xmlns="http://schemas.microsoft.com/Extension">Extension1</ExtensionValue>)  (Name = Extention2, Value = <ExtensionValue FakeAttr="AttrValue" xmlns="http://schemas.microsoft.com/Extension">Extension2</ExtensionValue>) ]
+
+Enumerating ServiceGroupTypes...
+StatefulTypeDescription: ServiceTypeName = StatefulServiceGroupType, PlacementConstraints = '', HasPersistedState = 1
+LoadMetrics: [ (Name = MetricA, PrimaryDefaultLoad = '8', SecondaryDefaultLoad = '5', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_LOW')  (Name = MetricC, PrimaryDefaultLoad = '9', SecondaryDefaultLoad = '5', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_LOW')  (Name = MetricD, PrimaryDefaultLoad = '3', SecondaryDefaultLoad = '5', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_LOW') ]
+Extensions: [ (Name = Extension, Value = <ExtensionValue FakeAttr="AttrValue" xmlns="http://schemas.microsoft.com/Extension">SGExtension</ExtensionValue>) ]
+UseImplicitFactory = 1
+ServiceGroupTypeMembers: [(StatefulServiceGroupTypeA LoadMetrics: [ (Name = MetricA, PrimaryDefaultLoad = '8', SecondaryDefaultLoad = '5', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_MEDIUM')  (Name = MetricC, PrimaryDefaultLoad = '9', SecondaryDefaultLoad = '5', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_HIGH') ])(StatefulServiceGroupTypeB LoadMetrics: [ (Name = MetricD, PrimaryDefaultLoad = '3', SecondaryDefaultLoad = '5', Weight = 'FABRIC_SERVICE_LOAD_METRIC_WEIGHT_MEDIUM') ])]
+
+Enumerating Endpoints...
+Endpoint: Name=EndpointA, Protocol=https, Type=Input, Port=30000, Certificate='', UriScheme='', PathSuffix='', CodePackageName='CodeA', IpAddressOrFqdn='1.1.1.1'
+Endpoint: Name=EndpointB, Protocol=https, Type=Internal, Port=30001, Certificate='text', UriScheme='', PathSuffix='', CodePackageName='', IpAddressOrFqdn='2.2.2.2'
+
+Enumerating Users...
+User: Name = UserA, SID = S-1-5-21-3457078528-3974835590-2308132456-15633
+ParentApplicationGroups: GroupA
+ParentSystemGroups: PowerUsers Administrators
+
+User: Name = UserB, SID = S-1-5-21-3457078528-3974835590-2308132456-15634
+ParentApplicationGroups: GroupB
+
+Enumerating Groups...
+Group: Name = GroupA, SID = S-1-5-21-3457078528-3974835590-2308132456-15631
+DomainUserMembers: DomainUser1 DomainUser2
+SystemGroupMembers: Users
+Group: Name = GroupB, SID = S-1-5-21-3457078528-3974835590-2308132456-15632
+DomainGroupMembers: DomainGroup
+SystemGroupMembers: Administrators
+
+Enumerating CodePackages...
+CodePackageDescription: Name = CodeA, Version = 1.0, ServiceManifestName = ServicePackage, ServiceManifestVersion = 1.0, Path = {0}\Applications\Application_App0\ServicePackage.CodeA.1.0
+IsShared = 1, IsolationPolicy = DedicatedProcess, EntryPointType = ExeHost, EntryPoints = CodeA.exe, SetupEntryPoint = SetupA.exe
+CodePackageDescription: Name = CodeB, Version = 1.0, ServiceManifestName = ServicePackage, ServiceManifestVersion = 1.0, Path = {0}\Applications\Application_App0\ServicePackage.CodeB.1.0
+IsShared = 0, IsolationPolicy = SharedDomain, EntryPointType = DllHost, EntryPoints = ManagedAssembly.CodeBManaged.dll UnmanagedDll.CodeBUnManaged.dll, SetupEntryPoint = SetupB.exe
+
+Enumerating ConfigPackages...
+ConfigPackageDescription: Name = ConfigA, Version = 1.0, Path = {0}\Applications\Application_App0\ServicePackage.ConfigA.1.0
+ConfigurationSection SectionA : [ (Name = Param1, Value = Override_1000)  (Name = Param2, Value = False) ]
+ConfigurationSection SectionB : [ (Name = Param1, Value = Override_False)  (Name = Param2, Value = String)  (Name = Param3, Value = 256)  (Name = Param4, Value = String) ]
+ConfigurationSection SectionC : [ (Name = Param1, Value = Override_500000) ]
+ConfigPackageDescription: Name = ConfigB, Version = 1.0, Path = {0}\Applications\Application_App0\ServicePackage.ConfigB.1.0
+ConfigurationSection SectionA : [ (Name = Param1, Value = 100)  (Name = Param2, Value = Override_True)  (Name = Param3, Value = 256)  (Name = Param4, Value = Override_65536) ]
+ConfigurationSection SectionB : [ (Name = Param1, Value = True)  (Name = Param2, Value = Override_NewValueString) ]
+
+Enumerating DataPackages...
+DataPackageDescription: Name = DataA, Version = 1.0, Path = {0}\Applications\Application_App0\ServicePackage.DataA.1.0
+DataPackageDescription: Name = DataB, Version = 1.0, Path = {0}\Applications\Application_App0\ServicePackage.DataB.1.0

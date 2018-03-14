@@ -1,0 +1,113 @@
+votes 10 20 30 40 50
+cmservice 0 0
+namingservice 1 1 1
+cleantest
+
+set OfflineReplicaKeepDuration 5
+set QuorumLossWaitDuration 5
+set ServiceLocationBroadcastInterval 1
+
++10
++20
++30
++40
++50
+verify
+
+#
+# Ensure stability of Naming service before proceeding
+#
+createname fabric:/caching
+
+######################################################
+# Testcase 1: On errors, all cache entries for a name should be cleared
+#
+# Create a service with multiple partitions 
+# Resolve keys that map to different partitions and populate client cache.
+# Delete service using another fabric client (so the cache is not affected on this node).
+# Resolve one partition with previous value => refresh (go to gateway)
+# 	This should clear all entries
+# Resolve the other partition without refresh - should return updated information 
+# 
+######################################################
+
+createservice fabric:/caching/testcase1 CalculatorServiceType n 2 2 lowRange=0 highRange=90
+verify
+
+createclient client1 nodeconfig=10
+
+resolveusingclient client1 fabric:/caching/testcase1 12 cache=cache1 
+resolveusingclient client1 fabric:/caching/testcase1 88 cache=unusedcache1
+
+deleteservice fabric:/caching/testcase1 nodeconfig=20
+verify
+
+# wait for FM broadcast
+!pause 3
+
+resolveusingclient client1 fabric:/caching/testcase1 12 cache=cache1 error=UserServiceNotFound
+resolveusingclient client1 fabric:/caching/testcase1 88 cache=unusedcache2 error=UserServiceNotFound
+
+####################################################################
+# Testcase 2: GetServiceDescription should clear all cache entries for the service name
+#
+# Create a service with multiple partitions 
+# Resolve a key and populate client cache.
+# Delete service using another fabric client (so the cache is not affected on this node).
+# GetServiceDescription encounters error, should clear cache entries
+# Resolve partition without refresh - should return updated information 
+# 
+####################################################################
+
+createservice fabric:/caching/testcase2 CalculatorServiceType n 2 2
+verify
+
+createclient client2 nodeconfig=10
+
+resolveusingclient client2 fabric:/caching/testcase2 11 cache=unusedcache1
+
+deleteservice fabric:/caching/testcase2 nodeconfig=20
+verify
+
+# wait for FM broadcast
+!pause 3
+
+getservicedescriptionusingclient client2 fabric:/caching/testcase2 UserServiceNotFound
+
+resolveusingclient client2 fabric:/caching/testcase2 11  cache=unusedcache2 error=UserServiceNotFound
+
+################################################
+# Testcase 2: Successful resolution that shows service metadata changed should clear all old cache entries for the service name
+#
+# Create a service with multiple partitions 
+# Resolve keys that map to different partitions and populate client cache.
+# Delete service using another fabric client (so the cache is not affected on this node).
+# Re-create service with different partition information
+# Resolve one partition with refresh - new result should be returned
+#	This should clear all old entries
+# Resolve second partition without refresh - new result should be returned
+# 
+################################################
+
+createservice fabric:/caching/testcase3 CalculatorServiceType n 2 2 lowRange=0 highRange=90
+verify
+
+createclient client3 nodeconfig=30
+
+resolveusingclient client3 fabric:/caching/testcase3 17 cache=cache3 
+resolveusingclient client3 fabric:/caching/testcase3 27 cache=cache4
+
+deleteservice fabric:/caching/testcase3 nodeconfig=20
+verify
+
+# wait for FM broadcast
+!pause 3
+
+createservice fabric:/caching/testcase3 CalculatorServiceType n 2 2 lowRange=0 highRange=1000
+
+resolveusingclient client3 fabric:/caching/testcase3 17 cache=cache3 compareVersionError=ServiceMetadataMismatch
+resolveusingclient client3 fabric:/caching/testcase3 27 cache=unusedcache2 
+resolveusingclient client3 fabric:/caching/testcase3 27 cache=cache4 compareVersionError=ServiceMetadataMismatch
+
+
+!q

@@ -1,0 +1,90 @@
+##############################################################################################################################
+# RDBUg 8850593 - Add commands in fabric test to wait for a particular lsn to ALL apply ack'd and a particular lsn to be ALL receive ack'd
+# [owner - hanagar]
+#
+#   1. Add 2 operations to the target service
+#   2. Verify LSN 2 has been received and apply ack'd by all secondaries
+#   3. Move secondary from 20 to 10, report fault on primary
+#   4. Wait for reconfiguration to complete
+#   5. Add 2 more operations to the service, Verify LSN 4 receive and apply ack'd
+#   6. Add 2 more operations to the service, Verify LSN 6 receive and apply ack'd
+##############################################################################################################################
+
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set UserReplicaRestartWaitDuration 1
+set MaxApiDelayInterval 10
+set MinApiDelayInterval 10
+
++10
++20
++30
+verify
++40
++50
++60
+verify 
+
+
+# This test requires for services to ACK operations on the secondary
+createname fabric:/test1
+createservice fabric:/test1 TestStoreServiceType y 1 5 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true;RE_SecondaryClearAcknowledgedOperations:true
+verify
+
+# Do some replication operations on the primary 
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 10Data2
+
+# Wait for LSN 2 to be receive/apply ack'd
+waitforalltoapplylsn fabric:/test1 60 2
+
+# move secondary from 20 to 10 -> This will initiate S->N for node 20
+movesecondary fabric:/test1 20 10 
+!waitforstate FM.Replica.Role.fabric:/test1.20 None
+
+# report fault on primary replica 60
+reportfault 60 fabric:/test1 transient
+
+# Wait for FM to know the primary went down
+!waitforstate FM.Replica.IsUp.fabric:/test1.60 false 
+
+# Do some client operations while reconfig is stuck in phase4_activate
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 Phase4_Activate
+!pause 2
+
+clientput fabric:/test1 30 10Data3
+clientput fabric:/test1 40 10Data4
+
+# Wait for LSN 4 to be receive/apply ack'd
+waitforalltoapplylsn fabric:/test1 50 4
+
+# These puts will happen post the reconfig being complete
+clientput fabric:/test1 50 10Data5
+clientput fabric:/test1 60 10Data6
+
+# Wait for LSN 6 to be receive/apply ack'd
+waitforalltoapplylsn fabric:/test1 50 6
+
+verify
+
+injectfailure 50 fabric:/test1 pump.replication.delay
+injectfailure 40 fabric:/test1 pump.replication.delay
+injectfailure 30 fabric:/test1 pump.replication.delay
+
+clientput fabric:/test1 70 10Data7
+clientput fabric:/test1 80 10Data8
+clientput fabric:/test1 90 10Data9
+
+# Wait for LSN 9 to be receive/apply ack'd
+# Set timeout to 35 seconds since delay is 10
+# Below call should not timeout before lsn 9 is reached
+waitforalltoapplylsn fabric:/test1 50 9 35
+
+verify
+!q

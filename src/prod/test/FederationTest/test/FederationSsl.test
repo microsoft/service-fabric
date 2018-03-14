@@ -1,0 +1,27 @@
+set CredentialType X509
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 100
+clearticket
++100
++1000
++2000
++3000
++4000
+verify
+-4000
+-3000
+-2000
+verify
+-1000
+verify
+-100
+verify
+
+# Delay to prevent kernel lease agent reusing in different security setting
+-*
+!pause 30
+
+!q

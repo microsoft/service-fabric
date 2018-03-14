@@ -1,0 +1,8 @@
+add_subdirectory(tstore)
+add_subdirectory(logicallog)
+add_subdirectory(txnreplicator)
+add_subdirectory(utilities)
+add_subdirectory(testcommon)
+add_subdirectory(integration)
+add_subdirectory(interop)
+add_subdirectory(reliableconcurrentqueue)

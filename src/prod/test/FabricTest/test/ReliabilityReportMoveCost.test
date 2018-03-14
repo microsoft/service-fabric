@@ -1,0 +1,60 @@
+# [owner:nipuzovi]
+#
+# This test validates ReportMoveCost scenarios
+#
+
+set DummyPLBEnabled true
+set SendLoadReportInterval 1
+set HealthOperationTimeout 5
+set HealthReportSendInterval 3
+set HealthReportRetrySendInterval 5
+set HealthStoreCleanupInterval 1
+set PeriodicStateCleanupScanInterval 1
+set UserReplicaRestartWaitDuration 300
+set UseMoveCostReports true
+
+votes 10 20 30
+cmservice 3 2
+namingservice 1 3 2
+cleantest
+
++10
++20
++30
+verify
+
++40
+verify
+
+createname fabric:/stateless
+createservice fabric:/stateless CalculatorServiceType n 1 3 
+
+verify
+
+!waitforstate FM.Replica.State.fabric:/stateless.20 Ready
+!waitforstate FM.Replica.State.fabric:/stateless.30 Ready
+!waitforstate FM.Replica.State.fabric:/stateless.40 Ready
+
+set MaxNumberOfLoadReportsPerMessage 1
+
+reportmovecost fabric:/stateless 40 3
+
+# The command itself will wait for the value to propagate.
+verifymovecostvalue fabric:/stateless none 3
+
+createname fabric:/volatile
+createservice fabric:/volatile TestStoreServiceType y 1 3 
+
+verify
+
+!waitforstate FM.Replica.Role.fabric:/volatile.40 Primary
+!waitforstate FM.Replica.Role.fabric:/volatile.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/volatile.20 Secondary
+
+reportmovecost fabric:/volatile 40 2
+reportmovecost fabric:/volatile 30 1
+
+verifymovecostvalue fabric:/volatile Primary 2
+verifymovecostvalue fabric:/volatile Secondary 1
+
+!q

@@ -1,0 +1,65 @@
+votes 10
+fmservice 1 1
+namingservice 1 1 1
+cmservice 0 0
+set IsBackupTest true
+cleantest
++10
+verify
+
+###############################################################
+# Testcase 1: Simple backup, then incremental backup and restore
+#
+###############################################################
+
+createservice fabric:/testcase1 TestPersistedStoreServiceType y 1 1 persist lowRange=0 highRange=9 initdata=Store_EnableIncrementalBackup:true
+verify
+
+clientput fabric:/testcase1 0 hello
+!wait
+clientget fabric:/testcase1 0 hello
+!wait
+verify
+
+# initial attempt at incremental backup (should fail since a full backup is needed first)
+clientbackup fabric:/testcase1 0 BackupRestore2.test.Data\backup_dir\incremental1 backupOption=incremental error=MissingFullBackup
+verify
+
+# initial backup after inserting a few records
+clientbackup fabric:/testcase1 0 BackupRestore2.test.Data\backup_dir\full
+!wait
+
+clientput fabric:/testcase1 0 world
+!wait
+clientget fabric:/testcase1 0 world
+verify
+
+# incremental backup
+clientbackup fabric:/testcase1 0 BackupRestore2.test.Data\backup_dir\incremental1 backupOption=incremental
+
+# Merge the contents of the full and incremental backups
+xcopy BackupRestore2.test.Data\backup_dir\full\new BackupRestore2.test.Data\backup_dir\merged true
+xcopy BackupRestore2.test.Data\backup_dir\incremental1 BackupRestore2.test.Data\backup_dir\merged true
+!wait
+
+# Restore the contents by deleting the existing service, creating a new one and then verify
+deleteservice fabric:/testcase1
+!wait
+verify
+
+createservice fabric:/testcase1 TestPersistedStoreServiceType y 1 1 persist lowRange=0 highRange=9
+!wait
+verify
+
+clientrestore fabric:/testcase1 0 BackupRestore2.test.Data\backup_dir\merged
+
+# restore does a ReportFault(Transient). The 'pause' is a crude way to allow the 
+# transient fault to restart the replica before doing a clientget
+!pause 10
+verify
+
+clientget fabric:/testcase1 0 world
+!wait
+verify
+
+!q

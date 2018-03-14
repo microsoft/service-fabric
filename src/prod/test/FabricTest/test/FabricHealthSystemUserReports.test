@@ -1,0 +1,174 @@
+#
+# This test validates Health Subsystem scenarios
+# where user reports come before the system reports.
+# When system reports come, they should override the user ones and the entities should be in correct state.
+# Reports are bypassing client, they are simply given to HM through test hook to be able to test with expected report order.
+#
+votes 10
+fmservice 3 1
+cmservice 3 1
+namingservice 3 1 1
+
+set HealthOperationTimeout 30
+set HealthReportSendInterval 30
+set HealthReportRetrySendInterval 5
+set DummyPLBEnabled true
+set ReportHealthThroughHMPrimary true
+cleantest
+
+# Block the reports from being sent, so system reports do not reach HM
+addbehavior b1 * * ReportHealth
+
++10
++20
++30
++40
++50
+verify
+
+#################################################################
+# Testcase 0: User reports before system reports.
+# Put reports on different entities directly on HM.
+# They are processed before system reports; the entities are not visible because they don't have system reports.
+#################################################################
+
+#
+# Create app with a stateless service and a stateful service
+#
+
+# CM calls directly HM, so the application entity is created on create application call
+# Send user report before that, with instance 1
+queryhealth application appname=fabric:/app1/FabricHealth_test expectempty=true "expectederrormessage=Entity not found"
+reporthealthinternal application appname=fabric:/app1/FabricHealth_test sequencenumber=8 healthstate=error
+
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicepack version10 ServicePackageB version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful
+app.servicetypes version10 ServicePackageB ServiceTypeB1 stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.codepack version10 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0
+app.reqservices version10 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.reqservices version10 ServiceB1 ServiceTypeB1 stateless partition=1 instance=3
+app.upload version10
+provisionapp version10
+createapp fabric:/app1/FabricHealth_test TestApp 1.0 
+verify
+
+queryhealth node nodeid=10 expectempty=true "expectederrormessage=Entity not found"
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectempty=true "expectederrormessage=Entity not found"
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceB1 expectempty=true "expectederrormessage=Entity not found"
+queryhealth partition partitionid=fabric:/app1/FabricHealth_test/ServiceA1#0 expectempty=true "expectederrormessage=Entity not found"
+queryhealth partition partitionid=fabric:/app1/FabricHealth_test/ServiceB1#0 expectempty=true "expectederrormessage=Entity not found"
+queryhealth replica replicaid=fabric:/app1/FabricHealth_test/ServiceA1#0#0 expectempty=true "expectederrormessage=Entity not found"
+queryhealth replica replicaid=fabric:/app1/FabricHealth_test/ServiceB1#0#0 expectempty=true "expectederrormessage=Entity not found"
+
+# Report on node using the right instance and the unknown instance
+reporthealthinternal node nodeid=10 sequencenumber=1 healthstate=warning
+reporthealthinternal node nodeid=20 node.instanceid=0 sequencenumber=1 healthstate=error
+
+# Report on stateful replica using the right instance
+reporthealthinternal replica replicaid=fabric:/app1/FabricHealth_test/ServiceA1#0#0 sequencenumber=6 healthstate=warning
+
+# Report on stateless replica (no instance required)
+reporthealthinternal instance replicaid=fabric:/app1/FabricHealth_test/ServiceB1#0#0 sequencenumber=7 healthstate=warning
+
+# Report on partition (no instance)
+reporthealthinternal partition partitionid=fabric:/app1/FabricHealth_test/ServiceA1#0 sequencenumber=4 healthstate=warning
+reporthealthinternal partition partitionid=fabric:/app1/FabricHealth_test/ServiceB1#0 sequencenumber=5 healthstate=error
+
+# Report on services
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_test/ServiceA1 sequencenumber=2 healthstate=error
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_test/ServiceB1 sequencenumber=3 healthstate=error
+
+queryhealth node nodeid=10 expectempty=true "expectederrormessage=no System report"
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectempty=true "expectederrormessage=no System report"
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceB1 expectempty=true "expectederrormessage=no System report"
+queryhealth partition partitionid=fabric:/app1/FabricHealth_test/ServiceA1#0 expectempty=true "expectederrormessage=no System report"
+queryhealth partition partitionid=fabric:/app1/FabricHealth_test/ServiceB1#0 expectempty=true "expectederrormessage=no System report"
+queryhealth replica replicaid=fabric:/app1/FabricHealth_test/ServiceA1#0#0 expectempty=true "expectederrormessage=no System report"
+queryhealth replica replicaid=fabric:/app1/FabricHealth_test/ServiceB1#0#0 expectempty=true "expectederrormessage=no System report"
+
+# Let the system reports go through
+removebehavior b1
+
+# System report and user report combined, node has same instance
+queryhealth node nodeid=10 expectedhealthstate=warning
+
+# System report replaces user report because of correct instance
+queryhealth node nodeid=20 expectedhealthstate=ok
+
+# Stateful replica has instance, system report merged with the user reports
+queryhealth replica replicaid=fabric:/app1/FabricHealth_test/ServiceA1#0#0 expectedhealthstate=warning expectedeventscount=2
+
+# Stateless instance has no instance, reports are combined
+queryhealth replica replicaid=fabric:/app1/FabricHealth_test/ServiceB1#0#0 expectedhealthstate=warning expectedeventscount=2
+
+# Partition has no instance, so the reports are combined
+queryhealth partition partitionid=fabric:/app1/FabricHealth_test/ServiceA1#0 expectedhealthstate=warning expectedeventscount=2
+queryhealth partition partitionid=fabric:/app1/FabricHealth_test/ServiceB1#0 expectedhealthstate=error expectedeventscount=2
+
+# System service reports overwrite the user reports
+queryhealth service service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedhealthstate=warning expectedeventscount=1
+queryhealth service service servicename=fabric:/app1/FabricHealth_test/ServiceB1 expectedhealthstate=error expectedeventscount=1
+
+# System app report replaces user report
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=error expectedeventscount=1
+
+#################################################################
+# Testcase 1: Replica kind mismatch between user and system reports
+# User reports arrive before system reports.
+#################################################################
+# Block the reports from being sent, so system reports do not reach HM
+addbehavior b1 * * ReportHealth
+
+#
+# Create another app with a stateless service and a stateful service
+#
+createapp fabric:/app2/FabricHealth_test TestApp 1.0 
+verify
+
+queryhealth service servicename=fabric:/app2/FabricHealth_test/ServiceA1 expectempty=true "expectederrormessage=Entity not found"
+queryhealth service servicename=fabric:/app2/FabricHealth_test/ServiceB1 expectempty=true "expectederrormessage=Entity not found"
+queryhealth partition partitionid=fabric:/app2/FabricHealth_test/ServiceA1#0 expectempty=true "expectederrormessage=Entity not found"
+queryhealth partition partitionid=fabric:/app2/FabricHealth_test/ServiceB1#0 expectempty=true "expectederrormessage=Entity not found"
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceA1#0#0 expectempty=true "expectederrormessage=Entity not found"
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#0 expectempty=true "expectederrormessage=Entity not found"
+
+# Report on stateful replica as an instance
+reporthealthinternal instance replicaid=fabric:/app2/FabricHealth_test/ServiceA1#0#0 sequencenumber=9 healthstate=warning
+
+# Report on stateless instance as replica, with no instance
+reporthealthinternal replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#0 replica.instanceid=-1 sequencenumber=10 healthstate=warning
+
+# Report on stateless instance as replica, with instance (as System); set dummy node as attribute
+reporthealthinternal replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#1 sequencenumber=11 healthstate=warning sourceid=System.RA nodeid=20
+
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceA1#0#0 expectempty=true "expectederrormessage=no System report"
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#0 expectempty=true "expectederrormessage=no System report"
+# Replica not visible even if it has system report because hierarchy reports are missing
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#1 expectempty=true "expectederrormessage=parent entity is not found"
+
+# Let system reports come in
+removebehavior b1
+
+# Stateful replica: system report replaces the user report for instance
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceA1#0#0 expectedhealthstate=ok
+
+# Stateless instance: system report replaces the user report 
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#0 expectedhealthstate=ok
+
+# Stateless instance: system report doesn't replace the previous system report with mismatched kind
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#1 expectedhealthstate=warning
+
+# Send user reports with mismatched kinds
+# Report on stateful replica as an instance again
+reporthealthinternal instance replicaid=fabric:/app2/FabricHealth_test/ServiceA1#0#0 sequencenumber=12 healthstate=warning expectederror=InvalidArgument
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceA1#0#0 expectedhealthstate=ok
+
+# Report on stateless instance as replica, with no instance
+reporthealthinternal replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#0 replica.instanceid=-1 sequencenumber=13 healthstate=warning expectederror=InvalidArgument
+queryhealth replica replicaid=fabric:/app2/FabricHealth_test/ServiceB1#0#0 expectedhealthstate=ok
+
+!q

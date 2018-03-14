@@ -1,0 +1,188 @@
+votes 10 20 30
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+set DummyPLBEnabled true
+set SendLoadReportInterval 1
+set HealthOperationTimeout 30
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 10
+
+
+cleantest
++10 cap=memory:10,disk:10,cpu:10,battery:10,metricthatblocksplacement:1
++20 cap=memory:10,disk:10,cpu:10,battery:10,metricthatblocksplacement:1
++30 cap=memory:10,disk:10,cpu:10,battery:100,metricthatblocksplacement:1
++40 cap=memory:10,disk:10,cpu:100,battery:0,metricthatblocksplacement:1
++50 cap=memory:10,disk:100,cpu:0,battery:0,metricthatblocksplacement:1
++60 cap=memory:100,disk:0,cpu:0,battery:0,metricthatblocksplacement:1
+Verify
+
+
+#Create a bunch of services using these metrics
+
+createname fabric:/stateless
+createservice fabric:/stateless CalculatorServiceType n 1 3 metrics=memory,Low,9,0
+verify
+
+createname fabric:/pseudostateless
+createservice fabric:/pseudostateless CalculatorServiceType n 1 3 metrics=disk,Low,1,0
+verify
+
+createname fabric:/statefulpersisted
+createservice fabric:/statefulpersisted TestPersistedStoreServiceType y 1 2 persist metrics=memory,Medium,5,5,disk,High,5,5
+verify
+
+createname fabric:/memorylessproc
+createservice fabric:/memorylessproc CalculatorServiceType n 1 3 metrics=cpu,Low,9,0
+verify
+
+createname fabric:/batteryguzzler
+createservice fabric:/batteryguzzler CalculatorServiceType n 1 3 metrics=battery,Low,9,0
+verify
+
+set PeriodicLoadPersistInterval 1
+
+
+reportload fabric:/stateless 40 memory=9
+
+#Wait for Load Reports to Persist at the FM, for the PLB to detect the updated loads, and create health reports based on them
+!pause 5
+verifyloadvalue fabric:/stateless memory none 9 40
+queryhealth node nodeid=10 expectedhealthstate=ok
+queryhealth node nodeid=20 expectedhealthstate=ok
+queryhealth node nodeid=30 expectedhealthstate=ok
+queryhealth node nodeid=40 expectedhealthstate=ok
+queryhealth node nodeid=50 expectedhealthstate=ok
+queryhealth node nodeid=60 expectedhealthstate=ok
+
+reportload fabric:/stateless 40 memory=90
+reportload fabric:/pseudostateless 40 disk=90
+
+#Wait for Load Reports to Persist at the FM for the PLB to detect the updated loads, and create health reports based on them
+!pause 5
+verifyloadvalue fabric:/stateless memory none 90 40
+verifyloadvalue fabric:/pseudostateless disk none 90 40
+
+queryhealth node nodeid=10 expectedhealthstate=ok
+queryhealth node nodeid=20 expectedhealthstate=ok
+queryhealth node nodeid=40 expectedhealthstate=warning "expecteddesc=Capacity_disk:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:40, disk, 10, 90]"
+queryhealth node nodeid=40 expectedhealthstate=warning "expecteddesc=Capacity_memory:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:40, memory, 10, 90]"
+queryhealth node nodeid=60 expectedhealthstate=ok
+
+reportload fabric:/stateless 40 memory=0
+reportload fabric:/statefulpersisted 30 memory=100
+reportload fabric:/statefulpersisted 30 disk=95
+
+#Wait for Load Reports to Persist at the FM, for the previous warnings to expire,  for the PLB to detect the updated loads, and create health reports based on them
+!pause 5
+verifyloadvalue fabric:/stateless memory none 0 40
+verifyloadvalue fabric:/statefulpersisted memory primary 100
+verifyloadvalue fabric:/statefulpersisted disk primary 95
+
+queryhealth node nodeid=10 expectedhealthstate=ok
+queryhealth node nodeid=20 expectedhealthstate=ok
+queryhealth node nodeid=30 expectedhealthstate=warning "expecteddesc=Capacity_memory:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:30, memory, 10, 100]"
+queryhealth node nodeid=30 expectedhealthstate=warning "expecteddesc=Capacity_disk:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:30, disk, 10, 95]"
+queryhealth node nodeid=40 expectedhealthstate=warning "expecteddesc=Capacity_disk:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:40, disk, 10, 90]"
+queryhealth node nodeid=50 expectedhealthstate=ok
+queryhealth node nodeid=60 expectedhealthstate=ok
+
+reportload fabric:/memorylessproc 20 cpu=90
+reportload fabric:/statefulpersisted 20 disk=100
+
+
+#Wait for Load Reports to Persist at the FM for the PLB to detect the updated loads, and create health reports based on them
+!pause 5
+verifyloadvalue fabric:/memorylessproc cpu none 90 20
+verifyloadvalue fabric:/statefulpersisted disk secondary 100 20
+
+queryhealth node nodeid=10 expectedhealthstate=ok
+queryhealth node nodeid=20 expectedhealthstate=warning "expecteddesc=Capacity_disk:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:20, disk, 10, 100]"
+queryhealth node nodeid=20 expectedhealthstate=warning "expecteddesc=Capacity_cpu:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:20, cpu, 10, 90]"
+queryhealth node nodeid=30 expectedhealthstate=warning "expecteddesc=Capacity_memory:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:30, memory, 10, 100]"
+queryhealth node nodeid=30 expectedhealthstate=warning "expecteddesc=Capacity_disk:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:30, disk, 10, 95]"
+queryhealth node nodeid=40 expectedhealthstate=warning "expecteddesc=Capacity_disk:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:40, disk, 10, 90]"
+queryhealth node nodeid=50 expectedhealthstate=ok
+queryhealth node nodeid=60 expectedhealthstate=ok
+
+reportload fabric:/batteryguzzler 20 battery=200
+reportload fabric:/memorylessproc 20 cpu=0
+reportload fabric:/pseudostateless 40 disk=0
+reportload fabric:/statefulpersisted 30 disk=5
+
+#Wait for Load Reports to Persist at the FM for the PLB to detect the updated loads, and create health reports based on them
+!pause 5
+
+verifyloadvalue fabric:/memorylessproc cpu none 0 20
+verifyloadvalue fabric:/pseudostateless disk none 0 40
+verifyloadvalue fabric:/statefulpersisted disk primary 5
+
+queryhealth node nodeid=20 expectedhealthstate=warning "expecteddesc=Capacity_battery:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:20, battery, 10, 200]"
+queryhealth node nodeid=20 expectedhealthstate=warning "expecteddesc=Capacity_disk:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:20, disk, 10, 100]"
+queryhealth node nodeid=30 expectedhealthstate=warning "expecteddesc=Capacity_memory:The Cluster Resource Manager has detected a capacity violation for:[Node, Metric, Capacity, Load] = [nodeid:30, memory, 10, 100]"
+queryhealth node nodeid=40 expectedhealthstate=ok
+queryhealth node nodeid=50 expectedhealthstate=ok
+queryhealth node nodeid=60 expectedhealthstate=ok
+
+
+#Testing out Health Reporting when Service Replicas are Unabled to be Placed
+createname fabric:/servicethatwontgetplaced
+createservice fabric:/servicethatwontgetplaced CalculatorServiceType n 1 3 metrics=metricthatblocksplacement,Low,2,0
+
+#Wait for Service  Name creation to propagate and  have to wait for the duration required for VerboseHealthReportLimit failed attempts at placement
+!pause 12
+queryhealth service servicename=fabric:/servicethatwontgetplaced expectedhealthstate=warning
+
+#Disable Verbose Health Reporting
+toggleverboseserviceplacementhealthreporting false
+
+#Confirm Verbose Health Reporting
+!pause 17
+queryhealth service servicename=fabric:/servicethatwontgetplaced expectedhealthstate=ok
+
+#Enable Verbose Health Reporting
+toggleverboseserviceplacementhealthreporting true
+
+#Don't need to wait here because the count has racked up
+!pause 1
+
+queryhealth service servicename=fabric:/servicethatwontgetplaced expectedhealthstate=warning
+
++70 cap=memory:10,disk:10,cpu:100,battery:0,metricthatblocksplacement:10
++80 cap=memory:10,disk:100,cpu:0,battery:0,metricthatblocksplacement:10
++90 cap=memory:100,disk:0,cpu:0,battery:0,metricthatblocksplacement:10
+
+!pause 17
+
+queryhealth service servicename=fabric:/servicethatwontgetplaced expectedhealthstate=ok
+
+#Artificial Error Report to Test the CodePath
+reporthealth service sourceid=System.CRM servicename=fabric:/System/FailoverManagerService property=ServiceDescription healthstate=error
+queryhealth service servicename=fabric:/System/FailoverManagerService expectedhealthstate=error
+
+updateservice fabric:/System/FailoverManagerService Stateful TargetReplicaSetSize=5
+# Test that the property "ServiceDescription" points that FailoverManagerService was updated
+queryhealth service servicename=fabric:/System/FailoverManagerService expectedhealthstate=ok "expecteddesc=ServiceDescription:System/FailoverManagerService was updated successfully."
+
+
+# Test affinity violation cases. Child service can only be placed on 2 nodes because of the default CPU load
+# Remove the service so the nodes 90/80/70 can be empty for affinity test
+deleteservice fabric:/servicethatwontgetplaced
+verify
+
+# parent replicas should be on 90/80/70 and child replicas should be on 60/50/40
+
+createservice fabric:/childService TestStoreServiceType y 1 3 metrics=metricthatblocksplacement,High,10,10
+verify
+
+createservice fabric:/parentService TestStoreServiceType y 1 3 metrics=metricthatblocksplacement,High,1,1
+verify
+
+# update with affinity so that the child service would be in violation
+updateservice fabric:/childService Stateful servicecorrelations=fabric:/parentService,affinity
+verify
+
+queryhealth service servicename=fabric:/childService expectedhealthstate=warning
+
+!q

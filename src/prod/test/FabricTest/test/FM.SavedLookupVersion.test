@@ -1,0 +1,66 @@
+#
+# [owner] MMohsin, AlexWun, AnuragG
+#
+# This test case covers the scenario where a deleted partition has the hightest lookup version, which is successfully
+# saved and then restored on FM failover. The assertion is that the end lookup version should not go backwards on
+# FM failover even if the partition having the highest lookup version has been deleted.
+#
+
+votes 10
+cleantest
+fmservice 3 1
+cmservice 1 1
+namingservice 1 1 1
+
+set DummyPLBEnabled true
+set PlacementTimeLimit 5
+set DeletedReplicaKeepDuration 1
+set PeriodicStateCleanupScanInterval 5
+
++10
+verify
+
++20
++30
+verify
+
+swapprimary FMService 10 30
+verify
+
++40
++50
++60
+verify
+
+# Create services
+createservice fabric:/stateless CalculatorServiceType n 1 3
+createservice fabric:/volatile TestStoreServiceType y 1 3
+verify
+
+# Delete fabric:/stateless so that it has the highest lookup version
+deleteservice fabric:/stateless
+
+# Let another partition report health so that fabric:/stateless does not have highest health sequence number
+addbehavior b1 * * AddReplica
+UpdateService fabric:/volatile Stateful TargetReplicaSetSize=4
+
+# Wait until health has been reported
+queryhealth partition partitionid=fabric:/volatile#0 expectedhealthstate=warning
+
+# Ensure that the highest lookup version has been saved
+!var HighestLookupVersion FM.HighestLookupVersion
+!waitforstate FM.SavedLookupVersion <var.HighestLookupVersion>
+
+# Failover the FM
+abort 30
+
+# Verify that the correct end lookup version has been restored
+!waitforstate FM.HighestLookupVersion <var.HighestLookupVersion>
+
+removebehavior b1
+
+verify
+
+-*
+
+!q

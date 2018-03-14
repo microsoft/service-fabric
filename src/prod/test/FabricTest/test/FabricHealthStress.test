@@ -1,0 +1,180 @@
+#
+# This test validates Health Subsystem with sequence streaming related scenarios.
+# It uses internal health client in order to validate sequence stream progress and health client errors.
+#
+votes 10
+cmservice 3 1
+namingservice 5 1 1
+
+set DummyPLBEnabled true
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+set UseInternalHealthClient true
+set MaxNumberOfHealthReports 8
+set MaxNumberOfHealthReportsPerMessage 2
+
+cleantest
++10
++20
++30
++40
++50
+verify
+
+#
+# Add an ad-hoc stateless service
+#
+createservice fabric:/stateless CalculatorServiceType n 1 3
+verify
+
+# source1 and source2 are using sequence streams, source3 doesn't
+
+healthpreinitialize node sourceid=source1
+healthpreinitialize partition sourceid=source2
+
+healthgetprogress node sourceid=source1 expectedprogress=0
+healthgetprogress partition sourceid=source2  expectedprogress=0
+
+# Report health data on different entities
+
+# Enqueue more than client queue size and check error is received
+# Block the reports from being sent, so they are kept in the client queue
+addbehavior b1 * * ReportHealth
+
+reporthealth node sourceid=source1 nodeid=10                                              sequencenumber=0 healthstate=ok
+reporthealth node sourceid=source1 nodeid=20                                              sequencenumber=1 healthstate=ok
+reporthealth node sourceid=source1 nodeid=30                                              sequencenumber=2 healthstate=ok
+reporthealth node sourceid=source1 nodeid=40                                              sequencenumber=3 healthstate=ok
+reporthealth node sourceid=source1 nodeid=50                                              sequencenumber=4 healthstate=ok
+
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0                   sequencenumber=0 healthstate=warning
+
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#0                     sequencenumber=0 healthstate=error
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#1                     sequencenumber=1 healthstate=error
+
+# Report through source3; report is dropped because the reporting component has reached max number of queued reports
+reporthealth service sourceid=source3 servicename=fabric:/stateless serviceinstanceid=-1   sequencenumber=0 healthstate=ok expectederror=HealthMaxReportsReached
+
+removebehavior b1
+
+healthpostinitialize node sourceid=source1
+healthpostinitialize partition sourceid=source2
+
+healthgetprogress node sourceid=source1 expectedprogress=5
+healthgetprogress partition sourceid=source2  expectedprogress=1
+
+reporthealth node sourceid=source1 nodeid=10                                              sequencenumber=5 healthstate=ok
+reporthealth node sourceid=source1 nodeid=20                                              sequencenumber=6 healthstate=ok
+reporthealth node sourceid=source1 nodeid=30                                              sequencenumber=7 healthstate=ok
+reporthealth node sourceid=source1 nodeid=40                                              sequencenumber=8 healthstate=ok
+reporthealth node sourceid=source1 nodeid=50                                              sequencenumber=9 healthstate=ok
+
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0                   sequencenumber=1 healthstate=warning
+
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#0                     sequencenumber=2 healthstate=error
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#1                     sequencenumber=3 healthstate=error
+
+reporthealth node sourceid=source1 nodeid=10                                              sequencenumber=10 healthstate=ok
+reporthealth node sourceid=source1 nodeid=20                                              sequencenumber=11 healthstate=ok
+reporthealth node sourceid=source1 nodeid=30                                              sequencenumber=12 healthstate=ok
+reporthealth node sourceid=source1 nodeid=40                                              sequencenumber=13 healthstate=ok
+reporthealth node sourceid=source1 nodeid=50                                              sequencenumber=14 healthstate=ok
+
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0                   sequencenumber=2 healthstate=warning
+
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#0                     sequencenumber=4 healthstate=error
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#1                     sequencenumber=5 healthstate=error
+
+# Report with sequence number 0 again - report should be now sent to HM
+queryhealth service servicename=fabric:/stateless expectedeventcount=1 expectedhealthstate=error
+reporthealth service sourceid=source3 servicename=fabric:/stateless serviceinstanceid=-1   sequencenumber=0 healthstate=ok 
+queryhealth service servicename=fabric:/stateless expectedeventcount=2 expectedhealthstate=error
+
+reporthealth node sourceid=source1 nodeid=10                                              sequencenumber=15 healthstate=ok
+reporthealth node sourceid=source1 nodeid=20                                              sequencenumber=16 healthstate=ok
+reporthealth node sourceid=source1 nodeid=30                                              sequencenumber=17 healthstate=ok
+reporthealth node sourceid=source1 nodeid=40                                              sequencenumber=18 healthstate=ok
+reporthealth node sourceid=source1 nodeid=50                                              sequencenumber=19 healthstate=ok
+
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0                   sequencenumber=3 healthstate=warning
+
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#0                     sequencenumber=6 healthstate=error
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#1                     sequencenumber=7 healthstate=error
+
+reporthealth service sourceid=source3 servicename=fabric:/stateless                        sequencenumber=1 healthstate=ok 
+
+reporthealth node sourceid=source1 nodeid=10                                              sequencenumber=20 healthstate=ok
+reporthealth node sourceid=source1 nodeid=20                                              sequencenumber=21 healthstate=ok
+reporthealth node sourceid=source1 nodeid=30                                              sequencenumber=22 healthstate=ok
+reporthealth node sourceid=source1 nodeid=40                                              sequencenumber=23 healthstate=ok
+reporthealth node sourceid=source1 nodeid=50                                              sequencenumber=24 healthstate=ok
+
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0                   sequencenumber=4 healthstate=warning
+
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#0                     sequencenumber=8 healthstate=error
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#1                     sequencenumber=9 healthstate=error
+
+reporthealth service sourceid=source3 servicename=fabric:/stateless                        sequencenumber=2 healthstate=ok 
+
+reporthealth node sourceid=source1 nodeid=10                                              sequencenumber=25 healthstate=ok
+reporthealth node sourceid=source1 nodeid=20                                              sequencenumber=26 healthstate=ok
+reporthealth node sourceid=source1 nodeid=30                                              sequencenumber=27 healthstate=ok
+reporthealth node sourceid=source1 nodeid=40                                              sequencenumber=28 healthstate=ok
+reporthealth node sourceid=source1 nodeid=50                                              sequencenumber=29 healthstate=ok
+
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0                   sequencenumber=5 healthstate=warning
+
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#0                     sequencenumber=10 healthstate=error
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#1                     sequencenumber=11 healthstate=error
+
+reporthealth service sourceid=source3 servicename=fabric:/stateless                        sequencenumber=3 healthstate=ok 
+
+reporthealth node sourceid=source1 nodeid=10                                              sequencenumber=30 healthstate=ok
+reporthealth node sourceid=source1 nodeid=20                                              sequencenumber=31 healthstate=ok
+reporthealth node sourceid=source1 nodeid=30                                              sequencenumber=32 healthstate=ok
+reporthealth node sourceid=source1 nodeid=40                                              sequencenumber=33 healthstate=ok
+reporthealth node sourceid=source1 nodeid=50                                              sequencenumber=34 healthstate=ok
+
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0                   sequencenumber=6 healthstate=warning
+
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#0                     sequencenumber=12 healthstate=error
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#1                     sequencenumber=13 healthstate=error
+
+reporthealth service sourceid=source3 servicename=fabric:/stateless                        sequencenumber=4 healthstate=ok 
+
+reporthealth node sourceid=source1 nodeid=10                                              sequencenumber=35 healthstate=ok
+reporthealth node sourceid=source1 nodeid=20                                              sequencenumber=36 healthstate=ok
+reporthealth node sourceid=source1 nodeid=30                                              sequencenumber=37 healthstate=ok
+reporthealth node sourceid=source1 nodeid=40                                              sequencenumber=38 healthstate=ok
+reporthealth node sourceid=source1 nodeid=50                                              sequencenumber=39 healthstate=ok
+
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0                   sequencenumber=7 healthstate=warning
+
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#0                     sequencenumber=14 healthstate=error
+reporthealth instance sourceid=source2 replicaid=fabric:/stateless#0#1                     sequencenumber=15 healthstate=error
+
+reporthealth service sourceid=source3 servicename=fabric:/stateless                        sequencenumber=5 healthstate=warning 
+
+# Query and verify the health 
+queryhealth node nodeid=10 expectedhealthstate=ok
+# Partition health state takes into account the state of the replicas. Since one replica is at error, expect error
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=error
+queryhealth replica replicaid=fabric:/stateless#0#0 expectedhealthstate=error
+queryhealth service servicename=fabric:/stateless expectedhealthstate=error expectedeventcount=2
+
+# Check new progress
+healthgetprogress node sourceid=source1 expectedprogress=40
+healthgetprogress partition sourceid=source2  expectedprogress=8
+
+# Reset client
+resethealthclient
+
+healthpreinitialize node sourceid=source1
+healthpreinitialize partition sourceid=source2
+
+healthgetprogress node sourceid=source1 expectedprogress=40
+healthgetprogress partition sourceid=source2  expectedprogress=8
+queryhealth node nodeid=10 expectedhealthstate=ok
+
+!q

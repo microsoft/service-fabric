@@ -1,0 +1,41 @@
+set GlobalTicketLeaseDuration 5
+set GlobalTicketRenewInterval 0.5
+set BootstrapTicketLeaseDuration 2
+set BootstrapTicketAcquireLimit 1
+set PingInterval 1
+set OpenTimeout 30
+votes "sql1:SqlServer:Driver={SQL Server};Server=(local);Database=master;Trusted_Connection=yes"
+cleartickets
++0
+verify -st
+!pause,6
+verify -st
+-0
+verify -st
++0
+!pause,2
+!state Phase.0 B
+verify -st
++10
+verify -st
+-0
+!pause,6
+verify -st
+-10
+verify -st
+votes 100 200 "sql1:SqlServer:Driver={SQL Server};Server=(local);Database=master;Trusted_Connection=yes"
+cleartickets
++100 10070
+verify -st
+!pause,6
+verify -st
++200 10080
+verify -st
+!pause,65
+addbehavior block100 100 * ArbitrateRequest
+!expect,Node 100 Failed
+blockleaseagent 10070
+verify -st
+!pause,10
+verify -st
+!q

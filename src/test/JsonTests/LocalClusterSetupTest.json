@@ -1,0 +1,402 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "JapaneseClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "JapaneseClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "GermanClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "GermanClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChineseClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChineseClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ArabicClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-ARABIC",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ArabicClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-ARABIC",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "CzechClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-CZECH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "CzechClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-CZECH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "GreekClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-GREEK",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "GreekClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-GREEK",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "HebrewClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-HEBREW",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "HebrewClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-HEBREW",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "KoreanClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-KOREAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "KoreanClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-KOREAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RussianClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RussianClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SpanishClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-SPANISH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SpanishClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-SPANISH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ThaiClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-THAI",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ThaiClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-THAI",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "TurkishClusterSetupSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "Arguments": "-Secure $True",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "TurkishClusterSetupNonSecure",
+      "Type": "PowershellTest",
+      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "PSScriptName": ".\\ClusterDeploymentTest.ps1",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

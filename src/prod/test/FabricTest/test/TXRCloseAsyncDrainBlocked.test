@@ -1,0 +1,78 @@
+#
+# [owner]- Hanagar
+# 
+# Scenario:
+#  - 3 replica set, primary on 40, secondaries on 20, 30
+#  - Block replication to node 20
+#  - Block replication ack from node 30
+#  - Add operations to induce checkpoint on node 30 
+#       - After checkpoint signal is reached, block additional ack from node 30 to prevent further stabilization
+#  - Inject state provider CR failure on node 30
+
+!load FailoverCITConfigurationInitialization.test
+
+# Note - adding CM for queryhealth
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify  
+
+createservice fabric:/test TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4;TR_CheckpointThresholdInMB:1;TR_MinLogSizeInMB:1;TR_TruncationThresholdFactor:2;TR_ThrottlingThresholdFactor:3;
+
+!waitforstate FM.Replica.Role.fabric:/test.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test.20 Secondary
+verify
+
+# Block preparecheckpoint on secondary 30
+setsignal 30 fabric:/test provider2.preparecheckpoint.block
+
+# Block replication to node 20
+addbehavior b1 * 20 ReplicationOperation
+
+# Add operations
+clientput fabric:/test 0 a keycount=10 valsize=1048576 noverify=true error=Timeout
+clientput fabric:/test 10 b keycount=10 valsize=1048576 noverify=true error=Timeout
+
+# Confirm checkpoint has been reached
+waitforsignalhit 30 fabric:/test provider2.preparecheckpoint.block
+
+# Ensure replicationack is blocked from node 30
+# Preventing additional stabilization
+addbehavior b2 30 * ReplicationAck
+
+# Inject failure on state provider change role
+injectfailure 30 fabric:/test sp2.changeroleasync
+
+!pause 10
+
+# Report fault on node 30
+reportfault 30 fabric:/test transient
+
+# Unblock preparecheckpoint
+resetsignal 30 fabric:/test provider2.preparecheckpoint.block
+
+!pause 5
+
+# Remove changeroleasync failure
+removefailure 30 fabric:/test sp2.changeroleasync
+
+# Confirm replica closed successfully
+!waitforstate FM.Replica.State.fabric:/test.30 StandBy
+
+# Unblock replication and ack
+removebehavior b1
+removebehavior b2
+
+# Confirm any pending reconfiguration completes
+verify 
+!q

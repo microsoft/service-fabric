@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+db_get servicefabricsdkcommon/accepted-all-eula
+if [ "$RET" = "true" ]; then
+    echo "All versions of service fabric licenses have been auto accepted by setting servicefabricsdkcommon/accepted-all-eula"
+    exit 0
+fi
+
+db_get servicefabricsdkcommon/accepted-eula-ga
+if [ "$RET" = "true" ]; then
+    echo "Service Fabric license has already been accepted"
+    exit 0
+else
+    # show license again
+    db_fset servicefabricsdkcommon/presenteula seen false
+    db_fset servicefabricsdkcommon/accepted-eula-ga seen false
+fi
+
+db_input critical servicefabricsdkcommon/presenteula
+db_input critical servicefabricsdkcommon/accepted-eula-ga
+db_go

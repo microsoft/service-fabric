@@ -1,0 +1,62 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "LinuxScale_D2_NullStateful",
+      "Type": "Linux_ScriptTest",
+      "Owners": "anmola,xunlu,chenxu,jefchen",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "LinuxScale_D2_NullStateful.Test",
+        "ExecutionTimeout": "10000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "LinuxScale_D2_NullStateless",
+      "Type": "Linux_ScriptTest",
+      "Owners": "anmola,xunlu,chenxu,jefchen",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "LinuxScale_D2_NullStateless.Test",
+        "ExecutionTimeout": "10000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "WindowsScale_D2_NullStateful",
+      "Type": "Azure_ScriptTest",
+      "Owners": "anmola,xunlu,chenxu,jefchen",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "WindowsScale_D2_NullStateful.Test",
+        "ExecutionTimeout": "10000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "WindowsScale_D2_NullStateless",
+      "Type": "Azure_ScriptTest",
+      "Owners": "anmola,xunlu,chenxu,jefchen",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "WindowsScale_D2_NullStateless.Test",
+        "ExecutionTimeout": "10000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

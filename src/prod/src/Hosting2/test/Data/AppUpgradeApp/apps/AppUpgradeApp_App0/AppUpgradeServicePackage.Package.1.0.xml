@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="AppUpgradeServicePackage" 
+    ManifestVersion="1.0" 
+    RolloutVersion="1.0" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Description>Service that implements the AppUpgrade functionalities</Description>
+  <DigestedServiceTypes RolloutVersion="1.0">
+    <ServiceTypes>
+      <StatelessServiceType ServiceTypeName="AppUpgradeService" />
+    </ServiceTypes>
+  </DigestedServiceTypes>
+  <DigestedCodePackage RolloutVersion="1.0">
+    <CodePackage Name="AppUpgradeService.Code" Version="1.0">
+      <EntryPoint>
+          <ExeHost>
+              <Program>Service.exe</Program>
+              <ConsoleRedirection FileMaxSizeInKb="20" FileRetentionCount="4" />
+              <RunFrequency IntervalInSeconds="2" />
+          </ExeHost>
+      </EntryPoint>      
+    </CodePackage>
+  </DigestedCodePackage>
+  <DigestedConfigPackage RolloutVersion="1.0">
+    <ConfigPackage Name="AppUpgradeService.Config" Version="1.0" />
+  </DigestedConfigPackage>
+  <DigestedDataPackage RolloutVersion="1.0">
+    <DataPackage Name="AppUpgradeService.Data" Version="1.0" />
+  </DigestedDataPackage> 
+   <DigestedResources RolloutVersion="1.0">
+     <DigestedEndpoints>
+      <DigestedEndpoint>
+        <Endpoint Name="ServiceEndpoint3" Protocol="https" Port="80"/>
+        <EndpointBindingPolicy CertificateRef="TestCert1" EndpointRef="ServiceEndpoint3"/>
+      </DigestedEndpoint>
+    </DigestedEndpoints>
+    <DigestedCertificates>
+      <EndpointCertificate Name="TestCert1" X509FindValue="FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF F0" X509StoreName="MY" />  
+    </DigestedCertificates>
+  </DigestedResources>
+  <Diagnostics />
+</ServicePackage>

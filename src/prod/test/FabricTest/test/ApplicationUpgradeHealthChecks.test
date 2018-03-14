@@ -1,0 +1,172 @@
+#
+# Tests different application upgrade scenarios related to application health evaluation
+#
+votes 20 30 
+fmservice 7 2
+cmservice 3 1
+namingservice 1 3 1
+cleantest
+
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 2
+set UpgradeStatusPollInterval 5
+set UpgradeHealthCheckInterval 5
+
++10 ud=ud_1
++20 ud=ud_2
++30 ud=ud_3
++40 ud=ud_4
++50 ud=ud_2
++60 ud=ud_2
+verify
+
+#
+# JSON policy format can be found through ServiceModel::ApplicationHealthPolicy::ToString()
+# Undefined fields are defaulted
+#
+!string jsonapppolicy \
+{\
+    "ConsiderWarningAsError":false,\
+    "MaxPercentUnhealthyDeployedApplications":0,\
+    "DefaultServiceTypeHealthPolicy":\
+    {\
+        "MaxPercentUnhealthyServices":0,\
+        "MaxPercentUnhealthyPartitionsPerService":0,\
+        "MaxPercentUnhealthyReplicasPerPartition":0\
+    },\
+    "ServiceTypeHealthPolicyMap":[]\
+}\
+
+!string jsonapppolicy2 \
+{\
+    "ConsiderWarningAsError":false,\
+    "MaxPercentUnhealthyDeployedApplications":20,\
+    "DefaultServiceTypeHealthPolicy":\
+    {\
+        "MaxPercentUnhealthyServices":0,\
+        "MaxPercentUnhealthyPartitionsPerService":0,\
+        "MaxPercentUnhealthyReplicasPerPartition":0\
+    },\
+    "ServiceTypeHealthPolicyMap":[]\
+}\
+
+# add app to the cluster
+app.add version10 TestApp 1.0
+app.clear version10
+
+app.healthpolicy version10 jsonpolicy=<string.jsonapppolicy>
+
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.reqservices version10 ServiceA1 ServiceTypeA1 stateful partition=1 replica=6
+
+app.upload version10
+provisionapp version10
+
+createapp fabric:/app1/upgradetest TestApp 1.0
+verify
+
+# Application version 1.1: Add a new service package
+app.add version11 TestApp 1.1 version10
+
+app.servicepack version11 ServicePackageA version=1.1 configversion=1.1 dataversion=1.0
+app.servicepack version11 ServicePackageB version=1.1 configversion=1.1 dataversion=1.0
+
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes version11 ServicePackageB ServiceTypeB1 stateful
+
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1,ServiceTypeA2 version=1.1
+app.codepack version11 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.1
+app.codepack version11 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0
+
+app.reqservices version11 ServiceA1 ServiceTypeA1 stateful partition=1 replica=6
+app.reqservices version11 ServiceB1 ServiceTypeB1 stateful partition=1 replica=3
+
+app.upload version11
+provisionapp version11
+
+###################################
+# Application Upgrade failure testcases
+###################################
+
+###################################
+# Testcase 1.1: Service health checks
+###################################
+# Report health with error state for replica in application to trigger a rollback
+reporthealth replica replicaid=fabric:/app1/upgradetest/ServiceA1#0#2 sequencenumber=1 healthstate=error
+queryhealth replica replicaid=fabric:/app1/upgradetest/ServiceA1#0#2 expectedhealthstate=error
+
+upgradeapp fabric:/app1/upgradetest 1.1 Rolling upgrademode=monitored failaction=rollback healthcheckretry=0 healthcheckstable=0
+
+# Inform test that a rollback is expected for the application so that the verify validates that it is in original version
+setrollbackapp fabric:/app1/upgradetest 1.0 expectedreason=services,ServiceTypeA1,1,0 failurereason=HealthCheck
+
+verifyupgradeapp fabric:/app1/upgradetest 
+verify
+
+# Clear state
+reporthealth replica replicaid=fabric:/app1/upgradetest/ServiceA1#0#2 sequencenumber=2 healthstate=ok
+queryhealth replica replicaid=fabric:/app1/upgradetest/ServiceA1#0#2 expectedhealthstate=ok
+
+###################################
+# Testcase 1.2: Application event health checks
+###################################
+reporthealth application appname=fabric:/app1/upgradetest sequencenumber=1 healthstate=error
+queryhealth application appname=fabric:/app1/upgradetest expectedhealthstate=error
+
+upgradeapp fabric:/app1/upgradetest 1.1 Rolling upgrademode=monitored failaction=rollback healthcheckretry=0 healthcheckstable=0
+setrollbackapp fabric:/app1/upgradetest 1.0 expectedreason=event,FabricTest_Source,FabricTest_Property failurereason=HealthCheck
+
+verifyupgradeapp fabric:/app1/upgradetest
+verify
+
+# Clear state
+reporthealth application appname=fabric:/app1/upgradetest sequencenumber=2 healthstate=ok
+#There's still a UD violation for UD 2 as nodes 20,50,60 are all there and there's a primary and two secondaries in the same upgrade domain
+#The PLB detects this and will report a health warning for the UD constraint violation
+queryhealth application appname=fabric:/app1/upgradetest expectedhealthstate=warning
+
+###################################
+# Testcase 1.3: Deployed applications health checks
+###################################
+reporthealth deployedapplication nodeid=50 appname=fabric:/app1/upgradetest sequencenumber=1 healthstate=error
+queryhealth deployedapplication nodeid=50 appname=fabric:/app1/upgradetest expectedhealthstate=error
+
+reporthealth deployedapplication nodeid=60 appname=fabric:/app1/upgradetest sequencenumber=1 healthstate=error
+queryhealth deployedapplication nodeid=60 appname=fabric:/app1/upgradetest expectedhealthstate=error
+
+upgradeapp fabric:/app1/upgradetest 1.1 Rolling upgrademode=monitored failaction=rollback jsonpolicy=<string.jsonapppolicy> healthcheckretry=0 healthcheckstable=0
+setrollbackapp fabric:/app1/upgradetest 1.0 expectedreason=deployedapplications,2,0 failurereason=HealthCheck
+
+verifyupgradeapp fabric:/app1/upgradetest
+verify
+
+upgradeapp fabric:/app1/upgradetest 1.1 Rolling upgrademode=monitored failaction=rollback jsonpolicy=<string.jsonapppolicy2> healthcheckretry=0 healthcheckstable=0
+setrollbackapp fabric:/app1/upgradetest 1.0 expectedreason=deployedapplicationsperud,ud_2,2,20 failurereason=HealthCheck
+
+verifyupgradeapp fabric:/app1/upgradetest
+verify
+
+# Clear state
+reporthealth deployedapplication nodeid=50 appname=fabric:/app1/upgradetest sequencenumber=2 healthstate=ok
+queryhealth deployedapplication nodeid=50 appname=fabric:/app1/upgradetest expectedhealthstate=ok
+
+reporthealth deployedapplication nodeid=60 appname=fabric:/app1/upgradetest sequencenumber=2 healthstate=ok
+queryhealth deployedapplication nodeid=60 appname=fabric:/app1/upgradetest expectedhealthstate=ok
+
+###################################
+# Testcase 2: All healthy
+###################################
+
+#There's still a UD violation for UD 2 as nodes 20,50,60 are all there and there's a primary and two secondaries in the same upgrade domain
+#The PLB detects this and will report a health warning for the UD constraint violation
+queryhealth application appname=fabric:/app1/upgradetest expectedhealthstate=warning
+
+upgradeapp fabric:/app1/upgradetest 1.1 Rolling upgrademode=monitored healthcheckwait=5 healthcheckretry=10 failaction=rollback jsonpolicy=<string.jsonapppolicy> healthcheckstable=0
+verifyupgradeapp fabric:/app1/upgradetest
+verify
+
+unprovisionapp TestApp 1.0
+
+!q

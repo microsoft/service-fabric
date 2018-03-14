@@ -1,0 +1,126 @@
+###############################################################################
+# Test: PLBSingletonUpgradeWithConstraintCheck.test
+# Owners: apopadic, nipuzovi, yangli
+# This test verifies upgrade that singleton upgrade is not blocked if
+# constarint check movements is initiated just before the upgrade
+# Targeted scenario is:
+#  - Case when we ended up in following state: (P/LI S/V) repDiff = 0,
+#     and PLB should generate swap with moveInProgress replica
+###############################################################################
+votes 10 20 30
+fmservice 2 1
+namingservice 1 2 1
+cmservice 2 1
+cleantest
+
+# Enable predictability of initial replica placement
+set DummyPLBEnabled true
+# Disable load balancing in order to preserve predictability during test run
+set LoadBalancingEnabled false
+# Allow movement of replicas of services which have target replica count = 1, during upgrade
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+# Disable relaxed affinity during upgrade 
+set RelaxAffinityConstraintDuringUpgrade false
+# Set the FM expected upgrade durations
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+# Ensuring that service package deactivation is not too slow
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange 0
+# Do not restore singleton replica to original location after upgrade
+set RestoreReplicaLocationAfterUpgrade false
+
+# Add cluster nodes
++10 ud=UD1 cap=CPU:30
++20 ud=UD2 cap=CPU:100
++30 ud=UD3 cap=CPU:150
+verify
+
+# Initial application version
+app.add AppV1 MyApp v1
+app.clear AppV1
+app.servicepack AppV1 MyServicePackage version=v1 configversion=v1 dataversion=v1
+app.servicetypes AppV1 MyServicePackage VolatileServiceType stateful
+app.servicetypes AppV1 MyServicePackage PersistedServiceType stateful persist
+app.codepack AppV1 MyServicePackage VolatileCode types=VolatileServiceType version=v1
+app.codepack AppV1 MyServicePackage PersistedCode types=PersistedServiceType version=v1
+app.upload AppV1
+provisionapp AppV1
+
+# New application version
+app.add AppV2 MyApp v2
+app.clear AppV2
+app.servicepack AppV2 MyServicePackage version=v2 configversion=v1 dataversion=v1
+app.servicetypes AppV2 MyServicePackage VolatileServiceType stateful
+app.servicetypes AppV2 MyServicePackage PersistedServiceType stateful persist
+app.codepack AppV2 MyServicePackage VolatileCode types=VolatileServiceType version=v2
+app.codepack AppV2 MyServicePackage PersistedCode types=PersistedServiceType version=v2
+app.upload AppV2
+provisionapp AppV2
+
+#### Create application and services
+createapp fabric:/testApp MyApp v1
+createservice fabric:/testApp/VolatileService VolatileServiceType y 1 1 minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,50,50
+createservice fabric:/testApp/PersistedService PersistedServiceType y 1 1 persist minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,50,50
+createservice fabric:/testApp/KnobService VolatileServiceType y 1 1 minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,50,50
+verify
+nameexists fabric:/testApp true
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileService.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/PersistedService.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/KnobService.30 Ready
+
+# Disable the placement predictability
+set DummyPLBEnabled false
+
+# Do not allow reconfiguration P->S on node 30,
+# eventhough there is ready secondary on node 20
+addbehavior b1 * 30 DoReconfiguration
+
+# Create constraint violation by increasing the load of knob service
+# and forcing other replicas to be moved from node 30
+!var knobServicePartitionId FM.FT.PartitionId.fabric:/testApp/KnobService
+updateservice fabric:/testApp/KnobService Stateful metrics=CPU,High,150,150
+verifypartitionload <var.knobServicePartitionId> CPU 150 150
+
+# Wait for both secondaries to be build on node 20
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileService.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/PersistedService.20 Ready
+!waitforstate FM.Replica.Role.fabric:/testApp/VolatileService.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testApp/PersistedService.20 Secondary
+
+# Start application upgrade
+# This will increase singleton service target replica count to 2 in FM,
+# hence additional secondary with MoveInProgress flag, will not be dropped
+upgradeapp fabric:/testApp v2 Rolling upgrademode=manual
+verifyupgradeapp fabric:/testApp upgradedomains=UD1
+
+# Lower down the KnobService load, to allow primary replica to be moved back to node 30,
+# without another capacity violation movement
+updateservice fabric:/testApp/KnobService Stateful metrics=CPU,High,30,30
+verifypartitionload <var.knobServicePartitionId> CPU 30 30
+
+# Continue with the upgrade, and expected behavior is
+# that primary is swapped-out to MoveInProgress secondary
+# Nodes     :   10      20      30
+# Replicas              P/I     S/V
+upgradeappmovenext fabric:/testApp
+!pause 1
+
+# Allow primary swapout (swapback) and continue with UD2 upgrade (node 20)
+removebehavior b1
+
+verifyupgradeapp fabric:/testApp upgradedomains=UD2
+upgradeappmovenext fabric:/testApp
+verifyupgradeapp fabric:/testApp upgradedomains=UD3
+
+# Test case cleanup
+!pause 5
+deleteapp fabric:/testApp
+unprovisionapp MyApp v1
+unprovisionapp MyApp v2
+verify
+nameexists fabric:/testApp false
+
+-*
+
+!q

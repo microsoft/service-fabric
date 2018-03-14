@@ -1,0 +1,36 @@
+LIBRARY FabricClient
+EXPORTS
+    FabricCreateClient
+    FabricCreateLocalClient
+    FabricCreateClient2
+    FabricCreateLocalClient2
+    FabricCreateClient3
+    FabricCreateLocalClient3
+    FabricCreateLocalClient4
+    GetFabricClientDefaultSettings
+;   FabricGetClientDllVersion
+    FabricGetDefaultRollingUpgradeMonitoringPolicy
+    wmemcmp
+    wmemchr
+    wmemmove
+    wmemcpy
+    wmemset
+    wcslen
+    wcsnlen
+    wcscmp
+    wcsicmp
+    wcscpy
+    wcsncmp
+    wcsncpy
+    wcschr
+    wcsstr
+    wcsspn
+    wcscspn
+    wcslwr
+    wcslwr_s
+    wcsncat
+    wcsrchr
+    wcsrev
+    wcscasecmp
+    wcstod
+

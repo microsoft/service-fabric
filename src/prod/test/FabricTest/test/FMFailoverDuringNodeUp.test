@@ -1,0 +1,59 @@
+#
+# Scenario : Bring down FMM and FM primary when NodeUp is sent so that they miss the NodeUp message.
+#            When the new ones come up, they should receive a retried NodeUp.
+#
+set DummyPLBEnabled true
+set FMPlacementConstraints fmservice==true
+
+votes 10 20 30
+namingservice 1 3 2
+cleantest
+
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+fmservice 5 1
+set UserReplicaRestartWaitDuration 9999
+
+# Use placement constraint to make sure 10 is chosen as primary
+
++10 nodeprops=fmservice:true
++20 
+
+!waitforstate FM.Replica.Role.FMService.10 Primary
+
++30 nodeprops=fmservice:true
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
++60 nodeprops=fmservice:true
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+
+# Down some node where neither FMM nor the FM primary is present
+-40
+!waitforstate FM.Replica.IsUp.fabric:/test1.40 false
+!waitforstate FM.FT.Reconfig.FMService false
+
+# Block NodeUp
+addbehavior b2 40 * NodeUp
+
+# Bring back the downed node, down FMM and the FM primary
++40 nodeprops=fmservice:true
+!wait
+-10
+!wait
+removebehavior b2
+
+# The new FM should get a retried NodeUp.  We will know it did when the down user service replica comes back
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+
++10 nodeprops=fmservice:true
+verify
+
+!q

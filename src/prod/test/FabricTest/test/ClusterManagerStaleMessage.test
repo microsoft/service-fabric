@@ -1,0 +1,185 @@
+!setcfg Management.CleanupApplicationPackageOnProvisionSuccess=false
+votes 10
+namingservice 1 3 2
+cmservice 3 2
+imagestoreservice 0 0
+cleantest
+
+set NamingMaxOperationTimeout 40
+
++10
++20
++30
+verify
+
+createclient client1 nodeconfig=10
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageX version=V1
+
+app.servicetypes versionV1 ServicePackageX ServiceTypeX stateless
+
+app.codepack versionV1 ServicePackageX CodeX types=ServiceTypeX version=V1
+
+app.servicetemplate versionV1 ServiceTypeX stateless partition=1 replica=1
+
+app.upload versionV1
+
+#
+# 1) Stale Unprovision
+#
+
+addbehavior b1 * * UnprovisionApplicationTypeAction 1.0 20
+set NamingOperationTimeout 5
+
+unprovisionapp TestApp V1 Timeout
+
+removebehavior b1
+set NamingOperationTimeout 40
+
+provisionapp versionV1
+
+!pause 20
+
+createapp fabric:/testappA TestApp V1
+deleteapp fabric:/testappA
+
+#
+# 2) Stale Provision
+#
+
+addbehavior b1 * * ProvisionApplicationTypeAction 1.0 20
+set NamingOperationTimeout 5
+
+provisionapp versionV1 Timeout
+
+removebehavior b1
+set NamingOperationTimeout 40
+
+unprovisionapp TestApp V1
+
+!pause 20
+
+createapp fabric:/testappB TestApp V1 error=ApplicationTypeNotFound
+
+#
+# 3) Stale DeleteApplication
+#
+
+provisionapp versionV1
+
+addbehavior b1 * * DeleteApplicationAction 1.0 20
+set NamingOperationTimeout 5
+
+deleteapp fabric:/testappC error=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 40
+
+createapp fabric:/testappC TestApp V1
+
+!pause 20
+
+deleteapp fabric:/testappC
+
+#
+# 4) Stale CreateApplication
+#
+
+createapp fabric:/testappD TestApp V1
+
+addbehavior b1 * * CreateApplicationAction 1.0 20
+set NamingOperationTimeout 5
+
+createapp fabric:/testappD TestApp V1 error=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 40
+
+deleteapp fabric:/testappD
+
+!pause 20
+
+nameexists fabric:/testappD false
+
+#
+# 5) Stale DeleteService
+#
+
+createapp fabric:/testappE TestApp V1
+
+createservice fabric:/testappE/staledelete ServiceTypeX n 1 1 client=client1 appname=fabric:/testappE
+
+addbehavior b1 * * DeleteServiceAction 1.0 20
+set NamingOperationTimeout 5
+
+deleteservice fabric:/testappE/staledelete client=client1 errors=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 40
+
+createservice fabric:/testappE/staledelete ServiceTypeX n 1 1 client=client1 appname=fabric:/testappE errors=UserServiceAlreadyExists
+
+!pause 20
+
+nameexists fabric:/testappE/staledelete true
+
+verify
+
+#
+# 6) Stale CreateService
+#
+
+createapp fabric:/testappF TestApp V1
+
+createservice fabric:/testappF/stalecreate ServiceTypeX n 1 1 client=client1 appname=fabric:/testappF
+
+addbehavior b1 * * CreateServiceAction 1.0 20
+set NamingOperationTimeout 5
+
+createservice fabric:/testappF/stalecreate ServiceTypeX n 1 1 client=client1 appname=fabric:/testappF errors=Timeout
+
+removebehavior b1
+set NamingOperationTimeout 40
+
+deleteservice fabric:/testappF/stalecreate client=client1
+
+!pause 20
+
+nameexists fabric:/testappF/stalecreate false
+
+verify
+
+#
+# 7) Stale CreateServiceFromTemplate
+#
+
+createapp fabric:/testappG TestApp V1
+
+createservicefromtemplate fabric:/testappG/stalefromtemplate ServiceTypeX fabric:/testappG
+
+addbehavior b1 * * CreateServiceFromTemplateAction 1.0 20
+set NamingOperationTimeout 5
+
+createservicefromtemplate fabric:/testappG/stalefromtemplate ServiceTypeX fabric:/testappG Timeout
+
+removebehavior b1
+set NamingOperationTimeout 40
+
+deleteservice fabric:/testappG/stalefromtemplate
+
+!pause 20
+
+nameexists fabric:/testappG/stalefromtemplate false
+
+verify
+
+-*
+
+!q

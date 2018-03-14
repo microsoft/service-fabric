@@ -1,0 +1,110 @@
+!updatecfg Federation.ImplicitLeaseInterval=60
+!updatecfg Federation.LeaseDuration=10
+!updatecfg Federation.MaxLeaseDuration=10
+!updatecfg Federation.ArbitrationTimeout=10
+!updatecfg Federation.MaxArbitrationTimeout=10
+!updatecfg Federation.LeaseSuspendTimeout=5
+!updatecfg Federation.KeepAliveSuspicionLevelThreshold=12
+!updatecfg Votes.100=SeedNode,127.0.0.1:16100 Votes.200=SeedNode,127.0.0.1:16200 Votes.300=SeedNode,127.0.0.1:16300 Votes.400=SeedNode,127.0.0.1:16400 Votes.500=SeedNode,127.0.0.1:16500
+clearticket
+
++100 17100
++300 17300
++400 17400
+verify
++110 17110
++120 17120
+verify
++90 17090
+verify
++200 17200
++600 17600
+verify
+blockleaseagent 17200
+abort 200
+verify
+arbitrator 100
+!pause,10
+addleasebehavior * * indirect a1
+addleasebehavior 17090 17120 *~ a2
+addleasebehavior 17300 17120 *~ a3
+addleasebehavior 17400 17120 *~ a4
+!pause,20
+verify
+arbitrator 100
+removeleasebehavior a1
+removeleasebehavior a2
+removeleasebehavior a3
+removeleasebehavior a4
+!pause,20
+blockleaseagent 17110
+abort 110
+verify
+arbitrator 100
+!expect,Node 120 Failed
+addbehavior b1 90 * ArbitrateRequest 1 2
+addleasebehavior * * indirect b1
+addleasebehavior 17090 17120 *~ b2
+verify
+arbitrator 100
+removebehavior b1
+!updatecfg Federation.KeepAliveSuspicionLevelThreshold=9
+addbehavior b2 600 * ArbitrateKeepAlive
+addbehavior b3 600 * ArbitrateRequest 1 2
+addleasebehavior 17600 17090 *~ b3
+!pause,20
+verify
+removebehavior b2
+addleasebehavior 17600 17100 *~ b4
+addleasebehavior 17600 17300 *~ b5
+!pause,20
+verify
+arbitrator 100
+addleasebehavior 17600 17400 *~ b6
+!expect,Node 600 Failed
+verify
+arbitrator 100
+removebehavior b3
++150 17150
++350 17350
+verify
+addbehavior b4 * * ArbitrateKeepAlive
+addbehavior b5 350 100 ArbitrateRequest 1 2
+addbehavior b6 150 300 ArbitrateRequest 1 2
+addbehavior b7 150 400 ArbitrateRequest 1 2
+addleasebehavior 17350 17150 *~ b7
+!pause,20
+verify
+arbitrator 100
+removeleasebehavior b1
+removeleasebehavior b2
+removeleasebehavior b3
+removeleasebehavior b4
+removeleasebehavior b5
+removeleasebehavior b6
+removeleasebehavior b7
+!pause,20
+addleasebehavior * * indirect c1
+addleasebehavior 17350 17150 *~ c2
+!expect,Node 350 Failed
+verify
+removebehavior b4
+removebehavior b5
+removebehavior b6
+removebehavior b7
+arbitrator 100
+list
++200 17200
++700 17700
+verify
+!pause,20
+addbehavior b8 100 300 ArbitrateKeepAlive
+addbehavior b9 100 400 ArbitrateKeepAlive
+addbehavior b10 100 * ArbitrateRequest 1 1
+addleasebehavior 17100 17700 *~ c3
+!pause,25
+verify
+removeleasebehavior c1
+removeleasebehavior c2
+removeleasebehavior c3
+!q

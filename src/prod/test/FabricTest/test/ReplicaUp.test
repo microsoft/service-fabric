@@ -1,0 +1,77 @@
+#Reopen tests
+
+#The aim is to test scenarios where the reopen of a persisted service takes a long time
+#In such cases the RA will send all the replicas for which reopen is still pending as down
+#And set the last replica up flag to true
+
+#This should enable FM to figure out if the service needs to be deleted etc and the FM
+#can then tell the RA to drop the service
+
+#In this scenario there is an app which in v1 registers two services ServiceName1 (ST1) and ServiceName2 (ST2)
+#This app is created and placed
+#One of the secondaries that contained this app is brought down 
+#fabric:/ServiceName1 is deleted
+#Then app is upgraded to v2. In v2 it only registers ST2 and creates ServiceName2
+#Then the down node is brought up
+#It will try to reopen the replica for ServiceName1 which was present earlier
+#This reopen is not possible because the service type for that is never going to be registered
+#After the ReopenSuccessWaitInterval expires the RA will send this as a down replica and last replica up flag will be set
+#This will cause the FM to do a ReplicaUpReply and tell the RA that this service has been deleted
+#RA should then cancel the reopen of this (ServiceType has not been registered) and Close this FT
+
+set ReopenSuccessWaitInterval 5
+set RAPMessageRetryInterval 1
+set ReplicaUpMessageRetryInterval 1
+set DummyPLBEnabled true
+namingservice 3 3 2
+fmservice 3 1
+cmservice 3 1
+cleantest
+
+votes 10 20 30
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+app.add 1 FabTRandomApp 1
+app.clear 1
+app.servicepack 1 SP1 version=1 configversion=1
+app.servicetypes 1 SP1 ST1 stateful persist
+app.servicetypes 1 SP1 ST2 stateful persist
+app.codepack 1 SP1 CP1 version=1 types=ST1,ST2
+app.reqservices 1 ServiceName1 ST1 stateful partition=1 replica=3
+app.reqservices 1 ServiceName2 ST2 stateful partition=1 replica=3
+app.upload 1
+
+app.add 2 FabTRandomApp 2
+app.clear 2
+app.servicepack 2 SP1 version=2 configversion=2
+app.servicetypes 2 SP1 ST2 stateful persist
+app.codepack 2 SP1 CP1 version=2 types=ST2
+app.reqservices 2 ServiceName2 ST2 stateful partition=1 replica=3
+app.upload 2
+
+provisionapp 1
+provisionapp 2
+
+createapp fabric:/testapp0 FabTRandomApp 1
+verify
+
+-40
+deleteservice fabric:/testapp0/ServiceName1
+upgradeapp fabric:/testapp0 2 Rolling
+
+verifyupgradeapp fabric:/testapp0
+
++40
+
+#this should eventually be close
+!waitforstate RA.FT.State.fabric:/testapp0/ServiceName1.40 Closed
+
+verify
+!q

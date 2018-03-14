@@ -1,0 +1,108 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "DictionaryScenario-36P-6N-WCF (A3)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-6N-WCF (A3)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N6_PaaS_A3_WCF.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "DictionaryScenario-3P-3N-WCF (A3)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-3P-3N-WCF (A3)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP3N3_PaaS_A3_WCF.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "DictionaryScenario-36P-3N-WCF (A3)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-WCF  (A3)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N3_PaaS_A3_WCF.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "DictionaryScenario-36P-3N (A3)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N (A3)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N3_PaaS_A3.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "DictionaryScenario-36P-36N (A3)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-36N (A3)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N36_PaaS_A3.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "DictionaryScenario-3P-3N-Backups (A3)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-3P-3N-Backups (A3)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP3N3B_PaaS_A3.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "6100"        
+      }
+    }
+  ]
+}

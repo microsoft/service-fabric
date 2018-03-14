@@ -1,0 +1,228 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "PLB_GeoReplication",
+      "Type": "V2_DllTest",
+      "Owners": "chanli",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_GeoReplication",
+        "ExecutionTimeout": "6000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementConstraint",
+      "Type": "V2_DllTest",
+      "Owners": "chanli",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementConstraint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_LoadQuery",
+      "Type": "V2_DllTest",
+      "Owners": "nipuzovi",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_LoadQuery",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_ServiceAffinity",
+      "Type": "V2_DllTest",
+      "Owners": "Nikola.Puzovic",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_ServiceAffinity",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_SetupEntryPoint",
+      "Type": "V2_DllTest",
+      "Owners": "tugup, harahma, vaishnav, vipulm",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_SetupEntryPoint",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_HealthRestApi",
+      "Type": "V2_DllTest",
+      "Owners": "mialu",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_HealthRestApi",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_DiffProvision",
+      "Type": "V2_DllTest",
+      "Owners": "mialu",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_DiffProvision",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_LargeApplicationDeployment",
+      "Type": "V2_DllTest",
+      "Owners": "mialu",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "1200",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_LargeApplicationDeployment",
+        "ExecutionTimeout": "9800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Mgmt_ImageStoreRestApi",
+      "Type": "V2_DllTest",
+      "Owners": "mialu",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "1200",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "ManagementTestCases",
+        "TaskName": "Mgmt_ImageStoreRestApi",
+        "ExecutionTimeout": "9000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PLB_PlacementOnEveryNode",
+      "Type": "V2_DllTest",
+      "Owners": "mmicic",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "LoadBalancingTestCases",
+        "TaskName": "PLB_PlacementOnEveryNode",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FSSWithFaults",
+      "Type": "V2_DllTest",
+      "Owners": "tugup,iyyappam,mialu",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "HostingTestCases",
+        "TaskName": "Hosting_FSSWithFaults",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hosting_FSS",
+      "Type": "V2_DllTest",
+      "Owners": "tugup,iyyappam,mialu",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:5;Group=TestOnPrem",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_311_V2Functionalsuite_ServiceFabric.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "HostingTestCases",
+        "TaskName": "Hosting_NativeImageStore",
+        "ExecutionTimeout": "4200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

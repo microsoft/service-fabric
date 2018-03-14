@@ -1,0 +1,99 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+#
+# Create and commit atomic group with no operations
+#
+
+createname fabric:/test3
+createservice fabric:/test3 AtomicGroupService y 1 3
+verify
+
+call fabric:/test3 60 CreateAtomicGroup ag1
+call fabric:/test3 60 CommitAtomicGroup ag1
+
+deleteservice fabric:/test3
+verify
+
+#
+# Create and rollback atomic group with no operations
+#
+
+createname fabric:/test4
+createservice fabric:/test4 AtomicGroupService y 1 3
+verify
+
+call fabric:/test4 60 CreateAtomicGroup   ag1
+call fabric:/test4 60 RollbackAtomicGroup ag1
+
+deleteservice fabric:/test4
+verify
+
+#
+# Replicate and rollback simple atomic group
+#
+
+createname fabric:/test1
+createservice fabric:/test1 AtomicGroupService y 1 3
+verify
+
+call fabric:/test1 60 CreateAtomicGroup             ag1
+call fabric:/test1 60 ReplicateAtomicGroupOperation ag1 ag1 ag1redoInfo ag1undoInfo
+call fabric:/test1 60 RollbackAtomicGroup           ag1
+
+call fabric:/test1 60 VerifyState ag1 rolledback ag1redoInfo ag1undoInfo
+call fabric:/test1 50 VerifyState ag1 rolledback ag1redoInfo ag1undoInfo
+call fabric:/test1 40 VerifyState ag1 rolledback ag1redoInfo ag1undoInfo
+
+deleteservice fabric:/test1
+verify
+
+#
+# Replicate and commit simple atomic group
+#
+
+createname fabric:/test2
+createservice fabric:/test2 AtomicGroupService y 1 3
+verify
+
+call fabric:/test2 60 CreateAtomicGroup             ag1
+call fabric:/test2 60 ReplicateAtomicGroupOperation ag1 ag1 ag1redoInfo ag1undoInfo
+call fabric:/test2 60 CommitAtomicGroup             ag1
+
+call fabric:/test2 60 VerifyState ag1 committed ag1redoInfo
+call fabric:/test2 50 VerifyState ag1 committed ag1redoInfo
+call fabric:/test2 40 VerifyState ag1 committed ag1redoInfo
+
+deleteservice fabric:/test2
+verify
+
+#
+# Replicate and commit simple atomic group, single replica
+#
+
+createname fabric:/test5
+createservice fabric:/test5 AtomicGroupService y 1 1
+verify
+
+call fabric:/test5 60 CreateAtomicGroup             ag1
+call fabric:/test5 60 ReplicateAtomicGroupOperation ag1 ag1 ag1redoInfo ag1undoInfo
+call fabric:/test5 60 CommitAtomicGroup             ag1
+
+call fabric:/test5 60 VerifyState ag1 committed ag1redoInfo
+
+deleteservice fabric:/test5
+verify
+
+!q

@@ -1,0 +1,418 @@
+###############################################################################
+# Test: RGNoNodeCapacities.Test
+# Owners: mocolic, yangli, anuragg
+# This test verifies that:
+# 	- PLB and Hosting are synced if user doesn't specify node capacities in the manifest
+# 	- Hosting will start even if user specifies in the manifest more CPU cores then the machine really has
+###############################################################################
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+fmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+
+# We need to be able to move replicas while in upgrade
+set AllowConstraintCheckFixesDuringApplicationUpgrade true
+
+# Disable load balancing to have predictability during test run
+set LoadBalancingEnabled false
+
+# Do not allow movement during upgrade for replicas which services have target replica count = 1
+set IsSingletonReplicaMoveAllowedDuringUpgrade false
+
+# Time slot while hosting holds opened service package after replica was dropped
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange to 0
+
+# TestCase1 - when LRM is in test mode
+# Do not check for available resources and do not enforce RG on the nodes
+# This is to be able to execute the test on any machine, regardless 
+set LocalResourceManagerTestMode true
+
++10 ud=UD1 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:2000
++20 ud=UD2 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:2000
++30 ud=UD3 cap=servicefabric:/_CpuCores:2,servicefabric:/_MemoryInMB:2000
+verify
+
+# 
+# Application type version 1.0
+#
+app.add version10 TestAppType 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0 resources=CPU,1,MemoryInMB,1000
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateless
+app.servicetypes version10 ServicePackageA ServiceTypeA2 stateful
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.codepack version10 ServicePackageA CodeA2 types=ServiceTypeA2 version=1.0
+app.upload version10 compress
+provisionapp version10
+
+# 
+# Application type version 1.1 
+#
+app.add version11 TestAppType 1.1 version10
+app.clear version11
+app.servicepack version11 ServicePackageA resources=CPU,3,MemoryInMB,2000
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateless
+app.servicetypes version11 ServicePackageA ServiceTypeA2 stateful
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.codepack version11 ServicePackageA CodeA2 types=ServiceTypeA2 version=1.0
+app.upload version11 compress
+provisionapp version11
+
+# 
+# Application type2 version 1.0
+#
+
+# Both OK
+app.add version20 TestAppType2 1.0
+app.clear version20
+app.servicepack version20 ServicePackageB resources=CPU,1,MemoryInMB,1000
+app.servicetypes version20 ServicePackageB ServiceTypeB1 stateful
+app.servicetypes version20 ServicePackageB ServiceTypeB2 stateful
+app.codepack version20 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0
+app.codepack version20 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0
+app.upload version20 compress
+provisionapp version20
+
+
+# 
+# Application type2 version 1.1
+#
+
+# CPU - OK; Memory is not OK
+app.add version21 TestAppType2 1.1 version20
+app.clear version21
+app.servicepack version21 ServicePackageB resources=CPU,5
+app.servicetypes version21 ServicePackageB ServiceTypeB1 stateful
+app.servicetypes version21 ServicePackageB ServiceTypeB2 stateful
+app.codepack version21 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0 rgpolicies=MemoryInMB;500000
+app.codepack version21 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0 rgpolicies=MemoryInMB;500000
+app.upload version21 compress
+provisionapp version21
+
+# 
+# Application type2 version 1.2
+#
+
+#Both not OK 
+app.add version22 TestAppType2 1.2 version21
+app.clear version22
+app.servicepack version22 ServicePackageB resources=CPU,40
+app.servicetypes version22 ServicePackageB ServiceTypeB1 stateful
+app.servicetypes version22 ServicePackageB ServiceTypeB2 stateful
+app.codepack version22 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0 rgpolicies=MemoryInMB;20000
+app.codepack version22 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0 rgpolicies=MemoryInMB;20000
+app.upload version22 compress
+provisionapp version22
+
+
+# 
+# Application type2 version 1.2
+#
+
+# CPU not OK; Memory is OK
+app.add version23 TestAppType2 1.3 version22
+app.clear version23
+app.servicepack version23 ServicePackageB resources=CPU,40
+app.servicetypes version23 ServicePackageB ServiceTypeB1 stateful
+app.servicetypes version23 ServicePackageB ServiceTypeB2 stateful
+app.codepack version23 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0 rgpolicies=MemoryInMB;1000
+app.codepack version23 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0 rgpolicies=MemoryInMB;1000
+app.upload version23 compress
+provisionapp version23
+
+# 
+# Application type3 version 1.0
+#
+app.add version30 TestAppType3 1.0
+app.clear version30
+app.servicepack version30 ServicePackageC resources=CPU,3,MemoryInMB,2000
+app.servicetypes version30 ServicePackageC ServiceTypeC stateful
+app.codepack version30 ServicePackageC CodeC types=ServiceTypeC version=1.0
+app.upload version30 compress
+provisionapp version30
+
+# 
+# Application type3 version 1.1
+#
+app.add version31 TestAppType3 1.1 version30
+app.clear version31
+app.servicepack version31 ServicePackageC resources=CPU,101
+app.servicetypes version31 ServicePackageC ServiceTypeC stateful
+app.codepack version31 ServicePackageC CodeC types=ServiceTypeC version=1.0 rgpolicies=MemoryInMB;2000
+app.upload version31 compress
+provisionapp version31
+
+#
+# Create application version 1.0
+#
+createapp fabric:/app1 TestAppType 1.0
+verify
+
+# ScenarioA:
+# LRM in testmode and nodes are with ok capacities
+createservice fabric:/app1/serviceA1 ServiceTypeA1 n 1 1 appname=fabric:/app1 servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/app1/serviceA2 ServiceTypeA2 y 1 1 servicecorrelations=fabric:/app1/serviceA1,affinity appname=fabric:/app1
+verify
+
+!waitforstate FM.Replica.State.fabric:/app1/serviceA1.30 Ready
+!waitforstate FM.Replica.State.fabric:/app1/serviceA2.30 Ready
+
+#Verify load on Node30
+verifynodeload nodeid:30 servicefabric:/_CpuCores 2
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 30 servicefabric:/_CpuCores 2
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 2000
+
+
+# ScenarioB:
+# LRM in test mode and nodes with higher capacities than machine really has
+# But this will not be an issue since we won't enforce and check real capacities
+# Create Node with 1TB memory and 100CPU cores
++40 ud=UD4 cap=servicefabric:/_CpuCores:100,servicefabric:/_MemoryInMB:1000000
+verify
+#
+# Upgrade application from version 1.0 to 1.1
+#
+upgradeapp fabric:/app1 1.1 Rolling
+verifyupgradeapp fabric:/app1 timeout=500
+verify
+
+# It has to go to the node 40 since there is no other node which will have enough
+!waitforstate FM.Replica.State.fabric:/app1/serviceA1.40 Ready
+!waitforstate FM.Replica.State.fabric:/app1/serviceA2.40 Ready
+
+verifynodeload nodeid:40 servicefabric:/_CpuCores 6
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 4000
+
+verifyresourceonnode 40 servicefabric:/_CpuCores 6
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 4000
+
+# ScenarioC:
+# LRM in test mode and nodes without capacities
+# 
+set DummyPLBEnabled true
++50 ud=UD5
+verify
+
+createservice fabric:/app1/serviceA3 ServiceTypeA1 n 1 1 appname=fabric:/app1
+createservice fabric:/app1/serviceA4 ServiceTypeA2 y 1 1 appname=fabric:/app1
+verify
+
+!waitforstate FM.Replica.State.fabric:/app1/serviceA3.50 Ready
+!waitforstate FM.Replica.State.fabric:/app1/serviceA4.50 Ready
+
+verifynodeload nodeid:50 servicefabric:/_CpuCores 3
+verifynodeload nodeid:50 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 50 servicefabric:/_CpuCores 3
+verifyresourceonnode 50 servicefabric:/_MemoryInMB 2000
+
+# cluster has 2 apps (fabric:/app1 & fabric:/System)
+# we're in test mode - no health warnings
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:5;apps-ok:2
+
+deleteservice fabric:/app1/serviceA1
+deleteservice fabric:/app1/serviceA2
+deleteservice fabric:/app1/serviceA3
+deleteservice fabric:/app1/serviceA4
+
+-50
+-40
+verify
+
+################################################################################
+# TestCase2:
+# Repeat previous scenario with LRM in real mode
+# Check for available resources and do enforce RG on the nodes
+set LocalResourceManagerTestMode false
+set AutoDetectAvailableResources false
+
+# Create application version 1.0
+#
+createapp fabric:/app2 TestAppType2 1.0
+verify
+
+createservice fabric:/app2/serviceB ServiceTypeB1 y 1 1 appname=fabric:/app2
+verify
+
+!waitforstate FM.Replica.State.fabric:/app2/serviceB.30 Ready
+
+# ScenarioA:
+# LRM in real mode and nodes are with ok capacities
+# Both metrics are OK - no health warnings
+verifynodeload nodeid:30 servicefabric:/_CpuCores 1
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 1000
+
+verifyresourceonnode 30 servicefabric:/_CpuCores 1
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 1000
+
+# ScenarioB:
+# LRM in real mode and nodes with higher capacities than machine really has
+# Create Node with 1TB memory and 100CPU cores
+# This is not ok; machines don't really have this much and we're not in test mode
++40 ud=UD4 cap=servicefabric:/_CpuCores:30,servicefabric:/_MemoryInMB:1000000
+verify
+
+#
+# Upgrade application2 from version 1.0 to 1.1
+#
+# CPU - OK; Memory - not OK (more that machine really has)
+upgradeapp fabric:/app2 1.1 Rolling
+verifyupgradeapp fabric:/app2 timeout=500
+verify
+
+verifynodeload nodeid:40 servicefabric:/_CpuCores 5
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 1000000
+
+verifyresourceonnode 40 servicefabric:/_CpuCores 5
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 1000000
+
+# Emit health warning on node when bad capacities are configured
+queryhealth node nodeid=40 expectedhealthstate=warning
+
+# Verify that the CPU and memory limits are actually set correctly in Job Object
+verifylimits cpmemory=524288000000,524288000000
+
++50 ud=UD5
+# ScenarioC':
+# LRM in real mode and nodes without capacities
+# Both metrics are not OK
+#
+# Upgrade application2 from version 1.1 to 1.2
+#
+upgradeapp fabric:/app2 1.2 Rolling
+verifyupgradeapp fabric:/app2 timeout=500
+verify
+
+# replica can be on either node40 or node50
+verifyclusterload servicefabric:/_CpuCores 40 40 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 40000 40000 0 -1
+
+# ScenarioC'':
+# CPU - bad; Memory metric - OK
+#
+# Upgrade application2 from version 1.2 to 1.3
+#
+
+upgradeapp fabric:/app2 1.3 Rolling
+verifyupgradeapp fabric:/app2 timeout=500
+verify
+
+verifyclusterload servicefabric:/_CpuCores 40 40 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 2000 2000 0 -1
+
+#remove app1 and app2
+deleteapp fabric:/app1
+deleteapp fabric:/app2
+
+# TestCase3: Check health warnings
+# remove node without capacities
+-50
+verify
+
+#
+# Create application3 version 1.0
+#
+createapp fabric:/app3 TestAppType3 1.0
+verify
+
+createservice fabric:/app3/serviceC3 ServiceTypeC y 1 1 appname=fabric:/app3
+verify
+
+# no other node has enough capacity 
+!waitforstate FM.Replica.State.fabric:/app3/serviceC3.40 Ready
+
+verifynodeload nodeid:40 servicefabric:/_CpuCores 3
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 40 servicefabric:/_CpuCores 3
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 2000
+
+# emit health warning on node with bad RG capacities
+queryhealth node nodeid=40 expectedhealthstate=warning
+
++50 ud=UD5
+verify
+
+# Upgrade application3 from version 1.0 to 1.1
+#
+upgradeapp fabric:/app3 1.1 Rolling
+verifyupgradeapp fabric:/app3 timeout=500
+verify
+
+# it has to go to node50 with unlimited capacities
+!waitforstate FM.Replica.State.fabric:/app3/serviceC3.50 Ready
+verifynodeload nodeid:50 servicefabric:/_CpuCores 101
+verifynodeload nodeid:50 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 50 servicefabric:/_CpuCores 101
+verifyresourceonnode 50 servicefabric:/_MemoryInMB 2000
+
+# there will be a warning on SP level when capacities on node are not defined and AutoDetect is false
+queryhealth deployedapplication appname=fabric:/app3 nodeid=50 expectedstates=1 stats=deployedservicepackages-warning:1
+
+# also health warning on node40 will stay there until capacities are corrected
+queryhealth node nodeid=40 expectedhealthstate=warning
+
+# update node 40 with ok capacities
+# downgrade application to version 1.0 when uses less capacities
+# and bring node 50 down, so that we move SP from Node50->Node40 and test if health warnings are removed
+-40
+verify
++40 ud=UD4 cap=servicefabric:/_CpuCores:3,servicefabric:/_MemoryInMB:2000
+verify
+
+# Downgrade application3 from version 1.1 to 1.0
+#
+upgradeapp fabric:/app3 1.0 Rolling
+verifyupgradeapp fabric:/app3 timeout=500
+verify
+
+-50
+verify
+
+!waitforstate FM.Replica.State.fabric:/app3/serviceC3.40 Ready
+verifynodeload nodeid:40 servicefabric:/_CpuCores 3
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 40 servicefabric:/_CpuCores 3
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 2000
+
+# node40 is up and no health warning on it
+queryhealth node nodeid=40 expectedhealthstate=ok
+
+#no warning on SP level since capacities on Node40 are fine
+queryhealth deployedapplication appname=fabric:/app3 nodeid=40 expectedstates=1 stats=deployedservicepackages-ok:1
+
+# Test case cleanup
+!pause 5
+deleteapp fabric:/app3
+
+unprovisionapp TestAppType 1.0
+unprovisionapp TestAppType 1.1
+
+unprovisionapp TestAppType2 1.0
+unprovisionapp TestAppType2 1.1
+unprovisionapp TestAppType2 1.2
+unprovisionapp TestAppType2 1.3
+
+unprovisionapp TestAppType3 1.0
+verify
+
+verifyclusterload servicefabric:/_CpuCores 0 0 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 0 0 0 -1
+
+nameexists fabric:/app1 false
+nameexists fabric:/app2 false
+nameexists fabric:/app3 false
+
+-10
+-20
+-30
+-40
+!q

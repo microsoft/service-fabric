@@ -1,0 +1,11 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+#include <ktl.h>
+#include <ktrace.h>
+
+#include "ktlloggerX.h"
+#include "ktllogger/ktlloggerktl.h"
+#include "Common/KtlSF.Common.h"

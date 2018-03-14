@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="PersistentQueueServicePackage" Version="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>Service that implements the persistent queue functionality</Description>
+  <ServiceTypes>
+    <StatefulServiceType ServiceTypeName="PersistentQueueService" HasPersistedState="true" />
+  </ServiceTypes>
+  <CodePackage Name="PersistentQueueService.Code" Version="1.0">
+    <EntryPoint>
+        <ExeHost>
+            <Program>SandboxPersistentQueueService.exe</Program>
+        </ExeHost>
+    </EntryPoint>    
+  </CodePackage>
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="QueueServiceEndpoint" Protocol="tcp" Type="Input" />
+      <Endpoint Name="ReplicatorEndpoint" Protocol="tcp" Type="Internal" />
+      <Endpoint Name="TestExplicitEndpoint" Protocol="http" Port="9999" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

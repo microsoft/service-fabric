@@ -1,0 +1,598 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "BasicStatefulActorKvsTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "BasicStatefulActorKvsTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatefulActorRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "BasicStatefulActorRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatefulActorVolatileTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "BasicStatefulActorVolatileTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatelessActorTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "BasicStatelessActorTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorEventsTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorEventsTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActGCtestonKvsTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorGCKvsTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActGCtestonRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorGCRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActGCtestonVolatileTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorGCVolatileTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActRemindersKvsTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,rajeetn",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "RemindersKvsTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActRemindersRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,rajeetn",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "RemindersRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActRemindersVolatileTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,rajeetn",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "RemindersVolatileTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorDirtyStateKVSTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,rajeetn",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "DirtyActorStateKVSTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorDirtyStateRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,rajeetn",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "DirtyActorStateRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorDirtyStateVolatileTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,rajeetn",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "DirtyActorStateVolatileTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorFailoverKVSTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters" : {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorFailoverKvsTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorFailoverRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorFailoverRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PolymorphicStateActorTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,harahma",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "PolymorphicStateActorTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryKVSTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorQueryKVSTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQuerywithPagingKVSTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorQueryPagingKVSTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorQueryRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQuerywithPagingRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorQueryPagingRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryVolatileTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorQueryVolatileTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryPagingVolatileTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorQueryPagingVolatileTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryStatelesstestTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorQueryStatelessTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryPagingStatelessTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorQueryPagingStatelessTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatefulActorKVSTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "DeleteStatefulActorKvsTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatefulActorRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "DeleteStatefulActorRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatefulActorVolatileTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "DeleteStatefulActorVolatileTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatelessActorTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "DeleteStatelessActorTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorservicepolymorphismTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,harahma",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ActorServicePolymorphismTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ReminderContinuityKVSTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,harahma",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ReminderContinuityActorKvsTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ReminderContinuityRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,harahma",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ReminderContinuityActorRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ReminderContinuityVolatileTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,harahma",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "TaskName": "ReminderContinuityActorVolatileTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatefulActorRD2TRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinuxTStoreDisabled.txt",
+        "TaskName": "BasicStatefulActorRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorFailovertestRDTRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinuxTStoreEnabled.txt",
+        "TaskName": "ActorFailoverRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+	  {
+      "Name": "DeleteStatefulActorRD2TRSLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi,amanbha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinuxTStoreEnabledValue.txt",
+        "TaskName": "DeleteStatefulActorRDTRSLinux.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "TestRunnerServiceLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "asnegi",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "TestRunnerServiceLinux.test",
+        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

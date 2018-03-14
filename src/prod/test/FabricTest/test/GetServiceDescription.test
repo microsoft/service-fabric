@@ -1,0 +1,166 @@
+#
+# [owner] MMohsin
+#
+
+votes 10 20 30
+fmservice 3 2
+cmservice 3 2
+namingservice 2 3 2
+cleantest
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
++40 ud=UD1
++50 ud=UD2
++60 ud=UD3
+verify
+
+# Attempt to get ServiceDesacriptions for services that do not exist
+getservicedescription fabric:/System/RepairManagerService ServiceNotFound
+getservicedescription fabric:/foo UserServiceNotFound
+
+# Get ServiceDescriptions for system services
+getservicedescription fabric:/System/FailoverManagerService verify replicarestartwaitduration=5 quorumlosswaitduration=3214202341 standbyreplicakeepduration=604800
+getserviceDescription fabric:/System/ClusterManagerService verify replicarestartwaitduration=5 quorumlosswaitduration=3214202341 standbyreplicakeepduration=604800
+getservicedescription fabric:/System/NamingService verify replicarestartwaitduration=5 quorumlosswaitduration=3214202341 standbyreplicakeepduration=604800
+
+# Set the default Failover settings
+set UserReplicaRestartWaitDuration 2
+set QuorumLossWaitDuration 200
+set UserStandByReplicaKeepduration 20
+
+# Create some ad-hoc services using default Failover settings
+createservice fabric:/stateless CalculatorServiceType n 3 3
+createservice fabric:/volatile TestStoreServiceType y 3 3 minreplicasetsize=2
+createservice fabric:/persisted TestPersistedStoreServiceType y 3 3 persist minreplicasetsize=2
+verify
+
+# Get ServiceDescriptions for ad-hoc services
+getservicedescription fabric:/stateless
+getservicedescription fabric:/volatile
+getservicedescription fabric:/persisted verify replicarestartwaitduration=2 quorumlosswaitduration=200 standbyreplicakeepduration=20
+
+#
+# Create an application with some defautl services using default Failover settings
+#
+app.add version10 MyApp 1.0
+app.clear version10
+app.servicepack version10 MyServicePackage version=1.0
+app.servicetypes version10 MyServicePackage StatelessServiceType stateless
+app.servicetypes version10 MyServicePackage VolatileServiceType stateful
+app.servicetypes version10 MyServicePackage PersistedServiceType stateful persist
+app.codepack version10 MyServicePackage StatelessCode types=StatelessServiceType version=1.0
+app.codepack version10 MyServicePackage VolatileCode types=VolatileServiceType version=1.0
+app.codepack version10 MyServicePackage PersistedCode types=PersistedServiceType version=1.0
+app.reqservices version10 Default/Stateless StatelessServiceType stateless partition=1 instance=3
+app.reqservices version10 Default/Volatile VolatileServiceType stateful partition=1 replica=3 minreplicasetsize=3
+app.reqservices version10 Default/Persisted PersistedServiceType stateful partition=1 replica=3 minreplicasetsize=3
+app.upload version10
+provisionapp version10
+createapp fabric:/MyApp MyApp 1.0
+verify
+
+# Create some services for the application using default Failover settings
+createservice fabric:/MyApp/Stateless StatelessServiceType n 1 3 appname=fabric:/MyApp
+createservice fabric:/MyApp/Volatile VolatileServiceType y 1 3 minreplicasetsize=2 appname=fabric:/MyApp
+createservice fabric:/MyApp/Persisted PersistedServiceType y 1 3 persist  minreplicasetsize=2 appname=fabric:/MyApp
+verify
+
+# Get ServiceDescriptions for the application services
+getservicedescription fabric:/MyApp/Default/Stateless
+getservicedescription fabric:/MyApp/Default/Volatile
+getservicedescription fabric:/MyApp/Default/Persisted verify replicarestartwaitduration=2 quorumlosswaitduration=200 standbyreplicakeepduration=20
+getservicedescription fabric:/MyApp/Stateless
+getservicedescription fabric:/MyApp/Volatile
+getservicedescription fabric:/MyApp/Persisted verify replicarestartwaitduration=2 quorumlosswaitduration=200 standbyreplicakeepduration=20
+
+# Change the default Failover settings
+set UserReplicaRestartWaitDuration 4
+set QuorumLossWaitDuration 400
+set UserStandByReplicaKeepduration 40
+
+# Get ServiceDescriptions for the user services
+getservicedescription fabric:/persisted verify replicarestartwaitduration=4 quorumlosswaitduration=400 standbyreplicakeepduration=40
+getservicedescription fabric:/MyApp/Default/Persisted verify replicarestartwaitduration=4 quorumlosswaitduration=400 standbyreplicakeepduration=40
+getservicedescription fabric:/MyApp/Persisted verify replicarestartwaitduration=4 quorumlosswaitduration=400 standbyreplicakeepduration=40
+
+# Update all services
+updateservice fabric:/System/FailoverManagerService Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3 ReplicaRestartWaitDuration=6 QuorumLossWaitDuration=600 StandByReplicaKeepDuration=60
+updateservice fabric:/System/ClusterManagerService Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3 ReplicaRestartWaitDuration=6 QuorumLossWaitDuration=600 StandByReplicaKeepDuration=60
+updateservice fabric:/System/NamingService Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3 ReplicaRestartWaitDuration=6 QuorumLossWaitDuration=600 StandByReplicaKeepDuration=60
+updateservice fabric:/stateless Stateless InstanceCount=5
+updateservice fabric:/volatile Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3
+updateservice fabric:/persisted Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3 ReplicaRestartWaitDuration=6 QuorumLossWaitDuration=600 StandByReplicaKeepDuration=60
+updateservice fabric:/MyApp/Default/Stateless Stateless InstanceCount=5
+updateservice fabric:/MyApp/Default/Volatile Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3
+updateservice fabric:/MyApp/Default/Persisted Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3 ReplicaRestartWaitDuration=6 QuorumLossWaitDuration=600 StandByReplicaKeepDuration=60
+updateservice fabric:/MyApp/Stateless Stateless InstanceCount=5
+updateservice fabric:/MyApp/Volatile Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3
+updateservice fabric:/MyApp/Persisted Stateful TargetReplicaSetSize=5 MinReplicaSetSize=3 ReplicaRestartWaitDuration=6 QuorumLossWaitDuration=600 StandByReplicaKeepDuration=60
+verify
+
+# Get new ServiceDescriptions for all the services
+getservicedescription fabric:/System/FailoverManagerService verify replicarestartwaitduration=6 quorumlosswaitduration=600 standbyreplicakeepduration=60
+getserviceDescription fabric:/System/ClusterManagerService verify replicarestartwaitduration=6 quorumlosswaitduration=600 standbyreplicakeepduration=60
+getservicedescription fabric:/System/NamingService verify replicarestartwaitduration=6 quorumlosswaitduration=600 standbyreplicakeepduration=60
+getservicedescription fabric:/stateless
+getservicedescription fabric:/volatile
+getservicedescription fabric:/persisted verify replicarestartwaitduration=6 quorumlosswaitduration=600 standbyreplicakeepduration=60
+getservicedescription fabric:/MyApp/Default/Stateless
+getservicedescription fabric:/MyApp/Default/Volatile
+getservicedescription fabric:/MyApp/Default/Persisted verify replicarestartwaitduration=6 quorumlosswaitduration=600 standbyreplicakeepduration=60
+getservicedescription fabric:/MyApp/Stateless
+getservicedescription fabric:/MyApp/Volatile
+getservicedescription fabric:/MyApp/Persisted verify replicarestartwaitduration=6 quorumlosswaitduration=600 standbyreplicakeepduration=60
+
+# Delete all user services and applications
+deleteservice fabric:/stateless
+deleteservice fabric:/volatile
+deleteservice fabric:/persisted
+deleteapp fabric:/MyApp
+unprovisionapp MyApp 1.0
+app.delete version10
+
+# Create a new ad-hoc service with non-default Failover settings
+createservice fabric:/persisted TestPersistedStoreServiceType y 3 3 persist minreplicasetsize=2 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+verify
+
+# Get ServiceDescription for the ad-hoc service
+getservicedescription fabric:/persisted verify replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+#
+# Create a new application with a defautl service using non-default Failover settings
+#
+app.add version10 MyApp 1.0
+app.clear version10
+app.servicepack version10 MyServicePackage version=1.0
+app.servicetypes version10 MyServicePackage PersistedServiceType stateful persist
+app.codepack version10 MyServicePackage PersistedCode types=PersistedServiceType version=1.0
+app.reqservices version10 Default/Persisted PersistedServiceType stateful partition=1 replica=3 minreplicasetsize=3 replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+app.upload version10
+provisionapp version10
+createapp fabric:/MyApp MyApp 1.0
+verify
+
+# Create a service for the application using non-default Failover settings
+createservice fabric:/MyApp/Persisted PersistedServiceType y 1 3 persist  minreplicasetsize=2 appname=fabric:/MyApp replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+verify
+
+# Get ServiceDescriptions for the application services
+getservicedescription fabric:/MyApp/Default/Persisted verify replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+getservicedescription fabric:/MyApp/Persisted verify replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+# Change the default Failover settings
+set UserReplicaRestartWaitDuration 10
+set QuorumLossWaitDuration 1000
+set UserStandByReplicaKeepduration 100
+
+# Get ServiceDescriptions for the user services (the Failover settings should not have chagned)
+getservicedescription fabric:/persisted verify replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+getservicedescription fabric:/MyApp/Default/Persisted verify replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+getservicedescription fabric:/MyApp/Persisted verify replicarestartwaitduration=8 quorumlosswaitduration=800 standbyreplicakeepduration=80
+
+-*
+
+!q

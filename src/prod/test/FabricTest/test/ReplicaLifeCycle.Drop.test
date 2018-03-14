@@ -1,0 +1,638 @@
+#
+# [owner] aprameyr
+# Test scenarios around Replica Drop/Delete
+set ServiceTypeDisableGraceInterval 100000
+set NamingOperationTimeout 10
+!load FailoverCITInitialization.test
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+######################################################
+## Scenario 1: Drop Simple Scenario
+######################################################
+#
+#createservice fabric:/test1 TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+#verify
+#
+#addbehavior b1 * * DoReconfigurationReply
+#movesecondary fabric:/test1 30 20
+#!waitforstate RA.FT.State.fabric:/test1.30 Closed
+#removebehavior b1
+#
+#verify
+#
+#deleteservice fabric:/test1
+#verify
+#
+######################################################
+## Scenario 2: Induce failure in CR(None)
+## Drop should complete
+######################################################
+#
+#createservice fabric:/test2a TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+#verify
+#
+#injectfailure 30 fabric:/test2a service.beginchangerole
+#addbehavior b1 * * DoReconfigurationReply
+#
+#movesecondary fabric:/test2a 30 20
+#!waitforstate RA.FT.State.fabric:/test2a.30 Closed
+#removebehavior b1
+#removefailure 30 fabric:/test2a service.beginchangerole
+#
+#verify
+#
+#deleteservice fabric:/test2a
+#verify
+#
+#createservice fabric:/test2b TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+#verify
+#
+#injectfailure 30 fabric:/test2b replicator.beginchangerole
+#addbehavior b1 * * DoReconfigurationReply
+#
+#movesecondary fabric:/test2b 30 20
+#!waitforstate RA.FT.State.fabric:/test2b.30 Closed
+#removebehavior b1
+#removefailure 30 fabric:/test2b replicator.beginchangerole
+#
+#verify
+#
+#deleteservice fabric:/test2b
+#verify
+#
+######################################################
+## Scenario 2.1: Induce failure in Close 
+## Drop should complete
+######################################################
+#
+#createservice fabric:/test21a TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+#verify
+#
+#injectfailure 30 fabric:/test21a service.beginclose
+#addbehavior b1 * * DoReconfigurationReply
+#
+#movesecondary fabric:/test21a 30 20
+#!waitforstate RA.FT.State.fabric:/test21a.30 Closed
+#removebehavior b1
+#removefailure 30 fabric:/test21a service.beginclose
+#
+#verify
+#
+#deleteservice fabric:/test21a
+#verify
+#
+#createservice fabric:/test21b TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+#verify
+#
+#injectfailure 30 fabric:/test21b replicator.beginclose
+#addbehavior b1 * * DoReconfigurationReply
+#
+#movesecondary fabric:/test21b 30 20
+#!waitforstate RA.FT.State.fabric:/test21b.30 Closed
+#removebehavior b1
+#removefailure 30 fabric:/test21b replicator.beginclose
+#
+#verify
+#
+#deleteservice fabric:/test21b
+#verify
+#
+#
+######################################################
+## Scenario 2.2: Induce failure in Close 
+## Drop should complete
+######################################################
+#
+#createservice fabric:/test22 CalculatorServiceType n 1 1 persist constraint=(system!=true)
+#verify
+#
+#injectfailure 40 fabric:/test22 service.beginclose
+#
+#deleteservice fabric:/test22
+#!waitforstate RA.FT.State.fabric:/test22.40 Closed
+#
+#removefailure 40 fabric:/test22 service.beginclose
+#verify
+#
+#####################################################
+# Scenario 3: Take down app host during drop
+# Bring back app host -> Drop should continue
+#####################################################
+
+#####################################################
+# Scenario 3.1: Verification of CR (None) being invoked
+#####################################################
+createservice fabric:/test3a TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+#Block Replica Close 
+#RF Permanent to induce drop and verify that RA has received the intent
+addbehavior b0 * * ReplicaUp
+addbehavior b1 * * ReplicaClose
+reportfault 40 fabric:/test3a permanent
+
+!waitforstate RA.Replica.State.fabric:/test3a.40.40 ID
+
+#Remove runtime
+removeruntime 40 y
+
+#add back runtime
+#block CR(None) to stall the drop
+#remove ReplicaClose
+removebehavior b1
+setsignal 40 fabric:/test3a service.beginchangerole.block
+
+addruntime 40 y
+
+#verify that the replica is still ID 
+waitforsignalhit 40 fabric:/test3a service.beginchangerole.block
+!waitforstate RA.Replica.IsUp.fabric:/test3a.40.40 true
+!waitforstate RA.Replica.State.fabric:/test3a.40.40 ID
+
+resetsignal 40 fabric:/test3a service.beginchangerole.block
+
+#replica should get closed
+!waitforstate RA.FT.State.fabric:/test3a.40 Closed
+
+#remove replica dropped block
+removebehavior b0
+verify
+
+deleteservice fabric:/test3a
+verify
+
+#####################################################
+# Scenario 3.2: OpenReplica failure should complete the close and leak state
+#####################################################
+
+createservice fabric:/test3b TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+#Block Replica Close 
+#RF Permanent to induce drop and verify that RA has received the intent
+addbehavior b0 * * ReplicaUp
+addbehavior b1 * * ReplicaClose
+reportfault 40 fabric:/test3b permanent
+
+!waitforstate RA.Replica.State.fabric:/test3b.40.40 ID
+
+#Remove runtime
+removeruntime 40 y
+
+#add back runtime
+#remove ReplicaClose
+#block replica close reply to first verify that close is processed
+addbehavior b2 * * ReplicaCloseReply
+removebehavior b1
+
+injectfailure 40 fabric:/test3b service.beginopen
+addruntime 40 y
+
+#verify that the replica is still ID 
+waitforsignalhit 40 fabric:/test3b service.beginopen
+!waitforstate RA.Replica.IsUp.fabric:/test3b.40.40 true
+!waitforstate RA.Replica.State.fabric:/test3b.40.40 ID
+removefailure 40 fabric:/test3b service.beginopen
+removebehavior b2
+
+#replica should get closed
+!waitforstate RA.FT.State.fabric:/test3b.40 Closed
+
+#remove replica dropped block
+removebehavior b0
+verify
+
+deleteservice fabric:/test3b
+verify
+
+#####################################################
+# Scenario 3.3: OpenReplicator failure should abort replica, complete and leak state
+#####################################################
+ 
+createservice fabric:/test3c TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+#Block Replica Close 
+#RF Permanent to induce drop and verify that RA has received the intent
+addbehavior b0 * * ReplicaUp
+addbehavior b1 * * ReplicaClose
+reportfault 40 fabric:/test3c permanent
+
+!waitforstate RA.Replica.State.fabric:/test3c.40.40 ID
+
+#Remove runtime
+removeruntime 40 y
+
+#add back runtime
+#remove ReplicaClose
+#block replica close reply to first verify that close is processed
+removebehavior b1
+setsignal 40 fabric:/test3c service.abort.block
+injectfailure 40 fabric:/test3c replicator.beginopen
+
+addruntime 40 y
+
+#pause and verify that the replica is still ID 
+waitforsignalhit 40 fabric:/test3c service.abort.block
+!waitforstate RA.Replica.IsUp.fabric:/test3c.40.40 true
+!waitforstate RA.Replica.State.fabric:/test3c.40.40 ID
+
+resetsignal 40 fabric:/test3c service.abort.block
+
+removefailure 40 fabric:/test3c replicator.beginopen
+
+#replica should get closed
+!waitforstate RA.FT.State.fabric:/test3c.40 Closed
+
+#remove replica dropped block
+removebehavior b0
+verify
+
+deleteservice fabric:/test3c
+verify
+
+#####################################################
+# Scenario 3.4: CR(None) failure should abort replica and replicator and complete and leak state
+#####################################################
+
+createservice fabric:/test3d TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+#Block Replica Close 
+#RF Permanent to induce drop and verify that RA has received the intent
+addbehavior b0 * * ReplicaUp
+addbehavior b1 * * ReplicaClose
+reportfault 40 fabric:/test3d permanent
+
+!waitforstate RA.Replica.State.fabric:/test3d.40.40 ID
+
+#Remove runtime
+removeruntime 40 y
+
+#add back runtime
+#remove ReplicaClose
+#block replica close reply to first verify that close is processed
+removebehavior b1
+setsignal 40 fabric:/test3d replicator.abort.block
+injectfailure 40 fabric:/test3d replicator.beginchangerole
+
+addruntime 40 y
+
+#Verify abort hit
+waitforsignalhit 40 fabric:/test3d replicator.abort.block
+!waitforstate RA.Replica.IsUp.fabric:/test3d.40.40 true
+!waitforstate RA.Replica.State.fabric:/test3d.40.40 ID
+
+setsignal 40 fabric:/test3d service.abort.block
+resetsignal 40 fabric:/test3d replicator.abort.block
+
+waitforsignalhit 40 fabric:/test3d service.abort.block
+!waitforstate RA.Replica.IsUp.fabric:/test3d.40.40 true
+!waitforstate RA.Replica.State.fabric:/test3d.40.40 ID
+
+removefailure 40 fabric:/test3d replicator.beginchangerole
+resetsignal 40 fabric:/test3d service.abort.block
+
+#replica should get closed
+!waitforstate RA.FT.State.fabric:/test3d.40 Closed
+
+#remove replica dropped block but verify only after sending the delete to the fm
+removebehavior b0
+deleteservice fabric:/test3d
+verify
+
+#####################################################
+# Scenario 3.5: CR(None) failure should abort replica and replicator and complete and leak state
+#####################################################
+
+createservice fabric:/test3e TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+#Block Replica Close 
+#RF Permanent to induce drop and verify that RA has received the intent
+addbehavior b0 * * ReplicaUp
+addbehavior b1 * * ReplicaClose
+reportfault 40 fabric:/test3e permanent
+
+!waitforstate RA.Replica.State.fabric:/test3e.40.40 ID
+
+#Remove runtime
+removeruntime 40 y
+
+#add back runtime
+#remove ReplicaClose
+#block replica close reply to first verify that close is processed
+removebehavior b1
+setsignal 40 fabric:/test3e replicator.abort.block
+injectfailure 40 fabric:/test3e service.beginchangerole
+
+addruntime 40 y
+
+#pause and verify that the replica is still ID 
+waitforsignalhit 40 fabric:/test3e replicator.abort.block
+!waitforstate RA.Replica.IsUp.fabric:/test3e.40.40 true
+!waitforstate RA.Replica.State.fabric:/test3e.40.40 ID
+
+setsignal 40 fabric:/test3e service.abort.block
+resetsignal 40 fabric:/test3e replicator.abort.block
+
+waitforsignalhit 40 fabric:/test3e service.abort.block
+!waitforstate RA.Replica.IsUp.fabric:/test3e.40.40 true
+!waitforstate RA.Replica.State.fabric:/test3e.40.40 ID
+
+resetsignal 40 fabric:/test3e service.abort.block
+removefailure 40 fabric:/test3e service.beginchangerole
+#replica should get closed
+!waitforstate RA.FT.State.fabric:/test3e.40 Closed
+
+#remove replica dropped block
+removebehavior b0
+verify
+
+deleteservice fabric:/test3e
+verify
+
+#####################################################
+# Scenario 3.6: Verification of CR (None) being invoked
+#####################################################
+createservice fabric:/test3f TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+#Block Replica Close 
+#RF Permanent to induce drop and verify that RA has received the intent
+addbehavior b0 * * ReplicaUp
+addbehavior b1 * * ReplicaClose
+reportfault 40 fabric:/test3f permanent
+
+!waitforstate RA.Replica.State.fabric:/test3f.40.40 ID
+
+#Remove runtime
+removeruntime 40 y
+
+#add back runtime
+#block replica close reply
+addbehavior b2 * * ReplicaCloseReply
+setsignal 40 fabric:/test3f service.beginchangerole.block
+
+removebehavior b1
+
+addruntime 40 y
+
+#pause and verify that the replica is still ID 
+waitforsignalhit 40 fabric:/test3f service.beginchangerole.block
+!waitforstate RA.Replica.IsUp.fabric:/test3f.40.40 true
+!waitforstate RA.Replica.State.fabric:/test3f.40.40 ID
+resetsignal 40 fabric:/test3f service.beginchangerole.block
+
+removebehavior b2
+
+#replica should get closed
+!waitforstate RA.FT.State.fabric:/test3f.40 Closed
+
+#remove replica dropped block
+removebehavior b0
+verify
+
+deleteservice fabric:/test3f
+verify
+
+#####################################################
+# Scenario 4: Delete Simple Scenario
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+deleteservice fabric:/test4
+verify
+
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test4.40 true
+
+#####################################################
+# Scenario 5: Delete Simple Scenario
+#####################################################
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+injectfailure 40 fabric:/test5 service.beginchangerole
+
+deleteservice fabric:/test5
+verify
+
+removefailure 40 fabric:/test5 service.beginchangerole
+
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test5.40 true
+
+#####################################################
+# Scenario 6: Delete of IC replica
+#####################################################
+
+removeruntime 40 y
+
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test6.40.40 IC
+
+deleteservice fabric:/test6 
+!waitforstate RA.FT.State.fabric:/test6.40 Closed
+
+addruntime 40 y
+
+verify
+
+#####################################################
+# Scenario 7: Delete of IC replica (Stateless)
+#####################################################
+
+removeruntime 40 n
+
+createservice fabric:/test7 CalculatorServiceType n 1 1 persist constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test7.40.40 IC
+
+deleteservice fabric:/test7 
+!waitforstate RA.FT.State.fabric:/test7.40 Closed
+
+addruntime 40 n
+
+verify
+
+#####################################################
+# Scenario 7: Delete of IC replica (Stateless)
+#####################################################
+
+removeruntime 40 n
+
+createservice fabric:/test7 CalculatorServiceType n 1 1 persist constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test7.40.40 IC
+
+deleteservice fabric:/test7 
+!waitforstate RA.FT.State.fabric:/test7.40 Closed
+
+addruntime 40 n
+
+verify
+
+#####################################################
+# Scenario 8: Successful drop with replica close reply being dropped does not cause multiple open + cr(none)
+# Regression test for 4270634
+#####################################################
+
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test8 replicator.beginopen.block
+
+addbehavior b1 * * ReplicaCloseReply
+deleteservice fabric:/test8 errors=Timeout
+
+failifsignalhit 40 fabric:/test8 replicator.beginopen.block 15
+
+resetsignal 40 fabric:/test8 replicator.beginopen.block
+removebehavior b1
+
+deleteservice fabric:/test8 errors=UserServiceNotFound
+verify
+
+#####################################################
+# Scenario 9: AppHost down during delete
+#####################################################
+
+createservice fabric:/test9 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * ReplicaClose
+deleteservice fabric:/test9 errors=Timeout
+
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test9.40 true
+removeruntime 40 y
+
+addruntime 40 y
+removebehavior b1
+
+deleteservice fabric:/test9 errors=UserServiceNotFound
+verify
+
+#####################################################
+# Scenario 10: FM is notified during host crash during report fault
+#####################################################
+
+createservice fabric:/test10 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * ReplicaClose 
+reportfault 40 fabric:/test10 permanent
+
+!waitforstate RA.Replica.State.fabric:/test10.40.40 ID
+
+addbehavior b2 * * UpdateConfiguration
+#!waitforstate RA.FT.ReconfigStage.fabric:/test10.30 Phase2_Catchup
+removeruntime 40 y
+removebehavior b2
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.30 None
+
+addruntime 40 y
+removebehavior b1
+verify
+
+deleteservice fabric:/test10 
+verify
+
+#####################################################
+# Scenario 11: FM is notified during host crash during report fault (volatile)
+#####################################################
+
+createservice fabric:/test11 TestStoreServiceType y 1 3 constraint=(system!=true)
+verify
+
+addbehavior b1 * * ReplicaClose
+reportfault 40 fabric:/test11 permanent
+
+!waitforstate RA.Replica.State.fabric:/test11.40.40 ID
+
+addbehavior b2 * * UpdateConfiguration
+removeruntime 40 y
+#!waitforstate RA.FT.ReconfigStage.fabric:/test10.30 Phase2_Catchup
+removebehavior b2
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.30 None
+
+addruntime 40 y
+removebehavior b1
+verify
+
+deleteservice fabric:/test11 
+verify
+
+#####################################################
+# Scenario 12: App Host down during delete for volatile
+#####################################################
+
+createservice fabric:/test12 TestStoreServiceType y 1 1 constraint=(system!=true)
+verify
+
+addbehavior b1 * * ReplicaClose
+
+deleteservice fabric:/test12 errors=Timeout
+!waitforstate RA.Replica.State.fabric:/test12.40.40 ID
+
+removeruntime 40 y
+!waitforstate RA.FT.State.fabric:/test12.40 Closed
+
+removebehavior b1
+deleteservice fabric:/test12 errors=UserServiceNotFound
+verify
+
+addruntime 40 y
+
+#####################################################
+# Scenario 13: UpdateReadWrite notification during Delete does
+# not send replica down
+#####################################################
+
+createservice fabric:/test13 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * DeleteReplicaReply
+
+deleteservice fabric:/test13 errors=Timeout
+!waitforstate RA.FT.State.fabric:/test13.40 Closed
+
+!pause 10
+!waitforstate FM.Replica.IsUp.fabric:/test13.40 true
+
+removebehavior b1
+deleteservice fabric:/test13 errors=UserServiceNotFound
+verify
+
+#####################################################
+# Scenario 14: App host down after update read write notification during close
+#####################################################
+
+createservice fabric:/test14 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test14 service.beginclose.block
+reportfault 40 fabric:/test14 transient
+
+waitforsignalhit 40 fabric:/test14 service.beginclose.block
+!waitforstate FM.Replica.IsUp.fabric:/test14.40 false
+
+resetsignal 40 fabric:/test14 service.beginclose.block
+removeruntime 40 y
+!pause 10
+
+addruntime 40 y
+verify
+
+deleteservice fabric:/test14
+verify
+
+!q

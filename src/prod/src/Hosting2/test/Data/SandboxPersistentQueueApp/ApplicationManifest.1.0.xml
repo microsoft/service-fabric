@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest ApplicationTypeName="SandboxPersistentQueueApp" ApplicationTypeVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Description>This is a sample stateful persisted queue service</Description>
+    <Parameters>
+    <Parameter Name="NumofPartition" DefaultValue="5"/>
+    <Parameter Name="MinReplicaSetSize" DefaultValue="2"/>
+    <Parameter Name="TargetReplicaSetSize" DefaultValue="3"/>
+    </Parameters>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="PersistentQueueServicePackage" ServiceManifestVersion="1.0"/>
+        <ConfigOverrides/>
+    <Policies>
+      <SecurityAccessPolicy ResourceRef="QueueServiceEndpoint" PrincipalRef="pQueueUser" GrantRights="Full"/>
+      <SecurityAccessPolicy ResourceRef="ReplicatorEndpoint" PrincipalRef="pQueueUser" GrantRights="Full"/>
+	  <SecurityAccessPolicy ResourceRef="TestExplicitEndpoint" PrincipalRef="pQueueUser" GrantRights="Full"/>
+      <RunAsPolicy CodePackageRef="PersistentQueueService.Code" UserRef="pQueueUser"/>
+    </Policies>
+    </ServiceManifestImport>    
+    <ServiceTemplates>
+        <StatefulService ServiceTypeName="PersistentQueueService">
+            <UniformInt64Partition PartitionCount="[NumofPartition]" LowKey="0" HighKey="100"></UniformInt64Partition>
+        </StatefulService>
+    </ServiceTemplates>
+    <DefaultServices>
+            <Service Name="RequiredPersistentQueueService">
+                <StatefulService ServiceTypeName="PersistentQueueService" MinReplicaSetSize="[MinReplicaSetSize]" TargetReplicaSetSize="[TargetReplicaSetSize]">
+                    <UniformInt64Partition PartitionCount="[NumofPartition]" LowKey="0" HighKey="100"></UniformInt64Partition>
+                </StatefulService>
+            </Service>
+    </DefaultServices>
+
+  <Principals>
+    <Users>
+      <User Name="pQueueUser"></User>
+    </Users>
+  </Principals>
+  
+</ApplicationManifest>

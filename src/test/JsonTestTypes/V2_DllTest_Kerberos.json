@@ -1,0 +1,66 @@
+{
+    "RequiredParameters": [ "TaskName", "DllPath", "ClassName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "ConfigName": "",
+        "Machines": "",
+        "InstalledFeaturesFile": "",
+        "CredentialType": "",
+        "CleanupType": "",
+        "SetupTimeout": "900",
+        "ExecutionTimeout": "1200",
+		"NativeStoreEnabled": "",
+        "EseStoreEnabled": "",
+        "CleanupTimeout": "2100"
+    },
+
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPTYPE] [SETUPARGS]",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabricTestRunner.exe",
+            "Arguments": "/DllPath:MS.Test.WinFabric.Cases.dll /ClassName:SecurityTestCases /TestCaseName:Security_KerberosPrepare %/TestParamFile:[BINS]\\WinFabricTest\\Config\\Suite_348_V2_FunctionalSuite_7M_Kerberos_FQDN.txt% /auto:true %/Machines:[MACHINES]%",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabricTestRunner.exe",
+            "Arguments": "/DllPath:[DLLPATH] /ClassName:[CLASSNAME] /TestCaseName:[TASKNAME] %/TestParamFile:[CONFIGNAME]% /auto:true %/Machines:[MACHINES]% /InstalledFeatures:[INSTALLEDFEATURESFILE] %/security:[CREDENTIALTYPE]% /notestdir:true %/nativestore:[NATIVESTOREENABLED]% %/ese:[ESESTOREENABLED]% /togglestore",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.xml$,.*\\.json$,.*\\.man$"
+    }
+}

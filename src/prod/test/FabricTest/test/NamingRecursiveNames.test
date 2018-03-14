@@ -1,0 +1,152 @@
+votes 10
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+
+# Reduce running time of CIT 
+#
+set RepairOperationTimeout 5
+set RepairInterval 2
+
++10
++20
++30
++40
+verify
+
+#########################################
+# Testcase 1: Create and delete names that require 
+# recursively creating and deleting parents
+######################################### 
+
+# Requested name is created Explicit, the parents are implicit
+createname fabric:/a/b/c/d/e
+nameexists fabric:/a true
+nameexists fabric:/a/b true
+nameexists fabric:/a/b/c true
+nameexists fabric:/a/b/c/d true
+nameexists fabric:/a/b/c/d/e true
+
+# Explicitely create a name on the path already created above.
+# Explicit flag should be set for this name
+
+
+createname fabric:/a/b/c
+createname fabric:/a/b/c NameAlreadyExists
+
+# Delete name that has sub-name
+deletename fabric:/a/b/c/d NameNotEmpty
+
+# Delete the leaf name, should recursively delete upto the first explicitely created name
+deletename fabric:/a/b/c/d/e 
+nameexists fabric:/a true
+nameexists fabric:/a/b true
+nameexists fabric:/a/b/c true
+nameexists fabric:/a/b/c/d false
+nameexists fabric:/a/b/c/d/e false
+
+# Delete the last explicitly created name, all names should be deleted
+deletename fabric:/a/b/c 
+nameexists fabric:/a/b/c false
+nameexists fabric:/a/b false
+nameexists fabric:/a false
+
+#########################################
+# Testcase 2: Create and delete services that require 
+# recursively creating and deleting names
+######################################### 
+
+# Create service, name will be created as Implicit
+createservice fabric:/root/App1/Metadata/Svc1 TestStoreService n 1 1
+nameexists fabric:/root true
+nameexists fabric:/root/App1 true
+nameexists fabric:/root/App1/Metadata true
+nameexists fabric:/root/App1/Metadata/Svc1 true
+
+# Create another services on the path. Names will remain implicit
+createservice fabric:/root/App1 TestStoreService n 1 1
+createservice fabric:/root TestStoreService n 1 1
+
+# Create an explicit name
+createname fabric:/root/App1/Metadata
+
+# Delete the inner-most service, should delete its name
+# and stop at the first explicit name
+deleteservice fabric:/root/App1/Metadata/Svc1
+nameexists fabric:/root true
+nameexists fabric:/root/App1 true
+nameexists fabric:/root/App1/Metadata true
+nameexists fabric:/root/App1/Metadata/Svc1 false
+
+# Delete an inner service, names should not be deleted as there are child names
+deleteservice fabric:/root/App1
+nameexists fabric:/root true
+nameexists fabric:/root/App1 true
+nameexists fabric:/root/App1/Metadata true
+
+# Delete the explicit name, names should be deleted until the service name is reached
+deletename fabric:/root/App1/Metadata
+nameexists fabric:/root true
+nameexists fabric:/root/App1 false
+nameexists fabric:/root/App1/Metadata false
+
+# Delete the last service, all names should be deleted
+deleteservice fabric:/root
+nameexists fabric:/root false
+
+#########################################
+# Testcase 3: Create a name explicitly, then a service at that name.
+# Delete service should not delete the name.
+######################################### 
+createname fabric:/servicename
+createservice fabric:/servicename TestStoreService n 1 1
+deleteservice fabric:/servicename 
+nameexists fabric:/servicename true
+
+#########################################
+# Testcase 4: Properties are stored only at the Name Owner
+# Recursive name deletion should revert tentative deletion
+# for the correct name at the AO when encountering a property.
+#########################################
+
+# Testcase 4a: Property at leaf segment
+
+createname fabric:/z/y/x/w
+putproperty fabric:/z/y/x/w PropertyW ValueW
+
+deletename fabric:/z/y/x/w NameNotEmpty
+nameexists fabric:/z/y/x/w true
+nameexists fabric:/z/y/x true
+nameexists fabric:/z/y true
+nameexists fabric:/z true
+
+deleteproperty fabric:/z/y/x/w PropertyW
+
+# Testcase 4b: Property at mid-segment
+
+putproperty fabric:/z/y/x ProperyX ValueX
+
+deletename fabric:/z/y/x/w
+nameexists fabric:/z/y/x/w false
+nameexists fabric:/z/y/x true
+nameexists fabric:/z/y true
+nameexists fabric:/z true
+
+deleteproperty fabric:/z/y/x ProperyX
+
+# Testcase 4c: Property at first segment
+
+putproperty fabric:/z ProperyZ ValueZ
+
+deletename fabric:/z/y/x
+nameexists fabric:/z/y/x false
+nameexists fabric:/z/y false
+nameexists fabric:/z true
+
+deleteproperty fabric:/z ProperyZ
+
+deletename fabric:/z
+nameexists fabric:/z false
+
+
+!q

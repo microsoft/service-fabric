@@ -1,0 +1,110 @@
+fabric:/www.ms.com
+fabric:/hostname/test/a%23b/t.htm
+fabric:/c/test/test.htm
+fabric:/c/test/test.htm
+fabric:/hostmachine/test/a%23b/t.htm
+fabric:/a/b/c/d;p?q#s
+fabric:/a/b/c/%23s
+fabric:/a/b/c#s
+fabric:/a/b/c/%23s
+fabric:/www.microsoft.com:1020/f/support/show.html
+fabric:/www.microsoft.com:8000/f/5%25}.xls
+fabric:/www.microsoft.com:8000/f/5%25xy.xls
+fabric:/www.microsoft.com/test/try.htm
+fabric:/testhost/a/b/c%23test/e.txt
+fabric:/user@ftp.microsoft.com
+fabric:/a
+fabric:/a/b/c/g
+fabric:/a/b/c/g#s
+fabric:/a/b/g
+fabric:/a/b/c/d;p?y
+fabric:/a/b
+fabric:/a/b/c/g
+fabric:/g
+fabric:/a/g
+fabric:/a/b/c/g
+fabric:/a/b/c/;x
+fabric:/a/b/c/d;p?q#s
+fabric:/a/b/c/g?y#s
+fabric:/a/b/c
+fabric:/a/b/c/g;x
+fabric:/a/b/c/g;x?y#s
+fabric:/a/b/c/g?y
+fabric:/a/b/c
+fabric:/a/b
+fabric:/a/g
+fabric:/testhost/test/e.txt
+fabric:/ohserv/scripts/cgibin/args2.pl?@!:+$reserved
+fabric:/c:/f/b
+fabric:/testhost2/test/e.txt
+fabric:/www.microsoft.com/test.htm
+fabric:/www.microsoft.com/test.asp?some search text
+fabric:/ohserv/testcases/url/fragments/fragment2.htm#At@sign
+fabric:/testhost/a/b/d%23test.txt
+fabric:/testhost/a/test/e.txt
+fabric:/scottim_2k/contents/test.htm
+fabric:/hostmachine/test%3Ft.html
+fabric:/ftp.microsoft.com
+fabric:/www.microsoft.com/test.asp?some search text
+fabric:/ieinternal/ie5/network/url parsing/escape/This File.htm
+fabric:/www.microsoft.com
+fabric:/testhost/a/test/e.txt
+fabric:/testhost/a/b/e.txt
+fabric:/ftp.microsoft.com
+fabric:/ohserv/testcases/url/fragments/fragment2.htm#///slashes//
+fabric:/c:/f/b
+fabric:/user@ftp.microsoft.com:2100/test.html%3Fab
+fabric:/testhost/a/b/d%23test/e.txt
+fabric:/user:pass@ftp.microsoft.com
+fabric:/UserInfo{ }@hostname/dir/file
+fabric:/unchost/share/path
+fabric:/adad/%3Fw/adasd
+fabric:/www.ms.com
+fabric:/www.ms.com/1/file
+fabric:/www.ms.com/1/file
+fabric:/www.ms.com/1/2/3/file
+fabric:/www.ms.com
+fabric:/www.ms.com/1/2/3/4
+fabric:/www.ms.com/1/2/3/4
+fabric:/www.ms.com/1/.2/..3..3/...4.4.4
+fabric:/www.ms.com/Aboveroot
+fabric:/www.ms.com/1/2/3/4
+fabric:/www.ms.com/1/2/3
+fabric:/www.ms.com
+fabric:/www.ms.com/dfsfs
+fabric:/www.ms.com/1/2/3/Dir
+fabric:/www.ms.com/1/2/3/4
+fabric:/www.ms.com/1/2/3/4
+fabric:/www.ms.com/dfsfs
+fabric:/www.ms.com
+fabric:/www.ms.com/1/2/3/4
+fabric:/www.ms.com/1/2/3/4
+fabric:/www.ms.com/1/2/3/file
+fabric:/www.ms.com
+fabric:/www.ms.com/1/2/3/4
+fabric:/www.ms.com/1/.2/..3..3/...4.4.4
+fabric:/www.ms.com
+fabric:/www.ms.com/1/2/3
+fabric:/c:/path/file
+fabric:/host/path/file.htm
+fabric:/ieinternal/ie5/network/url parsing/escape/This&File.htm
+fabric:/www.microsoft.com
+fabric:/scottim_2k/contents/test.htm
+fabric:/wyattweb.com/freepage/m/mcmail@parkavenue.net/home.shtml
+fabric:/hybj.fancy.com.tw
+fabric:/:@ftp.microsoft.com:10021
+fabric:/host:333/space path
+fabric:/host:333/space path/bar Path
+fabric:/host/filename
+fabric:/host/ Path/new filename
+fabric:/spacehost/some1/some2
+fabric:/spacehost/bar Path
+fabric:/spacehost/some1/some2#not_a_fragment
+fabric:/spacehost/bar Path
+fabric:/host:333/space path
+fabric:/anotherhost:444/Path%3Fno_query
+fabric:/host/space path/some1
+fabric:/host/space path/bar Path
+fabric:/host/space path
+fabric:/anotherhost:444/Path
+fabric:/!&()*,;=-._{}/!&()*,;=-._{}

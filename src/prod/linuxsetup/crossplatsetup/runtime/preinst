@@ -1,0 +1,65 @@
+#!/bin/bash
+echo In PreInst - $@
+
+# NOTE: Any changes in this file have to be compatible for both DEB and RPM distros 
+# as it is used in both installers. Use conditionals where necessary.
+
+exitCode=0
+
+GetDistroInstaller()
+{
+    local __resultvar=$1
+
+    /usr/bin/dpkg --search /usr/bin/dpkg >/dev/null 2>&1
+    if [ $? = 0 ]; then
+        eval $__resultvar="DEB"
+    else
+        /usr/bin/rpm -q -f /usr/bin/rpm >/dev/null 2>&1
+        if [ $? = 0 ]; then
+            eval $__resultvar="RPM"
+        else
+            eval $__resultvar="UNKNOWN"
+        fi
+    fi
+}
+
+GetDistroInstaller DISTROINSTALLER
+if [ $DISTROINSTALLER = "DEB" ]; then
+    # Source debconf library.
+    . /usr/share/debconf/confmodule
+    db_version 2.0
+fi
+
+#IsUpgrade="false"
+#for var in "$@"
+#do
+#    echo "$var"
+#     if [ "$var" == "upgrade" ]; then
+#        IsUpgrade="true"
+#     fi
+#done
+
+echo "Stopping service fabric service"
+systemctl stop servicefabric
+
+echo "Disable service fabric service"
+systemctl disable servicefabric
+
+if [ $DISTROINSTALLER = "DEB" ]; then
+    db_get servicefabric/accepted-all-eula
+    db_go
+    if [ "$RET" != "true" ]; then
+        db_get servicefabric/accepted-eula-ga
+        db_go
+        if [ "$RET" != "true" ]; then
+            echo EULA not accepted. Exiting installation
+            exitCode=2
+        fi
+    fi
+
+    sleep 0.001 # debconf causes script to return error 128 on slow machines if script exits too quickly
+elif [ $DISTROINSTALLER = "RPM" ]; then
+    echo "EULA autoaccepted for RPM"
+fi
+
+exit $exitCode

@@ -1,0 +1,155 @@
+votes 10 20 30 40 50
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+
++10 nodeprops=servicenode:1
++20
++30 nodeprops=servicenode:1
++40
++50 nodeprops=servicenode:1
+verify
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageA version=V1
+app.servicetypes versionV1 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack versionV1 ServicePackageA CodeA1 types=ServiceTypeA1 version=V1
+
+app.upload versionV1
+
+# 
+# Application version V2
+#
+app.add versionV2 TestApp V2 versionV1
+app.clear versionV2
+
+app.servicepack versionV2 ServicePackageA version=V2
+app.servicetypes versionV2 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack versionV2 ServicePackageA CodeA1 types=ServiceTypeA1 version=V2
+
+app.upload versionV2
+
+#
+# Provision application version V1
+#
+provisionapp versionV1
+
+#
+# Provision application version V2
+#
+provisionapp versionV2
+
+#
+# Create application version 
+#
+createapp fabric:/skip_upgrade_domain TestApp V1
+verify
+
+createservice fabric:/skip_upgrade_domain/user_service ServiceTypeA1 y 1 3 persist appname=fabric:/skip_upgrade_domain constraint=servicenode==1
+verify
+
+#
+# Uncomment to manually test monitored upgrade
+#
+#upgradeapp fabric:/skip_upgrade_domain V2 Rolling upgrademode=monitored failaction=rollback healthcheckretry=30
+#verifyupgradeapp fabric:/skip_upgrade_domain
+#verify
+#!q
+
+#
+# Upgrade application from version V1 to V2
+#
+# Nodes containing no services will automatically verify
+#
+
+upgradeapp fabric:/skip_upgrade_domain V2 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud,30_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud,30_ud,40_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud,30_ud,40_ud,50_ud
+
+verifyupgradeapp fabric:/skip_upgrade_domain
+
+verify
+
+#
+# Swap node properties and test again
+#
+
++60 nodeprops=servicenode:1
+verify
+
+-10 removedata
+verify
+nodestateremoved 10
++10
+verify
+
+-20
++20 nodeprops=servicenode:1
+verify
+
+-30 removedata
+verify
+nodestateremoved 30
++30
+verify
+
+-40
++40 nodeprops=servicenode:1
+verify
+
+-50 removedata
+verify
+nodestateremoved 50
++50
+verify
+
+#
+# Upgrade application from version V2 to V1
+#
+# Nodes containing no services will automatically verify
+#
+
+upgradeapp fabric:/skip_upgrade_domain V1 Rolling upgrademode=manual
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud,30_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud,30_ud,40_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud,30_ud,40_ud,50_ud
+upgradeappmovenext fabric:/skip_upgrade_domain
+
+verifyupgradeapp fabric:/skip_upgrade_domain upgradedomains=10_ud,20_ud,30_ud,40_ud,50_ud,60_ud
+
+verifyupgradeapp fabric:/skip_upgrade_domain
+
+verify
+
+!q

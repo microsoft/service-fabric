@@ -1,0 +1,74 @@
+#
+# Regression Test for Bug 1319507
+#
+
+set DummyPLBEnabled true
+votes 10 20 30
+cleantest
+fmservice 3 3
+namingservice 1 3 1
+
+set ExpectedClusterSize 5
+set FMPlacementConstraints fmservice==true
+
++10
++20
++30 nodeprops=fmservice:true
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
+verify
+
+!waitforstate FM.Replica.Role.FMService.50 Primary
+!waitforstate FM.Replica.Role.FMService.40 Secondary
+!waitforstate FM.Replica.Role.FMService.30 Secondary
+
+# Block reconfiguration related messages from FM primary on node 50 to secondary on node 30
+addbehavior b1 50 30 Activate
+
+# Restart the FM secondary on node 40
+-40
+!wait
++40 nodeprops=fmservice:true
+!wait
+
+# At this point, the FM secondary on node 30 does not know that replica on node 40 has restarted
+!waitforstate FM.FT.Reconfig.FMService true
+!waitforstate FM.Replica.State.FMService.40 StandBy
+
+# Prevent any further reconfigurations
+addbehavior b2 * * DoReconfiguration
+
+# Bring down the FM primary and secondary on nodes 50 and 40 respectively
+-50
+-40
+!wait
+
+!waitforstate FM.FT.QuorumLost.FMService true
+
+# Trigger FMM rebuild of the FMService replica set
+-10
+!wait
+
+# Rebuild will complete with a single report from ready secondary on node 30.
+# The generated FailoverUnit will not have the updated replica instance id for replica on node node 40.
+!waitforstate FM.FT.Reconfig.FMService false
+!waitforstate FM.FT.QuorumLost.FMService true
+
+# Allow the reconfigurations to proceed
+removebehavior b2
+removebehavior b1
+
+# Bring up the old FMService primary replica on node 50.
+# This replica knows about the updated replica instance id for replica on node 40.
++50 nodeprops=fmservice:true
+!wait
+
+# FMM will update the replica instance id for replica on node 40, and
+# the FailoverUnit will come out of quorum loss and complete reconfiguration.
+!waitforstate FM.FT.Reconfig.FMService false
+!waitforstate FM.FT.QuorumLost.FMService false
+
++40 nodeprops=fmservice:true
+verify
+
+!q

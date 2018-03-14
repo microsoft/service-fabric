@@ -1,0 +1,102 @@
+#
+# [owner] aprameyr
+# Report Health for build on another replica being stuck
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 1
+set HealthReportRetrySendInterval 5
+
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Create a service
+# Replicate some data but block to the secondary
+# Restart the secondary and block all copy
+# Health report should be raised
+#####################################################
+
+set ServiceApiHealthDuration 500000
+set ServiceReconfigurationApiHealthDuration 3000000
+set BuildReplicaTimeLimit 3
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+!waitforstate FM.Replica.State.fabric:/test1.40 Ready
+!waitforstate FM.Replica.State.fabric:/test1.30 Ready
+
+#Add some data that is not visible to node 20
+clientput fabric:/test1 10 10
+clientput fabric:/test1 20 10
+clientput fabric:/test1 30 10
+!wait
+
+addbehavior b2 * 20 CopyOperation
++20 nodeprops=system:false
+
+!waitforstate FM.Replica.State.fabric:/test1.20 InBuild
+
+queryhealth replica replicaid=fabric:/test1#0#0 expectedhealthstate=warning
+
+removebehavior b2
+verify 
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2: Test case for replicator sync API 
+# failure should not lead to health event
+#####################################################
+
+set ServiceApiHealthDuration 1
+set ServiceReconfigurationApiHealthDuration 1
+set BuildReplicaTimeLimit 1
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+#inject failure in Getstatus
+injectfailure 20 fabric:/test2 replicator.GetCurrentProgress
+
+#force getlsn
+-40
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.30 Phase1_GetLSN
+
+#give health time to catchup
+!pause 5
+
+queryhealth replica replicaid=fabric:/test2#0#1 expectedhealthstate=ok
+
+removefailure 20 fabric:/test2 replicator.GetCurrentProgress
+verify
+
++40 nodeprops=system:true
+!waitforstate FM.Node.IsUp.40 true
+
+deleteservice fabric:/test2
+verify
+
+
+!q

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ApplicationManifest
+    ApplicationTypeName="LinuxRunAsTestApplication"
+    ApplicationTypeVersion="1.0"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <Description>Linux RunAs test application.</Description>
+
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="RunAsAcctServicePackage" ServiceManifestVersion="1.0"/>
+        <ConfigOverrides/>
+        <Policies>
+           <RunAsPolicy CodePackageRef="Code" EntryPointType="Main" UserRef="tmpuser" />
+        </Policies>       
+    </ServiceManifestImport>
+
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="RunAsRootServicePackage" ServiceManifestVersion="1.0"/>
+        <ConfigOverrides/>
+        <Policies>
+           <RunAsPolicy CodePackageRef="Code" EntryPointType="Main" UserRef="root" />
+        </Policies>
+    </ServiceManifestImport>
+
+    <DefaultServices>
+        <Service Name="RunAsAcctService">
+            <StatelessService ServiceTypeName="RunAsAcctServiceType" InstanceCount="3">
+                <SingletonPartition />
+            </StatelessService>
+        </Service>
+
+        <Service Name="RunAsRootService">
+            <StatelessService ServiceTypeName="RunAsRootServiceType" InstanceCount="3">
+                <SingletonPartition />
+            </StatelessService>
+        </Service>
+    </DefaultServices>
+
+    <Principals>
+        <Users>
+            <User Name="tmpuser"/>
+            <User Name="root" AccountType="LocalSystem"/>
+        </Users>
+    </Principals>
+
+</ApplicationManifest>
+

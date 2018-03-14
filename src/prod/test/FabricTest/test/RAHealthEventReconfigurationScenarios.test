@@ -1,0 +1,395 @@
+#
+# [owner] brcamina
+# Test scenarios around Phase1_GetLSN for Health Reporting
+!load FailoverCITConfigurationInitialization.test
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
+set StoreClientTimeout 3
+set StoreReplicationTimeout 3
+set ReconfigurationHealthReportThreshold 1
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+##############################################################
+# Scenario 1: GetLSN stuck because nodes are unresponsive    #
+##############################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test1.30.30
+
+!var spFUID FM.FT.PartitionId.fabric:/test1#0
+
+addbehavior b1 * * GetLSN
+
+-40
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.30 Phase1_GetLSN
+
+# allow retry to happen
+!pause 5
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.30 Phase1_GetLSN
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+# Remove the block and check that the health warning is cleared
+removebehavior b1
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
+verify
+
++40 nodeprops=system:false
+!waitforstate FM.Node.IsUp.40 true
+
+deleteservice fabric:/test1
+verify
+
+
+############################################################
+# Scenario 2: GetLSN is blocked if a read quorum goes down #
+############################################################
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test2.30.30
+
+!var spFUID FM.FT.PartitionId.fabric:/test2#0
+
+addbehavior b1 * * GetLSN
+
+-40 
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.30 Phase1_GetLSN
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+!waitforstate RA.Replica.IsUp.fabric:/test2.30.20 false
+
+!pause 5
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.30 Phase1_GetLSN
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+removebehavior b1
++20 nodeprops=system:false
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test2
+verify
+
+
+############################################################
+# Scenario 3: GetLSN is blocked if a read quorum is        #
+# unresponsive                                             # 
+############################################################
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test3.30.30
+
+!var spFUID FM.FT.PartitionId.fabric:/test3#0
+
+addbehavior b1 * 20 GetLSN
+
+-40 
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.30 Phase1_GetLSN
+
+!pause 5
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+removebehavior b1
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: Block replication to 20, 30, 40       #
+# Put some data which should be on 60, 50           #
+# Take down 60                                      #
+# Primary should be stuck in Catchup                #
+#####################################################
+
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test4.50.50
+
+!var spFUID FM.FT.PartitionId.fabric:/test4#0
+
+addbehavior b1 * 20 ReplicationOperation
+addbehavior b2 * 30 ReplicationOperation
+addbehavior b3 * 40 ReplicationOperation
+clientput fabric:/test4 10 10 error=Timeout
+
+!pause 5
+
+-60
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.50 Phase2_Catchup
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+#retry of UC should happen
+!pause 1
+
+removebehavior b2
+removebehavior b3
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.50 None
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
++60 nodeprops=system:false
+verify
+
+removebehavior b1
+
+deleteservice fabric:/test4
+verify
+
+-50
+-60
+!waitforstate FM.Node.IsUp.50 false
+!waitforstate FM.Node.IsUp.60 false
+
+
+#####################################################
+# Scenario 5: Demote stuck on old primary during    #
+# Swap primary (phase0 demote)                      #
+#####################################################
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test5.40.40
+
+!var spFUID FM.FT.PartitionId.fabric:/test5#0
+
+addbehavior b0 40 * DoReconfiguration
+addbehavior b1 * * UpdateConfiguration
+
+clientput fabric:/test5 10 10
+!pause 5
+
+swapprimary fabric:/test5 40 30
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 Phase0_Demote
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+!pause 1
+
+removebehavior b0
+removebehavior b1
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
+deleteservice fabric:/test5
+verify
+
+
+#####################################################
+# Scenario 6: Reconfiguration stuck on Phase0_Abort #
+# By failing new primary before reconfig starts     #
+#####################################################
+
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test6.40.40
+
+!var spFUID FM.FT.PartitionId.fabric:/test6#0
+
+clientput fabric:/test6 10 10
+!wait
+
+addbehavior b0 * * GetLSN
+setsignal 40 fabric:/test6 replicator.updatecatchupreplicasetconfiguration.block
+
+swapprimary fabric:/test6 40 20
+waitforsignalhit 40 fabric:/test6 replicator.updatecatchupreplicasetconfiguration.block
+
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Abort_Phase0_Demote
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+resetsignal 40 fabric:/test6 replicator.updatecatchupreplicasetconfiguration.block
+
+verify
+removebehavior b0
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
++20 nodeprops=system:false
+verify
+
+deleteservice fabric:/test6
+verify
+
+# ############################################################
+# # Scenario 7: Deactivate is blocked if a read             #
+#               quorum goes down                             #
+# ############################################################
+
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test7.30.30
+
+!var spFUID FM.FT.PartitionId.fabric:/test7#0
+
+addbehavior b1 * * Deactivate
+
+-40 
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.30 Phase3_Deactivate
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+!waitforstate RA.Replica.IsUp.fabric:/test7.30.20 false
+
+!pause 5
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.30 Phase3_Deactivate
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+removebehavior b1
++20 nodeprops=system:false
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test7
+verify
+
+# ############################################################
+# # Scenario 8: Deactivate is blocked if a read              #
+#               quorum is unresponsive                       #
+# ############################################################
+
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test8.30.30
+
+!var spFUID FM.FT.PartitionId.fabric:/test8#0
+
+addbehavior b1 * * Deactivate
+
+-40 
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.30 Phase3_Deactivate
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+removebehavior b1
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test8
+verify
+
+# ############################################################
+# # Scenario 9: Activate is blocked if a replica             #
+#               is unresponsive                              #
+# ############################################################
+
+createservice fabric:/test9 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test9.30.30
+
+!var spFUID FM.FT.PartitionId.fabric:/test9#0
+
+addbehavior b1 * * Activate
+
+-40 
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.30 Phase4_Activate
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+removebehavior b1
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test9	
+verify
+
+#####################################################
+# Scenario 11: S/S IB Activate is blocked if a      #
+# replica is marked as IB                           #
+#####################################################
+
+createservice fabric:/test11 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+!var spReplId RA.Replica.ReplicaId.fabric:/test11.30.30
+
+!var spFUID FM.FT.PartitionId.fabric:/test11#0
+
+addbehavior b1 * * Activate
+
+-40
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.30 Phase4_Activate
+
+addbehavior b2 * * ReplicatorBuildIdleReplica
+addbehavior b3 * * ReplicaUp
+reportfault 20 fabric:/test11 transient
+
+!waitforstate RA.Replica.State.fabric:/test11.20.20 SB
+removebehavior b3
+!waitforstate RA.Replica.State.fabric:/test11.30.20 IB
+
+removebehavior b1
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.30 Phase4_Activate
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=warning
+
+removebehavior b2
+
+queryhealth replica replica.id=<var.spReplId> partitionguid=<var.spFUID> expectedhealthstate=ok
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test11
+verify
+
+!q

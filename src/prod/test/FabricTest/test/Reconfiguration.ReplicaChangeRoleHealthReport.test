@@ -1,0 +1,314 @@
+#
+# [owner] chuxin
+# This script tests the scenario where there is a bug in the service
+# and the api call for replica change role keeps on failing. Appropriate health
+# events should be reported in this case.
+#
+
+votes 10
+
+cleantest
+fmservice 1 1
+cmservice 1 1
+namingservice 1 1 1
+
+set ReconfigurationMessageRetryInterval 5
+set ReplicaChangeRoleFailureErrorReportThreshold 1
+set ReplicaChangeRoleFailureRestartThreshold 3
+set DummyPLBEnabled true
+set PlacementTimeLimit 5
+set HealthOperationTimeout 5
+set HealthReportSendInterval 3
+set HealthReportRetrySendInterval 5
+set HealthStoreCleanupInterval 1
+set HealthStoreEntityWithoutSystemReportKeptInterval 5
+set UseInternalHealthClient true
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Swap primary
+# Old primary fails CR(S). Health Report generated. Remove Failure. Health Report cleared.
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+!var pReplicaId RA.Replica.ReplicaId.fabric:/test1.40.40
+!var partitionId FM.FT.PartitionId.fabric:/test1#0
+
+injectfailure 40 fabric:/test1 service.beginchangerole
+
+swapprimary fabric:/test1 40 30
+
+!pause 5
+
+queryhealth replica replica.id=<var.pReplicaId> partitionguid=<var.partitionId> expectedhealthstate=error
+
+removefailure 40 fabric:/test1 service.beginchangerole
+
+queryhealth replica replica.id=<var.pReplicaId> partitionguid=<var.partitionId> expectedhealthstate=ok
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2: Swap primary
+# New primary fails CR(P). Health Report generated. Remove Failure. Health Report cleared.
+#####################################################
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+!var sReplicaId RA.Replica.ReplicaId.fabric:/test2.40.30
+!var partitionId FM.FT.PartitionId.fabric:/test2#0
+
+injectfailure 30 fabric:/test2 service.beginchangerole
+
+swapprimary fabric:/test2 40 30
+
+!pause 5
+
+queryhealth replica replica.id=<var.sReplicaId> partitionguid=<var.partitionId> expectedhealthstate=error
+
+removefailure 30 fabric:/test2 service.beginchangerole
+
+queryhealth replica replica.id=<var.sReplicaId> partitionguid=<var.partitionId> expectedhealthstate=ok
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 3: Swap primary
+# Old primary fails CR(S). Health Report generated. After certain retry, replica restart.
+#####################################################
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+!var pReplicaId RA.Replica.ReplicaId.fabric:/test3.40.40
+!var partitionId FM.FT.PartitionId.fabric:/test3#0
+
+injectfailure 40 fabric:/test3 service.beginchangerole
+
+swapprimary fabric:/test3 40 30
+
+!pause 5
+
+queryhealth replica replica.id=<var.pReplicaId> partitionguid=<var.partitionId> expectedhealthstate=error
+
+!waitforstate RA.Replica.State.fabric:/test3.40.40 IC
+
+removefailure 40 fabric:/test3 service.beginchangerole
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: Swap primary
+# New primary fails CR(P). Health Report generated. After certain retry, replica restart.
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+!var sReplicaId RA.Replica.ReplicaId.fabric:/test4.40.30
+!var partitionId FM.FT.PartitionId.fabric:/test4#0
+
+injectfailure 30 fabric:/test4 service.beginchangerole
+
+swapprimary fabric:/test4 40 30
+
+!pause 5
+
+queryhealth replica replica.id=<var.sReplicaId> partitionguid=<var.partitionId> expectedhealthstate=error
+
+!waitforstate RA.Replica.State.fabric:/test4.40.30 IC
+
+removefailure 30 fabric:/test4 service.beginchangerole
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 5: Failover
+# New Primary fails CR(P). Health Report generated. Remove Failure. Health Report cleared.
+#####################################################
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+!var sReplicaId RA.Replica.ReplicaId.fabric:/test5.40.30
+!var partitionId FM.FT.PartitionId.fabric:/test5#0
+
+injectfailure 30 fabric:/test5 service.beginchangerole
+
+-40
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.30 Phase2_Catchup
+
+queryhealth replica replica.id=<var.sReplicaId> partitionguid=<var.partitionId> expectedhealthstate=error
+
+!pause 5
+removefailure 30 fabric:/test5 service.beginchangerole
+
+queryhealth replica replica.id=<var.sReplicaId> partitionguid=<var.partitionId> expectedhealthstate=ok
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.30 None
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Scenario 6: Failover
+# New Primary fails CR(P). Health Report generated. After certain retry, replica restart.
+#####################################################
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+!var sReplicaId RA.Replica.ReplicaId.fabric:/test6.40.30
+!var partitionId FM.FT.PartitionId.fabric:/test6#0
+
+injectfailure 30 fabric:/test6 service.beginchangerole
+
+-40
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.30 Phase2_Catchup
+
+queryhealth replica replica.id=<var.sReplicaId> partitionguid=<var.partitionId> expectedhealthstate=error
+
+!pause 5
+!waitforstate RA.Replica.State.fabric:/test6.30.30 IC
+
+removefailure 30 fabric:/test6 service.beginchangerole
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.30 None
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test6
+verify
+
+#####################################################
+# Scenario 7: Swap Primary
+# Health report generated during Phase0_Demote. During Abort_Phase0_Demote will be cleared.
+#####################################################
+
+#set this to a high value otherwise there is a race and the restart may happen before ok is observed
+set ReplicaChangeRoleFailureRestartThreshold 300
+
+createservice fabric:/test7 TestStoreServiceType y 1 3 minreplicasetsize=3 constraint=(system!=true)
+verify
+
+!var pReplicaId RA.Replica.ReplicaId.fabric:/test7.40.40
+!var partitionId FM.FT.PartitionId.fabric:/test7#0
+
+injectfailure 40 fabric:/test7 service.beginchangerole
+
+swapprimary fabric:/test7 40 30
+
+!pause 5
+
+queryhealth replica replica.id=<var.pReplicaId> partitionguid=<var.partitionId> expectedhealthstate=error
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 Abort_Phase0_Demote
+removefailure 40 fabric:/test7 service.beginchangerole
+
+!pause 15
+
+queryhealth replica replica.id=<var.pReplicaId> partitionguid=<var.partitionId> expectedhealthstate=ok
+
++30 nodeprops=system:true
+verify
+
+deleteservice fabric:/test7
+verify
+
+#####################################################
+# Scenario 8: Health report is generated during cancel catchup
+# warning health report is generated and cleared during cancel catchup
+#####################################################
+
+createservice fabric:/test8 TestStoreServiceType y 1 3 minreplicasetsize=3 constraint=(system!=true)
+verify
+
+!var pReplicaId RA.Replica.ReplicaId.fabric:/test8.40.40
+!var partitionId FM.FT.PartitionId.fabric:/test8#0
+
+setsignal 40 fabric:/test8 replicator.beginchangerole.block
+
+swapprimary fabric:/test8 40 30 force
+
+!pause 5
+
+waitforsignalhit 40 fabric:/test8 replicator.beginchangerole.block
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 Abort_Phase0_Demote
+
+injectfailure 40 fabric:/test8 service.beginchangerole
+resetsignal 40 fabric:/test8 replicator.beginchangerole.block
+
+!pause 5
+
+queryhealth replica replica.id=<var.pReplicaId> partitionguid=<var.partitionId> expectedhealthstate=error
+
+removefailure 40 fabric:/test8 service.beginchangerole
+
+!pause 15
+
+queryhealth replica replica.id=<var.pReplicaId> partitionguid=<var.partitionId> expectedhealthstate=ok
+
++30 nodeprops=system:false
+verify
+
+deleteservice fabric:/test8
+verify
+
+#####################################################
+# Scenario 9: Health report is generated during cancel catchup
+# and replica is restarted
+#####################################################
+
+set ReplicaChangeRoleFailureRestartThreshold 3
+
+createservice fabric:/test9 TestStoreServiceType y 1 3 minreplicasetsize=3 constraint=(system!=true)
+verify
+
+addbehavior b0 * * ReplicaClose
+
+!var pReplicaId RA.Replica.ReplicaId.fabric:/test9.40.40
+!var partitionId FM.FT.PartitionId.fabric:/test9#0
+
+setsignal 40 fabric:/test9 replicator.beginchangerole.block
+
+swapprimary fabric:/test9 40 30 force
+
+waitforsignalhit 40 fabric:/test9 replicator.beginchangerole.block
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.40 Abort_Phase0_Demote
+
+injectfailure 40 fabric:/test9 service.beginchangerole
+resetsignal 40 fabric:/test9 replicator.beginchangerole.block
+
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test9.40 true
+removebehavior b0
+removefailure 40 fabric:/test9 service.beginchangerole
+
++30 nodeprops=system:false
+verify
+
+deleteservice fabric:/test9
+verify
+
+!q

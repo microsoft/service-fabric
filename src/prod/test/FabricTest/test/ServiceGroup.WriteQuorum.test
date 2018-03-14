@@ -1,0 +1,78 @@
+set DummyPLBEnabled true
+votes 10
+cmservice 0 0
+namingservice 3 3 2
+cleantest
+set ExpectedClusterSize 3
+fmservice 5 1
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
++10
++20
++30
+verify
+
+#################################################################
+######## Retry Commit                                    ########
+#################################################################
+createname fabric:/servicegroup2
+
+injectfailure 30 fabric:/servicegroup2#test1 servicegroup.delaycommit
+
+createservicegroup \
+    fabric:/servicegroup2 SGStatefulServiceFactory y 1 5 \
+    1 \
+    fabric:/servicegroup2#test1 SGStatefulService \
+    init fabric:/servicegroup2#test1 \
+        atomicgroupstateprovider \
+        replicateatomic \
+        primary.onclose.assert.state=1 \
+        primary.onclose.assert.lastcommited=2 \
+    endinit \
+    persist \
+    minreplicasetsize=4
+
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.20 Idle
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.10 Idle
+
+# establish write quorum
++40
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.10 Secondary
+
+!pause,10
+
+# remove write quorum
+-40
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.10 Secondary
+
+removefailure 30 fabric:/servicegroup2#test1 servicegroup.delaycommit
+
+!pause,10
+
+# reestablish write quorum
++40
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup2.10 Secondary
+
+!pause,10
+
+deleteservicegroup fabric:/servicegroup2
+
+!pause,5
+
+deletename fabric:/servicegroup2
+
+verify
+!q

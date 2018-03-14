@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="TestServicePackage" ManifestVersion="1.0" RolloutVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Description>Test Description</Description>
+  <DigestedServiceTypes RolloutVersion="1.0">
+    <ServiceTypes>
+      <StatelessServiceType ServiceTypeName="TestStatelessServiceType">
+        <LoadMetrics>
+          <LoadMetric Name="TestStatelessServiceTypeMetric1" PrimaryDefaultLoad="2" />
+          <LoadMetric Name="TestStatelessServiceTypeMetric2" PrimaryDefaultLoad="3" />
+        </LoadMetrics>
+        <PlacementConstraints>TestStatelessServiceType Constraints</PlacementConstraints>
+      </StatelessServiceType>
+      <StatefulServiceType ServiceTypeName="TestStatefulServiceType" HasPersistedState="true">
+        <LoadMetrics>
+          <LoadMetric Name="TestStatefulServiceTypeMetric1" PrimaryDefaultLoad="7" SecondaryDefaultLoad="7" />
+          <LoadMetric Name="TestStatefulServiceTypeMetric2" PrimaryDefaultLoad="1" SecondaryDefaultLoad="1" />
+        </LoadMetrics>
+        <PlacementConstraints>TestStatefulServiceType Constraints</PlacementConstraints>
+        <Extensions>
+          <Extension Name="TestStatefulExtension">
+            <TestElement TestAttr="TestStatefulValue">TestStatefulData</TestElement>
+          </Extension>
+        </Extensions>
+      </StatefulServiceType>
+    </ServiceTypes>
+  </DigestedServiceTypes>
+  <DigestedCodePackage RolloutVersion="1.0">
+    <CodePackage Name="TestStatelessServiceType.Code" Version="1.0">
+      <EntryPoint>
+          <ExeHost>
+              <Program>TestStatelessServiceType.exe</Program>
+              <RunFrequency IntervalInSeconds="2" />
+          </ExeHost>
+      </EntryPoint>      
+    </CodePackage>
+    <RunAsPolicy CodePackageRef="TestStatelessServiceType.Code" UserRef="DefaultUser" />
+  </DigestedCodePackage>
+  <DigestedCodePackage RolloutVersion="1.0">
+    <CodePackage Name="TestStatefulServiceType.Code" Version="1.0">
+      <EntryPoint>
+        <DllHost IsolationPolicy="SharedDomain">
+          <UnmanagedDll>TestStatefulServiceType.dll</UnmanagedDll>
+        </DllHost>
+      </EntryPoint>      
+    </CodePackage>
+    <RunAsPolicy CodePackageRef="TestStatefulServiceType.Code" UserRef="DefaultUser" />
+  </DigestedCodePackage>
+  <DigestedConfigPackage RolloutVersion="1.0">
+    <ConfigPackage Name="TestStatefulServiceType.Config" Version="1.0" />
+    <ConfigOverride Name="TestStatefulServiceType.Config">
+      <Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+        <Section Name="TestStatefulServiceTypeSection1">
+          <Parameter Name="Param1" Value="Override_1000" />
+        </Section>
+        <Section Name="TestStatefulServiceTypeSection2">
+          <Parameter Name="Param1" Value="Override_False" />
+        </Section>
+        <Section Name="TestStatefulServiceTypeSection3">
+          <Parameter Name="Param1" Value="Override_500000" />
+        </Section>
+      </Settings>
+    </ConfigOverride>
+  </DigestedConfigPackage>
+  <DigestedConfigPackage RolloutVersion="1.0">
+    <ConfigPackage Name="TestStatelessServiceType.Config" Version="1.0" />
+    <ConfigOverride Name="TestStatelessServiceType.Config">
+      <Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+        <Section Name="TestStatelessServiceTypeSection1">
+          <Parameter Name="Param2" Value="Override_True" />
+          <Parameter Name="Param4" Value="Override_65536" />
+        </Section>
+        <Section Name="TestStatelessServiceTypeSection2">
+          <Parameter Name="Param2" Value="Override_NewValueString" />
+        </Section>
+      </Settings>
+    </ConfigOverride>
+  </DigestedConfigPackage>
+  <DigestedDataPackage RolloutVersion="1.0">
+    <DataPackage Name="TestStatelessServiceType.Data" Version="1.0" />
+  </DigestedDataPackage>
+  <DigestedDataPackage RolloutVersion="1.0">
+    <DataPackage Name="TestStatefulServiceType.Data" Version="1.0" />
+  </DigestedDataPackage>
+  <DigestedResources RolloutVersion="1.0" />
+  <Diagnostics />
+</ServicePackage>

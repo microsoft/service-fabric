@@ -1,0 +1,67 @@
+#
+# Validates cluster upgrade using delta health evalaution with dynamic upgrade domains.
+#
+
+votes 10 20 30 40 50
+fmservice 5 1
+namingservice 1 5 1
+cmservice 5 1
+cleantest
+
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+set FabricUpgradeStatusPollInterval 5
+set FabricUpgradeHealthCheckInterval 5
+
+set NamingOperationTimeout 60
+set NamingOperationRetryTimeout 180
+
++10 version=4.2.777.0:v1
++20 version=4.2.777.0:v1
++30 version=4.2.777.0:v1
++40 version=4.2.777.0:v1
++50 version=4.2.777.0:v1
+verify
+
+prepareupgradefabric code=4.2.777.0 config=v1
+provisionfabric code=4.2.777.0 config=v1
+
+# ignore absolute policy to test delta
+!string jsonpolicyapi {"MaxPercentUnhealthyNodes":100}
+!string jsonupgradepolicyapi {"MaxPercentUpgradeDomainDeltaUnhealthyNodes":100,"MaxPercentDeltaUnhealthyNodes":15}
+
+upgradefabric code=4.2.777.0 config=v1 Rolling upgrademode=monitored failaction=rollback healthcheckwait=10 healthcheckretry=60 jsonpolicy=<string.jsonpolicyapi> enabledeltas=true jsonupgradepolicy=<string.jsonupgradepolicyapi> healthcheckstable=0
+
+!pause,10
+
+#
+# kill a single node to test that the new UDs (60, 70, 80) are correctly detected and updated
+#
+# 1/5 = 20% unhealthy > MaxPercentDeltaUnhealthyNodes = 15% (fail)
+# 1/8 = 12.5% unhealthy < MaxPercentDeltaUnhealthyNodes = 15% (pass)
+#
+
+-30
++60 version=4.2.777.0:v1
++70 version=4.2.777.0:v1
+
+queryhealth node nodeid=60 expectedhealthstate=ok
+queryhealth node nodeid=70 expectedhealthstate=ok
+
+# Stop reports from going to HM
+addbehavior b1 * * ReportHealth
+
++80 version=4.2.777.0:v1
+verify 
+
+# Wait for CM to ask HM to create baseline for ud of node 80
+# Since HM doesn't have the node, the baseline has 0 errors, 0 total
+
+!pause,5
+
+# Let the reports through
+removebehavior b1 
+
+verifyupgradefabric
+
+!q

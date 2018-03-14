@@ -1,0 +1,172 @@
+#
+# [owner] aprameyr
+# Test scenarios around Replica Abort
+#
+
+!load FailoverCITInitialization.test
+set NamingOperationTimeout 10
+set IsSingletonReplicaMoveAllowedDuringUpgrade false
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Abort Restart Simple Scenario
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * ReplicaUp
+reportfault 40 fabric:/test1 permanent
+!waitforstate RA.FT.State.fabric:/test1.40 Closed
+removebehavior b1
+
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2a: Abort During Open should work
+# Scenario 2b: Abort during open with open failure should try to reopen
+#####################################################
+
+addbehavior b1 * * ReplicaOpenReply
+addbehavior b2 * * ReplicaClose
+addbehavior b3 * * ReplicaUp
+injectfailure 40 fabric:/test2a service.beginopen.reportfault.permanent
+
+createservice fabric:/test2a TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test2a.40.40 ID
+
+removefailure 40 fabric:/test2a service.beginopen.reportfault.permanent
+removebehavior b2
+removebehavior b1
+
+!waitforstate RA.FT.State.fabric:/test2a.40 Closed
+removebehavior b3
+
+verify
+
+deleteservice fabric:/test2a
+verify
+###
+addbehavior b2 * * ReplicaClose
+addbehavior b3 * * ReplicaUp
+injectfailure 40 fabric:/test2b service.beginopen.reportfault.permanent
+injectfailure 40 fabric:/test2b service.beginopen
+
+createservice fabric:/test2b TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+
+!waitforstate RA.Replica.State.fabric:/test2b.40.40 ID
+
+removefailure 40 fabric:/test2b service.beginopen.reportfault.permanent
+setsignal 40 fabric:/test2b service.beginopen.block
+removebehavior b2
+
+waitforsignalhit 40 fabric:/test2b service.beginopen.block
+resetsignal 40 fabric:/test2b service.beginopen.block
+
+removefailure 40 fabric:/test2b service.beginopen
+
+!waitforstate RA.FT.State.fabric:/test2b.40 Closed
+removebehavior b3
+
+verify
+
+deleteservice fabric:/test2b
+verify
+
+#####################################################
+# Scenario 3: Abort During Close
+#####################################################
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test2 service.beginclose.block
+deactivatenode 40 Restart
+
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test2.40 true
+
+# RF should be dropped as close is progressing
+reportfault 40 fabric:/test2 permanent
+!pause 5
+!waitforstate RA.Replica.State.fabric:/test2.40.40 RD
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test2.40 true
+
+resetsignal 40 fabric:/test2 service.beginclose.block
+verify
+
+activatenode 40 
+verify
+
+deleteservice fabric:/test2
+verify
+#####################################################
+# Scenario 4: Abort with failure in API
+#####################################################
+
+createservice fabric:/test4a TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+injectfailure 40 fabric:/test4a service.beginchangerole
+addbehavior b1 * * ReplicaUp
+reportfault 40 fabric:/test4a permanent
+!waitforstate RA.FT.State.fabric:/test4a.40 Closed
+removefailure 40 fabric:/test4a service.beginchangerole
+removebehavior b1
+
+verify
+
+deleteservice fabric:/test4a
+verify
+
+createservice fabric:/test4b TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+injectfailure 40 fabric:/test4b replicator.beginchangerole
+addbehavior b1 * * ReplicaUp
+reportfault 40 fabric:/test4b permanent
+!waitforstate RA.FT.State.fabric:/test4b.40 Closed
+removefailure 40 fabric:/test4b replicator.beginchangerole
+removebehavior b1
+
+verify
+
+deleteservice fabric:/test4b
+verify
+
+#####################################################
+# Scenario 5: CR(N) failure with abort followed by app host down
+# FUP Close operation must set read/write status properly
+#####################################################
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+addbehavior b0 * * ReplicaUp
+injectfailure 40 fabric:/test5 service.beginchangerole
+setsignal 40 fabric:/test5 service.abort.block
+
+deleteservice fabric:/test5 errors=Timeout
+waitforsignalhit 40 fabric:/test5 service.abort.block
+resetsignal 40 fabric:/test5 service.abort.block
+
+-40
+!waitforstate FM.Node.IsUp.40 false
+removebehavior b0
+
++40 nodeprops=system:false
+!waitforstate FM.Node.IsUp.40 true
+
+deleteservice fabric:/test5 errors=UserServiceNotFound
+verify
+
+
+
+!q

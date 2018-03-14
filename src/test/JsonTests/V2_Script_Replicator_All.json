@@ -1,0 +1,202 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "ReplicatorTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "hanagar",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "Replicator.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RollingUpgradeTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "hanagar, richhas",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "RollingUpgrade.test",
+        "ExecutionTimeout": "1200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DistributedQueueCIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, preethas, richhas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "DQueue-CIT.test",
+        "ExecutionTimeout": "10800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DistributedQueueFailures",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, preethas, richhas",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "DQueue-Faults.test",
+        "ExecutionTimeout": "10800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DistributedQueueStress",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, preethas, richhas",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "DQueue-Stress.test",
+        "ExecutionTimeout": "7200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DistributedDictionaryCIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, richhas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "DDict-CIT.test",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DistributedCollections",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, richhas",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "DCollections.test",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "MCFDynamicStateManagerTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "preethas, richhas",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "MCFDynamicSM.test",
+        "ExecutionTimeout": "86400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "TPCCCIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "preethas, hanagar, tyadam, richhas",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "TPCC-CIT.test",
+        "ExecutionTimeout": "18000",
+        "CleanupTimeout": "7200"
+      }
+    },
+    {
+      "Name": "TPCC1-Day1-Partition",
+      "Type": "V2_ScriptTest",
+      "Owners": "preethas, hanagar, tyadam, richhas",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "TPCC-1Day1P.test",
+        "ExecutionTimeout": "93600",
+        "CleanupTimeout": "7200"
+      }
+    },
+    {
+      "Name": "BackupCIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, preethas, richhas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "Backup-CIT.test",
+        "ExecutionTimeout": "1200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Backup",
+      "Type": "V2_ScriptTest",
+      "Owners": "mcoskun, richhas",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "Backup.test",
+        "ExecutionTimeout": "57600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RecoveryPerf(LAB)",
+      "Type": "V2_ScriptTest",
+      "Owners": "SumukhS, AlanWar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "RecoveryPerf.test",
+        "ExecutionTimeout": "10000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SlowCheckpoints",
+      "Type": "V2_ScriptTest",
+      "Owners": "SumukhS, alanwar",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
+        "TaskName": "RRSlowCheckpoints.test",
+        "ExecutionTimeout": "12000",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

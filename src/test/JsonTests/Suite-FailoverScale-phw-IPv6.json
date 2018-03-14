@@ -1,0 +1,27 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "FMScale_SP3R_phw(LAB)",
+      "Type": "V2_DllTest",
+      "Owners": "lemai",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:21;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "3600",
+        "PerfTestTaskName": "FMScale_SP3R_phw (LAB)",
+        "ExpectedResultsFileName": "FailoverScalePerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\Failover_Scale_pHW_IPv6.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SP3R",
+        "InstalledFeaturesFile": "Config\\FailoverScalePHWInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "28800"
+      }
+    }
+  ]
+}

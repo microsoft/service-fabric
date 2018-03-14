@@ -1,0 +1,148 @@
+#
+# Checks scenarios where HM skips persisting similar reports.
+# The reports go directly through HM, which is sync (the test command waits for the message to be processed) and can verify error codes.
+#
+votes 10
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+
+set DummyPLBEnabled true
+set HealthOperationTimeout 20
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+set QueryOperationRetryDelay 1
+set HealthStoreCleanupInterval 3
+set ReportHealthThroughHMPrimary true
+set QueryOperationRetryCount 30
+
+# Disable slow commits reports so when test runs under load health isn't impacted
+set SlowCommitCountThreshold 100000
+
+cleantest
++10
++20
++30
++40
++50
++60
+verify
+
+# Wait for all system reports to be received
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:6;apps-ok:1
+checkhm partitions expectedcount=5
+
+########################################
+# Testcase: Report with same parameters.
+########################################
+
+# First report is persisted to disk
+reporthealthinternal node nodeid=20 sequencenumber=1 healthstate=warning property=property1 timetoliveseconds=7
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1
+
+# Second report is updated in memory only, SN returned by query is the older one
+reporthealthinternal node nodeid=20 sequencenumber=2 healthstate=warning property=property1 timetoliveseconds=7
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,1
+
+# Third report is updated in memory only, then we let it expires
+reporthealthinternal node nodeid=20 sequencenumber=3 healthstate=warning property=property1 timetoliveseconds=7
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,1
+
+# Report expires. Before persisted on cleanup timer, query returns previous event (sn=1), after cleanup timer
+# persists the info, returns sequence number 3
+queryhealth node nodeid=20 expectedhealthstate=error expectedreason=event,FabricTest_Source,property1,3
+
+#
+# Failover the primary
+#
+killservice ClusterManagerServiceName primaryOnly=true
+verify
+
+# After restart, the event is still expired
+queryhealth node nodeid=20 expectedhealthstate=error expectedreason=event,FabricTest_Source,property1,3
+
+# Report same data, expired flag is updated and report is persisted
+reporthealthinternal node nodeid=20 sequencenumber=4 healthstate=warning property=property1 timetoliveseconds=7
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,4
+
+# Update in memory only
+reporthealthinternal node nodeid=20 sequencenumber=5 healthstate=warning property=property1 timetoliveseconds=7
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,4
+
+# Report same sequence number, different health state, rejected due to stale sn (based on comparison with DIFF)
+reporthealthinternal node nodeid=20 sequencenumber=5 healthstate=error property=property1 timetoliveseconds=7 expectederror=HealthStaleReport
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,4
+
+# Different TTL, event is persisted
+reporthealthinternal node nodeid=20 sequencenumber=6 healthstate=warning property=property1 timetoliveseconds=60
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,6
+
+# Update in memory only
+reporthealthinternal node nodeid=20 sequencenumber=7 healthstate=warning property=property1 timetoliveseconds=60
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,6
+
+#
+# Failover the primary
+#
+killservice ClusterManagerServiceName primaryOnly=true
+verify
+
+# The last in-memory state is lost
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,6
+
+########################################
+# Testcase: Report with different parameters
+########################################
+# Different health state, persisted. SN 7 is accepted, because previous sn 7 was lost.
+reporthealthinternal node nodeid=20 sequencenumber=7 healthstate=error property=property1 timetoliveseconds=60
+queryhealth node nodeid=20 expectedhealthstate=error expectedreason=event,FabricTest_Source,property1,7
+
+# Different description, persisted
+reporthealthinternal node nodeid=20 sequencenumber=8 healthstate=error property=property1 timetoliveseconds=60 description="testgenerated"
+queryhealth node nodeid=20 expectedhealthstate=error expectedreason=event,FabricTest_Source,property1,8
+
+# Different attributes, persisted
+reporthealthinternal node nodeid=20 sequencenumber=9 healthstate=error property=property1 timetoliveseconds=60 description="testgenerated" ipaddressorfqdn=127.0.0.1:3339
+queryhealth node nodeid=20 expectedhealthstate=error expectedreason=event,FabricTest_Source,property1,9
+
+# Different remove when expired, persisted
+reporthealthinternal node nodeid=20 sequencenumber=10 healthstate=error property=property1 timetoliveseconds=60 description="testgenerated" transient=true ipaddressorfqdn=127.0.0.1:3339
+queryhealth node nodeid=20 expectedhealthstate=error expectedreason=event,FabricTest_Source,property1,10
+
+########################################
+# Testcase: Transient events
+########################################
+# Same transient event, persist
+reporthealthinternal node nodeid=20 sequencenumber=11 healthstate=error property=property1 timetoliveseconds=60 description="testgenerated" transient=true ipaddressorfqdn=127.0.0.1:3339
+queryhealth node nodeid=20 expectedhealthstate=error expectedreason=event,FabricTest_Source,property1,11
+
+# Different transient event, persisted
+reporthealthinternal node nodeid=20 sequencenumber=12 healthstate=warning property=property1 timetoliveseconds=7 transient=true 
+queryhealth node nodeid=20 expectedhealthstate=warning expectedreason=event,FabricTest_Source,property1,12
+
+# Event expired, not taken into consideration for evaluation
+queryhealth node nodeid=20 expectedhealthstate=ok
+
+########################################
+# Testcase: Events are persisted on mismatch expiration
+########################################
+# Create dummy entity with a fake system report, which has small TTL and RemoveWhenExpired false.
+reporthealthinternal node nodeid=777 node.instanceid=1 sourceid=System.FM property=State sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 transient=false timetoliveseconds=3
+
+# Entity is created and healthy, it has 1 event
+queryhealth node nodeid=777 expectedhealthstate=ok expectedeventcount=1
+
+# System event expires and the entity is in error. The system report is persisted because of state mismatch.
+queryhealth node nodeid=777 expectedhealthstate=error expectedeventcount=1 expectedreason=event,System.FM,State
+checkhmentity node nodeid=777 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 expectedeventcount=1
+
+# Add a user report with small ttl and RemoveWhenExpired true.
+reporthealthinternal node nodeid=777 node.instanceid=1 sequencenumber=1 healthstate=ok transient=true timetoliveseconds=3
+queryhealth node nodeid=777 expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.FM,State
+
+# User event expires and it's removed from store. 
+queryhealth node nodeid=777 expectedhealthstate=error expectedeventcount=1 expectedreason=event,System.FM,State
+checkhmentity node nodeid=777 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 expectedeventcount=1
+
+
+!q

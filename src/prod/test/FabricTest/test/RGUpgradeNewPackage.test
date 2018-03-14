@@ -1,0 +1,177 @@
+################################################################################################
+# Test: RGUpgradeNewPackage.Test
+# Owners: nipuzovi, yangli, anuragg
+# This test verifies basic upgrade scenario of resource governance when we are adding a new SP
+################################################################################################
+votes 20 30
+namingservice 1 3 1
+cmservice 3 1
+fmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+#use fast balancing
+set PLBActionRetryTimes 30
+#we need to be able to move replicas while in upgrade
+set AllowConstraintCheckFixesDuringApplicationUpgrade true
+# Do not check for available resources and do not enforce RG on the nodes
+# This is to be able to execute the test on any machine, regardless 
+set LocalResourceManagerTestMode true
+set ExpectedReplicaUpgradeDuration 5
+
++10 ud=UD1 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:250
++20 ud=UD2 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:2000
++30 ud=UD3 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:2000
++40 ud=UD4 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:2000
+verify
+
+app.add version10 TestApp 1.0
+app.clear version10
+
+app.servicepack version10 ServicePackageA version=1.0 resources=CPU,1,MemoryInMB,250
+
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful volatile
+
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+
+app.upload version10 compress
+
+app.add version12 TestApp2 1.0
+app.clear version12
+
+app.servicepack version12 ServicePackageA version=1.0 resources=CPU,2,MemoryInMB,1500
+
+app.servicetypes version12 ServicePackageA ServiceTypeA1 stateful volatile
+
+app.codepack version12 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+
+app.upload version12 compress
+
+app.add version11 TestApp 2.0 version10
+app.clear version11
+
+app.servicepack version11 ServicePackageA version=2.0 codeversion = 2.0 configversion=1.1 dataversion=1.0 resources=CPU,2,MemoryInMB,0
+
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful volatile
+
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.1
+
+app.servicepack version11 ServicePackageB version=2.0 configversion=1.1 dataversion=1.0 resources=CPU,0,MemoryInMB,500
+
+app.servicetypes version11 ServicePackageB ServiceTypeB1 stateless
+
+app.codepack version11 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.1
+
+app.upload version11 compress
+
+provisionapp version10
+provisionapp version11
+provisionapp version12
+
+createapp fabric:/app1 TestApp 1.0
+verify
+createapp fabric:/app2 TestApp2 1.0
+verify
+
+createservice fabric:/app2/service1 ServiceTypeA1 y 1 3 minreplicasetsize=3 volatile appname=fabric:/app2
+verify
+
+createservice fabric:/app1/service1 ServiceTypeA1 y 1 3 minreplicasetsize=1 volatile appname=fabric:/app1 servicePackageActivationMode=SharedProcess
+createservice fabric:/app1/service2 ServiceTypeA1 y 1 3 minreplicasetsize=1 volatile appname=fabric:/app1 servicePackageActivationMode=ExclusiveProcess
+verify
+
+verifyclusterload servicefabric:/_CpuCores 12 4 1 -1
+verifyclusterload servicefabric:/_MemoryInMB 6000 2000 250 -1
+
+#
+# Upgrade application from version 1.0 to 2.0
+#
+upgradeapp fabric:/app1 2.0 Rolling
+verifyupgradeapp fabric:/app1
+verify
+
+!pause 20
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 0
+verifynodeload nodeid:20 servicefabric:/_CpuCores 6
+verifynodeload nodeid:30 servicefabric:/_CpuCores 6
+verifynodeload nodeid:40 servicefabric:/_CpuCores 6
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 0
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 1500
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 1500
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 1500
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 0
+verifyresourceonnode 20 servicefabric:/_CpuCores 6
+verifyresourceonnode 30 servicefabric:/_CpuCores 6
+verifyresourceonnode 40 servicefabric:/_CpuCores 6
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 0
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 1500
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 1500
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 1500
+
+createservice fabric:/app1/service3 ServiceTypeB1 n 1 3 minreplicasetsize=2 appname=fabric:/app1
+verify
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 0
+verifynodeload nodeid:20 servicefabric:/_CpuCores 6
+verifynodeload nodeid:30 servicefabric:/_CpuCores 6
+verifynodeload nodeid:40 servicefabric:/_CpuCores 6
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 0
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 2000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 0
+verifyresourceonnode 20 servicefabric:/_CpuCores 6
+verifyresourceonnode 30 servicefabric:/_CpuCores 6
+verifyresourceonnode 40 servicefabric:/_CpuCores 6
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 0
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 2000
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 2000
+
+app.add version13 TestApp 2.2 version11
+app.clear version13
+app.servicepack version13 ServicePackageA version=2.2 codeversion = 2.0 configversion=1.2 dataversion=1.0 resources=CPU,2,MemoryInMB,0
+
+app.servicetypes version13 ServicePackageA ServiceTypeA1 stateful volatile
+
+app.codepack version13 ServicePackageA CodeA1 types=ServiceTypeA1 version=2.2
+
+app.servicepack version13 ServicePackageB version=2.2 configversion=1.2 dataversion=1.0 resources=CPU,0,MemoryInMB,250
+
+app.servicetypes version13 ServicePackageB ServiceTypeB1 stateless
+
+app.codepack version13 ServicePackageB CodeB1 types=ServiceTypeB1 version=2.2
+
+app.upload version13 compress
+
+provisionapp version13
+
+upgradeapp fabric:/app1 2.2 Rolling
+verifyupgradeapp fabric:/app1
+verify
+
+!pause 20
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 0
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 250
+verifyclusterload servicefabric:/_CpuCores 18 6 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 5250 1750 250 -1
+
+deleteservice fabric:/app1/service3
+verify
+
+verifyclusterload servicefabric:/_CpuCores 18 6 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 4500 1500 0 -1
+
+createservice fabric:/app1/service3 ServiceTypeB1 n 1 3 minreplicasetsize=2 appname=fabric:/app1
+verify
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 0
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 250
+verifyclusterload servicefabric:/_CpuCores 18 6 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 5250 1750 250 -1
+
+!q

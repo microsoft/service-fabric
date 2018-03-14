@@ -1,0 +1,136 @@
+#
+# Authorities are not supported
+#
+fabric://c:/%23/bla.dat
+fabric://c:/a/bc#xy
+fabric://c:/dir/base.txt%23test
+fabric://c:/dir2/Newfile%23name.txt
+fabric://c:/test/e.txt
+fabric://c:/test/rel1/rel2/rel.html
+fabric://c:/rel1/rel2/rel.html
+fabric://d:/test/e.txt
+fabric://c:/f/b
+fabric://Cyrillic-A-Tail-?/dir/file
+fabric://UNC-Name{ }/dir/file
+fabric://Root/dir/file
+fabric://#hostname
+fabric:////%3F/adasd
+fabric://c:/path/file
+fabric://c:/dir/path
+fabric:///dir/path/file.htm
+fabric://c:/dir/path/fil#e.htm
+fabric://c:/dir/path/fil%3Fe.htm
+fabric://c:/dir/path/fil%3Fe.htm
+fabric://c:/dir/path/file%3Fe.txt
+fabric://c:/dir/path/file%23e.txt
+fabric://c:/dir/path/file%3Fe.txt
+fabric://c:/dir/path/file#e.txt
+fabric://c:/space path/some1/some2%3Fnot_a_query
+fabric://c:/space path/bar Path
+#
+# Literal IPs are only supported in authority
+#
+fabric:/[0000:0000:0000:0000:0000:0000:0000:0001]
+fabric:/[0143:0000:0000:0000:0000:0127:0000:0021]
+fabric:/[1111:2222:3333:4444:5555:6666:7777:8888]
+fabric:/[0143:0000:0000:0000:0000:0000:0000:0021]:400
+fabric:/[0143:0000:0000:0000:0000:0000:0127:0021]:8080
+fabric:/[1111:2222:3333:4444:5555:6666:7777:8888]
+fabric:/[0143:0000:0000:0000:0000:0127:0000:0021]
+fabric:/[0127:0127:1024:0127:0127:1024:1024:1024]
+fabric:/[FE80:0000:0000:0000:0123:4567:89AB:CDEF]
+fabric:/[0143:0000:0000:0000:0000:0000:0000:0021]
+fabric:/[0143:0000:0000:0000:0000:0000:0000:0021]
+fabric:/[FE80:0000:0000:0000:0123:4567:89AB:CDEF]:800
+fabric:/[1111:2222:3333:4444:5555:6666:7777:8888]:800
+fabric:/[0143:0000:0000:0000:0000:0000:0127:0021]
+fabric:/[0143:0000:0000:0000:0000:0000:0000:0021]
+fabric:/[0000:0000:0000:0000:0000:0000:7F7F:0001]
+fabric:/[0127:0127:1024:0127:0127:1024:7F7F:0001]
+fabric:/[0001:0000:0000:0000:0000:0000:0000:0001]:400/boo
+fabric:/[0001:0000:0000:0000:0000:0000:0000:0001]:400/boo
+#
+# Rootless paths are not supported
+#
+fabric:user@microsoft.com
+fabric:h
+fabric:comp.infosystem.www.misc
+fabric:def/ghi/jkl
+fabric:*
+fabric:schemas-microsoft-com:xml-msdata
+#
+# Empty segments (including trailing slashes) are not supported
+#
+fabric:/www.microsoft.com/#some anchor
+fabric:/www.microsoft.com//path
+fabric:/h/#NotAHost
+fabric:/user@ftp.microsoft.com:2100/#ab
+#
+# '%' is only supported as an escape character
+#
+fabric:/www.microsoft.com:8000/foo/5%}.xls
+fabric:/www.microsoft.com/#some% anchor
+fabric:/www.microsoft.com/test.asp?some search% text
+#
+# + is reserved and not allowed in NamingUris
+#
+fabric:/+a
+fabric:/a+
+fabric:/a+b
+fabric:/a+/b
+fabric:/a/+b
+fabric:/a/b+
+fabric:/a/b+c
+#
+# $ is reserved and not allowed in NamingUris
+#
+fabric:/$a
+fabric:/a$
+fabric:/a$b
+fabric:/a$/b
+fabric:/a/$b
+fabric:/a/b$
+fabric:/a/b$c
+#
+# ~ is reserved and not allowed in NamingUris
+#
+fabric:/~a
+fabric:/a~
+fabric:/a~b
+fabric:/a~/b
+fabric:/a/~b
+fabric:/a/b~
+fabric:/a/b~c
+#
+# Additional unreserved, but unsupported characters
+#
+#
+fabric:/a<
+fabric:/a<b
+fabric:/a/<b
+fabric:/a/b<
+fabric:/a/b<c
+#
+fabric:/a>
+fabric:/a>b
+fabric:/a/>b
+fabric:/a/b>
+fabric:/a/b>c
+#
+fabric:/a\
+fabric:/a\b
+fabric:/a/\b
+fabric:/a/b\
+fabric:/a/b\c
+#
+fabric:/a^
+fabric:/a^b
+fabric:/a/^b
+fabric:/a/b^
+fabric:/a/b^c
+#
+fabric:/a|
+fabric:/a|b
+fabric:/a/|b
+fabric:/a/b|
+fabric:/a/b|c

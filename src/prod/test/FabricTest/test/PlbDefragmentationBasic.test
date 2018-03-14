@@ -1,0 +1,88 @@
+# [owner:mmicic]
+# This test validates defragmentation by basic PLB operations
+
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set DefragmentationMetrics CPU true
+set BalancingDelayAfterNewNode 1
+set MinLoadBalancingInterval 9999
+set SendLoadReportInterval 1
+set ScoreImprovementThreshold 0.000001
+set UseMoveCostReports true
+
++10 cap=CPU:100 ud=ud1 fd=fd:/fd1
++20 cap=CPU:100 ud=ud1 fd=fd:/fd2
++30 cap=CPU:100 ud=ud1 fd=fd:/fd3
+verify
+
+set DummyPLBEnabled true
+
+createname fabric:/test0
+createservice fabric:/test0 TestStoreServiceType y 1 3 metrics=CPU,High,10,10
+!waitforstate FM.Replica.Role.fabric:/test0.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/test0.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/test0.30 Primary
+
+# Increase service move cost in order not to be moved by PLB
+set MaxNumberOfLoadReportsPerMessage 1
+reportmovecost fabric:/test0 10 3
+reportmovecost fabric:/test0 20 3
+reportmovecost fabric:/test0 30 3
+
+verifymovecostvalue fabric:/test0 Primary 3
+verifymovecostvalue fabric:/test0 Secondary 3
+
+set DummyPLBEnabled false
+
++40 cap=CPU:100 ud=ud1 fd=fd:/fd4
++50 cap=CPU:100 ud=ud1 fd=fd:/fd5
++60 cap=CPU:100 ud=ud1 fd=fd:/fd6
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist metrics=CPU,High,10,10
+
+# Wait for perfect service placement 
+!pause 5
+
+!waitforstate FM.Replica.Role.fabric:/test1.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary|Secondary
+
+# Verify that test0 is not moved
+!waitforstate FM.Replica.Role.fabric:/test0.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test0.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test0.30 Primary|Secondary
+
+set DummyPLBEnabled true
+
+createname fabric:/test2
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist metrics=CPU,High,10,10
+!waitforstate FM.Replica.Role.fabric:/test2.40 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.50 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.60 Primary|Secondary
+
+# Make sure that we only attempt fast balancing when defragmenting the cluster
+set PLBActionRetryTimes 100
+set MinLoadBalancingInterval 1
+set DummyPLBEnabled false
+
+# Wait for test2 to be moved
+!pause 5
+gfum
+
+# Verify that test2 is moved
+!waitforstate FM.Replica.Role.fabric:/test2.10 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.20 Primary|Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.30 Primary|Secondary
+
+deleteservice fabric:/test0
+deleteservice fabric:/test1
+deleteservice fabric:/test2
+verify
+
+!q

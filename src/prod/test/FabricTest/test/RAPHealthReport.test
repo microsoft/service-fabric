@@ -1,0 +1,46 @@
+#
+# [owner:hulyap]
+# This test validates RAP health reporting logic
+#
+set DummyPLBEnabled true
+set ServiceApiHealthDuration 5
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 1
+set HealthReportRetrySendInterval 5
+votes 10
+cmservice 3 1
+namingservice 5 1 1
+cleantest
++10
++20
++30
+verify
+
++40
+verify
+
+createname fabric:/statefulpersisted
+createservice fabric:/statefulpersisted TestPersistedStoreServiceType y 1 1 persist
+verify
+
+setsignal 40 fabric:/statefulpersisted service.beginopen.block
+reportfault 40 fabric:/statefulpersisted transient
+queryhealth replica replicaid=fabric:/statefulpersisted#0#0 expectedhealthstate=warning description=nodeid:40
+resetsignal 40 fabric:/statefulpersisted service.beginopen.block
+
+queryhealth replica replicaid=fabric:/statefulpersisted#0#0 expectedhealthstate=ok description=nodeid:40
+
+verify
+
+setsignal 40 fabric:/statefulpersisted replicator.beginclose.block
+reportfault 40 fabric:/statefulpersisted transient
+queryhealth replica replicaid=fabric:/statefulpersisted#0#0 expectedhealthstate=warning description=nodeid:40
+resetsignal 40 fabric:/statefulpersisted replicator.beginclose.block
+
+queryhealth replica replicaid=fabric:/statefulpersisted#0#0 expectedhealthstate=ok description=nodeid:40
+
+verify
+
+
+!q

@@ -1,0 +1,1075 @@
+#
+# [owner]- SumukhS
+# Fault Injection Tests for IStateProvider2 interface of the transactional replicator
+# 
+
+!load FailoverCITInitialization.test
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify  
+
+##############################################################################################
+#
+# TestCase 1 - Fail 1 call to applyasync on Primary and ensure replica set is healthy after that
+#
+##############################################################################################
+
+createservice fabric:/test1 TXRServiceType y 1 3 persist constraint=(system!=true)
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+verify 
+
+clientput fabric:/test1 10 ten
+!wait
+
+# this will ensure build is stuck and we can verify the state for replica being restarted
+addbehavior blockSC * * StartCopy
+
+#inject failure for the applyasync call on the primary. This will throw an exception from the next ApplyAsync() 
+injectfailure 40 fabric:/test1 sp2highfrequencyapi.applyasync 
+clientput fabric:/test1 10 ten~
+
+# since primary faults when applyasync throws an exception above, 30 becomes the new primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary
+
+removefailure 40 fabric:/test1 sp2highfrequencyapi.applyasync
+removebehavior blockSC
+
+!waitforstate RA.Replica.State.fabric:/test1.30.40 RD
+
+verify
+
+# 20 must have still been replicated to the secondaries and hence new primary would have the data
+clientget fabric:/test1 10 ten~
+!wait 
+
+deleteservice fabric:/test1
+verify 
+
+##############################################################################################
+#
+# TestCase 2 - Fail 1 call to applyasync on Secondary and ensure replica set is healthy after that
+#
+##############################################################################################
+
+createservice fabric:/test2 TXRServiceType y 1 3 persist constraint=(system!=true)
+!waitforstate FM.Replica.Role.fabric:/test2.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test2.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test2.20 Secondary
+verify 
+
+clientput fabric:/test2 10 ten
+!wait
+
+# this will ensure build is stuck and we can verify the state for replica being restarted
+addbehavior blockSC * * StartCopy
+
+#inject failure for the applyasync call on the primary. This will throw an exception from the next ApplyAsync() 
+injectfailure 20 fabric:/test2 sp2highfrequencyapi.applyasync
+clientput fabric:/test2 10 ten~
+
+# The wait will complete because 30 would send an ACK
+!wait 
+
+!waitforstate FM.Replica.Role.fabric:/test2.20 NullReplica|Idle
+removefailure 20 fabric:/test2 sp2highfrequencyapi.applyasync
+removebehavior blockSC
+
+!waitforstate RA.Replica.State.fabric:/test2.40.20 RD
+
+verify
+
+deleteservice fabric:/test2
+verify
+
+##############################################################################################
+#
+# TestCase 3 - Fail openasync calls to TestStateProvider2 and ensure replica set is healthy after that
+#
+##############################################################################################
+
+#
+# TestCase 3a - Inject failure in OpenAsync on Primary AddPath
+#
+
+createservice fabric:/test3a TXRServiceType y 1 3 persist constraint=(system!=true)
+!waitforstate FM.Replica.Role.fabric:/test3a.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test3a.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3a.20 Secondary
+verify 
+
+# Inject failure for the OpenAsync call on the primary. This will throw an exception 
+# from the next OpenAsync(). 
+injectfailure 40 fabric:/test3a sp2.openasync 
+
+# Set a signal on OpenAsync call, then we will wait for the signal later.
+# In this way, we know when to remove the failure and make sure we hit the failure.
+setsignal 40 fabric:/test3a provider2.openasync.block
+clientput fabric:/test3a 10 ten
+
+# OpenAsync signal is blocked
+waitforsignalhit 40 fabric:/test3a provider2.openasync.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow OpenAsync to continue
+resetsignal 40 fabric:/test3a provider2.openasync.block
+
+# Replica go down and will be in StandBy (SB) until fault is removed
+!waitforstate RA.Replica.State.fabric:/test3a.40.40 SB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 40 fabric:/test3a sp2.openasync
+
+# Wait for all replicas to become ready
+!waitforstate RA.Replica.State.fabric:/test3a.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test3a.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test3a.40.20 RD
+
+!waitforstate FM.Replica.Role.fabric:/test3a.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3a.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test3a.20 Secondary
+
+# Verify the data exists
+clientget fabric:/test3a 10 ten
+!wait 
+
+deleteservice fabric:/test3a 
+verify
+
+#
+# TestCase 3b - Inject failure in OpenAsync on Primary RecoveryPath
+#
+
+createservice fabric:/test3b TXRServiceType y 1 3 persist constraint=(system!=true)
+!waitforstate FM.Replica.Role.fabric:/test3b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test3b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3b.20 Secondary
+verify 
+
+# Add the state provider
+clientput fabric:/test3b 10 ten
+!wait 
+
+# Verify the data exists
+clientget fabric:/test3b 10 ten
+!wait 
+
+injectfailure 40 fabric:/test3b sp2.openasync 
+
+# Since the state provider already exists in all three replicas, inject the fault and restart the primary node. 
+setsignal 40 fabric:/test3b provider2.openasync.block
+reportfault 40 fabric:/test3b transient
+
+# OpenAsync signal is blocked
+waitforsignalhit 40 fabric:/test3b provider2.openasync.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow OpenAsync to continue
+resetsignal 40 fabric:/test3b provider2.openasync.block
+
+# Replica go down and will be in StandBy (SB) until fault is removed
+!waitforstate RA.Replica.State.fabric:/test3b.40.40 SB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 40 fabric:/test3b sp2.openasync
+
+# Wait for all replicas to become ready
+!waitforstate RA.Replica.State.fabric:/test3b.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test3b.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test3b.40.20 RD
+
+!waitforstate FM.Replica.Role.fabric:/test3b.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3b.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test3b.20 Secondary
+
+# Verify the data exists
+clientget fabric:/test3b 10 ten
+!wait 
+
+deleteservice fabric:/test3b
+verify 
+
+#
+# TestCase 3c - #10018487: Inject failure in OpenAsync on Primary RestorePath
+#
+
+#
+# TestCase 3d - Inject failure in OpenAsync on Secondary AddPath
+#
+
+createservice fabric:/test3d TXRServiceType y 1 3 persist constraint=(system!=true)
+!waitforstate FM.Replica.Role.fabric:/test3d.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test3d.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3d.20 Secondary
+verify 
+
+#inject failure for the openasync call on the Secondary. This will throw an exception from the next OpenAsync() 
+injectfailure 20 fabric:/test3d sp2.openasync 
+
+# Set a signal on OpenAsync call, then we will wait for the signal later.
+# In this way, we know when to remove the failure and make sure we hit the failure.
+setsignal 20 fabric:/test3d provider2.openasync.block
+clientput fabric:/test3d 10 ten
+
+# OpenAsync signal is blocked
+waitforsignalhit 20 fabric:/test3d provider2.openasync.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow OpenAsync to continue
+resetsignal 20 fabric:/test3d provider2.openasync.block
+
+!waitforstate FM.Replica.Role.fabric:/test3d.20 NullReplica|Idle
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 20 fabric:/test3d sp2.openasync
+
+!waitforstate RA.Replica.State.fabric:/test3d.40.20 RD
+!waitforstate FM.Replica.Role.fabric:/test3d.20 Secondary
+
+# Verify the data exists
+clientget fabric:/test3d 10 ten
+!wait 
+
+deleteservice fabric:/test3d 
+verify
+
+#
+# TestCase 3e - Inject failure in OpenAsync on Secondary RecoveryPath
+#
+
+createservice fabric:/test3e TXRServiceType y 1 3 persist constraint=(system!=true)
+!waitforstate FM.Replica.Role.fabric:/test3e.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test3e.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3e.20 Secondary
+verify 
+
+# Add the state provider
+clientput fabric:/test3e 10 ten
+!wait 
+
+# Verify the data exists
+clientget fabric:/test3e 10 ten
+!wait 
+
+injectfailure 20 fabric:/test3e sp2.openasync 
+
+# Since the state provider already exists in all three replicas, inject the fault and restart the primary node. 
+setsignal 20 fabric:/test3e provider2.openasync.block
+reportfault 20 fabric:/test3e transient
+
+# OpenAsync signal is blocked
+waitforsignalhit 20 fabric:/test3e provider2.openasync.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow OpenAsync to continue
+resetsignal 20 fabric:/test3e provider2.openasync.block
+
+!waitforstate FM.Replica.Role.fabric:/test3e.20 NullReplica|Idle
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 20 fabric:/test3e sp2.openasync
+
+!waitforstate RA.Replica.State.fabric:/test3e.40.20 RD
+!waitforstate FM.Replica.Role.fabric:/test3e.20 Secondary
+
+# Verify the data exists
+clientget fabric:/test3e 10 ten
+!wait 
+
+deleteservice fabric:/test3e 
+verify
+
+#
+# TestCase 3f - Inject failure in OpenAsync on CopyPath
+#
+
+# Add a new node
++50 nodeprops=system:false
+!wait
+verify
+
+createservice fabric:/test3f TXRServiceType y 1 3 persist constraint=(system!=true)
+!waitforstate FM.Replica.Role.fabric:/test3f.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test3f.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3f.30 Secondary
+verify 
+
+# Add the state provider
+clientput fabric:/test3f 10 ten
+!wait 
+# Verify the data exists
+clientget fabric:/test3f 10 ten
+!wait 
+
+injectfailure 20 fabric:/test3f sp2.openasync
+setsignal 20 fabric:/test3f provider2.openasync.block
+
+# Move the secondary to the new node, in this case, invoke the copy 
+movesecondary fabric:/test3f 30 20
+# OpenAsync signal is blocked
+waitforsignalhit 20 fabric:/test3f provider2.openasync.block
+
+# Allow OpenAsync to continue
+resetsignal 20 fabric:/test3f provider2.openasync.block
+!waitforstate FM.Replica.Role.fabric:/test3f.20 NullReplica|Idle
+
+removefailure 20 fabric:/test3f sp2.openasync
+
+!waitforstate FM.Replica.Role.fabric:/test3f.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test3f.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3f.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test3f.20 Idle
+verify
+
+movesecondary fabric:/test3f 30 20
+!waitforstate FM.Replica.Role.fabric:/test3f.20 Secondary
+
+# Verify the data exists
+clientget fabric:/test3f 10 ten
+!wait 
+
+deleteservice fabric:/test3f 
+verify
+
+# Remove node
+-50
+!wait
+verify
+
+##############################################################################################
+#
+# TestCase 11 - Fail PrepareCheckpoint calls to TestStateProvider2 and verify replica set behavior
+#
+##############################################################################################
+
+##############################################################################################
+# TestCase 11a - Inject failure in PrepareCheckpoint on service primary
+##############################################################################################
+createservice fabric:/test11a TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:3;TR_MinLogSizeInMB:3;TR_TruncationThresholdFactor:3;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test11a.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test11a.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test11a.20 Secondary
+verify
+
+injectfailure 40 fabric:/test11a sp2.preparecheckpoint
+
+clientput fabric:/test11a 10 ten
+!wait
+
+clientput fabric:/test11a 20 twenty
+!wait
+
+setsignal 40 fabric:/test11a provider2.preparecheckpoint.block
+
+# Start checkpoint on service primary
+requestcheckpoint fabric:/test11a 40 
+
+# Add tx and do not wait
+# Checkpoint has been requested and preparecheckpoint signal is blocked
+clientput fabric:/test11a 30 thirty
+
+waitforsignalhit 40 fabric:/test11a provider2.preparecheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 40 fabric:/test11a provider2.preparecheckpoint.block
+
+# Wait for primary replica to go down
+!waitforstate RA.Replica.State.fabric:/test11a.40.40 IB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 40 fabric:/test11a sp2.preparecheckpoint
+
+# Wait for all replicas to become ready
+!waitforstate RA.Replica.State.fabric:/test11a.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test11a.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test11a.40.20 RD
+
+!waitforstate FM.Replica.Role.fabric:/test11a.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test11a.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test11a.20 Secondary
+
+# Wait for any pending operations to complete
+!wait
+
+# Retrieve all keys added to service
+clientget fabric:/test11a 10 ten 
+clientget fabric:/test11a 20 twenty
+clientget fabric:/test11a 30 thirty
+!wait
+
+deleteservice fabric:/test11a 
+verify
+
+##############################################################################################
+# TestCase 11b - Inject failure in PrepareCheckpoint on a secondary
+##############################################################################################
+
+createservice fabric:/test11b TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:3;TR_MinLogSizeInMB:3;TR_TruncationThresholdFactor:3;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test11b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test11b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test11b.20 Secondary
+
+verify
+
+injectfailure 20 fabric:/test11b sp2.preparecheckpoint
+
+# Add new key to service primary
+clientput fabric:/test11b 10 ten
+!wait
+
+setsignal 20 fabric:/test11b provider2.preparecheckpoint.block
+
+# Start checkpoint on service secondary
+requestcheckpoint fabric:/test11b 20
+
+# Add tx and do not wait
+# Checkpoint has been requested and preparecheckpoint signal is blocked
+clientput fabric:/test11b 20 twenty
+
+waitforsignalhit 20 fabric:/test11b provider2.preparecheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 20 fabric:/test11b provider2.preparecheckpoint.block
+
+# Wait for secondary replica to go down
+!waitforstate RA.Replica.State.fabric:/test11b.40.20 IB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 20 fabric:/test11b sp2.preparecheckpoint
+
+# Ensure all replicas are ready
+!waitforstate RA.Replica.State.fabric:/test11b.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test11b.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test11b.40.20 RD
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test11b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test11b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test11b.20 Secondary
+verify
+
+# Wait for any pending operations to complete
+!wait
+
+clientget fabric:/test11b 10 ten
+clientget fabric:/test11b 20 twenty
+!wait
+
+deleteservice fabric:/test11b 
+verify
+
+##############################################################################################
+# TestCase 11c - Inject failure in PrepareCheckpoint during full copy
+##############################################################################################
+# Add node
++50 nodeprops=system:false
+!wait
+verify
+
+createservice fabric:/test11c TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:2;TR_MinLogSizeInMB:2;TR_TruncationThresholdFactor:2;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test11c.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test11c.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test11c.30 Secondary
+
+verify
+
+injectfailure 20 fabric:/test11c sp2.preparecheckpoint
+
+clientput fabric:/test11c 0 a keycount=10 valsize=16384
+clientput fabric:/test11c 10 b keycount=10 valsize=16384
+clientput fabric:/test11c 20 c keycount=10 valsize=16384
+clientput fabric:/test11c 30 d keycount=10 valsize=16384
+clientput fabric:/test11c 40 e keycount=10 valsize=16384
+clientput fabric:/test11c 50 f keycount=10 valsize=16384
+clientput fabric:/test11c 60 g keycount=10 valsize=16384
+!wait
+
+setsignal 20 fabric:/test11c provider2.preparecheckpoint.block
+
+movesecondary fabric:/test11c 30 20
+!waitforstate RA.FT.State.fabric:/test11c.30 Closed
+
+waitforsignalhit 20 fabric:/test11c provider2.preparecheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 20 fabric:/test11c provider2.preparecheckpoint.block
+
+# Wait for secondary replica to go down
+!waitforstate RA.Replica.State.fabric:/test11c.50.20 IB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 20 fabric:/test11c sp2.preparecheckpoint
+
+# Ensure replicas are ready
+!waitforstate RA.Replica.State.fabric:/test11c.50.50 RD
+!waitforstate RA.Replica.State.fabric:/test11c.50.40 RD
+!waitforstate RA.Replica.State.fabric:/test11c.50.20 RD
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test11c.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test11c.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test11c.20 Secondary
+verify
+
+clientget fabric:/test11c 0 a keycount=10 valsize=16384
+clientget fabric:/test11c 10 b keycount=10 valsize=16384
+clientget fabric:/test11c 20 c keycount=10 valsize=16384
+clientget fabric:/test11c 30 d keycount=10 valsize=16384
+clientget fabric:/test11c 40 e keycount=10 valsize=16384
+clientget fabric:/test11c 50 f keycount=10 valsize=16384
+clientget fabric:/test11c 60 g keycount=10 valsize=16384
+!wait
+
+deleteservice fabric:/test11c
+verify
+
+# Remove node
+-50
+!wait
+verify
+
+##############################################################################################
+#
+# TestCase 12 - Fail PerformCheckpoint calls to TestStateProvider2 and verify replica set behavior
+#
+##############################################################################################
+
+##############################################################################################
+# TestCase 12a - Inject failure in PerformCheckpoint on service primary
+##############################################################################################
+createservice fabric:/test12a TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:3;TR_MinLogSizeInMB:3;TR_TruncationThresholdFactor:3;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test12a.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test12a.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test12a.20 Secondary
+verify
+
+injectfailure 40 fabric:/test12a sp2.performcheckpointasync
+
+clientput fabric:/test12a 10 ten
+!wait
+
+clientput fabric:/test12a 20 twenty
+!wait
+
+setsignal 40 fabric:/test12a provider2.performcheckpoint.block
+
+# Start checkpoint on service primary
+requestcheckpoint fabric:/test12a 40 
+
+# Add tx and do not wait
+# Checkpoint has been requested and PerformCheckpoint signal is blocked
+clientput fabric:/test12a 30 thirty
+
+waitforsignalhit 40 fabric:/test12a provider2.performcheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 40 fabric:/test12a provider2.performcheckpoint.block
+
+# Wait for primary replica to go down
+!waitforstate RA.Replica.State.fabric:/test12a.40.40 IB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 40 fabric:/test12a sp2.performcheckpointasync
+
+# Wait for all replicas to become ready
+!waitforstate RA.Replica.State.fabric:/test12a.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test12a.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test12a.40.20 RD
+
+!waitforstate FM.Replica.Role.fabric:/test12a.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test12a.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test12a.20 Secondary
+
+clientget fabric:/test12a 10 ten 
+clientget fabric:/test12a 20 twenty
+!wait
+
+deleteservice fabric:/test12a 
+verify
+
+##############################################################################################
+# TestCase 12b - Inject failure in PerformCheckpoint on a secondary
+##############################################################################################
+
+createservice fabric:/test12b TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:3;TR_MinLogSizeInMB:3;TR_TruncationThresholdFactor:3;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test12b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test12b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test12b.20 Secondary
+
+verify
+
+injectfailure 20 fabric:/test12b sp2.performcheckpointasync
+
+# Add new key to service primary
+clientput fabric:/test12b 10 ten
+!wait
+
+setsignal 20 fabric:/test12b provider2.performcheckpoint.block
+
+# Start checkpoint on service secondary
+requestcheckpoint fabric:/test12b 20
+
+# Add tx and do not wait
+# Checkpoint has been requested and PerformCheckpoint signal is blocked
+clientput fabric:/test12b 20 twenty
+
+waitforsignalhit 20 fabric:/test12b provider2.performcheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 20 fabric:/test12b provider2.performcheckpoint.block
+
+# Wait for secondary replica to go down
+!waitforstate RA.Replica.State.fabric:/test12b.40.20 IB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 20 fabric:/test12b sp2.performcheckpointasync
+
+# Ensure all replicas are ready
+!waitforstate RA.Replica.State.fabric:/test12b.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test12b.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test12b.40.20 RD
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test12b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test12b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test12b.20 Secondary
+verify
+
+clientget fabric:/test12b 10 ten
+clientget fabric:/test12b 20 twenty
+!wait
+
+deleteservice fabric:/test12b 
+verify
+
+##############################################################################################
+# TestCase 12c - Inject failure in PerformCheckpoint during full copy
+##############################################################################################
+# Add node
++50 nodeprops=system:false
+!wait
+verify
+
+createservice fabric:/test12c TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:2;TR_MinLogSizeInMB:2;TR_TruncationThresholdFactor:2;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test12c.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test12c.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test12c.30 Secondary
+
+verify
+
+injectfailure 20 fabric:/test12c sp2.performcheckpointasync
+
+clientput fabric:/test12c 0 a keycount=10 valsize=16384
+clientput fabric:/test12c 10 b keycount=10 valsize=16384
+clientput fabric:/test12c 20 c keycount=10 valsize=16384
+clientput fabric:/test12c 30 d keycount=10 valsize=16384
+clientput fabric:/test12c 40 e keycount=10 valsize=16384
+clientput fabric:/test12c 50 f keycount=10 valsize=16384
+clientput fabric:/test12c 60 g keycount=10 valsize=16384
+!wait
+
+setsignal 20 fabric:/test12c provider2.performcheckpoint.block
+
+movesecondary fabric:/test12c 30 20
+!waitforstate RA.FT.State.fabric:/test12c.30 Closed
+
+waitforsignalhit 20 fabric:/test12c provider2.performcheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 20 fabric:/test12c provider2.performcheckpoint.block
+
+# Wait for secondary replica to go down
+!waitforstate RA.Replica.State.fabric:/test12c.50.20 IB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 20 fabric:/test12c sp2.performcheckpointasync
+
+# Ensure replicas are ready
+!waitforstate RA.Replica.State.fabric:/test12c.50.50 RD
+!waitforstate RA.Replica.State.fabric:/test12c.50.40 RD
+!waitforstate RA.Replica.State.fabric:/test12c.50.20 RD
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test12c.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test12c.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test12c.20 Secondary
+verify
+
+clientget fabric:/test12c 0 a keycount=10 valsize=16384
+clientget fabric:/test12c 10 b keycount=10 valsize=16384
+clientget fabric:/test12c 20 c keycount=10 valsize=16384
+clientget fabric:/test12c 30 d keycount=10 valsize=16384
+clientget fabric:/test12c 40 e keycount=10 valsize=16384
+clientget fabric:/test12c 50 f keycount=10 valsize=16384
+clientget fabric:/test12c 60 g keycount=10 valsize=16384
+!wait
+
+deleteservice fabric:/test12c
+verify
+
+# Remove node
+-50
+!wait
+verify
+
+##############################################################################################
+#
+# TestCase 13 - Fail CompleteCheckpoint calls to TestStateProvider2 and verify replica set behavior
+#
+##############################################################################################
+
+##############################################################################################
+# TestCase 13a - Inject failure in CompleteCheckpoint on service primary
+##############################################################################################
+createservice fabric:/test13a TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:3;TR_MinLogSizeInMB:3;TR_TruncationThresholdFactor:3;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test13a.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test13a.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test13a.20 Secondary
+verify
+
+injectfailure 40 fabric:/test13a sp2.completecheckpointasync
+
+clientput fabric:/test13a 10 ten
+!wait
+
+clientput fabric:/test13a 20 twenty
+!wait
+
+setsignal 40 fabric:/test13a provider2.completecheckpoint.block
+
+# Start checkpoint on service primary
+requestcheckpoint fabric:/test13a 40 
+
+# Add tx and do not wait
+# Checkpoint has been requested and CompleteCheckpoint signal is blocked
+clientput fabric:/test13a 30 thirty
+
+waitforsignalhit 40 fabric:/test13a provider2.completecheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 40 fabric:/test13a provider2.completecheckpoint.block
+
+# Wait for primary replica to go down
+# CompleteCheckpoint is performed during recovery so the replica will be in StandBy (SB) until fault is cleared
+!waitforstate RA.Replica.State.fabric:/test13a.40.40 SB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 40 fabric:/test13a sp2.completecheckpointasync
+
+# Wait for all replicas to become ready
+!waitforstate RA.Replica.State.fabric:/test13a.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test13a.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test13a.40.20 RD
+
+!waitforstate FM.Replica.Role.fabric:/test13a.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test13a.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test13a.20 Secondary
+
+# Wait for any pending operations to complete
+!wait
+
+clientget fabric:/test13a 10 ten 
+clientget fabric:/test13a 20 twenty
+clientget fabric:/test13a 30 thirty
+!wait
+
+deleteservice fabric:/test13a 
+verify
+
+##############################################################################################
+# TestCase 13b - Inject failure in CompleteCheckpoint on a secondary
+##############################################################################################
+
+createservice fabric:/test13b TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:3;TR_MinLogSizeInMB:3;TR_TruncationThresholdFactor:3;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test13b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test13b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test13b.20 Secondary
+
+verify
+
+injectfailure 20 fabric:/test13b sp2.completecheckpointasync
+
+# Add new key to service primary
+clientput fabric:/test13b 10 ten
+!wait
+
+setsignal 20 fabric:/test13b provider2.completecheckpoint.block
+
+# Start checkpoint on service secondary
+requestcheckpoint fabric:/test13b 20
+
+# Add tx and do not wait
+# Checkpoint has been requested and CompleteCheckpoint signal is blocked
+clientput fabric:/test13b 20 twenty
+
+waitforsignalhit 20 fabric:/test13b provider2.completecheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 20 fabric:/test13b provider2.completecheckpoint.block
+
+# Wait for secondary replica to go down
+# CompleteCheckpoint is performed during recovery so the replica will be in StandBy (SB) until fault is cleared
+!waitforstate RA.Replica.IsUp.fabric:/test13b.40.20 false
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 20 fabric:/test13b sp2.completecheckpointasync
+
+# Ensure all replicas are ready
+!waitforstate RA.Replica.State.fabric:/test13b.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test13b.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test13b.40.20 RD
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test13b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test13b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test13b.20 Secondary
+verify
+
+clientget fabric:/test13b 10 ten
+clientget fabric:/test13b 20 twenty
+!wait
+
+deleteservice fabric:/test13b 
+verify
+
+##############################################################################################
+# TestCase 13c - Inject failure in CompleteCheckpoint during full copy
+##############################################################################################
+# Add node
++50 nodeprops=system:false
+!wait
+verify
+
+createservice fabric:/test13c TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:2;TR_MinLogSizeInMB:2;TR_TruncationThresholdFactor:2;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test13c.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test13c.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test13c.30 Secondary
+
+verify
+
+injectfailure 20 fabric:/test13c sp2.completecheckpointasync
+setsignal 20 fabric:/test13c provider2.completecheckpoint.block
+
+clientput fabric:/test13c 0 a keycount=10 valsize=16384
+clientput fabric:/test13c 10 b keycount=10 valsize=16384
+clientput fabric:/test13c 20 c keycount=10 valsize=16384
+clientput fabric:/test13c 30 d keycount=10 valsize=16384
+clientput fabric:/test13c 40 e keycount=10 valsize=16384
+clientput fabric:/test13c 50 f keycount=10 valsize=16384
+clientput fabric:/test13c 60 g keycount=10 valsize=16384
+!wait
+
+movesecondary fabric:/test13c 30 20
+!waitforstate RA.FT.State.fabric:/test13c.30 Closed
+
+# Deactivate node 30 with intent Pause
+# Ensure that a new replica is not placed
+DeactivateNode 30 Pause
+!wait
+
+waitforsignalhit 20 fabric:/test13c provider2.completecheckpoint.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow checkpoint to continue
+resetsignal 20 fabric:/test13c provider2.completecheckpoint.block
+
+# Wait for secondary replica to go down
+!waitforstate RA.Replica.State.fabric:/test13c.20.20 SB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 20 fabric:/test13c sp2.completecheckpointasync
+
+# Ensure replicas are ready
+!waitforstate RA.Replica.State.fabric:/test13c.50.50 RD
+!waitforstate RA.Replica.State.fabric:/test13c.50.40 RD
+!waitforstate RA.Replica.State.fabric:/test13c.50.20 RD
+
+!waitforstate FM.Replica.Role.fabric:/test13c.50 Primary
+!waitforstate FM.Replica.Role.fabric:/test13c.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test13c.20 Secondary
+verify
+
+clientget fabric:/test13c 0 a keycount=10 valsize=16384
+clientget fabric:/test13c 10 b keycount=10 valsize=16384
+clientget fabric:/test13c 20 c keycount=10 valsize=16384
+clientget fabric:/test13c 30 d keycount=10 valsize=16384
+clientget fabric:/test13c 40 e keycount=10 valsize=16384
+clientget fabric:/test13c 50 f keycount=10 valsize=16384
+clientget fabric:/test13c 60 g keycount=10 valsize=16384
+!wait
+
+deleteservice fabric:/test13c
+verify
+
+# Remove node 50
+-50
+!wait
+verify
+
+# Reactivate node 30
+ActivateNode 30
+!wait
+verify
+
+##############################################################################################
+#
+# TestCase 14 - Fail RecoverCheckpointAsync calls to TestStateProvider2 and verify replica set behavior
+#
+##############################################################################################
+
+##############################################################################################
+# TestCase 14a - Inject failure in RecoverCheckpointAsync on service primary
+##############################################################################################
+createservice fabric:/test14a TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:3;TR_MinLogSizeInMB:3;TR_TruncationThresholdFactor:3;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test14a.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test14a.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test14a.20 Secondary
+verify
+
+# Add operations
+clientput fabric:/test14a 10 ten
+!wait
+
+clientput fabric:/test14a 20 twenty
+!wait
+
+# Set failure on primary node
+injectfailure 40 fabric:/test14a sp2.recovercheckpointasync
+setsignal 40 fabric:/test14a provider2.recovercheckpointasync.block
+
+# Report fault on service primary
+reportfault 40 fabric:/test14a transient
+!wait
+
+waitforsignalhit 40 fabric:/test14a provider2.recovercheckpointasync.block
+
+# Block all copy operations
+addbehavior scblock * * StartCopy
+
+# Allow recovercheckpointasync to continue
+resetsignal 40 fabric:/test14a provider2.recovercheckpointasync.block
+
+# Wait for primary replica to go down
+!waitforstate RA.Replica.State.fabric:/test14a.40.40 SB
+
+# Allow replica to get built
+removebehavior scblock
+removefailure 40 fabric:/test14a sp2.recovercheckpointasync
+
+# Wait for all replicas to become ready
+!waitforstate RA.Replica.State.fabric:/test14a.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test14a.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test14a.40.20 RD
+
+!waitforstate FM.Replica.Role.fabric:/test14a.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test14a.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test14a.20 Secondary
+
+clientget fabric:/test14a 10 ten 
+clientget fabric:/test14a 20 twenty
+!wait
+
+deleteservice fabric:/test14a 
+verify
+
+##############################################################################################
+# TestCase 14b - Inject failure in RecoverCheckpointAsync on service secondary
+##############################################################################################
+
+createservice fabric:/test14b TXRServiceType y 1 3 persist constraint=(system!=true) initdata=TR_CheckpointThresholdInMB:3;TR_MinLogSizeInMB:3;TR_TruncationThresholdFactor:3;TR_ThrottlingThresholdFactor:6;
+!waitforstate FM.Replica.Role.fabric:/test14b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test14b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test14b.20 Secondary
+verify
+
+# Add operations
+clientput fabric:/test14b 10 ten
+!wait
+
+clientput fabric:/test14b 20 twenty
+!wait
+
+# Set failure on secondary node 30
+injectfailure 30 fabric:/test14b sp2.recovercheckpointasync
+setsignal 30 fabric:/test14b provider2.recovercheckpointasync.block
+
+# Report fault on service secondary
+reportfault 30 fabric:/test14b transient
+!wait
+
+waitforsignalhit 30 fabric:/test14b provider2.recovercheckpointasync.block
+
+# Allow recovercheckpointasync to continue
+resetsignal 30 fabric:/test14b provider2.recovercheckpointasync.block
+
+# Wait for secondary replica to go down
+!waitforstate RA.Replica.IsUp.fabric:/test14b.40.30 false
+removefailure 30 fabric:/test14b sp2.recovercheckpointasync
+
+# Wait for all replicas to become ready
+!waitforstate RA.Replica.State.fabric:/test14b.40.40 RD
+!waitforstate RA.Replica.State.fabric:/test14b.40.30 RD
+!waitforstate RA.Replica.State.fabric:/test14b.40.20 RD
+
+!waitforstate FM.Replica.Role.fabric:/test14b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test14b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test14b.20 Secondary
+
+clientget fabric:/test14b 10 ten 
+clientget fabric:/test14b 20 twenty
+!wait
+
+deleteservice fabric:/test14b 
+verify
+
+!q

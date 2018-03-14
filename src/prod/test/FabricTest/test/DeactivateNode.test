@@ -1,0 +1,184 @@
+votes 10 20 30
+cleantest
+fmservice 3 1
+cmservice 3 1
+namingservice 1 3 1
+
+set NamingOperationRetryTimeout 30
+set HealthOperationTimeout 5
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+
++10
++20
++30
++40
++50
++60
+verify
+
+# Verify that all the nodes are activated by default
+!waitforstate FM.Node.DeactivationIntent.10 None
+!waitforstate FM.Node.DeactivationIntent.20 None
+!waitforstate FM.Node.DeactivationIntent.30 None
+!waitforstate FM.Node.DeactivationIntent.40 None
+!waitforstate FM.Node.DeactivationIntent.50 None
+!waitforstate FM.Node.DeactivationIntent.60 None
+
+# Deactivate node 60 and keep it deactivated for the duration of the test
+deactivatenode 60 RemoveData
+!waitforstate FM.Node.DeactivationIntent.60 RemoveData
+!waitforstate FM.Node.DeactivationStatus.60 DeactivationComplete
+
+# Create some services
+createservice fabric:/stateless CalculatorServiceType n 2 4
+createservice fabric:/volatile TestStoreServiceType y 2 4
+createservice fabric:/persisted TestPersistedStoreServiceType y 2 4 persist
+verify
+
+# Activate node 50 (this should succeed as the node is already activated)
+activatenode 50
+
+# Deactivate a node that does not exist (unknown node)
+deactivatenode 100 Pause
+
+# Verify that FM has created a fake entry for the unknown node
+!waitforstate FM.Node.IsUp.100 false
+!waitforstate FM.Node.DeactivationIntent.100 Pause
+!waitforstate FM.Node.DeactivationStatus.100 DeactivationComplete
+
+# Health should not be reported for the unknown node
+queryhealth node nodeid=100 expectempty=true
+
+# Bring down node 20
+-20
+verify
+
+# Deactivate node 30 with intent Restart (this should fail because of voters constraint)
+deactivatenode 30 Restart
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationSafetyCheckInProgress
+
+# Bring node 20 back up
++20
+verify
+
+# Deactivation of node 30 should now succeed
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+
+# Activate node 30
+activatenode 30
+!waitforstate FM.Node.DeactivationIntent.30 None
+!waitforstate FM.Node.DeactivationStatus.30 None
+
+# Deactivate node 50 with intent Pause
+deactivatenode 50 Pause
+!waitforstate FM.Node.DeactivationIntent.50 Pause
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+# Deactivate node 50 with intent Restart
+deactivatenode 50 Restart
+!waitforstate FM.Node.DeactivationIntent.50 Restart
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+verify
+
+# There should be no up replica on node 50
+!waitforstate FM.UpReplicaCount.50 0
+
+# Bring down node 50
+-50
+verify
+
+# Node 50 should still be deactivated with intent Restart
+!waitforstate FM.Node.DeactivationIntent.50 Restart
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+# Activate node 50 while it is still down
+activatenode 50
+!waitforstate FM.Node.DeactivationIntent.50 None
+!waitforstate FM.Node.DeactivationStatus.50 None
+
+# Deactivate node 50 again with intnet Restart while it is still down
+deactivatenode 50 Restart
+!waitforstate FM.Node.DeactivationIntent.50 Restart
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+# Bring node 50 back up
++50
+verify
+
+# Node 50 should still be deactivated with  intent Restart
+!waitforstate FM.Node.DeactivationIntent.50 Restart
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+# There should still be no up replica on node 50
+!waitforstate FM.UpReplicaCount.50 0
+
+# Calling DeactivateNode again should succeed
+deactivatenode 50 Restart
+!waitforstate FM.Node.DeactivationIntent.50 Restart
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+# Attempt to deactivate node 50 with intent Pause (this should not be allowed)
+deactivatenode 50 Pause
+!waitforstate FM.Node.DeactivationIntent.50 Restart
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+# Activate node 50 to allow replica placement
+activatenode 50
+
+# Deactivate node 40 with intent RemoveData
+deactivatenode 40 RemoveData
+!waitforstate FM.Node.DeactivationIntent.40 RemoveData
+!waitforstate FM.Node.DeactivationStatus.40 DeactivationComplete
+
+# There should be no up replicas on node 40
+!waitforstate FM.UpReplicaCount.40 0
+
+# Activate node 40 to allow replica placement
+activatenode 40
+
+# Verify that node 60 is still deactivated and there are no up replicas on it
+!waitforstate FM.Node.DeactivationIntent.60 RemoveData
+!waitforstate FM.Node.DeactivationStatus.60 DeactivationComplete
+!waitforstate FM.UpReplicaCount.60 0
+
+# FM has failed over since the time the unknown node 100 was created at the FM.
+# Verify that no health has been reported for this unknown node.
+queryhealth node nodeid=100 expectempty=true
+
+# Let the fake entry for node 100 expire
+set UnknownNodeKeepDuration 1
+
+# Verify that node 100 no exists at the FM
+!waitforstate FM.Node.Exists.100 false
+
+# Update the persisted service such that min==target,
+# and set RRWD to a large value
+updateservice fabric:/persisted Stateful MinReplicaSetSize=4 ReplicaRestartWaitDuration=3600
+
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/persisted 4
+!waitforstate FM.Service.ReplicaRestartWaitDuration.fabric:/persisted 3600
+verify
+
+# Bring down node 50
+-50
+!wait
+
+# Deactivate node 50 with intent RemoveData
+deactivatenode 50 RemoveData
+!waitforstate FM.Node.DeactivationIntent.50 RemoveData
+!waitforstate FM.Node.DeactivationStatus.50 DeactivationComplete
+
+# Activate node 50
+activatenode 50
+!waitforstate FM.Node.DeactivationIntent.50 None
+!waitforstate FM.Node.DeactivationStatus.50 None
+
+# Bring back node 50
++50
+verify
+
+!q

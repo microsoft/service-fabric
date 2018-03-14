@@ -1,0 +1,331 @@
+#
+# Validates HM check of memory versus in store inconsistency.
+# When an inconsistency is detected, HM reports transient fault so it can load correct data from store.
+#
+
+votes 10
+fmservice 3 1
+cmservice 3 1
+namingservice 1 3 3
+
+set HealthOperationTimeout 5
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+set DummyPLBEnabled true
+
+set HealthStoreCleanupInterval 5
+set HealthStoreCleanupGraceInterval 5
+set HealthStoreEntityWithoutSystemReportKeptInterval 60
+
+# Report directly through HM, to bypass the health client
+set ReportHealthThroughHMPrimary true
+
+# Disable slow commits reports so when test runs under load health isn't impacted
+set SlowCommitCountThreshold 100000
+
+# Checking in-memory inconsistency is done anytime between 5 and 10 seconds + cleanup interval.
+set EnableHealthCacheConsistencyCheck true
+set MinHealthCacheConsistencyCheckInterval 5
+set MaxHealthCacheConsistencyCheckInterval 10
+
+cleantest
++10
++20
++30
++40
++50
+verify
+
+# Add ad-hoc stateless service so the ad-hoc app is created in memory
+createservice fabric:/stateless CalculatorServiceType n 1 3
+verify
+
+# Cluster has 5 nodes and system and ad-hoc applications
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:5;apps-ok:2
+
+##################################################
+# Testcase: Entities NOT in store (because they do not expect system reports and are automatically created by HM).
+# Corrupt in memory state to change entity state as IN store.
+##################################################
+
+#
+# fabric:/System is not persisted to store as it has no events yet.
+# Change state to IsInStore, expect ReportFault
+#
+
+checkhmentity application appname=fabric:/System expectedentitystate=PendingFirstReport
+corrupthmentity application appname=fabric:/System changeentitystate=true expectedentitystate=Ready
+
+# After report fault, the state is fixed
+checkhmentity application appname=fabric:/System expectedentitystate=PendingFirstReport
+
+#
+# Ad-hoc is not persisted to store as it has no events yet.
+# Change state to IsInStore, expect ReportFault
+#
+
+checkhmentity application appname= expectedentitystate=PendingFirstReport
+corrupthmentity application appname= changeentitystate=true expectedentitystate=Ready
+
+# After report fault, the state is fixed
+checkhmentity application appname= expectedentitystate=PendingFirstReport
+
+##################################################
+# Testcase: Entities in store.
+# Corrupt in memory state:
+# - entity state as NOT IN store.
+# - corrupt events
+# - change attributes system counts
+##################################################
+
+# Create dummy application
+reporthealthinternal application appname=fabric:/testapp1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default apptype=testapptype
+reporthealthinternal service servicename=fabric:/testapp1/svc1 sequencenumber=1 healthstate=ok sourceid=System.FM appname=fabric:/testapp1 servicetypename=ServiceTypeA1
+queryhealth application appname=fabric:/testapp1 expectedhealthstate=ok expectedeventcount=1 expectedstates=ok:1
+
+reporthealthinternal application appname=fabric:/testapp1 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+reporthealthinternal application appname=fabric:/testapp1 sequencenumber=1 healthstate=ok sourceid=W2 property=P1
+reporthealthinternal application appname=fabric:/testapp1 sequencenumber=1 healthstate=ok sourceid=W3 property=P1
+reporthealthinternal application appname=fabric:/testapp1 sequencenumber=1 healthstate=ok sourceid=W4 property=P1
+
+queryhealth application appname=fabric:/testapp1 expectedhealthstate=ok expectedeventcount=5
+
+#
+# Corrupt entity state
+#
+
+checkhmentity application appname=fabric:/testapp1 expectedentitystate=Ready expectedeventcount=5
+corrupthmentity application appname=fabric:/testapp1 changeentitystate=true expectedentitystate=PendingFirstReport expectedeventcount=5
+
+# ReportFault fixes the state
+checkhmentity application appname=fabric:/testapp1 expectedentitystate=Ready expectedeventcount=5
+
+#
+# Change hasSystemReport flag
+#
+
+checkhmentity application appname=fabric:/testapp1 expectedentitystate=Ready expectedeventcount=5
+corrupthmentity application appname=fabric:/testapp1 changeHasSystemReport=true expectedentitystate=Ready expectedeventcount=5
+
+# ReportFault fixes the state, from nosystemreport to ok
+checkhmentity application appname=fabric:/testapp1 expectedentitystate=Ready state=ok expectedeventcount=5
+
+#
+# Add entity events
+#
+
+checkhmentity application appname=fabric:/testapp1 expectedentitystate=Ready expectedeventcount=5
+
+# Add 3 events
+corrupthmentity application appname=fabric:/testapp1 addevents=FTCorrupted,Corrupt1,ok;FTCorrupted,Corrupt2,error;FTCorrupted,Corrupt3,warning \
+    expectedentitystate=Ready expectedeventcount=8
+
+# ReportFault fixes the state
+checkhmentity application appname=fabric:/testapp1 expectedentitystate=Ready expectedeventcount=5
+
+#
+# Remove entity events
+#
+checkhmentity application appname=fabric:/testapp1 expectedentitystate=Ready expectedeventcount=5
+
+# Remove 2 of the events
+corrupthmentity application appname=fabric:/testapp1 removeevents=W1,P1,ok;W2,P1,ok expectedentitystate=Ready expectedeventcount=3
+
+# ReportFault fixes the state
+checkhmentity application appname=fabric:/testapp1 expectedentitystate=Ready expectedeventcount=5
+
+#
+# Scramble existing events
+#
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:6666 sourceid=System.FM property=State
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+queryhealth node nodeid=666 expectedhealthstate=ok expectedeventcount=2
+checkhmentity node nodeid=666 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:6666 expectedentitystate=Ready expectedeventcount=2
+
+corrupthmentity node nodeid=666 scrambleevents=W1,P1,warning expectedentitystate=Ready expectedeventcount=2
+
+# ReportFault fixes the state
+queryhealth node nodeid=666 expectedhealthstate=ok
+checkhmentity node nodeid=666 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:6666 expectedentitystate=Ready expectedeventcount=2
+
+#
+# Change system error count flag
+#
+# Report a system error
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=2 healthstate=error ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:6666 sourceid=System.FM property=State
+queryhealth node nodeid=666 expectedhealthstate=error expectedeventcount=2
+
+checkhmentity node nodeid=666 state=systemerror node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:6666 expectedentitystate=Ready expectedeventcount=2
+
+# Change the state to reset system error
+corrupthmentity node nodeid=666 changeSystemErrorCount=true expectedentitystate=Ready expectedeventcount=2
+
+# ReportFault fixes the state, changes from systemerror to true
+checkhmentity node nodeid=666 state=systemerror node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:6666 expectedentitystate=Ready expectedeventcount=2
+
+##################################################
+# Testcase: Leak events.
+# After HM failover, the leaked events are cleaned on next cleanup timer.
+##################################################
+
+# Set check intervals to large values
+set MinHealthCacheConsistencyCheckInterval 1200
+set MaxHealthCacheConsistencyCheckInterval 2400
+
+# Create a few dummy applications
+
+reporthealthinternal application appname=fabric:/appwithleakedevents1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM property=State apppolicy=default apptype=testapptype
+reporthealthinternal application appname=fabric:/appwithleakedevents2 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM property=State apppolicy=default apptype=testapptype
+reporthealthinternal application appname=fabric:/appwithleakedevents3 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM property=State apppolicy=default apptype=testapptype
+reporthealthinternal application appname=fabric:/appwithleakedevents4 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM property=State apppolicy=default apptype=testapptype
+reporthealthinternal application appname=fabric:/appwithleakedevents5 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM property=State apppolicy=default apptype=testapptype
+reporthealthinternal application appname=fabric:/appwithleakedevents6 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM property=State apppolicy=default apptype=testapptype
+
+queryhealth application appname=fabric:/appwithleakedevents1 expectedhealthstate=ok expectedeventcount=1
+queryhealth application appname=fabric:/appwithleakedevents2 expectedhealthstate=ok expectedeventcount=1
+queryhealth application appname=fabric:/appwithleakedevents3 expectedhealthstate=ok expectedeventcount=1
+queryhealth application appname=fabric:/appwithleakedevents4 expectedhealthstate=ok expectedeventcount=1
+queryhealth application appname=fabric:/appwithleakedevents5 expectedhealthstate=ok expectedeventcount=1
+queryhealth application appname=fabric:/appwithleakedevents6 expectedhealthstate=ok expectedeventcount=1
+
+reporthealthinternal application appname=fabric:/appwithleakedevents1 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+reporthealthinternal application appname=fabric:/appwithleakedevents1 sequencenumber=1 healthstate=ok sourceid=W2 property=P1
+
+reporthealthinternal application appname=fabric:/appwithleakedevents2 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+reporthealthinternal application appname=fabric:/appwithleakedevents2 sequencenumber=1 healthstate=ok sourceid=W2 property=P1
+
+reporthealthinternal application appname=fabric:/appwithleakedevents3 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+reporthealthinternal application appname=fabric:/appwithleakedevents3 sequencenumber=1 healthstate=ok sourceid=W2 property=P1
+
+reporthealthinternal application appname=fabric:/appwithleakedevents4 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+reporthealthinternal application appname=fabric:/appwithleakedevents4 sequencenumber=1 healthstate=ok sourceid=W2 property=P1
+
+reporthealthinternal application appname=fabric:/appwithleakedevents5 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+reporthealthinternal application appname=fabric:/appwithleakedevents5 sequencenumber=1 healthstate=ok sourceid=W2 property=P1
+
+reporthealthinternal application appname=fabric:/appwithleakedevents6 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+reporthealthinternal application appname=fabric:/appwithleakedevents6 sequencenumber=1 healthstate=ok sourceid=W2 property=P1
+
+queryhealth application appname=fabric:/appwithleakedevents1 expectedhealthstate=ok expectedeventcount=3
+queryhealth application appname=fabric:/appwithleakedevents2 expectedhealthstate=ok expectedeventcount=3
+queryhealth application appname=fabric:/appwithleakedevents3 expectedhealthstate=ok expectedeventcount=3
+queryhealth application appname=fabric:/appwithleakedevents4 expectedhealthstate=ok expectedeventcount=3
+queryhealth application appname=fabric:/appwithleakedevents5 expectedhealthstate=ok expectedeventcount=3
+queryhealth application appname=fabric:/appwithleakedevents6 expectedhealthstate=ok expectedeventcount=3
+
+# Remove the user reports, the entities have only System report
+corrupthmentity application appname=fabric:/appwithleakedevents1 removeevents=W1,P1,ok;W2,P1,ok expectedentitystate=Ready expectedeventcount=1
+corrupthmentity application appname=fabric:/appwithleakedevents2 removeevents=W1,P1,ok;W2,P1,ok expectedentitystate=Ready expectedeventcount=1
+corrupthmentity application appname=fabric:/appwithleakedevents3 removeevents=W1,P1,ok;W2,P1,ok expectedentitystate=Ready expectedeventcount=1
+corrupthmentity application appname=fabric:/appwithleakedevents4 removeevents=W1,P1,ok;W2,P1,ok expectedentitystate=Ready expectedeventcount=1
+corrupthmentity application appname=fabric:/appwithleakedevents5 removeevents=W1,P1,ok;W2,P1,ok expectedentitystate=Ready expectedeventcount=1
+corrupthmentity application appname=fabric:/appwithleakedevents6 removeevents=W1,P1,ok;W2,P1,ok expectedentitystate=Ready expectedeventcount=1
+
+checkhmentity application appname=fabric:/appwithleakedevents1 expectedentitystate=Ready expectedeventcount=1
+checkhmentity application appname=fabric:/appwithleakedevents2 expectedentitystate=Ready expectedeventcount=1
+checkhmentity application appname=fabric:/appwithleakedevents3 expectedentitystate=Ready expectedeventcount=1
+checkhmentity application appname=fabric:/appwithleakedevents4 expectedentitystate=Ready expectedeventcount=1
+checkhmentity application appname=fabric:/appwithleakedevents5 expectedentitystate=Ready expectedeventcount=1
+checkhmentity application appname=fabric:/appwithleakedevents6 expectedentitystate=Ready expectedeventcount=1
+
+checkhm applications expectedcount=9
+
+# Delete the entities, which will delete the System reports and mark the attributes for delete.
+# The user reports will remain in store, since the in-memory cache doesn't know about them.
+
+deletehealth app appname=fabric:/appwithleakedevents1 appinstanceid=1 sequencenumber=2 sourceid=System.CM
+deletehealth app appname=fabric:/appwithleakedevents2 appinstanceid=1 sequencenumber=2 sourceid=System.CM
+deletehealth app appname=fabric:/appwithleakedevents3 appinstanceid=1 sequencenumber=2 sourceid=System.CM
+deletehealth app appname=fabric:/appwithleakedevents4 appinstanceid=1 sequencenumber=2 sourceid=System.CM
+deletehealth app appname=fabric:/appwithleakedevents5 appinstanceid=1 sequencenumber=2 sourceid=System.CM
+deletehealth app appname=fabric:/appwithleakedevents6 appinstanceid=1 sequencenumber=2 sourceid=System.CM
+
+checkhmentity application appname=fabric:/appwithleakedevents1 state=deleted
+checkhmentity application appname=fabric:/appwithleakedevents2 state=deleted
+checkhmentity application appname=fabric:/appwithleakedevents3 state=deleted
+checkhmentity application appname=fabric:/appwithleakedevents4 state=deleted
+checkhmentity application appname=fabric:/appwithleakedevents5 state=deleted
+checkhmentity application appname=fabric:/appwithleakedevents6 state=deleted
+
+# Wait until the entities are cleaned up, so the attributes are removed from store.
+checkhm applications expectedcount=3
+
+# Move the CM primary
+# Increase the cleanup interval to test receiving reports before the entities are automatically cleaned up.
+set HealthStoreCleanupInterval 30
+killservice ClusterManagerServiceName primaryOnly=true
+verify
+
+# The applications are created in memory to cleanup the leaked events.
+# Their state is PendingFirstReport and they hold the leaked events.
+checkhm applications expectedcount=9
+checkhmentity application appname=fabric:/appwithleakedevents1 state=nosystemreport expectedeventcount=2
+checkhmentity application appname=fabric:/appwithleakedevents2 state=nosystemreport expectedeventcount=2
+checkhmentity application appname=fabric:/appwithleakedevents3 state=nosystemreport expectedeventcount=2
+checkhmentity application appname=fabric:/appwithleakedevents4 state=nosystemreport expectedeventcount=2
+checkhmentity application appname=fabric:/appwithleakedevents5 state=nosystemreport expectedeventcount=2
+checkhmentity application appname=fabric:/appwithleakedevents6 state=nosystemreport expectedeventcount=2
+
+#
+# Send new reports on the entities and check that previous reports are cleaned up.
+#
+
+# Send delete report. The entity is in deleted state and has no reports other then the delete entity one.
+deletehealth app appname=fabric:/appwithleakedevents1 appinstanceid=1 sequencenumber=3 sourceid=System.CM 
+checkhmentity application appname=fabric:/appwithleakedevents1 state=deleted expectedeventcount=1
+
+# Send a user report for a new source and property. Leaked events are cleaned up and the new entity is persisted with the new event
+# Instance of the entity is unknown.
+reporthealthinternal application appname=fabric:/appwithleakedevents2 sequencenumber=1 healthstate=ok sourceid=W3 property=P2
+checkhmentity application appname=fabric:/appwithleakedevents2 state=nosystemreport expectedeventcount=1 appinstanceid=-1
+
+# Send a report with the same source and property as the one leaked, but newer sequence number.
+reporthealthinternal application appname=fabric:/appwithleakedevents3 sequencenumber=2 healthstate=ok sourceid=W1 property=P1
+checkhmentity application appname=fabric:/appwithleakedevents3 state=nosystemreport expectedeventcount=1 appinstanceid=-1
+
+# Send a report with the same source and property as the one leaked, and the same sequence number.
+reporthealthinternal application appname=fabric:/appwithleakedevents4 sequencenumber=1 healthstate=ok sourceid=W1 property=P1
+checkhmentity application appname=fabric:/appwithleakedevents4 state=nosystemreport expectedeventcount=1 appinstanceid=-1
+
+# Send a system report with the same instance.
+reporthealthinternal application appname=fabric:/appwithleakedevents5 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM property=State apppolicy=default apptype=testapptype
+checkhmentity application appname=fabric:/appwithleakedevents5 state=ok expectedeventcount=1 appinstanceid=1
+
+# Move the CM primary again.
+# Reduce the cleanup interval to check that the entities are properly cleaned up.
+set HealthStoreCleanupInterval 5
+killservice ClusterManagerServiceName primaryOnly=true
+verify
+
+# The entity that didn't receive reports is cleaned up on the first cleanup timer.
+# The entity is in PendingFirstReport but with no children and no events, so it will be cleaned up from cache.
+checkhmentity application appname=fabric:/appwithleakedevents6 state=cleanedup
+
+##################################################
+# Testcase: Report fails to persist with store conflict.
+# State is checked immediately.
+##################################################
+
+# Set check intervals to large values
+set MinHealthCacheConsistencyCheckInterval 1200
+set MaxHealthCacheConsistencyCheckInterval 2400
+
+# Report source+property that will be persisted to store
+reporthealthinternal service servicename=fabric:/testapp1/svc1 sequencenumber=1 healthstate=warning sourceid=W1 property=P1
+queryhealth service servicename=fabric:/testapp1/svc1 expectedhealthstate=warning
+checkhmentity service servicename=fabric:/testapp1/svc1 expectedentitystate=Ready expectedeventcount=2
+
+# Remove the event from memory
+corrupthmentity service servicename=fabric:/testapp1/svc1 removeevents=W1,P1,warning expectedentitystate=Ready expectedeventcount=1
+queryhealth service servicename=fabric:/testapp1/svc1 expectedhealthstate=ok
+
+# Report again the same source+property, in memory thinks it doesn't exist so it tries to Insert in store
+# This fails with store commit.
+reporthealthinternal service servicename=fabric:/testapp1/svc1 sequencenumber=2 healthstate=ok sourceid=W1 property=P1 expectederror=StoreWriteConflict
+
+# ReportFault fixes the state
+checkhmentity service servicename=fabric:/testapp1/svc1 expectedentitystate=Ready expectedeventcount=2
+queryhealth service servicename=fabric:/testapp1/svc1 expectedhealthstate=warning
+
+
+!q

@@ -1,0 +1,62 @@
+#
+# [owner] sumukhs
+# Test scenarios for sending new primaryepoch during failed swaps
+#
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 5
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+################################################################################
+# Scenario 1: Swap Primary cancelled must allow secondary to accept new operations as usual
+################################################################################ 
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+addbehavior b1 60 50 ReplicationOperation
+addbehavior b2 60 40 ReplicationOperation
+
+clientput fabric:/test1 10 10 
+clientput fabric:/test1 10 20
+!wait 
+
+# catchup will be stuck as the target primary does not have the operation 
+swapprimary fabric:/test1 60 50 
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.60 Phase0_Demote
+
+# induce cancel swap
+-50 
+!wait 
+
+# swap must get cancelled
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.60 None 
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary 
+
+# ensure quorum is achieved with 60,40 and 20
+addbehavior b3 60 30 ReplicationOperation 
+removebehavior b2
+removebehavior b1
+clientput fabric:/test1 10 10 
+clientput fabric:/test1 10 20 
+!wait 
+
+removebehavior b3 
++50 nodeprops=system:false 
+!wait 
+
+deleteservice fabric:/test1 
+verify  
+
+################################################################################
+# Scenario 2: Swap Primary cancelled must restart idle replicas
+# TODO : This test case is harder to achieve because we need an IB replica before
+# initiating swap. This is not supported today
+################################################################################ 
+
+!q

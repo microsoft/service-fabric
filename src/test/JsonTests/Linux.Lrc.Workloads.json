@@ -1,0 +1,34 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "LinuxLrc9Workoads",
+      "Type": "Linux_SFRP_ScriptTest",
+      "Owners": "anmola,xunlu,chenxu,jefchen",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "Linux.Lrc9.Workloads.Test",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "LinuxLrc1Workoads",
+      "Type": "Linux_SFRP_ScriptTest",
+      "Owners": "anmola,xunlu,chenxu,jefchen",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "Linux.Lrc1.Workloads.Test",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ] 
+}

@@ -1,0 +1,73 @@
+#!/bin/bash
+echo In PostRm - $@
+
+# NOTE: Any changes in this file have to be compatible for both DEB and RPM distros 
+# as it is used in both installers. Use conditionals where necessary.
+
+GetDistroInstaller()
+{
+    local __resultvar=$1
+
+    /usr/bin/dpkg --search /usr/bin/dpkg >/dev/null 2>&1
+    if [ $? = 0 ]; then
+        eval $__resultvar="DEB"
+    else
+        /usr/bin/rpm -q -f /usr/bin/rpm >/dev/null 2>&1
+        if [ $? = 0 ]; then
+            eval $__resultvar="RPM"
+        else
+            eval $__resultvar="UNKNOWN"
+        fi
+    fi
+}
+
+GetDistroInstaller DISTROINSTALLER
+
+IsRemove="false"
+if [ $DISTROINSTALLER = "DEB" ]; then
+    for var in "$@"
+    do
+        echo "$var"
+        if [ "$var" == "purge" ]; then
+            IsRemove="true"
+        fi
+    done
+elif [ $DISTROINSTALLER = "RPM" ]; then
+    for var in "$@"
+    do
+        echo "$var"
+        if [ "$var" == "0" ]; then
+            IsRemove="true"
+        fi
+    done
+fi
+
+if [ "$IsRemove" == "true" ]; then
+    echo "Removing access to block devices"
+    for i in `lsblk -l | cut -d' ' -f1 |grep -v NAME`
+    do 
+        sudo setfacl -x "u:sfuser" /dev/${i}
+    done
+
+    echo "Cleaning up accounts and groups"
+    sudo userdel -rf sfuser             > /dev/null 2>&1
+    sudo userdel -rf sfappsuser         > /dev/null 2>&1
+    sudo userdel -rf G-FSSGroupffffffff > /dev/null 2>&1
+    sudo userdel -rf P_FSSUserffffffff  > /dev/null 2>&1
+    sudo userdel -rf S_FSSUserffffffff  > /dev/null 2>&1
+    for THIS in `awk -F':' '{ print $1}' /etc/passwd | grep WF-`
+    do
+        sudo userdel -rf $THIS      > /dev/null 2>&1
+    done
+    sudo groupdel sfuser            > /dev/null 2>&1
+    sudo groupdel FSSMetaGroup      > /dev/null 2>&1
+    sudo groupdel FSSGroupffffffff  > /dev/null 2>&1
+    sudo groupdel P_FSSUserffffffff > /dev/null 2>&1
+    sudo groupdel S_FSSUserffffffff > /dev/null 2>&1
+    for THIS in `awk -F':' '{ print $1}' /etc/group | grep WF-`
+    do
+        sudo groupdel $THIS         > /dev/null 2>&1
+    done
+fi
+
+exit 0

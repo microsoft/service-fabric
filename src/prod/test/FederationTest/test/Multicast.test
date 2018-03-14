@@ -1,0 +1,34 @@
+!updatecfg Federation.BroadcastPropagationFactor=3
+votes 0
+clearticket
++0
+verify
+multicast 0 0
+verify
+multicast 0 10
+verify
++10
++20
++30
++40
++50
++60
++70
++80
++90
++100
++1000
++5000
+verify
+multicast 0 10,20,30,40,50,60
+verify
+multicast 30 10,15,20,30,40,50,60,70,80,200
+verify
+addbehavior b1 * 50 Multicast
+multicast 30 10,15,20,30,40,50,60,70,80,200 timeout=15 pending=40,50,60
+verify
+removebehavior b1
+addbehavior b2 * 40 Multicast
+multicast 30 10,15,20,30,40,50,60,70,80,200 timeout=15 pending=40
+verify
+!q

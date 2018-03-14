@@ -1,0 +1,122 @@
+set TestComposeDeploymentTestMode true
+!setcfg Management.CleanupApplicationPackageOnProvisionSuccess=false
+votes 10
+fmservice 1 1
+namingservice 1 1 1
+cmservice 1 1
+cleantest
+
++10
+verify
+
+# App 1
+app.add App1 App1 v1
+app.clear App1
+
+app.servicepack App1 ServicePackageA version=v1
+app.servicetypes App1 ServicePackageA ServiceTypeA stateful persist
+app.codepack App1 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.reqservices App1 ServiceA ServiceTypeA stateful partition=1 replica=3
+
+app.upload App1
+
+#
+# Test case 1: Create and then Delete
+#
+createcompose app App1 App1 v1 verify
+createcompose app isSkipSetIB=true error=ComposeDeploymentAlreadyExists
+query GetDockerComposeApplicationStatusList verify DeploymentName=app,Status=Ready
+query GetApplicationList verify ApplicationName=fabric:/app,ApplicationDefinitionKind=Compose
+
+# ServiceFabricApplicationDescription=1, Compose=2
+query GetApplicationList ApplicationDefinitionKindFilter=2 verify ApplicationName=fabric:/app,ApplicationDefinitionKind=Compose
+query GetApplicationList ApplicationDefinitionKindFilter=1 expectempty=true
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=2 verify ApplicationTypeName=App1,ApplicationTypeVersion=v1,Status=Available,ApplicationTypeDefinitionKind=Compose
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=3 verify ApplicationTypeName=App1,ApplicationTypeVersion=v1,Status=Available,ApplicationTypeDefinitionKind=Compose
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=1 expectempty=true
+
+deletecompose app verify
+query GetDockerComposeApplicationStatusList expectempty=true
+deletecompose app error=ComposeDeploymentNotFound
+verify
+
+#
+# Test case 2: Creation failed
+#
+
+# Create application stuck
+set QueryOperationRetryCount 60
+addbehavior b1 * * CreateService
+createcompose error App1 App1 v1 asyncverify
+!pause 20
+query GetDockerComposeApplicationStatusList verify DeploymentName=error,Status=Creating
+removebehavior b1
+
+set QueryOperationRetryCount 15
+
+# ImageBuilder error
+createcompose iberror App2 App2 v1
+!pause 20
+query GetDockerComposeApplicationStatusList verify DeploymentName=iberror,Status=Failed
+deletecompose iberror verify noapp
+
+# RegularApp
+app.add RegularApp RegularApp vRegular
+app.clear RegularApp
+
+app.servicepack RegularApp ServicePackageA version=vRegular
+app.servicetypes RegularApp ServicePackageA ServiceTypeA stateful persist
+app.codepack RegularApp ServicePackageA CodeA types=ServiceTypeA version=vRegular
+
+app.upload RegularApp
+provisionapp RegularApp
+
+createapp fabric:/RegularApp RegularApp vRegular
+
+createcompose RegularApp App2 App2 v1 error=ApplicationAlreadyExists
+
+deleteapp fabric:/RegularApp
+
+#
+# Test case 3: Parallel create and delete
+#
+
+# App 2
+app.add App2 App2 v1
+app.clear App2
+
+app.servicepack App2 ServicePackageA version=v1
+app.servicetypes App2 ServicePackageA ServiceTypeA stateful persist
+app.codepack App2 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.upload App2
+
+# App 3
+app.add App3 App3 v3
+app.clear App3
+
+app.servicepack App3 ServicePackageA version=v3
+app.servicetypes App3 ServicePackageA ServiceTypeA stateful persist
+app.codepack App3 ServicePackageA CodeA types=ServiceTypeA version=v3
+
+app.upload App3
+
+createcompose app2 App2 App2 v1 asyncverify
+createcompose app3 App3 App3 v3 asyncverify
+
+!pause 30
+
+query GetDockerComposeApplicationStatusList verify DeploymentName=app2,Status=Ready
+query GetDockerComposeApplicationStatusList verify DeploymentName=app3,Status=Ready
+
+deletecompose app2
+deletecompose app3
+
+# Delete stuck application in case 2
+!pause 40
+query GetDockerComposeApplicationStatusList verify DeploymentName=error,Status=Ready
+deletecompose error verify
+verify
+
+query GetDockerComposeApplicationStatusList expectempty=true
+!q

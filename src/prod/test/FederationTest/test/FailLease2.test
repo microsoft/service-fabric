@@ -1,0 +1,16 @@
+votes 10
+clearticket
+removeleasebehavior 
++10 10010
++20 10020
++30 10030
+verify
+addbehavior b 30 * ArbitrateRequest
+addleasebehavior * * indirect
+addleasebehavior 10020 10030 *
+!expect,Node 30 Failed
+!pause 20
+verify
+removeleasebehavior
+!q
+

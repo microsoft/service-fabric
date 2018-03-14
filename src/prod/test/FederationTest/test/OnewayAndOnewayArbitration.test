@@ -1,0 +1,30 @@
+!setcfg Federation.LeaseDuration=10
+!setcfg Federation.MaxLeaseDuration=10
+!setcfg Federation.ArbitrationTimeout=10
+!setcfg Federation.MaxArbitrationTimeout=10
+votes 11
+clearticket
++11 10011
++21 10021
++31 10031
++41 10041
++51 10051
++61 10061
++71 10071
++81 10081
++91 10091
++101 10101
+verify
+!pause,10
+addleasebehavior * * indirect q1
+addleasebehavior 10051 10101 request q2
+addleasebehavior 10101 10051 request q3
+-61
+addbehavior b 51 * ArbitrateRequest 
+!pause 15
+verify
+removeleasebehavior q1
+removeleasebehavior q2
+removeleasebehavior q3
+!q
+

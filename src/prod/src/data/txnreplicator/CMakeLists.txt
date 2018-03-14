@@ -1,0 +1,7 @@
+add_subdirectory(lib)
+add_subdirectory(test)
+add_subdirectory(common)
+add_subdirectory(logrecordlib)
+add_subdirectory(loggingreplicator)
+add_subdirectory(statemanager)
+add_subdirectory(testcommon)

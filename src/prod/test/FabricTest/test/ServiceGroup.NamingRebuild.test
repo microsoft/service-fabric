@@ -1,0 +1,45 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 2 2
+
+set NamingOperationTimeout 10
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+###############################################
+######## Stateless Open/Close        ##########
+###############################################
+createname fabric:/servicegroup1
+
+addbehavior b1 * * CreateServiceReply
+
+createservicegroup fabric:/servicegroup1 SGStatelessServiceFactory n 1 2 \
+    2 \
+    fabric:/servicegroup1#test1 SGStatelessService \
+    fabric:/servicegroup1#test2 SGStatelessService \
+    error=Timeout
+
+removebehavior b1
+
+# Increase naming operation timeout, as create service may run into repairs and take longer time
+set NamingOperationTimeout 20
+
+createservicegroup fabric:/servicegroup1 SGStatelessServiceFactory n 1 2 \
+    2 \
+    fabric:/servicegroup1#test1 SGStatelessService \
+    fabric:/servicegroup1#test2 SGStatelessService \
+    error=UserServiceGroupAlreadyExists \
+    forceUpdatePsd=true
+
+resolve fabric:/servicegroup1#test1 10
+
+!q

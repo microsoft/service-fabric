@@ -1,0 +1,1236 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Hairball DD Perf (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball MRCQ Perf (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "yzha, tyadam",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\MRCQ-Perf-1R-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball MRCQ Perf 3-Replica (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "yzha, tyadam",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\MRCQ-Perf-3R-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 3-Replica (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-3R-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-3P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-3P-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-3P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-3P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-3P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-3P-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-6P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-6P-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball MRCQ Perf 3-Replica-6P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "yzha, tyadam",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\MRCQ-Perf-3R-6P-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-6P Direct Dedicated Log (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-6P-DirectDedicatedLog-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-6P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-6P-PaaS-D14.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 3-Replica-6P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-3R-6P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-6P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-6P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-6P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-6P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-6P-MemoryLog (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-6P-PaaS-D14-MemoryLog.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-6P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-6P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 1-Replica-6P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D14,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-1R-6P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-36P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-36P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-36P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-36P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-36P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-36P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-36P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-36P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-36P (D14)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D14,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-36P-PaaS-D14.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-PaaS-A7.test",   
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-PaaS-A7.test", 
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-PaaS-A7.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-PaaS-A7.test",
+        "ExecutionTimeout": "32400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 3-Replica (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-3R-PaaS-A7.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-PaaS-A7.test", 
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-3P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-3P-PaaS-A7.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-3P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-3P-PaaS-A7.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-3P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-3P-PaaS-A7.test",       
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-6P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-6P-PaaS-A7.test",        
+        "ExecutionTimeout": "32400",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-6P Write Throttled (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-6P-WriteThrottled-PaaS-A7.test",        
+        "ExecutionTimeout": "32400",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-6P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-6P-PaaS-A7.test",   
+        "ExecutionTimeout": "32400",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 3-Replica-6P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-3R-6P-PaaS-A7.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-6P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-6P-PaaS-A7.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-6P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-6P-PaaS-A7.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-6P-MemoryLog (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-6P-PaaS-A7-MemoryLog.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-6P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-6P-PaaS-A7.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 1-Replica-6P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags":"Hairball,A7,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-1R-6P-PaaS-A7.test",   
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-36P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,A7,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-36P-PaaS-A7.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-36P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,A7,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-36P-PaaS-A7.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-36P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,A7,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-36P-PaaS-A7.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-36P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,A7,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-36P-PaaS-A7.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-36P (A7)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,A7,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-36P-PaaS-A7.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-PaaS-D3.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-PaaS-D3.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 3-Replica (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-3R-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-PaaS-D3.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-3P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-3P-PaaS-D3.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-3P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-3P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-3P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags" : "Hairball,D3,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-3P-PaaS-D3.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-6P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, PreethaS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-6P-PaaS-D3.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-6P Write Throttled (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, PreethaS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-6P-WriteThrottled-PaaS-D3.test",        
+        "ExecutionTimeout": "32400",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-6P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-6P-PaaS-D3.test",        
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 3-Replica-6P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, AlanWar",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-3R-6P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-6P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-6P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-6P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, PreethaS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-6P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-6P-MemoryLog (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, PreethaS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-6P-PaaS-D3-MemoryLog.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-6P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-6P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 1-Replica-6P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, AlanWar",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\AtomicTx-Perf-1R-6P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-36P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, PreethaS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-3R-36P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-36P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-3R-36P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-36P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, AlanWar",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\V1Perf-3R-36P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-36P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "hanagar,sumukhs, PreethaS",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\DDict-Perf-1R-36P-PaaS-D3.test",        
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-36P (D3)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "Tags": "Hairball,D3,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "PaaS\\KVS-Perf-1R-36P-PaaS-D3.test", 
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "YCSBMeasurementTest (DS4)",
+      "Type": "Azure_ScriptTest",
+      "Owners": "t-shahs,anmola,rsinha",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "ycsb3TierMeasurement.test",
+        "ExecutionTimeout": "5400",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N (D4)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Tags": "E2EPerf,PaaS,D4,36P3N",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N (D4)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N3_PaaS_D4.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-6N (D4)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Tags": "E2EPerf,PaaS,D4,36P6N",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-6N (D4)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N6_PaaS_D4.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"       
+      }
+    },
+    {
+      "Name": "E2EDictionary-3P-3N (D4)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Tags": "E2EPerf,PaaS,D4,3P3N",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-3P-3N (D4)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP3N3_PaaS_D4.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-6N-WCF (D4)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Tags": "E2EPerf,PaaS,D4,36P6N,WCF",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-6N-WCF (D4)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N6_PaaS_D4_WCF.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-3P-3N-WCF (D4)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Tags": "E2EPerf,PaaS,D4,3P3N,WCF",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-3P-3N-WCF (D4)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP3N3_PaaS_D4_WCF.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N-WCF (D4)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Tags": "E2EPerf,PaaS,D4,36P3N,WCF",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-WCF (D4)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N3_PaaS_D4_WCF.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N-Faults (D4)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Tags": "E2EPerf,PaaS,D4,3P3N",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-Faults (D4)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP36N3F_PaaS_D4.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-3P-3N-Backups (D4)",
+      "Type": "Azure_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Tags": "E2EPerf,PaaS,D4,3P3N",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-3P-3N-Backups (D4)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioPaaSConfig.txt",
+        "TaskName": "RelDP3N3B_PaaS_D4.test",        
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    }
+  ]
+}

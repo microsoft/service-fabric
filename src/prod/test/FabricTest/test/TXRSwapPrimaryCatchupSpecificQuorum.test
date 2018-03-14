@@ -1,0 +1,44 @@
+#
+# Tests catchup completion during swap primary for native transactional replicator.
+# In a 3 node setup, replication is blocked from primary to one of the secondaries.
+# Swap Primary command is issued to move primary to another secondary (not the one blocked)
+# This will trigger a catchup (specific quorum) and it should succeed.
+# If replicator is not implementing IFabricReplicatorCatchupSpecificQuorum interface, catchupAll is expected and reconfiguration should get stuck
+#
+
+set DeletedReplicaKeepDuration 3
+!load FailoverCITInitialization.test
+
++20  nodeprops=system:false
++30  nodeprops=system:false
++40  nodeprops=system:false
+verify
+
+createservice fabric:/test1 TXRServiceType y 1 3 persist constraint=(system!=true)
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+
+!var UserServiceFTID FM.FT.PartitionId.fabric:/test1
+
+addbehavior replblockto20 * 20 ReplicationOperation
+
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 30 40Data1
+!wait
+
+moveprimaryclient 30 <var.UserServiceFTID>
+gfum
+verify
+
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+
+deleteservice fabric:/test1
+verify
+
+!q

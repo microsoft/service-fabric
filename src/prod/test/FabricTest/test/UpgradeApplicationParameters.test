@@ -1,0 +1,153 @@
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+
++10
++20
++30
+verify
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageA version=V1
+
+app.servicetypes versionV1 ServicePackageA ServiceTypeA stateful persist
+
+app.codepack versionV1 ServicePackageA CodeA types=ServiceTypeA version=V1
+
+app.parameters versionV1 PartitionCountA:1,ReplicaCountA:1
+
+app.servicetemplate versionV1 ServiceTypeA stateful persist partition=[PartitionCountA] replica=[ReplicaCountA]
+
+app.upload versionV1
+
+# 
+# Application version V2 
+#
+
+app.add versionV2 TestApp V2 versionV1
+
+app.servicepack versionV2 ServicePackageB version=V2
+
+app.servicetypes versionV2 ServicePackageB ServiceTypeB stateless
+
+app.codepack versionV2 ServicePackageB CodeB types=ServiceTypeB version=V2
+
+app.parameters versionV2 PartitionCountB:1,InstanceCountB:1
+
+app.servicetemplate versionV2 ServiceTypeB stateless partition=[PartitionCountB] instance=[InstanceCountB]
+
+app.upload versionV2
+
+#
+# Provision application version V1
+#
+provisionapp versionV1
+
+#
+# Provision application version V2
+#
+provisionapp versionV2
+
+#
+# Create application version V1
+#
+createapp fabric:/testapp TestApp V1
+verify
+
+createservicefromtemplate fabric:/testapp/svc1 ServiceTypeA fabric:/testapp
+verify
+
+#
+# ImageBuilder validation error on upgrade
+#
+upgradeapp fabric:/testapp V1 Rolling appparam=DoesNotExist:1 errors=ImageBuilderValidationError
+
+#
+# Validate against no effective parameter changes after merging with defaults
+# 
+upgradeapp fabric:/testapp V1 Rolling errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V1 Rolling appparam=PartitionCountA:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V1 Rolling appparam=ReplicaCountA:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V1 Rolling appparam=PartitionCountA:1,ReplicaCountA:1 errors=ApplicationAlreadyInTargetVersion
+
+#
+# Upgrade V1 application parameters
+# 
+upgradeapp fabric:/testapp V1 Rolling appparam=PartitionCountA:2,ReplicaCountA:3
+
+verifyupgradeapp fabric:/testapp
+
+createservicefromtemplate fabric:/testapp/svc2 ServiceTypeA fabric:/testapp
+verify
+
+#
+# Upgrade to V2, which has more parameters
+# 
+upgradeapp fabric:/testapp V2 Rolling
+
+verifyupgradeapp fabric:/testapp
+
+createservicefromtemplate fabric:/testapp/svc3 ServiceTypeA fabric:/testapp
+createservicefromtemplate fabric:/testapp/svc4 ServiceTypeB fabric:/testapp
+verify
+
+#
+# Upgrade V1 and V2 application parameters
+# 
+upgradeapp fabric:/testapp V2 Rolling appparam=ReplicaCountA:3,InstanceCountB:3
+
+verifyupgradeapp fabric:/testapp
+
+createservicefromtemplate fabric:/testapp/svc5 ServiceTypeA fabric:/testapp
+createservicefromtemplate fabric:/testapp/svc6 ServiceTypeB fabric:/testapp
+verify
+
+#
+# Upgrade V2 application parameter only
+# 
+upgradeapp fabric:/testapp V2 Rolling appparam=ReplicaCountA:3,InstanceCountB:1
+
+verifyupgradeapp fabric:/testapp
+
+createservicefromtemplate fabric:/testapp/svc7 ServiceTypeA fabric:/testapp
+createservicefromtemplate fabric:/testapp/svc8 ServiceTypeB fabric:/testapp
+verify
+
+#
+# Validate against no effective parameter changes after merging with defaults
+# 
+upgradeapp fabric:/testapp V2 Rolling appparam=ReplicaCountA:3 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=ReplicaCountA:3,InstanceCountB:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=ReplicaCountA:3,PartitionCountA:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=ReplicaCountA:3,PartitionCountB:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=ReplicaCountA:3,PartitionCountA:1,PartitionCountB:1,InstanceCountB:1 errors=ApplicationAlreadyInTargetVersion
+
+#
+# Upgrade back to default values
+# 
+upgradeapp fabric:/testapp V2 Rolling
+
+verifyupgradeapp fabric:/testapp
+
+#
+# Validate against no effective parameter changes after merging with defaults
+# 
+upgradeapp fabric:/testapp V2 Rolling errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=PartitionCountA:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=PartitionCountA:1,ReplicaCountA:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=PartitionCountB:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=PartitionCountB:1,InstanceCountB:1 errors=ApplicationAlreadyInTargetVersion
+upgradeapp fabric:/testapp V2 Rolling appparam=PartitionCountA:1,ReplicaCountA:1,PartitionCountB:1,InstanceCountB:1 errors=ApplicationAlreadyInTargetVersion
+
+-*
+
+!q

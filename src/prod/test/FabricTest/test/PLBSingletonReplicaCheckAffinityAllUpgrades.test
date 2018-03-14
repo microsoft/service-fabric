@@ -1,0 +1,397 @@
+###############################################################################
+# Test: PLBSingletonReplicaCheckAffinityAllUpgrades.test
+# Owners: apopadic, nipuzovi, yangli
+# This test verifies that check affinity upgrade optimization for singleton
+# replica services, works for all type of upgrades:
+# config, single package, full application, SF upgrade, Infra/OS upgrade
+###############################################################################
+
+votes 10 20 30
+fmservice 2 1
+namingservice 1 2 1
+cmservice 2 1
+cleantest
+
+# Enable predictability of initial replica placement
+set DummyPLBEnabled true
+
+# Disable load balancing in order to preserve predictability during test run
+set LoadBalancingEnabled false
+
+# Allow movement of replicas of services which have target replica count = 1, during upgrade
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+
+# Add/move new replicas together for affinity correlated partitions during upgrade
+set CheckAffinityForUpgradePlacement true
+
+# Disable relaxed affinity during upgrade 
+set RelaxAffinityConstraintDuringUpgrade false
+
+# Do not restore replica location after the upgrade because:
+# 1. Not-deterministic FM droping of service move operation,
+# could produce unexpected replica movements (by the test)
+# 2. There is a tracked issue with this functionality being flaky (RDBug 10463332)
+set RestoreReplicaLocationAfterUpgrade false
+
+# Set the FM expected upgrade durations
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+
+# Ensuring that service package deactivation is not too slow
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange 0
+
+# Avoid timeout during cluster upgrade
+set NamingOperationTimeout 60
+set NamingOperationRetryTimeout 180
+
++10 ud=UD1 cap=CPU:30
++20 ud=UD2 cap=CPU:120
++30 ud=UD3 cap=CPU:120
+verify
+
+#### TEST SETUP: Create application
+#### Application contains all service types: stateless, voltile, persisted
+
+# Initial application version
+app.add AppV1 MyApp v1
+app.clear AppV1
+app.servicepack AppV1 MyServicePackage version=v1 configversion=v1 dataversion=v1
+app.servicetypes AppV1 MyServicePackage StatelessServiceType stateless
+app.servicetypes AppV1 MyServicePackage VolatileServiceType stateful
+app.servicetypes AppV1 MyServicePackage PersistedServiceType stateful persist
+app.codepack AppV1 MyServicePackage StatelessCode types=StatelessServiceType version=v1
+app.codepack AppV1 MyServicePackage VolatileCode types=VolatileServiceType version=v1
+app.upload AppV1
+provisionapp AppV1
+
+# Config package upgrade
+app.add AppV2 MyApp v2
+app.clear AppV2
+app.servicepack AppV2 MyServicePackage version=v2 configversion=v2 dataversion=v1
+app.servicetypes AppV2 MyServicePackage StatelessServiceType stateless
+app.servicetypes AppV2 MyServicePackage VolatileServiceType stateful
+app.servicetypes AppV2 MyServicePackage PersistedServiceType stateful persist
+app.codepack AppV2 MyServicePackage StatelessCode types=StatelessServiceType version=v1
+app.codepack AppV2 MyServicePackage VolatileCode types=VolatileServiceType version=v1
+app.upload AppV2
+provisionapp AppV2
+
+# Single code package upgrade (volatile)
+app.add AppV3 MyApp v3
+app.clear AppV3
+app.servicepack AppV3 MyServicePackage version=v3 configversion=v2 dataversion=v1
+app.servicetypes AppV3 MyServicePackage StatelessServiceType stateless
+app.servicetypes AppV3 MyServicePackage VolatileServiceType stateful
+app.servicetypes AppV3 MyServicePackage PersistedServiceType stateful persist
+app.codepack AppV3 MyServicePackage StatelessCode types=StatelessServiceType version=v1
+app.codepack AppV3 MyServicePackage VolatileCode types=VolatileServiceType version=v2
+app.upload AppV3
+provisionapp AppV3
+
+# Full application upgrade (all services)
+app.add AppV4 MyApp v4
+app.clear AppV4
+app.servicepack AppV4 MyServicePackage version=v4 configversion=v2 dataversion=v1
+app.servicetypes AppV4 MyServicePackage StatelessServiceType stateless
+app.servicetypes AppV4 MyServicePackage VolatileServiceType stateful
+app.servicetypes AppV4 MyServicePackage PersistedServiceType stateful persist
+app.codepack AppV4 MyServicePackage StatelessCode types=StatelessServiceType version=v2
+app.codepack AppV4 MyServicePackage VolatileCode types=VolatileServiceType version=v3
+app.upload AppV4
+provisionapp AppV4
+
+#### Create application and services (parent: stateless, persisted, volatile)
+createapp fabric:/testApp MyApp v1
+# Scenario with stateless parent is disabled due to RDBug:10588889
+#RDBug 10588889: createservice fabric:/testApp/StatelessParent StatelessServiceType n 1 1 appname=fabric:/testApp metrics=CPU,High,10,0
+#RDBug 10588889:createservice fabric:/testApp/StatelessChild1 StatelessServiceType n 1 1 servicecorrelations=fabric:/testApp/StatelessParent,affinity appname=fabric:/testApp metrics=CPU,High,10,0
+#RDBug 10588889:createservice fabric:/testApp/VolatileChild3 VolatileServiceType y 1 1 servicecorrelations=fabric:/testApp/StatelessParent,nonAlignedAffinity minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,10,10
+#RDBug 10588889:createservice fabric:/testApp/PersistedChild3 PersistedServiceType y 1 1 servicecorrelations=fabric:/testApp/StatelessParent,nonAlignedAffinity persist minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,10,10
+
+createservice fabric:/testApp/VolatileParent1 VolatileServiceType y 1 1 minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,10,10
+createservice fabric:/testApp/VolatileChild11 VolatileServiceType y 1 1 servicecorrelations=fabric:/testApp/VolatileParent1,affinity minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,10,10
+createservice fabric:/testApp/VolatileChild12 VolatileServiceType y 1 1 servicecorrelations=fabric:/testApp/VolatileParent1,affinity minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,10,10
+createservice fabric:/testApp/StatelessChild1 StatelessServiceType n 1 1 servicecorrelations=fabric:/testApp/VolatileParent1,nonAlignedAffinity appname=fabric:/testApp metrics=CPU,High,10,0
+
+createservice fabric:/testApp/VolatileParent2 VolatileServiceType y 1 1 minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,10,10
+createservice fabric:/testApp/VolatileChild21 VolatileServiceType y 1 1 servicecorrelations=fabric:/testApp/VolatileParent2,affinity minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,10,10
+createservice fabric:/testApp/VolatileChild22 VolatileServiceType y 1 1 servicecorrelations=fabric:/testApp/VolatileParent2,affinity minreplicasetsize=1 appname=fabric:/testApp metrics=CPU,High,10,10
+createservice fabric:/testApp/StatelessChild2 StatelessServiceType n 1 1 servicecorrelations=fabric:/testApp/VolatileParent2,nonAlignedAffinity appname=fabric:/testApp metrics=CPU,High,10,0
+
+verify
+nameexists fabric:/testApp true
+
+# VERIFY: That all replicas are initially placed on node 30
+#RDBug 10588889: !waitforstate FM.Replica.State.fabric:/testApp/StatelessParent.30 Ready
+#RDBug 10588889: !waitforstate FM.Replica.State.fabric:/testApp/StatelessChild1.30 Ready
+#RDBug 10588889: !waitforstate FM.Replica.State.fabric:/testApp/VolatileChild3.30 Ready
+#RDBug 10588889: !waitforstate FM.Replica.State.fabric:/testApp/PersistedChild3.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/StatelessChild1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/StatelessChild2.30 Ready
+
+# Disable predictability of replica placement, hence test can verify
+# that replicas are placed on a node with enough capacity (node 20)
+# (also prevent enabling of load balancing)
+set DummyPLBEnabled false
+set LoadBalancingEnabled false
+
+#
+#### TEST CASE 1: Application upgrade - only configuration package
+#
+upgradeapp fabric:/testApp v2 Rolling upgrademode=manual
+verifyupgradeapp fabric:/testApp upgradedomains=UD1
+upgradeappmovenext fabric:/testApp
+verifyupgradeapp fabric:/testApp upgradedomains=UD2
+upgradeappmovenext fabric:/testApp
+verifyupgradeapp fabric:/testApp upgradedomains=UD3
+
+# VERIFY: That all replicas are on node 30, no movements are expected
+#RDBug 10588889: !waitforstate FM.Replica.State.fabric:/testApp/StatelessParent.30 Ready
+#RDBug 10588889: !waitforstate FM.Replica.State.fabric:/testApp/StatelessChild1.30 Ready
+#RDBug 10588889: !waitforstate FM.Replica.State.fabric:/testApp/VolatileChild3.30 Ready
+#RDBug 10588889: !waitforstate FM.Replica.State.fabric:/testApp/PersistedChild3.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/StatelessChild1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/StatelessChild2.30 Ready
+
+
+#
+#### TEST CASE 2: Application upgrade - single code package upgrade (volatile)
+#
+!pause 5
+upgradeapp fabric:/testApp v3 Rolling upgrademode=manual
+verifyupgradeapp fabric:/testApp upgradedomains=UD1
+upgradeappmovenext fabric:/testApp
+verifyupgradeapp fabric:/testApp upgradedomains=UD2
+upgradeappmovenext fabric:/testApp
+
+# VERIFY: That all replicas are moved to node 20
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.20 Ready
+
+verifyupgradeapp fabric:/testApp upgradedomains=UD3
+
+#
+#### TEST CASE 3: Application upgrade - full application upgrade (all services)
+#
+!pause 5
+upgradeapp fabric:/testApp v4 Rolling upgrademode=manual
+verifyupgradeapp fabric:/testApp upgradedomains=UD1
+upgradeappmovenext fabric:/testApp
+
+# VERIFY: That all stateful replicas are moved to node 30
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.30 Ready
+
+verifyupgradeapp fabric:/testApp upgradedomains=UD2
+upgradeappmovenext fabric:/testApp
+
+# VERIFY: That all stateful replicas are moved to node 20
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.20 Ready
+
+verifyupgradeapp fabric:/testApp upgradedomains=UD3
+
+#
+#### TEST CASE 4: Fabric upgrade
+#
+!pause 5
+prepareupgradefabric code=6.0.0.0 config=v6
+provisionfabric code=6.0.0.0 config=v6
+upgradefabric code=6.0.0.0 config=v6 Rolling upgrademode=manual
+verifyupgradefabric upgradedomains=UD1
+upgradefabricmovenext
+
+# VERIFY: That all stateful replicas are moved to node 30
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.30 Ready
+
+verifyupgradefabric upgradedomains=UD2
+upgradefabricmovenext
+
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.20 Ready
+
+verifyupgradefabric upgradedomains=UD3
+
+
+#
+#### TEST CASE 5: Node Deactivation - Restart (Infra/OS upgrade)
+#
+!pause 5
+deactivatenode 10 Restart
+!waitforstate FM.Node.DeactivationIntent.10 Restart
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+activatenode 10
+!waitforstate FM.Node.DeactivationIntent.10 None
+!waitforstate FM.Node.DeactivationStatus.10 None
+verify
+
+deactivatenode 20 Restart
+!waitforstate FM.Node.DeactivationIntent.20 Restart
+!waitforstate FM.Node.DeactivationStatus.20 DeactivationComplete
+
+# VERIFY: That all stateful replicas are moved to node 30
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.30 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.30 Ready
+
+activatenode 20
+!waitforstate FM.Node.DeactivationIntent.20 None
+!waitforstate FM.Node.DeactivationStatus.20 None
+verify
+
+deactivatenode 30 Restart
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+
+# VERIFY: That all statefull replicas are moved to node 20
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.20 Ready
+
+activatenode 30
+!waitforstate FM.Node.DeactivationIntent.30 None
+!waitforstate FM.Node.DeactivationStatus.30 None
+verify
+gfum
+
+
+
+#
+#### TEST CASE 6: Node Deactivation - Pause (No movements)
+#
+!pause 5
+deactivatenode 10 Pause
+!waitforstate FM.Node.DeactivationIntent.10 Pause
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+activatenode 10
+!waitforstate FM.Node.DeactivationIntent.10 None
+!waitforstate FM.Node.DeactivationStatus.10 None
+verify
+deactivatenode 20 Pause
+!waitforstate FM.Node.DeactivationIntent.20 Pause
+!waitforstate FM.Node.DeactivationStatus.20 DeactivationComplete
+
+
+# VERIFY: That all statefull replicas are moved to node 20
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild11.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild12.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild21.20 Ready
+!waitforstate FM.Replica.State.fabric:/testApp/VolatileChild22.20 Ready
+
+activatenode 20
+!waitforstate FM.Node.DeactivationIntent.20 None
+!waitforstate FM.Node.DeactivationStatus.20 None
+verify
+deactivatenode 30 Pause
+!waitforstate FM.Node.DeactivationIntent.30 Pause
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+activatenode 30
+!waitforstate FM.Node.DeactivationIntent.30 None
+!waitforstate FM.Node.DeactivationStatus.30 None
+verify
+gfum
+
+#
+#### TEST CASE 7: Node Deactivation - RemoveData (Infra/OS upgrade)
+# RemoveData scenario is deactivated due to RDBug #10783287
+#RDBug 10783287: !pause 5
+#RDBug 10783287: deactivatenode 10 RemoveData
+#RDBug 10783287: !waitforstate FM.Node.DeactivationIntent.10 RemoveData
+#RDBug 10783287: !waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+#RDBug 10783287: activatenode 10
+#RDBug 10783287: !waitforstate FM.Node.DeactivationIntent.10 None
+#RDBug 10783287: !waitforstate FM.Node.DeactivationStatus.10 None
+#RDBug 10783287: verify
+#RDBug 10783287: deactivatenode 20 RemoveData
+#RDBug 10783287: !waitforstate FM.Node.DeactivationIntent.20 RemoveData
+#RDBug 10783287: !waitforstate FM.Node.DeactivationStatus.20 DeactivationComplete
+
+# VERIFY: That all statefull replicas are moved to node 30, during node 20 deactivation
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileParent.30 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileChild1.30 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileChild2.30 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileChild3.30 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.30 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/PersistedChild1.30 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/PersistedChild2.30 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/PersistedChild3.30 Ready
+
+#RDBug 10783287: activatenode 20
+#RDBug 10783287: !waitforstate FM.Node.DeactivationIntent.20 None
+#RDBug 10783287: !waitforstate FM.Node.DeactivationStatus.20 None
+#RDBug 10783287: verify
+#RDBug 10783287: deactivatenode 30 RemoveData
+#RDBug 10783287: !waitforstate FM.Node.DeactivationIntent.30 RemoveData
+#RDBug 10783287: !waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+
+# VERIFY: That all statefull replicas are moved to node 20
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileParent.20 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileChild1.20 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileChild2.20 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileChild3.20 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/VolatileParent2.20 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/PersistedChild1.20 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/PersistedChild2.20 Ready
+#RDBug 10783287: !waitforstate FM.Replica.State.fabric:/testApp/PersistedChild3.20 Ready
+
+#RDBug 10783287: activatenode 30
+#RDBug 10783287: !waitforstate FM.Node.DeactivationIntent.30 None
+#RDBug 10783287: !waitforstate FM.Node.DeactivationStatus.30 None
+#RDBug 10783287: verify
+#RDBug 10783287: gfum
+
+##### Test case cleanup
+deleteapp fabric:/testApp
+unprovisionapp MyApp v1
+unprovisionapp MyApp v2
+unprovisionapp MyApp v3
+unprovisionapp MyApp v4
+unprovisionfabric code=6.0.0.0 config=v6 FabricVersionInUse
+verify
+nameexists fabric:/testApp false
+
+-*
+
+!q

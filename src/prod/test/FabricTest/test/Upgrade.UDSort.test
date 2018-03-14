@@ -1,0 +1,151 @@
+#
+# [owner] MMohsin, AnuragG
+#
+# This test case covers the scenario where the value of SortUpgradeDomainNamesAsNumbers while upgrades are in progress.
+#
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set UpgradeStatusPollInterval 5
+set ExpectedReplicaUpgradeDuration 3600
+set UserReplicaRestartWaitDuration 3600
+
++10 ud=2
++20 ud=4
++30 ud=6
++40 ud=8
++50 ud=10
++60 ud=15
++70 ud=20
++80 ud=50
++90 ud=100
+verify
+
+# Capture the PartitionId of the FM service
+!var FMServiceFTID FM.FT.PartitionId.FMService
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA PersistedServiceType stateful persist
+app.servicetypes version10 ServicePackageA VolatileServiceType stateful
+app.servicetypes version10 ServicePackageA StatelessServiceType stateless
+app.codepack version10 ServicePackageA CodeA1 types=PersistedServiceType,VolatileServiceType,StatelessServiceType version=1.0
+app.reqservices version10 Persisted PersistedServiceType stateful partition=3 replica=5 minreplicasetsize=3
+app.reqservices version10 Volatile VolatileServiceType stateful partition=3 replica=5 minreplicasetsize=3
+app.reqservices version10 Stateless StatelessServiceType stateless partition=3 instance=5
+app.upload version10
+provisionapp version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1 version10
+app.servicepack version11 ServicePackageA version=1.1 configversion=1.1 dataversion=1.0
+app.servicetypes version11 ServicePackageA PersistedServiceType stateful persist
+app.servicetypes version11 ServicePackageA VolatileServiceType stateful
+app.servicetypes version11 ServicePackageA StatelessServiceType stateless
+app.codepack version11 ServicePackageA CodeA1 types=PersistedServiceType,VolatileServiceType,StatelessServiceType version=1.1
+app.reqservices version11 Persisted PersistedServiceType stateful partition=3 replica=5 minreplicasetsize=3
+app.reqservices version11 Volatile VolatileServiceType stateful partition=3 replica=5 minreplicasetsize=3
+app.reqservices version11 Stateless StatelessServiceType stateless partition=3 instance=5
+app.upload version11
+provisionapp version11
+
+# Create applications in version 1.0
+createapp fabric:/MyApp1 TestApp 1.0
+createapp fabric:/MyApp2 TestApp 1.0
+verify
+
+#
+# Start upgrade of fabric:/MyApp1 with the old UD sorting behavior
+#
+set SortUpgradeDomainNamesAsNumbers false
+upgradeapp fabric:/MyApp1 1.1 Rolling upgrademode=manual
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10
+
+#
+# Start upgrade of fabric:/MyApp2 with the new UD sorting behavior
+#
+set SortUpgradeDomainNamesAsNumbers true
+upgradeapp fabric:/MyApp2 1.1 Rolling upgrademode=manual
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2
+
+#
+# Continue with the upgrade
+#
+upgradeappmovenext fabric:/MyApp1
+upgradeappmovenext fabric:/MyApp2
+
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10,100
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2,4
+
+upgradeappmovenext fabric:/MyApp1
+upgradeappmovenext fabric:/MyApp2
+
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10,100,15
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2,4,6
+
+upgradeappmovenext fabric:/MyApp1
+upgradeappmovenext fabric:/MyApp2
+
+# Set the UD sorting behavior for new upgrades to false
+set SortUpgradeDomainNamesAsNumbers false
+
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10,100,15,2
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2,4,6,8
+
+upgradeappmovenext fabric:/MyApp1
+upgradeappmovenext fabric:/MyApp2
+
+# Move the FM primary so that state loaded from the disk
+moveprimaryclient RANDOM <var.FMServiceFTID>
+
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10,100,15,2,20
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2,4,6,8,10
+
+upgradeappmovenext fabric:/MyApp1
+upgradeappmovenext fabric:/MyApp2
+
+# Set the UD sorting behavior for new upgrades to true
+set SortUpgradeDomainNamesAsNumbers true
+
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10,100,15,2,20,4
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2,4,6,8,10,15
+
+upgradeappmovenext fabric:/MyApp1
+upgradeappmovenext fabric:/MyApp2
+
+# Move the FM primary so that state loaded from the disk
+moveprimaryclient RANDOM <var.FMServiceFTID>
+
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10,100,15,2,20,4,50
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2,4,6,8,10,15,20
+
+upgradeappmovenext fabric:/MyApp1
+upgradeappmovenext fabric:/MyApp2
+
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10,100,15,2,20,4,50,6
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2,4,6,8,10,15,20,50
+
+upgradeappmovenext fabric:/MyApp1
+upgradeappmovenext fabric:/MyApp2
+
+verifyupgradeapp fabric:/MyApp1 upgradedomains=10,100,15,2,20,4,50,6,8
+verifyupgradeapp fabric:/MyApp2 upgradedomains=2,4,6,8,10,15,20,50,100
+
+verifyupgradeapp fabric:/MyApp1
+verifyupgradeapp fabric:/MyApp2
+
+verify
+
+-*
+
+!q

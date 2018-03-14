@@ -1,0 +1,58 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+
+set NamingOperationTimeout 120
+set ServiceLocationBroadcastInterval 60000
+
++10
++20
++30
+verify
++40
++50
++60
++70
++80
++90
+verify
+
+#
+# Add a persisted service.  It will be placed on 90,80,70,60.
+#
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 4 persist
+verify
+
+###########################################
+## Create 2 clients using the same gateway
+## Register for notifications on one and resolve on the other
+## Since Broadcast is delayed, resolve should trigger the notification
+###########################################
+createclient c1 nodeconfig=10
+createclient c2 nodeconfig=10
+
+!pause,2
+
+registercallback c1 cb1 fabric:/test1 30 
+waitforcallback c1 cb1
+
+swapprimary fabric:/test1 90 70
+verify
+
+#
+# Resolve with refresh on client c2
+# to bring the latest results
+#
+resolveusingclient c2 fabric:/test1 30 cache=cache1 
+resolveusingclient c2 fabric:/test1 30 cache=cache1 
+
+waitforcallback c1 cb1 timeout=30
+
+unregistercallback c1 cb1
+deleteclient c1
+deleteclient c2
+
+!q

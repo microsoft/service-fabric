@@ -1,0 +1,56 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1225345
+# Scenario: Service is deleted while node is down
+# When node comes up it is unable to get teh service type registration
+# Eventually node will send LastReplicaUp with this replica as down
+# This will cause RA to abort create the replica and forcibly drop it
+set DummyPLBEnabled true
+set ReopenSuccessWaitInterval 5
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+verify
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+deleteservice fabric:/test1
+!waitforstate RA.FT.State.fabric:/test1.40 Closed
+!waitforstate RA.FT.State.fabric:/test1.30 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.40 true
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.30 true
+
+addbehavior b1 10 20 DeleteReplica
+
+#Block node up ack so that RA open on 20 is delayed
+addbehavior b2 * * NodeUpAck
+
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+
+#remove the runtime on 20 so that node is stuck on find service type registration
+!pause 10
+removeruntime 20 y
+
+removebehavior b2
+
+#now wait till reopen timeout expires and the replica is sent as down 
+#the replicaupreply from FM will tell RA to drop the replica
+!waitforstate RA.FT.State.fabric:/test1.20 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.20 true
+
+!q

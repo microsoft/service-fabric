@@ -1,0 +1,56 @@
+# ------------------------------------------------
+# Test - Rebuild GFUM
+# ------------------------------------------------
+
+votes 10 20 30
+fmservice 3 1
+cmservice 0 0
+namingservice 3 3 2
+cleantest
+
+set DummyPLBEnabled true
+set ExpectedClusterSize 3
+set ClusterStableWaitDuration 5
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+
++10
++20
++30
+verify
+
+!waitforstate FM.Replica.Role.FMService.30 Primary
+
+# Reliable master will run on node 0
++0
++40
++50
++60
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary
+
+clientput fabric:/test1 10 10Data1
+!wait
+verify
+gfum fmm
+
+# Bring down the primary for test service, primary for FMService and the Reliable Master at the same time.
+-0
+-30
+-60
+verify
+gfum fmm
+gfum
+
+# Bring down another set of nodes. Quorum loss for test1 and FMService
+# FabricTest doesn’t support quorum loss for FM FT (Defect #719133)
+# -10
+# -20
+# -50
+# verify
+# gfum fmm
+# gfum
+!q

@@ -1,0 +1,69 @@
+#
+# This script is intended for manual execution when testing the performance of FabricClient's service endpoint cache. 
+# It is not run as part of RunTests.cmd.
+#
+
+set NamingOperationTimeout 10
+
+
+
+### resolution
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=10000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=100000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+
+
+### eviction
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=2000 cachelimit=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=10000 cachelimit=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=100000 cachelimit=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+
+
+### key range
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=10 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=100 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=200 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+
+
+### notifications
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=1 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=10 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=100 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=1000 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+
+
+### service groups
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=1
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=5
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=10
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=100
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=200
+
+
+!q

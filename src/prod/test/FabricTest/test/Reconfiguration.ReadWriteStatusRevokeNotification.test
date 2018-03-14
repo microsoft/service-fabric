@@ -1,0 +1,137 @@
+#
+# [owner] aprameyr
+# Test scenarios around Read/Write status
+!load FailoverCITInitialization.test
+set IsPreWriteStatusRevokeCatchupEnabled false
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 120
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: RF transient on a primary allows writes to continue
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+setsignal 60 fabric:/test1 service.beginclose.block
+
+addbehavior b1 * * UpdateConfiguration
+reportfault 60 fabric:/test1 transient
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 Phase2_Catchup
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 None
+
+clientput fabric:/test1 10 10
+!wait
+
+clientget fabric:/test1 10 10
+!wait
+
+resetsignal 60 fabric:/test1 service.beginclose.block
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2: RF permanent on a primary allows writes to continue
+#####################################################
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+setsignal 60 fabric:/test2 service.beginchangerole.block
+
+addbehavior b1 * * UpdateConfiguration
+reportfault 60 fabric:/test2 permanent
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.50 Phase2_Catchup
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.50 None
+
+clientput fabric:/test2 10 10
+!wait
+
+clientget fabric:/test2 10 10
+!wait
+
+resetsignal 60 fabric:/test2 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test2
+verify
+#####################################################
+# Scenario 3: S/N does not block if change role is stuck
+#####################################################
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+addbehavior b0 * * UpdateConfiguration
+
+setsignal 50 fabric:/test3 service.beginchangerole.block
+movesecondary fabric:/test3 50 30
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.60 Phase2_Catchup
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.60 None
+
+resetsignal 50 fabric:/test3 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: S/N does not block if change role is stuck if there is failover
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+addbehavior b0 * * UpdateConfiguration
+
+setsignal 50 fabric:/test4 service.beginchangerole.block
+movesecondary fabric:/test4 50 30
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 Phase2_Catchup
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 None
+
+resetsignal 50 fabric:/test4 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test4
+verify
+
+######################################################
+## Scenario 5: RF transient on a primary blocks for volatile
+######################################################
+
+createservice fabric:/test5 TestStoreServiceType y 1 3 constraint=(system!=true)
+verify
+
+addbehavior b0 * * ReplicaCloseReply
+
+reportfault 60 fabric:/test5 transient
+
+!waitforstate FM.FT.Reconfig.fabric:/test5 false
+!pause 10
+!waitforstate FM.FT.Reconfig.fabric:/test5 false
+!waitforstate RA.FT.State.fabric:/test5.60 Open
+
+removebehavior b0
+verify 
+
+deleteservice fabric:/test5
+verify
+
+!q

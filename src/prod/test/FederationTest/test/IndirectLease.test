@@ -1,0 +1,32 @@
+votes 10
+clearticket
++10 10010
++20 10020
++30 10030
++40 10040
++50 10050
++60 10060
++70 10070
++80 10080
++90 10090
+verify
+
+blockleaseconnection 14020 14030
+blockleaseconnection 14050 14060
+
+!pause,25
+verify
+
+unblockleaseconnection 14020 14030
+unblockleaseconnection 14050 14060
+
+-90
+-80
+-70
+-60
+-50
+-40
+-30
+-20
+-10
+!q

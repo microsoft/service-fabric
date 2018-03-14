@@ -1,0 +1,23 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "MultiClusterTest",
+      "Type": "LinuxWindowsTestType",
+      "Owners": "danmas",
+      "ResourcesRequired": "Server:1&Azure:2",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "LinuxBasicTest.Test",
+        "TaskName1": "WindowAzureBasicTest.Test",
+        "TaskName2": "LinuxBasicTestQuit.Test",
+        "ConfigName": "WinFabricTest\\Config\\MultiTestConfig.txt",
+        "ExecutionTimeout": "10000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

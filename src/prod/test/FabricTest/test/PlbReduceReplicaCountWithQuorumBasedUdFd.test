@@ -1,0 +1,65 @@
+#
+# [owner] MMicic
+#
+# Validation that dropping extra replicas is done from overloaded domains 
+# when quorum based UD/FD logic is used.
+#
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 150
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+set DeletedReplicaKeepDuration 1
+set QuorumBasedReplicaDistributionPerUpgradeDomains true
+set QuorumBasedReplicaDistributionPerFaultDomains true
+
+set DummyPLBEnabled true
+
++10 ud=UD1 fd=fd:/dc1
++20 ud=UD1 fd=fd:/dc1
++30 ud=UD1 fd=fd:/dc1
+
++40 ud=UD2 fd=fd:/dc2
++50 ud=UD2 fd=fd:/dc2
++60 ud=UD2 fd=fd:/dc2
+
++70 ud=UD3 fd=fd:/dc3
++80 ud=UD3 fd=fd:/dc3
++90 ud=UD3 fd=fd:/dc3
+
+verify
+
+createname fabric:/testA1
+createservice fabric:/testA1 TestPersistedStoreServiceType y 1 7 persist
+verify
+
+# as dummy PLB is ON, we expect last two domains to have 3 replicas each
+!waitforstate FM.Replica.Role.fabric:/testA1.90 Primary
+!waitforstate FM.Replica.Role.fabric:/testA1.80 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.70 Secondary
+
+!waitforstate FM.Replica.Role.fabric:/testA1.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.40 Secondary
+
+!waitforstate FM.Replica.Role.fabric:/testA1.30 Secondary
+
+updateservice fabric:/testA1 Stateful TargetReplicaSetSize=5
+
+# we expect that primary and secondary on the node 30 are not dropped
+!waitforstate FM.Replica.Role.fabric:/testA1.90 Primary
+!waitforstate FM.Replica.Role.fabric:/testA1.30 Secondary
+
+verify
+
+-*
+
+!q

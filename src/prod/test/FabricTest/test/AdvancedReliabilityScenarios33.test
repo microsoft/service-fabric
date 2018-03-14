@@ -1,0 +1,149 @@
+#
+# This contains test cases for ensuring Rebuild works correctly when
+# secondary replicas are being built and undergo SB->IB->RD and Idle->Secondary
+# transitions (bug 868411)
+#
+
+set DummyPLBEnabled true
+set FullRebuildWaitDuration 5
+set UserReplicaRestartWaitDuration 9999
+set SendToFMTimeout 3
+set FMPlacementConstraints fmservice==true
+
+votes 10
+cmservice 0 0
+namingservice 1 2 1
+fmservice 1 1
+cleantest
+
+# Use placement constraint to make sure FM can only be on node 20 or 30
+
++10 nodeprops=StringProperty:SeedNode
+
++30 nodeprops=fmservice:true
+!wait
+
+!waitforstate FM.Replica.Role.FMService.30 Primary
+
++20 nodeprops=fmservice:true
+!wait
+
+
+verify
+
+# Add nodes where the test service replicas will be placed
++40 nodeprops=StringProperty:NormalNode
++50 nodeprops=StringProperty:NormalNode
++60 nodeprops=StringProperty:NormalNode
+
+verify
+
+# Create a persisted stateful service with 3 replicas
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty==NormalNode)
+verify
+
+#
+# Scenario 1: Rebuild during AddReplica(Secondary)
+#
+
+# This will ensure FM gets the ReplicaUp before replica down
+# and will trigger FM sending AddReplica(Secondary)
+addbehavior b1 * * ReplicaUp
+addbehavior b2 * * ChangeNotification
+
+# Rebuild needs to be triggered before the build is completed
+addbehavior b3 * * CreateReplicaReply
+
+# Restart a Secondary
+-50
+
+!wait
+
++50 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.50 true
+removebehavior b1
+
+!waitforstate FM.Replica.State.fabric:/test1.50 InBuild
+
+removebehavior b2
+
+# Trigger a rebuild
+-30 removedata
+!wait
+nodestateremoved 30
+!wait
++30 nodeprops=fmservice:true
+
+removebehavior b3
+
+# After rebuild, the replica-set should be healthy again
+verify
+
+#
+# Scenario 2: Rebuild during move secondary
+#
+
++70 nodeprops=StringProperty:NormalNode
+
+verify
+
+# Block the reconfiguration during Phase3 Deactivate to trigger rebuild
+addbehavior b4 50 60 DeactivateReply
+
+# Move the secondary
+movesecondary fabric:/test1 50 70
+
+!waitforstate RA.FT.State.fabric:/test1.50 Closed
+
+# Trigger a rebuild
+-20 removedata
+!wait
+nodestateremoved 20
+!wait
+
+removebehavior b4
+
++20 nodeprops=fmservice:true
+
+# After rebuild, the replica-set should be healthy again
+verify
+
+#
+# Scenario 3: Restart secondary replica during reconfiguration and trigger rebuild
+#
+
+addbehavior b5 * * Deactivate
+
+# Trigger reconfiguration by taking down the primary
+-60
+
+!waitforstate FM.Replica.IsUp.fabric:/test1.60 false
+
+# Restart a secondary replica during reconfiguration
+-40
+
+!waitforstate FM.Replica.IsUp.fabric:/test1.40 false
+
++40 nodeprops=StringProperty:NormalNode
+
+!waitforstate RA.Replica.State.fabric:/test1.40.40 IB
+
+# Trigger a rebuild
+-30 removedata
+!wait
+nodestateremoved 30
+!wait
+
+removebehavior b5
+
++30 nodeprops=fmservice:true
+
+# Add the node back so replica-set target replica count is achieved
++60 nodeprops=StringProperty:NormalNode
+
+# After rebuild, the replica-set should be healthy again
+
+verify
+
+!q

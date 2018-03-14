@@ -1,0 +1,117 @@
+# This script has 2 cases:
+# - Report a transient fault, drop a few ReplicaUp's
+# - Report a permanent fault, drop a few ReplicaDropped's
+#
+set DummyPLBEnabled true
+votes 40 50 60
+cmservice 0 0
+namingservice 1 4 1
+
+set FullRebuildWaitDuration 10
+set UserReplicaRestartWaitDuration 9999
+set NamingOperationRetryTimeout 60
+set FMPlacementConstraints fmservice==true
+
+cleantest
+
+# Use placement constraint to make sure 40 is chosen as primary
+
++40 nodeprops=fmservice:true
++50 
+!wait
+
+!waitforstate FM.Replica.Role.FMService.40 Primary
+
+-50 
++50 nodeprops=fmservice:true
++60 nodeprops=fmservice:true
+!waitforstate FM.Replica.Role.FMService.50 Secondary
+!waitforstate FM.Replica.Role.FMService.60 Secondary
+
+# Add more nodes
+#
++30 nodeprops=fmservice:true
++20 nodeprops=fmservice:true
++10 nodeprops=fmservice:true
++5  nodeprops=fmservice:true
+
+verify
+
+
+# Create a persisted stateful service
+#
+createname fabric:/persisted
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 4 persist
+
+verify
+
+!waitforstate FM.Replica.Role.fabric:/persisted.60 Primary
+!waitforstate FM.Replica.Role.fabric:/persisted.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted.30 Secondary
+
+clientput fabric:/persisted 10 1DataPersisted
+!wait
+
+
+# Report a transient fault, drop a few ReplicaUp's
+#
+addbehavior b2 * * ReplicaUp 1.0 Max 0 0 2
+
+# Block AddReplica so InBuild state can be checked at FM
+#
+addbehavior b3 * * AddReplica
+
+reportfault 50 fabric:/persisted transient
+
+!waitforstate FM.Replica.State.fabric:/persisted.50 InBuild
+
+# Reallow AddReplica
+#
+removebehavior b3
+removebehavior b2
+
+verify
+
+# Resolve service locations
+#
+resolve fabric:/persisted 100
+
+verify
+clientget fabric:/persisted 10 1DataPersisted
+clientput fabric:/persisted 20 2DataPersisted
+!wait
+
+
+#  Report a permanent fault, drop a few ReplicaUp's
+#
+addbehavior b2 * * ReplicaUp 1.0 Max 0 0 2
+
+# Block AddReplica so InBuild state can be checked at FM
+#
+addbehavior b3 * * AddReplica
+
+reportfault 50 fabric:/persisted permanent
+
+!waitforstate FM.Replica.State.fabric:/persisted.50 Dropped|InBuild
+
+# Reallow AddReplica
+#
+removebehavior b3
+removebehavior b2
+
+verify
+
+# Resolve service locations
+#
+resolve fabric:/persisted 100
+
+verify
+clientget fabric:/persisted 20 2DataPersisted
+!wait
+
+# Delete services
+#
+deleteservice fabric:/persisted
+
+!q

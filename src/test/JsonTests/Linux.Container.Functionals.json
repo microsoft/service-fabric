@@ -1,0 +1,21 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "E2EContainerCertLinux",
+      "Type": "Linux_ScriptTest",
+      "Owners": "ratando",      
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "ContainerCertMgmnt.Linux.test",
+        "ExecutionTimeout": "3600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    }
+  ]
+}

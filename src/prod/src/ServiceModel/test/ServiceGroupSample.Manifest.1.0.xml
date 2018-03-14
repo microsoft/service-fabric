@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="CalculatorSample" Version="1.0" xsi:schemaLocation="http://schemas.microsoft.com/2011/01/fabric ..\xsd\ServiceFabricServiceModel.xsd" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>
+    This is the description.<SomeRandomElement Attr="Value" /><SomeRandomElement2>XML</SomeRandomElement2>
+  </Description>
+  <ServiceTypes>
+    <StatefulServiceType ServiceTypeName="AService" HasPersistedState="true" />
+    <StatefulServiceType ServiceTypeName="BService" HasPersistedState="true" />
+    <StatefulServiceGroupType HasPersistedState="true" ServiceGroupTypeName="ABServiceGroup" UseImplicitFactory="true">
+      <ServiceGroupMembers>
+        <ServiceGroupTypeMember ServiceTypeName="A">
+          <LoadMetrics>
+            <LoadMetric Name="A" PrimaryDefaultLoad="5" SecondaryDefaultLoad="5"/>
+            <LoadMetric Name="C" PrimaryDefaultLoad="5" SecondaryDefaultLoad="5"/>
+          </LoadMetrics>
+        </ServiceGroupTypeMember>
+        <ServiceGroupTypeMember ServiceTypeName="B"/>
+      </ServiceGroupMembers>
+      <Extensions>
+        <Extension Name="SGExtension">
+          <a href="fabric:/ABServiceGroup">Click Me</a>
+        </Extension>
+      </Extensions>
+    </StatefulServiceGroupType>
+  </ServiceTypes>
+  <CodePackage Name="SGCodePackage" Version="1.0" IsShared="1">
+    <EntryPoint>
+      <DllHost>
+        <UnmanagedDll>A.dll</UnmanagedDll>
+        <ManagedAssembly>B, Version=1.0.0.0</ManagedAssembly>
+      </DllHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="A.Config" Version="1.0">
+  </ConfigPackage>
+  <DataPackage Name="A.Data1" Version="1.0" />
+  <DataPackage Name="B.Data2" Version="1.0">
+  </DataPackage>
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="String" Protocol="http" Type="Internal" />
+      <Endpoint Protocol="tcp" Name="String" CertificateRef="text" Type="Internal" Port="2" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

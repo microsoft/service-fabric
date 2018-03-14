@@ -1,0 +1,80 @@
+#
+# [owner] yangli
+#
+# During fabric upgrade, affinity should be relaxed to place missing replicas
+#
+
+votes 10 20 30
+fmservice 3 1
+namingservice 1 3 2
+cmservice 3 3
+cleantest
+
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 150
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+
++10 cap=CPU:20 fd=fd:/dc0
++20 cap=CPU:20
++30 cap=CPU:10
+verify
+
+#
+# This test hits a stack overflow sometimes, register a vectored exception handler
+# so that we get a dump of the overflowed stack before the stack unwinds
+#
+registerstackoverflowdumpgenerator
+
+createservice fabric:/test1 TestStoreServiceType y 1 3 metrics=CPU,High,10,10 placementPolicies=fd:/dc0,preferredPrimaryDomain
+
+# Primary replica should be created on nodes 10
+!waitforstate FM.Replica.Role.fabric:/test1.10 Primary
+!waitforstate FM.Replica.IsUp.fabric:/test1.20 true
+!waitforstate FM.Replica.IsUp.fabric:/test1.30 true
+
++40 cap=CPU:10
+
+verify
+
+#
+# Prepare and privision for cluster upgrade
+#
+prepareupgradefabric code=4.2.765.0 config=version5
+provisionfabric code=4.2.765.0 config=version5
+
+#
+# Upgrade cluster
+#
+upgradefabric code=4.2.765.0 config=version5 Rolling upgrademode=manual
+
+createservice fabric:/test2 TestStoreServiceType y 1 3 servicecorrelations=fabric:/test1,affinity metrics=CPU,High,10,10
+
+# Affinity should be relaxed and new replicas should be created on nodes 40
+!waitforstate FM.Replica.IsUp.fabric:/test2.10 true
+!waitforstate FM.Replica.IsUp.fabric:/test2.20 true
+!waitforstate FM.Replica.IsUp.fabric:/test2.40 true
+
+updatefabricupgrade upgrademode=auto
+
+verifyupgradefabric
+
++50
+verify
+
+-30
+verify
+
+# After the upgrade, the affinity violation should be corrected
+!waitforstate FM.Replica.IsUp.fabric:/test1.50 true
+!waitforstate FM.Replica.IsUp.fabric:/test2.50 true
+
+verify
+
+gfum
+
+-*
+
+!q

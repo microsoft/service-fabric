@@ -1,0 +1,15 @@
+define printws
+    if ($arg0.__r_.__first_.__l.__size_ > 0) && ($arg0.__r_.__first_.__l.__data_ > 8)
+        set $s=(unsigned short*)($arg0.__r_.__first_.__l.__data_)
+    else
+        set $s=(unsigned short*)($arg0.__r_.__first_.__s.__data_)
+    end
+
+    while (*$s)
+        set $wc = *$s
+        printf "%c", $wc
+        set $s++
+    end
+    echo \n
+end
+

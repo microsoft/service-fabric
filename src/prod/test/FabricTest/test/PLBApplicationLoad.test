@@ -1,0 +1,126 @@
+###############################################################################
+# Test: PLBApplicationLoad.test
+# Owners: nipuzovi, yangli, anuragg
+# This test verifies the basic functionality of PLB app groups in case when 
+# applications report load, and when both balancing and defragmentation are on.
+###############################################################################
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+
+set DefragmentationMetrics MEMORY true
+
++10 ud=UD1 cap=CPU:100,MEMORY:100
++20 ud=UD2 cap=CPU:100,MEMORY:100
++30 ud=UD3 cap=CPU:100,MEMORY:100
++40 ud=UD4 cap=CPU:100,MEMORY:100
++50 ud=UD5 cap=CPU:100,MEMORY:100
+verify
+
+###############################################################################
+#
+# Test Case: app group with balancing
+#
+###############################################################################
+
+app.add versionTB1 TestBalancingApp vTB1
+app.clear versionTB1
+app.servicepack versionTB1 ServicePackageBalancing version=v1
+app.servicetypes versionTB1 ServicePackageBalancing ServiceTypeBalancing stateful persist
+app.codepack versionTB1 ServicePackageBalancing CodeBalancing types=ServiceTypeBalancing version=v1
+app.upload versionTB1
+provisionapp versionTB1
+
+createapp fabric:/testbalancing TestBalancingApp vTB1 scaleout=2,4,CPU,50,100,400
+verify
+
+# Total cluster capacity is 500, PerNodeReservation is 50, and MinNodeCount is 2 - hence we shouldn't be able to place service that needs 401
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 1 persist metrics=CPU,High,401,401 errors=InsufficientClusterCapacity
+
+# Create 5 services so that we can spread them over 5 nodes
+createservice fabric:/testbalancing/S1 ServiceTypeBalancing y 1 1 persist minreplicasetsize=1 appname=fabric:/testbalancing metrics=CPU,High,20,20
+createservice fabric:/testbalancing/S2 ServiceTypeBalancing y 1 1 persist minreplicasetsize=1 appname=fabric:/testbalancing metrics=CPU,High,20,20
+createservice fabric:/testbalancing/S3 ServiceTypeBalancing y 1 1 persist minreplicasetsize=1 appname=fabric:/testbalancing metrics=CPU,High,20,20
+createservice fabric:/testbalancing/S4 ServiceTypeBalancing y 1 1 persist minreplicasetsize=1 appname=fabric:/testbalancing metrics=CPU,High,20,20
+createservice fabric:/testbalancing/S5 ServiceTypeBalancing y 1 1 persist minreplicasetsize=1 appname=fabric:/testbalancing metrics=CPU,High,20,20
+verify
+
+# verify that this application will use between 2 and 4 nodes (balancing should push for 5 nodes)
+verifyapplicationload fabric:/testbalancing minimumNodes=2 maximumNodes=4 nodeCount=4 loads=CPU,100,400,100
+
+deleteapp fabric:/testbalancing
+unprovisionapp TestBalancingApp vTB1
+
+verify
+nameexists fabric:/testbalancing false
+
+###############################################################################
+#
+# Test Case: app group with defragmentation
+#
+###############################################################################
+
+app.add versionTD1 TestDefragApp vTD1
+app.clear versionTD1
+app.servicepack versionTD1 ServicePackageDefrag version=v1
+app.servicetypes versionTD1 ServicePackageDefrag ServiceTypeDefrag stateful persist
+app.codepack versionTD1 ServicePackageDefrag CodeDefrag types=ServiceTypeDefrag version=v1
+app.upload versionTD1
+provisionapp versionTD1
+
+createapp fabric:/testdefrag TestDefragApp vTD1 scaleout=2,3,MEMORY,0,100,400
+
+# Create 5 services so that we can spread them over 5 nodes
+createservice fabric:/testdefrag/S1 ServiceTypeDefrag y 1 1 persist minreplicasetsize=1 appname=fabric:/testdefrag metrics=MEMORY,High,20,20
+createservice fabric:/testdefrag/S2 ServiceTypeDefrag y 1 1 persist minreplicasetsize=1 appname=fabric:/testdefrag metrics=MEMORY,High,20,20
+createservice fabric:/testdefrag/S3 ServiceTypeDefrag y 1 1 persist minreplicasetsize=1 appname=fabric:/testdefrag metrics=MEMORY,High,20,20
+createservice fabric:/testdefrag/S4 ServiceTypeDefrag y 1 1 persist minreplicasetsize=1 appname=fabric:/testdefrag metrics=MEMORY,High,20,20
+createservice fabric:/testdefrag/S5 ServiceTypeDefrag y 1 1 persist minreplicasetsize=1 appname=fabric:/testdefrag metrics=MEMORY,High,20,20
+
+#verify
+
+# All replicas should be on a single node due to defragmentation setting
+verifyapplicationload fabric:/testdefrag minimumNodes=2 maximumNodes=3 nodeCount=1 loads=MEMORY,0,400,100
+
+updateapp fabric:/testdefrag maxCount=5 metrics=MEMORY,0,21,400
+verifyapplicationload fabric:/testdefrag nodeCount=5 loads=MEMORY,0,400,100
+
+deleteapp fabric:/testdefrag
+unprovisionapp TestDefragApp vTD1
+
+verify
+nameexists fabric:/testdefrag false
+
+###############################################################################
+#
+# Test Case: app group with cluster-wide service
+#
+###############################################################################
+
+app.add versionTS1 TestStatelessApp vTS1
+app.clear versionTS1
+app.servicepack versionTS1 ServicePackageStateless version=v1
+app.servicetypes versionTS1 ServicePackageStateless ServiceTypeStateless stateless
+app.codepack versionTS1 ServicePackageStateless CodeDefrag types=ServiceTypeStateless version=v1
+app.upload versionTS1
+provisionapp versionTS1
+
+createapp fabric:/teststateless TestStatelessApp vTS1 scaleout=0,3
+
+# Create service that will go to each node
+createservice fabric:/teststateless/Stateless ServiceTypeStateless n 1 -1 appname=fabric:/teststateless
+#verify
+
+# Verify that NodeCount will be correct in absence of loads, and that service will be placed on 3 nodes
+!waitforstate FM.FT.ReplicaCount.fabric:/teststateless/Stateless 3
+verifyapplicationload fabric:/teststateless minimumNodes=0 maximumNodes=3 nodeCount=3
+
+# Make sure that placement does not attempt to place replicas on every node
+!pause 10
+# verifyunplacedreason fabric:/teststateless/Stateless There were no unplaced replicas for
+
+!q

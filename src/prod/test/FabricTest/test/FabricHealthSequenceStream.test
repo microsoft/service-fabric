@@ -1,0 +1,235 @@
+#
+# Validates Health Subsystem scenarios related to sequence stream protocol.
+#
+
+votes 10
+
+cmservice 3 1
+namingservice 3 3 1
+fmservice 3 1
+
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 10
+set UseInternalHealthClient true
+set HealthStoreCleanupInterval 20
+set HealthStoreCleanupGraceInterval 5
+set HealthStoreEntityWithoutSystemReportKeptInterval 60
+set HealthStoreNodeEntityInvalidationDuration 10
+
+set DummyPLBEnabled true
+cleantest
++10
++20
++30
++40
++50
+verify
+
+########################################################
+# Testcase 1: Test invalidation cleanup logic
+########################################################
+healthpreinitialize node sourceid=System.FMM instance=1
+healthgetprogress node sourceid=System.FMM expectedprogress=0
+
+reporthealthinternal node nodeid=111 node.instanceid=1 sequencenumber=0 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FMM
+reporthealthinternal node nodeid=222 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FMM
+reporthealthinternal node nodeid=333 node.instanceid=30 sequencenumber=2 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FMM
+reporthealthinternal node nodeid=444 node.instanceid=1 sequencenumber=3 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FMM
+
+# PostInitialize not called yet, no report should be sent
+healthgetprogress node sourceid=System.FMM  expectedprogress=0
+
+healthpostinitialize node sourceid=System.FMM sequencenumber=0
+healthgetprogress node sourceid=System.FMM expectedprogress=4
+
+# Report a replica on the node to check that it's deleted when the node is invalidated
+!string SvcTypeA1Partition0 31299114-0820-4cbd-8090-3ba86b899db2
+reporthealthinternal application appname=fabric:/ss1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default apptype=FabricHealthAppType
+reporthealthinternal service servicename=fabric:/ss1/S1 sequencenumber=1 healthstate=ok sourceid=System.FM appname=fabric:/ss1 servicetypename=ServiceTypeA1
+reporthealthinternal partition partitionguid=<string.SvcTypeA1Partition0> servicename=fabric:/ss1/S1 type=persistent sequencenumber=1 healthstate=ok sourceid=System.FM
+reporthealthinternal replica replica.id=10000 replica.instanceid=1 partitionguid=<string.SvcTypeA1Partition0> nodeid=444 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.RA
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok
+queryhealth replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok
+queryhealth service servicename=fabric:/ss1/S1 expectedhealthstate=ok
+queryhealth application appname=fabric:/ss1 expectedhealthstate=ok
+
+resethealthclient
+healthpreinitialize node sourceid=System.FMM instance=2
+
+# Report on some nodes so they are not invalidated
+reporthealthinternal node nodeid=111 node.instanceid=1 sequencenumber=4 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FMM
+reporthealthinternal node nodeid=10 sequencenumber=5 healthstate=ok sourceid=System.FMM
+reporthealthinternal node nodeid=20 sequencenumber=6 healthstate=ok sourceid=System.FMM
+reporthealthinternal node nodeid=30 sequencenumber=7 healthstate=ok sourceid=System.FMM
+reporthealthinternal node nodeid=40 sequencenumber=8 healthstate=ok sourceid=System.FMM
+reporthealthinternal node nodeid=50 sequencenumber=9 healthstate=ok sourceid=System.FMM
+
+healthgetprogress node sourceid=System.FMM expectedprogress=4
+# Invalidate all reports; all entities reported on before invalidation should be cleaned up
+healthpostinitialize node sourceid=System.FMM sequencenumber=4 invalidatesequencenumber=4
+
+!pause,10
+
+checkhmentity node nodeid=222 state=cleanedup node.instanceid=1
+checkhmentity node nodeid=333 state=cleanedup node.instanceid=30
+
+# User report on cleaned up entity resets the attributes
+reporthealthinternal node nodeid=222 node.instanceid=0 sequencenumber=1 healthstate=warning
+checkhmentity node nodeid=222 state=nosystemreport node.instanceid=0
+queryhealth node nodeid=333 expectedempty=true
+
+reporthealthinternal node nodeid=333 node.instanceid=0 sequencenumber=1 healthstate=warning
+checkhmentity node nodeid=333 state=nosystemreport node.instanceid=0
+queryhealth node nodeid=222 expectedempty=true
+
+# Report as system on the same instance as initially, the user report is lost and the system report is persisted
+reporthealthinternal node nodeid=222 node.instanceid=1 sequencenumber=10 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FMM
+queryhealth node nodeid=222 expectedhealthstate=ok expectedeventcount=1
+
+# Report as system on the same or lower instance as initially, the user reports are lost and the system reports are persisted
+reporthealthinternal node nodeid=333 node.instanceid=10 sequencenumber=11 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FMM
+queryhealth node nodeid=333 expectedhealthstate=ok expectedeventcount=1
+
+# Replica on invalidated node is cleaned up
+checkhmentity node nodeid=444 state=cleanedup node.instanceid=1
+queryhealth replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> expectedempty=true
+checkhmentity replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> state=deleted
+
+queryhealth node nodeid=111 expectedhealthstate=ok
+queryhealth node nodeid=10 expectedhealthstate=ok
+
+#
+# Add an ad-hoc stateless service
+#
+createname fabric:/stateless
+createservice fabric:/stateless CalculatorServiceType n 3 1
+verify
+
+########################################################
+# Testcase 2: Test general sequence stream algorithm scenarios
+########################################################
+
+# drop getprogress messages initially
+addbehavior b1 * * GetSequenceStreamProgress
+
+healthpreinitialize partition sourceid=source2 instance=1
+
+# allow getprogress and retry logic should send it
+!pause 5
+removebehavior b1
+
+healthgetprogress partition sourceid=source2  expectedprogress=0
+
+# Report health data on different entities
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=0 healthstate=error
+
+# PostInitialize not called yet, no report should be sent
+healthgetprogress partition sourceid=source2  expectedprogress=0
+
+healthpostinitialize partition sourceid=source2 sequencenumber=0
+
+# Query and verify the health 
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=error
+
+# Check new progress
+healthgetprogress partition sourceid=source2  expectedprogress=1
+
+# Report new values
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=2 healthstate=warning
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#2 sequencenumber=1 healthstate=error
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=4 healthstate=error
+
+# Check progress
+healthgetprogress partition sourceid=source2  expectedprogress=3
+
+# Skip sequence 3, now 4 should get accepted
+healthskipsequence partition sourceid=source2 sequencenumber=3
+healthgetprogress partition sourceid=source2  expectedprogress=5
+
+# Create another gap
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=6 healthstate=warning
+healthgetprogress partition sourceid=source2  expectedprogress=5
+
+# Fill the gap with a report
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#2 sequencenumber=5 healthstate=error
+healthgetprogress partition sourceid=source2  expectedprogress=7
+
+# Skip without later reports will not be sent
+healthskipsequence partition sourceid=source2 sequencenumber=8
+!pause 5
+healthgetprogress partition sourceid=source2  expectedprogress=7
+
+# Reset client
+resethealthclient
+
+healthpreinitialize partition sourceid=source2 instance=2
+
+healthgetprogress partition sourceid=source2  expectedprogress=7
+
+# Simulate that 8 & 10 not reported before failover
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=8 healthstate=warning
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=10 healthstate=warning
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=11 healthstate=ok
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=12 healthstate=warning
+
+healthpostinitialize partition sourceid=source2 sequencenumber=11
+healthgetprogress partition sourceid=source2 expectedprogress=13
+
+#insert reverse order in the same stream partition_source2
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=15 healthstate=error
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=14 healthstate=ok
+healthskipsequence partition sourceid=source2 sequencenumber=13
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#2 sequencenumber=16 healthstate=warning
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=17 healthstate=ok
+
+healthgetprogress partition sourceid=source2 expectedprogress=18
+
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/stateless#1 expectedhealthstate=error
+queryhealth partition partitionid=fabric:/stateless#2 expectedhealthstate=warning
+
+#
+# Test rebuild scenario with stale reports
+#
+
+addbehavior b1 * * ReportHealth 1.0 6
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=18 healthstate=warning
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=19 healthstate=ok
+!pause,1
+healthpreinitialize partition sourceid=source2 instance=3
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=0 healthstate=error
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=1 healthstate=error
+!pause,2
+removebehavior b1
+!pause,5
+healthgetprogress partition sourceid=source2 expectedprogress=18
+healthpostinitialize partition sourceid=source2 sequencenumber=18 invalidatesequencenumber=18
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=18 healthstate=ok
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#1 sequencenumber=19 healthstate=warning
+healthgetprogress partition sourceid=source2 expectedprogress=20
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/stateless#1 expectedhealthstate=warning
+
+#
+# Test rebuild scenario with pending report persistence
+#
+
+addbehavior b1 * * ReplicationOperation 1.0 6
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=20 healthstate=warning
+!pause,3
+healthpreinitialize partition sourceid=source2 instance=4
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=0 healthstate=error
+removebehavior b1
+!pause,6
+healthgetprogress partition sourceid=source2 expectedprogress=21
+healthpostinitialize partition sourceid=source2 sequencenumber=21 invalidatesequencenumber=21
+reporthealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=21 healthstate=warning
+healthgetprogress partition sourceid=source2 expectedprogress=22
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning
+
+# Delete health
+deletehealth partition sourceid=source2 partitionid=fabric:/stateless#0 sequencenumber=22
+
+healthgetprogress partition sourceid=source2 expectedprogress=23
+
+!q

@@ -1,0 +1,21 @@
+{
+    "Default": {
+    },
+    "Tests": [
+        {
+          "Name": "TStoreLonghaul",
+          "Type": "Azure_ScriptTest",
+          "Owners": "preethas, zuparvez",
+          "ResourcesRequired": "Server:1&Azure:1",
+          "TestExecutionParameters": {
+            "SetupType": "XCopy",
+            "SetupTimeout": "900",
+            "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+            "TaskName": "TStoreLonghaul-Debug-PAAS.test",
+            "ExecutionTimeout": "36000",
+            "CleanupType": "XCopy",
+            "CleanupTimeout": "12000"
+          }
+        }
+    ]
+}

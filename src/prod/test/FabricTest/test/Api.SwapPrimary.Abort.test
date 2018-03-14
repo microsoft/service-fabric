@@ -1,0 +1,13 @@
+#
+# [owner] aprameyr
+# Test all the api calls during swap primary
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 5
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+
+!q

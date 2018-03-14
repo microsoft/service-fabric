@@ -1,0 +1,264 @@
+###############################################################################
+# Test: PLBSingleReplicaCheckAffinityMultipleApp.test
+# Owners: apopadic, nipuzovi, yangli
+# This test verifies that check affinity upgrade optimization for single
+# replica services, works for all type of upgrades:
+# config, single package, full application, SF upgrade, Infra/OS upgrade
+# when we have multiple applications in cluster
+###############################################################################
+
+votes 10 20 30
+fmservice 2 1
+namingservice 1 2 1
+cmservice 2 1
+cleantest
+
+# Enable predictability of initial replica placement
+set DummyPLBEnabled true
+
+# Disable load balancing in order to preserve predictability during test run
+set LoadBalancingEnabled false
+
+# Allow movement of replicas of services which have target replica count = 1, during upgrade
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+
+# Do not restore replica location after the upgrade (#10463332)
+set RestoreReplicaLocationAfterUpgrade false
+
+# Add/move new replicas together for affinity correlated partitions during upgrade
+set CheckAffinityForUpgradePlacement true
+
+# Disable relaxed affinity during upgrade 
+set RelaxAffinityConstraintDuringUpgrade false
+
+# Set the FM expected upgrade durations
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+
+# Ensuring that service package deactivation is not too slow
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange 0
+
+# Avoid timeout during cluster upgrade
+set NamingOperationTimeout 60
+set NamingOperationRetryTimeout 180
+
++10 ud=UD1 cap=CPU:60
++20 ud=UD2 cap=CPU:140
++30 ud=UD3 cap=CPU:140
+verify
+
+#### TEST SETUP: Create application
+#### Application contains all service types: stateless, voltile, persisted
+
+# Initial application version
+app.add AppV1 MyApp v1
+app.clear AppV1
+app.servicepack AppV1 MyServicePackage version=v1 configversion=v1 dataversion=v1
+app.servicetypes AppV1 MyServicePackage VolatileServiceType stateful
+app.codepack AppV1 MyServicePackage VolatileCode types=VolatileServiceType version=v1
+app.upload AppV1
+provisionapp AppV1
+
+# Config package upgrade
+app.add AppV2 MyApp v2
+app.clear AppV2
+app.servicepack AppV2 MyServicePackage version=v2 configversion=v2 dataversion=v1
+app.servicetypes AppV2 MyServicePackage VolatileServiceType stateful
+app.codepack AppV2 MyServicePackage VolatileCode types=VolatileServiceType version=v1
+app.upload AppV2
+provisionapp AppV2
+
+# Full application upgrade (all services)
+app.add AppV3 MyApp v3
+app.clear AppV3
+app.servicepack AppV3 MyServicePackage version=v3 configversion=v2 dataversion=v1
+app.servicetypes AppV3 MyServicePackage VolatileServiceType stateful
+app.codepack AppV3 MyServicePackage VolatileCode types=VolatileServiceType version=v2
+app.upload AppV3
+provisionapp AppV3
+
+#### Create application and services
+createapp fabric:/testAppA MyApp v1
+createservice fabric:/testAppA/ParentServiceA VolatileServiceType y 1 1 minreplicasetsize=1 appname=fabric:/testAppA metrics=CPU,High,10,10
+createservice fabric:/testAppA/ChildServiceA1 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppA/ParentServiceA,affinity minreplicasetsize=1 appname=fabric:/testAppA metrics=CPU,High,10,10
+createservice fabric:/testAppA/ChildServiceA2 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppA/ParentServiceA,affinity minreplicasetsize=1 appname=fabric:/testAppA metrics=CPU,High,10,10
+createservice fabric:/testAppA/ChildServiceA3 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppA/ParentServiceA,affinity minreplicasetsize=1 appname=fabric:/testAppA metrics=CPU,High,10,10
+createservice fabric:/testAppA/ChildServiceA4 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppA/ParentServiceA,affinity minreplicasetsize=1 appname=fabric:/testAppA metrics=CPU,High,10,10
+createservice fabric:/testAppA/ChildServiceA5 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppA/ParentServiceA,affinity minreplicasetsize=1 appname=fabric:/testAppA metrics=CPU,High,10,10
+createservice fabric:/testAppA/ChildServiceA6 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppA/ParentServiceA,affinity minreplicasetsize=1 appname=fabric:/testAppA metrics=CPU,High,10,10
+
+createapp fabric:/testAppB MyApp v1
+createservice fabric:/testAppB/ParentServiceB VolatileServiceType y 1 1 minreplicasetsize=1 appname=fabric:/testAppB metrics=CPU,High,10,10
+createservice fabric:/testAppB/ChildServiceB1 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppB/ParentServiceB,affinity minreplicasetsize=1 appname=fabric:/testAppB metrics=CPU,High,10,10
+createservice fabric:/testAppB/ChildServiceB2 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppB/ParentServiceB,affinity minreplicasetsize=1 appname=fabric:/testAppB metrics=CPU,High,10,10
+createservice fabric:/testAppB/ChildServiceB3 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppB/ParentServiceB,affinity minreplicasetsize=1 appname=fabric:/testAppB metrics=CPU,High,10,10
+createservice fabric:/testAppB/ChildServiceB4 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppB/ParentServiceB,affinity minreplicasetsize=1 appname=fabric:/testAppB metrics=CPU,High,10,10
+createservice fabric:/testAppB/ChildServiceB5 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppB/ParentServiceB,affinity minreplicasetsize=1 appname=fabric:/testAppB metrics=CPU,High,10,10
+createservice fabric:/testAppB/ChildServiceB6 VolatileServiceType y 1 1 servicecorrelations=fabric:/testAppB/ParentServiceB,affinity minreplicasetsize=1 appname=fabric:/testAppB metrics=CPU,High,10,10
+
+verify
+nameexists fabric:/testAppA true
+nameexists fabric:/testAppB true
+
+# VERIFY: That all replicas are initially placed on node 30
+!waitforstate FM.Replica.State.fabric:/testAppA/ParentServiceA.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA3.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA4.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA5.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA6.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ParentServiceB.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB3.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB4.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB5.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB6.30 Ready
+
+# Disable predictability of replica placement, hence test can verify
+# that replicas are placed on a node with enough capacity (node 20)
+# (also prevent enabling of load balancing)
+set DummyPLBEnabled false
+set LoadBalancingEnabled false
+
+#
+#### TEST CASE 1: Application upgrade - only configuration package
+#
+upgradeapp fabric:/testAppA v2 Rolling upgrademode=auto
+upgradeapp fabric:/testAppB v2 Rolling upgrademode=auto
+verifyupgradeapp fabric:/testAppA
+verifyupgradeapp fabric:/testAppB
+
+# VERIFY: That all replicas are on node 30, no movements are expected
+!pause 2
+!waitforstate FM.Replica.State.fabric:/testAppA/ParentServiceA.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA3.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA4.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA5.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA6.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ParentServiceB.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB3.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB4.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB5.30 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB6.30 Ready
+
+
+#
+#### TEST CASE 2: Application upgrade - full application upgrade (all services)
+#
+!pause 2
+upgradeapp fabric:/testAppA v3 Rolling upgrademode=auto
+upgradeapp fabric:/testAppB v3 Rolling upgrademode=auto
+verifyupgradeapp fabric:/testAppA
+verifyupgradeapp fabric:/testAppB
+
+# VERIFY: That all replicas are move to node 20 during upgrade
+!waitforstate FM.Replica.State.fabric:/testAppA/ParentServiceA.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA3.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA4.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA5.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA6.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ParentServiceB.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB3.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB4.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB5.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB6.20 Ready
+
+
+
+#
+#### TEST CASE 3: Fabric upgrade
+#
+!pause 2
+prepareupgradefabric code=6.0.0.0 config=v6
+provisionfabric code=6.0.0.0 config=v6
+upgradefabric code=6.0.0.0 config=v6 Rolling upgrademode=auto
+verifyupgradefabric
+
+# VERIFY: That all statefull replicas are moved to node 20, after the upgrade
+!waitforstate FM.Replica.State.fabric:/testAppA/ParentServiceA.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA3.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA4.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA5.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA6.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ParentServiceB.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB3.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB4.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB5.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB6.20 Ready
+
+
+#
+#### TEST CASE 4: Node Deactivation - Restart (Infra/OS upgrade)
+#
+!pause 2
+deactivatenode 10 Restart
+!waitforstate FM.Node.DeactivationIntent.10 Restart
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+activatenode 10
+!waitforstate FM.Node.DeactivationIntent.10 None
+!waitforstate FM.Node.DeactivationStatus.10 None
+verify
+
+deactivatenode 20 Restart
+!waitforstate FM.Node.DeactivationIntent.20 Restart
+!waitforstate FM.Node.DeactivationStatus.20 DeactivationComplete
+activatenode 20
+!waitforstate FM.Node.DeactivationIntent.20 None
+!waitforstate FM.Node.DeactivationStatus.20 None
+verify
+
+deactivatenode 30 Restart
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+
+# VERIFY: That all statefull replicas are moved to node 20
+!waitforstate FM.Replica.State.fabric:/testAppA/ParentServiceA.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA3.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA4.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA5.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppA/ChildServiceA6.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ParentServiceB.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB3.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB4.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB5.20 Ready
+!waitforstate FM.Replica.State.fabric:/testAppB/ChildServiceB6.20 Ready
+activatenode 30
+!waitforstate FM.Node.DeactivationIntent.30 None
+!waitforstate FM.Node.DeactivationStatus.30 None
+verify
+gfum
+
+
+##### Test case cleanup
+deleteapp fabric:/testAppA
+deleteapp fabric:/testAppB
+unprovisionapp MyApp v1
+unprovisionapp MyApp v2
+unprovisionapp MyApp v3
+unprovisionfabric code=6.0.0.0 config=v6 FabricVersionInUse
+verify
+nameexists fabric:/testAppA false
+nameexists fabric:/testAppB false
+
+-*
+
+!q

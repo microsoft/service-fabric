@@ -1,0 +1,156 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "logicallog.test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "tyadam,alanwar",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "logicallog.test.exe",
+        "ExecutionTimeout": "2700",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"
+      }
+    },
+    {
+      "Name": "statemanager.test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "mcoskun,zhol",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "statemanager.test.exe",
+        "ExecutionTimeout": "3600",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"
+      }
+    },
+    {
+      "Name": "loggingreplicator.test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "sumukhs,hanagar,imang",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "loggingreplicator.test.exe",
+        "ExecutionTimeout": "2700",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"
+      }
+    },
+    {
+      "Name": "txnreplicator.test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "sumukhs,mcoskun,hanagar,imang",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "txnreplicator.test.exe",
+        "ExecutionTimeout": "2700",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "data.utilities.test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "yihzhang,sumukhs,preethas,mcoskun",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "data.utilities.test.exe",
+		"Params": "--run_test=!@no_appverif",
+        "ExecutionTimeout": "2700",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "data.integration.test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "mcoskun,sumukhs,zhol",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "data.integration.test.exe",
+        "ExecutionTimeout": "2700",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "data.integration.upgrade.test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "hanagar,mcoskun,sumukhs",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "data.integration.upgrade.test.exe",
+        "ExecutionTimeout": "2700",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"        
+      }
+    },
+    {
+      "Name": "TStore.Test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "preethas,zuparvez",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "TStore.Test.exe",
+        "ExecutionTimeout": "7200",
+        "SetupType": "XCopy",
+        "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"        
+      }
+    },
+    {
+      "Name": "ReliableCollectionRuntimeImpl.Test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "rahku",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "ReliableCollectionRuntimeImpl.Test.exe",
+        "ExecutionTimeout": "7200",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ReliableConcurrentQueue.Test.exe(AppVerifier)",
+      "Type": "ExeTest_Sequential_AppVerifier",
+      "Owners": "yzha",
+      "ResourcesRequired": "Server:1;Group=windbg",
+      "TestExecutionParameters": {
+        "TaskName": "ReliableConcurrentQueue.Test.exe",
+        "ExecutionTimeout": "7200",
+        "SetupType": "XCopy"
+      }
+    },
+	{
+      "Name": "FabSrvNative TPCC CIT OneMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "shalabhs,yzha,rahku,tyadam,preethas,mcoskun,rajak",
+      "Tags": "NData,TPCC,FabSrvNative",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "FabSrvNativeTPCC-CIT.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabSrvNative TPCC CIT MultiMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "shalabhs,yzha,rahku,tyadam,preethas,mcoskun,rajak",
+      "Tags": "NData,TPCC,FabSrvNative",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "FabSrvNativeTPCC-CIT.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

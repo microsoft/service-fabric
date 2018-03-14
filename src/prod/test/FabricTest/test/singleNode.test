@@ -1,0 +1,10 @@
+votes 10
+namingservice 1 1 1
+cmservice 1 1
+fmservice 1 1
+cleantest
+
++10
+verify
+
+!q

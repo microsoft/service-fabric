@@ -1,0 +1,127 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "FMScale_SL_1I (PaaS)",
+      "Type": "V2_Dll_Perf_Test_Quark",
+      "Owners": "chuxin,aprameyr",
+      "ResourcesRequired": "Server:11",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "3600",
+        "PerfTestTaskName": "FMScale_SL_1I (PaaS)",
+        "ExpectedResultsFileName": "FailoverScalePerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\FailoverScale_stateless.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SL_1I",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\FailoverScaleInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "FMScale_SV3R (PaaS)",
+      "Type": "V2_Dll_Perf_Test_Quark",
+      "Owners": "chuxin,aprameyr",
+      "ResourcesRequired": "Server:11",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "3600",
+        "PerfTestTaskName": "FMScale_SV3R (PaaS)",
+        "ExpectedResultsFileName": "FailoverScalePerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\FailoverScale.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SV3R",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\FailoverScaleInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "FMScale_SP3R (PaaS)",
+      "Type": "V2_Dll_Perf_Test_Quark",
+      "Owners": "chuxin,aprameyr",
+      "ResourcesRequired": "Server:11",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "3600",
+        "PerfTestTaskName": "FMScale_SP3R (PaaS)",
+        "ExpectedResultsFileName": "FailoverScalePerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\FailoverScale.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SP3R",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\FailoverScaleInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "FMScale_KVS3R (PaaS)",
+      "Type": "V2_Dll_Perf_Test_Quark",
+      "Owners": "chuxin,aprameyr",
+      "ResourcesRequired": "Server:11",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "3600",
+        "PerfTestTaskName": "FMScale_KVS3R (PaaS)",
+        "ExpectedResultsFileName": "FailoverScalePerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\FailoverScale_KVS.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_KVS3R",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\FailoverScaleInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "FMScale_SP3R_stress (PaaS)",
+      "Type": "V2_Dll_Perf_Test",
+      "Owners": "chuxin,aprameyr",
+      "ResourcesRequired": "Server:12",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "3600",
+        "PerfTestTaskName": "FMScale_SP3R_stress (PaaS)",
+        "ExpectedResultsFileName": "FailoverScalePerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\FailoverScale_stress.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SP3R",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\FailoverScaleStressInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
+    {
+      "Name": "FMScale_SP3R_phw (LAB)",
+      "Type": "V2_Dll_Perf_Test_Quark",
+      "Owners": "chuxin,aprameyr",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:21;Group=Failover-Scale",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "3600",
+        "PerfTestTaskName": "FMScale_SP3R_phw (LAB)",
+        "ExpectedResultsFileName": "FailoverScalePerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\Failover_Scale_pHW.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SP3R",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\FailoverScalePHWInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "28800"
+      }
+    }
+  ]
+}

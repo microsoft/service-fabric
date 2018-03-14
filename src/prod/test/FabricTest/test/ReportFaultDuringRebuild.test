@@ -1,0 +1,156 @@
+# Summary: this script calls ReportFault() during a rebuild.  It also
+# downs the FM primary while it is doing a rebuild by
+# putting FM in quorum loss and letting the FullRebuildWaitDuration expire.  After a new FM is 
+# created and performing a rebuild, the test brings primary down.
+
+set DummyPLBEnabled true
+votes 40 50 60
+cmservice 0 0
+namingservice 1 4 1
+
+set FullRebuildWaitDuration 10
+set UserReplicaRestartWaitDuration 9999
+set NamingOperationRetryTimeout 60
+set FMPlacementConstraints fmservice==true
+
+cleantest
+
+# Use placement constraint to make sure 40 is chosen as primary
+
++40 nodeprops=fmservice:true
++50 
+!wait
+
+!waitforstate FM.Replica.Role.FMService.40 Primary
+
+-50
++50 nodeprops=fmservice:true
++60 nodeprops=fmservice:true
+!waitforstate FM.Replica.Role.FMService.50 Secondary
+!waitforstate FM.Replica.Role.FMService.60 Secondary
+
+# Add more nodes
+#
++30 nodeprops=fmservice:true
++20 nodeprops=fmservice:true
++10 nodeprops=fmservice:true
++70 nodeprops=fmservice:true
+!waitforstate FM.Replica.Role.FMService.70 Secondary
+
++5  nodeprops=fmservice:true
+verify
+
+# Create a stateless service
+#
+createname fabric:/stateless
+createservice fabric:/stateless CalculatorServiceType n 2 6
+
+# Create a volatile stateful service
+#
+createname fabric:/volatile
+createservice fabric:/volatile TestStoreServiceType y 1 5
+
+# Create a persisted stateful service
+#
+createname fabric:/persisted
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 4 persist
+
+verify
+
+!waitforstate FM.Replica.Role.fabric:/volatile.70 Primary
+!waitforstate FM.Replica.Role.fabric:/volatile.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/volatile.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/volatile.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/volatile.30 Secondary
+
+!waitforstate FM.Replica.Role.fabric:/persisted.70 Primary
+!waitforstate FM.Replica.Role.fabric:/persisted.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/persisted.40 Secondary
+
+clientput fabric:/volatile  10 1DataVolatile
+clientput fabric:/persisted 10 1DataPersisted
+!wait
+
+# Disable NodeDown notifications to FM{M}
+#
+addbehavior b2 * * ChangeNotification
+addbehavior b4 * * ReplicaUp
+
+
+# Remove nodes 40, 30, 20, 10. This will result in quorum loss for the FM Service.
+#
+-40
+-30
+-20
+-10
+
+removebehavior b4
+removebehavior b2
+
+# Block LFUMUpload
+#
+addbehavior blu3 60 * LFUMUpload
+
+# Wait for the new FM
+#
+!waitforstate FM.Replica.Role.FMService.70 Primary
+
+# Allow some time for the rebuild protocol to start
+#
+!pause, 30
+
+# Now kill the new FM and wait for a new one
+#
+-70
+!waitforstate FM.Replica.Role.FMService.60 Primary
+
+addbehavior b3 * * AddReplica
+
+
+# Report fault from some replicas on node 50
+#
+reportfault 50 fabric:/persisted permanent
+reportfault 50 fabric:/volatile transient
+
+# Re-allow LFUMUpload
+#
+removebehavior blu3
+
+!waitforstate FM.Replica.State.fabric:/persisted.50 InBuild|Dropped
+!waitforstate FM.Replica.State.fabric:/volatile.50 InBuild
+
+# Reallow AddReplica
+#
+removebehavior b3
+
+# Add nodes back
+#
++10 nodeprops=fmservice:true
++20 nodeprops=fmservice:true
++30 nodeprops=fmservice:true
++40 nodeprops=fmservice:true
++70 nodeprops=fmservice:true
+verify
+
+# Resolve service locations
+#
+resolve fabric:/persisted 100
+resolve fabric:/stateless 100
+resolve fabric:/volatile 100
+
+!waitforstate FM.FT.QuorumLost.fabric:/persisted false
+!waitforstate FM.FT.QuorumLost.fabric:/volatile false
+verify
+
+clientget fabric:/persisted 10 1DataPersisted
+clientget fabric:/volatile  10 1DataVolatile
+!wait 
+
+# Delete services
+#
+deleteservice fabric:/stateless
+deleteservice fabric:/volatile
+deleteservice fabric:/persisted
+
+!q

@@ -1,0 +1,5 @@
+#!/bin/bash
+echo In PostInst - $@
+
+# NOTE: Any changes in this file have to be compatible for both DEB and RPM distros 
+# as it is used in both installers. Use conditionals where necessary.

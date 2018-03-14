@@ -1,0 +1,59 @@
+﻿{
+    "RequiredParameters": [ "ClusterEndPoint", "CodePkgPathListFile" ],
+
+    "Defaults": {
+        "SetupInstall": "",
+        "SetupArgs": "",
+        "SetupType": "",
+        "AppUpgrade": "",
+        "Machines": "",
+        "AppConfigPath": "",
+        "CleanupType": "",
+        "SetupTimeout": "1200",
+        "ExecutionTimeout": "2100",
+        "CleanupTimeout": "2100"
+    },
+
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPINSTALL] [SETUPARGS] [SETUPTYPE]",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\RunLRCPSScript.cmd",
+            "Arguments": "\"[MACHINES]\" [CLUSTERENDPOINT] [CODEPKGPATHLISTFILE]  [APPUPGRADE] [APPCONFIGPATH] ",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\"",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.out$,.-*\\.trace$,.*\\.pdb$,.*\\.dmp$,.*\\.xml,.*\\.json,.*\\.man"
+    }
+}

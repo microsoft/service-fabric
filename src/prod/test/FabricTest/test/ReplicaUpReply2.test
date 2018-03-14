@@ -1,0 +1,118 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1225345
+# 
+set DummyPLBEnabled true
+set UserStandByReplicaKeepDuration 1
+set OfflineReplicaKeepDuration 1
+set DroppedReplicaKeepDuration 1
+set DeletedReplicaKeepDuration 1
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+#########################
+# Scenario: Service is deleted while node is down
+# OfflineReplicaKeepDuration is set to a low value so FM has forgotten about the replica when the node comes up
+# RA should delete the replica at this point
+###########################
+
+addbehavior b1 10 20 DeleteReplica
+createservice fabric:/test1 TestStoreServiceType y 1 3 constraint=(StringProperty!=SeedNode)
+verify
+
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test1.20 false
+!waitforstate FM.FT.Reconfig.fabric:/test1 false
+
+deleteservice fabric:/test1
+!waitforstate RA.FT.State.fabric:/test1.40 Closed
+!waitforstate RA.FT.State.fabric:/test1.30 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.40 true
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.30 true
+
+#wait for the FM to forget about this replica
+!waitforstate FM.Replica.IsUp.fabric:/test1.20 NullReplica
+
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+!waitforstate RA.FT.State.fabric:/test1.20 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test1.20 true
+
+removebehavior b1
+verify
+
+
+#########################
+# Scenario: Service is deleted while node is down
+# Node gets deactivated and when it comes up it sends the replica as down
+# Intent from FM to delete should be accepted by the node
+###########################
+
+addbehavior b1 10 20 DeleteReplica
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+verify
+
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test2.20 false
+!waitforstate FM.FT.Reconfig.fabric:/test2 false
+
+deactivatenode 20 Restart
+
+deleteservice fabric:/test2
+!waitforstate RA.FT.State.fabric:/test2.40 Closed
+!waitforstate RA.FT.State.fabric:/test2.30 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.40 true
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.30 true
+
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+!waitforstate RA.Replica.IsUp.fabric:/test2.20.20 false
+
+#wait for the FM to forget about this replica
+#without the bug RA will acknowledge the intent to delete
+!waitforstate FM.Replica.IsUp.fabric:/test2.20 NullReplica
+
+#now take down the node and activate it
+#this will cause FM to forget about the partition
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+addbehavior bx * * ReplicaUp
+activatenode 20
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+
+#Create another service so that the FM will forget about that partition
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+!pause 30
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+#now fm will forget about the replica
+!waitforstate FM.FT.Exists.fabric:/test2 false
+
+#now activate the node and bring it up
+#ra should not send it as replica up but just complete the delete
+activatenode 20
+
+removebehavior bx
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.20 true
+!waitforstate RA.FT.State.fabric:/test2.20 Closed
+
+!q

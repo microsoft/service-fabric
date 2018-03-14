@@ -1,0 +1,484 @@
+#
+# Tests Slow Active Secondary Mitigation in Primary Replicator
+#
+
+seteseonly
+
+!load FailoverCITInitialization.test
+set IsPreWriteStatusRevokeCatchupEnabled true
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+#################################################################Persisted Services Test Cases##########################################################################
+
+###################################################################################################################################################
+# TEST 1: Ensure Secondary is restarted when queue is full after 10 seconds (Oldest operation age in fabrictest.exe.cfg) due to slow receive ACK
+###################################################################################################################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test1.40 Secondary 
+
+addbehavior replblockto40 * 40 ReplicationOperation
+
+clientput fabric:/test1 10 10Data1
+clientput fabric:/test1 20 20Data1
+clientput fabric:/test1 30 40Data1  
+!wait
+!pause 20
+
+addbehavior scblock * * StartCopy
+# on this retry of replication operation, the secondary on 40 must get faulted 
+clientput fabric:/test1 40 40Data1 
+!waitforstate RA.Replica.State.fabric:/test1.60.40 IB 
+removebehavior scblock
+removebehavior replblockto40 
+!wait
+verify 
+deleteservice fabric:/test1 
+verify
+
+###################################################################################################################################################
+# TEST 2: Ensure Secondary is restarted when queue is full after 10 seconds (Oldest operation age in fabrictest.exe.cfg) due to slow apply ACK
+###################################################################################################################################################
+# 
+# createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+# verify
+# Verify current replica set
+# !waitforstate FM.Replica.Role.fabric:/test2.60 Primary
+# !waitforstate FM.Replica.Role.fabric:/test2.50 Secondary 
+# !waitforstate FM.Replica.Role.fabric:/test2.40 Secondary 
+# disable replication pump on 40
+# setsecondarypumpenabled fabric:/test2 40 n 
+# 
+# clientput fabric:/test2 10 10Data1
+# clientput fabric:/test2 20 20Data1
+# clientput fabric:/test2 30 30Data1 
+# clientput fabric:/test2 40 40Data1 
+# clientput fabric:/test2 50 50Data1 
+# clientput fabric:/test2 60 60Data1 
+# clientput fabric:/test2 70 70Data1 
+# clientput fabric:/test2 80 80Data1 error=REQueueFull
+# 
+# !pause 20
+# 
+# addbehavior ackBlock 40 * ReplicationAck
+# setsecondarypumpenabled fabric:/test2 40 y 
+# 
+# this should trigger a restart of the slow active
+# clientput fabric:/test2 90 90Data1 
+# 
+# !waitforstate RA.Replica.State.fabric:/test2.60.40 IB 
+# removebehavior ackBlock
+# !wait
+# verify 
+# 
+# deleteservice fabric:/test2
+# verify
+# 
+###################################################################################################################################################
+# TEST 3: Ensure Secondary is NOT restarted if write quorum of replicas receive acks are slow
+###################################################################################################################################################
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test3.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test3.40 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test3.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test3.20 Secondary 
+
+addbehavior replblockto40 * 40 ReplicationOperation
+addbehavior replblockto30 * 30 ReplicationOperation
+addbehavior replblockto20 * 20 ReplicationOperation 
+
+clientput fabric:/test3 10 10Data1
+clientput fabric:/test3 20 20Data1
+clientput fabric:/test3 30 40Data1 
+!pause 20
+
+addbehavior scblock * * StartCopy
+clientput fabric:/test3 30 40Data1
+
+!pause 3 
+removebehavior replblockto40
+removebehavior replblockto30
+removebehavior replblockto20 
+!wait
+verify 
+
+deleteservice fabric:/test3
+verify
+removebehavior scblock
+
+###################################################################################################################################################
+# TEST 4: Ensure Secondary is not restarted if write quorum of replicas apply acks are slow
+###################################################################################################################################################
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test4.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test4.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test4.40 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test4.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test4.20 Secondary 
+
+# disable replication pump on 40, 30 and 20
+setsignal 40 fabric:/test4 provider.secondarypump.block
+setsignal 30 fabric:/test4 provider.secondarypump.block
+setsignal 20 fabric:/test4 provider.secondarypump.block
+
+clientput fabric:/test4 10 10Data1
+clientput fabric:/test4 20 20Data1
+clientput fabric:/test4 30 40Data1 
+
+!pause 20
+addbehavior scblock * * StartCopy
+addbehavior ackBlock40 40 * ReplicationAck
+addbehavior ackBlock30 30 * ReplicationAck
+addbehavior ackBlock20 20 * ReplicationAck
+resetsignal 40 fabric:/test4 provider.secondarypump.block
+resetsignal 30 fabric:/test4 provider.secondarypump.block
+resetsignal 20 fabric:/test4 provider.secondarypump.block
+
+# this should trigger restart logic on primary, but none of the replicas must get restarted
+clientput fabric:/test4 50 60Data1 
+
+removebehavior ackBlock40
+removebehavior ackBlock30
+removebehavior ackBlock20
+!wait
+
+verify
+deleteservice fabric:/test4
+verify
+removebehavior scblock
+
+###################################################################################################################################################
+# TEST 5: Ensure Secondary is not restarted when doing so will result in QL
+###################################################################################################################################################
+
+# use min and target = 3
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 minreplicasetsize=3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test5.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test5.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test5.40 Secondary 
+
+addbehavior replblockto40 * 40 ReplicationOperation
+addbehavior scblock * * StartCopy 
+reportfault 50 fabric:/test5 transient
+
+clientput fabric:/test5 10 10Data1
+clientput fabric:/test5 20 20Data1
+clientput fabric:/test5 30 40Data1
+!pause 20
+
+clientput fabric:/test5 40 40Data1 
+!pause 10
+removebehavior replblockto40
+!wait  
+
+removebehavior scblock 
+!wait
+verify
+
+deleteservice fabric:/test5
+verify 
+
+###################################################################################################################################################
+# TEST 6: Ensure 2 unique Secondaries are restarted when 1 replicas is already faulted, but still in the view of the primary
+###################################################################################################################################################
+
+#
+# After faulting the replica on 30, it's coming back as SB instead of IB.
+# The test script is blocking StartCopy operations and that seems to be
+# preventing reconfiguration from transitioning it to IB.
+#
+
+# use min and target = 5
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 5 minreplicasetsize=5 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test6.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test6.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test6.40 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test6.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test6.20 Secondary 
+
+addbehavior scblock * * StartCopy 
+addbehavior inducefaultblock * * InduceFault
+
+addbehavior replblockto20 * 20 ReplicationOperation
+
+clientput fabric:/test6 10 10Data1 
+!wait 
+
+addbehavior replblockto30 * 30 ReplicationOperation 
+
+clientput fabric:/test6 20 20Data1
+clientput fabric:/test6 30 30Data1
+!wait
+!pause 20
+
+
+clientput fabric:/test6 40 40Data1
+!pause 5
+
+clientput fabric:/test6 50 50Data1 
+!pause 5
+!wait  
+
+verifyreadwritestatus 60 fabric:/test6 Granted Granted 
+
+# RD: RDBug 7114418: Clear up the replication queue's on the primary as soon as a slow secondary is faulted without waiting for it to close
+# ensure that even though the slow secondary replicas are still in the view of the primary, the queue is free'd up and we can perform more writes
+clientput fabric:/test6 10 10Data1
+clientput fabric:/test6 20 20Data1
+clientput fabric:/test6 30 40Data1
+clientput fabric:/test6 50 50Data1
+clientput fabric:/test6 10 50Data1
+clientput fabric:/test6 20 50Data1
+clientput fabric:/test6 30 50Data1
+clientput fabric:/test6 40 50Data1
+clientput fabric:/test6 50 50Data1
+!wait
+
+removebehavior inducefaultblock 
+!waitforstate RA.Replica.State.fabric:/test6.60.20 IB 
+!waitforstate RA.Replica.State.fabric:/test6.60.30 IB 
+removebehavior scblock
+!wait
+verify
+
+deleteservice fabric:/test6
+removebehavior replblockto20 
+removebehavior replblockto30 
+verify 
+
+###################################################################################################################################################
+# TEST 7: Ensure secondary is restarted during catchup pending where slow secondary is the target primary
+###################################################################################################################################################
+
+# TODO - modify this to min replica set size 5 after failover bug is fixed where write access is not granted during pre-catchup phase with min=target=5
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test7.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test7.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test7.40 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test7.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test7.20 Secondary 
+
+setsignal 60 fabric:/test7 replicator.updatecatchupreplicasetconfiguration.block  
+
+addbehavior scblock * * StartCopy 
+addbehavior inducefaultblock * * InduceFault
+
+addbehavior replblockto50 * 50 ReplicationOperation
+
+clientput fabric:/test7 10 10Data1 
+!wait
+clientput fabric:/test7 20 20Data1
+clientput fabric:/test7 10 30Data1
+!wait 
+
+swapprimary fabric:/test7 60 50 skipverify 
+waitforsignalhit 60 fabric:/test7 replicator.updatecatchupreplicasetconfiguration.block 
+verifyreadwritestatus 60 fabric:/test7 Granted Granted 
+resetsignal 60 fabric:/test7 replicator.updatecatchupreplicasetconfiguration.block
+# The above ensures catchup started on replicator
+
+!pause 20
+clientput fabric:/test7 10 10Data1
+clientput fabric:/test7 10 20Data1
+clientput fabric:/test7 10 30Data1
+clientput fabric:/test7 10 40Data1 
+!wait 
+
+removebehavior inducefaultblock 
+!waitforstate RA.Replica.State.fabric:/test7.60.50 IB 
+removebehavior replblockto50 
+removebehavior scblock
+!wait
+verify
+
+deleteservice fabric:/test7
+verify 
+
+
+###################################################################################################################################################
+#  RD: RDBug 7209449: UnreliableRandom failure: Throwing coding error - GetProgress: should be enough replicas for quorum, but index 1 >= active replica count 1 
+###################################################################################################################################################
+
+#
+# After the fault, reconfiguration gets stuck (intentionally blocked by test)
+# and the clientput for "40 40Data1" gets stuck.
+#
+
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 4 minreplicasetsize=3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test8.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test8.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test8.40 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test8.30 Secondary 
+
+addbehavior scblock * * StartCopy 
+
+addbehavior replblockto30 * 30 ReplicationOperation
+
+setsignal 60 fabric:/test8 replicator.updatecurrentreplicasetconfiguration.block
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 20Data1
+clientput fabric:/test8 30 30Data1
+!wait
+!pause 20
+
+clientput fabric:/test8 40 40Data1
+!pause 10 
+
+# this will accept a write while a reconfig is in progress and phase4 is stuck
+clientput fabric:/test8 10 50Data1
+!pause 3
+!wait 
+
+verifyreadwritestatus 60 fabric:/test8 Granted Granted 
+# this will fill the queue when reconfig is stuck in phase4
+addbehavior replblockto40 * 40 ReplicationOperation
+clientput fabric:/test8 10 10Data1
+clientput fabric:/test8 20 20Data1
+clientput fabric:/test8 30 40Data1 
+!pause 12
+
+clientput fabric:/test8 10 50Data1
+clientput fabric:/test8 20 50Data1
+clientput fabric:/test8 30 50Data1
+clientput fabric:/test8 40 50Data1
+clientput fabric:/test8 50 50Data1
+clientput fabric:/test8 60 50Data1
+resetsignal 60 fabric:/test8 replicator.updatecurrentreplicasetconfiguration.block
+
+!waitforstate RA.Replica.State.fabric:/test8.60.30 IB 
+removebehavior scblock 
+removebehavior replblockto30
+removebehavior replblockto40
+!wait
+verify
+
+deleteservice fabric:/test8
+verify 
+
+#################################################################Volatile Services Test Cases##########################################################################
+
+###################################################################################################################################################
+# TEST 1: Ensure Secondary is restarted when queue is full after 10 seconds (Oldest operation age in fabrictest.exe.cfg) due to slow receive ACK
+###################################################################################################################################################
+
+createservice fabric:/test1v TestStoreServiceType y 1 3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1v.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test1v.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test1v.40 Secondary 
+
+addbehavior replblockto40 * 40 ReplicationOperation
+
+clientput fabric:/test1v 10 10Data1
+clientput fabric:/test1v 20 20Data1
+clientput fabric:/test1v 30 30Data1
+!wait
+!pause 20
+
+addbehavior scblock * * StartCopy
+# on this retry of replication operation, the secondary on 40 must get faulted 
+clientput fabric:/test1v 40 40Data1 
+!waitforstate RA.Replica.State.fabric:/test1v.60.40 IB 
+removebehavior scblock
+removebehavior replblockto40 
+!wait
+verify 
+
+deleteservice fabric:/test1v
+verify
+
+###################################################################################################################################################
+# TEST 2: Ensure Secondary is not restarted if write quorum of replicas receive acks are slow
+###################################################################################################################################################
+createservice fabric:/test2v TestStoreServiceType y 1 5 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test2v.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test2v.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test2v.40 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test2v.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test2v.20 Secondary 
+
+addbehavior replblockto40 * 40 ReplicationOperation
+addbehavior replblockto30 * 30 ReplicationOperation
+addbehavior replblockto20 * 20 ReplicationOperation 
+
+clientput fabric:/test2v 10 10Data1
+clientput fabric:/test2v 20 20Data1
+clientput fabric:/test2v 30 30Data1
+!pause 20
+
+addbehavior scblock * * StartCopy
+# on this replication operation, the restart logic will check that all replicas are slow and hence not restart anyone
+clientput fabric:/test2v 40 40Data1  
+
+!pause 5
+removebehavior replblockto40
+removebehavior replblockto30
+removebehavior replblockto20 
+!wait
+verify 
+
+deleteservice fabric:/test2v
+verify
+removebehavior scblock
+
+###################################################################################################################################################
+# TEST 3: Ensure Secondary is not restarted when doing so will result in QL
+###################################################################################################################################################
+
+# use min and target = 3
+createservice fabric:/test3v TestStoreServiceType y 1 3 minreplicasetsize=3 constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:4;RE_InitialSecondaryReplicationQueueSize:2;RE_MaxSecondaryReplicationQueueSize:4
+verify
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test3v.60 Primary
+!waitforstate FM.Replica.Role.fabric:/test3v.50 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test3v.40 Secondary 
+
+addbehavior replblockto40 * 40 ReplicationOperation
+addbehavior scblock * * StartCopy 
+reportfault 50 fabric:/test3v transient
+
+clientput fabric:/test3v 10 10Data1
+clientput fabric:/test3v 20 20Data1
+clientput fabric:/test3v 30 30Data1
+!pause 20
+
+clientput fabric:/test3v 40 40Data1  
+!pause 5
+removebehavior replblockto40
+!wait  
+
+removebehavior scblock 
+!wait
+verify
+
+deleteservice fabric:/test3v
+verify
+
+cleareseonly
+
+!q

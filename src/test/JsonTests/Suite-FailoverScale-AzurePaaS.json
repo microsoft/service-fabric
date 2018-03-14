@@ -1,0 +1,23 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "FMScale_SL_1l_AzurePaaS",
+      "Type": "Azure_DllTest_Perf_Quark",
+      "Owners": "chuxin,aprameyr",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "3600",
+        "ConfigName": "WinFabricTest\\Config\\FailoverScale_AzurePaaS.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SL_1I",        
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    }    
+  ]
+}

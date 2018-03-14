@@ -1,0 +1,39 @@
+set DummyPLBEnabled true
+
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
+verify
+
+### Creating a service with 2 replica and with an unreachable replicator address. Primary replicator tries to build the secondary and it fails to due so due to network connection.
+### Health warning should show up on primary reflecting the remote replicator unreachable
+### Updating the service to 1-replica configuration causes the build to cancel (hence removal of the warning) and primary health status should come back to OK state.
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4;RE_ReplicatorAddress:10.11.12.13;RE_ReplicatorPort:0;
+
+# Verify primary replica is in correct state
+!waitforstate FM.Replica.Role.fabric:/test.30 Primary
+
+# query primary health and expect a warning
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning expectedevents=System.Replicator,RemoteReplicatorConnectionStatus,Warning
+
+# update service to 1-replica setup, hence removing the warning health report
+updateservice fabric:/test Stateful TargetReplicaSetSize=1 MinReplicaSetSize=1
+verify
+
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+
+!q

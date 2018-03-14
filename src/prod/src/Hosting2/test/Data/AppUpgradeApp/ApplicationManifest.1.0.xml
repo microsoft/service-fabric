@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest ApplicationTypeName="AppUpgradeApp" ApplicationTypeVersion="1.0" xsi:schemaLocation="http://schemas.microsoft.com/2011/01/fabric ServiceFabricServiceModel.xsd" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Description>This is a sample stateless AppUpgrade service provided by the Microsoft Azure Service Fabric</Description>
+<Parameters>
+    <Parameter Name="ServiceInstanceCount" DefaultValue="3"></Parameter>
+</Parameters>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="AppUpgradeServicePackage" ServiceManifestVersion="1.0"/>
+        <ConfigOverrides/>
+		<Policies>
+			<EndpointBindingPolicy CertificateRef="TestCert1" EndpointRef="ServiceEndpoint3"/>
+		</Policies>
+    </ServiceManifestImport>
+    <ServiceTemplates>
+    <StatelessService ServiceTypeName="AppUpgradeService" InstanceCount="5">
+        <SingletonPartition></SingletonPartition>
+    </StatelessService></ServiceTemplates>
+    <DefaultServices>
+        <Service Name="RequiredAppUpgradeService">
+            <StatelessService ServiceTypeName="AppUpgradeService" InstanceCount="[ServiceInstanceCount]">
+                <SingletonPartition></SingletonPartition>
+            </StatelessService>
+        </Service>
+    </DefaultServices>
+  <Certificates>
+    <EndpointCertificate Name="TestCert1" X509FindValue="FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF F0" X509StoreName="MY" />  
+  </Certificates>
+  <Principals>
+	<Users>
+      <User Name="TestUser"/>
+	</Users>
+  </Principals>
+</ApplicationManifest>

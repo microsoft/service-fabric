@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ServiceManifest Name="RunAsAcctServicePackage" Version="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>Service to test runas temporary account</Description>
+  <ServiceTypes>
+    <StatelessServiceType ServiceTypeName="RunAsAcctServiceType" />
+  </ServiceTypes>
+  <CodePackage Name="Code" Version="1.0">
+    <EntryPoint>
+      <ExeHost>
+        <Program>LinuxRunAsAcct.sh</Program>
+      </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="Config" Version="1.0" />
+  <DataPackage Name="Data" Version="1.0" />
+</ServiceManifest>
+

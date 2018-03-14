@@ -1,0 +1,132 @@
+votes 10
+cmservice 0 0
+namingservice 5 1 1
+cleantest
++10
++20
++30
++40
++50
+verify
+
+###########################################################
+#
+# The following testcases cover a few common property batch
+# scenarios involving multiple Read/Write/Check operations
+# within a single batch.
+#
+###########################################################
+
+#
+# testcase1: separately batched multi-write, multi-read
+#
+
+createname fabric:/testcase1
+
+submitbatch fabric:/testcase1 ops=put:PropA:DataA,put:PropB:DataB,put:PropC:DataC,put:PropD:DataD
+submitbatch fabric:/testcase1 ops=get:PropA,get:PropB,get:PropC,get:PropD result=0:PropA:DataA,1:PropB:DataB,2:PropC:DataC,3:PropD:DataD
+
+submitbatch fabric:/testcase1 ops=put:PropA:DataA2,put:PropC:DataC2
+submitbatch fabric:/testcase1 ops=get:PropA,get:PropB,get:PropC,get:PropD result=0:PropA:DataA2,1:PropB:DataB,2:PropC:DataC2,3:PropD:DataD
+
+submitbatch fabric:/testcase1 ops=put:PropB:DataB3,put:PropD:DataD3
+submitbatch fabric:/testcase1 ops=get:PropC,get:PropA,get:PropD,get:PropB result=0:PropC:DataC2,1:PropA:DataA2,2:PropD:DataD3,3:PropB:DataB3
+
+#
+# testcase2: mixed batch multi-write, multi-read
+#
+
+createname fabric:/testcase2
+
+submitbatch fabric:/testcase2 ops=get:PropA,put:PropA:DataA,put:PropB:DataB,get:PropB result=0:PropertyNotFound,1:InvalidArgument,3:PropB:DataB
+
+submitbatch fabric:/testcase2 ops=get:PropA,put:PropA:DataA2,put:PropA:DataA3,get:PropA result=0:PropA:DataA,2:InvalidArgument,3:PropA:DataA3
+
+submitbatch fabric:/testcase2 ops=put:PropA:DataA4,put:PropA:DataA5,put:PropA:DataA6,get:PropA result=3:PropA:DataA6
+
+submitbatch fabric:/testcase2 ops=get:PropA,get:PropA,get:PropA,put:PropA:DataA6 result=0:PropA:DataA6,1:PropA:DataA6,2:PropA:DataA6
+
+#
+# testcase3: multi-read errors
+#
+
+createname fabric:/testcase3
+
+submitbatch fabric:/testcase3 ops=get:PropA,get:PropB,get:PropC result=0:PropertyNotFound,1:PropertyNotFound,2:PropertyNotFound,3:InvalidArgument
+submitbatch fabric:/testcase3 ops=put:PropA:DataA,put:PropB:DataB,put:PropC:DataC result=0:InvalidArgument,1:InvalidArgument,2:InvalidArgument
+
+#
+# testcase4: multi-check
+#
+
+createname fabric:/testcase4
+
+submitbatch fabric:/testcase4 ops=checkexists:PropA:true,checkexists:PropB:false,checksequence:PropC:0,checksequence:PropD:0 index=0 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4 ops=put:PropA:DataA,put:PropB:DataB
+submitbatch fabric:/testcase4 ops=checkexists:PropA:true,checkexists:PropB:false,checksequence:PropC:0,checksequence:PropD:0 index=1 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4 ops=delete:PropB:DataB
+submitbatch fabric:/testcase4 ops=checkexists:PropA:true,checkexists:PropB:false,checksequence:PropC:0,checksequence:PropD:0 index=2 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4 ops=put:PropC:DataC,put:PropC:DataC2
+submitbatch fabric:/testcase4 ops=checkexists:PropA:true,checkexists:PropB:false,checksequence:PropC:1,checksequence:PropD:1 index=3 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase4 ops=put:PropD:DataD,put:PropD:DataD2,put:PropD:DataD3
+getproperty fabric:/testcase4 PropC DataC2 seqvar=SN_PropC
+getproperty fabric:/testcase4 PropD DataD3 seqvar=SN_PropD
+submitbatch fabric:/testcase4 ops=checkexists:PropA:true,checkexists:PropB:false,checksequence:PropC:$SN_PropC,checksequence:PropD:$SN_PropD
+
+#
+# testcase5: multi-delete
+#
+
+createname fabric:/testcase5
+
+submitbatch fabric:/testcase5 ops=put:PropA:DataA,put:PropB:DataB,put:PropC:DataC,put:PropD:DataD
+
+submitbatch fabric:/testcase5 ops=delete:PropA,checkexists:PropA:true,delete:PropB index=1 error=PropertyCheckFailed
+
+submitbatch fabric:/testcase5 ops=delete:PropA,delete:PropB,delete:PropA index=2 error=PropertyNotFound
+
+submitbatch fabric:/testcase5 ops=delete:PropA,delete:PropB,delete:PropE index=2 error=PropertyNotFound
+
+# This is allowed in v2 stack
+#submitbatch fabric:/testcase5 ops=delete:PropA,delete:PropB,delete:PropC,put:PropA:DataA2 index=3 error=StoreWriteConflict
+
+# This is allowed in v2 stack
+#submitbatch fabric:/testcase5 ops=put:PropB:DataB2,delete:PropA,delete:PropB,delete:PropC index=2 error=StoreWriteConflict
+
+# This is allowed in v2 stack
+#submitbatch fabric:/testcase5 ops=put:PropE:DataE,delete:PropA,delete:PropB,delete:PropE index=3 error=StoreWriteConflict
+
+submitbatch fabric:/testcase5 ops=get:PropA,get:PropB,get:PropC,delete:PropD result=0:PropA:DataA,1:PropB:DataB,2:PropC:DataC,3:InvalidArgument
+
+submitbatch fabric:/testcase5 ops=delete:PropA,delete:PropB,delete:PropC,delete:PropD index=3 error=PropertyNotFound
+
+submitbatch fabric:/testcase5 ops=put:PropD:DataD2,delete:PropA,delete:PropB,delete:PropC
+
+submitbatch fabric:/testcase5 ops=get:PropD,getmetadata:PropD,delete:PropD result=0:PropD:DataD2,1:PropD:12
+
+submitbatch fabric:/testcase5 ops=get:PropA,get:PropB,get:PropC,get:PropD result=0:PropertyNotFound,1:PropertyNotFound,2:PropertyNotFound,3:PropertyNotFound
+
+#
+# testcase6: multi-get metadata
+#
+
+createname fabric:/testcase6
+
+submitbatch fabric:/testcase6 ops=put:PropA:DataA,put:PropB:DataBB,put:PropC:DataCCC,put:PropD:DataDDDD
+
+submitbatch fabric:/testcase6 ops=getmetadata:PropA,getmetadata:PropB,getmetadata:PropC,getmetadata:PropD result=0:PropA:10,1:PropB:12,2:PropC:14,3:PropD:16
+
+submitbatch fabric:/testcase6 ops=get:PropA,getmetadata:PropB,get:PropC,getmetadata:PropD result=0:PropA:DataA,1:PropB:12,2:PropC:DataCCC,3:PropD:16
+
+submitbatch fabric:/testcase6 ops=get:PropA,getmetadata:PropA,get:PropC,getmetadata:PropC result=0:PropA:DataA,1:PropA:10,2:PropC:DataCCC,3:PropC:14
+
+submitbatch fabric:/testcase6 ops=get:PropA,getmetadata:PropA,get:PropA,getmetadata:PropA result=0:PropA:DataA,1:PropA:10,2:PropA:DataA,3:PropA:10
+
+submitbatch fabric:/testcase6 ops=getmetadata:PropA,put:PropA:DataA2,getmetadata:PropA,getmetadata:PropA result=0:PropA:10,1:InvalidArgument,2:PropA:12,3:PropA:12
+
+
+!q

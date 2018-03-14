@@ -1,0 +1,637 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "UpgradeStandalone",
+      "Type": "V2_ScriptTest",
+      "Owners": "rsinha,ratando,liphigao",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\XCopyServerUpgrade.txt",
+        "TaskName": "UpgradeFabricSA_Basic.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UpgradeFailover",
+      "Type": "V2_ScriptTest",
+      "Owners": "rsinha,ratando,liphigao",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\XCopyServerUpgrade.txt",
+        "TaskName": "UpgradeFabricSA_Failover.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "InterruptSimpleUpgrade",
+      "Type": "V2_ScriptTest",
+      "Owners": "rsinha, ratando,liphigao",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_Interrupt.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ScaleUpDownReliability",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:8",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_ReliabilityChange.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RemovePrimaryNonSeed",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_RemoveNonSeed.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RemoveNonPrimary",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_RemoveNonPrimary.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "X509Remove",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_X509Remove.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RemovePrimarySeed",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_RemoveSeed.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RemovePrimarySeedScaleDown",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_RemoveSeed_Scale.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RemoveFailure",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_RemoveFailover.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "RemoveUOSPrimary",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_RemoveUOSPrimary.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "AddPrimary",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_AddPrimary.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "AddNonPrimary",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_AddNonPrimary.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "AddPrimaryScale",
+      "Type": "V2_ScriptTest",
+      "Owners": "ratando, liphigao, rsinha",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_AddPrimaryScale.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ClusCertUpgrade1Box",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTestsWithoutFaultChecker.txt",
+        "TaskName": "UpgradeFabricSA_CertOneBox.test",
+        "ExecutionTimeout": "6300",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ClusCertCnUpgrade1Box",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTestsWithoutFaultChecker.txt",
+        "TaskName": "UpgradeFabricSA_CertCnOneBox.test",
+        "ExecutionTimeout": "6300",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ClusCertUpgradeMultiBox",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_CertMultiBox.test",
+        "ExecutionTimeout": "9000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_OneNode",
+      "Type": "PowershellTest",
+      "Owners": "liphigao,ratando",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -IsOneNode -IsOneBox -TestName SA_OneNode",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_OneBox",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,liphigao,ratando",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -IsOneBox -TestName SA_OneBox",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_OneboxRemote",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,liphigao,ratando",
+      "ResourcesRequired": "Server:2",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -IsOneBox -ControllerSeparate -TestName SA_OneboxRemote",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_Multibox",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,liphigao,ratando",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName SA_Multibox",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_MultiboxRemote",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,liphigao,ratando",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -ControllerSeparate -TestName SA_MultiboxRemote",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_AddNode",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,liphigao,ratando",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneNodeTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName SA_AddNode",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_CabDownload",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,ratando,liphigao",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneDownloadCabTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName SA_CabDownload",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_ArpUninstall",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,ratando,liphigao,rsinha",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneArpUninstallTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -TestName SA_ArpUninstall",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "StandAloneOneNodeUnsecure",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, taxi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "StandAloneOneNodeUnsecure.test",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "StandAloneOneNodeX509",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao,taxi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "StandAloneOneNodeX509.test",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "StandAloneOneNodeWindows",
+      "Type": "V2_ScriptTest",
+      "Environment": "Iaas",
+      "Owners": "liphigao,taxi",      
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "StandAloneOneNodeWindows.test",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_OneboxGenX509",
+      "Type": "PowershellTest",
+      "Environment": "Iaas",
+      "Owners": "maburlik,liphigao,ratando,taxi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -IsOneBox -TestName SA_OneboxGenX509 -GenerateX509Cert",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_OnenodeGenX509",
+      "Type": "PowershellTest",
+      "Environment": "Iaas",
+      "Owners": "maburlik,liphigao,ratando,taxi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -IsOneBox -IsOneNode -TestName SA_OnenodeGenX509 -GenerateX509Cert",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_MulboxGenX509",
+      "Type": "PowershellTest",
+      "Environment": "Iaas",
+      "Owners": "maburlik,liphigao,ratando,taxi",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -ControllerSeparate -TestName SA_MulboxGenX509 -GenerateX509Cert",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "EndToEndSmokeTestWindowsFabricGMSA",
+      "Type": "V2_ScriptTest",
+      "Owners": "rsinha,ratando",      
+      "ResourcesRequired": "Server:4;Group=adtestvm1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "StandaloneGMSA.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UpgradeFabricGMSAAddNonPrimary",
+      "Type": "V2_ScriptTest",
+      "Owners": "rsinha,ratando",      
+      "ResourcesRequired": "Server:6;Group=adtestvm1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "UpgradeFabricSA_gMSAAddNonPrim.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UpgradeFabricGMSAAddPrimary",
+      "Type": "V2_ScriptTest",
+      "Owners": "rsinha,ratando",      
+      "ResourcesRequired": "Server:5;Group=adtestvm1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "UpgradeFabricSA_gMSAAddPrimary.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UpgradeFabricGMSAAddPrimaryScale",
+      "Type": "V2_ScriptTest",
+      "Owners": "rsinha,ratando",      
+      "ResourcesRequired": "Server:6;Group=adtestvm1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "UpgradeFabricSA_gMSAAddPrimScale.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UpgradeFabricSA_gMSAAddFailover",
+      "Type": "V2_ScriptTest",
+      "Owners": "rsinha,ratando",      
+      "ResourcesRequired": "Server:6;Group=adtestvm1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "UpgradeFabricSA_gMSAAddFailover.test",
+        "ExecutionTimeout": "6000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UpdateSvcUpgrade",
+      "Type": "PowershellTest",
+      "Owners": "liphigao",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneUpdateSvcTest.ps1",
+        "Arguments": "-UpdateServicePackagePath ..\\..\\..\\FabricDrop\\ServiceFabricUpdateService",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UpdateSvcTelemetry",
+      "Type": "PowershellTest",
+      "Owners": "liphigao",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTelemetrySvcTest.ps1",
+        "Arguments": "-UpdateServicePackagePath ..\\..\\..\\FabricDrop\\ServiceFabricUpdateService -StandalonePackagePath  ..\\..\\..\\FabricDrop\\StandalonePackage -RunTimePackagePath  ..\\..\\..\\FabricDrop\\MicrosoftServiceFabric.cab",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+     {
+      "Name": "LogCollectorSA",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "LogCollectorSA.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UosDataLossSA",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UosDataLossSA.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BPA",
+      "Type": "PowershellTest_BPA",
+      "Owners": "alsantam",
+      "ResourcesRequired": "Server:2",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneBPATest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName BPA",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BPA_ports",
+      "Type": "PowershellTest_BPA",
+      "Owners": "alsantam",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "SetupType": "RequiredPortsBlocked",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneBPATest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -SetupType RequiredPortsBlocked -TestName BPA_ports",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BPA_CleanInstall",
+      "Type": "PowershellTest_BPA",
+      "Owners": "alsantam",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "SetupType": "FabricRuntimeInstalled",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneBPATest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -SetupType FabricRuntimeInstalled -TestName BPA_CleanInstall",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BPA_DataRoot",
+      "Type": "PowershellTest_BPA",
+      "Owners": "alsantam",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "SetupType": "DataRootExists",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneBPATest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -SetupType DataRootExists -TestName BPA_DataRoot",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_UnhealthyTest",
+      "Type": "PowershellTest",
+      "Owners": "alsantam",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -IsUnhealthyTest -TestName SA_UnhealthyTest",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_UnhealthyAdd",
+      "Type": "PowershellTest_BPA",
+      "Owners": "alsantam",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneUnhealthyAddTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName SA_UnhealthyAdd",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_1UnhealthyTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "alsantam",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Standalone.1UnhealthyTests.txt",
+        "TaskName": "StandAloneUnhealthy.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_2UnhealthyTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "alsantam",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Standalone.2UnhealthyTests.txt",
+        "TaskName": "StandAloneUnhealthy.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

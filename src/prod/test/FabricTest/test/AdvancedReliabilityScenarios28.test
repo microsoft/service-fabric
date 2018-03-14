@@ -1,0 +1,91 @@
+#
+# [owner:aprameyr]
+# This test validates that IC replicas are closed during application upgrade
+# Associated bug# 1340377 
+#
+
+set DummyPLBEnabled true
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
+set IsStrongSafetyCheckEnabled false
+
+#start nodes
++10
+verify
+
++20
+verify
+
+############################################
+# Application version 1.0
+############################################
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.reqservices version10 ServiceA1 ServiceTypeA1 stateful partition=1 replica=1
+app.upload version10
+
+############################################
+# Application version 1.1 
+# Upgraded vode package
+############################################
+app.add version11 TestApp 1.1 version10
+
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.1
+app.reqservices version11 ServiceA1 ServiceTypeA1 stateful partition=1 replica=1
+app.upload version11
+
+
+############################################
+# Provision application version 1.0
+############################################
+provisionapp version10
+
+
+############################################
+# Provision application version 1.1
+############################################
+provisionapp version11
+
+
+############################################
+# Create app v1
+############################################
+
+addbehavior b1 * * ReplicaOpen
+
+createapp fabric:/app1 TestApp 1.0
+!waitforstate RA.Replica.State.fabric:/app1/ServiceA1.20.20 IC
+!waitforstate RA.FT.HasServiceTypeRegistration.fabric:/app1/ServiceA1.20 true
+
+# block add primary so that we can verify that after the upgrade the replica was closed on the RA
+addbehavior b2 * * StatefulServiceReopen
+
+############################################
+# Upgrade app v1->v2
+############################################
+upgradeapp fabric:/app1 1.1 Rolling
+verifyupgradeapp fabric:/app1
+
+# the replica should have been closed on the node
+!waitforstate RA.Replica.State.fabric:/app1/ServiceA1.20.20 SB
+
+
+#unblock messages so that the final verify can succeed
+removebehavior b1
+removebehavior b2
+
+verify
+!q
+
+
+

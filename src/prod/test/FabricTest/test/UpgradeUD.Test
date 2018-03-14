@@ -1,0 +1,70 @@
+#
+# [owner] MMohsin
+#
+# This test exercises the scenario where all the replicas of a partition are in the same UD during upgrade.
+#
+
+votes 10 20 30
+fmservice 3 1
+namingservice 5 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+set ExpectedReplicaUpgradeDuration 10
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+
++10 ud=MyUD
++20 ud=MyUD
++30 ud=MyUD
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicepack version10 ServicePackageB version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful
+app.servicetypes version10 ServicePackageB ServiceTypeB stateful persist
+app.codepack version10 ServicePackageA CodeA types=ServiceTypeA version=1.0
+app.codepack version10 ServicePackageB CodeB types=ServiceTypeB version=1.0
+app.upload version10
+provisionapp version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicepack version11 ServicePackageB version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA stateful
+app.servicetypes version11 ServicePackageB ServiceTypeB stateful persist
+app.codepack version11 ServicePackageA CodeB types=ServiceTypeA version=1.1
+app.codepack version11 ServicePackageB CodeB types=ServiceTypeB version=1.1
+app.upload version11
+provisionapp version11
+
+# Create application version 1.0
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+# Create services
+createservice fabric:/MyApp/Volatile1 ServiceTypeA y 9 1 appname=fabric:/MyApp
+createservice fabric:/MyApp/Volatile2 ServiceTypeA y 3 2 appname=fabric:/MyApp
+createservice fabric:/MyApp/Volatile3 ServiceTypeA y 3 3 appname=fabric:/MyApp
+createservice fabric:/MyApp/Persisted1 ServiceTypeB y 3 1 persist appname=fabric:/MyApp
+createservice fabric:/MyApp/Persisted2 ServiceTypeB y 3 2 persist appname=fabric:/MyApp
+createservice fabric:/MyApp/Persisted3 ServiceTypeB y 3 3 persist appname=fabric:/MyApp
+verify
+
+#
+# Upgrade application from version 1.0 to 1.1
+#
+upgradeapp fabric:/MyApp 1.1 Rolling
+verifyupgradeapp fabric:/MyApp
+verify
+
+!q

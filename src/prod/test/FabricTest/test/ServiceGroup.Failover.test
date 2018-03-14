@@ -1,0 +1,127 @@
+set DummyPLBEnabled true
+cleantest
+votes 10
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
++10 nodeprops=StringProperty:SeedNode
+verify
+
++30 nodeprops=StringProperty:NormalNode
+verify
++40 nodeprops=StringProperty:NormalNode
++50 nodeprops=StringProperty:NormalNode
++60 nodeprops=StringProperty:NormalNode
+verify
++70 nodeprops=StringProperty:NormalNode
++80 nodeprops=StringProperty:NormalNode
++90 nodeprops=StringProperty:NormalNode
+verify
+
+###############################################
+## Service group failover test
+###############################################
+
+createname fabric:/servicegroup31
+createservicegroup fabric:/servicegroup31 SGStatefulServiceFactory y 1 5 3 fabric:/servicegroup31#test1 SGStatefulService fabric:/servicegroup31#test2 SGStatefulService fabric:/servicegroup31#test3 SGStatefulService persist constraint=(StringProperty!=SeedNode)
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.90 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.80 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.50 Secondary
+gfum
+# P90 S80 S70 S60 S50
+!pause,5
+
+swapprimary fabric:/servicegroup31 90 40
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.40 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.80 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.50 Secondary
+verify
+gfum
+# P40 S80 S70 S60 S50
+!pause,5
+
+swapprimary fabric:/servicegroup31 40 80
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.80 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.40 Secondary
+verify
+gfum
+# P80 S70 S60 S50 S40
+!pause,5
+
+swapprimary fabric:/servicegroup31 80 90
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.90 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.40 Secondary
+verify
+gfum
+# P90 S70 S60 S50 S40
+!pause,5
+
+-90
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.70 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.80 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.40 Secondary
+gfum
+# P70 S80 S60 S50 S40
+!pause,5
+
+-40
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.70 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.80 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.60 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.30 Secondary
+gfum
+# P70 S80 S60 S50 S30
+!pause,5
+
++40 nodeprops=StringProperty:NormalNode
+verify
+-70
+verify
++90 nodeprops=StringProperty:NormalNode
+!pause,5
+-80
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.90 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.30 Secondary
+gfum
+# P60 S90 S50 S40 S30
+
++70 nodeprops=StringProperty:NormalNode
++80 nodeprops=StringProperty:NormalNode
+verify
+-50
+-40
+verify
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.60 Primary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.90 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.80 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.70 Secondary
+!waitforstate FM.Replica.Role.fabric:/servicegroup31.30 Secondary
+gfum
+# P60 S90 S80 S70 S30
+
+deleteservicegroup fabric:/servicegroup31
+deletename fabric:/servicegroup31
+
+verify
+!q
+

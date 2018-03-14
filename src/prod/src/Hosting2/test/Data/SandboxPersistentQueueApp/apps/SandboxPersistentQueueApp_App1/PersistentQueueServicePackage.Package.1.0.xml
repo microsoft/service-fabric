@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="PersistentQueueServicePackage" ManifestVersion="1.0" RolloutVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Description>Service that implements the persistent queue functionality</Description>
+  <DigestedServiceTypes RolloutVersion="1.0">
+    <ServiceTypes>
+      <StatefulServiceType ServiceTypeName="PersistentQueueService" HasPersistedState="true" />
+    </ServiceTypes>
+  </DigestedServiceTypes>
+  <DigestedCodePackage RolloutVersion="1.0">
+    <CodePackage Name="PersistentQueueService.Code" Version="1.0">
+      <EntryPoint>
+          <ExeHost>
+              <Program>SandboxPersistentQueueService.exe</Program>
+          </ExeHost>
+      </EntryPoint>      
+    </CodePackage>
+    <RunAsPolicy CodePackageRef="PersistentQueueService.Code" UserRef="pQueueUser" />
+  </DigestedCodePackage>
+  <DigestedResources RolloutVersion="1.0">
+    <DigestedEndpoints>
+      <DigestedEndpoint>
+        <Endpoint Name="QueueServiceEndpoint" Protocol="tcp" Type="Input" />
+        <SecurityAccessPolicy ResourceRef="QueueServiceEndpoint" PrincipalRef="pQueueUser" GrantRights="Full" />
+      </DigestedEndpoint>
+      <DigestedEndpoint>
+        <Endpoint Name="ReplicatorEndpoint" Protocol="tcp" Type="Internal" />
+        <SecurityAccessPolicy ResourceRef="ReplicatorEndpoint" PrincipalRef="pQueueUser" GrantRights="Full" />
+      </DigestedEndpoint>
+      <DigestedEndpoint>
+        <Endpoint Name="TestExplicitEndpoint" Protocol="tcp" Port="9999" />
+        <SecurityAccessPolicy ResourceRef="TestExplicitEndpoint" PrincipalRef="pQueueUser" GrantRights="Full" />
+      </DigestedEndpoint>	  
+    </DigestedEndpoints>
+  </DigestedResources>
+  <Diagnostics />
+</ServicePackage>

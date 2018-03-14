@@ -1,0 +1,1 @@
+MyString1;http;Internal;0;,MyString2;tcp;Internal;2;text

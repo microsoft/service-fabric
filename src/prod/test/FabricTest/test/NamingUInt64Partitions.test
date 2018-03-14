@@ -1,0 +1,366 @@
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 3 1
+namingservice 1 3 1
+cleantest
+
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set NamingServiceChangePollInterval 30
+
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+createclient c1 nodeconfig=10
+!pause,2
+
+#######################################################
+# LowKey         = -9223372036854775808
+# HighKey        = 9223372036854775807
+# NumPartitions  = 1
+# 	[-9223372036854775808, 9223372036854775807]
+
+createservice fabric:/Persisted/uint64/S1 TestPersistedStoreServiceType y 1 2 persist lowRange=-9223372036854775808 highRange=9223372036854775807
+
+resolve fabric:/Persisted/uint64/S1  -9223372036854775808
+resolve fabric:/Persisted/uint64/S1  9223372036854775807
+resolve fabric:/Persisted/uint64/S1  0
+
+
+resolvewithevents fabric:/Persisted/uint64/S1  -9223372036854775808
+resolvewithevents fabric:/Persisted/uint64/S1  9223372036854775807
+resolvewithevents fabric:/Persisted/uint64/S1  0
+
+#######################################################
+# LowKey         = -9223372036854775808
+# HighKey        = 9223372036854775807
+# NumPartitions  = 5
+# 	[-9223372036854775808, -5534023222112865485]
+# 	[-5534023222112865484, -1844674407370955162]
+# 	[-1844674407370955161, 1844674407370955161]
+# 	[1844674407370955162, 5534023222112865484]
+# 	[5534023222112865485, 9223372036854775807]
+
+createservice fabric:/Persisted/uint64/S2 TestPersistedStoreServiceType y 5 2 persist lowRange=-9223372036854775808 highRange=9223372036854775807
+
+resolve fabric:/Persisted/uint64/S2 -9223372036854775808
+resolve fabric:/Persisted/uint64/S2 -5534023222112865486
+resolve fabric:/Persisted/uint64/S2 -5534023222112865485
+resolve fabric:/Persisted/uint64/S2 -5534023222112865484
+resolve fabric:/Persisted/uint64/S2 -5534023222112865483
+resolve fabric:/Persisted/uint64/S2 -1844674407370955163
+resolve fabric:/Persisted/uint64/S2 -1844674407370955162
+resolve fabric:/Persisted/uint64/S2 -1844674407370955161
+resolve fabric:/Persisted/uint64/S2 0
+resolve fabric:/Persisted/uint64/S2 1844674407370955160
+resolve fabric:/Persisted/uint64/S2 1844674407370955161
+resolve fabric:/Persisted/uint64/S2 1844674407370955162
+resolve fabric:/Persisted/uint64/S2 1844674407370955163
+resolve fabric:/Persisted/uint64/S2 5534023222112865483
+resolve fabric:/Persisted/uint64/S2 5534023222112865484
+resolve fabric:/Persisted/uint64/S2 5534023222112865485
+resolve fabric:/Persisted/uint64/S2 5534023222112865486
+resolve fabric:/Persisted/uint64/S2 9223372036854775806
+resolve fabric:/Persisted/uint64/S2 9223372036854775807
+
+resolvewithevents fabric:/Persisted/uint64/S2 -9223372036854775808
+resolvewithevents fabric:/Persisted/uint64/S2 -5534023222112865486
+resolvewithevents fabric:/Persisted/uint64/S2 -5534023222112865485
+resolvewithevents fabric:/Persisted/uint64/S2 -5534023222112865484
+resolvewithevents fabric:/Persisted/uint64/S2 -5534023222112865483
+resolvewithevents fabric:/Persisted/uint64/S2 -1844674407370955163
+resolvewithevents fabric:/Persisted/uint64/S2 -1844674407370955162
+resolvewithevents fabric:/Persisted/uint64/S2 -1844674407370955161
+resolvewithevents fabric:/Persisted/uint64/S2 0
+resolvewithevents fabric:/Persisted/uint64/S2 1844674407370955160
+resolvewithevents fabric:/Persisted/uint64/S2 1844674407370955161
+resolvewithevents fabric:/Persisted/uint64/S2 1844674407370955162
+resolvewithevents fabric:/Persisted/uint64/S2 1844674407370955163
+resolvewithevents fabric:/Persisted/uint64/S2 5534023222112865483
+resolvewithevents fabric:/Persisted/uint64/S2 5534023222112865484
+resolvewithevents fabric:/Persisted/uint64/S2 5534023222112865485
+resolvewithevents fabric:/Persisted/uint64/S2 5534023222112865486
+resolvewithevents fabric:/Persisted/uint64/S2 9223372036854775806
+resolvewithevents fabric:/Persisted/uint64/S2 9223372036854775807
+
+#######################################################
+# LowKey         = -9223372036854775808
+# HighKey        = 0
+# NumPartitions  = 1
+# 	[-9223372036854775808, 0]
+
+createservice fabric:/Persisted/uint64/S3 TestPersistedStoreServiceType y 1 2 persist lowRange=-9223372036854775808 highRange=0
+
+resolve fabric:/Persisted/uint64/S3  -9223372036854775808
+resolve fabric:/Persisted/uint64/S3  -9223372036854775807
+resolve fabric:/Persisted/uint64/S3  -1
+resolve fabric:/Persisted/uint64/S3  0
+resolve fabric:/Persisted/uint64/S3  1 error=InvalidServicePartition
+
+resolvewithevents fabric:/Persisted/uint64/S3  -9223372036854775808
+resolvewithevents fabric:/Persisted/uint64/S3  -9223372036854775807
+resolvewithevents fabric:/Persisted/uint64/S3  -1
+resolvewithevents fabric:/Persisted/uint64/S3  0
+resolvewithevents fabric:/Persisted/uint64/S3  1 InvalidServicePartition
+
+
+#######################################################
+# LowKey         = -9223372036854775808
+# HighKey        = 0
+# NumPartitions  = 2
+# 	[-9223372036854775808, -4611686018427387904]
+# 	[-4611686018427387903, 0]
+
+createservice fabric:/Persisted/uint64/S4 TestPersistedStoreServiceType y 2 2 persist lowRange=-9223372036854775808 highRange=0
+
+resolve fabric:/Persisted/uint64/S4  -9223372036854775808
+resolve fabric:/Persisted/uint64/S4  -9223372036854775807
+resolve fabric:/Persisted/uint64/S4  -4611686018427387904
+resolve fabric:/Persisted/uint64/S4  -4611686018427387903
+resolve fabric:/Persisted/uint64/S4  -4611686018427387905
+resolve fabric:/Persisted/uint64/S4  -1
+resolve fabric:/Persisted/uint64/S4  0
+resolve fabric:/Persisted/uint64/S4  1 error=InvalidServicePartition
+resolve fabric:/Persisted/uint64/S4  9223372036854775807 error=InvalidServicePartition
+
+resolvewithevents fabric:/Persisted/uint64/S4  -9223372036854775808
+resolvewithevents fabric:/Persisted/uint64/S4  -9223372036854775807
+resolvewithevents fabric:/Persisted/uint64/S4  -4611686018427387904
+resolvewithevents fabric:/Persisted/uint64/S4  -4611686018427387903
+resolvewithevents fabric:/Persisted/uint64/S4  -4611686018427387905
+resolvewithevents fabric:/Persisted/uint64/S4  -1
+resolvewithevents fabric:/Persisted/uint64/S4  0
+resolvewithevents fabric:/Persisted/uint64/S4  1 InvalidServicePartition
+resolvewithevents fabric:/Persisted/uint64/S4  9223372036854775807 InvalidServicePartition
+
+#######################################################
+# LowKey         = 0
+# HighKey        = 9223372036854775807
+# NumPartitions  = 1
+# 	[0, 9223372036854775807]
+
+createservice fabric:/Persisted/uint64/S5 TestPersistedStoreServiceType y 1 2 persist lowRange=0 highRange=9223372036854775807
+
+resolve fabric:/Persisted/uint64/S5  0
+resolve fabric:/Persisted/uint64/S5  1
+resolve fabric:/Persisted/uint64/S5  9223372036854775806 
+resolve fabric:/Persisted/uint64/S5  9223372036854775807
+resolve fabric:/Persisted/uint64/S5  -1 error=InvalidServicePartition
+resolve fabric:/Persisted/uint64/S5  -9223372036854775808 error=InvalidServicePartition
+
+resolvewithevents fabric:/Persisted/uint64/S5  0
+resolvewithevents fabric:/Persisted/uint64/S5  1
+resolvewithevents fabric:/Persisted/uint64/S5  9223372036854775806 
+resolvewithevents fabric:/Persisted/uint64/S5  9223372036854775807
+resolvewithevents fabric:/Persisted/uint64/S5  -1 InvalidServicePartition
+resolvewithevents fabric:/Persisted/uint64/S5  -9223372036854775808 InvalidServicePartition
+
+#######################################################
+# LowKey         = 0
+# HighKey        = 9223372036854775807
+# NumPartitions  = 2
+# 	[0, 4611686018427387903]
+# 	[4611686018427387904, 9223372036854775807]
+
+createservice fabric:/Persisted/uint64/S6 TestPersistedStoreServiceType y 2 2 persist lowRange=0 highRange=9223372036854775807
+
+resolve fabric:/Persisted/uint64/S5  0
+resolve fabric:/Persisted/uint64/S5  1
+resolve fabric:/Persisted/uint64/S5  4611686018427387902
+resolve fabric:/Persisted/uint64/S5  4611686018427387903
+resolve fabric:/Persisted/uint64/S5  4611686018427387904
+resolve fabric:/Persisted/uint64/S5  4611686018427387905
+resolve fabric:/Persisted/uint64/S5  9223372036854775806 
+resolve fabric:/Persisted/uint64/S5  9223372036854775807
+resolve fabric:/Persisted/uint64/S5  -1 error=InvalidServicePartition
+resolve fabric:/Persisted/uint64/S5  -9223372036854775808 error=InvalidServicePartition
+
+resolvewithevents fabric:/Persisted/uint64/S5  0
+resolvewithevents fabric:/Persisted/uint64/S5  1
+resolvewithevents fabric:/Persisted/uint64/S5  4611686018427387902
+resolvewithevents fabric:/Persisted/uint64/S5  4611686018427387903
+resolvewithevents fabric:/Persisted/uint64/S5  4611686018427387904
+resolvewithevents fabric:/Persisted/uint64/S5  4611686018427387905
+resolvewithevents fabric:/Persisted/uint64/S5  9223372036854775806 
+resolvewithevents fabric:/Persisted/uint64/S5  9223372036854775807
+resolvewithevents fabric:/Persisted/uint64/S5  -1 InvalidServicePartition
+resolvewithevents fabric:/Persisted/uint64/S5  -9223372036854775808 InvalidServicePartition
+
+#######################################################
+# LowKey         = -9223372036854775808
+# HighKey        = 9223372036854775807
+# NumPartitions  = 1
+# 	[-9223372036854775808, 9223372036854775807]
+
+createservice fabric:/Volatile/uint64/S1 TestStoreServiceType y 1 2  lowRange=-9223372036854775808 highRange=9223372036854775807
+
+resolve fabric:/Volatile/uint64/S1  -9223372036854775808
+resolve fabric:/Volatile/uint64/S1  9223372036854775807
+resolve fabric:/Volatile/uint64/S1  0
+
+resolvewithevents fabric:/Volatile/uint64/S1  -9223372036854775808
+resolvewithevents fabric:/Volatile/uint64/S1  9223372036854775807
+resolvewithevents fabric:/Volatile/uint64/S1  0
+
+#######################################################
+# LowKey         = -9223372036854775808
+# HighKey        = 9223372036854775807
+# NumPartitions  = 5
+# 	[-9223372036854775808, -5534023222112865485]
+# 	[-5534023222112865484, -1844674407370955162]
+# 	[-1844674407370955161, 1844674407370955161]
+# 	[1844674407370955162, 5534023222112865484]
+# 	[5534023222112865485, 9223372036854775807]
+
+createservice fabric:/Volatile/uint64/S2 TestStoreServiceType y 5 2  lowRange=-9223372036854775808 highRange=9223372036854775807
+
+resolve fabric:/Volatile/uint64/S2 -9223372036854775808
+resolve fabric:/Volatile/uint64/S2 -5534023222112865486
+resolve fabric:/Volatile/uint64/S2 -5534023222112865485
+resolve fabric:/Volatile/uint64/S2 -5534023222112865484
+resolve fabric:/Volatile/uint64/S2 -5534023222112865483
+resolve fabric:/Volatile/uint64/S2 -1844674407370955163
+resolve fabric:/Volatile/uint64/S2 -1844674407370955162
+resolve fabric:/Volatile/uint64/S2 -1844674407370955161
+resolve fabric:/Volatile/uint64/S2 0
+resolve fabric:/Volatile/uint64/S2 1844674407370955160
+resolve fabric:/Volatile/uint64/S2 1844674407370955161
+resolve fabric:/Volatile/uint64/S2 1844674407370955162
+resolve fabric:/Volatile/uint64/S2 1844674407370955163
+resolve fabric:/Volatile/uint64/S2 5534023222112865483
+resolve fabric:/Volatile/uint64/S2 5534023222112865484
+resolve fabric:/Volatile/uint64/S2 5534023222112865485
+resolve fabric:/Volatile/uint64/S2 5534023222112865486
+resolve fabric:/Volatile/uint64/S2 9223372036854775806
+resolve fabric:/Volatile/uint64/S2 9223372036854775807
+
+resolvewithevents fabric:/Volatile/uint64/S2 -9223372036854775808
+resolvewithevents fabric:/Volatile/uint64/S2 -5534023222112865486
+resolvewithevents fabric:/Volatile/uint64/S2 -5534023222112865485
+resolvewithevents fabric:/Volatile/uint64/S2 -5534023222112865484
+resolvewithevents fabric:/Volatile/uint64/S2 -5534023222112865483
+resolvewithevents fabric:/Volatile/uint64/S2 -1844674407370955163
+resolvewithevents fabric:/Volatile/uint64/S2 -1844674407370955162
+resolvewithevents fabric:/Volatile/uint64/S2 -1844674407370955161
+resolvewithevents fabric:/Volatile/uint64/S2 0
+resolvewithevents fabric:/Volatile/uint64/S2 1844674407370955160
+resolvewithevents fabric:/Volatile/uint64/S2 1844674407370955161
+resolvewithevents fabric:/Volatile/uint64/S2 1844674407370955162
+resolvewithevents fabric:/Volatile/uint64/S2 1844674407370955163
+resolvewithevents fabric:/Volatile/uint64/S2 5534023222112865483
+resolvewithevents fabric:/Volatile/uint64/S2 5534023222112865484
+resolvewithevents fabric:/Volatile/uint64/S2 5534023222112865485
+resolvewithevents fabric:/Volatile/uint64/S2 5534023222112865486
+resolvewithevents fabric:/Volatile/uint64/S2 9223372036854775806
+resolvewithevents fabric:/Volatile/uint64/S2 9223372036854775807
+
+#######################################################
+# LowKey         = -9223372036854775808
+# HighKey        = 0
+# NumPartitions  = 1
+# 	[-9223372036854775808, 0]
+
+createservice fabric:/Volatile/uint64/S3 TestStoreServiceType y 1 2  lowRange=-9223372036854775808 highRange=0
+
+resolve fabric:/Volatile/uint64/S3  -9223372036854775808
+resolve fabric:/Volatile/uint64/S3  -9223372036854775807
+resolve fabric:/Volatile/uint64/S3  -1
+resolve fabric:/Volatile/uint64/S3  0
+resolve fabric:/Volatile/uint64/S3  1 error=InvalidServicePartition
+
+resolvewithevents fabric:/Volatile/uint64/S3  -9223372036854775808
+resolvewithevents fabric:/Volatile/uint64/S3  -9223372036854775807
+resolvewithevents fabric:/Volatile/uint64/S3  -1
+resolvewithevents fabric:/Volatile/uint64/S3  0
+resolvewithevents fabric:/Volatile/uint64/S3  1 InvalidServicePartition
+
+#######################################################
+# LowKey         = -9223372036854775808
+# HighKey        = 0
+# NumPartitions  = 2
+# 	[-9223372036854775808, -4611686018427387904]
+# 	[-4611686018427387903, 0]
+
+createservice fabric:/Volatile/uint64/S4 TestStoreServiceType y 2 2  lowRange=-9223372036854775808 highRange=0
+
+resolve fabric:/Volatile/uint64/S4  -9223372036854775808
+resolve fabric:/Volatile/uint64/S4  -9223372036854775807
+resolve fabric:/Volatile/uint64/S4  -4611686018427387904
+resolve fabric:/Volatile/uint64/S4  -4611686018427387903
+resolve fabric:/Volatile/uint64/S4  -4611686018427387905
+resolve fabric:/Volatile/uint64/S4  -1
+resolve fabric:/Volatile/uint64/S4  0
+resolve fabric:/Volatile/uint64/S4  1 error=InvalidServicePartition
+resolve fabric:/Volatile/uint64/S4  9223372036854775807 error=InvalidServicePartition
+
+resolvewithevents fabric:/Volatile/uint64/S4  -9223372036854775808
+resolvewithevents fabric:/Volatile/uint64/S4  -9223372036854775807
+resolvewithevents fabric:/Volatile/uint64/S4  -4611686018427387904
+resolvewithevents fabric:/Volatile/uint64/S4  -4611686018427387903
+resolvewithevents fabric:/Volatile/uint64/S4  -4611686018427387905
+resolvewithevents fabric:/Volatile/uint64/S4  -1
+resolvewithevents fabric:/Volatile/uint64/S4  0
+resolvewithevents fabric:/Volatile/uint64/S4  1 InvalidServicePartition
+resolvewithevents fabric:/Volatile/uint64/S4  9223372036854775807 InvalidServicePartition
+
+#######################################################
+# LowKey         = 0
+# HighKey        = 9223372036854775807
+# NumPartitions  = 1
+# 	[0, 9223372036854775807]
+
+createservice fabric:/Volatile/uint64/S5 TestStoreServiceType y 1 2  lowRange=0 highRange=9223372036854775807
+
+resolve fabric:/Volatile/uint64/S5  0
+resolve fabric:/Volatile/uint64/S5  1
+resolve fabric:/Volatile/uint64/S5  9223372036854775806 
+resolve fabric:/Volatile/uint64/S5  9223372036854775807
+resolve fabric:/Volatile/uint64/S5  -1 error=InvalidServicePartition
+resolve fabric:/Volatile/uint64/S5  -9223372036854775808 error=InvalidServicePartition
+
+resolvewithevents fabric:/Volatile/uint64/S5  0
+resolvewithevents fabric:/Volatile/uint64/S5  1
+resolvewithevents fabric:/Volatile/uint64/S5  9223372036854775806 
+resolvewithevents fabric:/Volatile/uint64/S5  9223372036854775807
+resolvewithevents fabric:/Volatile/uint64/S5  -1 InvalidServicePartition
+resolvewithevents fabric:/Volatile/uint64/S5  -9223372036854775808 InvalidServicePartition
+
+#######################################################
+# LowKey         = 0
+# HighKey        = 9223372036854775807
+# NumPartitions  = 2
+# 	[0, 4611686018427387903]
+# 	[4611686018427387904, 9223372036854775807]
+
+createservice fabric:/Volatile/uint64/S6 TestStoreServiceType y 2 2  lowRange=0 highRange=9223372036854775807
+
+resolve fabric:/Volatile/uint64/S5  0
+resolve fabric:/Volatile/uint64/S5  1
+resolve fabric:/Volatile/uint64/S5  4611686018427387902
+resolve fabric:/Volatile/uint64/S5  4611686018427387903
+resolve fabric:/Volatile/uint64/S5  4611686018427387904
+resolve fabric:/Volatile/uint64/S5  4611686018427387905
+resolve fabric:/Volatile/uint64/S5  9223372036854775806 
+resolve fabric:/Volatile/uint64/S5  9223372036854775807
+resolve fabric:/Volatile/uint64/S5  -1 error=InvalidServicePartition
+resolve fabric:/Volatile/uint64/S5  -9223372036854775808 error=InvalidServicePartition
+
+resolvewithevents fabric:/Volatile/uint64/S5  0
+resolvewithevents fabric:/Volatile/uint64/S5  1
+resolvewithevents fabric:/Volatile/uint64/S5  4611686018427387902
+resolvewithevents fabric:/Volatile/uint64/S5  4611686018427387903
+resolvewithevents fabric:/Volatile/uint64/S5  4611686018427387904
+resolvewithevents fabric:/Volatile/uint64/S5  4611686018427387905
+resolvewithevents fabric:/Volatile/uint64/S5  9223372036854775806 
+resolvewithevents fabric:/Volatile/uint64/S5  9223372036854775807
+resolvewithevents fabric:/Volatile/uint64/S5  -1 InvalidServicePartition
+resolvewithevents fabric:/Volatile/uint64/S5  -9223372036854775808 InvalidServicePartition
+
+deleteclient c1
+!q

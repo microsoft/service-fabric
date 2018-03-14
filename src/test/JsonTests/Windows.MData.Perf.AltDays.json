@@ -1,0 +1,854 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "E2EDictionary-3P-3N (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,3P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-3P-3N (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP3N3.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"
+      }
+    },
+    {
+      "Name": "E2EDictionary-3P-3N-WCF (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,3P3N,WCF",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-3P-3N-WCF (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP3N3_WCF.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-3P-3N-Faults (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,3P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-3P-3N-Faults (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP3N3F.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N-MemoryLog (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,3P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-MemoryLog (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N3_MemoryLog.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-6P-3N-MemoryLog (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,6P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-6P-3N-MemoryLog (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP6N3_MemoryLog.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-1P-1N-MemoryLog (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:3;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,1P1N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-1P-1N-MemoryLog (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP1N1_MemoryLog.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N3.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N-WCF (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P3N,WCF",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-WCF (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N3_WCF.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N-FabricTransportV1 (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-FabricTransportV1 (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N3_FabricTransportV1.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N-Gets (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-Gets (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N3_G.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N-Faults (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-Faults (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N3F.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-3N-Backup (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-3N-Backup (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N3B.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-6N (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:7;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P6N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-6N (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N6.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-6N-WCF (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:7;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P6N,WCF",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-6N-WCF (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N6_WCF.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-36P-6N-FabricTransportV1 (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:7;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,36P6N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-36P-6N-FabricTransportV1 (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP36N6_FabricTransportV1.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-999P-3N (PerfLab)",
+      "Type": "V2_ScriptTest_Perf_Quark",
+      "Owners": "HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerfVoter",
+      "Tags": "E2EPerf,Lab,999P3N",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "DictionaryScenario-999P-3N (PerfLab)",
+        "ExpectedResultsFileName": "DictionaryPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryScenarioConfig.txt",
+        "TaskName": "RelDP999N3.test",
+        "ExecutionTimeout": "81600",
+        "CleanupTimeout": "6100"        
+      }
+    },
+    {
+      "Name": "E2EDictionary-Longhaul-6P6N-Restore",
+      "Type": "V2_ScriptTest_Archive_No_Etl",
+      "Owners": "HaNagar, SumukhS, MCoskun",
+      "Environment": "Iaas",
+      "Tags": "E2EPerf,Longhaul,6P6N",
+      "ResourcesRequired": "Server:7;Group=ReplicatorPerfVoter",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryLonghaulConfig.txt",
+        "TaskName": "RelDP6N6LonghaulRestore.test",
+        "ExecutionTimeout": "99999",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "E2EDictionary-Longhaul-6P6N-Producer",
+      "Type": "V2_ScriptTest_Archive_No_Etl",
+      "Owners": "HaNagar, SumukhS, MCoskun",
+      "Environment": "Iaas",
+      "Tags": "E2EPerf,Longhaul,6P6N",
+      "ResourcesRequired": "Server:7;Group=ReplicatorPerfVoter",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\DictionaryLonghaulConfig.txt",
+        "TaskName": "RelDP6N6LonghaulProducer.test",
+        "ExecutionTimeout": "86000",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Replicator Throttle Test (LAB)",
+      "Type": "V2_ScriptTest",
+      "Owners": "hanagar,sumukhs, AlanWar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "ReplicatorThrottle.test",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Replicator Throttle Test 3-Replica (LAB)",
+      "Type": "V2_ScriptTest",
+      "Owners": "hanagar,sumukhs, AlanWar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "ReplicatorThrottle-3R.test",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Recovery Perf (LAB)",
+      "Type": "V2_ScriptTest",
+      "Owners": "hanagar,sumukhs, AlanWar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "RecoveryPerf.test",
+        "ExecutionTimeout": "10000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf (LAB)",
+      "Type": "V2_ScriptTest_Perf",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Distributed Dictionary Performance (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-1R.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf Memory Log (LAB)",
+      "Type": "V2_ScriptTest_Perf",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Distributed Dictionary Performance (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-1R-MemoryLog.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica (LAB)",
+      "Type": "V2_ScriptTest_Perf",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Distributed Dictionary Performance 3-Replica (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-3R.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf (LAB)",
+      "Type": "V2_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "KVS-Perf-1R.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica (LAB)",
+      "Type": "V2_ScriptTest_Perf",
+      "Owners": "HaRahama, AlexWun",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "KVS Performance 3-Replica (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "KVS-Perf-3R.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 3-Replica (LAB)",
+      "Type": "V2_ScriptTest_Perf",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,1P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Atomic Transaction Performance 3-Replica (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "AtomicTx-Perf-3R.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-3P (LAB)",
+      "Type": "V2_ScriptTest",
+      "Owners": "HaRahama, AlexWun",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "KVS-Perf-3R-3P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-3P (LAB)",
+      "Type": "V2_ScriptTest",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,3P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-3R-3P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-6P (LAB)",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags" : "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Distributed Dictionary Performance 3-Replica-6P (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-3R-6P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf-1R-6P DirectDedicatedLog",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "AlanWar, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags" : "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Distributed Dictionary Performance 1-Replica-6P DirectDedicatedLog (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-1R-6P-DirectDedicatedLog.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-6P (LAB)",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "HaRahama, AlexWun",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags" : "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "KVS Performance 3-Replica-6P (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "KVS-Perf-3R-6P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 3-Replica-6P (LAB)",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags" : "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Atomic Transaction Performance 3-Replica-6P (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "AtomicTx-Perf-3R-6P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-6P (LAB)",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags" : "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Distributed Dictionary Performance 1-Replica-6P (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-1R-6P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf-1R-6P MLog",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags" : "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Distributed Dictionary Performance 1-Replica-6P (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-1R-6P-MemoryLog.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-6P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "HaRahama, AlexWun",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags" : "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "KVS-Perf-1R-6P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball AtomicTx Perf 1-Replica-6P (LAB)",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags" : "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Atomic Transaction Performance 1-Replica-6P (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "AtomicTx-Perf-1R-6P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-36P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-3R-36P.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 3-Replica-36P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "HaRahama, AlexWun",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "KVS-Perf-3R-36P.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-36P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "V1Perf-3R-36P.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-6P (LAB)",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,6P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Hairball V1Repl Perf 3-Replica-6P (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "V1Perf-3R-6P.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica (LAB)",
+      "Type": "V2_ScriptTest_Perf",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "PerfTestTaskName": "Hairball V1Repl Perf 3-Replica (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "V1Perf-3R.test",
+        "ExecutionTimeout": "28800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-36P (LAB)",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "PerfTestTaskName": "Hairball DD Perf 1-Replica-36P (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "TaskName": "DDict-Perf-1R-36P.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf-1R-36P MLog",
+      "Type": "V2_ScriptTest_Perf_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "PerfTestTaskName": "Hairball DD Perf-1R-36P MLog (LAB)",
+        "ExpectedResultsFileName": "ReplicatorStackExpectedResults.xml",
+        "TaskName": "DDict-Perf-1R-36P-MemoryLog.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-36P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "HaRahama, AlexWun",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,36P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "KVS-Perf-1R-36P.test",
+        "ExecutionTimeout": "21600",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 3-Replica-999P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,999P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-3R-999P.test",
+        "ExecutionTimeout": "18000",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball V1Repl Perf 3-Replica-999P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,999P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "V1Perf-3R-999P.test",
+        "ExecutionTimeout": "18000",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball DD Perf 1-Replica-999P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "ImanG, HaNagar, SumukhS",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,999P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "DDict-Perf-1R-999P.test",
+        "ExecutionTimeout": "18000",
+        "CleanupTimeout": "12000"
+      }
+    },
+    {
+      "Name": "Hairball KVS Perf 1-Replica-999P (LAB)",
+      "Type": "V2_ScriptTest_Cleanup_Fusion",
+      "Owners": "HaRahama, AlexWun",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "Tags": "Hairball,Lab,999P",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+        "TaskName": "KVS-Perf-1R-999P.test",
+        "ExecutionTimeout": "18000",
+        "CleanupTimeout": "12000"
+      }
+    }
+  ]
+}

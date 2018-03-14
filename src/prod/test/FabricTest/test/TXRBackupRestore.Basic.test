@@ -1,0 +1,343 @@
+#
+# [owner]- Zhol, Mcoskun
+# Backup and Restore CIT tests
+# 
+
+!load FailoverCITInitialization.test
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify  
+
+##############################################################################################
+#
+# TestCase 1 - Basic Backup and Restore functionality (Restore to the same replica)
+#
+# a. Full Backup with no user data and then restore
+# b. Full Backup with small user data and then restore
+# d. Full + Incremental Backup with no user data and then restore
+# e. Full + Incremental Backup with small user data and then restore
+#
+##############################################################################################
+
+##############################################################################################
+# TestCase 1.a Full Backup with no user data and then restore
+##############################################################################################
+createservice fabric:/testcase1a TXRServiceType y 1 3 persist constraint=(system!=true)
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/testcase1a.40 Primary
+!waitforstate FM.Replica.Role.fabric:/testcase1a.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/testcase1a.20 Secondary
+verify 
+
+clientbackup fabric:/testcase1a 0 CurrentDirectory
+
+# Invoke dataloss and then restore
+# Pause FM state machine processing
+set MaxActionsPerIteration 0
+
+-40 removedata
+-30 removedata
+-20 removedata
+!wait
+
+nodestateremoved 40
+nodestateremoved 30
+nodestateremoved 20
+!wait
+
++40 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.40 true
+
+# resume FM state machine processing
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/testcase1a.40 Primary
+
++30 nodeprops=system:false
++20 nodeprops=system:false
+!wait
+verify
+
+clientget fabric:/testcase1a 0 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase1a
+verify 
+
+##############################################################################################
+# TestCase 1.b Full Backup with small user data and then restore
+##############################################################################################
+createservice fabric:/testcase1b TXRServiceType y 1 3 persist constraint=(system!=true)
+
+!waitforstate FM.Replica.Role.fabric:/testcase1b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/testcase1b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/testcase1b.20 Secondary
+verify 
+
+clientput fabric:/testcase1b 0 Data1_0
+!wait
+clientget fabric:/testcase1b 0 Data1_0
+!wait
+verify
+
+clientbackup fabric:/testcase1b 0 CurrentDirectory
+
+set MaxActionsPerIteration 0
+
+-40 removedata
+-30 removedata
+-20 removedata
+!wait
+
+nodestateremoved 40
+nodestateremoved 30
+nodestateremoved 20
+!wait
+
++40 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.40 true
+
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/testcase1b.40 Primary
+
++30 nodeprops=system:false
++20 nodeprops=system:false
+!wait
+verify
+
+clientget fabric:/testcase1b 0 Data1_0
+clientget fabric:/testcase1b 1 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase1b
+verify 
+
+##############################################################################################
+# TestCase 1.c Full + Incremental Backup with no user data and then restore
+##############################################################################################
+createservice fabric:/testcase1c TXRServiceType y 1 3 persist constraint=(system!=true)
+
+!waitforstate FM.Replica.Role.fabric:/testcase1c.40 Primary
+!waitforstate FM.Replica.Role.fabric:/testcase1c.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/testcase1c.20 Secondary
+verify 
+
+clientbackup fabric:/testcase1c 0 CurrentDirectory
+clientbackup fabric:/testcase1c 0 CurrentDirectory backupOption=incremental
+
+set MaxActionsPerIteration 0
+
+-40 removedata
+-30 removedata
+-20 removedata
+!wait
+
+nodestateremoved 40
+nodestateremoved 30
+nodestateremoved 20
+!wait
+
++40 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.40 true
+
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/testcase1c.40 Primary
+
++30 nodeprops=system:false
++20 nodeprops=system:false
+!wait
+verify
+
+clientget fabric:/testcase1c 0 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase1c
+verify 
+
+##############################################################################################
+# TestCase 1.d Full + Incremental Backup with small user data and then restore
+##############################################################################################
+createservice fabric:/testcase1d TXRServiceType y 1 3 persist constraint=(system!=true)
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/testcase1d.40 Primary
+!waitforstate FM.Replica.Role.fabric:/testcase1d.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/testcase1d.20 Secondary
+verify 
+
+clientbackup fabric:/testcase1d 0 CurrentDirectory
+
+clientput fabric:/testcase1d 0 Data1_0
+!wait
+clientget fabric:/testcase1d 0 Data1_0
+!wait
+verify
+
+clientbackup fabric:/testcase1d 0 CurrentDirectory backupOption=incremental
+
+set MaxActionsPerIteration 0
+
+-40 removedata
+-30 removedata
+-20 removedata
+!wait
+
+nodestateremoved 40
+nodestateremoved 30
+nodestateremoved 20
+!wait
+
++40 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.40 true
+
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/testcase1d.40 Primary
+
++30 nodeprops=system:false
++20 nodeprops=system:false
+!wait
+verify
+
+clientget fabric:/testcase1d 0 Data1_0
+clientget fabric:/testcase1d 1 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase1d
+verify 
+
+##############################################################################################
+#
+# TestCase 2 - Basic Backup and Restore functionality (Checkpointed)
+#
+# a. Full Backup with checkpointed user data and then restore
+# b. Full + Incremental Backup with checkpointed user data and then restore
+#
+##############################################################################################
+
+##############################################################################################
+# TestCase 2.a Full Backup with checkpointed user data and then restore
+##############################################################################################
+createservice fabric:/testcase2a TXRServiceType y 1 3 persist constraint=(system!=true)
+
+!waitforstate FM.Replica.Role.fabric:/testcase2a.40 Primary
+!waitforstate FM.Replica.Role.fabric:/testcase2a.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/testcase2a.20 Secondary
+verify 
+
+clientput fabric:/testcase2a 0 Data1_0
+!wait
+clientget fabric:/testcase2a 0 Data1_0
+!wait
+verify
+
+requestcheckpoint fabric:/testcase2a 40
+clientbackup fabric:/testcase2a 0 CurrentDirectory
+
+set MaxActionsPerIteration 0
+
+-40 removedata
+-30 removedata
+-20 removedata
+!wait
+
+nodestateremoved 40
+nodestateremoved 30
+nodestateremoved 20
+!wait
+
++40 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.40 true
+
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/testcase2a.40 Primary
+
++30 nodeprops=system:false
++20 nodeprops=system:false
+!wait
+verify
+
+clientget fabric:/testcase2a 0 Data1_0
+clientget fabric:/testcase2a 1 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase2a
+verify 
+
+##############################################################################################
+# TestCase 2.b. Full + Incremental Backup with checkpointed user data and then restore
+##############################################################################################
+createservice fabric:/testcase2b TXRServiceType y 1 3 persist constraint=(system!=true)
+
+!waitforstate FM.Replica.Role.fabric:/testcase2b.40 Primary
+!waitforstate FM.Replica.Role.fabric:/testcase2b.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/testcase2b.20 Secondary
+verify 
+
+clientbackup fabric:/testcase2b 0 CurrentDirectory
+
+clientput fabric:/testcase2b 0 Data1_0
+!wait
+clientget fabric:/testcase2b 0 Data1_0
+!wait
+verify
+
+requestcheckpoint fabric:/testcase2b 40
+clientbackup fabric:/testcase2b 0 CurrentDirectory backupOption=incremental
+
+set MaxActionsPerIteration 0
+
+-40 removedata
+-30 removedata
+-20 removedata
+!wait
+
+nodestateremoved 40
+nodestateremoved 30
+nodestateremoved 20
+!wait
+
++40 nodeprops=system:false
+!wait
+
+!waitforstate FM.Node.IsUp.40 true
+
+set MaxActionsPerIteration 500
+
+!waitforstate FM.Replica.Role.fabric:/testcase2b.40 Primary
+
++30 nodeprops=system:false
++20 nodeprops=system:false
+!wait
+verify
+
+clientget fabric:/testcase2b 0 Data1_0
+clientget fabric:/testcase2b 1 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase2b
+verify 
+
+!q

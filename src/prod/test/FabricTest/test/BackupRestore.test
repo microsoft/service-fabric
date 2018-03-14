@@ -1,0 +1,473 @@
+votes 10 20 30
+fmservice 7 1
+namingservice 1 7 1
+cmservice 0 0
+set IsBackupTest true
+cleantest
++10
++20
++30
++40
++50
++60
++70
+verify
+
+###############################################################
+# Testcase 1: Primary-Only Singleton 
+#
+# Cannot restore service with mismatched partition
+# Can restore to same service name with no user data
+# Can restore to same service name with less advanced user data
+# Can restore to same service name with more advanced or equal user data
+#
+###############################################################
+
+createservice fabric:/testcase1 TestPersistedStoreServiceType y 1 1 persist lowRange=0 highRange=9
+verify
+
+clientput fabric:/testcase1 0 DataTC1_0
+clientput fabric:/testcase1 1 DataTC1_1
+!wait
+clientget fabric:/testcase1 0 DataTC1_0
+clientget fabric:/testcase1 1 DataTC1_1
+!wait
+verify
+
+clientbackup fabric:/testcase1 0 BackupRestore.test.Data\backup_dir
+
+clientput fabric:/testcase1 2 DataTC1_2
+!wait
+clientget fabric:/testcase1 0 DataTC1_0
+clientget fabric:/testcase1 1 DataTC1_1
+clientget fabric:/testcase1 2 DataTC1_2
+!wait
+verify
+
+# Can restore service with more advanced user data
+clientrestore fabric:/testcase1 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+clientget fabric:/testcase1 0 DataTC1_0
+clientget fabric:/testcase1 1 DataTC1_1
+clientget fabric:/testcase1 2 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase1
+verify
+
+# Cannot restore service with mismatched partition
+createservice fabric:/testcase1 TestPersistedStoreServiceType y 1 1 persist lowRange=0 highRange=8
+verify
+
+clientget fabric:/testcase1 0 KeyDoesNotExist
+clientget fabric:/testcase1 1 KeyDoesNotExist
+clientget fabric:/testcase1 2 KeyDoesNotExist
+!wait
+verify
+
+clientrestore fabric:/testcase1 0 BackupRestore.test.Data\backup_dir error=InvalidOperation
+!pause 15
+verify
+
+deleteservice fabric:/testcase1
+verify
+
+# Can restore to same service name with no data
+createservice fabric:/testcase1 TestPersistedStoreServiceType y 1 1 persist lowRange=0 highRange=9
+verify
+
+clientget fabric:/testcase1 0 KeyDoesNotExist
+clientget fabric:/testcase1 1 KeyDoesNotExist
+clientget fabric:/testcase1 2 KeyDoesNotExist
+!wait
+verify
+
+clientrestore fabric:/testcase1 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+clientget fabric:/testcase1 0 DataTC1_0
+clientget fabric:/testcase1 1 DataTC1_1
+clientget fabric:/testcase1 2 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase1
+verify
+
+# Can restore same service name with less advanced data
+createservice fabric:/testcase1 TestPersistedStoreServiceType y 1 1 persist lowRange=0 highRange=9
+verify
+
+clientput fabric:/testcase1 0 DataTC1_X
+!wait
+clientget fabric:/testcase1 0 DataTC1_X
+clientget fabric:/testcase1 1 KeyDoesNotExist
+clientget fabric:/testcase1 2 KeyDoesNotExist
+!wait
+verify
+
+clientrestore fabric:/testcase1 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+clientget fabric:/testcase1 0 DataTC1_0
+clientget fabric:/testcase1 1 DataTC1_1
+clientget fabric:/testcase1 2 KeyDoesNotExist
+!wait
+verify
+
+##################################################
+# Testcase 2: Primary-Only Singleton 
+#
+# Same as Testcase 1 but restores to a 
+# different service name
+#
+##################################################
+
+createservice fabric:/testcase2a TestPersistedStoreServiceType y 1 1 persist lowRange=-1 highRange=9
+verify
+
+clientput fabric:/testcase2a 0 DataTC2_0
+clientput fabric:/testcase2a 1 DataTC2_1
+!wait
+clientget fabric:/testcase2a 0 DataTC2_0
+clientget fabric:/testcase2a 1 DataTC2_1
+!wait
+verify
+
+clientbackup fabric:/testcase2a 0 BackupRestore.test.Data\backup_dir
+
+clientput fabric:/testcase2a 2 DataTC2_2
+!wait
+clientget fabric:/testcase2a 0 DataTC2_0
+clientget fabric:/testcase2a 1 DataTC2_1
+clientget fabric:/testcase2a 2 DataTC2_2
+!wait
+verify
+
+# Can restore service with more advanced user data
+createservice fabric:/testcase2b TestPersistedStoreServiceType y 1 1 persist lowRange=-1 highRange=9
+
+clientput fabric:/testcase2b 0 DataTC2_0b
+clientput fabric:/testcase2b 1 DataTC2_1b
+!wait
+clientget fabric:/testcase2b 0 DataTC2_0b
+clientget fabric:/testcase2b 1 DataTC2_1b
+!wait
+verify
+
+clientrestore fabric:/testcase2b 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+clientget fabric:/testcase2b 0 DataTC2_0
+clientget fabric:/testcase2b 1 DataTC2_1
+clientget fabric:/testcase2b 2 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase2b
+verify
+
+# Cannot restore service with mismatched partition
+createservice fabric:/testcase2b TestPersistedStoreServiceType y 1 1 persist lowRange=0 highRange=9
+verify
+
+clientget fabric:/testcase2b 0 KeyDoesNotExist
+clientget fabric:/testcase2b 1 KeyDoesNotExist
+clientget fabric:/testcase2b 2 KeyDoesNotExist
+!wait
+verify
+
+clientrestore fabric:/testcase2b 0 BackupRestore.test.Data\backup_dir error=InvalidOperation
+!pause 15
+verify
+
+deleteservice fabric:/testcase2b
+verify
+
+# Can restore to different service name with no data
+createservice fabric:/testcase2b TestPersistedStoreServiceType y 1 1 persist lowRange=-1 highRange=9
+verify
+
+clientget fabric:/testcase2b 0 KeyDoesNotExist
+clientget fabric:/testcase2b 1 KeyDoesNotExist
+clientget fabric:/testcase2b 2 KeyDoesNotExist
+!wait
+verify
+
+clientrestore fabric:/testcase2b 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+clientget fabric:/testcase2b 0 DataTC2_0
+clientget fabric:/testcase2b 1 DataTC2_1
+clientget fabric:/testcase2b 2 KeyDoesNotExist
+!wait
+verify
+
+deleteservice fabric:/testcase2b
+verify
+
+# Can restore to different service name with less advanced data
+createservice fabric:/testcase2c TestPersistedStoreServiceType y 1 1 persist lowRange=-1 highRange=9
+verify
+
+clientput fabric:/testcase2c 0 DataTC2_X
+!wait
+clientget fabric:/testcase2c 0 DataTC2_X
+clientget fabric:/testcase2c 1 KeyDoesNotExist
+clientget fabric:/testcase2c 2 KeyDoesNotExist
+!wait
+verify
+
+clientrestore fabric:/testcase2c 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+clientget fabric:/testcase2c 0 DataTC2_0
+clientget fabric:/testcase2c 1 DataTC2_1
+clientget fabric:/testcase2c 2 KeyDoesNotExist
+!wait
+verify
+
+##################################################
+# Testcase 3: Multi-Replica Singleton 
+#
+# Use UpdateService to modify replica set size
+#
+##################################################
+
+createservice fabric:/testcase3 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+clientput fabric:/testcase3 0 DataTC3_0
+clientput fabric:/testcase3 1 DataTC3_1
+!wait
+clientget fabric:/testcase3 0 DataTC3_0
+clientget fabric:/testcase3 1 DataTC3_1
+!wait
+verify
+
+clientbackup fabric:/testcase3 0 BackupRestore.test.Data\backup_dir
+
+clientput fabric:/testcase3 2 DataTC3_2
+!wait
+clientget fabric:/testcase3 0 DataTC3_0
+clientget fabric:/testcase3 1 DataTC3_1
+clientget fabric:/testcase3 2 DataTC3_2
+!wait
+verify
+
+deleteservice fabric:/testcase3
+verify
+
+createservice fabric:/testcase3 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+clientget fabric:/testcase3 0 KeyDoesNotExist
+clientget fabric:/testcase3 1 KeyDoesNotExist
+clientget fabric:/testcase3 2 KeyDoesNotExist
+!wait
+verify
+
+updateservice fabric:/testcase3 Stateful TargetReplicaSetSize=1
+verify
+
+clientrestore fabric:/testcase3 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+updateservice fabric:/testcase3 Stateful TargetReplicaSetSize=7
+verify
+
+clientget fabric:/testcase3 0 DataTC3_0
+clientget fabric:/testcase3 1 DataTC3_1
+clientget fabric:/testcase3 2 KeyDoesNotExist
+!wait
+verify
+
+killservice fabric:/testcase3 primaryOnly
+verify
+
+clientget fabric:/testcase3 0 DataTC3_0
+clientget fabric:/testcase3 1 DataTC3_1
+clientget fabric:/testcase3 2 KeyDoesNotExist
+!wait
+verify
+
+##################################################
+# Testcase 4: Multi-Partition
+#
+# Use UpdateService to modify replica set size
+# Cannot restore to wrong partition
+# Can restore to partition with user data
+#
+##################################################
+
+createservice fabric:/testcase4 TestPersistedStoreServiceType y 4 3 persist lowRange=0 highRange=3
+verify
+
+clientput fabric:/testcase4 0 DataTC4_0
+clientput fabric:/testcase4 1 DataTC4_1
+clientput fabric:/testcase4 2 DataTC4_2
+clientput fabric:/testcase4 3 DataTC4_3A
+!wait
+clientget fabric:/testcase4 0 DataTC4_0
+clientget fabric:/testcase4 1 DataTC4_1
+clientget fabric:/testcase4 2 DataTC4_2
+clientget fabric:/testcase4 3 DataTC4_3A
+!wait
+verify
+
+clientbackup fabric:/testcase4 0 BackupRestore.test.Data\backup_dir_0
+clientbackup fabric:/testcase4 1 BackupRestore.test.Data\backup_dir_1
+clientbackup fabric:/testcase4 2 BackupRestore.test.Data\backup_dir_2
+clientbackup fabric:/testcase4 3 BackupRestore.test.Data\backup_dir_3
+
+deleteservice fabric:/testcase4
+verify
+
+createservice fabric:/testcase4 TestPersistedStoreServiceType y 4 3 persist lowRange=0 highRange=3 minreplicasetsize=1
+verify
+
+clientget fabric:/testcase4 0 KeyDoesNotExist
+clientget fabric:/testcase4 1 KeyDoesNotExist
+clientget fabric:/testcase4 2 KeyDoesNotExist
+clientget fabric:/testcase4 3 KeyDoesNotExist
+!wait
+verify
+
+clientput fabric:/testcase4 3 DataTC4_3B
+!wait
+clientget fabric:/testcase4 3 DataTC4_3B
+!wait
+verify
+
+updateservice fabric:/testcase4 Stateful TargetReplicaSetSize=1
+verify
+
+# Cannot restore to wrong partition
+clientrestore fabric:/testcase4 0 BackupRestore.test.Data\backup_dir_1 error=InvalidOperation
+clientrestore fabric:/testcase4 0 BackupRestore.test.Data\backup_dir_2 error=InvalidOperation
+clientrestore fabric:/testcase4 0 BackupRestore.test.Data\backup_dir_3 error=InvalidOperation
+clientrestore fabric:/testcase4 1 BackupRestore.test.Data\backup_dir_0 error=InvalidOperation
+clientrestore fabric:/testcase4 1 BackupRestore.test.Data\backup_dir_2 error=InvalidOperation
+clientrestore fabric:/testcase4 1 BackupRestore.test.Data\backup_dir_3 error=InvalidOperation
+clientrestore fabric:/testcase4 2 BackupRestore.test.Data\backup_dir_0 error=InvalidOperation
+clientrestore fabric:/testcase4 2 BackupRestore.test.Data\backup_dir_1 error=InvalidOperation
+clientrestore fabric:/testcase4 2 BackupRestore.test.Data\backup_dir_3 error=InvalidOperation
+clientrestore fabric:/testcase4 3 BackupRestore.test.Data\backup_dir_0 error=InvalidOperation
+clientrestore fabric:/testcase4 3 BackupRestore.test.Data\backup_dir_1 error=InvalidOperation
+clientrestore fabric:/testcase4 3 BackupRestore.test.Data\backup_dir_2 error=InvalidOperation
+
+# Can restore to partition with user data
+clientrestore fabric:/testcase4 3 BackupRestore.test.Data\backup_dir_3
+!pause 15
+verify
+
+clientget fabric:/testcase4 0 KeyDoesNotExist
+clientget fabric:/testcase4 1 KeyDoesNotExist
+clientget fabric:/testcase4 2 KeyDoesNotExist
+clientget fabric:/testcase4 3 DataTC4_3A
+!wait
+verify
+
+clientrestore fabric:/testcase4 0 BackupRestore.test.Data\backup_dir_0
+clientrestore fabric:/testcase4 1 BackupRestore.test.Data\backup_dir_1
+clientrestore fabric:/testcase4 2 BackupRestore.test.Data\backup_dir_2
+!pause 15
+verify
+
+updateservice fabric:/testcase4 Stateful TargetReplicaSetSize=3
+verify
+
+clientget fabric:/testcase4 0 DataTC4_0
+clientget fabric:/testcase4 1 DataTC4_1
+clientget fabric:/testcase4 2 DataTC4_2
+clientget fabric:/testcase4 3 DataTC4_3A
+!wait
+verify
+
+##################################################
+# Testcase 5: Quorumloss+Dataloss
+#
+##################################################
+
++80 nodeprops=userservice:1
+verify
+
+createservice fabric:/testcase5 TestPersistedStoreServiceType y 1 1 persist constraint=userservice==1
+verify
+
+clientput fabric:/testcase5 0 DataTC5_0
+clientput fabric:/testcase5 1 DataTC5_1
+!wait
+clientget fabric:/testcase5 0 DataTC5_0
+clientget fabric:/testcase5 1 DataTC5_1
+!wait
+verify
+
+clientbackup fabric:/testcase5 0 BackupRestore.test.Data\backup_dir
+
+clientput fabric:/testcase5 2 DataTC5_2
+!wait
+clientget fabric:/testcase5 0 DataTC5_0
+clientget fabric:/testcase5 1 DataTC5_1
+clientget fabric:/testcase5 2 DataTC5_2
+!wait
+verify
+
+-80 removedata
+nodestateremoved 80
++90 nodeprops=userservice:1
+verify
+
+clientget fabric:/testcase5 0 KeyDoesNotExist
+clientget fabric:/testcase5 1 KeyDoesNotExist
+clientget fabric:/testcase5 2 KeyDoesNotExist
+!wait
+verify
+
+clientrestore fabric:/testcase5 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+# may take a little longer to transient fault soon after opening 
+!pause 15
+
+clientget fabric:/testcase5 0 DataTC5_0
+clientget fabric:/testcase5 1 DataTC5_1
+clientget fabric:/testcase5 2 KeyDoesNotExist
+!wait
+verify
+
+-90 removedata
+nodestateremoved 90
++80 nodeprops=userservice:1
+verify
+
+clientget fabric:/testcase5 0 KeyDoesNotExist
+clientget fabric:/testcase5 1 KeyDoesNotExist
+clientget fabric:/testcase5 2 KeyDoesNotExist
+!wait
+verify
+
+clientrestore fabric:/testcase5 0 BackupRestore.test.Data\backup_dir
+!pause 15
+verify
+
+# may take a little longer to transient fault soon after opening 
+!pause 15
+
+clientget fabric:/testcase5 0 DataTC5_0
+clientget fabric:/testcase5 1 DataTC5_1
+clientget fabric:/testcase5 2 KeyDoesNotExist
+!wait
+verify
+
+!q

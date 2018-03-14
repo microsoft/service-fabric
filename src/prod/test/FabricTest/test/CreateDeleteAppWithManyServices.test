@@ -1,0 +1,170 @@
+############################################################
+# Tests create and delete for application with many services
+# CM sends create default services and delete inner services in parallel to Naming,
+# with retries for failed operations.
+# The test induces failure when creating/deleting services by dropping some messages.
+# The internal job queues are configured with small parameters, to ensure some
+# operations are dropped / delayed
+############################################################
+
+votes 10 20 30
+
+fmservice 3 1
+cmservice 3 1
+namingservice 1 3 3
+cleantest
+
+set DummyPLBEnabled true
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+set RepairInterval 2
+set MaxExponentialOperationRetryDelay 5
+
+# Retry queries for longer (default 15 times) to allow time for stabilization (eg. in throttled cases)
+set QueryOperationRetryCount 60
+
+# Timeouts used as remaining time inside retries of naming operations
+set RepairOperationTimeout 10
+
+# Configure CM Naming job queue with smaller parameters to test throttle and queue full scenarios
+# Allows NamingJobQueueThreadCount threads to process in parallel,
+# at max NamingJobQueueSize items in the queue
+# and NamingJobQueueMaxPendingWorkCount items pending (started but not yet finished).
+set NamingJobQueueThreadCount 2
+set NamingJobQueueSize 8
+set NamingJobQueueMaxPendingWorkCount 7
+
+# Configure Naming job queue for processing requests with smaller parameters to test throttle and queue full scenarios
+set RequestQueueThreadCount 2
+set RequestQueueSize 5
+set MaxPendingRequestCount 4
+
+# Wait until all nodes are up before placing the system services,
+# to be able to consistently find the service primaries placed by dummy plb
+set ExpectedClusterSize 6
+
++10
++20
++30
++40
++50
++60
+verify
+
+#
+# Ensure stability of Naming service before proceeding
+#
+queryhealth service servicename=fabric:/System/NamingService expectedhealthstate=ok expectedstates=partitions-ok:1
+set ExpectedClusterSize 1
+
+checkhm services expectedcount=3
+
+# Wait for the recovery async operation to be completed
+!pause 2
+
+#
+# Provision an application with a few default services
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicepack version10 ServicePackageB version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful
+app.servicetypes version10 ServicePackageB ServiceTypeB stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA version=1.0
+app.codepack version10 ServicePackageB CodeB1 types=ServiceTypeB version=1.0
+app.reqservices version10 ServiceA1 ServiceTypeA stateful partition=1 replica=1
+app.reqservices version10 ServiceA2 ServiceTypeA stateful partition=1 replica=1
+app.reqservices version10 ServiceA3 ServiceTypeA stateful partition=1 replica=1
+app.reqservices version10 ServiceA4 ServiceTypeA stateful partition=1 replica=1
+app.reqservices version10 ServiceA5 ServiceTypeA stateful partition=1 replica=1
+app.reqservices version10 ServiceB1 ServiceTypeB stateless partition=1 instance=1
+app.reqservices version10 ServiceB2 ServiceTypeB stateless partition=1 instance=1
+app.reqservices version10 ServiceB3 ServiceTypeB stateless partition=1 instance=1
+app.reqservices version10 ServiceB4 ServiceTypeB stateless partition=1 instance=1
+app.reqservices version10 ServiceB5 ServiceTypeB stateless partition=1 instance=1
+app.upload version10
+provisionapp version10
+
+########################################################
+# Testcase 1: create application with multiple default services,
+# and drop messages to cause retries
+########################################################
+
+# Drop some of CreateServiceRequest between CM and Naming
+# to simulate create service failures and induce retries
+addbehavior b1 * * CreateServiceRequest 0.3
+
+set NamingOperationTimeout 8
+set NamingOperationRetryTimeout 180
+
+# Min and max timeout for scheduling retries
+set MinOperationTimeout 5
+set MaxOperationTimeout 10
+
+#
+# Create application, which fails with timeout because it has the same timeout as the inner operations.
+#
+createapp fabric:/app1 TestApp 1.0 error=Timeout updateApplicationMapOnError=true
+verify
+
+# Internally, CM retries until create app succeeds.
+queryhealth application appname=fabric:/app1 expectedhealthstate=ok
+queryhealthlist services appname=fabric:/app1 expectedstates=ok:10
+
+query GetApplicationList verify \
+    ApplicationName=fabric:/app1,ApplicationTypeName=TestApp,ApplicationTypeVersion=1.0,ApplicationStatus=Ready,HealthState=ok
+
+query getapplicationservicelist ApplicationName=fabric:/app1 verify \
+    ServiceName=fabric:/app1/ServiceA1,Type=Stateful,ServiceTypeName=ServiceTypeA,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceA2,Type=Stateful,ServiceTypeName=ServiceTypeA,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceA3,Type=Stateful,ServiceTypeName=ServiceTypeA,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceA4,Type=Stateful,ServiceTypeName=ServiceTypeA,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceA5,Type=Stateful,ServiceTypeName=ServiceTypeA,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceB1,Type=Stateless,ServiceTypeName=ServiceTypeB,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceB2,Type=Stateless,ServiceTypeName=ServiceTypeB,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceB3,Type=Stateless,ServiceTypeName=ServiceTypeB,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceB4,Type=Stateless,ServiceTypeName=ServiceTypeB,HealthState=ok \
+    ServiceName=fabric:/app1/ServiceB5,Type=Stateless,ServiceTypeName=ServiceTypeB,HealthState=ok
+        
+# Another create app completes with AlreadyExists.
+createapp fabric:/app1 TestApp 1.0 error=ApplicationAlreadyExists
+
+removebehavior b1
+
+########################################################
+# Testcase 2: create more services of the application.
+# Drop delete messages to simulate failures and then delete the application.
+########################################################
+set NamingOperationTimeout 30
+
+createservice fabric:/app1/svc1 ServiceTypeA y 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc2 ServiceTypeA y 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc3 ServiceTypeA y 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc4 ServiceTypeA y 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc5 ServiceTypeA y 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc6 ServiceTypeB n 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc7 ServiceTypeB n 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc8 ServiceTypeB n 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc9 ServiceTypeB n 1 1 appname=fabric:/app1
+createservice fabric:/app1/svc10 ServiceTypeB n 1 1 appname=fabric:/app1
+
+verify
+queryhealthlist services appname=fabric:/app1 expectedstates=ok:20
+
+# Drop some of the requests between NO and AO
+# to simulate delete service failures and induce retries
+addbehavior b1 * * InnerDeleteServiceRequest 0.3
+
+set NamingOperationTimeout 8
+
+deleteapp fabric:/app1 error=Timeout
+
+# Internally, CM retries until delete app succeeds.
+queryhealth application appname=fabric:/app1 expectempty=true
+
+removebehavior b1
+
+-*
+
+!q

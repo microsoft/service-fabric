@@ -1,0 +1,204 @@
+#
+# [owner:vaishnav]
+# This test validates Hosting Health Reports
+#
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange 0
+
+votes 30 40 50
+cmservice 3 1
+namingservice 5 1 1
+fmservice 3 1
+
+set NamingOperationTimeout 30
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+set HealthStoreCleanupInterval 5
+set HealthStoreCleanupGraceInterval 5
+
+set FabricUpgradeUpgradeRetryInterval 3
+set FabricUpgradeValidateRetryInterval 3
+set FabricUpgradeDownloadRetryInterval 3
+
+cleantest
++10
++20
++30
++40
++50
+verify
+
+#
+# Create app and a stateless service and a stateful service
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicepack version10 ServicePackageB version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful
+app.servicetypes version10 ServicePackageB ServiceTypeB1 stateless
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.codepack version10 ServicePackageB CodeB1 types=ServiceTypeB1 version=1.0
+app.codepack version10 ServicePackageB CodeB2 types=ServiceTypeB2 version=1.0
+app.reqservices version10 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3 servicePackageActivationMode=SharedProcess
+app.reqservices version10 ServiceB1 ServiceTypeB1 stateless partition=1 instance=5 servicePackageActivationMode=SharedProcess
+app.reqservices version10 ServiceA2 ServiceTypeA1 stateful partition=2 replica=5 servicePackageActivationMode=ExclusiveProcess
+app.reqservices version10 ServiceB2 ServiceTypeB1 stateless partition=2 instance=5 servicePackageActivationMode=ExclusiveProcess
+app.upload version10
+provisionapp version10
+createapp fabric:/app1/FabricHealth_test TestApp 1.0 
+verify
+
+!var SvcTypeNode1 FM.Replica.NodeId.fabric:/app1/FabricHealth_test/ServiceA1#0#0
+
+# Query and verify health of DeployedApplication
+queryhealth cluster appname=fabric:/app1/FabricHealth_test stats=nodes-ok:5;partitions-ok:6;services-ok:4;apps-ok:1;replicas-ok:28;deployedapps-ok:5
+
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> expectedstates=ok:6
+
+# Query and verify the health of Deployed ServicePackageA
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=10 expectedhealthstate=ok
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> expectedhealthstate=ok expectedstates=ok:6
+
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> servicemanifestname=ServicePackageA expectedstates=ok:3 expectedhealthstate=ok
+
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB expectedhealthstate=ok
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB expectedstates=ok:4
+
+!var ServicePackageA_ActivationId_N10 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceA2#0.10
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N10> expectedhealthstate=ok
+
+!var ServicePackageA_ActivationId_N20 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceA2#1.20
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=20 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N20> expectedhealthstate=ok
+
+!var ServicePackageA_ActivationId_N30 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceA2#0.30
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=30 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N30> expectedhealthstate=ok
+
+!var ServicePackageA_ActivationId_N40 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceA2#1.40
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=40 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N40> expectedhealthstate=ok
+
+!var ServicePackageA_ActivationId_N50 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceA2#0.50
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=50 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N50> expectedhealthstate=ok
+
+!var ServicePackageB_ActivationId_N10 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceB2#0.10
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N10> expectedhealthstate=ok
+
+!var ServicePackageB_ActivationId_N20 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceB2#1.20
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=20 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N20> expectedhealthstate=ok
+
+!var ServicePackageB_ActivationId_N30 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceB2#0.30
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=30 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N30> expectedhealthstate=ok
+
+!var ServicePackageB_ActivationId_N40 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceB2#1.40
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=40 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N40> expectedhealthstate=ok
+
+!var ServicePackageB_ActivationId_N50 RA.FT.ServicePackageActivationId.fabric:/app1/FabricHealth_test/ServiceB2#0.50
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=50 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N50> expectedhealthstate=ok
+
+# Delete service 'fabric:/app1/FabricHealth_test/ServiceB1'. ServicePackageB will be active in Exclusive mode.
+deleteservice fabric:/app1/FabricHealth_test/ServiceB1
+verify
+
+# Query and verify health of DeployedApplication after deleting the service: ServiceB1
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedstates=deployedapps-5
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> expectedstates=ok:5
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> expectedhealthstate=ok expectedstates=ok:5
+
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> servicemanifestname=ServicePackageA expectedhealthstate=ok
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N10> expectedhealthstate=ok
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=20 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N20> expectedhealthstate=ok
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N10> expectedhealthstate=ok
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=20 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N20> expectedhealthstate=ok
+
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB expectempty=true
+
+# Delete service 'fabric:/app1/FabricHealth_test/ServiceB2)' which will cause ServicePackageB to be deactivated.
+deleteservice fabric:/app1/FabricHealth_test/ServiceB2
+verify
+
+# Query and verify health of DeployedApplication after deleting the service: ServiceB2
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedstates=deployedapps-5
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> expectedstates=ok:3
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> expectedhealthstate=ok expectedstates=ok:3
+
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> servicemanifestname=ServicePackageA expectedhealthstate=ok
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N10> expectedhealthstate=ok
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=20 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N20> expectedhealthstate=ok
+
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB expectempty=true
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N10> expectempty=true
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=20 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N20> expectempty=true
+
+# Delete service 'fabric:/app1/FabricHealth_test/ServiceA2'. ServicePackageA for 'Shared' ActivationMode will still be there.
+deleteservice fabric:/app1/FabricHealth_test/ServiceA2
+verify
+
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedstates=deployedapps-3
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> expectedstates=ok:1
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> expectedhealthstate=ok expectedstates=ok:1
+
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=<var.SvcTypeNode1> servicemanifestname=ServicePackageA expectedhealthstate=ok
+
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N10> expectempty=true
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=20 servicemanifestname=ServicePackageA servicePackageActivationId=<var.ServicePackageA_ActivationId_N20> expectempty=true
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB expectempty=true
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=10 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N10> expectempty=true
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test nodeid=20 servicemanifestname=ServicePackageB servicePackageActivationId=<var.ServicePackageB_ActivationId_N20> expectempty=true
+
+# Delete the application
+deleteapp fabric:/app1/FabricHealth_test
+verify
+
+# Query and verify the Health reports of ServiceTypes are deleted
+queryhealth cluster appname=fabric:/app1/FabricHealth_test stats=apps-0;deployedapps-0;deployedservicepackages-0;replicas-0
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=10 expectempty=true
+checkhm deployedapplications expectedcount=0
+checkhm deployedservicepackages expectedcount=0
+
+# Verify health events during FabricUpgrade
+
+# Create and provision for FabricUpgrade
+prepareupgradefabric code=4.2.960.0 config=version2
+provisionfabric code=4.2.960.0 config=version2
+
+# Set flag to fail validation during FabricUpgrade
+failfabricupgradevalidation true
+
+# Start upgrade
+upgradefabric code=4.2.960.0 config=version2 Rolling upgrademode=manual
+
+# Query that the node is in error state due to validation failures
+queryhealth node nodeid=10 expectedhealthstate=error
+
+# Stop failing validation and verify that the upgrade succeds
+failfabricupgradevalidation false
+verifyupgradefabric upgradedomains=10_ud
+queryhealth node nodeid=10 expectedhealthstate=ok
+
+# Set flag to fail fabric upgrade
+failfabricupgrade true
+
+# Move to the next UD and query that the node is unhealthy due to upgrade failures
+upgradefabricmovenext
+queryhealth node nodeid=20 expectedhealthstate=error
+
+# Stop failing upgrade and verify that the upgrade succeds
+failfabricupgrade false
+verifyupgradefabric upgradedomains=10_ud,20_ud
+queryhealth node nodeid=20 expectedhealthstate=ok
+
+# Start upgrade of next UDs without any failure
+upgradefabricmovenext
+verifyupgradefabric upgradedomains=10_ud,20_ud,30_ud
+queryhealth node nodeid=30 expectedhealthstate=ok
+
+upgradefabricmovenext
+verifyupgradefabric upgradedomains=10_ud,20_ud,30_ud,40_ud
+queryhealth node nodeid=40 expectedhealthstate=ok
+
+upgradefabricmovenext
+verifyupgradefabric upgradedomains=10_ud,20_ud,30_ud,40_ud,50_ud
+queryhealth node nodeid=50 expectedhealthstate=ok
+
+!q

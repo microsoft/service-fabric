@@ -1,0 +1,1074 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "BasicStatefulActorKvs",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BasicStatefulActorKvs.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatefulActorRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BasicStatefulActorRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatefulActorOnNativeReliableDictionary",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BasicStatefulActorRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "BasicStatefulActorVolatile",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BasicStatefulActorVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatelessActor",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BasicStatelessActor.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorEvents",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorEvents.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActGCtest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorGC.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActReminderstestonKvs",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "RemindersKvs.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActReminderstestonReliableDictionary",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "RemindersRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActReminderstestonNativeReliableDictionary",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "RemindersRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "FabActReminderstestonVolatile",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "RemindersVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActdirtystatehandlerKVStests",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DirtyActorStateKVS.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActdirtystatehandlerRDtests",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DirtyActorStateRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabActdirtystatehandlerNativeRDtests",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DirtyActorStateRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "FabActdirtystatehandlerVolatiletests",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DirtyActorStateVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorFailovertestKVS",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorFailoverKvs.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorFailovertestRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorFailoverRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorFailovertestNativeRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorFailoverRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "ActorFailovertestVolatile",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorFailoverVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Actorreentrancytest",
+      "Type": "V2_ScriptTest",
+      "Owners": "rajeetn",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ReentrancyKVS.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "GranularStateActorKvs",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "GranularStateActorKvs.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "GranularStateActorRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "GranularStateActorRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "GranularStateActorNativeRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "GranularStateActorRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "GranularStateActorVolatile",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "GranularStateActorVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "PolymorphicStateActor",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "PolymorphicStateActor.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryStatefulKVStest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryKVS.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQuerywithPagingStatefulKVStest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryPagingKVS.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryStatefulRDtest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryStatefulNativeRDtest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "ActorQuerywithPagingStatefulRDtest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryPagingRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQuerywithPagingStatefulNativeRDtest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryPagingRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "ActorQueryStatefulVolatiletest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQuerywithPagingStatefulVolatiletest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryPagingVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQueryStatelesstest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryStateless.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorQuerywithPagingStatelesstest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorQueryPagingStateless.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatefulActorKVStest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DeleteStatefulActorKvs.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatefulActorRDtest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DeleteStatefulActorRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatefulActorNativeRDtest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DeleteStatefulActorRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "DeleteStatefulActorVolatiletest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DeleteStatefulActorVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatelessActortest",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "DeleteStatelessActor.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BackupRestoreActorRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BackupRestoreActorRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BackupRestoreActorNativeRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BackupRestoreActorRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "BackupRestoreActorKVS",
+      "Type": "V2_ScriptTest_NoNativeStore",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "BackupRestoreActorKVS.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorSecurecommunication",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorSecureCommunication.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Actorservicepolymorphismtest",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorServicePolymorphism.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ReminderContinuityKVS",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ReminderContinuityActorKvs.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ReminderContinuityRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ReminderContinuityActorRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ReminderContinuityNativeRD",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ReminderContinuityActorRD2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },    
+    {
+      "Name": "ReminderContinuityVolatile",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ReminderContinuityActorVolatile.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "BasicStatefulActorRDDisabledSweep",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreDisabled.txt",
+        "TaskName": "BasicStatefulActorRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorFailovertestRDEnabledSweep",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreEnabled.txt",
+        "TaskName": "ActorFailoverRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "DeleteStatefulActorRDtestEnabledSweep",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreEnabledValue.txt",
+        "TaskName": "DeleteStatefulActorRD.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorIndependentDispatcher",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha,harahma,suchia",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorIndepdentDispatcher.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ActorVerifyHeaderEvents",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha,harahma,suchia",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfig.txt",
+        "TaskName": "ActorVerifyHeaderEvents.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabSrvCIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma,tyadam",
+      "Tags": "Services",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "FabSrv-CIT.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabSrvStatelessRunAsyncFault",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Services",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "StatelessRunAsyncFault.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ServiceProxyCIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "bharatn",
+      "Tags": "Services",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "ServiceProxyTest.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ServiceProxyCITusingWCF",
+      "Type": "V2_ScriptTest",
+      "Owners": "bharatn",
+      "Tags": "Services",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "ServiceProxyTest-Wcf.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "WCFExceptionPropagation",
+      "Type": "V2_ScriptTest",
+      "Owners": "harahma",
+      "Tags": "Services",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "ExceptionPropagation.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ServiceProxypolimorphismCIT",
+      "Type": "V2_ScriptTest",
+      "Owners": "bharatn",
+      "Tags": "Services",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "ServiceProxyPolymorphismTest.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "KestrelCommunicationListenerTests",
+      "Type": "Command",
+      "Owners": "amanbha",
+      "Tags": "AspnetCore",
+      "TestExecutionParameters": {
+        "TaskName": "KestrelCommunicationListenerTests",
+        "COMMANDTORUN": "FabricUnitTests\\xunit.console.exe",
+        "PARAMS": "[BINS]\\FabricUnitTests\\Microsoft.ServiceFabric.AspNetCore.Tests.dll -verbose -diagnostics -class Microsoft.ServiceFabric.AspNetCore.Tests.KestrelCommunicationListenerTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "WebListenerCommunicationListenerTests",
+      "Type": "Command",
+      "Owners": "amanbha",
+      "Tags": "AspnetCore",
+      "TestExecutionParameters": {
+        "TaskName": "WebListenerCommunicationListenerTests",
+        "COMMANDTORUN": "FabricUnitTests\\xunit.console.exe",
+        "PARAMS": "[BINS]\\FabricUnitTests\\Microsoft.ServiceFabric.AspNetCore.Tests.dll -verbose -diagnostics -class Microsoft.ServiceFabric.AspNetCore.Tests.WebListenerCommunicationListenerTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "ServiceFabricMiddlewareTests",
+      "Type": "Command",
+      "Owners": "amanbha",
+      "Tags": "AspnetCore",
+      "TestExecutionParameters": {
+        "TaskName": "ServiceFabricMiddlewareTests",
+        "COMMANDTORUN": "FabricUnitTests\\xunit.console.exe",
+        "PARAMS": "[BINS]\\FabricUnitTests\\Microsoft.ServiceFabric.AspNetCore.Tests.dll -verbose -diagnostics -class Microsoft.ServiceFabric.AspNetCore.Tests.ServiceFabricMiddlewareTests",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "WebHostBuilderServiceFabricExtensionTests",
+      "Type": "Command",
+      "Owners": "amanbha",
+      "Tags": "AspnetCore",
+      "TestExecutionParameters": {
+        "TaskName": "WebHostBuilderServiceFabricExtensionTests",
+        "COMMANDTORUN": "FabricUnitTests\\xunit.console.exe",
+        "PARAMS": "[BINS]\\FabricUnitTests\\Microsoft.ServiceFabric.AspNetCore.Tests.dll -verbose -diagnostics -class Microsoft.ServiceFabric.AspNetCore.Tests.WebHostBuilderServiceFabricExtensionTests",
+        "SetupType": "XCopy"
+      }
+    }
+  ]
+}

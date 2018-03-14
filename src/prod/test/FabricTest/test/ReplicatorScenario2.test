@@ -1,0 +1,60 @@
+##########################################################################################################################
+#   Repro For RD BUG: 1250896
+#
+#   Scenario:
+#   3 Replica set P-40, S1-30, S2-20
+#
+#   1. Ensure that Replica 20 does NOT start pumping replication operations (GetReplicationStream should not be called)
+#
+#   2. No Replication operations are done in this epoch (initial configuration)
+#
+#   3. Once the partition is stable, kill 40
+#
+#   4. When Replicator on 20 receives UpdateEpoch, we hit an ASSERT with the bug 
+#
+#   Cause:
+#   Since replication pump has not started on 20, and since the dispatch queue is empty (since no repl operations in e1),
+#   the drain async operation completes with error code FABRIC_E_NOT_READY, indicating that the stream is not initialized
+#
+#   The assumption before this bug fix was that the drain operation during update epoch should never see this error code.
+#   This scenario contradicts the assumption and hence swallows the error code and returns SUCCESS 
+##########################################################################################################################
+
+set DummyPLBEnabled true
+votes 10
+cmservice 0 0
+namingservice 1 3 1
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+
++10
+verify
++20
++30
++40
+verify 
+
+# Block the start of replication pump
+setsignal 20 fabric:/test1 startpump.replication.block
+createname fabric:/test1
+createservice fabric:/test1 TestStoreServiceType y 1 3 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+
+!pause 3
+
+# Killing the primary should trigger an UpdateEpoch on the secondary replicator
+-40
+!waitforstate FM.Replica.Role.fabric:/test1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+
+!pause 2
+clientput fabric:/test1 10 10Data1 
+!wait 
+
+!q

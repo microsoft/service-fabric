@@ -1,0 +1,94 @@
+########################
+# Fabric Test Scenario 2
+########################
+# 
+# This test was ported from 2.log
+# and contains a series of small scenarios
+# combined into one large test.
+#
+#TODO: config,FixpointRetryInterval,0.5
+#TODO: config,FixpointBackoffInterval,0.5
+#TODO: config,JoinAcceptThrottleInterval,1
+#
+#################################
+# 1) Test bootup and restart
+#    using a single seed node
+#################################
+#
+set GlobalTicketLeaseDuration 20
+set GlobalTicketRenewInterval 3
+set BootstrapTicketLeaseDuration 20
+set BootstrapTicketAcquireLimit 5
+set PingInterval 2
+set OpenTimeout 30
+set CheckForLeak false
+# i. Seed node should boot immediately
+votes 0
+ticketstore 0 0 0
++0
+verify
+# ii. Non-seed node should boot immediately
++10
+verify
+-10
+-0
+# iii. Boot seed again - global ticket is active from the last boot.
+#      Seed node should not boot immediately.
+#      (State should still be 'Booting' after a short pause)
++0
+!pause,5
+!state Phase.0 B
+#Wait for seed node to boot.
+verify
+abort 0
+# iv. Set a global ticket that expires after 10 seconds
+#     Verify that 0 is able to form the ring after 10 seconds
+ticketstore 0 10 0
++0
+verify
++10
+verify
+-10
+-0
+# v. Additional testcase not in 2.log:
+#    Test that a non-zero super ticket also prevents
+#    node 0 from forming the ring immediately.
+ticketstore 0 0 10
++0
+!pause,5
+!state Phase.0 B
+#Wait for seed node to boot.
+verify
+abort 0
+# vi. Set a super ticket that expires after 10 seconds
+#     Verify that 0 is able to form the ring after 10 seconds
+ticketstore 0 0 10
++0
+verify
++10 expectfailure
+verify
+!expect,Node 10 Failed
+abort 0
+!wait 50
+votes 100 200 300
+clearticket
++100
++200
++300
+verify
++400
++500
+verify
+-100
+-200
+addbehavior b1 100 * NeighborhoodQueryRequest
++100
+!pause,5
+-300
+-400
+-500
+removebehavior b1
++200
++300
+verify
+!q

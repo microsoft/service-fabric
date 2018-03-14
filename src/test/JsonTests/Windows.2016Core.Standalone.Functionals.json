@@ -1,0 +1,176 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "SA_Onebox",
+      "Type": "PowershellTest",
+      "Owners": "menchi,liphigao,ratando",
+      "ResourcesRequired": "Server:1;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -IsOneBox -TestName SA_OneBox",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_OneboxRemote",
+      "Type": "PowershellTest",
+      "Owners": "liphigao,ratando",
+      "ResourcesRequired": "Server:2;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -IsOneBox -ControllerSeparate -TestName SA_OneboxRemote",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"         
+      }
+    },
+    {
+      "Name": "SA_Multibox",
+      "Type": "PowershellTest",
+      "Owners": "liphigao,ratando",
+      "ResourcesRequired": "Server:3;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName SA_Multibox",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_MultiboxRemote",
+      "Type": "PowershellTest",
+      "Owners": "liphigao,ratando",
+      "ResourcesRequired": "Server:4;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -ControllerSeparate -TestName SA_MultiboxRemote",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_AddNode",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,menchi,liphigao,ratando",
+      "ResourcesRequired": "Server:4;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneNodeTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName SA_AddNode",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_CabDownload",
+      "Type": "PowershellTest",
+      "Owners": "ratando,liphigao",
+      "ResourcesRequired": "Server:4;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneDownloadCabTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName SA_CabDownload",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SA_ArpUninstall",
+      "Type": "PowershellTest",
+      "Owners": "maburlik,ratando,liphigao,rsinha",
+      "ResourcesRequired": "Server:1;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneArpUninstallTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -TestName SA_ArpUninstall",
+        "ExecutionTimeout": "4800",
+        "CleanupTimeout": "2100"
+      }
+    },
+
+    {
+      "Name": "ClusCertUpgrade1Box",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:1;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTestsWithoutFaultChecker.txt",
+        "TaskName": "UpgradeFabricSA_CertOneBox.test",
+        "ExecutionTimeout": "6300",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ClusCertCnUpgrade1Box",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:1;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTestsWithoutFaultChecker.txt",
+        "TaskName": "UpgradeFabricSA_CertCnOneBox.test",
+        "ExecutionTimeout": "6300",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ClusCertUpgradeMultiBox",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:4;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_CertMultiBox.test",
+        "ExecutionTimeout": "9000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "InterruptUpgrade",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:4;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_Interrupt.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "UpgradeStandalone_WS2016Core",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:6;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\XCopyServerUpgrade.txt",
+        "TaskName": "UpgradeFabricSA_Basic.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "LogCollectorSA",
+      "Type": "V2_ScriptTest",
+      "Owners": "liphigao, ratando",
+      "ResourcesRequired": "Server:1;Group=WS2016Core",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "LogCollectorSA.test",
+        "ExecutionTimeout": "3000",
+        "CleanupTimeout": "2100"
+      }
+    }           
+  ]
+}

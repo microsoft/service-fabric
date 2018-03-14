@@ -1,0 +1,58 @@
+#
+# This script verifies:
+#  - A routed message can be delivered with retries, even with an unreliable transport.
+#  - An error code is returned when a routed message cannot be delivered due to Timeout.
+#
+
+!setcfg Federation.TraceLoopbackJobQueue=true
+
+votes 100
+clearticket
++100
++200
++300
++400
++500
+verify
+
+# Test 1: Verify routed messages delivered with retries enabled.
+# Drop 80% of messages, but set retry to 0.1 seconds so messages eventually received
+addbehavior dropMostRoutedFrom300 300 * Routed 0.8 Max
+set RouteTimeout 15.0
+set RouteRetryTimeout 0.1
+routeone 300 400 routeExact
+routeone 300 222
+routereq 300 510
+verify
+
+removebehavior dropMostRoutedFrom300
+
+# Test #2: Verify Timeout error if message not delivered.
+# Drop 100% of messages, so no messages should be received
+addbehavior dropAllRoutedFrom300 300 * Routed 1.0 Max
+set RouteTimeout 3.0
+set RouteRetryTimeout 0.1
+routeone 300 400 expectTimeout routeExact
+routeone 300 222 expectTimeout
+routereq 300 510 expectTimeout
+set RouteRetryTimeout 3.0
+routeone 300  99 expectTimeout
+set RouteRetryTimeout 5.0
+routereq 300 410 expectTimeout
+verify
+
+removebehavior dropAllRoutedFrom300 
+
+# Test #3: Verify the messages are received fine after removing unreliable transport behavior.
+routeone 300 101
+routereq 300 301
+routeone 200 305
+verify
+
+-500
+-400
+-300
+-200
+-100
+
+!q

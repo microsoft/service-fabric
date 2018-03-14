@@ -1,0 +1,73 @@
+votes 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set UpgradeStatusPollInterval 5
+
++10
++20
++30
+verify
+
+# 
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+
+app.servicepack version10 ServicePackageA version=1.0
+
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+
+app.upload version10
+
+# 
+# Application version 1.1 
+#
+
+app.add version11 TestApp 1.1 version10
+
+app.servicepack version11 ServicePackageA version=1.1 configversion=1.1 dataversion=1.0
+
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful persist
+
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.1
+
+app.reqservices version11 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+
+app.upload version11
+
+#
+# Provision application version 1.0
+#
+provisionapp version10
+
+#
+# Provision application version 1.1
+#
+provisionapp version11
+
+#
+# Create application version 1.0
+#
+createapp fabric:/app1 TestApp 1.0
+verify
+
+#
+# Upgrade application from version 1.0 to 1.1
+# 
+# There are no active services so the application is
+# unknown to the FM
+#
+upgradeapp fabric:/app1 1.1 Rolling
+
+verifyupgradeapp fabric:/app1
+
+verify
+
+-*
+
+!q

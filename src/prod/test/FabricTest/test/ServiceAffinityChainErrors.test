@@ -1,0 +1,60 @@
+# Verify service creations which form a service affinity chain would fail.
+
+cleantest
+votes 10
+namingservice 1 3 2
+set PlaceChildWithoutParent false
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
++10 cap=memory:10,disk:10
++20 cap=memory:10,disk:10
++30 cap=memory:10,disk:10
++40 cap=memory:10,disk:10
+verify
+
+createservice fabric:/test1 CalculatorServiceType n 0 3
+createservice fabric:/test2 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test1,affinity
+createservice fabric:/test3 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test2,affinity errors=ServiceAffinityChainNotSupported
+createservice fabric:/test3 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test2,affinity errors=ServiceAffinityChainNotSupported
+verify
+
+# Verify we can delete the failed service fine with UserServiceNotFound
+deleteservice fabric:/test3 errors=UserServiceNotFound
+deleteservice fabric:/test3 errors=UserServiceNotFound
+
+# Verify we can re-create the service with correct parameters (i.e. without forming the chain)
+createservice fabric:/test3 CalculatorServiceType n 0 3
+deleteservice fabric:/test3
+verify
+
+# A cycle is a chain as well
+createservice fabric:/test4 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test5,affinity
+createservice fabric:/test5 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test4,affinity errors=ServiceAffinityChainNotSupported
+createservice fabric:/test5 CalculatorServiceType n 0 3
+verify
+
+# A chain can be formed without all services to be created
+createservice fabric:/test6 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test7,affinity
+createservice fabric:/test8 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test6,affinity errors=ServiceAffinityChainNotSupported
+createservice fabric:/test7 CalculatorServiceType n 0 3
+verify
+
+createservice fabric:/test9 CalculatorServiceType n 0 3
+createservice fabric:/test10 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test9,affinity
+createservice fabric:/test11 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test10,affinity errors=ServiceAffinityChainNotSupported
+# This is allowed as the previous service didn't make it in
+createservice fabric:/test12 CalculatorServiceType n 0 3 servicecorrelations=fabric:/test11,affinity
+createservice fabric:/test11 CalculatorServiceType n 0 3
+verify
+
+createname fabric:/statefulpersisted
+createservice fabric:/statefulpersisted TestPersistedStoreServiceType y 1 2 persist metrics=memory,Medium,5,5,disk,High,5,5
+
+createname fabric:/statefulpersisted2
+createservice fabric:/statefulpersisted2 TestPersistedStoreServiceType y 1 2 persist metrics=memory,Medium,95,25,disk,High,950,250 errors=InsufficientClusterCapacity
+
+# Test affinity on a system service
+createservice fabric:/test13 CalculatorServiceType n 0 3 servicecorrelations=fabric:/System/NamingService,affinity
+verify
+
+!q

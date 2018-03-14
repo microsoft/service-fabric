@@ -1,0 +1,186 @@
+votes 10
+namingservice 1 1 1
+cmservice 1 1
+fmservice 1 1
+cleantest
+
+set ImageBuilderJobQueueDelay 5
+
++10
+verify
+
+# 
+# Application version v1
+#
+app.add version10 TestApp v1
+app.clear version10
+app.servicepack version10 ServicePackageA version=v1
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful persist
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=v1
+app.upload version10 compress
+
+#
+# Testcase 1: async provisioning
+#
+provisionapp version10 Success async applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Provisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Provisioning
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Available
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Available
+
+#
+# Testcase 2: async unprovisioning
+#
+unprovisionapp TestApp v1 Success async
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Unprovisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Unprovisioning
+
+query GetApplicationTypeList verify
+query GetApplicationTypePagedList verify
+
+#
+# Testcase 3: interrupt async provisioning
+#
+provisionapp version10 Success async applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Provisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Provisioning
+
+unprovisionapp TestApp v1 Success async
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Unprovisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Unprovisioning
+
+query GetApplicationTypeList verify
+
+query GetApplicationTypePagedList verify
+
+#
+# Testcase 3b: interrupt async provisioning with sync unprovision
+#
+provisionapp version10 Success async applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Provisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=TestApp,ApplicationTypeVersion=v1,Status=Provisioning
+
+unprovisionapp TestApp v1 ApplicationTypeNotFound
+
+query GetApplicationTypeList verify
+
+query GetApplicationTypePagedList verify
+
+#
+# Testcase 4: async provisioning failure, fix and re-provision same type+version
+#
+
+app.add FailApp FailType FailVersion
+app.clear FailApp
+app.servicepack FailApp ServicePackageA version=FailVersion
+app.upload FailApp compress
+
+provisionapp FailApp Success async applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Provisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Provisioning
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Failed
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Failed
+
+# fix and re-provision
+
+app.delete FailApp
+app.add FailApp FailType FailVersion
+app.clear FailApp
+app.servicepack FailApp ServicePackageA version=FailVersion
+app.servicetypes FailApp ServicePackageA ServiceTypeA1 stateful persist
+app.codepack FailApp ServicePackageA CodeA1 types=ServiceTypeA1 version=FailVersion
+app.upload FailApp compress
+
+provisionapp FailApp Success async applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Provisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Provisioning
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available
+
+#
+# Testcase 5: async provisioning failure, unprovision failed type+version
+#
+
+app.add FailApp2 FailType2 FailVersion2
+app.clear FailApp2
+app.servicepack FailApp2 ServicePackageA version=FailVersion2
+app.upload FailApp2 compress
+
+provisionapp FailApp2 Success async applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available \
+ApplicationTypeName=FailType2,ApplicationTypeVersion=FailVersion2,Status=Provisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available \
+ApplicationTypeName=FailType2,ApplicationTypeVersion=FailVersion2,Status=Provisioning
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available \
+ApplicationTypeName=FailType2,ApplicationTypeVersion=FailVersion2,Status=Failed
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available \
+ApplicationTypeName=FailType2,ApplicationTypeVersion=FailVersion2,Status=Failed
+
+# unprovision
+
+unprovisionapp FailType2 FailVersion2 Success async
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available \
+ApplicationTypeName=FailType2,ApplicationTypeVersion=FailVersion2,Status=Unprovisioning
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available \
+ApplicationTypeName=FailType2,ApplicationTypeVersion=FailVersion2,Status=Unprovisioning
+
+query GetApplicationTypeList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available
+
+query GetApplicationTypePagedList verify \
+ApplicationTypeName=FailType,ApplicationTypeVersion=FailVersion,Status=Available
+
+-*
+!q

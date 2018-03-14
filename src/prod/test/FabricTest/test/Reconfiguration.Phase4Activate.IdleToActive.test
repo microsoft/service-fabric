@@ -1,0 +1,707 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase4_Activate for a reconfig that promotes a replica
+!load FailoverCITInitialization.test
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Phase4_Activate promotes the replica
+# Verify retry while in progress
+#####################################################
+
+addbehavior b0 * * Activate
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 Phase4_Activate
+
+setsignal 30 fabric:/test1 replicator.beginchangerole.block
+
+removebehavior b0
+waitforsignalhit 30 fabric:/test1 replicator.beginchangerole.block
+
+!pause 10
+
+setsignal 30 fabric:/test1 service.beginchangerole.block
+resetsignal 30 fabric:/test1 replicator.beginchangerole.block
+waitforsignalhit 30 fabric:/test1 service.beginchangerole.block
+
+resetsignal 30 fabric:/test1 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2: Phase4_Activate I/S retry
+#####################################################
+
+addbehavior b0 * * Activate
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.40 Phase4_Activate
+
+removebehavior b0
+
+injectfailure 30 fabric:/test2 replicator.beginchangerole
+
+!pause 10
+
+removefailure 30 fabric:/test2 replicator.beginchangerole
+verify
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 3: DoReconfiguration is sent to I/S replica after replica has received Activate 
+# But before I/S is complete
+#####################################################
+
+addbehavior b0 * * Activate
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 Phase4_Activate
+
+setsignal 30 fabric:/test3 service.beginchangerole.block
+removebehavior b0
+waitforsignalhit 30 fabric:/test3 service.beginchangerole.block
+
+#Now I/S is blocked on RAP
+#Drop the primary
+reportfault 40 fabric:/test3 permanent
+!waitforstate FM.Replica.Role.fabric:/test3.30 Primary
+
+#Block on data loss and verify that it gets hit (i.e. FM sends DoReconfig and it is processed)
+setsignal 30 fabric:/test3 replicator.beginondataloss.block
+resetsignal 30 fabric:/test3 service.beginchangerole.block
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test3 replicator.beginondataloss.block
+resetsignal 30 fabric:/test3 replicator.beginondataloss.block
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 4: DoReconfiguration is sent to I/S replica after replica has completed activate
+#####################################################
+
+addbehavior b0 * * Activate
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 Phase4_Activate
+
+addbehavior b1 * * DoReconfigurationReply
+addbehavior b2 * * DoReconfiguration
+removebehavior b0
+!waitforstate RA.Replica.MessageStage.fabric:/test3.40.30 N
+
+reportfault 40 fabric:/test3 permanent
+!waitforstate FM.Replica.Role.fabric:/test3.30 Primary
+
+#Block on data loss and verify that it gets hit (i.e. FM sends DoReconfig and it is processed)
+setsignal 30 fabric:/test3 replicator.beginondataloss.block
+removebehavior b1
+removebehavior b2
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test3 replicator.beginondataloss.block
+resetsignal 30 fabric:/test3 replicator.beginondataloss.block
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 5: DoReconfiguration is sent to I/S replica after CR fails
+#####################################################
+
+addbehavior b0 * * Activate
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 Phase4_Activate
+
+setsignal 30 fabric:/test5 replicator.beginchangerole.block
+removebehavior b0
+waitforsignalhit 30 fabric:/test5 replicator.beginchangerole.block
+
+# ensure no further retry happens and CR(S) on repl is block
+# fail CR(S) on service
+addbehavior b0 * * Activate
+
+injectfailure 30 fabric:/test5 service.beginchangerole
+resetsignal 30 fabric:/test5 replicator.beginchangerole.block
+
+# pause as there is no way to ensure that api call is complete
+!pause 10
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 Phase4_Activate
+
+#Drop the primary
+addbehavior b1 * * DoReconfiguration
+reportfault 40 fabric:/test5 permanent
+!waitforstate FM.Replica.Role.fabric:/test5.30 Primary
+
+#Block on data loss and verify that it gets hit (i.e. FM sends DoReconfig and it is processed)
+setsignal 30 fabric:/test5 replicator.beginondataloss.block
+removebehavior b0
+removebehavior b1
+removefailure 30 fabric:/test5 service.beginchangerole
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test5 replicator.beginondataloss.block
+resetsignal 30 fabric:/test5 replicator.beginondataloss.block
+verify
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Scenario 6: S/S IB replica that is built during Activate
+# API calls and retries
+#####################################################
+
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior by * * ReplicaUp
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+removebehavior by
+
+!waitforstate RA.Replica.IsUp.fabric:/test6.40.30 true
+!waitforstate RA.Replica.State.fabric:/test6.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Phase4_Activate
+
+addbehavior b2 * * ReplicatorBuildIdleReplica
+reportfault 30 fabric:/test6 transient
+!waitforstate RA.Replica.State.fabric:/test6.40.30 IB
+
+setsignal 30 fabric:/test6 replicator.beginchangerole.block
+
+removebehavior b0
+removebehavior b2
+waitforsignalhit 30 fabric:/test6 replicator.beginchangerole.block
+
+!pause 10
+
+setsignal 30 fabric:/test6 service.beginchangerole.block
+resetsignal 30 fabric:/test6 replicator.beginchangerole.block
+waitforsignalhit 30 fabric:/test6 service.beginchangerole.block
+
+resetsignal 30 fabric:/test6 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test6
+verify
+
+#####################################################
+# Scenario 7: S/S IB replica that is built during Activate
+# API Failure and retry
+#####################################################
+
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior by * * ReplicaUp
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+removebehavior by
+
+!waitforstate RA.Replica.IsUp.fabric:/test7.40.30 true
+!waitforstate RA.Replica.State.fabric:/test7.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 Phase4_Activate
+
+addbehavior b2 * * ReplicatorBuildIdleReplica
+
+addbehavior by * * ReplicaUp
+reportfault 30 fabric:/test7 transient
+!waitforstate RA.FT.FMMessageStage.fabric:/test7.30 ReplicaUp
+removebehavior by
+
+!waitforstate RA.Replica.State.fabric:/test7.40.30 IB
+
+injectfailure 30 fabric:/test7 replicator.beginchangerole
+
+removebehavior b0
+removebehavior b2
+
+!pause 10
+
+removefailure 30 fabric:/test7 replicator.beginchangerole
+verify
+
+deleteservice fabric:/test7
+verify
+
+#####################################################
+# Scenario 8: S/S IB replica that is built during Activate
+# DoReconfiguration is sent 
+#####################################################
+
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior by * * ReplicaUp
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+removebehavior by
+
+!waitforstate RA.Replica.IsUp.fabric:/test8.40.30 true
+!waitforstate RA.Replica.State.fabric:/test8.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 Phase4_Activate
+
+addbehavior b2 * * ReplicatorBuildIdleReplica
+
+addbehavior by * * ReplicaUp
+reportfault 30 fabric:/test8 transient
+!waitforstate RA.FT.FMMessageStage.fabric:/test8.30 ReplicaUp
+removebehavior by
+
+
+!waitforstate RA.Replica.State.fabric:/test8.40.30 IB
+
+setsignal 30 fabric:/test8 service.beginchangerole.block
+removebehavior b0
+removebehavior b2
+
+waitforsignalhit 30 fabric:/test8 service.beginchangerole.block
+
+#Now I/S is blocked on RAP
+#Drop the primary
+reportfault 40 fabric:/test8 permanent
+!waitforstate FM.Replica.Role.fabric:/test8.30 Primary
+
+#Block on data loss and verify that it gets hit (i.e. FM sends DoReconfig and it is processed)
+setsignal 30 fabric:/test8 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 30 fabric:/test8 service.beginchangerole.block
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test8 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 30 fabric:/test8 replicator.updatecatchupreplicasetconfiguration.block
+verify
+
+deleteservice fabric:/test8
+verify
+
+#####################################################
+# Scenario 9: S/S IB replica that is built during Activate
+# DoReconfiguration is sent after activate is complete
+#####################################################
+
+createservice fabric:/test9 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior by * * ReplicaUp
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate FM.Node.IsUp.30 true
+removebehavior by
+
+!waitforstate RA.Replica.IsUp.fabric:/test9.40.30 true
+!waitforstate RA.Replica.State.fabric:/test9.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.40 Phase4_Activate
+
+addbehavior b2 * * ReplicatorBuildIdleReplica
+addbehavior by * * ReplicaUp
+reportfault 30 fabric:/test9 transient
+!waitforstate RA.FT.FMMessageStage.fabric:/test9.30 ReplicaUp
+removebehavior by
+
+!waitforstate RA.Replica.State.fabric:/test9.40.30 IB
+
+addbehavior b5 * * DoReconfigurationReply
+addbehavior b6 * * DoReconfiguration
+
+removebehavior b0
+removebehavior b2
+
+# activate reply is complete
+!waitforstate RA.Replica.MessageStage.fabric:/test9.40.30 N
+
+# Drop primary
+reportfault 40 fabric:/test9 permanent
+!waitforstate FM.Replica.Role.fabric:/test9.30 Primary
+
+# Block to verify
+setsignal 30 fabric:/test9 replicator.updatecatchupreplicasetconfiguration.block
+removebehavior b5 
+removebehavior b6
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test9 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 30 fabric:/test9 replicator.updatecatchupreplicasetconfiguration.block
+verify
+
+deleteservice fabric:/test9
+verify
+
+#####################################################
+# Scenario 10: S/S IB replica that is built during Activate
+# DoReconfiguration is sent after activate fails
+#####################################################
+
+createservice fabric:/test10 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.IsUp.fabric:/test10.40.30 true
+!waitforstate RA.Replica.State.fabric:/test10.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test10.40 Phase4_Activate
+
+addbehavior b2 * * ReplicatorBuildIdleReplica
+
+addbehavior by * * ReplicaUp
+reportfault 30 fabric:/test10 transient
+!waitforstate RA.FT.FMMessageStage.fabric:/test10.30 ReplicaUp
+removebehavior by
+
+!waitforstate RA.Replica.State.fabric:/test10.40.30 IB
+
+setsignal 30 fabric:/test10 replicator.beginchangerole.block
+
+removebehavior b0
+removebehavior b2
+
+# wait until we hit CR(S) on repl
+# fail CR(S) on service so RA has the state that activate has failed
+waitforsignalhit 30 fabric:/test10 replicator.beginchangerole.block
+
+# now CR(S) on service will fail, unblock CR(S) on repl
+addbehavior b5 * * Activate
+injectfailure 30 fabric:/test10 service.beginchangerole
+resetsignal 30 fabric:/test10 replicator.beginchangerole.block
+
+# Block to verify
+setsignal 30 fabric:/test10 replicator.updatecatchupreplicasetconfiguration.block
+
+# Drop primary
+reportfault 40 fabric:/test10 permanent
+!waitforstate FM.Replica.Role.fabric:/test10.30 Primary
+
+removefailure 30 fabric:/test10 service.beginchangerole
+removebehavior b5 
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test10 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 30 fabric:/test10 replicator.updatecatchupreplicasetconfiguration.block
+verify
+
+deleteservice fabric:/test10
+verify
+
+#####################################################
+# Scenario 11: S/S IB replica that is built during Catchup + Activate
+# API calls and retries
+#####################################################
+
+createservice fabric:/test11 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.IsUp.fabric:/test11.40.30 true
+!waitforstate RA.Replica.State.fabric:/test11.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.40 Phase4_Activate
+
+setsignal 30 fabric:/test11 replicator.beginchangerole.block
+
+removebehavior b0
+waitforsignalhit 30 fabric:/test11 replicator.beginchangerole.block
+
+!pause 10
+
+setsignal 30 fabric:/test11 service.beginchangerole.block
+resetsignal 30 fabric:/test11 replicator.beginchangerole.block
+waitforsignalhit 30 fabric:/test11 service.beginchangerole.block
+
+resetsignal 30 fabric:/test11 service.beginchangerole.block
+verify
+
+deleteservice fabric:/test11
+verify
+
+#####################################################
+# Scenario 12: S/S IB replica that is built during Catchup + Activate
+# API Failure and retry
+#####################################################
+
+createservice fabric:/test12 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test12.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.IsUp.fabric:/test12.40.30 true
+!waitforstate RA.Replica.State.fabric:/test12.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test12.40 Phase4_Activate
+
+injectfailure 30 fabric:/test12 replicator.beginchangerole
+
+removebehavior b0
+
+!pause 10
+
+removefailure 30 fabric:/test12 replicator.beginchangerole
+verify
+
+deleteservice fabric:/test12
+verify
+
+#####################################################
+# Scenario 13: S/S IB replica that is built during Catchup + Activate
+# DoReconfiguration is sent 
+#####################################################
+
+createservice fabric:/test13 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test13.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.IsUp.fabric:/test13.40.30 true
+!waitforstate RA.Replica.State.fabric:/test13.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test13.40 Phase4_Activate
+
+setsignal 30 fabric:/test13 service.beginchangerole.block
+removebehavior b0
+
+waitforsignalhit 30 fabric:/test13 service.beginchangerole.block
+
+#Now I/S is blocked on RAP
+#Drop the primary
+reportfault 40 fabric:/test13 permanent
+!waitforstate FM.Replica.Role.fabric:/test13.30 Primary
+
+#Block on data loss and verify that it gets hit (i.e. FM sends DoReconfig and it is processed)
+setsignal 30 fabric:/test13 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 30 fabric:/test13 service.beginchangerole.block
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test13 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 30 fabric:/test13 replicator.updatecatchupreplicasetconfiguration.block
+verify
+
+deleteservice fabric:/test13
+verify
+
+#####################################################
+# Scenario 14: S/S IB replica that is built during Catchup + Activate
+# DoReconfiguration is sent after activate is complete
+#####################################################
+
+createservice fabric:/test14 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test14.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.IsUp.fabric:/test14.40.30 true
+!waitforstate RA.Replica.State.fabric:/test14.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test14.40 Phase4_Activate
+
+addbehavior b5 * * DoReconfigurationReply
+addbehavior b6 * * DoReconfiguration
+
+removebehavior b0
+
+# activate reply is complete
+!waitforstate RA.Replica.MessageStage.fabric:/test14.40.30 N
+
+# Drop primary
+reportfault 40 fabric:/test14 permanent
+!waitforstate FM.Replica.Role.fabric:/test14.30 Primary
+
+# Block to verify
+setsignal 30 fabric:/test14 replicator.updatecatchupreplicasetconfiguration.block
+removebehavior b5 
+removebehavior b6
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test14 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 30 fabric:/test14 replicator.updatecatchupreplicasetconfiguration.block
+verify
+
+deleteservice fabric:/test14
+verify
+
+#####################################################
+# Scenario 15: S/S IB replica that is built during Catchup + Activate
+# DoReconfiguration is sent after activate fails
+#####################################################
+
+createservice fabric:/test15 TestPersistedStoreServiceType y 1 2 persist minreplicasetsize=2 constraint=(system!=true)
+verify
+
+addbehavior b0 * * Activate
+
+-30
+!waitforstate RA.FT.ReconfigStage.fabric:/test15.40 Phase2_Catchup
+
+addbehavior b1 * * UpdateConfigurationReply
++30 nodeprops=system:false
+!waitforstate RA.Replica.IsUp.fabric:/test15.40.30 true
+!waitforstate RA.Replica.State.fabric:/test15.40.30 RD
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test15.40 Phase4_Activate
+
+setsignal 30 fabric:/test15 replicator.beginchangerole.block
+
+removebehavior b0
+
+# wait until we hit CR(S) on repl
+# fail CR(S) on service so RA has the state that activate has failed
+waitforsignalhit 30 fabric:/test15 replicator.beginchangerole.block
+
+# now CR(S) on service will fail, unblock CR(S) on repl
+addbehavior b5 * * Activate
+injectfailure 30 fabric:/test15 service.beginchangerole
+resetsignal 30 fabric:/test15 replicator.beginchangerole.block
+
+# Block to verify
+setsignal 30 fabric:/test15 replicator.updatecatchupreplicasetconfiguration.block
+
+# Drop primary
+reportfault 40 fabric:/test15 permanent
+!waitforstate FM.Replica.Role.fabric:/test15.30 Primary
+
+removefailure 30 fabric:/test15 service.beginchangerole
+removebehavior b5 
+
+# Clear all blocks and continue
+waitforsignalhit 30 fabric:/test15 replicator.updatecatchupreplicasetconfiguration.block
+resetsignal 30 fabric:/test15 replicator.updatecatchupreplicasetconfiguration.block
+verify
+
+deleteservice fabric:/test15
+verify
+
+#####################################################
+# Scenario 16: I/S replica and primary fails before CR(S)
+#####################################################
+
+createservice fabric:/test16 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+addbehavior b0 * * UpdateConfiguration
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test16.40 Phase2_Catchup
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/test16.40 None
+
+addbehavior b0 * * UpdateConfigurationReply
++20 nodeprops=system:false
+!waitforstate RA.FT.ReconfigStage.fabric:/test16.40 Phase2_Catchup
+
+setsignal 20 fabric:/test16 service.beginchangerole.block
+removebehavior b0
+waitforsignalhit 20 fabric:/test16 service.beginchangerole.block
+
+#take down primary
+-40
+!waitforstate RA.FT.ReconfigStage.fabric:/test16.30 Phase1_GetLSN
+
+resetsignal 20 fabric:/test16 service.beginchangerole.block
+verify
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test16
+verify
+
+#####################################################
+# Scenario 17: I/S replica and I/S failure
+#####################################################
+
+createservice fabric:/test17 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+addbehavior b0 * * UpdateConfiguration
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test17.40 Phase2_Catchup
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/test17.40 None
+
+addbehavior b0 * * UpdateConfigurationReply
++20 nodeprops=system:false
+!waitforstate RA.FT.ReconfigStage.fabric:/test17.40 Phase2_Catchup
+
+injectfailure 20 fabric:/test17 service.beginchangerole
+removebehavior b0
+
+#wait for retries
+!waitforstate RA.FT.ReconfigStage.fabric:/test17.40 Phase4_Activate
+!pause 15
+
+removefailure 20 fabric:/test17 service.beginchangerole
+verify
+
+deleteservice fabric:/test17
+verify
+
+!q

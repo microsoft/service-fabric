@@ -1,0 +1,81 @@
+#
+# [owner] aprameyr,sumukhs
+# Bug# 1484386, 1601376
+# 
+set DummyPLBEnabled true
+set RAPMessageRetryInterval 3
+set ReplicaOpenFailureMaxRetryThreshold 2
+set ReplicaReopenFailureMaxRetryThreshold 2
+
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
+verify
+
+#######################################
+# Bug# 1484386
+# Reopen is running
+# ReportFault permanent is causing replica close and RAP has received ReplicaClose while replicator open is running
+# Replicator Open fails 
+# At this time the FUP should be aborted because of the RF permanent earlier instead of being left open
+########################################
+#Create the service
+#createservice fabric:/test2 TestPersistedStoreServiceType y 1 1 persist constraint=(StringProperty!=SeedNode)
+#verify
+#
+##add behavior to verify the state 
+#addbehavior b1 * * ReplicaDropped
+#
+##Inject failure and report fault to start the reopen of the replica
+#injectfailure 20 fabric:/test2 service.beginopen.reportfault.permanent
+#setsignal 20 fabric:/test2 replicator.beginopen.block
+#injectfailure 20 fabric:/test2 replicator.endopen
+#
+## let the reopen be processed only when the replicator open is hit
+#addbehavior bx * * StatefulServiceReopen
+#
+#
+##this should cause the reopen
+#reportfault fabric:/test2 20 transient 
+#!waitforstate RA.Replica.State.fabric:/test2.20.20 SB
+#
+#addbehavior b2 * * ReplicaClose
+#removebehavior bx
+#
+##give the RA time to process and send the message
+##wait directly for ID which will happen as soon as the service open faults permanent
+#!waitforstate RA.Replica.State.fabric:/test2.20.20 ID
+#
+## pause again because there is no way to validate that replicator open has started block
+#!pause 15
+#
+## let the retry happen and wait again
+#removebehavior b2
+#
+#!pause 15
+#
+##now unblock the replicator to continue and return failure
+#resetsignal 20 fabric:/test2 replicator.beginopen.block
+#
+##the RF permanent should be processed and with the bug fix there should be no assert
+#!waitforstate RA.FT.State.fabric:/test2.20 Closed 
+#
+#removebehavior b1
+#removefailure 20 fabric:/test2 service.beginopen.reportfault.permanent
+#removefailure 20 fabric:/test2 replicator.endopen
+#
+#verify
+#
+#deleteservice fabric:/test2
+#verify
+
+verify
+!q

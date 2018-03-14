@@ -1,0 +1,39 @@
+# TODO:
+IndirectLeaseMaxLimit.test
+ClusterManager.test
+ServiceGroup.Test.exe
+ReplicatorReportFault.test
+NamingPropertyBatchMultiOp.test
+NamingPropertyBatchBasic.test
+BinSkimVerification.exe
+
+# Not ported:
+Serialization.User.Test.exe
+ClusterManager.SingleNode.Test.exe
+ClusterManagerServiceDnsName.test
+
+# Security:
+SslBasic.test
+SslAccessCtrl.test
+CertIssuerCheck.test
+KerberosBasic.test
+KerberosBasic2.test
+FederationKerberos.test
+RunAsPolicy.NTLMAuthEnabled.test
+X509DefaultClient.test
+
+# Unsupported:
+UnreliableTransportUsingClient.test
+ClusterManagerErrors.test
+DotNetCoreCompatVerifier.test
+
+# Backup/Restore:
+BackupRestore.test
+BackupRestore2.test
+BackupRestore4.test
+ReplicatedStoreRepairPolicy.test
+
+# ESE 
+Store.Test.exe
+
+

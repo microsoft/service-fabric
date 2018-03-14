@@ -1,0 +1,7 @@
+# When running docker build, it sends the entire "build context" to the docker daemon.  In this
+# case, the context is all of the files in the folder containing the Dockerfile.
+# this tells docker to ignore everything except the Dockerfile.
+# If you need to include something else be careful not to start sending large files
+# such as the output directory or the source tree to the daemon.
+*
+!DOCKER_VERSION

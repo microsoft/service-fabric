@@ -1,0 +1,226 @@
+#
+# This test validates Health Subsystem scenarios in cases of Primary Failover
+#
+votes 10
+cmservice 3 1
+namingservice 3 1 1
+set DummyPLBEnabled true
+
+set HealthOperationTimeout 20
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+set HealthStoreCleanupInterval 5
+set HealthStoreCleanupGraceInterval 5
+set HealthStoreEntityWithoutSystemReportKeptInterval 5
+
+set QueryOperationRetryCount 60
+set QueryOperationRetryDelay 5
+
+# Wait until all nodes are up before placing the system services,
+# to be able to consistently find the service primaries placed by dummy plb
+set ExpectedClusterSize 7
+
+cleantest
++10
++20
++30
++40
++50
++60
++70
+verify
+
+set ExpectedClusterSize 1
+
+# The node that we report health against must be added after verify.
+# This ensures that the CM primary will not be placed on this node
++80
+verify
+
+#
+# Create app and a service 
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA1 stateful
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.0
+app.reqservices version10 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.upload version10
+provisionapp version10
+createapp fabric:/app1/FabricHealth_test TestApp 1.0 
+verify
+
+#
+# Add an ad-hoc stateless service
+#
+createname fabric:/stateless
+createservice fabric:/stateless CalculatorServiceType n 1 3
+verify
+
+# Wait for system reports to be received
+queryhealth cluster expectedstates=nodes-ok:8;apps-ok:3 stats=nodes-ok:8;apps-ok:2
+queryhealth partition partitionid=fabric:/stateless#0 expectedstates=ok:3 stats=replicas-ok:3
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedstates=deployedapps-3
+
+!var SvcTypeNode1 FM.Replica.NodeId.fabric:/app1/FabricHealth_test/ServiceA1#0#0
+
+# Report health data on different entities
+reporthealth node nodeid=80 sequencenumber=1 healthstate=ok
+reporthealth partition partitionid=fabric:/stateless#0 sequencenumber=2 healthstate=warning
+reporthealth instance replicaid=fabric:/stateless#0#0 sequencenumber=3 healthstate=error
+reporthealthinternal deployedapplication nodeid=<var.SvcTypeNode1> appname=fabric:/app1/FabricHealth_test appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal deployedservicepackage nodeid=<var.SvcTypeNode1> appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA servicepackageinstanceid=1 sequencenumber=4 healthstate=ok sourceid=System.Hosting
+reporthealth application appname=fabric:/app1/FabricHealth_test appinstanceid=1 sequencenumber=1 healthstate=warning sourceid=FabricTest property=p1 description=UserGenerated
+reporthealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 sequencenumber=1 healthstate=warning sourceid=FabricTest property=p1 description=UserGenerated
+
+# Query and verify the health 
+queryhealth node nodeid=80 expectedhealthstate=ok
+# Replica is at error, so partition must also be error
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=error
+queryhealth replica replicaid=fabric:/stateless#0#0 expectedhealthstate=error
+queryhealth deployedservicepackage nodeid=<var.SvcTypeNode1> appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA expectedhealthstate=ok 
+queryhealth deployedapplication nodeid=<var.SvcTypeNode1> appname=fabric:/app1/FabricHealth_test 
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedhealthstate=warning expecteddesc=p1:UserGenerated
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=warning expecteddesc=p1:UserGenerated
+
+######################################################################
+# Test case:
+# Kill HM primary (CM primary)
+# Delay loading data on the new primary, and send report and query requests during the delay time.
+# The requests should be queued and processed after the data is loaded.
+######################################################################
+set HealthEntityCacheLoadStoreDataDelayInSeconds 2
+
+gfum
+# HM primary is on 70, secondaries on 60 and 50
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.70 Primary
+moveprimaryclient 60 00000000-0000-0000-0000-000000002000
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.60 Primary
+verify
+
+#
+# Execute different first operation for different entities
+# The operations should be queued until the health entity cache loads all entities from store
+#
+# First operation for entity: Query
+queryhealth node nodeid=80 expectedhealthstate=ok
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedhealthstate=warning
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=warning
+# First operation for entity: Report
+reporthealth partition partitionid=fabric:/stateless#0 sequencenumber=3 healthstate=ok
+# First operation for entity: Delete
+deletehealth instance replicaid=fabric:/stateless#0#0 sequencenumber=10 sourceid=System.RA
+# First operation for entity: Stale Report
+reporthealthinternal deployedservicepackage nodeid=<var.SvcTypeNode1> appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA servicepackageinstanceid=1 sequencenumber=1 healthstate=warning sourceid=System.Hosting
+
+queryhealth node nodeid=80 expectedhealthstate=ok
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=ok
+queryhealth replica replicaid=fabric:/stateless#0#0 expectempty=true
+queryhealth deployedservicepackage nodeid=<var.SvcTypeNode1> appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA expectedhealthstate=ok 
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedhealthstate=warning
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=warning
+
+
+######################################################################
+# Test case:
+# Kill HM primary (CM primary), then while the new HM primary loads data, kill it
+######################################################################
+set HealthEntityCacheLoadStoreDataDelayInSeconds 0
+
+# Put an entry to be able to verify that data is correctly loaded on new primary
+# This entry shouldn't be changed by system reports. To be served by query, report it as a report from the authority source.
+reporthealthinternal node nodeid=660 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=661 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=662 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=663 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=664 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=665 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=667 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=668 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+reporthealthinternal node nodeid=669 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FM
+
+queryhealth node nodeid=660 expectedhealthstate=warning
+queryhealth node nodeid=661 expectedhealthstate=warning
+queryhealth node nodeid=662 expectedhealthstate=warning
+queryhealth node nodeid=663 expectedhealthstate=warning
+queryhealth node nodeid=664 expectedhealthstate=warning
+queryhealth node nodeid=665 expectedhealthstate=warning
+queryhealth node nodeid=666 expectedhealthstate=warning
+queryhealth node nodeid=667 expectedhealthstate=warning
+queryhealth node nodeid=668 expectedhealthstate=warning
+queryhealth node nodeid=669 expectedhealthstate=warning
+
+gfum
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.60 Primary
+moveprimaryclient 70 00000000-0000-0000-0000-000000002000
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.70 Primary
+verify
+
+gfum
+moveprimaryclient 50 00000000-0000-0000-0000-000000002000
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.50 Primary
+verify
+
+# Check that failover happened correctly and dummy node entity was loaded
+resethealthclient
+queryhealth node nodeid=660 expectedhealthstate=warning
+queryhealth node nodeid=661 expectedhealthstate=warning
+queryhealth node nodeid=662 expectedhealthstate=warning
+queryhealth node nodeid=663 expectedhealthstate=warning
+queryhealth node nodeid=664 expectedhealthstate=warning
+queryhealth node nodeid=665 expectedhealthstate=warning
+queryhealth node nodeid=666 expectedhealthstate=warning
+queryhealth node nodeid=667 expectedhealthstate=warning
+queryhealth node nodeid=668 expectedhealthstate=warning
+queryhealth node nodeid=669 expectedhealthstate=warning
+
+
+######################################################################
+# Test case:
+# Create a lot of entities, kill the HM primary and check that new primary has all data.
+######################################################################
+# HealthOperationTimeout is the timeout used for each report. The reports time out in HM if not processed in this interval
+set HealthOperationTimeout 50
+
+# NamingOperationTimeout is used to determine how long query is retried
+set NamingOperationTimeout 300
+
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM
+queryhealth node nodeid=3333 expectedhealthstate=ok
+
+!string perfappallservicesallpartitionsallreplicas {"Items":[\
+    {"HealthStateFilter":65535,\
+     "ApplicationNameFilter":"fabric:/perftest",\
+     "ServiceFilters":[\
+        {"HealthStateFilter":65535,\
+         "PartitionFilters":[\
+            {"HealthStateFilter":65535,\
+             "ReplicaFilters":[\
+                {"HealthStateFilter":65535,"ReplicaOrInstanceIdFilter":"-1"}]\
+            }]\
+        }]\
+    }]}\
+
+queryhealthstatechunk cluster applicationfilters=<string.perfappallservicesallpartitionsallreplicas> expectedhealthstate=warning expectedstates=apps-0
+
+hmload serviceCount=20 subname=HMFailover partitionCount=2 replicaCount=3 nodeid=3333
+queryhealthstatechunk cluster applicationfilters=<string.perfappallservicesallpartitionsallreplicas> expectedhealthstate=warning expectedstates=apps-ok:1;services-ok:20;partitions-ok:40;replicas-ok:120
+
+gfum
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.50 Primary
+moveprimaryclient 70 00000000-0000-0000-0000-000000002000
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.70 Primary
+verify
+
+queryhealth node nodeid=3333 expectedhealthstate=ok
+queryhealthstatechunk cluster applicationfilters=<string.perfappallservicesallpartitionsallreplicas> expectedhealthstate=warning expectedstates=apps-ok:1;services-ok:20;partitions-ok:40;replicas-ok:120
+
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.70 Primary
+moveprimaryclient 60 00000000-0000-0000-0000-000000002000
+!waitforstate FM.Replica.Role.ClusterManagerServiceName.60 Primary
+queryhealthstatechunk cluster applicationfilters=<string.perfappallservicesallpartitionsallreplicas> expectedhealthstate=warning expectedstates=apps-ok:1;services-ok:20;partitions-ok:40;replicas-ok:120
+
+
+!q

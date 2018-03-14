@@ -1,0 +1,67 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1762706
+# 
+set DummyPLBEnabled true
+
+# set this to a very high value to verify that the low reconfig value is what is being used
+set ServiceApiHealthDuration 500000000
+set ServiceReconfigurationApiHealthDuration 3
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 2 persist constraint=(StringProperty!=SeedNode)
+verify
+
+##############################
+# Verify that a slow ChangeRole P->S reports event
+##############################
+
+#Block Activate so that S->P is not invoked
+addbehavior b1 * * GetLSN
+
+# Block ChangeRole P->S
+setsignal 40 fabric:/test service.beginchangerole.block
+swapprimary fabric:/test 40 30
+
+#Verify Health Event
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=warning
+
+#Reset signal
+resetsignal 40 fabric:/test service.beginchangerole.block
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#0 expectedhealthstate=ok
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test.30 Phase1_GetLSN
+removebehavior b1
+
+#Block changerole P->S
+setsignal 30 fabric:/test service.beginchangerole.block
+
+#wait for health event
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=warning
+
+#Reset signal
+resetsignal 30 fabric:/test service.beginchangerole.block
+
+#Validate health event cleared
+queryhealth replica replicaid=fabric:/test#0#1 expectedhealthstate=ok
+
+verify
+!q

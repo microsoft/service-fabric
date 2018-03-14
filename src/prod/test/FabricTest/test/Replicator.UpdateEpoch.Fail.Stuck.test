@@ -1,0 +1,134 @@
+####################################################################################################
+# Test for Bug 3902667
+# Owner: jefchen, sumukhs
+# Description: When the replica UpdateEpoch fail, if any operation still still exist in the
+# OperationQueue, Close() would not be able to complete due to drain cannot finish. The fix
+# is to clear the queue if such scenario happened.
+####################################################################################################
+####################################################################################################
+# Volatile service
+####################################################################################################
+
+seteseonly
+
+set DummyPLBEnabled true
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set UserReplicaRestartWaitDuration 1
+set MaxApiDelayInterval 60
+set MinApiDelayInterval 60
+
+votes 10
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
+cleantest
+
++10 nodeprops=userservice:0
+verify
+# All system services are on node 10. Do not touch it.
+
++20 nodeprops=userservice:1
++30 nodeprops=userservice:1
++40 nodeprops=userservice:1
++50 nodeprops=userservice:1
++60 nodeprops=userservice:1
+verify
+
+# Primary on 60, two Secondaries on 50 and 40
+createservice fabric:/test1 TestStoreServiceType y 1 5 minreplicasetsize=3 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true constraint=(userservice==1)
+verify
+
+# All replicas should have REPL 1
+clientput fabric:/test1 1 1
+!wait
+!pause 5
+# All the replicas have REPL 1
+
+# Blocks all operations to 40 to make 40 has less operations
+addbehavior b1 * 40 ReplicationOperation
+clientput fabric:/test1 1 2
+!wait 
+
+# Takes down the primary on 60. 50 will be the new primary
+-60 
+!waitforstate FM.Node.IsUp.60 false
+verify
+
+# 50 has REPL 3. 40 has REPL 2
+clientput fabric:/test1 1 3
+!wait
+!pause 5
+
+# Step to simulate the failure
+injectfailure 40 fabric:/test1 provider.endupdateepoch
+
+# Remove the block of traffics to 40
+setsignal 40 fabric:/test1 pump.replication.block
+removebehavior b1
+verify
+
+# Blocks message from 40, so FM is not aware, then we know the state
+addbehavior b2 40 * ReplicaUp
+resetsignal 40 fabric:/test1 pump.replication.block
+!waitforstate RA.FT.State.fabric:/test1.40 Closed
+
+# Removes the block, replicator should come back to healthy
+removebehavior b2
+verify
+
+####################################################################################################
+# Persisted service
+####################################################################################################
+# Restore cluster to original state
+deleteservice fabric:/test1
++60 nodeprops=userservice:1
+!waitforstate FM.Node.IsUp.60 true
+verify
+
+# Primary on 60, two Secondaries on 50 and 40
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=3 initdata=RE_RequireServiceAck:true;RE_UseStreamFaults:true constraint=(userservice==1)
+verify
+
+# All replicas should have REPL 1
+clientput fabric:/test2 1 1
+!wait
+!pause 5
+# All the replicas have REPL 1
+
+# Blocks all operations to 40 to make 40 has less operations
+addbehavior b3 * 40 ReplicationOperation
+clientput fabric:/test2 1 2
+!wait 
+
+# Takes down the primary on 60. 50 will be the new primary
+-60 
+!waitforstate FM.Node.IsUp.60 false
+verify
+
+# 50 has REPL 3. 40 has REPL 2
+clientput fabric:/test2 1 3
+!wait
+!pause 5
+
+# Step to simulate the failure, already injected in volatile test
+injectfailure 40 fabric:/test2 provider.endupdateepoch
+
+# Remove the block of traffics to 40
+setsignal 40 fabric:/test2 pump.replication.block
+removebehavior b3
+verify
+
+# Blocks message to 40, so we know the state
+addbehavior b4 * * StartCopy
+resetsignal 40 fabric:/test2 pump.replication.block
+!waitforstate RA.Replica.State.fabric:/test2.40.40 IB
+
+# Removes the block, replicator should come back to healthy
+removebehavior b4
+verify
+
+cleareseonly
+
+!q
+

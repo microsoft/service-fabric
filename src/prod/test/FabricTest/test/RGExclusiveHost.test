@@ -1,0 +1,113 @@
+###############################################################################
+# Test: RGExclusiveHost.Test
+# Owners: nipuzovi, yangli, anuragg
+# This test verifies the flow of information manifest to PLB and Hosting subsystems.
+# Does not verify that Hosting is enforcing the actual limits.
+###############################################################################
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+set DummyPLBEnabled true
+set LocalResourceManagerTestMode true
+
++40 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:0
++10 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:1024
++20 cap=servicefabric:/_CpuCores:2,servicefabric:/_MemoryInMB:1024
++30 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:1024
+
+verify
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+app.servicepack versionTC1 ServicePackageA version=v1 resources=CPU,2,MemoryInMB,200
+app.servicepack versionTC1 ServicePackageB version=v1 resources=CPU,5,MemoryInMB,50
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes versionTC1 ServicePackageA ServiceTypeB stateful volatile
+app.servicetypes versionTC1 ServicePackageB ServiceTypeC stateful persist
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.codepack versionTC1 ServicePackageA CodeB types=ServiceTypeB version=v1
+app.codepack versionTC1 ServicePackageB CodeC types=ServiceTypeC version=v1
+
+app.upload versionTC1
+
+provisionapp versionTC1
+createapp fabric:/MyApp1 TestAppTC1 vTC1
+verify
+
+#we just enable it to enforce FM primary on the highest index node
+set DummyPLBEnabled false
+createservice fabric:/MyApp1/service1 ServiceTypeA y 1 2 persist appname=fabric:/MyApp1 servicePackageActivationMode=SharedProcess
+createservice fabric:/MyApp1/service2 ServiceTypeA y 1 1 persist appname=fabric:/MyApp1 servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/MyApp1/service3 ServiceTypeB y 1 1 appname=fabric:/MyApp1 servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/MyApp1/service4 ServiceTypeA y 1 2 persist appname=fabric:/MyApp1 servicePackageActivationMode=SharedProcess
+
+verify
+
+!waitforstate FM.Replica.State.fabric:/MyApp1/service1.10 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp1/service1.20 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp1/service2.10 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp1/service3.10 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp1/service4.10 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp1/service4.20 Ready
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 6
+verifynodeload nodeid:20 servicefabric:/_CpuCores 2
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 600
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 200
+
+# Verify resources on the node
+verifyresourceonnode 10 servicefabric:/_CpuCores 6
+verifyresourceonnode 20 servicefabric:/_CpuCores 2
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 600
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 200
+
+verifyplbandlrmsync
+
++5 cap=servicefabric:/_CpuCores:10,servicefabric:/_MemoryInMB:100
+verify
+
+createservice fabric:/MyApp1/service5 ServiceTypeC y 1 1 persist appname=fabric:/MyApp1 servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/MyApp1/service6 ServiceTypeC y 1 1 persist appname=fabric:/MyApp1 servicePackageActivationMode=SharedProcess
+verify
+
+!waitforstate FM.Replica.State.fabric:/MyApp1/service5.5 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp1/service6.5 Ready
+
+verifynodeload nodeid:5 servicefabric:/_CpuCores 10
+verifynodeload nodeid:5 servicefabric:/_MemoryInMB 100
+
+verifyresourceonnode 5 servicefabric:/_CpuCores 10
+verifyresourceonnode 5 servicefabric:/_MemoryInMB 100
+
+verifyclusterload servicefabric:/_CpuCores 18 10 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 900 600 0 -1
+
+#kill the node where the FM is, check if everything will be persisted properly
+-40
+verify
+gfum
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 6
+verifynodeload nodeid:20 servicefabric:/_CpuCores 2
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 600
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 200
+verifynodeload nodeid:5 servicefabric:/_CpuCores 10
+verifynodeload nodeid:5 servicefabric:/_MemoryInMB 100
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 6
+verifyresourceonnode 20 servicefabric:/_CpuCores 2
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 600
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 200
+verifyresourceonnode 5 servicefabric:/_CpuCores 10
+verifyresourceonnode 5 servicefabric:/_MemoryInMB 100
+
+verifyclusterload servicefabric:/_CpuCores 18 10 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 900 600 0 -1
+
+verifyplbandlrmsync
+
+!q

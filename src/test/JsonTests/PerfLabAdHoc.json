@@ -1,0 +1,21 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "AdHocTestingwith3PerfLabMachines",
+      "Type": "V2_ScriptTest",
+      "Owners": "alanwar",
+      "Environment": "Iaas",
+      "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+        "TaskName": "AdHocThreeNodeCluster.test",
+        "ExecutionTimeout": "90000",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

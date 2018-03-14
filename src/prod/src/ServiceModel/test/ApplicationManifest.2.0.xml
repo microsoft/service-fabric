@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest ApplicationTypeName="CalculatorApp" ApplicationTypeVersion="1.0" xsi:schemaLocation="http://schemas.microsoft.com/2011/01/fabric ServiceFabricServiceModel.xsd" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Description>This is a sample stateless calculator service provided by the Windows Fabric</Description>
+<Parameters>
+    <Parameter Name="ServiceInstanceCount" DefaultValue="3"></Parameter>
+</Parameters>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="CalculatorServicePackage" ServiceManifestVersion="2.0"/>
+        <ConfigOverrides/>
+    </ServiceManifestImport>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="CalculatorGatewayPackage" ServiceManifestVersion="3.0"/>
+        <ConfigOverrides/>
+    </ServiceManifestImport>
+    <ServiceTemplates>
+    <StatelessService ServiceTypeName="CalculatorService" InstanceCount="5">
+        <SingletonPartition></SingletonPartition>
+    </StatelessService></ServiceTemplates>
+    <DefaultServices>
+      <Service Name="Service1">
+        <StatelessService InstanceCount="1" ServiceTypeName="text">
+          <SingletonPartition/>
+          <LoadMetrics>
+            <LoadMetric Name="MetricA" Weight="Low"/>
+          </LoadMetrics>
+          <PlacementConstraints>String</PlacementConstraints>
+        </StatelessService>
+      </Service>
+      <ServiceGroup Name="ServiceGroup1">
+        <StatefulServiceGroup ServiceTypeName="ServiceGroup1Type">
+          <SingletonPartition/>
+          <Members>
+            <Member Name="Member11" ServiceTypeName="Member11Type"/>
+            <Member Name="Member12" ServiceTypeName="Member12Type"/>
+          </Members>
+        </StatefulServiceGroup>
+      </ServiceGroup>
+      <ServiceGroup Name="ServiceGroup2" ServicePackageActivationMode="SharedProcess">
+        <StatelessServiceGroup ServiceTypeName="ServiceGroup2Type">
+          <SingletonPartition/>
+          <LoadMetrics>
+            <LoadMetric Name="MetricA" Weight="Low"/>
+          </LoadMetrics>
+          <PlacementConstraints>String</PlacementConstraints>
+          <Members>
+            <Member Name="Member21" ServiceTypeName="Member21Type">
+            </Member>
+            <Member Name="Member22" ServiceTypeName="Member22Type">
+              <LoadMetrics>
+                <LoadMetric Name="MetricA" Weight="Low"/>
+              </LoadMetrics>
+            </Member>
+          </Members>
+        </StatelessServiceGroup>
+      </ServiceGroup>
+      <ServiceGroup Name="ServiceGroup3" ServicePackageActivationMode="ExclusiveProcess">
+        <StatelessServiceGroup ServiceTypeName="ServiceGroup2Type">
+          <SingletonPartition/>
+          <LoadMetrics>
+            <LoadMetric Name="MetricA" Weight="Low"/>
+          </LoadMetrics>
+          <PlacementConstraints>String</PlacementConstraints>
+          <Members>
+            <Member Name="Member21" ServiceTypeName="Member21Type">
+            </Member>
+            <Member Name="Member22" ServiceTypeName="Member22Type">
+              <LoadMetrics>
+                <LoadMetric Name="MetricA" Weight="Low"/>
+              </LoadMetrics>
+            </Member>
+          </Members>
+        </StatelessServiceGroup>
+      </ServiceGroup>
+    </DefaultServices>
+    <Policies />
+</ApplicationManifest>

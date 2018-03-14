@@ -1,0 +1,93 @@
+votes 10
+fmservice 1 1
+namingservice 1 7 3
+cmservice 0 0
+cleantest
+
+set FMPlacementConstraints fmservice==true
+set NamingOperationTimeout 20
+
++10 nodeprops=fmservice:true
++20
++30
++40
++50
++60
++70
+verify
+
+createname fabric:/a
+createname fabric:/a/b
+
+putproperty fabric:/a PropertyA ValueA
+putproperty fabric:/a/b PropertyAB ValueAB
+
+createservice fabric:/a CalculatorServiceType n 0 3
+createservice fabric:/a/b CalculatorServiceType n 0 3
+
+enumnames fabric:/a expectedCount=1 recursive=true
+nameexists fabric:/a true
+nameexists fabric:/a/b true
+
+getproperty fabric:/a PropertyA ValueA
+getproperty fabric:/a/b PropertyAB ValueAB
+
+resolve fabric:/a false
+resolve fabric:/a/b false
+
+# reduce to downshifted quorum
+-70 removedata
+-60 removedata
+-50 removedata
+-40 removedata
+-30 removedata
+verify
+
+nodestateremoved 70
+nodestateremoved 60
+nodestateremoved 50
+nodestateremoved 40
+nodestateremoved 30
+
+# read/write operations still function at downshifted quorum
+createname fabric:/b
+createname fabric:/b/a
+
+putproperty fabric:/b PropertyB ValueB
+putproperty fabric:/b/a PropertyBA ValueBA
+
+createservice fabric:/b CalculatorServiceType n 0 3
+createservice fabric:/b/a CalculatorServiceType n 0 3
+
+resolve fabric:/b false
+resolve fabric:/b/a false
+
+createname fabric:/q
+
+# cause quorumloss
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+# Timeout if the primary was killed, OperationCanceled if the secondary was killed
+createservice fabric:/q CalculatorServiceType n 0 3 errors=Timeout,OperationCanceled
+
+# restore quorum
++20
+
+# wait for node to become up
+!waitforstate FM.Node.IsUp.20 true
+
+# read/write operations still function after restoring quorum
+createname fabric:/c
+createname fabric:/c/a
+
+putproperty fabric:/c PropertyB ValueB
+putproperty fabric:/c/a PropertyBA ValueBA
+
+createservice fabric:/c CalculatorServiceType n 0 3
+createservice fabric:/c/a CalculatorServiceType n 0 3
+
+resolve fabric:/c false noverify=true
+resolve fabric:/c/a false noverify=true
+
+!q

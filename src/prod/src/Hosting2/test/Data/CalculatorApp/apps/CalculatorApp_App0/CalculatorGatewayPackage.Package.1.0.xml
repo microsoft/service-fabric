@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="CalculatorGatewayPackage" 
+    ManifestVersion="1.0" 
+    RolloutVersion="1.0" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Description>Gateway that connects to calculator service.</Description>
+  <DigestedServiceTypes RolloutVersion="1.0">
+    <ServiceTypes>
+      <StatelessServiceType ServiceTypeName="CalculatorGateway" />
+    </ServiceTypes>
+  </DigestedServiceTypes>
+  <DigestedCodePackage RolloutVersion="1.0">
+    <CodePackage Name="CalculatorGateway.Code" Version="1.0">
+      <EntryPoint>
+          <ExeHost>
+              <Program>Gateway.exe</Program>
+          </ExeHost>
+      </EntryPoint>      
+    </CodePackage>
+  </DigestedCodePackage>
+  <DigestedResources RolloutVersion="1.0" />
+  <Diagnostics />
+</ServicePackage>

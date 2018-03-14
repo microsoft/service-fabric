@@ -1,0 +1,64 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1762706
+# 
+set DummyPLBEnabled true
+
+# set this to a very high value to verify that the low reconfig value is what is being used
+set ServiceApiHealthDuration 500000000
+set ServiceReconfigurationApiHealthDuration 3
+set LocalHealthReportingTimerInterval 2
+set HealthOperationTimeout 5
+set HealthReportSendInterval 5
+set HealthReportRetrySendInterval 5
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+!waitforstate FM.Replica.State.fabric:/test.40 Ready
+!waitforstate FM.Replica.State.fabric:/test.30 Ready
+
+###############
+# I->S transition when primary is changing
+###############
+
+#at this point the service has 2 replicas
+#add another node and block DoReconfiguration - this will cause I/S transition to be generated
+
+addbehavior b1 * * DoReconfiguration
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+
+!waitforstate FM.Replica.State.fabric:/test.20 Ready
+!waitforstate FM.FT.Reconfig.fabric:/test true
+
+#take down primary and this should cause a reconfig 
+#30 (S->P) and 20 (I->S)
+#block ChangeRole on 20 and verify that a health event is reported
+
+-40
+!waitforstate FM.Node.IsUp.40 false
+
+setsignal 20 fabric:/test service.beginchangerole.block
+removebehavior b1
+
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=warning
+
+resetsignal 20 fabric:/test service.beginchangerole.block
+
+queryhealth replica replicaid=fabric:/test#0#2 expectedhealthstate=ok
+
++40 nodeprops=StringProperty:NormalNode
+verify
+!q

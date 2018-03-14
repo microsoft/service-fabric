@@ -1,0 +1,69 @@
+#
+# [owner] linggeng
+# This tests forceful delete service under FM rebuilds
+#
+
+votes 10 20 30
+fmservice 1 1
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set DummyPLBEnabled true
+set ExpectedClusterSize 3
+
++10
++20
++30
+verify
+
++40
++50
++60
+verify
+
+#
+# Create application
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicepack version10 ServicePackageB version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes version10 ServicePackageB ServiceTypeB stateless
+
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA version=1.0
+app.codepack version10 ServicePackageB CodeB1 types=ServiceTypeB version=1.0
+app.upload version10
+provisionapp version10
+
+createapp fabric:/app1 TestApp 1.0
+verify
+
+createservice fabric:/app1/test1 TestApp_App0:ServicePackageB:ServiceTypeB n 1 3 appname=fabric:/app1
+verify
+
+-60
+deleteservice fabric:/app1/test1
+
+verify
+gfum
+
+-30
+
+# FM rebuild
+nodestateremoved 30
+
+# Recreate fabric:/app1/test1
++60
+!waitforstate FM.Service.IsDeleted.fabric:/app1/test1 false
+
+gfum
+
+deleteservice fabric:/app1/test1 errors=UserServiceNotFound
+deleteservice fabric:/app1/test1 isForce
+verify
+gfum
+
+-*
+!q

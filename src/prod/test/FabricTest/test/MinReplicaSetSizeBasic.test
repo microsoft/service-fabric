@@ -1,0 +1,65 @@
+#
+# MinReplicaSetSize basic test - don't allow writes while FT has not reached MinReplicaSetSize
+#
+
+# Initilizations
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 0 0
+namingservice 3 3 3
+cleantest
+set ExpectedClusterSize 3
+fmservice 3 3
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set StoreClientTimeout 5
+
+# Add the nodes
++10
++20 
++30 
+verify
+# Service can only be placed on these nodes
++40 nodeprops=Service:true
++50 nodeprops=Service:true
++60 nodeprops=Service:true
+verify
+
+# Remove one node on which service can be placed
+-40
+verify
+
+# Create the service with min replica set size and target replica count = 3. Due to placement constraint it can 
+# only be on 40,50 and 60
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(Service==true)
+gfum
+# verify
+
+# Try write, should fail with NoWriteQuorum
+clientput fabric:/test1 10 10Data1 errors=NoWriteQuorum,NotPrimary,Timeout
+!wait
+
+# Add the third node so new replica can be created and FT meets min replica set size
++40 nodeprops=Service:true
+verify
+
+# Try write, should succeed now
+clientput fabric:/test1 10 10Data1 error=Success
+!wait
+
+# Remove nodes and verify downshift didn't happen
+-60
+-50
+!pause 5
+
+# Add nodes, writes should be allowed
++50 nodeprops=Service:true
++60 nodeprops=Service:true
+verify
+!waitforstate FM.FT.QuorumLost.fabric:/test1 false
+
+clientput fabric:/test1 20 20Data1 error=Success
+!wait
+
+!q

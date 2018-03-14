@@ -1,0 +1,140 @@
+#
+# Validates health reporting through partition object.
+#
+
+votes 10
+fmservice 3 1
+cmservice 3 1
+namingservice 3 1 1
+
+set HealthOperationTimeout 5
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+set DummyPLBEnabled true
+
+cleantest
++10
++20
++30
++40
++50
+verify
+
+httpgateway 10
+
+###############################################
+# Test case: Report on partition through
+# the stateful and stateless partition object.
+###############################################
+
+#
+# Add ad-hoc stateless service
+#
+createservice fabric:/stateless CalculatorServiceType n 1 5
+verify
+
+queryhealth partition partitionid=fabric:/stateless#0 expectedstates=5 expectedhealthstate=ok
+reporthealthipc partition nodeid=10 servicename=fabric:/stateless sourceid=ipctest property=ipcproperty sequencenumber=1 healthstate=warning description=ipcreport
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning expectedreason=event,ipctest,ipcproperty
+reporthealthipc partition nodeid=10 servicename=fabric:/stateless sourceid=ipctest property=ipcproperty sequencenumber=2 healthstate=ok description=ipcreport
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=ok
+
+# Report health on replica on node 10
+!var statelessReplica RA.Replica.ReplicaId.fabric:/stateless.10.10
+!var statelessPartition FM.FT.PartitionId.fabric:/stateless#0
+queryhealth replica replica.id=<var.statelessReplica> partitionguid=<var.statelessPartition> expectedhealthstate=ok 
+reporthealthipc replica nodeid=10 servicename=fabric:/stateless sourceid=ipctest property=ipcproperty sequencenumber=1 healthstate=warning description=ipcreport
+queryhealth replica replica.id=<var.statelessReplica> partitionguid=<var.statelessPartition> expectedhealthstate=warning expectedreason=event,ipctest,ipcproperty
+reporthealthipc replica nodeid=10 servicename=fabric:/stateless sourceid=ipctest property=ipcproperty sequencenumber=2 healthstate=ok description=ipcreport
+queryhealth replica replica.id=<var.statelessReplica> partitionguid=<var.statelessPartition> expectedhealthstate=ok
+
+#
+# Add stateful service
+#
+createservice fabric:/stateful TestStoreServiceType y 1 5
+verify
+
+queryhealth partition partitionid=fabric:/stateful#0 expectedstates=5 expectedhealthstate=ok
+reporthealthipc partition nodeid=10 servicename=fabric:/stateful sourceid=ipctest property=ipcproperty sequencenumber=2 healthstate=warning description=ipcreport
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning expectedreason=event,ipctest,ipcproperty
+reporthealthipc partition nodeid=10 servicename=fabric:/stateful sourceid=ipctest property=ipcproperty sequencenumber=3 healthstate=ok description=ipcreport
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=ok
+
+# Report health on replica on node 10
+!var statefulReplica RA.Replica.ReplicaId.fabric:/stateful.10.10
+!var statefulPartition FM.FT.PartitionId.fabric:/stateful#0
+queryhealth replica replica.id=<var.statefulReplica> partitionguid=<var.statefulPartition> expectedhealthstate=ok 
+reporthealthipc replica nodeid=10 servicename=fabric:/stateful sourceid=ipctest property=ipcproperty sequencenumber=1 healthstate=warning description=ipcreport
+queryhealth replica replica.id=<var.statefulReplica> partitionguid=<var.statefulPartition> expectedhealthstate=warning expectedreason=event,ipctest,ipcproperty
+reporthealthipc replica nodeid=10 servicename=fabric:/stateful sourceid=ipctest property=ipcproperty sequencenumber=2 healthstate=ok description=ipcreport
+queryhealth replica replica.id=<var.statefulReplica> partitionguid=<var.statefulPartition> expectedhealthstate=ok
+
+###############################################
+# Test case: Set high report interval and send with and without immediate.
+###############################################
+# Set report interval high and send immediately, check that reports are received appropriately
+set HealthReportSendInterval 360
+set HealthReportRetrySendInterval 360
+
+#
+# Partition reports
+#
+
+# Send immediately, reports sent
+reporthealthipc partition nodeid=20 servicename=fabric:/stateless sourceid=ipctestsendoptions property=ipcproperty sequencenumber=1 healthstate=warning description=ipcreport immediate=true
+reporthealthipc partition nodeid=20 servicename=fabric:/stateful sourceid=ipctestsendoptions property=ipcproperty sequencenumber=2 healthstate=warning description=ipcreport immediate=true
+
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcproperty
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcproperty
+
+# Do not send immediately, reports not sent
+reporthealthipc partition nodeid=20 servicename=fabric:/stateless sourceid=ipctestsendoptions property=ipcproperty sequencenumber=3 healthstate=error description=ipcreport immediate=false
+reporthealthipc partition nodeid=20 servicename=fabric:/stateful sourceid=ipctestsendoptions property=ipcproperty sequencenumber=4 healthstate=error description=ipcreport
+
+!pause,4
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcproperty
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcproperty
+
+# Send another report with immediate=true.
+reporthealthipc partition nodeid=20 servicename=fabric:/stateless sourceid=ipctestsendoptions property=ipcpropertynew sequencenumber=1 healthstate=warning immediate=true
+reporthealthipc partition nodeid=20 servicename=fabric:/stateful sourceid=ipctestsendoptions property=ipcpropertynew sequencenumber=2 healthstate=warning immediate=true
+
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=error expectedreason=event,ipctestsendoptions,ipcproperty
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=error expectedreason=event,ipctestsendoptions,ipcproperty
+
+# Clear the error reports, the warnings report will surface
+reporthealthipc partition nodeid=20 servicename=fabric:/stateless sourceid=ipctestsendoptions property=ipcproperty sequencenumber=5 healthstate=ok immediate=true
+reporthealthipc partition nodeid=20 servicename=fabric:/stateful sourceid=ipctestsendoptions property=ipcproperty sequencenumber=6 healthstate=ok immediate=true
+queryhealth partition partitionid=fabric:/stateless#0 expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcpropertynew
+queryhealth partition partitionid=fabric:/stateful#0 expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcpropertynew
+
+#
+# Replica reports
+#
+!var statelessReplica20 RA.Replica.ReplicaId.fabric:/stateless.20.20
+!var statefulReplica20 RA.Replica.ReplicaId.fabric:/stateful.20.20
+reporthealthipc replica nodeid=20 servicename=fabric:/stateless sourceid=ipctestsendoptions property=ipcproperty sequencenumber=1 healthstate=warning description=ipcreport immediate=true
+reporthealthipc replica nodeid=20 servicename=fabric:/stateful sourceid=ipctestsendoptions property=ipcproperty sequencenumber=2 healthstate=warning description=ipcreport immediate=true
+queryhealth replica replica.id=<var.statelessReplica20> partitionguid=<var.statelessPartition> expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcproperty
+queryhealth replica replica.id=<var.statefulReplica20> partitionguid=<var.statefulPartition> expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcproperty
+
+# Send immediate=false, reports not sent
+reporthealthipc replica nodeid=20 servicename=fabric:/stateless sourceid=ipctestsendoptions property=ipcproperty sequencenumber=3 healthstate=error description=ipcreport
+reporthealthipc replica nodeid=20 servicename=fabric:/stateful sourceid=ipctestsendoptions property=ipcproperty sequencenumber=4 healthstate=error description=ipcreport immediate=false
+queryhealth replica replica.id=<var.statelessReplica20> partitionguid=<var.statelessPartition> expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcproperty
+queryhealth replica replica.id=<var.statefulReplica20> partitionguid=<var.statefulPartition> expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcproperty
+
+# Send another report with immediate=true.
+reporthealthipc replica nodeid=20 servicename=fabric:/stateless sourceid=ipctestsendoptions property=ipcpropertynew sequencenumber=1 healthstate=warning immediate=true
+reporthealthipc replica nodeid=20 servicename=fabric:/stateful sourceid=ipctestsendoptions property=ipcpropertynew sequencenumber=2 healthstate=warning immediate=true
+
+queryhealth replica replica.id=<var.statelessReplica20> partitionguid=<var.statelessPartition> expectedhealthstate=error expectedreason=event,ipctestsendoptions,ipcproperty
+queryhealth replica replica.id=<var.statefulReplica20> partitionguid=<var.statefulPartition> expectedhealthstate=error expectedreason=event,ipctestsendoptions,ipcproperty
+
+# Clear the error report, the warning report will surface
+reporthealthipc replica nodeid=20 servicename=fabric:/stateless sourceid=ipctestsendoptions property=ipcproperty sequencenumber=5 healthstate=ok description=ipcreport immediate=true
+reporthealthipc replica nodeid=20 servicename=fabric:/stateful sourceid=ipctestsendoptions property=ipcproperty sequencenumber=6 healthstate=ok description=ipcreport immediate=true
+queryhealth replica replica.id=<var.statelessReplica20> partitionguid=<var.statelessPartition> expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcpropertynew
+queryhealth replica replica.id=<var.statefulReplica20> partitionguid=<var.statefulPartition> expectedhealthstate=warning expectedreason=event,ipctestsendoptions,ipcpropertynew
+
+!q

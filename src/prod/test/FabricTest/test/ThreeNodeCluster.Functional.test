@@ -1,0 +1,222 @@
+#
+# 3 node cluster scenarios
+#
+# Treat 3 nodes as black box. Shouldnt care where the FMM, FM or user service primary is running
+#
+
+# In this script, you will find a lot of places where we pause after node dynamism. These are on purpose.
+# ReplicaRestartWaitDuration is set for same duration, we want to test how things behave when we have new replicas being build
+# along with existing replicas coming online again.
+
+votes 10 20 30
+cmservice 7 3
+namingservice 1 7 3 
+fmservice 7 3
+cleantest
+
++10
++20
++30
+verify
+
+createservice fabric:/statefulpersisted1 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+!waitforstate FM.Replica.State.fabric:/statefulpersisted1.30 Ready
+!waitforstate FM.Replica.State.fabric:/statefulpersisted1.20 Ready
+!waitforstate FM.Replica.State.fabric:/statefulpersisted1.10 Ready
+
+clientput fabric:/statefulpersisted1 10 10Data
+!wait
+verify
+
+clientget fabric:/statefulpersisted1 10 10Data
+!wait
+verify
+
+################################################################################
+# Scenario 1 : Cluster restart
+################################################################################
+
+-10
+-20
+-30
+
+!pause 5
+clearticket
+
++30
++20
++10
+
+verify
+
+!waitforstate FM.FT.QuorumLost.fabric:/statefulpersisted1 false
+
+clientget fabric:/statefulpersisted1  10 10Data
+!wait
+verify
+clientput fabric:/statefulpersisted1  11 11Data
+!wait
+verify
+clientget fabric:/statefulpersisted1  11 11Data
+!wait
+verify
+
+################################################################################
+# Scenario 2 : Bring down one node and keep it down
+################################################################################
+
+-10
+verify
+
+clientput fabric:/statefulpersisted1 12 12Data
+!wait
+verify
+
+clientget fabric:/statefulpersisted1 12 12Data
+!wait
+
+createservice fabric:/statefulpersisted2 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+clientput fabric:/statefulpersisted2 20 20Data
+!wait
+verify
+
+clientget fabric:/statefulpersisted2 20 20Data
+!wait
+verify
+
+################################################################################
+# Scenario 3 : Bring down another node and keep it down for some time
+################################################################################
+
+-20
+!waitforstate FM.FT.QuorumLost.FMService true
+
++20
+verify
+
+clientget fabric:/statefulpersisted1 10 10Data
+clientget fabric:/statefulpersisted2 20 20Data
+!wait
+
+createservice fabric:/statefulpersisted3 TestPersistedStoreServiceType y 1 3 persist
+verify
+
++10
+verify
+
+clientget fabric:/statefulpersisted1 12 12Data
+!wait
+
+################################################################################
+# Scenario 4 : Down nodes one at a time, up nodes in reverse order
+################################################################################
+
+-30
+!waitforstate FM.Replica.IsUp.fabric:/statefulpersisted1.30 false
+!waitforstate FM.Replica.IsUp.fabric:/statefulpersisted2.30 false
+!waitforstate FM.Replica.IsUp.fabric:/statefulpersisted3.30 false
+
+-20
+!waitforstate FM.FT.QuorumLost.FMService true
+
+-10
+
+!pause 5
+clearticket
+
++10
++20
+verify
+
+!waitforstate FM.FT.QuorumLost.NamingService false
+!waitforstate FM.FT.Reconfig.NamingService false
+
+!waitforstate FM.FT.QuorumLost.ClusterManagerServiceName false
+!waitforstate FM.FT.Reconfig.ClusterManagerServiceName false
+
+!waitforstate FM.FT.QuorumLost.fabric:/statefulpersisted1 false
+!waitforstate FM.FT.QuorumLost.fabric:/statefulpersisted2 false
+!waitforstate FM.FT.QuorumLost.fabric:/statefulpersisted3 false
+
+clientget fabric:/statefulpersisted1 12 12Data
+clientget fabric:/statefulpersisted2 20 20Data
+!wait
+
+# MinTargetReplicaCount is set to 3, downshift for fabric:/statefulpersisted4 wont happen if we go below 3 nodes.
+createservice fabric:/statefulpersisted4 TestPersistedStoreServiceType y 1 3 minreplicasetsize=3 persist
+verify
+
+clientget fabric:/statefulpersisted1 12 12Data
+!wait
+
++30
+verify
+
+clientput fabric:/statefulpersisted4 40 40Data
+!wait
+
+clientget fabric:/statefulpersisted4 40 40Data
+!wait
+
+################################################################################
+# Scenario 5 : Down nodes one at a time, up nodes in same order
+################################################################################
+
+-10
+!waitforstate FM.Replica.IsUp.fabric:/statefulpersisted1.10 false
+!waitforstate FM.Replica.IsUp.fabric:/statefulpersisted2.10 false
+!waitforstate FM.Replica.IsUp.fabric:/statefulpersisted3.10 false
+!waitforstate FM.Replica.IsUp.fabric:/statefulpersisted4.10 false
+
+-20
+!waitforstate FM.FT.QuorumLost.FMService true
+
+-30
+
+!pause 5
+clearticket
+
++10
++20
+verify
+
+clientget fabric:/statefulpersisted4 40 40Data
+!wait
+
+createservice fabric:/statefulpersisted5 TestPersistedStoreServiceType y 1 3 minreplicasetsize=3 persist
+verify
+
++30
+verify
+
+################################################################################
+# Scenario 6 : Down quorum of nodes, bring up one node to get out of quorum loss
+################################################################################
+
+-10
+!waitforstate FM.Replica.IsUp.fabric:/statefulpersisted2.10 false
+!waitforstate FM.FT.Reconfig.fabric:/statefulpersisted2 false
+
+-20
+!waitforstate FM.FT.QuorumLost.FMService true
+
++20
+!waitforstate FM.FT.QuorumLost.FMService false
+!waitforstate FM.FT.QuorumLost.fabric:/statefulpersisted2 false
+!waitforstate FM.Replica.Role.fabric:/statefulpersisted2.30 Primary
+!waitforstate FM.FT.Reconfig.fabric:/statefulpersisted2 false
+
+verify
+
+clientget fabric:/statefulpersisted2 20 20Data
+
++10
+verify
+
+-*
+
+!q

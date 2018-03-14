@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="ServicePackage" Version="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <ServiceTypes>   
+   <StatelessServiceType ServiceTypeName="StatelessType" />
+  </ServiceTypes>
+  <CodePackage Name="CodeA" Version="1.0" IsShared="true">
+    <SetupEntryPoint>
+        <ExeHost>
+            <Program>SetupA.exe</Program>
+        </ExeHost>
+    </SetupEntryPoint>
+    <EntryPoint>
+        <ExeHost>
+            <Program>CodeA.exe</Program>
+        </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+
+  <ConfigPackage Name="ConfigA" Version="1.0" />
+
+  <DataPackage Name="DataA" Version="1.0" />
+
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="EndpointA" Protocol="https" Type="Input" Port="1000" CodePackageRef="CodeA"/>
+
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

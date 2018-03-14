@@ -1,0 +1,118 @@
+#
+# [owner] aprameyr
+# Test scenarios around the logical Phase1_Deactivate
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Phase1 Deactivate restarts a replica that cannot be caught up
+# Verify deactivate retry behavior
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+
+#Add some data that is not visible to node 20
+clientput fabric:/test1 10 10
+!wait
+
+#Restart the secondary on 30, 40, 50 so that catchup capability is lost
+addbehavior b2 * * ReplicaUp
+reportfault 50 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.50.50 SB
+removebehavior b2
+verify
+
+addbehavior b2 * * ReplicaUp
+reportfault 40 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.40.40 SB
+removebehavior b2
+verify
+
+addbehavior b2 * * ReplicaUp
+reportfault 30 fabric:/test1 transient 
+!waitforstate RA.Replica.State.fabric:/test1.30.30 SB
+removebehavior b2
+verify
+
+addbehavior b3 * 20 Deactivate
+-60
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.50 Phase4_Activate
+
+addbehavior b5 * * StatefulServiceReopen
+
+removebehavior b3
+!waitforstate RA.Replica.State.fabric:/test1.20.20 SB
+removebehavior b5
+
+verify
+
+clientget fabric:/test1 10 10
+!wait
+
++60 nodeprops=system:false
+verify
+
+deleteservice fabric:/test1
+verify
+
+#####################################################
+# Scenario 2: Phase1 Deactivate is retried for volatile services
+# And phase1 deactivate only takes down the behind replica
+#####################################################
+
+createservice fabric:/test2 TestStoreServiceType y 1 5 minreplicasetsize=5 constraint=(system!=true) initdata=RE_SecondaryClearAcknowledgedOperations:true
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+
+#Add some data that is not visible to node 20
+clientput fabric:/test2 10 10
+!wait
+
+#Block deactivate reply and replica dropped to the FM
+addbehavior b2 * * ReplicaUp
+addbehavior b3 20 * DeactivateReply
+
+#take down the primary
+-60
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.50 Phase4_Activate
+
+#wait for retries
+!pause 10
+
+#unblock deactivate reply
+removebehavior b3
+removebehavior b2
+verify
+
+removebehavior b1
+
++60 nodeprops=system:false
+verify
+
+deleteservice fabric:/test2
+verify
+
+!q

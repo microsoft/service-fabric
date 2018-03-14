@@ -1,0 +1,85 @@
+votes 10 20 30
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+set SendLoadReportInterval 1
+set HealthOperationTimeout 30
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 10
+set BalancingDelayAfterNewNode 15
+set ScoreImprovementThreshold 0.000001
+
+
+cleantest	
++10 cap=memory:10,cpu:10 nodeprops=Color:Green
++20 cap=memory:0,cpu:0 nodeprops=Color:Green
++30 cap=memory:10,cpu:10 nodeprops=Color:Blue
++40 cap=memory:10,cpu:10 nodeprops=Color:Blue
++50 cap=memory:0,cpu:0 nodeprops=Color:Red
++60 cap=memory:10,cpu:10 nodeprops=Color:Red
+Verify
+
+# Create a persisted stateful service
+createservice fabric:/persisted1 TestPersistedStoreServiceType y 1 1 persist metrics=memory,Low,1,1 constraint=(Color==Red)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted2 TestPersistedStoreServiceType y 1 1 persist metrics=memory,Low,1,1 constraint=(Color==Red)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted3 TestPersistedStoreServiceType y 1 1 persist metrics=memory,Low,1,1 constraint=(Color==Red)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted4 TestPersistedStoreServiceType y 1 1 persist metrics=memory,Low,1,1 constraint=(Color==Red)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted5 TestPersistedStoreServiceType y 1 1 persist metrics=memory,Low,1,1 constraint=(Color==Red)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted6 TestPersistedStoreServiceType y 1 1 persist metrics=memory,Low,1,1 constraint=(Color==Red)
+verify
+
+# Now Create Green Services
+
+# Create a persisted stateful service
+createservice fabric:/persisted7 TestPersistedStoreServiceType y 1 1 persist metrics=cpu,Low,1,1 constraint=(Color==Green)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted8 TestPersistedStoreServiceType y 1 1 persist metrics=cpu,Low,1,1 constraint=(Color==Green)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted9 TestPersistedStoreServiceType y 1 1 persist metrics=cpu,Low,1,1 constraint=(Color==Green)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted10 TestPersistedStoreServiceType y 1 1 persist metrics=cpu,Low,1,1 constraint=(Color==Green)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted11 TestPersistedStoreServiceType y 1 1 persist metrics=cpu,Low,1,1 constraint=(Color==Green)
+
+
+# Create a persisted stateful service
+createservice fabric:/persisted12 TestPersistedStoreServiceType y 1 1 persist metrics=cpu,Low,1,1 constraint=(Color==Green)
+verify
+
+
+gfum
+
+queryhealth cluster
+
++70 nodeprops=Color:Blue
+
+verify
+
+!pause 10
+
+queryhealth cluster expectedhealthstate=warning
+
+!q

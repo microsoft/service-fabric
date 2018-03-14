@@ -1,0 +1,21 @@
+{
+    "Default": {
+    },
+    "Tests": [
+        {
+            "Name": "DataLonghaul_Linux",
+            "Type": "Linux_ScriptTest",
+            "Owners": "mcoskun,zhol",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "DynamicLonghaul-PAAS-Linux.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+    ]
+}

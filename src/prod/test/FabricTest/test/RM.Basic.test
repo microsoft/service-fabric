@@ -1,0 +1,309 @@
+set RunAsPolicyEnabled true
+set DummyPLBEnabled true
+
+votes 10 20 30 40 50
+
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+rmservice 3 1
+
+cleantest
+
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 120
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 5
+
+set MaxPercentUnhealthyNodes 25
+
++10 nodeprops=stateless:1,volatile:1,persisted:1
++20 nodeprops=stateless:1,volatile:1,persisted:1
++30 nodeprops=stateless:1,volatile:1,persisted:1
++40
++50
+
+verify
+
+##################################################
+# Adhoc tests (TODO: split into categories below)
+##################################################
+
+createrepair id=A+B error=InvalidArgument
+createrepair id=A#B error=InvalidArgument
+createrepair id=A&B error=InvalidArgument
+createrepair id=A%B error=InvalidArgument
+createrepair id=A:B error=InvalidArgument
+createrepair id=A,B error=InvalidArgument
+createrepair id=A=B error=InvalidArgument
+createrepair id=A(B error=InvalidArgument
+createrepair id=A)B error=InvalidArgument
+createrepair id=A*B error=InvalidArgument
+
+createrepair id=RepairA action=MyAction
+createrepair id=RepairA action=MyAction error=RepairTaskAlreadyExists
+createrepair id=RepairB action=MyAction
+repairs
+
+cancelrepair id=RepairA
+cancelrepair id=RepairA error=InvalidState
+cancelrepair id=DoesNotExist error=RepairTaskNotFound
+repairs
+
+forceapproverepair id=RepairB error=InvalidState
+#forceapproverepair id=RepairB
+forceapproverepair id=RepairB version=42 error=StoreSequenceNumberCheckFailed
+forceapproverepair id=RepairA error=InvalidState
+forceapproverepair id=DoesNotExist error=RepairTaskNotFound
+repairs
+
+deleterepair id=RepairA
+deleterepair id=RepairA error=RepairTaskNotFound
+deleterepair id=RepairB error=InvalidState
+deleterepair id=DoesNotExist error=RepairTaskNotFound
+repairs
+
+cancelrepair id=RepairB version=42 error=StoreSequenceNumberCheckFailed
+cancelrepair id=RepairB abort
+repairs
+deleterepair id=RepairB
+deleterepair id=RepairB error=RepairTaskNotFound
+repairs
+
+createrepair id=RepairC
+updaterepair id=RepairC state=64 executor=RE result=4 resultcode=42 resultdetail=SomethingHappened
+repairs
+deleterepair id=RepairC
+repairs expectedcount=0
+
+# Testing if executordata field can be updated even after repair task is in Completed state
+createrepair id=RepairD
+updaterepair id=RepairD state=2 executor=RE executordata=XYZ
+cancelrepair id=RepairD
+# the below 2 commands should complete without errors
+updaterepair id=RepairD executordata=ABC
+updaterepair id=RepairD executordata=DEF
+deleterepair id=RepairD
+
+# Ensure that only executordata can be updated and not other fields when repair task is in Completed state
+createrepair id=RepairE
+updaterepair id=RepairE state=2 executor=RE executordata=XYZ
+cancelrepair id=RepairE
+updaterepair id=RepairE result=4 error=InvalidArgument
+updaterepair id=RepairE resultcode=42 error=InvalidArgument
+updaterepair id=RepairE resultdetail=SomethingHappened error=InvalidArgument
+deleterepair id=RepairE
+
+##################################################
+# Simple usage (auto)
+##################################################
+
+repairs expectedcount=0
+createrepair id=Foo
+updaterepair id=Foo state=2 executor=RE executordata=XYZ
+cancelrepair id=Foo
+repairs expectedcount=1
+deleterepair id=Foo
+repairs expectedcount=0
+
+##################################################
+# Simple usage (manual)
+##################################################
+
+# TODO
+
+##################################################
+# Query filters
+##################################################
+
+# Setup
+repairs expectedcount=0
+createrepair id=A/1 state=1
+createrepair id=A/2 state=2 executor=RE_X
+createrepair id=B/3 state=1
+createrepair id=B/4 state=2 executor=RE_X
+createrepair id=B/5 state=2 executor=RE_Y
+createrepair id=C/6 state=1
+cancelrepair id=C/6
+
+# Tests
+repairs expectedcount=6 id=
+repairs expectedcount=2 id=A/
+repairs expectedcount=3 id=B/
+repairs expectedcount=1 id=C/6
+repairs expectedcount=0 id=D/
+
+repairs expectedcount=6 state=127
+repairs expectedcount=2 state=1
+repairs expectedcount=3 state=2
+repairs expectedcount=1 state=64
+repairs expectedcount=0 state=8
+
+repairs expectedcount=6 executor=
+repairs expectedcount=2 executor=RE_X
+repairs expectedcount=1 executor=RE_Y
+repairs expectedcount=0 executor=RE_NotFound
+
+# Cleanup
+cancelrepair id=A/1
+cancelrepair id=A/2
+cancelrepair id=B/3
+cancelrepair id=B/4
+cancelrepair id=B/5
+deleterepair id=A/1
+deleterepair id=A/2
+deleterepair id=B/3
+deleterepair id=B/4
+deleterepair id=B/5
+deleterepair id=C/6
+repairs expectedcount=0
+
+##################################################
+# Creation
+##################################################
+
+# TODO
+
+##################################################
+# Task count limits
+##################################################
+
+repairs expectedcount=0
+createrepair id=01
+createrepair id=02
+createrepair id=03
+createrepair id=04
+createrepair id=05
+createrepair id=06
+createrepair id=07
+createrepair id=08
+createrepair id=09
+createrepair id=10
+
+# active = 10, total = 10
+repairs expectedcount=10 state=63
+repairs expectedcount=10
+
+createrepair id=11 error=ServiceTooBusy
+cancelrepair id=01
+
+# active = 9, total = 10
+repairs expectedcount=9 state=63
+repairs expectedcount=10
+
+createrepair id=11
+createrepair id=12 error=ServiceTooBusy
+
+cancelrepair id=02
+cancelrepair id=03
+cancelrepair id=04
+cancelrepair id=05
+cancelrepair id=06
+cancelrepair id=07
+
+# active = 4, total = 11
+repairs expectedcount=4 state=63
+repairs expectedcount=11
+
+createrepair id=12
+createrepair id=13
+createrepair id=14
+createrepair id=15
+
+# active = 8, total = 15
+repairs expectedcount=8 state=63
+repairs expectedcount=15
+
+createrepair id=16 error=ServiceTooBusy
+
+cancelrepair id=08
+cancelrepair id=09
+cancelrepair id=10
+cancelrepair id=11
+cancelrepair id=12
+cancelrepair id=13
+cancelrepair id=14
+cancelrepair id=15
+
+deleterepair id=01
+deleterepair id=02
+deleterepair id=03
+deleterepair id=04
+deleterepair id=05
+deleterepair id=06
+deleterepair id=07
+deleterepair id=08
+deleterepair id=09
+deleterepair id=10
+deleterepair id=11
+deleterepair id=12
+deleterepair id=13
+deleterepair id=14
+deleterepair id=15
+
+repairs expectedcount=0
+
+##################################################
+# Swap primary
+##################################################
+
+#repairs expectedcount=0
+
+#createrepair id=SwapPrimary
+
+#swapprimary RepairManagerService 50 40
+#!waitforstate FM.Replica.Role.RepairManagerService.40 Primary
+#!waitforstate FM.Replica.Role.RepairManagerService.50 Secondary
+#verify
+
+#repairs expectedcount=1 id=SwapPrimary state=1
+#cancelrepair id=SwapPrimary
+
+#swapprimary RepairManagerService 40 50
+#!waitforstate FM.Replica.Role.RepairManagerService.50 Primary
+#!waitforstate FM.Replica.Role.RepairManagerService.40 Secondary
+#verify
+
+#repairs expectedcount=1 id=SwapPrimary state=64
+#deleterepair id=SwapPrimary
+#repairs expectedcount=0
+
+#createrepair id=SwapPrimary2
+
+#swapprimary RepairManagerService 50 40
+#!waitforstate FM.Replica.Role.RepairManagerService.40 Primary
+#!waitforstate FM.Replica.Role.RepairManagerService.50 Secondary
+#verify
+#swapprimary RepairManagerService 40 50
+#!waitforstate FM.Replica.Role.RepairManagerService.50 Primary
+#!waitforstate FM.Replica.Role.RepairManagerService.40 Secondary
+#verify
+#swapprimary RepairManagerService 50 40
+#!waitforstate FM.Replica.Role.RepairManagerService.40 Primary
+#!waitforstate FM.Replica.Role.RepairManagerService.50 Secondary
+#verify
+
+#cancelrepair id=SwapPrimary2
+#deleterepair id=SwapPrimary2
+#repairs expectedcount=0
+
+##################################################
+# Failover
+##################################################
+
+#createrepair id=FailoverTest
+#repairs expectedcount=1 id=FailoverTest state=1
+#gfum
+
+#killservice RepairManagerService primaryOnly
+
+#cancelrepair id=FailoverTest
+#repairs expectedcount=1 id=FailoverTest state=64
+#deleterepair id=FailoverTest
+#repairs expectedcount=0
+#gfum
+
+##################################################
+
+-*
+!q

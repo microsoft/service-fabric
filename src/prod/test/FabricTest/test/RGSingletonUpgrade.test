@@ -1,0 +1,209 @@
+###############################################################################
+# Test: RGSingletonUpgrade.Test
+# Owners: mocolic, yangli, anuragg
+# This test verifies upgrade of resource governance for singleton services scenario
+# and checks if placement with move will be executed properly
+###############################################################################
+votes 10 20
+namingservice 1 3 1
+cmservice 3 1
+fmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+
+# Allow placement with move
+set PLBActionRetryTimes 1
+
+# Allow moving all replicas so that placement with move successfully place new child replica on a new node
+set MaxPercentageToMoveForPlacement 1
+
+# We need to be able to move replicas while in upgrade
+set AllowConstraintCheckFixesDuringApplicationUpgrade true
+
+# Do not check for available resources and do not enforce RG on the nodes
+# This is to be able to execute the test on any machine, regardless 
+set LocalResourceManagerTestMode true
+
+# Set the expected upgrade durations
+set ExpectedReplicaUpgradeDuration 20
+
+# Allow movement during upgrade for replicas which services have target replica count = 1
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange to 0
+
+#Allow moving parent replicas if we encounter affinity violation 
+set MoveParentToFixAffinityViolation true
+
+#we can bring services into quorum loss here
+set QuorumLossWaitDuration 2
+
+#Set this config to small value, so that we don't account load of offline replicas in cluster load
+set OfflineReplicaKeepDuration 1
+
++10 ud=UD1 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:2000 nodeprops=Color:Red
++20 ud=UD2 cap=servicefabric:/_CpuCores:2,servicefabric:/_MemoryInMB:2000 nodeprops=Color:Red
++30 ud=UD3 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:500 nodeprops=Color:Blue
+verify
+
+# 
+# Application type version 1.0
+#
+app.add version10 TestAppType 1.0
+app.clear version10
+app.servicepack version10 ServicePackage version=1.0
+app.servicetypes version10 ServicePackage ServiceTypeParent stateful persist
+app.servicetypes version10 ServicePackage ServiceTypeChild1 stateful persist
+app.codepack version10 ServicePackage CodeParent types=ServiceTypeParent version=1.0
+app.codepack version10 ServicePackage CodeChild1 types=ServiceTypeChild1 version=1.0
+app.upload version10 compress
+
+
+# 
+# Application type version 1.1 
+#
+app.add version11 TestAppType 1.1 version10
+app.clear version11
+app.servicepack version11 ServicePackage resources=CPU,1,MemoryInMB,1000
+app.servicetypes version11 ServicePackage ServiceTypeParent stateful persist
+app.servicetypes version11 ServicePackage ServiceTypeChild1 stateful persist
+app.codepack version11 ServicePackage CodeParent types=ServiceTypeParent version=1.0
+app.codepack version11 ServicePackage CodeChild1 types=ServiceTypeChild1 version=1.0
+app.upload version11 compress
+
+
+# 
+# Application type version 1.2
+#
+app.add version12 TestAppType 1.2 version11
+app.clear version12
+app.servicepack version12 ServicePackage resources=CPU,3
+app.servicetypes version12 ServicePackage ServiceTypeParent stateful persist
+app.servicetypes version12 ServicePackage ServiceTypeChild1 stateful persist
+app.codepack version12 ServicePackage CodeParent types=ServiceTypeParent version=1.2 rgpolicies=MemoryInMB;500
+app.codepack version12 ServicePackage CodeChild1 types=ServiceTypeChild1 version=1.2 rgpolicies=MemoryInMB;400
+app.upload version12 compress
+
+# 
+# Application type2 version 1.0
+#
+app.add version20 TestAppType2 1.0
+app.clear version20
+app.servicepack version20 ServicePackage2 version=1.0 resources=CPU,3,MemoryInMB,3000
+app.servicetypes version20 ServicePackage2 ServiceTypeChild2 stateful persist
+app.codepack version20 ServicePackage2 CodeChild2 types=ServiceTypeChild2 version=1.0
+app.upload version20 compress
+
+provisionapp version10
+provisionapp version11
+provisionapp version12
+provisionapp version20
+
+#
+# Create application version 1.0
+#
+createapp fabric:/app1 TestAppType 1.0
+verify
+
+createservice fabric:/app1/parentservice ServiceTypeParent y 1 1 persist appname=fabric:/app1 constraint=Color!=Red standbyreplicakeepduration=3
+createservice fabric:/app1/childservice1 ServiceTypeChild1 y 1 1 persist servicecorrelations=fabric:/app1/parentservice,affinity appname=fabric:/app1 standbyreplicakeepduration=3
+verify
+
+!waitforstate FM.Replica.State.fabric:/app1/parentservice.30 Ready
+!waitforstate FM.Replica.State.fabric:/app1/childservice1.30 Ready
+
+verifyclusterload servicefabric:/_CpuCores 0 0 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 0 0 0 -1
+
+#we actually need 2 nodes with enough capacity during singleton upgrades
++35 ud=UD4 cap=servicefabric:/_CpuCores:4,servicefabric:/_MemoryInMB:2000 nodeprops=Color:Green
++40 ud=UD5 cap=servicefabric:/_CpuCores:4,servicefabric:/_MemoryInMB:2000 nodeprops=Color:Green
+
+#
+# Upgrade application from version 1.0 to 1.1
+#
+upgradeapp fabric:/app1 1.1 Rolling
+verifyupgradeapp fabric:/app1 timeout=500
+verify
+
+-35
+
+!waitforstate FM.Replica.State.fabric:/app1/parentservice.40 Ready
+!waitforstate FM.Replica.State.fabric:/app1/childservice1.40 Ready
+
+verifynodeload nodeid:40 servicefabric:/_CpuCores 1
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 1000
+
+verifyresourceonnode 40 servicefabric:/_CpuCores 1
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 1000
+verify
+
+
++50 ud=UD6 cap=servicefabric:/_CpuCores:4,servicefabric:/_MemoryInMB:5000 nodeprops=Color:Yellow
++60 ud=UD7 cap=servicefabric:/_CpuCores:4,servicefabric:/_MemoryInMB:5000 nodeprops=Color:Red
+
+createapp fabric:/app2 TestAppType2 1.0
+verify
+
+createservice fabric:/app2/childservice2 ServiceTypeChild2 y 1 1 persist servicecorrelations=fabric:/app1/parentservice,affinity appname=fabric:/app2 standbyreplicakeepduration=3
+verify
+
+!waitforstate FM.Replica.State.fabric:/app1/parentservice.50 Ready
+!waitforstate FM.Replica.State.fabric:/app1/childservice1.50 Ready
+!waitforstate FM.Replica.State.fabric:/app2/childservice2.50 Ready
+
+verifynodeload nodeid:50 servicefabric:/_CpuCores 4
+verifynodeload nodeid:50 servicefabric:/_MemoryInMB 4000
+
+verifyresourceonnode 50 servicefabric:/_CpuCores 4
+verifyresourceonnode 50 servicefabric:/_MemoryInMB 4000
+
++65 ud=UD8 cap=servicefabric:/_CpuCores:7,servicefabric:/_MemoryInMB:5000 nodeprops=Color:Yellow
++70 ud=UD9 cap=servicefabric:/_CpuCores:7,servicefabric:/_MemoryInMB:5000 nodeprops=Color:Yellow
+
+#
+# Upgrade application from version 1.1 to 1.2
+#
+upgradeapp fabric:/app1 1.2 Rolling
+verifyupgradeapp fabric:/app1 timeout=500
+verify
+
+-65
+
+!waitforstate FM.Replica.State.fabric:/app1/parentservice.70 Ready
+!waitforstate FM.Replica.State.fabric:/app1/childservice1.70 Ready
+!waitforstate FM.Replica.State.fabric:/app2/childservice2.70 Ready
+
+verifynodeload nodeid:70 servicefabric:/_CpuCores 6
+verifynodeload nodeid:70 servicefabric:/_MemoryInMB 3900
+
+verifyresourceonnode 70 servicefabric:/_CpuCores 6
+verifyresourceonnode 70 servicefabric:/_MemoryInMB 3900
+
+#
+# Do the downgrade to 1.1 to check the consistency
+#
+upgradeapp fabric:/app1 1.1 Rolling
+verifyupgradeapp fabric:/app1 timeout=500
+verify
+
+verifyclusterload servicefabric:/_CpuCores 4 4 0 -1
+verifyclusterload servicefabric:/_MemoryInMB 4000 4000 0 -1
+
+# Test case cleanup
+!pause 5
+deleteapp fabric:/app1
+deleteapp fabric:/app2
+
+unprovisionapp TestAppType 1.0
+unprovisionapp TestAppType 1.1
+unprovisionapp TestAppType 1.2
+unprovisionapp TestAppType2 1.0
+verify
+
+nameexists fabric:/app1 false
+nameexists fabric:/app2 false
+
+!q

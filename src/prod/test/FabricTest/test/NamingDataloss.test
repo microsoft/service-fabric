@@ -1,0 +1,72 @@
+set ReplicaReopenFailureMaxRetryThreshold 1
+votes 10 20 30
+fmservice 7 2
+cmservice 0 0
+namingservice 1 1 1
+cleantest
+
+set OfflineReplicaKeepDuration 5
+set QuorumLossWaitDuration 5
+set NamingPlacementConstraints naming==1
+
++10 nodeprops=naming:1
++20 nodeprops=naming:0
++30 nodeprops=naming:0
+verify
+
+#
+# Ensure stability of Naming service before proceeding
+#
+createname fabric:/dataloss
+
+createclient client1 nodeconfig=10
+
+createservice fabric:/dataloss/testcase1a CalculatorServiceType n 0 3 client=client1
+createservice fabric:/dataloss/testcase1b CalculatorServiceType n 2 3 lowRange=1 highRange=2 client=client1
+createservice fabric:/dataloss/testcase1c CalculatorServiceType n 3 3 partitionnames=p1,p2,p3 client=client1
+
+verify
+
+gfum
+
+killnamingservice cleardb=true
+
+verify
+
++10 nodeprops=naming:1
+
+verify
+
+gfum
+
+#
+# Verify dataloss has occurred in Naming Service
+#
+
+createclient client2 nodeconfig=20
+
+resolveusingclient client2 fabric:/dataloss/testcase1a 0 error=UserServiceNotFound
+resolveusingclient client2 fabric:/dataloss/testcase1b 1 error=UserServiceNotFound
+resolveusingclient client2 fabric:/dataloss/testcase1c p1 error=UserServiceNotFound
+
+#
+# Rebuild service metadata from FM
+#
+
+createservice fabric:/dataloss/testcase1a CalculatorServiceType n 2 3 lowRange=3 highRange=4 errors=UserServiceAlreadyExists client=client2
+createservice fabric:/dataloss/testcase1b CalculatorServiceType n 2 3 lowRange=5 highRange=6 errors=UserServiceAlreadyExists client=client2
+createservice fabric:/dataloss/testcase1c CalculatorServiceType n 2 3 partitionnames=p1b,p2b errors=UserServiceAlreadyExists client=client2
+
+#
+# Verify that existing metadata from FM was used rather than metadata in new CreateService requests
+#
+
+resolveusingclient client2 fabric:/dataloss/testcase1a false 
+resolveusingclient client2 fabric:/dataloss/testcase1b 1 
+resolveusingclient client2 fabric:/dataloss/testcase1c p1
+
+resolveusingclient client2 fabric:/dataloss/testcase1a 3 error=InvalidServicePartition
+resolveusingclient client2 fabric:/dataloss/testcase1b 5 error=InvalidServicePartition
+resolveusingclient client2 fabric:/dataloss/testcase1c p1b error=InvalidServicePartition
+
+!q

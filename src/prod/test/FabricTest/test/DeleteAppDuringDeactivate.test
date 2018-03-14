@@ -1,0 +1,94 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1513847
+# This test verifies scenarios around delete application while node is deactivated
+# 
+set DummyPLBEnabled true
+set NamingOperationTimeout 10
+
+votes 10 
+cmservice 1 1
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+#####################
+# Scenario 1: Delete while node is deactivated
+#####################
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(StringProperty!=SeedNode)
+verify
+
+deactivatenode 40 Restart
+!waitforstate FM.UpReplicaCount.40 0
+
+!waitforstate FM.Replica.IsUp.fabric:/test.40 false
+
+deleteservice fabric:/test
+
+!waitforstate FM.Replica.IsUp.fabric:/test.40 false
+!waitforstate RA.Replica.State.fabric:/test.40.40 SB
+!waitforstate RA.Replica.IsUp.fabric:/test.40.40 false
+
+activatenode 40
+!waitforstate RA.FT.State.fabric:/test.40 Closed
+verify
+
+#####################
+# Scenario 2: Delete while node is deactivated, take down node and bring it back up
+#####################
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(StringProperty!=SeedNode)
+verify
+
+deactivatenode 40 Restart
+!waitforstate FM.UpReplicaCount.40 0
+
+deleteservice fabric:/test
+
+-40
+!waitforstate FM.Node.IsUp.40 false
+
++40  nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.40 true
+
+activatenode 40 
+!waitforstate RA.FT.State.fabric:/test.40 Closed
+verify
+
+######################
+# Scenario 3: Delete while node is activated but block replica close to RAP and then deactivate
+#####################
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(StringProperty!=SeedNode)
+verify
+
+addbehavior b1 40 * ReplicaClose
+
+deleteservice fabric:/test errors=Timeout
+
+deactivatenode 40 Restart
+!waitforstate FM.Node.DeactivationStatus.40 DeactivationSafetyCheckComplete
+
+-40
+!waitforstate FM.Node.IsUp.40 false
+
+removebehavior b1
+
++40  nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.40 true
+
+deleteservice fabric:/test errors=UserServiceNotFound
+
+activatenode 40
+verify
+
+!q

@@ -1,0 +1,13 @@
+[Unit]
+Description=ServiceFabric Daemon
+
+[Service]
+Type=simple
+ExecStart=/opt/microsoft/servicefabric/bin/starthost.sh
+WorkingDirectory=/opt/microsoft/servicefabric/bin
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+

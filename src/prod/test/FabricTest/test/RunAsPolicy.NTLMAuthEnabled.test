@@ -1,0 +1,3 @@
+set NTLMAuthenticationEnabled true
+set NTLMAuthenticationPasswordSecret TestSecret
+!load RunAsPolicy.test

@@ -1,0 +1,51 @@
+votes 10 20 30
+cleantest
+fmservice 3 1
+namingservice 1 3 1
+
++10 fd=fd:/dc0/r0 nodeprops=prop1:1
++20 fd=fd:/dc0/r0 nodeprops=prop1:1
++30 fd=fd:/dc0/r1 nodeprops=prop1:1
++40 fd=fd:/dc0/r1 nodeprops=prop1:1
++50 fd=fd:/dc0/r2 nodeprops=prop1:2
++60 fd=fd:/dc1/r0 nodeprops=prop1:1
+
+verify
+# fabric:/stateless1 can be placed on every node even with FD constratins
+createname fabric:/stateless1
+createservice fabric:/stateless1 CalculatorServiceType n 1 -1
+verify
+
+!waitforstate FM.Replica.State.fabric:/stateless1.10 Ready
+!waitforstate FM.Replica.State.fabric:/stateless1.20 Ready
+!waitforstate FM.Replica.State.fabric:/stateless1.30 Ready
+!waitforstate FM.Replica.State.fabric:/stateless1.40 Ready
+!waitforstate FM.Replica.State.fabric:/stateless1.50 Ready
+!waitforstate FM.Replica.State.fabric:/stateless1.60 Ready
+
+# fabric:/stateless2 can be placed on every node other than the blocked node
+createname fabric:/stateless2
+createservice fabric:/stateless2 CalculatorServiceType n 1 -1 constraint=prop1==1
+
+!waitforstate FM.Replica.State.fabric:/stateless2.10 Ready
+!waitforstate FM.Replica.State.fabric:/stateless2.20 Ready
+!waitforstate FM.Replica.State.fabric:/stateless2.30 Ready
+!waitforstate FM.Replica.State.fabric:/stateless2.40 Ready
+!waitforstate FM.Replica.State.fabric:/stateless2.60 Ready
+
+# There should be no up replica on node 50
+!waitforstate FM.Replica.IsUp.fabric:/stateless2.50 NullReplica
+
++70 fd=fd:/dc0/r2 nodeprops=prop1:1
+verify
+
+# There should be instance places on the new node for both services
+!waitforstate FM.Replica.State.fabric:/stateless1.70 Ready
+!waitforstate FM.Replica.State.fabric:/stateless1.70 Ready
+
+
+gfum
+
+!pause,30
+
+!q

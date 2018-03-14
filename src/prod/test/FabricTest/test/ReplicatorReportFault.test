@@ -1,0 +1,325 @@
+####################################
+# Replicator report transient on copy failure
+####################################
+
+set DummyPLBEnabled true
+set ConstraintCheckEnabled false
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+
++10
++20
++30
+verify
++40
++50
++60
++70
++80
++90
+verify
+
+####################################
+# Secondary GetCopyContext fail
+####################################
+
+addbehavior b0 * * ReplicaUp
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+clientput fabric:/test1 10 10Data0
+!wait
++100
++110
+verify
+gfum
+
+injectfailure 110 fabric:/test1 provider.getcopycontext
+-70
+!waitforstate FM.Replica.State.fabric:/test1.110 Dropped|InBuild
+
+#add a pause to test retries and then remove the replica up block
+#without replica up block plb may keep placing on that node causing an infinite loop
+!pause 10
+removebehavior b0
+removefailure 110 fabric:/test1 provider.getcopycontext
+verify
+gfum
+
++70
+-100
+-110
+
+verify
+gfum
+
+
+deleteservice fabric:/test1
+verify
+####################################
+# Primary GetCopyState fail
+####################################
+createname fabric:/test2
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+clientput fabric:/test2 10 10Data0
+!wait
++100
+verify
+gfum
+
+injectfailure 80 fabric:/test2 provider.getcopystate
+addbehavior blockNewPrimaryReconfig 80 * DoReconfiguration
+-90
+!waitforstate FM.Replica.Role.fabric:/test2.80 Primary
+gfum
+removebehavior blockNewPrimaryReconfig
+!waitforstate FM.Replica.Role.fabric:/test2.70 Primary
+gfum
+removefailure 80 fabric:/test2 provider.getcopystate
+
++90
+-100
+verify
+gfum
+
+deleteservice fabric:/test2
+verify
+
+####################################
+# Volatile Primary GetCopyState fail
+####################################
+createname fabric:/test3
+createservice fabric:/test3 TestStoreServiceType y 1 3
+verify
+
+clientput fabric:/test3 10 10Data0
+!wait
++100
+verify
+gfum
+
+injectfailure 80 fabric:/test3 provider.getcopystate
+-90
+verify
+gfum
+removefailure 80 fabric:/test3 provider.getcopystate
+
++90
+-100
+verify
+gfum
+
+deleteservice fabric:/test3
+verify
+####################################
+# Volatile Primary BeginGetNext CopyState fail
+####################################
+createname fabric:/test4
+createservice fabric:/test4 TestStoreServiceType y 1 3
+verify
+
+clientput fabric:/test4 10 10Data0
+!wait
++100
+verify
+gfum
+
+injectfailure 80 fabric:/test4 provider.begingetnextcopystate
+-90
+verify
+gfum
+!waitforstate FM.Replica.Role.fabric:/test4.70 Primary
+removefailure 80 fabric:/test4 provider.begingetnextcopystate
+
+
++90
+-100
+verify
+gfum
+
+deleteservice fabric:/test4
+verify
+
+####################################
+# Volatile Primary EndGetNext CopyState fail
+####################################
+createname fabric:/test5
+createservice fabric:/test5 TestStoreServiceType y 1 3
+verify
+
+clientput fabric:/test5 10 10Data0
+!wait
++100
+verify
+gfum
+
+injectfailure 80 fabric:/test5 provider.endgetnextcopystate
+-90
+verify
+gfum
+!waitforstate FM.Replica.Role.fabric:/test5.70 Primary
+removefailure 80 fabric:/test5 provider.endgetnextcopystate
+
+
++90
+-100
+verify
+gfum
+
+deleteservice fabric:/test5
+verify
+
+####################################
+# ServiceGroup GetCopyState fail
+####################################
+createname fabric:/sg1
+createservicegroup fabric:/sg1 SGStatefulServiceFactory y 1 3 3 fabric:/sg1#test1 SGStatefulService fabric:/sg1#test2 SGStatefulService fabric:/sg1#test3 SGStatefulService persist
+verify
+
++100
+verify
+gfum
+
+injectfailure 80 fabric:/sg1#test2 provider.getcopystate
+addbehavior blockNewPrimaryReconfig 80 * DoReconfiguration
+-90
+!waitforstate FM.Replica.Role.fabric:/sg1.80 Primary
+gfum
+removebehavior blockNewPrimaryReconfig
+!waitforstate FM.Replica.Role.fabric:/sg1.70 Primary
+gfum
+removefailure 80 fabric:/sg1#test2 provider.getcopystate
+
++90
+-100
+verify
+gfum
+
+####################################
+# ServiceGroup BeginGetNext CopyState fail
+####################################
+createname fabric:/sg2
+createservicegroup fabric:/sg2 SGStatefulServiceFactory y 1 3 3 fabric:/sg2#test1 SGStatefulService fabric:/sg2#test2 SGStatefulService fabric:/sg2#test3 SGStatefulService persist
+verify
+
++100
+verify
+gfum
+
+injectfailure 80 fabric:/sg2#test2 provider.begingetnextcopystate
+addbehavior blockNewPrimaryReconfig 80 * DoReconfiguration
+-90
+!waitforstate FM.Replica.Role.fabric:/sg2.80 Primary
+gfum
+removebehavior blockNewPrimaryReconfig
+!waitforstate FM.Replica.Role.fabric:/sg2.70 Primary
+gfum
+removefailure 80 fabric:/sg2#test2 provider.begingetnextcopystate
+
++90
+-100
+verify
+gfum
+####################################
+# ServiceGroup EndGetNext CopyState fail
+####################################
+createname fabric:/sg3
+createservicegroup fabric:/sg3 SGStatefulServiceFactory y 1 3 3 fabric:/sg3#test1 SGStatefulService fabric:/sg3#test2 SGStatefulService fabric:/sg3#test3 SGStatefulService persist
+verify
+
++100
+verify
+gfum
+
+injectfailure 80 fabric:/sg3#test2 provider.endgetnextcopystate
+addbehavior blockNewPrimaryReconfig 80 * DoReconfiguration
+-90
+!waitforstate FM.Replica.Role.fabric:/sg3.80 Primary
+gfum
+removebehavior blockNewPrimaryReconfig
+!waitforstate FM.Replica.Role.fabric:/sg3.70 Primary
+gfum
+removefailure 80 fabric:/sg3#test2 provider.endgetnextcopystate
+
++90
+-100
+verify
+gfum
+####################################
+# ServiceGroup GetCopyContext fail
+####################################
+createname fabric:/sg4
+createservicegroup fabric:/sg4 SGStatefulServiceFactory y 1 3 3 fabric:/sg4#test1 SGStatefulService fabric:/sg4#test2 SGStatefulService fabric:/sg4#test3 SGStatefulService persist
+verify
+
++100
+verify
+gfum
+
+injectfailure 100 fabric:/sg4#test2 provider.getcopycontext
+-70
+!waitforstate FM.Replica.State.fabric:/sg4.100 InBuild|Dropped|Ready
+!pause,5
+removefailure 100 fabric:/sg4#test2 provider.getcopycontext
+verify
+gfum
+!waitforstate FM.Replica.Role.fabric:/sg4.90 Primary
+
++70
+-100
+verify
+gfum
+####################################
+# ServiceGroup BeginGetNext CopyContext fail
+####################################
+createname fabric:/sg5
+createservicegroup fabric:/sg5 SGStatefulServiceFactory y 1 3 3 fabric:/sg5#test1 SGStatefulService fabric:/sg5#test2 SGStatefulService fabric:/sg5#test3 SGStatefulService persist
+verify
+
++100
+verify
+gfum
+
+injectfailure 100 fabric:/sg5#test2 provider.begingetnextcopycontext
+-70
+!waitforstate FM.Replica.State.fabric:/sg5.100 InBuild|Dropped|Ready
+!pause,5
+removefailure 100 fabric:/sg5#test2 provider.begingetnextcopycontext
+verify
+gfum
+!waitforstate FM.Replica.Role.fabric:/sg5.90 Primary
+
++70
+-100
+verify
+gfum
+####################################
+# ServiceGroup EndGetNext CopyContext fail
+####################################
+createname fabric:/sg6
+createservicegroup fabric:/sg6 SGStatefulServiceFactory y 1 3 3 fabric:/sg6#test1 SGStatefulService fabric:/sg6#test2 SGStatefulService fabric:/sg6#test3 SGStatefulService persist
+verify
+
++100
+verify
+gfum
+
+injectfailure 100 fabric:/sg6#test2 provider.endgetnextcopycontext
+-70
+!waitforstate FM.Replica.State.fabric:/sg6.100 InBuild|Dropped|Ready
+!pause,5
+removefailure 100 fabric:/sg6#test2 provider.endgetnextcopycontext
+verify
+gfum
+!waitforstate FM.Replica.Role.fabric:/sg6.90 Primary
+
+!q

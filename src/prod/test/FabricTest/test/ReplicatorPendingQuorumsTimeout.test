@@ -1,0 +1,115 @@
+##########################################################################################################################
+#   This script tests the behavior of the replicator during close, when it waits for pending operations to be quorum ack'd 
+##########################################################################################################################
+
+set DummyPLBEnabled true
+votes 10
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+
++10 nodeprops=system:true
+verify
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify 
+
+############################################################################
+# Case 1: Large Timeout value, but no pending ops.
+#
+# Expectation: Close must finish immediately
+############################################################################
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist initdata=RE_PrimaryWaitForPendingQuorumsTimeoutMilliseconds:1000000 constraint=(system!=true)
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test1.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test1.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test1.20 Secondary
+
+clientput fabric:/test1 10 10Data1 
+clientput fabric:/test1 10 10Data2 
+!wait 
+
+# This will trigger close on the primary
+addbehavior r1 * * StatefulServiceReopenReply
+reportfault 40 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.40.40 SB
+
+removebehavior r1
+!waitforstate RA.Replica.State.fabric:/test1.40.40 RD
+verify
+
+deleteservice fabric:/test1
+!wait
+
+############################################################################
+# Case 3: Zero Timeout value with 1 pending operation
+#
+# Expectation: Close must finish immediately
+############################################################################
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist initdata=RE_PrimaryWaitForPendingQuorumsTimeoutMilliseconds:0 constraint=(system!=true)
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test3.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test3.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test3.20 Secondary
+verify
+
+clientput fabric:/test3 10 10Data1 
+!wait 
+
+addbehavior b1 * 40 ReplicationAck
+clientput fabric:/test3 10 10Data2 
+
+# This will trigger close on the primary
+addbehavior r1 * * StatefulServiceReopenReply
+reportfault 40 fabric:/test3 transient
+!waitforstate RA.Replica.State.fabric:/test3.40.40 SB
+removebehavior r1 
+
+# Verify that reconfiguration has completed even though there was no quorum for pending op
+!waitforstate RA.Replica.State.fabric:/test3.40.40 RD
+verify
+removebehavior b1 
+
+deleteservice fabric:/test3
+!wait
+
+############################################################################
+# Case 5: Small Timeout value with 1 pending operation 
+#
+# Expectation: The wait must timeout and Close should finish
+############################################################################
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 persist initdata=RE_PrimaryWaitForPendingQuorumsTimeoutMilliseconds:2000 constraint=(system!=true)
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/test5.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test5.30 Secondary 
+!waitforstate FM.Replica.Role.fabric:/test5.20 Secondary
+verify
+
+clientput fabric:/test5 10 10Data1 
+!wait 
+
+addbehavior b1 * 40 ReplicationAck
+clientput fabric:/test5 10 10Data2 
+
+# This will trigger close on the primary
+addbehavior r1 * * StatefulServiceReopenReply
+reportfault 40 fabric:/test5 transient 
+!waitforstate RA.Replica.State.fabric:/test5.40.40 SB
+removebehavior r1
+
+# Verify that reconfiguration will complete due to timeout 
+!waitforstate RA.Replica.State.fabric:/test5.40.40 RD
+verify
+removebehavior b1
+
+deleteservice fabric:/test5
+!wait
+
+!q 

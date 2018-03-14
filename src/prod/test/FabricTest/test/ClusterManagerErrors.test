@@ -1,0 +1,271 @@
+votes 10 20
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+
++10
++20
++30
+verify
+
+# Provision unknown application type
+provisionapp unknown DirectoryNotFound
+ 
+# Rollback due to ImageBuilderValidationError leaves validated versions intact
+
+# Validated version
+app.add OkApp1 OkType OkVersion
+app.clear OkApp1
+
+app.servicepack OkApp1 ServicePackageA version=v1
+app.servicetypes OkApp1 ServicePackageA ServiceTypeA stateful persist
+app.codepack OkApp1 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.upload OkApp1
+
+provisionapp OkApp1
+
+# Invalid version
+app.add OkApp2 OkType BadVersion
+app.clear OkApp2
+app.upload OkApp2
+
+provisionapp OkApp2 ImageBuilderValidationError
+
+# Validated version still exists
+createapp fabric:/okapp OkType OkVersion
+verify
+
+# Create service with name not prefix of app name fails
+createservice fabric:/ok2app/servicetypeA ServiceTypeA y 1 3 persist appname=fabric:/okapp errors=InvalidNameUri
+# Create servuce with name prefix of app but not prefix app uri path fails
+createservice fabric:/okappwithextrainfo/servicetypeA ServiceTypeA y 1 3 persist appname=fabric:/okapp errors=InvalidNameUri
+
+# Validation error at CM
+app.add OkApp3 OkType BadVersion3
+app.clear OkApp3
+
+app.servicepack OkApp3 ServicePackageB version=v1
+app.servicetypes OkApp3 ServicePackageB ServiceTypeB stateful persist
+app.codepack OkApp3 ServicePackageB CodeB types=ServiceTypeB version=v1
+
+app.upload OkApp3
+
+provisionapp OkApp3
+
+# Use service type to cause upgrade validation error at CM
+createservice fabric:/okapp/servicetypeA ServiceTypeA y 1 3 persist appname=fabric:/okapp
+verify
+
+upgradeapp fabric:/okapp BadVersion3 Rolling errors=ApplicationUpgradeValidationError
+
+# Re-provision and upgrade to good version
+app.add OkApp4 OkType OkVersion4
+app.clear OkApp4
+
+app.servicepack OkApp4 ServicePackageA version=v2
+app.servicetypes OkApp4 ServicePackageA ServiceTypeA stateful persist
+app.codepack OkApp4 ServicePackageA CodeA types=ServiceTypeA version=v2
+
+app.upload OkApp4
+
+provisionapp OkApp4
+
+# Validation should pass now
+upgradeapp fabric:/okapp OkVersion4 Rolling
+verify
+
+# Validation should continue to fail against the bad version even after a successful upgrade
+upgradeapp fabric:/okapp BadVersion3 Rolling errors=ApplicationUpgradeValidationError
+
+deleteapp fabric:/okapp
+verify
+
+# Application type with no service package
+app.add NoSP
+app.clear NoSP
+app.upload NoSP
+
+provisionapp NoSP ImageBuilderValidationError
+
+# Application type with no code package
+app.add NoCP
+app.clear NoCP
+
+app.servicepack NoCP ServicePackageA version=1.0
+app.servicetypes NoCP ServicePackageA ServiceTypeA1 stateful persist
+
+app.upload NoCP
+provisionapp NoCP ImageBuilderValidationError
+
+
+# Application type with no service type  
+app.add NoST
+app.clear NoST
+
+app.servicepack NoST ServicePackageA version=1.0
+
+app.codepack NoST ServicePackageA CodeA1 version=1.0
+
+app.upload NoST
+provisionapp NoST ImageBuilderValidationError
+
+# Application type with invalid required service 
+app.add NoRS
+app.clear NoRS
+
+app.servicepack NoRS ServicePackageA version=1.0
+app.servicetypes NoRS ServicePackageA ServiceTypeA1 stateful persist
+app.codepack NoRS ServicePackageA CodeA1 version=1.0
+app.reqservices NoRS ServiceA1 UnknownType stateful partition=1 replica=3
+
+app.upload NoRS
+provisionapp NoRS ImageBuilderValidationError
+
+# Application type with invalid service template
+app.add NoTem 
+app.clear NoTem 
+
+app.servicepack NoTem ServicePackageA version=1.0
+app.servicetypes NoTem ServicePackageA ServiceTypeA1 stateful persist
+app.codepack NoTem ServicePackageA CodeA1 version=1.0
+app.servicetemplate NoTem UnknownType stateless partition=1 instance=3
+
+app.upload NoTem
+provisionapp NoTem ImageBuilderValidationError
+
+# Create application for invalid type
+createapp fabric:/app1 UnknownType 1.0 error=ApplicationTypeNotFound
+
+app.add RealApp
+app.upload RealApp
+
+# Create application for invalid version
+createapp fabric:/app1 RealApp 1.1 error=ApplicationTypeNotFound
+
+# 
+# Application version V1
+#
+app.add versionV1 TestApp V1
+app.clear versionV1
+
+app.servicepack versionV1 ServicePackageA version=V1
+app.servicetypes versionV1 ServicePackageA ServiceTypeA1 stateful
+app.codepack versionV1 ServicePackageA CodeA1 types=ServiceTypeA1 version=V1
+app.reqservices versionV1 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.servicetemplate versionV1 ServiceTypeA1 stateful partition=2 replica=2
+
+app.upload versionV1
+
+# Duplicate provision should fail
+provisionapp versionV1 Success applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+provisionapp versionV1 ApplicationTypeAlreadyExists
+
+app.add versionV1b testApp V1
+app.clear versionV1b
+
+app.servicepack versionV1b ServicePackageA version=V1
+app.servicetypes versionV1b ServicePackageA ServiceTypeA1 stateful
+app.codepack versionV1b ServicePackageA CodeA1 types=ServiceTypeA1 version=V1
+app.reqservices versionV1b ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.servicetemplate versionV1b ServiceTypeA1 stateful partition=2 replica=2
+
+app.upload versionV1b
+
+app.add versionV1c TestApp v1
+app.clear versionV1c
+
+app.servicepack versionV1c ServicePackageA version=v1
+app.servicetypes versionV1c ServicePackageA ServiceTypeA1 stateful
+app.codepack versionV1c ServicePackageA CodeA1 types=ServiceTypeA1 version=v1
+app.reqservices versionV1c ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.servicetemplate versionV1c ServiceTypeA1 stateful partition=2 replica=2
+
+app.upload versionV1c
+
+# Disallow case sensitive duplicates
+provisionapp versionV1b ApplicationTypeAlreadyExists
+provisionapp versionV1c ApplicationTypeAlreadyExists
+
+createapp fabric:/app1 TestApp V1 
+verify
+
+# Create existing app
+createapp fabric:/app1 TestApp V1 error=ApplicationAlreadyExists
+
+# Can't unprovision application type that has applications
+unprovisionapp TestApp V1 ApplicationTypeInUse
+
+# create service with name not path prefix of application fails
+createservicefromtemplate fabric:/app2/ServiceA1 ServiceTypeA1 fabric:/app1 InvalidNameUri
+createservicefromtemplate fabric:/app1-ServiceA1 ServiceTypeA1 fabric:/app1 InvalidNameUri
+
+# create service for existing app
+createservicefromtemplate fabric:/app1/ServiceA11 ServiceTypeA1 fabric:/NoApp ApplicationNotFound
+
+# Create from unknown template
+createservicefromtemplate fabric:/app1/ServiceA11 UnknownTemplate fabric:/app1 ServiceTypeTemplateNotFound
+
+# create from template with existing service
+createservicefromtemplate fabric:/app1/ServiceA1 ServiceTypeA1 fabric:/app1 UserServiceAlreadyExists
+
+# don't accept MoveNext() call if application isn't upgrading
+upgradeappmovenext fabric:/app1 error=ApplicationNotUpgrading
+
+# upgrade to the same version should fail
+upgradeapp fabric:/app1 V1 Rolling errors=ApplicationAlreadyInTargetVersion
+
+app.add version11 TestApp 1.1
+app.clear version11
+
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA1 stateful
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA1 version=1.1
+app.reqservices version11 ServiceA1 ServiceTypeA1 stateful partition=1 replica=3
+app.servicetemplate version11 ServiceTypeA1 stateful partition=2 replica=2
+
+app.upload version11
+provisionapp version11
+
+upgradeapp fabric:/app1 1.1 Rolling
+
+# Call upgrade to the same version while upgrade is in progress
+upgradeapp fabric:/app1 1.1 Rolling errors=ApplicationUpgradeInProgress
+
+upgradeappstatus fabric:/no_app_found error=ApplicationNotFound
+
+#
+# Cannot create duplicate service name under a different application.
+# Return an error other than "service already exists".
+#
+app.add versionM1 TestAppMismatch m1
+app.clear versionM1
+app.servicepack versionM1 ServicePackageA version=m1
+app.servicetypes versionM1 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionM1 ServicePackageA CodeA types=ServiceTypeA version=m1
+app.upload versionM1
+provisionapp versionM1
+
+createapp fabric:/app_mismatch TestAppMismatch m1
+createapp fabric:/app_mismatch/x TestAppMismatch m1
+verify
+
+createservice fabric:/app_mismatch/x/service ServiceTypeA y 1 1 persist appname=fabric:/app_mismatch
+verify
+
+resolve fabric:/app_mismatch/x/service 1
+query getapplicationservicelist ApplicationName=fabric:/app_mismatch verify ServiceName=fabric:/app_mismatch/x/service
+query getapplicationservicelist ApplicationName=fabric:/app_mismatch/x expectempty=true
+queryhealth service servicename=fabric:/app_mismatch/x/service expectedhealthstate=ok
+
+createservice fabric:/app_mismatch/x/service ServiceTypeA y 1 1 persist appname=fabric:/app_mismatch/x errors=InvalidNameUri
+verify
+
+resolve fabric:/app_mismatch/x/service 1
+query getapplicationservicelist ApplicationName=fabric:/app_mismatch verify ServiceName=fabric:/app_mismatch/x/service
+query getapplicationservicelist ApplicationName=fabric:/app_mismatch/x expectempty=true
+queryhealth service servicename=fabric:/app_mismatch/x/service expectedhealthstate=ok
+
+!q

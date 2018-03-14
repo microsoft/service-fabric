@@ -1,0 +1,93 @@
+#
+# Tests system reports with invalid instance
+#
+votes 10
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+set DummyPLBEnabled true
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+set QueryOperationRetryDelay 1
+
+cleantest
++10
++20
++30
++40
++50
++60
+verify
+
+# Wait for all system reports to be received
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:6;apps-ok:1
+queryhealthlist nodes expectedstates=ok:6
+queryhealthlist services appname=fabric:/System expectedstates=ok:3
+
+###################################################
+# Testcase: first report is System error report with instance 0
+###################################################
+
+# Report system error on a node as FM with instance 0.
+# Entity is created, event is persisted, attributes are set.
+reporthealthinternal node nodeid=666 node.instanceid=0 sequencenumber=1 healthstate=error ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State
+
+queryhealth node nodeid=666 expectedhealthstate=error
+checkhmentity node nodeid=666 state=systemerror node.instanceid=0 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 
+queryhealthlist nodes expectedstates=ok:6,error:1
+
+# Add more system reports with invalid instance, they should be persisted. Attributes are changed as well
+reporthealthinternal node nodeid=666 node.instanceid=0 sequencenumber=1 healthstate=ok ud=udInfra1 sourceid=System.Infra property=Infra1
+reporthealthinternal node nodeid=666 node.instanceid=0 sequencenumber=1 healthstate=ok fd=fdInfra2 sourceid=System.Infra property=Infra2
+
+queryhealth node nodeid=666 expectedhealthstate=error
+checkhmentity node nodeid=666 state=systemerror node.instanceid=0 ud=udInfra1 fd=fdInfra2 ipaddressorfqdn=127.0.0.1:3333 
+queryhealthlist nodes expectedstates=ok:6,error:1
+
+# Replace system error with ok
+reporthealthinternal node nodeid=666 node.instanceid=0 sequencenumber=2 healthstate=ok ipaddressorfqdn=127.0.0.1:4444 sourceid=System.FM property=State
+queryhealth node nodeid=666 expectedhealthstate=ok
+checkhmentity node nodeid=666 state=ok node.instanceid=0 ud=udInfra1 fd=fdInfra2 ipaddressorfqdn=127.0.0.1:4444
+queryhealthlist nodes expectedstates=ok:7
+
+# Delete report with instance 0
+deletehealth node nodeid=666 node.instanceid=0 sequencenumber=3 sourceid=System.FM
+queryhealth node nodeid=666 expectedempty=true
+checkhmentity node nodeid=666 node.instanceid=0 state=deleted
+queryhealthlist nodes expectedstates=ok:6
+
+###################################################
+# Testcase: first report is System ok report with instance 0
+# Next report is System error report with instance 0
+###################################################
+reporthealthinternal node nodeid=777 node.instanceid=0 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State
+
+queryhealth node nodeid=777 expectedhealthstate=ok
+checkhmentity node nodeid=777 state=ok node.instanceid=0 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 
+queryhealthlist nodes expectedstates=ok:7
+
+# Error replaces ok in attributes stats
+reporthealthinternal node nodeid=777 node.instanceid=0 sequencenumber=2 healthstate=error ud=ud2 sourceid=System.FM property=State
+queryhealth node nodeid=777 expectedhealthstate=error
+checkhmentity node nodeid=777 state=systemerror node.instanceid=0 ud=ud2 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 
+queryhealthlist nodes expectedstates=ok:6,error:1
+
+# Delete report with instance 0
+deletehealth node nodeid=777 node.instanceid=0 sequencenumber=3 sourceid=System.FM
+queryhealth node nodeid=777 expectedempty=true
+checkhmentity node nodeid=777 node.instanceid=0 state=deleted
+queryhealthlist nodes expectedstates=ok:6
+
+###################################################
+# Testcase: first report is System delete report with instance 0
+###################################################
+deletehealth node nodeid=888 node.instanceid=0 sequencenumber=1 sourceid=System.FM
+queryhealth node nodeid=888 expectedempty=true
+checkhmentity node nodeid=888 node.instanceid=0 state=deleted
+
+# Reject report with entity deleted
+reporthealthinternal node nodeid=888 node.instanceid=0 sequencenumber=2 healthstate=error sourceid=System.FM property=State
+checkhmentity node nodeid=888 node.instanceid=0 state=deleted
+queryhealth node nodeid=888 expectedempty=true
+
+!q

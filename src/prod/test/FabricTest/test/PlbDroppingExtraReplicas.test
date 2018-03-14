@@ -1,0 +1,355 @@
+# This test verifies the PLB logic for dropping of extra replicas and the interaction between PLB and FM in this case.
+# Several scenarios are covered:
+#   - PLB should always drop the replica whose drop will yield best cluster balance.
+#   - In case of affinitized services, PLB should choose parent service replica to drop so that affinity constraint is not violated.
+#   - In case of affinitized services, PLB should not drop parent replica before child is dropped.
+
+votes 10 20 30
+cmservice 0 0
+namingservice 1 3 2
+fmservice 3 1
+cleantest
+set NamingOperationTimeout 25
+set NamingOperationRetryTimeout 60
+set SendLoadReportInterval 1
+set PeriodicLoadPersistInterval 1
+set PLBRewindInterval 1
+set DeletedReplicaKeepDuration 3
+set AllowHigherChildTargetReplicaCountForAffinity false
+
++10 cap=CPU:20
++20 cap=CPU:20
++30 cap=CPU:20
+verify
+
+set DummyPLBEnabled true
+
+#=========================
+# Dropping extra replica based on standard deviation
+#=========================
+
+# Add a persisted service A1, CPU usage 5, number of replica 3
+createname fabric:/testA1
+createservice fabric:/testA1 TestPersistedStoreServiceType y 1 3 persist metrics=CPU,High,5,5
+verify
+
++40 cap=CPU:20
+
+# Add one more secondary replica on last node
+updateservice fabric:/testA1 Stateful TargetReplicaSetSize=4
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testA1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testA1.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.40 Secondary
+verify
+
+# Add a persisted service B, CPU usage 10, number of replicas 1
+createname fabric:/testB
+createservice fabric:/testB TestPersistedStoreServiceType y 1 1 persist metrics=CPU,High,10,10
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testB.40 Primary
+verify
+
+# Use true PLB in order to reach balancing phase at the end of placement
+set DummyPLBEnabled false
+
+# Reduce target replica count for service A1 to 3
+updateservice fabric:/testA1 Stateful TargetReplicaSetSize=3
+verify
+
+# Verify that FM remove secondary replica from the most overloaded node
+!waitforstate FM.Replica.Role.fabric:/testA1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testA1.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.40 NullReplica
+verify
+
+#=========================
+# Affinity checks during dropping extra replicas.
+# Parent service should wait for dropping child service's extra replica.
+#=========================
+
+set DummyPLBEnabled true
+
+# Undo target replica count for service A1 to 4
+updateservice fabric:/testA1 Stateful TargetReplicaSetSize=4
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testA1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testA1.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.40 Secondary
+verify
+
+-40
+
+# Create child service C1 for service A1
+createname fabric:/testC1
+createservice fabric:/testC1 TestPersistedStoreServiceType y 1 3 persist metrics=CPU,High,5,5 servicecorrelations=fabric:/testA1,affinity
+verify
+
++40 cap=CPU:20
+
+# Add one more secondary replica on last node
+updateservice fabric:/testC1 Stateful TargetReplicaSetSize=4
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testC1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testC1.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testC1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testC1.40 Secondary
+verify
+
+# Reduce target replica count for PARENT service A1 to 3
+updateservice fabric:/testA1 Stateful TargetReplicaSetSize=3
+verify
+
+# Extra replica should NOT be dropped
+!pause 10
+
+!waitforstate FM.Replica.Role.fabric:/testA1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testA1.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.40 Secondary
+
+# New behavior allows higher child target count than parent,
+# so replica should be dropped if the flag allows it
+
+set AllowHigherChildTargetReplicaCountForAffinity true
+
+!waitforstate FM.Replica.Role.fabric:/testA1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testA1.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA1.40 NullReplica
+
+# Reduce target replica count for CHILD service C1 to 3
+updateservice fabric:/testC1 Stateful TargetReplicaSetSize=3
+verify
+
+# Extra replica should be dropped
+
+!waitforstate FM.Replica.Role.fabric:/testC1.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testC1.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testC1.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testC1.40 NullReplica
+
+deleteservice fabric:/testA1
+deleteservice fabric:/testC1
+set AllowHigherChildTargetReplicaCountForAffinity false
+verify
+
+#=========================
+# Affinity checks during dropping extra replicas.
+# Parent service should wait on dropping child service's extra replica.
+#=========================
+
+-40
+
+# Add a persisted service A2, CPU usage 5, number of replica 3
+createname fabric:/testA2
+createservice fabric:/testA2 TestPersistedStoreServiceType y 1 3 persist metrics=CPU,High,5,5
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testA2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testA2.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA2.20 Secondary
+verify
+
+# Create child service C2 for service A2
+createname fabric:/testC2
+createservice fabric:/testC2 TestPersistedStoreServiceType y 1 3 persist metrics=CPU,High,5,5 servicecorrelations=fabric:/testA2,affinity
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testC2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testC2.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testC2.20 Secondary
+verify
+
++40 cap=CPU:20
+
+# Add one more secondary replica on last node for services A2 and C2
+updateservice fabric:/testA2 Stateful TargetReplicaSetSize=4
+updateservice fabric:/testC2 Stateful TargetReplicaSetSize=4
+verify
+
+!waitforstate FM.Replica.Role.fabric:/testA2.40 Secondary
+!waitforstate FM.Replica.Role.fabric:/testC2.40 Secondary
+verify
+
+# Reduce target replica count for CHILD service C2 to 3
+updateservice fabric:/testC2 Stateful TargetReplicaSetSize=3
+verify
+
+# Extra replica should be dropped
+
+!waitforstate FM.Replica.Role.fabric:/testC2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testC2.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testC2.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testC2.40 NullReplica
+
+# Reduce target replica count for PARENT service A2 to 3
+updateservice fabric:/testA2 Stateful TargetReplicaSetSize=3
+verify
+
+# Extra replica should be dropped
+
+!waitforstate FM.Replica.Role.fabric:/testA2.30 Primary
+!waitforstate FM.Replica.Role.fabric:/testA2.10 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA2.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/testA2.40 NullReplica
+
+deleteservice fabric:/testA2
+deleteservice fabric:/testC2
+verify 
+
+#============================
+# Repeat everything for stateless services
+#============================
+
+#=========================
+# Dropping extra replica based on standard deviation
+#=========================
+
+# Add a persisted service SA1, CPU usage 5, number of replica 3
+createname fabric:/testSA1
+createservice fabric:/testSA1 CalculatorServiceType n 1 4 metrics=CPU,High,5,0
+verify
+
+!waitforstate FM.Replica.State.fabric:/testSA1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.40 Ready
+verify
+
+# Reduce target replica count for service SA1 to 3
+updateservice fabric:/testSA1 Stateless InstanceCount=3
+verify
+
+# Verify that FM remove secondary replica from the most overloaded node
+!waitforstate FM.Replica.State.fabric:/testSA1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.40 Dropped
+verify
+
+#=========================
+# Affinity checks during dropping extra replicas.
+# Parent service should wait for dropping child service's extra replica.
+#=========================
+
+# Undo target replica count for service SA1 to 4
+updateservice fabric:/testSA1 Stateless InstanceCount=4
+verify
+
+!waitforstate FM.Replica.State.fabric:/testSA1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.40 Ready
+verify
+
+# Create child service SC1 for service SA1
+createname fabric:/testSC1
+createservice fabric:/testSC1 CalculatorServiceType n 1 4 metrics=CPU,High,5,0 servicecorrelations=fabric:/testSA1,affinity
+verify
+
+!waitforstate FM.Replica.State.fabric:/testSC1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSC1.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSC1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSC1.40 Ready
+verify
+
+# Reduce target replica count for PARENT service A1 to 3
+updateservice fabric:/testSA1 Stateless InstanceCount=3
+verify
+
+# Extra replica should NOT be dropped
+!pause 10
+
+!waitforstate FM.Replica.State.fabric:/testSA1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.40 Ready
+
+# New behavior allows higher child target count than parent,
+# so replica should be dropped if the flag allows it
+
+set AllowHigherChildTargetReplicaCountForAffinity true
+
+!waitforstate FM.Replica.State.fabric:/testSA1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSA1.40 Dropped
+
+# Reduce target replica count for CHILD service C1 to 3
+updateservice fabric:/testSC1 Stateless InstanceCount=3
+verify
+
+# Extra replica should be dropped
+
+!waitforstate FM.Replica.State.fabric:/testSC1.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSC1.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSC1.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSC1.40 Dropped
+
+deleteservice fabric:/testSA1
+deleteservice fabric:/testSC1
+set AllowHigherChildTargetReplicaCountForAffinity false
+verify
+
+#=========================
+# Affinity checks during dropping extra replicas.
+# Parent service should wait on dropping child service's extra replica.
+#=========================
+
+# Add a persisted service SA2, CPU usage 5, number of replica 3
+createname fabric:/testSA2
+createservice fabric:/testSA2 CalculatorServiceType n 1 4 metrics=CPU,High,5,0
+verify
+
+!waitforstate FM.Replica.State.fabric:/testSA2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSA2.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSA2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSA2.40 Ready
+verify
+
+# Create child service SC2 for service SA2
+createname fabric:/testSC2
+createservice fabric:/testSC2 CalculatorServiceType n 1 4 metrics=CPU,High,5,0 servicecorrelations=fabric:/testSA2,affinity
+verify
+
+!waitforstate FM.Replica.State.fabric:/testSC2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSC2.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSC2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSC2.40 Ready
+verify
+
+# Reduce target replica count for CHILD service SC2 to 3
+updateservice fabric:/testSC2 Stateless InstanceCount=3
+verify
+
+# Extra replica should be dropped
+
+!waitforstate FM.Replica.State.fabric:/testSC2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSC2.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSC2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSC2.40 Dropped
+
+# Reduce target replica count for PARENT service SA2 to 3
+updateservice fabric:/testSA2 Stateless InstanceCount=3
+verify
+
+# Extra replica should be dropped
+
+!waitforstate FM.Replica.State.fabric:/testSA2.30 Ready
+!waitforstate FM.Replica.State.fabric:/testSA2.10 Ready
+!waitforstate FM.Replica.State.fabric:/testSA2.20 Ready
+!waitforstate FM.Replica.State.fabric:/testSA2.40 Dropped
+
+deleteservice fabric:/testSA2
+deleteservice fabric:/testSC2
+verify 
+
+!q

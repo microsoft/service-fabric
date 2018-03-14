@@ -1,0 +1,88 @@
+﻿{
+    "RequiredParameters": [ "TaskName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "Params": "",
+        "CleanupType": "",
+        "CredentialType": "",
+        "WorkingDirectory" : "",
+        "SetupTimeout": "1200",
+        "ExecutionTimeout": "2100",
+        "CleanupTimeout": "2100"
+    },
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPTYPE] [SETUPARGS] ",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "reg",
+            "Arguments": "query \"HKLM\\software\\microsoft\\windows\\windows error reporting\" /s",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "appverif",
+            "Arguments": "-enable exceptions handles heaps leak locks memory srwlock threadpool tls dirtystacks cuzz -for [TASKNAME]",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }, 
+        {
+            "ExeName": "reg",
+            "Arguments": "query \"HKLM\\software\\microsoft\\windows\\windows error reporting\" /s",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },      
+        {
+            "ExeName": "[BINS]\\FabricUnitTests\\[TASKNAME]",
+            "Arguments": "[PARAMS] --log_level=all %-security:[CREDENTIALTYPE]% --catch_system_errors=no",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
+            "WorkingDirectory" : "[WORKINGDIRECTORY]"
+        },        
+        {
+            "ExeName": "reg",
+            "Arguments": "query \"HKLM\\software\\microsoft\\windows\\windows error reporting\" /s",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "appverif",
+            "Arguments": "-disable -for [TASKNAME]",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "reg",
+            "Arguments": "query \"HKLM\\software\\microsoft\\windows\\windows error reporting\" /s",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.out$,.-*\\.trace$,.*\\.pdb$,.*\\.dmp$,.*\\.etl$" 
+    }
+}

@@ -1,0 +1,75 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1433149
+# RA should report replicas that take a long time to reopen as SB D
+# The test scenario is a persisted service on 3 nodes
+# Take down the three nodes
+# Bring the nodes back
+# Prevent the reopen for the ReopenSuccessWaitInterval
+# Validate that replicas get uploaded to FM
+# Bring back the runtime and verify that data loss has not happened
+# 
+set DummyPLBEnabled true
+set ReopenSuccessWaitInterval 10
+set RAPMessageRetryInterval 3
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+createservice fabric:/test TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+verify
+
+# Store the data loss number
+!var InitDLN FM.FT.DataLossVersion.fabric:/test
+
+-20
+-30
+-40
+!wait
+
+addbehavior b1 * * NodeUpAck
+
++40 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.40 true
+
+!pause 10
+removeruntime 40 y
+removebehavior b1
+
+addbehavior b2 * * NodeUpAck
++30 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.30 true
+
+!pause 10
+removeruntime 30 y
+removebehavior b2 
+
+#At this point the replica should be SB D on the FM and not DD
+
+!waitforstate FM.Replica.IsUp.fabric:/test.40 false
+!waitforstate FM.Replica.IsUp.fabric:/test.30 false
+
+!waitforstate FM.Node.IsReplicaUploaded.30 true
+!waitforstate FM.Node.IsReplicaUploaded.40 true
+
+addruntime 30 y
+addruntime 40 y
+
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+
+verify
+!waitforstate FM.FT.DataLossVersion.fabric:/test <var.InitDLN>
+!waitforstate FM.FT.QuorumLost.fabric:/test false
+!q

@@ -1,0 +1,50 @@
+#
+# [owner] sumukhs
+# Ensure UE is called on SP when build is done during pending swap primary
+#
+
+!load FailoverCITInitialization.test
+set NamingOperationTimeout 10
+set NamingOperationRetryTimeout 120
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+createservice fabric:/statefulpersisted TestPersistedStoreServiceType y 1 3 persist 
+verify
+
+# Verify current replica set
+!waitforstate FM.Replica.Role.fabric:/statefulpersisted.60 Primary
+!waitforstate FM.Replica.Role.fabric:/statefulpersisted.50 Secondary
+!waitforstate FM.Replica.Role.fabric:/statefulpersisted.40 Secondary
+
+clientput fabric:/statefulpersisted 10 10Data0
+!wait 
+!pause 3
+
+addbehavior blockRepl50 60 50 ReplicationOperation
+
+clientput fabric:/statefulpersisted 10 10Data1
+!wait 
+
+addbehavior blockRepl40 60 40 ReplicationOperation
+
+clientput fabric:/statefulpersisted 10 10Data2
+
+swapprimary fabric:/statefulpersisted 60 50 skipverify
+setsignal 40 fabric:/statefulpersisted provider.beginupdateepoch.block 
+
+reportfault 40 fabric:/statefulpersisted transient
+reportfault 50 fabric:/statefulpersisted transient 
+
+removebehavior blockRepl40
+
+clientput fabric:/statefulpersisted 10 10Data3
+waitforsignalhit 40 fabric:/statefulpersisted provider.beginupdateepoch.block
+removebehavior blockRepl50
+
+!q

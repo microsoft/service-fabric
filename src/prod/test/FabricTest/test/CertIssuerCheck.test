@@ -1,0 +1,92 @@
+# This is a certificate security test. The SecurityDomain will be set to WinFabricRing.Rings.WinFabricTestDomain.com for this test.
+# For this test to pass, the following certificates need to be installed on the machine:
+# cluster node certificate: CN = WinFabric-Test-SAN3-Oscar, SAN = WinFabricRing3.Rings.WinFabricTestDomain2.com
+# Client certificates:
+#1. CN = WinFabric-Test-SAN1-Alice, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#2. CN = WinFabric-Test-SAN1-Bob, SAN = WinFabricRing.Rings.WinFabricTestDomain.com
+#3. CN = WinFabric-Test-SAN2-Charlie, SAN = WinFabricRing2.Rings.WinFabricTestDomain.com
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+votes 10
+cmservice 0 0
+namingservice 1 1 1
+fmservice 1 1
+cleantest
+
+!setcfg Security.SessionExpiration=60
+!setcfg Security.ClusterCredentialType=X509
+!setcfg Security.ClusterAllowedCommonNames=WinFabric-Test-SAN3-Oscar
+!setcfg Security.ClusterCertIssuers=b3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+!setcfg Security.ServerAuthCredentialType=X509
+!setcfg Security.ServerAuthAllowedCommonNames=WinFabric-Test-SAN3-Oscar
+!setcfg Security.ClientAuthAllowedCommonNames=WinFabric-Test-SAN1-Alice
+!setcfg Security.ClientCertIssuers=b3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+!setcfg Security.ServerCertIssuers=b3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+
+set DefaultNodeCredentials FindBySubjectName,WinFabric-Test-SAN3-Oscar,My,LocalMachine
+set ClusterWideCredentials X509:EncryptAndSign:WinFabric-Test-SAN3-Oscar:WinFabric-Test-SAN1-Alice:WinFabric-Test-SAN3-Oscar
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Alice:EncryptAndSign:WinFabric-Test-SAN3-Oscar
+
+# start the cluster 
++10 
+verify
+
+# set wrong cluster cert issuer, new nodes will not be able to join 
+!updatecfg Security.ClusterCertIssuers=c3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+# wait for async config update to complete
+!pause 10 
+
++20 error=Timeout
++30 error=Timeout
+verify
+
+# correct wrong cluster cert issuer, new nodes will join 
+!updatecfg Security.ClusterCertIssuers=b3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+# wait for async config update to complete
+!pause 10 
+
++20
++30
+verify
+
+# set wrong client cert issuer, then clients cannot talk to gateway
+!updatecfg Security.ClientCertIssuers=c3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+# wait for async config update to complete
+!pause 10 
+
+getservicedescription fabric:/test1 ConnectionDenied 
+nameexists fabric:/NoSuchName false ConnectionDenied 
+createname fabric:/b ConnectionDenied 
+
+# correct client cert issuer, then clients will work
+!updatecfg Security.ClientCertIssuers=b3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+# wait async for config update to complete
+!pause 10 
+
+nameexists fabric:/NoSuchName false
+createname fabric:/b
+nameexists fabric:/b true
+createservice fabric:/test1 TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+updateservice fabric:/test1 Stateful TargetReplicaSetSize=5
+verify
+
+# set incorrect server cert issuer, then client side will fail to verify server cert
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Alice:EncryptAndSign:WinFabric-Test-SAN3-Oscar:c3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+
+nameexists fabric:/b true ServerAuthenticationFailed 
+createname fabric:/bbbbb ServerAuthenticationFailed 
+
+# set correct server cert issuer, then things come back to normal 
+set ClientCredentials X509:LocalMachine:My:FindBySubjectName:CN=WinFabric-Test-SAN1-Alice:EncryptAndSign:WinFabric-Test-SAN3-Oscar:b3449b018d0f6839a2c5d62b5b6c6ac822b6f662
+
+nameexists fabric:/b true 
+createname fabric:/bbbbb
+nameexists fabric:/bbbbb true 
+
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30
+
+!q

@@ -1,0 +1,222 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "TestabilityActionsSingleMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai,motanv,likevi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\FASSuiteConfig.txt",
+        "TaskName": "TestabilityActions.test",
+        "ExecutionTimeout": "3000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "TestabilityActionsRestSingleMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai,motanv,likevi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\FASSuiteConfig.txt",
+        "TaskName": "TestabilityActionsRest.test",
+        "ExecutionTimeout": "3000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FaultAnalysisServiceSingleMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai,motanv,likevi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\FASSuiteConfig.txt",
+        "TaskName": "FaultAnalysisService.test",
+        "ExecutionTimeout": "3000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "TSInternalSingleMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai,motanv,likevi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\FASSuiteConfig.txt",
+        "TaskName": "TSInternal.test",
+        "ExecutionTimeout": "3000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FaultAnalysisServiceTruncate",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai,motanv,likevi",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\FASSuiteConfig.txt",
+        "TaskName": "FaultAnalysisServiceTruncate.test",
+        "ExecutionTimeout": "3000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "StartNodeTransition",
+      "Type": "V2_ScriptTest",
+      "Owners": "lemai,motanv,likevi",
+      "ResourcesRequired": "Server:5",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\FASSuiteConfig.txt",
+        "TaskName": "StartNodeTransition.test",
+        "ExecutionTimeout": "3000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+	    {
+      "Name": "ChaosApiTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai,likevi",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosApiTest.test",
+        "ExecutionTimeout": "5400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosAutoStopTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai,likevi",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosAutoStopTest.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosResumeTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai,likevi",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosResumeTest.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosApiTest_ConfigureSystemFault",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai,likevi",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosApiTest_ConfigureSystemFault.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosApiTest_ConfigureRemoveReplicaWeight",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai,likevi",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosApiTest_ConfigureRemoveReplicaWeight.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosApiTest_SetParamsThroughContext",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai,likevi",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosApiTest_SetParamsThroughContext.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosApiTest_ChaosTargetFilter",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosApiTest_ChaosTargetFilter.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosApiTest_StatelessInstance_NodeFault",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai,likevi",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosApiTest_StatelessInstance_NodeFault.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosApiTest_LiveNodeCountCheck.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,lemai,likevi",
+      "Tags": "Chaos",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosApiTest_LiveNodeCountCheck.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

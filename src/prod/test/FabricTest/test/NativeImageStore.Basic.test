@@ -1,0 +1,71 @@
+enablenativeimagestore
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+imagestoreservice 3 1
+
+cleantest
+
++10
++20
++30
+verify
+
+# Create a directory and upload
+iss.createfile $a
+iss.upload $a store\A
+
+# Create a file and upload
+iss.createdir $b filecount=30
+iss.upload $b incoming\b
+
+# Download the directory and file
+iss.download store\A
+iss.download incoming\b
+
+# Verify that the directory and file in all replicas are valid
+iss.verify
+
+# Test overwrite of directory
+iss.createfile $c
+iss.upload $c store\A overwrite
+
+# Test overwrite of file
+iss.createdir $d
+iss.upload $d incoming\b overwrite
+
+iss.verify
+
+# Test delete of directory and file
+iss.delete store\A
+iss.delete incoming\b
+
+iss.verify
+
+# Test parallel operations
+iss.createfile $e size=Large
+iss.createdir $f size=Mixed filecount=2
+iss.createdir $g filecount=50
+
+iss.upload $e Parallel\E async
+iss.upload $f Parallel\F async
+iss.upload $g Parallel\G async
+
+iss.wait
+iss.verify
+
+# Test parallel download
+iss.download Parallel\E async
+iss.download Parallel\F async
+iss.download Parallel\G async
+
+iss.wait
+
+# Test parallel delete
+iss.delete Parallel\E async
+iss.delete Parallel\G async
+iss.delete Parallel\F async
+
+iss.wait
+iss.verify
+!q

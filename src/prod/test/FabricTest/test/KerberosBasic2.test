@@ -1,0 +1,54 @@
+# This is a basic Kerberos security test with Sign protection
+# Delay to prevent kernel lease agent reusing in different security setting
+!pause 30 
+
+votes 10 20
+cmservice 0 0
+cleantest
+
+set DummyPLBEnabled true
+
+!setcfg Security.NegotiateForWindowsSecurity=false
+set ClusterWideCredentials Windows:Sign
+
++10
++20
++30
++40
+verify
+
+# Set client credentials to WinFabric-Test-SAN1-Alice which should work
+set ClientCredentials Windows:Sign
+
+# verify that creating a service works
+createservice fabric:/test1 TestStoreServiceType y 3 3 lowRange=1 highRange=3
+verify
+
+# verify that a "locally" connected client works at all gateways
+resolve fabric:/test1 1 nodeconfig=10
+resolve fabric:/test1 2 nodeconfig=20
+resolve fabric:/test1 3 nodeconfig=30
+resolve fabric:/test1 1 nodeconfig=40
+
+set NamingOperationTimeout 5
+
+# Set client to use an incorrect protection level 
+set ClientCredentials Windows:EncryptAndSign
+createname fabric:/b GatewayUnreachable,OperationCanceled
+
+set ClientCredentials None
+createname fabric:/c GatewayUnreachable,OperationCanceled
+
+# Recover correct client setting for checking
+set ClientCredentials Windows:Sign 
+nameexists fabric:/b false
+nameexists fabric:/c false
+
+verify
+
+# Delay to prevent kernel lease agent reusing in different security setting
+-*
+!pause 30
+
+!q
+

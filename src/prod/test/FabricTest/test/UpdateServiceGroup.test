@@ -1,0 +1,48 @@
+set DummyPLBEnabled true
+votes 10
+cmservice 0 0
+namingservice 1 3 2
+cleantest
+
++10
++20
++30
++40
++50
+verify
+
+createservicegroup fabric:/servicegroup SGStatefulServiceFactory y 1 3 3 fabric:/servicegroup#test1 SGStatefulService fabric:/servicegroup#test2 SGStatefulService fabric:/servicegroup#test3 SGStatefulService persist standbyreplicakeepduration=200
+!waitforstate FM.Service.StandByReplicaKeepDuration.fabric:/servicegroup 200
+verify
+
+gfum
+
+updateservicegroup fabric:/servicegroup Stateful TargetReplicaSetSize=2
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/servicegroup 2
+verify
+
+UpdateServiceGroup fabric:/servicegroup Stateful MinReplicaSetSize=2
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/servicegroup 2
+verify
+
+updateservicegroup fabric:/servicegroup Stateful TargetReplicaSetSize=5
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/servicegroup 5
+verify
+
+updateservicegroup fabric:/servicegroup Stateful ReplicaRestartWaitDuration=30
+!waitforstate FM.Service.ReplicaRestartWaitDuration.fabric:/servicegroup 30
+verify
+
+updateservicegroup fabric:/servicegroup Stateful QuorumLossWaitDuration=60
+!waitforstate FM.Service.QuorumLossWaitDuration.fabric:/servicegroup 60
+verify
+
+updateservicegroup fabric:/servicegroup Stateful StandByReplicaKeepDuration=300
+!waitforstate FM.Service.StandByReplicaKeepDuration.fabric:/servicegroup 300
+verify
+
+deleteservicegroup fabric:/servicegroup
+verify
+
+-*
+!q

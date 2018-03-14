@@ -1,0 +1,84 @@
+# TokenRecovery Probe/Echo Path Changes -- Test plan invariant (10d) and (10e)
+set RouteTimeout 5.0
+set OpenTimeout 1200
+set GlobalTicketLeaseDuration 1200
+set TokenAcquireTimeout 1200
+
+votes 0
+clearticket
+
+# Case 1: New node appears in recovery path
+
++0
++400
+verify
+
+# Force a gap to be created by dropping the initial TokenTransfer as well as the
+# Token recovery messages too.  In this case there will be a gap between 0 and 300...
+addbehavior DropTokenTransferFrom0 0 * TokenTransfer 1.0 Max
+addbehavior DropTokenProbeFrom0 0 * TokenProbe 1.0 Max
+addbehavior DropTokenEchoFrom0 0 * TokenEcho 1.0 Max
+
++300
+
+# Node 300 should be in Routing but with only part its token range (200, 380].
+# The full range should be (180, 380]
+# It will be sending TokenProbes towards 0 at this point but all are blocked...
+!waitforstate Phase.300 R 5
+
+# Introduce a single "pass through" node which is Routing w/Empty token
+addbehavior DelayNeighborhoodQueryReplyFrom0 0 * NeighborhoodQueryReply 1.0 2.0
+addbehavior DelayNeighborhoodQueryReplyFrom300 300 * NeighborhoodQueryReply 1.0 2.0
+addbehavior DropTokenTransferFrom300 300 * TokenTransfer 1.0 Max
+addbehavior DropTokenProbeFrom300 300 * TokenProbe 1.0 Max
+
++100
+addbehavior DropTokenRequestFrom100 100 * TokenRequest 1.0 Max
++210
+addbehavior DropTokenRequestFrom210 210 * TokenRequest 1.0 Max
+
+!waitforstate Phase.100 R 10
+!waitforstate Phase.210 R 10
+!pause 5
+show
+
+# Verify the gap really exists
+routereq 0 181 expectTimeout
+routereq 0 200 expectTimeout
+!pause 6
+
+# Create enough delay at Node 100 so we can Join another node to change the path.
+# Free up node 300 to send the probe, but only 1 of them...
+addbehavior DelayProbeFrom100 100 * TokenProbe 1.0 10.0
+removebehavior DropTokenEchoFrom0
+removebehavior DropTokenProbeFrom300
+!pause 3
+addbehavior DropTokenProbeFrom300 300 * TokenProbe 1.0 Max
+
++290
+addbehavior DropTokenRequestFrom290 290 * TokenRequest 1.0 Max
+
+!waitforstate Phase.290 R 10
+
+# The path change from adding node 290 should have caused the single Probe recovery to fail
+# Verify the gap still exists
+routereq 0 181 expectTimeout
+routereq 0 200 expectTimeout
+!pause 6
+
+# Now fully heal and verify that the gap is closed
+removebehavior DelayProbeFrom100
+removebehavior DropTokenProbeFrom300
+removebehavior DropTokenTransferFrom300
+removebehavior DropTokenProbeFrom0
+removebehavior DropTokenTransferFrom0
+verify
+
+routereq 0 181
+routereq 0 200
+
+verify
+!wait
+
+-*
+!q

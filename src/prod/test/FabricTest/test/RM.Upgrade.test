@@ -1,0 +1,57 @@
+set RunAsPolicyEnabled true
+
+votes 10 20 30 40 50
+
+set NamingPlacementConstraints naming==1
+set FMPlacementConstraints fmservice==1
+set RMPlacementConstraints rmservice==1
+
+fmservice 3 1
+namingservice 1 3 1
+cmservice 3 1
+# RM not yet enabled
+
+cleantest
+
+# Node 10 has the naming gateway that the RM will use, so don't allow the FM on 10 because FM primary will be killed.
+# Force all naming replicas on first set of nodes, so we know those nodes will each have at least some replica.
+# Have 4 nodes for FM so that the verify succeeds after the FM kill.
++10 nodeprops=fmservice:0,naming:1,rmservice:1
++20 nodeprops=fmservice:0,naming:1,rmservice:1
++30 nodeprops=fmservice:0,naming:1,rmservice:1
++40 nodeprops=fmservice:0,naming:1,rmservice:1
++50 nodeprops=fmservice:1,naming:0,rmservice:0
++60 nodeprops=fmservice:1,naming:0,rmservice:0
++70 nodeprops=fmservice:1,naming:0,rmservice:0
++80 nodeprops=fmservice:1,naming:0,rmservice:0
+verify
+
+# Recycle enough nodes so that we know at least one had replicas on it, to cause tombstone creation
+-20
+verify
++20 nodeprops=fmservice:0,naming:1,rmservice:1
+verify
+-30
+verify
++30 nodeprops=fmservice:0,naming:1,rmservice:1
+verify
+
+# Enable the RM
+rmservice 3 1 upgrade
+
+# Kill the primary FM to cause the new primary to create the RM
+killfmservice primaryOnly
+verify
+
+gfum
+
+# Check that the RM works now
+createrepair id=UpgradeTest
+cancelrepair id=UpgradeTest
+deleterepair id=UpgradeTest
+repairs expectedcount=0
+
+gfum
+
+-*
+!q

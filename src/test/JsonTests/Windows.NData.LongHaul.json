@@ -1,0 +1,146 @@
+{
+    "Default": {
+    },
+    "Tests": [
+        {
+            "Name": "DataLonghaul_Windows",
+            "Type": "Azure_ScriptTest_RetailOnly",
+            "Owners": "mcoskun,zhol",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "DynamicLonghaul-PAAS.test",
+              "ExecutionTimeout": "14400",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+          "Name": "TStoreLonghaul",
+          "Type": "Azure_ScriptTest_RetailOnly",
+          "Owners": "preethas, zuparvez",
+          "ResourcesRequired": "Server:1&Azure:1",
+          "TestExecutionParameters": {
+            "SetupType": "XCopy",
+            "SetupTimeout": "900",
+            "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+            "TaskName": "TStoreLonghaul-PAAS.test",
+            "ExecutionTimeout": "36000",
+            "CleanupType": "XCopy",
+            "CleanupTimeout": "12000"
+          }
+        },
+        {
+          "Name": "NativeTStoreTPCC (Retail Only)",
+          "Type": "Azure_ScriptTest_RetailOnly",
+          "Owners": "preethas, zuparvez",
+          "ResourcesRequired": "Server:1&Azure:1",
+          "TestExecutionParameters": {
+            "SetupType": "XCopy",
+            "SetupTimeout": "900",
+            "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+            "TaskName": "Tpcc1P-PAAS.test",
+            "ExecutionTimeout": "86400",
+            "CleanupType": "XCopy",
+            "CleanupTimeout": "12000"
+          }
+        },
+        {
+            "Name": "NativeTStoreTPCC (Debug Only)",
+            "Type": "Azure_ScriptTest_DebugOnly",
+            "Owners": "preethas, zuparvez",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "900",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_Perf.txt",
+              "TaskName": "Tpcc1P-PAAS-Debug.test",
+              "ExecutionTimeout": "86400",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "12000"
+            }
+          },
+          {
+            "Name": "TXRCrashTest_1",
+            "Type": "V2_ScriptTest_RetailOnly",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "V2Native-CrashTest.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "TXRCrashTest_2",
+            "Type": "V2_ScriptTest_RetailOnly",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "V2Native-CrashTest.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "TXRCrashTest_3",
+            "Type": "V2_ScriptTest_RetailOnly",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "V2Native-CrashTest.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "TXRCrashTest_4",
+            "Type": "V2_ScriptTest_RetailOnly",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "V2Native-CrashTest.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "TXRCrashTest_5",
+            "Type": "V2_ScriptTest_RetailOnly",
+            "Owners": "ImanG, HaNagar, SumukhS",
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "V2Native-CrashTest.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        }
+    ]
+}

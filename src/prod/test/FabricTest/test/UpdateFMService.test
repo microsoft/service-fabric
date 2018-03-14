@@ -1,0 +1,202 @@
+#
+# [owner] MMohsin
+#
+# This test exercises the UpdateService API for the FMService.
+# It covers various scenarios involving FMM failover after
+# the FMService has been updated.
+#
+
+votes 10 20 30
+fmservice 3 1
+cmservice 5 1
+namingservice 1 5 1
+set ExpectedClusterSize 3
+set DeletedReplicaKeepDuration 3
+set GracefulReplicaShutdownMaxDuration 0
+cleantest
+
+set DummyPLBEnabled true
+set FMPlacementConstraints fmservice==true
+
++10
++20
++30 nodeprops=fmservice:true
+
+!waitforstate FM.Replica.Role.FMService.30 Primary
+
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
+
+!waitforstate FM.Replica.Role.FMService.40 Secondary
+!waitforstate FM.Replica.Role.FMService.50 Secondary
+
++60 nodeprops=fmservice:true
++70 nodeprops=fmservice:true
+verify
+
+!waitforstate FM.Replica.Role.FMService.30 Primary
+!waitforstate FM.Replica.Role.FMService.40 Secondary
+!waitforstate FM.Replica.Role.FMService.50 Secondary
+
+
+################################################################################
+# Scenario 1: FMM failover involving rebuild
+################################################################################
+
+updateservice fabric:/System/FailoverManagerService Stateful TargetReplicaSetSize=5
+
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 5
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 1
+verify
+
+!var UpdateVersion1 FMM.Service.UpdateVersion.FMService
+
+-10
+verify
+
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 5
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 1
+!waitforstate FMM.Service.UpdateVersion.FMService <var.UpdateVersion1>
+
+################################################################################
+# Scenario 2: FMM failover involving GFUM transfer
+################################################################################
+
+updateservice fabric:/System/FailoverManagerService Stateful MinReplicaSetSize=3
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 5
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 3
+verify
+
+!var UpdateVersion2 FMM.Service.UpdateVersion.FMService
+
++10
+verify
+
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 5
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 3
+!waitforstate FMM.Service.UpdateVersion.FMService <var.UpdateVersion2>
+
+################################################################################
+# Scenario 3: FMM failover involving rebuild when less than ExpectedClusterSize
+#             number of nodes are up during rebuild and some FMService replica
+#             is discovered during rebuild
+################################################################################
+
+updateservice fabric:/System/FailoverManagerService Stateful TargetReplicaSetSize=4 MinReplicaSetSize=4
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 4
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 4
+verify
+
+!var UpdateVersion3 FMM.Service.UpdateVersion.FMService
+
+-70
+-60
+-50
+-40
+!wait
+
+-10
+!wait
+
+!waitforstate FM.FT.QuorumLost.FMService true
+
++10
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
++60 nodeprops=fmservice:true
++70 nodeprops=fmservice:true
+verify
+
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 4
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 4
+!waitforstate FMM.Service.UpdateVersion.FMService <var.UpdateVersion3>
+
+################################################################################
+# Scenario 4: FMM failover involving rebuild when less than ExpectedClusterSize
+#             number of nodes are up during rebuild and "no" FMService replica
+#             is discovered during rebuild
+################################################################################
+
+!var FMServiceFTID FM.FT.PartitionId.FMService
+!var FMReplicaId RA.Replica.ReplicaId.FMService.30.30
+
+clientreportfault 30 <var.FMServiceFTID> <var.FMReplicaId> permanent
+!waitforstate FM.Replica.Role.FMService.30 NullReplica
+
+updateservice fabric:/System/FailoverManagerService Stateful TargetReplicaSetSize=2 MinReplicaSetSize=2
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 2
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 2
+verify
+
+!var UpdateVersion4 FMM.Service.UpdateVersion.FMService
+
+-70
+-60
+-50
+-40
+!wait
+
+-10
+!wait
+
+!waitforstate FM.FT.QuorumLost.FMService NULL
+!waitforstate FM.FT.IsInRebuild.FMService false
+
++10
+!wait
+
+!waitforstate FM.FT.QuorumLost.FMService NULL
+!waitforstate FM.FT.IsInRebuild.FMService false
+
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
++60 nodeprops=fmservice:true
++70 nodeprops=fmservice:true
+verify
+
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 2
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 2
+!waitforstate FMM.Service.UpdateVersion.FMService <var.UpdateVersion4>
+
+################################################################################
+# Scenario 5: A variation of Scenario 4 above, where the first node to get to
+#             the ExpectedClusterSize number of nodes has the FMService replica
+################################################################################
+
+updateservice fabric:/System/FailoverManagerService Stateful TargetReplicaSetSize=3 MinReplicaSetSize=3
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 3
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 3
+verify
+
+!var UpdateVersion5 FMM.Service.UpdateVersion.FMService
+
+-70
+-60
+-50
+-40
+!wait
+
+-10
+!wait
+
+!waitforstate FM.FT.QuorumLost.FMService NULL
+!waitforstate FM.FT.IsInRebuild.FMService false
+
++70 nodeprops=fmservice:true
+!wait
+
+!waitforstate FM.FT.IsInRebuild.FMService true
+
++10
++40 nodeprops=fmservice:true
++50 nodeprops=fmservice:true
++60 nodeprops=fmservice:true
+verify
+
+!waitforstate FMM.Service.TargetReplicaSetSize.FMService 3
+!waitforstate FMM.Service.MinReplicaSetSize.FMService 3
+!waitforstate FMM.Service.UpdateVersion.FMService <var.UpdateVersion5>
+
+-*
+
+!q

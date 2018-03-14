@@ -1,0 +1,76 @@
+votes 10 20 30
+set PlaceChildWithoutParent false
+cleantest
+
+fmservice 3 1
+cmservice 3 1
+namingservice 1 3 1
+
++10 cap=CPU:20,MEMORY:1
++20 cap=CPU:10,MEMORY:0
++30 cap=CPU:10,MEMORY:0
+verify
+
+createservice fabric:/persistedParent TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2 metrics=MEMORY,High,1,0
+!waitforstate FM.Replica.Role.fabric:/persistedParent.10 Primary
+!waitforstate FM.Replica.Role.fabric:/persistedParent.20 Secondary
+!waitforstate FM.Replica.Role.fabric:/persistedParent.30 Secondary
+
+createservice fabric:/persistedChild TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2 metrics=CPU,High,20,10 servicecorrelations=fabric:/persistedParent,affinity
+
+# Verify the affinity
+!waitforstate FM.Replica.Role.fabric:/persistedChild.10 Primary
+!waitforstate FM.Replica.State.fabric:/persistedChild.20 Ready
+!waitforstate FM.Replica.State.fabric:/persistedChild.30 Ready
+
+################################################################################
+# Down IB replica
+################################################################################
+
+addbehavior b1 * * AddReplica
+
++40 cap=CPU:10
+verify
+
+-30
+!waitforstate FM.Replica.State.fabric:/persistedChild.40 InBuild
+
++30 cap=CPU:10
+-40
+
+# Now we have down in build replica on 40
+!waitforstate FM.Replica.IsUp.fabric:/persistedChild.40 false
+!waitforstate FM.Replica.State.fabric:/persistedChild.40 InBuild
+
+removebehavior b1
+
+verify
+gfum
+
+deleteservice fabric:/persistedParent
+
+# Create parent service and the primary should be on 70
++50 cap=CPU:50
++60 cap=CPU:50
++70 cap=CPU:100
+verify
+
+createservice fabric:/persistedParent TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=2 metrics=CPU,High,60,30
+verify
+
+# Primary replica should be created on nodes 70
+!waitforstate FM.Replica.Role.fabric:/persistedParent.70 Primary
+!waitforstate FM.Replica.IsUp.fabric:/persistedParent.60 true
+!waitforstate FM.Replica.IsUp.fabric:/persistedParent.50 true
+
+# With constraint check, child replicas should move
+!waitforstate FM.Replica.Role.fabric:/persistedChild.70 Primary
+!waitforstate FM.Replica.IsUp.fabric:/persistedChild.60 true
+!waitforstate FM.Replica.IsUp.fabric:/persistedChild.50 true
+
+verify
+
+gfum
+
+-*
+!q

@@ -1,0 +1,57 @@
+#
+# [owner] aprameyr
+# Associated bug#: 1225345
+# 
+set DummyPLBEnabled true
+set UserStandByReplicaKeepDuration 1
+set OfflineReplicaKeepDuration 1
+set DroppedReplicaKeepDuration 1
+set DeletedReplicaKeepDuration 1
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=StringProperty:SeedNode
+verify
+
++20 nodeprops=StringProperty:NormalNode
++30 nodeprops=StringProperty:NormalNode
++40 nodeprops=StringProperty:NormalNode
+verify
+
+#########################
+# Scenario: Service is deleted while node is down
+# OfflineReplicaKeepDuration is set to a low value so FM has forgotten about the replica when the node comes up
+# RA reports the replica as Up and should get deleted
+###########################
+addbehavior b1 10 20 DeleteReplica
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist constraint=(StringProperty!=SeedNode)
+verify
+
+-20
+!waitforstate FM.Node.IsUp.20 false
+
+
+#wait for the FM to forget about this replica
+!waitforstate FM.Replica.IsUp.fabric:/test2.20 NullReplica
+
+deleteservice fabric:/test2
+!waitforstate RA.FT.State.fabric:/test2.40 Closed
+!waitforstate RA.FT.State.fabric:/test2.30 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.40 true
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.30 true
+
+
++20 nodeprops=StringProperty:NormalNode
+!waitforstate FM.Node.IsUp.20 true
+!waitforstate RA.FT.State.fabric:/test2.20 Closed
+!waitforstate RA.FT.LocalReplicaDeleted.fabric:/test2.20 true
+
+removebehavior b1
+verify
+
+
+!q
