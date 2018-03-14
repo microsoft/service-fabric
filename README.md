@@ -88,6 +88,19 @@ Currently, the build container is based off a base image that includes a few ser
 
 This will pull all of the required packages, add service fabric internal dependencies, and apply patches.
 
+#### Troubleshooting: Internet connectivity when installing local docker containers behind a firewall
+A common issue with building a docker container behind a firewall is when the firewall blocks the default DNS used by docker.  This will manifest as packages failing to download during the `docker build` step (such as in the `builddocker.sh` script above).  
+
+To fix this, you need to tell Docker to use an alternative DNS server.  As a root user, create or edit the Docker daemon's config file at `/etc/docker/daemon.json` so that it has an entry that looks like this:
+```
+{ 
+    "dns": ["<my DNS server IP here>", "<my DNS secondary server IP here>"] 
+}
+```
+Take note to replace the above command with your actual local DNS server, and restart docker:
+```
+service docker restart
+```
 
 ## Documentation 
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).
