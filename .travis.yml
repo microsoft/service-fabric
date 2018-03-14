@@ -1,0 +1,9 @@
+sudo: required
+
+language: C
+
+services:
+  - docker
+
+script:
+  - ./runbuild.sh -createdeb
