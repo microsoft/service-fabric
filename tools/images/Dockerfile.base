@@ -1,4 +1,0 @@
-FROM ubuntu:16.04
-ADD https://sfossdeps.blob.core.windows.net/binaries/v0.1.tgz /tmp
-RUN mkdir -p /external && tar -xvf /tmp/v0.1.tgz -C / && \
-     rm /tmp/v0.1.tgz
