@@ -83,7 +83,6 @@ target_link_libraries(${exe_loggingreplicator_test}
   crypto
   minizip
   z
-  bz2
   m
   rt
   pthread

@@ -47,11 +47,8 @@ target_link_libraries(
   ${lib_Transport}
   ${lib_ApiWrappers}
   ${lib_Common}
-  snappy
-  lz4
   minizip
   z
-  bz2
   rt
   pthread
 )

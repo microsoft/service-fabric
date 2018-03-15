@@ -50,7 +50,6 @@ target_link_libraries(${lib_KPhysicalLog}
   	unwind-x86_64
   	minizip
   	z
-  	bz2
 )
 
 install(TARGETS ${lib_KPhysicalLog} DESTINATION ${TEST_OUTPUT_DIR})
