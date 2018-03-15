@@ -47,6 +47,8 @@ build()
         config
     fi
     cd ${BIN_DIR}
+    echo "Starting clang build with ${NUM_PROC} jobs. Total free memory:"
+    echo `free -h`
     make clang -j${NUM_PROC}
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to build clang"
@@ -60,6 +62,8 @@ install()
         mkdir -p ${LIB_DIR}
     fi
     cd ${BIN_DIR}
+    echo "Starting clang installation with ${NUM_PROC} jobs. Total free memory:"
+    echo `free -h`
     make install-clang -j${NUM_PROC}
     make install-clang-headers -j${NUM_PROC}
 }

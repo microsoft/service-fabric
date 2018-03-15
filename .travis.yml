@@ -1,0 +1,10 @@
+sudo: required
+
+language: C
+
+services:
+  - docker
+install: ./src/prod/tools/linux/third-party/install-third-party.sh -v -j 1
+
+script:
+  - ./runbuild.sh -v -createdeb -j2
