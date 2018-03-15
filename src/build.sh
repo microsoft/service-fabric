@@ -9,7 +9,7 @@
 PrintUsage()
 {
     cat << EOF
-Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-all] [-v]
+Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-v]
     -c: Clean build
     -d: Set project binary root to current working directory
     -p: Disable precompiled headers
@@ -24,7 +24,6 @@ Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradet
     -clang50: Use clang 5.0
     -j<#>: Specify number of build threads
     -v: Verbose
-    -all: Build third party libraries
 EOF
 }
 
