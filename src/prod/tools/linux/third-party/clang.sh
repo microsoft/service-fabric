@@ -47,6 +47,8 @@ build()
         config
     fi
     cd ${BIN_DIR}
+    echo "Starting clang build with ${NUM_PROC} jobs. Total free memory:"
+    echo `free -h`
     make clang -j${NUM_PROC}
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to build clang"
