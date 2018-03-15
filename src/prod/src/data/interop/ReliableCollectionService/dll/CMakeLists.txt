@@ -48,11 +48,8 @@ target_link_libraries(
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
-  snappy
-  lz4
   minizip
   z
-  bz2
   rt
   pthread
 )

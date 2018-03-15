@@ -68,11 +68,8 @@ target_link_libraries(${exe_FabricHost}
   ${Cxx}
   ${CxxABI}
   ssh2
-  snappy
   minizip
   z
-  bz2
-  lz4
   ssl
   crypto
   m
