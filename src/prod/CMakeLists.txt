@@ -223,12 +223,7 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/lib ${PROJECT_BINARY_DIR}/test)
 
 set(EXTERNAL_DEPS_DIR "${PROJECT_SOURCE_DIR}/../../external/")
 
-option(BUILD_THIRD_PARTY OFF)
-if (BUILD_THIRD_PARTY)
-    set(THIRD_PARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/../../deps/third-party/bin")
-else()
-    set(THIRD_PARTY_LIB_DIR "${EXTERNAL_DEPS_DIR}/WinFab.Linux.Libs")
-endif()
+set(THIRD_PARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/../../deps/third-party/bin")
 
 # Dependent libs
 set (EXTERNAL_LIB_PATH ${EXTERNAL_DEPS_DIR}/WinFab.Linux.Libs)
@@ -272,11 +267,7 @@ include_directories("${THIRD_PARTY_LIB_DIR}/Boost_1_61_0")
 
 # for Cxx 
 set (CXX_INC_PATH "${THIRD_PARTY_LIB_DIR}/Cxx/include/c++/v1")
-if (BUILD_THIRD_PARTY)
-    set (CXX_LIB_PATH "${THIRD_PARTY_LIB_DIR}/Cxx/lib")
-else()
-    set (CXX_LIB_PATH "${THIRD_PARTY_LIB_DIR}/Cxx")
-endif()
+set (CXX_LIB_PATH "${THIRD_PARTY_LIB_DIR}/Cxx/lib")
 include_directories ("${CXX_INC_PATH}")
 link_directories("${CXX_LIB_PATH}")
 
@@ -326,13 +317,8 @@ find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesys
 include_directories(${BOOST_INCLUDE_DIRS})
 link_directories(${BOOST_LIBRARY_DIRS})
 
-if (BUILD_THIRD_PARTY)
-    find_library(Cxx c++ PATHS ${CXX_LIB_PATH} NO_DEFAULT_PATH)
-    find_library(CxxABI c++abi PATHS ${CXX_LIB_PATH} NO_DEFAULT_PATH)
-else()
-    find_library(Cxx cxx PATHS ${CXX_LIB_PATH} NO_DEFAULT_PATH)
-    find_library(CxxABI cxxabi PATHS ${CXX_LIB_PATH} NO_DEFAULT_PATH)
-endif()
+find_library(Cxx c++ PATHS ${CXX_LIB_PATH} NO_DEFAULT_PATH)
+find_library(CxxABI c++abi PATHS ${CXX_LIB_PATH} NO_DEFAULT_PATH)
 set (CMAKE_CXX_STANDARD_LIBRARIES "${Cxx} ${CxxABI}")
 
 find_library(BoostTest2 boost_unit_test_framework PATHS ${BOOST_LIBRARY_DIRS} NO_DEFAULT_PATH)
