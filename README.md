@@ -42,9 +42,9 @@ The builds were run on [Azure Linux VMs](https://docs.microsoft.com/en-us/azure/
 
 |Machine SKU|Cores|Memory (GB)|Build Time|
 |-----------|-----|-----------|----------|
-|Standard_D8s_v3|8|32GB|~2 hours|
+|Standard_D8s_v3|8|32GB|~4 hours|
 |Standard_D16s_v3|16|64GB|~2 hours|
-|Standard_D32s_v3|32|128GB|~2 hours|
+|Standard_D32s_v3|32|128GB|~1 hours|
 
 On a smaller VM (Standard_D4s_V3 / 4 cores / 16GB) the build may fail. You may be able to build on a machine with less RAM if you limit the parallelism using the -j switch. 
 
