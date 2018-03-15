@@ -45,7 +45,6 @@ target_link_libraries(${exe_LinuxRetailTests}
   unwind-x86_64
   minizip
   z
-  bz2
 )
 
 add_dependencies(${exe_LinuxRetailTests}

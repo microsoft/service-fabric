@@ -57,10 +57,7 @@ target_link_libraries(${exe_FailoverFM.Test}
   ${lib_FabricCommon}
   ${lib_FabricResources}
   ssh2
-  snappy
-  lz4
   z
-  bz2
   ssl
   crypto
   minizip

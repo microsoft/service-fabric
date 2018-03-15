@@ -57,9 +57,7 @@ target_link_libraries(${exe_DnsServiceTest}
   ${BoostTest2}
   ${Cxx}
   ${CxxABI}
-  lz4
   z
-  bz2
   ssl
   crypto
   minizip

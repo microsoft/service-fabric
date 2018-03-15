@@ -7,7 +7,7 @@
 
 apt update
 apt install -y openssh-server curl libc++1 cifs-utils
-apt install -y libssh2-1 libsnappy1v5 liblz4-1 libbz2-1.0 libunwind8 libib-util
+apt install -y libssh2-1 libunwind8 libib-util
 apt install -y lttng-tools lttng-modules-dkms liblttng-ust0 chrpath members sshpass nodejs nodejs-legacy npm locales
 apt install -y cgroup-bin acl net-tools apt-transport-https rssh vim atop libcurl3 openjdk-8-jre
 sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ xenial main" > /etc/apt/sources.list.d/dotnetdev.list'
