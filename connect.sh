@@ -31,7 +31,6 @@ done
 CDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DOCKER_VERSION=`cat "$CDIR"/DOCKER_VERSION`
 OUT_DIR=$CDIR/out
-winp
 echo "Running container version $DOCKER_VERSION"
 # net=host for connection on corpnet
 # cap-add SYS_PTRACE for strace to work.
