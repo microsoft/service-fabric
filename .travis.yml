@@ -7,4 +7,4 @@ services:
 install: travis_wait ./src/prod/tools/linux/third-party/install-third-party.sh -v
 
 script:
-  - ./runbuild.sh -v -createdeb
+  - ./runbuild.sh -v -createdeb -j2
