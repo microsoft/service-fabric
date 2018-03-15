@@ -33,6 +33,22 @@ In the meantime, contributions to other areas of Service Fabric are welcome on a
 
 For more information on how this process works and how to contribute, provide feedback, and log bugs, please see [Contributing.md](CONTRIBUTING.md).
 
+## Build Requirements
+The requirements below are based off running a clean build using ninja, with the command
+
+$ runbuild.sh –c –n
+
+The build were run on [Azure Linux VMs](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general). They should be taken as estimates of how long a build will take.
+
+|Machine SKU|Cores|Memory (GB)|Build Time|
+|-----------|-----|-----------|----------|
+|Standard_D8s_v3|8|32GB|~2 hours|
+|Standard_D16s_v3|16|64GB|~2 hours|
+|Standard_D32s_v3|32|128GB|~2 hours|
+
+On a smaller VM (Standard_D4s_V3/4 cores/16GB) the build may fail. You may be able to build on a machine with less ram if you limit the parallelism using the -j switch.
+The build also requires approximately 70GB of disk space.
+
 ## Setting up for build
 ### Get a linux machine
 This is the linux version of Service Fabric.  You need a linux machine to build this project.  If you have a linux machine, great! You can get started below.  If not, you can get a [linux machine on Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/Canonical.UbuntuServer?tab=Overview).
@@ -77,6 +93,19 @@ Currently, the build container is based off a base image that includes a few ser
 
 This will pull all of the required packages, add service fabric internal dependencies, and apply patches.
 
+#### Troubleshooting: Internet connectivity when installing local docker containers behind a firewall
+A common issue with building a docker container behind a firewall is when the firewall blocks the default DNS used by docker.  This will manifest as packages failing to download during the `docker build` step (such as in the `builddocker.sh` script above).  
+
+To fix this, you need to tell Docker to use an alternative DNS server.  As a root user, create or edit the Docker daemon's config file at `/etc/docker/daemon.json` so that it has an entry that looks like this:
+```
+{ 
+    "dns": ["<my DNS server IP here>", "<my DNS secondary server IP here>"] 
+}
+```
+Take note to replace the above command with your actual local DNS server, and restart docker:
+```
+service docker restart
+```
 
 ## Documentation 
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).
