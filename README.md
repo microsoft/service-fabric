@@ -62,6 +62,11 @@ To start the build inside of a docker container you can clone the repository and
 ```
 This will do a full build of the project with the output being placed into the `out` directory.  For more options see `runbuild.sh -h`.
 
+Additionally in order to build and create the installer packages you can pass in the -createinstaller option to the script 
+```
+./runbuild.sh -createinstaller
+```
+
 #### Optional: Build the container locally
 If you would prefer to build the container locally, you can run the following script:
 ```
