@@ -26,7 +26,7 @@ BuildImage()
   fi
 
   pushd "../../../out/build.prod"
-  sudo docker build -f dockers/cluster-deployer/Dockerfile -t sfosscontainerreg.azurecr.io/clusterdeployer . 
+  sudo docker build -f dockers/cluster-deployer/Dockerfile -t microsoft/service-fabric-run-ubuntu/clusterdeployer . 
   popd
 }
 
@@ -137,7 +137,7 @@ StartVerb()
     -td \
     --name sfoneboxdev \
     -v $(pwd)/../../../out/build.prod/FabricDrop:/home/FabricDrop \
-    sfosscontainerreg.azurecr.io/clusterdeployer \
+    microsoft/service-fabric-run-ubuntu/clusterdeployer \
     bash -c "./run.sh"
 
   #Poll to check if the cluster is active by hitting SFX endpoint
