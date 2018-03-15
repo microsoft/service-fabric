@@ -239,7 +239,6 @@ target_link_libraries(${lib_Common}
     ${Ktlfull}
     minizip
     z
-    bz2
 )
 
 set_target_properties(${lib_Common} PROPERTIES

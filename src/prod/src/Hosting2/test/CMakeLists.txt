@@ -106,11 +106,8 @@ target_link_libraries(${exe_Hosting2Test}
   ${lib_FabricCommon}
   ${lib_FabricResources}
   ssh2
-  snappy
-  lz4
   minizip
   z
-  bz2
   m
   rt
   jemalloc
