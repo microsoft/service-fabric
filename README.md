@@ -1,4 +1,5 @@
 # Service Fabric
+[![Build Status](https://travis-ci.com/Microsoft/service-fabric.svg?branch=master)](https://travis-ci.com/Microsoft/service-fabric)
 
 Service Fabric is a distributed systems platform for packaging, deploying, and managing stateless and stateful distributed applications and containers at large scale. Service Fabric runs on Windows and Linux, on any cloud, any datacenter, across geographic regions, or on your laptop.
 
