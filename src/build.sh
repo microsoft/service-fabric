@@ -126,7 +126,7 @@ BuildLib()
         ${BuildScript} -c
     fi
     if [ ${VERBOSE} = 1 ]; then
-        ${BuildScript} -v
+        ${BuildScript} -v -j ${NumProc}
     else
         ${BuildScript} -j ${NumProc}
     fi
