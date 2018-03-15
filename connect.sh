@@ -29,9 +29,8 @@ done
 # change directory to the one containing this script and
 # record this directories full path.
 CDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-DOCKER_VERSION=`cat $CDIR/DOCKER_VERSION`
+DOCKER_VERSION=`cat "$CDIR"/DOCKER_VERSION`
 OUT_DIR=$CDIR/out
-
 echo "Running container version $DOCKER_VERSION"
 # net=host for connection on corpnet
 # cap-add SYS_PTRACE for strace to work.
@@ -43,8 +42,8 @@ docker run \
     --net=host \
     --cap-add NET_ADMIN \
     -ti \
-    -v $OUT_DIR:/out \
-    -v $CDIR/deps:/deps \
-    -v $CDIR/src:/src \
+    -v "$OUT_DIR":/out \
+    -v "$CDIR"/deps:/deps \
+    -v "$CDIR"/src:/src \
     microsoft/service-fabric-build-ubuntu:$DOCKER_VERSION \
     bash -i
