@@ -38,7 +38,9 @@ The requirements below are based off running clean builds using ninja, with the 
 
 $ runbuild.sh –c –n
 
-The builds were run on [Azure Linux VMs](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general). They should be taken as estimates of how long a build will take.
+The builds were run on [Azure Linux VMs](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general) with added disk capacity. If you want to to build on an Azure machine you need to add approximately 70GB for the source+build outputs. 
+
+These times should be taken as estimates of how long a build will take.
 
 |Machine SKU|Cores|Memory (GB)|Build Time|
 |-----------|-----|-----------|----------|
