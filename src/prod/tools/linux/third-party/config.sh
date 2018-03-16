@@ -93,9 +93,8 @@ _init_()
     local branch=$2
     local src_dir=$3
     mkdir -p ${src_dir}
-    git clone ${repo} ${src_dir}
+    git clone --depth 1 -b ${branch} -- ${repo} ${src_dir}
     cd ${src_dir}
-    git checkout ${branch}
 }
 
 # Delete the binary output dir.

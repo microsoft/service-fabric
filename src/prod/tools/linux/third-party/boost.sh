@@ -43,7 +43,7 @@ init()
 {
     _init_ ${REPO} ${TAG} ${SRC_DIR}
     cd ${SRC_DIR}
-    git submodule update --init --recursive
+    git submodule update --init --quiet -- tools/build tools/inspect libs/chrono libs/filesystem libs/test libs/random libs/regex libs/system libs/thread libs/timer
     prune_unused
 }
 
