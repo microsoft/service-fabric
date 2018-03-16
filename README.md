@@ -36,17 +36,21 @@ For more information on how this process works and how to contribute, provide fe
 ## Build Requirements
 The requirements below are based off running clean builds using ninja, with the command
 
-$ runbuild.sh –c –n
+```sh
+runbuild.sh –c –n
+```
 
-The builds were run on [Azure Linux VMs](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general). They should be taken as estimates of how long a build will take.
+The builds were run on [Azure Linux VMs](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general) with added disk capacity. If you want to to build on an Azure machine you need to add approximately 70GB for the source+build outputs. 
 
-|Machine SKU|Cores|Memory (GB)|Build Time|
+These times should be taken as estimates of how long a build will take.
+
+|Machine SKU|Cores|Memory|Build Time|
 |-----------|-----|-----------|----------|
 |Standard_D8s_v3|8|32GB|~4 hours|
 |Standard_D16s_v3|16|64GB|~2 hours|
-|Standard_D32s_v3|32|128GB|~1 hours|
+|Standard_D32s_v3|32|128GB|~1 hour|
 
-On a smaller VM (Standard_D4s_V3 / 4 cores / 16GB) the build may fail. You may be able to build on a machine with less RAM if you limit the parallelism using the -j switch. 
+On a smaller VM (Standard_D4s_V3 / 4 cores / 16GB) the build may fail. You may be able to build on a machine with less RAM if you limit the parallelism using the `-j` switch.
 
 The build also requires approximately 70GB of disk space.
 
@@ -58,7 +62,8 @@ This is the Linux version of Service Fabric. You need a Linux machine to build t
 Our build environment depends on Docker. In order to get started you will need to [install docker](https://docs.docker.com/engine/installation/).  
 
 There are many ways to install docker. Here is how to install on Ubuntu:
-```
+
+```sh
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt-get update
@@ -67,7 +72,8 @@ sudo apt-get install -y docker-ce
 
 ## Optional: Enable executing docker without sudo
 By default docker requires root privelages to run. In order to run docker as a regular user (i.e, not root), you need to add the user to the `docker` user group:
-```
+
+```sh
 sudo usermod -aG docker ${USER}
 su - ${USER}
 ```
@@ -75,20 +81,24 @@ su - ${USER}
 You do not need to do this, but note that if you skip this step, you must run all docker commands with sudo.
 
 ## Build Service Fabric
-To start the build inside of a docker container you can clone the repository and run this command from the root directory
-```
+To start the build inside of a docker container you can clone the repository and run this command from the root directory:
+
+```sh
 ./runbuild.sh
 ```
+
 This will do a full build of the project with the output being placed into the `out` directory.  For more options see `runbuild.sh -h`.
 
-Additionally in order to build and create the installer packages you can pass in the -createinstaller option to the script 
-```
+Additionally in order to build and create the installer packages you can pass in the `-createinstaller` option to the script:
+
+```sh
 ./runbuild.sh -createinstaller
 ```
 
 #### Optional: Build the container locally
 If you would prefer to build the container locally, you can run the following script:
-```
+
+```sh
 sudo ./tools/builddocker.sh
 ```
 
@@ -100,13 +110,16 @@ This will pull all of the required packages, add Service Fabric internal depende
 A common issue with building a docker container behind a firewall is when the firewall blocks the default DNS used by docker.  This will manifest as packages failing to download during the `docker build` step (such as in the `builddocker.sh` script above).  
 
 To fix this, you need to tell Docker to use an alternative DNS server.  As a root user, create or edit the Docker daemon's config file at `/etc/docker/daemon.json` so that it has an entry that looks like this:
-```
+
+```json
 { 
     "dns": ["<my DNS server IP here>", "<my DNS secondary server IP here>"] 
 }
 ```
+
 Take note to replace the above command with your actual local DNS server, and restart docker:
-```
+
+```sh
 service docker restart
 ```
 ## Testing a local cluster
