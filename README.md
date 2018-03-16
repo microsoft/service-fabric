@@ -40,13 +40,15 @@ The requirements below are based off running clean builds using ninja, with the 
 runbuild.sh –c –n
 ```
 
-The builds were run on [Azure Linux VMs](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general). They should be taken as estimates of how long a build will take.
+The builds were run on [Azure Linux VMs](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general) with added disk capacity. If you want to to build on an Azure machine you need to add approximately 70GB for the source+build outputs. 
+
+These times should be taken as estimates of how long a build will take.
 
 |Machine SKU|Cores|Memory|Build Time|
 |-----------|-----|-----------|----------|
-|Standard_D8s_v3|8|32GB|~2 hours|
+|Standard_D8s_v3|8|32GB|~4 hours|
 |Standard_D16s_v3|16|64GB|~2 hours|
-|Standard_D32s_v3|32|128GB|~2 hours|
+|Standard_D32s_v3|32|128GB|~1 hour|
 
 On a smaller VM (Standard_D4s_V3 / 4 cores / 16GB) the build may fail. You may be able to build on a machine with less RAM if you limit the parallelism using the `-j` switch.
 
