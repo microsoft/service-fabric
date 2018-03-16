@@ -26,7 +26,7 @@ BuildImage()
   fi
 
   pushd "../../../out/build.prod"
-  sudo docker build -f dockers/cluster-deployer/Dockerfile -t microsoft/service-fabric-run-ubuntu/clusterdeployer . 
+  sudo docker build -f ClusterDeployerTest/image/Dockerfile -t microsoft/service-fabric-run-ubuntu/clusterdeployer . 
   popd
 }
 
