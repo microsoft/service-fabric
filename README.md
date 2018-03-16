@@ -109,6 +109,9 @@ Take note to replace the above command with your actual local DNS server, and re
 ```
 service docker restart
 ```
+## Testing a local cluster
+
+For more details please refer to [Testing using ClusterDeployer](docs/cluster_deployer_test.md).
 
 ## Documentation 
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).
