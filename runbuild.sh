@@ -50,9 +50,9 @@ docker run \
     --net=host \
     --cap-add=NET_ADMIN \
     -ti \
-    -v $OUT_DIR:/out \
-    -v $CDIR/deps:/deps \
-    -v $CDIR/src:/src \
+    -v "$OUT_DIR":/out \
+    -v "$CDIR"/deps:/deps \
+    -v "$CDIR"/src:/src \
     -e "BUILD_PARAMS=$BUILD_PARAMS" \
     $IMAGE_NAME:$DOCKER_VERSION \
     bash -c 'echo $BUILD_PARAMS && cd /out/ && /src/build.sh -all -d $BUILD_PARAMS'
