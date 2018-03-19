@@ -18,6 +18,8 @@ cluster.sh <verb> [options]
 EOF
 }
 
+IMAGE_NAME="service-fabric-run-ubuntu"
+
 BuildImage()
 {
   if [ ! -d "../../../out/build.prod/FabricDrop" ]; then
@@ -26,13 +28,13 @@ BuildImage()
   fi
 
   pushd "../../../out/build.prod"
-  sudo docker build -f ClusterDeployerTest/image/Dockerfile -t service-fabric-run-ubuntu . 
+  sudo docker build -f ClusterDeployerTest/image/Dockerfile -t $IMAGE_NAME . 
   popd
 }
 
 CheckImageExists()
 {
-  Count=$(sudo docker image ls -a | grep sfosscontainerreg.azurecr.io/clusterdeployer | wc -l)
+  Count=$(sudo docker image ls -a | grep $IMAGE_NAME | wc -l)
   if [ "$Count" = "0" ]; then
     return 1
   fi
@@ -137,7 +139,7 @@ StartVerb()
     -td \
     --name sfoneboxdev \
     -v $(pwd)/../../../out/build.prod/FabricDrop:/home/FabricDrop \
-    service-fabric-run-ubuntu \
+    $IMAGE_NAME \
     bash -c "./run.sh"
 
   #Poll to check if the cluster is active by hitting SFX endpoint
