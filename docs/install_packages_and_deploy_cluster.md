@@ -55,16 +55,13 @@ To install the SDK and the associated runtime package via the apt-get command-li
 
 ### Install and set up the Service Fabric Debians for local cluster setup
 
-After you have updated your sources, you can install the runtime and SDK, confirm the installation, and agree to the license agreement. Please cd to the location in the output directory where the debians are placed i.e. repo.root/out/build.prod/FabricDrop/deb/. Install the runtime and sdk Debian packages named as servicefabric_x.x.x.x.deb and servicefabric_sdkcommon_y.y.y.deb, where x.x.x.x and y.y.y is the actual version numbers in the same of the file. Please replace the commands below with the actual files names in the folder 
+After you have updated your sources, you can install the runtime and SDK, confirm the installation, and agree to the license agreement. Please cd to the location in the output directory where the debians are placed i.e. out/build.prod/FabricDrop/deb/. Install the runtime and sdk Debian packages named as servicefabric_x.x.x.x.deb and servicefabric_sdkcommon_y.y.y.deb, where x.x.x.x and y.y.y is the actual version numbers in the same of the file. Please replace the commands below with the actual files names in the folder 
 
 ```bash
-sudo dpkg -i servicefabric_x.x.x.x.deb
-sudo apt-get install -fy
-sudo dpkg -i servicefabric_sdkcommon_x.x.x.deb
-sudo apt-get install -fy
+sudo dpkg -i servicefabric_x.x.x.x.deb && sudo apt-get install -fy
+sudo dpkg -i servicefabric_sdkcommon_x.x.x.deb && sudo apt-get install -fy
 ```
 
->   [!TIP]
 >   The following commands automate accepting the license for Service Fabric packages:
 >   ```bash
 >   echo "servicefabric servicefabric/accepted-eula-ga select true" | sudo debconf-set-selections
@@ -85,8 +82,7 @@ sudo apt-get install -fy
   At this point, you can deploy pre-built Service Fabric application packages or new ones based on guest containers or guest executables. Please check out more details at [How to run some sample projects](https://azure.microsoft.com/resources/samples/?sort=0&service=service-fabric).
 
 
->   [!TIP]
-    If you have an SSD disk avaiable, it is recommended to pass an SSD folder path using `--clusterdataroot` with devclustersetup.sh for superior performance.
+>   If you have an SSD disk avaiable, it is recommended to pass an SSD folder path using `--clusterdataroot` with devclustersetup.sh for superior performance.
 
 ## Set up the Service Fabric CLI
 
