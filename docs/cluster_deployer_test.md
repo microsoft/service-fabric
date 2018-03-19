@@ -23,10 +23,10 @@ ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2376
 ```
 
 3. Reload Docker. On Ubuntu
-
+```
 sudo systemctl daemon-reload
 sudo systemctl restart docker
-
+```
 ## Running the test
 
 Build Service Fabric
