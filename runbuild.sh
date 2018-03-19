@@ -2,11 +2,11 @@
 
 # get the current directory
 CDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-DOCKER_VERSION=`cat $CDIR/DOCKER_VERSION`
+DOCKER_VERSION=`cat "$CDIR"/DOCKER_VERSION`
 
 OUT_DIR=$CDIR/out
 
-mkdir -p $OUT_DIR
+mkdir -p "$OUT_DIR"
 
 BUILD_PARAMS=""
 while (( "$#" )); do
@@ -33,9 +33,9 @@ docker run \
     --net=host \
     --cap-add=NET_ADMIN \
     -ti \
-    -v $OUT_DIR:/out \
-    -v $CDIR/deps:/deps \
-    -v $CDIR/src:/src \
+    -v "$OUT_DIR":/out \
+    -v "$CDIR"/deps:/deps \
+    -v "$CDIR"/src:/src \
     -e "BUILD_PARAMS=$BUILD_PARAMS" \
     microsoft/service-fabric-build-ubuntu:$DOCKER_VERSION \
     bash -c 'echo $BUILD_PARAMS && cd /out/ && /src/build.sh -all -d $BUILD_PARAMS'
