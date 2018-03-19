@@ -34,10 +34,10 @@ Build Service Fabric
   $ ./runbuild.sh
 
 Run the test
-
+```
   $ cd out/build.prod/ClusterDeployerTest/
   $ ./runtest.sh
-
+```
 ## Details
 
 This test first builds a Docker image (service-cluster-run-ubuntu) locally, this image contains the necessary packages to run Service Fabric. The test then runs Docker, mounting the FabricDrop folder in your output directory. Then a (sample application)[https://github.com/Azure-Samples/service-fabric-dotnet-core-getting-started] is downloaded and built inside the container. The application is installed, and if the http endpoint can be hit then the test passes.
