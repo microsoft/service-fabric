@@ -134,3 +134,7 @@ For Service Fabric sample code, check out the [Azure Code Sample gallery](https:
 All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
 ## Code of Conduct 
 All Service Fabric open source projects adopt the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+## Meet the team
+<a href="https://youtu.be/D-1mfk3Vv-4" target="_blank"><strong>Take a virtual tour with us</strong></a> to meet some of the folks who design and implement the code you're reading/building here. You'll meet more of us over time! We really look forward to your contributions and innovations. 
+
+-- Service Fabric Team
