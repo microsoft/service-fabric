@@ -16,9 +16,11 @@ You will need to setup Docker as instructed here for (mac)[https://docs.microsof
 ```
 2. Expose a tcp listener for your Docker daemon. For Ubuntu edit /etc/systemd/system/docker.service.d/docker.conf
 
+```
 [Service]
 ExecStart=
 ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2376
+```
 
 3. Reload Docker. On Ubuntu
 
