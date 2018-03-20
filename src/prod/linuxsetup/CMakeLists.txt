@@ -140,6 +140,8 @@ add_custom_target(fabricdrop
 
     COMMAND cp -r ${PROJECT_SOURCE_DIR}/src/linux/dockers ${PROJECT_BINARY_DIR}
     COMMAND cp -r ${PROJECT_SOURCE_DIR}/src/linux/dockers/.dockerignore ${PROJECT_BINARY_DIR}
+
+    COMMAND cp -r ${PROJECT_SOURCE_DIR}/../test/ClusterDeployer ${PROJECT_BINARY_DIR}/ClusterDeployerTest
     )
 		
 add_custom_target(symsplit
