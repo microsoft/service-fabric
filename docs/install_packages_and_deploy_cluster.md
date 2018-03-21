@@ -9,9 +9,9 @@ The following operating system versions are supported for development:
 
 * Ubuntu 16.04 (`Xenial Xerus`)
 
-Ensure you have run the build using the -createinstaller option to generate the debian files
+Ensure you have run the build using the `--createinstaller` option to generate the debian files
 ```
-./runbuild.sh -createinstaller
+./runbuild.sh --createinstaller
 ```
 
 ## Installation steps

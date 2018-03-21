@@ -9,24 +9,24 @@
 PrintUsage()
 {
     cat << EOF
-Usage: ./build.sh [-c] [-d] [-p] [-n] [--cleandeps] [--cleanall] [-createdeb] [-createinstaller] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-all] [-v]
+Usage: ./build.sh [-c] [-d] [-p] [-n] [--cleandeps] [--cleanall] [--createdeb] [--createinstaller] [--upgradetestdeb] [--upgradetestinstaller] [--skipbuild] [-s] [-st] [--release] [--debug] [--clang50] [-j<#>] [--all] [-v]
     -c: Clean build
     --cleandeps: Cleans the third party dependencies
     --cleanall: Cleans both the service fabric build and the built third party dependencies
     -d: Set project binary root to current working directory
     -p: Disable precompiled headers
     -n: Use ninja to build
-    -createdeb -createinstaller: Create installer package
-    -upgradetestdeb -upgradetestinstalller: Create multiple installer packages (for testing)
-    -skipbuild: Skip the build phase (only generate)
+    --createdeb --createinstaller: Create installer package
+    --upgradetestdeb --upgradetestinstalller: Create multiple installer packages (for testing)
+    --skipbuild: Skip the build phase (only generate)
     -s: Split symbols
     -st: Split symbols for test directory
-    -release: Build release
-    -debug: Build debug
-    -clang50: Use clang 5.0
+    --release: Build release
+    --debug: Build debug
+    --clang50: Use clang 5.0
     -j<#>: Specify number of build threads
     -v: Verbose
-    -all: Build third party libraries
+    --all: Build third party libraries
 EOF
 }
 
@@ -314,11 +314,11 @@ while (( "$#" )); do
         DisablePrecompile=$1
     elif [ "$1" == "-n" ]; then
         UseNinjaBuild="true"
-    elif [ "$1" == "-createdeb" ] || [ "$1" == "-createinstaller" ]; then
+    elif [ "$1" == "--createdeb" ] || [ "$1" == "--createinstaller" ]; then
         CreateInstallerPackage="true"
-    elif [ "$1" == "-upgradetestdeb" ] || [ "$1" == "-upgradetestinstaller" ]; then
+    elif [ "$1" == "--upgradetestdeb" ] || [ "$1" == "--upgradetestinstaller" ]; then
         CreateMultipleInstallerPackagesForTesting="true"
-    elif [ "$1" == "-skipbuild" ]; then
+    elif [ "$1" == "--skipbuild" ]; then
         SkipBuild="true"
     elif [ "$1" == "-s" ]; then
         SplitSymbols="true"
@@ -327,17 +327,17 @@ while (( "$#" )); do
     #used for official builds only
     elif [ "$1" == "--cloudbuild" ]; then
         CloudBuild="true"
-    elif [ "$1" == "-release" ]; then
+    elif [ "$1" == "--release" ]; then
         BuildType="RelWithDebInfo"
-    elif [ "$1" == "-debug" ]; then
+    elif [ "$1" == "--debug" ]; then
         BuildType="Debug"
-    elif [ "$1" == "-clang50" ]; then
+    elif [ "$1" == "--clang50" ]; then
         ClangVersion="5.0-sf"
         DisablePrecompile=""
     elif [[ "$1" =~ ^-j.* ]]; then
         NumProcStr=${1:2}
         NumProc=$(($NumProcStr + 0))
-    elif [ "$1" == "-all" ]; then
+    elif [ "$1" == "--all" ]; then
         BuildThirdPartyLib="ON"
     elif [ "$1" == "-v" ]; then
         VERBOSE=1
