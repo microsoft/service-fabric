@@ -9,8 +9,10 @@
 PrintUsage()
 {
     cat << EOF
-Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-all] [-v]
+Usage: ./build.sh [-c] [-d] [-p] [-n] [--cleandeps] [--cleanall] [-createdeb] [-createinstaller] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-all] [-v]
     -c: Clean build
+    --cleandeps: Cleans the third party dependencies
+    --cleanall: Cleans both the service fabric build and the built third party dependencies
     -d: Set project binary root to current working directory
     -p: Disable precompiled headers
     -n: Use ninja to build
@@ -340,7 +342,10 @@ while (( "$#" )); do
     elif [ "$1" == "-v" ]; then
         VERBOSE=1
     elif [ "$1" == "--cleandeps" ]; then
-	CLEAN_DEPS=1
+	    CLEAN_DEPS=1
+    elif [ "$1" == "--cleanall" ]; then
+        CLEAN_DEPS=1
+        CleanBuildDrop=1
     elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
         PrintUsage
         exit -1
