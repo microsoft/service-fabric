@@ -38,4 +38,4 @@ docker run \
     -v "$CDIR"/src:/src \
     -e "BUILD_PARAMS=$BUILD_PARAMS" \
     microsoft/service-fabric-build-ubuntu:$DOCKER_VERSION \
-    bash -c 'echo $BUILD_PARAMS && cd /out/ && /src/build.sh -all -d $BUILD_PARAMS'
+    bash -c 'echo $BUILD_PARAMS && cd /out/ && /src/build.sh -d $BUILD_PARAMS'

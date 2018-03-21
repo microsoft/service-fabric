@@ -9,7 +9,7 @@
 PrintUsage()
 {
     cat << EOF
-Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-all] [-v]
+Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-v]
     -c: Clean build
     -d: Set project binary root to current working directory
     -p: Disable precompiled headers
@@ -24,7 +24,6 @@ Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradet
     -clang50: Use clang 5.0
     -j<#>: Specify number of build threads
     -v: Verbose
-    -all: Build third party libraries
 EOF
 }
 
@@ -53,7 +52,6 @@ ScriptPath=`pwd -P`
 popd > /dev/null
 ProjRoot=${ScriptPath}/..
 ProjBinRoot=${ProjRoot}
-LibPath=${ProjRoot}/external/WinFab.Linux.Libs
 CleanBuildDrop="-nc"
 DisablePrecompile="-p"
 SkipBuild="false"
@@ -66,59 +64,13 @@ CloudBuild="false"
 BuildType="RelWithDebInfo"
 ClangVersion="5.0"
 NumProc=0
-BuildThirdPartyLib="ON"
 VERBOSE=0
 CLEAN_DEPS=0
-#WinFab.Linux.Libs library version
-LinuxLibVersion="WinFab.Linux.Libs.2.2.7"
-if [ $LINUX_DISTRIBUTION = "REDHAT" ]; then
-    LinuxLibVersion="WinFab.Linux.Libs.2.2.2-centos"
-fi
-CoreCLRLibVersion="WinFab.CoreCLR.Libs.6.2.183"
-SFXLibVersion="ServiceFabric.Explorer.2017.11.13.1"
-KtlLibDebugVersion="WinFab.Ktl.Linux.debug.1.1.2.52"
-KtlLibRetailVersion="WinFab.Ktl.Linux.retail.1.1.2.52"
-SFUpgradeTestVersion="Microsoft.ServiceFabric.Upgrade.Test.Internal.6.0.0.22"
 
 export CMAKE_NO_VERBOSE=1
 
-# Install any required packages that docker image don't have yet
-# After the docker image has this, this should be removed.
-InstallPkgs()
-{
-    ${ProjRoot}/src/prod/tools/linux/init.sh ${LinuxLibVersion} ${CoreCLRLibVersion} ${SFXLibVersion} ${KtlLibDebugVersion} ${KtlLibRetailVersion} ${SFUpgradeTestVersion} ${CloudBuild}
-    if [ $? != 0 ]; then
-        return 1
-    fi
-
-    if [ -e ${LibPath}/Boost_1_61_0/lib/libc%2B%2B.so.1 ]
-    then
-       mv ${LibPath}/Boost_1_61_0/lib/libc%2B%2B.so.1 ${LibPath}/Boost_1_61_0/lib/libc++.so.1
-       rm ${LibPath}/Boost_1_61_0/lib/libc%2*.so.1
-    fi
-    if [ -e ${LibPath}/Boost_1_61_0/lib/libc%25252B%25252B.so.1 ]
-    then
-       mv ${LibPath}/Boost_1_61_0/lib/libc%25252B%25252B.so.1 ${LibPath}/Boost_1_61_0/lib/libc++.so.1
-       rm ${LibPath}/Boost_1_61_0/lib/libc%2*.so.1
-    fi
-}
-
-InstallDeps()
-{
-    local InstallScript=${ProjRoot}/src/prod/tools/linux/third-party/install-deps.sh
-    ${InstallScript}
-    if [ $? != 0 ]; then
-        exit 1
-    fi
-}
-
 BuildLib()
 {
-    if [ ${BuildThirdPartyLib} != "ON" ]; then
-        return 0
-    fi
-    #InstallDeps
-
     local bin_output=${ProjBinRoot}/build.prod/third-party
     local BuildScript=${ProjRoot}/src/prod/tools/linux/third-party/install-third-party.sh
     if [ ${CLEAN_DEPS} = 1 ]; then
@@ -148,13 +100,8 @@ BuildDir()
 
     BuildSystem="make"
 
-    if [ ${BuildThirdPartyLib} = "OFF" ]; then
-        CC=/usr/lib/llvm-${ClangVersion}/bin/clang
-        CXX=/usr/lib/llvm-${ClangVersion}/bin/clang++
-    else
-        CC=${ProjRoot}/deps/third-party/bin/clang/bin/clang
-        CXX=${ProjRoot}/deps/third-party/bin/clang/bin/clang++
-    fi
+    CC=${ProjRoot}/deps/third-party/bin/clang/bin/clang
+    CXX=${ProjRoot}/deps/third-party/bin/clang/bin/clang++
 
     if [ "-c" = ${Clean} ] || [ ! -d ${ProjBinRoot}/build.${DirName} ]; then
         rm -rf ${ProjBinRoot}/build.${DirName} 2> /dev/null
@@ -335,8 +282,6 @@ while (( "$#" )); do
     elif [[ "$1" =~ ^-j.* ]]; then
         NumProcStr=${1:2}
         NumProc=$(($NumProcStr + 0))
-    elif [ "$1" == "-all" ]; then
-        BuildThirdPartyLib="ON"
     elif [ "$1" == "-v" ]; then
         VERBOSE=1
     elif [ "$1" == "--cleandeps" ]; then
@@ -358,14 +303,6 @@ if [ $CloudBuild == "true" ]; then
     echo "Environment variable AZURE_CREDENTIALS not found."
     exit 1
   fi
-fi
-
-mkdir -p ${ProjRoot}/external
-InstallPkgs
-
-if [ $? != 0 ]; then
-    echo InstallPkgs has failed. Stopping build.
-    exit 1
 fi
 
 BuildLib
