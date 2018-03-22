@@ -54,21 +54,24 @@ popd > /dev/null
 ProjRoot=${ScriptPath}/..
 ProjBinRoot=${ProjRoot}
 LibPath=${ProjRoot}/external/WinFab.Linux.Libs
-CleanBuildDrop="-nc"
-DisablePrecompile="-p"
-SkipBuild="false"
-CreateInstallerPackage="false"
-CreateMultipleInstallerPackagesForTesting="false"
-SplitSymbols="false"
-SplitSymbolsForTestDir="false"
-UseNinjaBuild="false"
-CloudBuild="false"
-BuildType="RelWithDebInfo"
-ClangVersion="5.0"
-NumProc=0
-BuildThirdPartyLib="ON"
-VERBOSE=0
-CLEAN_DEPS=0
+
+CleanBuildDrop=${CleanBuildDrop:-"-nc"}
+DisablePrecompile=${DisablePrecompile:-"-p"}
+SkipBuild=${SkipBuild:-"false"}
+CreateInstallerPackage=${CreateInstallerPackage:-"false"}
+CreateMultipleInstallerPackagesForTesting=${CreateMultipleInstallerPackagesForTesting:-"false"}
+SplitSymbols=${SplitSymbols:-"false"}
+SplitSymbolsForTestDir=${SplitSymbolsForTestDir:-"false"}
+UseNinjaBuild=${UseNinjaBuild:-"false"}
+CloudBuild=${CloudBuild:-"false"}
+BuildType=${BuildType:-"RelWithDebInfo"}
+ClangVersion=${ClangVersion:-"5.0"}
+NumProc=${NumProc:-0}
+BuildThirdPartyLib=${BuildThirdPartyLib:-"ON"}
+VERBOSE=${VERBOSE:-0}
+CLEAN_DEPS=${CLEAN_DEPS:-0}
+export CMAKE_NO_VERBOSE=${CMAKE_NO_VERBOSE:-1}
+
 #WinFab.Linux.Libs library version
 LinuxLibVersion="WinFab.Linux.Libs.2.2.7"
 if [ $LINUX_DISTRIBUTION = "REDHAT" ]; then
@@ -80,7 +83,6 @@ KtlLibDebugVersion="WinFab.Ktl.Linux.debug.1.1.2.52"
 KtlLibRetailVersion="WinFab.Ktl.Linux.retail.1.1.2.52"
 SFUpgradeTestVersion="Microsoft.ServiceFabric.Upgrade.Test.Internal.6.0.0.22"
 
-export CMAKE_NO_VERBOSE=1
 
 # Install any required packages that docker image don't have yet
 # After the docker image has this, this should be removed.
