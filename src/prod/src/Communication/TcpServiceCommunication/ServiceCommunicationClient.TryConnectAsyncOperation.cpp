@@ -96,7 +96,7 @@ private:
                 else
                 { //This means we got a valid reply. Hence it is Connected.
                     error = ErrorCodeValue::Success;
-                    WriteInfo(TraceType, this->owner_.clientId_, "Connect Succeded :  for Service {0}", this->owner_.serviceLocation_);
+                    WriteInfo(TraceType, this->owner_.clientId_, "Connect Succeeded :  for Service {0}", this->owner_.serviceLocation_);
 
                     if (this->owner_.TransitionToConnected().IsSuccess())
                     {
