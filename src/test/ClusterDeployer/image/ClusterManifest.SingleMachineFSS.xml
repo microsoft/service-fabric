@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ClusterManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Test Generated ClusterManifest" Version="v1" Description="Test Generated ClusterManifest" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <NodeTypes>
+    <NodeType Name="N0010Ref">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="19001" />
+        <ClusterConnectionEndpoint Port="19002" />
+        <HttpGatewayEndpoint Port="19080" Protocol="http" />
+        <ServiceConnectionEndpoint Port="19006" />
+        <HttpApplicationGatewayEndpoint Port="19081" Protocol="http" />
+        <ApplicationEndpoints StartPort="22001" EndPort="23000" />
+      </Endpoints>
+    </NodeType>
+    <NodeType Name="N0020Ref">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19010" />
+        <LeaseDriverEndpoint Port="19011" />
+        <ClusterConnectionEndpoint Port="19012" />
+        <HttpGatewayEndpoint Port="19082" Protocol="http" />
+        <ServiceConnectionEndpoint Port="19016" />
+        <HttpApplicationGatewayEndpoint Port="19083" Protocol="http" />
+        <ApplicationEndpoints StartPort="23001" EndPort="24000" />
+      </Endpoints>
+    </NodeType>
+    <NodeType Name="N0030Ref">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19020" />
+        <LeaseDriverEndpoint Port="19021" />
+        <ClusterConnectionEndpoint Port="19022" />
+        <HttpGatewayEndpoint Port="19084" Protocol="http" />
+        <ServiceConnectionEndpoint Port="19026" />
+        <HttpApplicationGatewayEndpoint Port="19085" Protocol="http" />
+        <ApplicationEndpoints StartPort="24001" EndPort="25000" />
+      </Endpoints>
+    </NodeType>
+  </NodeTypes>
+  <Infrastructure>
+    <Linux IsScaleMin="true">
+      <NodeList>
+        <Node NodeName="N0010" IPAddressOrFQDN="REPLACE_IP_1" IsSeedNode="true" NodeTypeRef="N0010Ref" />
+        <Node NodeName="N0020" IPAddressOrFQDN="REPLACE_IP_1" IsSeedNode="true" NodeTypeRef="N0020Ref" />
+        <Node NodeName="N0030" IPAddressOrFQDN="REPLACE_IP_1" IsSeedNode="true" NodeTypeRef="N0030Ref" />
+      </NodeList>
+    </Linux>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="Trace/Console">
+        <Parameter Name="Level" Value="2" />
+    </Section>
+    <Section Name="Trace/Etw">
+        <Parameter Name="Level" Value="5" />
+    </Section>
+    <Section Name="Federation">
+      <Parameter Name="NodeIdGeneratorVersion" Value="V3" />
+    </Section>
+    <Section Name="ClusterManager">
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="ReplicaRestartWaitDuration" Value="5" />
+      <Parameter Name="UpgradeStatusPollInterval" Value="5" />
+      <Parameter Name="FabricUpgradeStatusPollInterval" Value="5" />
+      <Parameter Name="UpgradeHealthCheckInterval" Value="5" />
+      <Parameter Name="FabricUpgradeHealthCheckInterval" Value="5" />
+    </Section>
+    <Section Name="FailoverManager">
+      <Parameter Name="ClusterStableWaitDuration" Value="0" />
+      <Parameter Name="PeriodicStateScanInterval" Value="2" />
+      <Parameter Name="MinActionRetryIntervalPerReplica" Value="5" />
+      <Parameter Name="PeriodicStateCleanupScanInterval" Value="15" />
+      <Parameter Name="SystemReplicaRestartWaitDuration" Value="5" />
+      <Parameter Name="DeletedReplicaKeepDuration" Value="5" />
+      <Parameter Name="ExpectedClusterSize" Value="1" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="ReplicaRestartWaitDuration" Value="5" />
+      <Parameter Name="UserReplicaRestartWaitDuration" Value="5" />
+    </Section>
+    <Section Name="Hosting">
+      <Parameter Name="EnableActivateNoWindow" Value="True" />
+      <Parameter Name="ActivatedProcessDieOnUnhandledExceptionEnabled" Value="False" />
+      <Parameter Name="RunAsPolicyEnabled" Value="True" />
+      <Parameter Name="EndpointProviderEnabled" Value="True" />
+      <Parameter Name="FirewallPolicyEnabled" Value="False" />
+      <Parameter Name="SkipDockerProcessManagement" Value="True" />
+      <Parameter Name="ContainerHostAddress" Value="http://docker.for.mac.host.internal:2376" />
+      <Parameter Name="DisableContainerServiceStartOnContainerActivatorOpen" Value="True" />
+    </Section>
+    <Section Name="HttpGateway">
+      <Parameter Name="IsEnabled" Value="True" />
+      <Parameter Name="VersionCheck" Value="True" />
+    </Section>
+    <Section Name="ImageStoreService">
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="ReplicaRestartWaitDuration" Value="5" />
+    </Section>
+    <Section Name="FileStoreService">
+      <Parameter Name="PrimaryAccountType" Value="LocalUser"/>
+      <Parameter Name="PrimaryAccountNTLMPasswordSecret" Value="Foo"/>
+      <Parameter Name="SecondaryAccountType" Value="LocalUser"/>
+      <Parameter Name="SecondaryAccountNTLMPasswordSecret" Value="Bar"/>
+    </Section>
+    <Section Name="Management">
+        <Parameter Name="ImageStoreConnectionString" Value="fabric:ImageStore" />
+    </Section>
+    <Section Name="NamingService">
+      <Parameter Name="PartitionCount" Value="1" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+      <Parameter Name="MinReplicaSetSize" Value="1" />
+      <Parameter Name="ReplicaRestartWaitDuration" Value="5" />
+    </Section>
+    <Section Name="PerformanceCounterLocalStore">
+      <Parameter Name="IsEnabled" Value="False" />
+    </Section>
+    <Section Name="PlacementAndLoadBalancing">
+      <Parameter Name="LoadBalancingEnabled" Value="False" />
+    </Section>
+    <Section Name="ReconfigurationAgent">
+      <Parameter Name="ReplicaUpMessageRetryInterval" Value="5" />
+      <Parameter Name="RAUpgradeProgressCheckInterval" Value="2" />
+      <Parameter Name="FabricUpgradeReplicaCloseCompleteCheckInterval" Value="1" />
+      <Parameter Name="IsDeactivationInfoEnabled" Value="True" />
+      <Parameter Name="ReplicaOpenFailureWarningReportThreshold" Value="1" />
+    </Section>
+    <Section Name="FabricClient">
+      <Parameter Name="HealthReportSendInterval" Value="1" />
+    </Section>
+    <Section Name="Security">
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+      <Parameter Name="NegotiateForWindowsSecurity" Value="True" />
+      <Parameter Name="DisableFirewallRuleForPublicProfile" Value="False" />
+    </Section>
+    <Section Name="Diagnostics">
+      <Parameter Name="ProducerInstances" Value="WinFabLttProducer" />
+      <Parameter Name="ConsumerInstances" Value="AzureWinFabCsv"/>
+    </Section>
+    <Section Name="WinFabLttProducer">
+      <Parameter Name="ProducerType" Value="LttProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+    </Section>
+    <Section Name="AzureWinFabCsv">
+      <Parameter Name="ConsumerType" Value="AzureBlobCsvUploader"/>
+      <Parameter Name="ProducerInstance" Value="WinFabLttProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="StoreConnectionString" Value="xstore:DefaultEndpointsProtocol=https;AccountName=[];AccountKey=[]"/>
+      <Parameter Name="ContainerName" Value="fabriclogs"/>
+    </Section>
+    <Section Name="RunAs_DCA">
+      <Parameter Name="RunAsAccountType" Value="LocalSystem" />
+    </Section>
+    <Section Name="Setup">
+      <Parameter Name="SkipFirewallConfiguration" Value="True" />
+    </Section>
+  </FabricSettings>
+</ClusterManifest>

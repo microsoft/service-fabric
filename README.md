@@ -122,12 +122,18 @@ Take note to replace the above command with your actual local DNS server, and re
 ```sh
 service docker restart
 ```
+## Testing a local cluster
+
+For more details please refer to [Testing using ClusterDeployer](docs/cluster_deployer_test.md).
+
+## Running a local cluster
+For more details please refer [Deploying local cluster from build](docs/install_packages_and_deploy_cluster.md)
 
 ## Documentation 
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).
 ## Samples 
 For Service Fabric sample code, check out the [Azure Code Sample gallery](https://azure.microsoft.com/resources/samples/?service=service-fabric) or go straight to [Azure-Samples on GitHub](https://github.com/Azure-Samples?q=service-fabric).
 ## License 
-All Service Fabric open source projects are licensed under the [MIT License](LICENSE.txt).
+All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
 ## Code of Conduct 
 All Service Fabric open source projects adopt the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
