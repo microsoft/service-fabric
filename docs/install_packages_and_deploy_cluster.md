@@ -50,6 +50,7 @@ To install the SDK and the associated runtime package via the apt-get command-li
 6. Refresh your package lists based on the newly added repositories.
 
     ```bash
+    sudo apt-get install apt-transport-https
     sudo apt-get update
     ```
 
