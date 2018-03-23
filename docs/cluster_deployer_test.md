@@ -6,6 +6,16 @@ You will need to setup Docker as instructed here for (mac)[https://docs.microsof
 
 ### Linux Setup
 
+---
+#### Note ####
+You can't run the local cluster and the Docker daemon concurrently. If you followed the [instructions]  (install_packages_and_deploy_cluster.md) to setup a local cluster, then in order to use use this test you will need to stop the local cluster and start the Docker daemon.
+
+```
+sudo systemctl stop servicefabric
+sudo systemctl start docker
+```
+---
+
 1. Edit the Daemon configuration (normally /etc/docker/daemon.json)
 
 ```json
@@ -19,7 +29,7 @@ You will need to setup Docker as instructed here for (mac)[https://docs.microsof
 ```
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2376
+ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2376
 ```
 
 3. Reload Docker. On Ubuntu
