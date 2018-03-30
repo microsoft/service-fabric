@@ -131,7 +131,7 @@ Service Fabric conceptual and reference documentation is available at [docs.micr
 ## Samples 
 For Service Fabric sample code, check out the [Azure Code Sample gallery](https://azure.microsoft.com/resources/samples/?service=service-fabric) or go straight to [Azure-Samples on GitHub](https://github.com/Azure-Samples?q=service-fabric).
 ## Service Fabric - Behind the Curtain  
-<a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time. Check back often!
+<a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
 ## License 
 All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
 ## Code of Conduct 
