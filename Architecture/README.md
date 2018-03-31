@@ -1,7 +1,8 @@
 # Service Fabric Architecture
 
 Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
-
+<br/>
+<br/>
 [!["Management"](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management.png)](https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md)  
 [!["Naming"](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Naming.png)](https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Naming/README.md) [!["Hosting"](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Hosting.png)](https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Hosting2/README.md) [!["Application"](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Application.png)](https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Application)  
 [!["Communication"](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Communication.png)](https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication/README.md) [!["Reliability"](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Reliability.png)](https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability/README.md)  
