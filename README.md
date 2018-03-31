@@ -10,7 +10,7 @@ To get started with building applications for Service Fabric:
  - [Run some sample projects](https://azure.microsoft.com/resources/samples/?sort=0&service=service-fabric).
  
  
-## Introduction to Azure Service Fabric
+## Service Fabric Overview
  
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/v9WHgjSqwWg/0.jpg)](https://www.youtube.com/watch?v=v9WHgjSqwWg) 
 
