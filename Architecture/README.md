@@ -1,6 +1,6 @@
 # Service Fabric Architecture
 
-Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
+Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related subsystem's top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
 <br/>
 <br/>
 <table style="border: 0px; padding: 0px;">
