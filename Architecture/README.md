@@ -31,7 +31,6 @@ Explore the Service Fabric codebase by clicking on an architectural tile below. 
     <td align="left">
         <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Naming/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Naming.png" /></a> 
       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Hosting2/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Hosting.png" /></a> 
-      <a href="#"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Application.png" /></a> 
       <br/>
         <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Communication.png" /></a> 
         <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Reliability.png" /></a>
