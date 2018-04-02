@@ -14,7 +14,6 @@ Besides taming distributes systems complexity and easing correctness reasoning, 
 Finally, we believe that it is easy to relax consistency guarantees to arrive at arguably correct weaker consistency models than trying to build consistent applications on a weaker platform. To this effect, Service Fabric provides explicit extension points in its system operation to relax the consistency guarantees built into to enable building weaker-consistency applications. For example, Azure Document DB service, which is also built on top of Service Fabric, leverages these system defined extension points to developer weaker consistency 
 
 #### Service Fabric Subsystems at a Glance
-
 ![Service Fabric Architecture](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/service-fabric-architecture.png)
 
 
