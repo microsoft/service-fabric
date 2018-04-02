@@ -15,7 +15,7 @@ Finally, we believe that it is easy to relax consistency guarantees to arrive at
 
 
 
-#### Service Fabric Subsystems
+#### Service Fabric Subsystems at a Glance
 
 
 ![Service Fabric Architecture](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/SFArchitecture.png)
