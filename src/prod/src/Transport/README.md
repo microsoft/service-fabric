@@ -1,1 +1,7 @@
 # Transport
+
+The Transport susbsystem is designed and implemented to provide high performance, high throughput, low overhead, and low latency, and is used for performance and latency sensitive purposes such as ring maintenance and replication.  The messaging stack includes Federation broadcast. 
+
+Service Fabric includes a messaging stack to facilitate routing and route maintenance between nodes in a ring federation or cluster. Messages are accompanied by header information that identifies and describes the messages and may be used as an extensibility mechanism. Transports implement a basic point-to-point datagram communication channel with address resolution, and additional functionality, such as end-to-end security, request-reply, reliability assurances and multicast may be layered on top of the low-level transport.  
+
+The multicast communication pattern involves sending a message efficiently to a group of receivers. The pattern of sending a one-way message to a group of receives is referred to as fan-out pattern. The pattern of sending a request message to a group of receives and collecting a reply from each one of them is referred to as scatter-gather pattern.  In Service Fabric, different multicast patterns are needed at various level of stacks, while the basic patterns remain the same; the type of receivers and their number involved in the pattern differentiate the solution provided. This document describes the scenarios and design of multicast messaging solutions provided by Service Fabric. 
