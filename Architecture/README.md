@@ -1,5 +1,10 @@
 # Service Fabric Architecture
 
+
+![Service Fabric Architecture](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/service-fabric-architecture.png)  
+
+
+
 From day one, Service Fabric was designed to run strongly consistent internet scale services like Azure Databases. To deliver on the consistency guarantees to its applications, Service Fabric itself is built using layered subsystems where each subsystem provides strong guarantees to its peer and higher level subsystem. For example, the federation subsystem is responsible for managing cluster membership, message routing, leader election, and failure detection with strong guarantees. The reliability system leverages leader election and failure detection capabilities of federation subsystem to build replicated state machines that underlie stateful microservices.  Communication subsystem leverages message routing capability of federation subsystem to reliably deliver its messages. Naming, hosting, and health subsystems work together and depend on the reliability and communication subsystems to manage the lifecycle of the various microservice applications running in the cluster. Our experience running Service Fabric in production for more than a decade has shown that it will be very hard to build a comprehensive distributed systems platform like Service Fabric without properly layering it and thinking about consistency first. Any decently complex internet scale service like Azure DB will have many moving parts and it is similarly hard for it to provide consistency guarantees to its users when its internal componentry is inconsistent. 
 
 Besides taming distributes systems complexity and easing correctness reasoning, putting consistency at the platform layer offers the following efficiencies:  
@@ -11,10 +16,6 @@ Besides taming distributes systems complexity and easing correctness reasoning, 
 **Developer Efficiency**: Service Fabric is leveraged very broadly inside Microsoft for running many of its cloud infrastructure and services and it is increasingly getting used externally. It isolates infrastructure/service/application developers from dealing having to deal with hard distributed systems problems. If consistency were to be built at the application layer, each distinct application will have to hire distributed systems developers and spend development resources and take longer to reach production quality. Put differently, as comprehensive microservices platform, Service Fabric accords development agility by allowing application developers to focus on their application specific problems by doing the heavy lifting needed to solve the hard distributed systems problems shared by many applications. 
 
 Finally, we believe that it is easy to relax consistency guarantees to arrive at arguably correct weaker consistency models than trying to build consistent applications on a weaker platform. To this effect, Service Fabric provides explicit extension points in its system operation to relax the consistency guarantees built into to enable building weaker-consistency applications. For example, Azure Document DB service, which is also built on top of Service Fabric, leverages these system defined extension points to developer weaker consistency 
-
-## Service Fabric Service Architecture
-
-![Service Fabric Architecture](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/service-fabric-architecture.png)
 
 
 ## Service Fabric Core Subsystem Explorer (Maps top level subsystems to the source code in this repo)
