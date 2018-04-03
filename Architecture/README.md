@@ -17,7 +17,32 @@ Besides taming distributed systems complexity and easing correctness reasoning, 
 
 **Developer Efficiency**: Service Fabric is leveraged very broadly inside Microsoft for running many of its cloud infrastructure and services and it is increasingly getting used externally. It isolates infrastructure/service/application developers from dealing having to deal with hard distributed systems problems. If consistency were to be built at the application layer, each distinct application will have to hire distributed systems developers and spend development resources and take longer to reach production quality. Put differently, as comprehensive microservices platform, Service Fabric accords development agility by allowing application developers to focus on their application specific problems by doing the heavy lifting needed to solve the hard distributed systems problems shared by many applications. 
 
-Finally, we believe that it is easy to relax consistency guarantees to arrive at arguably correct weaker consistency models than trying to build consistent applications on a weaker platform. To this effect, Service Fabric provides explicit extension points in its system operation to relax the consistency guarantees built into to enable building weaker-consistency applications. For example, Azure Cosmos DB service, which is built on top of Service Fabric, leverages these system-defined extension points to support their own consistency models.
+Finally, we believe that it is easy to relax consistency guarantees to arrive at arguably correct weaker consistency models than trying to build consistent applications on a weaker platform. To this effect, Service Fabric provides explicit extension points in its system operation to relax the consistency guarantees built into to enable building weaker-consistency applications. For example, Azure Cosmos DB service, which is built on top of Service Fabric, leverages these system-defined extension points to support their own consistency models.  
+
+### Infrastructure concepts  
+
+***Cluster***: A network-connected set of virtual or physical machines into which your microservices are deployed and managed. Clusters can scale to thousands of machines.  
+
+***Node***: A machine or VM that's part of a cluster is called a node. Each node is assigned a node name (a string). Nodes have characteristics, such as placement properties. Each machine or VM has an auto-start Windows service, FabricHost.exe, that starts running upon boot and then starts two executables: Fabric.exe and FabricGateway.exe. These two executables make up the node. For testing scenarios, you can host multiple nodes on a single machine or VM by running multiple instances of Fabric.exe and FabricGateway.exe.  
+
+### System services  
+
+There are system services that are created in every cluster that provide the platform capabilities of Service Fabric.  
+
+***Naming Service***: Each Service Fabric cluster has a Naming Service, which resolves service names to a location in the cluster. You manage the service names and properties, like an internet Domain Name System (DNS) for the cluster. Clients securely communicate with any node in the cluster by using the Naming Service to resolve a service name and its location. Applications move within the cluster. For example, this can be due to failures, resource balancing, or the resizing of the cluster. You can develop services and clients that resolve the current network location. Clients obtain the actual machine IP address and port where it's currently running.  
+
+***Image Store Service***: Each Service Fabric cluster has an Image Store service where deployed, versioned application packages are kept. Copy an application package to the Image Store and then register the application type contained within that application package. After the application type is provisioned, you create a named application from it. You can unregister an application type from the Image Store service after all its named applications have been deleted.  
+
+***Failover Manager Service***: Each Service Fabric cluster has a Failover Manager service that is responsible for the following actions:  
+
+Performs functions related to high availability and consistency of services.  
+Orchestrates application and cluster upgrades.  
+Interacts with other system components.  
+
+***Repair Manager Service***: This is an optional system service that allows repair actions to be performed on a cluster in a way that is safe, automatable, and transparent. Repair manager is used in:  
+
+Performing Azure maintenance repairs on Silver and Gold durability Azure Service Fabric clusters.  
+Carrying out repair actions for Patch Orchestration Application
 
 
 ## Service Fabric Subsystem Explorer (Maps top level Service Fabric services to the source code in this repo)
