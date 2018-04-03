@@ -31,13 +31,6 @@ We'll be providing frequent updates here and on our [team blog](https://blogs.ms
  - [ ] Migrate complete test infrastructure 
 
 
-## How to engage, contribute and provide feedback 
-During our transition to open development, we are primarily focused on tasks related to building, testing, and developing Service Fabric on GitHub. If you are interested in helping out with this effort, head over to the current set of issues to see what we currently need help with. We will happily work with you and take any contributions that help us move Service Fabric development to GitHub.
-
-In the meantime, contributions to other areas of Service Fabric are welcome on a best-effort basis. While the team continues to develop internally, we will integrate the changes into our internal development repo for testing and verification, and then push the merged changes back to GitHub when the change is released. The smaller and more targeted your PRs, the easier it will be for us to review and integrate them. 
-
-For more information on how this process works and how to contribute, provide feedback, and log bugs, please see [Contributing.md](CONTRIBUTING.md).
-
 ## Build Requirements
 The requirements below are based off running clean builds using ninja, with the command
 
@@ -145,6 +138,13 @@ For Service Fabric sample code, check out the [Azure Code Sample gallery](https:
 
 ### On Open Sourcing Service Fabric  
 [![On opening sourcing Service Fabric](https://img.youtube.com/vi/NmLdhpuPs04/0.jpg)](https://www.youtube.com/watch?v=NmLdhpuPs04) 
+
+## How to engage, contribute and provide feedback 
+During our transition to open development, we are primarily focused on tasks related to building, testing, and developing Service Fabric on GitHub. If you are interested in helping out with this effort, head over to the current set of issues to see what we currently need help with. We will happily work with you and take any contributions that help us move Service Fabric development to GitHub.  
+
+In the meantime, contributions to other areas of Service Fabric are welcome on a best-effort basis. While the team continues to develop internally, we will integrate the changes into our internal development repo for testing and verification, and then push the merged changes back to GitHub when the change is released. The smaller and more targeted your PRs, the easier it will be for us to review and integrate them. 
+
+For more information on how this process works and how to contribute, provide feedback, and log bugs, please see [Contributing.md](CONTRIBUTING.md).  
 
 ## License 
 All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
