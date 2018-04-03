@@ -1,7 +1,3 @@
-# Federation
+# Federation subsystem
 
-The Federation subsystem organizes a set of machines (nodes) into a ring structure that optimally provides highly reliable failure detection, agreement, and leader election among the ring nodes. 
-
-Federation subsytsem is used by the <a href="https://github.com/GitTorre/service-fabric/blob/master/src/prod/src/Reliability/README.md">Reliability subsystem</a> of Service Fabric to make services highly reliable and scalable: The reliability subsystem uses partitioning to achieve scalability; a service is broken down in to partitions that are placed at various nodes on the Federation. 
-
-Federation subsystem is also used by Service Fabric's <a href="https://github.com/GitTorre/service-fabric/edit/master/src/prod/src/Communication/README.md">Communication subsystem</a>. 
+In order to reason about a set of nodes in a distributed system, you need to have a consistent view of the system. The federation subsystem uses the communication primitives provided by the transport subsystem and stitches the various nodes into a single unified cluster that it can reason about. It provides the distributed systems primitives needed by the other subsystems - failure detection, leader election, and consistent routing. The federation subsystem is built on top of distributed hash tables with a 128-bit token space. The subsystem creates a ring topology over the nodes, with each node in the ring being allocated a subset of the token space for ownership. For failure detection, the layer uses a leasing mechanism based on heart beating and arbitration. The federation subsystem also guarantees through intricate join and departure protocols that only a single owner of a token exists at any time. This provides leader election and consistent routing guarantees. 
