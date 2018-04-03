@@ -18,7 +18,7 @@ Besides taming distributes systems complexity and easing correctness reasoning, 
 Finally, we believe that it is easy to relax consistency guarantees to arrive at arguably correct weaker consistency models than trying to build consistent applications on a weaker platform. To this effect, Service Fabric provides explicit extension points in its system operation to relax the consistency guarantees built into to enable building weaker-consistency applications. For example, Azure Document DB service, which is also built on top of Service Fabric, leverages these system defined extension points to developer weaker consistency 
 
 
-## Service Fabric Core Subsystem Explorer (Maps top level subsystems to the source code in this repo)
+## Service Fabric Subsystem Explorer (Maps top level Service Fabric services to the source code in this repo)
 
 Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related subsystem's top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
 <br/>
@@ -26,7 +26,7 @@ Explore the Service Fabric codebase by clicking on an architectural tile below. 
 <table style="border: 0px; padding: 0px;">
   <tr>
     <td align="right">
-       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management.png" height="274" width="184" align="right" /></a>
+       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management.png" height="279" width="184" align="right" /></a>
     </td>
     <td align="left">
         <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Naming/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Naming.png" /></a> 
