@@ -26,7 +26,7 @@ Explore the Service Fabric codebase by clicking on an architectural tile below. 
 <table style="border: 0px; padding: 0px;">
   <tr>
     <td align="right">
-       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management.png" height="287" width="184" align="right" /></a>
+       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management.png" height="294" width="184" align="right" /></a>
     </td>
     <td align="left">
         <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Naming/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Naming.png" /></a> 
