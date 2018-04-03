@@ -1,7 +1,7 @@
 # Service Fabric Architecture
 
 
-![Service Fabric Architecture](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/service-fabric-architecture.png)  
+![Service Fabric Architecture](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/SFArchitecture.png)  
 
 
 
