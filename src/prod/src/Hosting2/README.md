@@ -1,3 +1,3 @@
 # Hosting and Activation subsystem
 
-The Cluster Manager informs the hosting subsystem (running on each node) which services it needs to manage for a particular node. The Hosting subsystem then manages the lifecycle of the application on that node. It interacts with the reliability and health components to ensure that the replicas are properly placed and are health and happy.
+The [***Cluster Manager***](https://github.com/Microsoft/service-fabric/tree/f258f7579af9643dac6b1c75c93db9a3bcd28fdd/src/prod/src/Management/ClusterManager) informs the [***Hosting subsystem***](https://github.com/Microsoft/service-fabric/tree/master/src/prod/src/Naming) (running on each node) which services it needs to manage for a particular node. The Hosting subsystem then manages the lifecycle of the application on that node. It interacts with the reliability and health components to ensure that the replicas are properly placed and are health and happy.
