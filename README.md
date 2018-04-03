@@ -11,11 +11,6 @@ To get started with building applications for Service Fabric:
  - Watch this!  
  [![Watch this](https://img.youtube.com/vi/v9WHgjSqwWg/0.jpg)](https://www.youtube.com/watch?v=v9WHgjSqwWg) 
  
- 
-## Service Fabric Overview
- 
-
-
 ## Project timeline and development
 Service Fabric is currently undergoing a big transition to open development. Our main goal right now is to move the entire build, test, and development process to GitHub. For now the Service Fabric team will continue regular feature development internally while we work on transitioning everything to GitHub.  
 
