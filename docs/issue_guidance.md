@@ -3,7 +3,7 @@
 This document details how Service Fabric handles issues reported through GitHub.
 
 **Note**, for support, guidance on opening issues, and general questions related to using Service Fabric, take a look
-at the documentation in the [contributing guide](CONTRIBUTING.md).
+at the documentation in the [contributing guide](/CONTRIBUTING.md).
 
 # Triaging issues
 
