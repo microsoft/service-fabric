@@ -8,11 +8,13 @@ To get started with building applications for Service Fabric:
  - Set up your development environment for [Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started), [Linux](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-Linux), or [Mac](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-mac).
  - [See our documentation](https://docs.microsoft.com/azure/service-fabric/).
  - [Run some sample projects](https://azure.microsoft.com/resources/samples/?sort=0&service=service-fabric).
+ - Watch this!  
+ [![Watch this](https://img.youtube.com/vi/v9WHgjSqwWg/0.jpg)](https://www.youtube.com/watch?v=v9WHgjSqwWg) 
  
  
 ## Service Fabric Overview
  
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/v9WHgjSqwWg/0.jpg)](https://www.youtube.com/watch?v=v9WHgjSqwWg) 
+
 
 ## Project timeline and development
 Service Fabric is currently undergoing a big transition to open development. Our main goal right now is to move the entire build, test, and development process to GitHub. For now the Service Fabric team will continue regular feature development internally while we work on transitioning everything to GitHub.  
