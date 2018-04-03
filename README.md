@@ -139,12 +139,12 @@ Service Fabric conceptual and reference documentation is available at [docs.micr
 ## Samples 
 For Service Fabric sample code, check out the [Azure Code Sample gallery](https://azure.microsoft.com/resources/samples/?service=service-fabric) or go straight to [Azure-Samples on GitHub](https://github.com/Azure-Samples?q=service-fabric).
 ## Service Fabric Architecture
-Understand the core Service Fabric services (aka, subsystems) and explore this codebase using a simple [subsystem explorer](https://github.com/GitTorre/service-fabric/blob/master/Architecture/README.md) as your guide. Each graphical section will take you to the corresponding source folder. You'll also see links to related technical design docs and videos (our Lap Around Service Fabric the Codebase series). Learn on!
+[Gain deeper insight](https://github.com/GitTorre/service-fabric/blob/master/Architecture/README.md) into the core Service Fabric services (aka, subsystems) and explore this rather large codebase by using a "subsystems map" as your guide: each graphical section will take you to the corresponding source folder. You'll also see links to related technical design docs and videos (our Lap Around Service Fabric the Codebase series). Learn on!
 ## Service Fabric - Behind the Curtain  
 <a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
 
 ### On Open Sourcing Service Fabric  
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/NmLdhpuPs04/0.jpg)](https://www.youtube.com/watch?v=NmLdhpuPs04) 
+[![On opening sourcing Service Fabric](https://img.youtube.com/vi/NmLdhpuPs04/0.jpg)](https://www.youtube.com/watch?v=NmLdhpuPs04) 
 
 ## License 
 All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
