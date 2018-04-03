@@ -139,7 +139,7 @@ Service Fabric conceptual and reference documentation is available at [docs.micr
 ## Samples 
 For Service Fabric sample code, check out the [Azure Code Sample gallery](https://azure.microsoft.com/resources/samples/?service=service-fabric) or go straight to [Azure-Samples on GitHub](https://github.com/Azure-Samples?q=service-fabric).
 ## Service Fabric Architecture
-Explore this codebase using an [architecture chart](https://github.com/GitTorre/service-fabric/blob/master/Architecture/README.md) as your guide. Each graphical section will take you to the corresponding source folder. You'll also see links to related technical design docs and videos (our Lap Around Service Fabric the Codebase series). Learn on!
+Understand the core Service Fabric services (aka, subsystems) and explore this codebase using a simple [subsystem explorer](https://github.com/GitTorre/service-fabric/blob/master/Architecture/README.md) as your guide. Each graphical section will take you to the corresponding source folder. You'll also see links to related technical design docs and videos (our Lap Around Service Fabric the Codebase series). Learn on!
 ## Service Fabric - Behind the Curtain  
 <a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
 
