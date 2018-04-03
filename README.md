@@ -135,7 +135,7 @@ For Service Fabric sample code, check out the [Azure Code Sample gallery](https:
 #### 
 Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
 
-[![Service Fabric Team Tour](https://img.youtube.com/vi/D-1mfk3Vv-4/0.jpg)]("https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true")
+[![Service Fabric Team Tour](https://img.youtube.com/vi/D-1mfk3Vv-4/0.jpg)](https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true)
 
 Learn about the thinking behind the thinking of our open sourcing Service Fabric:   
 [![On opening sourcing Service Fabric](https://img.youtube.com/vi/NmLdhpuPs04/0.jpg)](https://www.youtube.com/watch?v=NmLdhpuPs04) 
