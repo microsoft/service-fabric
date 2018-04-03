@@ -29,7 +29,7 @@ Explore the Service Fabric codebase by clicking on an architectural tile below. 
 <table style="border: 0px; padding: 0px;" width="600">
   <tr>
     <td align="right">
-       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management_D.png" height="284" width="234" align="right" /></a>
+       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management_D.png" height="284" width="224" align="right" /></a>
     </td>
     <td align="left">
         <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Communication_D.png" /></a> 
