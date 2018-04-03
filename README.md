@@ -131,9 +131,13 @@ For Service Fabric sample code, check out the [Azure Code Sample gallery](https:
 ## Service Fabric Architecture
 [**Gain deeper insights**](https://github.com/GitTorre/service-fabric/blob/master/Architecture/README.md) into the core Service Fabric services (aka, subsystems) and explore this rather large codebase by using a "subsystems map" as your guide: each graphical section will take you to the corresponding source folder. You'll also see links to related technical design docs and videos (our Lap Around Service Fabric the Codebase series). Learn on!
 ## Service Fabric - Behind the Curtain  
-<a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
 
-### On Open Sourcing Service Fabric  
+#### 
+Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
+
+[![Service Fabric Team Tour](https://img.youtube.com/vi/D-1mfk3Vv-4/0.jpg)]("https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true")
+
+Learn about the thinking behind the thinking of our open sourcing Service Fabric:   
 [![On opening sourcing Service Fabric](https://img.youtube.com/vi/NmLdhpuPs04/0.jpg)](https://www.youtube.com/watch?v=NmLdhpuPs04) 
 
 ## How to engage, contribute and provide feedback 
