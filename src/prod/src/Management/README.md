@@ -8,4 +8,4 @@ The Management subsystem provides end-to-end service and application lifecycle m
 
 [***Image Store***](https://github.com/Microsoft/service-fabric/tree/master/src/prod/src/Management/ImageStore): This service provides storage and distribution of the application binaries. This service provides a simple distributed file store where the applications are uploaded to and downloaded from.
 
-[<== Back to Architecture](https://github.com/GitTorre/service-fabric/tree/master/Architecture)
+[<== Back to Architecture](https://github.com/GitTorre/service-fabric/tree/master/Architecture#_explorer)
