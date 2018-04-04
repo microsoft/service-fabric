@@ -44,7 +44,7 @@ Interacts with other system components.
 Performing Azure maintenance repairs on Silver and Gold durability Azure Service Fabric clusters.  
 Carrying out repair actions for Patch Orchestration Application
 
-
+<a name="_explorer"></a>
 ## Service Fabric Subsystem Explorer (Maps top level Service Fabric services to the source code in this repo)
 
 Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related subsystem's top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
