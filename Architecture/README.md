@@ -1,9 +1,21 @@
 # Service Fabric Architecture
 
 
-[![Service Fabric Architecture](https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/service-fabric-architecture.png)](#)
-
-
+<table style="border: 0px; padding: 0px;" width="600">
+  <tr>
+    <td align="right">
+       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management_D.png" height="284" width="234" align="right" /></a>
+    </td>
+    <td align="left">
+        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Communication_D.png" /></a> 
+      <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Reliability_D.png" /></a>  
+        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Hosting2/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Hosting_D.png" /></a> 
+      <br/>
+        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Federation/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Federation_D.png" /></a>  
+        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Transport/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Transport_D.png" /></a>
+    </td>
+  </tr>
+</table>
 
 Service Fabric is designed to run strongly consistent internet scale services like SQL Azure and Cosmos DB, to name a few. **To deliver on the consistency guarantees to its applications, Service Fabric itself is built using layered subsystems where each subsystem provides strong guarantees to its peer and higher level subsystems**. For example, the **Federation subsystem** is responsible for managing cluster membership, message routing, leader election, and failure detection with strong guarantees. The **Reliability subsystem** leverages leader election and failure detection capabilities of the Federation subsystem to build **replicated state machines** that are the foundation of **stateful** microservices.  The **Communication subsystem** leverages message routing capabilities of the Federation subsystem to reliably deliver its messages. **Naming, Hosting, and Health subsystems** work together and depend on the ***Reliability*** and ***Communication subsystems*** to manage the lifecycle of the various microservice applications running in the cluster.  
 
@@ -27,18 +39,4 @@ Explore the Service Fabric codebase by clicking on an architectural tile below. 
 <br/>
 <br/>
 
-<table style="border: 0px; padding: 0px;" width="600">
-  <tr>
-    <td align="right">
-       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Management_D.png" height="284" width="234" align="right" /></a>
-    </td>
-    <td align="left">
-        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Communication_D.png" /></a> 
-      <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Reliability_D.png" /></a>  
-        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Hosting2/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Hosting_D.png" /></a> 
-      <br/>
-        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Federation/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Federation_D.png" /></a>  
-        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Transport/README.md"><img src="https://github.com/GitTorre/service-fabric/blob/master/Architecture/Images/Transport_D.png" /></a>
-    </td>
-  </tr>
-</table>
+
