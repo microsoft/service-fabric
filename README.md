@@ -124,31 +124,16 @@ For more details please refer to [Testing using ClusterDeployer](docs/cluster_de
 ## Running a local cluster
 For more details please refer [Deploying local cluster from build](docs/install_packages_and_deploy_cluster.md)
 
+## Running a local cluster
+For more details please refer [Deploying local cluster from build](docs/install_packages_and_deploy_cluster.md)
+
 ## Documentation 
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).
 ## Samples 
 For Service Fabric sample code, check out the [Azure Code Sample gallery](https://azure.microsoft.com/resources/samples/?service=service-fabric) or go straight to [Azure-Samples on GitHub](https://github.com/Azure-Samples?q=service-fabric).
-## Service Fabric Architecture
-[**Gain deeper insights**](https://github.com/GitTorre/service-fabric/blob/master/Architecture/README.md) into the core Service Fabric services (aka, subsystems) and explore this rather large codebase by using a "subsystems map" as your guide: each graphical section will take you to the corresponding source folder. You'll also see links to related technical design docs and videos (our Lap Around Service Fabric the Codebase series). Learn on!
 ## Service Fabric - Behind the Curtain  
-
-#### 
-Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
-
-[![Service Fabric Team Tour](https://img.youtube.com/vi/D-1mfk3Vv-4/0.jpg)](https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true)
-
-Learn about the thinking behind the thinking of our open sourcing Service Fabric:  
-
-[![On opening sourcing Service Fabric](https://img.youtube.com/vi/NmLdhpuPs04/0.jpg)](https://www.youtube.com/watch?v=NmLdhpuPs04) 
-
-## How to engage, contribute and provide feedback 
-During our transition to open development, we are primarily focused on tasks related to building, testing, and developing Service Fabric on GitHub. If you are interested in helping out with this effort, head over to the current set of issues to see what we currently need help with. We will happily work with you and take any contributions that help us move Service Fabric development to GitHub.  
-
-In the meantime, contributions to other areas of Service Fabric are welcome on a best-effort basis. While the team continues to develop internally, we will integrate the changes into our internal development repo for testing and verification, and then push the merged changes back to GitHub when the change is released. The smaller and more targeted your PRs, the easier it will be for us to review and integrate them. 
-
-For more information on how this process works and how to contribute, provide feedback, and log bugs, please see [Contributing.md](CONTRIBUTING.md).  
-
-## License 
+<a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
+## License 
 All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
-## Code of Conduct 
+## Code of Conduct 
 All Service Fabric open source projects adopt the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.

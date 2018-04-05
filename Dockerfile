@@ -18,9 +18,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev \
     libssl-dev \
     libssh2-1-dev \
-    libsnappy-dev \
-    liblz4-dev \
-    libbz2-dev \
     lttng-tools \
     lttng-modules-dkms \
     liblttng-ust-dev \
