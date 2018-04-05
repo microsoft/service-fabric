@@ -2,7 +2,6 @@
 
 Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related subsystem's top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
 <br/>
-<br/>
 
 <table style="border: 0px; padding: 0px;" width="600">
   <tr>
@@ -20,19 +19,6 @@ Explore the Service Fabric codebase by clicking on an architectural tile below. 
   </tr>
 </table>
 
-Service Fabric is designed to run strongly consistent internet scale services like SQL Azure and Cosmos DB, to name a few. **To deliver on the consistency guarantees to its applications, Service Fabric itself is built using layered subsystems where each subsystem provides strong guarantees to its peer and higher level subsystems**. For example, the **Federation subsystem** is responsible for managing cluster membership, message routing, leader election, and failure detection with strong guarantees. The **Reliability subsystem** leverages leader election and failure detection capabilities of the Federation subsystem to build **replicated state machines** that are the foundation of **stateful** microservices.  The **Communication subsystem** leverages message routing capabilities of the Federation subsystem to reliably deliver its messages. **Naming, Hosting, and Health subsystems** work together and depend on the ***Reliability*** and ***Communication subsystems*** to manage the lifecycle of the various microservice applications running in the cluster.  
-
-**Our experience running Service Fabric in production for more than a decade has shown that it will be very hard to build a comprehensive distributed systems platform like Service Fabric without properly layering it and thinking about consistency** ***first***. Any decently complex internet scale service like Azure DB or Cosmos DB, for example, will have many moving parts and it is similarly hard for it to provide consistency guarantees to its users when its internal componentry is inconsistent. This is precisely why both SQL Azure and Comsmos DB run on Service Fabric. 
-
-Besides taming distributed systems complexity and easing correctness reasoning, Service Fabric is designed to put consistency at the platform layer, which guarantees the following efficiencies:  
-
-**Runtime Efficiency**: **A layered system like Service Fabric, where consistency primitives are built bottoms up, delivers runtime efficiency in providing consistency with much fewer messages**. For example, the cost of failure detection at the federation layer is amortized across 1000s of replicated state machines running in the cluster.  
-
-**Operational Efficiency**: When a livesite issue happens, **it is much easier to zero-in on the component that is misbehaving. And, since the application does not deal with consistency primitives, it is easier to isolate failures between platform and the application layers**. 
-
-**Developer Efficiency**: **Service Fabric is leveraged very broadly inside Microsoft for running many of its cloud infrastructure and services and it is increasingly getting used externally. It isolates infrastructure/service/application developers from dealing having to deal with hard distributed systems problems.** If consistency were to be built at the application layer, each distinct application will have to hire distributed systems developers and spend development resources and take longer to reach production quality. Put differently, as comprehensive microservices platform, Service Fabric accords development agility by allowing application developers to focus on their application specific problems by doing the heavy lifting needed to solve the hard distributed systems problems shared by many applications. 
-
-Finally, **we believe that it is easy to relax consistency guarantees to arrive at arguably correct weaker consistency models than trying to build consistent applications on a weaker platform**. To this effect, Service Fabric provides explicit extension points in its system operation to relax the consistency guarantees built into to enable building weaker-consistency applications. 
 
 
 
