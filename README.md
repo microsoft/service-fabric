@@ -117,14 +117,10 @@ Take note to replace the above command with your actual local DNS server, and re
 ```sh
 service docker restart
 ```
-## Testing a local cluster
-
+## Testing a local cluster  
 For more details please refer to [Testing using ClusterDeployer](docs/cluster_deployer_test.md).
 
-## Running a local cluster
-For more details please refer [Deploying local cluster from build](docs/install_packages_and_deploy_cluster.md)
-
-## Running a local cluster
+## Running a local cluster  
 For more details please refer [Deploying local cluster from build](docs/install_packages_and_deploy_cluster.md)
 
 ## Documentation 
