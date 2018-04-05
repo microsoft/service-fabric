@@ -1,5 +1,8 @@
 # Service Fabric Architecture
 
+Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related subsystem's top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
+<br/>
+<br/>
 
 <table style="border: 0px; padding: 0px;" width="600">
   <tr>
@@ -32,11 +35,5 @@ Besides taming distributed systems complexity and easing correctness reasoning, 
 Finally, **we believe that it is easy to relax consistency guarantees to arrive at arguably correct weaker consistency models than trying to build consistent applications on a weaker platform**. To this effect, Service Fabric provides explicit extension points in its system operation to relax the consistency guarantees built into to enable building weaker-consistency applications. 
 
 
-<a name="_explorer"></a>
-## Service Fabric Subsystem Explorer (Maps top level Service Fabric services to the source code in this repo)
-
-Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related subsystem's top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
-<br/>
-<br/>
 
 
