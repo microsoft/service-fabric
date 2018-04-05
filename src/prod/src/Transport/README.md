@@ -6,5 +6,3 @@ Service Fabric includes a messaging stack to facilitate routing and route mainte
 
 The multicast communication pattern involves sending a message efficiently to a group of receivers. The pattern of sending a one-way message to a group of receives is referred to as fan-out pattern. The pattern of sending a request message to a group of receives and collecting a reply from each one of them is referred to as scatter-gather pattern.  In Service Fabric, different multicast patterns are needed at various level of the stack, while the basic patterns remain the same; the type of receivers and their number involved in the pattern differentiate the solution provided. 
 
-
-[<== Back to Architecture](https://github.com/GitTorre/service-fabric/tree/master/Architecture#_explorer)
