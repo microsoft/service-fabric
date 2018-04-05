@@ -1,6 +1,8 @@
 # Service Fabric Architecture
 
-Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related subsystem's top level source folder start page (README), which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
+Service Fabric is composed of several subsystems working together to achieve the uber goal of the Service Fabric platform: to remove the complexities of distributed computing from developers who want to build highly available, resilient, and massively scalable cloud servcices. 
+
+Explore the Service Fabric codebase by clicking on an architectural tile below. You'll be taken to the related subsystem's top level source folder, which will contain introductory information, links to technical design documents, and deep dive videos with the folks who write the code you're going to read. Enjoy!  
 <br/>
 
 <table style="border: 0px; padding: 0px;" width="600">
