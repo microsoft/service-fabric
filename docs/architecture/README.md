@@ -6,22 +6,25 @@ As you can imagine, it takes a lot of code to materialize Service Fabric. To mak
 
 Enjoy your travels through the code and thank you for jumping in. We really look forward to your contributions and feedback.   
 <br/>
-
-<table style="border: 0px; padding: 0px;" width="600">
-  <tr>
-    <td align="right">
-       <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Management_D.png" height="284" width="234" align="right" /></a>
-    </td>
-    <td align="left">
-        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Communication_D.png" /></a> 
-      <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Reliability_D.png" /></a>  
-        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Hosting2"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Hosting_D.png" /></a> 
-      <br/>
-        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Federation"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Federation_D.png" /></a>  
-        <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Transport"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Transport_D.png" /></a>
-    </td>
-  </tr>
-</table>
+ <table>
+        <tr>
+          <td align="right" width="130">
+             <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Management_E.png" height="230" width="125" align="right" /></a>
+          </td>
+          <td align="center" width="564">
+              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Communication_E.png" /></a> 
+            <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Reliability_E.png" /></a>  
+              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Hosting2"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Hosting_E.png" /></a> 
+            <br/>
+              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Federation"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Federation_E.png" /></a>  
+              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Transport"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Transport_E.png" /></a>
+          </td>
+        <td align="left" width="130">
+             <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Testability"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Testability_E.png" height="230" width="125" align="left" /></a>
+          </td>
+        </tr>
+ </table>
+  
 
 
 
