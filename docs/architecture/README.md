@@ -22,7 +22,7 @@ Enjoy your travels through the code and thank you for jumping in. We really look
               <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Transport#transport-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Transport_E.png" /></a>
           </td>
         <td align="left" width="130">
-             <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Testability"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Testability_E.png" height="230" width="125" align="left" /></a>
+             <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Testability#testability-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Testability_E.png" height="230" width="125" align="left" /></a>
           </td>
         </tr>
  </table>
