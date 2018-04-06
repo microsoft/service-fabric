@@ -1,6 +1,6 @@
 # Reliability subsystem
 
-The [Reliability subsystem](https://github.com/Microsoft/service-fabric/tree/master/src/prod/src/Reliability) provides the mechanism to make the state of a Service Fabric service highly available through the use of the Replicator, Failover Manager, and Resource Balancer.  
+The **Reliability subsystem** provides the mechanism to make the state of a Service Fabric service highly available through the use of the Replicator, Failover Manager, and Resource Balancer.  
 
 [The Replicator](https://github.com/Microsoft/service-fabric/tree/master/src/prod/src/Reliability/Replication) ensures that state changes in the primary service replica will automatically be replicated to secondary replicas, maintaining consistency between the primary and secondary replicas in a service replica set. The replicator is responsible for quorum management among the replicas in the replica set. It interacts with the failover unit to get the list of operations to replicate, and the reconfiguration agent provides it with the configuration of the replica set. That configuration indicates which replicas the operations need to be replicated. Service Fabric provides a default replicator called Fabric Replicator, which can be used by the programming model API to make the service state highly available and reliable.  
 
