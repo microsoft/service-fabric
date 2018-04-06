@@ -8,9 +8,12 @@ Clicking on an image below will take you to the related subsystem's top level so
 
 Enjoy your travels through the code and thank you for jumping in. We really look forward to your contributions and feedback.   
 <br/>
-<center>
+
  <table>
         <tr>
+         <td colspan="3" align="center"><strong>Explore the Core Subsystems of Service Fabric Standalone</strong></td>
+         </tr>
+         <tr>
           <td align="right" width="130">
              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management#management-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Management_E.png" height="230" width="125" align="right" /></a>
           </td>
@@ -27,4 +30,3 @@ Enjoy your travels through the code and thank you for jumping in. We really look
           </td>
         </tr>
  </table>
-</center>
