@@ -11,14 +11,14 @@ Enjoy your travels through the code and thank you for jumping in. We really look
  <table>
         <tr>
           <td align="right" width="130">
-             <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Management_E.png" height="230" width="125" align="right" /></a>
+             <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management#management-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Management_E.png" height="230" width="125" align="right" /></a>
           </td>
           <td align="center" width="564">
-              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Communication_E.png" /></a> 
-            <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Reliability_E.png" /></a>  
+              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication#communication-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Communication_E.png" /></a> 
+            <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability#reliability-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Reliability_E.png" /></a>  
               <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Hosting2#hosting-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Hosting_E.png" /></a> 
             <br/>
-              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Federation"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Federation_E.png" /></a>  
+              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Federation#federation-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Federation_E.png" /></a>  
               <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Transport"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Transport_E.png" /></a>
           </td>
         <td align="left" width="130">
