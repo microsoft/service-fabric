@@ -8,6 +8,7 @@ Clicking on an image below will take you to the related subsystem's top level so
 
 Enjoy your travels through the code and thank you for jumping in. We really look forward to your contributions and feedback.   
 <br/>
+<center>
  <table>
         <tr>
           <td align="right" width="130">
@@ -26,9 +27,4 @@ Enjoy your travels through the code and thank you for jumping in. We really look
           </td>
         </tr>
  </table>
-  
-
-
-
-
-
+</center>
