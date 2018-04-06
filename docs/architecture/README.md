@@ -1,4 +1,4 @@
-# Service Fabric Architecture
+# Service Fabric Core Subsystem Architecture
 
 Service Fabric is composed of several subsystems working together to achieve the promise of the platform: to remove the complexities of distributed computing from developers who want to build highly available, resilient, and massively scalable cloud servcices across public and private clouds, and operating systems. 
 
