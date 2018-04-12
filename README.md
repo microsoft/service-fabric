@@ -73,6 +73,7 @@ You do not need to do this, but note that if you skip this step, you must run al
 To start the build inside of a docker container you can clone the repository and run this command from the root directory:
 
 ```sh
+
 ./runbuild.sh
 ```
 
@@ -116,6 +117,13 @@ For more details please refer to [Testing using ClusterDeployer](docs/cluster_de
 
 ## Running a local cluster  
 For more details please refer [Deploying local cluster from build](docs/install_packages_and_deploy_cluster.md)
+
+## How to engage, contribute and provide feedback 
+During our transition to open development, we are primarily focused on tasks related to building, testing, and developing Service Fabric on GitHub. If you are interested in helping out with this effort, head over to the current set of issues to see what we currently need help with. We will happily work with you and take any contributions that help us move Service Fabric development to GitHub.
+
+In the meantime, contributions to other areas of Service Fabric are welcome on a best-effort basis. While the team continues to develop internally, we will integrate the changes into our internal development repo for testing and verification, and then push the merged changes back to GitHub when the change is released. The smaller and more targeted your PRs, the easier it will be for us to review and integrate them. 
+
+For more information on how this process works and how to contribute, provide feedback, and log bugs, please see [Contributing.md](CONTRIBUTING.md).
 
 ## Documentation 
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).
