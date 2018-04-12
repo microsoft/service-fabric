@@ -1,6 +1,6 @@
 # Service Fabric
 
-[Service Fabric is a distributed systems platform](https://github.com/GitTorre/service-fabric/tree/master/docs/architecture/README.md) for packaging, deploying, and managing stateless and stateful distributed applications and containers at large scale. Service Fabric runs on Windows and Linux, on any cloud, any datacenter, across geographic regions, or on your laptop.
+[Service Fabric is a distributed systems platform](docs/architecture/README.md) for packaging, deploying, and managing stateless and stateful distributed applications and containers at large scale. Service Fabric runs on Windows and Linux, on any cloud, any datacenter, across geographic regions, or on your laptop.
 
 ## Getting started with Service Fabric
 To get started with building applications for Service Fabric:
