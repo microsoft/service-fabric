@@ -8,25 +8,24 @@ Clicking on an image below will take you to the related subsystem's top level so
 
 Enjoy your travels through the code and thank you for jumping in. We really look forward to your contributions and feedback.   
 <br/>
-
  <table>
         <tr>
          <td colspan="3" align="center"><strong>Explore the Core Subsystems of Service Fabric Standalone</strong></td>
          </tr>
          <tr>
           <td align="right" width="130">
-             <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Management#management-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Management_E.png" height="230" width="125" align="right" /></a>
+             <a href="/src/prod/src/Management#management-subsystem"><img src="/docs/architecture/Images/Management_E.png" height="230" width="125" align="right" /></a>
           </td>
           <td align="center" width="564">
-              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Communication#communication-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Communication_E.png" /></a> 
-            <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Reliability#reliability-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Reliability_E.png" /></a>  
-              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Hosting2#hosting-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Hosting_E.png" /></a> 
+              <a href="/src/prod/src/Communication#communication-subsystem"><img src="/docs/architecture/Images/Communication_E.png" /></a> 
+            <a href="/src/prod/src/Reliability#reliability-subsystem"><img src="/docs/architecture/Images/Reliability_E.png" /></a>  
+              <a href="/src/prod/src/Hosting2#hosting-subsystem"><img src="/docs/architecture/Images/Hosting_E.png" /></a> 
             <br/>
-              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Federation#federation-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Federation_E.png" /></a>  
-              <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Transport#transport-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Transport_E.png" /></a>
+              <a href="/src/prod/src/Federation#federation-subsystem"><img src="/docs/architecture/Images/Federation_E.png" /></a>  
+              <a href="/src/prod/src/Transport#transport-subsystem"><img src="/docs/architecture/Images/Transport_E.png" /></a>
           </td>
         <td align="left" width="130">
-             <a href="https://github.com/GitTorre/service-fabric/tree/master/src/prod/src/Testability#testabililty-subsystem"><img src="https://github.com/GitTorre/service-fabric/blob/master/docs/architecture/Images/Testability_E.png" height="230" width="125" align="left" /></a>
+             <a href="/src/prod/src/Testability#testabililty-subsystem"><img src="/docs/architecture/Images/Testability_E.png" height="230" width="125" align="left" /></a>
           </td>
         </tr>
  </table>
