@@ -1,14 +1,9 @@
 # Service Fabric
 
-[Service Fabric is a distributed systems platform](docs/architecture/README.md) for packaging, deploying, and managing stateless and stateful distributed applications and containers at large scale. Service Fabric runs on Windows and Linux, on any cloud, any datacenter, across geographic regions, or on your laptop.
+Service Fabric is a distributed systems platform for packaging, deploying, and managing stateless and stateful distributed applications and containers at large scale. Service Fabric runs on Windows and Linux, on any cloud, any datacenter, across geographic regions, or on your laptop.
 
-## Getting started with Service Fabric
-To get started with building applications for Service Fabric:
-
- - Set up your development environment for [Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started), [Linux](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-Linux), or [Mac](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-mac).
- - [See our documentation](https://docs.microsoft.com/azure/service-fabric/).
- - [Run some sample projects](https://azure.microsoft.com/resources/samples/?sort=0&service=service-fabric).
- - [Watch this.](https://www.youtube.com/watch?v=v9WHgjSqwWg) 
+## Architecture and Subsystem Explorer
+[Learn about Service Fabric's Core Subsystems](docs/architecture/README.md), mapped to this repo's folder structure.
  
 ## Project timeline and development
 Service Fabric is currently undergoing a big transition to open development. Our main goal right now is to move the entire build, test, and development process to GitHub. For now the Service Fabric team will continue regular feature development internally while we work on transitioning everything to GitHub.  
