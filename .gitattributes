@@ -1,3 +1,4 @@
 # Enforce LF endings on Windows.  This is necessary
 # in order for the Linux docker container on Windows to work.
 * text eol=lf
+*.png binary
