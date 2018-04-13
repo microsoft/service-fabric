@@ -1,0 +1,3 @@
+# Communication subsystem
+
+The **Communication subsystem** provides reliable messaging within the cluster and service discovery through the [Naming service](/src/prod/src/Naming). The Naming service resolves service names to a location in the cluster and enables users to manage service names and properties. Using the Naming service, clients can securely communicate with any node in the cluster to resolve a service name and retrieve service metadata. Using a simple Naming client API, users of Service Fabric can develop services and clients capable of resolving the current network location despite node dynamism or the re-sizing of the cluster.  

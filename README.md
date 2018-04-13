@@ -2,13 +2,9 @@
 
 Service Fabric is a distributed systems platform for packaging, deploying, and managing stateless and stateful distributed applications and containers at large scale. Service Fabric runs on Windows and Linux, on any cloud, any datacenter, across geographic regions, or on your laptop.
 
-## Getting started with Service Fabric
-To get started with building applications for Service Fabric:
-
- - Set up your development environment for [Windows](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started), [Linux](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-Linux), or [Mac](https://docs.microsoft.com/azure/service-fabric/service-fabric-get-started-mac).
- - [See our documentation](https://docs.microsoft.com/azure/service-fabric/).
- - [Run some sample projects](https://azure.microsoft.com/resources/samples/?sort=0&service=service-fabric).
-
+## Architecture and Subsystem Explorer
+[Learn about Service Fabric's Core Subsystems](docs/architecture/README.md), mapped to this repo's folder structure.
+ 
 ## Project timeline and development
 Service Fabric is currently undergoing a big transition to open development. Our main goal right now is to move the entire build, test, and development process to GitHub. For now the Service Fabric team will continue regular feature development internally while we work on transitioning everything to GitHub.  
 
@@ -25,13 +21,6 @@ We'll be providing frequent updates here and on our [team blog](https://blogs.ms
  - [ ] Automated CI environment
  - [ ] Migrate complete test infrastructure 
 
-
-## How to engage, contribute and provide feedback 
-During our transition to open development, we are primarily focused on tasks related to building, testing, and developing Service Fabric on GitHub. If you are interested in helping out with this effort, head over to the current set of issues to see what we currently need help with. We will happily work with you and take any contributions that help us move Service Fabric development to GitHub.
-
-In the meantime, contributions to other areas of Service Fabric are welcome on a best-effort basis. While the team continues to develop internally, we will integrate the changes into our internal development repo for testing and verification, and then push the merged changes back to GitHub when the change is released. The smaller and more targeted your PRs, the easier it will be for us to review and integrate them. 
-
-For more information on how this process works and how to contribute, provide feedback, and log bugs, please see [Contributing.md](CONTRIBUTING.md).
 
 ## Build Requirements
 The requirements below are based off running clean builds using ninja, with the command
@@ -84,6 +73,7 @@ You do not need to do this, but note that if you skip this step, you must run al
 To start the build inside of a docker container you can clone the repository and run this command from the root directory:
 
 ```sh
+
 ./runbuild.sh
 ```
 
@@ -122,16 +112,22 @@ Take note to replace the above command with your actual local DNS server, and re
 ```sh
 service docker restart
 ```
-## Testing a local cluster
-
+## Testing a local cluster  
 For more details please refer to [Testing using ClusterDeployer](docs/cluster_deployer_test.md).
 
-## Running a local cluster
+## Running a local cluster  
 For more details please refer [Deploying local cluster from build](docs/install_packages_and_deploy_cluster.md)
 
-## Documentation 
+## How to engage, contribute and provide feedback 
+During our transition to open development, we are primarily focused on tasks related to building, testing, and developing Service Fabric on GitHub. If you are interested in helping out with this effort, head over to the current set of issues to see what we currently need help with. We will happily work with you and take any contributions that help us move Service Fabric development to GitHub.
+
+In the meantime, contributions to other areas of Service Fabric are welcome on a best-effort basis. While the team continues to develop internally, we will integrate the changes into our internal development repo for testing and verification, and then push the merged changes back to GitHub when the change is released. The smaller and more targeted your PRs, the easier it will be for us to review and integrate them. 
+
+For more information on how this process works and how to contribute, provide feedback, and log bugs, please see [Contributing.md](CONTRIBUTING.md).
+
+## Documentation 
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).
-## Samples 
+## Samples 
 For Service Fabric sample code, check out the [Azure Code Sample gallery](https://azure.microsoft.com/resources/samples/?service=service-fabric) or go straight to [Azure-Samples on GitHub](https://github.com/Azure-Samples?q=service-fabric).
 ## Service Fabric - Behind the Curtain  
 <a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This playlist will grow over time with content describing the inner workings of the product.  
@@ -139,6 +135,3 @@ For Service Fabric sample code, check out the [Azure Code Sample gallery](https:
 All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
 ## Code of Conduct 
 All Service Fabric open source projects adopt the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
-
--- Service Fabric Team
