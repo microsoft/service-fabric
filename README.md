@@ -107,7 +107,12 @@ To fix this, you need to tell Docker to use an alternative DNS server.  As a roo
 }
 ```
 
-Take note to replace the above command with your actual local DNS server, and restart docker:
+Take note to replace the above command with your actual local DNS server, ensure to list both local and search, that can be found using:
+```sh
+cat /etc/resolv.conf
+```
+
+The restart the docker service:
 
 ```sh
 service docker restart
