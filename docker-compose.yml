@@ -1,0 +1,8 @@
+version: '2'
+services:
+  buildenv:
+    image: "microsoft/service-fabric-build-ubuntu"
+    volumes:
+     - ./out:/out
+     - ./deps:/deps
+     - ./src:/src
