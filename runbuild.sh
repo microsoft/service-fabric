@@ -47,6 +47,7 @@ fi
 echo "Running a build with container $IMAGE_NAME:$DOCKER_VERSION..."
 docker run \
     --rm \
+    --name service-fabric-runbuild -d \
     --net=host \
     --cap-add=NET_ADMIN \
     -ti \
@@ -55,4 +56,5 @@ docker run \
     -v "$CDIR"/src:/src \
     -e "BUILD_PARAMS=$BUILD_PARAMS" \
     $IMAGE_NAME:$DOCKER_VERSION \
-    bash -c 'echo $BUILD_PARAMS && cd /out/ && /src/build.sh -all -d $BUILD_PARAMS'
+    bash -c 'echo $BUILD_PARAMS && cd /out/ && /src/build.sh -all -d $BUILD_PARAMS' && \
+docker logs -f service-fabric-runbuild
