@@ -45,7 +45,7 @@ fi
 # Start tracing
 echo "Starting tracing session"
 if command -v lttng >/dev/null 2>&1; then
-    ./Fabric/DCA.Code/lttng_handler.sh "${FabricDataRoot}/log/Traces"
+    ./Fabric/DCA.Code/lttng_handler.sh "${FabricLogRoot}/Traces"
 else
     echo "LTTng is not installed." >&2;
 fi
