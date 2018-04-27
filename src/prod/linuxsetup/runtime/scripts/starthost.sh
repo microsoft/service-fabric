@@ -54,4 +54,4 @@ fi
 check_errs $? FabricDeployer
 
 echo Starting FabricHost
-/opt/microsoft/servicefabric/bin/FabricHost -c -skipfabricsetup
+/opt/microsoft/servicefabric/bin/FabricHost --console --skipfabricsetup
