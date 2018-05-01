@@ -2,13 +2,13 @@
 
 ## Prerequisites
 
-You will need to setup Docker as instructed here for (mac)[https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-get-started-mac] or see below for the Linux instructions.
+You will need to setup Docker as instructed here for [mac](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-get-started-mac) or see below for the Linux instructions.
 
 ### Linux Setup
 
 ---
 #### Note ####
-You can't run the local cluster and the Docker daemon concurrently. If you followed the [instructions]  (install_packages_and_deploy_cluster.md) to setup a local cluster, then in order to use use this test you will need to stop the local cluster and start the Docker daemon.
+You can't run the local cluster and the Docker daemon concurrently. If you followed the [instructions](install_packages_and_deploy_cluster.md) to setup a local cluster, then in order to use use this test you will need to stop the local cluster and start the Docker daemon.
 
 ```
 sudo systemctl stop servicefabric
@@ -50,4 +50,4 @@ Run the test
 ```
 ## Details
 
-This test first builds a Docker image (service-cluster-run-ubuntu) locally, this image contains the necessary packages to run Service Fabric. The test then runs Docker, mounting the FabricDrop folder in your output directory. Then a (sample application)[https://github.com/Azure-Samples/service-fabric-dotnet-core-getting-started] is downloaded and built inside the container. The application is installed, and if the http endpoint can be hit then the test passes.
+This test first builds a Docker image (service-cluster-run-ubuntu) locally, this image contains the necessary packages to run Service Fabric. The test then runs Docker, mounting the FabricDrop folder in your output directory. Then a [sample application](https://github.com/Azure-Samples/service-fabric-dotnet-core-getting-started) is downloaded and built inside the container. The application is installed, and if the http endpoint can be hit then the test passes.
