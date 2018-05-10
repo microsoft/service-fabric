@@ -1,4 +1,23 @@
 # Enforce LF endings on Windows.  This is necessary
 # in order for the Linux docker container on Windows to work.
 * text eol=lf
+
+# Use text conventions for commonly used text extensions.
+*.csv text
+*.ini text
+*.json text
+*.txt text
+*.xml text
+
+# Denote all files that are truly binary and should not be modified.
+*.dll binary
+*.exe binary
+*.gz binary
+*.ico binary
+*.jpg binary
+*.lib binary
+*.pdb binary
+*.pdf binary
 *.png binary
+*.wim binary
+*.zip binary
