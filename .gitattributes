@@ -2,6 +2,11 @@
 # in order for the Linux docker container on Windows to work.
 * text eol=lf
 
+# Denote all files that are truly binary and should not be modified.
+*.ico binary
+*.jpg binary
+*.png binary
+
 # Use text conventions for commonly used text extensions.
 *.csv text
 *.ini text
