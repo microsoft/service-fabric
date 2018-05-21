@@ -107,3 +107,23 @@ external/
 
 # Third party dependency folder
 deps/
+
+# Repository Bloat Risks
+*.7[Zz]
+*.[Bb][Ii][Nn]
+*.[Cc][Aa][Bb]
+*.[Dd][Ll][Ll]
+*.[Dd][Mm][Pp]
+*.[Ee][Tt][Ll]
+*.[Ee][Xx][Ee]
+*.[Gg][Zz]
+*.[Ll][Ii][Bb]
+*.[Mm][Ss][Ii]
+*.[Mm][Ss][Uu]
+*.[Nn][Uu][Pp][Kk][Gg]
+*.[Pp][Dd][Bb]
+*.[Rr][Aa][Rr]
+*.[Ss][Oo]
+*.[Vv][Hh][Dd]
+*.[Ww][Ii][Mm]
+*.[Zz][Ii][Pp]

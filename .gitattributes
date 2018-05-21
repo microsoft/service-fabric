@@ -8,16 +8,3 @@
 *.json text
 *.txt text
 *.xml text
-
-# Denote all files that are truly binary and should not be modified.
-*.dll binary
-*.exe binary
-*.gz binary
-*.ico binary
-*.jpg binary
-*.lib binary
-*.pdb binary
-*.pdf binary
-*.png binary
-*.wim binary
-*.zip binary
