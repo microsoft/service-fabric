@@ -1,27 +1,25 @@
-Proposed labels by section on GitHub
+Best Practices Guide for GitHub usage
 ====================================
 >
 Assignees
 ---------------------------------------------------------------
 
-> No labels for this section - just use the alias of the individuals owning the issue. MS alias showing is preferred.
+> No labels for this section - just use the alias of the individuals owning the issue.
 
 Labels
 ------------------------------------------------------------
 
-> It is understood that some teams will have their OWN GItHub page. Focus is on the SF page and we can build on/modify for other Team GitHub pages later once the initial model is completed.
+> It is understood that some teams will have their own GitHub page. Focus is on the SF page and we can build on/modify for other Team GitHub pages later once the initial model is completed.
 >
 >  
 ### Label Rules for GitHub
 
 -   All tags and labels are lower-case and dash separated
-
--   All hierarchy is whack separated and no caps.
 >  
 
-| ***State/Status*** | ***Area***               | ***Issue Type*** | ***Pri***       |
+| ***Status*** | ***Area***               | ***Issue Type*** | ***Pri***       |
 |--------------------|--------------------------|------------------|-----------------|
-| investigating      | area-common              | question         | Pri-0,(regular) |
+| investigating      | area-common              | question         | pri-0, |
 | needs-more-info    | areas-communication      | enhancement      |                 |      
 | understood         | area-data-structures     | code-defect      |                 |
 | in-design          | area-developer           | test-defect      |                 |
@@ -40,28 +38,21 @@ Labels
 |                    | area-sfrp                |                  |                 |
 |                    | area-standaloneinstaller |                  |                 |
 |                    | area-store               |                  |                 |
-|                    | area-test                |                  |                 |
+|                    | area-testinfra           |                  |                 |
 |                    | area-testability         |                  |                 |
 |                    | area-transport           |                  |                 |
 |                    | area-needs-triage        |                  |                 |
 |                    | area-try-service-fabric  |                  |                 |
-|                    | varea-windows-server     |                  |                 |
+|                    | area-windows-server      |                  |                 |
 |                    |                          |                  |                 |
 
-Project - NA for now
+
 --------------------------------------------------------------------------
 
-| ***xxxx*** | ***xxx*** |
-|------------|-----------|
-| xxx        | xxx       |
 
-
-> **No labels for this area at this time.**
-
-Milestones
 ----------------------------------------------------------------
 
-| ***Release (Iteration path)***                                                            |
+| ***Release***                                                            |
 |-------------------------------------------------------------------------------------------|
 | 6.3, 6.4, etc. (define specifically once we get a build number at end of release)         
                                                                                             
@@ -71,7 +62,7 @@ Milestones
  >                                                                                          
  > All work items update automatically once the milestone is updated. (= minimal effort)    
                                                                                             
- There is not a vNext or backlog release.                                                   
+ There is not a vNext or backlog release.                                        
                                                                                             
  > No Milestone = backlog                                                                   |
 
