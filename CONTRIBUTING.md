@@ -14,10 +14,10 @@ If you're interested in helping us move (or you just like working on build and t
 ### Open an issue
 For non-security related bugs, issues, or other discussion, please log a new issue in the appropriate GitHub repo:
 
-- [Azure/service-fabric-services-and-actors-dotnet](https://github.com/Azure/service-fabric-services-and-actors-dotnet) for issues related to **Reliable Services, Reliable Actors, and Service Remoting**.
-- [Azure/service-fabric-aspnetcore](https://github.com/Azure/service-fabric-aspnetcore) for issues related to **ASP.NET Core integration with Reliable Services**.
-- [Azure/service-fabric-cli](https://github.com/Azure/service-fabric-cli) for any issues related to the **SF CLI (sfctl)**.
-- [Azure/service-fabric-explorer](https://github.com/Azure/service-fabric-explorer) for issues related to **Service Fabric Explorer**.
+- [Microsoft/service-fabric-services-and-actors-dotnet](https://github.com/Microsoft/service-fabric-services-and-actors-dotnet) for issues related to **Reliable Services, Reliable Actors, and Service Remoting**.
+- [Microsoft/service-fabric-aspnetcore](https://github.com/Microsoft/service-fabric-aspnetcore) for issues related to **ASP.NET Core integration with Reliable Services**.
+- [Microsoft/service-fabric-cli](https://github.com/Microsoft/service-fabric-cli) for any issues related to the **SF CLI (sfctl)**.
+- [Microsoft/service-fabric-explorer](https://github.com/Microsoft/service-fabric-explorer) for issues related to **Service Fabric Explorer**.
 - [Azure/service-fabric-issues](http://github.com/Azure/service-fabric-issues) for all other bugs or feature requests related to **Service Fabric in general**. Note that we will eventually migrate the issues repo into the main project repo, but for now we'd like to keep these separated from issues related to the transitioning of Service Fabric onto Github.
 - [Microsoft/service-fabric](http://github.com/Microsoft/service-fabric) for any issues specific to problems with **contributing to Service Fabric**, for example Docker builds not working, trouble running tests, etc.
 
