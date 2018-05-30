@@ -61,8 +61,8 @@ if [ ! -d /etc/servicefabric ]; then
     mkdir /etc/servicefabric
 fi
 echo -n ${FabricDataRoot} > /etc/servicefabric/FabricDataRoot
-echo -n ${FabricDataRoot}/log > /etc/servicefabric/FabricLogRoot
-echo -n ${FabricBinRoot} > /etc/servicefabric/FabricBinRoot
+echo -n ${FabricLogRoot}  > /etc/servicefabric/FabricLogRoot
+echo -n ${FabricBinRoot}  > /etc/servicefabric/FabricBinRoot
 echo -n ${FabricCodePath} > /etc/servicefabric/FabricCodePath
 
 export LD_LIBRARY_PATH=${FabricCodePath}
