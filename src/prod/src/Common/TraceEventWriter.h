@@ -8,7 +8,7 @@
 namespace Common
 {
 
-#define DECLARE_STRUCTURED_TRACE(traceName, ...) Common::TraceEventWriter<__VA_ARGS__> traceName
+#define DECLARE_STRUCTURED_TRACE(traceName, ...) Common::TraceEventWriter<__VA_ARGS__> traceName;
 
 #define DECLARE_OPERATIONAL_TRACE(traceName, ...) \
     DECLARE_STRUCTURED_TRACE(traceName, Common::Guid, __VA_ARGS__)
@@ -26,10 +26,10 @@ namespace Common
     DECLARE_OPERATIONAL_TRACE(traceName, std::wstring, __VA_ARGS__)
 
 #define DECLARE_PARTITIONS_OPERATIONAL_TRACE(traceName, ...) \
-    DECLARE_OPERATIONAL_TRACE(traceName, std::wstring, __VA_ARGS__)
+    DECLARE_OPERATIONAL_TRACE(traceName, Common::Guid, __VA_ARGS__)
 
 #define DECLARE_REPLICAS_OPERATIONAL_TRACE(traceName, ...) \
-    DECLARE_OPERATIONAL_TRACE(traceName, std::wstring, ULONG64, __VA_ARGS__)
+    DECLARE_OPERATIONAL_TRACE(traceName, Common::Guid, FABRIC_REPLICA_ID, __VA_ARGS__)
 
 #define BEGIN_STRUCTURED_TRACES( Component ) \
     public: \
@@ -47,38 +47,46 @@ namespace Common
 	traceName(Common::TraceTaskCodes::taskCode, traceId, #traceName, Common::LogLevel::traceLevel, Common::TraceChannelType::traceChannelType, Common::TraceKeywords::traceKeywords, __VA_ARGS__)
 
 #define STRUCTURED_DEL_QUERY_TRACE(tableName, traceName, taskCode, traceId, traceLevel, ...) \
-    STRUCTURED_QUERY_TRACE(tableName##_DEL, traceName, taskCode, traceId, traceLevel, __VA_ARGS__) 
+    STRUCTURED_QUERY_TRACE(tableName##_DEL, traceName, taskCode, traceId, traceLevel, __VA_ARGS__)
 
 #define STRUCTURED_QUERY_TRACE(tableName, traceName, taskCode, traceId, traceLevel, ...) \
-    STRUCTURED_QUERY_TRACE_HELPER(traceName, _##tableName##_##traceName, taskCode, traceId, traceLevel, __VA_ARGS__) 
+    STRUCTURED_QUERY_TRACE_HELPER(traceName, _##tableName##_##traceName, taskCode, traceId, traceLevel, __VA_ARGS__)
 
-// Note: To be removed after all operational traces is changed to use the new macros.
+    // Note: To be removed after all operational traces is changed to use the new macros.
 #define STRUCTURED_OPERATIONAL_TRACE(tablePrefix, traceName, taskCode, traceId, traceLevel, ...) \
-    STRUCTURED_QUERY_TRACE_HELPER(traceName, _##tablePrefix##Operational_##traceName, taskCode, traceId, traceLevel, Common::TraceChannelType::Operational, __VA_ARGS__) 
+    STRUCTURED_QUERY_TRACE_HELPER(traceName, _##tablePrefix##Ops_##traceName, taskCode, traceId, traceLevel, Common::TraceChannelType::Operational, __VA_ARGS__)
 
-#define OPERATIONAL_TRACE(tablePrefix, traceName, taskCode, traceId, traceLevel, formatString, ...) \
-    STRUCTURED_QUERY_TRACE_HELPER(traceName, _##tablePrefix##Operational_##traceName, taskCode, traceId, traceLevel, Common::TraceChannelType::Operational, formatString, "eventInstanceId", __VA_ARGS__) 
+#define OPERATIONAL_TRACE(traceName, tablePrefix, publicEventName, category, taskCode, traceId, traceLevel, formatString, ...) \
+    STRUCTURED_OPERATIONAL_TRACE_HELPER(traceName, _##tablePrefix##Ops_##traceName, publicEventName, category, taskCode, traceId, traceLevel, Common::TraceChannelType::Operational, formatString, "eventInstanceId", __VA_ARGS__)
 
-#define CLUSTER_OPERATIONAL_TRACE(traceName, taskCode, traceId, traceLevel, formatString, ...) \
-    OPERATIONAL_TRACE(Cluster, traceName, taskCode, traceId, traceLevel, formatString, __VA_ARGS__)
+#define CLUSTER_OPERATIONAL_TRACE(traceName, publicEventName, category, taskCode, traceId, traceLevel, formatString, ...) \
+    OPERATIONAL_TRACE(traceName, Cluster, publicEventName, category, taskCode, traceId, traceLevel, formatString, __VA_ARGS__)
 
-#define NODES_OPERATIONAL_TRACE(traceName, taskCode, traceId, traceLevel, formatString, ...) \
-    OPERATIONAL_TRACE(Nodes, traceName, taskCode, traceId, traceLevel, formatString, "nodeName", __VA_ARGS__)
+#define NODES_OPERATIONAL_TRACE(traceName, publicEventName, category, taskCode, traceId, traceLevel, formatString, ...) \
+    OPERATIONAL_TRACE(traceName, Nodes, publicEventName, category, taskCode, traceId, traceLevel, formatString, "nodeName", __VA_ARGS__)
 
-#define APPLICATIONS_OPERATIONAL_TRACE(traceName, taskCode, traceId, traceLevel, formatString, ...) \
-    OPERATIONAL_TRACE(Applications, traceName, taskCode, traceId, traceLevel, formatString, "applicationId", __VA_ARGS__)
+#define APPLICATIONS_OPERATIONAL_TRACE(traceName, publicEventName, category, taskCode, traceId, traceLevel, formatString, ...) \
+    OPERATIONAL_TRACE(traceName, Applications, publicEventName, category, taskCode, traceId, traceLevel, formatString, "applicationName", __VA_ARGS__)
 
-#define SERVICES_OPERATIONAL_TRACE(traceName, taskCode, traceId, traceLevel, formatString, ...) \
-    OPERATIONAL_TRACE(Services, traceName, taskCode, traceId, traceLevel, formatString, "serviceId", __VA_ARGS__)
+#define SERVICES_OPERATIONAL_TRACE(traceName, publicEventName, category, taskCode, traceId, traceLevel, formatString, ...) \
+    OPERATIONAL_TRACE(traceName, Services, publicEventName, category, taskCode, traceId, traceLevel, formatString, "serviceName", __VA_ARGS__)
 
-#define PARTITIONS_OPERATIONAL_TRACE(traceName, taskCode, traceId, traceLevel, formatString, ...) \
-    OPERATIONAL_TRACE(Partitions, traceName, taskCode, traceId, traceLevel, formatString, "partitionId", __VA_ARGS__)
+#define PARTITIONS_OPERATIONAL_TRACE(traceName, publicEventName, category, taskCode, traceId, traceLevel, formatString, ...) \
+    OPERATIONAL_TRACE(traceName, Partitions, publicEventName, category, taskCode, traceId, traceLevel, formatString, "partitionId", __VA_ARGS__)
 
-#define REPLICAS_OPERATIONAL_TRACE(traceName, taskCode, traceId, traceLevel, formatString, ...) \
-    OPERATIONAL_TRACE(Replicas, traceName, taskCode, traceId, traceLevel, formatString, "partitionId", "replicaId", __VA_ARGS__)
+#define REPLICAS_OPERATIONAL_TRACE(traceName, publicEventName, category, taskCode, traceId, traceLevel, formatString, ...) \
+    OPERATIONAL_TRACE(traceName, Replicas, publicEventName, category, taskCode, traceId, traceLevel, formatString, "partitionId", "replicaId", __VA_ARGS__)
 
 #define STRUCTURED_QUERY_TRACE_HELPER(traceName, queryTraceName, taskCode, traceId, traceLevel, ...) \
     traceName(Common::TraceTaskCodes::taskCode, traceId, #queryTraceName, Common::LogLevel::traceLevel, __VA_ARGS__)
+
+#define STRUCTURED_OPERATIONAL_TRACE_HELPER(traceName, queryTraceName, publicEventName, category, taskCode, traceId, traceLevel, ...) \
+    traceName(ExtendedEventMetadata::Create(publicEventName, category), Common::TraceTaskCodes::taskCode, traceId, #queryTraceName, Common::LogLevel::traceLevel, __VA_ARGS__)
+
+#define OperationalStateTransitionCategory L"StateTransition"
+#define OperationalLifeCycleCategory L"LifeCycle"
+#define OperationalUpgradeCategory L"Upgrade"
+#define OperationalHealthCategory L"Health"
 
 #define DECLARE_ENUM_STRUCTURED_TRACE( enumClassName ) \
     class Trace \
@@ -227,7 +235,8 @@ namespace Common
             StringLiteral argName11 = StringLiteral(),
             StringLiteral argName12 = StringLiteral(),
             StringLiteral argName13 = StringLiteral())
-            :   event_(TraceProvider::StaticInit_Singleton()->CreateEvent(taskId, eventId, eventName, level, (level <= LogLevel::Enum::Warning) ? TraceChannelType::Admin : TraceChannelType::Debug, TraceKeywords::Default, format))
+            : event_(TraceProvider::StaticInit_Singleton()->CreateEvent(taskId, eventId, eventName, level, (level <= LogLevel::Enum::Warning) ? TraceChannelType::Admin : TraceChannelType::Debug, TraceKeywords::Default, format))
+            , metadataFieldsCount_(0)
         {
             Initialization(
                 argName0,
@@ -267,7 +276,8 @@ namespace Common
             StringLiteral argName11 = StringLiteral(),
             StringLiteral argName12 = StringLiteral(),
             StringLiteral argName13 = StringLiteral())
-            :   event_(TraceProvider::StaticInit_Singleton()->CreateEvent(taskId, eventId, eventName, level, channel, TraceKeywords::Default, format))
+            : event_(TraceProvider::StaticInit_Singleton()->CreateEvent(taskId, eventId, eventName, level, channel, TraceKeywords::Default, format))
+            , metadataFieldsCount_(0)
         {
             Initialization(
                 argName0,
@@ -285,7 +295,55 @@ namespace Common
                 argName12,
                 argName13);
         }
-        
+
+        TraceEventWriter(
+            std::unique_ptr<ExtendedEventMetadata> extendedMetadata,
+            TraceTaskCodes::Enum taskId,
+            USHORT eventId,
+            StringLiteral eventName,
+            LogLevel::Enum level,
+            TraceChannelType::Enum channel,
+            StringLiteral format,
+            StringLiteral argName0 = StringLiteral(),
+            StringLiteral argName1 = StringLiteral(),
+            StringLiteral argName2 = StringLiteral(),
+            StringLiteral argName3 = StringLiteral(),
+            StringLiteral argName4 = StringLiteral(),
+            StringLiteral argName5 = StringLiteral(),
+            StringLiteral argName6 = StringLiteral(),
+            StringLiteral argName7 = StringLiteral(),
+            StringLiteral argName8 = StringLiteral(),
+            StringLiteral argName9 = StringLiteral(),
+            StringLiteral argName10 = StringLiteral(),
+            StringLiteral argName11 = StringLiteral(),
+            StringLiteral argName12 = StringLiteral(),
+            StringLiteral argName13 = StringLiteral())
+            : event_(TraceProvider::StaticInit_Singleton()->CreateEvent(taskId, eventId, eventName, level, channel, TraceKeywords::Default, format))
+            , metadataFieldsCount_(0)
+            , extendedMetadata_(std::move(extendedMetadata))
+        {
+            if (event_.GetFieldCount() == 0 && extendedMetadata_)
+            {
+                event_.AddEventMetadataFields<ExtendedEventMetadata>(metadataFieldsCount_);
+            }
+
+            Initialization(
+                argName0,
+                argName1,
+                argName2,
+                argName3,
+                argName4,
+                argName5,
+                argName6,
+                argName7,
+                argName8,
+                argName9,
+                argName10,
+                argName11,
+                argName12,
+                argName13);
+        }
+
         TraceEventWriter(
             TraceTaskCodes::Enum taskId,
             USHORT eventId,
@@ -308,8 +366,58 @@ namespace Common
             StringLiteral argName11 = StringLiteral(),
             StringLiteral argName12 = StringLiteral(),
             StringLiteral argName13 = StringLiteral())
-            :   event_(TraceProvider::StaticInit_Singleton()->CreateEvent(taskId, eventId, eventName, level, channel, keywords, format))
+            : event_(TraceProvider::StaticInit_Singleton()->CreateEvent(taskId, eventId, eventName, level, channel, keywords, format))
+            , metadataFieldsCount_(0)
         {
+            Initialization(
+                argName0,
+                argName1,
+                argName2,
+                argName3,
+                argName4,
+                argName5,
+                argName6,
+                argName7,
+                argName8,
+                argName9,
+                argName10,
+                argName11,
+                argName12,
+                argName13);
+        }
+
+        TraceEventWriter(
+            std::unique_ptr<ExtendedEventMetadata> extendedMetadata,
+            TraceTaskCodes::Enum taskId,
+            USHORT eventId,
+            StringLiteral eventName,
+            LogLevel::Enum level,
+            TraceChannelType::Enum channel,
+            TraceKeywords::Enum keywords,
+            StringLiteral format,
+            StringLiteral argName0 = StringLiteral(),
+            StringLiteral argName1 = StringLiteral(),
+            StringLiteral argName2 = StringLiteral(),
+            StringLiteral argName3 = StringLiteral(),
+            StringLiteral argName4 = StringLiteral(),
+            StringLiteral argName5 = StringLiteral(),
+            StringLiteral argName6 = StringLiteral(),
+            StringLiteral argName7 = StringLiteral(),
+            StringLiteral argName8 = StringLiteral(),
+            StringLiteral argName9 = StringLiteral(),
+            StringLiteral argName10 = StringLiteral(),
+            StringLiteral argName11 = StringLiteral(),
+            StringLiteral argName12 = StringLiteral(),
+            StringLiteral argName13 = StringLiteral())
+            : event_(TraceProvider::StaticInit_Singleton()->CreateEvent(taskId, eventId, eventName, level, channel, keywords, format))
+            , metadataFieldsCount_(0)
+            , extendedMetadata_(std::move(extendedMetadata))
+        {
+            if (event_.GetFieldCount() == 0 && extendedMetadata_)
+            {
+                event_.AddEventMetadataFields<ExtendedEventMetadata>(metadataFieldsCount_);
+            }
+
             Initialization(
                 argName0,
                 argName1,
@@ -358,9 +466,9 @@ namespace Common
             UNREFERENCED_PARAMETER(argName12);
             UNREFERENCED_PARAMETER(argName13);
 
-            if (event_.GetFieldCount() == 0)
+            if (event_.GetFieldCount() == metadataFieldsCount_)
             {
-                size_t index = 0;
+                size_t index = metadataFieldsCount_;
                 UNREFERENCED_PARAMETER(index);
 
                 __if_not_exists(detail::IsNilType<_Arg0>::True) { event_.AddEventField<_Arg0>(argName0, index); }
@@ -396,28 +504,50 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg0>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
-                event_.Write(NULL);
+                if (extendedMetadata_)
+                {
+                    TraceEventContext context(event_.GetFieldCount());
+                    extendedMetadata_->AppendFields(context);
+
+                    event_.Write(context.GetEvents());
+                }
+                else
+                {
+                    event_.Write(NULL);
+                }
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat());
 
                 event_.WriteToTextSink(std::wstring(), formattedString, useConsole, useFile, useETW);
@@ -428,46 +558,71 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg1>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
 
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
             }
         }
-    
+
         void operator() (_Arg0 const & a0, _Arg1 const & a1) const
         {
             static_assert(detail::IsNilType<_Arg2>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -475,22 +630,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -501,10 +665,18 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg3>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -513,22 +685,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -539,10 +720,18 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg4>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+           if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -552,22 +741,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -578,10 +776,18 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg5>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -592,22 +798,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -618,10 +833,18 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg6>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -633,22 +856,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -659,10 +891,18 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg7>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -675,22 +915,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5, a6);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -701,10 +950,18 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg8>::value, "Invalid number of arguments");
 
-#if !defined(PLATFORM_UNIX)
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -718,22 +975,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-#endif
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5, a6, a7);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -743,10 +1009,19 @@ namespace Common
         void operator() (_Arg0 const & a0, _Arg1 const & a1, _Arg2 const & a2, _Arg3 const & a3, _Arg4 const & a4, _Arg5 const & a5, _Arg6 const & a6, _Arg7 const & a7, _Arg8 const & a8) const
         {
             static_assert(detail::IsNilType<_Arg9>::value, "Invalid number of arguments");
-            
-            if (event_.IsETWSinkEnabled())
+
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -761,21 +1036,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5, a6, a7, a8);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -785,10 +1070,19 @@ namespace Common
         void operator() (_Arg0 const & a0, _Arg1 const & a1, _Arg2 const & a2, _Arg3 const & a3, _Arg4 const & a4, _Arg5 const & a5, _Arg6 const & a6, _Arg7 const & a7, _Arg8 const & a8, _Arg9 const & a9) const
         {
             static_assert(detail::IsNilType<_Arg10>::value, "Invalid number of arguments");
-            
-            if (event_.IsETWSinkEnabled())
+
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -804,21 +1098,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -828,10 +1132,19 @@ namespace Common
         void operator() (_Arg0 const & a0, _Arg1 const & a1, _Arg2 const & a2, _Arg3 const & a3, _Arg4 const & a4, _Arg5 const & a5, _Arg6 const & a6, _Arg7 const & a7, _Arg8 const & a8, _Arg9 const & a9, _Arg10 const & a10) const
         {
             static_assert(detail::IsNilType<_Arg11>::value, "Invalid number of arguments");
-            
-            if (event_.IsETWSinkEnabled())
+
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -848,21 +1161,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -872,10 +1195,19 @@ namespace Common
         void operator() (_Arg0 const & a0, _Arg1 const & a1, _Arg2 const & a2, _Arg3 const & a3, _Arg4 const & a4, _Arg5 const & a5, _Arg6 const & a6, _Arg7 const & a7, _Arg8 const & a8, _Arg9 const & a9, _Arg10 const & a10, _Arg11 const & a11) const
         {
             static_assert(detail::IsNilType<_Arg12>::value, "Invalid number of arguments");
-            
-            if (event_.IsETWSinkEnabled())
+
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -893,21 +1225,31 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
@@ -918,9 +1260,18 @@ namespace Common
         {
             static_assert(detail::IsNilType<_Arg13>::value, "Invalid number of arguments");
 
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -939,32 +1290,51 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
             }
         }
-        
+
         void operator() (_Arg0 const & a0, _Arg1 const & a1, _Arg2 const & a2, _Arg3 const & a3, _Arg4 const & a4, _Arg5 const & a5, _Arg6 const & a6, _Arg7 const & a7, _Arg8 const & a8, _Arg9 const & a9, _Arg10 const & a10, _Arg11 const & a11, _Arg12 const & a12, _Arg13 const & a13) const
         {
-            if (event_.IsETWSinkEnabled())
+            if (event_.IsETWSinkEnabled()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 TraceEventContext context(event_.GetFieldCount());
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(context);
+                }
 
                 context.Write(a0);
                 context.Write(a1);
@@ -984,28 +1354,40 @@ namespace Common
                 event_.Write(context.GetEvents());
             }
 
-            if (event_.IsChildEvent())
+            if (event_.IsChildEvent()
+#if defined(PLATFORM_UNIX)
+                    && event_.IsLinuxStructuredTracesEnabled()
+#endif
+                    )
             {
                 return;
             }
-            
+
             bool useFile = event_.IsFileSinkEnabled();
             bool useConsole = event_.IsConsoleSinkEnabled();
             bool useETW = false;
 #if defined(PLATFORM_UNIX)
-            useETW = event_.IsETWSinkEnabled();
-#endif       
+            useETW = event_.IsETWSinkEnabled() && !event_.IsLinuxStructuredTracesEnabled();
+#endif
             if (useConsole || useFile || useETW)
             {
                 std::wstring formattedString;
                 StringWriter w(formattedString);
+
+                if (extendedMetadata_)
+                {
+                    extendedMetadata_->AppendFields(w);
+                }
+
                 w.Write(event_.GetFormat(), a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
 
                 event_.WriteToTextSink(a0, formattedString, useConsole, useFile, useETW);
             }
         }
-        
+
     private:
         TraceEvent & event_;
+        size_t metadataFieldsCount_;
+        std::unique_ptr<ExtendedEventMetadata> extendedMetadata_;
     };
 }

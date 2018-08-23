@@ -46,7 +46,7 @@ namespace Data
                 return STATUS_SUCCESS;
             }
 
-			__declspec(property(get = get_Count)) ULONG Count;
+            __declspec(property(get = get_Count)) ULONG Count;
             ULONG get_Count() const override
             {
                 return arraySPtr_->Count();

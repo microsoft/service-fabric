@@ -11,7 +11,7 @@
       "TestExecutionParameters": {        
         "SetupTimeout": "900",
         "PSScriptName": "WinFabricTest\\ServiceFabricClientPackageVerification.ps1",
-        "Arguments": " sflrcpaas01.cloudapp.net:19000",
+        "Arguments": "winlrc-paas-00.cloudapp.net:19000",
         "ExecutionTimeout": "4200",
         "CleanupType": "XCopy",
         "CleanupTimeout": "2100"

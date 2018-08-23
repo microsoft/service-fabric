@@ -1,12 +1,4 @@
-IF(CMAKE_BUILD_TYPE MATCHES Debug)
-  message("Debug build, linking against WinFab.Ktl.Linux.debug")
-  include_directories(BEFORE "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.debug/inc")
-ELSE()
-  message("Optimized build, linking against WinFab.Ktl.Linux.retail")
-  include_directories(BEFORE "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.retail/inc")
-ENDIF()
-include_directories(BEFORE "../linux_include")
-include_directories(BEFORE "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.retail/inc")
+
 include_directories(BEFORE "../linux_include")
 include_directories(BEFORE "../include")
 include_directories(BEFORE "../config")
@@ -27,6 +19,7 @@ Helpers/ComFabricStatelessServicePartition2.cpp
 Helpers/ComPropertyManager.cpp
 Helpers/ComServiceManager.cpp
 Helpers/ComServicePartitionResult.cpp
+Helpers/ComFabricServiceDescriptionResult.cpp
 Helpers/DnsHelper.cpp
 Helpers/DnsServiceSynchronizer.cpp
 Helpers/FabricData.cpp
@@ -40,9 +33,6 @@ add_precompiled_header(${exe_DnsServiceTest} precomp/stdafx.h)
 set_target_properties(${exe_DnsServiceTest} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
 
-find_library(KtlfullDbg NAMES ktlfull PATHS "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.debug" NO_DEFAULT_PATH)
-find_library(KtlfullOpt NAMES ktlfull PATHS "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.retail" NO_DEFAULT_PATH)
-    
 target_link_libraries(${exe_DnsServiceTest}
   ${lib_DnsService}
   ${lib_DnsServiceConfig}
@@ -53,7 +43,7 @@ target_link_libraries(${exe_DnsServiceTest}
   ${lib_FabricClient}
   ${lib_FabricResources}
   ${lib_FabricRuntime}
-  debug ${KtlfullDbg} optimized ${KtlfullOpt}
+  ${Ktlfull}
   ${BoostTest2}
   ${Cxx}
   ${CxxABI}
@@ -69,7 +59,5 @@ target_link_libraries(${exe_DnsServiceTest}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
   icuuc
 )

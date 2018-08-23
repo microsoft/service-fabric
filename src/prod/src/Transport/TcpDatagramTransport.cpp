@@ -323,13 +323,20 @@ void TcpDatagramTransport::StartConnectionValicationTimer_CallerHoldingWLock()
         checkInterval = std::max(connectionIdleTimeout_, TransportConfig::GetConfig().ReceiveMissingThreshold);
     }
 
-    WriteInfo(Constants::TcpTrace, traceId_, "connectionValidationTimer_ period: {0}", checkInterval);
-    if (checkInterval <= TimeSpan::Zero)
+    if (TransportConfig::GetConfig().SendTimeout <= TimeSpan::Zero)
     {
-        WriteInfo(Constants::TcpTrace, traceId_, "connectionValidationTimer_ is disabled");
-        return;
+        if (checkInterval <= TimeSpan::Zero)
+        {
+            WriteInfo(Constants::TcpTrace, traceId_, "connectionValidationTimer_ is disabled");
+            return;
+        }
+    }
+    else if (TransportConfig::GetConfig().SendTimeout < checkInterval)
+    {
+        checkInterval = TransportConfig::GetConfig().SendTimeout;
     }
 
+    WriteInfo(Constants::TcpTrace, traceId_, "connectionValidationTimer_ period: {0}", checkInterval);
     connectionValidationTimer_ = Timer::Create(
         "ConnectionValidation",
         [this] (TimerSPtr const&) { ConnectionValidationTimerCallback(); },
@@ -442,6 +449,24 @@ Common::ErrorCode TcpDatagramTransport::SetSecurity(SecuritySettings const & sec
     }
 
     return errorCode;
+}
+
+void TcpDatagramTransport::SetFrameHeaderErrorChecking(bool enabled)
+{
+    frameHeaderErrorCheckingEnabled_ = enabled;
+    WriteInfo(
+        Constants::TcpTrace, traceId_,
+        "{0}: frameHeaderErrorCheckingEnabled_ set to {1}",
+        listenAddress_, enabled);
+}
+
+void TcpDatagramTransport::SetMessageErrorChecking(bool enabled)
+{
+    messageErrorCheckingEnabled_ = enabled;
+    WriteInfo(
+        Constants::TcpTrace, traceId_,
+        "{0}: messageErrorCheckingEnabled_ set to {1}",
+        listenAddress_, enabled);
 }
 
 void TcpDatagramTransport::OnListenInstanceMessage(
@@ -1422,30 +1447,7 @@ void TcpDatagramTransport::OnAcceptFailure(ErrorCode const & error, IListenSocke
 
     WriteWarning(Constants::TcpTrace, traceId_, "{0}: Accept failed: error {1}", ListenAddress(), error);
     
-#ifdef PLATFORM_UNIX
-
-    //LINUXTODO consider check if error is retryable, crash if not
     SubmitAcceptWithDelay(listenSocket, TransportConfig::GetConfig().AcceptRetryDelay);
-    return;
-    
-#else
-    
-    if (error.IsWin32Error(WSAECONNRESET) || error.IsWin32Error(WSAECONNABORTED) || error.IsWin32Error(ERROR_NETNAME_DELETED))
-    {
-        SubmitAcceptWithDelay(listenSocket, TimeSpan::Zero);
-        return;
-    }
-
-    if (error.IsError(ErrorCodeValue::OperationFailed) || error.IsWin32Error(WSAENOBUFS) || error.IsWin32Error(WSAEUSERS))
-    {
-        // These are low memory conditions, back off and resubmit
-        SubmitAcceptWithDelay(listenSocket, TransportConfig::GetConfig().AcceptRetryDelay);
-        return;
-    }
-
-    // Treat any other error as a bug, these typically include not calling WSAStartup, invalid parameters, etc
-    Common::Assert::CodingError("transport {0} on {1} Accept failed: error {2}", traceId_, ListenAddress(), error);
-#endif
 }
 
 void TcpDatagramTransport::SubmitAcceptWithDelay(IListenSocket & listenSocket, TimeSpan delay)
@@ -1540,7 +1542,7 @@ void TcpDatagramTransport::OnMessageReceived(
     }
 }
 
-void TcpDatagramTransport::OnConnectionFault(ISendTarget const & target, ErrorCode fault)
+void TcpDatagramTransport::OnConnectionFault(ISendTarget const & target, ErrorCode const & fault)
 {
     ConnectionFaultHandler handler = nullptr;
     {

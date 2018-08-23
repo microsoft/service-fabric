@@ -70,6 +70,9 @@ namespace Management
             __declspec(property(get=get_ContextProcessingDelay)) Common::TimeSpan const & ContextProcessingDelay;
             Common::TimeSpan const & get_ContextProcessingDelay() const { return contextProcessingDelay_; }
 
+            __declspec(property(get=get_VolumeManager)) std::unique_ptr<VolumeManager> & VolMgr;
+            std::unique_ptr<VolumeManager> & get_VolumeManager() { return volumeManagerUPtr_; }
+
             OpenReplicaCallback OnOpenReplicaCallback;
             ChangeRoleCallback OnChangeRoleCallback;
             CloseReplicaCallback OnCloseReplicaCallback;
@@ -118,6 +121,14 @@ namespace Management
                 Common::AsyncOperationSPtr const & root);
             Common::ErrorCode EndAcceptCreateComposeDeployment(Common::AsyncOperationSPtr const & operation) { return EndAcceptRequest(operation); }
 
+            Common::AsyncOperationSPtr BeginAcceptCreateSingleInstanceApplication(
+                ServiceModel::ModelV2::ApplicationDescription &&,
+                ClientRequestSPtr && clientRequest,
+                Common::TimeSpan const timeout,
+                Common::AsyncCallback const & callback,
+                Common::AsyncOperationSPtr const & root);
+            Common::ErrorCode EndAcceptCreateSingleInstanceApplication(Common::AsyncOperationSPtr const & operation) { return EndAcceptRequest(operation); }
+ 
             Common::AsyncOperationSPtr BeginAcceptDeleteComposeDeployment(
                 std::wstring const &,
                 Common::NamingUri const &,
@@ -126,6 +137,14 @@ namespace Management
                 Common::AsyncCallback const &,
                 Common::AsyncOperationSPtr const &);
             Common::ErrorCode EndAcceptDeleteComposeDeployment(Common::AsyncOperationSPtr const & operation) { return EndAcceptRequest(operation); }
+
+            Common::AsyncOperationSPtr BeginAcceptDeleteSingleInstanceDeployment(
+                ServiceModel::DeleteSingleInstanceDeploymentDescription const &,
+                ClientRequestSPtr &&,
+                Common::TimeSpan const,
+                Common::AsyncCallback const &,
+                Common::AsyncOperationSPtr const &);
+            Common::ErrorCode EndAcceptDeleteSingleInstanceDeployment(Common::AsyncOperationSPtr const & operation) { return EndAcceptRequest(operation); }
 
             Common::AsyncOperationSPtr BeginAcceptUpdateApplication(
                 ServiceModel::ApplicationUpdateDescriptionWrapper const & updateDescription,
@@ -146,7 +165,7 @@ namespace Management
             Common::AsyncOperationSPtr BeginAcceptCreateServiceFromTemplate(
                 Common::NamingUri const & applicationName,
                 Common::NamingUri const & absoluteServiceName,
-				std::wstring const & serviceDnsName,
+                std::wstring const & serviceDnsName,
                 ServiceModelTypeName const &,
                 ServiceModel::ServicePackageActivationMode::Enum servicePackageActivationMode,
                 std::vector<byte> &&,
@@ -165,7 +184,7 @@ namespace Management
             Common::ErrorCode EndAcceptUnprovisionApplicationType(Common::AsyncOperationSPtr const & op) { return EndAcceptRequest(op); }
 
             Common::AsyncOperationSPtr BeginAcceptDeleteApplication(
-                DeleteApplicationMessageBody const & appName,
+                DeleteApplicationMessageBody const & body,
                 ClientRequestSPtr &&,
                 Common::TimeSpan const,
                 Common::AsyncCallback const &,
@@ -342,6 +361,12 @@ namespace Management
                 bool excludeManifest,
                 __out std::vector<std::pair<ApplicationTypeContext, std::shared_ptr<StoreDataApplicationManifest>>> &) const;
             
+            Common::ErrorCode GetApplicationResourceQueryResult(
+                Store::StoreTransaction const &,
+                SingleInstanceDeploymentContext const &,
+                Store::ReplicaActivityId const &,
+                __out ServiceModel::ModelV2::ApplicationDescriptionQueryResult &);
+
             static Common::TimeSpan GetRandomizedOperationRetryDelay(Common::ErrorCode const &);
             Common::ErrorCode GetCompletedApplicationContext(
                 Store::StoreTransaction const &, 
@@ -356,6 +381,13 @@ namespace Management
                 Store::StoreTransaction const &, 
                 __out ApplicationContext &) const;
             Common::ErrorCode ValidateServiceTypeDuringUpgrade(Store::StoreTransaction const &, ApplicationContext const &, ServiceModelTypeName const &) const;
+
+            Common::ErrorCode GetStoreData(
+                Store::StoreTransaction const &,
+                DeploymentType::Enum deploymentType,
+                std::wstring const & deploymentName,
+                ServiceModelVersion const & version,
+                std::shared_ptr<Store::StoreData> & storeData) const;
 
             template <class TStoreData>
             Common::ErrorCode ClearVerifiedUpgradeDomains(
@@ -406,7 +438,7 @@ namespace Management
 
             static bool IsDnsServiceEnabled();
             static Common::ErrorCode ValidateServiceDnsName(std::wstring const &);
-            static std::wstring GetComposeDeploymentNameFromAppName(std::wstring const &);
+            static std::wstring GetDeploymentNameFromAppName(std::wstring const &);
 
             // ************
             // Test Helpers
@@ -474,6 +506,24 @@ namespace Management
                 __out Transport::MessageUPtr & reply);
 
         private:
+            Common::AsyncOperationSPtr BeginProcessUpgradeSingleInstanceApplication(
+                std::shared_ptr<SingleInstanceDeploymentContext> &&,
+                ServiceModel::SingleInstanceApplicationUpgradeDescription const & upgradeDescription,
+                Store::StoreTransaction &&,
+                ClientRequestSPtr && clientRequest,
+                Common::TimeSpan const timeout,
+                Common::AsyncCallback const & callback,
+                Common::AsyncOperationSPtr const & root);
+
+            Common::AsyncOperationSPtr BeginReplaceSingleInstanceApplication(
+                std::shared_ptr<SingleInstanceDeploymentContext> &&,
+                ServiceModel::ModelV2::ApplicationDescription const &,
+                Store::StoreTransaction &&,
+                ClientRequestSPtr && clientRequest,
+                Common::TimeSpan const timeout,
+                Common::AsyncCallback const & callback,
+                Common::AsyncOperationSPtr const & root);
+
             class FinishAcceptRequestAsyncOperation;
 
             Common::ErrorCode OpenHealthManagerReplica();
@@ -641,9 +691,17 @@ namespace Management
                 Store::StoreTransaction const &,
                 __inout ComposeDeploymentContext &) const;
 
+            Common::ErrorCode GetDeletableSingleInstanceDeploymentContext(
+                Store::StoreTransaction const &,
+                __inout SingleInstanceDeploymentContext &) const;
+
             Common::ErrorCode GetCompletedApplicationTypeContext(Store::StoreTransaction const &, __inout ApplicationTypeContext &);
 
         public:
+            Common::ErrorCode GetSingleInstanceDeploymentContext(
+                Store::StoreTransaction const &,
+                __inout SingleInstanceDeploymentContext &) const;
+            
             Common::ErrorCode GetComposeDeploymentContext(
                 Store::StoreTransaction const &,
                 __inout ComposeDeploymentContext &) const;
@@ -702,6 +760,9 @@ namespace Management
             ServiceModel::QueryResult GetProvisionedFabricConfigVersions(ServiceModel::QueryArgumentMap const & queryArgs, Store::ReplicaActivityId const & replicaActivityId);
             ServiceModel::QueryResult GetDeletedApplicationsList(ServiceModel::QueryArgumentMap const & queryArgs, Store::ReplicaActivityId const & ReplicaId);
             ServiceModel::QueryResult GetProvisionedApplicationTypePackages(ServiceModel::QueryArgumentMap const & queryArgs, Store::ReplicaActivityId const & ReplicaId);
+            ServiceModel::QueryResult GetApplicationResources(ServiceModel::QueryArgumentMap const & queryArgs, Store::ReplicaActivityId const & replicaActivityId);
+            ServiceModel::QueryResult GetServiceResources(ServiceModel::QueryArgumentMap const & queryArgs, Store::ReplicaActivityId const & replicaActivityId);
+            ServiceModel::QueryResult GetVolumeResources(ServiceModel::QueryArgumentMap const & queryArgs, Store::ReplicaActivityId const & replicaActivityId);
 
             void InitializeCachedFilePtrs();
 
@@ -761,7 +822,10 @@ namespace Management
             //
             Common::CachedFileSPtr currentClusterManifest_;
             
-            std::shared_ptr<IDockerComposeAppTypeNameVersionGenerator> dockerComposeAppTypeVersionGenerator_;
+            std::shared_ptr<IApplicationDeploymentTypeNameVersionGenerator> dockerComposeAppTypeVersionGenerator_;
+            std::shared_ptr<IApplicationDeploymentTypeNameVersionGenerator> containerGroupAppTypeVersionGenerator_;
+
+            std::unique_ptr<VolumeManager> volumeManagerUPtr_;
         };
     }
 }

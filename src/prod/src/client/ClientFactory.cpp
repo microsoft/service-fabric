@@ -474,3 +474,42 @@ ErrorCode ClientFactory::CreateComposeManagementClient(__out IComposeManagementC
 
     return error;
 }
+
+ErrorCode ClientFactory::CreateResourceManagementClient(__out IResourceManagementClientPtr &clientPtr)
+{
+    auto error = ValidateFabricClient();
+    if (error.IsSuccess())
+    {
+        clientPtr = RootedObjectPointer<IResourceManagementClient>(
+            fabricClientSPtr_.get(),
+            this->CreateComponentRoot());
+    }
+
+    return error;
+}
+
+ErrorCode ClientFactory::CreateSecretStoreClient(__out ISecretStoreClientPtr &clientPtr)
+{
+    auto error = ValidateFabricClient();
+    if (error.IsSuccess())
+    {
+        clientPtr = RootedObjectPointer<ISecretStoreClient>(
+            fabricClientSPtr_.get(),
+            this->CreateComponentRoot());
+    }
+
+    return error;
+}
+
+ErrorCode ClientFactory::CreateResourceManagerClient(__out IResourceManagerClientPtr &clientPtr)
+{
+    auto error = ValidateFabricClient();
+    if (error.IsSuccess())
+    {
+        clientPtr = RootedObjectPointer<IResourceManagerClient>(
+            fabricClientSPtr_.get(),
+            this->CreateComponentRoot());
+    }
+
+    return error;
+}

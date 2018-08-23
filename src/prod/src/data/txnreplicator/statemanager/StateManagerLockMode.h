@@ -11,7 +11,6 @@ namespace Data
     {
         //
         // Lock modes supported by the state manager.
-        // TODO: Rename to LockMode.
         //
         namespace StateManagerLockMode
         {

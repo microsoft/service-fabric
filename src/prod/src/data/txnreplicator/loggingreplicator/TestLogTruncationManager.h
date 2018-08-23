@@ -50,10 +50,32 @@ namespace LoggingReplicatorTests
 
         Data::LoggingReplicator::ReplicatedLogManager::IsGoodLogHeadCandidateCalculator GetGoodLogHeadCandidateCalculator() override;
 
+        void OnCheckpointCompleted(
+            __in NTSTATUS status,
+            __in Data::LogRecordLib::CheckpointState::Enum checkpointState,
+            __in bool isRecoveredCheckpoint) override;
+
+        void OnTruncationCompleted() override;
+
+        Data::LoggingReplicator::PeriodicCheckpointTruncationState::Enum get_PeriodicTruncationState() const override
+        {
+            return Data::LoggingReplicator::PeriodicCheckpointTruncationState::NotStarted;
+        }
+
+        void InitiatePeriodicCheckpoint() override;
+
         void SetIsGoodLogHead(OperationProbability value);
         void SetCheckpoint(OperationProbability value);
         void SetIndex(OperationProbability value);
         void SetTruncateHead(OperationProbability value);
+
+        void Recover(
+            __in LONG64 recoveredCheckpointTime,
+            __in LONG64 recoveredTruncationTime) override
+        {
+            UNREFERENCED_PARAMETER(recoveredCheckpointTime);
+            UNREFERENCED_PARAMETER(recoveredTruncationTime);
+        }
 
     private:
 

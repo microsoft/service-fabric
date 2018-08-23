@@ -20,7 +20,7 @@ LogManager::LogManager(
     __in PartitionedReplicaId const & traceId,
     __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig)
     : KShared()
     , KObject()
     , PartitionedReplicaTraceComponent(traceId)
@@ -276,6 +276,7 @@ Awaitable<NTSTATUS> LogManager::OpenAsync(__out RecoveryPhysicalLogReader::SPtr 
             *logicalLog_,
             *emptyCallbackManager_,
             DefaultWriteCacheSizeMB * 1024 * 1024,
+            false,
             *invalidLogRecords_->Inv_LogRecord,
             perfCounters_,
             healthClient_,
@@ -373,16 +374,20 @@ Awaitable<NTSTATUS> LogManager::OpenWithRestoreFilesAsync(
             logicalLog_->GetWritePosition());
     }
 
+    // Initialize physical log writer with default maxwritecachesizeinbytes and recompute offsets = true
+    // Ensures invalid offset is not read when restoring from previous version backups after the addition of new fields
     PhysicalLogWriter::SPtr logWriter = PhysicalLogWriter::Create(
         *PartitionedReplicaIdentifier,
         *logicalLog_,
         *emptyCallbackManager_,
         static_cast<LONG>(DefaultWriteCacheSizeMB * Constants::BytesInKBytes * Constants::BytesInKBytes),
+        true,
         *invalidLogRecords_->Inv_LogRecord,
         perfCounters_,
         healthClient_,
         transactionalReplicatorConfig_,
         GetThisAllocator());
+
     KFinally([&] {logWriter->Dispose(); });
 
     LogRecordsMap::SPtr logRecordsMapSPtr = nullptr;
@@ -440,10 +445,12 @@ Awaitable<NTSTATUS> LogManager::OpenWithRestoreFilesAsync(
                 backupRecordIndex++;
 
                 // Note that indexingLogRecord->PreviousPhysicalRecord is an InvalidLogRecord.
-                IndexingLogRecord::SPtr indexingLogRecord = dynamic_cast<IndexingLogRecord *>(firstRecordFromBackupLog.RawPtr());
+                IndexingLogRecord::SPtr logHeadIndexingRecord = dynamic_cast<IndexingLogRecord *>(firstRecordFromBackupLog.RawPtr());
 
                 // Used for linking the transactions.
-                logRecordsMapSPtr = LogRecordsMap::Create(*PartitionedReplicaIdentifier, *indexingLogRecord, invalidLogRecords, GetThisAllocator());
+                logRecordsMapSPtr = LogRecordsMap::Create(*PartitionedReplicaIdentifier, *logHeadIndexingRecord, invalidLogRecords, GetThisAllocator());
+
+                logRecordsMapSPtr->ProcessLogRecord(*firstRecordFromBackupLog);
 
                 EventSource::Events->RestoreRecord(
                     TracePartitionId,
@@ -539,6 +546,7 @@ void LogManager::PrepareToLog(
         *logicalLog_,
         callbackManager,
         DefaultWriteCacheSizeMB * 1024 * 1024,
+        false,
         tailRecord,
         perfCounters_,
         healthClient_,

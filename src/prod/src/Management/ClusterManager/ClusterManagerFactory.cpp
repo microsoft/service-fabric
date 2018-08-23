@@ -32,7 +32,7 @@ namespace Management
             Transport::SecuritySettings const& clusterSecuritySettings,
             ComponentRoot const & fabricRoot)
             : NodeTraceComponent(federation.Instance) 
-            , fabricRoot_(fabricRoot.shared_from_this())
+            , fabricRoot_(fabricRoot.CreateComponentRoot())
             , federation_(federation)
             , serviceResolver_(serviceResolver)
             , clientConnectionAddress_(clientConnectionAddress)
@@ -86,8 +86,6 @@ namespace Management
             FABRIC_REPLICA_ID replicaId,
             __out IStatefulServiceReplicaPtr & replicaResult)
         {
-            UNREFERENCED_PARAMETER(initializationData);
-
             ASSERT_IF(
                 serviceType != ServiceModel::ServiceTypeIdentifier::ClusterManagerServiceTypeId->ServiceTypeName, 
                 "ClusterManagerFactory cannot create service of type '{0}'", 
@@ -147,7 +145,8 @@ namespace Management
                         Path::Combine(workingDir_, Constants::DatabaseDirectory),
                         ManagementConfig::GetConfig().CompactionThresholdInMB),
                     clientFactory_,
-                    serviceName);
+                    serviceName,
+                    initializationData);
 
                 if (!error.IsSuccess()) { return error; }
 

@@ -29,14 +29,20 @@ namespace Management
                 case Enum::RollingForwardPending:
                     w << L"RollingForwardPending";
                     break;
-                case Enum::RollingForwardCompleted:
-                    w << L"RollingForwardCompleted";
-                    break;
                 case Enum::RollingForwardInProgress:
                     w << L"RollingForwardInProgress";
                     break;
+                case Enum::RollingForwardCompleted:
+                    w << L"RollingForwardCompleted";
+                    break;
+                case Enum::Failed:
+                    w << L"Failed";
+                    break;
+                case Enum::RollingBackPending:
+                    w << L"RollingBackPending";
+                    break;
                 default:
-                    w << Common::wformatString("Unknown UpgradeOrchestrationService value {0}", static_cast<int>(val));
+                    w << Common::wformatString("Unknown OrchestrationUpgradeState value {0}", static_cast<int>(val));
                 }
             }
 
@@ -62,6 +68,9 @@ namespace Management
                 case FABRIC_UPGRADE_STATE_FAILED:
                     progress = Failed;
                     break;
+                case FABRIC_UPGRADE_STATE_ROLLING_BACK_PENDING:
+                    progress = RollingBackPending;
+                    break;
                 default:
                     return ErrorCode(ErrorCodeValue::InvalidArgument, wformatString("Unknown OrchestrationUpgradeState"));
                 }
@@ -85,6 +94,8 @@ namespace Management
                     return FABRIC_UPGRADE_STATE_ROLLING_FORWARD_COMPLETED;
                 case Failed:
                     return FABRIC_UPGRADE_STATE_FAILED;
+                case RollingBackPending:
+                    return FABRIC_UPGRADE_STATE_ROLLING_BACK_PENDING;
                 default:
                     return FABRIC_UPGRADE_STATE_INVALID;
                 }

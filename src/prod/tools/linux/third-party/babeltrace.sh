@@ -20,7 +20,7 @@ source ${ScriptPath}/config.sh
 #CC=
 #SRC_DIR=
 #BIN_DIR=
-LIB_DIR=${LIB_DIR}/tools
+LIB_DIR=${LIB_DIR}/babeltrace
 
 init()
 {
@@ -38,7 +38,7 @@ config()
         --enable-static=no \
         --enable-silent-rules \
         --disable-debug-info \
-        --libdir=${LIB_DIR} --bindir=${LIB_DIR} \
+        --prefix=${LIB_DIR} \
         --program-transform-name="s/babeltrace/sftrace/g"
 }
 
@@ -67,7 +67,7 @@ install()
         mkdir -p ${LIB_DIR}
     fi
     cd ${BIN_DIR}
-    make V=${VERBOSE} install-exec
+    make V=${VERBOSE} install
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to install babeltrace"
         exit 1
@@ -85,4 +85,5 @@ uninstall()
 }
 
 # RUN (function defined in config.sh)
+clean_all
 run $@

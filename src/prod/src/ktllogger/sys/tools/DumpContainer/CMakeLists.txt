@@ -5,6 +5,9 @@ set (lib_DumpContainer "DumpContainer" CACHE STRING "DumpContainer.so")
 include_directories(".")
 include_directories("../../src")
 include_directories("../../ktlshim")
+include_directories("../../inc")
+# pull in InternalKtlLogger.h
+include_directories("../../../../../ktl/src/logger/src")
 
 add_definitions(-DUPASSTHROUGH)
 add_definitions(-DKTL_BUILD)
@@ -31,7 +34,7 @@ target_link_libraries(${exe_DumpContainer}
   ${lib_KtlLoggerUser}
   ${lib_Common}
   ${lib_FabricCommon}
-  ${lib_KtlLoggerShimUPassthrough}
+  ${lib_KtlLoggerShimUnify}
   ${lib_ktlfull}
   ktllttng
   ${Cxx}
@@ -46,8 +49,6 @@ target_link_libraries(${exe_DumpContainer}
    dl
    xml2
    uuid
-   unwind
-   unwind-x86_64
 )
 
 # share test lib

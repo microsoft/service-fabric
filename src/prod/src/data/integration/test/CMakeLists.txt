@@ -13,9 +13,9 @@ add_executable(${exe_data_integration_test}
   ${PROJECT_SOURCE_DIR}/test/BoostUnitTest/btest.cpp
   ../Backup.Test.cpp
   ../FactoryArgument.Test.cpp
+  ../StateManagerMapInterface.Test.cpp
   ../Replica.cpp
   ../TestBackupCallbackHandler.cpp
-  ../ReplicatorPerfTest.cpp
 )
 
 add_precompiled_header(${exe_data_integration_test} ../stdafx.h)
@@ -30,10 +30,10 @@ target_link_libraries(${exe_data_integration_test}
   ${lib_data_testcommon}
   ${lib_Replication}
   ${lib_Hosting2}
-  ${lib_Common}
   ${lib_ServiceModel}
   ${lib_Serialization}
   ${lib_Transport}
+  ${lib_Common}
   ${lib_ApiWrappers}
   ${lib_txnreplicator_testcommon}
   ${BoostTest2}
@@ -53,8 +53,6 @@ target_link_libraries(${exe_data_integration_test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

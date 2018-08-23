@@ -14,7 +14,11 @@ ServicePackageInstanceEnvironmentContext::ServicePackageInstanceEnvironmentConte
     ServicePackageInstanceIdentifier const & servicePackageInstanceId)
     : servicePackageInstanceId_(servicePackageInstanceId),
     groupContainerName_(),
-    setupContainerGroup_(false)
+#if defined(PLATFORM_UNIX)
+    containerGroupIsolated_(false),
+#endif
+    setupContainerGroup_(false),
+    firewallPorts_()
 {
 }
 
@@ -42,6 +46,7 @@ void ServicePackageInstanceEnvironmentContext::Reset()
 {    
     endpointResources_.clear();    
     etwProviderGuids_.clear();
+    firewallPorts_.clear();
 }
 
 void ServicePackageInstanceEnvironmentContext::AddAssignedIpAddresses(wstring const & codePackageName, wstring const & ipAddress)
@@ -77,6 +82,13 @@ void ServicePackageInstanceEnvironmentContext::AddGroupContainerName(wstring con
 {
     groupContainerName_ = containerName;
 }
+
+#if defined(PLATFORM_UNIX)
+void ServicePackageInstanceEnvironmentContext::SetContainerGroupIsolatedFlag(bool isIsolated)
+{
+    containerGroupIsolated_ = isIsolated;
+}
+#endif
 
 void ServicePackageInstanceEnvironmentContext::SetContainerGroupSetupFlag(bool isEnabled)
 {

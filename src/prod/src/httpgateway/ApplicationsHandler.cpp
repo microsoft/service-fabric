@@ -169,6 +169,18 @@ void ApplicationsHandler::GetApplicationApiHandlers(vector<HandlerUriTemplate> &
         false));
 
     uris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::ApplicationsEntityKeyPath, Constants::SuspendBackup),
+        Constants::HttpPostVerb,
+        MAKE_HANDLER_CALLBACK(PerformBackupRestoreOperation),
+        false));
+
+    uris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::ApplicationsEntityKeyPath, Constants::ResumeBackup),
+        Constants::HttpPostVerb,
+        MAKE_HANDLER_CALLBACK(PerformBackupRestoreOperation),
+        false));
+
+    uris.push_back(HandlerUriTemplate(
         MAKE_SUFFIX_PATH(Constants::ApplicationsEntityKeyPath, Constants::GetBackups),
         Constants::HttpGetVerb,
         MAKE_HANDLER_CALLBACK(PerformBackupRestoreOperation),
@@ -511,6 +523,18 @@ void ApplicationsHandler::GetServiceApiHandlers(vector<HandlerUriTemplate> &hand
         false));
 
     uris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::ServicesEntityKeyPath, Constants::SuspendBackup),
+        Constants::HttpPostVerb,
+        MAKE_HANDLER_CALLBACK(PerformBackupRestoreOperation),
+        false));
+
+    uris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::ServicesEntityKeyPath, Constants::ResumeBackup),
+        Constants::HttpPostVerb,
+        MAKE_HANDLER_CALLBACK(PerformBackupRestoreOperation),
+        false));
+
+    uris.push_back(HandlerUriTemplate(
         MAKE_SUFFIX_PATH(Constants::ServicesEntityKeyPath, Constants::GetBackups),
         Constants::HttpGetVerb,
         MAKE_HANDLER_CALLBACK(PerformBackupRestoreOperation),
@@ -669,7 +693,12 @@ void ApplicationsHandler::GetAllApplications(AsyncOperationSPtr const& thisSPtr)
 
     if (handlerOperation->Uri.ApiVersion != Constants::V1ApiVersion)
     {
-        GetApplicationQueryDescription(thisSPtr, false, queryDescription);
+        auto error = GetApplicationQueryDescription(thisSPtr, false, queryDescription);
+        if (!error.IsSuccess())
+        {
+            handlerOperation->OnError(thisSPtr, error);
+            return;
+        }
     }
 
     AsyncOperationSPtr operation = client.QueryClient->BeginGetApplicationList(
@@ -753,7 +782,12 @@ void ApplicationsHandler::GetApplicationById(AsyncOperationSPtr const& thisSPtr)
 
     if (handlerOperation->Uri.ApiVersion != Constants::V1ApiVersion)
     {
-        GetApplicationQueryDescription(thisSPtr, true, queryDescription);
+        auto error = GetApplicationQueryDescription(thisSPtr, true, queryDescription);
+        if (!error.IsSuccess())
+        {
+            handlerOperation->OnError(thisSPtr, error);
+            return;
+        }
     }
     else
     {
@@ -780,7 +814,7 @@ void ApplicationsHandler::GetApplicationById(AsyncOperationSPtr const& thisSPtr)
     OnGetApplicationByIdComplete(operation, true);
 }
 
-void ApplicationsHandler::GetApplicationQueryDescription(
+ErrorCode ApplicationsHandler::GetApplicationQueryDescription(
     Common::AsyncOperationSPtr const & thisSPtr,
     bool includeApplicationName,
     __out ApplicationQueryDescription & queryDescription)
@@ -800,8 +834,7 @@ void ApplicationsHandler::GetApplicationQueryDescription(
         error = argumentParser.TryGetApplicationName(nameUri);
         if (!error.IsSuccess())
         {
-            handlerOperation->OnError(thisSPtr, error);
-            return;
+            return error;
         }
         queryDescription.ApplicationNameFilter = move(nameUri);
     }
@@ -816,10 +849,9 @@ void ApplicationsHandler::GetApplicationQueryDescription(
         error = argumentParser.TryGetPagingDescription(pagingDescription);
         if (!error.IsSuccess())
         {
-            handlerOperation->OnError(thisSPtr, error);
-            return;
+            return error;
         }
-        queryDescription.QueryPagingDescriptionObject = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryDescription.QueryPagingDescriptionUPtr = make_unique<QueryPagingDescription>(move(pagingDescription));
 
         // ApplicationTypeName
         error = argumentParser.TryGetApplicationTypeName(applicationTypeNameFilter);
@@ -830,8 +862,7 @@ void ApplicationsHandler::GetApplicationQueryDescription(
         else if (!error.IsSuccess() && !error.IsError(ErrorCodeValue::ApplicationTypeNotFound))
         {
             // If an error occurred and a applicationTypeNameFilter has been provided
-            handlerOperation->OnError(thisSPtr, error);
-            return;
+            return error;
         }
 
         // ApplicationDefinitionKindFilter
@@ -847,8 +878,7 @@ void ApplicationsHandler::GetApplicationQueryDescription(
 
         if (!error.IsSuccess())
         {
-            handlerOperation->OnError(thisSPtr, error);
-            return;
+            return error;
         }
     }
 
@@ -861,9 +891,10 @@ void ApplicationsHandler::GetApplicationQueryDescription(
     }
     else if (!error.IsSuccess() && !error.IsError(ErrorCodeValue::NotFound))
     {
-        handlerOperation->OnError(thisSPtr, error);
-        return;
+        return error;
     }
+
+    return ErrorCodeValue::Success;
 }
 
 void ApplicationsHandler::OnGetApplicationByIdComplete(
@@ -972,7 +1003,7 @@ void ApplicationsHandler::OnCreateApplicationComplete(
     }
 
     ByteBufferUPtr emptyBody;
-    handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusCreated, *Constants::StatusDecsriptionCreated);
+    handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusCreated, *Constants::StatusDescriptionCreated);
 }
 
 void ApplicationsHandler::DeleteApplication(AsyncOperationSPtr const& thisSPtr)
@@ -1376,6 +1407,15 @@ void ApplicationsHandler::OnGetAllPartitionsComplete(
         if (pagingStatus)
         {
             list.ContinuationToken = pagingStatus->TakeContinuationToken();
+        }
+
+        if (handlerOperation->Uri.ApiVersion >= Constants::V64ApiVersion)
+        {
+            for (auto it = partitionResult.begin(); it != partitionResult.end(); ++it)
+            {
+                // Rename field CurrentConfigurationEpoch to PrimaryEpoch to match powershell output
+                it->SetRenameAsPrimaryEpoch(true);
+            }
         }
 
         list.Items = move(partitionResult);
@@ -4313,6 +4353,7 @@ void ApplicationsHandler::PerformBackupRestoreOperation(AsyncOperationSPtr const
         Common::Guid::NewGuid().ToString(), // New trace Id for tracking the request end to end
         handlerOperation->MessageContextUPtr,
         handlerOperation->TakeBody(),
+        wstring(),
         [this](AsyncOperationSPtr const& operation)
     {
         this->OnPerformBackupRestoreOperationComplete(operation, false);

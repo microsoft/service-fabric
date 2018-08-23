@@ -21,6 +21,7 @@ namespace Reliability
         class ReplicaDescription;
         class PlacementAndLoadBalancing;
         class SearcherSettings;
+        class ServiceDomain;
 
         class Service
         {
@@ -77,6 +78,10 @@ namespace Reliability
             bool get_PartiallyPlace() const { return partiallyPlace_; }
             void set_PartiallyPlace(bool value) { partiallyPlace_ = value; }
 
+            __declspec(property(get = get_NextASCheck, put = put_nextASCheck)) Common::StopwatchTime NextAutoScaleCheck;
+            Common::StopwatchTime get_NextASCheck() const { return nextAutoScaleCheck_; }
+            void put_nextASCheck(Common::StopwatchTime const& value) { nextAutoScaleCheck_ = value; }
+
             void UpdateServiceBlockList(DynamicBitSet && blockList) 
             { 
                 serviceBlockList_ = std::move(blockList); 
@@ -100,6 +105,10 @@ namespace Reliability
             std::vector<uint> GetDefaultLoads(ReplicaRole::Enum role) const;
 
             uint GetDefaultMetricLoad(uint metricIndex, ReplicaRole::Enum role) const;
+
+            bool IsLoadAvailableForPartitions(std::wstring const& metricName, ServiceDomain const& serviceDomain);
+
+            bool GetAverageLoadPerPartitions(std::wstring const& metricName, ServiceDomain const& serviceDomain, bool useOnlyPrimaryLoad, double & averageLoad) const;
 
             // get the default move cost for a new failover unit of this service
             uint GetDefaultMoveCost(ReplicaRole::Enum role) const;
@@ -143,6 +152,8 @@ namespace Reliability
 
             Type::Enum FDDistribution_;
             bool partiallyPlace_;
+
+            Common::StopwatchTime nextAutoScaleCheck_;
         };
 
         void WriteToTextWriter(Common::TextWriter & w, Service::Type::Enum const & val);

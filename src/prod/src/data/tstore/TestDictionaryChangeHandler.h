@@ -50,8 +50,11 @@ namespace TStoreTests
             __in TxnReplicator::TransactionBase const& replicatorTransaction,
             __in TKey key,
             __in TValue value,
-            __in LONG64 sequenceNumber) noexcept override
+            __in LONG64 sequenceNumber,
+            __in bool isPrimary) noexcept override
         {
+            UNREFERENCED_PARAMETER(isPrimary);
+
             Notification n;
             n.Operation = StoreModificationType::Add;
             n.Key = key;
@@ -66,8 +69,11 @@ namespace TStoreTests
             __in TxnReplicator::TransactionBase const& replicatorTransaction,
             __in TKey key,
             __in TValue value,
-            __in LONG64 sequenceNumber) noexcept override
+            __in LONG64 sequenceNumber,
+            __in bool isPrimary) noexcept override
         {
+            UNREFERENCED_PARAMETER(isPrimary);
+
             Notification n;
             n.Operation = StoreModificationType::Update;
             n.Key = key;
@@ -81,9 +87,11 @@ namespace TStoreTests
         ktl::Awaitable<void> OnRemovedAsync(
             __in TxnReplicator::TransactionBase const& replicatorTransaction,
             __in TKey key,
-            __in LONG64 sequenceNumber) noexcept override
+            __in LONG64 sequenceNumber,
+            __in bool isPrimary) noexcept override
         {
             UNREFERENCED_PARAMETER(sequenceNumber);
+            UNREFERENCED_PARAMETER(isPrimary);
 
             Notification n;
             n.Operation = StoreModificationType::Remove;

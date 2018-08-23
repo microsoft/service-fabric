@@ -185,7 +185,7 @@ ErrorCode EntreeServiceToProxyIpcChannel::OnOpen()
         false,
         0,
         perfCounter,
-        FabricGateway::FabricGatewayConfig::GetConfig().RequestQueueSize);
+        ServiceModelConfig::GetConfig().RequestQueueSize);
 
     error = transport_->Start();
     if (error.IsSuccess())

@@ -1,0 +1,393 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase1_GetLSN with slow remote replicas
+!load FailoverCITInitialization.test
+
+set RemoteReplicaProgressQueryWaitDuration 5
+set StoreClientTimeout 3
+set StoreReplicationTimeout 3
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Reconfiguration proceeds if read quorum replica does not respond
+#####################################################
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior b0 * 20 GetLSN
+addbehavior b1 * 30 GetLSN
+addbehavior bx * * UpdateConfiguration
+reportfault 50 fabric:/test1 transient
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 Phase2_Catchup
+removebehavior bx
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 None
+verify
+
+removebehavior b0
+removebehavior b1
+
+deleteservice fabric:/test1 
+verify
+
+#####################################################
+# Scenario 2: Reconfiguration proceeds if local replica does not respond
+# The local replica should be faulted and not change config
+#####################################################
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior b0 40 * ReplicatorUpdateEpochAndGetStatus
+addbehavior b1 * * DoReconfiguration
+addbehavior b2 * * ChangeConfiguration
+reportfault 50 fabric:/test2 transient
+!waitforstate FM.FT.Reconfig.fabric:/test2 true
+removebehavior b1
+!waitforstate FM.FT.Reconfig.fabric:/test2 false
+verify
+
+removebehavior b0
+removebehavior b2
+
+deleteservice fabric:/test2 
+verify
+
+#####################################################
+# Scenario 2a: Stateful Volatile Reconfiguration proceeds if local replica does not respond
+# The local replica should be faulted and not change config
+#####################################################
+createservice fabric:/test2a TestStoreServiceType y 1 4 minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior b0 40 * ReplicatorUpdateEpochAndGetStatus
+addbehavior b1 * * DoReconfiguration
+addbehavior b2 * * ChangeConfiguration
+reportfault 50 fabric:/test2a transient
+!waitforstate FM.FT.Reconfig.fabric:/test2a true
+removebehavior b1
+!waitforstate FM.FT.Reconfig.fabric:/test2a false
+verify
+
+removebehavior b0
+removebehavior b2
+
+deleteservice fabric:/test2a 
+verify
+
+#####################################################
+# Scenario 3: Reconfiguration is stuck if there is less than a read quorum
+#####################################################
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior b0 * 20 GetLSN
+addbehavior b1 * 30 GetLSN
+
+reportfault 50 fabric:/test3 permanent
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 Phase1_GetLSN
+
+#Pause until config expires
+!pause 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 Phase1_GetLSN
+
+removebehavior b1
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 None
+verify
+
+removebehavior b0
+
+deleteservice fabric:/test3 
+verify
+
+#####################################################
+# Scenario 4: Reconfiguration is stuck if there is data loss and a replica has not reported progress
+# Even if the time has expired
+#####################################################
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior b0 * * ReplicatorUpdateEpochAndGetStatus
+
+reportfault 50 fabric:/test4 permanent
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.40 Phase1_GetLSN
+
+reportfault 30 fabric:/test4 permanent
+reportfault 20 fabric:/test4 permanent
+
+#Pause until config expires
+!pause 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.40 Phase1_GetLSN
+
+setsignal 40 fabric:/test4 replicator.beginondataloss.block
+removebehavior b0
+
+waitforsignalhit 40 fabric:/test4 replicator.beginondataloss.block
+resetsignal 40 fabric:/test4 replicator.beginondataloss.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.40 None
+verify
+
+deleteservice fabric:/test4 
+verify
+#####################################################
+# Scenario 5: Replica set is in the following state
+# [N/P U 50 1] [N/S U 40 1] [N/S 30 0] [N/S 20 1]
+# 50 restarts and 40 becomes primary.
+# [N/S U 50 5] [N/P U 40 5] [N/S 30 1] [N/S 20 5]
+# LSN is written and ack'd by 50, 40, 20
+# Failover and 30 is made the primary 
+# Now GetLSN is blocked to 50 and 40 and 30 should do Change Config to 20
+# Eventually after reconfig the data is still readable
+#####################################################
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior bx * 30 ReplicationOperation
+
+#Write to update the state
+# [N/P U 50 1] [N/S U 40 1] [N/S 30 0] [N/S 20 1]
+clientput fabric:/test5 10 10
+!wait
+
+#Make 40 primary
+addbehavior b0 * * UpdateConfiguration
+reportfault 50 fabric:/test5 transient
+reportfault 20 fabric:/test5 transient
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 Phase2_Catchup
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.40 None
+verify
+
+# Write again. this will set progress to 2
+# Catchup LSN is 1 on 30
+# 30 has LSN 0
+clientput fabric:/test5 10 20
+!wait
+
+# Block DoReconfiguration and take down two nodes
+addbehavior b0 * * DoReconfiguration
+-40
+-50
+!waitforstate FM.Replica.IsUp.fabric:/test5.40 false
+!waitforstate FM.Replica.IsUp.fabric:/test5.50 false
+
+#bring back the two nodes
++50 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test5.50 true
+
++40 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test5.40 true
+
+addbehavior b1 * 50 GetLSN
+addbehavior b2 * 40 GetLSN
+addbehavior b3 * * Deactivate
+removebehavior b0
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.30 Phase1_GetLSN
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.20 Phase1_GetLSN
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.20 Phase2_Catchup
+
+removebehavior b3
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.20 None
+
+removebehavior b2
+removebehavior b1
+removebehavior bx
+verify
+
+clientget fabric:/test5 10 20
+!wait
+
+deleteservice fabric:/test5 
+verify
+
+#####################################################
+# Scenario 6: Replica set is in the following state
+# [N/P U 50 e0:0] [N/S U 40 e0:2] [N/S 30 e0:0] [N/S 20 e0:0]
+# 40 goes down and 50 restarts 
+# write is made in the next epoch
+# [N/P U 50 e1:1] [N/S U 40 e0:2] [N/S 30 e1:1] [N/S 20 e1:1]
+# all replicas go down and 40, 20, 20 come up
+# 40 is primary elect and get lsn is blocked to 20
+# change config happens, 30 becomes primary
+#####################################################
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+addbehavior bx * 30 ReplicationOperation
+addbehavior by * 20 ReplicationOperation
+
+# [N/P U 50 e0:0] [N/S U 40 e0:2] [N/S 30 e0:0] [N/S 20 e0:0]
+clientput fabric:/test6 10 10 errors=Timeout,NotPrimary
+clientput fabric:/test6 20 10 errors=Timeout,NotPrimary
+!pause 10
+!wait
+
+addbehavior b0 * * DoReconfiguration
+-40
+-50
+!waitforstate FM.Replica.IsUp.fabric:/test6.40 false
+!waitforstate FM.Replica.IsUp.fabric:/test6.50 false
+!waitforstate FM.FT.Reconfig.fabric:/test6 true
+
++50 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test6.50 true
+
+removebehavior b0
+!waitforstate FM.FT.Reconfig.fabric:/test6 true
+verify
+
+removebehavior bx
+removebehavior by
+
+clientput fabric:/test6 10 20 
+!wait
+
+# Take down all nodes
+-50
+-30
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test6.50 false
+!waitforstate FM.Replica.IsUp.fabric:/test6.30 false
+!waitforstate FM.Replica.IsUp.fabric:/test6.20 false
+
+# bring back 40
+
+addbehavior b1 * 20 GetLSN
+addbehavior b2 * 30 GetLSN
+
++40 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test6.40 true
+
++20 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test6.20 true
+
+!waitforstate FM.FT.Reconfig.fabric:/test6 true
+
++30 nodeprops=system:false
+!waitforstate FM.Replica.IsUp.fabric:/test6.30 true
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Phase1_GetLSN
+
+!pause 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Phase1_GetLSN
+
+removebehavior b1
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.20 Phase1_GetLSN
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.20 None
+
+clientget fabric:/test6 10 20
+!wait
+
++50 nodeprops=system:false
+verify
+
+removebehavior b0
+removebehavior b1
+removebehavior b2
+
+deleteservice fabric:/test6 
+verify
+
+#####################################################
+# Scenario 7: Reconfiguration does not restart slow SB replica
+#####################################################
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+#verify by using instance id
+addbehavior b0 * 50 GetLSN
+addbehavior bx * * UpdateConfiguration
+addbehavior bz * * ReplicaUp
+
+reportfault 50 fabric:/test7 transient
+!waitforstate RA.Replica.State.fabric:/test7.50.50 SB
+!var InstanceId RA.Replica.InstanceId.fabric:/test7.50.50 
+removebehavior bz
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 Phase1_GetLSN
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 Phase2_Catchup
+removebehavior bx
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.40 None
+verify
+
+removebehavior b0
+removebehavior b1
+verify
+
+!waitforstate RA.Replica.InstanceId.fabric:/test7.50.50 <var.InstanceId>
+
+deleteservice fabric:/test7 
+verify
+
+#####################################################
+# Scenario 8: Reconfiguration does restart slow RD replica
+#####################################################
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+setsignal 30 fabric:/test8 service.beginclose.block 
+
+addbehavior b0 * 30 GetLSN
+addbehavior bx * * UpdateConfiguration
+
+reportfault 50 fabric:/test8 transient
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 Phase1_GetLSN
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 Phase2_Catchup
+removebehavior bx
+
+waitforsignalhit 30 fabric:/test8 service.beginclose.block
+resetsignal 30 fabric:/test8 service.beginclose.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 None
+verify
+
+removebehavior b0
+removebehavior b1
+verify
+
+deleteservice fabric:/test8  
+verify
+
+#####################################################
+# Scenario 9: Regression test for 7141932
+# 1. A S/N reconfiguration is in progress 
+# 2. Primary fails over
+# 3. During GetLSN phase S/N replica fails to respond and the Get LSN wait timer expires. 
+# 4. Reconfiguration proceeds to phase2 and since this replica is not in CC it is not restarted
+# 5. During catchup, in the UC call to the replicator has the S/N replica in PC but the progress is -1 as it did not respond to GetLSN
+#####################################################
++60 nodeprops=system:false
+verify
+
+createservice fabric:/test9 TestPersistedStoreServiceType y 1 4 persist minreplicasetsize=4 constraint=(system!=true)
+verify
+
+setsignal 30 fabric:/test9 service.beginchangerole.block 
+
+movesecondary fabric:/test9 30 20
+
+addbehavior bz 30 * ReplicaUp
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.60 Phase3_Deactivate
+waitforsignalhit 30 fabric:/test9 service.beginchangerole.block 
+
+reportfault 60 fabric:/test9 transient
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test9.50 Phase3_Deactivate
+resetsignal 30 fabric:/test9 service.beginchangerole.block
+
+removebehavior bz 
+verify
+
+deleteservice fabric:/test9 
+verify
+
+!q

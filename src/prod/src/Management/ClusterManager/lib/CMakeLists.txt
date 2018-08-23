@@ -7,6 +7,7 @@ set( LINUX_SOURCES
     ../ApplicationUpgradeContext.cpp
     ../ClearApplicationUpgradeContextAsyncOperation.cpp
     ../ClearComposeDeploymentUpgradeContextAsyncOperation.cpp
+    ../ClearSingleInstanceDeploymentUpgradeContextAsyncOperation.cpp
     ../ClientRequestAsyncOperation.cpp
     ../ClusterBaselineAsyncOperation.cpp
     ../ClusterManagerCounters.cpp
@@ -18,10 +19,14 @@ set( LINUX_SOURCES
     ../ComposeDeploymentContext.cpp
     ../ComposeDeploymentUpgradeContext.cpp
     ../Constants.cpp
+    ../ContainerGroupAppTypeNameVersionGenerator.cpp
     ../CreateApplicationAsyncOperation.cpp
     ../CreateComposeDeploymentAsyncOperation.cpp
+    ../CreateDefaultServiceWithDnsNameIfNeededAsyncOperation.cpp
     ../CreateServiceAsyncOperation.cpp
     ../CreateServiceFromTemplateAsyncOperation.cpp
+    ../CreateSingleInstanceApplicationAsyncOperation.cpp
+    ../CreateVolumeAsyncOperation.cpp
     ../DeletableRolloutContext.cpp
     ../DeleteApplication2AsyncOperation.cpp
     ../DeleteApplicationAsyncOperation.cpp
@@ -31,6 +36,10 @@ set( LINUX_SOURCES
     ../DeleteComposeDeploymentContextAsyncOperation.cpp
     ../DeleteServiceAsyncOperation.cpp
     ../DeleteServiceContextAsyncOperation.cpp
+    ../DeleteSingleInstanceDeploymentAsyncOperation.cpp
+    ../DeleteSingleInstanceDeploymentContextAsyncOperation.cpp
+    ../DeleteVolumeAsyncOperation.cpp
+    ../DeploymentType.cpp
     ../DigestedApplicationDescription.cpp
     ../DockerComposeAppTypeNameVersionGenerator.cpp
     ../FabricClientProxy.cpp
@@ -59,9 +68,12 @@ set( LINUX_SOURCES
     ../ProcessQueryAsyncOperation.cpp
     ../ProcessRolloutContextAsyncOperationBase.cpp
     ../ProcessServiceContextAsyncOperation.cpp
+    ../ProcessSingleInstanceDeploymentContextAsyncOperation.cpp
+    ../ProcessSingleInstanceDeploymentUpgradeContextAsyncOperation.cpp
     ../ProcessUpgradeContextAsyncOperationBase.cpp
     ../ProvisionApplicationTypeAsyncOperation.cpp
     ../ProvisionFabricAsyncOperation.cpp
+    ../ReplaceSingleInstanceDeploymentContextAsyncOperation.cpp
     ../ReportFabricUpgradeHealthAsyncOperation.cpp
     ../ReportUpgradeHealthAsyncOperation.cpp
     ../RollbackApplicationUpgradeAsyncOperation.cpp
@@ -74,18 +86,22 @@ set( LINUX_SOURCES
     ../ServiceContext.cpp
     ../ServiceModelServiceManifestDescription.cpp
     ../ServiceModelTypeName.cpp
+    ../SingleInstanceDeploymentContext.cpp
+    ../SingleInstanceDeploymentUpgradeContext.cpp
     ../StartInfrastructureTaskAsyncOperation.cpp
     ../StoreDataApplicationIdMap.cpp
     ../StoreDataApplicationManifest.cpp
     ../StoreDataClusterUpgradeStateSnapshot.cpp
     ../StoreDataComposeDeploymentInstance.cpp
-    ../StoreDataComposeDeploymentInstanceCounter.cpp
     ../StoreDataGlobalInstanceCounter.cpp
     ../StoreDataServiceManifest.cpp
     ../StoreDataServicePackage.cpp
     ../StoreDataServiceTemplate.cpp
+    ../StoreDataSingleInstanceApplicationInstance.cpp
+    ../StoreDataSingleInstanceDeploymentCounter.cpp
     ../StoreDataVerifiedFabricUpgradeDomains.cpp
     ../StoreDataVerifiedUpgradeDomains.cpp
+    ../StoreDataVolume.cpp
     ../TestDockerComposeImageBuilderProxy.cpp
     ../UnprovisionApplicationTypeAsyncOperation.cpp
     ../UnprovisionFabricAsyncOperation.cpp
@@ -95,6 +111,7 @@ set( LINUX_SOURCES
     ../UpgradeApplicationAsyncOperation.cpp
     ../UpgradeComposeDeploymentAsyncOperation.cpp
     ../UpgradeFabricAsyncOperation.cpp
+    ../VolumeManager.cpp
 )
 
 include_directories("..")

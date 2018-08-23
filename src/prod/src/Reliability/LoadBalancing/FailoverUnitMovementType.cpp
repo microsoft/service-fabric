@@ -34,18 +34,26 @@ wstring FailoverUnitMovementType::ToString(FailoverUnitMovementType::Enum failov
         return L"SwapPrimarySecondary";
     case FailoverUnitMovementType::MoveSecondary:
         return L"MoveSecondary";
+    case FailoverUnitMovementType::MoveInstance:
+        return L"MoveInstance";
     case FailoverUnitMovementType::MovePrimary:
         return L"MovePrimary";
     case FailoverUnitMovementType::AddPrimary:
         return L"AddPrimary";
     case FailoverUnitMovementType::AddSecondary:
         return L"AddSecondary";
+    case FailoverUnitMovementType::AddInstance:
+        return L"AddInstance";
     case FailoverUnitMovementType::PromoteSecondary:
         return L"PromoteSecondary";
-    case FailoverUnitMovementType::Void:
-        return L"Void";
-    case FailoverUnitMovementType::Drop:
-        return L"Drop";
+    case FailoverUnitMovementType::RequestedPlacementNotPossible:
+        return L"RequestedPlacementNotPossible";
+    case FailoverUnitMovementType::DropPrimary:
+        return L"DropPrimary";
+    case FailoverUnitMovementType::DropSecondary:
+        return L"DropSecondary";
+    case FailoverUnitMovementType::DropInstance:
+        return L"DropInstance";
     default:
         Common::Assert::CodingError("Unknown FailoverUnit Movement Type {0}", static_cast<int>(failoverUnitMovementType));
     }

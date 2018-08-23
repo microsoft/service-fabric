@@ -34,6 +34,7 @@ namespace Data
             DECLARE_STORE_STRUCTURED_TRACE(MetadataManagerSafeFileReplaceDeleting, Common::Guid, Common::WStringLiteral, Common::WStringLiteral);
 
             // Checkpoint Files
+            DECLARE_STORE_STRUCTURED_TRACE(CheckpointFileWriteBytesPerSec, Common::Guid, Common::WStringLiteral, ULONG64);
             DECLARE_STORE_STRUCTURED_TRACE(KeyCheckpointFileOpenAsync, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, Common::WStringLiteral);
             DECLARE_STORE_STRUCTURED_TRACE(ValueCheckpointFileOpenAsync, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, Common::WStringLiteral);
 
@@ -57,7 +58,7 @@ namespace Data
             DECLARE_STORE_STRUCTURED_TRACE(CopyManagerProcessStartValueFileCopyOperation, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, Common::WStringLiteral, ULONG32, ULONG32);
             DECLARE_STORE_STRUCTURED_TRACE(CopyManagerProcessWriteValueFileCopyOperation, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, Common::WStringLiteral, ULONG32);
             DECLARE_STORE_STRUCTURED_TRACE(CopyManagerProcessEndValueFileCopyOperation, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, Common::WStringLiteral, LONG64);
-            DECLARE_STORE_STRUCTURED_TRACE(CopyManagerProcessCompleteCopyOperation, Common::Guid, Common::WStringLiteral, Common::WStringLiteral);
+            DECLARE_STORE_STRUCTURED_TRACE(CopyManagerProcessCompleteCopyOperation, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, ULONG64);
             DECLARE_STORE_STRUCTURED_TRACE(CopyManagerException, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, Common::StringLiteral, LONG64);
 
             // Store Copy Stream
@@ -68,7 +69,7 @@ namespace Data
             DECLARE_STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkStart, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, ULONG32, ULONG32, ULONG32);
             DECLARE_STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkWrite, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, ULONG32, ULONG32);
             DECLARE_STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkEnd, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, ULONG32);
-            DECLARE_STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCompleted, Common::Guid, Common::WStringLiteral, Common::WStringLiteral);
+            DECLARE_STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCompleted, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, ULONG64);
             DECLARE_STORE_STRUCTURED_TRACE(StoreCopyStreamException, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, Common::StringLiteral, LONG64);
 
             // Store
@@ -107,7 +108,7 @@ namespace Data
             DECLARE_STORE_STRUCTURED_TRACE(StorePrepareCheckpointCompletedApi, Common::Guid, Common::WStringLiteral, LONG64);
             DECLARE_STORE_STRUCTURED_TRACE(StorePerformCheckpointAsyncStartApi, Common::Guid, Common::WStringLiteral, LONG64, LONG64);
             DECLARE_STORE_STRUCTURED_TRACE(StoreCheckpointAsyncApi, Common::Guid, Common::WStringLiteral, Common::WStringLiteral);
-            DECLARE_STORE_STRUCTURED_TRACE(StorePerformCheckpointAsyncCompletedApi, Common::Guid, Common::WStringLiteral, ULONG32, LONG64);
+            DECLARE_STORE_STRUCTURED_TRACE(StorePerformCheckpointAsyncCompletedApi, Common::Guid, Common::WStringLiteral, ULONG32, LONG64, LONG64, ULONG64, LONG64);
             DECLARE_STORE_STRUCTURED_TRACE(StoreCompleteCheckpointAsyncApi, Common::Guid, Common::WStringLiteral, Common::WStringLiteral);
             DECLARE_STORE_STRUCTURED_TRACE(StoreCompleteCheckpointAsyncCompletedApi, Common::Guid, Common::WStringLiteral, LONG64, LONG64, LONG64, LONG64, LONG64, LONG64);
             DECLARE_STORE_STRUCTURED_TRACE(StoreRecoverCheckpointAsyncApi, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, LONG64, LONG64, LONG64);
@@ -133,11 +134,12 @@ namespace Data
             DECLARE_STORE_STRUCTURED_TRACE(StoreRebuildNotificationStarting, Common::Guid, Common::WStringLiteral);
             DECLARE_STORE_STRUCTURED_TRACE(StoreRebuildNotificationCompleted, Common::Guid, Common::WStringLiteral, INT64);
             DECLARE_STORE_STRUCTURED_TRACE(StoreSweep, Common::Guid, Common::WStringLiteral, Common::WStringLiteral);
-            DECLARE_STORE_STRUCTURED_TRACE(StoreException, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, Common::StringLiteral, LONG64);
+            DECLARE_STORE_STRUCTURED_TRACE(StoreException, Common::Guid, Common::WStringLiteral, Common::WStringLiteral, LONG64, ULONG64, LONG64, Common::StringLiteral);
             DECLARE_STORE_STRUCTURED_TRACE(StoreThrowIfNotWritable, Common::Guid, Common::WStringLiteral, LONG64, ULONG32, ULONG32);
             DECLARE_STORE_STRUCTURED_TRACE(StoreThrowIfNotReadable, Common::Guid, Common::WStringLiteral, LONG64, ULONG32, ULONG32);
             DECLARE_STORE_STRUCTURED_TRACE(StoreConstructor, Common::Guid, Common::WStringLiteral, Common::WStringLiteral);
             DECLARE_STORE_STRUCTURED_TRACE(StoreDestructor, Common::Guid, Common::WStringLiteral);
+            DECLARE_STORE_STRUCTURED_TRACE(StoreSize, Common::Guid, Common::WStringLiteral, LONG64, ULONG64, LONG64);
 
 
             StoreEventSource() :
@@ -155,42 +157,43 @@ namespace Data
                 STORE_STRUCTURED_TRACE(MetadataManagerSafeFileReplaceDeleting, 10, Info, "{1}: deleting {2}", "id", "TraceTag", "File"),
 
                 // Checkpoint Files
-                STORE_STRUCTURED_TRACE(KeyCheckpointFileOpenAsync, 11, Info, "{1}: filename={2} state={3}", "id", "TraceTag", "Filename", "State"),
-                STORE_STRUCTURED_TRACE(ValueCheckpointFileOpenAsync, 12, Info, "{1}: filename={2} state={3}", "id", "TraceTag", "Filename", "State"),
+                STORE_STRUCTURED_TRACE(CheckpointFileWriteBytesPerSec, 11, Info, "{1}: checkpointfilewrite={2}bytes/sec", "id", "TraceTag", "CheckpointFileWriteBytesPerSec"),
+                STORE_STRUCTURED_TRACE(KeyCheckpointFileOpenAsync, 12, Info, "{1}: filename={2} state={3}", "id", "TraceTag", "Filename", "State"),
+                STORE_STRUCTURED_TRACE(ValueCheckpointFileOpenAsync, 13, Info, "{1}: filename={2} state={3}", "id", "TraceTag", "Filename", "State"),
 
                 // Consolidation Manager
-                STORE_STRUCTURED_TRACE(ConsolidationManagerMergeAsync, 13, Info, "{1}: {2}", "id", "TraceTag", "Message"),
-                STORE_STRUCTURED_TRACE(ConsolidationManagerMergeFile, 14, Info, "{1}: Merge filename={2}", "id", "TraceTag", "Filename"),
-                STORE_STRUCTURED_TRACE(ConsolidationManagerSlowConsolidation, 15, Warning, "{1}: high delta count {2} and the default count is {3} indicating slow consolidation", "id", "TraceTag", "Index", "DefaultNumber"),
+                STORE_STRUCTURED_TRACE(ConsolidationManagerMergeAsync, 14, Info, "{1}: {2}", "id", "TraceTag", "Message"),
+                STORE_STRUCTURED_TRACE(ConsolidationManagerMergeFile, 15, Info, "{1}: Merge filename={2}", "id", "TraceTag", "Filename"),
+                STORE_STRUCTURED_TRACE(ConsolidationManagerSlowConsolidation, 16, Warning, "{1}: high delta count {2} and the default count is {3} indicating slow consolidation", "id", "TraceTag", "Index", "DefaultNumber"),
 
                 // Recovery Store Component
-                STORE_STRUCTURED_TRACE(RecoveryStoreComponentMergeKeyCheckpointFilesAsync, 16, Noise, "{1}: Merge keyfiles. phase={2} count={3}", "id", "TraceTag", "Phase", "Count"),
+                STORE_STRUCTURED_TRACE(RecoveryStoreComponentMergeKeyCheckpointFilesAsync, 17, Noise, "{1}: Merge keyfiles. phase={2} count={3}", "id", "TraceTag", "Phase", "Count"),
 
                 // Copy Manager
-                STORE_STRUCTURED_TRACE(CopyManagerAddCopyDataAsync, 17, Info, "{1}: Received bytes={2}", "id", "TraceTag", "ReceivedBytes"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationData, 18, Info, "{1}: directory={2} bytes={3}", "id", "TraceTag", "Directory", "ReceivedBytes"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationProtocol, 19, Info, "{1}: directory={2} version={3}", "id", "TraceTag", "Direcotry", "Version"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationMsg, 20, Info, "{1}: Unknown copy protocol version={2}", "id", "TraceTag", "Version"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessMetadataTableCopyOperation, 21, Info, "{1}: directory={2} bytes={3}", "id", "TraceTag", "Directory", "ReceivedBytes"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessStartKeyFileCopyOperation, 22, Info, "{1}: directory={2} filename={3} bytes={4} fileid={5}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes", "FileId"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessWriteKeyFileCopyOperation, 23, Info, "{1}: directory={2} filename={3} bytes={4}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessEndKeyFileCopyOperation, 24, Info, "{1}: directory={2} filename={3} filesize={4}", "id", "TraceTag", "Directory", "Filename", "FileSize"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessStartValueFileCopyOperation, 25, Info, "{1}: directory={2} filename={3} bytes={4} fileid={5}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes", "FileId"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessWriteValueFileCopyOperation, 26, Info, "{1}: directory={2} filename={3} bytes={4}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessEndValueFileCopyOperation, 27, Info, "{1}: directory={2} filename={3} filesize={4}", "id", "TraceTag", "Directory", "Filename", "FileSize"),
-                STORE_STRUCTURED_TRACE(CopyManagerProcessCompleteCopyOperation, 28, Info, "{1}: directory={2}", "id", "TraceTag", "Directory"),
-                STORE_STRUCTURED_TRACE(CopyManagerException, 29, Warning, "{1}: UnexpectedException: message={2} error code={4}\nStack: {3}", "id", "TraceTag", "Message", "StackTrace", "ErrorCode"),
+                STORE_STRUCTURED_TRACE(CopyManagerAddCopyDataAsync, 18, Info, "{1}: Received bytes={2}", "id", "TraceTag", "ReceivedBytes"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationData, 19, Info, "{1}: directory={2} bytes={3}", "id", "TraceTag", "Directory", "ReceivedBytes"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationProtocol, 20, Info, "{1}: directory={2} version={3}", "id", "TraceTag", "Direcotry", "Version"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessVersionCopyOperationMsg, 21, Info, "{1}: Unknown copy protocol version={2}", "id", "TraceTag", "Version"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessMetadataTableCopyOperation, 22, Info, "{1}: directory={2} bytes={3}", "id", "TraceTag", "Directory", "ReceivedBytes"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessStartKeyFileCopyOperation, 23, Info, "{1}: directory={2} filename={3} bytes={4} fileid={5}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes", "FileId"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessWriteKeyFileCopyOperation, 24, Info, "{1}: directory={2} filename={3} bytes={4}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessEndKeyFileCopyOperation, 25, Info, "{1}: directory={2} filename={3} filesize={4}", "id", "TraceTag", "Directory", "Filename", "FileSize"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessStartValueFileCopyOperation, 26, Info, "{1}: directory={2} filename={3} bytes={4} fileid={5}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes", "FileId"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessWriteValueFileCopyOperation, 27, Info, "{1}: directory={2} filename={3} bytes={4}", "id", "TraceTag", "Directory", "Filename", "ReceivedBytes"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessEndValueFileCopyOperation, 28, Info, "{1}: directory={2} filename={3} filesize={4}", "id", "TraceTag", "Directory", "Filename", "FileSize"),
+                STORE_STRUCTURED_TRACE(CopyManagerProcessCompleteCopyOperation, 29, Info, "{1}: directory={2} copydiskwriterate={3}", "id", "TraceTag", "Directory", "CopyDiskWriteRate"),
+                STORE_STRUCTURED_TRACE(CopyManagerException, 30, Warning, "{1}: UnexpectedException: message={2} error code={4}\nStack: {3}", "id", "TraceTag", "Message", "StackTrace", "ErrorCode"),
 
                 // Store Copy Stream
-                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStarting, 30, Info, "{1}: starting directory={2}", "id", "TraceTag", "Directory"),
-                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageVersion, 31, Info, "{1}: version={2} bytes={3}", "id", "TraceTag", "Version", "Bytes"),
-                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageMetadataTable, 32, Info, "{1}: directory={2} bytes={3}", "id", "TraceTag", "Directory", "Bytes"),
-                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkOpen, 33, Info, "{1}: Opening file={2}", "id", "TraceTag", "File"),
-                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkStart, 34, Info, "{1}: Starting file={2} operation={3} bytes={4} fileid={5}", "id", "TraceTag", "File", "Operation", "Bytes", "FileId"),
-                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkWrite, 35, Info, "{1}: Writing file={2} operation={3} bytes={4}", "id", "TraceTag", "File", "Operation", "Bytes"),
-                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkEnd, 36, Info, "{1}: Ending file={2} operation={3}", "id", "TraceTag", "File", "Operation"),
-                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCompleted, 37, Info, "{1}: directory={2}", "id", "TraceTag", "Directory"),
-                STORE_STRUCTURED_TRACE(StoreCopyStreamException, 38, Warning, "{1}: UnexpectedException: Message: {2} Error Code: {4}\nStack: {3}", "id", "TraceTag", "Message", "StackTrace", "ErrorCode"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStarting, 31, Info, "{1}: starting directory={2}", "id", "TraceTag", "Directory"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageVersion, 32, Info, "{1}: version={2} bytes={3}", "id", "TraceTag", "Version", "Bytes"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageMetadataTable, 33, Info, "{1}: directory={2} bytes={3}", "id", "TraceTag", "Directory", "Bytes"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkOpen, 34, Info, "{1}: Opening file={2}", "id", "TraceTag", "File"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkStart, 35, Info, "{1}: Starting file={2} operation={3} bytes={4} fileid={5}", "id", "TraceTag", "File", "Operation", "Bytes", "FileId"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkWrite, 36, Info, "{1}: Writing file={2} operation={3} bytes={4}", "id", "TraceTag", "File", "Operation", "Bytes"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCheckpointChunkEnd, 37, Info, "{1}: Ending file={2} operation={3}", "id", "TraceTag", "File", "Operation"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamCopyStageCompleted, 38, Info, "{1}: directory={2} copydiskreadrate={3}", "id", "TraceTag", "Directory", "CopyDiskReadRate"),
+                STORE_STRUCTURED_TRACE(StoreCopyStreamException, 39, Warning, "{1}: UnexpectedException: Message: {2} Error Code: {4}\nStack: {3}", "id", "TraceTag", "Message", "StackTrace", "ErrorCode"),
 
                 // Store
                 STORE_STRUCTURED_TRACE(StoreConstructor, 100, Info, "{1}: ctor name={2}", "id", "TraceTag", "Name"),
@@ -229,7 +232,7 @@ namespace Data
                 STORE_STRUCTURED_TRACE(StorePrepareCheckpointCompletedApi, 134, Info, "{1}: count={2}", "id", "TraceTag", "Count"),
                 STORE_STRUCTURED_TRACE(StorePerformCheckpointAsyncStartApi, 135, Info, "{1}: perfom checkpoint starting. last prepare checkpoint lsn={2}; checkpoint lsn={3}", "id", "TraceTag", "LastPrepareLSN", "CheckpointLSN"),
                 STORE_STRUCTURED_TRACE(StoreCheckpointAsyncApi, 136, Info, "{1}: {2}", "id", "TraceTag", "Message"),
-                STORE_STRUCTURED_TRACE(StorePerformCheckpointAsyncCompletedApi, 137, Info, "{1}: last fileid={2} duration={3} ms", "id", "TraceTag", "FileId", "Duration"),
+                STORE_STRUCTURED_TRACE(StorePerformCheckpointAsyncCompletedApi, 137, Info, "{1}: last fileid={2} duration={3} ms itemcount={4} disksize={5} memorysize={6}", "id", "TraceTag", "FileId", "Duration", "ItemCount", "DiskSize", "MemorySize"),
                 STORE_STRUCTURED_TRACE(StoreCompleteCheckpointAsyncApi, 138, Info, "{1}: complete checkpoint {2}", "id", "TraceTag", "Message"),
                 STORE_STRUCTURED_TRACE(StoreCompleteCheckpointAsyncCompletedApi, 139, Info, "{1}: total={2} ms replace={3} ms swap={4} ms computeToBeDeleted={5} ms delete={5} ms; checkpointed={6} bytes", "id", "TraceTag", "TotalTime", "ReplaceTime", "SwapTime", "ComputeDeletedTime", "DeleteTime", "Size"),
                 STORE_STRUCTURED_TRACE(StoreRecoverCheckpointAsyncApi, 140, Info, "{1}: {2} count={3} recovered={4} bytes lsn={5}", "id", "TraceTag", "Message", "Count", "Size", "LSN"),
@@ -251,14 +254,15 @@ namespace Data
                 STORE_STRUCTURED_TRACE(StoreRestoreCheckpointAsyncApi, 156, Info, "{1}: folder={2} {3}", "id", "TraceTag", "Folder", "Message"),
                 STORE_STRUCTURED_TRACE(StoreRestoreCheckpointAsyncFile, 157, Info, "{1}: folder={2} restoring file {3} to {4}", "id", "TraceTag", "Folder", "Source", "Destination"),
                 STORE_STRUCTURED_TRACE(StoreRestoreCheckpointAsyncError, 158, Error, "{1}: failed with error status {2}", "id", "TraceTag", "Status"),
-                STORE_STRUCTURED_TRACE(StoreCreateKeyEnumeratorAsync, 159, Info, "{1}: Txn: {1} VisibilitySequenceNumber: {2}", "id", "TraceTag", "Transaction", "VisibilitySequenceNumber"),
+                STORE_STRUCTURED_TRACE(StoreCreateKeyEnumeratorAsync, 159, Info, "{1}: Txn: {2} VisibilitySequenceNumber: {3}", "id", "TraceTag", "Transaction", "VisibilitySequenceNumber"),
                 STORE_STRUCTURED_TRACE(StoreRebuildNotificationStarting, 160, Info, "{1}: starting", "id", "TraceTag"),
                 STORE_STRUCTURED_TRACE(StoreRebuildNotificationCompleted, 161, Info, "{1}: completed; duration: {2} ms", "id", "TraceTag", "Duration"),
                 STORE_STRUCTURED_TRACE(StoreSweep, 162, Info, "{1}: {2}", "id", "TraceTag", "Message"),
-                STORE_STRUCTURED_TRACE(StoreException, 163, Warning, "{1}: UnexpectedException: Message: {2} Code:{4}\nStack: {3}", "id", "TraceTag", "Message", "StackTrace", "ErrorCode"),
+                STORE_STRUCTURED_TRACE(StoreException, 163, Warning, "{1}: UnexpectedException: Message: {2} txn={3} key={4} Code:{5}\nStack: {6}", "id", "TraceTag", "Message", "Transaction", "Key", "ErrorCode", "Stack"),
                 STORE_STRUCTURED_TRACE(StoreThrowIfNotWritable, 164, Warning, "{1}: txn={2} status={3} role={4}", "id", "TraceTag", "Transaction", "Status", "Role"),
                 STORE_STRUCTURED_TRACE(StoreThrowIfNotReadable, 165, Warning, "{1}: txn={2} status={3} role={4}", "id", "TraceTag", "Transaction", "Status", "Role"),
-                STORE_STRUCTURED_TRACE(StoreOnCleanupAsyncApiPrimeLockNotAcquired, 166, Warning, "{1}: timed out trying to acquire prime lock", "id", "TraceTag")
+                STORE_STRUCTURED_TRACE(StoreOnCleanupAsyncApiPrimeLockNotAcquired, 166, Warning, "{1}: timed out trying to acquire prime lock", "id", "TraceTag"),
+                STORE_STRUCTURED_TRACE(StoreSize, 167, Info, "{1}: itemcount={2} disksize={3} memorysize={4}", "id", "TraceTag", "ItemCount", "DiskSize", "MemorySize")
             {
             }
             static Common::Global<StoreEventSource> Events;

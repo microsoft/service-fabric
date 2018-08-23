@@ -18,7 +18,8 @@ DigestedCodePackageDescription::DigestedCodePackageDescription() :
     IsShared(false),
     DebugParameters(),
     ContainerPolicies(),
-    ResourceGovernancePolicy()
+    ResourceGovernancePolicy(),
+    ConfigPackagePolicy()
 {
 }
 
@@ -31,7 +32,8 @@ DigestedCodePackageDescription::DigestedCodePackageDescription(DigestedCodePacka
     IsShared(other.IsShared),
     DebugParameters(other.DebugParameters),
     ContainerPolicies(other.ContainerPolicies),
-    ResourceGovernancePolicy(other.ResourceGovernancePolicy)
+    ResourceGovernancePolicy(other.ResourceGovernancePolicy),
+    ConfigPackagePolicy(other.ConfigPackagePolicy)
 {
 }
 
@@ -44,44 +46,9 @@ DigestedCodePackageDescription::DigestedCodePackageDescription(DigestedCodePacka
     IsShared(other.IsShared),
     DebugParameters(move(other.DebugParameters)),
     ContainerPolicies(move(other.ContainerPolicies)),
-    ResourceGovernancePolicy(move(other.ResourceGovernancePolicy))
+    ResourceGovernancePolicy(move(other.ResourceGovernancePolicy)),
+    ConfigPackagePolicy(move(other.ConfigPackagePolicy))
 {
-}
-
-DigestedCodePackageDescription const & DigestedCodePackageDescription::operator = (DigestedCodePackageDescription const & other)
-{
-    if (this != & other)
-    {
-        this->RolloutVersionValue = other.RolloutVersionValue;
-        this->CodePackage = other.CodePackage;
-        this->RunAsPolicy = other.RunAsPolicy;
-        this->SetupRunAsPolicy = other.SetupRunAsPolicy;
-        this->ContentChecksum = other.ContentChecksum;
-        this->IsShared = other.IsShared;
-        this->DebugParameters = other.DebugParameters;
-        this->ContainerPolicies = other.ContainerPolicies;
-        this->ResourceGovernancePolicy = other.ResourceGovernancePolicy;
-    }
-
-    return *this;
-}
-
-DigestedCodePackageDescription const & DigestedCodePackageDescription::operator = (DigestedCodePackageDescription && other)
-{
-    if (this != & other)
-    {
-        this->RolloutVersionValue = move(other.RolloutVersionValue);
-        this->CodePackage = move(other.CodePackage);
-        this->RunAsPolicy = move(other.RunAsPolicy);
-        this->SetupRunAsPolicy = move(other.SetupRunAsPolicy);
-        this->ContentChecksum = move(other.ContentChecksum);
-        this->IsShared = other.IsShared;
-        this->DebugParameters = move(other.DebugParameters);
-        this->ContainerPolicies = move(other.ContainerPolicies);
-        this->ResourceGovernancePolicy = move(other.ResourceGovernancePolicy);
-    }
-
-    return *this;
 }
 
 bool DigestedCodePackageDescription::operator == (DigestedCodePackageDescription const & other) const
@@ -146,6 +113,7 @@ void DigestedCodePackageDescription::WriteTo(TextWriter & w, FormatOptions const
     w.Write("DebugParameters = {0}", DebugParameters);
     w.Write("ContainerPolicies = {0}", ContainerPolicies);
     w.Write("ResourceGovernancePolicy = {0}", ResourceGovernancePolicy);
+    w.Write("ConfigPackagePolicies = {0}", ConfigPackagePolicy);
     w.Write("}");
 }
 
@@ -189,6 +157,7 @@ void DigestedCodePackageDescription::ReadFromXml(
     ParseDebugParameters(xmlReader);
     ParseContainerPolicies(xmlReader);
     ParseResourceGovernancePolicy(xmlReader);
+    ParseConfigPackagePolicy(xmlReader);
     // </DigestedCodePackage>
     xmlReader->ReadEndElement();
 }
@@ -246,7 +215,11 @@ ErrorCode DigestedCodePackageDescription::WriteToXml(XmlWriterUPtr const & xmlWr
     {
         return er;
     }
-
+    er = ConfigPackagePolicy.WriteToXml(xmlWriter);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
     return xmlWriter->WriteEndElement();
 }
 
@@ -258,6 +231,7 @@ void DigestedCodePackageDescription::clear()
     this->DebugParameters.clear();
     this->ContainerPolicies.clear();
     this->ResourceGovernancePolicy.clear();
+    this->ConfigPackagePolicy.clear();
 }
 
 void DigestedCodePackageDescription::ParseRunasPolicies(XmlReaderUPtr const & xmlReader)
@@ -322,5 +296,15 @@ void DigestedCodePackageDescription::ParseResourceGovernancePolicy(XmlReaderUPtr
         *SchemaNames::Namespace))
     {
         this->ResourceGovernancePolicy.ReadFromXml(xmlReader);
+    }
+}
+
+void DigestedCodePackageDescription::ParseConfigPackagePolicy(XmlReaderUPtr const & xmlReader)
+{
+    if (xmlReader->IsStartElement(
+        *SchemaNames::Element_ConfigPackagePolicies,
+        *SchemaNames::Namespace))
+    {
+        this->ConfigPackagePolicy.ReadFromXml(xmlReader);
     }
 }

@@ -154,3 +154,21 @@ ErrorCode TestClientFactory::CreateComposeManagementClient(__out IComposeManagem
     clientPtr = RootedObjectPointer<IComposeManagementClient>(nullptr, this->CreateComponentRoot());
     return ErrorCode::Success();
 }
+
+ErrorCode TestClientFactory::CreateSecretStoreClient(__out ISecretStoreClientPtr &clientPtr)
+{
+    clientPtr = RootedObjectPointer<ISecretStoreClient>(nullptr, this->CreateComponentRoot());
+    return ErrorCode::Success();
+}
+
+ErrorCode TestClientFactory::CreateResourceManagerClient(__out Api::IResourceManagerClientPtr &clientPtr)
+{
+    clientPtr = RootedObjectPointer<IResourceManagerClient>(nullptr, this->CreateComponentRoot());
+    return ErrorCode::Success();
+}
+
+ErrorCode TestClientFactory::CreateResourceManagementClient(__out IResourceManagementClientPtr &clientPtr)
+{
+    clientPtr = RootedObjectPointer<IResourceManagementClient>(nullptr, this->CreateComponentRoot());
+    return ErrorCode::Success();
+}

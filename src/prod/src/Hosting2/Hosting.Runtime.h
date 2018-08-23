@@ -54,6 +54,8 @@
 #include "Hosting2/ComDataPackage.h"
 #include "Hosting2/CodePackageActivationContext.h"
 #include "Hosting2/ComCodePackageActivationContext.h"
+#include "Hosting2/ITentativeApplicationHostCodePackageActivator.h"
+#include "Hosting2/ComApplicationHostCodePackageActivator.h"
 #if !defined (PLATFORM_UNIX)
 #include "Hosting2/FabricGetBackupSchedulePolicyResult.h"
 #include "Hosting2/FabricGetRestorePointDetailsResult.h"

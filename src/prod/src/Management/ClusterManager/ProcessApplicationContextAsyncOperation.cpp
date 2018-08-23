@@ -15,114 +15,6 @@ using namespace Reliability;
 
 StringLiteral const TraceComponent("ApplicationContextAsyncOperation");
 
-class ProcessApplicationContextAsyncOperation::CreateDefaultServiceWithDnsNameAsyncOperation
-    : public TimedAsyncOperation
-{
-    DENY_COPY(CreateDefaultServiceWithDnsNameAsyncOperation)
-
-public:
-    CreateDefaultServiceWithDnsNameAsyncOperation(
-        ServiceContext &defaultServiceContext,
-        ProcessApplicationContextAsyncOperation &owner,
-        Common::ActivityId &activityId,
-        TimeSpan timeout,
-        AsyncCallback callback,
-        AsyncOperationSPtr const &parent)
-        : TimedAsyncOperation(timeout, callback, parent)
-        , defaultServiceContext_(defaultServiceContext)
-        , owner_(owner)
-        , activityId_(activityId)
-    {
-    }
-
-    static ErrorCode CreateDefaultServiceWithDnsNameAsyncOperation::End(AsyncOperationSPtr const &operation)
-    {
-        auto casted = AsyncOperation::End<CreateDefaultServiceWithDnsNameAsyncOperation>(operation);
-        return casted->Error;
-    }
-
-    void OnStart(AsyncOperationSPtr const &thisSPtr)
-    {
-        if (!defaultServiceContext_.ServiceDescriptor.Service.ServiceDnsName.empty())
-        {
-            auto operation = this->owner_.BeginCreateServiceDnsName(
-                defaultServiceContext_.ServiceDescriptor.Service.Name,
-                defaultServiceContext_.ServiceDescriptor.Service.ServiceDnsName,
-                activityId_,
-                this->RemainingTime,
-                [this](AsyncOperationSPtr const &operation)
-                {
-                    this->OnCreateDnsNameComplete(operation, false);
-                },
-                thisSPtr);
-
-            this->OnCreateDnsNameComplete(operation, true);
-        }
-        else
-        {
-            auto operation = this->owner_.Client.BeginCreateService(
-                defaultServiceContext_.ServiceDescriptor,
-                defaultServiceContext_.PackageVersion,
-                defaultServiceContext_.PackageInstance,
-                activityId_,
-                this->RemainingTime,
-                [this](AsyncOperationSPtr const &operation)
-                {
-                    this->OnCreateServiceComplete(operation, false);
-                },
-                thisSPtr);
-
-            this->OnCreateServiceComplete(operation, true);
-        }
-    }
-
-    void OnCreateDnsNameComplete(AsyncOperationSPtr const &operation, bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
-
-        auto error = this->owner_.EndCreateServiceDnsName(operation);
-        if (!error.IsSuccess())
-        {
-            // dns name creation failed
-            this->TryComplete(operation->Parent, error);
-            return;
-        }
-
-        auto innerOp = this->owner_.Client.BeginCreateService(
-            defaultServiceContext_.ServiceDescriptor,
-            defaultServiceContext_.PackageVersion,
-            defaultServiceContext_.PackageInstance,
-            activityId_,
-            this->RemainingTime,
-            [this](AsyncOperationSPtr const &operation)
-            {
-                this->OnCreateServiceComplete(operation, false);
-            },
-            operation->Parent);
-
-        this->OnCreateServiceComplete(innerOp, true);
-    }
-
-    void OnCreateServiceComplete(AsyncOperationSPtr const &operation, bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
-
-        auto error = this->owner_.Client.EndCreateService(operation);
-        if (error.IsError(ErrorCodeValue::UserServiceAlreadyExists))
-        {
-            error = ErrorCode::Success();
-        }
-
-        this->TryComplete(operation->Parent, error);
-    }
-
-private:
-
-    ServiceContext &defaultServiceContext_;
-    ProcessApplicationContextAsyncOperation &owner_;
-    Common::ActivityId activityId_;
-};
-
 ProcessApplicationContextAsyncOperation::ProcessApplicationContextAsyncOperation(
     __in RolloutManager & rolloutManager,
     __in ApplicationContext & context,
@@ -157,7 +49,7 @@ void ProcessApplicationContextAsyncOperation::OnStart(AsyncOperationSPtr const &
 
     if (!error.IsSuccess())
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -195,7 +87,7 @@ void ProcessApplicationContextAsyncOperation::EndCreateName(AsyncOperationSPtr c
 
     if (!error.IsSuccess())
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -245,7 +137,7 @@ void ProcessApplicationContextAsyncOperation::EndCreateProperty(AsyncOperationSP
     }
     else
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -269,17 +161,23 @@ void ProcessApplicationContextAsyncOperation::OnBuildApplicationComplete(
                 ErrorCodeValue::ImageBuilderValidationError,
                 move(errorDetails));
         }
+
+        this->SendCreateApplicationRequestToFM(thisSPtr);
     }
 
     if (!error.IsSuccess())
 	{
-		this->TryComplete(thisSPtr, error);
+		this->TryComplete(thisSPtr, move(error));
 		return;
 	}
+}
 
+void ProcessApplicationContextAsyncOperation::SendCreateApplicationRequestToFM(
+    AsyncOperationSPtr const & thisSPtr)
+{
     // Send the request to FM with capacity description and with RG settings
     ApplicationIdentifier appId;
-    error = ApplicationIdentifier::FromString(context_.ApplicationId.Value, appId);
+    ErrorCode error = ApplicationIdentifier::FromString(context_.ApplicationId.Value, appId);
 
     if (error.IsSuccess())
     {
@@ -288,7 +186,8 @@ void ProcessApplicationContextAsyncOperation::OnBuildApplicationComplete(
             appId,
             context_.PackageInstance,
             context_.ApplicationCapacity,
-            appDescription_.ResourceGovernanceDescriptions);
+            appDescription_.ResourceGovernanceDescriptions,
+            appDescription_.CodePackageContainersImages);
 
         auto request = RSMessage::GetCreateApplicationRequest().CreateMessage(body);
 
@@ -469,7 +368,7 @@ void ProcessApplicationContextAsyncOperation::OnCommitPendingDefaultServicesComp
     }
     else
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -512,8 +411,8 @@ AsyncOperationSPtr ProcessApplicationContextAsyncOperation::BeginCreateService(
     // create the service at FM.
     //
     Common::ActivityId innerActivityId(context_.ActivityId, static_cast<uint64>(operationIndex));
-    auto &defaultServiceContext = defaultServices_[operationIndex];
-    return AsyncOperation::CreateAndStart<CreateDefaultServiceWithDnsNameAsyncOperation>(
+    auto const &defaultServiceContext = defaultServices_[operationIndex];
+    return AsyncOperation::CreateAndStart<CreateDefaultServiceWithDnsNameIfNeededAsyncOperation>(
         defaultServiceContext,
         *this,
         innerActivityId,
@@ -526,7 +425,7 @@ void ProcessApplicationContextAsyncOperation::EndCreateService(
     Common::AsyncOperationSPtr const & operation,
     ParallelOperationsCompletedCallback const & callback)
 {
-    auto error = CreateDefaultServiceWithDnsNameAsyncOperation::End(operation);
+    auto error = CreateDefaultServiceWithDnsNameIfNeededAsyncOperation::End(operation);
 
     callback(operation->Parent, error);
 }
@@ -555,7 +454,7 @@ void ProcessApplicationContextAsyncOperation::OnCreateServicesComplete(
     auto error = this->ReportApplicationPolicy(TraceComponent, thisSPtr, context_);
     if (!error.IsSuccess())
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -661,7 +560,7 @@ void ProcessApplicationContextAsyncOperation::FinishCreateApplication(AsyncOpera
     }
     else
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -690,12 +589,14 @@ void ProcessApplicationContextAsyncOperation::OnCommitComplete(
             context_.ManifestId);
 
         CMEvents::Trace->ApplicationCreatedOperational(
+            Common::Guid::NewGuid(),
             context_.ApplicationName.ToString(), 
             context_.TypeName.Value, 
-            context_.TypeVersion.Value);
+            context_.TypeVersion.Value,
+            context_.ApplicationDefinitionKind);
     }
 
-    this->TryComplete(operation->Parent, error);
+    this->TryComplete(operation->Parent, move(error));
 }
 
 ErrorCode ProcessApplicationContextAsyncOperation::End(AsyncOperationSPtr const & operation)

@@ -104,27 +104,37 @@ void PhysicalLogRecord::Read(
 void PhysicalLogRecord::Write(
     __in BinaryWriter & binaryWriter, 
     __in OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
     ULONG32 startingPosition = binaryWriter.Position;
     binaryWriter.Position += sizeof(ULONG32);
 
-    if(linkedPhysicalRecordOffset_ == Constants::InvalidPhysicalRecordOffset)
+    if(linkedPhysicalRecordOffset_ == Constants::InvalidPhysicalRecordOffset || forceRecomputeOffsets == true)
     {
         ASSERT_IFNOT(
+            linkedPhysicalRecord_ != nullptr || forceRecomputeOffsets == true,
+            "Linked physical record must not be null. (linkedPhysicalRecord_ != nullptr)={0}. forceRecomputeOffsets={1}",
             linkedPhysicalRecord_ != nullptr,
-            "Linked physical record must not be null");
+            forceRecomputeOffsets);
 
-        ASSERT_IFNOT(
-            linkedPhysicalRecord_->RecordPosition != Constants::InvalidRecordPosition,
-            "Linked physical record position must be valid");
+        if (linkedPhysicalRecord_ == nullptr)
+        {
+            linkedPhysicalRecordOffset_ = 0;
+        }
+        else
+        {
+            ASSERT_IFNOT(
+                linkedPhysicalRecord_->RecordPosition != Constants::InvalidRecordPosition,
+                "Linked physical record position must be valid");
 
-        ASSERT_IFNOT(
-            RecordPosition != Constants::InvalidRecordPosition,
-            "Record position must be valid");
+            ASSERT_IFNOT(
+                RecordPosition != Constants::InvalidRecordPosition,
+                "Record position must be valid");
 
-        linkedPhysicalRecordOffset_ = RecordPosition - linkedPhysicalRecord_->RecordPosition;
+            linkedPhysicalRecordOffset_ = RecordPosition - linkedPhysicalRecord_->RecordPosition;
+        }
     }
 
     binaryWriter.Write(linkedPhysicalRecordOffset_);

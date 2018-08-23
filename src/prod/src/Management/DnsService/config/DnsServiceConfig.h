@@ -16,6 +16,10 @@ namespace DNS
         PUBLIC_CONFIG_ENTRY(bool, L"DnsService", IsEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
         PUBLIC_CONFIG_ENTRY(int, L"DnsService", InstanceCount, -1, Common::ConfigEntryUpgradePolicy::Static);
         PUBLIC_CONFIG_ENTRY(bool, L"DnsService", SetAsPreferredDns, true, Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(bool, L"DnsService", AllowMultipleListeners, false, Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"DnsService", PartitionPrefix, L"--", Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"DnsService", PartitionSuffix, L"", Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(bool, L"DnsService", EnablePartitionedQuery, false, Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(std::wstring, L"DnsService", PlacementConstraints, L"", Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(int, L"DnsService", DnsPort, 53, Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(int, L"DnsService", NumberOfConcurrentQueries, 100, Common::ConfigEntryUpgradePolicy::Static);

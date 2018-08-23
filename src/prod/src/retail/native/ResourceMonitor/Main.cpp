@@ -16,18 +16,18 @@ LPCWSTR ResourceMonitorTypeName = L"ResourceMonitorServiceType";
 
 int main()
 {
-	IFabricRuntime* pRuntime;
-	HRESULT hr = FabricCreateRuntime(IID_IFabricRuntime, (void**)(&pRuntime));
+    ComPointer<IFabricRuntime> runtimeCPtr;
 
-	auto serviceFactory = make_com<ResourceMonitorServiceFactory, IFabricStatelessServiceFactory>(pRuntime);
-	auto &ipc = (dynamic_cast<ComFabricRuntime*>(pRuntime))->Runtime->Host.Client;
+    HRESULT hr = ::FabricCreateRuntime(
+        IID_IFabricRuntime,
+        runtimeCPtr.VoidInitializationAddress());
+    if (FAILED(hr)) { return hr; }
 
-	ComPointer<IFabricRuntime> spFabricRuntime;
-	spFabricRuntime.SetNoAddRef(pRuntime);
-	serviceFactory.GetRawPointer();
+    auto serviceFactory = make_com<ResourceMonitorServiceFactory, IFabricStatelessServiceFactory>(runtimeCPtr);
 
-	hr = spFabricRuntime->RegisterStatelessServiceFactory(ResourceMonitorTypeName, serviceFactory.GetRawPointer());
-	UNREFERENCED_PARAMETER(hr); UNREFERENCED_PARAMETER(ipc);
+    hr = runtimeCPtr->RegisterStatelessServiceFactory(ResourceMonitorTypeName, serviceFactory.GetRawPointer());
+    if (FAILED(hr)) { return hr; }
+
     while (1)
     {
         Sleep(10000);

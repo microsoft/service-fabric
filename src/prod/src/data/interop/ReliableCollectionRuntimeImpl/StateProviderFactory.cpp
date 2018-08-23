@@ -6,6 +6,7 @@
 #include "stdafx.h"
 
 using namespace Data;
+using namespace Data::Collections;
 using namespace Utilities;
 using namespace TStore;
 using namespace Data::Interop;
@@ -18,7 +19,11 @@ NTSTATUS StateProviderFactory::Create(
     if (!storeFactory)
         return STATUS_INSUFFICIENT_RESOURCES;
 
-    StateProviderFactory* pointer = _new(RELIABLECOLLECTIONRUNTIME_TAG, allocator) StateProviderFactory(storeFactory.RawPtr());
+    RCQStateProviderFactory::SPtr rcqFactory = RCQStateProviderFactory::CreateBufferFactory(allocator);
+    if (!rcqFactory)
+        return STATUS_INSUFFICIENT_RESOURCES;
+
+    StateProviderFactory* pointer = _new(RELIABLECOLLECTIONRUNTIME_TAG, allocator) StateProviderFactory(storeFactory.RawPtr(), rcqFactory.RawPtr());
     if (!pointer)
         return STATUS_INSUFFICIENT_RESOURCES;
 
@@ -42,15 +47,41 @@ NTSTATUS StateProviderFactory::Create(
 
     if (stateProviderInfo->Kind == StateProviderKind::Store)
     {
-        status = CreateStringUTF16KeyBufferValueStore(factoryArguments, stateProvider);
+        status = storeFactory_->Create(factoryArguments, stateProvider);
         if (!NT_SUCCESS(status))
             return status;
     }
     else if (stateProviderInfo->Kind == StateProviderKind::ConcurrentQueue)
     {
-        status = CreateBufferItemRCQ(factoryArguments, stateProvider);
+        status = rcqFactory_->Create(factoryArguments, stateProvider);
         if (!NT_SUCCESS(status))
             return status;
+    }
+    else if (stateProviderInfo->Kind == StateProviderKind::ReliableDictionary_Compat)
+    {
+        KStringView uriLastSegment;
+        ULONG uriSegmentCount = const_cast<KUri*>(factoryArguments.Name.RawPtr())->GetSegmentCount();
+        const_cast<KUri*>(factoryArguments.Name.RawPtr())->GetSegment(uriSegmentCount - 1, uriLastSegment);
+        if (uriLastSegment.Compare(L"dataStore") == 0)
+        {
+            // Create internal TStore component of ReliableDictionary
+            status = storeFactory_->Create(factoryArguments, stateProvider);
+            if (!NT_SUCCESS(status))
+                return status;
+        }
+        else
+        {
+            // Create dummy wrapper ReliableDictionary state provider
+            CompatRDStateProvider::SPtr compatRDStateProvider;
+            status = CompatRDStateProvider::Create(
+                factoryArguments,
+                GetThisAllocator(),
+                compatRDStateProvider);
+            if (!NT_SUCCESS(status))
+                return status;
+
+            stateProvider = static_cast<TxnReplicator::IStateProvider2*>(compatRDStateProvider.RawPtr());
+        }
     }
     else
     {
@@ -72,27 +103,13 @@ NTSTATUS StateProviderFactory::Create(
     return STATUS_SUCCESS;
 }
 
-NTSTATUS StateProviderFactory::CreateStringUTF16KeyBufferValueStore(
-    __in Data::StateManager::FactoryArguments const & factoryArguments,
-    __out TxnReplicator::IStateProvider2::SPtr & stateProvider)
-{
-    return storeFactory_->Create(factoryArguments, stateProvider);
-}
-
-NTSTATUS StateProviderFactory::CreateBufferItemRCQ(
-    __in Data::StateManager::FactoryArguments const & factoryArguments,
-    __out TxnReplicator::IStateProvider2::SPtr & stateProvider)
-{
-    UNREFERENCED_PARAMETER(factoryArguments);
-    UNREFERENCED_PARAMETER(stateProvider);
-    // TODO Call Queue Ctor
-    return STATUS_SUCCESS;
-}
-
-StateProviderFactory::StateProviderFactory(__in Data::StateManager::IStateProvider2Factory* factory)
+StateProviderFactory::StateProviderFactory(
+    __in Data::StateManager::IStateProvider2Factory* storeFactory,
+    __in Data::StateManager::IStateProvider2Factory* rcqFactory)
     : KObject()
     , KShared()
-    , storeFactory_(factory)
+    , storeFactory_(storeFactory)
+    , rcqFactory_(rcqFactory)
 {
 }
 

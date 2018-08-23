@@ -31,6 +31,11 @@ namespace Reliability
                 __declspec(property(get = get_ReplicaHealthEvents)) std::vector<ReplicaHealthEventInfo> & ReplicaHealthEvents;
                 std::vector<ReplicaHealthEventInfo> & get_ReplicaHealthEvents()  { return replicaHealthEvents_; }
 
+                Common::ErrorCode ReportStoreProviderEvent(ServiceModel::HealthReport &&)
+                {
+                    return Common::ErrorCodeValue::Success;
+                }
+
                 Common::ErrorCode ReportReplicaEvent(
                     Health::ReplicaHealthEvent::Enum type,
                     Reliability::FailoverUnitId const & ftId,
@@ -66,6 +71,11 @@ namespace Reliability
             class PerfTestHealthSubsystemWrapperStub : public Health::IHealthSubsystemWrapper
             {
             public:
+                Common::ErrorCode ReportStoreProviderEvent(ServiceModel::HealthReport &&)
+                {
+                    return Common::ErrorCodeValue::Success;
+                }
+
                 Common::ErrorCode ReportReplicaEvent(
                     Health::ReplicaHealthEvent::Enum ,
                     Reliability::FailoverUnitId const & ,

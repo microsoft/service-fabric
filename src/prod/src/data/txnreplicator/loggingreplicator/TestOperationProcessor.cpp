@@ -20,7 +20,8 @@ TestOperationProcessor::TestOperationProcessor(
     __in int minDelay, 
     __in int maxDelay, 
     __in int seed,
-    __in TxnReplicator::TRInternalSettingsSPtr const & config,
+    __in TRInternalSettingsSPtr const & config,
+    __in bool useParallelDispatcher,
     __in KAllocator & allocator)
     : IOperationProcessor()
     , KObject()
@@ -38,7 +39,22 @@ TestOperationProcessor::TestOperationProcessor(
     , minDelay_(minDelay)
     , maxDelay_(maxDelay)
 {
-    recordsDispatcher_ = LogRecordsDispatcher::Create(traceId, *this, config, allocator);
+    if (!useParallelDispatcher)
+    {
+        if (Common::DateTime::Now().Ticks % 2 == 0)
+        {
+            recordsDispatcher_ = SerialLogRecordsDispatcher::Create(traceId, *this, config, allocator);
+        }
+        else
+        {
+            recordsDispatcher_ = ParallelLogRecordsDispatcher::Create(traceId, *this, config, allocator);
+        }
+    }
+    else
+    {
+        recordsDispatcher_ = ParallelLogRecordsDispatcher::Create(traceId, *this, config, allocator);
+    }
+
     groupCommits_.Append(TestGroupCommitValidationResult());
 
     CODING_ERROR_ASSERT(minDelay_ <= maxDelay_);
@@ -56,11 +72,26 @@ TestOperationProcessor::SPtr TestOperationProcessor::Create(
     __in TxnReplicator::TRInternalSettingsSPtr const & config,
     __in KAllocator & allocator)
 {
-    TestOperationProcessor * testOperationProcessor = _new(TESTOPERATIONPROCESSOR_TAG, allocator)TestOperationProcessor(traceId, minDelay, maxDelay, seed, config, allocator);
+    TestOperationProcessor * testOperationProcessor = _new(TESTOPERATIONPROCESSOR_TAG, allocator)TestOperationProcessor(traceId, minDelay, maxDelay, seed, config, false, allocator);
     CODING_ERROR_ASSERT(testOperationProcessor != nullptr);
 
     return TestOperationProcessor::SPtr(testOperationProcessor);
 }
+
+TestOperationProcessor::SPtr TestOperationProcessor::CreateWithParallelDispatcher(
+    __in PartitionedReplicaId const & traceId,
+    __in int minDelay, 
+    __in int maxDelay, 
+    __in int seed,
+    __in TxnReplicator::TRInternalSettingsSPtr const & config,
+    __in KAllocator & allocator)
+{
+    TestOperationProcessor * testOperationProcessor = _new(TESTOPERATIONPROCESSOR_TAG, allocator)TestOperationProcessor(traceId, minDelay, maxDelay, seed, config, true, allocator);
+    CODING_ERROR_ASSERT(testOperationProcessor != nullptr);
+
+    return TestOperationProcessor::SPtr(testOperationProcessor);
+}
+
 
 void TestOperationProcessor::Close()
 {
@@ -77,7 +108,7 @@ bool TestOperationProcessor::WaitForProcessingToComplete(
 
     do
     {
-        Sleep(2);
+        Sleep(100);
 
         if (processedRecordsCount_ >= targetProcessedRecord && processingRecordsCount_ == 0)
         {
@@ -100,7 +131,7 @@ bool TestOperationProcessor::WaitForBarrierProcessingToComplete(
 
     do
     {
-        Sleep(4);
+        Sleep(100);
 
         if (processingRecordsCount_ == 0 && barrierCount_ == expectedBarrierCount)
         {
@@ -164,17 +195,17 @@ Awaitable<void> TestOperationProcessor::ImmediatelyProcessRecordAsync(
         CODING_ERROR_ASSERT(status == STATUS_SUCCESS);
     }
 
-    InterlockedIncrement(&immediateCalledCount_);
+    InterlockedIncrement((volatile LONG*)&immediateCalledCount_);
 
     if (logRecord.RecordType == LogRecordType::Enum::Barrier)
     {
         groupCommits_[groupCommits_.Count() - 1].Lsn = logRecord.Lsn;
         groupCommits_.Append(TestGroupCommitValidationResult());
-        InterlockedIncrement(&barrierCount_);
+        InterlockedIncrement((volatile LONG*)&barrierCount_);
     }
 
-    InterlockedIncrement(&processedRecordsCount_);
-    InterlockedDecrement(&processingRecordsCount_);
+    InterlockedIncrement((volatile LONG*)&processedRecordsCount_);
+    InterlockedDecrement((volatile LONG*)&processingRecordsCount_);
 
     logRecord.CompletedApply(STATUS_SUCCESS);
     co_return;
@@ -182,12 +213,12 @@ Awaitable<void> TestOperationProcessor::ImmediatelyProcessRecordAsync(
 
 void TestOperationProcessor::PrepareToProcessLogicalRecord()
 {
-    InterlockedIncrement(&processingRecordsCount_);
+    InterlockedIncrement((volatile LONG*)&processingRecordsCount_);
 }
         
 void TestOperationProcessor::PrepareToProcessPhysicalRecord()
 {
-    InterlockedIncrement(&processingRecordsCount_);
+    InterlockedIncrement((volatile LONG*)&processingRecordsCount_);
 }
 
 Awaitable<void> TestOperationProcessor::ProcessLoggedRecordAsync(__in LogRecord & logRecord)
@@ -198,13 +229,13 @@ Awaitable<void> TestOperationProcessor::ProcessLoggedRecordAsync(__in LogRecord 
         CODING_ERROR_ASSERT(status == STATUS_SUCCESS);
     }
 
-    InterlockedIncrement(&normalCalledCount_);
+    InterlockedIncrement((volatile LONG*)&normalCalledCount_);
 
     if (logRecord.RecordType == LogRecordType::Enum::Barrier)
     {
         groupCommits_[groupCommits_.Count() - 1].Lsn = logRecord.Lsn;
         groupCommits_.Append(TestGroupCommitValidationResult());
-        InterlockedIncrement(&barrierCount_);
+        InterlockedIncrement((volatile LONG*)&barrierCount_);
     }
     else if (logRecord.RecordType == LogRecordType::Enum::BeginTransaction)
     {
@@ -227,8 +258,8 @@ Awaitable<void> TestOperationProcessor::ProcessLoggedRecordAsync(__in LogRecord 
         }
     }
 
-    InterlockedIncrement(&processedRecordsCount_);
-    InterlockedDecrement(&processingRecordsCount_);
+    InterlockedIncrement((volatile LONG*)&processedRecordsCount_);
+    InterlockedDecrement((volatile LONG*)&processingRecordsCount_);
 
     co_return;
 }
@@ -236,18 +267,18 @@ Awaitable<void> TestOperationProcessor::ProcessLoggedRecordAsync(__in LogRecord 
 void TestOperationProcessor::UpdateDispatchingBarrierTask(__in CompletionTask & barrierTask)
 {
     UNREFERENCED_PARAMETER(barrierTask);
-    InterlockedIncrement(&updateDispatchedBarrierTaskCount_);
+    InterlockedIncrement((volatile LONG*)&updateDispatchedBarrierTaskCount_);
 }
 
 // Notification APIs
 NTSTATUS TestOperationProcessor::RegisterTransactionChangeHandler(
-	__in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept
+    __in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept
 {
-	UNREFERENCED_PARAMETER(transactionChangeHandler);
-	CODING_ASSERT("NOT IMPLEMENTED");
+    UNREFERENCED_PARAMETER(transactionChangeHandler);
+    CODING_ASSERT("NOT IMPLEMENTED");
 }
 
 NTSTATUS TestOperationProcessor::UnRegisterTransactionChangeHandler() noexcept
 {
-	CODING_ASSERT("NOT IMPLEMENTED");
+    CODING_ASSERT("NOT IMPLEMENTED");
 }

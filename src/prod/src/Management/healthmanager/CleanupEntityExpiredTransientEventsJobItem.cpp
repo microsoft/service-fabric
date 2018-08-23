@@ -33,15 +33,3 @@ void CleanupEntityExpiredTransientEventsJobItem::FinishAsyncWork()
 {
     this->Entity->EndCleanupExpiredTransientEvents(*this, this->PendingAsyncWork);
 }
-
-bool CleanupEntityExpiredTransientEventsJobItem::CanCombine(IHealthJobItemSPtr const & other) const
-{
-    // Can combine only with other cleanup entity job items of the same type
-    return (other->Type == this->Type);
-}
-
-void CleanupEntityExpiredTransientEventsJobItem::Append(IHealthJobItemSPtr && other)
-{
-    // Both requests execute the same work, so simply ignore the second one
-    ASSERT_IFNOT(other->Type == this->Type, "{0}: can't append {1}", *this, *other);
-}

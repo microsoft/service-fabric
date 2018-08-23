@@ -58,7 +58,7 @@ namespace Transport
         virtual bool AuthenticateRemoteByClaims() const;
         virtual bool ShouldPerformClaimsRetrieval() const;
         virtual void CompleteClaimsRetrieval(Common::ErrorCode const &, std::wstring const & localClaims) = 0;
-        virtual void CompleteClientAuth(Common::ErrorCode error, SecuritySettings::RoleClaims const & clientClaims, Common::TimeSpan expiration) = 0;
+        virtual void CompleteClientAuth(Common::ErrorCode const & error, SecuritySettings::RoleClaims const & clientClaims, Common::TimeSpan expiration) = 0;
 
         virtual bool AccessCheck(AccessControl::FabricAcl const & acl, DWORD desiredAccess) const = 0;
 
@@ -160,6 +160,7 @@ namespace Transport
         ConnectionAuthMessage(std::wstring const & errorMessage, RoleMask::Enum roleGranted = RoleMask::None);
 
         std::wstring const & ErrorMessage() const;
+        std::wstring && TakeMessage();
         RoleMask::Enum RoleGranted() const { return roleGranted_; }
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 

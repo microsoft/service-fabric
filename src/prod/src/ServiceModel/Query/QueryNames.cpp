@@ -161,6 +161,22 @@ namespace Query
                     return L"GetAggregatedDeployedApplicationsOnNodeHealthPagedList";
                 case QueryNames::GetComposeDeploymentUpgradeProgress:
                     return L"GetComposeDeploymentUpgradeProgress";
+                case QueryNames::GetDeployedCodePackageListByApplication:
+                    return L"GetDeployedCodePackageListByApplication";
+                case QueryNames::GetReplicaListByServiceNames:
+                    return L"GetReplicaListByServiceNames";
+                case QueryNames::GetApplicationResourceList:
+                    return L"GetApplicationResourceList";
+                case QueryNames::GetServiceResourceList:
+                    return L"GetServiceResourceList";
+                case QueryNames::GetContainerCodePackageLogs:
+                    return L"GetContainerCodePackageLogs";
+                case QueryNames::GetReplicaResourceList:
+                    return L"GetReplicaResourceList";
+                case QueryNames::GetApplicationUnhealthyEvaluation:
+                    return L"GetApplicationUnhealthyEvaluation";
+                case QueryNames::GetVolumeResourceList:
+                    return L"GetVolumeResourceList";
                 default:
                     return wformatString("Unknown QueryNames::Enum value {0}", static_cast<int>(val));
             }

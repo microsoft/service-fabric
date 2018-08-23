@@ -21,7 +21,7 @@ namespace Data
         //              |__Properties__|__Checksum__|
         //              |__Footer______|__Checksum__|
         //  
-        //  Metadata section shows stateprovider infomation
+        //  Metadata section shows stateprovider information
         //  FileBlock contains the information 1. how many metadatas 2. size of each metadata
         //  Properties is key-value pairs of checkpoint file properties
         //  Footer section has the version, properties offset and size
@@ -77,6 +77,7 @@ namespace Data
             ktl::Awaitable<void> WriteAsync(
                 __in KSharedArray<SerializableMetadata::CSPtr> const & metadataArray,
                 __in SerializationMode::Enum serailizationMode,
+                __in bool allowPrepareCheckpointLSNToBeInvalid,
                 __in FABRIC_SEQUENCE_NUMBER prepareCheckpointLSN,
                 __in ktl::CancellationToken const & cancellationToken);
 
@@ -90,6 +91,7 @@ namespace Data
         private:
             ktl::Awaitable<void> WriteMetadataAsync(
                 __in SerializationMode::Enum serailizationMode,
+                __in bool allowPrepareCheckpointLSNToBeInvalid,
                 __in FABRIC_SEQUENCE_NUMBER prepareCheckpointLSN,
                 __in ktl::CancellationToken const & cancellationToken,
                 __inout ktl::io::KStream & fileStream);
@@ -138,11 +140,11 @@ namespace Data
                 __in KWString const & filePath) noexcept;
 
         private:
-            static const ULONG32 CopyProtocolVersion = 1;
-            static const ULONG32 DesiredBlockSize = 32 * 1024;
-            static const ULONG32 Version = 1;
-            static const LONGLONG BlockSizeSectionSize = sizeof(LONG32);
-            static const LONGLONG CheckSumSectionSize = sizeof(ULONG64);
+            static const ULONG32 CopyProtocolVersion;
+            static const ULONG32 DesiredBlockSize;
+            static const ULONG32 Version;
+            static const LONGLONG BlockSizeSectionSize;
+            static const LONGLONG CheckSumSectionSize;
 
         private:
             const KWString filePath_;

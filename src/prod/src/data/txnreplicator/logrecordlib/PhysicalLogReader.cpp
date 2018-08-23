@@ -58,7 +58,7 @@ PhysicalLogReader::PhysicalLogReader(
     ASSERT_IFNOT(
         result == TRUE,
         "PhysicalLogReader::Ctor : Failed to concatenate {0}",
-        Data::Utilities::ToStringLiteral(readerName)); // otherwise reader is too long
+        ToStringLiteral(readerName)); // otherwise reader is too long
 }
 
 PhysicalLogReader::~PhysicalLogReader()
@@ -104,12 +104,12 @@ void PhysicalLogReader::Dispose()
 }
  
 IAsyncEnumerator<LogRecord::SPtr>::SPtr PhysicalLogReader::GetLogRecords(
-    __in Data::Utilities::PartitionedReplicaId const & traceId,
+    __in PartitionedReplicaId const & traceId,
     __in KStringView const & readerName,
     __in LogReaderType::Enum readerType,
     __in LONG64 readAheadCacheSizeBytes,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig)
 {
     IAsyncEnumerator<LogRecord::SPtr>::SPtr logRecords = LogRecords::Create(
         traceId,

@@ -28,14 +28,14 @@ namespace FailoverManagerUnitTest
         TEST_CLASS_CLEANUP(ClassCleanup);
 
         void CheckState(
-			wstring const &testName,
+            wstring const &testName,
             wstring inputFailoverUnitStr,
             wstring expectedOutputFailoverUnitStr,
             wstring expectedActions,
             int expectedReplicaDifference = 0);
 
         void CheckMessage(
-			wstring const & testName,
+            wstring const & testName,
             wstring const& msgAction,
             wstring msgBodyStr,
             wstring inputFailoverUnitStr,
@@ -43,15 +43,22 @@ namespace FailoverManagerUnitTest
             wstring expectedActionsStr,
             wstring fromNode);
 
-		void CheckPlbMovement(
-			wstring const& testName,
-			wstring movementStr,
-			wstring inputFailoverUnitStr,
-			wstring expectedOutputFailoverUnitStr,
-			wstring expectedActionsStr,
-			int expectedReplicaDifference);
-		
-		ComponentRootSPtr root_;
+        void CheckPlbMovement(
+            wstring const& testName,
+            wstring movementStr,
+            wstring inputFailoverUnitStr,
+            wstring expectedOutputFailoverUnitStr,
+            wstring expectedActionsStr,
+            int expectedReplicaDifference);
+
+        void CheckPlbAutoScale(
+            wstring const& testName,
+            wstring inputFailoverUnitStr,
+            int expectedTargetCount,
+            int expectedReplicaDifference
+        );
+        
+        ComponentRootSPtr root_;
         FailoverManagerSPtr fm_;
 
         vector<StateMachineTaskUPtr> statelessTasks_;
@@ -59,13 +66,13 @@ namespace FailoverManagerUnitTest
     };
 
     void TestStateMachineTask::CheckState(
-		wstring const & testName,
+        wstring const & testName,
         wstring inputFailoverUnitStr,
         wstring expectedOutputFailoverUnitStr,
         wstring expectedActions,
         int expectedReplicaDifference)
     {
-		Trace.WriteInfo("StateMachineTaskTestSource", "{0}", testName);
+        Trace.WriteInfo("StateMachineTaskTestSource", "{0}", testName);
 
         // Remove extra spaces
         TestHelper::TrimExtraSpaces(inputFailoverUnitStr);
@@ -124,7 +131,7 @@ namespace FailoverManagerUnitTest
     }
 
     void TestStateMachineTask::CheckMessage(
-		wstring const & testName,
+        wstring const & testName,
         wstring const& msgAction,
         wstring msgBodyStr,
         wstring inputFailoverUnitStr,
@@ -132,7 +139,7 @@ namespace FailoverManagerUnitTest
         wstring expectedActionsStr,
         wstring fromNode)
     {
-		Trace.WriteInfo("StateMachineTaskTestSource", "{0}", testName);
+        Trace.WriteInfo("StateMachineTaskTestSource", "{0}", testName);
 
         // Remove extra spaces
         TestHelper::TrimExtraSpaces(msgBodyStr);
@@ -212,125 +219,176 @@ namespace FailoverManagerUnitTest
         TestHelper::AssertEqual(expectedActionsVector, actualActionsVector, testName);
     }
 
-	void TestStateMachineTask::CheckPlbMovement(
-		wstring const& testName,
-		wstring movementStr,
-		wstring inputFailoverUnitStr,
-		wstring expectedOutputFailoverUnitStr,
-		wstring expectedActionsStr,
-		int expectedReplicaDifference)
-	{
-		Trace.WriteInfo("StateMachineTaskTestSource", "{0}", testName);
+    void TestStateMachineTask::CheckPlbMovement(
+        wstring const& testName,
+        wstring movementStr,
+        wstring inputFailoverUnitStr,
+        wstring expectedOutputFailoverUnitStr,
+        wstring expectedActionsStr,
+        int expectedReplicaDifference)
+    {
+        Trace.WriteInfo("StateMachineTaskTestSource", "{0}", testName);
 
-		// Remove extra spaces
-		TestHelper::TrimExtraSpaces(movementStr);
-		TestHelper::TrimExtraSpaces(inputFailoverUnitStr);
-		TestHelper::TrimExtraSpaces(expectedOutputFailoverUnitStr);
-		TestHelper::TrimExtraSpaces(expectedActionsStr);
+        // Remove extra spaces
+        TestHelper::TrimExtraSpaces(movementStr);
+        TestHelper::TrimExtraSpaces(inputFailoverUnitStr);
+        TestHelper::TrimExtraSpaces(expectedOutputFailoverUnitStr);
+        TestHelper::TrimExtraSpaces(expectedActionsStr);
 
-		FailoverUnitUPtr ft = TestHelper::FailoverUnitFromString(inputFailoverUnitStr);
-		ft->PostUpdate(DateTime::Now());
-		ft->PostCommit(ft->OperationLSN + 1);
+        FailoverUnitUPtr ft = TestHelper::FailoverUnitFromString(inputFailoverUnitStr);
+        ft->PostUpdate(DateTime::Now());
+        ft->PostCommit(ft->OperationLSN + 1);
 
-		ServiceDescription serviceDescription = ft->ServiceInfoObj->ServiceDescription;
+        ServiceDescription serviceDescription = ft->ServiceInfoObj->ServiceDescription;
 
-		FailoverUnitCacheEntrySPtr entry = make_shared<FailoverUnitCacheEntry>(*fm_, move(ft));
-		bool isDeleted;
-		entry->Lock(TimeSpan::Zero, true, isDeleted);
-		LockedFailoverUnitPtr failoverUnit(entry);
-		failoverUnit->UpdatePointers(*fm_, fm_->NodeCacheObj, fm_->ServiceCacheObj);
+        FailoverUnitCacheEntrySPtr entry = make_shared<FailoverUnitCacheEntry>(*fm_, move(ft));
+        bool isDeleted;
+        entry->Lock(TimeSpan::Zero, true, isDeleted);
+        LockedFailoverUnitPtr failoverUnit(entry);
+        failoverUnit->UpdatePointers(*fm_, fm_->NodeCacheObj, fm_->ServiceCacheObj);
 
-		failoverUnit->ForEachReplica([this](Replica const& replica) 
-		{
-			if (replica.NodeInfoObj->IsUp)
-			{
-				NodeInfoSPtr nodeInfo = replica.NodeInfoObj;
-				fm_->NodeCacheObj.NodeUp(move(nodeInfo));
-			}
-			else
-			{
-				fm_->NodeCacheObj.NodeDown(replica.NodeInfoObj->NodeInstance);
-			}
-		});
+        failoverUnit->ForEachReplica([this](Replica const& replica) 
+        {
+            if (replica.NodeInfoObj->IsUp)
+            {
+                NodeInfoSPtr nodeInfo = replica.NodeInfoObj;
 
-		vector<wstring> plbActionsStr;
-		StringUtility::Split<wstring>(movementStr, plbActionsStr, L"[");
+                FabricVersionInstance versionInstance;
+                fm_->NodeCacheObj.NodeUp(move(nodeInfo), true /* IsVersionGatekeepingNeeded */, versionInstance);
+            }
+            else
+            {
+                fm_->NodeCacheObj.NodeDown(replica.NodeInfoObj->NodeInstance);
+            }
+        });
 
-		vector<LoadBalancingComponent::FailoverUnitMovement::PLBAction> plbActions;
-		for (size_t i = 0; i < plbActionsStr.size(); i++)
-		{
-			StringUtility::TrimSpaces(plbActionsStr[i]);
-			StringUtility::TrimTrailing<wstring>(plbActionsStr[i], L"]");
+        vector<wstring> plbActionsStr;
+        StringUtility::Split<wstring>(movementStr, plbActionsStr, L"[");
 
-			vector<wstring> tokens;
-			StringUtility::Split<wstring>(plbActionsStr[i], tokens, L" ");
+        vector<LoadBalancingComponent::FailoverUnitMovement::PLBAction> plbActions;
+        for (size_t i = 0; i < plbActionsStr.size(); i++)
+        {
+            StringUtility::TrimSpaces(plbActionsStr[i]);
+            StringUtility::TrimTrailing<wstring>(plbActionsStr[i], L"]");
 
-			LoadBalancingComponent::FailoverUnitMovementType::Enum plbActionType = TestHelper::PlbMovementActionTypeFromString(tokens[0]);
-			NodeId sourceNodeId = TestHelper::CreateNodeId(Int32_Parse(tokens[1]));
-			NodeId targetNodeId = TestHelper::CreateNodeId(Int32_Parse(tokens[2]));
+            vector<wstring> tokens;
+            StringUtility::Split<wstring>(plbActionsStr[i], tokens, L" ");
 
-			fm_->NodeCacheObj.NodeUp(TestHelper::CreateNodeInfo(NodeInstance(sourceNodeId, 1)));
-			fm_->NodeCacheObj.NodeUp(TestHelper::CreateNodeInfo(NodeInstance(targetNodeId, 1)));
+            LoadBalancingComponent::FailoverUnitMovementType::Enum plbActionType = TestHelper::PlbMovementActionTypeFromString(tokens[0]);
+            NodeId sourceNodeId = TestHelper::CreateNodeId(Int32_Parse(tokens[1]));
+            NodeId targetNodeId = TestHelper::CreateNodeId(Int32_Parse(tokens[2]));
 
-			LoadBalancingComponent::FailoverUnitMovement::PLBAction plbAction(
-				sourceNodeId,
-				targetNodeId,
-				plbActionType,
-				Reliability::LoadBalancingComponent::PLBSchedulerActionType::None);
+            FabricVersionInstance versionInstance;
+            fm_->NodeCacheObj.NodeUp(TestHelper::CreateNodeInfo(NodeInstance(sourceNodeId, 1)), true /* IsVersionGatekeepingNeeded */, versionInstance);
+            fm_->NodeCacheObj.NodeUp(TestHelper::CreateNodeInfo(NodeInstance(targetNodeId, 1)), true /* IsVersionGatekeepingNeeded */, versionInstance);
 
-			plbActions.push_back(move(plbAction));
-		}
+            LoadBalancingComponent::FailoverUnitMovement::PLBAction plbAction(
+                sourceNodeId,
+                targetNodeId,
+                plbActionType,
+                Reliability::LoadBalancingComponent::PLBSchedulerActionType::None);
 
-		// Get the movement
-		wstring serviceName = failoverUnit->ServiceName;
-		LoadBalancingComponent::FailoverUnitMovement movement(
-			failoverUnit->Id.Guid,
-			move(serviceName),
-			failoverUnit->IsStateful,
-			failoverUnit->UpdateVersion,
-			false, // IsFailoverUnitInTransition
-			move(plbActions));
+            plbActions.push_back(move(plbAction));
+        }
 
-		vector<StateMachineActionUPtr> actions;
+        // Get the movement
+        wstring serviceName = failoverUnit->ServiceName;
+        LoadBalancingComponent::FailoverUnitMovement movement(
+            failoverUnit->Id.Guid,
+            move(serviceName),
+            failoverUnit->IsStateful,
+            failoverUnit->UpdateVersion,
+            false, // IsFailoverUnitInTransition
+            move(plbActions));
 
-		DynamicStateMachineTaskUPtr movementTask(
-			new MovementTask(*fm_, fm_->NodeCacheObj, move(movement), move(LoadBalancingComponent::DecisionToken(Guid::Empty(), 0))));
-		movementTask->CheckFailoverUnit(failoverUnit, actions);
+        vector<StateMachineActionUPtr> actions;
 
-		vector<StateMachineTaskUPtr> const& tasks = failoverUnit->IsStateful ? statefulTasks_ : statelessTasks_;
-		for (StateMachineTaskUPtr const& task : tasks)
-		{
-			task->CheckFailoverUnit(failoverUnit, actions);
-		}
+        DynamicStateMachineTaskUPtr movementTask(
+            new MovementTask(*fm_, fm_->NodeCacheObj, move(movement), move(LoadBalancingComponent::DecisionToken(Guid::Empty(), 0))));
+        movementTask->CheckFailoverUnit(failoverUnit, actions);
 
-		wstring actualOutputFailoverUnitStr = TestHelper::FailoverUnitToString(failoverUnit.Current, serviceDescription);
+        vector<StateMachineTaskUPtr> const& tasks = failoverUnit->IsStateful ? statefulTasks_ : statelessTasks_;
+        for (StateMachineTaskUPtr const& task : tasks)
+        {
+            task->CheckFailoverUnit(failoverUnit, actions);
+        }
 
-		vector<wstring> expectedActionVector;
-		StringUtility::Split<wstring>(expectedActionsStr, expectedActionVector, L"|");
-		sort(expectedActionVector.begin(), expectedActionVector.end());
-		vector<wstring> actualActionVector = TestHelper::ActionsToString(actions);
+        wstring actualOutputFailoverUnitStr = TestHelper::FailoverUnitToString(failoverUnit.Current, serviceDescription);
 
-		if (failoverUnit->IsQuorumLost())
-		{
-			actualActionVector.push_back(L"QuorumLost");
-			sort(actualActionVector.begin(), actualActionVector.end());
-		}
+        vector<wstring> expectedActionVector;
+        StringUtility::Split<wstring>(expectedActionsStr, expectedActionVector, L"|");
+        sort(expectedActionVector.begin(), expectedActionVector.end());
+        vector<wstring> actualActionVector = TestHelper::ActionsToString(actions);
 
-		int actualReplicaDifference = failoverUnit->ReplicaDifference;
+        if (failoverUnit->IsQuorumLost())
+        {
+            actualActionVector.push_back(L"QuorumLost");
+            sort(actualActionVector.begin(), actualActionVector.end());
+        }
 
-		TestHelper::AssertEqual(expectedOutputFailoverUnitStr, actualOutputFailoverUnitStr, testName);
-		TestHelper::AssertEqual(expectedActionVector, actualActionVector, testName);
-		TestHelper::AssertEqual(expectedReplicaDifference, actualReplicaDifference, testName);
+        int actualReplicaDifference = failoverUnit->ReplicaDifference;
 
-		if (inputFailoverUnitStr == expectedOutputFailoverUnitStr)
-		{
-			VERIFY_IS_TRUE((!failoverUnit.IsUpdating || actualReplicaDifference != 0) && failoverUnit->PersistenceState == PersistenceState::NoChange);
-		}
-		else
-		{
-			VERIFY_IS_TRUE(failoverUnit.IsUpdating && failoverUnit->PersistenceState != PersistenceState::NoChange);
-		}
-	}
+        TestHelper::AssertEqual(expectedOutputFailoverUnitStr, actualOutputFailoverUnitStr, testName);
+        TestHelper::AssertEqual(expectedActionVector, actualActionVector, testName);
+        TestHelper::AssertEqual(expectedReplicaDifference, actualReplicaDifference, testName);
+
+        if (inputFailoverUnitStr == expectedOutputFailoverUnitStr)
+        {
+            VERIFY_IS_TRUE((!failoverUnit.IsUpdating || actualReplicaDifference != 0) && failoverUnit->PersistenceState == PersistenceState::NoChange);
+        }
+        else
+        {
+            VERIFY_IS_TRUE(failoverUnit.IsUpdating && failoverUnit->PersistenceState != PersistenceState::NoChange);
+        }
+    }
+
+    void TestStateMachineTask::CheckPlbAutoScale(
+        wstring const& testName,
+        wstring inputFailoverUnitStr,
+        int expectedTargetCount,
+        int expectedReplicaDifference)
+    {
+        Trace.WriteInfo("StateMachineTaskTestSource", "{0}", testName);
+
+        // Remove extra spaces
+        TestHelper::TrimExtraSpaces(inputFailoverUnitStr);
+
+        //create a scaling policy
+        vector<ServiceScalingPolicyDescription> scalingPolicies;
+        ScalingMechanismSPtr mechanism = make_shared<Reliability::InstanceCountScalingMechanism>(1, 2, 1);
+        ScalingTriggerSPtr trigger = make_shared<Reliability::AveragePartitionLoadScalingTrigger>(*ServiceModel::Constants::SystemMetricNameMemoryInMB, 100, 200, 40);
+        scalingPolicies.push_back(ServiceScalingPolicyDescription(trigger, mechanism));
+
+        FailoverUnitUPtr ft = TestHelper::FailoverUnitFromString(inputFailoverUnitStr, scalingPolicies);
+        ft->PostUpdate(DateTime::Now());
+        ft->PostCommit(ft->OperationLSN + 1);
+
+        ServiceDescription serviceDescription = ft->ServiceInfoObj->ServiceDescription;
+
+        FailoverUnitCacheEntrySPtr entry = make_shared<FailoverUnitCacheEntry>(*fm_, move(ft));
+        bool isDeleted;
+        entry->Lock(TimeSpan::Zero, true, isDeleted);
+        LockedFailoverUnitPtr failoverUnit(entry);
+        failoverUnit->UpdatePointers(*fm_, fm_->NodeCacheObj, fm_->ServiceCacheObj);
+
+        vector<StateMachineActionUPtr> actions;
+
+        DynamicStateMachineTaskUPtr autoscaleTask(
+            new AutoScalingTask(expectedTargetCount));
+
+        autoscaleTask->CheckFailoverUnit(failoverUnit, actions);
+
+        vector<StateMachineTaskUPtr> const& tasks = failoverUnit->IsStateful ? statefulTasks_ : statelessTasks_;
+        for (StateMachineTaskUPtr const& task : tasks)
+        {
+            task->CheckFailoverUnit(failoverUnit, actions);
+        }
+
+        int actualReplicaDifference = failoverUnit.Current->ReplicaDifference;
+
+        TestHelper::AssertEqual(expectedReplicaDifference, actualReplicaDifference, testName);
+        TestHelper::AssertEqual(failoverUnit.Current->TargetReplicaSetSize, expectedTargetCount, testName);
+    }
 
     BOOST_FIXTURE_TEST_SUITE(TestStateMachineTaskSuite,TestStateMachineTask)
 
@@ -907,11 +965,11 @@ namespace FailoverManagerUnitTest
             L"3 2 S   111/122 [0:0 P/S DD N Down] [1 S/P RD - Up] [2 N/N DD - Down]",
             L"DoReconfiguration->1 [0 P/S] [1 S/P]");
 
-		CheckState(
-			L"A secondary is marked as ToBePromoted while another SB secondary exists",
-			L"4 3 SP 000/111 [1 N/P RD - Up] [2 N/S RD P Up] [3 N/S RD - Up] [4 N/S SB - Up]",
-			L"4 3 SP 000/111 [1 N/P RD - Up] [2 N/S RD P Up] [3 N/S RD - Up] [4 N/S IB - Up]",
-			L"AddReplica->1 [4 N/S]");
+        CheckState(
+            L"A secondary is marked as ToBePromoted while another SB secondary exists",
+            L"4 3 SP 000/111 [1 N/P RD - Up] [2 N/S RD P Up] [3 N/S RD - Up] [4 N/S SB - Up]",
+            L"4 3 SP 000/111 [1 N/P RD - Up] [2 N/S RD P Up] [3 N/S RD - Up] [4 N/S IB - Up]",
+            L"AddReplica->1 [4 N/S]");
     }
 
     BOOST_AUTO_TEST_CASE(StatefulFailoverTest)
@@ -1405,40 +1463,55 @@ namespace FailoverManagerUnitTest
             L"1");
     }
 
-	BOOST_AUTO_TEST_CASE(MovementTask)
-	{
-		CheckPlbMovement(
-			L"Swap primary/secondary when another ToBePromoted replica already exists",
-			L"[SwapPrimarySecondary 1 2]",
-			L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P Up]",
-			L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P Up]",
-			L"AddReplica->1 [4 N/I]",
-			0);
+    BOOST_AUTO_TEST_CASE(MovementTask)
+    {
+        CheckPlbMovement(
+            L"Swap primary/secondary when another ToBePromoted replica already exists",
+            L"[SwapPrimarySecondary 1 2]",
+            L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P Up]",
+            L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P Up]",
+            L"AddReplica->1 [4 N/I]",
+            0);
 
-		CheckPlbMovement(
-			L"Promote secondary when another ToBePromoted replica already exists",
-			L"[PromoteSecondary 0 2]",
-			L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P Up]",
-			L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P Up]",
-			L"AddReplica->1 [4 N/I]",
-			0);
+        CheckPlbMovement(
+            L"Promote secondary when another ToBePromoted replica already exists",
+            L"[PromoteSecondary 0 2]",
+            L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P Up]",
+            L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P Up]",
+            L"AddReplica->1 [4 N/I]",
+            0);
 
-		CheckPlbMovement(
-			L"Move primary to a new node when another ToBePromoted replica already exists",
-			L"[MovePrimary 4 5]",
-			L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P  Up]",
-			L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB PV Up]",
-			L"00000000-0000-0000-0000-000000000000:(MovePrimary:4=>5)|AddReplica->1 [4 N/I]",
-			-1);
+        CheckPlbMovement(
+            L"Move primary to a new node when another ToBePromoted replica already exists",
+            L"[MovePrimary 4 5]",
+            L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P  Up]",
+            L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB PV Up]",
+            L"00000000-0000-0000-0000-000000000000:(MovePrimary:4=>5)|AddReplica->1 [4 N/I]",
+            -1);
 
-		CheckPlbMovement(
-			L"Promote an idle StandBy replica when another ToBePromoted replica already exists",
-			L"[MovePrimary 4 5]",
-			L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P  Up] [5 N/I SB - Up]",
-			L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB PV Up] [5 N/I SB - Up]",
-			L"00000000-0000-0000-0000-000000000000:(MovePrimary:4=>5)|AddReplica->1 [4 N/I]",
-			-1);
-	}
+        CheckPlbMovement(
+            L"Promote an idle StandBy replica when another ToBePromoted replica already exists",
+            L"[MovePrimary 4 5]",
+            L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB P  Up] [5 N/I SB - Up]",
+            L"3 2 SP 000/111 [1 N/P RD V Up] [2 N/S RD - Up] [3 N/S RD - Up] [4 N/I IB PV Up] [5 N/I SB - Up]",
+            L"00000000-0000-0000-0000-000000000000:(MovePrimary:4=>5)|AddReplica->1 [4 N/I]",
+            -1);
+    }
+
+    BOOST_AUTO_TEST_CASE(AutoScaling)
+    {
+        CheckPlbAutoScale(
+            L"AutoScaling: Target increase",
+            L"3 0 - 000/111 [0 N/N RD - Up] [1 N/N RD - Up] [2 N/N RD - Up]",
+            4,
+            1);
+
+        CheckPlbAutoScale(
+            L"AutoScaling: Target decrease",
+            L"3 0 - 000/111 [0 N/N RD - Up] [1 N/N RD - Up]",
+            2,
+            0);
+    }
 
     BOOST_AUTO_TEST_SUITE_END()
 

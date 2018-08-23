@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_external_repo_nuget_package_version.props" />
+
+  <PropertyGroup>
+    <Description>Microsoft.ServiceFabric.Data Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Microsoft.ServiceFabric.Data</AssemblyName>
+    <PackageId>Microsoft.ServiceFabric.Data</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+	  ..\..\_friends.cs;
+	  ..\..\Constants.cs;
+	  ..\..\DataTrace.cs;
+	  ..\..\DataAssemblyResolver.cs;
+	  ..\..\ReliableStateManager.cs;
+	  Microsoft.ServiceFabric.Data.SR.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <EmbeddedResource Include="..\..\SR.resx"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**;@(EmbeddedResource)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="..\..\..\Microsoft.ServiceFabric.Data.Interfaces\CoreCLR\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Principal.Windows" Version="4.4.0" />
+    <PackageReference Include="Microsoft.ServiceFabric.Data.Extensions" Version="$(ReferenceDataExtensionsNugetPackageVersion)" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <ResourcesClassName>SR</ResourcesClassName>
+    <ResourcesFileDir>..\..\</ResourcesFileDir>
+    <ResourcesFileName>SR</ResourcesFileName>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
+	<StringResourcesCsFileName>$(RootNamespace).$(ResourcesClassName).cs</StringResourcesCsFileName>
+    <StringResourcesCsFilePath>$(IntermediateOutputPath)$(StringResourcesCsFileName)</StringResourcesCsFilePath>
+	<StringResourcesResxFilePath>..\..\SR.resx</StringResourcesResxFilePath>
+  </PropertyGroup>
+  <Target Name="EnableCoreCLRResGen"
+    BeforeTargets="BeforeBuild"
+    DependsOnTargets="CoreClrResGen" />
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

@@ -50,7 +50,7 @@ namespace Reliability
             // modify the solution by placing a replica on a specified node
             void PlaceReplica(PlacementReplica const* replica, NodeEntry const* targetNode);
             void PlaceReplicaAndPromote(PlacementReplica * replica, NodeEntry const* targetNode);
-            void PromoteSecondary(PartitionEntry const* replica, Common::Random & random, NodeEntry const* targetNode);
+            size_t PromoteSecondary(PartitionEntry const* replica, Common::Random & random, NodeEntry const* targetNode);
             void PromoteSecondaryForPartitions(std::vector<PartitionEntry const*> const& partitions, Common::Random & random, NodeEntry const* targetNode);
 
             void AddVoidMovement(PartitionEntry const* partition, Common::Random & random, NodeEntry const* sourceNode);

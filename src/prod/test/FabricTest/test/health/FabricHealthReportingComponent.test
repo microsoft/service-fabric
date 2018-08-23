@@ -1,0 +1,426 @@
+#
+# Tests health reporting component
+#
+
+votes 10
+
+# format: target replica set size, min replica set size.
+cmservice 3 1
+# format: partition count, target replica set size, min replica set size
+namingservice 3 1 1
+# format: target replica set size, min replica set size.
+fmservice 2 1
+
+set GracefulReplicaShutdownMaxDuration 0
+set DummyPLBEnabled true
+set HealthOperationTimeout 30
+set NamingOperationTimeout 30
+set NamingOperationRetryTimeout 300
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 10
+set HealthStoreCleanupInterval 5
+set HealthStoreCleanupGraceInterval 5
+
+# The test checks expected number of replicas for System services, so make sure no additional SB replicas are created
+set SystemStandByReplicaKeepDuration 1
+set FMStandByReplicaKeepDuration 1
+set CMStandByReplicaKeepDuration 1
+set NamingStandByReplicaKeepDuration 1
+set SystemReplicaRestartWaitDuration 3600
+set UserStandByReplicaKeepDuration 1
+set UserReplicaRestartWaitDuration 3600
+
+# Reject reports based on count
+set EnableMaxPendingHealthReportSizeEstimation false
+
+cleantest
++10
++20
++30
++40
++50
++60
+verify
+
+# Wait for all system reports to be received
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:6;apps-ok:1
+queryhealth application appname=fabric:/System expectedstates=services-ok:3
+queryhealth service servicename=fabric:/System/NamingService expectedstates=ok:3
+queryhealth service servicename=fabric:/System/ClusterManagerService expectedstates=1
+queryhealth service servicename=fabric:/System/FailoverManagerService expectedstates=1
+
+########################################################
+# Testcase: Parallel add reports
+########################################################
+set QueryOperationRetryDelay 10
+set QueryOperationRetryCount 30
+
+checkhm replicas expectedcount=8
+
+hmload name=fabric:/AddReportsApp serviceCount=1 subname=ParallelAdd partitionCount=1 replicaCount=4 nodeid=60
+# Replica count: 8 + serviceCount * partitionCount * replicaCount
+checkhm replicas expectedcount=12
+
+hmload name=fabric:/AddReportsApp serviceCount=10 subname=ParallelAdd partitionCount=1 replicaCount=3 nodeid=60
+# Replica count: 8 + serviceCount * partitionCount * replicaCount
+checkhm replicas expectedcount=42
+
+hmload name=fabric:/AddReportsApp2 serviceCount=5 subname=ParallelAdd2 partitionCount=5 replicaCount=5 nodeid=50
+checkhm replicas expectedcount=167
+
+# Reset configuration
+set QueryOperationRetryDelay 1
+# Reset this to the default value of 30 mins
+set HealthStoreCleanupGraceInterval 1800
+
+###########################################
+# Testcase: Drop ReportHealth messages to test 
+# add report logic on Reporting Component.
+# Report on same instance and new instance of node.
+############################################
+
+addbehavior b1 * * ReportHealth
+
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FMM property=Master
+checkhealthclient reportcount=1
+
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FMM property=property1
+checkhealthclient reportcount=2
+
+# Same entity property id, replace existing
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=2 healthstate=ok sourceid=System.FMM property=property1
+checkhealthclient reportcount=2
+
+# Old sequence number, reject with stale
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FMM property=property1 expectederror=HealthStaleReport
+checkhealthclient reportcount=2
+
+# Add more reports from same source, different properties
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FMM property=property2
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FMM property=property3
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FMM property=property4
+checkhealthclient reportcount=5
+
+# Delete node, all reports should be removed but the delete one
+deletehealth node nodeid=666 node.instanceid=1 sequencenumber=2 sourceid=System.FMM
+checkhealthclient reportcount=1
+
+# Add report for the same instance, reject because the entity is pending deletion
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FMM property=property5 expectederror=HealthStaleReport
+checkhealthclient reportcount=1
+
+# Report higher instance, replace previous report
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=3 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FMM property=Master
+checkhealthclient reportcount=1
+
+# Report with lower instance, reject with stale
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=4 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FMM expectederror=HealthStaleReport
+checkhealthclient reportcount=1
+
+# Add more reports on the latest instance
+# Delete with lower instance, reject
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=5 healthstate=ok sourceid=System.FMM property=property5 transient=true timetoliveseconds=1
+checkhealthclient reportcount=2
+deletehealth node nodeid=666 node.instanceid=1 sequencenumber=6 sourceid=System.FMM expectederror=HealthStaleReport
+checkhealthclient reportcount=2
+
+###########################################
+# Testcase: Test remove report logic on Reporting Component
+# when HM Ack is received
+############################################
+
+queryhealth node nodeid=666 expectempty=true
+removebehavior b1
+queryhealth node nodeid=666 expectedhealthstate=ok expectedeventcount=1
+checkhealthclient reportcount=0
+
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=2 healthstate=ok sourceid=System.FMM property=property2
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=2 healthstate=ok sourceid=System.FMM property=property3
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=2 healthstate=ok sourceid=System.FMM property=property4
+
+queryhealth node nodeid=666 expectedhealthstate=ok expectedeventcount=4
+checkhealthclient reportcount=0
+
+############################################
+# Test removing reports for the same instance when HM replies with HealthEntityDeleted
+############################################
+
+# Delete entity
+deletehealth node nodeid=666 node.instanceid=2 sequencenumber=3 sourceid=System.FMM
+queryhealth node nodeid=666 expectempty=true
+
+# Create new client and add reports for same instance
+resethealthclient
+
+# Make sure not all reports are sent to HM:
+# Delay HM reply and add one report, then block all reports
+# When HM reply for first report comes, all reports should be deleted because the entity is deleted
+addbehavior b1 * * OperationSuccessAction 1.0 8
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=3 healthstate=ok sourceid=System.FMM property=property1
+# Wait for the first report to be sent
+!pause,2
+
+addbehavior b2 * * ReportHealth
+
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=3 healthstate=ok sourceid=System.FMM property=property2
+
+checkhealthclient reportcount=0
+
+removebehavior b2
+removebehavior b1
+
+# Wait until all delayed OperationSuccessAction reach the health client
+!pause,10
+
+############################################
+# Test HM report drop based on Max reports and report priority
+# Add reports on the same entity with different priorities. HM should accept and process them based on priority.
+# The reporting component sends them ordered by sequence stream, then sequence number. 
+# Each report must have a different source+property to ensure they are not overriden on client side.
+# Set number of reports HM can accept small to test which reports are accepted.
+# Once accepted, pause the HM job queue to make sure all reports are enqueued to test scheduling logic.
+############################################
+set HealthReportRetrySendInterval 2
+set HealthReportSendBackOffStepInSeconds 1
+set HealthReportSendMaxBackOffInterval 2
+
+# Don't send reports immediately, wait for them to accumulate so all are sent in one batch
+set HealthReportSendInterval 30
+
+resethealthclient
+
+#
+# Testcase: HM accepts one critical, one non-critical report
+#
+set MaxPendingHealthReportCount 1
+
+# Do not let any entity jobs to execute
+sethmthrottle throttle=true
+
+# Normal1
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=1 healthstate=ok ud=udNormal1 sourceid=Normal property=Normal1
+# High1
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.High property=High1
+# Critical1 (FM authority report)
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=1 healthstate=ok ud=udCritical1 fd=fdCritical1 ipaddressorfqdn=127.0.0.1:4444 sourceid=System.FM property=State
+
+# Normal2
+# Wait for previous reports to be added, then send with immediate true, to bypass the health report send interval and send immediately.
+!pause,1
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=Normal property=Normal2 immediate=true
+
+checkhealthclient reportcount=4
+
+# Wait for reports to reach HM and be put into the entity job queue manager at the same time
+!pause,5
+
+# HM executes Critical1 first, which sets attributes to udCritical1 and fdCritical1, then Normal1, which updates ud to udNormal1
+sethmthrottle throttle=false
+checkhmentity node nodeid=1010 state=ok node.instanceid=1 ud=udNormal1 fd=fdCritical1 ipaddressorfqdn=127.0.0.1:4444
+
+# Health client receives ServiceTooBusy, so it retries in Retry + backoff interval
+checkhealthclient reportcount=0
+
+#
+# Testcase: add multiple reports, none critical
+# 
+resethealthclient
+sethmthrottle throttle=true
+
+# High1
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=2 healthstate=ok ud=udHigh1 ipaddressorfqdn=127.0.0.1:5555  sourceid=System.High property=High1
+# Normal2
+# Wait for previous reports to be added, then send with immediate true, to bypass the health report send interval and send immediately.
+!pause,1
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=2 healthstate=ok ud=udNormal2 sourceid=Normal property=Normal2 immediate=true
+
+checkhealthclient reportcount=2
+
+!pause,5
+sethmthrottle throttle=false
+
+# Health client has ss Normal: (Normal2), System.High: (High1). HM accepts Normal2
+checkhmentity node nodeid=1010 state=ok node.instanceid=1 ud=udNormal2 fd=fdCritical1 ipaddressorfqdn=127.0.0.1:4444
+
+checkhealthclient reportcount=0
+
+#
+# Increase number of reports HM can queue, so all reports are accepted and processed in parallel.
+# 
+resethealthclient
+sethmthrottle throttle=true
+set MaxPendingHealthReportCount 100
+
+# High1
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=3 healthstate=ok ud=udHigh1 ipaddressorfqdn=127.0.0.1:5555  sourceid=System.High property=High1
+# Normal3
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=1 healthstate=ok ud=udNormal3 sourceid=Normal property=Normal3
+# High2
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=1 healthstate=ok ud=udHigh2 sourceid=System.High property=High2
+# Critical2
+# Wait for previous reports to be added, then send with immediate true, to bypass the health report send interval and send immediately.
+!pause,1
+reporthealthinternal node nodeid=1010 node.instanceid=1 sequencenumber=2 healthstate=ok ud=udCritical2 fd=fdCritical2 sourceid=System.FM property=State immediate=true
+checkhealthclient reportcount=4
+
+!pause,5
+sethmthrottle throttle=false
+
+# Health client has ss Normal: (Normal3), System.FM: (Critical2), System.High: (High1, High2). 
+# HM accepts all reports, then processes them by priority: Critical2, High1, High2, Normal3
+checkhmentity node nodeid=1010 state=ok node.instanceid=1 ud=udNormal3 fd=fdCritical2 ipaddressorfqdn=127.0.0.1:5555
+
+checkhealthclient reportcount=0
+
+############################################
+# Test HM report processing order based on priority
+############################################
+set HealthReportRetrySendInterval 2
+set MaxPendingHealthReportCount 100
+set HealthReportSendBackOffStepInSeconds 1
+set HealthReportSendMaxBackOffInterval 2
+
+set HealthReportSendInterval 5
+addbehavior b1 * * ReportHealth
+
+# Add reports on different entities with different priorities. HM should process them based on priority.
+# 1111, Normal1
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok ud=udNormal1 sourceid=Normal Property=Normal1
+# 2222, High1
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok ud=udHigh1 fd=fdHigh1 sourceid=System.High Property=High1
+# 3333, Normal2
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=2 healthstate=ok ud=udNormal2 sourceid=Normal Property=Normal2
+# 1111, Critical1
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok ud=udCritical1 fd=fdCritical1 sourceid=System.FM property=State
+# 2222, Normal3
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=3 healthstate=ok ud=udNormal3 sourceid=Normal Property=Normal3
+# 3333, Critical2
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=2 healthstate=ok ud=udCritical2 fd=fdCritical2 sourceid=System.FM property=State
+# 1111, High2
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=2 healthstate=ok ud=udHigh2 fd=fdHigh2 sourceid=System.High
+
+checkhealthclient reportcount=7
+sethmthrottle throttle=true
+
+removebehavior b1
+
+!pause,5
+sethmthrottle throttle=false
+# Health client sends ss Normal: (1111-Normal1, 3333-Normal2, 2222-Normal3), System.FM (1111-Critical1, 3333-Critical2), System.High (2222-High1, 1111-High2)
+# HM processes items in priority and based on sequence numbers:
+# 1111-Critical1, 3333-Critical2, 2222-High1
+# 1111-High2, 3333-Normal2, 2222-Normal3
+# 1111-Normal1
+checkhmentity node nodeid=1111 state=ok node.instanceid=1 ud=udNormal1 fd=fdHigh2
+checkhmentity node nodeid=2222 state=ok node.instanceid=1 ud=udNormal3 fd=fdHigh1
+checkhmentity node nodeid=3333 state=ok node.instanceid=1 ud=udNormal2 fd=fdCritical2
+
+checkhealthclient reportcount=0
+
+########################################################
+# Test HM drop operations for sources with sequence stream
+########################################################
+set HealthReportSendInterval 5
+healthpreinitialize node sourceid=SourceWithSS instance=1
+healthgetprogress node sourceid=SourceWithSS expectedprogress=0
+healthpostinitialize node sourceid=SourceWithSS sequencenumber=0
+
+set MaxPendingHealthReportCount 1
+
+# Add report with normal priority, both SS and report are accepted. Report is executed first, then ss is started.
+reporthealthinternal node nodeid=20 sequencenumber=0 healthstate=ok ud=udTest1 fd=fdTest1 sourceid=SourceWithSS
+checkhmentity node nodeid=20 state=ok ud=udTest1 fd=fdTest1
+healthgetprogress node sourceid=SourceWithSS expectedprogress=1
+checkhealthclient reportcount=0
+
+########################################################
+# Testcase: Test backoff on ServiceTooBusy
+########################################################
+set MaxPendingHealthReportCount 1
+set HealthReportSendBackOffStepInSeconds 2
+set HealthReportSendMaxBackOffInterval 7
+set HealthReportRetrySendInterval 1
+set QueryOperationRetryCount 30
+
+resethealthclient
+
+# Don't send reports immediately, wait for them to accumulate so all are sent in one batch
+set HealthReportSendInterval 30
+
+reporthealthinternal node nodeid=3000 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FMM property=property1
+reporthealthinternal node nodeid=3000 node.instanceid=1 sequencenumber=2 healthstate=ok sourceid=System.FMM property=property2
+reporthealthinternal node nodeid=3000 node.instanceid=1 sequencenumber=3 healthstate=ok sourceid=System.FMM property=property3
+reporthealthinternal node nodeid=3000 node.instanceid=1 sequencenumber=4 healthstate=ok sourceid=System.FMM property=property4
+!pause,1
+reporthealthinternal node nodeid=3000 node.instanceid=1 sequencenumber=5 healthstate=ok sourceid=System.FMM property=property5 immediate=true
+
+# HM accepts 1 report and sends ServiceTooBusy for the others. The reporting component retries with exponential backoff.
+checkhealthclient reportcount=3 servicetoobusycount=2
+checkhealthclient reportcount=1 servicetoobusycount=4
+checkhealthclient reportcount=0 servicetoobusycount=0
+
+queryhealth node nodeid=3000 expectedhealthstate=ok expectedeventcount=5
+
+# Add another report. It's sent after HealthReportSendInterval since last reply from HM was success.
+reporthealthinternal node nodeid=3000 node.instanceid=1 sequencenumber=6 healthstate=ok sourceid=System.FMM property=property6
+checkhealthclient reportcount=0 servicetoobusycount=0
+
+
+############################################
+# Testcase: Do not re-send reports until the retry interval has passed
+############################################
+# Set retry interval to a big value
+set HealthReportRetrySendInterval 6000
+set HealthReportSendInterval 0
+
+# Drop reports so the first report is not sent
+addbehavior b1 * * ReportHealth
+
+reporthealthinternal node nodeid=9999 node.instanceid=1 sequencenumber=1 healthstate=error sourceid=System.FMM property=property1
+checkhealthclient reportcount=1
+
+# Wait for the first report to be sent
+!pause,2
+
+removebehavior b1
+
+# Add another report, that should be sent to HM immediately
+reporthealthinternal node nodeid=9999 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=System.FMM property=property2
+
+# Check that HM receives only the new report, not the old one
+queryhealth node nodeid=9999 expectedhealthstate=warning expectedeventcount=1
+checkhealthclient reportcount=1
+
+# Reduce retry send interval
+set HealthReportRetrySendInterval 5
+
+# Add another report, both the first and the last reports are sent
+reporthealthinternal node nodeid=9999 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FMM property=property3
+
+queryhealth node nodeid=9999 expectedhealthstate=error expectedeventcount=3
+checkhealthclient reportcount=0
+
+############################################
+# Testcase: Use Immediate to send reports immediately
+############################################
+# Set send interval to a big value
+set HealthReportSendInterval 360
+set HealthReportRetrySendInterval 360
+set MaxPendingHealthReportCount 1000
+resethealthclient
+
+reporthealthinternal cluster sequencenumber=1 property=prop1 healthstate=warning immediate=false
+checkhealthclient reportcount=1
+reporthealthinternal cluster sequencenumber=1 property=prop2 healthstate=ok
+checkhealthclient reportcount=2
+reporthealthinternal cluster sequencenumber=1 property=prop3 healthstate=error
+checkhealthclient reportcount=3
+
+!pause,5
+checkhealthclient reportcount=3
+
+reporthealthinternal cluster sequencenumber=1 property=prop4 healthstate=ok immediate=true
+checkhealthclient reportcount=0
+queryhealth cluster expectedhealthstate=error
+
+!q

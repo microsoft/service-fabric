@@ -30,8 +30,8 @@ target_link_libraries(
   ${lib_ImageStore}
   ${lib_ClientServerTransport}
   ${lib_FileStoreService}
-  ${lib_Common}
   ${lib_Transport}
+  ${lib_Common}
   ${lib_ServiceModel}
   ${lib_Serialization}
   ${lib_InternalFabricUUID}

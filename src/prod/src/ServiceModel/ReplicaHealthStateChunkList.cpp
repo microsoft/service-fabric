@@ -27,23 +27,6 @@ ReplicaHealthStateChunkList::ReplicaHealthStateChunkList(
 {
 }
 
-ReplicaHealthStateChunkList::ReplicaHealthStateChunkList(ReplicaHealthStateChunkList && other)
-    : HealthStateChunkList(move(other))
-    , items_(move(other.items_))
-{
-}
-
-ReplicaHealthStateChunkList & ReplicaHealthStateChunkList::operator =(ReplicaHealthStateChunkList && other)
-{
-    if (this != &other)
-    {
-        items_ = move(other.items_);
-    }
-
-    HealthStateChunkList::operator=(move(other));
-    return *this;
-}
-
 ReplicaHealthStateChunkList::~ReplicaHealthStateChunkList()
 {
 }

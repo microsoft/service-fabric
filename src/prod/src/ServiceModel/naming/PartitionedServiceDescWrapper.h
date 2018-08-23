@@ -37,11 +37,13 @@ namespace ServiceModel
             DWORD StandByReplicaKeepDurationSeconds,
             FABRIC_MOVE_COST defaultMoveCost,
             ServicePackageActivationMode::Enum const servicePackageActivationMode,
-            std::wstring const& serviceDnsName);
-
+            std::wstring const& serviceDnsName,
+            std::vector<Reliability::ServiceScalingPolicyDescription> const & scalingPolicies);
+       
         ~PartitionedServiceDescWrapper() {};
 
-        PartitionedServiceDescWrapper & operator = (PartitionedServiceDescWrapper && other);
+        PartitionedServiceDescWrapper & operator = (PartitionedServiceDescWrapper && other) = default;
+        PartitionedServiceDescWrapper(PartitionedServiceDescWrapper && other) = default;
 
         Common::ErrorCode FromPublicApi(
             __in FABRIC_SERVICE_DESCRIPTION const & serviceDescription);
@@ -77,6 +79,7 @@ namespace ServiceModel
         __declspec(property(get=get_IsDefaultMoveCostSpecified)) bool const IsDefaultMoveCostSpecified;
         __declspec(property(get = get_PackageActivationMode)) ServicePackageActivationMode::Enum const PackageActivationMode;
         __declspec(property(get = get_ServiceDnsName)) std::wstring const &ServiceDnsName;
+        __declspec(property(get = get_ScalingPolicies)) std::vector<Reliability::ServiceScalingPolicyDescription> const& ScalingPolicies;
 
         FABRIC_SERVICE_KIND const& get_ServiceKind() const { return serviceKind_; }
         std::wstring const& get_AppName() const { return applicationName_; }
@@ -104,6 +107,7 @@ namespace ServiceModel
         bool get_IsDefaultMoveCostSpecified() const { return isDefaultMoveCostSpecified_; }
         ServicePackageActivationMode::Enum get_PackageActivationMode() const { return servicePackageActivationMode_; }
         std::wstring const& get_ServiceDnsName() const { return serviceDnsName_; }
+        std::vector<Reliability::ServiceScalingPolicyDescription> const& get_ScalingPolicies() const { return scalingPolicies_; }
 
         std::vector<Reliability::ServiceCorrelationDescription> const & get_Correlations() const
         {
@@ -143,6 +147,7 @@ namespace ServiceModel
             SERIALIZABLE_PROPERTY(ServiceModel::Constants::IsDefaultMoveCostSpecified, isDefaultMoveCostSpecified_)
             SERIALIZABLE_PROPERTY_ENUM(ServiceModel::Constants::ServicePackageActivationMode, servicePackageActivationMode_)
             SERIALIZABLE_PROPERTY(ServiceModel::Constants::ServiceDnsName, serviceDnsName_)
+            SERIALIZABLE_PROPERTY(ServiceModel::Constants::ScalingPolicies, scalingPolicies_)
         END_JSON_SERIALIZABLE_PROPERTIES()
 
     protected: // TODO: Are all these below need to be protected??
@@ -176,6 +181,7 @@ namespace ServiceModel
         bool isDefaultMoveCostSpecified_;
         bool isServiceGroup_;
         std::wstring serviceDnsName_;
+        std::vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies_;
 
     private:
         ServicePackageActivationMode::Enum servicePackageActivationMode_;

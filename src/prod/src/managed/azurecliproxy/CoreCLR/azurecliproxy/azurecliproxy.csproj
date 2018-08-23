@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+  <PropertyGroup>
+    <Description>Azure CLI Proxy</Description>
+    
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>azurecliproxy</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>azurecliproxy</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\AzureCliProxy.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <None Update="AzureCliProxy.sh">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

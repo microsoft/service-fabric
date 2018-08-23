@@ -226,8 +226,13 @@ void BalanceCheckerCreator::CreateLoadBalancingDomainEntries()
     size_t totalMetricCount = 0;
     vector<Service const*> const& services = partitionClosure_.Services;
 
+    // Maps aren't initialised, but first access to field will set it to 0
     std::map<std::wstring, uint> metricsBufferedCapacities;
     std::map<std::wstring, uint> metricsTotalCapacities;
+    std::map<std::wstring, uint> metricsMaxNodeCapacities;
+    std::map<std::wstring, uint> metricsNumberOfNodesWithCapacity;
+
+    uint numberOfNodesWithAvailableCapacity = 0;
 
     TESTASSERT_IFNOT(nodes_.size() == bufferedCapacities_.size() && nodes_.size() == totalCapacities_.size(),
         "Nodes vector size doesn't match capacity vectors");
@@ -237,6 +242,8 @@ void BalanceCheckerCreator::CreateLoadBalancingDomainEntries()
         // towards total cluster capacity because no replicas can be placed on them
         if (nodes_[i].NodeDescriptionObj.IsCapacityAvailable)
         {
+            numberOfNodesWithAvailableCapacity++;
+
             for (auto j = bufferedCapacities_[i].begin(); j != bufferedCapacities_[i].end(); ++j)
             {
                 metricsBufferedCapacities[j->first] += j->second;
@@ -245,6 +252,12 @@ void BalanceCheckerCreator::CreateLoadBalancingDomainEntries()
             for (auto j = totalCapacities_[i].begin(); j != totalCapacities_[i].end(); ++j)
             {
                 metricsTotalCapacities[j->first] += j->second;
+                metricsNumberOfNodesWithCapacity[j->first]++;
+
+                if (metricsMaxNodeCapacities[j->first] < j->second)
+                {
+                    metricsMaxNodeCapacities[j->first] = j->second;
+                }
             }
         }
     }
@@ -279,22 +292,30 @@ void BalanceCheckerCreator::CreateLoadBalancingDomainEntries()
             }
 
             bool isMetricDefrag = IsDefragmentationMetric(itServiceMetric->Name);
+            bool defragmentationScopedAlgorithmEnabled = GetDefragmentationScopedAlgorithmEnabled(itServiceMetric->Name);
 
             int32 numberOfEmptyNodes = -1;
             Metric::DefragDistributionType emptyNodeDistribution = Metric::DefragDistributionType::SpreadAcrossFDs_UDs;
-            size_t defragEmptyNodeLoadThreashold = 0;
+            size_t defragEmptyNodeLoadThreshold = 0;
+            int64 reservationLoad = 0;
             if (isMetricDefrag)
             {
-                numberOfEmptyNodes = GetDefragEmptyNodesCount(itServiceMetric->Name);
-                defragEmptyNodeLoadThreashold = GetDefragEmptyNodeLoadTreshold(itServiceMetric->Name);
+                numberOfEmptyNodes = GetDefragEmptyNodesCount(itServiceMetric->Name, defragmentationScopedAlgorithmEnabled);
+                defragEmptyNodeLoadThreshold = GetDefragEmptyNodeLoadTreshold(itServiceMetric->Name);
+                reservationLoad = GetReservationLoadAmount(itServiceMetric->Name, metricsMaxNodeCapacities[itServiceMetric->Name]);
                 emptyNodeDistribution = GetDefragDistribution(itServiceMetric->Name);
             }
 
             double placementHeuristicIncomingLoadFactor = GetPlacementHeuristicIncomingLoadFactor(itServiceMetric->Name);
             double placementHeuristicEmptySpacePercent = GetPlacementHeuristicEmptySpacePercent(itServiceMetric->Name);
-            bool defragmentationScopedAlgorithmEnabled = GetDefragmentationScopedAlgorithmEnabled(itServiceMetric->Name);
             Metric::PlacementStrategy placementStrategy = GetPlacementStrategy(itServiceMetric->Name);
-            double defragmentationEmptyNodeWeight = GetDefragmentationEmptyNodeWeight(itServiceMetric->Name);
+            double defragmentationEmptyNodeWeight = GetDefragmentationEmptyNodeWeight(itServiceMetric->Name, placementStrategy);
+            double defragmentationNonEmptyNodeWeight = GetDefragmentationNonEmptyNodeWeight(itServiceMetric->Name, placementStrategy);
+            bool balancingByPercentage = false;
+            if (metricsNumberOfNodesWithCapacity[itServiceMetric->Name] == numberOfNodesWithAvailableCapacity)
+            {
+                balancingByPercentage = IsBalancingByPercentageEnabled(itServiceMetric->Name);
+            }
 
             // cluster buffered capacity
             int64 clusterBufferedCapacity;
@@ -339,13 +360,16 @@ void BalanceCheckerCreator::CreateLoadBalancingDomainEntries()
                 clusterLoad,
                 isMetricDefrag,
                 numberOfEmptyNodes,
-                defragEmptyNodeLoadThreashold,
+                defragEmptyNodeLoadThreshold,
+                reservationLoad,
                 emptyNodeDistribution,
                 placementHeuristicIncomingLoadFactor,
                 placementHeuristicEmptySpacePercent,
                 defragmentationScopedAlgorithmEnabled,
                 placementStrategy,
-                defragmentationEmptyNodeWeight));
+                defragmentationEmptyNodeWeight,
+                defragmentationNonEmptyNodeWeight,
+                balancingByPercentage));
         }
 
         ASSERT_IF(lbDomainMetrics.empty(), "LB domain doesn't have metrics");
@@ -403,22 +427,32 @@ void BalanceCheckerCreator::CreateLoadBalancingDomainEntries()
         {
             existScopedDefragMetric_ |= GetDefragmentationScopedAlgorithmEnabled(it->second.Name);
         }
-
+        bool defragmentationScopedAlgorithmEnabled = GetDefragmentationScopedAlgorithmEnabled(metricName);
+        
         int32 numberOfEmptyNodes = -1;
         Metric::DefragDistributionType emptyNodeDistribution = Metric::DefragDistributionType::SpreadAcrossFDs_UDs;
-        size_t defragEmptyNodeLoadThreashold = 0;
+        size_t defragEmptyNodeLoadThreshold = 0;
+        int64 reservationLoad = 0;
         if (isMetricDefrag)
         {
-            numberOfEmptyNodes = GetDefragEmptyNodesCount(metricName);
-            defragEmptyNodeLoadThreashold = GetDefragEmptyNodeLoadTreshold(metricName);
+            numberOfEmptyNodes = GetDefragEmptyNodesCount(metricName, defragmentationScopedAlgorithmEnabled);
+            defragEmptyNodeLoadThreshold = GetDefragEmptyNodeLoadTreshold(metricName);
+            reservationLoad = GetReservationLoadAmount(metricName, metricsMaxNodeCapacities[metricName]);
             emptyNodeDistribution = GetDefragDistribution(metricName);
         }
 
         double placementHeuristicIncomingLoadFactor = GetPlacementHeuristicIncomingLoadFactor(metricName);
         double placementHeuristicEmptySpacePercent = GetPlacementHeuristicEmptySpacePercent(metricName);
-        bool defragmentationScopedAlgorithmEnabled = GetDefragmentationScopedAlgorithmEnabled(metricName);
         Metric::PlacementStrategy placementStrategy = GetPlacementStrategy(metricName);
-        double defragmentationEmptyNodeWeight = GetDefragmentationEmptyNodeWeight(metricName);
+        double defragmentationEmptyNodeWeight = GetDefragmentationEmptyNodeWeight(metricName, placementStrategy);
+        double defragmentationNonEmptyNodeWeight = GetDefragmentationNonEmptyNodeWeight(metricName, placementStrategy);
+
+        // If some nodes don't have capacity for a metric, it can't be balanced by percentage
+        bool balancingByPercentage = false;
+        if (metricsNumberOfNodesWithCapacity[metricName] == numberOfNodesWithAvailableCapacity)
+        {
+            balancingByPercentage = IsBalancingByPercentageEnabled(metricName);
+        }
 
         int64 clusterBufferedCapacity = metricsBufferedCapacities[metricName];
         int64 clusterTotalCapacity = metricsTotalCapacities[metricName];
@@ -434,13 +468,16 @@ void BalanceCheckerCreator::CreateLoadBalancingDomainEntries()
             it->second.NodeLoadSum,
             isMetricDefrag,
             numberOfEmptyNodes,
-            defragEmptyNodeLoadThreashold,
+            defragEmptyNodeLoadThreshold,
+            reservationLoad,
             emptyNodeDistribution,
             placementHeuristicIncomingLoadFactor,
             placementHeuristicEmptySpacePercent,
             defragmentationScopedAlgorithmEnabled,
             placementStrategy,
-            defragmentationEmptyNodeWeight));
+            defragmentationEmptyNodeWeight,
+            defragmentationNonEmptyNodeWeight,
+            balancingByPercentage));
     }
 
     lbDomainEntries_.push_back(LoadBalancingDomainEntry(move(globalMetrics), globalMetricWeightSum, totalMetricCount, -1));
@@ -531,6 +568,7 @@ void BalanceCheckerCreator::CreateNodeEntries()
         }
 
         NodeDescription const& nodeDescription = nodes_[i].NodeDescriptionObj;
+        auto nodeImages = nodes_[i].NodeImages;
 
         if (nodeDescription.IsUp)
         {
@@ -572,7 +610,8 @@ void BalanceCheckerCreator::CreateNodeEntries()
             faultDomainIndices_.empty() ? TreeNodeIndex() : move(faultDomainIndices_[i]),
             upgradeDomainIndices_.empty() ? TreeNodeIndex() : move(upgradeDomainIndices_[i]),
             nodeDescription.IsDeactivated,
-            nodeDescription.IsUp));
+            nodeDescription.IsUp,
+            move(nodeImages)));
 
         if (!nodeDescription.IsUp)
         {
@@ -731,7 +770,7 @@ bool BalanceCheckerCreator::IsDefragmentationMetric(std::wstring const& metricNa
     return isMetricDefrag;
 }
 
-int32 BalanceCheckerCreator::GetDefragEmptyNodesCount(std::wstring const& metricName)
+int32 BalanceCheckerCreator::GetDefragEmptyNodesCount(std::wstring const& metricName, bool scopedDefragEnabled)
 {
     int32 targetNumberOfEmptyNodes = -1;
     auto percentOrNumberOfFreeNodesIt = settings_.DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.find(metricName);
@@ -763,35 +802,76 @@ int32 BalanceCheckerCreator::GetDefragEmptyNodesCount(std::wstring const& metric
         }
     }
 
+    //If number of empty nodes is not specified, for defragmentation we empty 1 node in each domain
+    //for Reservation, if number of nodes with reservation is not specified we don't reserve any capacity
+    if (targetNumberOfEmptyNodes < 0 && scopedDefragEnabled)
+    {
+        targetNumberOfEmptyNodes = 0;
+    }
+
     return targetNumberOfEmptyNodes;
 }
 
 int64 BalanceCheckerCreator::GetDefragEmptyNodeLoadTreshold(std::wstring const& metricName)
 {
-    int64 emptyNodeTreshold = 0;
+    int64 emptyNodeThreshold = 0;
 
     if (!GetDefragmentationScopedAlgorithmEnabled(metricName))
     {
         auto emptyNodeTresholdIt = settings_.MetricActivityThresholds.find(metricName);
         if (emptyNodeTresholdIt != settings_.MetricActivityThresholds.end())
         {
-            emptyNodeTreshold = (metricName == ServiceModel::Constants::SystemMetricNameCpuCores) ?
+            emptyNodeThreshold = (metricName == ServiceModel::Constants::SystemMetricNameCpuCores) ?
                 emptyNodeTresholdIt->second * ServiceModel::Constants::ResourceGovernanceCpuCorrectionFactor :
                 emptyNodeTresholdIt->second;
         }
     }
-    else
+
+    return emptyNodeThreshold;
+}
+
+int64 BalanceCheckerCreator::GetReservationLoadAmount(std::wstring const& metricName, int64 nodeCapacity)
+{
+    int64 reservedLoad = 0;
+
+    if (GetDefragmentationScopedAlgorithmEnabled(metricName))
     {
-        auto emptyNodeTresholdIt = settings_.MetricEmptyNodeThresholds.find(metricName);
-        if (emptyNodeTresholdIt != settings_.MetricEmptyNodeThresholds.end())
+        auto reservedLoadIt = settings_.ReservedLoadPerNode.find(metricName);
+        if (reservedLoadIt != settings_.ReservedLoadPerNode.end())
         {
-            emptyNodeTreshold = (metricName == ServiceModel::Constants::SystemMetricNameCpuCores) ?
-            emptyNodeTresholdIt->second * ServiceModel::Constants::ResourceGovernanceCpuCorrectionFactor :
-            emptyNodeTresholdIt->second;
+            reservedLoad = reservedLoadIt->second;
+            if (reservedLoad != 0 && metricName == ServiceModel::Constants::SystemMetricNameCpuCores)
+            {
+                reservedLoad *= ServiceModel::Constants::ResourceGovernanceCpuCorrectionFactor;
+            }
+        }
+        else
+        {
+            auto emptyNodeTresholdIt = settings_.MetricEmptyNodeThresholds.find(metricName);
+            if (emptyNodeTresholdIt != settings_.MetricEmptyNodeThresholds.end())
+            {
+                auto emptyNodeThreshold = emptyNodeTresholdIt->second;
+                if (metricName == ServiceModel::Constants::SystemMetricNameCpuCores)
+                {
+                    emptyNodeThreshold *= ServiceModel::Constants::ResourceGovernanceCpuCorrectionFactor;
+                }
+
+                reservedLoad = nodeCapacity - emptyNodeThreshold;
+            }
+            else
+            {
+                // if it's not specified otherwise, reserve whole node capacity
+                reservedLoad = nodeCapacity;
+            }
         }
     }
 
-    return emptyNodeTreshold;
+    if (reservedLoad < 0)
+    {
+        reservedLoad = 0;
+    }
+
+    return reservedLoad;
 }
 
 Metric::DefragDistributionType BalanceCheckerCreator::GetDefragDistribution(std::wstring const& metricName)
@@ -900,14 +980,56 @@ Metric::PlacementStrategy BalanceCheckerCreator::GetPlacementStrategy(std::wstri
     return placementStrategy;
 }
 
-double BalanceCheckerCreator::GetDefragmentationEmptyNodeWeight(std::wstring const& metricName)
+double BalanceCheckerCreator::GetDefragmentationEmptyNodeWeight(std::wstring const& metricName, Metric::PlacementStrategy placementStrategy)
 {
     double defragmentationEmptyNodeWeight = 0;
     auto itDefragmentationEmptyNodeWeight = settings_.DefragmentationEmptyNodeWeight.find(metricName);
     if (itDefragmentationEmptyNodeWeight != settings_.DefragmentationEmptyNodeWeight.end())
     {
         defragmentationEmptyNodeWeight = itDefragmentationEmptyNodeWeight->second;
+
+        if (defragmentationEmptyNodeWeight > 1)
+        {
+            defragmentationEmptyNodeWeight = 1;
+        }
+    }
+    else
+    {
+        if (placementStrategy == Metric::PlacementStrategy::ReservationAndBalance || 
+            placementStrategy == Metric::PlacementStrategy::ReservationAndPack || 
+            placementStrategy == Metric::PlacementStrategy::Defragmentation)
+        {
+            defragmentationEmptyNodeWeight = 0.999;
+        }
+        else if (placementStrategy == Metric::PlacementStrategy::Reservation)
+        {
+            defragmentationEmptyNodeWeight = 1;
+        }
+    }
+    return defragmentationEmptyNodeWeight;
+}
+
+double BalanceCheckerCreator::GetDefragmentationNonEmptyNodeWeight(std::wstring const& metricName, Metric::PlacementStrategy placementStrategy)
+{
+    double defragmentationNonEmptyNodeWeight = 1 - GetDefragmentationEmptyNodeWeight(metricName, placementStrategy);
+
+    auto itDefragmentationNonEmptyNodeWeight = settings_.DefragmentationNonEmptyNodeWeight.find(metricName);
+    if (itDefragmentationNonEmptyNodeWeight != settings_.DefragmentationNonEmptyNodeWeight.end())
+    {
+        defragmentationNonEmptyNodeWeight = itDefragmentationNonEmptyNodeWeight->second;
     }
 
-    return defragmentationEmptyNodeWeight;
+    return defragmentationNonEmptyNodeWeight;
+}
+
+bool BalanceCheckerCreator::IsBalancingByPercentageEnabled(std::wstring const & metricName)
+{
+    bool balancingByPercentage = false;
+    auto itBalancingByPercentage = settings_.BalancingByPercent.find(metricName);
+    if (itBalancingByPercentage != settings_.BalancingByPercent.end())
+    {
+        balancingByPercentage = itBalancingByPercentage->second;
+    }
+
+    return balancingByPercentage;
 }

@@ -12,13 +12,13 @@ namespace Reliability
         class FailoverThrottle
         {
         public:
-            FailoverThrottle(Common::TimeSpan throttleTime);
+            FailoverThrottle(Common::ConfigEntry<Common::TimeSpan> & throttleTime);
 
             bool IsThrottling();
             FailoverThrottle(FailoverThrottle const&) = delete;
             void operator=(FailoverThrottle const&) = delete;
         private:
-            Common::TimeSpan throttleTime_;
+            Common::ConfigEntry<Common::TimeSpan> & throttleTime_;
             Common::Stopwatch stopwatch_;
             bool isFirstCall_;
         };

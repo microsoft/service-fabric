@@ -64,9 +64,10 @@ CandidateSolution Searcher::SearchForSolution(
     random_.Reseed(randomSeed_);
 
     PLBConfig const& config = PLBConfig::GetConfig();
-    if (searchType.Action == PLBSchedulerActionType::Creation || searchType.Action == PLBSchedulerActionType::CreationWithMove)
+    if (searchType.Action == PLBSchedulerActionType::NewReplicaPlacement ||
+        searchType.Action == PLBSchedulerActionType::NewReplicaPlacementWithMove)
     {
-        bool creationWithMove = (searchType.Action == PLBSchedulerActionType::Creation) ? false : true;
+        bool creationWithMove = (searchType.Action == PLBSchedulerActionType::NewReplicaPlacement) ? false : true;
         return SearchForPlacement(
             config.MaxPercentageToMoveForPlacement,
             config.PlacementSearchTimeout,
@@ -87,7 +88,7 @@ CandidateSolution Searcher::SearchForSolution(
             0.8,
             searchType);
     }
-    else if (searchType.Action == PLBSchedulerActionType::FastBalancing)
+    else if (searchType.Action == PLBSchedulerActionType::QuickLoadBalancing)
     {
         return SearchForBalancing(
             true,
@@ -99,7 +100,7 @@ CandidateSolution Searcher::SearchForSolution(
             containsDefragMetric,
             searchType.Action);
     }
-    else if (searchType.Action == PLBSchedulerActionType::SlowBalancing)
+    else if (searchType.Action == PLBSchedulerActionType::LoadBalancing)
     {
         return SearchForBalancing(
             false,
@@ -511,7 +512,7 @@ CandidateSolution Searcher::SearchForPlacement(
         if (maxNumberOfMigrations == 0)
         {
             //if we can't make any movements we skip this phase..
-            trace_.Searcher(L"Creation with Move was skipped due to movement threshold being met.");
+            trace_.Searcher(L"NewReplicaPlacementWithMove was skipped due to movement threshold being met.");
         }
         else
         {
@@ -523,7 +524,7 @@ CandidateSolution Searcher::SearchForPlacement(
                 vector<Movement>(maxNumberOfMigrations),
                 currentSchedulerAction);
 
-            // try CreationWithMove with partial closure
+            // try NewReplicaPlacementWithMove with partial closure
             StopwatchTime randomPlaceEnd = now + RandomWalkTimeout;
             RandomWalkPlacementWithReplicaMove(
                 solutionWithRandomMove,
@@ -534,7 +535,7 @@ CandidateSolution Searcher::SearchForPlacement(
                 false,
                 true);
 
-            // try CreationWithMove with full closure without totalRandom
+            // try NewReplicaPlacementWithMove with full closure without totalRandom
             // totalRandom false means: only the random move that can improve the placement would be adopted
             if (solutionWithRandomMove.ValidMoveCount == 0)
             {
@@ -550,7 +551,7 @@ CandidateSolution Searcher::SearchForPlacement(
                     false);
             }
 
-            // try CreationWithMove with full closure and use total random to see if we can get better result
+            // try NewReplicaPlacementWithMove with full closure and use total random to see if we can get better result
             if (solutionWithRandomMove.ValidMoveCount == 0)
             {
                 randomPlaceEnd += RandomWalkTimeout;
@@ -808,6 +809,7 @@ void Searcher::RandomWalking(
     bool relaxAffinity /* = false */)
 {
     StopwatchTime lastStartTime = Stopwatch::Now();
+
     TempSolution tempSolution(solution);
 
     uint64 totalIterations = 0;
@@ -925,7 +927,11 @@ void Searcher::RandomWalkPlacement(
 
     InitialWalk(solution, solutions, maxPriority, relaxAffinity);
 
-    RandomWalking(solution, solutions, endTime, maxRound, transitionPerRound, relaxAffinity);
+    if (!UseBatchPlacement())
+    {
+        // No random walking for batch placement
+        RandomWalking(solution, solutions, endTime, maxRound, transitionPerRound, relaxAffinity);
+    }
 
     ChooseWalk(solution, solutions, maxConstraintPriority, maxPriority);
 }

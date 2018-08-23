@@ -14,12 +14,14 @@ ApplicationHostClosedEventArgs::ApplicationHostClosedEventArgs(
     wstring const & hostId,
     vector<ServiceModel::ServiceTypeIdentifier> const & serviceTypes,
     ServiceModel::ServicePackageActivationContext isolationContext,
-    wstring const & servicePackagePublicActivationId)
+    wstring const & servicePackagePublicActivationId,
+    Common::ActivityDescription const & activityDescription)
     : sequenceNumber_(sequenceNumber)
     , hostId_(hostId)
     , serviceTypes_(serviceTypes)
     , activationContext_(isolationContext)
     , servicePackagePublicActivationId_(servicePackagePublicActivationId)
+    , activityDescription_(activityDescription)
 {
 }
 
@@ -29,6 +31,7 @@ ApplicationHostClosedEventArgs::ApplicationHostClosedEventArgs(ApplicationHostCl
     , serviceTypes_(other.serviceTypes_)
     , activationContext_(other.activationContext_)
     , servicePackagePublicActivationId_(other.servicePackagePublicActivationId_)
+    , activityDescription_(other.activityDescription_)
 {
 }
 
@@ -38,6 +41,7 @@ ApplicationHostClosedEventArgs::ApplicationHostClosedEventArgs(ApplicationHostCl
     , serviceTypes_(move(other.serviceTypes_))
     , activationContext_(move(other.activationContext_))
     , servicePackagePublicActivationId_(move(other.servicePackagePublicActivationId_))
+    , activityDescription_(move(other.activityDescription_))
 {
 }
 
@@ -50,6 +54,7 @@ ApplicationHostClosedEventArgs const & ApplicationHostClosedEventArgs::operator 
         this->serviceTypes_ = other.serviceTypes_;
         this->activationContext_ = other.activationContext_;
         this->servicePackagePublicActivationId_ = other.servicePackagePublicActivationId_;
+        this->activityDescription_ = other.activityDescription_;
     }
 
     return *this;
@@ -64,6 +69,7 @@ ApplicationHostClosedEventArgs const & ApplicationHostClosedEventArgs::operator 
         this->serviceTypes_ = move(other.serviceTypes_);
         this->activationContext_ = move(other.activationContext_);
         this->servicePackagePublicActivationId_ = move(other.servicePackagePublicActivationId_);
+        this->activityDescription_ = other.activityDescription_;
     }
 
     return *this;
@@ -87,5 +93,6 @@ void ApplicationHostClosedEventArgs::WriteTo(TextWriter& w, FormatOptions const&
     w.Write("],");
     w.Write("ActivaionContext = {0}", activationContext_);
     w.Write("ServicePackagePublicActivationId = {0}", servicePackagePublicActivationId_);
+    w.Write("ActivityDescription = {0}", activityDescription_);
     w.Write("}");
 }

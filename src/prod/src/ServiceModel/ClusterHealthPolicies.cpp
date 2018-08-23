@@ -14,21 +14,3 @@ ClusterHealthPolicies::ClusterHealthPolicies()
     , ClusterHealthPolicyEntry()
 {
 }
-
-ClusterHealthPolicies::ClusterHealthPolicies(
-    ClusterHealthPolicies && other)
-    : ApplicationHealthPolicies(move(other.ApplicationHealthPolicies))
-    , ClusterHealthPolicyEntry(move(other.ClusterHealthPolicyEntry))
-{
-}
-
-ClusterHealthPolicies & ClusterHealthPolicies::operator = (ClusterHealthPolicies && other)
-{
-    if (this != &other)
-    {
-        this->ClusterHealthPolicyEntry = move(other.ClusterHealthPolicyEntry);
-        this->ApplicationHealthPolicies = move(other.ApplicationHealthPolicies);
-    }
-
-    return *this;
-}

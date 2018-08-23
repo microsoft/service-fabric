@@ -7,7 +7,7 @@ set( LINUX_SOURCES
     DeactivateMessageBody.cpp
     DeleteReplicaMessageBody.cpp
     FailoverConfig.cpp
-	FailoverManagerId.cpp
+    FailoverManagerId.cpp
     FailoverUnitDescription.cpp
     FailoverUnitFlags.cpp
     FailoverUnitInfo.cpp

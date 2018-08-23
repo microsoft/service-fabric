@@ -244,3 +244,16 @@ ErrorCode ProcessListUploadSessionRequestAsyncOperation::EndOperation(
 
     return ErrorCodeValue::Success;;
 }
+
+void ProcessListUploadSessionRequestAsyncOperation::WriteTrace(ErrorCode const &error)
+{
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "ListUploadSession request failed with error {0}, sessionId:{1}, storeRelativePath:{2}",
+            error,
+            this->sessionId_,
+            this->storeRelativePath_);
+    }
+}

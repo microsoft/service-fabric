@@ -102,6 +102,9 @@ namespace Reliability
                 case OnSafetyCheckAcknowledged:
                     w << "OnSafetyCheckAcknowledged";
                     return;
+                case UpdateAvailableImagesPerNode:
+                    w << "UpdateAvailableImagesPerNode";
+                    return;
                 default:
                     Common::Assert::CodingError("Unknown {0}", static_cast<int>(val));
                 }

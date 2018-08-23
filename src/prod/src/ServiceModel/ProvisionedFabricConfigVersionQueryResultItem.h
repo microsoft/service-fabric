@@ -13,15 +13,16 @@ namespace ServiceModel
     public:
         ProvisionedFabricConfigVersionQueryResultItem();
         ProvisionedFabricConfigVersionQueryResultItem(std::wstring const & configVersion);
-        ProvisionedFabricConfigVersionQueryResultItem(ProvisionedFabricConfigVersionQueryResultItem const & other);
-        ProvisionedFabricConfigVersionQueryResultItem(ProvisionedFabricConfigVersionQueryResultItem && other);
+        
+        ProvisionedFabricConfigVersionQueryResultItem(ProvisionedFabricConfigVersionQueryResultItem const & other) = default;
+        ProvisionedFabricConfigVersionQueryResultItem(ProvisionedFabricConfigVersionQueryResultItem && other) = default;
+
+        ProvisionedFabricConfigVersionQueryResultItem & operator = (ProvisionedFabricConfigVersionQueryResultItem const & other) = default;
+        ProvisionedFabricConfigVersionQueryResultItem & operator = (ProvisionedFabricConfigVersionQueryResultItem && other) = default;
 
         __declspec(property(get=get_ConfigVersion)) std::wstring const & ConfigVersion;
         std::wstring const & get_ConfigVersion() const { return configVersion_; }
-
-        ProvisionedFabricConfigVersionQueryResultItem const & operator = (ProvisionedFabricConfigVersionQueryResultItem const & other);
-        ProvisionedFabricConfigVersionQueryResultItem const & operator = (ProvisionedFabricConfigVersionQueryResultItem && other);
-
+        
         void ToPublicApi(
             __in Common::ScopedHeap & heap, 
             __out FABRIC_PROVISIONED_CONFIG_VERSION_QUERY_RESULT_ITEM & publicQueryResult) const ;

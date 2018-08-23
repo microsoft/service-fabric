@@ -19,6 +19,7 @@ NTSTATUS CheckpointFileProperties::Create(
         0,                                  // ReplicaId
         0,                                  // RootStateProviderCount
         0,                                  // StateProviderCount
+        false,                              // DoNotWritePrepareCheckpointLSN
         FABRIC_INVALID_SEQUENCE_NUMBER);    // PrepareCheckpointLSN
     if (result == nullptr)
     {
@@ -40,6 +41,7 @@ NTSTATUS CheckpointFileProperties::Create(
     __in FABRIC_REPLICA_ID replicaId,
     __in ULONG32 rootStateProviderCount,
     __in ULONG32 stateProviderCount,
+    __in bool doNotWritePrepareCheckpointLSN,
     __in FABRIC_SEQUENCE_NUMBER prepareCheckpointLSN,
     __in KAllocator & allocator,
     __out SPtr & result) noexcept
@@ -51,6 +53,7 @@ NTSTATUS CheckpointFileProperties::Create(
         replicaId,
         rootStateProviderCount,
         stateProviderCount,
+        doNotWritePrepareCheckpointLSN,
         prepareCheckpointLSN);
     if (result == nullptr)
     {
@@ -102,7 +105,7 @@ void CheckpointFileProperties::Write(__in BinaryWriter & writer)
     VarInt::Write(writer, static_cast<ULONG32>(sizeof(ULONG64)));
     writer.Write(ReplicaId);
 
-    if (!test_Ignore_)
+    if (doNotWritePrepareCheckpointLSN_ == false && test_Ignore_ == false)
     {
         // 'checkpointlsn' - FABRIC_SEQUENCE_NUMBER
         writer.Write(PrepareCheckpointLSNPropertyName_);
@@ -141,8 +144,15 @@ void CheckpointFileProperties::ReadProperty(
     {
         reader.Read(replicaId_);
     }
-    else if (!test_Ignore_ && property.Compare(PrepareCheckpointLSNPropertyName_) == 0)
+    else if (property.Compare(PrepareCheckpointLSNPropertyName_) == 0)
     {
+        if (test_Ignore_)
+        {
+            // If test ignore set to true, we need to jump over the value block.
+            FileProperties::ReadProperty(reader, property, valueSize);
+            return;
+        }
+
         reader.Read(prepareCheckpointLSN_);
         ASSERT_IFNOT(
             prepareCheckpointLSN_ >= FABRIC_AUTO_SEQUENCE_NUMBER,
@@ -179,6 +189,7 @@ CheckpointFileProperties::CheckpointFileProperties(
     __in FABRIC_REPLICA_ID replicaId,
     __in ULONG32 rootStateProviderCount,
     __in ULONG32 stateProviderCount,
+    __in bool doNotWritePrepareCheckpointLSN,
     __in FABRIC_SEQUENCE_NUMBER prepareCheckpointLSN)
     : FileProperties()
     , blocksHandle_(blocksHandle)
@@ -189,6 +200,7 @@ CheckpointFileProperties::CheckpointFileProperties(
     , stateProviderCount_(stateProviderCount)
     , prepareCheckpointLSN_(prepareCheckpointLSN)
     , test_Ignore_(false)
+    , doNotWritePrepareCheckpointLSN_(doNotWritePrepareCheckpointLSN)
 {
 }
 

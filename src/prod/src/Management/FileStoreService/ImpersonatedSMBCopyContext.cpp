@@ -278,11 +278,21 @@ ErrorCode ImpersonatedSMBCopyContext::ImpersonateAndCopyFile(
 
 bool ImpersonatedSMBCopyContext::IsRetryableError(ErrorCode const & error)
 {
+    if (IsRetryableNetworkError(error) ||
+        error.IsWin32Error(ERROR_PATH_NOT_FOUND) ||
+        error.IsWin32Error(ERROR_SHARING_VIOLATION))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool ImpersonatedSMBCopyContext::IsRetryableNetworkError(ErrorCode const & error)
+{
     if (error.IsWin32Error(ERROR_BAD_NETPATH) ||
         error.IsWin32Error(ERROR_BAD_NET_NAME) ||
-        error.IsWin32Error(ERROR_PATH_NOT_FOUND) ||
-        error.IsWin32Error(ERROR_NETNAME_DELETED) ||
-        error.IsWin32Error(ERROR_SHARING_VIOLATION))
+        error.IsWin32Error(ERROR_NETNAME_DELETED))
     {
         return true;
     }

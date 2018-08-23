@@ -58,7 +58,7 @@ namespace Naming
         //The maximum number of entries maintained in the LRU service description cache at the Naming Store Service (set to 0 for no limit).
         PUBLIC_CONFIG_ENTRY(int, L"NamingService", ServiceDescriptionCacheLimit, 0, Common::ConfigEntryUpgradePolicy::Static);
         // Uses TStore for persisted stateful storage when set to true
-        INTERNAL_CONFIG_ENTRY(bool, L"NamingService", EnableTStore, false, Common::ConfigEntryUpgradePolicy::NotAllowed);
+        INTERNAL_CONFIG_ENTRY(bool, L"NamingService", EnableTStore, false, Common::ConfigEntryUpgradePolicy::Static);
 
         // The store will be auto-compacted during open when the database file size exceeds this threshold (<=0 to disable)
         INTERNAL_CONFIG_ENTRY(int, L"NamingService", CompactionThresholdInMB, 0, Common::ConfigEntryUpgradePolicy::Dynamic);

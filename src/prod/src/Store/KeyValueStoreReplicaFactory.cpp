@@ -185,8 +185,8 @@ ErrorCode KeyValueStoreReplicaFactory::CreateKeyValueStoreReplica_V2(
     return KeyValueStoreReplica::CreateForPublicStack_V2(
         partitionId, 
         replicaId,
-        move(storeSettings),
         move(replicatorSettings),
+        move(storeSettings),
         storeEventHandler,
         secondaryEventHandler,
         kvs); // out

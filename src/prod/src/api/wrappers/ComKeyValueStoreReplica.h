@@ -13,7 +13,6 @@ namespace Api
 
     class ComKeyValueStoreReplica :
         public IFabricKeyValueStoreReplica6,
-        public IFabricInternalStatefulServiceReplica,
         private ComStatefulServiceReplica
     {
         DENY_COPY(ComKeyValueStoreReplica)
@@ -25,7 +24,6 @@ namespace Api
             COM_INTERFACE_ITEM(IID_IFabricKeyValueStoreReplica4, IFabricKeyValueStoreReplica4)
             COM_INTERFACE_ITEM(IID_IFabricKeyValueStoreReplica5, IFabricKeyValueStoreReplica5)
             COM_INTERFACE_ITEM(IID_IFabricKeyValueStoreReplica6, IFabricKeyValueStoreReplica6)
-            COM_INTERFACE_ITEM(IID_IFabricInternalStatefulServiceReplica, IFabricInternalStatefulServiceReplica)
             COM_INTERFACE_ITEM(CLSID_ComKeyValueStoreReplica, ComKeyValueStoreReplica)
             COM_DELEGATE_TO_BASE_ITEM(ComStatefulServiceReplica)
         END_COM_INTERFACE_LIST()
@@ -225,13 +223,6 @@ namespace Api
             /* [in] */ FABRIC_KEY_VALUE_STORE_RESTORE_SETTINGS * settings,
             /* [in] */ IFabricAsyncOperationCallback *callback,
             /* [retval][out] */ IFabricAsyncOperationContext **context);
-
-        //
-        // IFabricInternalStatefulServiceReplica
-        //
-
-        HRESULT STDMETHODCALLTYPE GetStatus(
-            /* [out, retval] */ IFabricStatefulServiceReplicaStatusResult ** result);
 
     private:
 

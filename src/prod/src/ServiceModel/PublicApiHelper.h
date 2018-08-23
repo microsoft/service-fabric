@@ -29,7 +29,7 @@ namespace ServiceModel
 
             publicList.Count = count;
             publicList.Items = publicArray.GetRawArray();
-            return ErrorCode::Success();
+            return Common::ErrorCode::Success();
         }
 
         template<class TServiceModel, class TPublicApiList>
@@ -39,7 +39,7 @@ namespace ServiceModel
         {
             if (publicList == NULL)
             {
-                return ErrorCode::Success();
+                return Common::ErrorCode::Success();
             }
 
             auto publicItems = publicList->Items;
@@ -58,7 +58,7 @@ namespace ServiceModel
                 list.push_back(move(listEntry));
             }
 
-            return ErrorCode::Success();
+            return Common::ErrorCode::Success();
         }
 
         template<class TStringMap>
@@ -66,6 +66,19 @@ namespace ServiceModel
             __in Common::ScopedHeap & heap,
             __in TStringMap const& stringMap,
             __out FABRIC_STRING_PAIR_LIST & fabricStringPairList)
+        {
+            return ToPublicApiStringMap<TStringMap, FABRIC_STRING_PAIR_LIST>(
+                heap,
+                stringMap,
+                fabricStringPairList);
+        }
+
+
+        template<class TStringMap, class TPublicApiList>
+        static Common::ErrorCode ToPublicApiStringMap(
+            __in Common::ScopedHeap & heap,
+            __in TStringMap const& stringMap,
+            __out TPublicApiList & fabricStringPairList)
         {
             auto count = static_cast<ULONG>(stringMap.size());
 
@@ -93,8 +106,18 @@ namespace ServiceModel
 
         template<class TStringMap>
         static Common::ErrorCode FromPublicApiStringPairList(
-            __out FABRIC_STRING_PAIR_LIST const & fabricStringPairList,
-            __in TStringMap & stringMap)
+            _In_ FABRIC_STRING_PAIR_LIST const & fabricStringPairList,
+            _Out_ TStringMap & stringMap)
+        {
+            return FromPublicApiStringMap<TStringMap, FABRIC_STRING_PAIR_LIST>(
+                fabricStringPairList,
+                stringMap);
+        }
+
+        template<class TStringMap, class TPublicApiList>
+        static Common::ErrorCode FromPublicApiStringMap(
+            _In_ TPublicApiList const & fabricStringPairList,
+            _Out_ TStringMap & stringMap)
         {
             for (ULONG i = 0; i < fabricStringPairList.Count; ++i)
             {

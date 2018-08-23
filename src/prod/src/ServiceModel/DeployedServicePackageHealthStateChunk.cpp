@@ -36,31 +36,6 @@ DeployedServicePackageHealthStateChunk::DeployedServicePackageHealthStateChunk(
 {
 }
 
-DeployedServicePackageHealthStateChunk::DeployedServicePackageHealthStateChunk(DeployedServicePackageHealthStateChunk && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , Common::ISizeEstimator(move(other))
-    , serviceManifestName_(move(other.serviceManifestName_))
-    , servicePackageActivationId_(move(other.servicePackageActivationId_))
-    , healthState_(move(other.healthState_))
-{
-}
-
-DeployedServicePackageHealthStateChunk & DeployedServicePackageHealthStateChunk::operator =(DeployedServicePackageHealthStateChunk && other)
-{
-    if (this != &other)
-    {
-        serviceManifestName_ = move(other.serviceManifestName_);
-        servicePackageActivationId_ = move(other.servicePackageActivationId_);
-        healthState_ = move(other.healthState_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    Common::ISizeEstimator::operator=(move(other));
-    return *this;
-}
-
 DeployedServicePackageHealthStateChunk::~DeployedServicePackageHealthStateChunk()
 {
 }

@@ -42,7 +42,7 @@ namespace Store
 
         __declspec(property(get=get_WorkingDirectory)) std::wstring const & WorkingDirectory;
         __declspec(property(get=get_SharedLogSettings)) TxnReplicator::KtlLoggerSharedLogSettingsUPtr const & SharedLogSettings;
-        __declspec(property(get = get_TxnReplicatorSettings)) TxnReplicator::TransactionalReplicatorSettingsUPtr const & TxnReplicatorSettings;
+        __declspec(property(get=get_TxnReplicatorSettings)) TxnReplicator::TransactionalReplicatorSettingsUPtr const & TxnReplicatorSettings;
         __declspec(property(get=get_NotificationMode)) SecondaryNotificationMode::Enum const & NotificationMode;
         __declspec(property(get=get_TStoreLockTimeout)) Common::TimeSpan const & TStoreLockTimeout;
 
@@ -63,6 +63,10 @@ namespace Store
             std::wstring const & sharedLogDirectory,
             std::wstring const & sharedLogFilename,
             Common::Guid const & sharedLogGuid);
+
+        Common::ErrorCode DeleteDatabaseFiles(Common::Guid const & partitionId, FABRIC_REPLICA_ID replicaId);
+        Common::ErrorCode DeleteDatabaseFiles(Common::Guid const & partitionId, FABRIC_REPLICA_ID replicaId, std::wstring const & sharedLogFilePath);
+        Common::ErrorCode TraceAndGetError(std::wstring && msg, Common::ErrorCode const &);
 
     private:
 

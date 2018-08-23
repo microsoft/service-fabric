@@ -19,36 +19,6 @@ ServiceNameQueryResult::ServiceNameQueryResult(Uri const & serviceName)
 {
 }
 
-ServiceNameQueryResult::ServiceNameQueryResult(ServiceNameQueryResult const & other)
-    : serviceName_(other.serviceName_)
-{
-}
-
-ServiceNameQueryResult::ServiceNameQueryResult(ServiceNameQueryResult && other)
-    : serviceName_(move(other.serviceName_))
-{
-}
-
-ServiceNameQueryResult const & ServiceNameQueryResult::operator = (ServiceNameQueryResult const & other)
-{
-    if (this != &other)
-    {
-        this->serviceName_ = other.serviceName_;
-    }
-
-    return *this;
-}
-
-ServiceNameQueryResult const & ServiceNameQueryResult::operator = (ServiceNameQueryResult && other)
-{
-    if (this != &other)
-    {
-        this->serviceName_ = move(other.serviceName_);
-    }
-
-    return *this;
-}
-
 void ServiceNameQueryResult::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_SERVICE_NAME_QUERY_RESULT & publicQueryResult) const 

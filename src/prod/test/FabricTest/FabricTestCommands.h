@@ -82,6 +82,7 @@ namespace FabricTest
 
         static std::wstring const CreateNameCommand;
         static std::wstring const DeleteNameCommand;
+        static std::wstring const DnsNameExistsCommand;
         static std::wstring const NameExistsCommand;
         static std::wstring const PutPropertyCommand;
         static std::wstring const PutCustomPropertyCommand;
@@ -128,6 +129,7 @@ namespace FabricTest
         static std::wstring const DeactivateNodesCommand;
         static std::wstring const RemoveNodeDeactivationCommand;
         static std::wstring const VerifyNodeDeactivationStatusCommand;
+        static std::wstring const UpdateNodeImagesCommand;
 
         static std::wstring const NodeStateRemovedCommand;
         static std::wstring const RecoverPartitionsCommand;
@@ -156,6 +158,7 @@ namespace FabricTest
         static std::wstring const VerifyImageStore;
         static std::wstring const VerifyNodeFiles;
         static std::wstring const DeployServicePackageCommand;
+        static std::wstring const VerifyDeployedCodePackageCountCommand;
 
         static std::wstring const CreateComposeCommand;
         static std::wstring const DeleteComposeCommand;
@@ -307,5 +310,10 @@ namespace FabricTest
         //
         static std::wstring const SetEseOnly;
         static std::wstring const ClearEseOnly;
+
+        // Verify configured checkpoint and truncation interval timestamps
+        // Intended for use with random tests only
+        // Valid for TXRServiceTypes exclusively
+        static std::wstring const EnableLogTruncationTimestampValidation;
     };
 };

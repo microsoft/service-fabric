@@ -15,8 +15,8 @@ namespace ServiceModel
         HealthReportSendOptions();
         explicit HealthReportSendOptions(bool immediate);
         
-        HealthReportSendOptions(HealthReportSendOptions && other);
-        HealthReportSendOptions & operator = (HealthReportSendOptions && other);
+        HealthReportSendOptions(HealthReportSendOptions && other) = default;
+        HealthReportSendOptions & operator = (HealthReportSendOptions && other) = default;
 
         ~HealthReportSendOptions();
 

@@ -113,8 +113,29 @@ private:
             owner_.Root.TraceId,
             "OpenDeactivator: error={0}",
             error);
+        if (!error.IsSuccess())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        ApplicationManager & appManager = owner_;
+        IFabricActivatorClientSPtr activatorClient = this->owner_.hosting_.FabricActivatorClientObj;
+
+        //Register handler to handle process termination events.
+        auto terminationHandler = owner_.hosting_.FabricActivatorClientObj->AddRootContainerTerminationHandler(
+            [&appManager](EventArgs const& eventArgs)
+        {
+            appManager.OnRootContainerTerminated(eventArgs);
+        });
+
+        owner_.terminationNotificationHandler_ = make_unique<ResourceHolder<HHandler>>(
+            move(terminationHandler),
+            [activatorClient](ResourceHolder<HHandler> * thisPtr)
+        {
+            activatorClient->RemoveRootContainerTerminationHandler(thisPtr->Value);
+        });
         TryComplete(thisSPtr, error);
-        return;
     }
 
 private:
@@ -373,6 +394,7 @@ private:
         auto operation = owner_.hosting_.DownloadManagerObj->BeginDownloadApplicationPackage(
             versionedServiceTypeId_.Id.ApplicationId,
             versionedServiceTypeId_.servicePackageVersionInstance.Version.ApplicationVersionValue,
+            serviceTypeInstanceId_.ActivationContext,
             applicationName_,
             [this](AsyncOperationSPtr const & operation){ this->FinishDownloadApplication(operation, false); },
             thisSPtr);
@@ -930,6 +952,33 @@ void ApplicationManager::OnAbort()
     environmentManager_->Abort();
 }
 
+void ApplicationManager::OnRootContainerTerminated(
+    EventArgs const & eventArgs)
+{
+    ApplicationHostTerminatedEventArgs args = dynamic_cast<ApplicationHostTerminatedEventArgs const &>(eventArgs);
+    ServicePackageInstanceIdentifier spId;
+    //The hostId for root container is same as servicepackageinstanceId.
+    auto error = ServicePackageInstanceIdentifier::FromString(args.HostId, spId);
+    if (error.IsSuccess())
+    {
+        WriteInfo(
+            TraceType,
+            Root.TraceId,
+            "Root container terminated unexpectedly, deactivating servicepackage Id={0}",
+            spId);
+        DeactivateServicePackageInstance(spId);
+    }
+    else
+    {
+        WriteWarning(
+            TraceType,
+            Root.TraceId, 
+            "Failed to convert {0} to ServicePackageInstanceId error {1}",
+            args.HostId,
+            error);
+    }
+}
+
 AsyncOperationSPtr ApplicationManager::BeginDownloadAndActivate(
     uint64 const sequenceNumber,
     VersionedServiceTypeIdentifier const & versionedServiceTypeId,
@@ -1289,9 +1338,26 @@ ErrorCode ApplicationManager::Contains(ServiceModel::ApplicationIdentifier const
     return this->applicationMap_->Contains(appId, contains);
 }
 
+void ApplicationManager::OnServiceTypesUnregistered(
+    ServicePackageInstanceIdentifier const & servicePackageInstanceId,
+    vector<ServiceTypeInstanceIdentifier> const & serviceTypeInstanceIds)
+{
+    if (serviceTypeInstanceIds.size() == 0)
+    {
+        return;
+    }
+
+    Application2SPtr application;
+    auto error = this->applicationMap_->Get(servicePackageInstanceId.ApplicationId, application);
+    if (error.IsSuccess())
+    {
+        application->OnServiceTypesUnregistered(servicePackageInstanceId, serviceTypeInstanceIds);
+    }
+}
+
 bool ApplicationManager::ShouldReportHealth(ServicePackageInstanceIdentifier const & servicePackageInstanceId) const
 {
-	// Donot report health if the Application/ServicePackage is in any of the terminal states or going under deactivation.
+    // Donot report health if the Application/ServicePackage is in any of the terminal states or going under deactivation.
 
     Application2SPtr application;
     auto error = this->applicationMap_->Get(servicePackageInstanceId.ApplicationId, application);

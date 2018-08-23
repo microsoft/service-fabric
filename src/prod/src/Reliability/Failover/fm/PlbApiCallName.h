@@ -41,7 +41,8 @@ namespace Reliability
                 UpdateClusterUpgrade = 25,
                 OnFMBusy = 26,
                 OnSafetyCheckAcknowledged = 27,
-                LastValidEnum = OnSafetyCheckAcknowledged
+                UpdateAvailableImagesPerNode = 28,
+                LastValidEnum = UpdateAvailableImagesPerNode
             };
 
             void WriteToTextWriter(Common::TextWriter & w, Enum const & val);

@@ -199,6 +199,14 @@ QueryResult QueryGateway::GetQueryList()
         StringCollection optionalArguments;
 
         auto specification = QuerySpecificationStore::Get().GetSpecification(lookupEntry->second, QueryArgumentMap());
+
+        // For QuerySpecifications that are not persisted in the store, do not return it for verification.
+        // Some query specifications are created dynamically with runtime generated input so they are not persisted in the store.
+        if (!specification)
+        {
+            continue;
+        }
+
         for(auto itArgument = specification->SupportedArguments.begin(); itArgument != specification->SupportedArguments.end(); ++itArgument)
         {
             if (itArgument->IsRequired)

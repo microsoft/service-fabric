@@ -1,0 +1,58 @@
+﻿{
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "ConfigName": "",
+        "Machines": "",
+        "CleanupType": "",
+        "CredentialType": "",
+        "ServiceTimeout": "",
+        "SetupTimeout": "900",
+        "ExecutionTimeout": "70000",
+        "CleanupTimeout": "2100"
+    },
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPTYPE] [SETUPARGS] ",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabricTestRunner.exe",
+            "Arguments": " /auto:true /random %/t:[SERVICETIMEOUT]% /SfrpLinuxUbuntu /serviceName:[AZURERESOURCES] %/TestParamFile:[CONFIGNAME]% %/security:[CREDENTIALTYPE]% /notestdir:true",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
+            "WorkingDirectory": ""
+        }
+    ],
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.xml,.*\\.json,.*\\.man"
+    }
+
+}

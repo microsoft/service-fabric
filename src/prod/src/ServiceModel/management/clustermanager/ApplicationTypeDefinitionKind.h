@@ -18,7 +18,9 @@ namespace Management
                 // Regular type - create application based on application type
                 ServiceFabricApplicationPackage = 1,
                 // For compose application - each application instance has its own type
-                Compose= 2
+                Compose= 2,
+                // For mesh application - each application instance has its own type
+                MeshApplicationDescription = 3,
             };
 
             void WriteToTextWriter(Common::TextWriter & w, Enum const & e);

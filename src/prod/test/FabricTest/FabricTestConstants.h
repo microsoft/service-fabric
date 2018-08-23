@@ -38,5 +38,10 @@ namespace FabricTest
         static std::wstring const SharedPackageNames;
         static std::wstring const VerifyInCache;
         static std::wstring const VerifyShared;
+
+        static std::wstring const NodeIdList;
+        static std::wstring const ExpectedCount;
+        static std::wstring const ApplicationName;
+        static std::wstring const ServicePackageActivationId;
     };
 };

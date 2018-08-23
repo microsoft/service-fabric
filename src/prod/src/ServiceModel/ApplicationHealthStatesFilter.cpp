@@ -21,21 +21,6 @@ ApplicationHealthStatesFilter::ApplicationHealthStatesFilter(DWORD healthStateFi
 {
 }
 
-ApplicationHealthStatesFilter::ApplicationHealthStatesFilter(ApplicationHealthStatesFilter && other)
-    : healthStateFilter_(move(other.healthStateFilter_))
-{
-}
-
-ApplicationHealthStatesFilter & ApplicationHealthStatesFilter::operator =(ApplicationHealthStatesFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-    }
-
-    return *this;
-}
-
 ApplicationHealthStatesFilter::~ApplicationHealthStatesFilter()
 {
 }

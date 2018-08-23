@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+  <PropertyGroup>
+    <Description>Image Builder</Description>
+
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <DefineConstants>$(DefineConstants);DotNetCoreClr;DotNetCoreClrLinux</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>ImageBuilder</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>ImageBuilder</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\ImageBuilderExe.cs;
+      ..\..\StringConstants.cs;
+      ..\..\DiagnosticsSinkJsonConverter.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <None Update="ImageBuilder.sh">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="ImageBuilder.bat">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetsLinux)' == 'true' ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_iot.props" />
+  
+</Project>

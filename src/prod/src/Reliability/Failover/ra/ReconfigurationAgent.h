@@ -452,7 +452,7 @@ namespace Reliability
             void ReportResourceUsageHandler(Transport::Message & message);
 
             void ReportFaultMessageHandler(Infrastructure::HandlerParameters & parameters, ReportFaultMessageContext & msgContext);
-            void ReportFaultHandler(Infrastructure::HandlerParameters & parameters, FaultType::Enum faultType);
+            void ReportFaultHandler(Infrastructure::HandlerParameters & parameters, FaultType::Enum faultType, Common::ActivityDescription const & activityDescription);
 
             bool CanProcessNodeFabricUpgrade(std::wstring const & activityId, ServiceModel::FabricUpgradeSpecification const & newVersion);
             void ProcessNodeFabricUpgradeHandler(std::wstring const & activityId, ServiceModel::FabricUpgradeSpecification const & newVersion);
@@ -503,7 +503,7 @@ namespace Reliability
             void ProcessRuntimeClosed(std::wstring const & hostId, std::wstring const & runtimeId);
             bool RuntimeClosedProcessor(Infrastructure::HandlerParameters & handlerParamters, JobItemContextBase &);
 
-            void ProcessAppHostClosed(std::wstring const & hostId);
+            void ProcessAppHostClosed(std::wstring const & hostId, Common::ActivityDescription const & acitivityDescription);
             bool AppHostClosedProcessor(Infrastructure::HandlerParameters & handlerParameters, JobItemContextBase &);
 
             bool ServiceTypeRegisteredProcessor(Infrastructure::HandlerParameters & handlerParameters, JobItemContextBase &);
@@ -639,12 +639,14 @@ namespace Reliability
 
             void CloseLocalReplica(
                 Infrastructure::HandlerParameters & handlerParameters,
-                ReplicaCloseMode closeMode);
+                ReplicaCloseMode closeMode,
+                Common::ActivityDescription const & activityDescription);
 
             void CloseLocalReplica(
                 Infrastructure::HandlerParameters & handlerParameters,
                 ReplicaCloseMode closeMode,
-                Federation::NodeInstance const & senderNode);
+                Federation::NodeInstance const & senderNode,
+                Common::ActivityDescription const & activityDescription);
 
             bool ReopenDownReplica(
                 Infrastructure::HandlerParameters & handlerParameters);
@@ -671,11 +673,12 @@ namespace Reliability
             bool ReplicaUpReplyProcessor(Infrastructure::HandlerParameters & handlerParameters, ReplicaUpReplyJobItemContext & context);
 
             bool ClientReportFaultRequestProcessor(Infrastructure::HandlerParameters & handlerParameters, ClientReportFaultJobItemContext & context);
-            void CompleteReportFaultRequest(ClientReportFaultJobItemContext & context, Common::ErrorCode error);
+            void CompleteReportFaultRequest(ClientReportFaultJobItemContext & context, Common::ErrorCode const & error);
+
             void CompleteReportFaultRequest(
                 Common::ActivityId const & activityId,
                 Federation::RequestReceiverContext & context,
-                Common::ErrorCode error);
+                Common::ErrorCode const & error);
 
             bool TryUpdateServiceDescription(
                 Infrastructure::LockedFailoverUnitPtr & failoverUnit,

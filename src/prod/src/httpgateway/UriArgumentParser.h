@@ -46,6 +46,9 @@ namespace HttpGateway
         Common::ErrorCode TryGetDeploymentName(
             __out std::wstring &deploymentName);
 
+        Common::ErrorCode TryGetContainerName(
+            __out std::wstring &containerName);
+
         Common::ErrorCode TryGetApplicationNameInQueryParam(
             __out Common::NamingUri &applicationName);
 
@@ -119,6 +122,9 @@ namespace HttpGateway
         Common::ErrorCode TryGetImageStoreRelativePath(
             __out std::wstring & relativePath);
 
+        Common::ErrorCode TryGetInstanceId(
+            __out std::wstring & instanceId) const;
+
         Common::ErrorCode TryGetTestCommandProgressType(
             __out DWORD& );
 
@@ -156,6 +162,12 @@ namespace HttpGateway
 
         Common::ErrorCode TryGetPropertyName(
             __out std::wstring & propertyName);
+
+        Common::ErrorCode TryGetVolumeName(
+            __out std::wstring & volumeName);
+
+        Common::ErrorCode TryGetAbsoluteServiceName(
+            __out Common::NamingUri &name);
 
     private:
         Common::ErrorCode TryGetPathId(

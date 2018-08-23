@@ -23,6 +23,11 @@ namespace Data
             // Flag used to enable File Count Merge Policy
             FileCount = 1 << 2,
 
+            // Flag used to enable Size on Disk Merge Policy
+            // This policy decides to merge if the total size on disk exceeds a certain threshold and merges
+            // all of them if there there is at least 1 invalid or deleted entry among them.
+            SizeOnDisk = 1 << 3,
+
             // Enables all merge policies.
             All = INT_MAX
         };

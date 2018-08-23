@@ -1,0 +1,110 @@
+###############################################################################
+# Test: PLBPreferredContainerPlacementBasic.Test
+# Owners: mocolic, miradic, nipuzovi
+# This test verifies PLB logic for preferred placing of container replicas 
+###############################################################################
+
+votes 10 20 30
+namingservice 1 1 1
+cmservice 1 1
+fmservice 1 1
+cleantest
+
+set NamingOperationTimeout 120
+
+# Time slot while hosting holds opened service package after replica was dropped
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange to 0
+
+# Disable load balancing to have predictability during test run
+set LoadBalancingEnabled false
+
+# Do not check for available resources and do not enforce RG on the nodes
+# This is to be able to execute the test on any machine, regardless 
+set LocalResourceManagerTestMode true
+
+set PreferNodesForContainerPlacement true
+
++10 ud=UD1 cap=ServiceFabric:/_CpuCores:1,ServiceFabric:/_MemoryInMB:6000
++20 ud=UD2 cap=ServiceFabric:/_CpuCores:1,ServiceFabric:/_MemoryInMB:6000
++30 ud=UD3 cap=ServiceFabric:/_CpuCores:1,ServiceFabric:/_MemoryInMB:6000
++40 ud=UD4 cap=ServiceFabric:/_CpuCores:2,ServiceFabric:/_MemoryInMB:6000
+verify
+
+#if containers are not supported finish the test...
+checkcontainers
+
+updatenodeimages 10 images=microsoft/nanoserver:sac2016,ubuntu
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+# ServicePackageA - images:{microsoft/nanoserver:sac2016 for Windows; ubuntu for Linux}
+app.servicepack versionTC1 ServicePackageA version=v1
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateless implicit
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA version=v1 entrytype=ContainerHost
+app.upload versionTC1
+provisionapp versionTC1
+
+app.add versionTC2 TestAppTC2 vTC2
+app.clear versionTC2
+# ServicePackageB - images:{microsoft/nanoserver:sac2016 for Windows; ubuntu for Linux}
+app.servicepack versionTC2 ServicePackageB version=v1 resources=CPU,0.8
+app.servicetypes versionTC2 ServicePackageB ServiceTypeB stateless implicit
+app.codepack versionTC2 ServicePackageB CodeB types=ServiceTypeB version=v1 entrytype=ContainerHost
+app.upload versionTC2
+provisionapp versionTC2
+
+app.add versionTC3 TestAppTC3 vTC3
+app.clear versionTC3
+# ServicePackageB - images:{microsoft/nanoserver:sac2016 for Windows; ubuntu for Linux}
+app.servicepack versionTC3 ServicePackageC version=v1 resources=CPU,1.1
+app.servicetypes versionTC3 ServicePackageC ServiceTypeC stateless implicit
+app.codepack versionTC3 ServicePackageC CodeC types=ServiceTypeC version=v1 entrytype=ContainerHost
+app.upload versionTC3
+provisionapp versionTC3
+
+# Create the application.
+createapp fabric:/app1 TestAppTC1 vTC1
+createapp fabric:/app2 TestAppTC2 vTC2
+createapp fabric:/app3 TestAppTC3 vTC3
+verify
+
+# app1 - serviceA, 1 partition, 1 replica 
+createservice fabric:/app1/serviceA ServiceTypeA n 1 1 appname=fabric:/app1
+createservice fabric:/app2/serviceB ServiceTypeB n 1 1 appname=fabric:/app2
+createservice fabric:/app3/serviceC ServiceTypeC n 1 1 appname=fabric:/app3
+
+#Pause for 15 minutes because downloading container images takes time
+!pause 900
+
+!waitforstate FM.Replica.State.fabric:/app1/serviceA.10 Ready
+!waitforstate FM.Replica.State.fabric:/app2/serviceB.10 Ready
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 1 0.8
+verifyresourceonnode 10 servicefabric:/_CpuCores 0.8
+
+!waitforstate FM.Replica.State.fabric:/app3/serviceC.40 Ready
+
+verifynodeload nodeid:40 servicefabric:/_CpuCores 2 1.1
+verifyresourceonnode 40 servicefabric:/_CpuCores 1.1
+
+# Test case cleanup
+!pause 5
+deleteapp fabric:/app1
+deleteapp fabric:/app2
+deleteapp fabric:/app3
+
+unprovisionapp TestAppTC1 vTC1
+unprovisionapp TestAppTC2 vTC2
+unprovisionapp TestAppTC3 vTC3
+verify
+
+nameexists fabric:/app1 false
+nameexists fabric:/app2 false
+
+-10
+-20
+-30
+-40
+
+!q

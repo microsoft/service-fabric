@@ -10,6 +10,12 @@ set( LINUX_SOURCES
   ../FileProperties.cpp
   ../KAsyncEventHelper.cpp
   ../KPath.cpp
+  ../LockControlBlock.cpp
+  ../LockHashTable.cpp
+  ../LockHashValue.cpp
+  ../LockManager.cpp
+  ../LockModeComparer.cpp
+  ../LockResourceControlBlock.cpp
   ../LongComparer.cpp
   ../MemoryStream.cpp
   ../OperationData.cpp
@@ -17,6 +23,7 @@ set( LINUX_SOURCES
   ../KStringComparer.cpp
   ../PartitionedReplicaId.cpp
   ../Partition.cpp
+  ../PrimeLockRequest.cpp
   ../RandomGenerator.cpp
   ../ReaderWriterAsyncLock.cpp
   ../SharedException.cpp

@@ -71,13 +71,21 @@ namespace Hosting2
 
         void OnProcessTerminated(DWORD exitCode, Common::ErrorCode error);
 
-        Common::ErrorCode ShutdownDockerService();
-
     protected:
         virtual void OnAbort();
 
     private:
         Common::ErrorCode CheckDockerServicePresence();
+        Common::ErrorCode ShutdownDockerService();
+        Common::ErrorCode StartDockerService();
+        bool IsWinServerOrLinux();
+        bool IsFabricHostClosing();
+        Common::TimeSpan UpdateExitStatsAndGetDueTime(_Out_ ULONG & continousExitCount);
+        void OnContinousExitFailureResetTimeout(TimerSPtr const & timer, ULONG exitCount);
+        void ScheduleStart(TimeSpan const & dueTime);
+        void CleanupStatTimer();
+        Common::ErrorCode ConfigureDockerPidFile(std::wstring const& workingDirectory, _Out_ std::wstring & dockerpidFile);
+        void CleanupHNSEndpoints();
 
     private:
         ProcessActivationManager & processActivationManager_;
@@ -86,8 +94,14 @@ namespace Hosting2
         Common::RwLock lock_;
         bool isDockerServicePresent_;
         bool isDockerServiceManaged_;
+        ULONG continuousExitCount_;
+        Common::TimerSPtr resetStatstimer_;
 
         class DeactivateAsyncOperation;
         class InitializeAsyncOperation;
+#ifndef PLATFORM_UNIX
+        class HNSEndpointCleanup;
+        std::unique_ptr<HNSEndpointCleanup> hnsEndpointCleanup_;
+#endif
     };
 }

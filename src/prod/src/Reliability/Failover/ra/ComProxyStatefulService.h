@@ -39,10 +39,11 @@ namespace Reliability
             void Abort();
 
             Common::ErrorCode GetQueryResult(__out ServiceModel::ReplicaStatusQueryResultSPtr & result);
+            void UpdateInitializationData(std::vector<byte> const &);
 
         private:
             Common::ComPointer<::IFabricStatefulServiceReplica> service_;
-            Common::ComPointer<::IFabricInternalStatefulServiceReplica> internalService_;
+            Common::ComPointer<::IFabricInternalStatefulServiceReplica2> internalService_;
 
             class OpenAsyncOperation;
             class ChangeRoleAsyncOperation;

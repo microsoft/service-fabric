@@ -38,8 +38,11 @@ MergeHelper::MergeHelper()
     percentageOfInvalidEntriesPerFile_ = DefaultPercentageOfInvalidEntriesPerFile;
     percentageOfDeletedEntriesPerFile_ = DefaultPercentageOfDeletedEntriesPerFile;
 
-    // file count merge policy
+    // File count merge policy
     NumberOfInvalidEntries = 0;
+
+    // Size on disk merge policy
+    SizeOnDiskThreshold = DefaultSizeForSizeOnDiskPolicy;
 }
 
 MergeHelper::~MergeHelper()
@@ -102,101 +105,48 @@ ktl::Awaitable<bool> MergeHelper::ShouldMerge(
         }
     }
 
+    if (IsMergePolicyEnabled(MergePolicy::SizeOnDisk))
+    {
+        bool shouldMerge = co_await ShouldMergeForSizeOnDiskPolicy(mergeTable);
+
+        if (shouldMerge)
+        {
+            mergeList = _new(MERGEHELPER_TAG, GetThisAllocator()) KSharedArray<ULONG32>();
+            auto mergeTableEnumerator = mergeTable.Table->GetEnumerator();
+            while (mergeTableEnumerator->MoveNext())
+            {
+                auto item = mergeTableEnumerator->Current();
+                mergeList->Append(item.Key);
+            }
+            co_return true;
+        }
+    }
+
     mergeList = nullptr;
     co_return false;
 }
 
 KSharedArray<ULONG32>::SPtr MergeHelper::GetMergeList(__in MetadataTable& mergeTable)
 {
-    KSharedArray<ULONG32>::SPtr mergeFileIds = nullptr;
+    KSharedArray<ULONG32>::SPtr mergeFileIds = _new(MERGEHELPER_TAG, GetThisAllocator()) KSharedArray<ULONG32>();
 
     bool invalidEntriesEnabled = IsMergePolicyEnabled(MergePolicy::InvalidEntries);
     bool deletedEntriesEnabled = IsMergePolicyEnabled(MergePolicy::DeletedEntries);
 
-    if (invalidEntriesEnabled && deletedEntriesEnabled)
-    {
-        mergeFileIds = GetMergeFileListForInvalidAndDeletedEntries(mergeTable);
-    }
-    else if (invalidEntriesEnabled)
-    {
-        mergeFileIds = GetMergeFileListForInvalidEntries(mergeTable);
-    }
-    else if (deletedEntriesEnabled)
-    {
-        mergeFileIds = GetMergeFileListForDeletedEntries(mergeTable);
-    }
-
-    return mergeFileIds;
-}
-
-KSharedArray<ULONG32>::SPtr MergeHelper::GetMergeFileListForInvalidAndDeletedEntries(__in MetadataTable & mergeTable)
-{
-    KSharedArray<ULONG32>::SPtr mergeFileIds = _new(MERGEHELPER_TAG, this->GetThisAllocator()) KSharedArray<ULONG32>();
-
-    bool shouldAdd = false;
-
     auto mergeTableEnumerator = mergeTable.Table->GetEnumerator();
     while (mergeTableEnumerator->MoveNext())
     {
         auto item = mergeTableEnumerator->Current();
-        shouldAdd = IsFileQualifiedForInvalidEntriesMergePolicy(item);
-        if (shouldAdd)
+        if (invalidEntriesEnabled && IsFileQualifiedForInvalidEntriesMergePolicy(item))
         {
             mergeFileIds->Append(item.Key);
-
-            // If InvalidEntries picked up the file for merge, no need to check for DeletedEntries policy,
-            // continue to next file
-            continue;
         }
-
-        shouldAdd = IsFileQualifiedForDeletedEntriesMergePolicy(item);
-        if (shouldAdd)
+        else if (deletedEntriesEnabled && IsFileQualifiedForDeletedEntriesMergePolicy(item))
         {
             mergeFileIds->Append(item.Key);
         }
     }
-    
-    return mergeFileIds;
-}
 
-KSharedArray<ULONG32>::SPtr MergeHelper::GetMergeFileListForInvalidEntries(__in MetadataTable & mergeTable)
-{
-    KSharedArray<ULONG32>::SPtr mergeFileIds = _new(MERGEHELPER_TAG, this->GetThisAllocator()) KSharedArray<ULONG32>();
-
-    bool shouldAdd = false;
-
-    auto mergeTableEnumerator = mergeTable.Table->GetEnumerator();
-    while (mergeTableEnumerator->MoveNext())
-    {
-        auto item = mergeTableEnumerator->Current();
-        shouldAdd = IsFileQualifiedForInvalidEntriesMergePolicy(item);
-        if (shouldAdd)
-        {
-            mergeFileIds->Append(item.Key);
-        }
-    }
-    
-    return mergeFileIds;
-}
-
-KSharedArray<ULONG32>::SPtr MergeHelper::GetMergeFileListForDeletedEntries(__in MetadataTable & mergeTable)
-{
-    KSharedArray<ULONG32>::SPtr mergeFileIds = _new(MERGEHELPER_TAG, this->GetThisAllocator()) KSharedArray<ULONG32>();
-
-    bool shouldAdd = false;
-
-    auto mergeTableEnumerator = mergeTable.Table->GetEnumerator();
-    while (mergeTableEnumerator->MoveNext())
-    {
-        auto item = mergeTableEnumerator->Current();
-
-        shouldAdd = IsFileQualifiedForDeletedEntriesMergePolicy(item);
-        if (shouldAdd)
-        {
-            mergeFileIds->Append(item.Key);
-        }
-    }
-    
     return mergeFileIds;
 }
 
@@ -275,7 +225,7 @@ ktl::Awaitable<bool> MergeHelper::ShouldMergeDueToFileCountPolicy(
         ULONG32 fileId = currentItem.Key;
         FileMetadata::SPtr fileMetadataSPtr = currentItem.Value;
 
-        ULONG64 fileSize = co_await fileMetadataSPtr->GetFileSize();
+        ULONG64 fileSize = co_await fileMetadataSPtr->GetFileSizeAsync();
 
         ULONG32 fileType = fileCountMergeConfigurationSPtr_->GetFileType(fileSize);
         bool listExists = fileTypeToMergeList_->ContainsKey(fileType);
@@ -304,6 +254,30 @@ ktl::Awaitable<bool> MergeHelper::ShouldMergeDueToFileCountPolicy(
 
     CleanMap();
     co_return false;
+}
+
+ktl::Awaitable<bool> MergeHelper::ShouldMergeForSizeOnDiskPolicy(__in MetadataTable& mergeTable)
+{
+    ULONG numberOfDeltaDifferentialStates = 3;
+    if (mergeTable.Table->Count < numberOfDeltaDifferentialStates)
+    {
+        co_return false;
+    }
+
+    ULONG64 totalSize = 0;
+    bool hasInvalidOrDeletedEntry = false;
+
+    auto mergeTableEnumerator = mergeTable.Table->GetEnumerator();
+    while (mergeTableEnumerator->MoveNext())
+    {
+        auto fileMetadata = mergeTableEnumerator->Current().Value;
+        totalSize += co_await fileMetadata->GetFileSizeAsync();
+        hasInvalidOrDeletedEntry |=
+            (fileMetadata->NumberOfValidEntries != fileMetadata->TotalNumberOfEntries) ||
+            (fileMetadata->NumberOfDeletedEntries > 0);
+    }
+
+    co_return (totalSize >= SizeOnDiskThreshold) && hasInvalidOrDeletedEntry;
 }
 
 bool MergeHelper::IsMergePolicyEnabled(__in MergePolicy mergePolicy)

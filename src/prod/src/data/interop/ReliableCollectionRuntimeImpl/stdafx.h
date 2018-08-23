@@ -10,13 +10,15 @@
 
 // External dependencies
 #include "../../txnreplicator/TransactionalReplicator.Public.h"
-#include "../../tstore/LockMode.h"
+#include "../../utilities/LockMode.h"
 #include "../../tstore/Store.Public.h"
+#include "../../reliableconcurrentqueue/ReliableConcurrentQueue.Public.h"
+
 #ifdef FEATURE_DICTIONARY_NOTIFICATION_BATCHING
 #include "../../utilities/KAutoHashTable.h"
 #include "../../tstore/Diagnostics.h"
-#include "../../tstore/Dictionary.h"
-#include "../../tstore/DictionaryEnumerator.h"
+#include "../../utilities/Dictionary.h"
+#include "../../utilities/DictionaryEnumerator.h"
 #include "../../tstore/ConcurrentDictionary2.h"
 #endif
 #include "../../utilities/StatusConverter.h"
@@ -42,9 +44,12 @@ namespace Data
 #include "DictionaryChangeHandler.h"
 #include "StateManagerChangeHandler.h"
 #include "TransactionChangeHandler.h"
+#include "RCREventSource.h"
 #include "StateProviderInfo.h"
 #include "StateProviderFactory.h"
 #include "ComStateProviderFactory.h"
+#include "CompatRDStateProvider.h"
+#include "ConfigurationPackageChangeHandler.h"
 
 // External dependencies
 // Test headers

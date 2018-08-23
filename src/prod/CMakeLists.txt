@@ -1,4 +1,11 @@
 cmake_minimum_required (VERSION 2.6)
+
+# build ktl first as it has its own "toplevel" CMakeLists.txt
+add_subdirectory (ktl)
+
+if(NOT (BUILD_KTL_ONLY STREQUAL "ON"))
+
+# now build ServiceFabric
 project (ServiceFabric)
 
 set(WARNINGS)
@@ -108,6 +115,7 @@ add_definitions(-DCORECLR=1)
 add_definitions(-DPIC=1)
 add_definitions(-DBIT64=1)
 add_definitions(-D_WIN64=1)
+add_definitions(-DPAL_STDCPP_COMPAT=1)
 
 # Preprocessor definitions used in ServiceModel.props. These have effect on PAL
 add_definitions(-D_STATIC_CPPLIB)
@@ -118,6 +126,15 @@ add_definitions(-D_USE_DECLSPECS_FOR_SAL=1)
 # macro prevents the Winsock.h from being included by the Windows.h header.
 add_definitions(-DWIN32_LEAN_AND_MEAN=1)
 add_definitions(-DSTRSAFE_LIB)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DDBG=1)
+endif()
+
+set(KTL_LIB_DIR "${CMAKE_BINARY_DIR}/ktl/src/lib")
+set(KtlLoggerUser "KtlLoggerUser")
+set(Ktlcore "ktlcore")
+set(Ktlfull "ktlfull")
 
 # if this is defined, asserts are voided. This was defined in Windows Fabric Compilation.
 add_definitions(-DNDEBUG)
@@ -143,11 +160,11 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_STD}")
 sf_add_compile_options(-stdlib=libc++)
 
-set (CMAKE_STATIC_LIBRARIES_FLAGS "-stdlib=libc++ -pthread")
+set (CMAKE_STATIC_LIBRARIES_FLAGS "-pthread")
 set (CMAKE_STATIC_LIBRARIES_FLAGS "${CMAKE_STATIC_LIBRARY_FLAGS} -Wl,--build-id")
-set (CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++ -pthread")
+set (CMAKE_SHARED_LINKER_FLAGS "-pthread")
 set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--build-id -Wl,--allow-multiple-definition")
-set (CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ -pthread")
+set (CMAKE_EXE_LINKER_FLAGS "-pthread")
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--build-id -Wl,--allow-multiple-definition")
 
 # ms extensions
@@ -236,14 +253,6 @@ set (CLRPAL_LIB_PATH ${EXTERNAL_LIB_PATH}/ClrPal)
 set (BOOST_TEST_PATH ${THIRD_PARTY_LIB_DIR}/Boost_1_61_0/lib)
 set (CASABLANCA_LIB_PATH ${THIRD_PARTY_LIB_DIR}/casablanca_v_2/lib)
 
-# set boost paths for casablanca
-set(Boost_NO_SYSTEM_PATHS TRUE)
-if (Boost_NO_SYSTEM_PATHS)
-set(BOOST_ROOT "${THIRD_PARTY_LIB_DIR}/Boost_1_61_0")
-set(BOOST_INCLUDE_DIRS "${BOOST_ROOT}/boost")
-set(BOOST_LIBRARY_DIRS "${BOOST_ROOT}/lib")
-
-endif (Boost_NO_SYSTEM_PATHS)
 # for WindowsFabric
 include_directories (".")
 include_directories ("src")
@@ -258,10 +267,7 @@ include_directories ("src/prebuilt/idl/public")
 include_directories ("src/prebuilt/idl/internal")
 
 # for PAL
-include_directories ("src/inc/palrt")
-include_directories ("src/inc/clr")
-include_directories ("src/inc/clr/pal")
-include_directories ("src/inc/clr/rt")
+include_directories ("src/pal/src")
 
 # for ktlwf 
 include_directories ("shared/ktlwf/ktlwf/inc")
@@ -284,14 +290,10 @@ link_directories("${CXX_LIB_PATH}")
 include_directories("/usr/include/libxml2")
 
 # ktl libs
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DDBG=1)
-    set(KTL_LIB_DIR "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.debug")
-else()
-    set(KTL_LIB_DIR "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.retail")
-endif()
-include_directories("${KTL_LIB_DIR}/inc")
-include_directories("${KTL_LIB_DIR}/inc/linux-coroutine")
+include_directories("./ktl/src/inc")
+include_directories("./ktl/src/logger/inc")
+include_directories("./ktl/src/linuxinc")
+include_directories("./ktl/src/inc/linux-coroutine")
 
 # for zip/unzip
 include_directories("${THIRD_PARTY_LIB_DIR}/minizip")
@@ -302,29 +304,45 @@ set(WebSocket_INCLUDE_DIR "${THIRD_PARTY_LIB_DIR}/casablanca_v_2/libs/websocketp
 set(Boost_INCLUDE_DIR "${THIRD_PARTY_LIB_DIR}/Boost_1_61_0")
 
 
-set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WebSocket_INCLUDE_DIR})
+set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WebSocket_INCLUDE_DIR})
 include_directories(${Casablanca_INCLUDE_DIRS})
-
 
 link_directories("${THIRD_PARTY_LIB_DIR}/casablanca_v_2/Binaries")
 link_directories("${KTL_LIB_DIR}")
 
-find_library(Ktlfull NAMES ktlfull PATHS "${KTL_LIB_DIR}" NO_DEFAULT_PATH)
-find_library(Ktlcore NAMES ktlcore PATHS "${KTL_LIB_DIR}" NO_DEFAULT_PATH)
-find_library(KtlLoggerUser NAMES KtlLoggerUser PATHS "${KTL_LIB_DIR}" NO_DEFAULT_PATH)
 find_library(KmUnitUser NAMES KmUnitUser PATHS "${KTL_LIB_DIR}" NO_DEFAULT_PATH)
 find_library(KtlLttng NAMES ktllttng PATHS "${KTL_LIB_DIR}" NO_DEFAULT_PATH)
 
 link_directories("${THIRD_PARTY_LIB_DIR}/minizip")
 
+include_directories(${THIRD_PARTY_LIB_DIR}/grpc/include)
+link_directories("${THIRD_PARTY_LIB_DIR}/grpc")
+
+include_directories(${THIRD_PARTY_LIB_DIR}/grpc/include)
+link_directories("${THIRD_PARTY_LIB_DIR}/grpc")
+
+
 # environmet variable
 set (ENV{BOOST_TEST_LOG_LEVEL} "test_suite")
 
 # boost packages for casablanca
-find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
+# set boost paths for casablanca
+set(BOOST_ROOT "${THIRD_PARTY_LIB_DIR}/Boost_1_61_0")
+set(BOOST_INCLUDEDIR "${BOOST_ROOT}/boost")
+# not needed?
+#set(BOOST_INCLUDE_DIRS "${BOOST_ROOT}/boost")
+#set (BOOST_TEST_PATH ${THIRD_PARTY_LIB_DIR}/Boost_1_61_0/lib)
 
-include_directories(${BOOST_INCLUDE_DIRS})
+set(BOOST_LIBRARY_DIRS "${BOOST_ROOT}/lib")
+
+include_directories(${BOOST_ROOT}) # Some things include headers like boost/xxxx.hpp, so need root dir as include path as well
+include_directories(${BOOST_INCLUDEDIR})
 link_directories(${BOOST_LIBRARY_DIRS})
+
+find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
+find_library(BoostTest2 boost_unit_test_framework PATHS ${BOOST_LIBRARY_DIRS} NO_DEFAULT_PATH)
+
+
 
 if (BUILD_THIRD_PARTY)
     find_library(Cxx c++ PATHS ${CXX_LIB_PATH} NO_DEFAULT_PATH)
@@ -335,10 +353,16 @@ else()
 endif()
 set (CMAKE_CXX_STANDARD_LIBRARIES "${Cxx} ${CxxABI}")
 
-find_library(BoostTest2 boost_unit_test_framework PATHS ${BOOST_LIBRARY_DIRS} NO_DEFAULT_PATH)
-
-find_library(ClrPal coreclr PATHS ${CLRPAL_LIB_PATH})
 find_library(cpprest cpprest PATHS ${CASABLANCA_LIB_PATH})
+
+set (BABELTRACE_LIB_PATH ${THIRD_PARTY_LIB_DIR}/babeltrace/lib)
+find_library(Babeltrace babeltrace PATHS ${BABELTRACE_LIB_PATH} NO_DEFAULT_PATH)
+find_library(BabeltraceCTF babeltrace-ctf PATHS ${BABELTRACE_LIB_PATH} NO_DEFAULT_PATH)
+
+set (Babeltrace_INCLUDE_DIR "${THIRD_PARTY_LIB_DIR}/babeltrace/include")
+
+include_directories(${Babeltrace_INCLUDE_DIR})
+
 # casablanca libraries
 set(Casablanca_LIBRARY cpprest)
 set(Casablanca_LIBRARIES ${Casablanca_LIBRARY})
@@ -354,12 +378,8 @@ set(ASM_LIBS ${EXTERNAL_DEPS_DIR}/Java.Linux.Libs/asm CACHE STRING "JAVA ASM_LIB
 set (LIBRARY_OUTPUT_DIR ${PROJECT_BINARY_DIR}/lib CACHE STRING "Library Output directory")
 set (TEST_OUTPUT_DIR ${PROJECT_BINARY_DIR}/test CACHE STRING "Test Output directory")
 
-# TODO: Is this needed ??
-####set (lib_KtlLoggerUser "KtlLoggerUser" CACHE STRING "KTL Logger (User) Library")
-set (lib_KtlLoggerShimUser "KtlLoggerShimUser" CACHE STRING "KTL Logger Shim Library")
 set (lib_KtlLoggerShimUDriver "KtlLoggerShimUDriver" CACHE STRING "KTL Logger UDriver Library")
-set (lib_KtlLoggerShimUPassthrough "KtlLoggerShimUPassthrough" CACHE STRING "KTL Logger UPassthrough Library")
-
+set (lib_KtlLoggerShimUnify "KtlLoggerShimUnify" CACHE STRING "KTL Logger Unify Library")
 
 set (CLUSTER_DEPLOYER_DIR ${PROJECT_BINARY_DIR}/ClusterDeployer CACHE STRING "Cluster Deployer tool directory")
 set (FABRIC_DROP_DIR ${PROJECT_BINARY_DIR}/FabricDrop CACHE STRING "FabricDrop directory")
@@ -368,21 +388,33 @@ file(MAKE_DIRECTORY ${CLUSTER_DEPLOYER_DIR})
 # Fabric Drop and packaging constants
 set (Linux_Setup_Dir ${PROJECT_SOURCE_DIR}/../prod/linuxsetup CACHE STRING "Path to linuxsetup folder")
 set (WinFab_Linux_Libs_Dir ${EXTERNAL_LIB_PATH}/ CACHE STRING "Path to WinFab.Linux.Libs")
-set (WinFab_Linux_Libs_Tools_Dir ${THIRD_PARTY_LIB_DIR}/tools)
+set (Managed_Libs_Dir ${PROJECT_BINARY_DIR}/coreclr/ CACHE STRING "Path to local build managed components")
+set (Managed_Publish_Libs_Dir ${Managed_Libs_Dir}publish/external/ CACHE STRING "Path to managed structured published bits")
+set (WinFab_Babeltrace_Dir ${THIRD_PARTY_LIB_DIR}/babeltrace/ CACHE STRING "Path to build of modified and patched babeltrace lib")
 set (WinFab_CoreCLR_Libs_Dir ${EXTERNAL_DEPS_DIR}/WinFab.CoreCLR.Libs CACHE STRING "Path to WinFab.CoreCLR.Libs")
 
-file (STRINGS "linuxbuildversion.txt" BUILD_VERSION)
-set (Cluster_Version ${BUILD_VERSION} CACHE STRING "Current Cluster version")
-file (STRINGS "linuxupgradebuildversion.txt" UPGRADE_BUILD_VERSION)
-set (Cluster_Version_UpgradeTest ${UPGRADE_BUILD_VERSION} CACHE STRING "New Cluster version for upgrade testing")
-set (SDKCommon_Version "1.2.0" CACHE STRING "Current SDK Common version")
+file (STRINGS "linuxsetup/versions/linuxbuild.version" BUILD_VERSION)
+
+set (Cluster_Version ${BUILD_VERSION} CACHE STRING "Current Cluster version" FORCE)
+
+option (PACKAGE_LOCAL_BUILD_MANAGED "Option to package locally build managed binaries in deb file. If OFF, uses external/WinFab.CoreClr.Libs/*" OFF)
+if (PACKAGE_LOCAL_BUILD_MANAGED)
+   set (Package_Managed_Libs_Dir ${Managed_Publish_Libs_Dir} CACHE STRING "Package Managed binaries from local build.")
+else()
+   set (Package_Managed_Libs_Dir ${WinFab_CoreCLR_Libs_Dir} CACHE STRING "Package Managed binaries from winfab_coreclr_libs.")
+endif()
+
+file (STRINGS "linuxsetup/versions/linuxupgradebuild.version" UPGRADE_BUILD_VERSION)
+set (Cluster_Version_UpgradeTest ${UPGRADE_BUILD_VERSION} CACHE STRING "New Cluster version for upgrade testing" FORCE)
+file (STRINGS "linuxsetup/versions/sdkcommon.version" SDK_COMMON_VERSION)
+set (SDKCommon_Version ${SDK_COMMON_VERSION} CACHE STRING "Current SDK Common version")
 
 set (GuestBinary_Gen_Name generator-azuresfguest  CACHE STRING "Guest binary generator name")
 set (Container_Gen_Name generator-azuresfcontainer  CACHE STRING "Container generator name")
 
 if(LINUX_DISTRIBUTION STREQUAL "DEBIAN")
-    set (Runtime_Deb_Folder ${FABRIC_DROP_DIR}/deb/servicefabric_${Cluster_Version} CACHE STRING "Runtime Debian package name")
-    set (Runtime_Deb_Folder_UpgradeTest ${FABRIC_DROP_DIR}/deb/servicefabric_${Cluster_Version_UpgradeTest} CACHE STRING "Runtime Debian package name for deb upgrade testing")
+    set (Runtime_Deb_Folder ${FABRIC_DROP_DIR}/deb/servicefabric_${Cluster_Version} CACHE STRING "Runtime Debian package name" FORCE)
+    set (Runtime_Deb_Folder_UpgradeTest ${FABRIC_DROP_DIR}/deb/servicefabric_${Cluster_Version_UpgradeTest} CACHE STRING "Runtime Debian package name for deb upgrade testing" FORCE)
     set (Runtime_Deb_Install_Path opt/microsoft/servicefabric CACHE STRING "Runtime Debian package install path")
 
     set (SFSdk_Path opt/microsoft/sdk CACHE STRING "Path to SDK root")
@@ -394,8 +426,8 @@ if(LINUX_DISTRIBUTION STREQUAL "DEBIAN")
 elseif(LINUX_DISTRIBUTION STREQUAL "REDHAT")
     set (Base_Rpm_Folder ${FABRIC_DROP_DIR}/rpm CACHE STRING "RPM parent folder containing RPM build resources")
     set (Runtime_Rpm_DropFolder ${FABRIC_DROP_DIR}/rpm/servicefabric_runtime CACHE STRING "Runtime RPM package name")
-    set (Runtime_Rpm_Folder ${FABRIC_DROP_DIR}/rpm/servicefabric_${Cluster_Version} CACHE STRING "Runtime RPM package name")
-    set (Runtime_Rpm_Folder_UpgradeTest ${FABRIC_DROP_DIR}/rpm/servicefabric_${Cluster_Version_UpgradeTest} CACHE STRING "Runtime RPM package name for rpm upgrade testing")
+    set (Runtime_Rpm_Folder ${FABRIC_DROP_DIR}/rpm/servicefabric_${Cluster_Version} CACHE STRING "Runtime RPM package name" FORCE)
+    set (Runtime_Rpm_Folder_UpgradeTest ${FABRIC_DROP_DIR}/rpm/servicefabric_${Cluster_Version_UpgradeTest} CACHE STRING "Runtime RPM package name for rpm upgrade testing" FORCE)
     set (Runtime_Rpm_Install_Path opt/microsoft/servicefabric CACHE STRING "Runtime RPM package install path")
 
     set (Rpmbuild_Runtime_Path ${Base_Rpm_Folder}/rpmbuild_runtime CACHE STRING "rpmbuild path for Runtime package")
@@ -442,14 +474,22 @@ set (lib_httptransport "httptransport" CACHE STRING "HttpTransport library")
 set (lib_UpgradeOrchestrationService "UpgradeOrchestrationService" CACHE STRING "lib_UpgradeOrchestrationService library")
 set (lib_DnsServiceConfig "DnsServiceConfig" CACHE STRING "DnsServiceConfig library")
 set (lib_Communication "Communication" CACHE STRING "Communication library")
-set (lib_KtlLogger "KtlLogger" CACHE STRING "KtlLogger library")
+set (lib_KtlLoggerNode "KtlLoggerNode" CACHE STRING "KtlLoggerNode library")
 set (lib_TcpServiceCommunication "TcpServiceCommunication" CACHE STRING "TcpServiceCommunication library")
 set (exe_TcpServiceCommunication.Test "TcpServiceCommunication.Test.exe" CACHE STRING "TcpServiceCommunication.Test.Exe")
 set (lib_Lease "Lease" CACHE STRING "Lease library")
+set (exe_Lease.Test "Lease.Test.exe" CACHE STRING "Lease.Test.Exe")
 set (lib_LeaseAgent "LeaseAgent" CACHE STRING "LeaseAgent library")
 set (lib_FabricCommon "FabricCommon" CACHE STRING "FabricCommon library")
 set (lib_FabricNode "FabricNode" CACHE STRING "FabricNode library")
 set (exe_FabricNode.Test "FabricNode.Test.exe" CACHE STRING "FabricNode.Test.Exe")
+
+set (lib_ResourceManager "ResourceManager" CACHE STRING "ResourceManager library")
+
+set (lib_CentralSecretService "CentralSecretService" CACHE STRING "CentralSecretService library")
+set (exe_FabricCSS "FabricCSS" CACHE STRING "FabricCSS")
+set (lib_LocalSecretService "LocalSecretService" CACHE STRING "LocalSecretService library")
+set (exe_FabricLSS "FabricLSS" CACHE STRING "FabricLSS")
 
 set (lib_ServiceModel "ServiceModel" CACHE STRING "Service Model library")
 set (exe_ServiceModelTest "ServiceModel.Test.exe" CACHE STRING "ServiceModel Boost Test Exe")
@@ -489,6 +529,7 @@ set (lib_FabricTransport "FabricTransport" CACHE STRING "FabricTransport library
 
 set (lib_Replication "Replication" CACHE STRING "Replication library")
 set (exe_Replication.Test "Replication.Test.exe" CACHE STRING "Replication.Test.Exe")
+set (exe_ReplicationPerf.Test "ReplicationPerf.Test.exe" CACHE STRING "ReplicationPerf.Test.Exe")
 
 set (lib_FileStoreService "FileStoreSvc" CACHE STRING "FileStoreService library")
 
@@ -560,9 +601,7 @@ set (lib_FabricUpgradeOrchestrationService "FabricUpgradeOrchestrationService" C
 set (exe_ReplicatedStoreViewer "ReplicatedStoreViewer" CACHE STRING "ReplicatedStoreViewer exe")
 
 set (lib_KtlLoggerUser "KtlLoggerUser" CACHE STRING "KTL Logger (User) Library")
-set (lib_KtlLoggerShimUser "KtlLoggerShimUser" CACHE STRING "KTL Logger Shim Library")
-set (lib_KtlLoggerShimUDriver "KtlLoggerShimUDriver" CACHE STRING "KTL Logger UDriver Library")
-set (lib_KtlLoggerShimUPassthrough "KtlLoggerShimUPassthrough" CACHE STRING "KTL Logger UPassthrough Library")
+set (lib_KtlLoggerShimUnify "KtlLoggerShimUnify" CACHE STRING "KTL Logger Unify Library")
 
 set (lib_AadWrapperServer "AadWrapperServer" CACHE STRING "AadWrapperServer library")
 set (lib_TokenValidationService "TokenValidationService" CACHE STRING "TokenValidationService library")
@@ -582,6 +621,8 @@ set (exe_LogicalLog "LogicalLog.Test" CACHE STRING "LogicalLog library")
 
 set (lib_TStore "TStore" CACHE STRING "TStore library")
 set (exe_TStore_Test "TStore.Test.exe" CACHE STRING "TStore.Test Exe")
+set (lib_ReliableConcurrentQueue "ReliableConcurrentQueue" CACHE STRING "ReliableConcurrentQueue library")
+set (exe_ReliableConcurrentQueue_Test "ReliableConcurrentQueue.Test.exe" CACHE STRING "ReliableConcurrentQueue.Test Exe")
 
 set (lib_txnreplicator_common "txnreplicator.common" CACHE STRING "TransactionalReplicator Common library")
 set (lib_txnreplicator_testcommon "txnreplicator.testcommon" CACHE STRING "lib_TransactionalReplicator TestCommon library")
@@ -619,6 +660,8 @@ set (lib_ReliableCollectionRuntime "ReliableCollectionRuntime" CACHE STRING "Rel
 
 set (lib_BackupRestoreService "BackupRestoreService" CACHE STRING "BackupRestoreService library")
 
+set (lib_LttngReader "LttngReader" CACHE STRING "LttngReader library")
+
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel" CACHE STRING "" FORCE)
 
 add_custom_target(postbuild
@@ -632,3 +675,5 @@ add_subdirectory (shared)
 add_subdirectory (test)
 add_subdirectory (tools)
 add_subdirectory (linuxsetup)
+
+endif()

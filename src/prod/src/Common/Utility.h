@@ -235,6 +235,16 @@ namespace Common
             std::forward<t16>(a16)));
     }
 
+    template <class T, class t0, class t1, class t2, class t3, class t4, class t5, class t6, class t7, class t8, class t9, class t10, class t11, class t12, class t13, class t14, class t15, class t16, class t17>
+    std::unique_ptr<T> make_unique(t0 && a0, t1 && a1, t2 && a2, t3 && a3, t4 && a4, t5 && a5, t6 && a6, t7 && a7, t8 && a8, t9 && a9, t10 && a10, t11 && a11, t12 && a12, t13 && a13, t14 && a14, t15 && a15, t16 && a16, t17 && a17) {
+        return std::unique_ptr<T>(new T(
+            std::forward<t0>(a0), std::forward<t1>(a1), std::forward<t2>(a2), std::forward<t3>(a3),
+            std::forward<t4>(a4), std::forward<t5>(a5), std::forward<t6>(a6), std::forward<t7>(a7),
+            std::forward<t8>(a8), std::forward<t9>(a9), std::forward<t10>(a10), std::forward<t11>(a11),
+            std::forward<t12>(a12), std::forward<t13>(a13), std::forward<t14>(a14), std::forward<t15>(a15),
+            std::forward<t16>(a16), std::forward<t17>(a17)));
+    }
+
     template <class T, class D, class t0, class t1, class t2>
     std::unique_ptr<T,D> make_unique(t0 && a0, t1 && a1, t2 && a2) {
         return std::unique_ptr<T,D>(new T(

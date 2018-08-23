@@ -137,7 +137,7 @@ namespace Reliability
         PUBLIC_CONFIG_ENTRY(std::wstring, L"FailoverManager", PlacementConstraints, L"", Common::ConfigEntryUpgradePolicy::NotAllowed);
 
         // Uses TStore for persisted stateful storage when set to true
-        INTERNAL_CONFIG_ENTRY(bool, L"FailoverManager", EnableTStore, false, Common::ConfigEntryUpgradePolicy::NotAllowed);
+        INTERNAL_CONFIG_ENTRY(bool, L"FailoverManager", EnableTStore, false, Common::ConfigEntryUpgradePolicy::Static);
 
         // If set to true, FM ensures that any new node is at the correct version before it is admitted to the system.
         // If the node is not a the correct version, it is upgraded to the right version.
@@ -156,12 +156,15 @@ namespace Reliability
         PUBLIC_CONFIG_ENTRY(bool, L"FailoverManager", IsSingletonReplicaMoveAllowedDuringUpgrade, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // If set to true, move/swap replica to original location after upgrade
-        INTERNAL_CONFIG_ENTRY(bool, L"FailoverManager", RestoreReplicaLocationAfterUpgrade, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(bool, L"FailoverManager", RestoreReplicaLocationAfterUpgrade, false, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // Specifies the duration for which FM waits for PLB to trigger a swap-primary when deactivating a node intent
         // Restart. This so that all the all the primary replicas are swapped out of the node before closing the
         // replicas. If PLB is unable to start the swap and this much time has elapsed, FM proceeds with node deactivation.
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FailoverManager", SwapPrimaryRequestTimeout, Common::TimeSpan::FromSeconds(60.0 * 10), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        //Specifies the duration for which FM waits for an up replica to move out to a different node during remove node or remove data deactivation
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FailoverManager", RemoveNodeOrDataUpReplicaTimeout, Common::TimeSpan::MaxValue, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // Specified if FM should perform a stronger safety check for upgrades and node deactivations.
         INTERNAL_CONFIG_ENTRY(bool, L"FailoverManager", IsStrongSafetyCheckEnabled, true, Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -629,7 +632,13 @@ namespace Reliability
         INTERNAL_CONFIG_ENTRY(bool, L"ReconfigurationAgent", AssertOnStoreFatalError, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // Uses TStore for persisted stateful storage when set to true
-        INTERNAL_CONFIG_ENTRY(bool, L"ReconfigurationAgent", EnableLocalTStore, false, Common::ConfigEntryUpgradePolicy::NotAllowed);
+        INTERNAL_CONFIG_ENTRY(bool, L"ReconfigurationAgent", EnableLocalTStore, false, Common::ConfigEntryUpgradePolicy::Static);
+        
+        // Use to disable a safety check against accidentally switching local store provider type (EnableLocalTStore)
+        INTERNAL_CONFIG_ENTRY(bool, L"ReconfigurationAgent", AllowLocalStoreMigration, false, Common::ConfigEntryUpgradePolicy::Static);
+
+        // When set to true, RA will assert if nodeid doesn't match with value loaded from lfum
+        INTERNAL_CONFIG_ENTRY(bool, L"ReconfigurationAgent", AssertOnNodeIdMismatchAtLfumLoad, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // Determines whether RA will use deactivation info for performing primary re-election
         // For new clusters this configuration should be set to true
@@ -641,6 +650,9 @@ namespace Reliability
 
         // Check VersionInstance of completed upgrade with the one in NodeConfig.NodeVersion before sending NodeUp.
         INTERNAL_CONFIG_ENTRY(bool, L"ReconfigurationAgent", IsVersionInstanceCheckEnabled, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // For ESE->TStore migration support, disable some test asserts that normally check against LSN regression without data loss
+        INTERNAL_CONFIG_ENTRY(bool, L"ReconfigurationAgent", IsDataLossLsnCheckEnabled, false, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // Deprecated. Please use RAPMessageRetryInterval instead.
         DEPRECATED_CONFIG_ENTRY(Common::TimeSpan, L"ReconfigurationAgent", ReopenReplicaMessageRetryInterval, Common::TimeSpan::FromSeconds(30.0), Common::ConfigEntryUpgradePolicy::Static);

@@ -118,6 +118,7 @@ bool HealthEntity::ShouldBeCleanedUp() const
     AcquireReadLock lock(lock_);
 
     // The entity is not in store but has events. Need to remove the events.
+    // This covers the case when the entity was deleted or cleaned up and it had more than MaxEntityHealthReportsAllowedPerTransaction events.
     if (entityState_.IsPendingFirstReport && !events_.empty() && hasLeakedEvents_)
     {
         return true;
@@ -229,6 +230,26 @@ bool HealthEntity::ShouldBeDeletedDueToParentState(Common::ActivityId const & ac
         {
             // It has been too long since system report has been received
             // or the parents are in the wrong state
+            return true;
+        }
+
+        return false;
+    } // endlock
+}
+
+bool HealthEntity::ShouldAutoCleanupEvents() const
+{
+    { // lock
+        AcquireReadLock lock(lock_);
+        if (!entityState_.IsReady)
+        {
+            return false;
+        }
+
+        if (events_.size() > static_cast<size_t>(ManagementConfig::GetConfig().MaxEntityHealthReportsAllowedPerTransaction))
+        {
+            // There are more than allowed number of reports per entity.
+            // Try to automatically cleanup the events that do not impact health.
             return true;
         }
 
@@ -484,13 +505,13 @@ Common::ErrorCode HealthEntity::GetEventsHealthState(
         }
         else
         {
-            bool hasAuthoritySourceReport;
+            vector<HealthEvent> nonPersistedEvents;
             eventsHealthState = GetEventsHealthStateCallerHoldsLock(
                 activityId,
                 considerWarningAsError,
                 setUnhealthyEvaluations,
                 unhealthyEvaluations,
-                hasAuthoritySourceReport);
+                nonPersistedEvents);
             return ErrorCode(ErrorCodeValue::Success);
         }
     } // endlock
@@ -576,13 +597,13 @@ Common::ErrorCode HealthEntity::ProcessQuery(
             {
                 // Compute the aggregated health based on the entity events only
                 // This will also update the expired state of the event at the moment the health evaluation was done
-                bool hasAuthoritySourceReport;
+                vector<HealthEvent> nonPersistedEvents;
                 entityEventsState = GetEventsHealthStateCallerHoldsLock(
                     context.ActivityId,
                     context.HealthPolicyConsiderWarningAsError,
                     true, // setUnhealthyEvaluations
                     unhealthyEvaluations,
-                    hasAuthoritySourceReport);
+                    nonPersistedEvents);
 
                 if (context.ContextKind == RequestContextKind::QueryEntityDetail)
                 {
@@ -618,12 +639,13 @@ Common::ErrorCode HealthEntity::ProcessQuery(
                         }
                     }
 
-                    if (!hasAuthoritySourceReport)
+                    for (auto && entry : nonPersistedEvents)
                     {
-                        if (!eventsFilter || eventsFilter->IsRespected(FABRIC_HEALTH_STATE_ERROR))
+                        ASSERT_IF(entry.State == FABRIC_HEALTH_STATE_OK, "{0}: generated non-persisted event has state Ok: {1}", context.ActivityId, entry);
+                        FABRIC_HEALTH_STATE eventState = context.HealthPolicyConsiderWarningAsError ? FABRIC_HEALTH_STATE_ERROR : entry.State;
+                        if (!eventsFilter || eventsFilter->IsRespected(eventState))
                         {
-                            // Add event for missing health report
-                            queryEvents.push_back(GetMissingAuthorityReportHealthEvent());
+                            queryEvents.push_back(move(entry));
                         }
                     }
                 }
@@ -635,6 +657,7 @@ Common::ErrorCode HealthEntity::ProcessQuery(
     switch (context.ContextKind)
     {
     case RequestContextKind::QueryEntityChildren:
+    case RequestContextKind::QueryEntityUnhealthyChildren:
         return this->SetChildrenAggregatedHealthQueryResult(context);
 
     case RequestContextKind::QueryEntityDetail:
@@ -654,7 +677,7 @@ Common::ErrorCode HealthEntity::ProcessQuery(
 //
 void HealthEntity::StartProcessReport(
     IHealthJobItemSPtr const & jobItem,
-    vector<ReportRequestContext> const & contexts,
+    __in vector<ReportRequestContext> & contexts,
     bool isDeleteRequest)
 {
     // Contexts preprocessing:
@@ -746,7 +769,7 @@ void HealthEntity::StartProcessReport(
             pendingEvents_.clear();
             pendingAttributes_.reset();
 
-            for (auto const & context : contexts)
+            for (auto & context : contexts)
             {
                 if (context.IsErrorSet())
                 {
@@ -764,6 +787,8 @@ void HealthEntity::StartProcessReport(
                 {
                     timeout = remainingTime;
                 }
+
+                UpdateEntityInstanceInHealthReport(context);
             }
 
             needsToPersist = pendingAttributes_ || (!pendingEvents_.empty());
@@ -814,7 +839,7 @@ void HealthEntity::EndProcessReport(
 }
 
 bool HealthEntity::TryCreatePendingReportInformationCallerHoldsLock(
-    ReportRequestContext const & context,
+    __in ReportRequestContext & context,
     bool isDeleteRequest)
 {
     auto error = context.Report.ValidateReport();
@@ -866,6 +891,17 @@ bool HealthEntity::TryCreatePendingReportInformationCallerHoldsLock(
                     return false;
                 }
 
+                // We want to consider the previous state as error if it's expired and removeWhenExpired=False
+                // If removeWhenExpired=True, then it doesn't matter since it will be removed anyway.
+                if ((*it)->IsExpired && !(*it)->RemoveWhenExpired)
+                {
+                    context.PreviousState = FABRIC_HEALTH_STATE_ERROR;
+                }
+                else
+                {
+                    context.PreviousState = (*it)->State;
+                }
+
                 itEvent = it;
                 break;
             }
@@ -899,8 +935,11 @@ bool HealthEntity::TryCreatePendingReportInformationCallerHoldsLock(
                 context.SetError(ErrorCode(ErrorCodeValue::Success, wformatString("Optimized, persisted sn {0}", previousEvent->PersistedReportSequenceNumber)));
                 return false;
             }
-            else
+            else if (!previousEvent->RemoveWhenExpired)
             {
+                // Events that have RemoveWhenExpired true must always be persisted, because the expiration is sliding
+                // based on the time they are persisted.
+                // Only trace for non RemoveWhenExpired events, since that is the event of interest.
                 HMEvents::Trace->PersistEventPreviousExpired(
                     entityIdString_,
                     context.ReplicaActivityId.ActivityId,
@@ -1145,7 +1184,7 @@ void HealthEntity::CheckInMemoryAgainstStoreData(
         healthManagerReplica_.ReportTransientFault(ErrorCode(ErrorCodeValue::InconsistentInMemoryState));
     }
     else
-    {   
+    {
         { // lock
             AcquireWriteLock lock(lock_);
             HMEvents::Trace->CheckInMemoryAgainstStoreData(entityIdString_, activityId, error, stopwatch.Elapsed, *attributes_);
@@ -1205,7 +1244,7 @@ bool HealthEntity::VerifyInMemoryAgainstStoreEventsCallerHoldsLock(
     for (auto const & event : events_)
     {
         UpdateSystemDataCallerHoldsLock(*event, hasSystemReport, systemErrorCount);
-        
+
         auto it = storeEventKeys.find(event->Key);
         if (it == storeEventKeys.end())
         {
@@ -1362,7 +1401,7 @@ Common::ErrorCode HealthEntity::LoadStoreData(
         for (auto && event : storeEvents)
         {
             UpdateSystemDataCallerHoldsLock(*event, hasSystemReport, systemErrorCount);
-           
+
             event->UpdateOnLoadFromStore(healthInfoKind);
             events_.push_back(move(event));
         }
@@ -1448,22 +1487,20 @@ void HealthEntity::UpdateInMemoryDataCallerHoldsLock(Store::ReplicaActivityId co
         {
             entityState_.TransitionReady();
         }
-        else
-        {
-            removeOldEvents = attributes_->ShouldReplaceAttributes(*pendingAttributes_);
-            if (removeOldEvents)
-            {
-                // Remove all previous reports and add only the new events
-                events_.clear();
-                pendingAttributes_->ResetSystemInfo();
-                for (auto && pendingEvent : pendingEvents_)
-                {
-                    events_.push_back(move(pendingEvent));
-                }
-            }
 
-            hasLeakedEvents_ = false;
+        removeOldEvents = attributes_->ShouldReplaceAttributes(*pendingAttributes_);
+        if (removeOldEvents)
+        {
+            // Remove all previous reports and add only the new events
+            events_.clear();
+            pendingAttributes_->ResetSystemInfo();
+            for (auto && pendingEvent : pendingEvents_)
+            {
+                events_.push_back(move(pendingEvent));
+            }
         }
+
+        hasLeakedEvents_ = false;
 
         if (!pendingAttributes_->IsMarkedForDeletion && IsDeletedOrCleanedUpCallerHoldsLock())
         {
@@ -1661,6 +1698,44 @@ void HealthEntity::EndCleanupEntity(
 }
 
 //
+// Auto-Cleanup of events when there are too many events
+//
+void HealthEntity::StartAutoCleanupEvents(
+    IHealthJobItemSPtr const & jobItem)
+{
+    ErrorCode error(ErrorCodeValue::Success);
+
+    { // lock
+        AcquireReadLock lock(lock_);
+        if (entityState_.IsClosed)
+        {
+            // Nothing to do, just notify the job item
+            error = ErrorCode(ErrorCodeValue::ObjectClosed);
+        }
+        else if (!entityState_.IsReady)
+        {
+            error = ErrorCode(ErrorCodeValue::InvalidState);
+        }
+    } // endlock
+
+    if (!error.IsSuccess())
+    {
+        // Complete work item outside the lock
+        this->JobQueueManager.OnWorkComplete(*jobItem, error);
+        return;
+    }
+
+    StartPersistAutoCleanupEvents(jobItem);
+}
+
+void HealthEntity::EndAutoCleanupEvents(
+    __in IHealthJobItem & jobItem,
+    Common::AsyncOperationSPtr const & operation)
+{
+    OnPersistAutoCleanupEventsCompleted(jobItem, operation);
+}
+
+//
 // Cleanup expired transient events
 //
 void HealthEntity::StartCleanupExpiredTransientEvents(
@@ -1765,6 +1840,8 @@ Common::ErrorCode HealthEntity::PreparePersistCurrentDataTx(
 
     if (removeOldEvents)
     {
+        int deletedEvents = 0;
+        int maxEventsToDelete = ManagementConfig::GetConfig().MaxEntityHealthReportsAllowedPerTransaction;
         for (auto it = events_.begin(); it != events_.end(); ++it)
         {
             // Delete all events except the new one (to avoid StoreConflict due to same record
@@ -1781,6 +1858,24 @@ Common::ErrorCode HealthEntity::PreparePersistCurrentDataTx(
                 if (!error.IsSuccess())
                 {
                     return error;
+                }
+
+                if (++deletedEvents > maxEventsToDelete)
+                {
+                    // Not all events can be deleted. Reject the new report.
+                    // This can only happen when the health reporting is faulty and there are too many reports on the entity.
+                    // The mitigation is for users to delete some of the events manually.
+                    // The error sent back to the health client is a retryable one, since the next time the client sends
+                    // this report, the number of reports may be smaller and the report can succeed.
+                    healthManagerReplica_.WriteWarning(
+                        TraceComponent,
+                        entityIdString_,
+                        "{0}: ProcessReport can't remove old events. There are {1} events, max allowed {2}. Reject report",
+                        replicaActivityId.ActivityId,
+                        events_.size(),
+                        maxEventsToDelete);
+
+                    return ErrorCode(ErrorCodeValue::MaxResultsReached);
                 }
             }
         }
@@ -1958,14 +2053,7 @@ Common::ErrorCode HealthEntity::PreparePersistDeleteEntityTx(
     }
 
     // 2. Delete the events that are in memory
-    for (auto it = events_.begin(); it != events_.end(); ++it)
-    {
-        error = healthManagerReplica_.StoreWrapper.Delete(tx, **it);
-        if (!error.IsSuccess())
-        {
-            return error;
-        }
-    }
+    error = AddDeleteEventsToTx(replicaActivityId.ActivityId, tx);
 
     return error;
 }
@@ -2026,16 +2114,15 @@ void HealthEntity::OnPersistDeleteEntityCompleted(
             attributes_ = move(pendingAttributes_);
 
             attributes_->ResetSystemInfo();
-            events_.clear();
 
+            // Clear the events that were deleted from store.
+            UpdateDeletedEventsCallerHoldsLock();
             if (!entityState_.IsInStore)
             {
                 // The entry for the attributes was added to store, marked for delete
                 entityState_.TransitionReady();
                 wasReadyToAcceptRequests = false;
             }
-
-            hasLeakedEvents_ = false;
         }
         else if (entityState_.IsPendingWriteToStore)
         {
@@ -2060,6 +2147,101 @@ void HealthEntity::OnPersistDeleteEntityCompleted(
 
     // Notify current context of the result
     this->JobQueueManager.OnWorkComplete(jobItem, error);
+}
+
+Common::ErrorCode HealthEntity::AddDeleteEventsToTx(
+    Common::ActivityId const & activityId,
+    __in Store::IStoreBase::TransactionSPtr & tx)
+{
+    if (events_.empty())
+    {
+        // Nothing to do.
+        return ErrorCode::Success();
+    }
+
+    int deletedEvents = 0;
+    wstring traceDetails;
+    StringWriter writer(traceDetails);
+    int maxEventsToDelete = ManagementConfig::GetConfig().MaxEntityHealthReportsAllowedPerTransaction;
+    ErrorCode error(ErrorCodeValue::Success);
+    int traceCount = 0;
+    for (auto const & entry : events_)
+    {
+        // Trace the first few events that are deleted
+        AppendEventDataForTrace(writer, entry, traceCount);
+
+        error = healthManagerReplica_.StoreWrapper.Delete(tx, *entry);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        if (++deletedEvents >= maxEventsToDelete)
+        {
+            // Not all events can be deleted. Delete only up to max allowed size, the rest will be leaked.
+            healthManagerReplica_.WriteWarning(
+                TraceComponent,
+                entityIdString_,
+                "{0}: tx.Delete {1} events, the rest up to {2} events are leaked and will be cleaned up later. First deleted events: {3}",
+                activityId,
+                maxEventsToDelete,
+                events_.size(),
+                traceDetails);
+            return error;
+        }
+    }
+
+    healthManagerReplica_.WriteInfo(
+        TraceComponent,
+        entityIdString_,
+        "{0}: tx.Delete {1} events. First deleted events: {2}",
+        activityId,
+        events_.size(),
+        traceDetails);
+    return error;
+}
+
+void HealthEntity::UpdateDeletedEventsCallerHoldsLock()
+{
+    size_t maxEventsToDelete = static_cast<size_t>(ManagementConfig::GetConfig().MaxEntityHealthReportsAllowedPerTransaction);
+    if (events_.size() <= maxEventsToDelete)
+    {
+        events_.clear();
+        hasLeakedEvents_ = false;
+    }
+    else
+    {
+        // Only some events are deleted, remove them from memory. The rest should be kept to be cleaned up later.
+        auto itBegin = events_.begin();
+        auto itEnd = itBegin;
+        advance(itEnd, maxEventsToDelete);
+        events_.erase(itBegin, itEnd);
+        healthManagerReplica_.WriteInfo(
+            TraceComponent,
+            entityIdString_,
+            "tx.Delete removed {0} events, left {1} leaked events.",
+            maxEventsToDelete,
+            events_.size());
+        hasLeakedEvents_ = true;
+    }
+}
+
+void HealthEntity::AppendEventDataForTrace(
+    __in StringWriter & writer,
+    HealthEventStoreDataUPtr const & entry,
+    __inout int & traceCount)
+{
+    static int maxTraceCount = 50;
+    if (++traceCount <= maxTraceCount)
+    {
+        // Write few events per line
+        if (traceCount % 4 == 0)
+        {
+            writer.WriteLine();
+        }
+
+        writer.Write("({0}+{1} sn={2}); ", entry->SourceId, entry->Property, entry->ReportSequenceNumber);
+    }
 }
 
 //
@@ -2113,22 +2295,8 @@ Common::ErrorCode HealthEntity::PreparePersistCleanupEntityTx(
         }
     }
 
-    for (auto it = events_.begin(); it != events_.end(); ++it)
-    {
-        healthManagerReplica_.WriteInfo(
-            TraceComponent,
-            entityIdString_,
-            "{0}: Cleanup with events: tx.delete {1}",
-            replicaActivityId.TraceId,
-            **it);
-
-        error = healthManagerReplica_.StoreWrapper.Delete(tx, **it);
-        if (!error.IsSuccess())
-        {
-            return error;
-        }
-    }
-
+    // Delete any events
+    error = AddDeleteEventsToTx(replicaActivityId.ActivityId, tx);
     return error;
 }
 
@@ -2176,16 +2344,184 @@ void HealthEntity::OnPersistCleanupEntityCompleted(
             attributes_->MarkAsStale();
             attributes_ = move(cleanedUpAttributes);
 
-            events_.clear();
+            // Remove the entity events from memory.
+            UpdateDeletedEventsCallerHoldsLock();
 
             // The entity is no longer in store; if a new instance is reported, use Insert rather than Update
             // when writing attributes
             entityState_.TransitionPendingFirstReport();
-            hasLeakedEvents_ = false;
         }
     }
 
     // Notify current context of the result
+    this->JobQueueManager.OnWorkComplete(jobItem, error);
+}
+
+//
+// Auto cleanup of events when there are too many events.
+//
+Common::ErrorCode HealthEntity::PreparePersistAutoCleanupEventsTx(
+    Store::ReplicaActivityId const & replicaActivityId,
+    __out Store::IStoreBase::TransactionSPtr & tx)
+{
+    auto error = healthManagerReplica_.StoreWrapper.CreateSimpleTransaction(replicaActivityId.ActivityId, tx);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    vector<std::list<HealthEventStoreDataUPtr>::const_iterator> eventsToBeDeletedIts;
+    size_t maxAllowed = static_cast<size_t>(ManagementConfig::GetConfig().MaxEntityHealthReportsAllowedPerTransaction);
+    size_t initialSize;
+    wstring traceDetails;
+    StringWriter writer(traceDetails);
+
+    // 2 cleanup job items should not be executed in parallel.
+    // If the second one comes here, it's because the first one is executing the commit async.
+    // Check IsPendingUpdateToStore and if any event has it set, do not run, wait until next cleanup task is scheduled.
+    // The executing task will update the flag when it's done.
+    { // lock
+        AcquireReadLock lock(lock_);
+        initialSize = events_.size();
+        if (initialSize > maxAllowed)
+        {
+            size_t count = 0;
+            int traceCount = 0;
+            for (auto it = events_.cbegin(); it != events_.cend(); ++it)
+            {
+                auto & entry = *it;
+
+                if (entry->IsPendingUpdateToStore)
+                {
+                    healthManagerReplica_.WriteInfo(
+                        TraceComponent,
+                        entityIdString_,
+                        "{0}: The event {1} is already marked IsPendingUpdateToStore. {2}",
+                        replicaActivityId.TraceId,
+                        *entry,
+                        *attributes_);
+                    return ErrorCode(ErrorCodeValue::AlreadyExists);
+                }
+
+                // Only delete events that do not impact health.
+                if (entry->DoesNotImpactHealth())
+                {
+                    AppendEventDataForTrace(writer, entry, traceCount);
+
+                    eventsToBeDeletedIts.push_back(it);
+                    entry->IsPendingUpdateToStore = true;
+                    if (++count > maxAllowed)
+                    {
+                        // Added upto max number of reports per tx.
+                        break;
+                    }
+
+                    if (initialSize - count <= maxAllowed)
+                    {
+                        // The remaining reports are below the critical level.
+                        break;
+                    }
+                }
+            }
+        }
+    } // endlock
+
+    if (eventsToBeDeletedIts.empty())
+    {
+        // No work needed
+        healthManagerReplica_.WriteInfo(
+            TraceComponent,
+            entityIdString_,
+            "{0}: Entity has {1} events, max allowed = {2}. Auto-cleanup found no events to remove.",
+            replicaActivityId.ActivityId,
+            initialSize,
+            maxAllowed,
+            eventsToBeDeletedIts.size());
+        return ErrorCode(ErrorCodeValue::NotFound);
+    }
+
+    healthManagerReplica_.WriteInfo(
+        TraceComponent,
+        entityIdString_,
+        "{0}: Entity has {1} events, max allowed = {2}. Auto-cleanup {3} events that do not impact health. First events: {4}",
+        replicaActivityId.ActivityId,
+        initialSize,
+        maxAllowed,
+        eventsToBeDeletedIts.size(),
+        traceDetails);
+
+    // It's ok to access the iterators outside the lock, since the job queue manager ensures only one job queue is active at one time.
+    for (auto const & it : eventsToBeDeletedIts)
+    {
+        error = healthManagerReplica_.StoreWrapper.Delete(tx, *(*it));
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+    }
+
+    return error;
+}
+
+void HealthEntity::StartPersistAutoCleanupEvents(
+    IHealthJobItemSPtr const & jobItem)
+{
+    auto error = healthManagerReplica_.StartCommitJobItem(
+        jobItem,
+        [this](Store::ReplicaActivityId const & replicaActivityId, __out Store::IStoreBase::TransactionSPtr & tx)->ErrorCode
+        {
+            return this->PreparePersistAutoCleanupEventsTx(replicaActivityId, tx);
+        },
+            [this](__in IHealthJobItem & jobItem, AsyncOperationSPtr const & operation)
+        {
+            this->OnPersistAutoCleanupEventsCompleted(jobItem, operation);
+        },
+        ManagementConfig::GetConfig().MaxOperationTimeout);
+
+    TESTASSERT_IFNOT(error.IsSuccess(), "{0}: Auto-Cleanup events: start commit job item failed with {1}", *jobItem, error);
+}
+
+void HealthEntity::OnPersistAutoCleanupEventsCompleted(
+    __in IHealthJobItem & jobItem,
+    Common::AsyncOperationSPtr const & operation)
+{
+    auto error = ReplicatedStoreWrapper::EndCommit(operation);
+    if (error.IsError(ErrorCodeValue::NotFound))
+    {
+        // Nothing to do, no events were found, no need to take lock
+        this->JobQueueManager.OnWorkComplete(jobItem, error);
+        return;
+    }
+
+    { // lock
+        AcquireWriteLock lock(lock_);
+        if (entityState_.IsClosed)
+        {
+            error.Overwrite(ErrorCode(ErrorCodeValue::ObjectClosed));
+        }
+        else if (error.IsSuccess())
+        {
+            // Auto-cleanup only removes events that can't impact system count, so no changes to System error/report count are needed.
+            for (auto it = events_.begin(); it != events_.end();)
+            {
+                auto & entry = *it;
+                if (entry->IsPendingUpdateToStore)
+                {
+                    events_.erase(it++);
+                }
+                else
+                {
+                    ++it;
+                }
+            }
+        }
+        else
+        {
+            ResetPendingEventsCallerHoldsLock();
+        }
+    } //endlock
+
+      // Notify current context of the result
     this->JobQueueManager.OnWorkComplete(jobItem, error);
 }
 
@@ -2208,7 +2544,7 @@ Common::ErrorCode HealthEntity::PreparePersistExpiredEventChangesTx(
 
     // Indexes for events that need to be changed. Set under lock
     vector<std::list<HealthEventStoreDataUPtr>::const_iterator> eventsToBeDeletedIts;
-    
+
     // 2 cleanup job items should not be executed in parallel.
     // If the second one comes here, it's because the first one is executing the commit async.
     // Check IsPendingUpdateToStore and if any event has it set, do not run, wait until next cleanup task is scheduled.
@@ -2231,11 +2567,24 @@ Common::ErrorCode HealthEntity::PreparePersistExpiredEventChangesTx(
         }
     } // endlock
 
+    size_t maxAllowed = static_cast<size_t>(ManagementConfig::GetConfig().MaxEntityHealthReportsAllowedPerTransaction);
+
     { // lock
         // Take write lock because UpdateExpired can change the cached expired state
         AcquireWriteLock lock(lock_);
         for (auto it = events_.cbegin(); it != events_.cend(); ++it)
         {
+            if (eventsToBeDeletedIts.size() + eventsToBeUpdatedToStore.size() > maxAllowed)
+            {
+                healthManagerReplica_.WriteInfo(
+                    TraceComponent,
+                    entityIdString_,
+                    "{0}: Events to be deleted / updated are more than MaxEntityHealthReportsAllowedPerTransaction {1}, processing accumulated events.",
+                    replicaActivityId.ActivityId,
+                    maxAllowed);
+                break;
+            }
+
             auto & entry = *it;
 
             // Update expired information and get events that need to be modified
@@ -2359,12 +2708,37 @@ void HealthEntity::OnPersistExpiredEventChangesCompleted(
                     if (entry->RemoveWhenExpired)
                     {
                         ASSERT_IFNOT(entry->IsExpired, "{0}: {1}: Unexpected pending update entry: event should be transient expired: {2}", this->EntityIdString, jobItem.ReplicaActivityId.ActivityId, *it);
+
+                        // Trace that an event has expired. Only trace if the expiry has an impact on health state.
+                        // So, do not trace events with OK health status, in order to cut down on clutter in the traces.
+                        if (entry->State != FABRIC_HEALTH_STATE_OK)
+                        {
+                            HMEvents::Trace->TraceEventExpiredOperational(
+                                jobItem.EntityKind,
+                                entry,
+                                attributes_);
+                        }
+
                         events_.erase(it++);
                         this->HealthManagerCounters->NumberOfExpiredTransientHealthReports.Increment();
                     }
                     else
                     {
                         ASSERT_IFNOT(entry->NeedsToBePersistedToStore(), "{0}: {1}: Unexpected pending update entry {2}", this->EntityIdString, jobItem.ReplicaActivityId.ActivityId, *it);
+
+                        // Because of optimizations, NeedsToBePersisted checks if in memory and persisted is different (for expired tracker), in cases where the
+                        // source, property, TTL, and description are the same. This means that it's possible that the in the store, we have an expired event
+                        // that is becoming un-expired. We don't want to trace expired in that case.
+                        if (entry->IsExpired)
+                        {
+                            // Trace that an event has expired
+                            HMEvents::Trace->TraceEventExpiredOperational(
+                                jobItem.EntityKind,
+                                entry,
+                                attributes_);
+                        }
+
+
                         // Update in place - move diff into current persisted
                         entry->MoveDiffToCurrent(jobItem.ReplicaActivityId);
                         entry->IsPendingUpdateToStore = false;
@@ -2397,18 +2771,23 @@ void HealthEntity::OnPersistExpiredEventChangesCompleted(
         }
         else
         {
-            for (auto it = events_.begin(); it != events_.end(); ++it)
-            {
-                if ((*it)->IsPendingUpdateToStore)
-                {
-                    (*it)->IsPendingUpdateToStore = false;
-                }
-            }
+            ResetPendingEventsCallerHoldsLock();
         }
     } //endlock
 
     // Notify current context of the result
     this->JobQueueManager.OnWorkComplete(jobItem, error);
+}
+
+void HealthEntity::ResetPendingEventsCallerHoldsLock()
+{
+    for (auto & entry : events_)
+    {
+        if (entry->IsPendingUpdateToStore)
+        {
+            entry->IsPendingUpdateToStore = false;
+        }
+    }
 }
 
 void HealthEntity::UpdateSystemDataCallerHoldsLock(
@@ -2423,6 +2802,17 @@ void HealthEntity::UpdateSystemDataCallerHoldsLock(
         {
             ++systemErrorCount;
         }
+    }
+}
+
+void HealthEntity::UpdateEntityInstanceInHealthReport(__in ReportRequestContext & context)
+{
+    // In EntityHealthInformation, check that HasUnknownInstance is true before updating the EntityInstance value
+    auto & entity = context.Report.EntityInformation;
+
+    if (entity->HasUnknownInstance() && attributes_->UseInstance)
+    {
+        entity->EntityInstance = attributes_->InstanceId;
     }
 }
 
@@ -2487,12 +2877,17 @@ void HealthEntity::CreatePendingAttributesCallerHoldsLock(
     }
 }
 
+// Evaluates the aggregated health state of the events only, based on the considerWarningAsError part of the policy.
+// It sets unhealthy evaluations if required by the caller. The unhealthy evaluations are only needed for
+// health queries (eg. Get<Entity>Health - GetClusterHealth, GetApplicationHealth etc) and upgrade queries (eg. IsClusterHealthy)
+// and not for the general queries, like Get<Entity>List. The general queries only need the aggregated health state.
+// It sets the non persisted events that HM generates to flag conditions like no authority reports or too many health reports per entity.
 FABRIC_HEALTH_STATE HealthEntity::GetEventsHealthStateCallerHoldsLock(
     Common::ActivityId const & activityId,
     bool considerWarningAsError,
     bool setUnhealthyEvaluations,
     __inout std::vector<ServiceModel::HealthEvaluation> & unhealthyEvaluations,
-    __out bool & hasAuthoritySourceReport)
+    __inout std::vector<ServiceModel::HealthEvent> & nonPersistedEvents)
 {
     // Compute the latest count of different health states
 
@@ -2510,7 +2905,7 @@ FABRIC_HEALTH_STATE HealthEntity::GetEventsHealthStateCallerHoldsLock(
     // Since the expected average number of events is small, the simple approach gives best code simplicity-performance trade off.
 
     // Check authority source report for all entities that expect system reports
-    hasAuthoritySourceReport = !attributes_->ExpectSystemReports;
+    bool hasAuthoritySourceReport = !attributes_->ExpectSystemReports;
 
     if (!entityState_.IsReady)
     {
@@ -2616,7 +3011,7 @@ FABRIC_HEALTH_STATE HealthEntity::GetEventsHealthStateCallerHoldsLock(
 
     int totalUnhealthy = warningCount + errorCount + expiredEventsCount;
 
-    FABRIC_HEALTH_STATE aggregatedState;
+    FABRIC_HEALTH_STATE aggregatedState = FABRIC_HEALTH_STATE_OK;
     if (errorCount > 0)
     {
         aggregatedState = FABRIC_HEALTH_STATE_ERROR;
@@ -2644,21 +3039,58 @@ FABRIC_HEALTH_STATE HealthEntity::GetEventsHealthStateCallerHoldsLock(
                 HealthEvaluation(make_shared<EventHealthEvaluation>(aggregatedState, (*firstWarning)->GenerateEvent(), considerWarningAsError)));
         }
     }
-    else if (!hasAuthoritySourceReport)
+
+    if (!hasAuthoritySourceReport)
     {
-        aggregatedState = FABRIC_HEALTH_STATE_ERROR;
+        // If the entity doesn't have an instance, a System component reported without instance.
+        // For example, Infrastructure Service. This can happen in scale-up and down scenarios, where the node is removed from FM
+        // but Infrastructure service reports on the Azure view. Since FM may never report on this node,
+        // do not let it impact cluster upgrades.
+        FABRIC_HEALTH_STATE authorityReportState = (attributes_->HasInvalidInstance && !considerWarningAsError) ? FABRIC_HEALTH_STATE_WARNING : FABRIC_HEALTH_STATE_ERROR;
+        wstring reportDescription;
         if (setUnhealthyEvaluations)
         {
-            unhealthyEvaluations.push_back(
-                HealthEvaluation(make_shared<EventHealthEvaluation>(aggregatedState, GetMissingAuthorityReportHealthEvent(), considerWarningAsError)));
+            reportDescription = GetMissingAuthorityReportHealthDescription();
         }
-    }
-    else
-    {
-        aggregatedState = FABRIC_HEALTH_STATE_OK;
+
+        AddGeneratedEventsCallerHoldsLock(
+            activityId,
+            *ServiceModel::Constants::AuthorityReportProperty,
+            authorityReportState,
+            move(reportDescription),
+            setUnhealthyEvaluations,
+            considerWarningAsError,
+            aggregatedState,
+            unhealthyEvaluations,
+            nonPersistedEvents);
     }
 
-    if (totalUnhealthy > 0 || !hasAuthoritySourceReport)
+    // Ignore the events that are expired and pending remove from store
+    int totalEvents = totalUnhealthy + okCount;
+    int maxSuggested = ManagementConfig::GetConfig().MaxSuggestedNumberOfEntityHealthReports;
+    if (totalEvents > maxSuggested)
+    {
+        // Too many health reports
+        FABRIC_HEALTH_STATE tooManyEventsHealthState = considerWarningAsError ? FABRIC_HEALTH_STATE_ERROR : FABRIC_HEALTH_STATE_WARNING;
+        wstring reportDescription;
+        if (setUnhealthyEvaluations)
+        {
+            reportDescription = GetTooManyReportsHealthDescription(totalEvents, maxSuggested);
+        }
+
+        AddGeneratedEventsCallerHoldsLock(
+            activityId,
+            *ServiceModel::Constants::HealthReportCountProperty,
+            tooManyEventsHealthState,
+            move(reportDescription),
+            setUnhealthyEvaluations,
+            considerWarningAsError,
+            aggregatedState,
+            unhealthyEvaluations,
+            nonPersistedEvents);
+    }
+
+    if (aggregatedState != FABRIC_HEALTH_STATE_OK)
     {
         HMEvents::Trace->GetHealth(
             this->EntityIdString,
@@ -2677,29 +3109,109 @@ FABRIC_HEALTH_STATE HealthEntity::GetEventsHealthStateCallerHoldsLock(
     return aggregatedState;
 }
 
-ServiceModel::HealthEvent HealthEntity::GetMissingAuthorityReportHealthEvent() const
+void HealthEntity::AddGeneratedEventsCallerHoldsLock(
+    Common::ActivityId const & activityId,
+    std::wstring const & reportProperty,
+    FABRIC_HEALTH_STATE reportState,
+    std::wstring && reportDescription,
+    bool setUnhealthyEvaluations,
+    bool considerWarningAsError,
+    __inout FABRIC_HEALTH_STATE & aggregatedState,
+    __inout std::vector<ServiceModel::HealthEvaluation> & unhealthyEvaluations,
+    __inout std::vector<ServiceModel::HealthEvent> & nonPersistedEvents)
+{
+    bool evaluationsNotSet = false;
+    if (aggregatedState < reportState)
+    {
+        aggregatedState = reportState;
+        evaluationsNotSet = true;
+    }
+
+    if (setUnhealthyEvaluations)
+    {
+        // Always set the health report to be returned, but only set the unhealthy evaluation if the aggregated health state was impacted.
+        auto report = GenerateNonPersistedEvent(
+            activityId,
+            reportProperty,
+            move(reportDescription),
+            reportState);
+        nonPersistedEvents.push_back(move(report));
+        if (evaluationsNotSet)
+        {
+            unhealthyEvaluations.clear();
+            unhealthyEvaluations.push_back(
+                HealthEvaluation(make_shared<EventHealthEvaluation>(aggregatedState, nonPersistedEvents.back(), considerWarningAsError)));
+        }
+    }
+}
+
+std::wstring HealthEntity::GetMissingAuthorityReportHealthDescription() const
+{
+    auto authoritySources = HealthReport::GetAuthoritySources(HealthEntityKind::GetHealthInformationKind(this->EntityKind, attributes_->UseInstance));
+    ASSERT_IF(authoritySources.empty(), "{0}: GetMissingAuthorityReportHealthDescription: there are no authority sources for this entity kind", *attributes_);
+    return wformatString(
+        HMResource::GetResources().EntityMissingRequiredReport,
+        authoritySources);
+}
+
+std::wstring HealthEntity::GetTooManyReportsHealthDescription(
+    int totalEvents,
+    int maxSuggested) const
+{
+    return wformatString(
+        HMResource::GetResources().TooManyHealthReports,
+        totalEvents,
+        maxSuggested);
+}
+
+ServiceModel::HealthEvent HealthEntity::GenerateNonPersistedEvent(
+    Common::ActivityId const & activityId,
+    std::wstring const & property,
+    std::wstring && description,
+    FABRIC_HEALTH_STATE state) const
 {
     auto now = DateTime::Now();
+    auto lastOkTransition = DateTime::Zero;
+    auto lastWarningTransition = DateTime::Zero;
+    auto lastErrorTransition = DateTime::Zero;
 
-    auto authoritySources = HealthReport::GetAuthoritySources(HealthEntityKind::GetHealthInformationKind(this->EntityKind, attributes_->UseInstance));
-    ASSERT_IF(authoritySources.empty(), "{0}: GetMissingAuthorityReportHealthEvent: there are no authority sources for this entity kind", *attributes_);
-    wstring description = wformatString(HMResource::GetResources().EntityMissingRequiredReport, authoritySources);
+    switch (state)
+    {
+    case FABRIC_HEALTH_STATE_OK:
+        lastOkTransition = now;
+        break;
+    case FABRIC_HEALTH_STATE_WARNING:
+        lastWarningTransition = now;
+        break;
+    case FABRIC_HEALTH_STATE_ERROR:
+        lastErrorTransition = now;
+        break;
+    default:
+        Assert::CodingError("{0}: {1}: GenerateNonPersistedEvent called with {2}, not supported", this->EntityIdString, activityId, state);
+    }
+
+    healthManagerReplica_.WriteInfo(
+        TraceComponent,
+        entityIdString_,
+        "{0}: Generate HM report {1} - '{2}'",
+        activityId,
+        property,
+        description);
 
     return HealthEvent(
         *ServiceModel::Constants::HealthReportHMSource,
-        *ServiceModel::Constants::AuthorityReportProperty,
+        property,
         TimeSpan::MaxValue, // TTL
-        FABRIC_HEALTH_STATE_ERROR, // health state
+        state,
         move(description),
         0, // report sequence number
         now, // source timestamp
         now, // last modified timestamp
         false, // is expired
         false, // remove when expired
-        DateTime::Zero, // last OK transition
-        DateTime::Zero, // last Warning transition
-        now // last Error transition
-    );
+        lastOkTransition,
+        lastWarningTransition,
+        lastErrorTransition);
 }
 
 bool HealthEntity::UpdateHealthState(

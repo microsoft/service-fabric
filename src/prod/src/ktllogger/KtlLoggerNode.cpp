@@ -19,12 +19,14 @@ class KtlLoggerNode::InitializeKtlLoggerAsyncOperation : public KtlProxyAsyncOpe
     public:
     InitializeKtlLoggerAsyncOperation(
         KtlLoggerInitializationContext& asyncContext,
+        BOOLEAN useInprocLogger,
         KtlLogManager::MemoryThrottleLimits const & memoryLimit,
         KtlLogManager::SharedLogContainerSettings const & sharedLogSettings,
         std::wstring const & fabricDataRoot,
         AsyncCallback const& callback,
         AsyncOperationSPtr const& parent)
         : KtlProxyAsyncOperation(&asyncContext, nullptr, callback, parent)
+        , useInprocLogger_(useInprocLogger)
         , memoryLimits_(memoryLimit)
         , sharedLogSettings_(sharedLogSettings)
         , fabricDataRoot_(fabricDataRoot)
@@ -48,6 +50,7 @@ class KtlLoggerNode::InitializeKtlLoggerAsyncOperation : public KtlProxyAsyncOpe
         // Call into the KTL async
         //
         asyncContext_->StartInitializeKtlLogger(
+            useInprocLogger_,                                               
             memoryLimits_,
             sharedLogSettings_,
             fabricDataRoot_.c_str(),
@@ -57,9 +60,9 @@ class KtlLoggerNode::InitializeKtlLoggerAsyncOperation : public KtlProxyAsyncOpe
         return STATUS_SUCCESS;
     }
 
-private:
-
+private:   
     KtlLoggerInitializationContext::SPtr asyncContext_;
+    BOOLEAN useInprocLogger_;
     KtlLogManager::MemoryThrottleLimits memoryLimits_;
     KtlLogManager::SharedLogContainerSettings sharedLogSettings_;
     std::wstring fabricDataRoot_;
@@ -451,6 +454,11 @@ void KtlLoggerNode::OpenAsyncOperation::OnStart(AsyncOperationSPtr const & thisS
     auto operation = shared_ptr<InitializeKtlLoggerAsyncOperation>(
         new(owner_.GetAllocator()) InitializeKtlLoggerAsyncOperation(
             *ktlLoggerInitContext,
+#if defined(PLATFORM_UNIX)
+            TRUE,
+#else
+            FALSE,
+#endif
             memoryLimits,
             *applicationSharedLogSettings_,
             fabricDataRoot_,

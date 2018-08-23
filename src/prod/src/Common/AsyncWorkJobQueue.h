@@ -151,8 +151,9 @@ namespace Common
         }
 
     private:
-        void Process()
+        void Process(ComponentRootSPtr const & root)
         {
+            ASSERT_IFNOT(root, "{0}: ProcessJob: root should be set inside Process(): {1}", name_, *this);
             int crtThread = GetCurrentThreadId();
 
             if (settingsHolder_->TraceProcessingThreads)
@@ -165,13 +166,13 @@ namespace Common
             bool hasAsyncReadyItem = false;
             T asyncReadyItem;
             auto jobItemState = AsyncWorkJobItemState::NotStarted;
-            ComponentRootSPtr root;
             auto crtItemIt = pendingProcessItems_.end();
 
             while (hasItem || hasAsyncReadyItem)
             {
                 { // lock
                     AcquireExclusiveLock grab(lock_);
+
                     if (jobItemState == AsyncWorkJobItemState::CompletedSync)
                     {
                         // Remove the item from the map, processing is done.
@@ -188,7 +189,6 @@ namespace Common
                     if (!asyncReadyItems_.empty())
                     {
                         asyncReadyItem = GetAsyncItemToExecuteCallerHoldsLock();
-                        root = rootSPtr_;
                         hasAsyncReadyItem = true;
                     }
                     else
@@ -198,7 +198,6 @@ namespace Common
                         if (TryGetItemToExecuteCallerHoldsLock(sequenceNumber))
                         {
                             crtItemIt = pendingProcessItems_.find(sequenceNumber);
-                            root = rootSPtr_;
                             hasItem = true;
                         }
                     }
@@ -467,7 +466,7 @@ namespace Common
 
             Threadpool::Post([this, root]
             {
-                this->Process();
+                this->Process(root);
             });
         }
 

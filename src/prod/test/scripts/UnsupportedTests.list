@@ -11,6 +11,7 @@ BinSkimVerification.exe
 Serialization.User.Test.exe
 ClusterManager.SingleNode.Test.exe
 ClusterManagerServiceDnsName.test
+ClusterManagerDefaultServicesDnsName.test
 
 # Security:
 SslBasic.test
@@ -26,6 +27,8 @@ X509DefaultClient.test
 UnreliableTransportUsingClient.test
 ClusterManagerErrors.test
 DotNetCoreCompatVerifier.test
+ResGen.Test
+DllExportTest.exe
 
 # Backup/Restore:
 BackupRestore.test

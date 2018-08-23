@@ -77,7 +77,7 @@ namespace Data
 
         private: 
             // For SerializableMetadata, all members are initialized in the constructor and will not be changed later, so set all members to const
-            // Order of member variables should be the same as order of initialzers
+            // Order of member variables should be the same as order of initializers
             const KUri::CSPtr name_;
             const KString::CSPtr typeString_;
             const FABRIC_STATE_PROVIDER_ID stateProviderId_;

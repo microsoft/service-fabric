@@ -9,6 +9,7 @@ using namespace Data;
 using namespace Utilities;
 using namespace TStore;
 using namespace TxnReplicator;
+using namespace Data::Interop;
 
 HRESULT StateManagerChangeHandler::Create(
     __in KAllocator& allocator,
@@ -50,6 +51,14 @@ void StateManagerChangeHandler::OnAdded(
     auto txnHandle = reinterpret_cast<TransactionHandle>(txn);
     auto stateProviderHandle = reinterpret_cast<StateProviderHandle>(&stateProvider);
 
+    // Is this is wrapper state provider for compat distributed dictionary state provider
+    if (dynamic_cast<CompatRDStateProvider*>(&stateProvider) != nullptr)
+    {
+        CompatRDStateProvider* pCompatRDStateProvider = dynamic_cast<CompatRDStateProvider*>(&stateProvider);
+        // Get actual data store state provider
+        stateProviderHandle = dynamic_cast<TxnReplicator::IStateProvider2*>(pCompatRDStateProvider->DataStore.RawPtr());
+    }
+
     // @TODO - Fix KTL so that KUri LPCWSTR conversion has correct const-ness
     StateManagerChangeData_SingleEntityChanged addData = { txnHandle, stateProviderHandle, (LPCWSTR) const_cast<KUri &>(stateProviderName) };
 
@@ -67,6 +76,15 @@ void StateManagerChangeHandler::OnRemoved(
     auto txn = const_cast<TxnReplicator::Transaction *>(dynamic_cast<TxnReplicator::Transaction const *>(&transaction));
     auto txnHandle = reinterpret_cast<TransactionHandle>(txn);
     auto stateProviderHandle = reinterpret_cast<StateProviderHandle>(&stateProvider);
+
+    // Is this is wrapper state provider for compat distributed dictionary state provider
+    if (dynamic_cast<CompatRDStateProvider*>(&stateProvider) != nullptr)
+    {
+        CompatRDStateProvider* pCompatRDStateProvider = dynamic_cast<CompatRDStateProvider*>(&stateProvider);
+        // Get actual data store state provider
+        stateProviderHandle = dynamic_cast<TxnReplicator::IStateProvider2*>(pCompatRDStateProvider->DataStore.RawPtr());
+    }
+
     StateManagerChangeData_SingleEntityChanged removeData = { txnHandle, stateProviderHandle, (LPCWSTR) const_cast<KUri &>(stateProviderName) };
 
     notifyStateManagerChangeCallback_(ctx_, txnReplicator_, StateManagerChangeKind_Remove, &removeData);

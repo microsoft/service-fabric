@@ -26,15 +26,16 @@ namespace Reliability
             std::wstring const& nodeName,
             std::wstring const& nodeType,
             std::wstring const& ipAddressOrFQDN,
-            ULONG clusterConnectionPort);
+            ULONG clusterConnectionPort,
+            unsigned short httpGatewayPort);
 
-        NodeDescription(NodeDescription const& other);
+        NodeDescription(NodeDescription const& other) = default;
 
-        NodeDescription(NodeDescription && other);
+        NodeDescription(NodeDescription && other) = default;
 
         void InitializeNodeName(Federation::NodeId const& nodeId);
 
-        NodeDescription & operator=(NodeDescription && other);
+        NodeDescription & operator=(NodeDescription && other) = default;
 
         __declspec (property(get=get_VersionInstance)) Common::FabricVersionInstance const& VersionInstance;
         Common::FabricVersionInstance const& get_VersionInstance() const { return versionInstance_; }
@@ -66,9 +67,12 @@ namespace Reliability
         __declspec (property(get=get_clusterConnectionPort)) ULONG ClusterConnectionPort;
         ULONG get_clusterConnectionPort() const { return clusterConnectionPort_; }
 
+        __declspec (property(get = get_httpGatewayPort)) unsigned short HttpGatewayPort;
+        unsigned short get_httpGatewayPort() const { return httpGatewayPort_; }
+
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const&) const;
 
-        FABRIC_FIELDS_10(nodeUpgradeDomainId_, nodeFaultDomainIds_, nodePropertyMap_, nodeCapacityRatioMap_, nodeCapacityMap_, versionInstance_, nodeName_, nodeType_, ipAddressOrFQDN_, clusterConnectionPort_);
+        FABRIC_FIELDS_11(nodeUpgradeDomainId_, nodeFaultDomainIds_, nodePropertyMap_, nodeCapacityRatioMap_, nodeCapacityMap_, versionInstance_, nodeName_, nodeType_, ipAddressOrFQDN_, clusterConnectionPort_, httpGatewayPort_);
 
     private:
 
@@ -82,6 +86,7 @@ namespace Reliability
         std::wstring nodeType_;
         std::wstring ipAddressOrFQDN_;
         ULONG clusterConnectionPort_;
+        unsigned short httpGatewayPort_ = 0;
     };
 }
 

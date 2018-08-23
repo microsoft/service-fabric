@@ -8,7 +8,19 @@
 
 pushd ../
 export _NTTREE=$(pwd)
-export LD_LIBRARY_PATH="$(pwd)/lib"
+
+if [ "$1" == "-harness" ]
+   then
+     export LD_LIBRARY_PATH="/opt/microsoft/servicefabric/bin/Fabric/Fabric.Code"
+     shift
+     ulimit -c unlimited
+   else
+     export LD_LIBRARY_PATH="$(pwd)/lib"
+fi
+
+echo "Running as user $(whoami)"
+echo "LB_LIBRARY_PATH IS $LD_LIBRARY_PATH"
+
 export LinuxModeEnabled=true
 export MALLOC_CHECK_=2
 
@@ -61,12 +73,14 @@ if [ "$waagentDirPerm" -ne "777" ]; then
     sudo chmod a+rwx ${waagentDir}
 fi
 
-echo $_NTTREE
+echo "Your $_NTTREE is: $_NTTREE"
 popd
 if [ $# -eq 0 ]; then
-    mono RunTests.exe /sourcefiles:SingleMachine-CIT.json /types:FabricTest,FabricTest_Sequential,FabricTest_RetailOnly,FederationTest,ExeTest,ExeTest_Sequential
-else
-    mono RunTests.exe $@
+    dotnet RunTests.dll /sourcefiles:SingleMachine-CIT.json /types:FabricTest,FabricTest_Sequential,FederationTest,ExeTest,ExeTest_Sequential
+elif [ "$1" == "/cloud" ]; then
+    dotnet RunTests.dll /sourcefiles:SingleMachine-CIT.json /types:FabricTest,FabricTest_Sequential,FederationTest,ExeTest,ExeTest_Sequential /cloud
+else 
+    dotnet RunTests.dll $@ 
 fi
 
 EXITCODE=$?

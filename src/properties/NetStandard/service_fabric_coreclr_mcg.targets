@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- MCG - Tool to generate code for interop for coreclr bits
+       This tool enables the Com Exceptions to work on Linux bits
+       We currently only run this on Linux bits and not windows bits. -->
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg.props" />
+
+  <ItemGroup>
+    <CoreClrMcgILFiles Include="$(CoreClrMcgOutDir)\$(AssemblyName).$(CoreClrMcgInteropClass).dll" />
+    <CoreClrMcgILFiles Include="$(CoreClrMcgOutDir)\$(AssemblyName).$(CoreClrMcgInteropClass).pdb" Condition="'$(BuildLinux)' != 'true'" />
+    <CoreClrMcgILFiles Include="$(CoreClrMcgOutDir)\System.Private.Interop.dll" />
+    <CoreClrMcgILFiles Include="$(CoreClrMcgOutDir)\System.Private.Interop.pdb" Condition="'$(BuildLinux)' != 'true'" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="$(TargetsLinux)=='true'" >
+    <CoreTempOutDir>obj$(BUILD_ALT_DIR)\$(BuildArchitecture)\l\$(TargetFramework)\</CoreTempOutDir>
+  </PropertyGroup>
+
+  <Target Name="CoreClrMCG"
+          Inputs="$(CoreClrMcgInDir)\$(AssemblyName).pdb"
+          Outputs="$(CoreClrMcgOutDir)\$(AssemblyName).$(CoreClrMcgInteropClass).dll"
+		  Condition=" '$(TargetsLinux)' == 'true' " >
+	<RemoveDir Directories="$(CoreClrMcgOutDir)" />
+	<MakeDir Directories="$(CoreClrMcgOutDir)"/>
+
+    <!-- Extend the Project specified MCG Path to the output files -->
+    <ItemGroup Condition=" '@(McgReferenceLocal)'!='' " >
+      <McgReferenceLocalBackup Include="%(McgReferenceLocal.Identity)" />
+    </ItemGroup>
+    <ItemGroup Condition=" '@(McgReferenceLocal)'!='' " >
+      <McgReferenceLocal Include="%(McgReferenceLocal.Identity)\$(CoreTempOutDir)" />
+      <McgReferenceLocal Remove="%(McgReferenceLocalBackup.Identity)" />
+    </ItemGroup>
+
+    <!-- Add the runtime reference files -->
+    <ItemGroup>
+      <McgReferenceLocal Include="$(CoreClrMcgRef)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ReferencePaths>"@(McgReferenceLocal -> '%(Identity)', ';')"</ReferencePaths>
+    </PropertyGroup>
+
+    <Exec Condition="'$(BuildLinux)' == 'true'" Command="$(CoreClrMcgExe) /runtime:coreclr /in:$(CoreClrMcgInDir) /referencePath:$(ReferencePaths) /outputpath:$(CoreClrMcgOutDir) /platform:$(CoreClrMcgPlatform) /interopclass:$(CoreClrMcgInteropClass) /cscpath:$(CscToolPath)\$(CscToolExe) /delaysign /keyfile:$(AssemblyOriginatorKeyFile) &gt; $(CoreClrMcgOutDir)\mcg_output.log" />
+
+    <Exec Condition="'$(BuildLinux)' != 'true'" Command="$(CoreClrMcgExe) /runtime:coreclr /in:$(CoreClrMcgInDir) /referencePath:@(McgReferenceLocal -> '%(Identity)', ';') /outputpath:$(CoreClrMcgOutDir) /platform:$(CoreClrMcgPlatform) /interopclass:$(CoreClrMcgInteropClass) /cscpath:$(CscToolPath)\RunCsc.cmd /delaysign /keyfile:$(AssemblyOriginatorKeyFile) &gt; $(CoreClrMcgOutDir)\mcg_output.log" />
+
+    <ReadLinesFromFile File="$(CoreClrMcgOutDir)\mcg_output.log">
+      <Output TaskParameter="Lines" ItemName="McgConsoleOutput" />
+    </ReadLinesFromFile>
+	<Error Text="MCG run failed on $(AssemblyName). Check $(CoreClrMcgOutDir)\mcg_output.log for details" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(McgConsoleOutput.Identity)', 'Mcg.McgMain.Main'))" />
+
+    <Copy SourceFiles="$(CoreClrMcgOutDir)$(AssemblyName).dll" DestinationFolder="$(CoreClrMcgInDir)\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(CoreClrMcgOutDir)$(AssemblyName).pdb" DestinationFolder="$(CoreClrMcgInDir)\" SkipUnchangedFiles="true" Condition="'$(BuildLinux)' != 'true'" />
+    <Copy SourceFiles="@(CoreClrMcgILFiles)" DestinationFolder="$(outdir)" SkipUnchangedFiles="true" ContinueOnError="true"/>
+  </Target>
+
+  <Target Name="RunCoreClrMCG" AfterTargets="AfterCompile">
+	<CallTarget Targets="CoreClrMCG"/>
+  </Target>
+
+  <!-- Add all binaries with MCG here so they can be copied to publish folder -->
+  <ItemGroup>
+    <CoreClrMcgBinaries Include="System.Fabric.dll">
+	  <McgBinariesPath>$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\bin\$(Configuration)\MCG</McgBinariesPath>
+	</CoreClrMcgBinaries>
+  <CoreClrMcgBinaries Include="FabricFAS.dll">
+	  <McgBinariesPath>$(SRCROOT)\prod\src\managed\FabricFAS\CoreCLRDlls\exe\bin\$(Configuration)\MCG</McgBinariesPath>
+	</CoreClrMcgBinaries>
+  </ItemGroup>
+</Project>

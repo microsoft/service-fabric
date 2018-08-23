@@ -10,9 +10,12 @@ using namespace Common;
 using namespace Hosting2;
 using namespace Management;
 using namespace ServiceModel;
+#ifndef PLATFORM_UNIX
+using namespace Microsoft::WRL;
+#endif
 
 StringLiteral const TraceFirewallSecurityProvider("FirewallSecurityProvider");
-wstring FirewallSecurityProvider::firewallGroup_(L"WindowsFabricApplicationExplicitPort");
+
 LONG FirewallSecurityProvider::allProfiles_[] = { NET_FW_PROFILE2_DOMAIN, NET_FW_PROFILE2_PRIVATE, NET_FW_PROFILE2_PUBLIC };
 
 #if defined(PLATFORM_UNIX)
@@ -197,7 +200,8 @@ void FirewallSecurityProvider::OnAbort()
 
 ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicy(
     wstring const & policyName,
-    vector<LONG> ports)
+    vector<LONG> ports,
+    uint64 nodeInstanceId)
 {
     if (this->State.Value != FabricComponentState::Opened)
     {
@@ -212,7 +216,7 @@ ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicy(
     HRESULT hr = S_OK;
 
 #if defined(PLATFORM_UNIX)
-    auto err = CleanupRulesForAllProfiles(policyName, 0);
+    auto err = CleanupRulesForAllProfiles(policyName, ports, nodeInstanceId);
     if (!err.IsSuccess())
     {
         WriteInfo(
@@ -222,32 +226,57 @@ ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicy(
     }
 
     wstring ruleDescription = wformatString("Rule for WindowsFabric service package {0}", policyName);
-    for (auto it = profilesEnabled_.begin(); it != profilesEnabled_.end() && SUCCEEDED(hr); ++it)
+    for (auto const& profile : profilesEnabled_)
     {
-        for (auto iter = ports.begin(); iter != ports.end(); ++iter)
+        if (SUCCEEDED(hr))
         {
-            for (auto it1 = allprotocols_.begin(); it1 != allprotocols_.end(); it1++)
+            for (auto const& port : ports)
             {
-                hr = this->AddRule(0,
-                                   FirewallSecurityProvider::GetFirewallRuleName(policyName, false, *it, *it1),
-                                   ruleDescription,
-                                   *it,
-                                   *it1,
-                                   *iter,
-                                   false);
-                if (SUCCEEDED(hr))
+                for (auto const& protocol : allprotocols_)
                 {
-                    hr = this->AddRule(0,
-                                       FirewallSecurityProvider::GetFirewallRuleName(policyName, true, *it, *it1),
-                                       ruleDescription,
-                                       *it,
-                                       *it1,
-                                       *iter,
-                                       true);
-                }
-                if (FAILED(hr))
-                {
-                    break;
+                    wstring firewallRuleName = FirewallSecurityProvider::GetFirewallRuleName(policyName, false, profile, protocol, port, nodeInstanceId);
+                    WriteInfo(
+                        TraceFirewallSecurityProvider,
+                        Root.TraceId,
+                        "Adding firewall rule for port: {0} RuleName: {1}", port, firewallRuleName);
+
+                    hr = this->AddRule(firewallRuleName,
+                        ruleDescription,
+                        profile,
+                        protocol,
+                        port,
+                        false);
+                    if (SUCCEEDED(hr))
+                    {
+                        firewallRuleName = FirewallSecurityProvider::GetFirewallRuleName(policyName, true, profile, protocol, port, nodeInstanceId);
+
+                        WriteInfo(
+                            TraceFirewallSecurityProvider,
+                            Root.TraceId,
+                            "Adding firewall rule for port: {0} RuleName: {1}", port, firewallRuleName);
+
+                        hr = this->AddRule(firewallRuleName,
+                            ruleDescription,
+                            profile,
+                            protocol,
+                            port,
+                            true);
+                    }
+                    if (FAILED(hr))
+                    {
+                        WriteWarning(
+                            TraceFirewallSecurityProvider,
+                            Root.TraceId,
+                            "Failed adding firewall rule for port: {0} RuleName: {1}", port, firewallRuleName);
+                        break;
+                    }
+                    else
+                    {
+                        WriteInfo(
+                            TraceFirewallSecurityProvider,
+                            Root.TraceId,
+                            "Added firewall rule for port: {0} RuleName: {1}", port, firewallRuleName);
+                    }
                 }
             }
         }
@@ -255,91 +284,99 @@ ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicy(
     return ErrorCode::FromHResult(hr);
 #else
 
-    hr = CoInitializeEx(
-        0,
-        COINIT_MULTITHREADED
-    );
-    if (FAILED(hr))
-    {
-        ErrorCode error = ErrorCode::FromHResult(hr);
-        WriteError(TraceFirewallSecurityProvider, Root.TraceId, "Failed to create CoInitialize {0}", error);
-        return error;
-    }
-    INetFwPolicy2* fwPolicy;
-    hr = CoCreateInstance(
-        __uuidof(NetFwPolicy2),
-        NULL,
-        CLSCTX_INPROC_SERVER,
-        __uuidof(INetFwPolicy2),
-        (void**)&fwPolicy);
-    if (FAILED(hr))
-    {
-        ErrorCode error = ErrorCode::FromHResult(hr);
-        WriteError(TraceFirewallSecurityProvider, Root.TraceId, "Failed to create INetFwPolicy2 {0}", error);
-        return error;
-    }
-    INetFwRules *pFwRules = NULL;
-
+    ComPtr<INetFwPolicy2> fwPolicy;
+    ComPtr<INetFwRules> pFwRules;
     LONG currentProfilesBitMask = 0;
 
-    // Retrieve INetFwRules
-    hr = fwPolicy->get_Rules(&pFwRules);
-    if (FAILED(hr))
+    auto error = FirewallSecurityProviderHelper::GetRules(&fwPolicy, &pFwRules);
+    if (!error.IsSuccess())
     {
-        WriteWarning(
-            TraceFirewallSecurityProvider,
-            Root.TraceId,
-            "Failed to get firewall rules, hresult {0}", hr);
+        return error;
     }
     else
     {
-        auto err = CleanupRulesForAllProfiles(policyName, pFwRules);
-        if (!err.IsSuccess())
+        error = CleanupRulesForAllProfiles(policyName, pFwRules, ports, nodeInstanceId);
+        if (!error.IsSuccess())
         {
             WriteInfo(
                 TraceFirewallSecurityProvider,
                 Root.TraceId,
-                "Failed to remove firewall rule, error {0}, rulename", err, policyName);
+                "Failed to remove firewall rule, error {0}, rulename", error, policyName);
         }
         // Retrieve Current Profiles bitmask
         hr = fwPolicy->get_CurrentProfileTypes(&currentProfilesBitMask);
         if (SUCCEEDED(hr))
         {
-
             wstring ruleDescription = wformatString("Rule for WindowsFabric service package {0}", policyName);
             bool currentUserProfileEnabled = false;
-            for (auto it = profilesEnabled_.begin(); it != profilesEnabled_.end() && SUCCEEDED(hr); ++it)
+            for (auto const& profile : profilesEnabled_)
             {
-                for (auto iter = ports.begin(); iter != ports.end(); ++iter)
+                if (SUCCEEDED(hr))
                 {
-                    for (auto it1 = allprotocols_.begin(); it1 != allprotocols_.end(); it1++)
+                    for (auto const& port : ports)
                     {
-                        hr = this->AddRule(
-                            pFwRules,
-                            FirewallSecurityProvider::GetFirewallRuleName(policyName, false, *it, *it1),
-                            ruleDescription,
-                            *it,
-                            *it1,
-                            *iter,
-                            false);
-                        if (SUCCEEDED(hr))
+                        for (auto const& protocol : allprotocols_)
                         {
+                            wstring firewallRuleName = FirewallSecurityProvider::GetFirewallRuleName(policyName, false, profile, protocol, port, nodeInstanceId);
+
+                            WriteInfo(
+                                TraceFirewallSecurityProvider,
+                                Root.TraceId,
+                                "Adding firewall rule {0} for port {1}", firewallRuleName, port);
+
                             hr = this->AddRule(
                                 pFwRules,
-                                FirewallSecurityProvider::GetFirewallRuleName(policyName, true, *it, *it1),
+                                firewallRuleName,
                                 ruleDescription,
-                                *it,
-                                *it1,
-                                *iter,
-                                true);
-                        }
-                        if (FAILED(hr))
-                        {
-                            break;
+                                profile,
+                                protocol,
+                                port,
+                                false);
+
+                            if (SUCCEEDED(hr))
+                            {
+                                WriteInfo(
+                                    TraceFirewallSecurityProvider,
+                                    Root.TraceId,
+                                    "Added firewall rule {0} port:{1}", firewallRuleName, port);
+
+                                firewallRuleName = FirewallSecurityProvider::GetFirewallRuleName(policyName, true, profile, protocol, port, nodeInstanceId);
+
+                                WriteInfo(
+                                    TraceFirewallSecurityProvider,
+                                    Root.TraceId,
+                                    "Adding firewall rule {0} for port {1}", firewallRuleName, port);
+
+                                hr = this->AddRule(
+                                    pFwRules,
+                                    firewallRuleName,
+                                    ruleDescription,
+                                    profile,
+                                    protocol,
+                                    port,
+                                    true);
+                            }
+                            if (FAILED(hr))
+                            {
+                                WriteInfo(
+                                    TraceFirewallSecurityProvider,
+                                    Root.TraceId,
+                                    "Failed adding firewall rule for port: {0} RuleName: {1}", port, firewallRuleName);
+
+                                break;
+                            }
+                            else
+                            {
+                                WriteInfo(
+                                    TraceFirewallSecurityProvider,
+                                    Root.TraceId,
+                                    "Added firewall rule {0} port:{1}", firewallRuleName, port);
+                            }
                         }
                     }
                 }
-                if (*it & currentProfilesBitMask)
+
+                if (profile & currentProfilesBitMask)
                 {
                     currentUserProfileEnabled = true;
                 }
@@ -359,23 +396,13 @@ ErrorCode FirewallSecurityProvider::ConfigurePortFirewallPolicy(
                 Root.TraceId,
                 "Failed to get current profile types, hresult {0}", hr);
         }
-        // Release the INetFwRules object
-        if (pFwRules != NULL)
-        {
-            pFwRules->Release();
-        }
-        if (fwPolicy != NULL)
-        {
-            fwPolicy->Release();
-        }
     }
     return ErrorCode::FromHResult(hr);
 #endif    
 }
 
-
+#if defined(PLATFORM_UNIX)
 HRESULT FirewallSecurityProvider::AddRule(
-    INetFwRules* pFwRules,
     wstring const & policyName,
     wstring const & ruleDescription,
     LONG currentProfilesBitMask,
@@ -383,7 +410,6 @@ HRESULT FirewallSecurityProvider::AddRule(
     LONG port,
     bool outgoing)
 {
-#if defined(PLATFORM_UNIX)
     string policyNameA = StringUtility::Utf16ToUtf8(policyName);
     HRESULT hr = AddIptablesEntry(policyNameA, protocol, port, outgoing);
     if (FAILED(hr))
@@ -399,10 +425,19 @@ HRESULT FirewallSecurityProvider::AddRule(
         }
     }
     return hr;
-#else 
+}
+#else
+HRESULT FirewallSecurityProvider::AddRule(
+    ComPtr<INetFwRules> pFwRules,
+    wstring const & policyName,
+    wstring const & ruleDescription,
+    LONG currentProfilesBitMask,
+    LONG protocol,
+    LONG port,
+    bool outgoing)
+{
     HRESULT hr = S_OK;
-    INetFwRule *pFwRule = NULL;
-
+    ComPtr<INetFwRule> pFwRule = nullptr;
 
     hr = CoCreateInstance(
         __uuidof(NetFwRule),
@@ -427,23 +462,19 @@ HRESULT FirewallSecurityProvider::AddRule(
         {
             pFwRule->put_Direction(NET_FW_RULE_DIR_IN);
         }
-        pFwRule->put_Grouping((BSTR)FirewallSecurityProvider::firewallGroup_.c_str());
+        pFwRule->put_Grouping((BSTR)FirewallSecurityProviderHelper::firewallGroup_.c_str());
         pFwRule->put_Profiles(currentProfilesBitMask);
         pFwRule->put_Action(NET_FW_ACTION_ALLOW);
         pFwRule->put_Enabled(VARIANT_TRUE);
 
         // Add the Firewall Rule
-        hr = pFwRules->Add(pFwRule);
+        hr = pFwRules->Add(pFwRule.Get());
         if (FAILED(hr))
         {
             WriteWarning(
                 TraceFirewallSecurityProvider,
                 Root.TraceId,
                 "Failed to add firewall rule, hresult {0}", hr);
-        }
-        if (pFwRule != NULL)
-        {
-            pFwRule->Release();
         }
     }
     else
@@ -454,15 +485,16 @@ HRESULT FirewallSecurityProvider::AddRule(
             "Failed to create firewall rule instance, hresult {0}", hr);
     }
     return hr;
-#endif    
 }
-
+#endif
 
 ErrorCode FirewallSecurityProvider::RemoveFirewallRule(
-    wstring const & policyName)
+    wstring const & policyName,
+    vector<LONG> const& ports,
+    uint64 nodeInstanceId)
 {
 #if defined(PLATFORM_UNIX)
-    return CleanupRulesForAllProfiles(policyName, 0);
+    return CleanupRulesForAllProfiles(policyName, ports, nodeInstanceId);
 #else
     if (this->State.Value != FabricComponentState::Opened)
     {
@@ -474,129 +506,123 @@ ErrorCode FirewallSecurityProvider::RemoveFirewallRule(
         return ErrorCode(ErrorCodeValue::OperationFailed);
     }
 
-    HRESULT hr = S_OK;
+    ComPtr<INetFwPolicy2> fwPolicy;
+    ComPtr<INetFwRules> pFwRules;
 
-    hr = CoInitializeEx(
-        0,
-        COINIT_MULTITHREADED
-    );
-    if (FAILED(hr))
+    auto error = FirewallSecurityProviderHelper::GetRules(&fwPolicy, &pFwRules);
+    if (!error.IsSuccess())
     {
-        ErrorCode error = ErrorCode::FromHResult(hr);
-        WriteError(TraceFirewallSecurityProvider, Root.TraceId, "Failed to create CoInitialize {0}", error);
         return error;
-    }
-
-    INetFwPolicy2* fwPolicy;
-    hr = CoCreateInstance(
-        __uuidof(NetFwPolicy2),
-        NULL,
-        CLSCTX_INPROC_SERVER,
-        __uuidof(INetFwPolicy2),
-        (void**)&fwPolicy);
-    if (FAILED(hr))
-    {
-        ErrorCode error = ErrorCode::FromHResult(hr);
-        WriteError(TraceFirewallSecurityProvider, Root.TraceId, "Failed to create INetFwPolicy2 {0}", error);
-        return error;
-    }
-
-    INetFwRules *pFwRules = NULL;
-
-    // Retrieve INetFwRules
-    hr = fwPolicy->get_Rules(&pFwRules);
-    if (FAILED(hr))
-    {
-        WriteWarning(
-            TraceFirewallSecurityProvider,
-            Root.TraceId,
-            "Failed to get firewall rules, hresult {0}", hr);
-        return ErrorCode::FromHResult(hr);
     }
     else
     {
-        auto error = CleanupRulesForAllProfiles(policyName, pFwRules);
+        error = CleanupRulesForAllProfiles(policyName, pFwRules, ports, nodeInstanceId);
         WriteTrace(
             error.ToLogLevel(),
             TraceFirewallSecurityProvider,
             Root.TraceId,
-            "Removing firewall rules for policy {0} returned error {1}", policyName, error);
-        // Release the INetFwRules object
-        if (pFwRules != NULL)
-        {
-            pFwRules->Release();
-        }
-        if (fwPolicy != NULL)
-        {
-            fwPolicy->Release();
-        }
+            "Removing firewall rules for policy {0} returned error {1} nodeInstanceId {2}", policyName, error, nodeInstanceId);
         return error;
     }
 #endif    
 }
 
-ErrorCode FirewallSecurityProvider::CleanupRulesForAllProfiles(wstring const & policyName, INetFwRules* pFwRules)
-{
 #if defined(PLATFORM_UNIX)
+ErrorCode FirewallSecurityProvider::CleanupRulesForAllProfiles(wstring const & policyName, vector<LONG> const& ports, uint64 nodeInstanceId)
+{
     HRESULT hr = S_OK;
-    for (auto iter = profilesEnabled_.begin(); iter != profilesEnabled_.end(); ++iter)
+    HRESULT last_hr = S_OK;
+    for (auto const& profile : profilesEnabled_)
     {
-        for (auto it = allprotocols_.begin(); it != allprotocols_.end(); it++)
+        for (auto const& port : ports)
         {
-            for (int dir = 0; dir <= 1; dir++)
+            for (auto const& protocol : allprotocols_)
             {
-                string policyNameA = StringUtility::Utf16ToUtf8(FirewallSecurityProvider::GetFirewallRuleName(policyName, dir, *iter, *it));
-                hr = RemoveIptablesEntry(policyNameA);
-                if (FAILED(hr))
+                for (int dir = 0; dir <= 1; dir++)
                 {
-                    WriteWarning(TraceFirewallSecurityProvider, Root.TraceId,
-                                 "Failed to remove incoming firewall rule (ipv4), hresult {0} rule {1}", hr, policyName);
-                }
-                hr = RemoveIp6tablesEntry(policyNameA);
-                if (FAILED(hr))
-                {
-                    WriteWarning(TraceFirewallSecurityProvider, Root.TraceId,
-                                 "Failed to remove incoming firewall rule (ipv6), hresult {0} rule {1}", hr, policyName);
+                    wstring firewallRuleName = FirewallSecurityProvider::GetFirewallRuleName(policyName, dir, profile, protocol, port, nodeInstanceId);
+
+                    WriteInfo(TraceFirewallSecurityProvider, Root.TraceId,
+                        "Removing rule {0}", firewallRuleName);
+
+                    string policyNameA = StringUtility::Utf16ToUtf8(firewallRuleName);
+                    hr = RemoveIptablesEntry(policyNameA);
+                    if (FAILED(hr))
+                    {
+                        WriteWarning(TraceFirewallSecurityProvider, Root.TraceId,
+                            "Failed to remove incoming firewall rule (ipv4), hresult {0} rule {1}", hr, policyName);
+                        last_hr = hr;
+                    }
+
+                    hr = RemoveIp6tablesEntry(policyNameA);
+                    if (FAILED(hr))
+                    {
+                        WriteWarning(TraceFirewallSecurityProvider, Root.TraceId,
+                            "Failed to remove incoming firewall rule (ipv6), hresult {0} rule {1}", hr, policyName);
+                        last_hr = hr;
+                    }
                 }
             }
         }
     }
-    return ErrorCode::FromHResult(hr);
-#else
-    HRESULT hr = S_OK;
-    for (auto iter = profilesEnabled_.begin(); iter != profilesEnabled_.end(); ++iter)
-    {
-        for (auto it = allprotocols_.begin(); it != allprotocols_.end(); it++)
-        {
-            hr = pFwRules->Remove((BSTR)FirewallSecurityProvider::GetFirewallRuleName(policyName, false, *iter, *it).c_str());
-            if (FAILED(hr))
-            {
-
-                WriteWarning(
-                    TraceFirewallSecurityProvider,
-                    Root.TraceId,
-                    "Failed to remove incoming firewall rule , hresult {0} rule {1}", hr, policyName);
-            }
-            hr = pFwRules->Remove((BSTR)FirewallSecurityProvider::GetFirewallRuleName(policyName, true, *iter, *it).c_str());
-            if (FAILED(hr))
-            {
-
-                WriteWarning(
-                    TraceFirewallSecurityProvider,
-                    Root.TraceId,
-                    "Failed to remove outgoing firewall rule , hresult {0} rule {1}", hr, policyName);
-            }
-        }
-    }
-    return ErrorCode::FromHResult(hr);
-#endif
+    return ErrorCode::FromHResult(last_hr);
 }
+#else
+ErrorCode FirewallSecurityProvider::CleanupRulesForAllProfiles(wstring const & policyName, ComPtr<INetFwRules> pFwRules, vector<LONG> const& ports, uint64 nodeInstanceId)
+{
+    HRESULT hr = S_OK;
+    HRESULT last_hr = S_OK;
+    for (auto const& profile : profilesEnabled_)
+    {
+        for (auto const& port : ports)
+        {
+            for (auto const& protocol : allprotocols_)
+            {
+                wstring firewallRuleName = FirewallSecurityProvider::GetFirewallRuleName(policyName, false, profile, protocol, port, nodeInstanceId);
+
+                WriteInfo(TraceFirewallSecurityProvider, Root.TraceId,
+                    "Removing rule {0}", firewallRuleName);
+
+                hr = pFwRules->Remove((BSTR)firewallRuleName.c_str());
+                if (FAILED(hr))
+                {
+
+                    WriteWarning(
+                        TraceFirewallSecurityProvider,
+                        Root.TraceId,
+                        "Failed to remove incoming firewall rule , hresult {0} rule {1}", hr, firewallRuleName);
+                    last_hr = hr;
+                }
+
+                firewallRuleName = FirewallSecurityProvider::GetFirewallRuleName(policyName, true, profile, protocol, port, nodeInstanceId);
+
+                WriteInfo(TraceFirewallSecurityProvider, Root.TraceId,
+                    "Removing rule {0}", firewallRuleName);
+
+                hr = pFwRules->Remove((BSTR)firewallRuleName.c_str());
+                if (FAILED(hr))
+                {
+
+                    WriteWarning(
+                        TraceFirewallSecurityProvider,
+                        Root.TraceId,
+                        "Failed to remove outgoing firewall rule , hresult {0} rule {1}", hr, policyName);
+                    last_hr = hr;
+                }
+            }
+        }
+    }
+    return ErrorCode::FromHResult(last_hr);
+}
+#endif
 
 wstring FirewallSecurityProvider::GetFirewallRuleName(
     wstring const & packageId,
     bool outgoing,
     LONG profileType,
-    LONG protocol)
+    LONG protocol,
+    LONG port,
+    uint64 nodeInstanceId)
 {
     wstring profileName = L"";
 
@@ -620,12 +646,13 @@ wstring FirewallSecurityProvider::GetFirewallRuleName(
     {
         profileName = wformatString("{0}_UDP", profileName);
     }
+
     if (outgoing)
     {
-        return wformatString("{0}_{1}_Out", packageId, profileName);
+        return wformatString("{0}_{1}_{2}_{3}_Out", nodeInstanceId, packageId, port, profileName);
     }
     else
     {
-        return wformatString("{0}_{1}_IN", packageId, profileName);
+        return wformatString("{0}_{1}_{2}_{3}_IN", nodeInstanceId, packageId, port, profileName);
     }
 }

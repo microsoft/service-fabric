@@ -60,10 +60,12 @@ namespace Query
             QueryArgument const & argument4,
             QueryArgument const & argument5);
 
+         __declspec(property(get=get_ParallelQuerySpecifications)) std::vector<QuerySpecificationSPtr> & ParallelQuerySpecifications;
+         std::vector<Query::QuerySpecificationSPtr> & get_ParallelQuerySpecifications() { return parallelQuerySpecifications_; }
+
          virtual Common::ErrorCode OnParallelQueryExecutionComplete(
              Common::ActivityId const & activityId,
-             std::map<Query::QuerySpecificationSPtr,
-             ServiceModel::QueryResult> & queryResults,
+             std::map<Query::QuerySpecificationSPtr, ServiceModel::QueryResult> & queryResults,
              __out Transport::MessageUPtr & replyMessage) = 0;
 
          // Can be overridden by the derived classes if they want to control the timeout specified for each of the parallel query.
@@ -72,8 +74,9 @@ namespace Query
              return totalRemainingTime;
          }
 
-         __declspec(property(get=get_ParallelQuerySpecifications)) std::vector<QuerySpecificationSPtr> & ParallelQuerySpecifications;
-         std::vector<Query::QuerySpecificationSPtr> & get_ParallelQuerySpecifications() { return parallelQuerySpecifications_; }
+         virtual ServiceModel::QueryArgumentMap GetQueryArgumentMap(
+             size_t index,
+             ServiceModel::QueryArgumentMap const & baseArg);
 
     private:
         std::vector<Query::QuerySpecificationSPtr> parallelQuerySpecifications_;

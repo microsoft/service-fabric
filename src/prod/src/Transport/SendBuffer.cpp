@@ -262,7 +262,7 @@ ErrorCode SendBuffer::Enqueue(MessageUPtr && message, TimeSpan expiration, bool 
     auto error = this->TrackMessageIdIfNeeded(message->MessageId);
     if (!error.IsSuccess())
     {
-        message->OnSendStatus(error.ReadValue(), move(message));
+        message->OnSendStatus(error, move(message));
         return error;
     }
 

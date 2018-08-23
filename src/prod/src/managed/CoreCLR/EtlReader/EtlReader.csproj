@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputType>Library</OutputType>
+    <AssemblyName>EtlReader</AssemblyName>
+    <PackageId>EtlReader</PackageId>
+  </PropertyGroup>
+
+ <ItemGroup>
+    <Compile Include="
+      ..\..\EtlReader\_friends.cs;
+      ..\..\EtlReader\TraceSessionMetadata.cs;
+      ..\..\EtlReader\EventDefinitionDescription.cs;
+      ..\..\EtlReader\EventSourceHelper.cs;
+      ..\..\EtlReader\ITraceFileEventReader.cs;
+      ..\..\EtlReader\ITraceFileEventReaderFactory.cs;
+      ..\..\EtlReader\ManifestDefinitionDescription.cs;
+      ..\..\EtlReader\ManifestEnvelope.cs;
+      ..\..\EtlReader\ManifestLoader.cs;
+      ..\..\EtlReader\ProviderDefinitionDescription.cs;
+      ..\..\EtlReader\TraceFileEventReaderFactory.cs;
+      ..\..\EtlReader\WellKnownProviderList.cs;
+      ..\..\EtlReader\ApplicationDataReader.cs;
+      ..\..\EtlReader\BufferCallback.cs;
+      ..\..\EtlReader\DecodingSource.cs;
+      ..\..\EtlReader\EtwBufferContext.cs;
+      ..\..\EtlReader\EventDataDescriptor.cs;
+      ..\..\EtlReader\EventDefinition.cs;
+      ..\..\EtlReader\EventDescriptor.cs;
+      ..\..\EtlReader\EventFormatter.cs;
+      ..\..\EtlReader\EventHeader.cs;
+      ..\..\EtlReader\EventHeaderExtendedData.cs;
+      ..\..\EtlReader\EventPropertyInfo.cs;
+      ..\..\EtlReader\EventRecord.cs;
+      ..\..\EtlReader\EventRecordCallback.cs;
+      ..\..\EtlReader\EventRecordEventArgs.cs;
+      ..\..\EtlReader\EventStack.cs;
+      ..\..\EtlReader\EventTrace.cs;
+      ..\..\EtlReader\EventTraceHeader.cs;
+      ..\..\EtlReader\EventTraceLogfile.cs;
+      ..\..\EtlReader\EventTraceProperties.cs;
+      ..\..\EtlReader\FieldDefinition.cs;
+      ..\..\EtlReader\ManifestCache.cs;
+      ..\..\EtlReader\NativeMethods.cs;
+      ..\..\EtlReader\PartialManifestInfo.cs;
+      ..\..\EtlReader\PropertyFlags.cs;
+      ..\..\EtlReader\ProviderDefinition.cs;
+      ..\..\EtlReader\ProviderInfo.cs;
+      ..\..\EtlReader\RealTimeEventReader.cs;
+      ..\..\EtlReader\StringTable.cs;
+      ..\..\EtlReader\SystemTime.cs;
+      ..\..\EtlReader\TdhInType.cs;
+      ..\..\EtlReader\TdhOutType.cs;
+      ..\..\EtlReader\TemplateFlags.cs;
+      ..\..\EtlReader\TraceEventInfo.cs;
+      ..\..\EtlReader\TraceFileEventReader.cs;
+      ..\..\EtlReader\TraceFileParser.cs;
+      ..\..\EtlReader\TraceLogfileHeader.cs;
+      ..\..\EtlReader\TraceSession.cs;
+      ..\..\EtlReader\valuemaps.cs;
+      ..\..\EtlReader\Win32TimeZoneInfo.cs;
+      ..\..\EtlReader\WinFabricManifestManager.cs"
+        Exclude="bin\*obj\**;**\*.xproj;packages\**" />
+      <None Update="lib\**">
+        <Pack>true</Pack>
+      </None>
+ </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

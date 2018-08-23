@@ -122,6 +122,15 @@ namespace Management
             virtual Common::ErrorCode EndUploadChunk(
                 Common::AsyncOperationSPtr const & operation) override;
 
+            virtual Common::AsyncOperationSPtr BeginUploadChunkContent(
+                __inout Transport::MessageUPtr &chunkContentMessage,
+                __inout Management::FileStoreService::UploadChunkContentDescription & uploadChunkContentDescription,
+                Common::TimeSpan const timeout,
+                Common::AsyncCallback const & callback,
+                Common::AsyncOperationSPtr const & parent) override;
+            virtual Common::ErrorCode EndUploadChunkContent(
+                Common::AsyncOperationSPtr const & operation) override;
+
             virtual Common::AsyncOperationSPtr BeginDeleteUploadSession(
                 Common::Guid const & sessionId,
                 Common::TimeSpan const timeout,

@@ -25,7 +25,6 @@ AsyncOperationSPtr UpgradeComposeDeploymentAsyncOperation::BeginAcceptRequest(
     UpgradeComposeDeploymentRequestHeaderBase requestHeader;
     vector<const_buffer> body;
 
-
     if (!this->Request.GetBody(body))
     {
         return this->Replica.RejectInvalidMessage(

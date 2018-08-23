@@ -125,6 +125,47 @@ namespace Management
                 __out std::map<std::wstring, std::wstring> &,
                 __out std::wstring &mergedComposeFile) = 0;
 
+            virtual Common::AsyncOperationSPtr BeginBuildSingleInstanceApplicationForUpgrade(
+                Common::ActivityId const &,
+                ServiceModelTypeName const &,
+                ServiceModelVersion const & currentTypeVersion,
+                ServiceModelVersion const & targetTypeVersion,
+                ServiceModel::ModelV2::ApplicationDescription const &,
+                Common::NamingUri const & appName,
+                ServiceModelApplicationId const & appId,
+                uint64 currentApplicationVersion,
+                Common::TimeSpan const,
+                Common::AsyncCallback const &,
+                Common::AsyncOperationSPtr const &) = 0;
+
+            virtual Common::ErrorCode EndBuildSingleInstanceApplicationForUpgrade(
+                Common::AsyncOperationSPtr const &,
+                __out std::vector<ServiceModelServiceManifestDescription> &,
+                __out std::wstring & applicationManifestContent,
+                __out ServiceModel::ApplicationHealthPolicy &,
+                __out std::map<std::wstring, std::wstring> &,
+                __out DigestedApplicationDescription &,
+                __out DigestedApplicationDescription &) = 0;
+
+            virtual Common::AsyncOperationSPtr BeginBuildSingleInstanceApplication(
+                Common::ActivityId const &,
+                ServiceModelTypeName const &,
+                ServiceModelVersion const &,
+                ServiceModel::ModelV2::ApplicationDescription const &,
+                Common::NamingUri const & appName,
+                ServiceModelApplicationId const & appId,
+                Common::TimeSpan const,
+                Common::AsyncCallback const &,
+                Common::AsyncOperationSPtr const &) = 0;
+
+            virtual Common::ErrorCode EndBuildSingleInstanceApplication(
+                Common::AsyncOperationSPtr const &,
+                __out std::vector<ServiceModelServiceManifestDescription> &,
+                __out std::wstring & applicationManifestContent,
+                __out ServiceModel::ApplicationHealthPolicy &,
+                __out std::map<std::wstring, std::wstring> &,
+                __out DigestedApplicationDescription &) = 0;
+
             virtual Common::ErrorCode Test_BuildApplication(
                 Common::NamingUri const &,
                 ServiceModelApplicationId const &,

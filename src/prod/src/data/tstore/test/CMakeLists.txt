@@ -13,7 +13,6 @@ add_executable(${exe_TStore_Test}
   ../DiskMetdata.Test.cpp
   ../CheckpointFile.Test.cpp
   ../KeyValueListTest.cpp
-  ../LockManager.Test.cpp
   ../LongStringStore.Test.cpp
   ../MetadataFile.Test.cpp
   ../RecoveryStoreComponent.Test.cpp
@@ -53,6 +52,7 @@ add_executable(${exe_TStore_Test}
   ../Store.MemorySize.Test.cpp
   ../StreamPool.Test.cpp
   ../Store.Sweep.Test.cpp
+  ../SweepManager.Test.cpp
   ../Upgrade.Test.cpp
 )
 
@@ -85,8 +85,6 @@ target_link_libraries(${exe_TStore_Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

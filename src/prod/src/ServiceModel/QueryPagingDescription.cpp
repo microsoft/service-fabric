@@ -17,12 +17,20 @@ QueryPagingDescription::QueryPagingDescription()
 {
 }
 
-Common::ErrorCode ServiceModel::QueryPagingDescription::FromPublicApi(FABRIC_QUERY_PAGING_DESCRIPTION const & pagingDescription)
+Common::ErrorCode QueryPagingDescription::FromPublicApi(FABRIC_QUERY_PAGING_DESCRIPTION const & pagingDescription)
 {
     TRY_PARSE_PUBLIC_STRING_ALLOW_NULL(pagingDescription.ContinuationToken, continuationToken_);
     maxResults_ = pagingDescription.MaxResults;
 
     return ErrorCode::Success();
+}
+
+void QueryPagingDescription::ToPublicApi(
+    __in Common::ScopedHeap & heap,
+    __out FABRIC_QUERY_PAGING_DESCRIPTION & result) const
+{
+    result.ContinuationToken = heap.AddString(continuationToken_);
+    result.MaxResults = (long)maxResults_;
 }
 
 void QueryPagingDescription::SetQueryArguments(__out QueryArgumentMap & argMap) const
@@ -45,18 +53,24 @@ void QueryPagingDescription::SetQueryArguments(__out QueryArgumentMap & argMap) 
 Common::ErrorCode QueryPagingDescription::GetFromArgumentMap(QueryArgumentMap const & argMap)
 {
     wstring continuationToken;
-    int64 maxResults;
 
-    // Try to find the string value of ContinuationToken and MaxResults
     bool hasContinuationToken = argMap.TryGetValue(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, continuationToken);
     if (hasContinuationToken)
     {
         continuationToken_ = move(continuationToken);
     }
 
-    auto error = argMap.GetInt64(Query::QueryResourceProperties::QueryMetadata::MaxResults, maxResults);
+    return TryGetMaxResultsFromArgumentMap(argMap, maxResults_);
+}
 
-    wstring maxResultsString;
+Common::ErrorCode QueryPagingDescription::TryGetMaxResultsFromArgumentMap(
+    QueryArgumentMap const & argMap,
+    int64 & maxResultsOut,
+    wstring const & activityId,
+    wstring const & operationName)
+{
+    int64 maxResults;
+    auto error = argMap.GetInt64(Query::QueryResourceProperties::QueryMetadata::MaxResults, maxResults);
 
     if (error.IsSuccess())
     {
@@ -64,24 +78,23 @@ Common::ErrorCode QueryPagingDescription::GetFromArgumentMap(QueryArgumentMap co
         // Max results can also not be 0, because it should have not been included in arg maps if that is the case
         if (maxResults <= 0)
         {
-            argMap.TryGetValue(Query::QueryResourceProperties::QueryMetadata::MaxResults, maxResultsString);
-            Trace.WriteWarning(TraceSource, "The provided MaxResults value \"{0}\" is invalid", maxResultsString);
+            Trace.WriteWarning(TraceSource, "{0} - {1}: The provided MaxResults value \"{2}\" is invalid", activityId, operationName, maxResults);
             return ErrorCode(
                 ErrorCodeValue::InvalidArgument,
-                wformatString(GET_COMMON_RC(Invalid_Max_Results), maxResultsString));
+                wformatString(GET_COMMON_RC(Invalid_Max_Results), maxResults));
         }
 
-        maxResults_ = maxResults;
+        maxResultsOut = maxResults;
         return ErrorCodeValue::Success;
     }
     else if (error.IsError(ErrorCodeValue::NotFound)) // If MaxResults wasn't given in arg maps
     {
-        maxResults_ = MaxResultsDefaultValue;
+        maxResultsOut = MaxResultsDefaultValue;
         return ErrorCodeValue::Success;
     }
     else
     {
-        Trace.WriteWarning(TraceSource, "The provided MaxResults value \"{0}\" cannot be parsed", maxResultsString);
+        wstring maxResultsString;
         argMap.TryGetValue(Query::QueryResourceProperties::QueryMetadata::MaxResults, maxResultsString);
         return ErrorCode(
             ErrorCodeValue::InvalidArgument,

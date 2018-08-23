@@ -5,7 +5,7 @@
     {
       "Name": "MonitoredUpgradeBasicXCopyTest",
       "Type": "V2_ScriptTest",
-      "Owners": "maburlik,rsinha,alexwun,mmohsin",
+      "Owners": "maburlik",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -18,9 +18,9 @@
       }
     },
     {
-      "Name": "MonitoredUpgradeTestWithFailureActionRollbackXCopy",
+      "Name": "MonitoredUpgradeWithFailureActionRollbackXCopy",
       "Type": "V2_ScriptTest",
-      "Owners": "maburlik,rsinha,alexwun,mmohsin",
+      "Owners": "maburlik",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -33,9 +33,9 @@
       }
     },    
     {
-      "Name": "MonitoredUpgradeTestWithFailureActionManualXCopy",
+      "Name": "MonitoredUpgradeWithFailureActionManualXCopy",
       "Type": "V2_ScriptTest",
-      "Owners": "maburlik,rsinha,alexwun,mmohsin",
+      "Owners": "maburlik",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -50,7 +50,7 @@
     {
       "Name": "AzureFabricUpgradeXCopyTest",
       "Type": "Azure_ScriptTest",
-      "Owners": "maburlik,rsinha",
+      "Owners": "maburlik",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",

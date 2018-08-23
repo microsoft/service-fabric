@@ -1243,6 +1243,35 @@ protected:
     }
 };
 
+class FabricNode::InitializeCentralSecretServiceAsyncOperation : public FabricNode::InitializeSystemServiceAsyncOperationBase
+{
+public:
+    InitializeCentralSecretServiceAsyncOperation(
+        FabricNode & owner,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & root)
+        : InitializeSystemServiceAsyncOperationBase(
+            owner,
+            ServiceModel::SystemServiceApplicationNameHelper::InternalCentralSecretServiceName,
+            ConsistencyUnitId::CreateFirstReservedId(*ConsistencyUnitId::CentralSecretServiceIdRange),
+            callback,
+            root)
+    {
+    }
+
+protected:
+
+    virtual AsyncOperationSPtr BeginCreateSystemService(TimeSpan const timeout, AsyncCallback const & callback, AsyncOperationSPtr const & root)
+    {
+        return this->Owner.management_->BeginCreateCentralSecretService(timeout, callback, root);
+    }
+
+    virtual ErrorCode EndCreateSystemService(AsyncOperationSPtr const & operation)
+    {
+        return this->Owner.management_->EndCreateCentralSecretService(operation);
+    }
+};
+
 class FabricNode::InitializeUpgradeOrchestrationServiceAsyncOperation : public FabricNode::InitializeSystemServiceAsyncOperationBase
 {
 public:
@@ -1364,6 +1393,13 @@ FabricNode::FabricNode(
         Common::Assert::CodingError("Failed to parse {0} as NodeId", config_->NodeId);
     }
 
+    if (HttpGateway::HttpGatewayConfig::GetConfig().IsEnabled)
+    {
+        auto httpGatewayPort = TcpTransportUtility::ParsePortString(config_->HttpGatewayListenAddress);
+        config_->SetHttpGatewayPort(httpGatewayPort);
+        WriteInfo(TraceLifeCycle, TraceId, "HttpGatewayPort = {0}", config_->HttpGatewayPort());
+    }
+
     constructError_ = SetClusterSpnIfNeeded();
     if(!constructError_.IsSuccess())
     {
@@ -1427,7 +1463,7 @@ FabricNode::FabricNode(
         config_->RuntimeServiceAddress,
         runtimeServiceAddressTls,
         federation->Id.ToString(),
-        !containerAppsEnabled /* allow use of unreliable transport */,
+        true /* allow use of unreliable transport */,
         L"FabricNode");
 
     SecuritySettings ipcServerSecuritySettings;
@@ -1463,28 +1499,8 @@ FabricNode::FabricNode(
     if (containerAppsEnabled)
     {
         SecuritySettings ipcServerTlsSecuritySettings;
-
-        constructError_ = CreateClusterSecuritySettings(ipcServerTlsSecuritySettings);
-        if(!constructError_.IsSuccess())
-        {
-            return;
-        }
-
-        if (ipcServerTlsSecuritySettings.SecurityProvider() != SecurityProvider::Ssl)
-        {
-            WriteInfo(TraceSecurity, TraceId, "Cluster certificate is not available, use self generated cert.");
-            constructError_ = SecuritySettings::CreateSelfGeneratedCertSslServer(ipcServerTlsSecuritySettings);
-
-            if(!constructError_.IsSuccess())
-            {
-                WriteError(
-                    TraceSecurity, 
-                    TraceId,
-                    "ipcServer->SecuritySettings.CreateSelfGeneratedCertSslServer error={0}",
-                    constructError_);
-                return;
-            }
-        }
+        constructError_ = CreateIpcServerTlsSecuritySettings(ipcServerTlsSecuritySettings);
+        if (!constructError_.IsSuccess()) { return; }
 
         WriteInfo(TraceSecurity, TraceId, "Initializing IPC server TLS SecuritySettings to {0}", ipcServerTlsSecuritySettings);
         constructError_ = ipcServer->SetSecurityTls(ipcServerTlsSecuritySettings);
@@ -2203,6 +2219,25 @@ ErrorCode FabricNode::SetClusterSecurity(SecuritySettings const & securitySettin
         }
     }
 
+    if (HostingConfig::GetConfig().FabricContainerAppsEnabled)
+    {
+        SecuritySettings ipcServerTlsSecuritySettings;
+        error = CreateIpcServerTlsSecuritySettings(ipcServerTlsSecuritySettings);
+        if (!error.IsSuccess()) { return error; }
+
+        WriteInfo(TraceSecurity, TraceId, "Initializing IPC server TLS SecuritySettings to {0}", ipcServerTlsSecuritySettings);
+        error = this->ipcServer_->SetSecurityTls(ipcServerTlsSecuritySettings);
+        if (!error.IsSuccess())
+        {
+            WriteError(
+                TraceSecurity,
+                TraceId,
+                "ipcServer_->SetSecurityTls error={0}",
+                error);
+            return error;
+        }
+    }
+
     return error;
 }
 
@@ -2342,7 +2377,9 @@ void FabricNode::CancelTimers()
     {
         AcquireExclusiveLock lock(timerLock_);
 
-        toCancel.swap(activeSystemServiceOperations_);
+        toCancel = move(activeSystemServiceOperations_);
+
+        activeSystemServiceOperations_.clear();
 
         if (tracingTimer_)
         {
@@ -2440,16 +2477,7 @@ AsyncOperationSPtr FabricNode::OnBeginOpen(
         hostNameString_,
         isSeedNode_,
         wformatString(config_->NodeVersion.Version));
-    Events.NodeOpeningOperational(
-        config_->InstanceName,
-        config_->UpgradeDomainId,
-        faultDomainString_,
-        config_->IPAddressOrFQDN,
-        hostNameString_,
-        isSeedNode_,
-        wformatString(config_->NodeVersion.Version),
-        federation_->IdString,
-        Instance.InstanceId);
+
     return AsyncOperation::CreateAndStart<OpenAsyncOperation>(*this, timeout, callback, parent);
 }
 
@@ -2460,28 +2488,30 @@ ErrorCode FabricNode::OnEndOpen(AsyncOperationSPtr const & asyncOperation)
     if (error.IsSuccess())
     {
         Events.NodeOpenedSuccessOperational(
+            Common::Guid::NewGuid(),
             config_->InstanceName,
+            Instance.InstanceId,
+            federation_->IdString,
             config_->UpgradeDomainId,
             faultDomainString_,
             config_->IPAddressOrFQDN,
             hostNameString_,
             isSeedNode_,
-            wformatString(config_->NodeVersion.Version),
-            federation_->IdString,
-            Instance.InstanceId);
+            wformatString(config_->NodeVersion.Version));
     }
     else
     {
         Events.NodeOpenedFailedOperational(
+            Common::Guid::NewGuid(),
             config_->InstanceName,
+            Instance.InstanceId,
+            federation_->IdString,
             config_->UpgradeDomainId,
             faultDomainString_,
             config_->IPAddressOrFQDN,
             hostNameString_,
             isSeedNode_,
             wformatString(config_->NodeVersion.Version),
-            federation_->IdString,
-            Instance.InstanceId,
             error.ReadValue());
     }
     return error;
@@ -2493,16 +2523,6 @@ AsyncOperationSPtr FabricNode::OnBeginClose(
     AsyncOperationSPtr const & parent)
 {
     Events.NodeClosing(federation_->IdString, Instance.InstanceId);
-    Events.NodeClosingOperational(
-        config_->InstanceName,
-        config_->UpgradeDomainId,
-        faultDomainString_,
-        config_->IPAddressOrFQDN,
-        hostNameString_,
-        isSeedNode_,
-        wformatString(config_->NodeVersion.Version),
-        federation_->IdString,
-        Instance.InstanceId);
     return AsyncOperation::CreateAndStart<CloseAsyncOperation>(*this, timeout, callback, parent);
 }
 
@@ -2511,9 +2531,10 @@ ErrorCode FabricNode::OnEndClose(AsyncOperationSPtr const & asyncOperation)
     ErrorCode error = CloseAsyncOperation::End(asyncOperation);
     Events.NodeClosed(federation_->IdString, Instance.InstanceId, error.ReadValue());
     Events.NodeClosedOperational(
+        Common::Guid::NewGuid(),
         config_->InstanceName,
-        federation_->IdString,
         Instance.InstanceId,
+        federation_->IdString,
         error.ReadValue());
     return error;
 }
@@ -2521,16 +2542,6 @@ ErrorCode FabricNode::OnEndClose(AsyncOperationSPtr const & asyncOperation)
 void FabricNode::OnAbort()
 {
     Events.NodeAborting(federation_->IdString, Instance.InstanceId);
-    Events.NodeAbortingOperational(
-        config_->InstanceName,
-        config_->UpgradeDomainId,
-        faultDomainString_,
-        config_->IPAddressOrFQDN,
-        hostNameString_,
-        isSeedNode_,
-        wformatString(config_->NodeVersion.Version),
-        federation_->IdString,
-        Instance.InstanceId);
 
     if (!IsInZombieMode)
     {
@@ -2588,15 +2599,16 @@ void FabricNode::OnAbort()
 
             Events.NodeAborted(federation_->IdString, Instance.InstanceId);
             Events.NodeAbortedOperational(
+                Common::Guid::NewGuid(),
                 config_->InstanceName,
+                Instance.InstanceId,
+                federation_->IdString,
                 config_->UpgradeDomainId,
                 faultDomainString_,
                 config_->IPAddressOrFQDN,
                 hostNameString_,
                 isSeedNode_,
-                wformatString(config_->NodeVersion.Version),
-                federation_->IdString,
-                Instance.InstanceId);
+                wformatString(config_->NodeVersion.Version));
         });
 }
 
@@ -2674,6 +2686,8 @@ void FabricNode::OnFailoverManagerReady()
     this->StartInitializeSystemServices();
 
     this->StartInitializeUpgradeOrchestrationService();
+
+    this->StartInitializeCentralSecretService();
 
     this->StartInitializeBackupRestoreService();
 }
@@ -2811,6 +2825,21 @@ void FabricNode::StartInitializeUpgradeOrchestrationService()
     }
 }
 
+void FabricNode::StartInitializeCentralSecretService()
+{
+    if (management_->IsCentralSecretServiceEnabled)
+    {
+        WriteInfo(TraceLifeCycle, "Creating CentralSecretService");
+
+        auto operation = AsyncOperation::CreateAndStart<InitializeCentralSecretServiceAsyncOperation>(
+            *this,
+            [](AsyncOperationSPtr const & operation) { InitializeSystemServiceAsyncOperationBase::End(operation); },
+            this->CreateAsyncOperationRoot());
+
+        this->TryStartInitializeSystemService(operation);
+    }
+}
+
 void FabricNode::StartInitializeBackupRestoreService()
 {
     if (management_->IsBackupRestoreServiceEnabled)
@@ -2919,4 +2948,35 @@ bool FabricNode::IsZombieModeFilePresent()
         zombieMode);
 
     return zombieMode;
+}
+
+ErrorCode FabricNode::CreateIpcServerTlsSecuritySettings(SecuritySettings & ipcServerTlsSecuritySettings)
+{
+    auto error = CreateClusterSecuritySettings(ipcServerTlsSecuritySettings);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    if (ipcServerTlsSecuritySettings.SecurityProvider() == SecurityProvider::Ssl && SecurityConfig::GetConfig().UseClusterCertForIpcServerTlsSecurity)
+    {
+        //TODO: Add cert update handling in Hosting to refresh certs in container application host
+        WriteInfo(TraceSecurity, TraceId, "Cluster certificate is available and UseClusterCertForIpcServerTlsSecurity set to true. Using Cluster cert for IPC Server TLS Security.");
+        return error;
+    }
+
+    WriteInfo(TraceSecurity, TraceId, "Cluster certificate is not available or UseClusterCertForIpcServerTlsSecurity is set to false. Using Self generated cert for IPC Server TLS Security.");
+    error = SecuritySettings::CreateSelfGeneratedCertSslServer(ipcServerTlsSecuritySettings);
+
+    if (!error.IsSuccess())
+    {
+        WriteError(
+            TraceSecurity,
+            TraceId,
+            "ipcServer->SecuritySettings.CreateSelfGeneratedCertSslServer error={0}",
+            error);
+        return error;
+    }
+
+    return error;
 }

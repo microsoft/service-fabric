@@ -24,9 +24,13 @@ FabricGetDnsNameOp::FabricGetDnsNameOp(
     __in KString& serviceName,
     __in IFabricServiceManagementClient& fabricServiceClient
 ) : _cache(cache),
-_spServiceName(&serviceName),
-_fabricServiceClient(fabricServiceClient)
+_spServiceName(&serviceName)
 {
+    fabricServiceClient.QueryInterface(
+        IID_IInternalFabricServiceManagementClient2,
+        _spInternalFabricServiceManagementClient2.VoidInitializationAddress());
+
+    KInvariant(_spInternalFabricServiceManagementClient2 != nullptr);
 }
 
 FabricGetDnsNameOp::~FabricGetDnsNameOp()
@@ -39,7 +43,8 @@ void FabricGetDnsNameOp::OnStart()
 
     FabricAsyncOperationCallback callback(this, &FabricGetDnsNameOp::OnFabricGetServiceDescriptionCompleted);
     OperationCallback::Create(/*out*/_spSync, GetThisAllocator(), callback);
-    HRESULT hr = _fabricServiceClient.BeginGetServiceDescription(
+    
+   HRESULT hr = _spInternalFabricServiceManagementClient2->BeginGetCachedServiceDescription(
         static_cast<LPCWSTR>(*_spServiceName),
         timeout,
         static_cast<IFabricAsyncOperationCallback*>(_spSync.RawPtr()),
@@ -64,9 +69,12 @@ void FabricGetDnsNameOp::OnFabricGetServiceDescriptionCompleted(
 )
 {
     KString::SPtr spDnsName;
-
     ComPointer<IFabricServiceDescriptionResult> spResult;
-    HRESULT hr = _fabricServiceClient.EndGetServiceDescription(pContext, spResult.InitializationAddress());
+
+    HRESULT hr = _spInternalFabricServiceManagementClient2->EndGetCachedServiceDescription(
+        pContext, 
+        spResult.InitializationAddress());
+
     if (hr == S_OK)
     {
         const FABRIC_SERVICE_DESCRIPTION* pDesc = spResult->get_Description();

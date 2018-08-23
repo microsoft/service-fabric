@@ -5,6 +5,7 @@
 
 #include "stdafx.h"
 
+using namespace Common;
 using namespace Data;
 using namespace Data::TStore;
 using namespace TxnReplicator;
@@ -86,6 +87,7 @@ ktl::Awaitable<NTSTATUS> __GetOrAddStateProviderAsync(
     }
 
     CO_RETURN_ON_FAILURE(status);
+
     alreadyExist = exists;
     co_return status;
 }
@@ -102,6 +104,9 @@ ktl::Awaitable<NTSTATUS> __GetOrAddStateProviderAsync(
 {
     NTSTATUS status = STATUS_SUCCESS;
     Transaction::SPtr transaction;
+    StateProvider_Kind stateProviderKind = StateProvider_Kind_Invalid;
+    if (stateProviderInfo != nullptr)
+        stateProviderKind = stateProviderInfo->Kind;
 
     status = txnReplicator->CreateTransaction(transaction);
     CO_RETURN_ON_FAILURE(status);
@@ -121,6 +126,31 @@ ktl::Awaitable<NTSTATUS> __GetOrAddStateProviderAsync(
     CO_RETURN_ON_FAILURE(status);
 
     status = co_await transaction->CommitAsync();
+    CO_RETURN_ON_FAILURE(status);
+
+    // Is this for compat reliable dictionary state provider
+    if (stateProviderKind == StateProvider_Kind_ReliableDictionary_Compat)
+    {
+        // For compat reliable dictionary state provider get the actual data store
+        CompatRDStateProvider* pCompatRDStateProvider = dynamic_cast<CompatRDStateProvider*>(stateProvider.RawPtr());
+        if (pCompatRDStateProvider == nullptr)
+        {
+            // Trace.WriteInfo(
+            //    "TransactionalReplicatorCExports",
+            //    "__GetOrAddStateProviderAsync: Dynamic casting to CompatRDStateProvider failed for {0}",
+            //    ToStringLiteral(stateProviderName));
+            co_return STATUS_OBJECT_TYPE_MISMATCH;
+        }
+        stateProvider = dynamic_cast<IStateProvider2*>(pCompatRDStateProvider->DataStore.RawPtr());
+        if (stateProvider == nullptr)
+        {
+            // Trace.WriteInfo(
+            //    "TransactionalReplicatorCExports",
+            //    "__GetOrAddStateProviderAsync: DataStore in CompatRDStateProvider {0} is null",
+            //    ToStringLiteral(stateProviderName));
+            co_return STATUS_OBJECT_TYPE_MISMATCH;
+        }
+    }
 
     co_return status;
 }
@@ -184,38 +214,6 @@ ktl::Task GetOrAddStateProviderAsyncInternal(
 }
 
 extern "C" HRESULT TxnReplicator_GetOrAddStateProviderAsync(
-    __in TxnReplicatorHandle txnReplicator,
-    __in TransactionHandle txn,
-    __in LPCWSTR name,
-    __in int64_t timeout,
-    __out CancellationTokenSourceHandle* cts,
-    __out StateProviderHandle* stateProviderHandle,
-    __out BOOL* alreadyExist,
-    __in fnNotifyGetOrAddStateProviderAsyncCompletion callback,
-    __in void* ctx,
-    __out BOOL* synchronousComplete)
-{
-    NTSTATUS status;
-    IStateProvider2::SPtr stateProviderSPtr;
-    GetOrAddStateProviderAsyncInternal(
-        (ITransactionalReplicator*)txnReplicator, 
-        (Transaction*)txn, 
-        name,
-        nullptr, // lang
-        nullptr, // StateProvider_Info*
-        timeout, 
-        (ktl::CancellationTokenSource**)cts, 
-        callback,
-        ctx,
-        status, 
-        *synchronousComplete,
-        stateProviderSPtr,
-        *alreadyExist);
-    *stateProviderHandle = stateProviderSPtr.Detach();
-    return StatusConverter::ToHResult(status);
-}
-
-CLASS_DECLSPEC HRESULT TxnReplicator_GetOrAddStateProviderAsync2(
     __in TxnReplicatorHandle txnReplicator,
     __in TransactionHandle txn,
     __in LPCWSTR name,
@@ -382,31 +380,6 @@ extern "C" HRESULT TxnReplicator_AddStateProviderAsync(
     __in TxnReplicatorHandle txnReplicator,
     __in TransactionHandle txn,
     __in LPCWSTR name,
-    __in int64_t timeout,
-    __out CancellationTokenSourceHandle* cts,
-    __in fnNotifyAsyncCompletion callback,
-    __in void* ctx,
-    __out BOOL* synchronousComplete) noexcept
-{
-    NTSTATUS status;
-
-    AddStateProviderAsyncInternal(
-        (ITransactionalReplicator*)txnReplicator, 
-        (Transaction*)txn, 
-        name,
-        nullptr, // Lang
-        nullptr, // StateProvider_Info*
-        timeout, 
-        (ktl::CancellationTokenSource**)cts, 
-        callback, ctx, status, *synchronousComplete);
-
-    return StatusConverter::ToHResult(status);
-}
-
-extern "C" HRESULT TxnReplicator_AddStateProviderAsync2(
-    __in TxnReplicatorHandle txnReplicator,
-    __in TransactionHandle txn,
-    __in LPCWSTR name,
     __in LPCWSTR lang,
     __in StateProvider_Info* stateProviderInfo,
     __in int64_t timeout,
@@ -570,6 +543,13 @@ extern "C" HRESULT TxnReplicator_GetStateProvider(
     status = ((ITransactionalReplicator*)txnReplicator)->Get(stateProviderName, stateProvider);
     if (NT_SUCCESS(status))
     {
+        // Is this compat reliable dictionary state provider
+        if (dynamic_cast<CompatRDStateProvider*>(stateProvider.RawPtr()) != nullptr)
+        {
+            // return the actual data store state provider instead of the wrapper object
+            CompatRDStateProvider* pCompatRDStateProvider = dynamic_cast<CompatRDStateProvider*>(stateProvider.RawPtr());
+            stateProvider = dynamic_cast<IStateProvider2*>(pCompatRDStateProvider->DataStore.RawPtr());
+        }
         *stateProviderHandle = stateProvider.Detach();
     }
 
@@ -633,6 +613,56 @@ ktl::Task TxnReplicator_BackupAsyncInternal(
     callback(ctx, StatusConverter::ToHResult(ntstatus));
 }
 
+ktl::Task TxnReplicator_BackupAsyncInternal2(
+    __in ITransactionalReplicator* txnReplicator,
+    __in fnUploadAsync2 uploadAsyncCallback,
+    __in Backup_Option backupOption,
+    __in int64_t timeout,
+    __out CancellationTokenSourceHandle* cts,
+    __in fnNotifyAsyncCompletion callback,
+    __in void* ctx,
+    __out NTSTATUS& status,
+    __out BOOL& synchronousComplete)
+{
+    BackupCallbackHandler::SPtr backupCallbackHandler;
+    ktl::CancellationTokenSource::SPtr ctsSPtr = nullptr;
+    ktl::CancellationToken cancellationToken = ktl::CancellationToken::None;
+    BackupInfo result;
+
+    status = STATUS_SUCCESS;
+    synchronousComplete = false;
+
+    status = BackupCallbackHandler::Create(txnReplicator->StatefulPartition->GetThisAllocator(), uploadAsyncCallback, ctx, backupCallbackHandler);
+    CO_RETURN_VOID_ON_FAILURE(status);
+
+    if (cts != nullptr)
+    {
+        status = ktl::CancellationTokenSource::Create(txnReplicator->StatefulPartition->GetThisAllocator(), RELIABLECOLLECTIONRUNTIME_TAG, ctsSPtr);
+        CO_RETURN_VOID_ON_FAILURE(status);
+        cancellationToken = ctsSPtr->Token;
+    }
+
+    auto awaitable = txnReplicator->BackupAsync(
+        *backupCallbackHandler,
+        (FABRIC_BACKUP_OPTION)backupOption,
+        Common::TimeSpan::FromTicks(timeout),
+        cancellationToken,
+        result);
+
+    if (IsComplete(awaitable))
+    {
+        synchronousComplete = true;
+        status = co_await awaitable;
+        co_return;
+    }
+
+    if (cts != nullptr)
+        *cts = ctsSPtr.Detach();
+
+    NTSTATUS ntstatus = co_await awaitable;
+    callback(ctx, StatusConverter::ToHResult(ntstatus));
+}
+
 extern "C" HRESULT TxnReplicator_BackupAsync(
     __in TxnReplicatorHandle txnReplicator,
     __in fnUploadAsync uploadAsyncCallback,
@@ -645,6 +675,30 @@ extern "C" HRESULT TxnReplicator_BackupAsync(
 {
     NTSTATUS status;
     TxnReplicator_BackupAsyncInternal(
+        (ITransactionalReplicator*)txnReplicator,
+        uploadAsyncCallback,
+        backupOption,
+        timeout,
+        cts,
+        callback,
+        ctx,
+        status,
+        *synchronousComplete);
+    return StatusConverter::ToHResult(status);
+}
+
+extern "C" HRESULT TxnReplicator_BackupAsync2(
+    __in TxnReplicatorHandle txnReplicator,
+    __in fnUploadAsync2 uploadAsyncCallback,
+    __in Backup_Option backupOption,
+    __in int64_t timeout,
+    __out CancellationTokenSourceHandle* cts,
+    __in fnNotifyAsyncCompletion callback,
+    __in void* ctx,
+    __out BOOL* synchronousComplete)
+{
+    NTSTATUS status;
+    TxnReplicator_BackupAsyncInternal2(
         (ITransactionalReplicator*)txnReplicator,
         uploadAsyncCallback,
         backupOption,
@@ -777,6 +831,44 @@ extern "C" HRESULT TxnReplicator_SetNotifyTransactionChangeCallback(
     return StatusConverter::ToHResult(status);
 }
 
+struct TxnReplicator_Info_v1
+{
+    uint32_t Size;                  // For versioning
+    int64_t LastStableSequenceNumber;
+    int64_t LastCommittedSequenceNumber;
+    Epoch CurrentEpoch;
+};
+
+extern "C" HRESULT TxnReplicator_GetInfo(
+    __in TxnReplicatorHandle txnReplicator,
+    __inout TxnReplicator_Info* info)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (info == nullptr || txnReplicator == nullptr)
+        return E_INVALIDARG;
+
+    auto replicator = reinterpret_cast<ITransactionalReplicator*>(txnReplicator);
+
+    if (info->Size > sizeof(TxnReplicator_Info_v1))
+        return E_INVALIDARG;
+
+    status = replicator->GetLastStableSequenceNumber(info->LastStableSequenceNumber);
+    ON_FAIL_RETURN_HR(status);
+
+    status = replicator->GetLastCommittedSequenceNumber(info->LastCommittedSequenceNumber);
+    ON_FAIL_RETURN_HR(status);
+
+    FABRIC_EPOCH  epoch;
+    status = replicator->GetCurrentEpoch(epoch);
+    ON_FAIL_RETURN_HR(status);
+
+    info->CurrentEpoch.DataLossNumber = epoch.DataLossNumber;
+    info->CurrentEpoch.ConfigurationNumber = epoch.ConfigurationNumber;
+    info->CurrentEpoch.Reserved = nullptr;
+
+    return S_OK;
+}
 
 HRESULT GetStateProviderFactory(IFabricInternalStatefulServicePartition *internalPartition, Common::ComPointer<IFabricStateProvider2Factory>& comStateProviderFactory)
 {
@@ -793,12 +885,12 @@ HRESULT GetStateProviderFactory(IFabricInternalStatefulServicePartition *interna
     return hr;
 }
 
-extern "C" HRESULT GetTxnReplicator(
-    __in void* statefulServicePartition, 
-    __in void* dataLossHandler, 
-    __in void const* fabricReplicatorSettings, 
-    __in void const* txReplicatorSettings, 
-    __in void const* ktlloggerSharedSettings, 
+HRESULT GetTxnReplicatorInternal(
+    __in void* statefulServicePartition,
+    __in void* dataLossHandler,
+    __in void const* fabricReplicatorSettings,
+    __in void const* txReplicatorSettings,
+    __in void const* ktlloggerSharedSettings,
     __out void** primaryReplicator,
     __out TxnReplicatorHandle* txnReplicatorHandle) noexcept
 {
@@ -830,60 +922,328 @@ extern "C" HRESULT GetTxnReplicator(
     return hr;
 }
 
-HRESULT LoadReplicatorSettingsFromConfigPackage(
-    __in LPCWSTR configPackageName,
-    __in LPCWSTR replicatorSettingsSectionName,
-    __out IFabricReplicatorSettingsResult** v1ReplicatorSettingsResult,
-    __out IFabricTransactionalReplicatorSettingsResult** txnReplicatorSettingsResult,
-    __out IFabricSharedLogSettingsResult** sharedLogSettingsResult)
+HRESULT GetEndpointResourceFromManifest(
+    __in PartitionedReplicaId const & prId,
+    __in Common::ComPointer<IFabricCodePackageActivationContext> codePackageActivationContextCPtr,
+    __in LPCWSTR endpointName,
+    __out ULONG & port)
+{
+    ASSERT_IF(NULL == codePackageActivationContextCPtr.GetRawPointer(), "activationContext is null");
+
+    const FABRIC_ENDPOINT_RESOURCE_DESCRIPTION_LIST * endpoints = codePackageActivationContextCPtr->get_ServiceEndpointResources();
+
+    if (endpoints == NULL ||
+        endpoints->Count == 0 ||
+        endpoints->Items == NULL)
+    {
+        RCREventSource::Events->ExceptionError(
+            prId.TracePartitionId,
+            prId.ReplicaId,
+            L"[GetEndpointResourceFromManifest] No endpoints found",
+            E_FAIL);
+        return E_FAIL;
+    }
+
+    wstring text;
+
+    // find endpoint by name
+    for (ULONG i = 0; i < endpoints->Count; ++i)
+    {
+        const auto & endpoint = endpoints->Items[i];
+
+        text.append(wformatString(
+            "Endpoint{0}:{1};{2};{3};{4} \n\r",
+            i,
+            endpoint.Name,
+            endpoint.Protocol,
+            endpoint.Type,
+            endpoint.Port));
+
+        ASSERT_IF(endpoint.Name == NULL, "FABRIC_ENDPOINT_RESOURCE_DESCRIPTION with Name == NULL");
+
+        if (StringUtility::AreEqualCaseInsensitive(endpointName, endpoint.Name))
+        {
+            port = endpoint.Port;
+
+            return S_OK;
+        }
+    }
+
+    wstring errorMessage;
+    StringWriter messageWriter(errorMessage);
+    messageWriter.Write("[StatefulServiceBase::GetEndpointResourceFromManifest] No matching Endpoint Resources found in service manifest. Endpoint found are: {0}", text);
+
+    RCREventSource::Events->ExceptionError(
+        prId.TracePartitionId,
+        prId.ReplicaId,
+        errorMessage,
+        E_FAIL);
+
+    return E_FAIL;
+}
+
+Common::WStringLiteral const DefaultReplicatorEndpointName(L"ReplicatorEndpoint");
+
+HRESULT Data::Interop::LoadReplicatorSettingsFromConfigPackage(
+    __in PartitionedReplicaId const & prId,
+    __in Common::ScopedHeap& heap,
+    __in ReplicatorConfigSettingsResult& configSettingsResult,
+    __in wstring& configPackageName,
+    __in wstring& replicatorSettingsSectionName,
+    __in wstring& replicatorSecuritySectionName,
+    __out FABRIC_REPLICATOR_SETTINGS const ** fabricReplicatorSettings,
+    __out TRANSACTIONAL_REPLICATOR_SETTINGS const ** txnReplicatorSettings,
+    __out KTLLOGGER_SHARED_LOG_SETTINGS const ** ktlLoggerSharedLogSettings)
 {
     HRESULT hr = S_OK;
-    std::wstring sectionNameW;
-    std::wstring configurationPackageNameW;
     Common::ComPointer<IFabricCodePackageActivationContext> codePackageActivationContextCPtr;
 
+    // Initialize out params to nullptr
+    if (fabricReplicatorSettings != nullptr)
+        *fabricReplicatorSettings = nullptr;
 
-    if (configPackageName == nullptr || configPackageName[0] == '\0')
-        return E_INVALIDARG;
+    if (txnReplicatorSettings != nullptr)
+        *txnReplicatorSettings = nullptr;
 
-    if (replicatorSettingsSectionName == nullptr || replicatorSettingsSectionName[0] == '\0')
-        return E_INVALIDARG;
+    if (ktlLoggerSharedLogSettings != nullptr)
+        *ktlLoggerSharedLogSettings = nullptr;
 
-    hr = Common::StringUtility::LpcwstrToWstring(replicatorSettingsSectionName, false, sectionNameW);
-    if (FAILED(hr))
+    if (configPackageName.empty())
+    {
+        RCREventSource::Events->Warning(
+            prId.TracePartitionId,
+            prId.ReplicaId,
+            L"LoadReplicatorSettingsFromConfigPackage - Replicator Config not provided");
         return hr;
-
-    hr = Common::StringUtility::LpcwstrToWstring(configPackageName, false, configurationPackageNameW);
-    if (FAILED(hr))
-        return hr;
-
+    }
+   
     hr = ::FabricGetActivationContext(IID_IFabricCodePackageActivationContext, codePackageActivationContextCPtr.VoidInitializationAddress());
     if (FAILED(hr))
+    {
+        RCREventSource::Events->ExceptionError(
+            prId.TracePartitionId,
+            prId.ReplicaId,
+            L"LoadReplicatorSettingsFromConfigPackage - FabricGetActivationContext failed",
+            hr);
         return hr;
+    }
 
-    hr = ::FabricLoadReplicatorSettings(
-        codePackageActivationContextCPtr.GetRawPointer(),
-        configPackageName,
-        replicatorSettingsSectionName,
-        v1ReplicatorSettingsResult);
+    Common::ComPointer<IFabricCodePackageActivationContext6> codePackageActivationContext6CPtr;
+    hr = codePackageActivationContextCPtr->QueryInterface(
+        IID_IFabricCodePackageActivationContext6,
+        codePackageActivationContext6CPtr.VoidInitializationAddress());
     if (FAILED(hr))
+    {
+        RCREventSource::Events->ExceptionError(
+            prId.TracePartitionId,
+            prId.ReplicaId,
+            L"LoadReplicatorSettingsFromConfigPackage - QueryInterface(IID_IFabricCodePackageActivationContext6) failed",
+            hr);
         return hr;
+    }
 
-    hr = TxnReplicator::TransactionalReplicatorSettings::FromConfig(
-        codePackageActivationContextCPtr,
-        configurationPackageNameW,
-        sectionNameW,
-        txnReplicatorSettingsResult);
+    IFabricConfigurationPackage *configPackage = nullptr;
+    hr = codePackageActivationContextCPtr->GetConfigurationPackage(configPackageName.c_str(), &configPackage);
     if (FAILED(hr))
-        return hr;
+    {
+        if (hr == FABRIC_E_CONFIGURATION_PACKAGE_NOT_FOUND)
+        {
+            //
+            // Fill in default value in FabricReplicatorSetting using default endpoint
+            //
+            ULONG replicatorPort;
+            hr = GetEndpointResourceFromManifest(
+                prId,
+                codePackageActivationContextCPtr,
+                DefaultReplicatorEndpointName.cbegin(),
+                replicatorPort);
+            if (FAILED(hr))
+            {
+                RCREventSource::Events->ExceptionError(
+                    prId.TracePartitionId,
+                    prId.ReplicaId,
+                    L"LoadReplicatorSettingsFromConfigPackage - GetEndpointResourceFromManifest failed",
+                    hr);
+                return hr;
+            }
 
-    hr = TxnReplicator::KtlLoggerSharedLogSettings::FromConfig(
-        codePackageActivationContextCPtr,
-        configurationPackageNameW,
-        sectionNameW,
-        sharedLogSettingsResult);
+            wstring hostName = codePackageActivationContext6CPtr->get_ServicePublishAddress();
 
-    return hr;
+            Common::ReferencePointer<FABRIC_REPLICATOR_SETTINGS> heapFabricReplicatorSettings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS>();
+
+            wstring hostAndPort;
+            StringWriter(hostAndPort).Write("{0}:{1}", hostName, replicatorPort);
+
+            LPCWSTR replicatorAddress = heap.AddString(hostAndPort);
+            heapFabricReplicatorSettings->ReplicatorAddress = replicatorAddress;
+            heapFabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_ADDRESS;
+
+            *fabricReplicatorSettings = heapFabricReplicatorSettings.GetRawPointer();
+
+            return S_OK;
+        }
+        else
+        {
+            RCREventSource::Events->ExceptionError(
+                prId.TracePartitionId,
+                prId.ReplicaId,
+                L"LoadReplicatorSettingsFromConfigPackage - GetConfigurationPackage failed",
+                hr);
+            return hr;
+        }
+    }
+
+    if (!replicatorSettingsSectionName.empty())
+    {
+        const FABRIC_CONFIGURATION_SECTION* section = nullptr;
+        hr = configPackage->GetSection(replicatorSettingsSectionName.c_str(), &section);
+        if (hr != FABRIC_E_CONFIGURATION_SECTION_NOT_FOUND && FAILED(hr))
+        {
+            RCREventSource::Events->ExceptionError(
+                prId.TracePartitionId,
+                prId.ReplicaId,
+                L"LoadReplicatorSettingsFromConfigPackage - GetSection failed",
+                hr);
+            return hr;
+        }
+
+        if (hr != FABRIC_E_CONFIGURATION_SECTION_NOT_FOUND && section != nullptr)
+        {
+            if (fabricReplicatorSettings != nullptr)
+            {
+                hr = ::FabricLoadReplicatorSettings(
+                    codePackageActivationContextCPtr.GetRawPointer(),
+                    configPackageName.c_str(),
+                    replicatorSettingsSectionName.c_str(),
+                    configSettingsResult.v1ReplicatorSettingsResult.InitializationAddress());
+                if (FAILED(hr))
+                {
+                    RCREventSource::Events->ExceptionError(
+                        prId.TracePartitionId,
+                        prId.ReplicaId,
+                        L"LoadReplicatorSettingsFromConfigPackage - FabricLoadReplicatorSettings failed",
+                        hr);
+                    return hr;
+                }
+
+                *fabricReplicatorSettings = configSettingsResult.v1ReplicatorSettingsResult->get_ReplicatorSettings();
+            }
+
+            if (txnReplicatorSettings != nullptr)
+            {
+                hr = TxnReplicator::TransactionalReplicatorSettings::FromConfig(
+                    codePackageActivationContextCPtr,
+                    configPackageName,
+                    replicatorSettingsSectionName,
+                    configSettingsResult.txnReplicatorSettingsResult.InitializationAddress());
+                if (FAILED(hr))
+                {
+                    RCREventSource::Events->ExceptionError(
+                        prId.TracePartitionId,
+                        prId.ReplicaId,
+                        L"LoadReplicatorSettingsFromConfigPackage - TransactionalReplicatorSettings::FromConfig failed",
+                        hr);
+                    return hr;
+                }
+
+                *txnReplicatorSettings = configSettingsResult.txnReplicatorSettingsResult->get_TransactionalReplicatorSettings();
+            }
+
+            if (ktlLoggerSharedLogSettings != nullptr)
+            {
+                hr = TxnReplicator::KtlLoggerSharedLogSettings::FromConfig(
+                    codePackageActivationContextCPtr,
+                    configPackageName,
+                    replicatorSettingsSectionName,
+                    configSettingsResult.sharedLogSettingsResult.InitializationAddress());
+                if (FAILED(hr))
+                {
+                    RCREventSource::Events->ExceptionError(
+                        prId.TracePartitionId,
+                        prId.ReplicaId,
+                        L"LoadReplicatorSettingsFromConfigPackage - KtlLoggerSharedLogSettings::FromConfig failed",
+                        hr);
+                    return hr;
+                }
+
+                *ktlLoggerSharedLogSettings = configSettingsResult.sharedLogSettingsResult->get_Settings();
+            }
+        }
+        else
+        {
+            // If replication settings section not found then trace warning and return hresult should be success
+            RCREventSource::Events->Warning(
+                prId.TracePartitionId,
+                prId.ReplicaId,
+                L"LoadReplicatorSettingsFromConfigPackage - Replication settings config section does not exists");
+            hr = S_OK;
+        }
+    }
+
+    if (!replicatorSecuritySectionName.empty() && fabricReplicatorSettings != nullptr)
+    {
+        const FABRIC_CONFIGURATION_SECTION* section = nullptr;;
+        hr = configPackage->GetSection(replicatorSecuritySectionName.c_str(), &section);
+        if (hr != FABRIC_E_CONFIGURATION_SECTION_NOT_FOUND && FAILED(hr))
+        {
+            RCREventSource::Events->ExceptionError(
+                prId.TracePartitionId,
+                prId.ReplicaId,
+                L"LoadReplicatorSettingsFromConfigPackage - GetSection failed for replicator security settings",
+                hr);
+            return hr;
+        }
+
+        if (hr != FABRIC_E_CONFIGURATION_SECTION_NOT_FOUND && section != nullptr)
+        {
+            hr = ::FabricLoadSecurityCredentials(
+                codePackageActivationContextCPtr.GetRawPointer(),
+                configPackageName.c_str(),
+                replicatorSecuritySectionName.c_str(),
+                configSettingsResult.replicatorSecurityCredentialsResult.InitializationAddress());
+            if (FAILED(hr))
+            {
+                RCREventSource::Events->ExceptionError(
+                    prId.TracePartitionId,
+                    prId.ReplicaId,
+                    L"LoadReplicatorSettingsFromConfigPackage - FabricLoadSecurityCredentials failed",
+                    hr);
+                return hr;
+            }
+
+            FABRIC_SECURITY_CREDENTIALS const* fabricSecurityCredentials = nullptr;
+            fabricSecurityCredentials = configSettingsResult.replicatorSecurityCredentialsResult->get_SecurityCredentials();
+
+            // Create new FABRIC_REPLICATOR_SETTINGS instance;
+            Common::ReferencePointer<FABRIC_REPLICATOR_SETTINGS> heapFabricReplicatorSettings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS>();
+            // If we already have valid fabric replication setting object then update it
+            if (*fabricReplicatorSettings != nullptr)
+            {
+                // cannot modify contents of const struct
+                // perform a shallow copy of the structure and update SecurityCredentials field
+                *heapFabricReplicatorSettings = *(*fabricReplicatorSettings);
+                heapFabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECURITY;
+                heapFabricReplicatorSettings->SecurityCredentials = fabricSecurityCredentials;
+            }
+            else
+            {
+                // Initialize flags to only have security flag set
+                heapFabricReplicatorSettings->Flags = FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECURITY;
+                heapFabricReplicatorSettings->SecurityCredentials = fabricSecurityCredentials;
+            }
+            *fabricReplicatorSettings = heapFabricReplicatorSettings.GetRawPointer();
+        }
+        else
+        {
+            // When section is not found trace warning and return success
+            RCREventSource::Events->Warning(
+                prId.TracePartitionId,
+                prId.ReplicaId,
+                L"LoadReplicatorSettingsFromConfigPackage - Replication security config section does not exists");
+        }
+    }
+
+    return S_OK;
 }
 
 // Assumes the out params are already initialized to default values from cluster config
@@ -907,248 +1267,330 @@ void ReplicatorSettingsToPublicApiSettings(
     if (replicatorSettings->Flags == TxnReplicator_Settings_Flags::None)
         return;
 
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::RetryInterval)
+    if (fabricReplicatorSettings != nullptr)
     {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_RETRY_INTERVAL;
-        fabricReplicatorSettings->RetryIntervalMilliseconds = replicatorSettings->RetryIntervalMilliseconds;
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::RetryInterval)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_RETRY_INTERVAL;
+            fabricReplicatorSettings->RetryIntervalMilliseconds = replicatorSettings->RetryIntervalMilliseconds;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::BatchAcknowledgementInterval)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_BATCH_ACKNOWLEDGEMENT_INTERVAL;
+            fabricReplicatorSettings->BatchAcknowledgementIntervalMilliseconds = replicatorSettings->BatchAcknowledgementIntervalMilliseconds;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::ReplicatorAddress)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_ADDRESS;
+            // not allocating new memory for string as lifetime of fabricReplicatorSetting is not beyond replicatorSettings
+            fabricReplicatorSettings->ReplicatorAddress = (LPCWSTR)replicatorSettings->ReplicatorAddress;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::InitialCopyQueueSize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_COPY_QUEUE_INITIAL_SIZE;
+            fabricReplicatorSettings->InitialCopyQueueSize = replicatorSettings->InitialCopyQueueSize;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxCopyQueueSize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_COPY_QUEUE_MAX_SIZE;
+            fabricReplicatorSettings->MaxCopyQueueSize = replicatorSettings->MaxCopyQueueSize;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SecurityCredentials)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECURITY;
+            // not allocating new memory for SecurityCredentials as lifetime of fabricReplicatorSetting is not beyond replicatorSettings
+            fabricReplicatorSettings->SecurityCredentials = (FABRIC_SECURITY_CREDENTIALS*)replicatorSettings->SecurityCredentials;
+        }
+
+        fabricReplicatorSettings->Reserved = nullptr;
+
+        if (replicatorSettings->Flags >= TxnReplicator_Settings_Flags::SecondaryClearAcknowledgedOperations)
+        {
+            ex1Settings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX1>();
+            ex1Settings->Reserved = nullptr;
+            fabricReplicatorSettings->Reserved = ex1Settings.GetRawPointer();
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SecondaryClearAcknowledgedOperations)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECONDARY_CLEAR_ACKNOWLEDGED_OPERATIONS;
+            ex1Settings->SecondaryClearAcknowledgedOperations = (BOOLEAN)replicatorSettings->SecondaryClearAcknowledgedOperations;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxReplicationMessageSize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_REPLICATION_MESSAGE_MAX_SIZE;
+            ex1Settings->MaxReplicationMessageSize = replicatorSettings->MaxReplicationMessageSize;
+        }
+
+        if (replicatorSettings->Flags >= TxnReplicator_Settings_Flags::InitialPrimaryReplicationQueueSize)
+        {
+            ex2Settings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX2>();
+            ex1Settings->Reserved = ex2Settings.GetRawPointer();
+            ex3Settings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX3>();
+            ex2Settings->Reserved = ex3Settings.GetRawPointer();
+            ex3Settings->Reserved = nullptr;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::InitialPrimaryReplicationQueueSize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PRIMARY_REPLICATION_QUEUE_INITIAL_SIZE;
+            ex3Settings->InitialPrimaryReplicationQueueSize = replicatorSettings->InitialPrimaryReplicationQueueSize;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxPrimaryReplicationQueueSize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PRIMARY_REPLICATION_QUEUE_MAX_SIZE;
+            ex3Settings->MaxPrimaryReplicationQueueSize = replicatorSettings->MaxPrimaryReplicationQueueSize;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxPrimaryReplicationQueueMemorySize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PRIMARY_REPLICATION_QUEUE_MAX_MEMORY_SIZE;
+            ex3Settings->MaxPrimaryReplicationQueueMemorySize = replicatorSettings->MaxPrimaryReplicationQueueMemorySize;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::InitialSecondaryReplicationQueueSize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECONDARY_REPLICATION_QUEUE_INITIAL_SIZE;
+            ex3Settings->InitialSecondaryReplicationQueueSize = replicatorSettings->InitialSecondaryReplicationQueueSize;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxSecondaryReplicationQueueSize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECONDARY_REPLICATION_QUEUE_MAX_SIZE;
+            ex3Settings->MaxSecondaryReplicationQueueSize = replicatorSettings->MaxSecondaryReplicationQueueSize;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxSecondaryReplicationQueueMemorySize)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECONDARY_REPLICATION_QUEUE_MAX_MEMORY_SIZE;
+            ex3Settings->MaxSecondaryReplicationQueueMemorySize = replicatorSettings->MaxSecondaryReplicationQueueMemorySize;
+        }
+
+        if (replicatorSettings->Flags >= TxnReplicator_Settings_Flags::ReplicatorListenAddress)
+        {
+            ex4Settings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX4>();
+            ex4Settings->Reserved = nullptr;
+            ex3Settings->Reserved = ex4Settings.GetRawPointer();
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::ReplicatorListenAddress)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_LISTEN_ADDRESS;
+            // not allocating new memory for string as lifetime of fabricReplicatorSetting is not beyond replicatorSettings
+            ex4Settings->ReplicatorListenAddress = (LPCWSTR)replicatorSettings->ReplicatorListenAddress;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::ReplicatorPublishAddress)
+        {
+            fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PUBLISH_ADDRESS;
+            // not allocating new memory for string as lifetime of fabricReplicatorSetting is not beyond replicatorSettings
+            ex4Settings->ReplicatorPublishAddress = (LPCWSTR)replicatorSettings->ReplicatorPublishAddress;
+        }
     }
 
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::BatchAcknowledgementInterval)
+    if (transactionalReplicatorSettings != nullptr)
     {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_BATCH_ACKNOWLEDGEMENT_INTERVAL;
-        fabricReplicatorSettings->BatchAcknowledgementIntervalMilliseconds = replicatorSettings->BatchAcknowledgementIntervalMilliseconds;
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxStreamSize)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_STREAM_SIZE_MB;
+            transactionalReplicatorSettings->MaxStreamSizeInMB = replicatorSettings->MaxStreamSizeInMB;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxMetadataSize)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_METADATA_SIZE_KB;
+            transactionalReplicatorSettings->MaxMetadataSizeInKB = replicatorSettings->MaxMetadataSizeInKB;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxRecordSize)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_RECORD_SIZE_KB;
+            transactionalReplicatorSettings->MaxRecordSizeInKB = replicatorSettings->MaxRecordSizeInKB;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxWriteQueueDepth)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_WRITE_QUEUE_DEPTH_KB;
+            transactionalReplicatorSettings->MaxWriteQueueDepthInKB = replicatorSettings->MaxWriteQueueDepthInKB;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::CheckpointThreshold)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_CHECKPOINT_THRESHOLD_MB;
+            transactionalReplicatorSettings->CheckpointThresholdInMB = replicatorSettings->CheckpointThresholdInMB;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxAccumulatedBackupLogSize)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_ACCUMULATED_BACKUP_LOG_SIZE_MB;
+            transactionalReplicatorSettings->MaxAccumulatedBackupLogSizeInMB = replicatorSettings->MaxAccumulatedBackupLogSizeInMB;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::OptimizeForLocalSSD)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_FOR_LOCAL_SSD;
+            transactionalReplicatorSettings->OptimizeForLocalSSD = (BOOLEAN)replicatorSettings->OptimizeForLocalSSD;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::OptimizeLogForLowerDiskUsage)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_LOG_FOR_LOWER_DISK_USAGE;
+            transactionalReplicatorSettings->OptimizeLogForLowerDiskUsage = (BOOLEAN)replicatorSettings->OptimizeLogForLowerDiskUsage;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SlowApiMonitoringDuration)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_API_MONITORING_DURATION_SECONDS;
+            transactionalReplicatorSettings->SlowApiMonitoringDurationSeconds = replicatorSettings->SlowApiMonitoringDurationSeconds;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MinLogSize)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MIN_LOG_SIZE_MB;
+            transactionalReplicatorSettings->MinLogSizeInMB = replicatorSettings->MinLogSizeInMB;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::TruncationThresholdFactor)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_TRUNCATION_THRESHOLD_FACTOR;
+            transactionalReplicatorSettings->TruncationThresholdFactor = replicatorSettings->TruncationThresholdFactor;
+        }
+
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::ThrottlingThresholdFactor)
+        {
+            transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_THROTTLING_THRESHOLD_FACTOR;
+            transactionalReplicatorSettings->ThrottlingThresholdFactor = replicatorSettings->ThrottlingThresholdFactor;
+        }
     }
 
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::ReplicatorAddress)
+    if (ktlLoggerSharedLogSettings != nullptr)
     {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_ADDRESS;
-        // not allocating new memory for string as lifetime of fabricReplicatorSetting is not beyond replicatorSettings
-        fabricReplicatorSettings->ReplicatorAddress = (LPCWSTR)replicatorSettings->ReplicatorAddress;
-    }
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SharedLogId)
+        {
+            ktlLoggerSharedLogSettings->ContainerId = (LPCWSTR)replicatorSettings->SharedLogId;
+        }
 
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::InitialCopyQueueSize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_COPY_QUEUE_INITIAL_SIZE;
-        fabricReplicatorSettings->InitialCopyQueueSize = replicatorSettings->InitialCopyQueueSize;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxCopyQueueSize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_COPY_QUEUE_MAX_SIZE;
-        fabricReplicatorSettings->MaxCopyQueueSize = replicatorSettings->MaxCopyQueueSize;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SecurityCredentials)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECURITY;
-        // not allocating new memory for SecurityCredentials as lifetime of fabricReplicatorSetting is not beyond replicatorSettings
-        fabricReplicatorSettings->SecurityCredentials = (FABRIC_SECURITY_CREDENTIALS*)replicatorSettings->SecurityCredentials;
-    }
-
-    fabricReplicatorSettings->Reserved = nullptr;
-
-    if (replicatorSettings->Flags >= TxnReplicator_Settings_Flags::SecondaryClearAcknowledgedOperations)
-    {
-        ex1Settings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX1>();
-        ex1Settings->Reserved = nullptr;
-        fabricReplicatorSettings->Reserved = ex1Settings.GetRawPointer();
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SecondaryClearAcknowledgedOperations)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECONDARY_CLEAR_ACKNOWLEDGED_OPERATIONS;
-        ex1Settings->SecondaryClearAcknowledgedOperations = (BOOLEAN)replicatorSettings->SecondaryClearAcknowledgedOperations;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxReplicationMessageSize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_REPLICATION_MESSAGE_MAX_SIZE;
-        ex1Settings->MaxReplicationMessageSize = replicatorSettings->MaxReplicationMessageSize;
-    }
-
-    if (replicatorSettings->Flags >= TxnReplicator_Settings_Flags::InitialPrimaryReplicationQueueSize)
-    {
-        ex2Settings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX2>();
-        ex1Settings->Reserved = ex2Settings.GetRawPointer();
-        ex3Settings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX3>();
-        ex2Settings->Reserved = ex3Settings.GetRawPointer();
-        ex3Settings->Reserved = nullptr;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::InitialPrimaryReplicationQueueSize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PRIMARY_REPLICATION_QUEUE_INITIAL_SIZE;
-        ex3Settings->InitialPrimaryReplicationQueueSize = replicatorSettings->InitialPrimaryReplicationQueueSize;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxPrimaryReplicationQueueSize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PRIMARY_REPLICATION_QUEUE_MAX_SIZE;
-        ex3Settings->MaxPrimaryReplicationQueueSize = replicatorSettings->MaxPrimaryReplicationQueueSize;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxPrimaryReplicationQueueMemorySize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PRIMARY_REPLICATION_QUEUE_MAX_MEMORY_SIZE;
-        ex3Settings->MaxPrimaryReplicationQueueMemorySize = replicatorSettings->MaxPrimaryReplicationQueueMemorySize;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::InitialSecondaryReplicationQueueSize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECONDARY_REPLICATION_QUEUE_INITIAL_SIZE;
-        ex3Settings->InitialSecondaryReplicationQueueSize = replicatorSettings->InitialSecondaryReplicationQueueSize;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxSecondaryReplicationQueueSize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECONDARY_REPLICATION_QUEUE_MAX_SIZE;
-        ex3Settings->MaxSecondaryReplicationQueueSize = replicatorSettings->MaxSecondaryReplicationQueueSize;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxSecondaryReplicationQueueMemorySize)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SECONDARY_REPLICATION_QUEUE_MAX_MEMORY_SIZE;
-        ex3Settings->MaxSecondaryReplicationQueueMemorySize = replicatorSettings->MaxSecondaryReplicationQueueMemorySize;
-    }
-
-    if (replicatorSettings->Flags >= TxnReplicator_Settings_Flags::ReplicatorListenAddress)
-    {
-        ex4Settings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS_EX4>();
-        ex4Settings->Reserved = nullptr;
-        ex3Settings->Reserved = ex4Settings.GetRawPointer();
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::ReplicatorListenAddress)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_LISTEN_ADDRESS;
-        // not allocating new memory for string as lifetime of fabricReplicatorSetting is not beyond replicatorSettings
-        ex4Settings->ReplicatorListenAddress = (LPCWSTR)replicatorSettings->ReplicatorListenAddress;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::ReplicatorPublishAddress)
-    {
-        fabricReplicatorSettings->Flags |= FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_PUBLISH_ADDRESS;
-        // not allocating new memory for string as lifetime of fabricReplicatorSetting is not beyond replicatorSettings
-        ex4Settings->ReplicatorPublishAddress = (LPCWSTR)replicatorSettings->ReplicatorPublishAddress;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxStreamSize)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_STREAM_SIZE_MB;
-        transactionalReplicatorSettings->MaxStreamSizeInMB = replicatorSettings->MaxStreamSizeInMB;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxMetadataSize)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_METADATA_SIZE_KB;
-        transactionalReplicatorSettings->MaxMetadataSizeInKB = replicatorSettings->MaxMetadataSizeInKB;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxRecordSize)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_RECORD_SIZE_KB;
-        transactionalReplicatorSettings->MaxRecordSizeInKB = replicatorSettings->MaxRecordSizeInKB;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxWriteQueueDepth)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_WRITE_QUEUE_DEPTH_KB;
-        transactionalReplicatorSettings->MaxWriteQueueDepthInKB = replicatorSettings->MaxWriteQueueDepthInKB;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::CheckpointThreshold)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_CHECKPOINT_THRESHOLD_MB;
-        transactionalReplicatorSettings->CheckpointThresholdInMB = replicatorSettings->CheckpointThresholdInMB;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MaxAccumulatedBackupLogSize)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MAX_ACCUMULATED_BACKUP_LOG_SIZE_MB;
-        transactionalReplicatorSettings->MaxAccumulatedBackupLogSizeInMB = replicatorSettings->MaxAccumulatedBackupLogSizeInMB;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::OptimizeForLocalSSD)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_FOR_LOCAL_SSD;
-        transactionalReplicatorSettings->OptimizeForLocalSSD = (BOOLEAN)replicatorSettings->OptimizeForLocalSSD;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::OptimizeLogForLowerDiskUsage)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_LOG_FOR_LOWER_DISK_USAGE;
-        transactionalReplicatorSettings->OptimizeLogForLowerDiskUsage = (BOOLEAN)replicatorSettings->OptimizeLogForLowerDiskUsage;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SlowApiMonitoringDuration)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_API_MONITORING_DURATION_SECONDS;
-        transactionalReplicatorSettings->SlowApiMonitoringDurationSeconds = replicatorSettings->SlowApiMonitoringDurationSeconds;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::MinLogSize)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_MIN_LOG_SIZE_MB;
-        transactionalReplicatorSettings->MinLogSizeInMB = replicatorSettings->MinLogSizeInMB;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::TruncationThresholdFactor)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_TRUNCATION_THRESHOLD_FACTOR;
-        transactionalReplicatorSettings->TruncationThresholdFactor = replicatorSettings->TruncationThresholdFactor;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::ThrottlingThresholdFactor)
-    {
-        transactionalReplicatorSettings->Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS::FABRIC_TRANSACTIONAL_REPLICATOR_THROTTLING_THRESHOLD_FACTOR;
-        transactionalReplicatorSettings->ThrottlingThresholdFactor = replicatorSettings->ThrottlingThresholdFactor;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SharedLogId)
-    {
-        ktlLoggerSharedLogSettings->ContainerId = (LPCWSTR)replicatorSettings->SharedLogId;
-    }
-
-    if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SharedLogPath)
-    {
-        ktlLoggerSharedLogSettings->ContainerPath = (LPCWSTR)replicatorSettings->SharedLogPath;
+        if (replicatorSettings->Flags & TxnReplicator_Settings_Flags::SharedLogPath)
+        {
+            ktlLoggerSharedLogSettings->ContainerPath = (LPCWSTR)replicatorSettings->SharedLogPath;
+        }
     }
 }
 
 
-extern "C" HRESULT GetTransactionalReplicator(
+HRESULT GetKtlSystem(
+    IFabricStatefulServicePartition* statefulServicePartition,
+    KtlSystem** ktlSystem)
+{
+    Common::ComPointer<IFabricInternalStatefulServicePartition> internalPartition;
+    HRESULT hr = statefulServicePartition->QueryInterface(IID_IFabricInternalStatefulServicePartition, internalPartition.VoidInitializationAddress());
+    if (!SUCCEEDED(hr))
+        return hr;
+
+    hr = internalPartition->GetKtlSystem((HANDLE*)ktlSystem);
+    if (!SUCCEEDED(hr))
+        return hr;
+
+    return S_OK;
+}
+
+
+extern "C" HRESULT GetTxnReplicator(
+    __in int64_t replicaId,
     __in void* statefulServicePartition,
     __in void* dataLossHandler,
     __in TxnReplicator_Settings const* replicatorSettings,
     __in LPCWSTR configPackageName,
     __in LPCWSTR replicatorSettingsSectionName,
-    __out void** primaryReplicator,
+    __in LPCWSTR replicatorSecuritySectionName,
+    __out PrimaryReplicatorHandle* primaryReplicator,
     __out TxnReplicatorHandle* txnReplicatorHandle) noexcept
 {
     HRESULT hr = S_OK;
     Common::ScopedHeap heap;
-    FABRIC_REPLICATOR_SETTINGS const* fabricReplicatorSettings = nullptr;
+    FABRIC_REPLICATOR_SETTINGS const * fabricReplicatorSettings = nullptr;
     TRANSACTIONAL_REPLICATOR_SETTINGS const* transactionalReplicatorSettings = nullptr;
     KTLLOGGER_SHARED_LOG_SETTINGS const* ktlLoggerSharedLogSettings = nullptr;
-    Common::ComPointer<IFabricReplicatorSettingsResult> v1ReplicatorSettingsResult;
-    Common::ComPointer<IFabricTransactionalReplicatorSettingsResult> txnReplicatorSettingsResult;
-    Common::ComPointer<IFabricSharedLogSettingsResult> sharedLogSettingsResult;
+    ReplicatorConfigSettingsResult configSettingsResult;
+    Common::ComPointer<IFabricCodePackageActivationContext> codePackageActivationContextCPtr;
+
+    FABRIC_SERVICE_PARTITION_INFORMATION const * partitionInfo;
+    hr = reinterpret_cast<IFabricStatefulServicePartition*>(statefulServicePartition)->GetPartitionInfo(&partitionInfo);
+    if (FAILED(hr))
+    {
+        RCREventSource::Events->ExceptionError(
+            Common::Guid::Empty(),
+            0,
+            L"Failed to GetPartitionInfo in GetTransactionalReplicator",
+            hr);
+
+        return hr;
+    }
+
+    KGuid pId(Common::ServiceInfoUtility::GetPartitionId(partitionInfo));
+    KtlSystem* ktlSystem;
+    hr = GetKtlSystem((IFabricStatefulServicePartition*)statefulServicePartition, &ktlSystem);
+    if (FAILED(hr))
+        return hr;
+
+    KAllocator& allocator = ktlSystem->PagedAllocator();
+    PartitionedReplicaId::SPtr prId = PartitionedReplicaId::Create(
+        pId,
+        replicaId,
+        allocator);
+    if (prId == nullptr)
+    {
+        RCREventSource::Events->ExceptionError(
+            Common::Guid(pId),
+            replicaId,
+            L"Failed to Create PartitionedReplicaId due to insufficient memory in GetTransactionalReplicator",
+            E_OUTOFMEMORY);
+
+        return E_OUTOFMEMORY;
+    }
+
+    TRY_COM_PARSE_PUBLIC_STRING_OUT(configPackageName, configPackage, true) // AllowNull
+    TRY_COM_PARSE_PUBLIC_STRING_OUT(replicatorSettingsSectionName, replicatorSettingsSection, true) // AllowNull
+    TRY_COM_PARSE_PUBLIC_STRING_OUT(replicatorSecuritySectionName, replicatorSecuritySection, true) // AllowNull
+
+    RCREventSource::Events->CreateTransactionalReplicator(prId->TracePartitionId, prId->ReplicaId, replicatorSettings != nullptr, configPackage, replicatorSettingsSection, replicatorSecuritySection);
+
+    hr = ::FabricGetActivationContext(IID_IFabricCodePackageActivationContext, codePackageActivationContextCPtr.VoidInitializationAddress());
+    if (FAILED(hr))
+    {
+        RCREventSource::Events->ExceptionError(
+            prId->TracePartitionId,
+            prId->ReplicaId,
+            L"Failed to get activation context in GetTransactionalReplicator",
+            hr);
+        return hr;
+    }
 
     if (replicatorSettings == nullptr)
     {
         hr = LoadReplicatorSettingsFromConfigPackage(
-            configPackageName,
-            replicatorSettingsSectionName,
-            v1ReplicatorSettingsResult.InitializationAddress(),
-            txnReplicatorSettingsResult.InitializationAddress(),
-            sharedLogSettingsResult.InitializationAddress());
+            const_cast<PartitionedReplicaId const &>(*prId),
+            heap,
+            configSettingsResult,
+            configPackage,
+            replicatorSettingsSection,
+            replicatorSecuritySection,
+            &fabricReplicatorSettings,
+            &transactionalReplicatorSettings,
+            &ktlLoggerSharedLogSettings);
 
         if (FAILED(hr))
+        {
+            RCREventSource::Events->ConfigPackageLoadFailed(prId->TracePartitionId, prId->ReplicaId, configPackage, replicatorSettingsSection, replicatorSecuritySection, hr);
             return hr;
-
-        fabricReplicatorSettings = v1ReplicatorSettingsResult->get_ReplicatorSettings();
-        transactionalReplicatorSettings = txnReplicatorSettingsResult->get_TransactionalReplicatorSettings();
-        ktlLoggerSharedLogSettings = sharedLogSettingsResult->get_Settings();
+        }
     } 
     else 
     { 
@@ -1174,7 +1616,7 @@ extern "C" HRESULT GetTransactionalReplicator(
         ktlLoggerSharedLogSettings = _ktlLoggerSharedLogSettings.GetRawPointer();
     }
 
-    return GetTxnReplicator(
+    hr = GetTxnReplicatorInternal(
         statefulServicePartition,
         dataLossHandler,
         fabricReplicatorSettings,
@@ -1182,5 +1624,76 @@ extern "C" HRESULT GetTransactionalReplicator(
         ktlLoggerSharedLogSettings,
         primaryReplicator,
         txnReplicatorHandle);
+    if (FAILED(hr))
+    {
+        RCREventSource::Events->ExceptionError(
+            prId->TracePartitionId,
+            prId->ReplicaId,
+            L"GetTxnReplicator api failed in GetTransactionalReplicator",
+            hr);
+        return hr;
+    }
+
+    // If valid config package name provided then hookup config package change handler
+    if (!configPackage.empty())
+    {
+        Common::ComPointer<IFabricConfigurationPackageChangeHandler> comConfigurationPackageChangeHandler;
+        LONGLONG callbackHandle;
+        hr = ConfigurationPackageChangeHandler::Create(
+            *prId,
+            reinterpret_cast<IFabricStatefulServicePartition*>(statefulServicePartition),
+            reinterpret_cast<IFabricPrimaryReplicator*>(*primaryReplicator),
+            configPackage,
+            replicatorSettingsSection,
+            replicatorSecuritySection,
+            allocator, 
+            comConfigurationPackageChangeHandler);
+        if (FAILED(hr))
+        {
+            RCREventSource::Events->ExceptionError(
+                prId->TracePartitionId,
+                prId->ReplicaId,
+                L"Failed to create ConfigurationPackageChangeHandler in GetTransactionalReplicator",
+                hr);
+            return hr;
+        }
+
+        hr = codePackageActivationContextCPtr->RegisterConfigurationPackageChangeHandler(
+            comConfigurationPackageChangeHandler.GetRawPointer(),
+            &callbackHandle);
+        if (FAILED(hr))
+        {
+            RCREventSource::Events->ExceptionError(
+                prId->TracePartitionId,
+                prId->ReplicaId,
+                L"RegisterConfigurationPackageChangeHandler failed in GetTransactionalReplicator",
+                hr);
+            return hr;
+        }
+    }
+    return hr;
 }
 
+extern "C" HRESULT PrimaryReplicator_UpdateReplicatorSettings(
+    __in PrimaryReplicatorHandle primaryReplicator,
+    __in TxnReplicator_Settings const* replicatorSettings)
+{
+    Common::ScopedHeap heap;
+    IFabricPrimaryReplicator* fabricPrimaryReplicator = reinterpret_cast<IFabricPrimaryReplicator*>(primaryReplicator);
+    IFabricTransactionalReplicator* fabricTransactionalReplicator = dynamic_cast<IFabricTransactionalReplicator*>(fabricPrimaryReplicator);
+    if (fabricTransactionalReplicator == nullptr)
+        return E_INVALIDARG;
+
+    Common::ReferencePointer<FABRIC_REPLICATOR_SETTINGS> fabricReplicatorSettings = heap.AddItem<FABRIC_REPLICATOR_SETTINGS>();
+    // Initialize before calling ReplicatorSettingsToPublicApiSettings
+    fabricReplicatorSettings->Flags = FABRIC_REPLICATOR_SETTINGS_FLAGS::FABRIC_REPLICATOR_SETTINGS_NONE;
+
+    ReplicatorSettingsToPublicApiSettings(
+        heap,
+        replicatorSettings,
+        fabricReplicatorSettings.GetRawPointer(),
+        nullptr,
+        nullptr);
+
+    return fabricTransactionalReplicator->UpdateReplicatorSettings(fabricReplicatorSettings.GetRawPointer());
+}

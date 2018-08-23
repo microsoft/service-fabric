@@ -28,27 +28,6 @@ ReplicaHealthStateFilter::ReplicaHealthStateFilter(
 {
 }
 
-ReplicaHealthStateFilter::ReplicaHealthStateFilter(ReplicaHealthStateFilter && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , healthStateFilter_(move(other.healthStateFilter_))
-    , replicaOrInstanceIdFilter_(move(other.replicaOrInstanceIdFilter_))
-{
-}
-
-ReplicaHealthStateFilter & ReplicaHealthStateFilter::operator =(ReplicaHealthStateFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-        replicaOrInstanceIdFilter_ = move(other.replicaOrInstanceIdFilter_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    return *this;
-}
-
 ReplicaHealthStateFilter::~ReplicaHealthStateFilter()
 {
 }

@@ -162,7 +162,7 @@ namespace LoggingReplicatorTests
             KArray<LogRecord::SPtr> txnRecords = TestTransactionGenerator::InterleaveTransactions(testTxList, lsn, seed, allocator, lsn);
 
             TRInternalSettingsSPtr settings = TRInternalSettings::Create(nullptr, make_shared<TransactionalReplicatorConfig>());
-            logProcessor_ = TestOperationProcessor::Create(*prId_, 2, 40, seed, settings, allocator);
+            logProcessor_ = TestOperationProcessor::CreateWithParallelDispatcher(*prId_, 2, 40, seed, settings, allocator);
 
             LoggedRecords::SPtr loggedRecords = LoggedRecords::Create(txnRecords, allocator);
 
@@ -233,7 +233,7 @@ namespace LoggingReplicatorTests
             expectedResults.Append(TestTransactionGenerator::InsertBarrier(txnRecords, 1, 0, 0, 1, seed, allocator));
 
             TRInternalSettingsSPtr settings = TRInternalSettings::Create(nullptr, make_shared<TransactionalReplicatorConfig>());
-            logProcessor_ = TestOperationProcessor::Create(*prId_, 1, 50, seed, settings, allocator);
+            logProcessor_ = TestOperationProcessor::CreateWithParallelDispatcher(*prId_, 1, 50, seed, settings, allocator);
 
             LoggedRecords::SPtr loggedRecords = LoggedRecords::Create(txnRecords, allocator);
 
@@ -273,7 +273,7 @@ namespace LoggingReplicatorTests
             expectedResults.Append(TestTransactionGenerator::InsertBarrier(txnRecords2, 2, 0, 1, 1, seed, allocator));
 
             TRInternalSettingsSPtr settings = TRInternalSettings::Create(nullptr, make_shared<TransactionalReplicatorConfig>());
-            logProcessor_ = TestOperationProcessor::Create(*prId_, 50, 100, seed, settings, allocator);
+            logProcessor_ = TestOperationProcessor::CreateWithParallelDispatcher(*prId_, 50, 100, seed, settings, allocator);
 
             LoggedRecords::SPtr loggedRecords1 = LoggedRecords::Create(txnRecords1, allocator);
             LoggedRecords::SPtr loggedRecords2 = LoggedRecords::Create(txnRecords2, allocator);
@@ -329,7 +329,7 @@ namespace LoggingReplicatorTests
             expectedResults.Append(TestTransactionGenerator::InsertBarrier(txnRecords, 3, 0, 1, 1, seed, allocator));
 
             TRInternalSettingsSPtr settings = TRInternalSettings::Create(nullptr, make_shared<TransactionalReplicatorConfig>());
-            logProcessor_ = TestOperationProcessor::Create(*prId_, 2, 3, seed, settings, allocator);
+            logProcessor_ = TestOperationProcessor::CreateWithParallelDispatcher(*prId_, 2, 3, seed, settings, allocator);
             auto tcs = logProcessor_->RecordsDispatcher.DrainAndPauseDispatchAsync();
             SyncAwait(tcs);
 
@@ -355,28 +355,29 @@ namespace LoggingReplicatorTests
         }
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(HundredThousandRecords)
+    /* DISABLED As APPVERIFIER RUNS FAIL With high memory usage
+    BOOST_AUTO_TEST_CASE(TenThousandRecords)
     {
-        TEST_TRACE_BEGIN("HundredThousandRecords")
+        TEST_TRACE_BEGIN("TenThousandRecords")
 
         {
             KArray<TestTransaction::SPtr> testTxList(allocator);
             KArray<TestGroupCommitValidationResult> expectedResults(allocator);
 
             LONG64 lsn = 1;
-            int totalTxCount = 100000;
+            int totalTxCount = 10000;
 
             for (int count = 0; count < totalTxCount; count++)
             {
                 testTxList.Append(TestTransactionGenerator::Create(3, true, allocator));
             }
 
-            KArray<LogRecord::SPtr> txnRecords = TestTransactionGenerator::InterleaveTransactions(testTxList, lsn, allocator, lsn);
+            KArray<LogRecord::SPtr> txnRecords = TestTransactionGenerator::InterleaveTransactions(testTxList, lsn, seed, allocator, lsn);
 
-            expectedResults.Append(TestTransactionGenerator::InsertBarrier(txnRecords, totalTxCount, 0, 1000, 3, allocator));
+            expectedResults.Append(TestTransactionGenerator::InsertBarrier(txnRecords, totalTxCount, 0, 1000, 3, seed, allocator));
 
-            logProcessor_ = TestOperationProcessor::Create(*prId_, 0, 0, allocator); // No delay as processing will take long time
+            TRInternalSettingsSPtr settings = TRInternalSettings::Create(nullptr, make_shared<TransactionalReplicatorConfig>());
+            logProcessor_ = TestOperationProcessor::Create(*prId_, 0, 0, seed, settings, allocator); // No delay as processing will take long time
             ULONG currentBarrierCount = logProcessor_->BarrierCount;
 
             LoggedRecords::SPtr loggedRecords = LoggedRecords::Create(txnRecords, allocator);
@@ -394,7 +395,50 @@ namespace LoggingReplicatorTests
             VERIFY_ARE_EQUAL(TestGroupCommitValidationResult::Compare(expectedResults, logProcessor_->GroupCommits), true);
         }
     }
-    */
+
+    BOOST_AUTO_TEST_CASE(TwoThousandBarriersCausingStackOverFlow)
+    {
+        TEST_TRACE_BEGIN("TwoThousandBarriersCausingStackOverFlow")
+
+        {
+            KArray<TestTransaction::SPtr> testTxList(allocator);
+            KArray<TestGroupCommitValidationResult> expectedResults(allocator);
+
+            LONG64 lsn = 1;
+            int txCountPerBarrier = 2;
+            int barrierCount = 2000;
+            TRInternalSettingsSPtr settings = TRInternalSettings::Create(nullptr, make_shared<TransactionalReplicatorConfig>());
+            logProcessor_ = TestOperationProcessor::Create(*prId_, 0, 0, seed, settings, allocator); // No delay as processing will take long time
+
+            Stopwatch s;
+            s.Start();
+
+            for (int i = 0; i < barrierCount; i++)
+            {
+                for (int count = 0; count < txCountPerBarrier; count++)
+                {
+                    testTxList.Append(TestTransactionGenerator::Create(3, true, allocator));
+                }
+
+                KArray<LogRecord::SPtr> txnRecords = TestTransactionGenerator::InterleaveTransactions(testTxList, lsn, seed, allocator, lsn);
+
+                expectedResults.Append(TestTransactionGenerator::InsertBarrier(txnRecords, txCountPerBarrier, 0, 0, 3, seed, allocator));
+                LoggedRecords::SPtr loggedRecords = LoggedRecords::Create(txnRecords, allocator);
+
+                TestOperationProcessor::SPtr localProcessor = logProcessor_;
+
+                localProcessor->RecordsDispatcher.DispatchLoggedRecords(*loggedRecords);
+            }
+
+            bool isProcessingComplete = logProcessor_->WaitForBarrierProcessingToComplete(barrierCount, TimeSpan::FromSeconds(500));
+            s.Stop();
+
+            Trace.WriteWarning(TraceComponent, "It took {0} milliseconds to finish dispatching all barriers", s.ElapsedMilliseconds);
+
+            VERIFY_ARE_EQUAL(isProcessingComplete, true);
+            VERIFY_ARE_EQUAL(TestGroupCommitValidationResult::Compare(expectedResults, logProcessor_->GroupCommits), true);
+        }
+    }*/
 
     BOOST_AUTO_TEST_SUITE_END()
 }

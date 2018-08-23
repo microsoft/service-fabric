@@ -324,7 +324,9 @@ FailoverUnitMovementTable MovePlan::GetMovements(StopwatchTime timestamp)
                     Assert::CodingError("One of inBuildThrottled and swapPrimaryThrottled should be true");
                 }
             }
-            else if (itAction->Action == FailoverUnitMovementType::AddSecondary && inBuildThrottled)
+            else if (inBuildThrottled  &&
+                (itAction->Action == FailoverUnitMovementType::AddSecondary ||
+                    itAction->Action == FailoverUnitMovementType::AddInstance))
             {
                 if (inBuildRemaining == 0)
                 {

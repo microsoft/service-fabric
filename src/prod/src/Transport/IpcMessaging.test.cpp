@@ -203,10 +203,10 @@ namespace Transport
 
         std::wstring serverListenAddress = TTestUtil::GetListenAddress();
         server = OpenServer(serverListenAddress, true);
-        Common::ManualResetEvent isMessageHandled(false);
+        auto isMessageHandled = make_shared<AutoResetEvent>(false);
         server->RegisterMessageHandler(
             serverSideActor_,
-            [&] (MessageUPtr & message, IpcReceiverContextUPtr & context)
+            [=] (MessageUPtr & message, IpcReceiverContextUPtr & context)
             {
                 if (message->Headers.ExpectsReply)
                 {
@@ -225,16 +225,16 @@ namespace Transport
         client->BeginRequest(
             move(ping),
             Common::TimeSpan::MaxValue,
-            [&](AsyncOperationSPtr const & operation)
+            [=](AsyncOperationSPtr const & operation)
             {
                 MessageUPtr reply;
                 auto endRequestErrorCode = client->EndRequest(operation, reply);
                 VERIFY_IS_TRUE(endRequestErrorCode.IsSuccess());
-                isMessageHandled.Set();
+                isMessageHandled->Set();
             },
             Common::AsyncOperationSPtr());
 
-        isMessageHandled.WaitOne(TimeSpan::FromSeconds(10));
+        VERIFY_IS_TRUE(isMessageHandled->WaitOne(TimeSpan::FromSeconds(10)));
 
         Common::Stopwatch timer;
         timer.Start();
@@ -243,16 +243,16 @@ namespace Transport
         client->BeginRequest(
             CreateClientMessageLong(serverSideActor_),
             Common::TimeSpan::MaxValue,
-            [&] (AsyncOperationSPtr const & operation)
+            [=] (AsyncOperationSPtr const & operation)
             {
                 MessageUPtr reply;
                 ErrorCode endRequestErrorCode = client->EndRequest(operation, reply);
                 VERIFY_IS_TRUE( endRequestErrorCode.IsError(Common::ErrorCodeValue::MessageTooLarge) );
-                isMessageHandled.Set();
+                isMessageHandled->Set();
             },
             Common::AsyncOperationSPtr());
 
-        isMessageHandled.WaitOne( TimeSpan::FromSeconds(10) );
+        isMessageHandled->WaitOne( TimeSpan::FromSeconds(10) );
         timer.Stop();
         VERIFY_IS_TRUE( timer.Elapsed < TimeSpan::FromSeconds(10) );  //verify that Timeout didn't occur.
 
@@ -516,11 +516,11 @@ namespace Transport
         std::wstring serverListenAddress = TTestUtil::GetListenAddress();
         server = OpenServer(serverListenAddress, secureMode);
         Common::atomic_long serverRequestCounter;
-        Common::AutoResetEvent serverReceivedClientRequest(false);
+        auto serverReceivedClientRequest = make_shared<AutoResetEvent>(false);
 
         server->RegisterMessageHandler(
             serverSideActor_,
-            [&] (MessageUPtr & message, IpcReceiverContextUPtr & context)
+            [serverReceivedClientRequest] (MessageUPtr & message, IpcReceiverContextUPtr & context)
             {
                 Trace.WriteInfo(
                     TraceType, "ipcServer: got message {0} from {1}",
@@ -529,19 +529,19 @@ namespace Transport
                 Trace.WriteInfo(TraceType, "ipcServer: kill client connection to trigger reconnect");
                 context->ReplyTarget->Reset();
 
-                serverReceivedClientRequest.Set();
+                serverReceivedClientRequest->Set();
             },
             true/*dispatchOnTransportThread*/);
 
-        ManualResetEvent clientReceivedServerMessage(false);
+        auto clientReceivedServerMessage = make_shared<AutoResetEvent>(false);
         client = OpenClient(clientId, serverListenAddress, secureMode);
         client->RegisterMessageHandler(
             clientSideActor_,
-            [&] (MessageUPtr & message, IpcReceiverContextUPtr & context)
+            [clientReceivedServerMessage] (MessageUPtr & message, IpcReceiverContextUPtr & context)
             {
                 Trace.WriteInfo(TraceType, "client got message {0} from {1}", message->TraceId(), context->From);
                 VERIFY_IS_TRUE(context->From.empty());
-                clientReceivedServerMessage.Set();
+                clientReceivedServerMessage->Set();
             },
             false/*dispatchOnTransportThread*/);
 
@@ -552,7 +552,7 @@ namespace Transport
 
         Trace.WriteInfo(TraceType, "IpcClient sending first message");
         client->SendOneWay(CreateClientMessage(serverSideActor_));
-        VERIFY_IS_TRUE(serverReceivedClientRequest.WaitOne(TimeSpan::FromSeconds(30)));
+        VERIFY_IS_TRUE(serverReceivedClientRequest->WaitOne(TimeSpan::FromSeconds(30)));
 
         Trace.WriteInfo(TraceType, "IpcServer must have started resetting the connection, now send more messages to prove that IpcClient can send after connection reset");
         bool serverReceivedMessage = false;
@@ -560,7 +560,7 @@ namespace Transport
         {
             Trace.WriteInfo(TraceType, "client sending a message");
             client->SendOneWay(CreateClientMessage(serverSideActor_));
-            if (serverReceivedClientRequest.WaitOne(TimeSpan::FromMilliseconds(100)))
+            if (serverReceivedClientRequest->WaitOne(TimeSpan::FromMilliseconds(100)))
             {
                 serverReceivedMessage = true;
                 break;
@@ -578,7 +578,7 @@ namespace Transport
         {
             Trace.WriteInfo(TraceType, "client sending a message to trigger reconnect timer");
             client->SendOneWay(CreateClientMessage(serverSideActor_));
-            if (serverReceivedClientRequest.WaitOne(TimeSpan::FromMilliseconds(100)))
+            if (serverReceivedClientRequest->WaitOne(TimeSpan::FromMilliseconds(100)))
             {
                 // IpcServer must have closed or started closing the connection
                 serverClosedConnection = true;
@@ -589,17 +589,17 @@ namespace Transport
         VERIFY_IS_TRUE(serverClosedConnection);
 
         // sending from IpcServer to IpcClient will not succeed until IpcClient reconnect
+        bool received = false;
         for (int i = 0; i < 300; ++i)
         {
             Trace.WriteInfo(TraceType, "ipcServer sending a message");
             server->SendOneWay(clientId, CreateServerMessage(clientSideActor_));
-            if (clientReceivedServerMessage.WaitOne(30))
+            if ((received = clientReceivedServerMessage->WaitOne(30)) == true)
             {
                 break;
             }
         }
-
-        VERIFY_IS_TRUE(clientReceivedServerMessage.WaitOne(0));
+        VERIFY_IS_TRUE(received);
     }
 
     void IpcTestBase::RequestReplyTest(bool secureMode)

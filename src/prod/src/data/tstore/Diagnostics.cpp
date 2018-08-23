@@ -24,3 +24,22 @@ void Diagnostics::GetExceptionStackTrace(
     exc->ToString(stackString);
 
 }
+
+ULONG64 Diagnostics::GetProcessMemoryUsageBytes()
+{
+#if defined(PLATFORM_UNIX)
+    return 0;
+#else
+    HANDLE hProcess;
+    PROCESS_MEMORY_COUNTERS pmc;
+
+    hProcess = OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+        FALSE,
+        GetCurrentProcessId());
+
+    CODING_ERROR_ASSERT(GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)) != FALSE);
+
+    return static_cast<ULONG64>(pmc.WorkingSetSize);
+#endif
+}

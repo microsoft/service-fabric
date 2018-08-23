@@ -16,32 +16,33 @@ using namespace ServiceModel;
 using namespace Transport;
 
 LocalHealthReportingComponent::LocalHealthReportingComponent(
-    Common::ComponentRoot const & root,
-    IpcHealthReportingClientSPtr && healthClient) :   
-    Common::RootedObject(root),
-    healthClient_(move(healthClient)),
-    nodeName_()
+	Common::ComponentRoot const & root,
+	IpcHealthReportingClientSPtr && healthClient) :
+	Common::RootedObject(root),
+	healthClient_(move(healthClient))
 {
     ApiMonitoring::MonitoringComponentConstructorParameters parameters;
     parameters.Root = &root;
     parameters.ScanInterval = FailoverConfig::GetConfig().LocalHealthReportingTimerInterval;
-    parameters.SlowHealthReportCallback = [this] (ApiMonitoring::MonitoringHealthEventList const & p)
+    parameters.SlowHealthReportCallback = [this] (ApiMonitoring::MonitoringHealthEventList const & p, ApiMonitoring::MonitoringComponentMetadata const & metaData)
     {
-        OnHealthEvent(SystemHealthReportCode::RAP_ApiSlow, p, TimeSpan::MaxValue, L"stuck");
+        OnHealthEvent(SystemHealthReportCode::RAP_ApiSlow, p, metaData, TimeSpan::MaxValue, L"stuck");
     };
 
-    parameters.ClearSlowHealthReportCallback = [this](ApiMonitoring::MonitoringHealthEventList const & p)
+    parameters.ClearSlowHealthReportCallback = [this](ApiMonitoring::MonitoringHealthEventList const & p, ApiMonitoring::MonitoringComponentMetadata const & metaData)
     {
-        OnHealthEvent(SystemHealthReportCode::RAP_ApiOk, p, FailoverConfig::GetConfig().RAPApiOKHealthEventDuration, L"complete");
+        OnHealthEvent(SystemHealthReportCode::RAP_ApiOk, p, metaData, FailoverConfig::GetConfig().RAPApiOKHealthEventDuration, L"complete");
     };
 
     monitoringComponent_ = ApiMonitoring::MonitoringComponent::Create(parameters);
 }
 
-void LocalHealthReportingComponent::Open(ReconfigurationAgentProxyId const & , uint64, wstring nodeName )
+void LocalHealthReportingComponent::Open(ReconfigurationAgentProxyId const & , Federation::NodeInstance const & nodeInstance, wstring const & nodeName)
 {
-    monitoringComponent_->Open();
-    nodeName_ = nodeName;
+    nodeInstance_ = nodeInstance;
+
+    auto metaData = MonitoringComponentMetadata(nodeName, nodeInstance.ToString());
+    monitoringComponent_->Open(metaData);    
 }
 
 void LocalHealthReportingComponent::Close()
@@ -72,10 +73,11 @@ void LocalHealthReportingComponent::ReportHealth(HealthReport && healthReport, H
 }
 
 HealthReport CreateHealthReport(
-    Common::SystemHealthReportCode::Enum code, 
-    MonitoringHealthEvent const & it, 
-    Common::TimeSpan const & ttl, 
-    std::wstring const & nodeName,
+	Common::SystemHealthReportCode::Enum code,
+	MonitoringHealthEvent const & it,
+	Common::TimeSpan const & ttl,
+	std::wstring const & nodeName,
+	Federation::NodeInstance const & nodeInstance,
     std::wstring const & status)
 {
     ApiNameDescription const & name = it.first->Api;
@@ -94,8 +96,8 @@ HealthReport CreateHealthReport(
     wstring description = wformatString(" {0} on node {1} is {2}. Start Time (UTC): {3}.", formattedName, nodeName, status, it.first->StartTime.ToDateTime());
 
     AttributeList attributeList;
-    attributeList.AddAttribute(*HealthAttributeNames::NodeId, wformatString(it.first->NodeInstance.Id));
-    attributeList.AddAttribute(*HealthAttributeNames::NodeInstanceId, wformatString(it.first->NodeInstance.InstanceId));
+    attributeList.AddAttribute(*HealthAttributeNames::NodeId, wformatString(nodeInstance.Id));
+    attributeList.AddAttribute(*HealthAttributeNames::NodeInstanceId, wformatString(nodeInstance.InstanceId));
 
     EntityHealthInformationSPtr entityInformation;
     if (name.Interface == InterfaceName::IStatelessServiceInstance)
@@ -125,6 +127,7 @@ HealthReport CreateHealthReport(
 void LocalHealthReportingComponent::OnHealthEvent(
     SystemHealthReportCode::Enum code, 
     ApiMonitoring::MonitoringHealthEventList const & events, 
+	ApiMonitoring::MonitoringComponentMetadata const & metaData,
     Common::TimeSpan const & ttl,
     std::wstring const & status)
 {
@@ -132,7 +135,7 @@ void LocalHealthReportingComponent::OnHealthEvent(
 
     for (auto const & it : events)
     {
-        reports.push_back(CreateHealthReport(code, it, ttl, nodeName_, status));
+        reports.push_back(CreateHealthReport(code, it, ttl, metaData.NodeName, nodeInstance_, status));
     }
 
     ReportHealth(move(reports), nullptr);

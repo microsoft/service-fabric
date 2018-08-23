@@ -305,6 +305,7 @@ namespace FabricTest
         bool MovePrimaryReplicaFromClient(Common::StringCollection const & params);
         bool MoveSecondaryReplicaFromClient(Common::StringCollection const & params);
         bool PLBUpdateService(Common::StringCollection const & params);
+        bool UpdateNodeImages(Common::StringCollection const & params);
 
         bool CallService(Common::StringCollection const & params);
 
@@ -441,8 +442,12 @@ namespace FabricTest
         bool IsQuorumLostForReconfigurationFU(ReliabilityTestApi::FailoverManagerComponentTestApi::FailoverUnitSnapshot const& failoverUnitUPtr);
         bool FabricTestDispatcher::IsQuorumLostForReconfigurationFU(ReliabilityTestApi::ReconfigurationAgentComponentTestApi::FailoverUnitSnapshotUPtr & primaryRafu);
         bool WaitForAllToApplyLsn(Common::StringCollection const & params);
-        bool CheckContainers(Common::StringCollection const & params);
+        bool WaitForAllToApplyLsnExtension(std::wstring & serviceName, NodeId & nodeId, TimeSpan timeout);
+        FABRIC_SEQUENCE_NUMBER CalculateTargetLsn(std::wstring & serviceName, NodeId & nodeId);
+        bool WaitForTargetLsn(std::wstring & serviceName, NodeId & nodeId, TimeSpan timeout, FABRIC_SEQUENCE_NUMBER targetLsn);
+        bool EnableLogTruncationTimestampValidation(Common::StringCollection const & params);
 
+        bool CheckContainers(Common::StringCollection const & params);
 
         bool FabricTestDispatcher::TryGetPrimaryRAFU(
             ReliabilityTestApi::FailoverManagerComponentTestApi::FailoverUnitSnapshot const& failoverUnitUPtr,
@@ -515,6 +520,7 @@ namespace FabricTest
         std::unique_ptr<NativeImageStoreExecutor> nativeImageStoreExecutor_;
         std::shared_ptr<TestFabricClient> fabricClient_;
         std::unique_ptr<TestFabricClientHealth> fabricClientHealth_;
+        std::unique_ptr<CheckpointTruncationTimestampValidator> checkpointTruncationTimestampValidator_;
         std::unique_ptr<TestFabricClientQuery> fabricClientQuery_;
         std::unique_ptr<FabricTestQueryExecutor> queryExecutor_;
         std::unique_ptr<TestFabricClientUpgrade> fabricClientUpgrade_;

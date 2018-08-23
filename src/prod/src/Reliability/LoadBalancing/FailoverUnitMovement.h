@@ -34,16 +34,19 @@ namespace Reliability
                 }
 
                 __declspec (property(get=get_IsAdd)) bool IsAdd;
-                bool get_IsAdd() const { return Action == FailoverUnitMovementType::AddPrimary || Action == FailoverUnitMovementType::AddSecondary; }
+                bool get_IsAdd() const { return Action == FailoverUnitMovementType::AddPrimary || Action == FailoverUnitMovementType::AddSecondary || Action == FailoverUnitMovementType::AddInstance; }
 
                 __declspec (property(get = get_HasSourceNode)) bool HasSourceNode;
                 bool get_HasSourceNode() const
                 {
                     return Action == FailoverUnitMovementType::SwapPrimarySecondary ||
                         Action == FailoverUnitMovementType::MoveSecondary ||
+                        Action == FailoverUnitMovementType::MoveInstance ||
                         Action == FailoverUnitMovementType::MovePrimary ||
-                        Action == FailoverUnitMovementType::Void ||
-                        Action == FailoverUnitMovementType::Drop;
+                        Action == FailoverUnitMovementType::RequestedPlacementNotPossible ||
+                        Action == FailoverUnitMovementType::DropPrimary ||
+                        Action == FailoverUnitMovementType::DropSecondary ||
+                        Action == FailoverUnitMovementType::DropInstance;
                 }
 
                 __declspec (property(get = get_HasTargetNode)) bool HasTargetNode;
@@ -51,9 +54,11 @@ namespace Reliability
                 {
                     return Action == FailoverUnitMovementType::SwapPrimarySecondary ||
                         Action == FailoverUnitMovementType::MoveSecondary ||
+                        Action == FailoverUnitMovementType::MoveInstance ||
                         Action == FailoverUnitMovementType::MovePrimary ||
                         Action == FailoverUnitMovementType::AddPrimary ||
                         Action == FailoverUnitMovementType::AddSecondary ||
+                        Action == FailoverUnitMovementType::AddInstance ||
                         Action == FailoverUnitMovementType::PromoteSecondary;
                 }
 

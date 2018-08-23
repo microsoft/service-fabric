@@ -11,6 +11,8 @@ namespace Store
     {
         enum Enum
         {
+            Invalid,
+
             // Local store based on ESE for Windows
             Local,
 

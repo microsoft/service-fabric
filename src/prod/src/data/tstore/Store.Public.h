@@ -17,14 +17,13 @@ namespace Data
     }
 }
 
-#include <kwfruntime.h>
-
 #include "NullableStringStateSerializer.h"
 #include "StoreBehavior.h"
 #include "StringStateSerializer.h"
 #include "StoreInitializationParameters.h"
 #include "KBufferSerializer.h"
 #include "KBufferComparer.h"
+#include "ReadMode.h"
 #include "StoreTransactionSettings.h"
 #include "IStoreTransaction.h"
 #include "IDictionaryChangeHandler.h"

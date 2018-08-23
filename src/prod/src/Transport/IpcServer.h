@@ -66,9 +66,15 @@ namespace Transport
         __declspec(property(get = get_SecuritySettingsTls)) Transport::SecuritySettings const & SecuritySettingsTls;
         Transport::SecuritySettings const & get_SecuritySettingsTls() const;
         Common::ErrorCode SetSecurityTls(Transport::SecuritySettings const & value);
+        
+        __declspec(property(get = get_ServerCertThumbprintTls)) Common::Thumbprint const & ServerCertThumbprintTls;
+        Common::Thumbprint const & get_ServerCertThumbprintTls() const;
 
         void SetMaxIncomingMessageSize(uint value);
         void DisableIncomingMessageSizeLimit();
+
+        Common::HHandler RegisterTlsSecuritySettingsUpdatedEvent(Common::EventHandler const & handler);
+        bool UnRegisterTlsSecuritySettingsUpdatedEvent(Common::HHandler hHandler);
 
     protected:
         Common::ErrorCode OnOpen();
@@ -80,6 +86,7 @@ namespace Transport
         class ClientTable;
         void OnReconnectMessageReceived(Transport::MessageUPtr & message, IpcReceiverContextUPtr & receiverContext, ClientTable & clientTable);
         void Cleanup();
+        void OnTlsSecuritySettingsUpdated();
 
         const std::wstring serverId_;
         const std::wstring traceId_;
@@ -108,6 +115,7 @@ namespace Transport
 
         TransportUnit localUnit_;
         std::unique_ptr<TransportUnit> tlsUnit_;
+        Common::Event tlsSecurityUpdatedEvent_;
     };
 
     typedef std::shared_ptr<IpcServer> IpcServerSPtr;

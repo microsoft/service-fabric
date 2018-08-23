@@ -64,7 +64,7 @@ namespace PlacementAndLoadBalancingUnitTest
         plb.UpdateServiceType(ServiceTypeDescription(wstring(L"DummyTestType"), std::set<NodeId>()));
         plb.UpdateService(CreateServiceDescription(L"TestService", L"TestType", true, CreateMetrics(L"")));
 
-        // FU in violation
+        // FT in violation
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(L"TestService"), 0, CreateReplicas(L"P/0"), 0));
 
         fm_->RefreshPLB(Stopwatch::Now());
@@ -102,14 +102,14 @@ namespace PlacementAndLoadBalancingUnitTest
         plb.UpdateService(ServiceDescription(wstring(L"TestService"), wstring(L"TestType"), wstring(L"TestApplication"), true, wstring(L"NodeType==OK"),
             wstring(L""), false, CreateMetrics(L""), FABRIC_MOVE_COST_LOW, false));
 
-        // FU in violation
+        // FT in violation
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(L"TestService"), 0, CreateReplicas(L"P/0"), 0));
 
-        // One more application/service/FU to make sure that application entry dictionary is not empty
+        // One more application/service/FT to make sure that application entry dictionary is not empty
         plb.UpdateService(CreateServiceDescription(L"OtherTestService", L"TestType", true, CreateMetrics(L"")));
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(L"OtherTestService"), 0, CreateReplicas(L"P/1"), 0));
 
-        // Process the FU update before application is deleted
+        // Process the FT update before application is deleted
         plb.ProcessPendingUpdatesPeriodicTask();
 
         // Now, delete the application - we should be able to survive this...
@@ -273,10 +273,10 @@ namespace PlacementAndLoadBalancingUnitTest
 
         plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), std::set<NodeId>()));
         plb.UpdateService(CreateServiceDescription(L"TestService", L"TestType", true, CreateMetrics(L"")));
-        // To avoid asserting on non-empty FU table when last service is deleted
+        // To avoid asserting on non-empty FT table when last service is deleted
         plb.UpdateService(CreateServiceDescription(L"PointlessService", L"TestType", true, CreateMetrics(L"")));
 
-        // FU in violation
+        // FT in violation
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(L"TestService"), 0, CreateReplicas(L"P/0"), 0));
 
         fm_->RefreshPLB(Stopwatch::Now());

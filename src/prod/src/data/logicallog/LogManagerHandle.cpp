@@ -22,24 +22,46 @@ NTSTATUS GetStagingLogPath(
     BOOLEAN res;
     KString::SPtr stagingLogPath;
 
-    WCHAR const extension[] = L".stlog";
+    KStringView const extension(L".stlog");
+
+#if !defined(PLATFORM_UNIX)
+    KStringView const windowsPrefix(L"\\??\\");
+#endif
+
+    ULONG bufferSize =
+        workDirectory.Length()
+        + (workDirectory.PeekLast() == KVolumeNamespace::PathSeparatorChar ? 0 : 1)   // path separator
+#if !defined(PLATFORM_UNIX)
+        + windowsPrefix.Length()
+#endif
+        + KStringView::GuidLengthInChars                                            // partitionId
+        + 1                                                                         // '_'
+        + 19                                                                        // max digits for a LONGLONG
+        + extension.Length()                                                        // extension including L'\0'
+        + 12;                                                                       // extra buffer
 
     status = KString::Create(
         stagingLogPath,
         allocator,
-        workDirectory.Length()
-        + (workDirectory.PeekLast() == KVolumeNamespace::PathSeparatorChar ? 0 : 1) // path separator
-        + KStringView::GuidLengthInChars                                            // partitionId
-        + 1                                                                         // '_'
-        + 19                                                                        // max digits for a LONGLONG
-        + ARRAYSIZE(extension)                                                      // extension including L'\0'
-        + 12);                                                                      // extra buffer
+        bufferSize);
     if (!NT_SUCCESS(status))
     {
         return status;
     }
 
     // Format: <workDir>/<partitionId>_<replicaId>.stlog
+
+#if !defined(PLATFORM_UNIX)
+    if (workDirectory.Length() < windowsPrefix.Length()
+        || workDirectory.SubString(0, windowsPrefix.Length()) != windowsPrefix)
+    {
+        res = stagingLogPath->Concat(windowsPrefix);
+        if (!res)
+        {
+            return STATUS_INSUFFICIENT_RESOURCES;
+        }
+    }
+#endif
 
     res = stagingLogPath->Concat(workDirectory);
     if (!res)
@@ -74,7 +96,7 @@ NTSTATUS GetStagingLogPath(
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    res = stagingLogPath->Concat(L".stlog");
+    res = stagingLogPath->Concat(extension);
     if (!res)
     {
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -119,20 +141,37 @@ LogManagerHandle::LogManagerHandle(
     , id_(id)
     , owner_(&owner)
 {
-#if !defined(PLATFORM_UNIX)
-    UNREFERENCED_PARAMETER(workDirectory);
-    stagingLogPath_ = nullptr;
-#else
-    NTSTATUS status = GetStagingLogPath(workDirectory, prId.PartitionId, static_cast<LONGLONG>(prId.ReplicaId), GetThisAllocator(), stagingLogPath_);
-    if (!NT_SUCCESS(status))
+    switch (owner_->ktlLoggerMode_)
     {
-        SetConstructorStatus(status);
+        case KtlLoggerMode::OutOfProc:
+        {
+            stagingLogPath_ = nullptr;
+            break;
+        }
 
-        owner_ = nullptr;
+        case KtlLoggerMode::InProc:
+        {
+            NTSTATUS status = GetStagingLogPath(
+                workDirectory,
+                prId.PartitionId,
+                static_cast<LONGLONG>(prId.ReplicaId),
+                GetThisAllocator(),
+                stagingLogPath_);
 
-        return;
+            if (!NT_SUCCESS(status))
+            {
+                SetConstructorStatus(status);
+
+                owner_ = nullptr;
+
+                return;
+            }
+            break;
+        }
+
+        default:
+            KInvariant(FALSE);
     }
-#endif
 }
 
 LogManagerHandle::~LogManagerHandle()
@@ -239,7 +278,7 @@ Awaitable<NTSTATUS> LogManagerHandle::CloseAsync(__in CancellationToken const & 
     }
 
     status = co_await *awaiter;
-	
+    
     co_return status;
 }
 
@@ -287,7 +326,7 @@ Task LogManagerHandle::AbortTask()
         {
             if (status == STATUS_UNSUCCESSFUL && !IsOpen())
             {
-                // This likely means that the logicallog was already closed when CloseAsync was initiated.
+                // This likely means that the LogicalLog was already closed when CloseAsync was initiated.
                 WriteInfo(
                     TraceComponent,
                     "{0} - AbortTask - CloseAsync failed during abort (likely already closed).  Status: {1}",
@@ -329,7 +368,7 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::CreateAndOpenPhysicalLogAsync(
     KCoService$ApiEntry(TRUE);
 
     NTSTATUS status;
-	
+    
     WriteInfo(
         TraceComponent,
         "{0} - CreateAndOpenPhysicalLogAsync - Creating physical log. Path0 {1} Path1 {2} Path3 {3} Id0 {4} Id1 {5}",
@@ -339,39 +378,50 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::CreateAndOpenPhysicalLogAsync(
         owner_->sharedLogSettings_ == nullptr ? L"" : owner_->sharedLogSettings_->Settings.Path,
         Common::Guid(physicalLogId),
         owner_->sharedLogSettings_ == nullptr ? Common::Guid::Empty() : Common::Guid(ToKGuid(owner_->sharedLogSettings_->Settings.LogContainerId)));
-	
-#if !defined(PLATFORM_UNIX)
+    
+    switch (owner_->ktlLoggerMode_)
+    {
+        case KtlLoggerMode::OutOfProc:
+        {
+            status = co_await owner_->OnCreateAndOpenPhysicalLogAsync(
+                *PartitionedReplicaIdentifier,
+                pathToCommonContainer,
+                physicalLogId,
+                containerSize,
+                maximumNumberStreams,
+                maximumLogicalLogBlockSize,
+                creationFlags,
+                cancellationToken,
+                physicalLog);
+            break;
+        }
 
-    status = co_await owner_->OnCreateAndOpenPhysicalLogAsync(
-        *PartitionedReplicaIdentifier,
-        pathToCommonContainer,
-        physicalLogId,
-        containerSize,
-        maximumNumberStreams,
-        maximumLogicalLogBlockSize,
-        creationFlags,
-        cancellationToken,
-        physicalLog);
-#else
-	
-    if (physicalLogId == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
-    {
-        status = co_await CreateAndOpenStagingLogAsync(cancellationToken, physicalLog);
+        case KtlLoggerMode::InProc:
+        {
+            if (physicalLogId == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
+            {
+                status = co_await CreateAndOpenStagingLogAsync(cancellationToken, physicalLog);
+            }
+            else
+            {
+                status = co_await owner_->OnCreateAndOpenPhysicalLogAsync(
+                    *PartitionedReplicaIdentifier,
+                    pathToCommonContainer,
+                    physicalLogId,
+                    containerSize,
+                    maximumNumberStreams,
+                    maximumLogicalLogBlockSize,
+                    creationFlags,
+                    cancellationToken,
+                    physicalLog);
+            }
+            break;
+        }
+
+        default:
+            KInvariant(FALSE);
+            co_return STATUS_UNSUCCESSFUL;
     }
-    else
-    {
-        status = co_await owner_->OnCreateAndOpenPhysicalLogAsync(
-            *PartitionedReplicaIdentifier,
-            pathToCommonContainer,
-            physicalLogId,
-            containerSize,
-            maximumNumberStreams,
-            maximumLogicalLogBlockSize,
-            creationFlags,
-            cancellationToken,
-            physicalLog);
-    }
-#endif
 
     co_return status;
 }
@@ -389,50 +439,63 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::CreateAndOpenPhysicalLogAsync(
     KStringView const * name = nullptr;
     KGuid const & id = ToKGuid(owner_->sharedLogSettings_->Settings.LogContainerId);
 
-#if !defined(PLATFORM_UNIX)
-    name = owner_->sharedLogName_.RawPtr();
+    switch (owner_->ktlLoggerMode_)
+    {
+        case KtlLoggerMode::OutOfProc:
+        {
+            name = owner_->sharedLogName_.RawPtr();
 
-    WriteInfo(
-        TraceComponent,
-        "{0} - CreateAndOpenPhysicalLogAsync - Creating physical log. Path0 {1} Path1 {2} Id0 {3} Id1 {4}",
-        PartitionedReplicaIdentifier->TraceId,
-        name->operator const wchar_t *(),
-        owner_->sharedLogSettings_->Settings.Path,
-        Common::Guid(id),
-        Common::Guid(ToKGuid(owner_->sharedLogSettings_->Settings.LogContainerId)));
-	
-    status = co_await owner_->OnCreateAndOpenPhysicalLogAsync(
-        *PartitionedReplicaIdentifier,
-        *owner_->sharedLogName_,
-        id,
-        owner_->sharedLogSettings_->Settings.LogSize,
-        owner_->sharedLogSettings_->Settings.MaximumNumberStreams,
-        owner_->sharedLogSettings_->Settings.MaximumRecordSize,
-        static_cast<LogCreationFlags>(owner_->sharedLogSettings_->Settings.Flags),
-        cancellationToken,
-        physicalLog);
-#else
-    if (id == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
-    {
-        name = stagingLogPath_.RawPtr();		
-        status = co_await CreateAndOpenStagingLogAsync(cancellationToken, physicalLog);
+            WriteInfo(
+                TraceComponent,
+                "{0} - CreateAndOpenPhysicalLogAsync - Creating physical log. Path0 {1} Path1 {2} Id0 {3} Id1 {4}",
+                PartitionedReplicaIdentifier->TraceId,
+                name->operator const wchar_t *(),
+                owner_->sharedLogSettings_->Settings.Path,
+                Common::Guid(id),
+                Common::Guid(ToKGuid(owner_->sharedLogSettings_->Settings.LogContainerId)));
+
+            status = co_await owner_->OnCreateAndOpenPhysicalLogAsync(
+                *PartitionedReplicaIdentifier,
+                *owner_->sharedLogName_,
+                id,
+                owner_->sharedLogSettings_->Settings.LogSize,
+                owner_->sharedLogSettings_->Settings.MaximumNumberStreams,
+                owner_->sharedLogSettings_->Settings.MaximumRecordSize,
+                static_cast<LogCreationFlags>(owner_->sharedLogSettings_->Settings.Flags),
+                cancellationToken,
+                physicalLog);
+            break;
+        }
+
+        case KtlLoggerMode::InProc:
+        {
+            if (id == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
+            {
+                name = stagingLogPath_.RawPtr();
+                status = co_await CreateAndOpenStagingLogAsync(cancellationToken, physicalLog);
+            }
+            else
+            {
+                name = owner_->sharedLogName_.RawPtr();
+
+                status = co_await owner_->OnCreateAndOpenPhysicalLogAsync(
+                    *PartitionedReplicaIdentifier,
+                    *owner_->sharedLogName_,
+                    id,
+                    owner_->sharedLogSettings_->Settings.LogSize,
+                    owner_->sharedLogSettings_->Settings.MaximumNumberStreams,
+                    owner_->sharedLogSettings_->Settings.MaximumRecordSize,
+                    static_cast<LogCreationFlags>(owner_->sharedLogSettings_->Settings.Flags),
+                    cancellationToken,
+                    physicalLog);
+            }
+            break;
+        }
+
+        default:
+            KInvariant(FALSE);
+            co_return STATUS_UNSUCCESSFUL;
     }
-    else
-    {
-        name = owner_->sharedLogName_.RawPtr();
-		
-        status = co_await owner_->OnCreateAndOpenPhysicalLogAsync(
-            *PartitionedReplicaIdentifier,
-            *owner_->sharedLogName_,
-            id,
-            owner_->sharedLogSettings_->Settings.LogSize,
-            owner_->sharedLogSettings_->Settings.MaximumNumberStreams,
-            owner_->sharedLogSettings_->Settings.MaximumRecordSize,
-            static_cast<LogCreationFlags>(owner_->sharedLogSettings_->Settings.Flags),
-            cancellationToken,
-            physicalLog);
-    }
-#endif
 
     KInvariant(name != nullptr);
     if (!NT_SUCCESS(status))
@@ -453,12 +516,7 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::CreateAndOpenStagingLogAsync(
     __in ktl::CancellationToken const & cancellationToken,
     __out IPhysicalLogHandle::SPtr& physicalLog)
 {
-#if !defined(PLATFORM_UNIX)
-    UNREFERENCED_PARAMETER(cancellationToken);
-    UNREFERENCED_PARAMETER(physicalLog);
-    KInvariant(FALSE);
-    co_return STATUS_NOT_IMPLEMENTED;
-#else
+    KInvariant(owner_->ktlLoggerMode_ == KtlLoggerMode::InProc);
     KInvariant(stagingLogPath_ != nullptr);
 
     Common::Guid sharedLogId = Common::Guid::NewGuid();
@@ -481,7 +539,6 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::CreateAndOpenStagingLogAsync(
         physicalLog);
 
     co_return status;
-#endif
 }
 
 ktl::Awaitable<NTSTATUS> LogManagerHandle::OpenPhysicalLogAsync(
@@ -499,30 +556,43 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::OpenPhysicalLogAsync(
         PartitionedReplicaIdentifier->TraceId,
         pathToCommonContainer.operator const wchar_t *(),
         Common::Guid(physicalLogId));
-	
-#if !defined(PLATFORM_UNIX)
-    status = co_await owner_->OnOpenPhysicalLogAsync(
-        *PartitionedReplicaIdentifier,
-        pathToCommonContainer,
-        physicalLogId,
-        cancellationToken,
-        physicalLog);
-#else
-    if (physicalLogId == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
-    {
-        status = co_await OpenStagingLogAsync(cancellationToken, physicalLog);
-    }
-    else
-    {
-        status = co_await owner_->OnOpenPhysicalLogAsync(
-            *PartitionedReplicaIdentifier,
-            pathToCommonContainer,
-            physicalLogId,
-            cancellationToken,
-            physicalLog);
-    }
-#endif
 
+    switch (owner_->ktlLoggerMode_)
+    {
+        case KtlLoggerMode::OutOfProc:
+        {
+            status = co_await owner_->OnOpenPhysicalLogAsync(
+                *PartitionedReplicaIdentifier,
+                pathToCommonContainer,
+                physicalLogId,
+                cancellationToken,
+                physicalLog);
+            break;
+        }
+
+        case KtlLoggerMode::InProc:
+        {
+            if (physicalLogId == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
+            {
+                status = co_await OpenStagingLogAsync(cancellationToken, physicalLog);
+            }
+            else
+            {
+                status = co_await owner_->OnOpenPhysicalLogAsync(
+                    *PartitionedReplicaIdentifier,
+                    pathToCommonContainer,
+                    physicalLogId,
+                    cancellationToken,
+                    physicalLog);
+            }
+            break;
+        }
+
+        default:
+            KInvariant(FALSE);
+            co_return STATUS_UNSUCCESSFUL;
+    }
+    
     co_return status;
 }
 
@@ -541,30 +611,43 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::OpenPhysicalLogAsync(
     WriteInfo(
         TraceComponent,
         "{0} - OpenPhysicalLogAsync - Open physical log.",
-        PartitionedReplicaIdentifier->TraceId);	
-	
-#if !defined(PLATFORM_UNIX)
-    status = co_await owner_->OnOpenPhysicalLogAsync(
-        *PartitionedReplicaIdentifier,
-        *owner_->sharedLogName_,
-        id,
-        cancellationToken,
-        physicalLog);
-#else
-    if (id == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
+        PartitionedReplicaIdentifier->TraceId);    
+    
+    switch (owner_->ktlLoggerMode_)
     {
-        status = co_await OpenStagingLogAsync(cancellationToken, physicalLog);
+        case KtlLoggerMode::OutOfProc:
+        {
+            status = co_await owner_->OnOpenPhysicalLogAsync(
+                *PartitionedReplicaIdentifier,
+                *owner_->sharedLogName_,
+                id,
+                cancellationToken,
+                physicalLog);
+            break;
+        }
+
+        case KtlLoggerMode::InProc:
+        {
+            if (id == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
+            {
+                status = co_await OpenStagingLogAsync(cancellationToken, physicalLog);
+            }
+            else
+            {
+                status = co_await owner_->OnOpenPhysicalLogAsync(
+                    *PartitionedReplicaIdentifier,
+                    *owner_->sharedLogName_,
+                    id,
+                    cancellationToken,
+                    physicalLog);
+            }
+            break;
+        }
+
+        default:
+            KInvariant(FALSE);
+            co_return STATUS_UNSUCCESSFUL;
     }
-    else
-    {
-        status = co_await owner_->OnOpenPhysicalLogAsync(
-            *PartitionedReplicaIdentifier,
-            *owner_->sharedLogName_,
-            id,
-            cancellationToken,
-            physicalLog);
-    }
-#endif
 
     co_return status;
 }
@@ -573,12 +656,7 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::OpenStagingLogAsync(
     __in ktl::CancellationToken const & cancellationToken,
     __out IPhysicalLogHandle::SPtr& physicalLog)
 {
-#if !defined(PLATFORM_UNIX)
-    UNREFERENCED_PARAMETER(cancellationToken);
-    UNREFERENCED_PARAMETER(physicalLog);
-    KInvariant(FALSE);
-    co_return STATUS_NOT_IMPLEMENTED;
-#else
+    KInvariant(owner_->ktlLoggerMode_ == KtlLoggerMode::InProc);
     KInvariant(stagingLogPath_ != nullptr);
 
     NTSTATUS status = CheckStagingLogPathLength(TraceId, *stagingLogPath_);
@@ -595,7 +673,6 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::OpenStagingLogAsync(
         physicalLog);
 
     co_return status;
-#endif
 }
 
 ktl::Awaitable<NTSTATUS> LogManagerHandle::DeletePhysicalLogAsync(
@@ -607,36 +684,48 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::DeletePhysicalLogAsync(
 
     NTSTATUS status;
 
-#if !defined(PLATFORM_UNIX)
-    WriteInfo(
-        TraceComponent,
-        "{0} - DeletePhysicalLogAsync - Deleting physical log. Path0 {1} Path1 {2} Path2 {3} Id0 {4} Id1 {5}",
-        PartitionedReplicaIdentifier->TraceId,
-        pathToCommonPhysicalLog.operator const wchar_t *(),
-        owner_->sharedLogName_ == nullptr ? L"" : owner_->sharedLogName_->operator const wchar_t *(),
-        owner_->sharedLogSettings_ == nullptr ? L"" : owner_->sharedLogSettings_->Settings.Path,
-        Common::Guid(physicalLogId),
-        owner_->sharedLogSettings_ == nullptr ? Common::Guid::Empty() : Common::Guid(ToKGuid(owner_->sharedLogSettings_->Settings.LogContainerId)));
+    switch (owner_->ktlLoggerMode_)
+    {
+        case KtlLoggerMode::OutOfProc:
+        {
+            WriteInfo(
+                TraceComponent,
+                "{0} - DeletePhysicalLogAsync - Deleting physical log. Path0 {1} Path1 {2} Path2 {3} Id0 {4} Id1 {5}",
+                PartitionedReplicaIdentifier->TraceId,
+                pathToCommonPhysicalLog.operator const wchar_t *(),
+                owner_->sharedLogName_ == nullptr ? L"" : owner_->sharedLogName_->operator const wchar_t *(),
+                owner_->sharedLogSettings_ == nullptr ? L"" : owner_->sharedLogSettings_->Settings.Path,
+                Common::Guid(physicalLogId),
+                owner_->sharedLogSettings_ == nullptr ? Common::Guid::Empty() : Common::Guid(ToKGuid(owner_->sharedLogSettings_->Settings.LogContainerId)));
 
-    status = co_await owner_->OnDeletePhysicalLogAsync(
-        *PartitionedReplicaIdentifier,
-        pathToCommonPhysicalLog,
-        physicalLogId,
-        cancellationToken);
-#else
-    if (physicalLogId == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
-    {
-        status = co_await DeleteStagingLogAsync(cancellationToken);
+            status = co_await owner_->OnDeletePhysicalLogAsync(
+                *PartitionedReplicaIdentifier,
+                pathToCommonPhysicalLog,
+                physicalLogId,
+                cancellationToken);
+            break;
+        }
+
+        case KtlLoggerMode::InProc:
+        {
+            if (physicalLogId == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
+            {
+                status = co_await DeleteStagingLogAsync(cancellationToken);
+            }
+            else
+            {
+                status = co_await owner_->OnDeletePhysicalLogAsync(
+                    *PartitionedReplicaIdentifier,
+                    pathToCommonPhysicalLog,
+                    physicalLogId,
+                    cancellationToken);
+            }
+            break;
+        }
+
+        default:
+            KInvariant(FALSE);
     }
-    else
-    {
-        status = co_await owner_->OnDeletePhysicalLogAsync(
-            *PartitionedReplicaIdentifier,
-            pathToCommonPhysicalLog,
-            physicalLogId,
-            cancellationToken);
-    }
-#endif
 
     co_return status;
 }
@@ -652,34 +741,47 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::DeletePhysicalLogAsync(
     NTSTATUS status;
     KGuid const & id = ToKGuid(owner_->sharedLogSettings_->Settings.LogContainerId);
 
-#if !defined(PLATFORM_UNIX)
-    WriteInfo(
-        TraceComponent,
-        "{0} - DeletePhysicalLogAsync - Deleting physical log. Path0 {1} Path1 {2} Id0 {3}",
-        PartitionedReplicaIdentifier->TraceId,
-        owner_->sharedLogName_->operator const wchar_t *(),
-        owner_->sharedLogSettings_->Settings.Path,
-        Common::Guid(id));
+    switch (owner_->ktlLoggerMode_)
+    {
+        case KtlLoggerMode::OutOfProc:
+        {
+            WriteInfo(
+                TraceComponent,
+                "{0} - DeletePhysicalLogAsync - Deleting physical log. Path0 {1} Path1 {2} Id0 {3}",
+                PartitionedReplicaIdentifier->TraceId,
+                owner_->sharedLogName_->operator const wchar_t *(),
+                owner_->sharedLogSettings_->Settings.Path,
+                Common::Guid(id));
 
-    status = co_await owner_->OnDeletePhysicalLogAsync(
-        *PartitionedReplicaIdentifier,
-        *owner_->sharedLogName_,
-        id,
-        cancellationToken);
-#else
-    if (id == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
-    {
-        status = co_await DeleteStagingLogAsync(cancellationToken);
+            status = co_await owner_->OnDeletePhysicalLogAsync(
+                *PartitionedReplicaIdentifier,
+                *owner_->sharedLogName_,
+                id,
+                cancellationToken);
+            break;
+        }
+
+        case KtlLoggerMode::InProc:
+        {
+            if (id == KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID())
+            {
+                status = co_await DeleteStagingLogAsync(cancellationToken);
+            }
+            else
+            {
+                status = co_await owner_->OnDeletePhysicalLogAsync(
+                    *PartitionedReplicaIdentifier,
+                    *owner_->sharedLogName_,
+                    id,
+                    cancellationToken);
+            }
+            break;
+        }
+
+        default:
+            KInvariant(FALSE);
+            co_return STATUS_UNSUCCESSFUL;
     }
-    else
-    {
-        status = co_await owner_->OnDeletePhysicalLogAsync(
-            *PartitionedReplicaIdentifier,
-            *owner_->sharedLogName_,
-            id,
-            cancellationToken);
-    }
-#endif
 
     co_return status;
 }
@@ -687,11 +789,7 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::DeletePhysicalLogAsync(
 ktl::Awaitable<NTSTATUS> LogManagerHandle::DeleteStagingLogAsync(
     __in ktl::CancellationToken const & cancellationToken)
 {
-#if !defined(PLATFORM_UNIX)
-    UNREFERENCED_PARAMETER(cancellationToken);
-    KInvariant(FALSE);
-    co_return STATUS_NOT_IMPLEMENTED;
-#else
+    KInvariant(owner_->ktlLoggerMode_ == KtlLoggerMode::InProc);
     KInvariant(stagingLogPath_ != nullptr);
 
     NTSTATUS status = CheckStagingLogPathLength(TraceId, *stagingLogPath_);
@@ -707,5 +805,4 @@ ktl::Awaitable<NTSTATUS> LogManagerHandle::DeleteStagingLogAsync(
         cancellationToken);
 
     co_return status;
-#endif
 }

@@ -48,5 +48,24 @@ namespace Reliability
             FailoverUnitId failoverUnitId_;
             Epoch dataLossEpoch_;
         };
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        class TraceAutoScaleAction : public StateMachineAction
+        {
+            DENY_COPY(TraceAutoScaleAction);
+
+        public:
+
+            TraceAutoScaleAction(int targetReplicaSetSize);
+
+            int OnPerformAction(FailoverManager & fm);
+
+            void WriteTo(Common::TextWriter & w, Common::FormatOptions const&) const;
+            void WriteToEtw(uint16 contextSequenceId) const;
+
+        private:
+            int targetReplicaSetSize_;
+        };
     }
 }

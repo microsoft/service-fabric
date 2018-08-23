@@ -18,8 +18,9 @@ TruncateTailManager::TruncateTailManager(
     __in ReplicatedLogManager & replicatedLogManager,
     __in TransactionMap & transactionsMap,
     __in IStateProviderManager & stateManager,
+    __in IBackupManager & backupManager,
     __in LONG64 tailLsn,
-    __in TxnReplicator::ApplyContext::Enum falseProgressApplyContext,
+    __in ApplyContext::Enum falseProgressApplyContext,
     __in RecoveryPhysicalLogReader & recoveryLogsReader,
     __in InvalidLogRecords & invalidLogRecords)
     : KShared()
@@ -28,6 +29,7 @@ TruncateTailManager::TruncateTailManager(
     , replicatedLogManager_(&replicatedLogManager)
     , transactionsMap_(&transactionsMap)
     , stateManager_(&stateManager)
+    , backupManager_(&backupManager)
     , tailLsn_(tailLsn)
     , falseProgressApplyContext_(falseProgressApplyContext)
     , recoveryLogsReader_(&recoveryLogsReader)
@@ -54,8 +56,9 @@ TruncateTailManager::SPtr TruncateTailManager::Create(
     __in ReplicatedLogManager & replicatedLogManager,
     __in TransactionMap & transactionsMap,
     __in IStateProviderManager & stateManager,
+    __in IBackupManager & backupManager,
     __in LONG64 tailLsn,
-    __in TxnReplicator::ApplyContext::Enum falseProgressApplyContext,
+    __in ApplyContext::Enum falseProgressApplyContext,
     __in RecoveryPhysicalLogReader & recoveryLogsReader,
     __in InvalidLogRecords & invalidLogRecords,
     __in KAllocator & allocator)
@@ -65,6 +68,7 @@ TruncateTailManager::SPtr TruncateTailManager::Create(
         replicatedLogManager,
         transactionsMap,
         stateManager,
+        backupManager,
         tailLsn,
         falseProgressApplyContext,
         recoveryLogsReader,
@@ -511,6 +515,10 @@ Awaitable<NTSTATUS> TruncateTailManager::TruncateTailAsync(__out LogRecord::SPtr
         }
         case LogRecordType::Enum::Backup:
         {
+            // Inform the backup manager that the last backup log record has been undone.
+            backupManager_->UndoLastCompletedBackupLogRecord();
+
+            // Trace that the backup log record has been false progressed.
             BackupLogRecord::SPtr backupRecord = dynamic_cast<BackupLogRecord *>(currentRecord.RawPtr());
             ASSERT_IF(
                 backupRecord == nullptr,

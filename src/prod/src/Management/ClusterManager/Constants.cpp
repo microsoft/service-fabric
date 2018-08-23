@@ -53,10 +53,12 @@ GlobalWString Constants::StoreType_ApplicationContext = make_global<wstring>(L"A
 GlobalWString Constants::StoreType_ApplicationUpgradeContext = make_global<wstring>(L"ApplicationUpgradeContext");
 GlobalWString Constants::StoreType_GoalStateApplicationUpgradeContext = make_global<wstring>(L"GoalStateApplicationUpgradeContext");
 GlobalWString Constants::StoreType_ComposeDeploymentContext = make_global<wstring>(L"ComposeDeploymentContext");
+GlobalWString Constants::StoreType_SingleInstanceDeploymentContext = make_global<wstring>(L"SingleInstanceDeploymentContext");
 GlobalWString Constants::StoreType_ServiceContext = make_global<wstring>(L"ServiceContext");
 GlobalWString Constants::StoreType_InfrastructureTaskContext = make_global<wstring>(L"InfrastructureTaskContext");
 GlobalWString Constants::StoreType_ApplicationUpdateContext = make_global<wstring>(L"ApplicationUpdateContext");
 GlobalWString Constants::StoreType_ComposeDeploymentUpgradeContext = make_global<wstring>(L"ComposeDeploymentUpgradeContext");
+GlobalWString Constants::StoreType_SingleInstanceDeploymentUpgradeContext = make_global<wstring>(L"SingleInstanceDeploymentUpgradeContext");
 
 GlobalWString Constants::StoreType_ApplicationIdMap = make_global<wstring>(L"ApplicationIdMap");
 GlobalWString Constants::StoreType_ServicePackage = make_global<wstring>(L"ServicePackage");
@@ -66,15 +68,20 @@ GlobalWString Constants::StoreType_VerifiedUpgradeDomains = make_global<wstring>
 GlobalWString Constants::StoreType_ApplicationManifest = make_global<wstring>(L"ApplicationManifest");
 GlobalWString Constants::StoreType_ServiceManifest = make_global<wstring>(L"ServiceManifests");
 GlobalWString Constants::StoreType_ComposeDeploymentInstance = make_global<wstring>(L"ComposeDeploymentInstance");
+GlobalWString Constants::StoreType_ContainerGroupDeploymentInstance = make_global<wstring>(L"ContainerGroupDeploymentInstance");
+GlobalWString Constants::StoreType_SingleInstanceApplicationInstance = make_global<wstring>(L"SingleInstanceApplicationInstance");
 
 GlobalWString Constants::StoreType_ComposeDeploymentInstanceCounter = make_global<wstring>(L"ComposeDeploymentInstanceCounter");
 GlobalWString Constants::StoreKey_ComposeDeploymentInstanceCounter = make_global<wstring>(L"ComposeDeploymentInstanceCounter");
+
+GlobalWString Constants::StoreType_Volume = make_global<wstring>(L"Volume");
 // -------------------------------
 // Naming Data Keys
 // -------------------------------
 
 GlobalWString Constants::ApplicationPropertyName = make_global<wstring>(L"ApplicationFlag");
 GlobalWString Constants::ComposeDeploymentTypePrefix = make_global<wstring>(L"Compose_");
+GlobalWString Constants::SingleInstanceDeploymentTypePrefix = make_global<wstring>(L"SingleInstance_");
 
 // -------------------------------
 // Test parameters

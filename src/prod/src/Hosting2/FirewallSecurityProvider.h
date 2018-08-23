@@ -21,10 +21,13 @@ namespace Hosting2
 
         Common::ErrorCode ConfigurePortFirewallPolicy(
             std::wstring const & policyName,
-            std::vector<LONG> ports);
+            std::vector<LONG> ports,
+            uint64 nodeInstanceId);
 
         Common::ErrorCode RemoveFirewallRule(
-            std::wstring const & policyName);
+            std::wstring const & policyName,
+            std::vector<LONG> const& ports,
+            uint64 nodeInstanceId);
 
     protected:
         virtual Common::ErrorCode OnOpen();
@@ -32,26 +35,39 @@ namespace Hosting2
         virtual void OnAbort();
 
     private:
+#if defined(PLATFORM_UNIX)
         HRESULT AddRule(
-            INetFwRules* rules,
             std::wstring const & ruleName,
             std::wstring const & ruleDescription,
             LONG currentProfileBitMask,
             LONG protocol,
             LONG port,
             bool outgoing);
-        
-        Common::ErrorCode CleanupRulesForAllProfiles(std::wstring const & policyName, INetFwRules* rules);
+
+        Common::ErrorCode CleanupRulesForAllProfiles(std::wstring const & policyName, vector<LONG> const& ports, uint64 nodeInstanceId);
+#else
+        HRESULT AddRule(
+            Microsoft::WRL::ComPtr<INetFwRules> rules,
+            std::wstring const & ruleName,
+            std::wstring const & ruleDescription,
+            LONG currentProfileBitMask,
+            LONG protocol,
+            LONG port,
+            bool outgoing);
+
+        Common::ErrorCode CleanupRulesForAllProfiles(std::wstring const & policyName, Microsoft::WRL::ComPtr<INetFwRules> rules, vector<LONG> const& ports, uint64 nodeInstanceId);
+#endif
+
 
         static std::wstring GetFirewallRuleName(
-			std::wstring const & policyName,
-			bool outgoing,
-			LONG profileType,
-			LONG protocol);
-
+            std::wstring const & policyName,
+            bool outgoing,
+            LONG profileType,
+            LONG protocol,
+            LONG port,
+            uint64 nodeInstanceId);
 
     private:
-        static std::wstring firewallGroup_;
         static LONG allProfiles_[3];
         std::vector<LONG> allprotocols_;
         std::vector<LONG> profilesEnabled_;

@@ -29,7 +29,8 @@ ApplicationInfo::ApplicationInfo(ApplicationInfo const& other)
       applicationName_(other.applicationName_),
       updateId_(other.updateId_),
       capacityDescription_(other.capacityDescription_),
-      resourceGovernanceDescription_(other.resourceGovernanceDescription_)
+      resourceGovernanceDescription_(other.resourceGovernanceDescription_),
+      codePackageContainersImages_(other.codePackageContainersImages_)
 {
 }
 
@@ -47,7 +48,8 @@ ApplicationInfo::ApplicationInfo(
       applicationName_(applicationName),
       updateId_(0),
       capacityDescription_(),
-      resourceGovernanceDescription_()
+      resourceGovernanceDescription_(),
+      codePackageContainersImages_()
 {
     PostRead(0);
 }
@@ -57,7 +59,8 @@ ApplicationInfo::ApplicationInfo(ServiceModel::ApplicationIdentifier const & app
     uint64 instanceId,
     uint64 updateId,
     ApplicationCapacityDescription const & appCapacity,
-    ServiceModel::ServicePackageResourceGovernanceMap const& rgDescription)
+    ServiceModel::ServicePackageResourceGovernanceMap const& rgDescription,
+    ServiceModel::CodePackageContainersImagesMap const& cpContainersImages)
     : StoreData(PersistenceState::ToBeInserted), 
       applicationId_(applicationId),
       applicationName_(applicationName),
@@ -68,7 +71,8 @@ ApplicationInfo::ApplicationInfo(ServiceModel::ApplicationIdentifier const & app
       rollback_(nullptr),
       lastUpdateTime_(DateTime::Now()),
       isDeleted_(false),
-      resourceGovernanceDescription_(rgDescription)
+      resourceGovernanceDescription_(rgDescription),
+      codePackageContainersImages_(cpContainersImages)
 {
     PostRead(0);
 }
@@ -87,7 +91,8 @@ ApplicationInfo::ApplicationInfo(
       applicationName_(other.applicationName_),
       updateId_(other.updateId_),
       capacityDescription_(other.capacityDescription_),
-      resourceGovernanceDescription_(other.resourceGovernanceDescription_)
+      resourceGovernanceDescription_(other.resourceGovernanceDescription_),
+      codePackageContainersImages_(other.codePackageContainersImages_)
 {
     instanceId_ = (upgrade_ ? upgrade_->Description.InstanceId : other.instanceId_);
 }
@@ -105,6 +110,7 @@ ApplicationInfo::ApplicationInfo(ApplicationInfo const& other, uint64 instanceId
     , updateId_(other.updateId_)
     , capacityDescription_(other.capacityDescription_)
     , resourceGovernanceDescription_(other.resourceGovernanceDescription_)
+    , codePackageContainersImages_(other.codePackageContainersImages_)
 {
 }
 
@@ -196,10 +202,12 @@ LoadBalancingComponent::ApplicationDescription ApplicationInfo::GetPLBApplicatio
     {
         isUpgradeInProgess = true;
         completedUDs = move(upgrade_->GetCompletedDomains());
-        upgradedRG = GetPLBServicePackageDescription(upgrade_->Description.Specification.UpgradedRGSettings);
+        upgradedRG = GetPLBServicePackageDescription(
+            upgrade_->Description.Specification.UpgradedRGSettings,
+            upgrade_->Description.Specification.UpgradedCPContainersImages);
     }
 
-    auto spDescriptions = GetPLBServicePackageDescription(ResourceGovernanceDescription);
+    auto spDescriptions = GetPLBServicePackageDescription(ResourceGovernanceDescription, CodePackageContainersImages);
 
     return LoadBalancingComponent::ApplicationDescription(
         move(applicationName),
@@ -213,7 +221,10 @@ LoadBalancingComponent::ApplicationDescription ApplicationInfo::GetPLBApplicatio
         ServiceModel::ApplicationIdentifier(applicationId_));
 }
 
-std::map<ServiceModel::ServicePackageIdentifier, LoadBalancingComponent::ServicePackageDescription> ApplicationInfo::GetPLBServicePackageDescription(ServiceModel::ServicePackageResourceGovernanceMap const & rgSettings) const
+std::map<ServiceModel::ServicePackageIdentifier, LoadBalancingComponent::ServicePackageDescription>
+ApplicationInfo::GetPLBServicePackageDescription(
+    ServiceModel::ServicePackageResourceGovernanceMap const & rgSettings,
+    ServiceModel::CodePackageContainersImagesMap const & containersImagesMap) const
 {
     map<ServiceModel::ServicePackageIdentifier, LoadBalancingComponent::ServicePackageDescription> spDescriptions;
     for (auto spRG = rgSettings.begin(); spRG != rgSettings.end(); ++spRG)
@@ -228,9 +239,20 @@ std::map<ServiceModel::ServicePackageIdentifier, LoadBalancingComponent::Service
             requiredResources.insert(make_pair(ServiceModel::Constants::SystemMetricNameMemoryInMB, spRG->second.MemoryInMB));
         }
 
+        std::vector<std::wstring> containerImages;
+        auto containerImagesIt = containersImagesMap.find(spRG->first);
+        if (containerImagesIt != containersImagesMap.end())
+        {
+            for (auto& image : containerImagesIt->second.ContainersImages)
+            {
+                containerImages.push_back(image);
+            }
+        }
+
         LoadBalancingComponent::ServicePackageDescription spDesc(
             ServicePackageIdentifier(spRG->first),
-            std::map<wstring, double>(requiredResources));
+            std::map<wstring, double>(requiredResources),
+            std::vector<std::wstring>(containerImages));
 
         spDescriptions.insert(make_pair(ServicePackageIdentifier(spRG->first), move(spDesc)));
     }

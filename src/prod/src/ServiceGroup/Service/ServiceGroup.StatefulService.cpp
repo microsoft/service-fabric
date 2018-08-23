@@ -3255,7 +3255,7 @@ STDMETHODIMP CStatefulServiceGroup::GetReplicationStream(__out IFabricOperationS
                 // (When changing from Primary => Active the event is always set.)
                 //
                 this->atomicGroupCopyDoneSignal_.WaitOne();
-                this->atomicGroupCopyDoneSignal_.Close();
+                this->atomicGroupCopyDoneSignal_.Reset();
 
                 //
                 // Check whether the replica has been faulted, if so there is no need to start draining.

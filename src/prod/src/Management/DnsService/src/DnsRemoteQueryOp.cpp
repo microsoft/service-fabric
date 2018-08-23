@@ -36,7 +36,7 @@ _currentDnsServerIndex(0),
 _currentDnsServiceIp(INADDR_NONE),
 _context(nullptr)
 {
-    netIoManager.CreateUdpListener(/*out*/_spUdpListener);
+    netIoManager.CreateUdpListener(/*out*/_spUdpListener, params.AllowMultipleListeners);
 }
 
 DnsRemoteQueryOp::~DnsRemoteQueryOp()

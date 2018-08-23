@@ -33,6 +33,11 @@ libs=(
   jemalloc
   babeltrace
   cpprest
+  protobuf
+  grpc
+  cri-o
+  cri-tools
+  containernetworking-plugins
   )
 
 pushd `dirname $0` > /dev/null
@@ -52,3 +57,4 @@ do
         exit -1
     fi
 done
+

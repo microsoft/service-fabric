@@ -34,18 +34,21 @@ public :
         __in TxnReplicator::TransactionBase const& replicatorTransaction,
         __in KeyType key,
         __in ValueType value,
-        __in LONG64 sequenceNumber) noexcept;
+        __in LONG64 sequenceNumber,
+        __in bool isPrimary) noexcept;
 
     ktl::Awaitable<void> OnUpdatedAsync(
         __in TxnReplicator::TransactionBase const& replicatorTransaction,
         __in KeyType key,
         __in ValueType value,
-        __in LONG64 sequenceNumber) noexcept;
+        __in LONG64 sequenceNumber,
+        __in bool isPrimary) noexcept;
 
     ktl::Awaitable<void> OnRemovedAsync(
         __in TxnReplicator::TransactionBase const& replicatorTransaction,
         __in KeyType key,
-        __in LONG64 sequenceNumber) noexcept;
+        __in LONG64 sequenceNumber,
+        __in bool isPrimary) noexcept;
 
     ktl::Awaitable<void> OnRebuiltAsync(__in Data::Utilities::IAsyncEnumerator<Data::KeyValuePair<KeyType, Data::KeyValuePair<LONG64, ValueType>>> & enumerableState) noexcept;
 

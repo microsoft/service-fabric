@@ -12,4 +12,4 @@
 #include "client/ClientServerTransport/ClientServerTransport.external.h"
 #include "Naming/naming.h"
 #include "FabricGateway/FabricGateway.h"
-#include "FabricGateway/FabricGatewayConfig.h"
+#include "ServiceModel/ServiceModelConfig.h"

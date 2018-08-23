@@ -13,13 +13,13 @@ namespace ServiceModel
     struct ServiceManifestImportDescription;
     struct ResourceGovernancePolicyDescription : public Serialization::FabricSerializable
     {
+        DEFAULT_COPY_ASSIGNMENT(ResourceGovernancePolicyDescription);
+        DEFAULT_COPY_CONSTRUCTOR(ResourceGovernancePolicyDescription);
+        DEFAULT_MOVE_ASSIGNMENT(ResourceGovernancePolicyDescription);
+        DEFAULT_MOVE_CONSTRUCTOR(ResourceGovernancePolicyDescription);
+
     public:
         ResourceGovernancePolicyDescription(); 
-        ResourceGovernancePolicyDescription(ResourceGovernancePolicyDescription const & other);
-        ResourceGovernancePolicyDescription(ResourceGovernancePolicyDescription && other);
-
-        ResourceGovernancePolicyDescription const & operator = (ResourceGovernancePolicyDescription const & other);
-        ResourceGovernancePolicyDescription const & operator = (ResourceGovernancePolicyDescription && other);
 
         bool operator == (ResourceGovernancePolicyDescription const & other) const;
         bool operator != (ResourceGovernancePolicyDescription const & other) const;
@@ -36,8 +36,9 @@ namespace ServiceModel
             __in Common::ScopedHeap & heap,
             __out FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION & fabricResourceGovernancePolicyDesc) const;
 
-        FABRIC_FIELDS_12(CodePackageRef, MemoryInMB, MemorySwapInMB, MemoryReservationInMB, CpuShares,
-            CpuPercent, MaximumIOps, MaximumIOBytesps, BlockIOWeight, CpusetCpus, NanoCpus, CpuQuota);
+        FABRIC_FIELDS_15(CodePackageRef, MemoryInMB, MemorySwapInMB, MemoryReservationInMB, CpuShares,
+            CpuPercent, MaximumIOps, MaximumIOBytesps, BlockIOWeight, CpusetCpus, NanoCpus, CpuQuota,
+            DiskQuotaInMB, KernelMemoryInMB, ShmSizeInMB);
 
     public:
         std::wstring CodePackageRef;
@@ -52,6 +53,9 @@ namespace ServiceModel
         std::wstring CpusetCpus;
         uint64 NanoCpus;
         uint CpuQuota;
+        uint DiskQuotaInMB;
+        uint KernelMemoryInMB;
+        uint ShmSizeInMB;
 
     private:
         friend struct DigestedCodePackageDescription;
@@ -59,6 +63,7 @@ namespace ServiceModel
         friend struct ServiceManifestImportDescription;
     
         void ReadFromXml(Common::XmlReaderUPtr const &);
+        void ReadFromXmlHelper(Common::XmlReaderUPtr const &, std::wstring const & readAttrib, uint & valToUpdate);
         Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const & xmlWriter);
     };
 }

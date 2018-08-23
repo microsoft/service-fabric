@@ -75,9 +75,9 @@ namespace Federation
         /* -------------- Messaging -------------- */
 
         // Timeout for connection setup on both incoming and accepting side (including security negotiation in secure mode)
-        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Federation", ConnectionOpenTimeout, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Static);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", ConnectionOpenTimeout, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Static);
         // Timeout for federation layer messages.
-        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Federation", MessageTimeout, Common::TimeSpan::FromSeconds(20), Common::ConfigEntryUpgradePolicy::Static);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", MessageTimeout, Common::TimeSpan::FromSeconds(20), Common::ConfigEntryUpgradePolicy::Static);
         // Connection idle timeout
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", ConnectionIdleTimeout, Common::TimeSpan::FromMinutes(15), Common::ConfigEntryUpgradePolicy::Static);
         // Default timeout for routing layer retry.
@@ -88,6 +88,8 @@ namespace Federation
         DEPRECATED_CONFIG_ENTRY(int, L"Federation", MaxMessageSize, 64 * 1024 * 1024, Common::ConfigEntryUpgradePolicy::Static);
         // Send queue size limit in bytes, per target, set to 0 to disable
         INTERNAL_CONFIG_ENTRY(uint, L"Federation", SendQueueSizeLimit, 64 * 1024 * 1024, Common::ConfigEntryUpgradePolicy::Static);
+        // Specifies if error checking on federation message header and body is enabled in non-secure mode
+        PUBLIC_CONFIG_ENTRY(bool, L"Federation", MessageErrorCheckingEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
         // The duration to keep broadcast context.
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", BroadcastContextKeepDuration, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Static);
         // The number of children in the broadcast spanning tree.
@@ -157,7 +159,7 @@ namespace Federation
         // If the duration expires, then the lease is lost. Loss of quorum of leases causes a node
         // to abandon the cluster, by failing to receive communication with a quorum of nodes in
         // this period of time.  This value needs to be adjusted based on the size of the cluster.
-        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Federation", GlobalTicketLeaseDuration, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Static);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", GlobalTicketLeaseDuration, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Static);
         // The lease interval for a bootstrap ticket.
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", BootstrapTicketLeaseDuration, Common::TimeSpan::FromSeconds(100), Common::ConfigEntryUpgradePolicy::Static);
         // The lease interval for acquiring the ownership for a shared (sql) vote.
@@ -203,11 +205,11 @@ namespace Federation
         // Duration that a lease lasts between a node and its neighbors accross data center.
         PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Federation", LeaseDurationAcrossFaultDomain, Common::TimeSpan::Zero, Common::ConfigEntryUpgradePolicy::Dynamic);
         // Max LeaseDuration allowed.  LeaseDuration and LeaseDurationAcrossFaultDomain must not exceed this value during upgrade.
-        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Federation", MaxLeaseDuration, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", MaxLeaseDuration, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Dynamic);
         // Duration that driver bugcheck if there is no ioctl call from user mode
-        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Federation", UnresponsiveDuration, Common::TimeSpan::FromSeconds(0), Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", UnresponsiveDuration, Common::TimeSpan::FromSeconds(0), Common::ConfigEntryUpgradePolicy::Dynamic);
         // Time interval that user mode is performing heartbeat
-        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Federation", HeartbeatInterval, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", HeartbeatInterval, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
         // After a lease loss, the duration allowed for a node to continue operating before
         // a successful arbitration.
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", LeaseSuspendTimeout, Common::TimeSpan::FromSeconds(2), Common::ConfigEntryUpgradePolicy::Static);
@@ -258,11 +260,18 @@ namespace Federation
         // The interval allowed for clock inaccuracy.
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", LeaseClockUncertaintyInterval, Common::TimeSpan::FromSeconds(0.03), Common::ConfigEntryUpgradePolicy::Dynamic);
         // The disk sector size, default is 4096 bytes.
-        PUBLIC_CONFIG_ENTRY(int, L"Federation", DiskSectorSize, 4096, Common::ConfigEntryUpgradePolicy::Dynamic);
-        // The disk probe buffer sector count, default is 1, the buffer size = DiskSectorSize (4096 bytes) * DiskProbeBufferSectorCount (1) = 4096 bytes.
-        PUBLIC_CONFIG_ENTRY(int, L"Federation", DiskProbeBufferSectorCount, 1, Common::ConfigEntryUpgradePolicy::Dynamic);
-        // The disk probe buffer data, default is 0xff.
-        PUBLIC_CONFIG_ENTRY(uint, L"Federation", DiskProbeBufferData, 255, Common::ConfigEntryUpgradePolicy::Dynamic, Common::InRange<uint>(0, 255));
+        INTERNAL_CONFIG_ENTRY(int, L"Federation", DiskSectorSize, 4096, Common::ConfigEntryUpgradePolicy::Dynamic);
+        // The disk probe buffer sector count, default is 1, the buffer size = DiskSectorSize (4096 bytes) * DiskProbeBufferSectorCount (1) = 4096 bytes, negative number enables the sector count to be random in between [1, abs(DiskProbeBufferSectorCount)].
+        INTERNAL_CONFIG_ENTRY(int, L"Federation", DiskProbeBufferSectorCount, 1, Common::ConfigEntryUpgradePolicy::Dynamic);
+        // The disk probe buffer data, default is 0xff, 0 and positive number enables the buffer to be filled with the config value, -1 enables the buffer data to be random.
+        INTERNAL_CONFIG_ENTRY(int, L"Federation", DiskProbeBufferData, 255, Common::ConfigEntryUpgradePolicy::Dynamic, Common::InRange<int>(-1, 255));
+        // The config to enable disk probe buffer data at random, default is false. This config overrides DiskProbeBufferData.
+        INTERNAL_CONFIG_ENTRY(bool, L"Federation", DiskProbeReopenFile, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+        // The config to set how long the delay for lease agent close.
+        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Federation", DelayLeaseAgentCloseInterval, Common::TimeSpan::FromSeconds(1), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The config to set the threshold to do faster pulling of the app ttl
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Federation", LeaseMonitorRenewLevelThreshold, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
 
         /* Point to point communcation*/
         // Specify max thread count for loopback job queue, default to 0, which means using processor count
@@ -271,22 +280,22 @@ namespace Federation
         INTERNAL_CONFIG_ENTRY(bool, L"Federation", TraceLoopbackJobQueue, false, Common::ConfigEntryUpgradePolicy::Static);
 
         /* security */
-        // Flags for cluster certificate chain validation, e.g. CRL checking
-        // 0x10000000 CERT_CHAIN_REVOCATION_CHECK_END_CERT
-        // 0x20000000 CERT_CHAIN_REVOCATION_CHECK_CHAIN
-        // 0x40000000 CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT
-        // 0x80000000 CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY
-        // 0x00000004 CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL : disables downloading of CRL and disallowed CTL, in case they are unavailable 
-        // Setting to 0 disables CRL checking, but this does not disable downloading of disallowed CTL.
+        // Bitmask for cluster certificate chain validation, e.g. CRL checking
+        // Values often used:
+        // 0x80000000 CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY: disable certificate revocation list (CRL) downloading when unavailable
+        // 0x00000004 CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL : disable certificate trust list (CTL) downloading on Windows machines
+        // lacking Internet access. Details about CTL can be found at:
+        // https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn265983(v=ws.11)
+        // Setting to 0 disables CRL checking, but it does not disable CTL downloading.
         // Full list of supported values is documented by dwFlags of CertGetCertificateChain:
         // http://msdn.microsoft.com/en-us/library/windows/desktop/aa376078(v=vs.85).aspx
 #ifdef PLATFORM_UNIX
         // Disable CRL checking on Linux until CRL installation and update issues are figured out
-        PUBLIC_CONFIG_ENTRY(uint, L"Federation", X509CertChainFlags, 0, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(uint, L"Federation", X509CertChainFlags, 0, Common::ConfigEntryUpgradePolicy::Dynamic);
 #else
-        PUBLIC_CONFIG_ENTRY(uint, L"Federation", X509CertChainFlags, 0x40000000, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(uint, L"Federation", X509CertChainFlags, 0x40000000, Common::ConfigEntryUpgradePolicy::Dynamic);
 #endif
         // Whether to ignore CRL offline error for cluster security 
-        PUBLIC_CONFIG_ENTRY(bool, L"Federation", IgnoreCrlOfflineError, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(bool, L"Federation", IgnoreCrlOfflineError, true, Common::ConfigEntryUpgradePolicy::Dynamic);
     };
 }

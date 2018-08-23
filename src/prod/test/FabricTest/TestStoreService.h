@@ -228,6 +228,8 @@ namespace FabricTest
         virtual Common::ErrorCode GetReplicationQueueCounters(
             __out FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS & counters);
 
+        virtual Common::ErrorCode GetReplicatorQueryResult(__out ServiceModel::ReplicatorStatusQueryResultSPtr & result);
+
     private:
         struct TestServiceEntry;
         class TestFabricOperationData;

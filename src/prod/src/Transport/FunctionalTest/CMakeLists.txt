@@ -20,9 +20,9 @@ set_target_properties(${exe_Transport.Functional.Test} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
 
 target_link_libraries(${exe_Transport.Functional.Test}
-  ${lib_Common}
   ${lib_Serialization}
   ${lib_Transport}
+  ${lib_Common}
   ${lib_ServiceModel} 
   ${Cxx}
   ${CxxABI}
@@ -40,8 +40,6 @@ target_link_libraries(${exe_Transport.Functional.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
   ${BoostTest2}
 )
 

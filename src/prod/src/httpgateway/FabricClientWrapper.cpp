@@ -54,6 +54,9 @@ ErrorCode FabricClientWrapper::Initialize(__in FabricNodeConfigSPtr &config)
     error = factoryPtr->CreateComposeManagementClient(composeAppMgmtClientPtr_);
     if (!error.IsSuccess()) { return error; }
 
+    error = factoryPtr->CreateResourceManagementClient(resourceMgmtClientPtr_);
+    if (!error.IsSuccess()) { return error; }
+
     error = factoryPtr->CreateServiceManagementClient(serviceMgmtClientPtr_);
     if (!error.IsSuccess()) { return error; }
 

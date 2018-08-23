@@ -16,19 +16,27 @@ StringLiteral const TraceType("InProcessApplicationHost");
 // InProcessApplicationHost Implementation
 //
 InProcessApplicationHost::InProcessApplicationHost(
-    wstring const & hostId, 
+    GuestServiceTypeHost & guestServiceTypeHost,
     wstring const & runtimeServiceAddress,
+    ApplicationHostContext const & hostContext,
     CodePackageContext const & codePackageContext)
     : ApplicationHost(
-        ApplicationHostContext(hostId, ApplicationHostType::Activated_InProcess, false),
+        hostContext,
         runtimeServiceAddress,
         nullptr,
         L"",
         false,
         nullptr),
+    guestServiceTypeHost_(guestServiceTypeHost),
     codeContextLock_(),
-    codePackageContext_(codePackageContext)
+    codePackageContext_(codePackageContext),
+    codePackageActivator_()
 {
+    if (hostContext.IsCodePackageActivatorHost)
+    {
+        auto cpActivator = make_shared<InProcessApplicationHostCodePackageActivator>(*this, *this);
+        codePackageActivator_ = move(cpActivator);
+    }
 }
 
 InProcessApplicationHost::~InProcessApplicationHost()
@@ -36,23 +44,27 @@ InProcessApplicationHost::~InProcessApplicationHost()
 }
 
 ErrorCode InProcessApplicationHost::Create(
-    wstring const & hostId, 
+    GuestServiceTypeHost & guestServiceTypeHost,
     wstring const & runtimeServiceAddress,
+    ApplicationHostContext const & hostContext,
     CodePackageContext const & codePackageContext,
-    __out ApplicationHostSPtr & applicationHost)
+    __out InProcessApplicationHostSPtr & applicationHost)
 {
-    WriteNoise(
-        TraceType,
-        "Creating: HostId={0}, CodeContext={1}",
-        hostId,        
-        codePackageContext);
 
     applicationHost = make_shared<InProcessApplicationHost>(
-        hostId,
+        guestServiceTypeHost,
         runtimeServiceAddress,
+        hostContext,
         codePackageContext);
 
     return ErrorCode(ErrorCodeValue::Success);
+}
+
+void InProcessApplicationHost::GetCodePackageContext(
+    CodePackageContext & codeContext)
+{
+    AcquireWriteLock grab(codeContextLock_);
+    codeContext = codePackageContext_;
 }
 
 ErrorCode InProcessApplicationHost::OnCreateAndAddFabricRuntime(
@@ -116,6 +128,44 @@ ErrorCode InProcessApplicationHost::OnGetCodePackageActivationContext(
     Assert::CodingError(
         "InProcessApplicationHost::OnGetCodePackageActivationContext should never be called. CodePackage {0}",
         codeContext);
+}
+
+ErrorCode InProcessApplicationHost::OnGetCodePackageActivator(
+    _Out_ ApplicationHostCodePackageActivatorSPtr & codePackageActivator)
+{
+    if (this->HostContext.IsCodePackageActivatorHost)
+    {
+        codePackageActivator = codePackageActivator_;
+        return ErrorCode::Success();
+    }
+
+    return ErrorCode(ErrorCodeValue::OperationNotSupported);
+}
+
+ErrorCode InProcessApplicationHost::OnCodePackageEvent(
+    CodePackageEventDescription const & eventDescription)
+{
+    ApplicationHostCodePackageActivatorSPtr codePackageActivator;
+    auto error = this->OnGetCodePackageActivator(codePackageActivator);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    codePackageActivator->NotifyEventHandlers(eventDescription);
+
+    return ErrorCode::Success();
+}
+
+void InProcessApplicationHost::ProcessCodePackageEvent(CodePackageEventDescription eventDescription)
+{
+    if (this->State.Value > FabricComponentState::Opened)
+    {
+        // no need to notify if type host is closing down
+        return;
+    }
+
+    this->OnCodePackageEvent(eventDescription);
 }
 
 ErrorCode InProcessApplicationHost::OnUpdateCodePackageContext(

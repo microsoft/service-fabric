@@ -540,6 +540,9 @@ protected:
         case QueryNames::GetServiceName:
             errorCode = owner_.GetServiceName(queryArgs_, queryResult, activityId_);
             break;
+        case QueryNames::GetReplicaListByServiceNames:
+            errorCode = owner_.GetReplicaListByServiceNames(queryArgs_, queryResult, activityId_);
+            break;
         default:
             errorCode = ErrorCodeValue::InvalidArgument;
         }
@@ -723,7 +726,17 @@ ErrorCode FMQueryHelper::GetNodesList(QueryArgumentMap const & queryArgs, QueryR
 
     fm_.WriteInfo(Constants::QuerySource, "{0}: Cache nodes: continuation token={1}, count={2}", activityId, continuationToken, nodes.size());
 
+    // Get max results value
+    int64 maxResults;
+    auto error = QueryPagingDescription::TryGetMaxResultsFromArgumentMap(queryArgs, maxResults, activityId.ToString(), L"FMQueryHelper::GetNodesList");
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
     ListPager<NodeQueryResult> nodeQueryResultList;
+    nodeQueryResultList.SetMaxResults(maxResults);
+
     for (auto nodeIt = nodes.begin(); nodeIt != nodes.end(); ++nodeIt)
     {
         NodeInfoSPtr const& nodeInfo = *nodeIt;
@@ -747,7 +760,7 @@ ErrorCode FMQueryHelper::GetNodesList(QueryArgumentMap const & queryArgs, QueryR
                 nodeDownTimeInSecs = (DateTime::Now() - nodeInfo->NodeDownTime).TotalSeconds();
             }
 
-            auto error = nodeQueryResultList.TryAdd(
+            error = nodeQueryResultList.TryAdd(
                 ServiceModel::NodeQueryResult(
                     nodeInfo->NodeName,
                     nodeInfo->IpAddressOrFQDN,
@@ -765,17 +778,22 @@ ErrorCode FMQueryHelper::GetNodesList(QueryArgumentMap const & queryArgs, QueryR
                     nodeInfo->Id,
                     nodeInfo->NodeInstance.InstanceId,
                     nodeInfo->DeactivationInfo.GetQueryResult(),
+                    nodeInfo->Description.HttpGatewayPort,
                     nodeInfo->Description.ClusterConnectionPort,
                     false));
-            if (error.IsError(ErrorCodeValue::EntryTooLarge))
+            if (!error.IsSuccess() && nodeQueryResultList.IsBenignError(error))
             {
                 fm_.WriteInfo(Constants::QuerySource,
-                    "{0}: reached max message size with {1} ({2}): {3}",
+                    "{0}: reached max message size or page limit with {1} ({2}): {3}",
                     activityId,
                     nodeInfo->Id,
                     nodeInfo->NodeName,
                     error.Message);
                 break;
+            }
+            else if (!error.IsSuccess())
+            {
+                return error;
             }
         }
     }
@@ -1035,7 +1053,7 @@ void FMQueryHelper::InsertPartitionIntoQueryResultList(LockedFailoverUnitPtr con
             failoverUnitPtr->MinReplicaSetSize,
             failoverUnitPtr->PartitionStatus,
             failoverUnitPtr->LastQuorumLossDuration.TotalSeconds(),
-            failoverUnitPtr->CurrentConfigurationEpoch));
+            failoverUnitPtr->CurrentConfigurationEpoch.ToPrimaryEpoch()));
     }
     else
     {
@@ -1043,6 +1061,24 @@ void FMQueryHelper::InsertPartitionIntoQueryResultList(LockedFailoverUnitPtr con
             servicePartitionInformation,
             failoverUnitPtr->TargetReplicaSetSize,
             failoverUnitPtr->PartitionStatus));
+    }
+}
+
+void FMQueryHelper::InsertReplicaInfoForPartition(LockedFailoverUnitPtr const &failoverUnitPtr, bool isFilterByPartitionName, wstring const & partitionNameFilter, ReplicasByServiceQueryResult &replicasByServiceResult)
+{
+    auto const & consistencyUnitDescription = failoverUnitPtr->FailoverUnitDescription.ConsistencyUnitDescription;
+    for (auto replica = failoverUnitPtr->BeginIterator; replica != failoverUnitPtr->EndIterator; ++replica)
+    {
+        if (isFilterByPartitionName && consistencyUnitDescription.PartitionName != partitionNameFilter) 
+        {
+            continue;
+        }
+
+        replicasByServiceResult.ReplicaInfos.push_back(move(ReplicaInfoResult(
+            consistencyUnitDescription.ConsistencyUnitId.Guid,
+            consistencyUnitDescription.PartitionName,
+            replica->ReplicaDescription.ReplicaId,
+            replica->NodeInfoObj->NodeName)));
     }
 }
 
@@ -1200,10 +1236,18 @@ ErrorCode FMQueryHelper::GetPartitionLoadInformation(QueryArgumentMap const & qu
 
         for (ServiceLoadMetricDescription const & metric : failoverUnitPtr->ServiceInfoObj->ServiceDescription.Metrics)
         {
-            primaryLoads.push_back(LoadMetricReport(metric.Name, static_cast<uint>(metric.PrimaryDefaultLoad), DateTime::Zero));
+            primaryLoads.push_back(LoadMetricReport(
+                metric.Name,
+                static_cast<uint>(metric.PrimaryDefaultLoad),
+                metric.PrimaryDefaultLoad,
+                DateTime::Zero));
             if (failoverUnitPtr->IsStateful)
             {
-                secondaryLoads.push_back(LoadMetricReport(metric.Name, static_cast<uint>(metric.SecondaryDefaultLoad), DateTime::Zero));
+                secondaryLoads.push_back(LoadMetricReport(
+                    metric.Name,
+                    static_cast<uint>(metric.SecondaryDefaultLoad),
+                    metric.SecondaryDefaultLoad,
+                    DateTime::Zero));
             }
         }
     }
@@ -1344,6 +1388,91 @@ ErrorCode FMQueryHelper::GetServicePartitionReplicaList(QueryArgumentMap const &
     return ErrorCode::Success();
 }
 
+ErrorCode FMQueryHelper::GetReplicaListByServiceNames(QueryArgumentMap const & queryArgs, QueryResult & queryResult, Common::ActivityId const & activityId)
+{
+    wstring serviceNamesString;
+    if (!queryArgs.TryGetValue(QueryResourceProperties::Service::ServiceNames, serviceNamesString))
+    {
+        return ErrorCodeValue::InvalidArgument;
+    }
+
+    // check if we need to filter on the replicaId
+    wstring desiredReplicaId;
+    bool filterReplicaId = queryArgs.TryGetValue(QueryResourceProperties::Replica::ReplicaId, desiredReplicaId);
+    if (!filterReplicaId)
+    {
+        filterReplicaId = queryArgs.TryGetValue(QueryResourceProperties::Replica::InstanceId, desiredReplicaId);
+    }
+
+    NamesArgument serviceNames;
+    auto error = JsonHelper::Deserialize(serviceNames, serviceNamesString);
+    if (!error.IsSuccess())
+    {
+        fm_.WriteInfo(Constants::QuerySource,
+            "{0}: ReplicasByService Error when deserializing service names {1}",
+            activityId,
+            error);
+        return error;
+    }
+
+    ListPager<ReplicasByServiceQueryResult> replicasByService;
+
+    for (auto const &serviceName : serviceNames.Names)
+    {
+        ReplicasByServiceQueryResult replicasByServiceResult(serviceName);
+
+        // Get replicas in all partitions in the service.
+        error = fm_.ServiceCacheObj.IterateOverFailoverUnits(
+            serviceName,
+            [](FailoverUnitId const&) -> bool
+            {
+                return true;
+            },
+            [&replicasByServiceResult, filterReplicaId, &desiredReplicaId, this](LockedFailoverUnitPtr & failoverUnit)->ErrorCode
+            {
+                if (!failoverUnit->IsOrphaned)
+                {
+                    InsertReplicaInfoForPartition(failoverUnit, filterReplicaId, desiredReplicaId, replicasByServiceResult);
+                }
+
+                return ErrorCodeValue::Success;
+            });
+
+        if (!error.IsSuccess())
+        {
+            fm_.WriteInfo(Constants::QuerySource,
+                "{0}: ReplicasByService Error when iterating Failover Unit's for service {1}: {2}",
+                activityId,
+                serviceName,
+                error);
+            return error;
+        }
+
+        error = replicasByService.TryAdd(move(replicasByServiceResult));
+        if (error.IsError(ErrorCodeValue::EntryTooLarge))
+        {
+            fm_.WriteInfo(Constants::QuerySource,
+                "{0}: ReplicasByService reached max message size with {1}: {2}",
+                activityId,
+                serviceName,
+                error);
+            break;
+        }
+        else if (!error.IsSuccess())
+        {
+            fm_.WriteInfo(Constants::QuerySource,
+                "{0}: ReplicasByService error when adding to list pager {1}: {2}",
+                activityId,
+                serviceName,
+                error);
+            return error;
+        }
+    }
+
+    queryResult = ServiceModel::QueryResult(move(replicasByService));
+    return ErrorCodeValue::Success;
+}
+
 ErrorCode FMQueryHelper::GetClusterLoadInformation(QueryArgumentMap const & queryArgs, QueryResult & queryResult, Common::ActivityId const & activityId)
 {
     UNREFERENCED_PARAMETER(activityId);
@@ -1445,17 +1574,26 @@ ErrorCode FMQueryHelper::GetReplicaLoadInformation(QueryArgumentMap const & quer
             }
             else
             {
+                // no need to divide and check as services cannot define system metrics (Cpu and Memory)
                 bool useSecondaryLoad = replica->FailoverUnitObj.IsStateful && role == ReplicaRole::Enum::Secondary;
 
                 for (ServiceLoadMetricDescription metric : failoverUnitPtr->ServiceInfoObj->ServiceDescription.Metrics)
                 {
                     if (useSecondaryLoad)
                     {
-                        loadMetricReports.push_back(LoadMetricReport(metric.Name, static_cast<uint>(metric.SecondaryDefaultLoad), DateTime::Zero));
+                        loadMetricReports.push_back(LoadMetricReport(
+                            metric.Name,
+                            static_cast<uint>(metric.SecondaryDefaultLoad),
+                            metric.SecondaryDefaultLoad,
+                            DateTime::Zero));
                     }
                     else
                     {
-                        loadMetricReports.push_back(LoadMetricReport(metric.Name, static_cast<uint>(metric.PrimaryDefaultLoad), DateTime::Zero));
+                        loadMetricReports.push_back(LoadMetricReport(
+                            metric.Name,
+                            static_cast<uint>(metric.PrimaryDefaultLoad),
+                            metric.PrimaryDefaultLoad,
+                            DateTime::Zero));
                     }
                 }
             }
@@ -1654,11 +1792,20 @@ bool FMQueryHelper::IsMatch(FABRIC_QUERY_NODE_STATUS nodeStatus, DWORD nodeStatu
     }
 }
 
-void FMQueryHelper::ConvertToLoadMetricReport(std::vector<LoadBalancingComponent::LoadMetricStats> const & loadMetricStats, __inout vector<LoadMetricReport> & loadMetricReport)
+void FMQueryHelper::ConvertToLoadMetricReport(
+    std::vector<LoadBalancingComponent::LoadMetricStats> const & loadMetricStats,
+    __inout vector<LoadMetricReport> & loadMetricReport)
 {
     for(auto iter = loadMetricStats.begin(); iter != loadMetricStats.end();++iter)
     {
-        loadMetricReport.push_back(LoadMetricReport(iter->Name, static_cast<uint>(iter->Value), StopwatchTime::ToDateTime(iter->LastReportTime)));
+        uint loadValue = static_cast<uint>(iter->Value);
+        double currentloadValue = iter->Value;
+        if (iter->Name == ServiceModel::Constants::SystemMetricNameCpuCores)
+        {
+            loadValue = static_cast<uint>(loadValue / ServiceModel::Constants::ResourceGovernanceCpuCorrectionFactor);
+            currentloadValue = currentloadValue / ServiceModel::Constants::ResourceGovernanceCpuCorrectionFactor;
+        }
+        loadMetricReport.push_back(LoadMetricReport(iter->Name, loadValue, currentloadValue, StopwatchTime::ToDateTime(iter->LastReportTime)));
     }
 }
 

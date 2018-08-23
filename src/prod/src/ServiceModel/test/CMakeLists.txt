@@ -19,7 +19,9 @@ add_executable(${exe_ServiceModelTest}
     ../NodeIdGenerator.Test.cpp
     ../Serializer.Test.cpp
 	../KeyRange.Test.cpp
+    ../JsonSerialization.Test.cpp
     ../QueryArgumentMap.Test.cpp
+    ../modelV2/modelV2.Test.cpp
 )
 
 
@@ -48,8 +50,6 @@ target_link_libraries(${exe_ServiceModelTest}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
   c
 )
 

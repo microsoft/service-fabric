@@ -19,8 +19,8 @@ namespace ServiceModel
             ULONG totalCount, 
             std::vector<DeployedServicePackageHealthStateChunk> && items);
 
-        DeployedServicePackageHealthStateChunkList(DeployedServicePackageHealthStateChunkList && other);
-        DeployedServicePackageHealthStateChunkList & operator = (DeployedServicePackageHealthStateChunkList && other);
+        DeployedServicePackageHealthStateChunkList(DeployedServicePackageHealthStateChunkList && other) = default;
+        DeployedServicePackageHealthStateChunkList & operator = (DeployedServicePackageHealthStateChunkList && other) = default;
 
         virtual ~DeployedServicePackageHealthStateChunkList();
 

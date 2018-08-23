@@ -74,13 +74,13 @@ namespace Transport
         Common::ErrorCode SendOneWay_Dedicated(MessageUPtr && message, Common::TimeSpan expiration) override;
 
         void Close() override;
-        void Abort(Common::ErrorCode fault) override;
+        void Abort(Common::ErrorCode const & fault) override;
         void StopSendAndScheduleClose(
             Common::ErrorCode const & fault,
             bool notifyRemote,
             Common::TimeSpan delay) override;
 
-        void ReportFault(Common::ErrorCode fault) override;
+        void ReportFault(Common::ErrorCode const & fault) override;
         Common::ErrorCode GetFault() const override;
 
         ISendTarget::SPtr SetTarget(ISendTarget::SPtr const & target) override;
@@ -149,15 +149,16 @@ namespace Transport
         void ResolveTargetHostName();
         bool ValidateInstanceChl(uint64 instanceLowerBound) const;
         bool IsIdleTooLongChl(Common::StopwatchTime now) const;
+        bool IsSendStuck(Common::StopwatchTime now) const;
         void CheckReceiveMissing_CallerHoldingLock(Common::StopwatchTime now);
 
-        void CloseInternal(bool abort, Common::ErrorCode fault);
-        void Close_CallerHoldingLock(bool abort, Common::ErrorCode fault);
-        Common::ErrorCode Fault_CallerHoldingLock(Common::ErrorCode fault);
+        void CloseInternal(bool abort, Common::ErrorCode const & fault);
+        void Close_CallerHoldingLock(bool abort, Common::ErrorCode const & fault);
+        Common::ErrorCode Fault_CallerHoldingLock(Common::ErrorCode const & fault);
         void ScheduleCleanup_CallerHoldingLock();
 
         void SubmitSend();
-        void SendComplete(Common::ErrorCode result, ULONG_PTR bytesTransferred);
+        void SendComplete(Common::ErrorCode const & result, ULONG_PTR bytesTransferred);
         Common::ErrorCode Send(
             MessageUPtr && message,
             Common::TimeSpan expiration,
@@ -166,7 +167,7 @@ namespace Transport
 
         bool CanReceive() const;
         void SubmitReceive();
-        void ReceiveComplete(Common::ErrorCode error, ULONG_PTR bytesTransferred);
+        void ReceiveComplete(Common::ErrorCode const & error, ULONG_PTR bytesTransferred);
         void ProcessReceivedBytes();
 
         void DispatchIncomingMessages(MessageUPtr && message);
@@ -305,7 +306,8 @@ namespace Transport
         Common::TimerSPtr closeTimer_;
 
         Common::TimeSpan idleTimeout_;
-        Common::StopwatchTime lastActivityTime_;
+        Common::StopwatchTime lastRecvCompeteTime_ = Common::StopwatchTime::MaxValue;
+        Common::StopwatchTime pendingSendStartTime_ = Common::StopwatchTime::MaxValue;
         static bool Test_IdleTimeoutHappened;
 
         Common::TimeSpan receiveMissingThreshold_;

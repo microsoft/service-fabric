@@ -138,7 +138,7 @@ namespace Naming
                         completeCallback(this->SequenceNumber);
                     }
                 },
-                owner_->CreateStoreOperationRoot());
+                owner_->CreateAsyncOperationRoot());
             completedSync = inner->CompletedSynchronously;
             operation_ = move(inner);
         }
@@ -215,7 +215,7 @@ namespace Naming
         __in ServiceResolver & fmClient, 
         Common::ComponentRoot const & root)
         : KeyValueStoreReplica(partitionId, replicaId)
-        , federationRoot_(root.shared_from_this())
+        , federationRoot_(root.CreateComponentRoot())
         , OnChangeRoleCallback()
         , OnCloseReplicaCallback()
         , namingConfig_(NamingConfig::GetConfig())
@@ -424,7 +424,7 @@ namespace Naming
 
     void StoreService::InitializeMessageHandler()
     {
-        auto root = CreateStoreOperationRoot();
+        auto selfRoot = this->CreateComponentRoot();
         auto filter = messageFilterSPtr_;
 
         // Register to receive routed messages from federation layer
@@ -435,7 +435,7 @@ namespace Naming
             { 
                 Assert::CodingError("StoreService does not support oneway messages");
             },
-            [this, root](Transport::MessageUPtr & message, Federation::RequestReceiverContextUPtr & requestReceiverContext)
+            [this, selfRoot](Transport::MessageUPtr & message, Federation::RequestReceiverContextUPtr & requestReceiverContext)
             { 
                 TimeoutHeader timeoutHeader;
                 NamingMessage::TryGetNamingHeader(*message, timeoutHeader);
@@ -625,8 +625,6 @@ namespace Naming
     bool StoreService::ValidateMessage(__in Transport::MessageUPtr & message)
     {
         bool success = true;
-
-        if (success)
         {
             FabricActivityHeader header;
             success = message->Headers.TryReadFirst(header);
@@ -704,7 +702,7 @@ namespace Naming
             *namingStoreUPtr_,
             *propertiesUPtr_,
             [this](AsyncOperationSPtr const & operation) { this->FinishRecoveringPrimary(operation, false); },
-            this->CreateStoreOperationRoot());
+            this->CreateAsyncOperationRoot());
 
         // Only use this make_shared/Start() pattern if the async operation will not
         // be cancelled before Start() finishes since Cancel() is not supported on unstarted async operations
@@ -762,14 +760,5 @@ namespace Naming
         }
 
         RecoverPrimaryAsyncOperation::End(operation);
-    }
-
-    // Async operations need to root both the federation runtime and this.
-    Common::AsyncOperationSPtr StoreService::CreateStoreOperationRoot()
-    {
-        std::vector<ComponentRootSPtr> roots;
-        roots.push_back(federationRoot_);
-        roots.push_back(CreateComponentRoot());
-        return CreateAsyncOperationMultiRoot(std::move(roots));
     }
 }

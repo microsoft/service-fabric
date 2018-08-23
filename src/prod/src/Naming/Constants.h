@@ -70,6 +70,7 @@ namespace Naming
         // File Transfer Gateway
         // -------------------------------
         static Common::GlobalWString FileTransferGatewayDirectory;
+        static double const ChunkFileLockAcquireTimeoutInSeconds;
     };
 
 }

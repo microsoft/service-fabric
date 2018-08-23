@@ -30,7 +30,7 @@ target_link_libraries(${lib_TransactionalReplicator}
     ${lib_TestHooks}
     ${lib_data_utilities}
     ${lib_KComAdapter}
-    ${lib_KtlLoggerShimUPassthrough}
+    ${lib_KtlLoggerShimUnify}
     ${KtlLoggerUser}
     ${Ktlfull}
     )

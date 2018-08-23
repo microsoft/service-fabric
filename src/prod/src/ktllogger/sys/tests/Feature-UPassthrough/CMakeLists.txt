@@ -15,7 +15,6 @@ add_executable(${exe_KtlLogFeatureUPassthroughTest}
   ../RWTStress.cpp
   ../LLWorkload.cpp
   ../Feature.Test.Linux.cpp
-  ../RvdLogger.cpp
   ../RawCoreLoggerTests.cpp
   ../overlaytests.cpp
   ../misctests.cpp
@@ -41,7 +40,7 @@ target_link_libraries(${exe_KtlLogFeatureUPassthroughTest}
   ${KtlLoggerUser}
   ${lib_Common}
   ${lib_FabricCommon}
-  ${lib_KtlLoggerShimUPassthrough}
+  ${lib_KtlLoggerShimUnify}
   ${Ktlfull}
   ktllttng
   KmUnitUser
@@ -58,6 +57,4 @@ target_link_libraries(${exe_KtlLogFeatureUPassthroughTest}
    dl
    xml2
    uuid
-   unwind
-   unwind-x86_64
 )

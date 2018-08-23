@@ -111,9 +111,10 @@ void InformationLogRecord::Read(
 void InformationLogRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
 
     ULONG32 startingPosition = binaryWriter.Position;
     binaryWriter.Position += sizeof(ULONG32);

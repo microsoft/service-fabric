@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <Target Name="All" BeforeTargets="BeforeBuild" DependsOnTargets="Gen_Config_Files;CopyFiles">
+  </Target>
+  <ItemGroup>
+    <ConfigFiles Include="$(SrcRoot)\prod\**\*Config.h" />
+  </ItemGroup>
+  <Target Name="Gen_Config_Files" Inputs="@(ConfigFiles);./WinFabricConfigSectionsTemplate.txt" Outputs="$(BinariesBuildTypeArchDirectory)\inc\Configurations.csv;$(BinariesBuildTypeArchDirectory)\inc\Configurations.linux.csv;$(BinariesBuildTypeArchDirectory)\inc\PublicConfigurations.csv;$(BinariesBuildTypeArchDirectory)\inc\WinFabricConfigSections.cs">
+    <MakeDir Directories="$(BinariesBuildTypeArchDirectory)\inc" />
+    <Exec Command="perl ../../tools/ConfigurationValidator/GenerateConfigurationsCSV.pl $(SrcRoot)/prod $(BinariesBuildTypeArchDirectory)/inc/Configurations.csv $(BinariesBuildTypeArchDirectory)/inc/Configurations.linux.csv $(BinariesBuildTypeArchDirectory)/inc/PublicConfigurations.csv" />
+    <Exec Command="perl GenerateConfigSections.pl $(SrcRoot)/prod $(BinariesBuildTypeArchDirectory)/inc/Configurations.csv $(BinariesBuildTypeArchDirectory)/inc/WinFabricConfigSections.cs" />
+  </Target>
+  <Target Name="CopyFiles">
+    <ItemGroup>
+      <!-- General copy for anything under \inc -->
+      <Content Include="$(BinariesBuildTypeArchDirectory)\inc\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Content)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(Content)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(Content)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="GetTargetFrameworkProperties" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

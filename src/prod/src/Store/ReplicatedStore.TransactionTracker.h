@@ -16,11 +16,13 @@ namespace Store
         void Remove(TransactionBase const &);
         void StartDrainTimer();
         void CancelDrainTimer();
+        void AbortOutstandingTransactions();
 
     private:
         typedef std::unordered_map<uint64, TransactionBaseWPtr> TransactionMap;
 
-        void AbortOutstanding(Common::ComponentRootSPtr const &, std::shared_ptr<TransactionMap> const & toRelease);
+        void ScheduleAbortOutstanding(bool enableDrainTimer);
+        void AbortOutstanding(Common::ComponentRootSPtr const &, std::shared_ptr<TransactionMap> const & toRelease, bool enableDrainTimer);
         void DrainTimerCallback();
 
         ReplicatedStore & replicatedStore_;

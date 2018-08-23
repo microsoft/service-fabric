@@ -28,6 +28,7 @@ TransactionalReplicatorSettings::TransactionalReplicatorSettings()
     , slowLogIOCountThreshold_(0)
     , slowLogIOTimeThreshold_()
     , slowLogIOHealthReportTTL_()
+    , truncationInterval_()
 {
 }
 
@@ -36,80 +37,88 @@ ErrorCode TransactionalReplicatorSettings::FromPublicApi(
     __out TransactionalReplicatorSettingsUPtr & output)
 {
     TransactionalReplicatorSettingsUPtr created = unique_ptr<TransactionalReplicatorSettings>(new TransactionalReplicatorSettings());
-    
+
     // Populate all member variables
     created->flags_ = transactionalReplicatorSettings2.Flags;
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_API_MONITORING_DURATION_SECONDS)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_API_MONITORING_DURATION_SECONDS)
     {
         created->slowApiMonitoringDuration_ = TimeSpan::FromSeconds(transactionalReplicatorSettings2.SlowApiMonitoringDurationSeconds);
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_CHECKPOINT_THRESHOLD_MB)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_CHECKPOINT_THRESHOLD_MB)
     {
         created->checkpointThresholdInMB_ = transactionalReplicatorSettings2.CheckpointThresholdInMB;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_MAX_ACCUMULATED_BACKUP_LOG_SIZE_MB)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_MAX_ACCUMULATED_BACKUP_LOG_SIZE_MB)
     {
         created->maxAccumulatedBackupLogSizeInMB_ = transactionalReplicatorSettings2.MaxAccumulatedBackupLogSizeInMB;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_MIN_LOG_SIZE_MB)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_MIN_LOG_SIZE_MB)
     {
         created->minLogSizeInMB_ = transactionalReplicatorSettings2.MinLogSizeInMB;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_TRUNCATION_THRESHOLD_FACTOR)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_TRUNCATION_THRESHOLD_FACTOR)
     {
         created->truncationThresholdFactor_ = transactionalReplicatorSettings2.TruncationThresholdFactor;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_THROTTLING_THRESHOLD_FACTOR)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_THROTTLING_THRESHOLD_FACTOR)
     {
         created->throttlingThresholdFactor_ = transactionalReplicatorSettings2.ThrottlingThresholdFactor;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_MAX_RECORD_SIZE_KB)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_MAX_RECORD_SIZE_KB)
     {
         created->maxRecordSizeInKB_ = transactionalReplicatorSettings2.MaxRecordSizeInKB;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_MAX_STREAM_SIZE_MB)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_MAX_STREAM_SIZE_MB)
     {
         created->maxStreamSizeInMB_ = transactionalReplicatorSettings2.MaxStreamSizeInMB;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_MAX_WRITE_QUEUE_DEPTH_KB)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_MAX_WRITE_QUEUE_DEPTH_KB)
     {
         created->maxWriteQueueDepthInKB_ = transactionalReplicatorSettings2.MaxWriteQueueDepthInKB;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_MAX_METADATA_SIZE_KB)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_MAX_METADATA_SIZE_KB)
     {
         created->maxMetadataSizeInKB_ = transactionalReplicatorSettings2.MaxMetadataSizeInKB;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_FOR_LOCAL_SSD)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_FOR_LOCAL_SSD)
     {
         created->optimizeForLocalSSD_ = transactionalReplicatorSettings2.OptimizeForLocalSSD;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_SECONDARY_COMMIT_APPLY_ACKNOWLEDGEMENT)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_SECONDARY_COMMIT_APPLY_ACKNOWLEDGEMENT)
     {
         created->enableSecondaryCommitApplyAcknowledgement_ = transactionalReplicatorSettings2.EnableSecondaryCommitApplyAcknowledgement;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_LOG_FOR_LOWER_DISK_USAGE)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_OPTIMIZE_LOG_FOR_LOWER_DISK_USAGE)
     {
         created->optimizeLogForLowerDiskUsage_ = transactionalReplicatorSettings2.OptimizeLogForLowerDiskUsage;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_DURATION_SECONDS)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_DURATION_SECONDS)
     {
         created->slowLogIODuration_ = TimeSpan::FromSeconds(transactionalReplicatorSettings2.SlowLogIODurationSeconds);
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_COUNT_THRESHOLD)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_COUNT_THRESHOLD)
     {
         created->slowLogIOCountThreshold_ = transactionalReplicatorSettings2.SlowLogIOCountThreshold;
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_TIME_THRESHOLD_SECONDS)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_TIME_THRESHOLD_SECONDS)
     {
         created->slowLogIOTimeThreshold_ = TimeSpan::FromSeconds(transactionalReplicatorSettings2.SlowLogIOTimeThresholdSeconds);
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_HEALTH_REPORT_TTL_SECONDS)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_HEALTH_REPORT_TTL_SECONDS)
     {
         created->slowLogIOHealthReportTTL_ = TimeSpan::FromSeconds(transactionalReplicatorSettings2.SlowLogIOHealthReportTTLSeconds);
     }
-    if (created->flags_ && FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION)
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION)
     {
         created->serializationVersion_ = transactionalReplicatorSettings2.SerializationVersion;
+    }
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_INCREMENTAL_BACKUPS_ACROSS_REPLICAS)
+    {
+        created->enableIncrementalBackupsAcrossReplicas_ = transactionalReplicatorSettings2.EnableIncrementalBackupsAcrossReplicas;
+    }
+    if (created->flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS)
+    {
+        created->truncationInterval_ = TimeSpan::FromSeconds(transactionalReplicatorSettings2.LogTruncationIntervalSeconds);
     }
 
     return MoveIfValid(
@@ -180,6 +189,12 @@ ErrorCode TransactionalReplicatorSettings::FromConfig(
     created->serializationVersion_ = config.SerializationVersion;
     created->flags_ |= FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION;
 
+    created->truncationInterval_ = config.TruncationInterval;
+    created->flags_ |= FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS;
+    
+    created->enableIncrementalBackupsAcrossReplicas_ = config.EnableIncrementalBackupsAcrossReplicas;
+    created->flags_ |= FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_INCREMENTAL_BACKUPS_ACROSS_REPLICAS;
+
     return MoveIfValid(
         move(created),
         output);
@@ -238,8 +253,7 @@ HRESULT TxnReplicator::TransactionalReplicatorSettings::FromConfig(
     }
 }
 
-void TransactionalReplicatorSettings::ToPublicApi(
-    __out TRANSACTIONAL_REPLICATOR_SETTINGS & transactionalReplicatorSettings)
+void TransactionalReplicatorSettings::ToPublicApi(__out TRANSACTIONAL_REPLICATOR_SETTINGS & transactionalReplicatorSettings)
 {
     transactionalReplicatorSettings.Reserved = NULL;
     transactionalReplicatorSettings.Flags = flags_;
@@ -315,6 +329,14 @@ void TransactionalReplicatorSettings::ToPublicApi(
     if (flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION)
     {
         transactionalReplicatorSettings.SerializationVersion = static_cast<DWORD>(serializationVersion_);
+    }
+    if (flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS)
+    {
+        transactionalReplicatorSettings.LogTruncationIntervalSeconds = static_cast<DWORD>(truncationInterval_.TotalSeconds());
+    }
+    if (flags_ & FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_INCREMENTAL_BACKUPS_ACROSS_REPLICAS)
+    {
+        transactionalReplicatorSettings.EnableIncrementalBackupsAcrossReplicas = enableIncrementalBackupsAcrossReplicas_;
     }
 }
 
@@ -530,6 +552,27 @@ Common::ErrorCode TxnReplicator::TransactionalReplicatorSettings::ReadFromConfig
     if (!error.IsSuccess()) { return error; }
     if (hasValue) { created->flags_ |= FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION; }
 
+    // PeriodicCheckpointTruncationInterval
+    error = Parser::ReadSettingsValue(
+        configPackageCPtr,
+        sectionName,
+        configNames.TruncationIntervalEntry.Key,
+        created->truncationInterval_,
+        hasValue);
+
+    if (!error.IsSuccess()) { return error; }
+    if (hasValue) { created->flags_ |= FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS; }
+    // EnableIncrementalBackupsAcrossReplicas
+    error = Parser::ReadSettingsValue(
+        configPackageCPtr,
+        sectionName,
+        configNames.EnableIncrementalBackupsAcrossReplicasEntry.Key,
+        created->enableIncrementalBackupsAcrossReplicas_,
+        hasValue);
+
+    if (!error.IsSuccess()) { return error; }
+    if (hasValue) { created->flags_ |= FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_INCREMENTAL_BACKUPS_ACROSS_REPLICAS; }
+
     return MoveIfValid(
         move(created),
         output);
@@ -605,6 +648,11 @@ bool TransactionalReplicatorSettings::get_EnableSecondaryCommitApplyAcknowledgem
     return enableSecondaryCommitApplyAcknowledgement_;
 }
 
+bool TransactionalReplicatorSettings::get_EnableIncrementalBackupsAcrossReplicas() const
+{
+    return enableIncrementalBackupsAcrossReplicas_;
+}
+
 Common::TimeSpan TransactionalReplicatorSettings::get_SlowLogIODuration() const
 {
     return slowLogIODuration_;
@@ -623,6 +671,11 @@ Common::TimeSpan TransactionalReplicatorSettings::get_SlowLogIOTimeThreshold() c
 Common::TimeSpan TransactionalReplicatorSettings::get_SlowLogIOHealthReportTTL() const
 {
     return slowLogIOHealthReportTTL_;
+}
+
+Common::TimeSpan TransactionalReplicatorSettings::get_TruncationInterval() const
+{
+    return truncationInterval_;
 }
 
 ErrorCode TransactionalReplicatorSettings::MoveIfValid(
@@ -1047,13 +1100,19 @@ bool TransactionalReplicatorSettings::IsMultipleOf4(int64 value)
     return ((value % 4) == 0);
 }
 
+bool TransactionalReplicatorSettings::IsTRSettingsEx1FlagsUsed(DWORD64 const & flags)
+{
+    return flags & FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_INCREMENTAL_BACKUPS_ACROSS_REPLICAS;
+}
+
 void TransactionalReplicatorSettings::WriteTo(TextWriter& w, FormatOptions const &) const
 {
     w.Write(
         "[checkpointThresholdInMB={0} maxAccumulatedBackupLogSizeInMB={1} minLogSizeInMB={2}\
         truncationThresholdFactor={3} throttlingThresholdFactor={4} maxRecordSizeInKB={5} maxStreamSizeInMB={6}\
         maxWriteQueueDepthInKB={7} maxMetadataSizeInKB={8} slowLogIOCountThreshold={9} serializationVersion={10}\
-        optimizeForLocalSSD={11} optimizeLogForLowerDiskUsage={12} enableSecondaryCommitApplyAcknowledgement={13}]",
+        optimizeForLocalSSD={11} optimizeLogForLowerDiskUsage={12} enableSecondaryCommitApplyAcknowledgement={13}\
+        enableIncrementalBackupsAcrossReplicas={14}]",
         checkpointThresholdInMB_,
         maxAccumulatedBackupLogSizeInMB_,
         minLogSizeInMB_,
@@ -1067,12 +1126,14 @@ void TransactionalReplicatorSettings::WriteTo(TextWriter& w, FormatOptions const
         serializationVersion_,
         optimizeForLocalSSD_,
         optimizeLogForLowerDiskUsage_,
-        enableSecondaryCommitApplyAcknowledgement_);
+        enableSecondaryCommitApplyAcknowledgement_,
+        enableIncrementalBackupsAcrossReplicas_);
 
     w.Write(
-        "[slowApiMonitoringDuration={0} slowLogIODuration={1} slowLogIOTimeThreshold={2} slowLogIOHealthReportTTL={3}]",
+        "[slowApiMonitoringDuration={0} slowLogIODuration={1} slowLogIOTimeThreshold={2} slowLogIOHealthReportTTL={3}, , periodicCheckpointTruncationInterval={4}]",
         slowApiMonitoringDuration_,
         slowLogIODuration_,
         slowLogIOTimeThreshold_,
-        slowLogIOHealthReportTTL_);
+        slowLogIOHealthReportTTL_,
+        truncationInterval_);
 }

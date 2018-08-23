@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>AzureTableUploader Class Library</Description>
+    <DefineConstants>$(DefineConstants);DotNetCoreClr</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>AzureTableUploader</AssemblyName>
+    <PackageId>AzureTableUploader</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\dll\_friends.cs;
+      ..\..\AzureTableCommon.cs;
+      ..\..\AzureTablePerformance.cs;
+      ..\..\AzureTableQueryableCsvUploader.cs;
+      ..\..\AzureTableQueryableEventUploader.cs;
+      ..\..\AzureTableTrimmer.cs;
+      ..\..\AzureTableSelectiveEventUploader.cs;
+      ..\..\CsvConfigFileHelper.cs;
+      ..\..\CsvDataTypeHelper.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\common\CoreCLRDll\AzureUploaderCommon\AzureUploaderCommon.csproj" />
+    <ProjectReference Include="..\..\..\..\..\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
+    <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

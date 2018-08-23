@@ -213,6 +213,8 @@ VOID SetupRawCoreLoggerTests(
     NTSTATUS status;
     KtlSystem* System;
 
+    EventRegisterMicrosoft_Windows_KTL();
+	
     status = KtlSystem::Initialize(FALSE,     // Do not enable VNetwork, we don't need it
                                    &System);
     VERIFY_IS_TRUE(NT_SUCCESS(status), "KtlSystemInitialize");
@@ -1720,7 +1722,7 @@ void DumpRecords(
             printf("\n");
             return;
         }
-
+		
         ULONG thisLen;
         ULONGLONG prevLen;
 
@@ -1756,6 +1758,7 @@ void DumpRecords(
             ReadAndDumpRecord(logContainer, logStream, StreamId, Asn, TRUE, TRUE, TRUE, &thisLen, &prevLen);
         }
 
+		
         logStream.Reset();
         //
         // All done, cleanup
@@ -2003,7 +2006,11 @@ void OpenViaKtl(
     StreamCloseSynchronizer closeStreamSync;
 
 
-    status = KtlLogManager::Create(ALLOCATION_TAG, *g_Allocator, logManager);
+#ifdef UPASSTHROUGH
+    status = KtlLogManager::CreateInproc(ALLOCATION_TAG, *g_Allocator, logManager);
+#else
+    status = KtlLogManager::CreateDriver(ALLOCATION_TAG, *g_Allocator, logManager);
+#endif
     VERIFY_IS_TRUE(NT_SUCCESS(status), "KtlLogManager::Create");
 
     status = logManager->StartOpenLogManager(NULL, // ParentAsync
@@ -2281,7 +2288,9 @@ BOOLEAN IsRecordChecksumValid(
     status = sync.WaitForCompletion();
     VERIFY_IS_TRUE(NT_SUCCESS(status), "");
 
-    return(fullRecordHeader->ChecksumIsValid());
+	status = fullRecordHeader->ChecksumIsValid(HeaderSize);
+	
+    return(NT_SUCCESS(status));
 }
 
 VOID

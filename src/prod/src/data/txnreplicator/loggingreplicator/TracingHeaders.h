@@ -11,5 +11,5 @@
 #include "LoggerEngine.h"
 #include "LogReaderRange.h"
 #include "FlushedRecordInfo.h"
-
+#include "PeriodicCheckpointTruncationState.h"
 #include "EventSource.h" // Include eventsource here after all enums

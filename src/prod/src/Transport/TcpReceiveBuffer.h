@@ -15,8 +15,6 @@ namespace Transport
         NTSTATUS GetNextMessage(_Out_ MessageUPtr & message, Common::StopwatchTime recvTime) override;
         void ConsumeCurrentMessage() override;
 
-        bool VerifySecurityProvider() override;
-
     private:
         TcpFrameHeader currentFrame_;
         TcpFrameHeader firstFrameHeader_;

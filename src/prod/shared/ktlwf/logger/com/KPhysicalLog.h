@@ -193,6 +193,8 @@ namespace Ktl
         {
             K_FORCE_SHARED(ComIKPhysicalLogManager)
 
+            ComIKPhysicalLogManager(__in BOOLEAN Inproc);
+                    
             K_BEGIN_COM_INTERFACE_LIST(ComIKPhysicalLogManager)
                 COM_INTERFACE_ITEM(IID_IUnknown, IKPhysicalLogManager)
                 COM_INTERFACE_ITEM(IID_IKPhysicalLogManager, IKPhysicalLogManager)
@@ -200,6 +202,7 @@ namespace Ktl
 
         public:
             static HRESULT Create(__in KAllocator& Allocator, __out ComIKPhysicalLogManager::SPtr& Result);
+            static HRESULT CreateInproc(__in KAllocator& Allocator, __out ComIKPhysicalLogManager::SPtr& Result);
 
         private:
             HRESULT STDMETHODCALLTYPE BeginOpen( 
@@ -394,7 +397,7 @@ namespace Ktl
         private:
             KtlLogContainer::SPtr   _BackingContainer;
         };
-		
+        
         //* IKPhysicalLogStream COM Definitions - see IKPhysicalLogStream interface documentation in NativeLog.cs
         class ComIKPhysicalLogStream :  public KShared<ComIKPhysicalLogStream>,
                                         public KObject<ComIKPhysicalLogStream>,

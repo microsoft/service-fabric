@@ -323,7 +323,8 @@ OperationData::CSPtr LogRecord::WriteRecord(
     __in BinaryWriter & binaryWriter,
     __in KAllocator & allocator,
     __in bool isPhysicalWrite,
-    __in bool setRecordLength)
+    __in bool setRecordLength,
+    __in bool forceRecomputeOffsets)
 {
     // Note: The binary writer is not where the real data is written
     // It is only passed in to avoid each log record from creating its own writer
@@ -338,7 +339,8 @@ OperationData::CSPtr LogRecord::WriteRecord(
     record.Write(
         binaryWriter,
         *operationData,
-        isPhysicalWrite);
+        isPhysicalWrite,
+        forceRecomputeOffsets);
 
     ULONG32 recordLength = 0;
 
@@ -746,8 +748,11 @@ void LogRecord::ReadLogical(
 void LogRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
+    UNREFERENCED_PARAMETER(forceRecomputeOffsets);
+
     // NOTE - LogicalData optimization is NOT done here unlike other log records because the LSN is not yet assigned at this point
     // Logical Metadata section
 

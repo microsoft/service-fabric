@@ -10,17 +10,15 @@ namespace Management
     namespace FileStoreService
     {
         class UploadSessionMetadata
-        {        
-          
+        {
+            DEFAULT_COPY_CONSTRUCTOR(UploadSessionMetadata)
+            DEFAULT_MOVE_CONSTRUCTOR(UploadSessionMetadata)
         public:
-
             UploadSessionMetadata();
             UploadSessionMetadata(
                 std::wstring const & storeRelativePath,
                 Common::Guid const & sessionId, 
                 uint64 fileSize);
-
-            UploadSessionMetadata(UploadSessionMetadata const & uploadSessionMetadata);
 
             virtual ~UploadSessionMetadata();
 
@@ -40,7 +38,7 @@ namespace Management
             Common::ErrorCode GetSortedStagingLocation(__out std::vector<std::wstring> & sortedStagingLocation);
             void GetStagingLocation(__out std::vector<std::wstring> & stagingLocation);
             Common::ErrorCode AddRange(uint64 startPosition, uint64 endPosition, std::wstring const & stagingLocation);
-            Common::ErrorCode CheckRange(uint64 startPosition, uint64 endPosition, uint64 fileLength_);
+            Common::ErrorCode CheckRange(uint64 startPosition, uint64 endPosition);
 
             void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 

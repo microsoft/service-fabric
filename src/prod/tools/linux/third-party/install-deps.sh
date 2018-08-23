@@ -28,6 +28,27 @@ if [ $LINUX_DISTRIBUTION = "REDHAT" ]; then
     exit 1
 fi
 
+# Check if GO is installed and version is greater than 1.10
+# How to install go 1.10 --> https://github.com/golang/go/wiki/Ubuntu
+command -v go >/dev/null 2>&1
+if [ $? != 0 ]; then
+    echo "ERROR: Please install golang 1.10"
+    exit -1
+fi
+version=$(go version)
+regex="([0-9]*\.[0-9]*)"
+if [[ $version =~ $regex ]]; then
+    version=${BASH_REMATCH[1]}
+    nums=( ${version//./ } )
+else
+    echo "Unable to parse go version number."
+    exit -1
+fi
+if !([ ${nums[0]} -ge "1" ] && [ ${nums[1]} -ge "10" ]); then
+    echo "ERROR: Your GO version is too old. cri-o needs at least GO 1.10"
+    exit -1
+fi
+
 deps=(
    # jemalloc
    autoconf
@@ -45,6 +66,22 @@ deps=(
    libncursesw5-dev
    swig
    libedit-dev
+
+   #cri-o
+   btrfs-tools
+   git
+   libassuan-dev
+   libdevmapper-dev
+   libglib2.0-dev
+   libc6-dev
+   libgpgme11-dev
+   libgpg-error-dev
+   libseccomp-dev
+   libselinux1-dev
+   pkg-config
+   go-md2man
+   runc
+   libostree-dev # libostree-dev can be found in the flatpak(https://launchpad.net/~alexlarsson/+archive/ubuntu/flatpak) PPA
 )
 
 for pkg in "${deps[@]}"

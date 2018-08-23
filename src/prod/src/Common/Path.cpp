@@ -9,6 +9,7 @@
 #include "Common/Throw.h"
 
 #define ROOT_SEPARATOR_CHAR  ':'
+#define ROOT_ESCAPE_PATH     '\"'
 
 #if !defined(PLATFORM_UNIX)
 
@@ -113,27 +114,37 @@ namespace
             path.append(extension);
         }
 
-        static void CombineInPlace(StringType & path1, StringType const & path2)
+        static void EscapePath(StringType & path)
         {
-            if (path2.empty()) 
-                return;
-
-            if (path1.empty() ) {
-                path1.append(path2);
-                return;
+            if (!path.empty())
+            {
+                path.insert(0, 1, (typename StringType::value_type)ROOT_ESCAPE_PATH);
+                path.push_back((typename StringType::value_type)ROOT_ESCAPE_PATH);
             }
+        }
 
-            if (path1.back() != (typename StringType::value_type)PATH_SEPARATOR_CHAR) {
-                path1.push_back((typename StringType::value_type)PATH_SEPARATOR_CHAR);
+        static void CombineInPlace(StringType & path1, StringType const & path2, bool escapePath)
+        {
+            if (!path2.empty() && !path1.empty())
+            {
+                if (path1.back() != (typename StringType::value_type)PATH_SEPARATOR_CHAR)
+                {
+                    path1.push_back((typename StringType::value_type)PATH_SEPARATOR_CHAR);
+                }
             }
 
             path1.append(path2);
+
+            if (escapePath)
+            {
+                EscapePath(path1);
+            }
         }
 
-        static StringType Combine(StringType const & path1, StringType const & path2)
+        static StringType Combine(StringType const & path1, StringType const & path2, bool escapePath)
         {
             StringType result (path1);
-            CombineInPlace(result, path2);
+            CombineInPlace(result, path2, escapePath);
             return result;
         }
 
@@ -247,6 +258,8 @@ namespace
 
 namespace Common
 {
+    Common::GlobalWString const Path::SfpkgExtension = make_global<std::wstring>(L".sfpkg");
+
     bool IsValidDriveChar(const WCHAR value)
     {
         return ((value >= L'A' && value <= L'Z') || (value >= L'a' && value <= L'z'));
@@ -416,6 +429,17 @@ namespace Common
         return PathT<string>::GetFileNameWithoutExtension(path);
     }
 
+    bool Path::IsSfpkg(std::wstring const & path)
+    {
+        wstring extension = Path::GetExtension(path);
+        return StringUtility::AreEqualCaseInsensitive(extension, *SfpkgExtension);
+    }
+
+    void Path::AddSfpkgExtension(__inout std::wstring & path)
+    {
+        Path::ChangeExtension(path, *SfpkgExtension);
+    }
+
     // Returns the root portion of the given path. The resulting string
     // consists of those rightmost characters of the path that constitute the
     // root of the path. Possible patterns for the resulting string are: An
@@ -528,24 +552,24 @@ namespace Common
         return ErrorCodeValue::Success;
     }
 
-    void Path::CombineInPlace(std::string& path1, std::string const & path2)
+    void Path::CombineInPlace(std::string& path1, std::string const & path2, bool escapePath)
     {
-        PathT<string>::CombineInPlace(path1, path2);
+        PathT<string>::CombineInPlace(path1, path2, escapePath);
     }
 
-    void Path::CombineInPlace(std::wstring& path1, std::wstring const & path2)
+    void Path::CombineInPlace(std::wstring& path1, std::wstring const & path2, bool escapePath)
     {
-        PathT<wstring>::CombineInPlace(path1, path2);
+        PathT<wstring>::CombineInPlace(path1, path2, escapePath);
     }
 
-    std::string Path::Combine(std::string const & path1, std::string const & path2)
+    std::string Path::Combine(std::string const & path1, std::string const & path2, bool escapePath)
     {
-        return PathT<string>::Combine(path1, path2);
+        return PathT<string>::Combine(path1, path2, escapePath);
     }
 
-    std::wstring Path::Combine(std::wstring const & path1, std::wstring const & path2)
+    std::wstring Path::Combine(std::wstring const & path1, std::wstring const & path2, bool escapePath)
     {
-        return PathT<wstring>::Combine(path1, path2);
+        return PathT<wstring>::Combine(path1, path2, escapePath);
     }
 
     bool Path::IsPathRooted(std::wstring const & path)

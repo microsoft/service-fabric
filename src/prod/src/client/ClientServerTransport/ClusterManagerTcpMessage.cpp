@@ -36,4 +36,6 @@ GlobalWString ClusterManagerTcpMessage::FinishInfrastructureTaskAction = make_gl
 GlobalWString ClusterManagerTcpMessage::RollbackApplicationUpgradeAction = make_global<wstring>(L"RollbackApplicationUpgradeAction");
 GlobalWString ClusterManagerTcpMessage::RollbackFabricUpgradeAction = make_global<wstring>(L"RollbackFabricUpgradeAction");
 
+GlobalWString ClusterManagerTcpMessage::CreateApplicationResourceAction = make_global<wstring>(L"CreateApplicationResourceAction");
+
 const Actor::Enum ClusterManagerTcpMessage::actor_ = Actor::CM;

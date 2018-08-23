@@ -17,8 +17,8 @@ namespace ServiceModel
     public:
         ClusterHealthPolicies();
 
-        ClusterHealthPolicies(ClusterHealthPolicies && other);
-        ClusterHealthPolicies & operator = (ClusterHealthPolicies && other);
+        ClusterHealthPolicies(ClusterHealthPolicies && other) = default;
+        ClusterHealthPolicies & operator = (ClusterHealthPolicies && other) = default;
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
             SERIALIZABLE_PROPERTY(Constants::ApplicationHealthPolicyMap, ApplicationHealthPolicies)

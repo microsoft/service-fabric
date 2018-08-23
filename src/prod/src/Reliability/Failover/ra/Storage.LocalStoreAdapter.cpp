@@ -213,13 +213,17 @@ ErrorCode LocalStoreAdapter::Open(
     Store::StoreFactoryParameters parameters;
     bool enableTStore = (FailoverConfig::GetConfig().EnableLocalTStore || Store::StoreConfig::GetConfig().EnableTStore);
     parameters.Type = enableTStore ? StoreType::TStore : StoreType::Local;
+    parameters.NodeInstance = ra_.NodeInstance;
+    parameters.NodeName = ra_.Reliability.NodeConfig->InstanceName;
     parameters.DirectoryPath = raDirectory;
     parameters.FileName = *RAStoreFilename;
     parameters.AssertOnFatalError = FailoverConfig::GetConfig().AssertOnStoreFatalError;
     parameters.KtlLogger = ktlLogger;
+    parameters.AllowMigration = FailoverConfig::GetConfig().AllowLocalStoreMigration;
 
     ILocalStoreSPtr store;
-    auto error = storeFactory_->CreateLocalStore(parameters, store);
+    ServiceModel::HealthReport healthReport;
+    auto error = storeFactory_->CreateLocalStore(parameters, store, healthReport);
     if (!error.IsSuccess())
     {
         return error;
@@ -230,6 +234,8 @@ ErrorCode LocalStoreAdapter::Open(
     {
         store_ = move(store);
         isOpen_.store(true);
+
+        ra_.HealthSubsystem.ReportStoreProviderEvent(move(healthReport));
     }
     else
     {

@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+  <PropertyGroup>
+    <Description>Fabric Fault Analysis Service</Description>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>FabricFAS</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>FabricFAS</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+    ..\..\..\Api\src\System\Fabric\JsonSerializerImpl\ChaosParametersJsonConverter.cs;
+    ..\..\..\Api\src\System\Fabric\JsonSerializerImpl\DictionaryAsArrayResolver.cs;
+    ..\..\..\Api\src\System\Fabric\JsonSerializerImpl\Constants.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\ChaosSchedulerState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\ChaosScheduleItem.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\ChaosScheduleEventInstance.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\ChaosScheduleEventInstancesEnumerator.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\ChaosScheduler.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\ChaosMessageProcessor.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\ChaosScenario.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\Common\ChaosUtil.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\Common\ChaosSchedulerUtil.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\Common\ValidationHelper.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\Common\ChaosTraceEventWriter.cs;
+    ..\..\src\system\fabric\faultanalysisservice\Chaos\Common\ChaosStopReason.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceImpl.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\ActionState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\ActionType.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\FabricTestAction.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeDataLossAction.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeDataLossInfo.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeDataLossState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeQuorumLossAction.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeQuorumLossInfo.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\InvokeQuorumLossState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\NodeCommandInfo.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\NodeCommandState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\RestartPartitionAction.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\RestartPartitionInfo.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\RestartPartitionState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\RollbackState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StartNodeFromFASAction.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StepBase.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StopNodeFromFASAction.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StuckAction.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\StuckState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\TestRetryStepAction.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\TestRetryStepState.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\InvokeDataLossSteps.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\InvokeQuorumLossSteps.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\RestartPartitionSteps.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\StartNodeSteps.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\StepStateNames.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\StopNodeSteps.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\StuckStep.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\TestRetryStepFactory.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\TestRetryStepStepOne.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Actions\Steps\TestRetryStepStepTwo.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Client\MockClient.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\FASConstants.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\FatalException.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\FaultAnalysisServiceUtility.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\RetrySameStepException.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\RollbackAndRetryCommandException.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Common\TestMode.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\ActionCompletionInfo.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\ActionStore.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\KeyPrefixes.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\ReliableFaultsEngine.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\FaultAnalysisServiceMessageProcessor.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\EntitySynchronizer.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Engine\NodeCommandSynchronizer.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Test\ActionTest.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisServiceRoot\Test\ServiceInternalFault.cs;
+	  ..\..\src\system\fabric\faultanalysisservice\Program.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FASCommunicationListener.cs;
+    ..\..\src\system\fabric\faultanalysisservice\FaultAnalysisService.cs;"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+	  <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+    <None Update="FabricFAS.sh">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric.BackupRestore/System.Fabric.BackupRestore.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="..\..\..\Microsoft.ServiceFabric.Data\CoreCLR\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="..\..\..\Microsoft.ServiceFabric.Data.Impl\CoreCLR\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj" />
+    <ProjectReference Include="..\..\..\Microsoft.ServiceFabric.Data.Interfaces\CoreCLR\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\CoreCLR\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Standard)\Microsoft.ServiceFabric.Services.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric.BackupRestore\System.Fabric.BackupRestore.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.McgInterop.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.4.0" />
+    <PackageReference Include="System.Security.AccessControl" Version="4.4.0" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="4.4.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <Reference Condition=" '$(BuildLinux)' != 'true' "
+               Include="$(PkgWinFab_Azure_Libs)\Microsoft.WindowsAzure.ServiceRuntime.Management\Microsoft.WindowsAzure.ServiceRuntime.Management.dll" />
+  </ItemGroup>
+  <!-- Add Linux build artifacts for bond libraries in FAS because these libraries are not availbale on nuget -->
+  <ItemGroup Condition=" '$(BuildLinux)' == 'true' ">
+    <Reference Include="$(LinuxBuildArtifacts)\Microsoft.Bond.dll" />
+    <Reference Include="$(LinuxBuildArtifacts)\Microsoft.Bond.Interfaces.dll" />
+    <Reference Include="$(LinuxBuildArtifacts)\Microsoft.WindowsAzure.ServiceRuntime.Management.dll" />
+  </ItemGroup>
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

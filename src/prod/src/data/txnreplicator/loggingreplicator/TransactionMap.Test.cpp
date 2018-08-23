@@ -49,7 +49,7 @@ namespace LoggingReplicatorTests
     void TransactionMapTest::VerifyPendingTxStats(__in TransactionMap & map, __in ULONG expected)
     {
         VERIFY_ARE_EQUAL(map.latestRecords_.size(), expected);
-        VERIFY_ARE_EQUAL(map.lsnPendingTransactions_.Count(), expected);
+        VERIFY_ARE_EQUAL(map.lsnPendingTransactions_.size(), expected);
         VERIFY_ARE_EQUAL(map.transactionIdPendingTransactionsPair_.size(), expected);
     }
 

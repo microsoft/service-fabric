@@ -55,3 +55,27 @@ void TraceDataLossAction::WriteToEtw(uint16 contextSequenceId) const
 {
     FailoverManager::FMEventSource->StateMachineAction(contextSequenceId, L"DataLoss");
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TraceAutoScaleAction::TraceAutoScaleAction(int targetReplicaSetSize)
+    : targetReplicaSetSize_(targetReplicaSetSize)
+{
+}
+
+int TraceAutoScaleAction::OnPerformAction(FailoverManager & fm)
+{
+    UNREFERENCED_PARAMETER(fm);
+
+    return 0;
+}
+
+void TraceAutoScaleAction::WriteTo(TextWriter & w, FormatOptions const&) const
+{
+    w.Write("AutoScale:{0}", targetReplicaSetSize_);
+}
+
+void TraceAutoScaleAction::WriteToEtw(uint16 contextSequenceId) const
+{
+    FailoverManager::FMEventSource->StateMachineAction(contextSequenceId, wformatString("AutoScale: {0}", targetReplicaSetSize_));
+}

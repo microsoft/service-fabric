@@ -33,7 +33,6 @@
 #include "Management/ImageStore/ImageStore.h"
 #include "Management/FileStoreService/IFileStoreClient.h"
 
-#include "Communication/NamespaceManager/NamespaceManagerMessage.h"
 #include "Store/Store.Internal.h"
 #include "api/definitions/ApiDefinitions.h"
 #include "client/HealthReportingTransport.h"

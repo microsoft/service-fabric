@@ -11,12 +11,17 @@ namespace Hosting2
     {
     public:
         ApplicationHostTerminatedEventArgs (
+            Common::ActivityDescription const & activityDescription,
             std::wstring const & hostId, 
             DWORD exitCode)
-            : hostId_(hostId)
+            : activityDescription_(activityDescription)
+            , hostId_(hostId)
             , exitCode_(exitCode)
         {
         }
+        
+        __declspec(property(get=get_ActivityDescription)) Common::ActivityDescription const & ActivityDescription;
+        inline Common::ActivityDescription const & get_ActivityDescription() const { return activityDescription_; }
 
         __declspec(property(get=get_HostId)) std::wstring const & HostId;
         inline std::wstring const & get_HostId() const { return hostId_; }
@@ -25,6 +30,7 @@ namespace Hosting2
         inline DWORD get_ExitCode() const { return exitCode_; }
 
     private:
+        Common::ActivityDescription activityDescription_;
         std::wstring hostId_;
         DWORD exitCode_;
     };

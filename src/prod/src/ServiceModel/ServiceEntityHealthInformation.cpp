@@ -29,26 +29,6 @@ ServiceEntityHealthInformation::ServiceEntityHealthInformation(
 {
 }
 
-ServiceEntityHealthInformation::ServiceEntityHealthInformation(ServiceEntityHealthInformation && other)
-    : EntityHealthInformation(move(other))
-    , serviceName_(move(other.serviceName_))
-    , instanceId_(other.instanceId_)
-{
-}
-
-ServiceEntityHealthInformation & ServiceEntityHealthInformation::operator = (ServiceEntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        serviceName_ = move(other.serviceName_);
-        instanceId_ = other.instanceId_;
-    }
-
-    EntityHealthInformation::operator=(move(other));
-
-    return *this;
-}
-
 ErrorCode ServiceEntityHealthInformation::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __in FABRIC_HEALTH_INFORMATION * commonHealthInformation,

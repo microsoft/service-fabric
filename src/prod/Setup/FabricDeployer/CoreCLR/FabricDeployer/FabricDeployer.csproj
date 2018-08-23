@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+  <PropertyGroup>
+    <Description>Fabric Deployer</Description>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>FabricDeployer</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>FabricDeployer</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\CommandLineParser.cs;
+      ..\..\Program.cs"
+      Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <None Update="FabricDeployer.sh">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="FabricDeployer.bat">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\managed\DCA\product\pluginvalidators\CoreCLRDll\pluginvalidators\pluginvalidators.csproj" />
+    <ProjectReference Include="..\..\..\..\src\managed\DCA\product\system.fabric.dca.validator\CoreCLRDll\System.Fabric.Dca.Validator\System.Fabric.Dca.Validator.csproj" />
+    <ProjectReference Include="..\..\..\..\src\managed\Api\CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+    <ProjectReference Include="..\..\..\..\src\managed\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="..\..\..\..\src\managed\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetsLinux)' == 'true' ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_iot.props" />
+</Project>

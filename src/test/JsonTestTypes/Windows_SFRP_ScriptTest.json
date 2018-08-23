@@ -1,6 +1,7 @@
 {
-    "RequiredParameters": [ "TaskName" ],
-
+    "RequiredParameters": [
+        "TaskName"
+    ],
     "Defaults": {
         "SetupArgs": "",
         "SetupType": "",
@@ -10,18 +11,16 @@
         "CredentialType": "",
         "SetupTimeout": "900",
         "ExecutionTimeout": "70000",
-		"NativeStoreEnabled": "",
+        "NativeStoreEnabled": "",
         "EseStoreEnabled": "",
         "CleanupTimeout": "2100"
     },
-
     "TestSetup": {
         "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
         "Arguments": "[SETUPTYPE] [SETUPARGS] ",
         "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
         "WorkingDirectory": "[CLOUDBINPATH]"
     },
-
     "TestExecution": [
         {
             "ExeName": "[BINS]\\WinFabricTest\\WinFabricTestRunner.exe",
@@ -42,6 +41,12 @@
             "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
         },
         {
+            "ExeName": "[BINS]\\WinFabricTest\\WinFabric.TestInfra.PerfUploader.exe",
+            "Arguments": "",
+            "WorkingDirectory": "[BINS]",
+            "MaxExecutionTimeInSeconds": "300"
+        },
+        {
             "ExeName": "__ARCHIVE__",
             "Arguments": "",
             "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
@@ -53,31 +58,7 @@
         "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
         "WorkingDirectory": "[CLOUDBINPATH]"
     },
-    "IndividualTestCleanup": [
-        {
-            "ExeName": "__WER__",
-            "Arguments": "",
-            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
-        },
-        {
-            "ExeName": "__KILL__",
-            "Arguments": "",
-            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
-        },
-         {
-            "ExeName": "[BINS]\\WinFabricTest\\WinFabric.TestInfra.PerfUploader.exe",
-            "Arguments": "",
-            "WorkingDirectory": "[BINS]",
-            "MaxExecutionTimeInSeconds": "300"
-        },    
-        {
-            "ExeName": "__ARCHIVE__",
-            "Arguments": "",
-            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
-        }
-    ],
     "ArchiverProperties": {
-        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$"
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.json$"
     }
-
 }

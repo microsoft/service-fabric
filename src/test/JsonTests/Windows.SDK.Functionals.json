@@ -19,6 +19,108 @@
         "CleanupTimeout": "2100"
       }
     },
+	{
+      "Name": "DeleteV2StatefulActorRDtestEnabledSweep",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha,harahma,suchia",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreEnabledValue.txt",
+        "TaskName": "DeleteStatefulActor-V2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+	{
+      "Name": "ActorReference",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha,harahma,suchia",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreEnabledValue.txt",
+        "TaskName": "ActorReference.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+	{
+      "Name": "ActorParameterTest",
+      "Type": "V2_ScriptTest",
+      "Owners": "suchia,amanbha",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreEnabledValue.txt",
+        "TaskName": "ActorParameterTest.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+	{
+      "Name": "ActorReference-V2",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha,harahma,suchia",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreEnabledValue.txt",
+        "TaskName": "ActorReference-V2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+	{
+      "Name": "ActorFailover-V2",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha,harahma,suchia",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreEnabledValue.txt",
+        "TaskName": "ActorFailover-V2.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+	{
+      "Name": "ActorFailover-V2WrapMessage",
+      "Type": "V2_ScriptTest",
+      "Owners": "amanbha,harahma,suchia",
+      "Tags": "Actors",
+      "ResourcesRequired": "Server:3",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "600",
+        "ConfigName": "WinFabricTest\\FabActTestConfigTStoreEnabledValue.txt",
+        "TaskName": "ActorFailover-V2WrapMessage.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
     {
       "Name": "BasicStatefulActorRD",
       "Type": "V2_ScriptTest",
@@ -87,6 +189,18 @@
         "CleanupTimeout": "2100"
       }
     },
+	{
+            "Name": "ServiceProxyTest-V2WrapMessage",
+            "Type": "V2_ScriptTest",
+            "Owners": "suchia",
+            "Tags": "Admin,Security,Services",
+            "IsCit": "false",
+            "TestExecutionParameters": {
+                "TaskName": "ServiceProxyTest-V2WrapMessage.test",
+                "ExecutionTimeout": "21600",
+                "SetupType": "XCopy"
+            }
+     },	
     {
       "Name": "ActorEvents",
       "Type": "V2_ScriptTest",
@@ -124,7 +238,7 @@
     {
       "Name": "FabActReminderstestonKvs",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -141,7 +255,7 @@
     {
       "Name": "FabActReminderstestonReliableDictionary",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -158,7 +272,7 @@
     {
       "Name": "FabActReminderstestonNativeReliableDictionary",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -175,7 +289,7 @@
     {
       "Name": "FabActReminderstestonVolatile",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -192,7 +306,7 @@
     {
       "Name": "FabActdirtystatehandlerKVStests",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -209,7 +323,7 @@
     {
       "Name": "FabActdirtystatehandlerRDtests",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -226,7 +340,7 @@
     {
       "Name": "FabActdirtystatehandlerNativeRDtests",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -243,7 +357,7 @@
     {
       "Name": "FabActdirtystatehandlerVolatiletests",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -328,7 +442,7 @@
     {
       "Name": "Actorreentrancytest",
       "Type": "V2_ScriptTest",
-      "Owners": "rajeetn",
+      "Owners": "harahma,amanbha",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -889,7 +1003,7 @@
     {
       "Name": "ActorIndependentDispatcher",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha,harahma,suchia",
+      "Owners": "suchia,amanbha,harahma",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -906,7 +1020,7 @@
     {
       "Name": "ActorVerifyHeaderEvents",
       "Type": "V2_ScriptTest",
-      "Owners": "amanbha,harahma,suchia",
+      "Owners": "suchia,amanbha,harahma",
       "Tags": "Actors",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
@@ -1020,54 +1134,6 @@
         "ExecutionTimeout": "21600",
         "CleanupType": "XCopy",
         "CleanupTimeout": "2100"
-      }
-    },
-    {
-      "Name": "KestrelCommunicationListenerTests",
-      "Type": "Command",
-      "Owners": "amanbha",
-      "Tags": "AspnetCore",
-      "TestExecutionParameters": {
-        "TaskName": "KestrelCommunicationListenerTests",
-        "COMMANDTORUN": "FabricUnitTests\\xunit.console.exe",
-        "PARAMS": "[BINS]\\FabricUnitTests\\Microsoft.ServiceFabric.AspNetCore.Tests.dll -verbose -diagnostics -class Microsoft.ServiceFabric.AspNetCore.Tests.KestrelCommunicationListenerTests",
-        "SetupType": "XCopy"
-      }
-    },
-    {
-      "Name": "WebListenerCommunicationListenerTests",
-      "Type": "Command",
-      "Owners": "amanbha",
-      "Tags": "AspnetCore",
-      "TestExecutionParameters": {
-        "TaskName": "WebListenerCommunicationListenerTests",
-        "COMMANDTORUN": "FabricUnitTests\\xunit.console.exe",
-        "PARAMS": "[BINS]\\FabricUnitTests\\Microsoft.ServiceFabric.AspNetCore.Tests.dll -verbose -diagnostics -class Microsoft.ServiceFabric.AspNetCore.Tests.WebListenerCommunicationListenerTests",
-        "SetupType": "XCopy"
-      }
-    },
-    {
-      "Name": "ServiceFabricMiddlewareTests",
-      "Type": "Command",
-      "Owners": "amanbha",
-      "Tags": "AspnetCore",
-      "TestExecutionParameters": {
-        "TaskName": "ServiceFabricMiddlewareTests",
-        "COMMANDTORUN": "FabricUnitTests\\xunit.console.exe",
-        "PARAMS": "[BINS]\\FabricUnitTests\\Microsoft.ServiceFabric.AspNetCore.Tests.dll -verbose -diagnostics -class Microsoft.ServiceFabric.AspNetCore.Tests.ServiceFabricMiddlewareTests",
-        "SetupType": "XCopy"
-      }
-    },
-    {
-      "Name": "WebHostBuilderServiceFabricExtensionTests",
-      "Type": "Command",
-      "Owners": "amanbha",
-      "Tags": "AspnetCore",
-      "TestExecutionParameters": {
-        "TaskName": "WebHostBuilderServiceFabricExtensionTests",
-        "COMMANDTORUN": "FabricUnitTests\\xunit.console.exe",
-        "PARAMS": "[BINS]\\FabricUnitTests\\Microsoft.ServiceFabric.AspNetCore.Tests.dll -verbose -diagnostics -class Microsoft.ServiceFabric.AspNetCore.Tests.WebHostBuilderServiceFabricExtensionTests",
-        "SetupType": "XCopy"
       }
     }
   ]

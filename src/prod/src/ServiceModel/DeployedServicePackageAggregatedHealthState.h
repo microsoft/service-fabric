@@ -23,11 +23,11 @@ namespace ServiceModel
             std::wstring const & nodeName,
             FABRIC_HEALTH_STATE aggregatedHealthState);
 
-        DeployedServicePackageAggregatedHealthState(DeployedServicePackageAggregatedHealthState const & other);
-        DeployedServicePackageAggregatedHealthState & operator = (DeployedServicePackageAggregatedHealthState const & other);
+        DeployedServicePackageAggregatedHealthState(DeployedServicePackageAggregatedHealthState const & other) = default;
+        DeployedServicePackageAggregatedHealthState & operator = (DeployedServicePackageAggregatedHealthState const & other) = default;
 
-        DeployedServicePackageAggregatedHealthState(DeployedServicePackageAggregatedHealthState && other);
-        DeployedServicePackageAggregatedHealthState & operator = (DeployedServicePackageAggregatedHealthState && other);
+        DeployedServicePackageAggregatedHealthState(DeployedServicePackageAggregatedHealthState && other) = default;
+        DeployedServicePackageAggregatedHealthState & operator = (DeployedServicePackageAggregatedHealthState && other) = default;
 
         ~DeployedServicePackageAggregatedHealthState();
 

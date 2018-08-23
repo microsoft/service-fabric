@@ -1974,8 +1974,11 @@ Routine Description:
     ExAcquireFastMutex(&DriverContext->LeaseAgentContextHashTableAccessMutex);
 
     for(PLEASE_AGENT_CONTEXT LeaseAgentContext: DriverContext->LeaseAgentContextHashTable){
+        if(Found) {
+            break;
+        }
         KeAcquireSpinLock(&LeaseAgentContext->Lock, &OldIrql);
-        if(Found) break;
+        
         if (!IsLeaseAgentFailed(LeaseAgentContext) && 
             (0 == wcscmp(TransportIdentifier(LeaseAgentContext->Transport), TransportIdentifier(LeaseAgentContextLookup->Transport))))
         {

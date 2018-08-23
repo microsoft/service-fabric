@@ -11,6 +11,7 @@ namespace Management
     {
         class StartUpgradeDescription
             : public Serialization::FabricSerializable
+            , public Common::IFabricJsonSerializable
         {
         public:
 
@@ -25,8 +26,10 @@ namespace Management
                 BYTE &,
                 BYTE &,
                 BYTE &,
-                BYTE &);
+                BYTE &,
+                ServiceModel::ApplicationHealthPolicyMap &&);
 
+            StartUpgradeDescription & operator = (StartUpgradeDescription const & other) = default;
             StartUpgradeDescription(StartUpgradeDescription const &);
             StartUpgradeDescription(StartUpgradeDescription &&);
 
@@ -44,6 +47,8 @@ namespace Management
             inline BYTE get_MaxPercentDeltaUnhealthyNodes() const { return maxPercentDeltaUnhealthyNodes_; }
             __declspec(property(get = get_MaxPercentUpgradeDomainDeltaUnhealthyNodes)) BYTE MaxPercentUpgradeDomainDeltaUnhealthyNodes;
             inline BYTE get_MaxPercentUpgradeDomainDeltaUnhealthyNodes() const { return maxPercentUpgradeDomainDeltaUnhealthyNodes_; }
+            __declspec(property(get = get_ApplicationHealthPolicies)) ServiceModel::ApplicationHealthPolicyMap ApplicationHealthPolicies;
+            inline ServiceModel::ApplicationHealthPolicyMap get_ApplicationHealthPolicies() const { return applicationHealthPolicies_; }
 
             std::wstring  const & get_ClusterConfig() const { return clusterConfig_; }
             Common::TimeSpan const get_HealthCheckRetryTimeout() const { return healthCheckRetryTimeout_; }
@@ -60,7 +65,21 @@ namespace Management
             Common::ErrorCode FromPublicApi(FABRIC_START_UPGRADE_DESCRIPTION const &);
             void ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_START_UPGRADE_DESCRIPTION &) const;
 
-            FABRIC_FIELDS_10(
+            BEGIN_JSON_SERIALIZABLE_PROPERTIES()
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::ClusterConfig, clusterConfig_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::HealthCheckRetryTimeout, healthCheckRetryTimeout_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::HealthCheckWaitDurationInSeconds, healthCheckWaitDuration_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::HealthCheckStableDurationInSeconds, healthCheckStableDuration_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::UpgradeDomainTimeoutInSeconds, upgradeDomainTimeout_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::UpgradeTimeoutInSeconds, upgradeTimeout_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::MaxPercentUnhealthyApplications, maxPercentUnhealthyApplications_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::MaxPercentUnhealthyNodes, maxPercentUnhealthyNodes_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::MaxPercentDeltaUnhealthyNodes, maxPercentDeltaUnhealthyNodes_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::MaxPercentUpgradeDomainDeltaUnhealthyNodes, maxPercentUpgradeDomainDeltaUnhealthyNodes_)
+                SERIALIZABLE_PROPERTY(ServiceModel::Constants::ApplicationHealthPolicies, applicationHealthPolicies_)
+            END_JSON_SERIALIZABLE_PROPERTIES()
+
+            FABRIC_FIELDS_11(
                 clusterConfig_,
                 healthCheckRetryTimeout_,
                 healthCheckWaitDuration_,
@@ -70,7 +89,8 @@ namespace Management
                 maxPercentUnhealthyApplications_,
                 maxPercentUnhealthyNodes_,
                 maxPercentDeltaUnhealthyNodes_,
-                maxPercentUpgradeDomainDeltaUnhealthyNodes_);
+                maxPercentUpgradeDomainDeltaUnhealthyNodes_,
+                applicationHealthPolicies_);
 
         private:
             std::wstring  clusterConfig_;
@@ -86,6 +106,8 @@ namespace Management
 
             Common::TimeSpan FromPublicTimeInSeconds(DWORD time);
             DWORD ToPublicTimeInSeconds(Common::TimeSpan const & time) const;
+
+            ServiceModel::ApplicationHealthPolicyMap applicationHealthPolicies_;
         };
     }
 }

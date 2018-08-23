@@ -21,7 +21,11 @@ NonActivatedApplicationHost::NonActivatedApplicationHost(
     KtlSystem * ktlSystem,
     wstring const & runtimeServiceAddress)
      : ApplicationHost(
-        ApplicationHostContext(hostId, ApplicationHostType::NonActivated, false/*Container host not supported for non activated*/), 
+        ApplicationHostContext(
+            hostId, 
+            ApplicationHostType::NonActivated, 
+            false /* isContainerHost */,
+            false /* isCodePackageActivatorHost */),
         runtimeServiceAddress,
         nullptr,
         L"",

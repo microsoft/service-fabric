@@ -249,7 +249,14 @@ FABRIC_APPLICATION_UPGRADE_STATE ApplicationUpgradeStatusDescription::ToPublicUp
         }
 
     case ApplicationUpgradeState::RollingBack:
-        return FABRIC_APPLICATION_UPGRADE_STATE_ROLLING_BACK_IN_PROGRESS;
+        if (inProgressUpgradeDomain_.empty() && !pendingUpgradeDomains_.empty() && this->GetRollingUpgradeMode() != RollingUpgradeMode::Enum::UnmonitoredAuto)
+        {
+            return FABRIC_APPLICATION_UPGRADE_STATE_ROLLING_BACK_PENDING;
+        }
+        else
+        {
+            return FABRIC_APPLICATION_UPGRADE_STATE_ROLLING_BACK_IN_PROGRESS;
+        }
 
     case ApplicationUpgradeState::Failed:
         return FABRIC_APPLICATION_UPGRADE_STATE_FAILED;

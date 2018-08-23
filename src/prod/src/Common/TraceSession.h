@@ -7,7 +7,7 @@
 
 namespace Common
 {
-    static const int ProvidersPerSession = 10;
+    static const int ProvidersPerSession = 11;
 
     namespace TraceSessionKind
     {
@@ -18,7 +18,8 @@ namespace Common
             Lease       = 2,
             AppInfo     = 3,
             Query       = 4,
-            Operational = 5
+            Operational = 5,
+            SFBDMiniport = 6
         };
     }
 
@@ -87,6 +88,7 @@ namespace Common
 
         // Trace Provider GUIDS
         static Common::Global<Common::Guid> LeaseDriverGuid;
+        static Common::Global<Common::Guid> SFBDMiniportDriverGuid;
         static Common::Global<Common::Guid> KTLGuid;
         static Common::Global<Common::Guid> FabricGuid;
         static Common::Global<Common::Guid> MSFIGuid;
@@ -98,8 +100,10 @@ namespace Common
         static Common::Global<Common::Guid> SFPOSNodeAgentSFUtilityGuid;
         static Common::Global<Common::Guid> ProgrammingModel_ServicesGuid;
         static Common::Global<Common::Guid> ReliableCollectionGuid;
+        static Common::Global<Common::Guid> AzureFilesVolumeDriverGuid;
 
         static Common::GlobalWString FabricTraceFileName;
+        static Common::GlobalWString SFBDMiniportTraceFileName;
         static Common::GlobalWString LeaseTraceFileName;
         static Common::GlobalWString AppInfoTraceFileName;
         static Common::GlobalWString AppInfoTraceFolderName;
@@ -110,6 +114,7 @@ namespace Common
 
         static Common::GlobalWString FabricTraceSessionName;
         static Common::GlobalWString LeaseTraceSessionName;
+        static Common::GlobalWString SFBDMiniportTraceSessionName;
         static Common::GlobalWString AppInfoTraceSessionName;
         static Common::GlobalWString QueryTraceSessionName;
         static Common::GlobalWString FabricCountersSessionName;

@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 namespace Api
 {
@@ -102,6 +102,17 @@ namespace Api
         virtual Common::ErrorCode EndStopChaos(
             Common::AsyncOperationSPtr const &) = 0;
 
+        virtual Common::AsyncOperationSPtr BeginGetChaos(
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndGetChaos(
+            Common::AsyncOperationSPtr const &,
+            __out IChaosDescriptionResultPtr &result) = 0;
+        virtual Common::ErrorCode EndGetChaos(
+            Common::AsyncOperationSPtr const &,
+            __out ISystemServiceApiResultPtr &result) = 0;
+
         virtual Common::AsyncOperationSPtr BeginGetChaosReport(
             Management::FaultAnalysisService::GetChaosReportDescription const &,
             Common::TimeSpan const timeout,
@@ -110,6 +121,18 @@ namespace Api
         virtual Common::ErrorCode EndGetChaosReport(
             Common::AsyncOperationSPtr const &,
             __out IChaosReportResultPtr &result) = 0;
+
+        virtual Common::AsyncOperationSPtr BeginGetChaosEvents(
+            Management::FaultAnalysisService::GetChaosEventsDescription const &,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndGetChaosEvents(
+            Common::AsyncOperationSPtr const &,
+            __out IChaosEventsSegmentResultPtr &result) = 0;
+        virtual Common::ErrorCode EndGetChaosEvents(
+            Common::AsyncOperationSPtr const &,
+            __out ISystemServiceApiResultPtr &result) = 0;
 
         virtual Common::AsyncOperationSPtr BeginStartNodeTransition(
             Management::FaultAnalysisService::StartNodeTransitionDescription const &,
@@ -127,5 +150,30 @@ namespace Api
         virtual Common::ErrorCode EndGetNodeTransitionProgress(
             Common::AsyncOperationSPtr const &,
             __out INodeTransitionProgressResultPtr &result) = 0;
+
+        // Chaos - Scheduler
+	    virtual Common::AsyncOperationSPtr BeginGetChaosSchedule(
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndGetChaosSchedule(
+            Common::AsyncOperationSPtr const &,
+            __out IChaosScheduleDescriptionResultPtr &result) = 0;
+        virtual Common::ErrorCode EndGetChaosSchedule(
+            Common::AsyncOperationSPtr const &,
+            __out ISystemServiceApiResultPtr &result) = 0;
+
+        virtual Common::AsyncOperationSPtr BeginSetChaosSchedule(
+            Management::FaultAnalysisService::SetChaosScheduleDescription const & setChaosScheduleDescription,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent) = 0;
+        virtual Common::AsyncOperationSPtr BeginSetChaosSchedule(
+            std::wstring const & state,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndSetChaosSchedule(
+            Common::AsyncOperationSPtr const &) = 0;
     };
 }

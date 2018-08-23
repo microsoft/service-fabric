@@ -227,7 +227,12 @@ Awaitable<void> ReplicatedLogManager::AwaitLsnOrderingTaskOnPrimaryAsync()
 
     K_LOCK_BLOCK(lsnOrderingLock_)
     {
-        if (operationAcceptedCount_.load() > 0 || lsnOrderingQueue_.Count() > 0)
+        // if there is an existing wait tcs, return that
+        if (lsnOrderingTcs_)
+        {
+            lsnOrderingTask = lsnOrderingTcs_;
+        }
+        else if (operationAcceptedCount_.load() > 0 || lsnOrderingQueue_.Count() > 0)
         {
             lsnOrderingTcs_ = CompletionTask::CreateAwaitableCompletionSource<void>(REPLICATEDLOGMANAGER_TAG, GetThisAllocator());
             lsnOrderingTask = lsnOrderingTcs_;
@@ -504,6 +509,7 @@ void ReplicatedLogManager::OnReplicationError(
 
 TruncateHeadLogRecord::SPtr ReplicatedLogManager::TruncateHead(
     __in bool isStable,
+    __in LONG64 lastPeriodicTruncationTimeStampTicks,
     __in IsGoodLogHeadCandidateCalculator & isGoodLogHeadCandidateCalculator)
 {
     TruncateHeadLogRecord::SPtr record = nullptr;
@@ -549,12 +555,14 @@ TruncateHeadLogRecord::SPtr ReplicatedLogManager::TruncateHead(
             }
         } while (true);
 
+        // Only truncation operations initiated by configured interval record timestamp
         record = TruncateHeadLogRecord::Create(
             *previousIndexingRecord,
             currentLogTailLsn_,
             lastLinkedPhysicalRecord_.Get().RawPtr(),
             *invalidLogRecords_->Inv_PhysicalLogRecord,
             isStable,
+            lastPeriodicTruncationTimeStampTicks,
             GetThisAllocator());
 
         InsertTruncateHeadCallerHoldsLock(*record, *previousIndexingRecord);
@@ -723,7 +731,7 @@ LogRecord::SPtr ReplicatedLogManager::GetEarliestRecordCallerHoldsLock()
 LONG64 ReplicatedLogManager::InsertBufferedRecordCallerHoldsLock(
     __in LogicalLogRecord & record,
     __in bool isPrimary,
-    __out AwaitableCompletionSource<void>::SPtr & lsnOrderingTcsToSignal)
+    __out LONG & pendingCount)
 {
     LONG64 result = logManager_->PhysicalLogWriter->InsertBufferedRecord(record);
     UpdateEpochLogRecord::SPtr updateEpochRecord = nullptr;
@@ -753,7 +761,7 @@ LONG64 ReplicatedLogManager::InsertBufferedRecordCallerHoldsLock(
 
     if (isPrimary)
     {
-        OnOperationLogInitiationCallerHoldsLock(lsnOrderingTcsToSignal);
+        pendingCount = OnOperationLogInitiationCallerHoldsLock();
     }
 
     if (record.RecordType == LogRecordType::Enum::Barrier)
@@ -776,6 +784,8 @@ LONG64 ReplicatedLogManager::LsnOrderingInsertCallerHoldsLock(
     __out AwaitableCompletionSource<void>::SPtr & lsnOrderingTcsToSignal)
 {
     LONG64 recordLsn = record.Lsn;
+    LONG64 result = 0;
+    LONG pendingCount = -1;
 
     // First every update epoch record on full copy secondary has UpdateEpoch(0,0)
     ASSERT_IFNOT(
@@ -805,7 +815,7 @@ LONG64 ReplicatedLogManager::LsnOrderingInsertCallerHoldsLock(
         return -1;
     }
 
-    LONG64 result = InsertBufferedRecordCallerHoldsLock(record, isPrimary, lsnOrderingTcsToSignal);
+    result = InsertBufferedRecordCallerHoldsLock(record, isPrimary, pendingCount);
 
     ULONG j = 0;
     for (j = 0; j < lsnOrderingQueue_.Count(); j++)
@@ -815,13 +825,21 @@ LONG64 ReplicatedLogManager::LsnOrderingInsertCallerHoldsLock(
             break;
         }
 
-        InsertBufferedRecordCallerHoldsLock(*lsnOrderingQueue_[j], isPrimary, lsnOrderingTcsToSignal);
+        InsertBufferedRecordCallerHoldsLock(*lsnOrderingQueue_[j], isPrimary, pendingCount);
     }
     
     if (j > 0)
     {
         BOOLEAN removedResult = lsnOrderingQueue_.RemoveRange(0, j);
         ASSERT_IFNOT(removedResult == TRUE, "Could not remove from lsn ordering queue");
+    }
+
+    if (lsnOrderingTcs_ != nullptr &&
+        pendingCount == 0 &&
+        lsnOrderingQueue_.Count() == 0)
+    {
+        lsnOrderingTcsToSignal = lsnOrderingTcs_;
+        lsnOrderingTcs_.Reset();
     }
 
     return result;
@@ -848,7 +866,7 @@ void ReplicatedLogManager::OnOperationAcceptance()
     ++operationAcceptedCount_;
 }
 
-void ReplicatedLogManager::OnOperationLogInitiationCallerHoldsLock(__out AwaitableCompletionSource<void>::SPtr & lsnOrderingTcsToSignal)
+LONG ReplicatedLogManager::OnOperationLogInitiationCallerHoldsLock()
 {
     LONG pendingCount = --operationAcceptedCount_;
     ASSERT_IFNOT(
@@ -856,15 +874,7 @@ void ReplicatedLogManager::OnOperationLogInitiationCallerHoldsLock(__out Awaitab
         "{0}:Pending op accepted count is zero during log initiation",
         TraceId);
 
-    if (pendingCount == 0)
-    {
-        if (lsnOrderingQueue_.Count() == 0 &&
-            lsnOrderingTcs_ != nullptr)
-        {
-            lsnOrderingTcsToSignal = lsnOrderingTcs_;
-            lsnOrderingTcs_ = nullptr;
-        }
-    }
+    return pendingCount;
 }
 
 void ReplicatedLogManager::OnOperationAcceptanceException()

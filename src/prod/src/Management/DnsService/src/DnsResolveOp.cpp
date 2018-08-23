@@ -131,7 +131,10 @@ void DnsResolveOp::OnStateEnter_StartFabricResolveOps()
             IDnsRecord& question = *arrQuestions[i];
 
             IFabricResolveOp::SPtr spFabricResolveOp = _fabricResolve.CreateResolveOp(
-                _params.FabricQueryTimeoutInSeconds
+                _params.FabricQueryTimeoutInSeconds,
+                _params.PartitionPrefix,
+                _params.PartitionSuffix,
+                _params.EnablePartitionedQuery
             );
             if (STATUS_SUCCESS != _arrFabricOps.Append(spFabricResolveOp))
             {

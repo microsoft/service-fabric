@@ -53,111 +53,144 @@ namespace TStoreTests
 
     private:
         KtlSystem* ktlSystem_;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> VerifyDefaultValues_OnInitalization_Test()
+        {
+            KAllocator& allocator = MergeHelperTest::GetAllocator();
+            MergeHelper::SPtr mh = nullptr;
+            NTSTATUS mh_status = MergeHelper::Create(allocator, mh);
+            CODING_ERROR_ASSERT(mh_status == STATUS_SUCCESS);
+            CODING_ERROR_ASSERT(mh->CurrentMergePolicy == MergePolicy::All);
+            CODING_ERROR_ASSERT(mh->MergeFilesCountThreshold == 3);
+            CODING_ERROR_ASSERT(mh->PercentageOfInvalidEntriesPerFile == 33);
+            co_return;
+        }
+
+        ktl::Awaitable<void> MergeList_OnInvalidentries_ShouldMatchMergeThreshold_Test()
+        {
+            KAllocator& allocator = GetAllocator();
+            MergeHelper::SPtr mergeHelperSPtr = nullptr;
+            auto status = MergeHelper::Create(allocator, mergeHelperSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            MetadataTable::SPtr metadataTableSPtr = nullptr;
+            status = MetadataTable::Create(allocator, metadataTableSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            FileMetadata::SPtr fileMeta = nullptr;
+            KString::SPtr fileNameSPtr = nullptr;
+            KString::Create(fileNameSPtr, GetAllocator(), L"");
+            status = FileMetadata::Create(1, *fileNameSPtr, 0, 0, 0, 0, false, allocator, *CreateTraceComponent(), fileMeta);
+            mergeHelperSPtr->NumberOfInvalidEntries = 1;
+            fileMeta->TotalNumberOfEntries = 2;
+            fileMeta->NumberOfValidEntries = 0;
+            ULONG32 fileId = 1;
+            metadataTableSPtr->Table->Add(fileId, fileMeta);
+
+            KSharedArray<ULONG32>::SPtr mergeList = mergeHelperSPtr->GetMergeList(*metadataTableSPtr);
+            CODING_ERROR_ASSERT((*mergeList)[0] == 1);
+            co_return;
+        }
+
+        ktl::Awaitable<void> GetMergeList_BasedOnPercentage_ShouldBeNonEmpty_Test()
+        {
+            KAllocator& allocator = GetAllocator();
+            MergeHelper::SPtr mergeHelperSPtr = nullptr;
+            auto status = MergeHelper::Create(allocator, mergeHelperSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            MetadataTable::SPtr metadataTableSPtr = nullptr;
+            status = MetadataTable::Create(allocator, metadataTableSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            FileMetadata::SPtr fileMeta = nullptr;
+            KString::SPtr fileNameSPtr = nullptr;
+            KString::Create(fileNameSPtr, GetAllocator(), L"");
+            status = FileMetadata::Create(1, *fileNameSPtr, 0, 0, 0, 0, false, allocator, *CreateTraceComponent(), fileMeta);
+            fileMeta->TotalNumberOfEntries = 1;
+            fileMeta->NumberOfValidEntries = 0;
+            ULONG32 fileId = 1;
+            metadataTableSPtr->Table->Add(fileId, fileMeta);
+
+            KSharedArray<ULONG32>::SPtr mergeList = mergeHelperSPtr->GetMergeList(*metadataTableSPtr);
+            CODING_ERROR_ASSERT((*mergeList)[0] == 1);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ShouldMerge_OneEmptyMetadataTable_ShouldReturnFalse_Test()
+        {
+            KAllocator& allocator = GetAllocator();
+            MergeHelper::SPtr mergeHelperSPtr = nullptr;
+            auto status = MergeHelper::Create(allocator, mergeHelperSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            MetadataTable::SPtr metadataTableSPtr = nullptr;
+            status = MetadataTable::Create(allocator, metadataTableSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        
+            KSharedArray<ULONG32>::SPtr mergeList = nullptr;
+            bool res = co_await mergeHelperSPtr->ShouldMerge(*metadataTableSPtr, mergeList);
+            CODING_ERROR_ASSERT(res == false);
+            co_return;
+        }
+
+        ktl::Awaitable<void> InvalidEntriesPolicy_MergeListExceedsMergeFilesCountThreshold_ShouldMerge_Test()
+        {
+            KAllocator& allocator = GetAllocator();
+            MergeHelper::SPtr mergeHelperSPtr = nullptr;
+            auto status = MergeHelper::Create(allocator, mergeHelperSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            mergeHelperSPtr->MergeFilesCountThreshold = 1;
+
+            MetadataTable::SPtr metadataTableSPtr = nullptr;
+            status = MetadataTable::Create(allocator, metadataTableSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            FileMetadata::SPtr fileMeta = nullptr;
+            KString::SPtr fileNameSPtr = nullptr;
+            KString::Create(fileNameSPtr, GetAllocator(), L"");
+            status = FileMetadata::Create(1, *fileNameSPtr, 0, 0, 0, 0, false, allocator, *CreateTraceComponent(), fileMeta);
+            fileMeta->TotalNumberOfEntries = 1;
+            fileMeta->NumberOfValidEntries = 0;
+            ULONG32 fileId = 1;
+            metadataTableSPtr->Table->Add(fileId, fileMeta);
+
+            KSharedArray<ULONG32>::SPtr mergeList = nullptr;
+            bool res = co_await mergeHelperSPtr->ShouldMerge(*metadataTableSPtr, mergeList);
+            CODING_ERROR_ASSERT(res == true);
+            CODING_ERROR_ASSERT((*mergeList)[0] == 1);
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(MergeHelperTestSuite, MergeHelperTest)
 
     BOOST_AUTO_TEST_CASE(VerifyDefaultValues_OnInitalization)
     {
-        KAllocator& allocator = MergeHelperTest::GetAllocator();
-        MergeHelper::SPtr mh = nullptr;
-        NTSTATUS mh_status = MergeHelper::Create(allocator, mh);
-        CODING_ERROR_ASSERT(mh_status == STATUS_SUCCESS);
-        CODING_ERROR_ASSERT(mh->CurrentMergePolicy == MergePolicy::All);
-        CODING_ERROR_ASSERT(mh->MergeFilesCountThreshold == 3);
-        CODING_ERROR_ASSERT(mh->PercentageOfInvalidEntriesPerFile == 33);
+        SyncAwait(VerifyDefaultValues_OnInitalization_Test());
     }
 
     BOOST_AUTO_TEST_CASE(MergeList_OnInvalidentries_ShouldMatchMergeThreshold)
     {
-        KAllocator& allocator = GetAllocator();
-        MergeHelper::SPtr mergeHelperSPtr = nullptr;
-        auto status = MergeHelper::Create(allocator, mergeHelperSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        MetadataTable::SPtr metadataTableSPtr = nullptr;
-        status = MetadataTable::Create(allocator, metadataTableSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        FileMetadata::SPtr fileMeta = nullptr;
-        KString::SPtr fileNameSPtr = nullptr;
-        KString::Create(fileNameSPtr, GetAllocator(), L"");
-        status = FileMetadata::Create(1, *fileNameSPtr, 0, 0, 0, 0, false, allocator, *CreateTraceComponent(), fileMeta);
-        mergeHelperSPtr->NumberOfInvalidEntries = 1;
-        fileMeta->TotalNumberOfEntries = 2;
-        fileMeta->NumberOfValidEntries = 0;
-        ULONG32 fileId = 1;
-        metadataTableSPtr->Table->Add(fileId, fileMeta);
-
-        KSharedArray<ULONG32>::SPtr mergeList = mergeHelperSPtr->GetMergeList(*metadataTableSPtr);
-        CODING_ERROR_ASSERT((*mergeList)[0] == 1);
+        SyncAwait(MergeList_OnInvalidentries_ShouldMatchMergeThreshold_Test());
     }
 
     BOOST_AUTO_TEST_CASE(GetMergeList_BasedOnPercentage_ShouldBeNonEmpty)
     {
-        KAllocator& allocator = GetAllocator();
-        MergeHelper::SPtr mergeHelperSPtr = nullptr;
-        auto status = MergeHelper::Create(allocator, mergeHelperSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        MetadataTable::SPtr metadataTableSPtr = nullptr;
-        status = MetadataTable::Create(allocator, metadataTableSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        FileMetadata::SPtr fileMeta = nullptr;
-        KString::SPtr fileNameSPtr = nullptr;
-        KString::Create(fileNameSPtr, GetAllocator(), L"");
-        status = FileMetadata::Create(1, *fileNameSPtr, 0, 0, 0, 0, false, allocator, *CreateTraceComponent(), fileMeta);
-        fileMeta->TotalNumberOfEntries = 1;
-        fileMeta->NumberOfValidEntries = 0;
-        ULONG32 fileId = 1;
-        metadataTableSPtr->Table->Add(fileId, fileMeta);
-
-        KSharedArray<ULONG32>::SPtr mergeList = mergeHelperSPtr->GetMergeList(*metadataTableSPtr);
-        CODING_ERROR_ASSERT((*mergeList)[0] == 1);
+        SyncAwait(GetMergeList_BasedOnPercentage_ShouldBeNonEmpty_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ShouldMerge_OneEmptyMetadataTable_ShouldReturnFalse)
     {
-        KAllocator& allocator = GetAllocator();
-        MergeHelper::SPtr mergeHelperSPtr = nullptr;
-        auto status = MergeHelper::Create(allocator, mergeHelperSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        MetadataTable::SPtr metadataTableSPtr = nullptr;
-        status = MetadataTable::Create(allocator, metadataTableSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        
-        KSharedArray<ULONG32>::SPtr mergeList = nullptr;
-        bool res = SyncAwait(mergeHelperSPtr->ShouldMerge(*metadataTableSPtr, mergeList));
-        CODING_ERROR_ASSERT(res == false);
+        SyncAwait(ShouldMerge_OneEmptyMetadataTable_ShouldReturnFalse_Test());
     }
 
     BOOST_AUTO_TEST_CASE(InvalidEntriesPolicy_MergeListExceedsMergeFilesCountThreshold_ShouldMerge)
     {
-        KAllocator& allocator = GetAllocator();
-        MergeHelper::SPtr mergeHelperSPtr = nullptr;
-        auto status = MergeHelper::Create(allocator, mergeHelperSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        mergeHelperSPtr->MergeFilesCountThreshold = 1;
-
-        MetadataTable::SPtr metadataTableSPtr = nullptr;
-        status = MetadataTable::Create(allocator, metadataTableSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        FileMetadata::SPtr fileMeta = nullptr;
-        KString::SPtr fileNameSPtr = nullptr;
-        KString::Create(fileNameSPtr, GetAllocator(), L"");
-        status = FileMetadata::Create(1, *fileNameSPtr, 0, 0, 0, 0, false, allocator, *CreateTraceComponent(), fileMeta);
-        fileMeta->TotalNumberOfEntries = 1;
-        fileMeta->NumberOfValidEntries = 0;
-        ULONG32 fileId = 1;
-        metadataTableSPtr->Table->Add(fileId, fileMeta);
-
-        KSharedArray<ULONG32>::SPtr mergeList = nullptr;
-        bool res = SyncAwait(mergeHelperSPtr->ShouldMerge(*metadataTableSPtr, mergeList));
-        CODING_ERROR_ASSERT(res == true);
-        CODING_ERROR_ASSERT((*mergeList)[0] == 1);
+        SyncAwait(InvalidEntriesPolicy_MergeListExceedsMergeFilesCountThreshold_ShouldMerge_Test());
     }
     
     // This test requires additonal setup to work correctly

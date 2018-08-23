@@ -99,7 +99,7 @@ Common::ApiMonitoring::ApiCallDescriptionSPtr ApiMonitoringWrapper::ApiMonitorin
     __in Common::TimeSpan const & slowApiTime)
 {
     Common::Guid partitionId = Common::Guid(partitionedReplicaId.PartitionId);
-    MonitoringData monitoringData = MonitoringData(partitionId, Federation::NodeInstance(), partitionedReplicaId.ReplicaId, 0, nameDesc, Common::StopwatchTime::FromDateTime(Common::DateTime::Now()));
+    MonitoringData monitoringData = MonitoringData(partitionId, partitionedReplicaId.ReplicaId, 0, nameDesc, Common::StopwatchTime::FromDateTime(Common::DateTime::Now()));
     MonitoringParameters monitoringParameters = MonitoringParameters(true, true, false, slowApiTime);
     
     return std::make_shared<ApiCallDescription>(monitoringData, monitoringParameters);
@@ -117,11 +117,13 @@ void ApiMonitoringWrapper::ApiMonitoringComponent::Open(__in Common::TimeSpan co
         Common::ApiMonitoring::MonitoringComponentConstructorParameters parameters;
         parameters.Root = this;
         parameters.ScanInterval = timeSpan;
-        parameters.SlowHealthReportCallback = [this](MonitoringHealthEventList const & events) { SlowHealthCallback(events); };
-        parameters.ClearSlowHealthReportCallback = [this](MonitoringHealthEventList const & events) { ClearSlowHealth(events); };
+        parameters.SlowHealthReportCallback = [this](MonitoringHealthEventList const & events, MonitoringComponentMetadata const &) { SlowHealthCallback(events); };
+        parameters.ClearSlowHealthReportCallback = [this](MonitoringHealthEventList const & events, MonitoringComponentMetadata const &) { ClearSlowHealth(events); };
         
         monitor_ = MonitoringComponent::Create(parameters);
-        monitor_->Open();
+
+        // Curently we add NodeName and NodeInstance information for failover APIs. These information can be added for Replicator APIs in the future. 
+        monitor_->Open(MonitoringComponentMetadata(L""/*NodeName*/, L""));
         isActive_ = true;
     }
 }

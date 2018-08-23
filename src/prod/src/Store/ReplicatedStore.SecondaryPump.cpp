@@ -11,7 +11,57 @@ using namespace TestHooks;
 
 namespace Store
 {
+
     StringLiteral const TraceComponent("SecondaryPump");
+
+    //
+    // PendingInsertMetadata
+    //
+
+    class ReplicatedStore::SecondaryPump::PendingInsertMetadata
+    {
+    private:
+        PendingInsertMetadata(wstring const & type, wstring const & key, FABRIC_SEQUENCE_NUMBER lsn)
+            : type_(type)
+            , key_(key)
+            , lsn_(lsn)
+        {
+        }
+
+    public:
+
+        static shared_ptr<PendingInsertMetadata> Create(wstring const & type, wstring const & key, FABRIC_SEQUENCE_NUMBER lsn)
+        {
+            return shared_ptr<PendingInsertMetadata>(new PendingInsertMetadata(type, key, lsn));
+        }
+
+        __declspec(property(get=get_Type)) wstring const & Type;
+        __declspec(property(get=get_Key)) wstring const & Key;
+        __declspec(property(get=get_Lsn)) ::FABRIC_SEQUENCE_NUMBER Lsn;
+
+        wstring const & get_Type() const { return type_; }
+        wstring const & get_Key() const { return key_; }
+        ::FABRIC_SEQUENCE_NUMBER get_Lsn() const { return lsn_; }
+
+        static wstring GetHash(wstring const & type, wstring const & key)
+        {
+            return wformatString("{0}:{1}", type, key);
+        }
+
+        wstring GetHash()
+        {
+            return GetHash(type_, key_);
+        }
+
+    private:
+        wstring type_;
+        wstring key_;
+        FABRIC_SEQUENCE_NUMBER lsn_;
+    };
+
+    //
+    // SecondaryPump
+    //
 
     ReplicatedStore::SecondaryPump::SecondaryPump(
         __in ReplicatedStore & replicatedStore,
@@ -294,7 +344,7 @@ namespace Store
         ::FABRIC_OPERATION_METADATA const * operationMetadata = operationCPtr->get_Metadata();
         ::FABRIC_SEQUENCE_NUMBER operationLsn = operationMetadata->SequenceNumber;
 
-        vector<ReplicationOperation> replicationOperations;
+        auto replicationOperations = make_shared<vector<ReplicationOperation>>();
         ::FABRIC_SEQUENCE_NUMBER lastQuorumAcked = 0;
 
         switch (pumpState)
@@ -304,7 +354,7 @@ namespace Store
                 pumpOperation,
                 operationCPtr,
                 operationLsn,
-                replicationOperations,
+                *replicationOperations,
                 lastQuorumAcked,
                 errorMessage);
 
@@ -315,7 +365,7 @@ namespace Store
                 pumpOperation,
                 operationCPtr,
                 operationLsn,
-                replicationOperations,
+                *replicationOperations,
                 lastQuorumAcked,
                 errorMessage);
 
@@ -330,7 +380,7 @@ namespace Store
 
         } // switch pumpState
 
-        if (error.IsSuccess() && !replicationOperations.empty())
+        if (error.IsSuccess() && !replicationOperations->empty())
         {
             // Operations are applied serially on the secondary, so there is only one active transaction
             // at a time.
@@ -1072,12 +1122,12 @@ namespace Store
         CopyOperation && copyOperation,
         ::FABRIC_SEQUENCE_NUMBER mockLSN)
     {
-        vector<ReplicationOperation> replicationOperations;
-        auto error = copyOperation.TakeReplicationOperations(replicationOperations);
+        auto replicationOperations = make_shared<vector<ReplicationOperation>>();
+        auto error = copyOperation.TakeReplicationOperations(*replicationOperations);
 
         if (!error.IsSuccess()) { return error; }
 
-        auto operationType = replicationOperations.front().Operation;
+        auto operationType = replicationOperations->front().Operation;
         if (operationType != ReplicationOperationType::Copy)
         {
             TRACE_ERROR_AND_TESTASSERT(TraceComponent, "{0} unsupported local apply type: expected=Copy actual={1}", this->TraceId, operationType);
@@ -1103,12 +1153,12 @@ namespace Store
 
     ErrorCode ReplicatedStore::SecondaryPump::ApplyOperationsWithRetry(
         ComPointer<IFabricOperation> const & operationCPtr,
-        vector<ReplicationOperation> const & replicationOperations,
+        shared_ptr<vector<ReplicationOperation>> const & replicationOperations,
         ::FABRIC_SEQUENCE_NUMBER operationLsn,
         ::FABRIC_SEQUENCE_NUMBER lastQuorumAcked,
         __out wstring & errorMessage)
     {
-        if (replicationOperations.empty())
+        if (replicationOperations->empty())
         {
             errorMessage = L"no replication operations to apply";
 
@@ -1118,14 +1168,14 @@ namespace Store
         // Process notification before applying on secondary (notification 
         // may or may not block depending on mode requested by application)
         //
-        switch (replicationOperations.front().Operation)
+        switch (replicationOperations->front().Operation)
         {
         case ReplicationOperationType::Insert:
         case ReplicationOperationType::Update:
         case ReplicationOperationType::Delete:
         {
             auto error = replicatedStore_.Notifications->NotifyReplication(
-                replicationOperations,
+                *replicationOperations,
                 operationLsn,
                 lastQuorumAcked);
 
@@ -1163,7 +1213,7 @@ namespace Store
             size_t updatedTombstoneCount = 0;
             error = this->ApplyOperations(
                 txSPtr, 
-                replicationOperations, 
+                *replicationOperations, 
                 operationLsn, 
                 lastQuorumAcked, 
                 updatedTombstoneCount, // out
@@ -1178,6 +1228,7 @@ namespace Store
                         move(txSPtr),
                         operationCPtr,
                         operationLsn,
+                        replicationOperations,
                         updatedTombstoneCount,
                         [this](AsyncOperationSPtr const & operation){ this->OnCommitComplete(operation, false); },
                         this->CreateAsyncOperationRoot());
@@ -1228,7 +1279,7 @@ namespace Store
                     //
                     if (errorMessage.empty())
                     {
-                        errorMessage = L"error details missing: LSN={0}", operationLsn;
+                        errorMessage = wformatString(L"error details missing: LSN={0}", operationLsn);
 
                         Assert::TestAssert("{0}", errorMessage);
                     }
@@ -1306,7 +1357,11 @@ namespace Store
                 break;
 
             case ReplicationOperationType::Delete:
-                error = this->DeleteIfDataItemExists(txSPtr, operation.Type, operation.Key);
+                error = this->DeleteIfDataItemExists(
+                    txSPtr, 
+                    operation.Type, 
+                    operation.Key, 
+                    operationLsn);
 
                 if (error.IsSuccess())
                 {
@@ -1399,7 +1454,7 @@ namespace Store
             // sequence number on the secondary never exceeds the highest sequence number
             // on the primary (which would look like false progress)
             //
-            error = this->DeleteIfDataItemExists(txSPtr, operation.Type, operation.Key);
+            error = this->DeleteIfDataItemExists(txSPtr, operation.Type, operation.Key, ILocalStore::SequenceNumberIgnore);
 
             if (error.IsSuccess())
             {
@@ -1466,7 +1521,7 @@ namespace Store
             dataKey = tombstone.LiveEntryKey;
         }
 
-        return this->DeleteIfDataItemExists(txSPtr, dataType, dataKey);
+        return this->DeleteIfDataItemExists(txSPtr, dataType, dataKey, operation.OperationLSN);
     }
 
     ErrorCode ReplicatedStore::SecondaryPump::ProcessTombstoneLowWatermark(
@@ -1633,7 +1688,11 @@ namespace Store
             operationLsn,
             lastModifiedOnPrimaryUtcUPtr.get());
 
-        if (error.IsError(ErrorCodeValue::StoreRecordAlreadyExists))
+        if (error.IsSuccess())
+        {
+            this->AddPendingInsert(type, key, operationLsn);
+        }
+        else if (error.IsError(ErrorCodeValue::StoreRecordAlreadyExists))
         {
             _int64 currentOperationLsn = ILocalStore::SequenceNumberIgnore;
             error = localStore->GetOperationLSN(txSPtr, type, key, currentOperationLsn);
@@ -1688,6 +1747,7 @@ namespace Store
             return err;
         }
 #endif
+
         _int64 currentOperationLsn = ILocalStore::SequenceNumberIgnore;
         auto error = localStore->GetOperationLSN(txSPtr, type, key, currentOperationLsn);
         
@@ -1701,6 +1761,11 @@ namespace Store
                 valueSizeInBytes,
                 operationLsn,
                 lastModifiedOnPrimaryUtcUPtr.get());
+
+            if (error.IsSuccess())
+            {
+                this->AddPendingInsert(type, key, operationLsn);
+            }
         }
         else if (error.IsSuccess())
         {
@@ -1716,7 +1781,8 @@ namespace Store
                 currentOperationLsn,
                 move(lastModifiedOnPrimaryUtcUPtr));
         }
-        else
+
+        if (!error.IsSuccess())
         {
             WriteInfo(
                 TraceComponent, 
@@ -1760,9 +1826,15 @@ namespace Store
         }
         else
         {
-            WriteNoise(
+            // This can happen during file stream full build when an entry is updated
+            // multiple times just as the full build backup occurs on the primary. The full build
+            // contents will contain only the latest version of the entry (LSN = K) while
+            // the replication stream that's buffered during the full build will contain all
+            // updates to this entry in LSN order (LSNs <= K).
+            //
+            WriteInfo(
                 TraceComponent, 
-                "{0} secondary ignored DoUpdate(): type = {1} key = {2} replication sequence = {3} (existing = {4})", 
+                "{0} secondary ignored DoUpdate(): type='{1}' key='{2}' lsn=(incoming={3} existing={4})", 
                 this->TraceId,
                 type,
                 key,
@@ -1776,7 +1848,8 @@ namespace Store
     ErrorCode ReplicatedStore::SecondaryPump::DeleteIfDataItemExists(
         TransactionSPtr const & txSPtr,
         wstring const & type,
-        wstring const & key)
+        wstring const & key,
+        FABRIC_SEQUENCE_NUMBER operationLsn)
     {
         auto const & localStore = this->GetCurrentLocalStore();
 
@@ -1788,20 +1861,126 @@ namespace Store
         }
 #endif
 
-        auto error = localStore->Delete(
+        _int64 currentOperationLsn = ILocalStore::SequenceNumberIgnore;
+        auto error = localStore->GetOperationLSN(txSPtr, type, key, currentOperationLsn);
+
+        // Delete operation LSN can potentially be less than the live entry LSN
+        // when processing a tombstone during copy and there's a live entry
+        // that was re-inserted after the delete. This can also happen
+        // if the queued replication stream delete is behind the progress included
+        // by a full build (i.e. the full build includes the delete, re-insert).
+        //
+        if (error.IsSuccess() && operationLsn != ILocalStore::SequenceNumberIgnore && operationLsn < currentOperationLsn)
+        {
+            WriteInfo(
+                TraceComponent, 
+                "{0} no-op delete for higher LSN live entry: type='{1}' key='{2}' lsn=(delete={3} existing={4})",
+                this->TraceId,
+                type,
+                key,
+                operationLsn,
+                currentOperationLsn);
+
+            return ErrorCodeValue::Success;
+        }
+        else if (error.IsError(ErrorCodeValue::StoreRecordNotFound))
+        {
+            FABRIC_SEQUENCE_NUMBER pendingLsn = 0;
+            if (this->ContainsPendingInsert(type, key, operationLsn, pendingLsn))
+            {
+                WriteInfo(
+                    TraceComponent, 
+                    "{0} block applying delete on pending insert: type='{1}' key='{2}' lsn={3} pending={4}",
+                    this->TraceId,
+                    type,
+                    key,
+                    operationLsn,
+                    pendingLsn);
+
+                // Block this delete if there is a pending uncommitted insert that does not
+                // show up in the delete tx view. Otherwise, we'll end up dropping the delete 
+                // on this secondary (see EseLocalStore implementation of Delete).
+                //
+                // Returning an error here will cause retrying of the apply in a new tx.
+                //
+                return ErrorCodeValue::StoreWriteConflict;
+            }
+            else
+            {
+                WriteInfo(
+                    TraceComponent, 
+                    "{0} no-op delete for non-existent entry: type='{1}' key='{2}' lsn={3}",
+                    this->TraceId,
+                    type,
+                    key,
+                    operationLsn);
+
+                return ErrorCodeValue::Success;
+            }
+        }
+
+        return localStore->Delete(
             txSPtr,
             type,
             key,
-            ILocalStore::SequenceNumberIgnore);
-
-        if (error.IsError(ErrorCodeValue::StoreRecordNotFound))
-        {
-            error = ErrorCodeValue::Success;
-        }
-
-        return error;
+            currentOperationLsn);
     }
 
+    void ReplicatedStore::SecondaryPump::AddPendingInsert(wstring const & type, wstring const & key, FABRIC_SEQUENCE_NUMBER lsn)
+    {
+        auto entry = PendingInsertMetadata::Create(type, key, lsn);
+        auto hash = entry->GetHash();
+
+        AcquireWriteLock lock(pendingInsertsLock_);
+
+        auto findIt = pendingInserts_.find(hash);
+        if (findIt == pendingInserts_.end() || findIt->second->Lsn < lsn)
+        {
+            pendingInserts_[hash] = entry;
+        }
+    }
+
+    void ReplicatedStore::SecondaryPump::RemovePendingInserts(vector<ReplicationOperation> const & replicationOperations, FABRIC_SEQUENCE_NUMBER lsn)
+    {
+        AcquireWriteLock lock(pendingInsertsLock_);
+
+        for (auto const & repl : replicationOperations)
+        {
+            if (repl.Operation == ReplicationOperationType::Copy || 
+                repl.Operation == ReplicationOperationType::Insert || 
+                repl.Operation == ReplicationOperationType::Update)
+            {
+                auto hash = PendingInsertMetadata::GetHash(repl.Type, repl.Key);
+
+                auto findIt = pendingInserts_.find(hash);
+                if (findIt != pendingInserts_.end() && findIt->second->Lsn <= lsn)
+                {
+                    pendingInserts_.erase(hash);
+                }
+            }
+        }
+    }
+
+    bool ReplicatedStore::SecondaryPump::ContainsPendingInsert(wstring const & type, wstring const & key, FABRIC_SEQUENCE_NUMBER lsn, __out FABRIC_SEQUENCE_NUMBER & pendingLsn)
+    {
+        auto hash = PendingInsertMetadata::GetHash(type, key);
+
+        AcquireReadLock lock(pendingInsertsLock_);
+
+        auto findIt = pendingInserts_.find(hash);
+
+        if (findIt != pendingInserts_.end())
+        {
+            pendingLsn = findIt->second->Lsn;
+
+            return (pendingLsn < lsn);
+        }
+        else
+        {
+            return false;
+        }
+    }
+        
     bool ReplicatedStore::SecondaryPump::ApproveNewOperationCreation()
     {
         AcquireReadLock acquire(thisLock_);
@@ -1971,7 +2150,7 @@ namespace Store
         isLogicalCopyStreamComplete_ = value;
         shouldNotifyCopyComplete_ = value;
     }
-    
+
     // *********************
     // ComPumpAsyncOperation
     // *********************
@@ -2040,6 +2219,7 @@ namespace Store
         ILocalStore::TransactionSPtr && transactionSPtr,
         ComPointer<IFabricOperation> const &operationCPtr,
         FABRIC_SEQUENCE_NUMBER operationLsn,
+        shared_ptr<vector<ReplicationOperation>> const & replicationOperations,
         size_t updatedTombstoneCount,
         AsyncCallback const & callback,
         AsyncOperationSPtr const & root)
@@ -2049,6 +2229,7 @@ namespace Store
         transactionSPtr_(std::move(transactionSPtr)),
         operationCPtr_(operationCPtr),
         operationLSN_(operationLsn),
+        replicationOperations_(replicationOperations),
         updatedTombstoneCount_(updatedTombstoneCount),
         localCommitStopwatch_()
     {
@@ -2086,6 +2267,8 @@ namespace Store
         transactionSPtr_.reset();
 
         this->TryComplete(thisSPtr, error);
+
+        owner_.RemovePendingInserts(*replicationOperations_, operationLSN_);
 
         if (updatedTombstoneCount_ > 0)
         {

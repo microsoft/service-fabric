@@ -62,13 +62,14 @@ namespace Hosting2
             ServicePackageInstanceIdentifier const & servicePackageInstanceId,
             int64 instanceId,
             ServiceModel::ServicePackageDescription const & servicePackageDescription,
+            std::wstring const & applicationName,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
 
         Common::ErrorCode EndSetupServicePackageInstanceEnvironment(
             Common::AsyncOperationSPtr const & asyncOperation,
-            __out ServicePackageInstanceEnvironmentContextSPtr & packageEnvironmentContext);
+            _Out_ ServicePackageInstanceEnvironmentContextSPtr & packageEnvironmentContext);
 
         Common::AsyncOperationSPtr BeginCleanupServicePackageInstanceEnvironment(
             ServicePackageInstanceEnvironmentContextSPtr const & packageEnvironmentContext,
@@ -92,14 +93,14 @@ namespace Hosting2
         // ****************************************************
         virtual Common::AsyncOperationSPtr OnBeginOpen(
             Common::TimeSpan timeout,
-            Common::AsyncCallback const & callback, 
+            Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
         virtual Common::ErrorCode OnEndOpen(
             Common::AsyncOperationSPtr const & operation);
 
         virtual Common::AsyncOperationSPtr OnBeginClose(
             Common::TimeSpan timeout,
-            Common::AsyncCallback const & callback, 
+            Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
         virtual Common::ErrorCode OnEndClose(
             Common::AsyncOperationSPtr const & operation);

@@ -105,7 +105,6 @@ private:
     friend class StateMachine;
 };
 
-
 StateMachine::StateMachine(uint64 initialState)
     : current_(initialState), 
     abortCalled_(false), 
@@ -133,7 +132,7 @@ void StateMachine::GetStateAndRefCount(__out uint64 & state, __out uint64 & refC
 {
     {
         AcquireReadLock lock(lock_);
-        
+
         state = this->GetState_CallerHoldsLock();
         refCount = this->GetRefCount_CallerHoldsLock();
     }
@@ -156,8 +155,8 @@ ErrorCode StateMachine::TransitionTo(uint64 target, uint64 entryMask, __out uint
 
     ErrorCode error;
 
-	uint64 after = 0;
-	uint64 afterRefCount = 0;
+    uint64 after = 0;
+    uint64 afterRefCount = 0;
 
     bool doAbort = false;
     vector<AsyncOperationSPtr> waitersToComplete;
@@ -270,8 +269,8 @@ ErrorCode StateMachine::TransitionTo(uint64 target, uint64 entryMask, __out uint
             error = ErrorCode(ErrorCodeValue::InvalidState);
         }
 
-		after = current_;
-		afterRefCount = currentRefCount_;
+        after = current_;
+        afterRefCount = currentRefCount_;
 
         if ((after != before) && (transitionWaiters_.size() != 0))
         {
@@ -286,8 +285,8 @@ ErrorCode StateMachine::TransitionTo(uint64 target, uint64 entryMask, __out uint
         }
     }
 
-	WriteTrace(
-		(error.IsSuccess() || error.IsError(ErrorCodeValue::OperationsPending)) ? LogLevel::Noise : LogLevel::Warning,
+    WriteTrace(
+        (error.IsSuccess() || error.IsError(ErrorCodeValue::OperationsPending)) ? LogLevel::Noise : LogLevel::Warning,
         TraceType_StateMachine,
         traceId_,
         "Transition: Target={0}, Before:{1}, After={2}, AfterRefCount={3}, Error={4}, CallAbort={5}.",

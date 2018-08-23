@@ -39,7 +39,7 @@ namespace Data
             static NTSTATUS Create(
                 __in Utilities::PartitionedReplicaId const & traceId,
                 __in TxnReplicator::IRuntimeFolders & runtimeFolders,
-                __in KWfStatefulServicePartition & partition,
+                __in Data::Utilities::IStatefulPartition & partition,
                 __in IStateProvider2Factory & stateProviderFactory,
                 __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
                 __in KAllocator& allocator,
@@ -69,12 +69,21 @@ namespace Data
 
         public: // IStateProviderMap APIs
             /// <summary>
-            /// Gets the given state provider registered wCrith the state manager.
+            /// Gets the given state provider registered with the state manager.
             /// </summary>
-            /// <returns>
-            /// If the state provider exists, return STATUS_SUCCESS and a valid SPtr to the requested ISP2.
-            /// If not, return SF_STATUS_NAME_DOES_NOT_EXIST and null SPtr to the requested ISP2.
-            /// </returns>
+            // Error Code Info:
+            //  Success:
+            //      SF_STATUS_NAME_DOES_NOT_EXIST: Requested ISP2 does not exist, return nullptr
+            //      STATUS_SUCCESS: Indicates function successfully return a valid SPtr to the requested ISP2
+            //  User Should Handle:
+            //      Retry-able:
+            //          SF_STATUS_NOT_READABLE: Partition is not readable
+            //          SF_STATUS_OBJECT_CLOSED: StateManager is closed
+            //      Failed:
+            //
+            //  User should not handle:
+            //      SF_STATUS_INVALID_NAME_URI: Input invalid Name
+            //      STATUS_INSUFFICIENT_RESOURCES: Out of memory to allocate
             NTSTATUS Get(
                 __in KUriView const & stateProviderName,
                 __out TxnReplicator::IStateProvider2::SPtr & stateProvider) noexcept override;
@@ -82,13 +91,38 @@ namespace Data
             /// <summary>
             /// Gets state providers registered with the state manager.
             /// </summary>
+            // Error Code Info:
+            //  Success: 
+            //      STATUS_SUCCESS: Indicates function successfully return a valid enumerator sptr
+            //  User Should Handle:
+            //      Retry-able:
+            //          SF_STATUS_OBJECT_CLOSED: StateManager is closed
+            //      Failed:
+            //
+            //  User should not handle:
+            //      STATUS_INSUFFICIENT_RESOURCES: Out of memory to allocate
             NTSTATUS CreateEnumerator(
                 __in bool parentsOnly,
                 __out Data::IEnumerator<Data::KeyValuePair<KUri::CSPtr, TxnReplicator::IStateProvider2::SPtr>>::SPtr & outEnumerator) noexcept override;
 
-            //
-            // Adds a state provider from the state manager.
-            //
+            /// <summary>
+            /// Adds a state provider to the state manager.
+            /// </summary>
+            // Error Code Info:
+            //  Success: 
+            //      STATUS_SUCCESS: Indicates function successfully add a state provider to state manager
+            //  User Should Handle:
+            //      Retry-able:
+            //          SF_STATUS_NOT_PRIMARY: Partition access status is not primary
+            //          SF_STATUS_OBJECT_CLOSED: StateManager is closed
+            //          SF_STATUS_TIMEOUT: Function call timed out 
+            //          STATUS_CANCELLED: Function canceled
+            //      Failed:
+            //          SF_STATUS_NAME_ALREADY_EXISTS: The state provider with specific name is already exist
+            //  User should not handle:
+            //      SF_STATUS_INVALID_NAME_URI: Input invalid Name
+            //      STATUS_INSUFFICIENT_RESOURCES: Out of memory to allocate
+            //      STATUS_INVALID_PARAMETER: Invalid initialization parameters
             ktl::Awaitable<NTSTATUS> AddAsync(
                 __in TxnReplicator::Transaction & transaction,
                 __in KUriView const & stateProviderName,
@@ -97,18 +131,48 @@ namespace Data
                 __in Common::TimeSpan const & timeout,
                 __in ktl::CancellationToken const & cancellationToken) noexcept override;
 
-            //
+            /// <summary>
             // Removes a state provider from the state manager.
-            //
+            /// </summary>
+            // Error Code Info:
+            //  Success: 
+            //      STATUS_SUCCESS: Indicates function successfully add a state provider to state manager
+            //  User Should Handle:
+            //      Retry-able:
+            //          SF_STATUS_NOT_PRIMARY: Partition access status is not primary
+            //          SF_STATUS_OBJECT_CLOSED: StateManager is closed
+            //          SF_STATUS_TIMEOUT: Function call timed out 
+            //          STATUS_CANCELLED: Function canceled
+            //      Failed:
+            //          SF_STATUS_NAME_DOES_NOT_EXIST: The state provider with specific name does not exist
+            //  User should not handle:
+            //      SF_STATUS_INVALID_NAME_URI: Input invalid Name
+            //      STATUS_INSUFFICIENT_RESOURCES: Out of memory to allocate
             ktl::Awaitable<NTSTATUS> RemoveAsync(
                 __in TxnReplicator::Transaction & transaction,
                 __in KUriView const & stateProviderName,
                 __in Common::TimeSpan const & timeout,
                 __in ktl::CancellationToken const & cancellationToken) noexcept override;
 
-            //
+            /// <summary>
             // Gets or Adds state provider.
+            /// </summary>
+            // Error Code Info:
+            //  Success: 
+            //      STATUS_SUCCESS: Indicates function successfully add or get a state provider to/from state manager
+            //  User Should Handle:
+            //      Retry-able:
+            //          SF_STATUS_NOT_PRIMARY: Partition access status is not primary
+            //          SF_STATUS_NOT_READABLE: Partition is not readable
+            //          SF_STATUS_OBJECT_CLOSED: StateManager is closed
+            //          SF_STATUS_TIMEOUT: Function call timed out 
+            //          STATUS_CANCELLED: Function canceled
+            //      Failed:
             //
+            //  User should not handle:
+            //      SF_STATUS_INVALID_NAME_URI: Input invalid Name
+            //      STATUS_INSUFFICIENT_RESOURCES: Out of memory to allocate
+            //      STATUS_INVALID_PARAMETER: Invalid initialization parameters
             ktl::Awaitable<NTSTATUS> GetOrAddAsync(
                 __in TxnReplicator::Transaction & transaction,
                 __in KUriView const & stateProviderName,
@@ -201,7 +265,7 @@ namespace Data
                 __in FABRIC_REPLICA_ID targetReplicaId, 
                 __out TxnReplicator::OperationDataStream::SPtr & result) noexcept override;
 
-            NTSTATUS BeginSettingCurrentState() noexcept override;
+            ktl::Awaitable<NTSTATUS> BeginSettingCurrentStateAsync() noexcept override;
             
             ktl::Awaitable<NTSTATUS> EndSettingCurrentState() noexcept override;
 
@@ -224,7 +288,7 @@ namespace Data
             FAILABLE StateManager(
                 __in Utilities::PartitionedReplicaId const & traceId,
                 __in TxnReplicator::IRuntimeFolders & runtimeFolders,
-                __in KWfStatefulServicePartition & partition,
+                __in Data::Utilities::IStatefulPartition & partition,
                 __in IStateProvider2Factory & stateProviderFactoryFunction,
                 __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig) noexcept;
 
@@ -370,6 +434,9 @@ namespace Data
                 __in KArray<Metadata::CSPtr> const & metadataArray,
                 __in FABRIC_STATE_PROVIDER_ID stateProviderId);
 
+            ktl::Awaitable<void> CloseOpenedStateProviderOnFailureAsync(
+                __in Metadata & metadata) noexcept;
+
         private:
             ktl::Awaitable<void> InitializeStateProvidersAsync(
                 __in Metadata & metadata,
@@ -380,7 +447,7 @@ namespace Data
 
         private: // Multiple State Provider Dispatcher
             // Calls on the state Providers.
-            // TODO: Should be in StateProviderManager/Dispatcher.
+            // 11908658: Should be in StateProviderManager/Dispatcher.
             ktl::Awaitable<NTSTATUS> OpenStateProvidersAsync(
                 __in ktl::CancellationToken const & cancellationToken) noexcept;
 
@@ -531,13 +598,12 @@ namespace Data
             static KStringView const DeleteOperation;
 
         private: // Const member variables
-            // TODO: Instead use the same id for sp and parent?
             FABRIC_STATE_PROVIDER_ID const EmptyStateProviderId = 0;
 
             // Version of the code.
             LONG32 const version_ = Constants::CurrentVersion;
 
-            // TODO: Today this is trace rate instead of max.
+            // Note: Today this is trace rate instead of max.
             ULONG32 const MaxRetryCount = 16;
 
             ULONG32 const StartingBackOffInMs = 8;
@@ -547,7 +613,7 @@ namespace Data
 
         private: // Initializer list initialized.
             TxnReplicator::IRuntimeFolders::SPtr const runtimeFolders_;
-            KWfStatefulServicePartition::SPtr const partitionSPtr_;
+            Data::Utilities::IStatefulPartition::SPtr const partitionSPtr_;
             KString::CSPtr const workDirectoryPath_;
             TxnReplicator::TRInternalSettingsSPtr const transactionalReplicatorConfig_;
 
@@ -577,7 +643,7 @@ namespace Data
             KSharedPtr<MetadataManager> metadataManagerSPtr_;
             KSharedPtr<CheckpointManager> checkpointManagerSPtr_;
 
-            // TODO: Use KAsyncLock instead since it is write only and timeout is not required.
+            // 11908685: Use KAsyncLock instead since it is write only and timeout is not required.
             Utilities::ReaderWriterAsyncLock::SPtr changeRoleLockSPtr_;
 
         private: // Initialized at initialize

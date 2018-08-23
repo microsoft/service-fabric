@@ -7,9 +7,6 @@ EXPORTS
     FabricCreateWinFabRunLayoutSpecification
     FabricCreateFabricDeploymentSpecification
     FabricGetConfigStore
-    FabricGetConfigStoreEnvironmentVariable
-    FabricGetThreadCount
-    FabricSetThreadTestLimit
     FabricEncryptText
     FabricEncryptText2
     FabricDecryptText
@@ -77,7 +74,9 @@ EXPORTS
 ;   DeleteCertificateFromStore
     VerifyFileSignature
     WriteManagedTrace
+    WriteManagedStructuredTrace
     TraceWrapper
+    TraceWrapperBinaryStructured
     wmemcmp
     wmemchr
     wmemmove
@@ -101,7 +100,5 @@ EXPORTS
     wcsrev
     wcscasecmp
     wcstod
-    FabricSetCrashLeasingApplicationCallback
-    FabricGetCrashLeasingApplicationCallback
-
+	FabricGetGlobals
 

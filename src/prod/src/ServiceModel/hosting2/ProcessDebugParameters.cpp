@@ -32,7 +32,8 @@ ProcessDebugParameters::ProcessDebugParameters(
     EnvironmentMap const & envVars,
     vector<wstring> const & containerEntryPoints,
     vector<wstring> const & containerMountedVolumes,
-    vector<wstring> const & containerEnvironmentBlock)
+    vector<wstring> const & containerEnvironmentBlock,
+    vector<wstring> const & containerLabels)
     : exePath_(exePath),
     arguments_(arguments),
     lockFile_(lockFile),
@@ -41,7 +42,8 @@ ProcessDebugParameters::ProcessDebugParameters(
     environmentBlock_(),
     containerEntryPoints_(containerEntryPoints),
     containerMountedVolumes_(containerMountedVolumes),
-    containerEnvironmentBlock_(containerEnvironmentBlock)
+    containerEnvironmentBlock_(containerEnvironmentBlock),
+    containerLabels_(containerLabels)
 {
     Environment::ToEnvironmentBlock(envVars, environmentBlock_);
 }
@@ -55,7 +57,8 @@ ProcessDebugParameters::ProcessDebugParameters(ProcessDebugParameters const & ot
     environmentBlock_(other.environmentBlock_),
     containerEntryPoints_(other.containerEntryPoints_),
     containerMountedVolumes_(other.containerMountedVolumes_),
-    containerEnvironmentBlock_(other.containerEnvironmentBlock_)
+    containerEnvironmentBlock_(other.containerEnvironmentBlock_),
+    containerLabels_(other.containerLabels_)
 {
 }
 
@@ -68,7 +71,8 @@ ProcessDebugParameters::ProcessDebugParameters(ProcessDebugParameters && other)
     environmentBlock_(move(other.environmentBlock_)),
     containerEntryPoints_(move(other.containerEntryPoints_)),
     containerMountedVolumes_(move(other.containerMountedVolumes_)),
-    containerEnvironmentBlock_(move(other.containerEnvironmentBlock_))
+    containerEnvironmentBlock_(move(other.containerEnvironmentBlock_)),
+    containerLabels_(move(other.containerLabels_))
 {
 }
 
@@ -85,6 +89,7 @@ ProcessDebugParameters const & ProcessDebugParameters::operator=(ProcessDebugPar
         this->containerEntryPoints_ = other.containerEntryPoints_;
         this->containerMountedVolumes_ = other.containerMountedVolumes_;
         this->containerEnvironmentBlock_ = other.containerEnvironmentBlock_;
+        this->containerLabels_ = other.containerLabels_;
     }
     return *this;
 }
@@ -102,6 +107,7 @@ ProcessDebugParameters const & ProcessDebugParameters::operator=(ProcessDebugPar
         this->containerEntryPoints_ = move(other.containerEntryPoints_);
         this->containerEnvironmentBlock_ = move(other.containerEnvironmentBlock_);
         this->containerMountedVolumes_ = move(other.containerMountedVolumes_);
+        this->containerLabels_ = move(other.containerLabels_);
     }
     return *this;
 }
@@ -114,31 +120,42 @@ void ProcessDebugParameters::WriteTo(TextWriter & w, FormatOptions const &) cons
     w.Write("LockFile = {0}, ", LockFile);
     w.Write("WorkingFolder = {0}, ", WorkingFolder);
     w.Write("DebugParametersFile = {0}, ", DebugParametersFile);
+
     w.Write("EnvironmentBlock = {");
-    for(auto iter = EnvironmentBlock.cbegin(); iter != EnvironmentBlock.cend(); ++ iter)
+    for(auto env : EnvironmentBlock)
     {
-        w.Write("{0}", *iter);
+        w.Write("{0}", env);
     }
+    w.Write("}");
+
     w.Write("ContainerEntryPoints = {");
-    for (auto iter = ContainerEntryPoints.cbegin(); iter != ContainerEntryPoints.cend(); ++iter)
+    for (auto entryPoint : ContainerEntryPoints)
     {
-        w.Write("{0}", *iter);
+        w.Write("{0}", entryPoint);
     }
     w.Write("}");
 
     w.Write("ContainerMountedVolumes = {");
-    for (auto iter = ContainerMountedVolumes.cbegin(); iter != ContainerMountedVolumes.cend(); ++iter)
+    for (auto volume : ContainerMountedVolumes)
     {
-        w.Write("{0}", *iter);
+        w.Write("{0}", volume);
     }
     w.Write("}");
 
     w.Write("ContainerEnvironmentBlock = {");
-    for (auto iter = ContainerEnvironmentBlock.cbegin(); iter != ContainerEnvironmentBlock.cend(); ++iter)
+    for (auto contEnv : ContainerEnvironmentBlock)
     {
-        w.Write("{0}", *iter);
+        w.Write("{0}", contEnv);
     }
     w.Write("}");
+
+    w.Write("ContainerLabels = {");
+    for (auto label : ContainerLabels)
+    {
+        w.Write("{0}", label);
+    }
+    w.Write("}");
+    
     w.Write("}");
 }
 
@@ -179,7 +196,14 @@ ErrorCode ProcessDebugParameters::ToPublicApi(
     StringList::ToPublicAPI(heap, this->ContainerEnvironmentBlock, containerEnvBlock);
     debugParameters.ContainerEnvironmentBlock = containerEnvBlock.GetRawPointer();
 
-    debugParameters.Reserved = nullptr;
+    auto debugParametersEx1 = heap.AddItem<FABRIC_PROCESS_DEBUG_PARAMETERS_EX1>();
+    
+    auto containerLabels = heap.AddItem<FABRIC_STRING_LIST>();
+    StringList::ToPublicAPI(heap, this->ContainerLabels, containerLabels);
+    debugParametersEx1->ContainerLabels = containerLabels.GetRawPointer();
+    debugParametersEx1->Reserved = nullptr;
+
+    debugParameters.Reserved = debugParametersEx1.GetRawPointer();
 
     return ErrorCode::Success();
 }

@@ -75,12 +75,12 @@ namespace Transport
         DECLARE_STRUCTURED_TRACE(BeginConnect, std::wstring, std::wstring, std::wstring, std::wstring);
         DECLARE_STRUCTURED_TRACE(BeginReceive, std::wstring);
         DECLARE_STRUCTURED_TRACE(ReceiveFailed, std::wstring, std::wstring, std::wstring, Common::ErrorCode);
-        DECLARE_STRUCTURED_TRACE(ReceivedData, std::wstring, uint64);
+        DECLARE_STRUCTURED_TRACE(ReceivedData, std::wstring, uint64, uint64);
         DECLARE_STRUCTURED_TRACE(DispatchMsg, std::wstring, MessageId, bool, uint32, uint32);
         DECLARE_STRUCTURED_TRACE(DispatchActivity, std::wstring, MessageId, bool, uint32, uint32, Actor::Trace, std::wstring, Common::ActivityId);
         DECLARE_STRUCTURED_TRACE(FailedToConnect, std::wstring, std::wstring, std::wstring, std::wstring, Common::ErrorCode, uint64, std::wstring);
         DECLARE_STRUCTURED_TRACE(BeginSend, std::wstring);
-        DECLARE_STRUCTURED_TRACE(SendCompleted, std::wstring, uint64);
+        DECLARE_STRUCTURED_TRACE(SendCompleted, std::wstring, uint64, uint64);
         DECLARE_STRUCTURED_TRACE(StartCloseDrainingSend, std::wstring, std::wstring, std::wstring);
         DECLARE_STRUCTURED_TRACE(ReceiveMissingDetected, std::wstring, std::wstring, std::wstring, Common::TimeSpan, uint, std::wstring);
         DECLARE_STRUCTURED_TRACE(DropMessageOnAbort, MessageId, Actor::Trace, std::wstring, Common::ErrorCode);
@@ -280,9 +280,10 @@ namespace Transport
                 ReceivedData,
                 22,
                 Noise,
-                "{1} bytes",
+                "{1} bytes, previous total: {2}",
                 "id",
-                "byteTransfered"),
+                "byteTransfered",
+                "previousTotal"),
             DispatchMsg(
                 Common::TraceTaskCodes::Transport,
                 23,
@@ -349,9 +350,10 @@ namespace Transport
                 SendCompleted,
                 29,
                 Noise,
-                "sent {1} bytes",
+                "sent {1} bytes, previousTotal: {2}",
                 "id",
-                "byteTransfered"),
+                "byteTransfered",
+                "previousTotal"),
             TRANSPORT_STRUCTURED_TRACE(
                 StartCloseDrainingSend,
                 30,

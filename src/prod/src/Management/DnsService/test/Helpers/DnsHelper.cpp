@@ -121,7 +121,7 @@ DNS_STATUS DnsHelper::Query(
     NullTracer::Create(/*out*/spTracer, allocator);
 
     IUdpListener::SPtr spListener;
-    netIoManager.CreateUdpListener(/*out*/spListener);
+    netIoManager.CreateUdpListener(/*out*/spListener, false /*AllowMultipleListeners*/);
 
     USHORT portClient = 0;
     DnsServiceSynchronizer syncListener;

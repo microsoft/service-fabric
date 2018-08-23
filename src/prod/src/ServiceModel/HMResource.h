@@ -93,6 +93,7 @@ namespace ServiceModel
         HM_RESOURCE( DuplicateDeployedServicePackageFilters, DuplicateDeployedServicePackageFilters)
         HM_RESOURCE( EntityTooLargeNoUnhealthyEvaluations, EntityTooLarge_NoUnhealthyEvaluations )
         HM_RESOURCE( EntityTooLargeWithUnhealthyEvaluations ,EntityTooLarge_WithUnhealthyEvaluations )
+        HM_RESOURCE( TooManyHealthReports, TooManyHealthReports )
 
         // Resource strings used in HealthReport description by system components
 

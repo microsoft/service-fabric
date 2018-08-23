@@ -16,9 +16,3 @@
 #include "Federation/Federation.h"
 
 #include "ConfigLoader.h"
-
-#if !defined(PLATFORM_UNIX)
-#include "TlHelp32.h"
-#include "Dbghelp.h"
-#endif
-

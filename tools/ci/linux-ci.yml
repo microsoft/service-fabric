@@ -1,0 +1,70 @@
+resources:
+- repo: self
+trigger: none
+queue:
+  name: SF-SeaBreeze
+  timeoutInMinutes: 0
+  demands: 
+  - Agent.OS -equals Linux
+  - ExpressRoute -equals True
+
+
+steps:
+- task: Docker@0
+  displayName: Build container image
+  inputs:
+    containerregistrytype: 'Container Registry'
+    dockerFile: 'tools/build/Dockerfile'
+    defaultContext: false
+    context: '$(System.DefaultWorkingDirectory)'    
+
+- task: Docker@0
+  displayName: Build incremental
+  inputs:
+    containerregistrytype: 'Container Registry'
+    action: 'Run an image'
+    containerName: 'sfbuild-$(Build.BuildId)'
+    volumes: |
+     $(System.DefaultWorkingDirectory)/out:/out
+     $(System.DefaultWorkingDirectory)/deps:/deps
+     $(System.DefaultWorkingDirectory)/src:/src
+     $(System.DefaultWorkingDirectory)/tmp:/tmp
+     $(System.DefaultWorkingDirectory)/external:/external     
+     $(System.DefaultWorkingDirectory)/.config:/.config
+    workDir: '/out'
+    containerCommand: '/src/build.sh -all -d -n -createdeb'
+    detached: false
+  continueOnError: true
+
+- task: Docker@0
+  displayName: Clean build and retry upon build failure
+  inputs:
+    containerregistrytype: 'Container Registry'
+    action: 'Run an image'
+    containerName: 'sfbuild-$(Build.BuildId)'
+    volumes: |
+     $(System.DefaultWorkingDirectory)/out:/out
+     $(System.DefaultWorkingDirectory)/deps:/deps
+     $(System.DefaultWorkingDirectory)/src:/src
+     $(System.DefaultWorkingDirectory)/external:/external
+     $(System.DefaultWorkingDirectory)/.config:/.config
+     
+    workDir: '/out'
+    containerCommand: '/src/build.sh -all -c -d -n -createdeb'
+    detached: false
+  condition: eq('SucceededWithIssues', variables['agent.jobStatus'])
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish Debians
+  inputs:
+    PathtoPublish: 'out/build.prod/FabricDrop/deb'
+    ArtifactName: Debians
+    publishLocation: Container
+
+- task: CmdLine@1
+  displayName: Test Deploying a Cluster
+  inputs:
+    filename: ' out/build.prod/ClusterDeployerTest/runtest.sh'
+    workingFolder: ' out/build.prod/ClusterDeployerTest/'
+  enabled: false
+

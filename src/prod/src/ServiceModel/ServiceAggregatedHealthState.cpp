@@ -39,40 +39,6 @@ ServiceAggregatedHealthState::~ServiceAggregatedHealthState()
 {
 }
 
-ServiceAggregatedHealthState::ServiceAggregatedHealthState(ServiceAggregatedHealthState const & other)
-    : serviceName_(other.serviceName_)
-    , aggregatedHealthState_(other.aggregatedHealthState_)
-{
-}
-
-ServiceAggregatedHealthState & ServiceAggregatedHealthState::operator = (ServiceAggregatedHealthState const & other)
-{
-    if (this != &other)
-    {
-        serviceName_ = other.serviceName_;
-        aggregatedHealthState_ = other.aggregatedHealthState_;
-    }
-
-    return *this;
-}
-
-ServiceAggregatedHealthState::ServiceAggregatedHealthState(ServiceAggregatedHealthState && other)
-    : serviceName_(move(other.serviceName_))
-    , aggregatedHealthState_(move(other.aggregatedHealthState_))
-{
-}
-
-ServiceAggregatedHealthState & ServiceAggregatedHealthState::operator = (ServiceAggregatedHealthState && other)
-{
-    if (this != &other)
-    {
-        serviceName_ = move(other.serviceName_);
-        aggregatedHealthState_ = move(other.aggregatedHealthState_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode ServiceAggregatedHealthState::ToPublicApi(
     __in Common::ScopedHeap & heap,
     __out FABRIC_SERVICE_HEALTH_STATE & publicServiceAggregatedHealthState) const

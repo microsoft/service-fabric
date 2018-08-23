@@ -148,6 +148,7 @@
 
 // Chaos
 #include "api/wrappers/ComFabricChaosReportResult.h"
+#include "api/wrappers/ComFabricChaosEventsSegmentResult.h"
 #include "api/wrappers/ComFabricClientFASResource.h"
 
 #include "api/wrappers/ComFaultAnalysisServiceAgent.h"
@@ -157,6 +158,10 @@
 #include "api/wrappers/ComUpgradeOrchestrationServiceAgentFactory.h"
 
 #include "api/wrappers/ComProxySystemServiceBase.h"
+
+#include "api/wrappers/ComFabricChaosDescriptionResult.h"
+#include "api/wrappers/ComFabricChaosScheduleDescriptionResult.h"
+
 // BackupRestore
 #include "api/wrappers/ComBackupRestoreServiceAgent.h"
 #include "api/wrappers/ComBackupRestoreServiceAgentFactory.h"
@@ -196,3 +201,7 @@
 #include "api/wrappers/ComProxyContainerActivatorService.h"
 
 #include "api/wrappers/WrapperFactory.h"
+
+// Secret Store Service
+#include "api/wrappers/ComSecretsResult.h"
+#include "api/wrappers/ComSecretReferencesResult.h"

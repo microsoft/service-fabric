@@ -22,6 +22,7 @@ namespace Management
                 DeletePending = 2,
                 Failed = 3,
                 Completed = 4,
+                Replacing = 5
             };
 
             void WriteToTextWriter(Common::TextWriter & w, Enum const & e);

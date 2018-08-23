@@ -111,12 +111,20 @@ BOOL CtrlHandler(DWORD fdwCtrlType)
         // Handle the CTRL-C signal. 
     case CTRL_C_EVENT:
         CloseServiceHost();
+#if defined(PLATFORM_UNIX)
+        ExitProcess(ERROR_SUCCESS);
+#else
         ExitProcess(ERROR_CONTROL_C_EXIT);
+#endif
 
         // Pass other signals to the next handler.
     case CTRL_BREAK_EVENT:
         CloseServiceHost();
+#if defined(PLATFORM_UNIX)
+        ExitProcess(ERROR_SUCCESS);
+#else
         ExitProcess(ERROR_CONTROL_C_EXIT);
+#endif
 
     default:
         return FALSE;

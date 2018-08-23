@@ -35,6 +35,7 @@ set( LINUX_SOURCES
     ../ApplicationTypeQueryResult.cpp
     ../ApplicationTypeStatus.cpp
     ../ApplicationUpdateDescriptionWrapper.cpp
+    ../ApplicationUnhealthyEvaluation.cpp
     ../ApplicationUpgradeDescriptionWrapper.cpp
     ../ApplicationUpgradeSpecification.cpp
     ../ApplicationVersion.cpp
@@ -56,13 +57,18 @@ set( LINUX_SOURCES
     ../ClusterHealthStatisticsFilter.cpp
     ../ClusterLoadInformationQueryResult.cpp
     ../ClusterUpgradeHealthPolicy.cpp
+    ../CodePackageContainersImagesDescription.cpp
     ../CodePackageDescription.cpp
     ../CodePackageEntryPoint.cpp
     ../CodePackageEntryPointStatistics.cpp
     ../CodePackageIdentifier.cpp
     ../ConfigPackageDescription.cpp
+    ../ConfigPackagePoliciesDescription.cpp
+    ../ConfigPackageSettingDescription.cpp
+    ../ConfigSettingsDescription.cpp
     ../ComposeDeploymentUpgradeDescription.cpp
     ../ComposeDeploymentUpgradeProgress.cpp
+    ../ConfigOverrideDescription.cpp
     ../ComposeDeploymentUpgradeState.cpp
     ../Constants.cpp
     ../ComposeDeploymentStatusQueryDescription.cpp
@@ -71,8 +77,10 @@ set( LINUX_SOURCES
     ../PortBindingDescription.cpp
     ../ContainerIsolationMode.cpp
     ../ContainerVolumeDescription.cpp
+    ../ContainerLabelDescription.cpp
     ../ContainerHealthConfigDescription.cpp
     ../ContainerCertificateDescription.cpp
+    ../ContainerGroupDeploymentUtility.cpp
     ../ContainerPoliciesDescription.cpp
     ../ContainerInfoArgMap.cpp
     ../ContainerInfoArgs.cpp
@@ -85,6 +93,7 @@ set( LINUX_SOURCES
     ../DefaultServiceDescription.cpp
     ../DeleteApplicationDescription.cpp
     ../DeleteServiceDescription.cpp
+    ../DeleteSingleInstanceDeploymentDescription.cpp
     ../DeltaNodesCheckHealthEvaluation.cpp
     ../DeployedApplicationAggregatedHealthState.cpp
     ../DeployedApplicationEntityHealthInformation.cpp
@@ -141,6 +150,7 @@ set( LINUX_SOURCES
     ../EntryPointStatus.cpp
     ../EntryPointType.cpp
     ../EnvironmentOverrideDescription.cpp
+    ../EnvironmentVariableOverrideDescription.cpp
     ../EnvironmentVariableDescription.cpp
     ../EnvironmentVariablesDescription.cpp
     ../ETWDescription.cpp
@@ -166,6 +176,7 @@ set( LINUX_SOURCES
     ../HealthInformation.cpp
     ../HealthReport.cpp
     ../HealthReportSendOptions.cpp
+    ../HealthState.cpp
     ../HealthStateChunkList.cpp
     ../HealthStatisticsFilter.cpp
     ../HostType.cpp
@@ -186,6 +197,34 @@ set( LINUX_SOURCES
     ../LocalStoreETWDescription.cpp
     ../LogCollectionPolicyDescription.cpp
     ../LogConfigDescription.cpp
+    ../modelV2/ApplicationDescription.cpp
+    ../modelV2/ContainerCodePackageDescription.cpp
+    ../modelV2/CodePackageInstanceView.cpp
+    ../modelV2/CodePackageResourceDescription.cpp
+    ../modelV2/ContainerLabel.cpp
+    ../modelV2/ContainerVolumeRef.cpp
+    ../modelV2/ContainerEndpointDescription.cpp
+    ../modelV2/ImageRegistryCredential.cpp
+    ../modelV2/ContainerServiceDescription.cpp
+    ../modelV2/ApplicationDescriptionQueryResult.cpp
+    ../modelV2/ServiceReplicaDescription.cpp
+    ../modelV2/ContainerServiceQueryResult.cpp
+    ../modelV2/DiagnosticsSinkKind.cpp
+    ../modelV2/DiagnosticsSinkBase.cpp
+    ../modelV2/DiagnosticsDescription2.cpp
+    ../modelV2/DiagnosticsRef.cpp
+    ../modelV2/AzureInternalMonitoringPipelineSinkDescription.cpp
+    ../modelV2/NetworkRef.cpp
+    ../modelV2/ReliableCollectionsRefs.cpp
+    ../modelV2/ResourceDescription.cpp
+    ../modelV2/SettingDescription.cpp
+    ../modelV2/ServicePropertiesBase.cpp
+    ../modelV2/ApplicationScopedVolumeCreationParameters.cpp
+    ../modelV2/ApplicationScopedVolumeProvider.cpp
+    ../modelV2/IndependentVolumeRef.cpp
+    ../modelV2/ApplicationScopedVolume.cpp
+    ../modelV2/VolumeQueryDescription.cpp
+    ../modelV2/VolumeQueryResult.cpp
     ../MonitoredUpgradeFailureAction.cpp
     ../NetworkType.cpp
     ../NetworkConfigDescription.cpp
@@ -201,6 +240,7 @@ set( LINUX_SOURCES
     ../NodeHealthStatesFilter.cpp
     ../NodeLoadInformationQueryResult.cpp
     ../NodeLoadMetricInformation.cpp
+    ../NodeQueryDescription.cpp
     ../NodeQueryResult.cpp
     ../NodesHealthEvaluation.cpp
     ../NTLMAuthenticationPolicyDescription.cpp
@@ -255,9 +295,12 @@ set( LINUX_SOURCES
     ../ReplicaHealthStateFilter.cpp
     ../ReplicaHealthStatesFilter.cpp
     ../ReplicaLoadInformationQueryResult.cpp
+    ../ReplicaResourceQueryResult.cpp
     ../ReplicasHealthEvaluation.cpp
     ../ReplicatorQueueStatus.cpp
     ../ReplicatorStatusQueryResult.cpp
+    ../ReplicasByServiceQueryResult.cpp
+    ../ReplicasResourceQueryDescription.cpp
     ../ReplicaStatusQueryResult.cpp
     ../RepositoryCredentialsDescription.cpp
     ../ResourcesDescription.cpp
@@ -307,7 +350,9 @@ set( LINUX_SOURCES
     ../ServiceNameQueryResult.cpp
     ../ServicePackageDescription.cpp
     ../ServicePackageResourceGovernanceDescription.cpp
+    ../ServiceFabricRuntimeAccessDescription.cpp
     ../ServicePackageActivationContext.cpp
+    ../ServicePackageContainerPolicyDescription.cpp
     ../ServicePackageIdentifier.cpp
     ../ServicePackagePoliciesDescription.cpp
     ../ServicePackageReference.cpp
@@ -328,6 +373,12 @@ set( LINUX_SOURCES
     ../ServiceTypeIdentifier.cpp
     ../ServiceTypeQueryResult.cpp
     ../ServiceTypeRemovalSpecification.cpp
+    ../SingleInstanceApplicationUpgradeDescription.cpp
+    ../SingleInstanceDeploymentQueryDescription.cpp
+    ../SingleInstanceDeploymentQueryResult.cpp
+    ../SingleInstanceDeploymentStatus.cpp
+    ../SingleInstanceDeploymentUpgradeDescription.cpp
+    ../SingleInstanceDeploymentUpgradeState.cpp
     ../StatefulReplicaEntityHealthInformation.cpp
     ../StatelessInstanceEntityHealthInformation.cpp
     ../StringList.cpp
@@ -362,12 +413,14 @@ set( LINUX_SOURCES
     ../hosting2/ApplicationHostClosedEventArgs.cpp
     ../hosting2/ServiceTypeRegistration.cpp
     ../hosting2/RuntimeClosedEventArgs.cpp
+    ../hosting2/SendAvailableContainerImagesEventArgs.cpp
     ../hosting2/ServiceTypeRegistrationEventArgs.cpp
     ../hosting2/ServicePackageInstanceIdentifier.cpp
     ../hosting2/ServiceTypeInstanceIdentifier.cpp
     ../hosting2/CodePackageInstanceIdentifier.cpp
     ../hosting2/ContainerDescription.cpp
     ../hosting2/ContainerImageDescription.cpp
+    ../hosting2/ContainerPodDescription.cpp
     ../hosting2/ProcessDebugParameters.cpp
     ../hosting2/ProcessDescription.cpp
     ../hosting2/ContainerActivationArgs.cpp
@@ -376,6 +429,8 @@ set( LINUX_SOURCES
     ../hosting2/ContainerEventNotification.cpp
     ../hosting2/ContainerApiExecutionArgs.cpp
     ../hosting2/ContainerApiExecutionResponse.cpp
+    ../hosting2/ContainerLogDriverConfigDescription.cpp
+    ../hosting2/CodePackageEventDescription.cpp
 
     ../management/FileStoreService/FileState.cpp
     ../management/FileStoreService/storecontentinfo.cpp
@@ -385,6 +440,20 @@ set( LINUX_SOURCES
     ../management/FileStoreService/uploadsession.cpp
     ../management/FileStoreService/uploadsessioninfo.cpp
     ../management/FileStoreService/StorePagedContentInfo.cpp
+    ../management/FileStoreService/UploadChunkContentDescription.cpp
+
+    ../management/CentralSecretService/ServiceModelConstants.cpp
+    ../management/CentralSecretService/Secret.cpp
+    ../management/CentralSecretService/SecretReference.cpp
+    ../management/CentralSecretService/SecretsDescription.cpp
+    ../management/CentralSecretService/SecretReferencesDescription.cpp
+    ../management/CentralSecretService/GetSecretsDescription.cpp
+    ../management/CentralSecretService/SecretResourceMetadata.cpp
+
+    ../management/ResourceManager/Claim.cpp
+    ../management/ResourceManager/ResourceIdentifier.cpp
+    ../management/ResourceManager/ResourceMetadata.cpp
+    ../management/ResourceManager/ResourceTypes.cpp
 
     ../management/clustermanager/ApplicationUpgradeDescription.cpp
     ../management/clustermanager/ApplicationDefinitionKind.cpp
@@ -410,6 +479,8 @@ set( LINUX_SOURCES
     ../management/clustermanager/ProvisionApplicationTypeDescription.cpp
     ../management/clustermanager/ProvisionApplicationTypeDescriptionBase.cpp
     ../management/clustermanager/UnprovisionApplicationTypeDescription.cpp
+    ../management/clustermanager/VolumeProvider.cpp
+    ../management/clustermanager/VolumeDescription.cpp
     ../management/HealthManager/ClusterUpgradeStateSnapshot.cpp
     ../management/HealthManager/EntityKind.cpp
     ../management/HealthManager/EntityKindHealthStateCount.cpp
@@ -427,7 +498,7 @@ set( LINUX_SOURCES
     ../management/ImageStore/ImageStoreCopyDescription.cpp
     ../management/ImageStore/ImageStoreListDescription.cpp
 
-	
+
     ../management/RepairManager/RepairImpactKind.cpp
     ../management/RepairManager/RepairTargetKind.cpp
     ../management/RepairManager/RepairTaskHealthCheckState.cpp
@@ -477,18 +548,30 @@ set( LINUX_SOURCES
     ../management/FaultAnalysisService/Chaos/ChaosEvent.cpp
     ../management/FaultAnalysisService/Chaos/ChaosParameters.cpp
     ../management/FaultAnalysisService/Chaos/ChaosReport.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosEventsSegment.cpp
     ../management/FaultAnalysisService/Chaos/ChaosReportFilter.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosEventsFilter.cpp
     ../management/FaultAnalysisService/Chaos/ChaosStatus.cpp
     ../management/FaultAnalysisService/Chaos/EventContextMap.cpp
     ../management/FaultAnalysisService/Chaos/ExecutingFaultsEvent.cpp
     ../management/FaultAnalysisService/Chaos/GetChaosReportDescription.cpp
+    ../management/FaultAnalysisService/Chaos/GetChaosEventsDescription.cpp
     ../management/FaultAnalysisService/Chaos/StartChaosDescription.cpp
+    ../management/FaultAnalysisService/Chaos/SetChaosScheduleDescription.cpp
     ../management/FaultAnalysisService/Chaos/StartedEvent.cpp
     ../management/FaultAnalysisService/Chaos/StoppedEvent.cpp
     ../management/FaultAnalysisService/Chaos/TestErrorEvent.cpp
     ../management/FaultAnalysisService/Chaos/ValidationFailedEvent.cpp
     ../management/FaultAnalysisService/Chaos/WaitingEvent.cpp
-    ../management/FaultAnalysisService/Chaos/ChaosTargetFilter.cpp    
+    ../management/FaultAnalysisService/Chaos/ChaosTargetFilter.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosScheduleStatus.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosScheduleTimeUtc.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosScheduleTimeRangeUtc.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosScheduleJobActiveDays.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosScheduleJob.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosSchedule.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosScheduleDescription.cpp
+    ../management/FaultAnalysisService/Chaos/ChaosDescription.cpp
 
     ../management/UpgradeOrchestrationService/OrchestrationUpgradeProgress.cpp
     ../management/UpgradeOrchestrationService/UpgradeOrchestrationServiceState.cpp
@@ -573,6 +656,16 @@ set( LINUX_SOURCES
     ../reliability/failover/ServiceTypeUpdateKind.cpp
     ../reliability/failover/ReconfigurationResult.cpp
     ../reliability/failover/ReconfigurationType.cpp
+    ../reliability/failover/ScalingTriggerKind.cpp
+    ../reliability/failover/ScalingMechanismKind.cpp
+    ../reliability/failover/ServiceScalingPolicyDescription.cpp
+    ../reliability/failover/ScalingTrigger.cpp
+    ../reliability/failover/AveragePartitionLoadScalingTrigger.cpp
+    ../reliability/failover/AverageServiceLoadScalingTrigger.cpp
+    ../reliability/failover/ScalingMechanism.cpp
+    ../reliability/failover/InstanceCountScalingMechanism.cpp
+    ../reliability/failover/AddRemoveIncrementalNamedPartitionScalingMechanism.cpp
+    ../reliability/failover/ReplicaLifeCycleState.cpp
     ../reliability/replication/ComReplicatorSettingsResult.cpp
     ../reliability/replication/ReplicatorSettings.cpp
 
@@ -585,12 +678,16 @@ set( LINUX_SOURCES
     ../transport/SecurityProvider.cpp
     ../transport/SecuritySettings.cpp
     ../transport/RoleMask.cpp
+    ../store/MigrationPhase.cpp
+    ../store/MigrationQueryResult.cpp
+    ../store/MigrationState.cpp
+    ../store/ProviderKind.cpp
     ../store/RestoreSettings.cpp
 
     ../data/txnreplicator/KtlLoggerSharedLogSettings.cpp
     ../data/txnreplicator/KvsSystemServiceConfig.cpp
     ../data/txnreplicator/TransactionalReplicatorSettings.cpp
-    ../data/txnreplicator/ComTransactionalReplicatorSettingsResult.cpp    
+    ../data/txnreplicator/ComTransactionalReplicatorSettingsResult.cpp
 
     ../management/ResourceMonitor/ApplicationHostEvent.cpp
     ../management/ResourceMonitor/HostUpdateRM.cpp

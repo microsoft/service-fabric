@@ -12,9 +12,9 @@ using namespace Transport;
 
 StringLiteral const TraceComponent("ResourceMonitoringAgent");
 
-ResourceMonitoringAgent::ResourceMonitoringAgent(IFabricRuntime * & pRuntime) :
+ResourceMonitoringAgent::ResourceMonitoringAgent(Hosting2::ComFabricRuntime * pRuntime, Transport::IpcClient & ipcClient) :
     pRuntime_(pRuntime),
-    ipcClient_((dynamic_cast<ComFabricRuntime*>(pRuntime))->Runtime->Host.Client)
+    ipcClient_(ipcClient)
 {
     WriteNoise(TraceComponent, "ResourceMonitoringAgent constructed.");
 }
@@ -81,9 +81,10 @@ void ResourceMonitoringAgent::UpdateFromHost(Management::ResourceMonitor::HostUp
 
         for (auto updateEvent : hostEvents)
         {
-#ifdef DBG
-            WriteInfo(TraceComponent, "Update event host {0}", updateEvent);
-#endif
+            if (ResourceMonitorServiceConfig::GetConfig().IsTestMode)
+            {
+                WriteInfo(TraceComponent, "Update event host {0}", updateEvent);
+            }
 
             if (updateEvent.IsUp)
             {
@@ -195,12 +196,13 @@ void ResourceMonitoringAgent::SendResourceUsage(TimerSPtr const & timer)
 
     WriteInfo(TraceComponent, "ResourceMonitoringAgent Sending ResourceUsage for {0} partitions", partitionUsage.size());
 
-#ifdef DBG
-    for (auto & usage : partitionUsage)
+    if (ResourceMonitorServiceConfig::GetConfig().IsTestMode)
     {
-        WriteInfo(TraceComponent, "Resource send {0} {1}", usage.first, usage.second);
+        for (auto & usage : partitionUsage)
+        {
+            WriteInfo(TraceComponent, "Resource send {0} {1}", usage.first, usage.second);
+        }
     }
-#endif
 
     if (partitionUsage.size() != 0)
     {
@@ -250,18 +252,26 @@ void ResourceMonitoringAgent::TraceCallback(Common::TimerSPtr const & timer)
 
 std::vector<std::wstring> ResourceMonitoringAgent::GetHostsToMeasure()
 {
-    AcquireReadLock grab(lock_);
-
     std::vector<std::wstring> hosts;
 
-    auto now = DateTime::Now();
-
-    for (auto & host : hostsToMonitor_)
     {
-        if (host.second.resourceUsage_.ShouldCheckUsage(now))
+        AcquireReadLock grab(lock_);
+
+        auto now = DateTime::Now();
+
+        for (auto & host : hostsToMonitor_)
         {
-            hosts.push_back(host.first);
+            if (host.second.resourceUsage_.ShouldCheckUsage(now))
+            {
+                hosts.push_back(host.first);
+            }
         }
+    }
+
+    if (hosts.size() > ResourceMonitorServiceConfig::GetConfig().MaxHostsToMeasure)
+    {
+        std::random_shuffle(hosts.begin(), hosts.end());
+        hosts.resize(ResourceMonitorServiceConfig::GetConfig().MaxHostsToMeasure);
     }
 
     return hosts;
@@ -280,9 +290,10 @@ void ResourceMonitoringAgent::UpdateWithMeasurements(std::map<std::wstring, Mana
             if (itHost != hostsToMonitor_.end())
             {
                 itHost->second.resourceUsage_.Update(measurement.second);
-#ifdef DBG
-                WriteInfo(TraceComponent, "Resource update {0} {1}", itHost->first, itHost->second.resourceUsage_);
-#endif
+                if (ResourceMonitorServiceConfig::GetConfig().IsTestMode)
+                {
+                    WriteInfo(TraceComponent, "Resource update {0} {1}", itHost->first, itHost->second.resourceUsage_);
+                }
             }
         }
     }
@@ -352,18 +363,7 @@ protected:
     {
         WriteNoise(TraceComponent, "ResourceMonitoringAgent::OpenAsyncOperation Started");
 
-        ComFabricRuntime * castedRuntimePtr;
-        try
-        {
-            castedRuntimePtr = dynamic_cast<ComFabricRuntime*>(owner_.pRuntime_);
-        }
-        catch (...)
-        {
-            Common::Assert::TestAssert("ResourceMonitoringAgent unable to cast ComFabricRuntime.");
-            WriteWarning(TraceComponent, "ResourceMonitoringAgent unable to get ComFabricRuntime");
-            TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::OperationFailed));
-            return;
-        }
+        ComFabricRuntime * castedRuntimePtr = owner_.pRuntime_;
 
         owner_.RegisterMessageHandler();
         owner_.hostId_ = castedRuntimePtr->Runtime->Host.get_Id();

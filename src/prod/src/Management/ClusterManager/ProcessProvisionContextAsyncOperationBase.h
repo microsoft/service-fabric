@@ -32,7 +32,7 @@ namespace Management
                 Common::AsyncOperationSPtr const &);
 
         protected:
-            void OnStart(Common::AsyncOperationSPtr const &) override;
+            virtual void OnStart(Common::AsyncOperationSPtr const &) override;
 
             virtual void StartProvisioning(Common::AsyncOperationSPtr const &) = 0;
             void OnCommitComplete(Common::AsyncOperationSPtr const &, bool expectedCompletedSynchronously);
@@ -48,6 +48,9 @@ namespace Management
 
             __declspec (property(get=get_AppTypeContext)) ApplicationTypeContext & AppTypeContext;
             ApplicationTypeContext & get_AppTypeContext() { return context_; }
+
+        private:
+            bool ShouldCleanupApplicationPackage() const;
 
         protected:
             bool startedProvision_;

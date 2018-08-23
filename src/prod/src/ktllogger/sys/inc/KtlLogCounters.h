@@ -10,6 +10,9 @@
 // See http://msdn.microsoft.com/en-us/library/windows/desktop/aa373092(v=vs.85).aspx for
 // details on the manifest scheme
 //
+
+#pragma once
+
 #if KTL_USER_MODE
 
 // {A1E3BBB1-1E5D-4e95-9E79-952AEF1206C3}

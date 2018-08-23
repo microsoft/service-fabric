@@ -14,9 +14,9 @@ namespace Management
             enum Enum
             {
                 Invalid = 0,
-                ClusterDefault = 1,
-                CleanupApplicationPackageOnSuccessfulProvision = 2,
-                NoCleanupApplicationPackageOnProvision = 3,
+                Default = 1,
+                Automatic = 2,
+                Manual = 3,
             };
 
             FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY ToPublicApi(Enum const&);
@@ -27,9 +27,9 @@ namespace Management
 
             BEGIN_DECLARE_ENUM_JSON_SERIALIZER(Enum)
                 ADD_ENUM_VALUE(Invalid)
-                ADD_ENUM_VALUE(ClusterDefault)
-                ADD_ENUM_VALUE(CleanupApplicationPackageOnSuccessfulProvision)
-                ADD_ENUM_VALUE(NoCleanupApplicationPackageOnProvision)
+                ADD_ENUM_VALUE(Default)
+                ADD_ENUM_VALUE(Automatic)
+                ADD_ENUM_VALUE(Manual)
             END_DECLARE_ENUM_SERIALIZER()
         }
     }

@@ -38,6 +38,7 @@ namespace ServiceModel
         friend struct DigestedCodePackageDescription;
         friend struct ServicePackagePoliciesDescription;
         friend struct ContainerPoliciesDescription;
+        friend struct ServicePackageContainerPolicyDescription;
         void ReadFromXml(Common::XmlReaderUPtr const &);
         Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
     };

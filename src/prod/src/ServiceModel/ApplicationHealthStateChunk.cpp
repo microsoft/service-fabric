@@ -42,35 +42,6 @@ ApplicationHealthStateChunk::ApplicationHealthStateChunk(
 {
 }
 
-ApplicationHealthStateChunk::ApplicationHealthStateChunk(ApplicationHealthStateChunk && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , Common::ISizeEstimator(move(other))
-    , applicationName_(move(other.applicationName_))
-    , applicationTypeName_(move(other.applicationTypeName_))
-    , healthState_(move(other.healthState_))
-    , serviceHealthStateChunks_(move(other.serviceHealthStateChunks_))
-    , deployedApplicationHealthStateChunks_(move(other.deployedApplicationHealthStateChunks_))
-{
-}
-
-ApplicationHealthStateChunk & ApplicationHealthStateChunk::operator =(ApplicationHealthStateChunk && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        applicationTypeName_ = move(other.applicationTypeName_);
-        healthState_ = move(other.healthState_);
-        serviceHealthStateChunks_ = move(other.serviceHealthStateChunks_);
-        deployedApplicationHealthStateChunks_ = move(other.deployedApplicationHealthStateChunks_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    Common::ISizeEstimator::operator=(move(other));
-    return *this;
-}
-
 ApplicationHealthStateChunk::~ApplicationHealthStateChunk()
 {
 }

@@ -20,40 +20,6 @@ NodeLoadInformationQueryResult::NodeLoadInformationQueryResult(
     nodeLoadMetricInformation_(move(nodeLoadMetricInformation))
 {
 }
-    
-NodeLoadInformationQueryResult::NodeLoadInformationQueryResult(NodeLoadInformationQueryResult const & other) :
-    nodeName_(other.nodeName_),
-    nodeLoadMetricInformation_(other.nodeLoadMetricInformation_)
-{
-}
-
-NodeLoadInformationQueryResult::NodeLoadInformationQueryResult(NodeLoadInformationQueryResult && other) :
-    nodeName_(move(other.nodeName_)),
-    nodeLoadMetricInformation_(move(other.nodeLoadMetricInformation_))
-{
-}
-
-NodeLoadInformationQueryResult const & NodeLoadInformationQueryResult::operator = (NodeLoadInformationQueryResult const & other)
-{
-    if (this != & other)
-    {
-        nodeName_ = other.nodeName_;
-        nodeLoadMetricInformation_ = other.nodeLoadMetricInformation_;
-    }
-
-    return *this;
-}
-
-NodeLoadInformationQueryResult const & NodeLoadInformationQueryResult::operator=(NodeLoadInformationQueryResult && other)
-{
-    if (this != &other)
-    {
-        nodeName_ = move(other.nodeName_);
-        nodeLoadMetricInformation_ = move(other.nodeLoadMetricInformation_);
-    }
-
-    return *this;
-}
 
 void NodeLoadInformationQueryResult::ToPublicApi(
     __in Common::ScopedHeap & heap, 

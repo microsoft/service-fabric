@@ -18,7 +18,8 @@ namespace Reliability
 
             ServicePackageDescription(
                 ServiceModel::ServicePackageIdentifier  && servicePackageIdentifier ,
-                std::map<std::wstring, double> && requiredResources);
+                std::map<std::wstring, double> && requiredResources,
+                std::vector<std::wstring> && containersImages);
 
             ServicePackageDescription(ServicePackageDescription const& other);
 
@@ -46,6 +47,9 @@ namespace Reliability
             __declspec(property(get = get_CorrectedRequiredResources)) std::map<std::wstring, uint> const& CorrectedRequiredResources;
             std::map<std::wstring, uint> const& get_CorrectedRequiredResources() const { return correctedRequiredResources_; }
 
+            __declspec(property(get = get_ContainersImages)) std::vector<std::wstring> const& ContainersImages;
+            std::vector<std::wstring> const& get_ContainersImages() const { return containersImages_; }
+
             uint GetMetricRgReservation(std::wstring const & metricName) const;
 
             bool IsAnyResourceReservationIncreased(ServicePackageDescription const& other);
@@ -62,6 +66,9 @@ namespace Reliability
 
             // This map represents each metric in the way in which PLB sees it.
             std::map<std::wstring, uint> correctedRequiredResources_;
+
+            // list of container images for the code packages of this service package
+            std::vector<std::wstring> containersImages_;
         };
     }
 }

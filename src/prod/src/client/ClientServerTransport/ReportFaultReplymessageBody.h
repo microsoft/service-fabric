@@ -13,10 +13,14 @@ namespace Reliability
         ReportFaultReplyMessageBody();
 
         ReportFaultReplyMessageBody(
-            Common::ErrorCode error);
+            Common::ErrorCode error,
+            std::wstring const & message);
 
         __declspec(property(get=get_Error)) Common::ErrorCode Error;
         Common::ErrorCode get_Error() const { return error_; }
+
+        __declspec(property(get = get_Message)) std::wstring Message;
+        std::wstring get_Message() const { return message_; }
 
         static std::string AddField(Common::TraceEvent & traceEvent, std::string const & name);
 
@@ -24,9 +28,10 @@ namespace Reliability
         void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
         void WriteToEtw(uint16 contextSequenceId) const;
 
-        FABRIC_FIELDS_01(error_);
+        FABRIC_FIELDS_02(error_, message_);
 
     private:
         Common::ErrorCode error_;
+        std::wstring message_;
     };
 }

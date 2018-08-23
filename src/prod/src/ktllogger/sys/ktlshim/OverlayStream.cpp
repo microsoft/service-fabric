@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #define VERBOSE 1
 
 #include "KtlLogShimKernel.h"
@@ -128,13 +132,6 @@ OverlayStream::OverlayStream(
     globalContext = up_cast<KAsyncGlobalContext, OverlayGlobalContext>(_GlobalContext);
     SetGlobalContext(globalContext);
 
-    status = KInstrumentedComponent::Create(_DummyIC, GetThisAllocator(), GetThisAllocationTag());
-    if (!NT_SUCCESS(status))
-    {
-        SetConstructorStatus(status);
-        return;
-    }
-    
     //
     // Allocate a waiter for the base container close event
     //
@@ -180,101 +177,6 @@ OverlayStream::OverlayStream(
         _OpenGateContext = nullptr;
     }
         
-    RtlZeroMemory(&_RecoveredLogicalLogHeader, sizeof(_RecoveredLogicalLogHeader));
-}
-
-OverlayStream::OverlayStream(
-    __in RvdLogManager& BaseLogManager,
-    __in RvdLog& BaseSharedLog,
-    __in KtlLogStreamId& StreamId,
-    __in KGuid& DiskId,
-    __in_opt KString const * const Path,                          
-    __in ULONG MaxRecordSize,
-    __in LONGLONG StreamSize,
-    __in ULONG StreamMetadataSize,
-    __in ThrottledKIoBufferAllocator &ThrottledAllocator
-    ) :
-       _OutstandingDedicatedWriteTable(OverlayStream::AsyncDestagingWriteContextOverlay::GetDedicatedLinksOffset(),
-                                       KNodeTable<AsyncDestagingWriteContextOverlay>::CompareFunction(
-                                                      &OverlayStream::AsyncDestagingWriteContextOverlay::Comparator)),   
-       _OutstandingSharedWriteTable(OverlayStream::AsyncDestagingWriteContextOverlay::GetSharedLinksOffset(),
-                                       KNodeTable<AsyncDestagingWriteContextOverlay>::CompareFunction(
-                                                      &OverlayStream::AsyncDestagingWriteContextOverlay::Comparator)),   
-       _OverlayLog(nullptr),
-       _BaseLogManager(&BaseLogManager),
-       _BaseSharedLog(&BaseSharedLog),
-       _StreamId(StreamId),
-       _DiskId(DiskId),
-       _Path(Path),
-       _FailureStatus(STATUS_SUCCESS),
-       _MaxRecordSize(MaxRecordSize),
-       _StreamSize(StreamSize),
-       _SharedLogQuota(StreamSize),
-       _StreamMetadataSize(StreamMetadataSize),
-       _StreamUsers(KtlLogStreamKernel::OverlayLinkageOffset),
-       _WriteOnlyToDedicated(FALSE),
-       _IsStreamForLogicalLog(FALSE),
-       _OpenGateContext(nullptr),
-#if !defined(PLATFORM_UNIX)
-       _PerfCounterSetInstance(nullptr),
-#endif
-       _SharedWriteBytesOutstanding(0),
-       _DedicatedWriteBytesOutstanding(0),
-       _DedicatedWriteBytesOutstandingThreshold(KLogicalLogInformation::WriteThrottleThresholdNoLimit),
-       _ThrottledWritesList(_ThrottleLinkageOffset),
-       _ThrottledAllocator(&ThrottledAllocator),
-       _DisableCoalescing(FALSE),
-       _PeriodicFlushTimeInSec(KtlLogManager::MemoryThrottleLimits::_DefaultPeriodicFlushTimeInSec),
-       _PeriodicTimerIntervalInSec(KtlLogManager::MemoryThrottleLimits::_DefaultPeriodicTimerIntervalInSec),
-#if defined(UDRIVER) || defined(UPASSTHROUGH)
-       _PeriodicTimerTestDelayInSec(0),
-#endif
-       _StreamAllocation(0),
-       _OpenServiceFSMCallout(nullptr)
-#if DBG
-       , _SharedTimerDelay(0),
-       _DedicatedTimerDelay(0)
-#endif
-{
-    NTSTATUS status;    
-
-    _ObjectState = Closed;
-    _DedicatedContainerId = *((KtlLogContainerId*)(&StreamId));
-
-    //
-    // Establish a global context for the stream. All asyncs should use this so traces can include the
-    // activity id.
-    //
-    OverlayGlobalContext::SPtr overlayGlobalContext;
-    KAsyncGlobalContext::SPtr globalContext;
-    status = OverlayGlobalContext::Create(*this, GetThisAllocator(), GetThisAllocationTag(), overlayGlobalContext);
-    if (!NT_SUCCESS(status))
-    {
-        SetConstructorStatus(status);
-        return;
-    }
-    globalContext = up_cast<KAsyncGlobalContext, OverlayGlobalContext>(overlayGlobalContext);
-    SetGlobalContext(globalContext);
-
-    status = KInstrumentedComponent::Create(_DummyIC, GetThisAllocator(), GetThisAllocationTag());
-    if (!NT_SUCCESS(status))
-    {
-        SetConstructorStatus(status);
-        return;
-    }
-        
-    //
-    // Allocate a waiter for the base container close event
-    //
-    status = _DedicatedLogShutdownEvent.CreateWaitContext(GetThisAllocationTag(),
-                                                          GetThisAllocator(),
-                                                          _DedicatedLogShutdownWait);
-    if (! NT_SUCCESS(status))
-    {
-        SetConstructorStatus(status);
-        return; 
-    }
-    
     RtlZeroMemory(&_RecoveredLogicalLogHeader, sizeof(_RecoveredLogicalLogHeader));
 }
 
@@ -442,6 +344,7 @@ OverlayStream::DoCompleteOpen(
 {
     _OpenDedicatedLog = nullptr;
     _OpenStream = nullptr;
+    _DeleteStream = nullptr;
     
     if (! NT_SUCCESS(Status))
     {
@@ -475,8 +378,10 @@ OverlayStream::DoCompleteOpen(
     }
 
     _CopySharedToDedicated = nullptr;
+    _CopySharedToBackup = nullptr;
 
     _TailReadContext = nullptr;
+    _LastReadContext = nullptr;
     _TailMetadataBuffer = nullptr;
     _TailIoBuffer = nullptr;
     
@@ -503,7 +408,7 @@ OverlayStream::OpenServiceFSM(
                         (ULONGLONG)0);
             
     if (! NT_SUCCESS(Status))
-    {
+    {        
         if (_State == WaitForDedicatedContainerClose)
         {
             //
@@ -528,6 +433,36 @@ OverlayStream::OpenServiceFSM(
             _StreamId.Get().Data4[6],
             _StreamId.Get().Data4[7]);
 
+        if ((_State == OpenDedicatedContainer) || (_State == OpenDedicatedStream))
+        {
+            //
+            // If opening the dedicated container or dedicated stream
+            // failed with specific error codes then we want to cleanup
+            // the streams resources
+            //
+            _FinalStatus = Status;
+            
+            if ((Status == STATUS_OBJECT_NAME_NOT_FOUND) ||
+                (Status == STATUS_OBJECT_PATH_NOT_FOUND))
+            {
+                AdvanceState(CleanupStreamResources);
+                goto StateMachine;
+            } else if (Status == K_STATUS_LOG_STRUCTURE_FAULT) {
+                AdvanceState(CopySharedLogDataToBackup);
+                goto StateMachine;
+            }
+        }
+
+        if ((_State == CopySharedLogDataToBackup) || (_State == CleanupStreamResources))
+        {
+            //
+            // If we failed trying to cleanup the stream resources then
+            // just try to close log and move on
+            //
+            AdvanceState(CloseDedicatedContainer);
+            goto StateMachine;
+        }
+
         if (_State > OpenDedicatedContainer)
         {
             //
@@ -536,16 +471,18 @@ OverlayStream::OpenServiceFSM(
             //
             AdvanceState(CloseDedicatedContainer);
             _FinalStatus = Status;
-
-            // Fall through into state machine
+            goto StateMachine;
         }
-        else 
-        {
-            DoCompleteOpen(Status);
-            return;
-        }
+        
+        
+        //
+        // Anything else, just fail it
+        //
+        DoCompleteOpen(Status);
+        return;
     }
 
+StateMachine:
     switch (_State)
     {
         case OpenInitial:
@@ -556,6 +493,8 @@ OverlayStream::OpenServiceFSM(
             // before close process starts
             //
             _GateAcquired = FALSE;
+
+            _DedicatedLogContainer = nullptr;
             
             KInvariant(_ObjectState == Closed);
             
@@ -607,7 +546,6 @@ OverlayStream::OpenServiceFSM(
                 return;
             }
 
-#if !defined(PLATFORM_UNIX)
             //
             // Create perfcounter set and grab dedicated log backlog
             // threshold
@@ -623,32 +561,28 @@ OverlayStream::OpenServiceFSM(
             _DedicatedWriteLatencyTimeIntervals = 0;
             _DedicatedWriteLatencyTimeAverage = 0;          
             
+#if !defined(PLATFORM_UNIX)
             KInvariant(! _PerfCounterSetInstance);
             
-            if (_OverlayLog)
-            {
-                OverlayManager::SPtr overlayManager = _OverlayLog->GetOverlayManager();
-                if (overlayManager)
-                {
-                    Status = overlayManager->CreateNewLogStreamPerfCounterSet(_StreamId, *this, _PerfCounterSetInstance);
-                    if (! NT_SUCCESS(Status))
-                    {
-                        //
-                        // Not having perf counters is not fatal
-                        //
-                        KTraceFailedAsyncRequest(Status, this, _State, 0);
-                    }
-
-                    _DedicatedWriteBytesOutstandingThreshold = overlayManager->GetMaximumDestagingWriteOutstanding();                   
-                }
-
-                _ContainerDedicatedBytesWritten = _OverlayLog->GetContainerDedicatedBytesWrittenPointer();
-                _ContainerSharedBytesWritten = _OverlayLog->GetContainerSharedBytesWrittenPointer();
-            } else {
-                _ContainerDedicatedBytesWritten = &_ContainerDedicatedBytesWrittenTemp;
-                _ContainerSharedBytesWritten = &_ContainerSharedBytesWrittenTemp;
-            }
 #endif
+            OverlayManager::SPtr overlayManager = _OverlayLog->GetOverlayManager();
+            if (overlayManager)
+            {
+#if !defined(PLATFORM_UNIX)
+                Status = overlayManager->CreateNewLogStreamPerfCounterSet(_StreamId, *this, _PerfCounterSetInstance);
+                if (! NT_SUCCESS(Status))
+                {
+                    //
+                    // Not having perf counters is not fatal
+                    //
+                    KTraceFailedAsyncRequest(Status, this, _State, 0);
+                }
+#endif
+                _DedicatedWriteBytesOutstandingThreshold = overlayManager->GetMaximumDestagingWriteOutstanding();                   
+            }
+
+            _ContainerDedicatedBytesWritten = _OverlayLog->GetContainerDedicatedBytesWrittenPointer();
+            _ContainerSharedBytesWritten = _OverlayLog->GetContainerSharedBytesWrittenPointer();
             
             //
             // Remember the max record size for the base shared log
@@ -788,16 +722,168 @@ OverlayStream::OpenServiceFSM(
                 }
             }
 
+            RvdLogAsn lowAsn;
+            RvdLogAsn highAsn;
             RvdLogAsn truncationAsn;
-            Status = _DedicatedLogStream->QueryRecordRange(NULL,
-                                                           NULL,
+            Status = _DedicatedLogStream->QueryRecordRange(&lowAsn,
+                                                           &highAsn,
                                                            &truncationAsn);
             KInvariant(NT_SUCCESS(Status));
+            _LastDedicatedAsn = highAsn;
             
             _SharedTruncationAsn.SetIfLarger(truncationAsn);
             _SharedLogStream->Truncate(_SharedTruncationAsn,
                                        _SharedTruncationAsn);
 
+
+            Status = _SharedLogStream->QueryRecordRange(&lowAsn, &highAsn, &truncationAsn);
+            KInvariant(NT_SUCCESS(Status));
+            if ((! _IsStreamForLogicalLog) || (OverlayStream::IsStreamEmpty(lowAsn, highAsn, truncationAsn)))
+            {
+                //
+                // Since shared stream is empty or this is not a
+                // logical log, don't worry about it.
+                //
+                AdvanceState(BeginCopyFromSharedToDedicated);
+                goto StateMachine;
+            }
+            _FirstSharedAsn = lowAsn;            
+
+            //
+            // Do a quick and dirty check to see if the shared log
+            // records are discontiguous from the end of the dedicated
+            // log.
+            //
+            ULONGLONG dedicatedVersion;
+            ULONGLONG sharedVersion;
+            RvdLogStream::RecordDisposition disposition;
+            ULONG ioSize;
+            ULONGLONG debugInfo1;
+            ULONG maximumDataInBuffer;  
+            Status = _SharedLogStream->QueryRecord(_FirstSharedAsn,
+                                                     &sharedVersion,
+                                                     &disposition,
+                                                     &ioSize,
+                                                     &debugInfo1);
+            KInvariant(NT_SUCCESS(Status));
+            KInvariant(disposition == RvdLogStream::RecordDisposition::eDispositionPersisted);
+            Status = _DedicatedLogStream->QueryRecord(_LastDedicatedAsn,
+                                                     &dedicatedVersion,
+                                                     &disposition,
+                                                     &ioSize,
+                                                     &debugInfo1);
+            KInvariant(NT_SUCCESS(Status));
+            KInvariant(disposition == RvdLogStream::RecordDisposition::eDispositionPersisted);
+
+            //
+            // Make sure that the shared record is newer then the dedicated
+            // record since if the shared record version is lower than
+            // the dedicated record version there there was a tail
+            // truncation and comparing ASNs would not be valid.
+            if (sharedVersion < dedicatedVersion)
+            {
+                AdvanceState(BeginCopyFromSharedToDedicated);
+                goto StateMachine;
+            }
+            
+            // In the case where the shared record is newer, we check that
+            // there is not a gap between the end of the last dedicated
+            // record and the beginning of the first shared record.
+            // Note that this is not a foolproof check since the
+            // dedicated record could have padding which is not
+            // accounted for in this check. So this check may pass even
+            // through there is indeed a hole. In any case the
+            // replicator will the entire log and if there is a hole,
+            // it will be caught at that level.
+            //
+            maximumDataInBuffer = (KLogicalLogInformation::FixedMetadataSize -
+                                   (_DedicatedLogContainer->QueryUserRecordSystemMetadataOverhead() +
+                                    sizeof(KtlLogVerify::KtlMetadataHeader) +
+                                    sizeof(KLogicalLogInformation::MetadataBlockHeader) +
+                                    sizeof(KLogicalLogInformation::StreamBlockHeader))) +
+                                   ioSize;
+
+            if (_FirstSharedAsn > (_LastDedicatedAsn.Get() + maximumDataInBuffer))
+            {
+                Status = K_STATUS_LOG_STRUCTURE_FAULT;
+                KTraceFailedAsyncRequest(Status, this, _FirstSharedAsn.Get(), _LastDedicatedAsn.Get());
+                KTraceFailedAsyncRequest(Status, this, maximumDataInBuffer, 0);
+                AdvanceState(CloseDedicatedContainer);
+                _FinalStatus = Status;
+                goto StateMachine;
+            }
+
+            //
+            // The above check is not foolproof due to
+            // padding. To make more correct, read
+            // the last dedicated log record and pull out its actual
+            // size and check against that.
+            // 
+            AdvanceState(VerifyDedicatedSharedContiguousness);
+            Status = _DedicatedLogStream->CreateAsyncReadContext(_LastReadContext);
+            if (! NT_SUCCESS(Status))
+            {
+                KTraceFailedAsyncRequest(Status, this, _State, 0);
+                AdvanceState(CloseDedicatedContainer);
+                _FinalStatus = Status;
+                goto StateMachine;
+            }
+
+            _LastReadContext->StartRead(_LastDedicatedAsn,
+                                        &_LastVersion,
+                                        _LastMetadataBuffer,
+                                        _LastIoBuffer,
+                                        this,
+                                        completion);
+            return;
+
+            
+        }
+
+        case VerifyDedicatedSharedContiguousness:
+        {
+            KLogicalLogInformation::StreamBlockHeader* streamBlockHeader;
+            KLogicalLogInformation::MetadataBlockHeader* metadataHeader;
+            ULONG dataSize;
+            ULONG data;
+            KInvariant(_IsStreamForLogicalLog);
+
+            Status = KLogicalLogInformation::FindLogicalLogHeadersWithCoreLoggerOffset(_LastMetadataBuffer,
+                                           _DedicatedLogContainer->QueryUserRecordSystemMetadataOverhead(),
+                                           *_LastIoBuffer,
+                                           sizeof(KtlLogVerify::KtlMetadataHeader),
+                                           metadataHeader,
+                                           streamBlockHeader,
+                                           dataSize,
+                                           data);
+            if (! NT_SUCCESS(Status))
+            {
+                Status = K_STATUS_LOG_STRUCTURE_FAULT;
+                KTraceFailedAsyncRequest(Status, this, _State, 0);
+                AdvanceState(CloseDedicatedContainer);
+                _FinalStatus = Status;
+                goto StateMachine;
+            }
+            
+
+            if (_FirstSharedAsn > (_LastDedicatedAsn.Get() + dataSize))
+            {
+                Status = K_STATUS_LOG_STRUCTURE_FAULT;
+                KTraceFailedAsyncRequest(Status, this, _FirstSharedAsn.Get(), _LastDedicatedAsn.Get());
+                KTraceFailedAsyncRequest(Status, this, dataSize, 0);
+                AdvanceState(CloseDedicatedContainer);
+                _FinalStatus = Status;
+                goto StateMachine;
+            }
+            
+
+            AdvanceState(BeginCopyFromSharedToDedicated);
+            goto StateMachine;
+            
+        }
+
+        case BeginCopyFromSharedToDedicated:
+        {
             //
             // Now copy any records left in the shared to dedicated and
             // truncate the shared
@@ -807,8 +893,9 @@ OverlayStream::OpenServiceFSM(
             if (! NT_SUCCESS(Status))
             {
                 KTraceFailedAsyncRequest(Status, this, _State, 0);
-                DoCompleteOpen(Status);
-                return;             
+                AdvanceState(CloseDedicatedContainer);
+                _FinalStatus = Status;
+                goto StateMachine;
             }
             
             _CopySharedToDedicated->StartCopySharedToDedicated(this,
@@ -835,8 +922,9 @@ OverlayStream::OpenServiceFSM(
                 if (! NT_SUCCESS(Status))
                 {
                     KTraceFailedAsyncRequest(Status, this, _State, 0);
-                    DoCompleteOpen(Status);
-                    return;             
+                    AdvanceState(CloseDedicatedContainer);
+                    _FinalStatus = Status;
+                    goto StateMachine;
                 }
 
                 if (!streamTailAsn.IsNull())
@@ -845,8 +933,9 @@ OverlayStream::OpenServiceFSM(
                     if (! NT_SUCCESS(Status))
                     {
                         KTraceFailedAsyncRequest(Status, this, _State, 0);
-                        DoCompleteOpen(Status);
-                        return;             
+                        AdvanceState(CloseDedicatedContainer);
+                        _FinalStatus = Status;
+                        goto StateMachine;
                     }
 
                     _LogicalLogTailOffset = streamTailAsn;
@@ -888,8 +977,9 @@ OverlayStream::OpenServiceFSM(
                 {
                     Status = K_STATUS_LOG_STRUCTURE_FAULT;
                     KTraceFailedAsyncRequest(Status, this, _State, 0);
-                    DoCompleteOpen(Status);
-                    return;             
+                    AdvanceState(CloseDedicatedContainer);
+                    _FinalStatus = Status;
+                    goto StateMachine;
                 }
 
                 //
@@ -968,29 +1058,72 @@ FinishOpen:
             //
             // Almost done
             //
-            if (_OverlayLog)
-            {
-                _OverlayLog->AccountForStreamOpen(*this);
-            }
+#ifndef FILEFUZZ
+            _OverlayLog->AccountForStreamOpen(*this);
+#endif
 
             _StreamAllocation =_ThrottledAllocator->AddToLimit();
 
             DoCompleteOpen(STATUS_SUCCESS);
             return;
         }
+        
+        case CopySharedLogDataToBackup:
+        {
+            _State = CleanupStreamResources;
+            Status = CreateAsyncCopySharedToBackupContext(_CopySharedToBackup);
+            if (! NT_SUCCESS(Status))
+            {
+                KTraceFailedAsyncRequest(Status, this, _State, 0);
+                _FinalStatus = Status;
+                goto CloseDedicatedContainer;
+            }
+            
+            _CopySharedToBackup->StartCopySharedToBackup(this,
+                                                         completion);
+            return;
+        }
 
+        case CleanupStreamResources:
+        {
+            _State = CloseDedicatedContainer;
+            Status = _BaseSharedLog->CreateAsyncDeleteLogStreamContext(_DeleteStream);                  
+            if (! NT_SUCCESS(Status))
+            {
+                KTraceFailedAsyncRequest(Status, this, _State, 0);
+                goto CloseDedicatedContainer;
+            }
+
+            _SharedLogStream = nullptr;
+            _CopySharedToDedicated = nullptr;
+            _CopySharedToBackup = nullptr;
+            
+            //
+            // Delete the log stream in the shared log to ensure that
+            // the resources used by the defunct stream are cleaned up
+            // in the shared log. The rest of the resources for the
+            // stream (metadata, etc) will be cleaned up the next time
+            // the container is opened.
+            _DeleteStream->StartDeleteLogStream(_StreamId, this, completion);
+                        
+            return;
+        }
+        
         case CloseDedicatedContainer:
         {
+CloseDedicatedContainer:
             AdvanceState(WaitForDedicatedContainerClose);
 
             _CopySharedToDedicated = nullptr;
+            _CopySharedToBackup = nullptr;
             _OpenDedicatedLog = nullptr;
             _OpenStream = nullptr;
+            _DeleteStream = nullptr;
             
-            _DedicatedLogContainer = nullptr;
             
             _DedicatedLogStream = nullptr;
             _TailReadContext = nullptr;
+            _LastReadContext = nullptr;
 
             _WriteTableLookupKey = nullptr;
 #if !defined(PLATFORM_UNIX)
@@ -1011,10 +1144,16 @@ FinishOpen:
                 _CoalesceRecords->_FlushAllRecordsForClose = nullptr;
                 _CoalesceRecords = nullptr;
             }
-            
-            _DedicatedLogShutdownWait->StartWaitUntilSet(this,
-                                                         completion);
-            break;
+
+            if (_DedicatedLogContainer != nullptr)
+            {
+                _DedicatedLogContainer = nullptr;
+                _DedicatedLogShutdownWait->StartWaitUntilSet(this,
+                                                             completion);
+                break;
+            }
+
+            // Fall through....
         }
 
         case WaitForDedicatedContainerClose:
@@ -1096,7 +1235,7 @@ OverlayStream::CloseServiceFSM(
     KDbgCheckpointWDataInformational(GetActivityId(), "CloseServiceFSM", Status,
                         (ULONGLONG)_State,
                         (ULONGLONG)this,
-                        (ULONGLONG)0,
+                        (ULONGLONG)_DedicatedLogContainer.RawPtr(),
                         (ULONGLONG)0);                                
     
     if (! NT_SUCCESS(Status))
@@ -1136,7 +1275,7 @@ OverlayStream::CloseServiceFSM(
             }
 
             KInvariant(_DedicatedLogContainer);
-            
+
             _DedicatedLogContainer = nullptr;
             _DedicatedLogShutdownWait->StartWaitUntilSet(this,
                                                          completion);
@@ -1145,10 +1284,9 @@ OverlayStream::CloseServiceFSM(
 
         case CloseDedicatedLog:
         {
-            if (_OverlayLog)
-            {
-                _OverlayLog->AccountForStreamClosed(*this);
-            }
+#ifndef FILEFUZZ
+            _OverlayLog->AccountForStreamClosed(*this);
+#endif
 
             _ThrottledAllocator->RemoveFromLimit(_StreamAllocation);
             _StreamAllocation = 0;
@@ -1238,7 +1376,6 @@ OverlayStream::StartServiceClose(
     return(status);
 }
 
-#if !defined(PLATFORM_UNIX)
 //
 // Number of operations to include in a single sample of latency
 //
@@ -1285,19 +1422,37 @@ VOID OverlayStream::UpdateDedicatedWriteLatencyTime(
         _DedicatedWriteLatencyTimeIntervals = 0;
     }
 }
-#endif
 
-NTSTATUS OverlayStream::ComputeLogPercentageUsed(__out ULONG& PercentUsed)
+void ComputeLogUsage(
+    __in RvdLog& log,
+    __out ULONGLONG& totalSpace,
+    __out ULONGLONG& freeSpace,
+    __out ULONGLONG& usedSpace
+    )
+{
+    log.QuerySpaceInformation(
+        &totalSpace,
+        &freeSpace);
+
+    //
+    // Core logger always reserves 2 records in case it has checkpoint records. This is not reflected in
+    // the freeSpace amount returned and so must be accounted for here
+    //
+    freeSpace -= log.QueryReservedSpace();
+
+    usedSpace = totalSpace - freeSpace;
+}
+
+NTSTATUS OverlayStream::ComputeLogSizeAndSpaceRemaining(
+    __out ULONGLONG& LogSize,
+    __out ULONGLONG& SpaceRemaining
+    )
 {
     NTSTATUS status;
     ULONGLONG totalSpace;
     ULONGLONG freeSpace;
     ULONGLONG usedSpace;
-    ULONGLONG reservedSpace;
-    ULONG percentUsed;
 
-    PercentUsed = 0;
-    
     status = TryAcquireRequestRef();
     if (!NT_SUCCESS(status))
     {
@@ -1305,23 +1460,47 @@ NTSTATUS OverlayStream::ComputeLogPercentageUsed(__out ULONG& PercentUsed)
     }
     KFinally([&] { ReleaseRequestRef(); });
 
-    _DedicatedLogContainer->QuerySpaceInformation(&totalSpace,
-                                                  &freeSpace);
+    ComputeLogUsage(
+        *_DedicatedLogContainer,
+        totalSpace,
+        freeSpace,
+        usedSpace);
 
-    reservedSpace = _DedicatedLogContainer->QueryReservedSpace();
+    KDbgCheckpointWData(GetActivityId(), "ComputeLogSizeAndSpaceRemaining", STATUS_SUCCESS, totalSpace, freeSpace, usedSpace, 0);
 
-    //
-    // Core logger always reserves 2 records in case it has checkpoint records. This is not reflected in
-    // the freespace amount returned and so must be accounted for here
-    //
-    freeSpace -= reservedSpace;
+    LogSize = usedSpace;
+    SpaceRemaining = freeSpace;
 
-    usedSpace = totalSpace - freeSpace;
+    return(STATUS_SUCCESS);
+}
+
+NTSTATUS OverlayStream::ComputeLogPercentageUsed(__out ULONG& PercentUsed)
+{
+    NTSTATUS status;
+    ULONGLONG totalSpace;
+    ULONGLONG freeSpace;
+    ULONGLONG usedSpace;
+    ULONG percentUsed;
+
+    PercentUsed = 0;
+
+    status = TryAcquireRequestRef();
+    if (!NT_SUCCESS(status))
+    {
+        return(status);
+    }
+    KFinally([&] { ReleaseRequestRef(); });
+
+    ComputeLogUsage(
+        *_DedicatedLogContainer,
+        totalSpace,
+        freeSpace,
+        usedSpace);
 
     percentUsed = (ULONG)((usedSpace*100) / totalSpace);
 
 #ifdef UDRIVER
-    KDbgCheckpointWData(GetActivityId(), "ComputeLogPercentageUsed", STATUS_SUCCESS, totalSpace, freeSpace, reservedSpace, percentUsed);
+    KDbgCheckpointWData(GetActivityId(), "ComputeLogPercentageUsed", STATUS_SUCCESS, totalSpace, freeSpace, usedSpace, percentUsed);
 #endif
     PercentUsed = percentUsed;
 
@@ -1382,47 +1561,65 @@ BOOLEAN OverlayStream::ThrottleWriteIfNeeded(
     // Determine if the write can proceed or if it needs to be throttled due to 
     // backlog on the dedicated writes or some other factor
     //
-    BOOLEAN continueWrite = TRUE;
 
-    // TODO: Also check SharedLogQuota
-    
-    K_LOCK_BLOCK(_ThrottleWriteLock)
+    if (GetWriteOnlyToDedicated())
     {
-        if ((GetWriteOnlyToDedicated()) ||
-            (GetDedicatedWriteBytesOutstandingThreshold() == KLogicalLogInformation::WriteThrottleThresholdNoLimit))
-        {
-            //
-            // Writing to dedicated only, no need to throttle
-            //
-            continueWrite = TRUE;
-        }
-        else if (GetDedicatedWriteBytesOutstanding() < GetDedicatedWriteBytesOutstandingThreshold())
-        {
-            //
-            // Dedicated write bytes outstanding is below threshold
-            //
-            continueWrite = TRUE;
-        }
-        else 
-        {
-            // TODO: Remove when stabilized
-            KDbgCheckpointWDataInformational(GetActivityId(), "Throttled write", STATUS_SUCCESS, (ULONGLONG)&DestagingWriteContext,
-                                _DedicatedWriteBytesOutstanding,
-                                DestagingWriteContext.GetRecordAsn().Get(),
-                                DestagingWriteContext.GetDataSize());
-            _ThrottledWritesList.AppendTail(&DestagingWriteContext);
-            continueWrite = FALSE;
-        }
+        //
+        // If bypassing shared log there is no throttling needed
+        //
+        return(TRUE);
     }
 
-    return(continueWrite);
+    
+    ULONGLONG totalSpace, freeSpace;
+    BOOLEAN sharedThrottled;
+
+    //
+    // First check if write needs to be throttled as a result of shared
+    // log usage.
+    //
+    sharedThrottled = _OverlayLog->ShouldThrottleSharedLog(DestagingWriteContext, totalSpace, freeSpace);
+    if (sharedThrottled)
+    {
+        KDbgCheckpointWDataInformational(GetActivityId(), "Throttled write", STATUS_SUCCESS, (ULONGLONG)&DestagingWriteContext,
+                            freeSpace,
+                            DestagingWriteContext.GetRecordAsn().Get(),
+                            totalSpace);
+        return(FALSE);
+    }
+
+    //
+    // Next check if the shared log is getting too far ahead for this
+    // particular dedicated log.
+    //
+    if ((GetDedicatedWriteBytesOutstandingThreshold() != KLogicalLogInformation::WriteThrottleThresholdNoLimit) &&
+        (GetDedicatedWriteBytesOutstanding() >= GetDedicatedWriteBytesOutstandingThreshold()))
+    {
+        KDbgCheckpointWDataInformational(GetActivityId(), "Throttled write", STATUS_SUCCESS, (ULONGLONG)&DestagingWriteContext,
+                            _DedicatedWriteBytesOutstanding,
+                            DestagingWriteContext.GetRecordAsn().Get(),
+                            GetDedicatedWriteBytesOutstandingThreshold());
+        
+        K_LOCK_BLOCK(_ThrottleWriteLock)
+        {
+            _ThrottledWritesList.AppendTail(&DestagingWriteContext);
+        }
+        
+        return(FALSE);
+    }
+
+    return(TRUE);
 }
    
-VOID OverlayStream::UnthrottleWritesIfPossible()
+VOID OverlayStream::UnthrottleWritesIfPossible(
+    __in BOOLEAN ReleaseOne
+    )
 {
-    BOOLEAN continueUnthrottling = TRUE;
     OverlayStream::AsyncDestagingWriteContextOverlay* throttledWrite = NULL;
 
+    BOOLEAN continueUnthrottling = TRUE;
+    _OverlayLog->ShouldUnthrottleSharedLog(ReleaseOne);
+    
     while (continueUnthrottling)
     {
         throttledWrite = NULL;
@@ -1439,25 +1636,24 @@ VOID OverlayStream::UnthrottleWritesIfPossible()
                 //
                 return;
             }
-            
+
             if ((GetDedicatedWriteBytesOutstandingThreshold() == KLogicalLogInformation::WriteThrottleThresholdNoLimit) || 
-                (GetDedicatedWriteBytesOutstanding() < GetDedicatedWriteBytesOutstandingThreshold()))
+                 (GetDedicatedWriteBytesOutstanding() < GetDedicatedWriteBytesOutstandingThreshold()))
             {
                 throttledWrite = _ThrottledWritesList.RemoveHead();
             } else {
                 // TODO: Remove when stabilized
                 KDbgCheckpointWDataInformational(GetActivityId(), "Didnt Unthrottled write", STATUS_SUCCESS,
                                     (ULONGLONG)throttledWrite, GetDedicatedWriteBytesOutstanding(),
-                                    throttledWrite->GetRecordAsn().Get(), throttledWrite->GetDataSize());
+                                    throttledWrite->GetRecordAsn().Get(), 0);
                 return;
-            }
-
+            }            
         }
 
         // TODO: Remove when stabilized
         KDbgCheckpointWDataInformational(GetActivityId(), "Unthrottled write", STATUS_SUCCESS,
                             (ULONGLONG)throttledWrite, GetDedicatedWriteBytesOutstanding(),
-                            throttledWrite->GetRecordAsn().Get(), throttledWrite->GetDataSize());
+                            throttledWrite->GetRecordAsn().Get(), 0);
         throttledWrite->OnStartAllocateBuffer();
     }
 }
@@ -1618,6 +1814,17 @@ OverlayStream::AsyncWriteContextOverlay::CompleteRequest(
     __in NTSTATUS Status
 )
 {
+    if (NT_SUCCESS(Status) && _LogSize != nullptr)
+    {
+        KAssert(_LogSpaceRemaining != nullptr);
+
+        Status = _OverlayStream->ComputeLogSizeAndSpaceRemaining(*_LogSize, *_LogSpaceRemaining);
+        if (!NT_SUCCESS(Status))
+        {
+            KTraceFailedAsyncRequest(Status, this, 0, 0);
+        }
+    }
+
     Complete(Status);
 }
 
@@ -1656,6 +1863,16 @@ OverlayStream::AsyncWriteContextOverlay::FSMContinue(
     {
         case Initial:
         {
+            if (! NT_SUCCESS(_OverlayStream->GetFailureStatus()))
+            {
+                //
+                // If a dedicated log write failed then we need to fail
+                // any subsequent writes
+                //
+                Complete(_OverlayStream->GetFailureStatus());
+                return;
+            }
+            
             _State = WriteToDestaging;
             _DestagingWrite->StartReservedWrite(_ReserveToUse,
                                                 _RecordAsn,
@@ -1756,6 +1973,8 @@ OverlayStream::AsyncWriteContextOverlay::StartWrite(
     _IoBuffer = IoBuffer;
     _SendToShared = NULL;
     _ForceFlush = FALSE;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
 
     Start(ParentAsyncContext, CallbackPtr);
 }
@@ -1784,6 +2003,8 @@ OverlayStream::AsyncWriteContextOverlay::StartWrite(
     _IoBuffer = IoBuffer;
     _SendToShared = NULL;
     _ForceFlush = FALSE;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
 
     Start(ParentAsyncContext, CallbackPtr);
 }
@@ -1807,7 +2028,36 @@ OverlayStream::AsyncWriteContextOverlay::StartReservedWrite(
     _IoBuffer = IoBuffer;
     _SendToShared = NULL;
     _ForceFlush = FALSE;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
     
+    Start(ParentAsyncContext, CallbackPtr);
+}
+
+VOID
+OverlayStream::AsyncWriteContextOverlay::StartReservedWrite(
+    __in ULONGLONG ReserveToUse,
+    __in RvdLogAsn RecordAsn,
+    __in ULONGLONG Version,
+    __in const KBuffer::SPtr& MetaDataBuffer,
+    __in const KIoBuffer::SPtr& IoBuffer,
+    __out ULONGLONG& LogSize,
+    __out ULONGLONG& LogSpaceRemaining,
+    __in_opt KAsyncContextBase* const ParentAsyncContext,
+    __in_opt KAsyncContextBase::CompletionCallback CallbackPtr)
+{
+    _State = Initial;
+
+    _ReserveToUse = ReserveToUse;
+    _RecordAsn = RecordAsn;
+    _Version = Version;
+    _MetaDataBuffer = MetaDataBuffer;
+    _IoBuffer = IoBuffer;
+    _SendToShared = NULL;
+    _ForceFlush = FALSE;
+    _LogSize = &LogSize;
+    _LogSpaceRemaining = &LogSpaceRemaining;
+
     Start(ParentAsyncContext, CallbackPtr);
 }
 
@@ -1836,6 +2086,8 @@ OverlayStream::AsyncWriteContextOverlay::StartReservedWrite(
     _IoBuffer = IoBuffer;
     _SendToShared = NULL;
     _ForceFlush = FALSE;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
 
     Start(ParentAsyncContext, CallbackPtr);
 }
@@ -1866,6 +2118,8 @@ OverlayStream::AsyncWriteContextOverlay::StartReservedWrite(
     _IoBuffer = IoBuffer;
     _SendToShared = SendToShared;
     _ForceFlush = ForceFlush;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
     
     Start(ParentAsyncContext, CallbackPtr);
 }
@@ -2066,9 +2320,7 @@ VOID OverlayStream::AsyncDestagingWriteContextOverlay::ProcessWriteCompletion(
 
             }
 
-#if !defined(PLATFORM_UNIX)
             _OverlayStream->AddPerfCounterBytesWritten(_DataSize);
-#endif
 
             _CallerAsync->CompleteRequest(Status);
             _CallerAsync = nullptr;
@@ -2185,9 +2437,8 @@ OverlayStream::AsyncDestagingWriteContextOverlay::DedicatedWriteCompletion(
     
     if (NT_SUCCESS(status))
     {
-#if !defined(PLATFORM_UNIX)
         _OverlayStream->AddPerfCounterDedicatedBytesWritten(_DataSize);
-#endif
+        
         //
         // When the dedicated write completes we know we can truncate
         // from the shared log
@@ -2202,7 +2453,7 @@ OverlayStream::AsyncDestagingWriteContextOverlay::DedicatedWriteCompletion(
     //
     // See if there are any throttled writes that can be started
     //
-    _OverlayStream->UnthrottleWritesIfPossible();
+    _OverlayStream->UnthrottleWritesIfPossible(TRUE);
     
     _CoalesceIoBuffer = nullptr;
     
@@ -2296,13 +2547,11 @@ OverlayStream::AsyncDestagingWriteContextOverlay::SharedWriteCompletion2(
     __in NTSTATUS Status
     )
 {
-#if !defined(PLATFORM_UNIX)
     LONGLONG sharedWriteLatencyTime = KNt::GetPerformanceTime() - _SharedWriteLatencyTimeStart;
     if (NT_SUCCESS(Status))
     {
         _OverlayStream->UpdateSharedWriteLatencyTime(sharedWriteLatencyTime);
     }
-#endif
 
     _SharedIoBuffer = nullptr;
     
@@ -2339,9 +2588,7 @@ OverlayStream::AsyncDestagingWriteContextOverlay::SharedWriteCompletionAfterEven
     {
         KTraceFailedAsyncRequest(status, this, 0, 0);
     } else {
-#if !defined(PLATFORM_UNIX)
         _OverlayStream->AddPerfCounterSharedBytesWritten(_TotalNumberBytesToWrite);
-#endif
     }
         
     ProcessWriteCompletion(TRUE, status);
@@ -2982,21 +3229,23 @@ OverlayStream::AsyncDestagingWriteContextOverlay::DedicatedTimerWaitCompletion(
 #endif
 
         _OverlayStream->AddDedicatedWriteBytesOutstanding(_DataSize);
+
+        //
+        // Passed off to AppendAsync. It is responsible to free the
+        // buffer back to the ThrottledAllocator
+        //
+        KIoBuffer::SPtr coalesceIoBuffer = _CoalesceIoBuffer;
+        _CoalesceIoBuffer = nullptr;
         
         _AppendFlushContext->Reuse();
         _AppendFlushContext->StartAppend(*_MetaDataBuffer,
                                          *_DedicatedIoBuffer,
                                          _ReserveToUse,
                                          (!_SendToShared) || _IsTruncateTailWrite || _ForceFlush,
-                                         _CoalesceIoBuffer.RawPtr(),
+                                         coalesceIoBuffer.RawPtr(),
                                          *this,
                                          dedicatedCompletion);
 
-        //
-        // Passed off to AppendAsync. It is responsible to free the
-        // buffer back to the ThrottledAllocator
-        //
-        _CoalesceIoBuffer = nullptr;
     }
     else 
     {
@@ -3121,8 +3370,7 @@ OverlayStream::AsyncDestagingWriteContextOverlay::AsyncDestagingWriteContextOver
     __in RvdLogStream& DedicatedLogStream
     ) :
    _DedicatedCoalescedEvent(FALSE, FALSE),
-   _ContainerOperation(OStream._OverlayLog ? *(OStream._OverlayLog->GetInstrumentedComponent()) :
-                                             *(OStream._DummyIC))
+   _ContainerOperation(*(OStream._OverlayLog->GetInstrumentedComponent()))
 {
     NTSTATUS status;
     
@@ -4963,7 +5211,7 @@ OverlayStream::AsyncMultiRecordReadContextOverlay::FSMContinue(
                         }
                     }
 
-                    if ((dataSizeInRecordIoBuffer > 0) && (dataSizeInRecordIoBuffer > 0))
+                    if (dataSizeInRecordIoBuffer > 0)
                     {
                         //
                         // If there is data in the IoBuffer then move it
@@ -5712,12 +5960,10 @@ OverlayStream::TruncateSharedStreamIfPossible(
 
             LONGLONG outstanding = _LogicalLogTailOffset.Get() - truncationAsn.Get();
             SetSharedWriteBytesOutstanding(outstanding);
+            
 #ifdef UDRIVER
             KDbgCheckpointWDataInformational(GetActivityId(), "Shared outstanding", STATUS_SUCCESS,
                                (ULONGLONG)this, truncationAsn.Get(), Version, outstanding);
-            // TODO: Remove when fully stabilized
-            KDbgCheckpointWData(GetActivityId(), "Shared Truncation", STATUS_SUCCESS,
-                               (ULONGLONG)this, truncationAsn.Get(), Version, 0);
 #endif
         }
 
@@ -5753,12 +5999,12 @@ OverlayStream::Truncate(__in RvdLogAsn TruncationPoint, __in RvdLogAsn Preferred
     KFinally([&] { ReleaseRequestRef(); });
 
     //
-    // If the shared log stream has returned an error from write then
+    // If the dedicated log stream has returned an error from write then
     // it is not safe to truncate.
     //
-    if (GetFailureStatus() == K_STATUS_LOG_STRUCTURE_FAULT)
+    if (! NT_SUCCESS(GetFailureStatus()))
     {
-        KTraceFailedAsyncRequest(K_STATUS_LOG_STRUCTURE_FAULT,
+        KTraceFailedAsyncRequest(GetFailureStatus(),
                                  this, TruncationPoint.Get(), _LogicalLogTailOffset.Get());
         return;
     }
@@ -6695,6 +6941,40 @@ OverlayStream::AsyncIoctlContextOverlay::FSMContinue(
                     *_OutBuffer = outBuffer;
                     break;
                 }
+
+                case KLogicalLogInformation::QueryLogSizeAndSpaceRemaining:
+                {
+                    KBuffer::SPtr outBuffer;
+                    KLogicalLogInformation::LogSizeAndSpaceRemaining* outStruct;
+
+                    Status = KBuffer::Create(
+                        sizeof(KLogicalLogInformation::LogSizeAndSpaceRemaining),
+                        outBuffer,
+                        GetThisAllocator());
+                    if (!NT_SUCCESS(Status))
+                    {
+                        KTraceFailedAsyncRequest(Status, this, _State, sizeof(KLogicalLogInformation::LogSizeAndSpaceRemaining));
+
+                        _State = CompletedWithError;
+                        Complete(Status);
+                        return;
+                    }
+
+                    outStruct = (KLogicalLogInformation::LogSizeAndSpaceRemaining*)outBuffer->GetBuffer();
+
+                    Status = _OverlayStream->ComputeLogSizeAndSpaceRemaining(outStruct->LogSize, outStruct->SpaceRemaining);
+                    if (!NT_SUCCESS(Status))
+                    {
+                        KTraceFailedAsyncRequest(Status, this, _State, 0);
+
+                        _State = CompletedWithError;
+                        Complete(Status);
+                        return;
+                    }
+
+                    *_OutBuffer = outBuffer;
+                    break;
+                }
                 
                 case KLogicalLogInformation::SetWriteThrottleThreshold:
                 {
@@ -6858,8 +7138,41 @@ OverlayStream::AsyncIoctlContextOverlay::FSMContinue(
                     }
                     break;
                 }
+
+                case KLogicalLogInformation::QueryTelemetryStatistics:
+                {
+                    if (_OverlayStream->_IsStreamForLogicalLog)
+                    {
+                        KBuffer::SPtr outBuffer;
+                        KLogicalLogInformation::TelemetryStatistics* outStruct;
+
+                        Status = KBuffer::Create(sizeof(KLogicalLogInformation::TelemetryStatistics),
+                                                    outBuffer,
+                                                    GetThisAllocator());
+                        if (! NT_SUCCESS(Status))
+                        {
+                            KTraceFailedAsyncRequest(Status, this, _State, 0);
+
+                            _State = CompletedWithError;
+                            Complete(Status);
+                            return;
+                        }
+
+                        outStruct = (KLogicalLogInformation::TelemetryStatistics*)outBuffer->GetBuffer();
+                        outStruct->DedicatedWriteBytesOutstanding = _OverlayStream->_DedicatedWriteBytesOutstanding;
+                        outStruct->DedicatedWriteBytesOutstandingThreshold = _OverlayStream->_DedicatedWriteBytesOutstandingThreshold;
+                        outStruct->ApplicationBytesWritten = _OverlayStream->_ApplicationBytesWritten;
+                        outStruct->SharedBytesWritten = _OverlayStream->_SharedBytesWritten;
+                        outStruct->DedicatedBytesWritten = _OverlayStream->_DedicatedBytesWritten;
+
+                        *_OutBuffer = outBuffer;
+                    }
+                    break;
+                }
+                
                 default:
                 {
+                    KTraceFailedAsyncRequest(Status, this, _State, _ControlCode);
                     break;
                 }
             }
@@ -7068,7 +7381,6 @@ OverlayStream::AsyncCopySharedToDedicatedContext::FSMContinue(
                                         (ULONGLONG)_State,
                                         (ULONGLONG)_CopyAsn.Get(),
                                         (ULONGLONG)0);                                
-                    _State = Completed;
                     Complete(STATUS_SUCCESS);
                     return;                                             
                 } else {
@@ -7099,7 +7411,6 @@ OverlayStream::AsyncCopySharedToDedicatedContext::FSMContinue(
                 if (! NT_SUCCESS(Status))
                 {
                     KTraceFailedAsyncRequest(Status, this, _State, _CopyAsn.Get());
-                    _State = CompletedWithError;
                     Complete(Status);
                     return;
                 }
@@ -7136,7 +7447,6 @@ OverlayStream::AsyncCopySharedToDedicatedContext::FSMContinue(
                         // STATUS_OBJECT_NAME_COLLISION is ok as it
                         // means the record is also in the dedicated
                         // log
-                        _State = CompletedWithError;
                         Complete(Status);
                         return;                     
                     }
@@ -7154,11 +7464,11 @@ OverlayStream::AsyncCopySharedToDedicatedContext::FSMContinue(
                     &disposition,
                     NULL,
                     &debugInfo1);
+                KInvariant(disposition == RvdLogStream::eDispositionPersisted);
 #else
                 disposition = RvdLogStream::eDispositionPersisted;
                 debugInfo1 = (ULONGLONG)-1;
 #endif
-                KInvariant(disposition == RvdLogStream::eDispositionPersisted);
 #ifdef VERBOSE
                 KDbgCheckpointWData(_OverlayStream->GetActivityId(),
                                     "Record Copied", Status,
@@ -7292,6 +7602,442 @@ OverlayStream::CreateAsyncCopySharedToDedicatedContext(
 }
 
 
+//
+// CopySharedToBackup
+//
+VOID
+OverlayStream::AsyncCopySharedToBackupContext::OnCompleted(
+    )
+{
+    _CopyMetadataBuffer = nullptr;
+    _CopyIoBuffer = nullptr;
+    _BackupLogContainer = nullptr;
+    _BackupLogStream = nullptr;
+    _SharedLogStream = nullptr;
+    _SharedRead = nullptr;
+    _BackupWrite = nullptr;
+    _OpenLog = nullptr;
+    _CreateLog = nullptr;
+    _OpenStream = nullptr;
+    _CreateStream = nullptr;
+}
+
+VOID
+OverlayStream::AsyncCopySharedToBackupContext::FSMContinue(
+    __in NTSTATUS Status
+    )
+{
+    KAsyncContextBase::CompletionCallback completion(this, &OverlayStream::AsyncCopySharedToBackupContext::OperationCompletion);
+
+    KDbgCheckpointWDataInformational(_OverlayStream->GetActivityId(),
+                    "OverlayStream::AsyncCopySharedToBackupContext::FSMContinue", Status,
+                    (ULONGLONG)_State,
+                    (ULONGLONG)this,
+                    (ULONGLONG)_CopyAsn.Get(),
+                    (ULONGLONG)0);                                
+
+    if (! NT_SUCCESS(Status))
+    {
+        KTraceFailedAsyncRequest(Status, this, _State, _CopyAsn.Get());
+    }
+
+#pragma warning(disable:4127)   // C4127: conditional expression is constant
+    while (TRUE)
+    {
+        switch (_State)
+        {
+            case Initial:
+            {
+                RvdLogAsn lowAsn, highAsn, truncationAsn;
+                
+                Status = _SharedLogStream->QueryRecordRange(&lowAsn, &highAsn, &truncationAsn);
+                KInvariant(NT_SUCCESS(Status));
+
+                if (OverlayStream::IsStreamEmpty(lowAsn, highAsn, truncationAsn))
+                {
+                    //
+                    // If there are no records in the shared then there
+                    // is nothing to do.
+                    //
+                    Complete(STATUS_SUCCESS);
+                    return;
+                }
+
+                //
+                // We have data to save from the shared log
+                //
+                if (_OverlayStream->GetPath())
+                {
+                    BOOLEAN b;
+
+                    //
+                    // Create the log container with a temp filename first,
+                    // it will be renamed to the actual filename once all
+                    // initialization is complete.
+                    //
+                    Status = KString::Create(_Path,
+                                             GetThisAllocator(),
+                                             (LPCWSTR)(*(_OverlayStream->GetPath())));
+                    if (! NT_SUCCESS(Status))
+                    {
+                        KTraceFailedAsyncRequest(Status, this, _State, 0);
+                        Complete(Status);
+                        return;
+                    }
+
+                    KStringView tempString(L".Backup");
+                    b = _Path->Concat(tempString);
+                    if (! b)
+                    {
+                        Status = STATUS_INSUFFICIENT_RESOURCES;
+                        KTraceFailedAsyncRequest(Status, this, _State, 0);
+                        Complete(Status);
+                        return;                 
+                    }
+                } else {
+                    //
+                    // No path, too bad
+                    //
+                    Status = STATUS_NOT_SUPPORTED;
+                    KTraceFailedAsyncRequest(Status, this, _State, 0);
+                    Complete(Status);
+                    return;
+                }
+
+                Status = _LogManager->CreateAsyncCreateLogContext(_CreateLog);
+                if (! NT_SUCCESS(Status))
+                {
+                    KTraceFailedAsyncRequest(Status, this, _State, 0);
+                    Complete(Status);
+                    return;
+                }
+
+                //
+                // Compute the size of the backup log
+                //
+                KArray<RvdLogStream::RecordMetadata> records(GetThisAllocator());
+
+                Status = records.Status();
+                if (! NT_SUCCESS(Status))
+                {
+                    KTraceFailedAsyncRequest(Status, this, _State, 0);
+                    Complete(Status);
+                    return;                     
+                }
+
+                Status = _SharedLogStream->QueryRecords(RvdLogAsn::Min(), RvdLogAsn::Max(), records);
+                if (! NT_SUCCESS(Status))
+                {
+                    KTraceFailedAsyncRequest(Status, this, _State, 0);
+                    Complete(Status);
+                    return;                     
+                }
+
+                ULONGLONG logSize = 0;
+                const ULONG metadataSize = 4096;
+                const ULONGLONG oneMB = 1024 * 1024;
+                const ULONGLONG minLogSize = (256 * oneMB);
+                for (ULONG i = 0; i < records.Count(); i++)
+                {
+                    logSize += (metadataSize + records[i].Size);
+                }
+
+                logSize += (logSize / 2);
+
+                logSize = (logSize + (minLogSize-1)) & ~(minLogSize-1);
+
+                _State = CreateBackupLog;
+                _CreateLog->StartCreateLog((KStringView)*_Path,
+                                           (RvdLogId)((_OverlayStream->GetStreamId()).Get()),
+                                           _LogType,
+                                           logSize,
+                                           16,    // MaxAllowedStreams
+                                           0,
+                                           1,     // Sparse
+                                           _BackupLogContainer,
+                                           this,
+                                           completion);
+                return;
+            }
+            
+            case CreateBackupLog:
+            {
+                if (! NT_SUCCESS(Status))
+                {
+                    Complete(Status);
+                    return;
+                }
+
+                _State = CreateBackupStream;
+                Status = _BackupLogContainer->CreateAsyncCreateLogStreamContext(_CreateStream);
+                if (! NT_SUCCESS(Status))
+                {
+                    KTraceFailedAsyncRequest(Status, this, _State, 0);
+                    Complete(Status);
+                    return;
+                }
+
+                RvdLogStreamType logType;
+
+                _SharedLogStream->QueryLogStreamType(logType);
+                _CreateStream->StartCreateLogStream(_OverlayStream->GetStreamId(),
+                                                    logType,
+                                                    _BackupLogStream,
+                                                    this,
+                                                    completion);
+                return;
+            }
+
+            case CreateBackupStream:
+            {
+                if (! NT_SUCCESS(Status))
+                {
+                    Complete(Status);
+                    return;
+                }
+
+                Status = _BackupLogStream->CreateAsyncWriteContext(_BackupWrite);
+                if (! NT_SUCCESS(Status))
+                {
+                    KTraceFailedAsyncRequest(Status, this, _State, _CopyAsn.Get());
+                    Complete(Status);
+                    return;
+                }
+                
+                _State = CopyRecords;
+                break;
+            }
+            
+            case CopyRecords:
+            {
+                RvdLogAsn lowAsn;
+                RvdLogAsn highAsn;
+                RvdLogAsn truncationAsn;
+
+                _State = ReadRecord;
+
+                _CopyMetadataBuffer = nullptr;
+                _CopyIoBuffer = nullptr;
+                _SharedRead->Reuse();
+                
+                Status = _SharedLogStream->QueryRecordRange(&lowAsn, &highAsn, &truncationAsn);
+                KInvariant(NT_SUCCESS(Status));
+
+                KDbgCheckpointWDataInformational(_OverlayStream->GetActivityId(),
+                                    "SharedStreamRecordRange", Status,
+                                    (ULONGLONG)this,
+                                    (ULONGLONG)lowAsn.Get(),
+                                    (ULONGLONG)highAsn.Get(),
+                                    (ULONGLONG)truncationAsn.Get());
+                
+                if (OverlayStream::IsStreamEmpty(lowAsn, highAsn, truncationAsn))
+                {
+                    //
+                    // No more records to copy
+                    //
+                    KDbgCheckpointWDataInformational(_OverlayStream->GetActivityId(),
+                                        "Copy Complete", Status,
+                                        (ULONGLONG)this,
+                                        (ULONGLONG)_State,
+                                        (ULONGLONG)_CopyAsn.Get(),
+                                        (ULONGLONG)0);                                
+                    Complete(STATUS_SUCCESS);
+                    return;                                             
+                } else {
+
+                    _CopyAsn = lowAsn;                    
+#ifdef VERBOSE
+                    KDbgCheckpointWData(_OverlayStream->GetActivityId(),
+                                        "StartRead", Status,
+                                        (ULONGLONG)this,
+                                        (ULONGLONG)_State,
+                                        (ULONGLONG)_CopyAsn.Get(),
+                                        (ULONGLONG)0);
+#endif
+                    _SharedRead->StartRead(_CopyAsn,
+                                             RvdLogStream::AsyncReadContext::ReadExactRecord,
+                                             NULL,                  // ActualAsn
+                                             &_CopyVersion,
+                                             _CopyMetadataBuffer,
+                                             _CopyIoBuffer,
+                                             this,
+                                             completion);
+                }
+                return;
+            }
+
+            case ReadRecord:
+            {
+                if (! NT_SUCCESS(Status))
+                {
+                    KTraceFailedAsyncRequest(Status, this, _State, _CopyAsn.Get());
+                    Complete(Status);
+                    return;
+                }
+                
+                _State = WriteRecord;
+                _BackupWrite->Reuse();
+
+#ifdef VERBOSE
+                KDbgCheckpointWData(_OverlayStream->GetActivityId(),
+                                    "StartWrite", Status,
+                                    (ULONGLONG)this,
+                                    (ULONGLONG)_State,
+                                    (ULONGLONG)_CopyAsn.Get(),
+                                    (ULONGLONG)0);
+#endif
+                _BackupWrite->StartReservedWrite(0,            // Reservation
+                                                    _CopyAsn,
+                                                    _CopyVersion,
+                                                    _CopyMetadataBuffer,
+                                                    _CopyIoBuffer,
+                                                    this,
+                                                    completion);
+                return;
+            }
+
+            case WriteRecord:
+            {
+                if (! NT_SUCCESS(Status))
+                {
+                    KTraceFailedAsyncRequest(Status, this, _State, _CopyAsn.Get());
+                    if (Status != STATUS_OBJECT_NAME_COLLISION)
+                    {
+                        //
+                        // STATUS_OBJECT_NAME_COLLISION is ok as it
+                        // means the record is also in the dedicated
+                        // log
+                        Complete(Status);
+                        return;                     
+                    }
+                }
+                
+                _SharedLogStream->Truncate(_CopyAsn, _CopyAsn);
+                _State = CopyRecords;
+                continue;
+            }
+
+            default:
+            {
+                KInvariant(FALSE);
+            }
+        }
+    }    
+}
+
+VOID
+OverlayStream::AsyncCopySharedToBackupContext::OnCancel(
+    )
+{
+    KTraceCancelCalled(this, FALSE, FALSE, 0);
+}
+
+VOID
+OverlayStream::AsyncCopySharedToBackupContext::OperationCompletion(
+    __in_opt KAsyncContextBase* const,
+    __in KAsyncContextBase& Async
+    )
+{
+    NTSTATUS status = Async.Status();
+
+    FSMContinue(status); 
+}
+
+VOID
+OverlayStream::AsyncCopySharedToBackupContext::OnStart(
+    )
+{
+    KInvariant(_State == Initial);
+
+    FSMContinue(STATUS_SUCCESS);
+}
+
+
+VOID
+OverlayStream::AsyncCopySharedToBackupContext::StartCopySharedToBackup(
+    __in_opt KAsyncContextBase* const ParentAsyncContext,
+    __in_opt KAsyncContextBase::CompletionCallback CallbackPtr)
+{
+    _State = Initial;
+    
+    Start(ParentAsyncContext, CallbackPtr);
+}
+
+OverlayStream::AsyncCopySharedToBackupContext::~AsyncCopySharedToBackupContext()
+{
+}
+
+VOID
+OverlayStream::AsyncCopySharedToBackupContext::OnReuse(
+    )
+{
+}
+
+
+OverlayStream::AsyncCopySharedToBackupContext::AsyncCopySharedToBackupContext(
+    __in OverlayStream& OStream,
+    __in RvdLogManager& LogManager, 
+    __in RvdLogStream& SharedLogStream
+    ) : 
+    _OverlayStream(&OStream),
+    _LogManager(&LogManager),
+    _SharedLogStream(&SharedLogStream),
+    _LogType(GetThisAllocator())
+{
+    NTSTATUS status;
+    RvdLogStream::AsyncReadContext::SPtr sharedRead;
+
+    _LogType =  L"Winfab Backup Logical Log";
+    
+    status = _LogType.Status();
+    if (! NT_SUCCESS(status))
+    {
+        SetConstructorStatus(status);
+        return;
+    }
+    
+    status = _SharedLogStream->CreateAsyncReadContext(sharedRead);
+    if (! NT_SUCCESS(status))
+    {
+        SetConstructorStatus(status);
+        return;
+    }
+    
+    _SharedRead = Ktl::Move(sharedRead);
+}
+
+
+NTSTATUS
+OverlayStream::CreateAsyncCopySharedToBackupContext(
+    __out AsyncCopySharedToBackupContext::SPtr& Context
+    )
+{
+    NTSTATUS status;
+    OverlayStream::AsyncCopySharedToBackupContext::SPtr context;
+
+    Context = nullptr;
+    
+    context = _new(GetThisAllocationTag(), GetThisAllocator()) AsyncCopySharedToBackupContext(*this,
+                                                                                              *_BaseLogManager,
+                                                                                              *_SharedLogStream);
+    if (context == nullptr)
+    {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        KTraceOutOfMemory( GetActivityId(), status, _DedicatedLogStream.RawPtr(), GetThisAllocationTag(), 0);
+        return(status);
+    }
+
+    status = context->Status();
+    if (! NT_SUCCESS(status))
+    {
+        return(status);
+    }
+
+    Context = Ktl::Move(context);
+    
+    return(STATUS_SUCCESS); 
+}
+
 VOID OverlayStream::FreeKIoBuffer(
     __in KActivityId ActivityId,
     __in ULONG Size
@@ -7299,3 +8045,4 @@ VOID OverlayStream::FreeKIoBuffer(
 {
     _ThrottledAllocator->FreeKIoBuffer(ActivityId, Size);
 }
+

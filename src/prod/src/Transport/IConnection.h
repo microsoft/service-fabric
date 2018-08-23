@@ -5,6 +5,14 @@
 
 #pragma once
 
+// This macro is to make sure that session expiration code generates a fault
+// that will be ignored by RequestReply, since the connection will be kept
+// alive to receive pending reply. The alternative is not reporting session
+// expiration fault until connection is closed, this is bad for FabricClient,
+// which wants to create a new connection immediately after the current one
+// is disabled for sending due to session expiration.
+#define SESSION_EXPIRATION_FAULT Common::ErrorCodeValue::SecuritySessionExpired
+
 namespace Transport
 {
     struct IConnection
@@ -37,13 +45,13 @@ namespace Transport
         virtual Common::ErrorCode SendOneWay_Dedicated(MessageUPtr && message, Common::TimeSpan expiration) = 0;
 
         virtual void Close() = 0;
-        virtual void Abort(Common::ErrorCode fault) = 0;
+        virtual void Abort(Common::ErrorCode const & fault) = 0;
         virtual void StopSendAndScheduleClose(
             Common::ErrorCode const & fault,
             bool notifyRemote,
             Common::TimeSpan delay) = 0;
 
-        virtual void ReportFault(Common::ErrorCode fault) = 0;
+        virtual void ReportFault(Common::ErrorCode const & fault) = 0;
         virtual Common::ErrorCode GetFault() const = 0;
 
         virtual ISendTarget::SPtr SetTarget(ISendTarget::SPtr const & target) = 0;

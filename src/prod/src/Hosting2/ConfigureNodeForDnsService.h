@@ -20,8 +20,7 @@ namespace Hosting2
 
         Common::ErrorCode Configure(
             bool isDnsServiceEnabled,
-            bool setAsPreferredDns,
-            std::wstring const & sid);
+            bool setAsPreferredDns);
 
     private:
         Common::ErrorCode ModifyDnsServerList();
@@ -39,7 +38,7 @@ namespace Hosting2
 
         Common::ErrorCode DisableNegativeCache();
 
-        Common::ErrorCode SetHostsFileAcl(std::wstring const & sid, bool remove);
+        Common::ErrorCode SetHostsFileAcl(bool remove);
 
         Common::ErrorCode SetStaticDnsChainRegistryValue(
             Common::RegistryKey & key,
@@ -54,7 +53,7 @@ namespace Hosting2
             const std::wstring & adapterName,
             std::wstring & adapterDescription);
 
-        void Cleanup(std::wstring const & sid);
+        void Cleanup();
 
     private:
         Common::RwLock lock_;

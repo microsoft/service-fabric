@@ -81,6 +81,7 @@
 #include "Management/healthmanager/CleanupEntityJobItemBase.h"
 #include "Management/healthmanager/CleanupEntityJobItem.h"
 #include "Management/healthmanager/CleanupEntityExpiredTransientEventsJobItem.h"
+#include "Management/healthmanager/AutoCleanupEventsJobItem.h"
 #include "Management/healthmanager/CheckInMemoryEntityDataJobItem.h"
 #include "Management/healthmanager/DeleteEntityJobItem.h"
 

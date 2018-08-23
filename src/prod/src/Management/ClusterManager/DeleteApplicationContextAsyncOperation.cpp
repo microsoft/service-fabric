@@ -33,6 +33,28 @@ DeleteApplicationContextAsyncOperation::DeleteApplicationContextAsyncOperation(
     , appName_(context.ApplicationName)
     , serviceContexts_()
     , serviceNames_()
+    , keepContextAlive_(false)
+{
+}
+
+DeleteApplicationContextAsyncOperation::DeleteApplicationContextAsyncOperation(
+    __in RolloutManager & rolloutManager,
+    __in ApplicationContext & context,
+    __in bool keepContextAlive,
+    TimeSpan const timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & root)
+    : ProcessRolloutContextAsyncOperationBase(
+        rolloutManager,
+        context.ReplicaActivityId,
+        timeout,
+        callback, 
+        root)
+    , context_(context)
+    , appName_(context.ApplicationName)
+    , serviceContexts_()
+    , serviceNames_()
+    , keepContextAlive_(keepContextAlive)
 {
 }
 
@@ -104,7 +126,7 @@ void DeleteApplicationContextAsyncOperation::DeleteAllServices(AsyncOperationSPt
 
     if (!error.IsSuccess())
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -323,7 +345,7 @@ void DeleteApplicationContextAsyncOperation::OnDeleteApplicationFromFMComplete(
 
     if (!error.IsSuccess())
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -360,10 +382,20 @@ void DeleteApplicationContextAsyncOperation::EndDeleteApplicationProperty(
             },
             [this](AsyncOperationSPtr const & operation) { this->EndDeleteApplicationName(operation); });
     }
+    else if (error.IsError(ErrorCodeValue::InvalidNameUri))
+    {
+        // If the name is invalid, continue to cleanup the rest of the resources.
+        // This error can happen during create application: create fails because the name is invalid,
+        // so CM tries to cleanup the context, which gets into invalid name again.
+        // Instead of failing the operation and retrying forever, since the is no need to delete the name
+        // (as create also failed), continue with next step.
+        this->CleanupImageStore(operation->Parent);
+        return;
+    }
     
     if (!error.IsSuccess())
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -389,7 +421,7 @@ void DeleteApplicationContextAsyncOperation::EndDeleteApplicationName(
     }
     else
     {
-        this->TryComplete(operation->Parent, error);
+        this->TryComplete(operation->Parent, move(error));
     }
 }
 
@@ -429,7 +461,7 @@ void DeleteApplicationContextAsyncOperation::OnCleanupImageStoreComplete(
     }
     else
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -444,7 +476,7 @@ void DeleteApplicationContextAsyncOperation::DeleteApplicationHealth(AsyncOperat
             "{0}: failed to get the health aggregator: {1}",
             this->TraceId,
             error);
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
         return;
     }
     
@@ -481,7 +513,7 @@ void DeleteApplicationContextAsyncOperation::OnDeleteApplicationHealthComplete(
             "{0}: failed to get the health aggregator: {1}",
             this->TraceId,
             error);
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
         return;
     }
 
@@ -498,7 +530,7 @@ void DeleteApplicationContextAsyncOperation::OnDeleteApplicationHealthComplete(
     }
     else
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -560,7 +592,7 @@ void DeleteApplicationContextAsyncOperation::PrepareCommitDeleteApplication(Asyn
         }
     }
 
-    if (error.IsSuccess())
+    if (error.IsSuccess() && !keepContextAlive_)
     {
         error = storeTx.DeleteIfFound(context_);
     }
@@ -592,7 +624,7 @@ void DeleteApplicationContextAsyncOperation::PrepareCommitDeleteApplication(Asyn
     }
     else
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -631,11 +663,13 @@ void DeleteApplicationContextAsyncOperation::OnCommitDeleteApplicationComplete(
             context_.ManifestId);
 
         CMEvents::Trace->ApplicationDeletedOperational(
+            Common::Guid::NewGuid(),
             context_.ApplicationName.ToString(), 
-            context_.TypeName.Value);
+            context_.TypeName.Value,
+            context_.TypeVersion.Value);
     }
 
-    this->TryComplete(operation->Parent, error);
+    this->TryComplete(operation->Parent, move(error));
 }
 
 ErrorCode DeleteApplicationContextAsyncOperation::End(AsyncOperationSPtr const & operation)

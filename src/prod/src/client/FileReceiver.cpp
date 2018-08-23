@@ -231,7 +231,7 @@ private:
                     owner_.traceId_,
                     "{0}: MoveTransacted failed with {1}. Source:{2}, Destination:{3}.",
                     operationId_,
-					error,
+                    error,
                     tempLocation_,
                     destinationFullPath_);
             }
@@ -362,7 +362,7 @@ ErrorCode FileReceiver::ReplyToSender(Transport::ISendTarget::SPtr const & sendT
 
     if (includeClientVersionHeaderInMessage_)
     {
-        message->Headers.Replace(*ClientProtocolVersionHeader::CurrentVersionHeader);
+        message->Headers.Replace(*ClientProtocolVersionHeader::SingleFileUploadVersionHeader);
     }
 
     auto sendError = transport_->SendOneWay(sendTarget, move(message), timeout);

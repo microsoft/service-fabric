@@ -337,11 +337,12 @@ private:
                     [pwait, exitCallback](pid_t pid, ErrorCode const & waitResult, DWORD exitCode)
                     {
                         TraceInfo(TraceTaskCodes::Hosting, TraceType_Activator, "wait callback called for process {0}, waitResult={1}, exitCode={2}", pid, waitResult, exitCode);
-                        if (WTERMSIG(exitCode) == SIGINT)
+                        DWORD signalCode = WTERMSIG(exitCode);
+                        if (signalCode == SIGINT)
                         {
                             exitCode = STATUS_CONTROL_C_EXIT;
                         }
-                        else if (WTERMSIG(exitCode) == SIGKILL)
+                        else if (signalCode == SIGKILL)
                         {
                             exitCode = ProcessActivator::ProcessDeactivateExitCode;
                         }
@@ -451,8 +452,14 @@ private:
         LPVOID penvBlock = envBlock.data();
         Environment::FromEnvironmentBlock(penvBlock, envMap_);
 
+        auto error = DecryptEnvironmentVariables();
+        if (!error.IsSuccess())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
         // create process
-        auto error = this->CreateProcess();
+        error = this->CreateProcess();
         if (!error.IsSuccess()) 
         {
             TryComplete(thisSPtr, error); 
@@ -460,6 +467,24 @@ private:
         }
 
         TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::Success));
+    }
+
+    ErrorCode DecryptEnvironmentVariables()
+    {
+        ErrorCode error(ErrorCodeValue::Success);
+        wstring value;
+        for (auto const& setting : processDescription_.EncryptedEnvironmentVariables)
+        {
+            error = ContainerConfigHelper::DecryptValue(setting.second, value);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+
+            envMap_[setting.first] = value;
+        }
+
+        return error;
     }
 
     ErrorCode CreateProcess()
@@ -730,6 +755,13 @@ ErrorCode ProcessActivator::EndDeactivate(
     AsyncOperationSPtr const & operation)
 {
     return DeactivateAsyncOperation::End(operation);
+}
+
+ErrorCode ProcessActivator::UpdateRGPolicy(
+    IProcessActivationContextSPtr & activationContext,
+    ProcessDescriptionUPtr & processDescription)
+{
+    return ErrorCodeValue::Success;
 }
 
 ErrorCode ProcessActivator::Terminate(IProcessActivationContextSPtr const & activationContext, UINT uExitCode)

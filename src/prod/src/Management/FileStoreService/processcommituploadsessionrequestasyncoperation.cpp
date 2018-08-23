@@ -43,20 +43,65 @@ public:
         return AsyncOperation::End<CommitUploadSessionAsyncOperation>(operation)->Error;
     }
 
+    __declspec(property(get = get_ReplicatedStoreWrapper)) ReplicatedStoreWrapper & ReplicatedStoreWrapperObj;
+    inline ReplicatedStoreWrapper & get_ReplicatedStoreWrapper() const { return *(this->requestManager_.ReplicaStoreWrapperUPtr); };
+
 protected:
 
     void OnStart(Common::AsyncOperationSPtr const & thisSPtr)
     {
+        static int count = 0;
+        ++count;
+        if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload && count == 19)
+        {
+            WriteWarning(
+                TraceComponent,
+                this->requestManager_.TraceId,
+                "Chaos enabled: Sending ErrorCodeValue::NotFound to simulate failover for CommitUploadSessionAsyncOperation: {0} {1}",
+                this->sessionId_,
+                this->storeRelativePath_);
+
+            this->TryComplete(thisSPtr, ErrorCodeValue::NotFound);
+            return;
+        }
+
+        // Check if the file is already committed state for this session Id. If so, return success.
+        FileMetadata metadata(this->storeRelativePath_);
+        auto error = this->ReplicatedStoreWrapperObj.ReadExact(this->activityId_, metadata);
+        if (error.IsSuccess() && metadata.UploadRequestId == sessionId_)
+        {
+            if (FileState::IsStable(metadata.State))
+            {
+                this->TryComplete(thisSPtr, ErrorCodeValue::Success);
+                return;
+            }
+        }
+
+        // Gather staged chunk files in order to assemble them
         std::vector<std::wstring> sortedStagingLocation;
-        ErrorCode error = this->GetSortedStagingLocation(sortedStagingLocation);
+        uint64 fileSize;
+        error = this->GetSortedStagingLocation(sortedStagingLocation, fileSize);
         if (!error.IsSuccess())
         {
-            this->TryComplete(thisSPtr, error);
+            UploadSessionMetadataSPtr uploadSessionMetadata;
+            auto sessionMetadataError = GetUploadSessionMapEntry(uploadSessionMetadata);
+            if (sessionMetadataError.IsSuccess())
+            {
+                WriteWarning(
+                    TraceComponent,
+                    "Getting Staging location failed. sessionId:{0} storePath:{1}: error:{2} UploadSessionMetadata:{3}.",
+                    this->sessionId_,
+                    this->storeRelativePath_,
+                    error,
+                    uploadSessionMetadata);
+            }
+            this->TryComplete(thisSPtr, move(error));
             return;
         }
 
         auto joinChunksOperation = this->BeginJoinChunksAsyncOperation(
             sortedStagingLocation,
+            fileSize,
             [this](AsyncOperationSPtr const & operation)
             {
                 this->OnJoinChunkOperationCompleted(operation, false);
@@ -68,15 +113,34 @@ protected:
 
 private:
 
-    ErrorCode GetSortedStagingLocation(__out std::vector<std::wstring> & sortedStagingLocation)
+    ErrorCode GetUploadSessionMapEntry(__inout UploadSessionMetadataSPtr &uploadSessionMetadata)
     {
+        auto error = this->requestManager_.UploadSessionMap->GetUploadSessionMapEntry(this->sessionId_, uploadSessionMetadata);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(
+                TraceComponent,
+                "Unable to get session map data. sessionId:{0} storePath:{1}: error:{2} ",
+                this->sessionId_,
+                this->storeRelativePath_,
+                error);
+        }
+
+        return error;
+    }
+
+    ErrorCode GetSortedStagingLocation(__out std::vector<std::wstring> & sortedStagingLocation, __out uint64 & fileSize)
+    {
+        fileSize = 0;
         UploadSessionMetadataSPtr metadata;
-        ErrorCode error = this->requestManager_.UploadSessionMap->GetUploadSessionMapEntry(this->sessionId_, metadata);
+        ErrorCode error = GetUploadSessionMapEntry(metadata);
         if (!error.IsSuccess())
         {
             return error;
         }
- 
+
+        fileSize = metadata->FileSize;
+
         error = metadata->GetSortedStagingLocation(sortedStagingLocation);
         if (!error.IsSuccess())
         {
@@ -93,10 +157,23 @@ private:
 
     AsyncOperationSPtr BeginJoinChunksAsyncOperation(
         std::vector<std::wstring> const & sortedStagingLocation,
+        uint64 const& fileSize,
         AsyncCallback const & callback,
         AsyncOperationSPtr const & parent)
     {
         this->joinedFileName_ = Path::Combine(this->requestManager_.get_LocalStagingLocation(), Common::Guid::NewGuid().ToString());
+
+#if !defined(PLATFORM_UNIX)
+        wstring longpathPrefix(L"\\\\?\\");
+        this->joinedFileName_.insert(0, longpathPrefix);
+#endif
+
+        if (fileSize == 0)
+        {
+            File::Touch(this->joinedFileName_);
+            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(callback, parent);
+        }
+
         ofstream joinedFile;
 #if !defined(PLATFORM_UNIX)
         joinedFile.open(this->joinedFileName_ , ios::out | ios::binary | ios::app);
@@ -105,7 +182,7 @@ private:
         joinedFile.open(joinedFileName.c_str(), ios::out | ios::binary | ios::app);
 #endif
         if (joinedFile.is_open())
-        {     
+        {
             for (auto it = sortedStagingLocation.begin(); it != sortedStagingLocation.end(); ++it)
             {
                 ifstream chunkStream;
@@ -116,16 +193,65 @@ private:
                     chunkStream.seekg(0, ios::end);
                     uint64 size = chunkStream.tellg();
                     chunkStream.seekg(ios::beg);
-                    char *chunkBuffer = new char[size];
-                    chunkStream.read(chunkBuffer, size);
-                    joinedFile.write(chunkBuffer, size);
-                    delete(chunkBuffer);
+                    auto chunkBuffer = std::make_unique<char[]>(size);
+                    chunkStream.read(chunkBuffer.get(), size);
+                    joinedFile.write(chunkBuffer.get(), size);
                     chunkStream.close();
                 }
+                else
+                {
+                    joinedFile.close();
+
+                    WriteWarning(
+                        TraceComponent,
+                        "Opening of staging file failed:{0}",
+                        *it);
+
+                    return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::ImageStoreIOError, callback, parent);
+                }
             }
+            joinedFile.close();
+        }
+        else
+        {
+            WriteWarning(
+                TraceComponent,
+                "Opening of merge file failed:{0}",
+                this->joinedFileName_);
+
+            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::ImageStoreIOError, callback, parent);
         }
 
-        joinedFile.close();
+#if _DEBUG
+        {
+            File mergedFile;
+            auto openError = mergedFile.TryOpen(
+                this->joinedFileName_,
+                FileMode::Open,
+                FileAccess::Read,
+                FileShare::Read,
+#if defined(PLATFORM_UNIX)
+                FileAttributes::Normal
+#else
+                FileAttributes::ReadOnly
+#endif
+            );
+
+            if (!openError.IsSuccess())
+            {
+                WriteWarning(
+                    TraceComponent,
+                    this->requestManager_.TraceId,
+                    "Unable to open file to get size {0}",
+                    this->joinedFileName_);
+            }
+            else
+            {
+                ASSERT_IFNOT(fileSize == (uint64)mergedFile.size(), "Merged file size {0} didn't match expected size {1}.", mergedFile.size(), fileSize);
+                mergedFile.Close2();
+            }
+        }
+#endif
         return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(callback, parent);
     }
 
@@ -151,6 +277,7 @@ private:
             this->joinedFileName_,
             this->storeRelativePath_,
             true,
+            this->sessionId_,
             this->requestManager_.GetNextFileVersion(),
             this->activityId_,
             this->timeoutHelper_.GetRemainingTime(),
@@ -168,7 +295,24 @@ private:
 
         AsyncOperationSPtr const & thisSPtr = operation->Parent;
         ErrorCode error = FileUploadAsyncOperation::End(operation);
-        this->TryComplete(thisSPtr, error);
+
+        if (!error.IsSuccess())
+        {
+            if (File::Exists(this->joinedFileName_))
+            {
+                auto deleteError = File::Delete2(this->joinedFileName_, false);
+                if (!deleteError.IsSuccess())
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        "Deleting joined file:{0}, Error:{1}",
+                        this->joinedFileName_,
+                        deleteError);
+                }
+            }
+        }
+
+        this->TryComplete(thisSPtr, move(error));
     }
 
     RequestManager & requestManager_;
@@ -229,10 +373,49 @@ ErrorCode ProcessCommitUploadSessionRequestAsyncOperation::EndOperation(
     Common::AsyncOperationSPtr const & asyncOperation)
 {
     auto errorCode = CommitUploadSessionAsyncOperation::End(asyncOperation);
-    if (errorCode.IsSuccess())
+
+    // For simple transaction, transactions are processed in groups.
+    // If one of them fail, all of the transactions are canceled.
+    // It is possible for a transaction to be inactive resulting in incomplete rollback of metadata where metadata is left in unstable state.
+    // In case of error, unstable state metadata entry should not be present in the store and must be deleted (in a separate transaction).
+    if (!errorCode.IsSuccess())
+    {
+        if (DeleteIfMetadataNotInStableState(asyncOperation))
+        {
+            WriteWarning(
+                TraceComponent,
+                "Metadata was not in stable state and was deleted for sessionId:{0} storeRelativePath:{1}, Error:{2}",
+                this->sessionId_,
+                this->StoreRelativePath,
+                errorCode);
+        }
+    }
+
+    if (errorCode.IsSuccess() || errorCode.IsError(ErrorCodeValue::AlreadyExists))
     {
         reply = FileStoreServiceMessage::GetClientOperationSuccess(this->ActivityId);
+        return ErrorCodeValue::Success;
     }
 
     return errorCode;
+}
+
+void ProcessCommitUploadSessionRequestAsyncOperation::WriteTrace(ErrorCode const &error)
+{
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "CommitUploadSession request failed with error {0}, sessionId:{1}",
+            error,
+            this->sessionId_);
+    }
+    else
+    {
+        WriteInfo(
+            TraceComponent,
+            "CommitUploadSession request Succeeded with error {0}, sessionId:{1}",
+            error,
+            this->sessionId_);
+    }
 }

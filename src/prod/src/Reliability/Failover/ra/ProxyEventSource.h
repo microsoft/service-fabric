@@ -18,6 +18,16 @@ namespace Reliability
                 Common::LogLevel::trace_level, \
                 __VA_ARGS__)
 
+        #define RAP_STRUCTURED_TRACE_QUERY(trace_name, trace_id, trace_type, trace_level, ...) \
+            trace_name( \
+                Common::TraceTaskCodes::RAP, \
+                trace_id, \
+                trace_type, \
+                Common::LogLevel::trace_level, \
+                Common::TraceChannelType::Debug, \
+                TRACE_KEYWORDS2(Default, ForQuery), \
+                __VA_ARGS__)
+
         class RAPEventSource
         {
             public:
@@ -275,15 +285,15 @@ namespace Reliability
                     ReconfigurationAgentProxyId,
                     size_t, 
                     Common::Guid, // fuid
-					ReplicaRole::Trace, // replicarole
-					std::wstring, // metricname
-					uint          // metricvalue
+                    ReplicaRole::Trace, // replicarole
+                    std::wstring, // metricname
+                    uint          // metricvalue
                     );
 
                 DECLARE_RAP_STRUCTURED_TRACE(LoadReportingInvalidLoad,
                     ReconfigurationAgentProxyId,
                     Common::Guid, // fuid
-					ReplicaRole::Trace // replicarole
+                    ReplicaRole::Trace // replicarole
                     );
 
                 DECLARE_RAP_STRUCTURED_TRACE(LoadReportingRemoveLoad,
@@ -345,15 +355,16 @@ namespace Reliability
 
                 DECLARE_RAP_STRUCTURED_TRACE(ApiReportFault,
                     Common::Guid, // fuid
-                    Federation::NodeId, // node id
+                    std::wstring, // node id
                     int64, // replica id
                     int64, // replica instance
-                    FaultType::Trace);
+                    FaultType::Trace,
+                    Common::ActivityDescription);
 
-				DECLARE_RAP_STRUCTURED_TRACE(LoadReportingUndefinedMetric,
-				        std::wstring, // metric name
-						Common::Guid // fuid
-						);
+                DECLARE_RAP_STRUCTURED_TRACE(LoadReportingUndefinedMetric,
+                        std::wstring, // metric name
+                        Common::Guid // fuid
+                        );
 
                 RAPEventSource() :
                     RAP_STRUCTURED_TRACE(UpdateAccessStatus,                                                4,      "UpdateAccessStatus",                                   Info,           "RAP on {1} updated access status status for replica {2}. Read = {3}. Write = {4}", "id", "rapId", "replicaId", "readStatus", "writeStatus"),
@@ -423,8 +434,8 @@ namespace Reliability
                     RAP_STRUCTURED_TRACE(MessageSenderSend,                                                 228,    "Send_MessageSender",                                   Noise,          "Send: {0} {1}", "rapId", "action"),
                     RAP_STRUCTURED_TRACE(MessageSenderRemove,                                               229,    "Remove_MessageSender",                                 Noise,          "Remove: {0} {1}", "rapId", "action"),
                                                                                                                                                                                             
-                    RAP_STRUCTURED_TRACE(ApiReportFault,                                                    247,    "ApiReportFault",                                       Info,           "API ReportFault {4} for FT {0} on node {1} with Replica Id {2} and Replica Instance Id {3}", "id", "nodeId", "replicaId", "replicaInstanceId", "faultType"),
-					RAP_STRUCTURED_TRACE(LoadReportingUndefinedMetric,                                      248,    "LoadReporting_UndefinedMetric",                        Warning,        "UndefinedMetric: {0} reported for fuid: {1}", "metricName", "fuid")
+                    RAP_STRUCTURED_TRACE_QUERY(ApiReportFault,                                              247,    "_Api_ApiReportFault",                                       Info,           "API ReportFault {4} for FT {0} on node {1} with Replica Id {2} and Replica Instance Id {3} and ReasonActivityDescription {5}", "id", "nodeId", "replicaId", "replicaInstanceId", "faultType", "reasonActivityDescription"),
+                    RAP_STRUCTURED_TRACE(LoadReportingUndefinedMetric,                                      248,    "LoadReporting_UndefinedMetric",                        Warning,        "UndefinedMetric: {0} reported for fuid: {1}", "metricName", "fuid")
                 {
                 }
 

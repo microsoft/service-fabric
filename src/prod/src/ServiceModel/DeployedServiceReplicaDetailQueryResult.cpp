@@ -78,47 +78,6 @@ DeployedServiceReplicaDetailQueryResult::DeployedServiceReplicaDetailQueryResult
 {
 }
 
-DeployedServiceReplicaDetailQueryResult::DeployedServiceReplicaDetailQueryResult(DeployedServiceReplicaDetailQueryResult && other)
-    : kind_(move(other.kind_))
-    , serviceName_(move(other.serviceName_))
-    , partitionId_(move(other.partitionId_))
-    , currentServiceOperation_(move(other.currentServiceOperation_))
-    , currentServiceOperationStartTime_(move(other.currentServiceOperationStartTime_))
-    , reportedLoad_(move(other.reportedLoad_))
-    , instanceId_(move(other.instanceId_))
-    , replicaId_(move(other.replicaId_))
-    , currentReplicatorOperation_(move(other.currentReplicatorOperation_))
-    , readStatus_(move(other.readStatus_))
-    , writeStatus_(move(other.writeStatus_))
-    , replicatorStatus_(move(other.replicatorStatus_))
-    , replicaStatus_(move(other.replicaStatus_))
-    , deployedServiceReplicaQueryResult_(move(other.deployedServiceReplicaQueryResult_))
-{
-}
-
-DeployedServiceReplicaDetailQueryResult & DeployedServiceReplicaDetailQueryResult::operator=(DeployedServiceReplicaDetailQueryResult&& other)
-{
-    if (this != &other)
-    {
-        kind_ = move(other.kind_);
-        serviceName_ = move(other.serviceName_);
-        partitionId_ = move(other.partitionId_);
-        currentServiceOperation_ = move(other.currentServiceOperation_);
-        currentServiceOperationStartTime_ = move(other.currentServiceOperationStartTime_);
-        reportedLoad_ = move(other.reportedLoad_);
-        instanceId_ = move(other.instanceId_);
-        replicaId_ = move(other.replicaId_);
-        currentReplicatorOperation_ = move(other.currentReplicatorOperation_);
-        readStatus_ = move(other.readStatus_);
-        writeStatus_ = move(other.writeStatus_);
-        replicatorStatus_ = move(other.replicatorStatus_);
-        replicaStatus_ = move(other.replicaStatus_);
-        deployedServiceReplicaQueryResult_ = move(other.deployedServiceReplicaQueryResult_);
-    }
-
-    return *this;
-}
-
 void DeployedServiceReplicaDetailQueryResult::SetReplicatorStatusQueryResult(ReplicatorStatusQueryResultSPtr && result)
 {
     ASSERT_IF(result == nullptr, "Can't set null result - if the replicator failed to provide a result then it should have returned an error");

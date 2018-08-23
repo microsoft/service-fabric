@@ -24,6 +24,7 @@ PartitionedServiceDescWrapper::PartitionedServiceDescWrapper()
     , defaultMoveCost_(FABRIC_MOVE_COST_LOW)
     , isDefaultMoveCostSpecified_(false)
     , servicePackageActivationMode_(ServicePackageActivationMode::SharedProcess)
+    , scalingPolicies_()
 {
 }
 
@@ -52,7 +53,8 @@ PartitionedServiceDescWrapper::PartitionedServiceDescWrapper(
     DWORD standByReplicaKeepDurationSeconds,
     FABRIC_MOVE_COST defaultMoveCost,
     ServicePackageActivationMode::Enum const servicePackageActivationMode,
-    std::wstring const& serviceDnsName)
+    std::wstring const& serviceDnsName,
+    std::vector<Reliability::ServiceScalingPolicyDescription> const & scalingPolicies)
     : serviceKind_(serviceKind)
     , applicationName_(applicationName)
     , serviceName_(serviceName)
@@ -76,40 +78,9 @@ PartitionedServiceDescWrapper::PartitionedServiceDescWrapper(
     , isDefaultMoveCostSpecified_(true)
     , servicePackageActivationMode_(servicePackageActivationMode)
     , serviceDnsName_(serviceDnsName)
+    , scalingPolicies_(scalingPolicies)
 {
     StringUtility::ToLower(serviceDnsName_);
-}
-
-PartitionedServiceDescWrapper & PartitionedServiceDescWrapper::operator = (PartitionedServiceDescWrapper && other)
-{
-    if (this != &other)
-    {
-        serviceKind_ = other.serviceKind_;
-        applicationName_ = move(other.applicationName_);
-        serviceName_ = move(other.serviceName_);
-        serviceTypeName_ = move(other.serviceTypeName_);
-        initializationData_ = move(other.initializationData_);
-        partitionDescription_ = other.partitionDescription_;
-        instanceCount_ = other.instanceCount_;
-        targetReplicaSetSize_ = other.targetReplicaSetSize_;
-        minReplicaSetSize_ = other.minReplicaSetSize_;
-        hasPersistedState_ = other.hasPersistedState_;
-        placementConstraints_ = move(other.placementConstraints_);
-        correlations_ = move(other.correlations_);
-        metrics_ = move(other.metrics_);
-        placementPolicies_ = move(other.placementPolicies_);
-        flags_ = other.flags_;
-        replicaRestartWaitDurationSeconds_ = other.replicaRestartWaitDurationSeconds_;
-        quorumLossWaitDurationSeconds_ = other.quorumLossWaitDurationSeconds_;
-        standByReplicaKeepDurationSeconds_ = other.standByReplicaKeepDurationSeconds_;
-        isServiceGroup_ = other.isServiceGroup_;
-        defaultMoveCost_ = other.defaultMoveCost_;
-        isDefaultMoveCostSpecified_ = other.isDefaultMoveCostSpecified_;
-        servicePackageActivationMode_ = other.servicePackageActivationMode_;
-        serviceDnsName_ = other.serviceDnsName_;
-    }
-
-    return *this;
 }
 
 ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
@@ -274,6 +245,30 @@ ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
 
         StringUtility::ToLower(serviceDnsName_);
 
+        if (statefulEx3->Reserved == NULL)
+        {
+            return ErrorCodeValue::Success;
+        }
+
+	auto statefulEx4 = reinterpret_cast<FABRIC_STATEFUL_SERVICE_DESCRIPTION_EX4*>(statefulEx3->Reserved);
+
+        if (statefulEx4->ScalingPolicyCount > 1)
+        {
+            // Currently, only one scaling policy is allowed per service.
+            // Vector is there for future uses (when services could have multiple scaling policies).
+            return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), statefulEx4->ScalingPolicyCount));
+        }
+        for (ULONG i = 0; i < statefulEx4->ScalingPolicyCount; i++)
+        {
+            Reliability::ServiceScalingPolicyDescription scalingDescription;
+            auto scalingError = scalingDescription.FromPublicApi(statefulEx4->ServiceScalingPolicies[i]);
+            if (!scalingError.IsSuccess())
+            {
+                return scalingError;
+            }
+            scalingPolicies_.push_back(move(scalingDescription));
+        }
+
         return err;
     }
     else if (serviceDescription.Kind == FABRIC_SERVICE_DESCRIPTION_KIND_STATELESS)
@@ -298,12 +293,12 @@ ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
             return error;
         }
 
-        if (stateless->CorrelationCount > 0 && stateless->Correlations == NULL) 
-        { 
+        if (stateless->CorrelationCount > 0 && stateless->Correlations == NULL)
+        {
             return TraceNullArgumentAndGetErrorDetails(
                 wformatString("{0} {1}", GET_CM_RC(Invalid_Null_Pointer), "FABRIC_STATELESS_SERVICE_DESCRIPTION->Correlation"));
         }
-        for(ULONG i = 0; i < stateless->CorrelationCount; i++)
+        for (ULONG i = 0; i < stateless->CorrelationCount; i++)
         {
             wstring correlationServiceName;
             hr = StringUtility::LpcwstrToWstring(stateless->Correlations[i].ServiceName, true /*acceptNull*/, correlationServiceName);
@@ -317,19 +312,19 @@ ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
         hr = StringUtility::LpcwstrToWstring(stateless->PlacementConstraints, true /*acceptNull*/, placementConstraints_);
         if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
 
-        if (stateless->MetricCount > 0 && stateless->Metrics == NULL) 
-        { 
+        if (stateless->MetricCount > 0 && stateless->Metrics == NULL)
+        {
             return TraceNullArgumentAndGetErrorDetails(
-                wformatString("{0} {1}", GET_CM_RC( Invalid_Null_Pointer ), "FABRIC_STATEFUL_SERVICE_DESCRIPTION->Metrics"));
+                wformatString("{0} {1}", GET_CM_RC(Invalid_Null_Pointer), "FABRIC_STATEFUL_SERVICE_DESCRIPTION->Metrics"));
         }
 
-        for(ULONG i = 0; i < stateless->MetricCount; i++)
+        for (ULONG i = 0; i < stateless->MetricCount; i++)
         {
             wstring metricsName;
             hr = StringUtility::LpcwstrToWstring(stateless->Metrics[i].Name, true /*acceptNull*/, metricsName);
             if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
             metrics_.push_back(Reliability::ServiceLoadMetricDescription(
-                move(metricsName), 
+                move(metricsName),
                 stateless->Metrics[i].Weight,
                 stateless->Metrics[i].PrimaryDefaultLoad,
                 stateless->Metrics[i].SecondaryDefaultLoad));
@@ -339,7 +334,7 @@ ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
             stateless->InitializationData,
             stateless->InitializationData + stateless->InitializationDataSize);
         instanceCount_ = stateless->InstanceCount;
-        
+
         error = this->InitializePartitionDescription(stateless->PartitionScheme, stateless->PartitionSchemeDescription, typeIdentifier);
         if (!error.IsSuccess())
         {
@@ -401,6 +396,31 @@ ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
         if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
 
         StringUtility::ToLower(serviceDnsName_);
+
+        if (statelessEx3->Reserved == NULL)
+        {
+            return ErrorCodeValue::Success;
+        }
+
+        auto statelessEx4 = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX4*>(statelessEx3->Reserved);
+
+        if (statelessEx4->ScalingPolicyCount > 1)
+        {
+            // Currently, only one scaling policy is allowed per service.
+            // Vector is there for future uses (when services could have multiple scaling policies).
+            return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), statelessEx4->ScalingPolicyCount));
+        }
+		
+        for (ULONG i = 0; i < statelessEx4->ScalingPolicyCount; i++)
+        {
+            Reliability::ServiceScalingPolicyDescription scalingDescription;
+            auto scalingError = scalingDescription.FromPublicApi(statelessEx4->ServiceScalingPolicies[i]);
+            if (!scalingError.IsSuccess())
+            {
+                return scalingError;
+            }
+            scalingPolicies_.push_back(move(scalingDescription));
+        }
 
         return err;
     }
@@ -621,6 +641,25 @@ void PartitionedServiceDescWrapper::ToPublicApi(__in ScopedHeap &heap, __in FABR
         statefulDescriptionEx2->Reserved = statefulDescriptionEx3.GetRawPointer();
         statefulDescriptionEx3->ServicePackageActivationMode = ServicePackageActivationMode::ToPublicApi(servicePackageActivationMode_);
         statefulDescriptionEx3->ServiceDnsName = heap.AddString(serviceDnsName_);
+
+	auto statefulDescriptionEx4 = heap.AddItem<FABRIC_STATEFUL_SERVICE_DESCRIPTION_EX4>();
+        statefulDescriptionEx3->Reserved = statefulDescriptionEx4.GetRawPointer();
+        size_t scalingPolicyCount = scalingPolicies_.size();
+        if (scalingPolicyCount > 0)
+        {
+            statefulDescriptionEx4->ScalingPolicyCount = static_cast<ULONG>(scalingPolicyCount);
+            auto spArray = heap.AddArray<FABRIC_SERVICE_SCALING_POLICY>(scalingPolicyCount);
+            statefulDescriptionEx4->ServiceScalingPolicies = spArray.GetRawArray();
+            for (size_t spIndex = 0; spIndex < scalingPolicyCount; ++spIndex)
+            {
+                scalingPolicies_[spIndex].ToPublicApi(heap, spArray[spIndex]);
+            }
+        }
+        else
+        {
+            statefulDescriptionEx4->ScalingPolicyCount = 0;
+            statefulDescriptionEx4->ServiceScalingPolicies = nullptr;
+        }
     }
     else
     {
@@ -734,6 +773,26 @@ void PartitionedServiceDescWrapper::ToPublicApi(__in ScopedHeap &heap, __in FABR
         statelessDescriptionEx2->Reserved = statelessDescriptionEx3.GetRawPointer();
         statelessDescriptionEx3->ServicePackageActivationMode = ServicePackageActivationMode::ToPublicApi(servicePackageActivationMode_);
         statelessDescriptionEx3->ServiceDnsName = heap.AddString(serviceDnsName_);
+
+	auto statelessDescriptionEx4 = heap.AddItem<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX4>();
+        statelessDescriptionEx3->Reserved = statelessDescriptionEx4.GetRawPointer();
+
+        size_t scalingPolicyCount = scalingPolicies_.size();
+        if (scalingPolicyCount > 0)
+        {
+            statelessDescriptionEx4->ScalingPolicyCount = static_cast<ULONG>(scalingPolicyCount);
+            auto spArray = heap.AddArray<FABRIC_SERVICE_SCALING_POLICY> (scalingPolicyCount);
+            statelessDescriptionEx4->ServiceScalingPolicies = spArray.GetRawArray();
+            for (size_t spIndex = 0; spIndex < scalingPolicyCount; ++spIndex)
+            {
+                scalingPolicies_[spIndex].ToPublicApi(heap, spArray[spIndex]);
+            }
+        }
+        else
+        {
+            statelessDescriptionEx4->ScalingPolicyCount = 0;
+            statelessDescriptionEx4->ServiceScalingPolicies = nullptr;
+        }
     }
 }
 

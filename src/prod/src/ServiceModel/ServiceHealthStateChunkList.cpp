@@ -27,23 +27,6 @@ ServiceHealthStateChunkList::ServiceHealthStateChunkList(
 {
 }
 
-ServiceHealthStateChunkList::ServiceHealthStateChunkList(ServiceHealthStateChunkList && other)
-    : HealthStateChunkList(move(other))
-    , items_(move(other.items_))
-{
-}
-
-ServiceHealthStateChunkList & ServiceHealthStateChunkList::operator =(ServiceHealthStateChunkList && other)
-{
-    if (this != &other)
-    {
-        items_ = move(other.items_);
-    }
-
-    HealthStateChunkList::operator=(move(other));
-    return *this;
-}
-
 ServiceHealthStateChunkList::~ServiceHealthStateChunkList()
 {
 }

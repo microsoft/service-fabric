@@ -23,7 +23,7 @@ namespace Serialization
 
         FabricSerializable & operator=(__in FabricSerializable  const & serializable);
 
-        bool operator==(__in FabricSerializable const & serializable);
+        bool operator==(__in FabricSerializable const & serializable) const;
 
         virtual NTSTATUS GetTypeInformation(__out FabricTypeInformation & typeInformation) const;
 

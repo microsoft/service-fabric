@@ -21,86 +21,15 @@ ResourceGovernancePolicyDescription::ResourceGovernancePolicyDescription()
     BlockIOWeight(0),
     CpusetCpus(),
     NanoCpus(0),
-    CpuQuota(0)
+    CpuQuota(0),
+    DiskQuotaInMB(0),
+    KernelMemoryInMB(0),
+    ShmSizeInMB(0)
 {
-}
-
-ResourceGovernancePolicyDescription::ResourceGovernancePolicyDescription(ResourceGovernancePolicyDescription const & other)
-    : CodePackageRef(other.CodePackageRef),
-    MemoryInMB(other.MemoryInMB),
-    MemorySwapInMB(other.MemorySwapInMB),
-    MemoryReservationInMB(other.MemoryReservationInMB),
-    CpuShares(other.CpuShares),
-    CpuPercent(other.CpuPercent),
-    MaximumIOps(other.MaximumIOps),
-    MaximumIOBytesps(other.MaximumIOBytesps),
-    BlockIOWeight(other.BlockIOWeight),
-    CpusetCpus(other.CpusetCpus),
-    NanoCpus(other.NanoCpus),
-    CpuQuota(other.CpuQuota)
-{
-}
-
-ResourceGovernancePolicyDescription::ResourceGovernancePolicyDescription(ResourceGovernancePolicyDescription && other)
-    : CodePackageRef(move(other.CodePackageRef)),
-    MemoryInMB(other.MemoryInMB),
-    MemorySwapInMB(other.MemorySwapInMB),
-    MemoryReservationInMB(other.MemoryReservationInMB),
-    CpuShares(other.CpuShares),
-    CpuPercent(other.CpuPercent),
-    MaximumIOps(other.MaximumIOps),
-    MaximumIOBytesps(other.MaximumIOBytesps),
-    BlockIOWeight(other.BlockIOWeight),
-    CpusetCpus(move(other.CpusetCpus)),
-    NanoCpus(other.NanoCpus),
-    CpuQuota(other.CpuQuota)
-{
-}
-
-ResourceGovernancePolicyDescription const & ResourceGovernancePolicyDescription::operator = (ResourceGovernancePolicyDescription const & other)
-{
-    if (this != &other)
-    {
-        this->CodePackageRef = other.CodePackageRef;
-        this->MemoryInMB = other.MemoryInMB;
-        this->MemorySwapInMB = other.MemorySwapInMB;
-        this->MemoryReservationInMB = other.MemoryReservationInMB;
-        this->CpuShares = other.CpuShares;
-        this->CpuPercent = other.CpuPercent;
-        this->MaximumIOps = other.MaximumIOps;
-        this->MaximumIOBytesps = other.MaximumIOBytesps;
-        this->BlockIOWeight = other.BlockIOWeight;
-        this->CpusetCpus = other.CpusetCpus;
-        this->NanoCpus = other.NanoCpus;
-        this->CpuQuota = other.CpuQuota;
-    }
-
-    return *this;
-}
-
-ResourceGovernancePolicyDescription const & ResourceGovernancePolicyDescription::operator = (ResourceGovernancePolicyDescription && other)
-{
-    if (this != &other)
-    {
-        this->CodePackageRef = move(other.CodePackageRef);
-        this->MemoryInMB = other.MemoryInMB;
-        this->MemorySwapInMB = other.MemorySwapInMB;
-        this->MemoryReservationInMB = other.MemoryReservationInMB;
-        this->CpuShares = other.CpuShares;
-        this->CpuPercent = other.CpuPercent;
-        this->MaximumIOps = other.MaximumIOps;
-        this->MaximumIOBytesps = other.MaximumIOBytesps;
-        this->BlockIOWeight = other.BlockIOWeight;
-        this->CpusetCpus = move(other.CpusetCpus);
-        this->NanoCpus = other.NanoCpus;
-        this->CpuQuota = other.CpuQuota;
-    }
-
-    return *this;
 }
 
 bool ResourceGovernancePolicyDescription::operator == (ResourceGovernancePolicyDescription const & other) const
-{    
+{
     return StringUtility::AreEqualCaseInsensitive(this->CodePackageRef, other.CodePackageRef) &&
         (this->MemoryInMB == other.MemoryInMB) &&
         (this->MemorySwapInMB == other.MemorySwapInMB) &&
@@ -112,7 +41,10 @@ bool ResourceGovernancePolicyDescription::operator == (ResourceGovernancePolicyD
         (this->BlockIOWeight == other.BlockIOWeight) &&
         (StringUtility::AreEqualCaseInsensitive(this->CpusetCpus, other.CpusetCpus)) &&
         (this->NanoCpus == other.NanoCpus) &&
-        (this->CpuQuota == other.CpuQuota);
+        (this->CpuQuota == other.CpuQuota) &&
+        (this->DiskQuotaInMB == other.DiskQuotaInMB) &&
+        (this->KernelMemoryInMB == other.KernelMemoryInMB) &&
+        (this->ShmSizeInMB == other.ShmSizeInMB);
 }
 
 bool ResourceGovernancePolicyDescription::operator != (ResourceGovernancePolicyDescription const & other) const
@@ -135,6 +67,9 @@ void ResourceGovernancePolicyDescription::WriteTo(TextWriter & w, FormatOptions 
     w.Write("CpusetCpus = {0} ", CpusetCpus);
     w.Write("NanoCpus = {0} ", NanoCpus);
     w.Write("CpuQuota = {0} ", CpuQuota);
+    w.Write("DiskSizeInMB = {0} ", DiskQuotaInMB);
+    w.Write("KernelMemoryInMB = {0} ", KernelMemoryInMB);
+    w.Write("ShmSizeInMB = {0} ", ShmSizeInMB);
     w.Write("}");
 }
 
@@ -146,101 +81,40 @@ wstring ResourceGovernancePolicyDescription::ToString() const
 void ResourceGovernancePolicyDescription::ReadFromXml(
     XmlReaderUPtr const & xmlReader)
 {
-    // <ResourceGovernancePolicy CodePackageRef="" MemoryInMB="" MemorySwapInMB="" MemoryReservationInMB="" CpuShares=""/>
+    // <ResourceGovernancePolicy CodePackageRef="" MemoryInMB="" MemorySwapInMB="" MemoryReservationInMB="" CpuShares=""
+    // CpuPercent="" MaximumIOps="" MaximumIOBytesps="" BlockIOWeight="" DiskQuotaInMB="" KernelMemoryInMB="" ShmSizeInMB="" />
     xmlReader->StartElement(
         *SchemaNames::Element_ResourceGovernancePolicy,
         *SchemaNames::Namespace);
 
     this->CodePackageRef = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_CodePackageRef);
-    if(xmlReader->HasAttribute(*SchemaNames::Attribute_MemoryInMB))
-    {
-        auto memoryInMB = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_MemoryInMB);
-        if (!StringUtility::TryFromWString<uint>(
-            memoryInMB,
-            this->MemoryInMB))
-        {
-            Parser::ThrowInvalidContent(xmlReader, L"positive integer", memoryInMB);
-        }
-    }
 
-    if (xmlReader->HasAttribute(*SchemaNames::Attribute_MemorySwapInMB))
-    {
-        auto memorySwap = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_MemorySwapInMB);
-        if (!StringUtility::TryFromWString<uint>(
-            memorySwap,
-            this->MemorySwapInMB))
-        {
-            Parser::ThrowInvalidContent(xmlReader, L"positive integer", memorySwap);
-        }
-    }
-  
-    if (xmlReader->HasAttribute(*SchemaNames::Attribute_MemoryReservationInMB))
-    {
-        auto memoryReservation = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_MemoryReservationInMB);
-        if (!StringUtility::TryFromWString<uint>(
-            memoryReservation,
-            this->MemoryReservationInMB))
-        {
-            Parser::ThrowInvalidContent(xmlReader, L"positive integer", memoryReservation);
-        }
-    }
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_MemoryInMB, this->MemoryInMB);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_MemorySwapInMB, this->MemorySwapInMB);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_MemoryReservationInMB, this->MemoryReservationInMB);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_CpuShares, this->CpuShares);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_CpuPercent, this->CpuPercent);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_MaximumIOps, this->MaximumIOps);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_MaximumIOBytesps, this->MaximumIOBytesps);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_BlockIOWeight, this->BlockIOWeight);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_DiskQuotaInMB, this->DiskQuotaInMB);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_KernelMemoryInMB, this->KernelMemoryInMB);
+    ReadFromXmlHelper(xmlReader, *SchemaNames::Attribute_ShmSizeInMB, this->ShmSizeInMB);
 
-    if (xmlReader->HasAttribute(*SchemaNames::Attribute_CpuShares))
-    {
-        auto cpuShares = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_CpuShares);
-        if (!StringUtility::TryFromWString<uint>(
-            cpuShares,
-            this->CpuShares))
-        {
-            Parser::ThrowInvalidContent(xmlReader, L"positive integer", cpuShares);
-        }
-    }
-
-    if (xmlReader->HasAttribute(*SchemaNames::Attribute_CpuPercent))
-    {
-        auto cpuPercent = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_CpuPercent);
-        if (!StringUtility::TryFromWString<uint>(
-            cpuPercent,
-            this->CpuPercent))
-        {
-            Parser::ThrowInvalidContent(xmlReader, L"positive integer", cpuPercent);
-        }
-    }
-
-    if (xmlReader->HasAttribute(*SchemaNames::Attribute_MaximumIOps))
-    {
-        auto maximumIOps = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_MaximumIOps);
-        if (!StringUtility::TryFromWString<uint>(
-            maximumIOps,
-            this->MaximumIOps))
-        {
-            Parser::ThrowInvalidContent(xmlReader, L"positive integer", maximumIOps);
-        }
-    }
-
-    if (xmlReader->HasAttribute(*SchemaNames::Attribute_MaximumIOBytesps))
-    {
-        auto maximumIOBps = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_MaximumIOBytesps);
-        if (!StringUtility::TryFromWString<uint>(
-            maximumIOBps,
-            this->MaximumIOBytesps))
-        {
-            Parser::ThrowInvalidContent(xmlReader, L"positive integer", maximumIOBps);
-        }
-    }
-
-    if (xmlReader->HasAttribute(*SchemaNames::Attribute_BlockIOWeight))
-    {
-        auto blkioweight = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_BlockIOWeight);
-        if (!StringUtility::TryFromWString<uint>(
-            blkioweight,
-            this->BlockIOWeight))
-        {
-            Parser::ThrowInvalidContent(xmlReader, L"positive integer", blkioweight);
-        }
-    }
     // Read the rest of the empty element
     xmlReader->ReadElement();
+}
+
+void ResourceGovernancePolicyDescription::ReadFromXmlHelper(XmlReaderUPtr const & xmlReader, wstring const & readAttrib, uint & valToUpdate)
+{
+    if (xmlReader->HasAttribute(readAttrib))
+    {
+        auto attrib = xmlReader->ReadAttributeValue(readAttrib);
+        if (!StringUtility::TryFromWString<uint>(attrib, valToUpdate))
+        {
+            Parser::ThrowInvalidContent(xmlReader, L"positive integer", attrib);
+        }
+    }
 }
 
 Common::ErrorCode ResourceGovernancePolicyDescription::WriteToXml(XmlWriterUPtr const & xmlWriter)
@@ -305,6 +179,25 @@ Common::ErrorCode ResourceGovernancePolicyDescription::WriteToXml(XmlWriterUPtr 
     {
         return er;
     }
+
+    er = xmlWriter->WriteNumericAttribute(*SchemaNames::Attribute_DiskQuotaInMB, this->DiskQuotaInMB);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+
+    er = xmlWriter->WriteNumericAttribute(*SchemaNames::Attribute_KernelMemoryInMB, this->KernelMemoryInMB);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+
+    er = xmlWriter->WriteNumericAttribute(*SchemaNames::Attribute_ShmSizeInMB, this->ShmSizeInMB);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+
     //</ResourceGovernancePolicy>
     return xmlWriter->WriteEndElement();
 }
@@ -323,6 +216,9 @@ void ResourceGovernancePolicyDescription::clear()
     this->CpusetCpus.clear();
     this->NanoCpus = 0;
     this->CpuQuota = 0;
+    this->DiskQuotaInMB = 0;
+    this->KernelMemoryInMB = 0;
+    this->ShmSizeInMB = 0;
 }
 
 bool ResourceGovernancePolicyDescription::ShouldSetupCgroup() const
@@ -347,7 +243,13 @@ ErrorCode ResourceGovernancePolicyDescription::ToPublicApi(
     fabricResourceGovernancePolicyDesc.NanoCpus = static_cast<ULONGLONG>(this->NanoCpus);
     fabricResourceGovernancePolicyDesc.CpuQuota = static_cast<ULONG>(this->CpuQuota);
 
-    fabricResourceGovernancePolicyDesc.Reserved = nullptr;
+    auto fabricResourceGovernancePolicyDescEx1 = heap.AddItem<FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION_EX1>();
+    fabricResourceGovernancePolicyDescEx1->DiskQuotaInMB = static_cast<ULONGLONG>(this->DiskQuotaInMB);
+    fabricResourceGovernancePolicyDescEx1->KernelMemoryInMB = static_cast<ULONGLONG>(this->KernelMemoryInMB);
+    fabricResourceGovernancePolicyDescEx1->ShmSizeInMB = static_cast<ULONGLONG>(this->ShmSizeInMB);
+    fabricResourceGovernancePolicyDescEx1->Reserved = nullptr;
+
+    fabricResourceGovernancePolicyDesc.Reserved = fabricResourceGovernancePolicyDescEx1.GetRawPointer();
 
     return ErrorCode::Success();
 }

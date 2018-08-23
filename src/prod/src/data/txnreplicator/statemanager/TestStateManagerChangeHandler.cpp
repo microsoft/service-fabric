@@ -82,6 +82,9 @@ void TestStateManagerChangeHandler::OnRebuilt(
 
         stateProviders_->Add(name.RawPtr(), stateProvider);
     }
+
+    // Verify that after enumerator reaches to end of the collection - further movenext should result to false
+    ASSERT_IFNOT(stateProviders.MoveNext() == false, "MoveNext should return false.");
 }
 
 void TestStateManagerChangeHandler::OnAdded(

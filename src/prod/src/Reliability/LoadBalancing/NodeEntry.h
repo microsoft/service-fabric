@@ -32,7 +32,8 @@ namespace Reliability
                 Common::TreeNodeIndex && faultDomainIndex,
                 Common::TreeNodeIndex && upgradeDomainIndex,
                 bool isDeactivated,
-                bool isUp);
+                bool isUp,
+                std::vector<std::wstring> && nodeImages = std::vector<std::wstring>());
 
             NodeEntry(NodeEntry && other);
 
@@ -77,8 +78,12 @@ namespace Reliability
             __declspec (property(get = get_IsUp)) bool IsUp;
             bool get_IsUp() const { return isUp_; }
 
+            __declspec (property(get = get_NodeImages)) std::vector<std::wstring> const& NodeImages;
+            std::vector<std::wstring> const& get_NodeImages() const { return nodeImages_; }
+
             int64 GetLoadLevel(size_t metricIndex) const;
             int64 GetLoadLevel(size_t metricIndex, int64 diff) const;
+            int64 GetNodeCapacity(size_t metricIndex) const;
 
             void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
 
@@ -120,6 +125,9 @@ namespace Reliability
 
             // indicates if a node is up or not
             bool isUp_;
+
+            // all container images for that node
+            std::vector<std::wstring> nodeImages_;
         };
     }
 }

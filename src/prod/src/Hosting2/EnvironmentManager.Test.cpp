@@ -90,7 +90,7 @@ protected:
     static void CheckPathsExist(
         std::map <std::wstring, std::wstring> pfxPaths,
         std::map <std::wstring, std::wstring> passwordPaths);
-    
+
     shared_ptr<TestFabricNodeHost> fabricNodeHost_;
 };
 
@@ -521,7 +521,7 @@ BOOST_AUTO_TEST_CASE(SecurityUserTestLoadProfile)
     {
         // There are cases where the profile files are still in the process of being deleted or in use,
         // even if the delete profile is successful.
-        // Since the directory is left behind, try to manually delete it - 
+        // Since the directory is left behind, try to manually delete it -
         // if this succeeds, that means all handles that the user created were correctly closed,
         // so consider success
         int retryCount = 5;
@@ -596,7 +596,7 @@ BOOST_AUTO_TEST_CASE(PrincipalsProviderTestWithSingleNode)
     vector<wstring> actualUserNames2;
     CheckPrincipals(appId, nodeId, provider, principals, actualGroupNames2, actualUserNames2);
 
-    // This time only call close rather than cleanup and ensure that principals are still deleted 
+    // This time only call close rather than cleanup and ensure that principals are still deleted
     error = provider->Close();
     VERIFY_IS_TRUE(error.IsSuccess(), L"Principal provider closed successfully");
     CheckPrincipalsAreDeleted(actualGroupNames2, actualUserNames2);
@@ -641,7 +641,7 @@ BOOST_AUTO_TEST_CASE(PrincipalsProviderTestWithMultipleNodes)
     user1.ParentApplicationGroups.push_back(groupName1);
     principals.Users.push_back(user1);
 
-    // On top of the specified principals, 
+    // On top of the specified principals,
     // a new group belonging to the application and
     // a group belonging to each node should be created
 
@@ -781,7 +781,7 @@ BOOST_AUTO_TEST_CASE(DummyContainerCertificateSetupTest)
     ApplicationEnvironmentContextSPtr appEnvironmentContext;
     ServicePackageInstanceIdentifier servicePackageInstanceId;
     int64 instanceId = 0;
-    
+
     Directory::CreateDirectory(GetEnvironmentManager().Hosting.RunLayout.GetApplicationWorkFolder(servicePackageInstanceId.ApplicationId.ToString()));
     wstring dataPackagePath = Path::Combine(GetEnvironmentManager().Hosting.RunLayout.GetApplicationFolder(servicePackageInstanceId.ApplicationId.ToString()), L"ServicePackage.DataPackage.1.0");
     Directory::CreateDirectory(dataPackagePath);
@@ -801,7 +801,7 @@ BOOST_AUTO_TEST_CASE(DummyContainerCertificateSetupTest)
 #else
     InstallTestCertInScope testCert(L"TestCert");
     certDescription.X509FindValue = testCert.Thumbprint()->PrimaryToString();
-#endif  
+#endif
     vector<ContainerCertificateDescription> certDescriptions;
     certDescriptions.push_back(certDescription);
 
@@ -827,6 +827,7 @@ BOOST_AUTO_TEST_CASE(DummyContainerCertificateSetupTest)
         servicePackageInstanceId,
         instanceId,
         servicePackageDescription,
+        L"friendlyAppName",
         TimeSpan::MaxValue,
         [this, &deployDone, &packageEnvironmentContext](AsyncOperationSPtr const & operation)
         {
@@ -838,7 +839,7 @@ BOOST_AUTO_TEST_CASE(DummyContainerCertificateSetupTest)
 
     VERIFY_IS_TRUE(deployDone.WaitOne(10000), L"DummyContainerCertificateSetupTest completed before timeout.");
     CheckPathsExist(packageEnvironmentContext->CertificatePaths, packageEnvironmentContext->CertificatePasswordPaths);
-   
+
     // Clean-up environment
     ManualResetEvent cleanupDone;
     GetEnvironmentManager().BeginCleanupServicePackageInstanceEnvironment(
@@ -853,9 +854,9 @@ BOOST_AUTO_TEST_CASE(DummyContainerCertificateSetupTest)
             cleanupDone.Set();
         },
         AsyncOperationSPtr());
-    
+
     VERIFY_IS_TRUE(cleanupDone.WaitOne(10000), L"DummyContainerCertificateSetupTest completed before timeout.");
-    
+
     this->fabricNodeHost_->Close();
 }
 BOOST_AUTO_TEST_SUITE_END()

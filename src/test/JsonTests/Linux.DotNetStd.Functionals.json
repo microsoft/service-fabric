@@ -133,7 +133,7 @@
     {
       "Name": "FabActRemindersKvsTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -149,7 +149,7 @@
     {
       "Name": "FabActRemindersRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -165,7 +165,7 @@
     {
       "Name": "FabActRemindersVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -181,7 +181,7 @@
     {
       "Name": "ActorDirtyStateKVSTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -197,7 +197,7 @@
     {
       "Name": "ActorDirtyStateRDTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -213,7 +213,7 @@
     {
       "Name": "ActorDirtyStateVolatileTRSLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -221,38 +221,6 @@
         "SetupTimeout": "600",
         "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
         "TaskName": "DirtyActorStateVolatileTRSLinux.test",
-        "ExecutionTimeout": "21600",
-        "CleanupType": "XCopy",
-        "CleanupTimeout": "2100"
-      }
-    },
-    {
-      "Name": "ActorFailoverKVSTRSLinux",
-      "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
-      "ResourcesRequired": "Server:1&Azure:1",
-      "TestExecutionParameters" : {
-        "SetupInstall": "/servicefabric",
-        "SetupType": "XCopy",
-        "SetupTimeout": "600",
-        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
-        "TaskName": "ActorFailoverKvsTRSLinux.test",
-        "ExecutionTimeout": "21600",
-        "CleanupType": "XCopy",
-        "CleanupTimeout": "2100"
-      }
-    },
-    {
-      "Name": "ActorFailoverRDTRSLinux",
-      "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
-      "ResourcesRequired": "Server:1&Azure:1",
-      "TestExecutionParameters": {
-        "SetupInstall": "/servicefabric",
-        "SetupType": "XCopy",
-        "SetupTimeout": "600",
-        "ConfigName": "WinFabricTest\\FabActTestConfigLinux.txt",
-        "TaskName": "ActorFailoverRDTRSLinux.test",
         "ExecutionTimeout": "21600",
         "CleanupType": "XCopy",
         "CleanupTimeout": "2100"
@@ -546,22 +514,6 @@
         "CleanupTimeout": "2100"
       }
     },
-    {
-      "Name": "ActorFailovertestRDTRSLinux",
-      "Type": "Linux_ScriptTest",
-      "Owners": "asnegi,amanbha",
-      "ResourcesRequired": "Server:1&Azure:1",
-      "TestExecutionParameters": {
-        "SetupInstall": "/servicefabric",
-        "SetupType": "XCopy",
-        "SetupTimeout": "600",
-        "ConfigName": "WinFabricTest\\FabActTestConfigLinuxTStoreEnabled.txt",
-        "TaskName": "ActorFailoverRDTRSLinux.test",
-        "ExecutionTimeout": "21600",
-        "CleanupType": "XCopy",
-        "CleanupTimeout": "2100"
-      }
-    },
 	  {
       "Name": "DeleteStatefulActorRD2TRSLinux",
       "Type": "Linux_ScriptTest",
@@ -581,7 +533,7 @@
     {
       "Name": "TestRunnerServiceLinux",
       "Type": "Linux_ScriptTest",
-      "Owners": "asnegi",
+      "Owners": "asnegi,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",

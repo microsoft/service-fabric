@@ -15,22 +15,19 @@ namespace Management
 
         public:
             static const RolloutContextType::Enum ContextType;
-            
+
             explicit DeletableRolloutContext(
                 RolloutContextType::Enum);
 
             DeletableRolloutContext(
                 RolloutContextType::Enum,
                 bool const);
- 
+
             DeletableRolloutContext(
                 DeletableRolloutContext const &);
 
-            DeletableRolloutContext(
-                DeletableRolloutContext &&);
-
-            DeletableRolloutContext & operator=(
-                DeletableRolloutContext &&);
+            DEFAULT_MOVE_CONSTRUCTOR(DeletableRolloutContext);
+            DEFAULT_MOVE_ASSIGNMENT(DeletableRolloutContext);
 
             DeletableRolloutContext(
                 RolloutContextType::Enum,

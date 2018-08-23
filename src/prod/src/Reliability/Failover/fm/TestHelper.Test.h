@@ -59,7 +59,7 @@ namespace FailoverManagerUnitTest
         //
         // Example: "3 2 SP 0 0 [0 0 - Idle Primary Up] [1 0 - Idle Secondary Up]"
         //
-        static Reliability::FailoverManagerComponent::FailoverUnitUPtr FailoverUnitFromString(std::wstring const& fuStr);
+        static Reliability::FailoverManagerComponent::FailoverUnitUPtr FailoverUnitFromString(std::wstring const& fuStr, vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies = vector<Reliability::ServiceScalingPolicyDescription>());
         static std::wstring FailoverUnitToString(Reliability::FailoverManagerComponent::FailoverUnitUPtr const& failoverUnit, Reliability::ServiceDescription const& serviceDescription = Reliability::ServiceDescription());
 
         static std::vector<std::wstring> ActionsToString(std::vector<Reliability::FailoverManagerComponent::StateMachineActionUPtr> const& actions);

@@ -136,20 +136,26 @@ namespace Reliability
             DENY_COPY(AppHostClosedInput);
 
         public:
-            AppHostClosedInput(std::wstring const & hostId)
-            : hostId_(hostId)
+            AppHostClosedInput(Common::ActivityDescription const & activityDescription, std::wstring const & hostId)
+            : activityDescription_(activityDescription)
+            , hostId_(hostId)
             {
             }
 
             AppHostClosedInput(AppHostClosedInput && other)
-            : hostId_(std::move(other.hostId_))
+            : activityDescription_(std::move(other.activityDescription_))
+            , hostId_(std::move(other.hostId_))
             {
             }
+
+            __declspec(property(get = get_ActivityDescription)) Common::ActivityDescription const & ActivityDescription;
+            Common::ActivityDescription const & get_ActivityDescription() const { return activityDescription_; }
 
             __declspec(property(get=get_HostId)) std::wstring const & HostId;
             std::wstring const & get_HostId() const { return hostId_; }
 
         private:
+            Common::ActivityDescription activityDescription_;
             std::wstring const hostId_;
         };
 
@@ -564,6 +570,9 @@ namespace Reliability
 
             __declspec(property(get=get_FaultType)) FaultType::Enum FaultType;
             FaultType::Enum get_FaultType() const { return body_.FaultType; }
+
+            __declspec(property(get = get_ActivityDescription)) Common::ActivityDescription const & ActivityDescription;
+            Common::ActivityDescription const & get_ActivityDescription() const { return body_.ActivityDescription; }
 
             __declspec(property(get=get_ActivityId)) Common::ActivityId const & ActivityId;
             Common::ActivityId const & get_ActivityId() const { return activityId_; }

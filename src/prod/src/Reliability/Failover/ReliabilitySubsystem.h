@@ -183,6 +183,9 @@ namespace Reliability
         void ServiceTypeDisabledHandler(Hosting2::ServiceTypeStatusEventArgs const & eventArgs);
         void ServiceTypeEnabledHandler(Hosting2::ServiceTypeStatusEventArgs const & eventArgs);
 
+        // Handle event to send available images on node to the FM
+        void SendAvailableContainerImagesHandler(Hosting2::SendAvailableContainerImagesEventArgs const& eventArgs);
+
         bool IsFMM() const;
 
         void Cleanup();

@@ -21,10 +21,10 @@ set_target_properties(${exe_Query.Test} PROPERTIES
 
 target_link_libraries(${exe_Query.Test}
   ${lib_Query}
-  ${lib_Common}
   ${lib_ServiceModel}
   ${lib_Serialization}
   ${lib_Transport}
+  ${lib_Common}
   ${lib_ApiWrappers}
   ${lib_ClientServerTransport}
   ${lib_Failover}
@@ -49,8 +49,6 @@ target_link_libraries(${exe_Query.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

@@ -107,6 +107,37 @@ BackupLogRecord::SPtr BackupLogRecord::CreateZeroBackupLogRecord(
     return BackupLogRecord::SPtr(pointer);
 }
 
+bool BackupLogRecord::IsZeroBackupLogRecord() const
+{
+    KGuid emptyGuid(TRUE);
+
+    if (backupId_ != emptyGuid)
+    {
+        return false;
+    }
+
+    ASSERT_IFNOT(
+        highestBackedUpEpoch_ == Epoch::InvalidEpoch(),
+        "If ZeroBackupLogRecord, epoch must be ZeroEpoch. {0}",
+        highestBackedUpEpoch_);
+
+    ASSERT_IFNOT(
+        highestBackedupLsn_ == 0,
+        "If ZeroBackupLogRecord, highest backed up LSN must be ZeroLsn. {0}",
+        highestBackedupLsn_);
+
+    ASSERT_IFNOT(
+        backupLogRecordCount_ == 0,
+        "If ZeroBackupLogRecord, backupLogRecordCount must be ZeroLsn. {0}",
+        backupLogRecordCount_);
+
+    ASSERT_IFNOT(
+        backupLogSize_ == 0,
+        "If ZeroBackupLogRecord, backupLogSizemust be ZeroLsn. {0}",
+        backupLogSize_);
+
+    return true;
+}
 
 void BackupLogRecord::UpdateApproximateDiskSize()
 {
@@ -170,9 +201,10 @@ void BackupLogRecord::ReadPrivate(
 void BackupLogRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
 
     if (replicatedData_ == nullptr)
     {

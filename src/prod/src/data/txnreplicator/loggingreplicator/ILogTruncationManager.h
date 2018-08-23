@@ -15,6 +15,9 @@ namespace Data
 
         public:
 
+            __declspec(property(get = get_PeriodicTruncationState)) PeriodicCheckpointTruncationState::Enum PeriodicCheckpointTruncationState;
+            virtual PeriodicCheckpointTruncationState::Enum get_PeriodicTruncationState() const = 0;
+
             virtual ktl::Awaitable<void> BlockSecondaryPumpIfNeeded(__in LONG64 lastStableLsn) = 0;
 
             virtual bool ShouldBlockOperationsOnPrimary() = 0;
@@ -32,6 +35,19 @@ namespace Data
             virtual bool ShouldTruncateHead() = 0;
     
             virtual ReplicatedLogManager::IsGoodLogHeadCandidateCalculator GetGoodLogHeadCandidateCalculator() = 0;
+
+            virtual void OnCheckpointCompleted(
+                __in NTSTATUS status,
+                __in Data::LogRecordLib::CheckpointState::Enum checkpointState,
+                __in bool isRecoveredCheckpoint) = 0;
+
+            virtual void OnTruncationCompleted() = 0;
+
+            virtual void InitiatePeriodicCheckpoint() = 0;
+
+            virtual void Recover(
+                __in LONG64 recoveredCheckpointTime,
+                __in LONG64 recoveredTruncationTime) = 0;
         };
     }
 }

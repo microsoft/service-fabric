@@ -52,7 +52,8 @@ namespace HttpGateway
             __in std::wstring const& verb,
             __in std::wstring const& url,
             __in std::wstring const& suffix,
-            __out GatewayUri &output);
+            __out GatewayUri &output,
+            __in bool allowHierarchicalEntityKeys = true);
 	
         GatewayUri & operator = (GatewayUri && other);       
         bool GetItem(__in std::wstring const&, __out_opt std::wstring &) const;
@@ -61,9 +62,15 @@ namespace HttpGateway
 
     private:
 
-        bool Parse(std::vector<HandlerUriTemplate> const& validHandlerUri, std::wstring const &suffix, std::wstring const& query, std::wstring const&verb);
+        bool Parse(std::vector<HandlerUriTemplate> const& validHandlerUri, std::wstring const &suffix, std::wstring const& query, std::wstring const&verb, bool allowHierarchicalEntityKeys);
         
-        bool ParseInternal(
+        bool ParseHierarchical(
+            HandlerUriTemplate const& validHandlerUri,
+            std::wstring const& verb,
+            Common::StringCollection const& requestSuffix,
+            std::wstring const& requestQuery);
+
+        bool ParseNonHierarchical(
             HandlerUriTemplate const& validHandlerUri,
             std::wstring const& verb,
             Common::StringCollection const& requestSuffix,
@@ -71,6 +78,9 @@ namespace HttpGateway
 
         bool UpdateKey(std::wstring &keyName, std::wstring &keyValue, std::wstring const &handlerToken, std::wstring const &suffixToken);
         void ParseQueryString(std::wstring const& queryString);
+
+        std::wstring GetKey(std::wstring const &keyWithDelimiters);
+        bool IsKey(std::wstring const &segment);
 
         //
         // No need for locking this map. Inserts into this map happen only

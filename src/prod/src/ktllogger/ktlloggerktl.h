@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "ktllogger.h"
+#include "./sys/inc/ktllogger.h"
 #include "KtlLoggerNode.h"
 
 namespace KtlLogger
@@ -25,6 +25,7 @@ namespace KtlLogger
 
             VOID
             StartInitializeKtlLogger(
+                __in BOOLEAN UseInprocLogger,
                 __in KtlLogManager::MemoryThrottleLimits& MemoryLimits,
                 __in KtlLogManager::SharedLogContainerSettings& SharedLogSettings,
                 __in LPCWSTR NodeWorkDirectory,
@@ -87,6 +88,7 @@ namespace KtlLogger
             //
             // Parameters to api
             //
+            BOOLEAN _UseInprocLogger;
             KtlLogManager::MemoryThrottleLimits _MemoryLimits;
             KtlLogManager::SharedLogContainerSettings _SharedLogSettings;
             WCHAR _NodeWorkDirectory[MAX_PATH];

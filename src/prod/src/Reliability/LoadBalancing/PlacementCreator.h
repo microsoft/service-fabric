@@ -104,6 +104,10 @@ namespace Reliability
 
             size_t quorumBasedServicesCount_;
             size_t quorumBasedPartitionsCount_;
+
+            // Makes temporary cache of services that use quorum based logic.
+            // Takes into account only services that have a partition in closure.
+            std::set<uint64> quorumBasedServicesTempCache_;
         };
 
     }

@@ -23,6 +23,9 @@ namespace ServiceModel
 #define GET_HM_RC( ResourceName ) \
     Common::StringResource::Get( IDS_HM_##ResourceName )
 
+#define GET_MODELV2_RC( ResourceName ) \
+    Common::StringResource::Get( IDS_MODELV2_##ResourceName )
+
 #define CHECK_EQUALS_IF_NON_NULL( field ) \
     if (field) \
     { \

@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#include "Common/FabricGlobals.h"
 
 #define PERF_COUNTER_OBJECT_PROCESS L"Process"
 #define PERF_COUNTER_THREAD_COUNT L"Thread Count"
@@ -129,11 +130,8 @@ void Throttle::EnableInternal()
     shortMemoryHistory_.Initialize(static_cast<size_t>(config.MemoryThrottleInterval.Ticks / sampleInterval.Ticks));
     longMemoryHistory_.Initialize(static_cast<size_t>(config.MemoryStableInterval.Ticks / sampleInterval.Ticks));
 
-    LONG threadTestLimit = static_cast<LONG>(config.ThreadTestLimit);
-    if (threadTestLimit > 0)
-    {
-        FabricSetThreadTestLimit(threadTestLimit);
-    }
+    int threadTestLimit = static_cast<int>(config.ThreadTestLimit);
+    FabricGlobals::Get().GetThreadCounter().SetThreadTestLimit(threadTestLimit);
 
     TimeSpan perfMonitorInterval = CommonConfig::GetConfig().PerfMonitorInterval;
     WriteInfo(
@@ -226,7 +224,7 @@ static int GetThreadCount()
     return 0; // don't want to pay the cost of reading /proc file to get thread count,
     // as thread count is not used for throttling anymore, it is only for tracing
 #else
-    return FabricGetThreadCount(); // exported by FabricCommon.dll
+    return FabricGlobals::Get().GetThreadCounter().ThreadCount;
 #endif
 }
 

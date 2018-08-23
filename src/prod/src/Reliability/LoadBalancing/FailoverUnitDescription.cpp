@@ -19,7 +19,8 @@ FailoverUnitDescription::FailoverUnitDescription(
     int replicaDifference,
     Reliability::FailoverUnitFlags::Flags flags,
     bool isReconfigurationInProgress,
-    bool isInQuorumLost)
+    bool isInQuorumLost,
+    int targetReplicaSetSize)
     : fuId_(fuId),
     serviceName_(move(serviceName)),
     version_(version),
@@ -27,7 +28,8 @@ FailoverUnitDescription::FailoverUnitDescription(
     replicas_(move(replicas)),
     replicaDifference_(replicaDifference),
     serviceId_(0),
-    flags_(flags)
+    flags_(flags),
+    targetReplicaSetSize_(targetReplicaSetSize)
 {
     plbFlags_.SetDeleted(false);
     plbFlags_.SetInQuorumLost(isInQuorumLost);
@@ -44,7 +46,8 @@ FailoverUnitDescription::FailoverUnitDescription(Common::Guid fuId, wstring && s
     replicaDifference_(0),
     serviceId_(serviceId),
     flags_(Reliability::FailoverUnitFlags::Flags::None),
-    plbFlags_(PLBFailoverUnitDescriptionFlags::Flags::None)
+    plbFlags_(PLBFailoverUnitDescriptionFlags::Flags::None),
+    targetReplicaSetSize_(0)
 {
     plbFlags_.SetDeleted(true);
 }
@@ -58,7 +61,8 @@ FailoverUnitDescription::FailoverUnitDescription(FailoverUnitDescription const &
     replicaDifference_(other.replicaDifference_),
     serviceId_(other.serviceId_),
     flags_(other.flags_),
-    plbFlags_(other.plbFlags_)
+    plbFlags_(other.plbFlags_),
+    targetReplicaSetSize_(other.targetReplicaSetSize_)
 {
 }
 
@@ -71,7 +75,8 @@ FailoverUnitDescription::FailoverUnitDescription(FailoverUnitDescription && othe
     replicaDifference_(other.replicaDifference_),
     serviceId_(other.serviceId_),
     flags_(other.flags_),
-    plbFlags_(other.plbFlags_)
+    plbFlags_(other.plbFlags_),
+    targetReplicaSetSize_(other.targetReplicaSetSize_)
 {
 }
 
@@ -88,6 +93,7 @@ FailoverUnitDescription & FailoverUnitDescription::operator = (FailoverUnitDescr
         serviceId_ = other.serviceId_;
         flags_ = other.flags_;
         plbFlags_ = other.plbFlags_;
+        targetReplicaSetSize_ = other.targetReplicaSetSize_;
     }
 
     return *this;
@@ -205,14 +211,15 @@ void FailoverUnitDescription::ForEachReplica(std::function<void(ReplicaDescripti
 void FailoverUnitDescription::WriteTo(Common::TextWriter& writer, Common::FormatOptions const &) const
 {
     writer.Write(
-        "{0} service:{1} flags:{2} plbFlags:{3} version:{4} replicaDiff:{5} replicas:{6}",
+        "{0} service:{1} flags:{2} plbFlags:{3} version:{4} replicaDiff:{5} replicas:{6} targetReplicaSetSize:{7}",
         fuId_,
         serviceName_,
         flags_,
         plbFlags_,
         version_,
         replicaDifference_,
-        replicas_);
+        replicas_,
+        targetReplicaSetSize_);
 }
 
 void FailoverUnitDescription::WriteToEtw(uint16 contextSequenceId) const

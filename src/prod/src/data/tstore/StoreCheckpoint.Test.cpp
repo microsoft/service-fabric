@@ -53,38 +53,44 @@ namespace TStoreTests
             return result;
         }
 
-        void AddKey(__in LONG64 key, __in KString::SPtr value)
+        ktl::Awaitable<void> AddKeyAsync(__in LONG64 key, __in KString::SPtr value)
         {
             auto txn = CreateWriteTransaction();
-            SyncAwait(Store->AddAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-            SyncAwait(txn->CommitAsync());
+            co_await Store->AddAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+            co_await txn->CommitAsync();
+            co_return;
         }
 
-        void UpdateKey(__in LONG64 key, __in KString::SPtr updateValue)
+        ktl::Awaitable<void> UpdateKeyAsync(__in LONG64 key, __in KString::SPtr updateValue)
         {
             auto txn = CreateWriteTransaction();
-            bool result = SyncAwait(Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, updateValue, DefaultTimeout, CancellationToken::None));
+            bool result = co_await Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, updateValue, DefaultTimeout, CancellationToken::None);
             ASSERT_IFNOT(result, "Should be able to update key {0}", key);
-            SyncAwait(txn->CommitAsync());
+            co_await txn->CommitAsync();
+            co_return;
         }
 
-        void RemoveKey(__in LONG64 key)
+        ktl::Awaitable<void> RemoveKeyAsync(__in LONG64 key)
         {
             auto txn = CreateWriteTransaction();
-            bool result = SyncAwait(Store->ConditionalRemoveAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None));
+            bool result = co_await Store->ConditionalRemoveAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
             ASSERT_IFNOT(result, "Should be able to remove key {0}", key);
-            SyncAwait(txn->CommitAsync());
+            co_await txn->CommitAsync();
+            co_return;
         }
 
-        void CheckpointAndRecover()
+        ktl::Awaitable<void> CheckpointAndRecoverAsync()
         {
-            Checkpoint();
-            CloseAndReOpenStore();
+            co_await CheckpointAsync();
+            co_await CloseAndReOpenStoreAsync();
+            co_return;
         }
 
-        void VerifyKeyExists(__in LONG64 key, __in KString::SPtr expectedValue)
+        ktl::Awaitable<void> VerifyKeyExistsAsync(__in LONG64 key, __in KString::SPtr expectedValue)
         {
-            SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, StringEquals));
+            co_await static_cast<TStoreTestBase *>(this)->VerifyKeyExistsAsync(
+                *Store, key, nullptr, expectedValue, StringEquals);
+            co_return;
         }
 
         ktl::Awaitable<void> VerifyKeysExistAsync(
@@ -148,65 +154,68 @@ namespace TStoreTests
             }
         }
 
-        void PopulateConsolidatedAndDifferential(__in LONG64 consolidatedCount, __in LONG64 differentialCount, bool isUpdate)
+        ktl::Awaitable<void> PopulateConsolidatedAndDifferentialAsync(__in LONG64 consolidatedCount, __in LONG64 differentialCount, bool isUpdate)
         {
             LONG64 highestConsolidatedValue = 2 * consolidatedCount;
             LONG64 highestDifferentialValue = 2 * differentialCount;
 
             for (LONG64 i = highestConsolidatedValue - 1; i >= 0; i -= 2) // Consolidated, all odd keys
             {
-                AddKey(i, GenerateString(i));
+                co_await AddKeyAsync(i, GenerateString(i));
                 if (isUpdate)
                 {
-                    UpdateKey(i, GenerateString(i));
+                    co_await UpdateKeyAsync(i, GenerateString(i));
                 }
             }
 
-            Checkpoint();
+            co_await CheckpointAsync();
 
             for (LONG64 i = 0; i < highestDifferentialValue; i += 2) // Differential, all even keys
             {
-                AddKey(i, GenerateString(i));
+                co_await AddKeyAsync(i, GenerateString(i));
                 if (isUpdate)
                 {
-                    UpdateKey(i, GenerateString(i));
+                    co_await UpdateKeyAsync(i, GenerateString(i));
                 }
             }
 
-            CheckpointAndRecover();
+            co_await CheckpointAndRecoverAsync();
 
             // TODO: Verify checkpoint file size
             for (LONG64 i = highestConsolidatedValue - 1; i >= 0; i -= 2)
             {
-                SyncAwait(VerifyKeyExistsInStoresAsync(i, nullptr, GenerateString(i), StringEquals));
+                co_await VerifyKeyExistsInStoresAsync(i, nullptr, GenerateString(i), StringEquals);
             }
 
             for (LONG64 i = 0; i < highestDifferentialValue; i += 2)
             {
-                SyncAwait(VerifyKeyExistsInStoresAsync(i, nullptr, GenerateString(i), StringEquals));
+                co_await VerifyKeyExistsInStoresAsync(i, nullptr, GenerateString(i), StringEquals);
             }
+
+            co_return;
         }
 
-        void DoOperation(__in LONG64 key, __in ULONG32 cyclePosition)
+        ktl::Awaitable<void> DoOperationAsync(__in LONG64 key, __in ULONG32 cyclePosition)
         {
             auto value = GenerateString(key);
             switch (cyclePosition % 3)
             {
             case 0: 
-                AddKey(key, value); 
-                SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
+                co_await AddKeyAsync(key, value);
+                co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
                 break;
             case 1: 
-                UpdateKey(key, GenerateString(key));
-                SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
+                co_await UpdateKeyAsync(key, GenerateString(key));
+                co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
                 break;
             case 2: 
-                RemoveKey(key);
-                SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+                co_await RemoveKeyAsync(key);
+                co_await VerifyKeyDoesNotExistAsync(*Store, key);
             }
+            co_return;
         }
 
-        void TwoDeltaTest(__in ULONG32 numVersionsFirstDifferential, __in ULONG32 numVersionsSecondDifferential, __in ULONG32 numIterations = 9)
+        ktl::Awaitable<void> TwoDeltaTestAsync(__in ULONG32 numVersionsFirstDifferential, __in ULONG32 numVersionsSecondDifferential, __in ULONG32 numIterations = 9)
         {
             LONG64 checkpointLSN = 1;
 
@@ -216,7 +225,7 @@ namespace TStoreTests
 
                 for (ULONG32 j = 0; j < numVersionsFirstDifferential; j++)
                 {
-                    DoOperation(i, numOperationsCompleted++);
+                    co_await DoOperationAsync(i, numOperationsCompleted++);
                 }
                 
                 checkpointLSN++;
@@ -229,27 +238,760 @@ namespace TStoreTests
 
                 for (ULONG32 j = 0; j < numVersionsSecondDifferential; j++)
                 {
-                    DoOperation(i, numOperationsCompleted++);
+                    co_await DoOperationAsync(i, numOperationsCompleted++);
                 }
 
-                CheckpointAndRecover();
+                co_await CheckpointAndRecoverAsync();
 
                 auto expectedNumOps = numVersionsFirstDifferential + numVersionsSecondDifferential;
 
                 if (expectedNumOps % 3 == 0)
                 {
-                    SyncAwait(VerifyKeyDoesNotExistInStoresAsync(i));
+                    co_await VerifyKeyDoesNotExistInStoresAsync(i);
                     VerifyCountInAllStores(0);
                 }
                 else
                 {
-                    SyncAwait(VerifyKeyExistsInStoresAsync(i, nullptr, GenerateString(i), StringEquals));
+                    co_await VerifyKeyExistsInStoresAsync(i, nullptr, GenerateString(i), StringEquals);
                     VerifyCountInAllStores(i + 1);
                 }
             }
+            co_return;
         }
 
         Common::CommonConfig config; // load the config object as its needed for the tracing to work
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> ReopenStore_ShouldSucceed_Test()
+        {
+            co_await CloseAndReOpenStoreAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_NoState_ShouldSucceed_Test()
+        {
+            co_await CheckpointAndRecoverAsync();
+
+            // TODO: verify checkpoint file size
+            VerifyCountInAllStores(0);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddCheckpointRead_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key, value);
+            co_await CheckpointAndRecoverAsync();
+
+            //TODO: Verify checkpoint file size
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddCheckpointRemove_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key, value);
+            co_await CheckpointAndRecoverAsync();
+            co_await VerifyKeyExistsAsync(key, value);
+            co_await RemoveKeyAsync(key);
+            co_await VerifyKeyDoesNotExistInStoresAsync(key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddCheckpointUpdateRead_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+            KString::SPtr updatedValue = GetStringValue(L"update");
+
+            co_await AddKeyAsync(key, value);
+            co_await CheckpointAndRecoverAsync();
+            co_await UpdateKeyAsync(key, updatedValue);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, updatedValue, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> EmptyCheckpoint_AfterNotEmptyCheckpoint_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key, value);
+            co_await CheckpointAsync(); // Not empty
+            co_await CheckpointAndRecoverAsync(); // Empty
+
+            // TODO: Verify checkpoint file size
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdateRemoveCheckpoint_MultipleTimes_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key, value);
+        
+            for (ULONG32 i = 0; i < 81; i++)
+            {
+                switch (i % 3)
+                {
+                case 0: co_await UpdateKeyAsync(key, value); break;
+                case 1: co_await RemoveKeyAsync(key); break;
+                case 2: co_await AddKeyAsync(key, value); break;
+                }
+                co_await CheckpointAsync();
+            }
+
+            co_await CheckpointAndRecoverAsync();
+
+            // TODO: verify checkpoint file size
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdateCheckpointRead_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+            KString::SPtr updatedValue = GetStringValue(L"update");
+
+            co_await AddKeyAsync(key, value);
+            co_await UpdateKeyAsync(key, updatedValue);
+            co_await CheckpointAndRecoverAsync();
+
+            // TODO: verify checkpoint file size
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, updatedValue, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddRemoveCheckpoint_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key, value);
+            co_await RemoveKeyAsync(key);
+            co_await CheckpointAndRecoverAsync();
+
+            // TODO: Verify checkpoint file size
+            VerifyCountInAllStores(0);
+            co_await VerifyKeyDoesNotExistInStoresAsync(key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddCheckpointRemoveCheckpoint_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key, value);
+            co_await CheckpointAndRecoverAsync();
+            co_await RemoveKeyAsync(key);
+            co_await CheckpointAndRecoverAsync();
+
+            // TODO: Verify checkpoint file size
+            VerifyCountInAllStores(0);
+            co_await VerifyKeyDoesNotExistInStoresAsync(key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddCheckpointRemoveCheckpointAddCheckpoint_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value1 = GetStringValue(L"value 1");
+            KString::SPtr value2 = GetStringValue(L"value 2");
+
+            co_await AddKeyAsync(key, value1);
+            co_await CheckpointAndRecoverAsync();
+            co_await RemoveKeyAsync(key);
+            co_await CheckpointAndRecoverAsync();
+            co_await AddKeyAsync(key, value2);
+            co_await CheckpointAndRecoverAsync();
+
+            // TODO: Verify checkpoint file size
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value2, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddCheckpointReadCheckpointRead_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key, value);
+            co_await CheckpointAsync();
+        
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+
+            co_await CheckpointAsync();
+
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddCheckpointReadUpdateCheckpointRead_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value1 = GetStringValue(L"value1");
+            KString::SPtr value2 = GetStringValue(L"value2");
+
+            co_await AddKeyAsync(key, value1);
+            co_await CheckpointAsync();
+
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, StringEquals);
+
+            co_await UpdateKeyAsync(key, value2);
+            co_await CheckpointAsync();
+
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value2, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddCheckpointCloseOpenReadUpdateCheckpointCloseOpenRead_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value1 = GetStringValue(L"value1");
+            KString::SPtr value2 = GetStringValue(L"value2");
+
+            co_await AddKeyAsync(key, value1);
+            co_await CheckpointAndRecoverAsync();
+
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, StringEquals);
+
+            co_await UpdateKeyAsync(key, value2);
+            co_await CheckpointAndRecoverAsync();
+
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value2, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_ZeroLSNPrepare_ShouldSucceed_Test()
+        {
+            auto checkpointLSN = 0;
+            for (ULONG32 i = 0; i < Stores->Count(); i++)
+            {
+                auto store = (*Stores)[i];
+                store->PrepareCheckpoint(checkpointLSN);
+            }
+
+            for (ULONG32 i = 0; i < Stores->Count(); i++)
+            {
+                auto store = (*Stores)[i];
+                co_await store->PerformCheckpointAsync(CancellationToken::None);
+                co_await store->CompleteCheckpointAsync(CancellationToken::None);
+            }
+
+            // Recover original checkpoint
+            co_await CloseAndReOpenStoreAsync();
+
+            VerifyCountInAllStores(0);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DuringApply_ShouldSucceed_Test()
+        {
+            LONG64 key1 = 17;
+            LONG64 key2 = 18;
+            KString::SPtr value1 = GetStringValue(L"value 1");
+            KString::SPtr value2 = GetStringValue(L"value 2");
+
+            co_await AddKeyAsync(key1, value1);
+
+            // Start checkpoint
+            auto checkpointLSN = 1;
+            for (ULONG32 i = 0; i < Stores->Count(); i++)
+            {
+                auto store = (*Stores)[i];
+                store->PrepareCheckpoint(checkpointLSN);
+            }
+        
+            // Apply after checkpoint has started
+            co_await AddKeyAsync(key2, value2);
+        
+            // Finish checkpoint
+            for (ULONG32 i = 0; i < Stores->Count(); i++)
+            {
+                auto store = (*Stores)[i];
+                co_await store->PerformCheckpointAsync(CancellationToken::None);
+                co_await store->CompleteCheckpointAsync(CancellationToken::None);
+            }
+
+            // Recover original checkpoint
+            co_await CloseAndReOpenStoreAsync();
+
+            // TODO: Verify checkpoint file size
+            VerifyCountInAllStores(1);
+
+            co_await VerifyKeyExistsInStoresAsync(key1, nullptr, value1, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddPrepareRead_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key, value);
+
+            auto checkpointLSN = 1;
+            for (ULONG32 i = 0; i < Stores->Count(); i++)
+            {
+                auto store = (*Stores)[i];
+                store->PrepareCheckpoint(checkpointLSN);
+            }
+
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> PreparePreparePerform_ShouldSucceed_Test()
+        {
+            LONG64 key1 = 17;
+            LONG64 key2 = 18;
+            KString::SPtr value = GetStringValue(L"value");
+
+            co_await AddKeyAsync(key1, value);
+
+            auto checkpointLSN = 1;
+            for (ULONG32 i = 0; i < Stores->Count(); i++)
+            {
+                auto store = (*Stores)[i];
+                store->PrepareCheckpoint(checkpointLSN);
+            }
+
+            co_await AddKeyAsync(key2, value);
+
+            checkpointLSN = 2;
+            for (ULONG32 i = 0; i < Stores->Count(); i++)
+            {
+                auto store = (*Stores)[i];
+                store->PrepareCheckpoint(checkpointLSN);
+            }
+
+            co_await VerifyKeyExistsInStoresAsync(key1, nullptr, value, StringEquals);
+            co_await VerifyKeyExistsInStoresAsync(key2, nullptr, value, StringEquals);
+
+            for (ULONG32 i = 0; i < Stores->Count(); i++)
+            {
+                auto store = (*Stores)[i];
+                co_await store->PerformCheckpointAsync(CancellationToken::None);
+                co_await store->CompleteCheckpointAsync(CancellationToken::None);
+            }
+
+            VerifyCountInAllStores(2);
+            co_await VerifyKeyExistsInStoresAsync(key1, nullptr, value, StringEquals);
+            co_await VerifyKeyExistsInStoresAsync(key2, nullptr, value, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdatePrepareRemoveCheckpointRecover_Twice_ShouldSucceed_Test()
+        {
+            KString::SPtr value = GetStringValue(L"value");
+
+            auto checkpointLSN = 1;
+            for (ULONG32 i = 0; i < 2; i++)
+            {
+                auto key = i;
+                co_await AddKeyAsync(key, value);
+                co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+
+                co_await UpdateKeyAsync(key, value);
+                co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+
+                checkpointLSN++;
+                for (ULONG32 j = 0; j < Stores->Count(); j++)
+                {
+                    auto store = (*Stores)[j];
+                    store->PrepareCheckpoint(checkpointLSN);
+                }
+
+                co_await RemoveKeyAsync(key);
+                co_await VerifyKeyDoesNotExistInStoresAsync(key);
+
+                co_await CheckpointAndRecoverAsync();
+
+                VerifyCountInAllStores(0);
+                co_await VerifyKeyDoesNotExistInStoresAsync(key);
+            }
+            co_return;
+        }
+
+        ktl::Awaitable<void> ConcurrentReadsDuringCheckpoint_MultipleDifferentials_ShouldSucceed_Test()
+        {
+            Store->EnableBackgroundConsolidation = false;
+            Store->ConsolidationManagerSPtr->NumberOfDeltasToBeConsolidated = 6;
+
+            for (LONG64 startKey = 0; startKey < 1000; startKey += 100)
+            {
+                {
+                    auto txn = CreateWriteTransaction();
+
+                    for (LONG64 key = startKey; key < startKey + 100; key++)
+                    {
+                        co_await Store->AddAsync(*txn->StoreTransactionSPtr, key, GenerateString(key), DefaultTimeout, ktl::CancellationToken::None);
+                    }
+
+                    co_await txn->CommitAsync();
+                }
+
+                if (startKey < 900) // Don't checkpoint last keys added
+                {
+                    co_await CheckpointAsync();
+                }
+            }
+        
+            LONG64 checkpointLSN = Replicator->IncrementAndGetCommitSequenceNumber();
+            Store->PrepareCheckpoint(checkpointLSN);
+
+            ktl::AwaitableCompletionSource<bool>::SPtr signalSPtr = nullptr;
+            NTSTATUS status = ktl::AwaitableCompletionSource<bool>::Create(GetAllocator(), ALLOC_TAG, signalSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            KSharedArray<ktl::Awaitable<void>>::SPtr tasks = _new(ALLOC_TAG, GetAllocator()) KSharedArray<ktl::Awaitable<void>>();
+            for (ULONG32 t = 0; t < 20; t++)
+            {
+                tasks->Append(VerifyKeysExistAsync(t * 50, 50, *signalSPtr, true));
+            }
+
+            signalSPtr->SetResult(true); // Start the background readers
+
+            co_await Store->PerformCheckpointAsync(ktl::CancellationToken::None);
+
+            co_await StoreUtilities::WhenAll<void>(*tasks, GetAllocator());
+
+            co_await Store->CompleteCheckpointAsync(ktl::CancellationToken::None);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ConcurrentReadsAndsCheckpoints_MultipleDifferentials_ShouldSucceed_Test()
+        {
+            Store->EnableBackgroundConsolidation = false;
+            Store->ConsolidationManagerSPtr->NumberOfDeltasToBeConsolidated = 6;
+
+            for (LONG64 startKey = 0; startKey < 1000; startKey += 100)
+            {
+                {
+                    auto txn = CreateWriteTransaction();
+
+                    for (LONG64 key = startKey; key < startKey + 100; key++)
+                    {
+                        co_await Store->AddAsync(*txn->StoreTransactionSPtr, key, GenerateString(key), DefaultTimeout, ktl::CancellationToken::None);
+                    }
+
+                    co_await txn->CommitAsync();
+                }
+
+                if (startKey < 900) // Don't checkpoint last keys added
+                {
+                    co_await CheckpointAsync();
+                }
+            }
+        
+            ktl::AwaitableCompletionSource<bool>::SPtr signalSPtr = nullptr;
+            NTSTATUS status = ktl::AwaitableCompletionSource<bool>::Create(GetAllocator(), ALLOC_TAG, signalSPtr);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            KSharedArray<ktl::Awaitable<void>>::SPtr tasks = _new(ALLOC_TAG, GetAllocator()) KSharedArray<ktl::Awaitable<void>>();
+
+            // Reads a total of 1200 items. 200 of which are from the checkpoint task and may not exist
+            for (ULONG32 t = 0; t < 20; t++)
+            {
+                tasks->Append(VerifyKeysExistAsync(t * 60, 60, *signalSPtr, false));
+            }
+
+            auto checkpointsTask = AddAndCheckpointAsync(10, 1000, 1200, *signalSPtr);
+
+            signalSPtr->SetResult(true); // Start the background readers and checkpoint task
+
+            co_await StoreUtilities::WhenAll<void>(*tasks, GetAllocator());
+            co_await checkpointsTask;
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_EmptyDifferentialState_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GetStringValue(L"value");
+        
+            co_await AddKeyAsync(key, value);
+            co_await CheckpointAndRecoverAsync();
+        
+            // TODO: Verify checkpoint file size
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+
+            co_await CheckpointAndRecoverAsync();
+
+            // TODO: Verify checkpoint file size
+            VerifyCountInAllStores(1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_Add_Delete_ShouldSucceed_Test()
+        {
+            LONG64 numItems = 100; // TODO: managed has this at 1024
+
+            for (LONG64 i = numItems - 1; i >= 0; i--)
+            {
+                co_await AddKeyAsync(i, GenerateString(i));
+            }
+
+            co_await CheckpointAsync(); // Consolidate
+
+            // Create a reverse differential state
+            for (LONG64 i = 0; i < numItems; i++)
+            {
+                co_await RemoveKeyAsync(i);
+            }
+
+            co_await CheckpointAsync();
+
+            VerifyCountInAllStores(0);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_Add_Update_UpdateRepeated_ShouldSucceed_Test()
+        {
+            LONG64 numItems = 100; // TODO: Managed has this at 1024
+            ULONG32 numUpdateIterations = 8;
+
+            for (LONG64 i = numItems - 1; i >= 0; i--)
+            {
+                co_await AddKeyAsync(i, GenerateString(i));
+            }
+
+            co_await CheckpointAsync(); // Consolidate
+
+            // Create a reverse differential state
+            for (LONG64 i = 0; i < numItems; i++)
+            {
+                co_await UpdateKeyAsync(i, GenerateString(i));
+            }
+
+            co_await CheckpointAsync();
+
+            for (ULONG32 i = 0; i < numUpdateIterations; i++)
+            {
+                for (LONG64 j = 0; j < numItems; j++)
+                {
+                    co_await UpdateKeyAsync(j, GenerateString(j));
+                }
+
+                co_await CheckpointAsync();
+            }
+
+            VerifyCountInAllStores(numItems);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_AddPartialUpdate_ShouldSucceed_Test()
+        {
+            LONG64 numItems = 100; // TODO: Managed has this at 1024
+            ULONG32 numUpdateIterations = 8;
+
+            for (LONG64 i = numItems - 1; i >= 0; i--)
+            {
+                co_await AddKeyAsync(i, GenerateString(i));
+            }
+
+            co_await CheckpointAsync(); // Consolidate
+
+            // Create a reverse differential state
+            for (LONG64 i = 0; i < numItems; i++)
+            {
+                co_await UpdateKeyAsync(i, GenerateString(i));
+            }
+
+            co_await CheckpointAsync();
+
+            for (ULONG32 i = 0; i < numUpdateIterations; i++)
+            {
+                // Lower half
+                for (LONG64 j = 0; j < numItems/2; j++)
+                {
+                    co_await UpdateKeyAsync(j, GenerateString(j));
+                }
+
+                co_await CheckpointAsync();
+            
+                // Upper half
+                for (LONG64 j = numItems/2; j < numItems; j++)
+                {
+                    co_await UpdateKeyAsync(j, GenerateString(j));
+                }
+
+                co_await CheckpointAsync();
+            }
+
+            VerifyCountInAllStores(numItems);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_SameCount_NoIntersection_AddAdd_ShouldSucceed_Test()
+        {
+            // TODO: Managed has this at 512, 512. Making smaller for now
+            co_await PopulateConsolidatedAndDifferentialAsync(50, 50, false);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_SameCount_NoIntersection_UpdateUpdate_ShouldSucceed_Test()
+        {
+            // TODO: Managed has this at 512, 512. Making smaller for now
+            co_await PopulateConsolidatedAndDifferentialAsync(50, 50, true);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_BiggerDifferential_NoIntersection_AddAdd_ShouldSucceed_Test()
+        {
+            // TODO: Managed has this at 512, 1024. Making smaller for now
+            co_await PopulateConsolidatedAndDifferentialAsync(50, 100, false);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_BiggerDifferential_NoIntersection_UpdateUpdate_ShouldSucceed_Test()
+        {
+            // TODO: Managed has this at 512, 1024. Making smaller for now
+            co_await PopulateConsolidatedAndDifferentialAsync(50, 100, true);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_BiggerConsolidated_NoIntersection_AddAdd_ShouldSucceed_Test()
+        {
+            // TODO: Managed has this at 1024, 512. Making smaller for now
+            co_await PopulateConsolidatedAndDifferentialAsync(100, 50, false);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_DifferentialAndConsolidated_BiggerConsolidated_NoIntersection_UpdateUpdate_ShouldSucceed_Test()
+        {
+            // TODO: Managed has this at 1024, 512. Making smaller for now
+            co_await PopulateConsolidatedAndDifferentialAsync(100, 50, true);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_TwoDeltaDifferentials_ZeroOne_ShouldSucceed_Test()
+        {
+            co_await TwoDeltaTestAsync(0, 1);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_TwoDeltaDifferentials_OneZero_ShouldSucceed_Test()
+        {
+            co_await TwoDeltaTestAsync(1, 0);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_TwoDeltaDifferentials_OneOne_ShouldSucceed_Test()
+        {
+            co_await TwoDeltaTestAsync(1, 1);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_TwoDeltaDifferentials_TwoOne_ShouldSucceed_Test()
+        {
+            co_await TwoDeltaTestAsync(2, 1);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_TwoDeltaDifferentials_OneTwo_ShouldSucceed_Test()
+        {
+            co_await TwoDeltaTestAsync(1, 2);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_TwoDeltaDifferentials_TwoTwo_ShouldSucceed_Test()
+        {
+            co_await TwoDeltaTestAsync(2, 2);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Add100Checkpoint_WithValueRecovery_ShouldSucceed_Test()
+    {
+        Store->ShouldLoadValuesOnRecovery = true;
+        for (LONG64 i = 0; i < 100; i++)
+        {
+            auto key = i;
+            auto value = GenerateString(i);
+            co_await AddKeyAsync(key, value);
+        }
+
+        co_await CheckpointAndRecoverAsync();
+
+        VerifyCountInAllStores(100);
+        for (LONG64 i = 0; i < 100; i++)
+        {
+            auto key = i;
+            auto expectedValue = GenerateString(i);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, expectedValue, StringEquals);
+        }
+        co_return;
+    }
+
+        ktl::Awaitable<void> Add100Checkpoint_WithValueRecovery_MultipleInflightTasks_ShouldSucceed_Test()
+    {
+        Store->ShouldLoadValuesOnRecovery = true;
+        Store->MaxNumberOfInflightValueRecoveryTasks = 10;
+
+        for (LONG64 i = 0; i < 100; i++)
+        {
+            auto key = i;
+            auto value = GenerateString(i);
+            co_await AddKeyAsync(key, value);
+        }
+
+        co_await CheckpointAndRecoverAsync();
+
+        VerifyCountInAllStores(100);
+        for (LONG64 i = 0; i < 100; i++)
+        {
+            auto key = i;
+            auto expectedValue = GenerateString(i);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, expectedValue, StringEquals);
+        }
+        co_return;
+    }
+
+        ktl::Awaitable<void> Add1000Checkpoint_ShouldSucceed_Test()
+        {
+            for (LONG64 i = 0; i < 1000; i++)
+            {
+                auto key = i;
+                auto value = GenerateString(i);
+                co_await AddKeyAsync(key, value);
+            }
+
+            co_await CheckpointAndRecoverAsync();
+
+            //TODO: Verify checkpoint file size
+            VerifyCountInAllStores(1000);
+            for (LONG64 i = 0; i < 1000; i++)
+            {
+                auto key = i;
+                auto expectedValue = GenerateString(i);
+                co_await VerifyKeyExistsInStoresAsync(key, nullptr, expectedValue, StringEquals);
+            }
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(StoreCheckpointTestSuite, StoreCheckpointTests)
@@ -257,446 +999,109 @@ namespace TStoreTests
 #pragma region Recovery tests
     BOOST_AUTO_TEST_CASE(ReopenStore_ShouldSucceed)
     {
-        CloseAndReOpenStore();
+        SyncAwait(ReopenStore_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_NoState_ShouldSucceed)
     {
-        CheckpointAndRecover();
-
-        // TODO: verify checkpoint file size
-        VerifyCountInAllStores(0);
+        SyncAwait(Checkpoint_NoState_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddCheckpointRead_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key, value);
-        CheckpointAndRecover();
-
-        //TODO: Verify checkpoint file size
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
+        SyncAwait(AddCheckpointRead_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddCheckpointRemove_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key, value);
-        CheckpointAndRecover();
-        VerifyKeyExists(key, value);
-        RemoveKey(key);
-        SyncAwait(VerifyKeyDoesNotExistInStoresAsync(key));
+        SyncAwait(AddCheckpointRemove_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddCheckpointUpdateRead_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-        KString::SPtr updatedValue = GetStringValue(L"update");
-
-        AddKey(key, value);
-        CheckpointAndRecover();
-        UpdateKey(key, updatedValue);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, updatedValue, StringEquals));
+        SyncAwait(AddCheckpointUpdateRead_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(EmptyCheckpoint_AfterNotEmptyCheckpoint_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key, value);
-        Checkpoint(); // Not empty
-        CheckpointAndRecover(); // Empty
-
-        // TODO: Verify checkpoint file size
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
+        SyncAwait(EmptyCheckpoint_AfterNotEmptyCheckpoint_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdateRemoveCheckpoint_MultipleTimes_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key, value);
-        
-        for (ULONG32 i = 0; i < 81; i++)
-        {
-            switch (i % 3)
-            {
-            case 0: UpdateKey(key, value); break;
-            case 1: RemoveKey(key); break;
-            case 2: AddKey(key, value); break;
-            }
-            Checkpoint();
-        }
-
-        CheckpointAndRecover();
-
-        // TODO: verify checkpoint file size
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
+        SyncAwait(AddUpdateRemoveCheckpoint_MultipleTimes_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdateCheckpointRead_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-        KString::SPtr updatedValue = GetStringValue(L"update");
-
-        AddKey(key, value);
-        UpdateKey(key, updatedValue);
-        CheckpointAndRecover();
-
-        // TODO: verify checkpoint file size
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, updatedValue, StringEquals));
+        SyncAwait(AddUpdateCheckpointRead_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddRemoveCheckpoint_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key, value);
-        RemoveKey(key);
-        CheckpointAndRecover();
-
-        // TODO: Verify checkpoint file size
-        VerifyCountInAllStores(0);
-        SyncAwait(VerifyKeyDoesNotExistInStoresAsync(key));
+        SyncAwait(AddRemoveCheckpoint_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddCheckpointRemoveCheckpoint_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key, value);
-        CheckpointAndRecover();
-        RemoveKey(key);
-        CheckpointAndRecover();
-
-        // TODO: Verify checkpoint file size
-        VerifyCountInAllStores(0);
-        SyncAwait(VerifyKeyDoesNotExistInStoresAsync(key));
+        SyncAwait(AddCheckpointRemoveCheckpoint_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddCheckpointRemoveCheckpointAddCheckpoint_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value1 = GetStringValue(L"value 1");
-        KString::SPtr value2 = GetStringValue(L"value 2");
-
-        AddKey(key, value1);
-        CheckpointAndRecover();
-        RemoveKey(key);
-        CheckpointAndRecover();
-        AddKey(key, value2);
-        CheckpointAndRecover();
-
-        // TODO: Verify checkpoint file size
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value2, StringEquals));
+        SyncAwait(AddCheckpointRemoveCheckpointAddCheckpoint_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddCheckpointReadCheckpointRead_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key, value);
-        Checkpoint();
-        
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
-
-        Checkpoint();
-
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
+        SyncAwait(AddCheckpointReadCheckpointRead_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddCheckpointReadUpdateCheckpointRead_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value1 = GetStringValue(L"value1");
-        KString::SPtr value2 = GetStringValue(L"value2");
-
-        AddKey(key, value1);
-        Checkpoint();
-
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, StringEquals));
-
-        UpdateKey(key, value2);
-        Checkpoint();
-
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value2, StringEquals));
+        SyncAwait(AddCheckpointReadUpdateCheckpointRead_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddCheckpointCloseOpenReadUpdateCheckpointCloseOpenRead_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value1 = GetStringValue(L"value1");
-        KString::SPtr value2 = GetStringValue(L"value2");
-
-        AddKey(key, value1);
-        CheckpointAndRecover();
-
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, StringEquals));
-
-        UpdateKey(key, value2);
-        CheckpointAndRecover();
-
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value2, StringEquals));
+        SyncAwait(AddCheckpointCloseOpenReadUpdateCheckpointCloseOpenRead_ShouldSucceed_Test());
     }
 #pragma endregion
 
 #pragma region Prepare Checkpoint tests
     BOOST_AUTO_TEST_CASE(Checkpoint_ZeroLSNPrepare_ShouldSucceed)
     {
-        auto checkpointLSN = 0;
-        for (ULONG32 i = 0; i < Stores->Count(); i++)
-        {
-            auto store = (*Stores)[i];
-            store->PrepareCheckpoint(checkpointLSN);
-        }
-
-        for (ULONG32 i = 0; i < Stores->Count(); i++)
-        {
-            auto store = (*Stores)[i];
-            SyncAwait(store->PerformCheckpointAsync(CancellationToken::None));
-            SyncAwait(store->CompleteCheckpointAsync(CancellationToken::None));
-        }
-
-        // Recover original checkpoint
-        CloseAndReOpenStore();
-
-        VerifyCountInAllStores(0);
+        SyncAwait(Checkpoint_ZeroLSNPrepare_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DuringApply_ShouldSucceed)
     {
-        LONG64 key1 = 17;
-        LONG64 key2 = 18;
-        KString::SPtr value1 = GetStringValue(L"value 1");
-        KString::SPtr value2 = GetStringValue(L"value 2");
-
-        AddKey(key1, value1);
-
-        // Start checkpoint
-        auto checkpointLSN = 1;
-        for (ULONG32 i = 0; i < Stores->Count(); i++)
-        {
-            auto store = (*Stores)[i];
-            store->PrepareCheckpoint(checkpointLSN);
-        }
-        
-        // Apply after checkpoint has started
-        AddKey(key2, value2); 
-        
-        // Finish checkpoint
-        for (ULONG32 i = 0; i < Stores->Count(); i++)
-        {
-            auto store = (*Stores)[i];
-            SyncAwait(store->PerformCheckpointAsync(CancellationToken::None));
-            SyncAwait(store->CompleteCheckpointAsync(CancellationToken::None));
-        }
-
-        // Recover original checkpoint
-        CloseAndReOpenStore();
-
-        // TODO: Verify checkpoint file size
-        VerifyCountInAllStores(1);
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key1, nullptr, value1, StringEquals));
+        SyncAwait(Checkpoint_DuringApply_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddPrepareRead_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key, value);
-
-        auto checkpointLSN = 1;
-        for (ULONG32 i = 0; i < Stores->Count(); i++)
-        {
-            auto store = (*Stores)[i];
-            store->PrepareCheckpoint(checkpointLSN);
-        }
-
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
+        SyncAwait(AddPrepareRead_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(PreparePreparePerform_ShouldSucceed)
     {
-        LONG64 key1 = 17;
-        LONG64 key2 = 18;
-        KString::SPtr value = GetStringValue(L"value");
-
-        AddKey(key1, value);
-
-        auto checkpointLSN = 1;
-        for (ULONG32 i = 0; i < Stores->Count(); i++)
-        {
-            auto store = (*Stores)[i];
-            store->PrepareCheckpoint(checkpointLSN);
-        }
-
-        AddKey(key2, value);
-
-        checkpointLSN = 2;
-        for (ULONG32 i = 0; i < Stores->Count(); i++)
-        {
-            auto store = (*Stores)[i];
-            store->PrepareCheckpoint(checkpointLSN);
-        }
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key1, nullptr, value, StringEquals));
-        SyncAwait(VerifyKeyExistsInStoresAsync(key2, nullptr, value, StringEquals));
-
-        for (ULONG32 i = 0; i < Stores->Count(); i++)
-        {
-            auto store = (*Stores)[i];
-            SyncAwait(store->PerformCheckpointAsync(CancellationToken::None));
-            SyncAwait(store->CompleteCheckpointAsync(CancellationToken::None));
-        }
-
-        VerifyCountInAllStores(2);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key1, nullptr, value, StringEquals));
-        SyncAwait(VerifyKeyExistsInStoresAsync(key2, nullptr, value, StringEquals));
+        SyncAwait(PreparePreparePerform_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdatePrepareRemoveCheckpointRecover_Twice_ShouldSucceed)
     {
-        KString::SPtr value = GetStringValue(L"value");
-
-        auto checkpointLSN = 1;
-        for (ULONG32 i = 0; i < 2; i++)
-        {
-            auto key = i;
-            AddKey(key, value);
-            SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
-
-            UpdateKey(key, value);
-            SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
-
-            checkpointLSN++;
-            for (ULONG32 j = 0; j < Stores->Count(); j++)
-            {
-                auto store = (*Stores)[j];
-                store->PrepareCheckpoint(checkpointLSN);
-            }
-
-            RemoveKey(key);
-            SyncAwait(VerifyKeyDoesNotExistInStoresAsync(key));
-
-            CheckpointAndRecover();
-
-            VerifyCountInAllStores(0);
-            SyncAwait(VerifyKeyDoesNotExistInStoresAsync(key));
-        }
+        SyncAwait(AddUpdatePrepareRemoveCheckpointRecover_Twice_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ConcurrentReadsDuringCheckpoint_MultipleDifferentials_ShouldSucceed)
     {
-        Store->EnableBackgroundConsolidation = false;
-        Store->ConsolidationManagerSPtr->NumberOfDeltasToBeConsolidated = 6;
-
-        for (LONG64 startKey = 0; startKey < 1000; startKey += 100)
-        {
-            {
-                auto txn = CreateWriteTransaction();
-
-                for (LONG64 key = startKey; key < startKey + 100; key++)
-                {
-                    SyncAwait(Store->AddAsync(*txn->StoreTransactionSPtr, key, GenerateString(key), DefaultTimeout, ktl::CancellationToken::None));
-                }
-
-                SyncAwait(txn->CommitAsync());
-            }
-
-            if (startKey < 900) // Don't checkpoint last keys added
-            {
-                Checkpoint();
-            }
-        }
-        
-        LONG64 checkpointLSN = Replicator->IncrementAndGetCommitSequenceNumber();
-        Store->PrepareCheckpoint(checkpointLSN);
-
-        ktl::AwaitableCompletionSource<bool>::SPtr signalSPtr = nullptr;
-        NTSTATUS status = ktl::AwaitableCompletionSource<bool>::Create(GetAllocator(), ALLOC_TAG, signalSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        KSharedArray<ktl::Awaitable<void>>::SPtr tasks = _new(ALLOC_TAG, GetAllocator()) KSharedArray<ktl::Awaitable<void>>();
-        for (ULONG32 t = 0; t < 20; t++)
-        {
-            tasks->Append(VerifyKeysExistAsync(t * 50, 50, *signalSPtr, true));
-        }
-
-        signalSPtr->SetResult(true); // Start the background readers
-
-        SyncAwait(Store->PerformCheckpointAsync(ktl::CancellationToken::None));
-
-        SyncAwait(StoreUtilities::WhenAll<void>(*tasks, GetAllocator()));
-
-        SyncAwait(Store->CompleteCheckpointAsync(ktl::CancellationToken::None));
+        SyncAwait(ConcurrentReadsDuringCheckpoint_MultipleDifferentials_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ConcurrentReadsAndsCheckpoints_MultipleDifferentials_ShouldSucceed)
     {
-        Store->EnableBackgroundConsolidation = false;
-        Store->ConsolidationManagerSPtr->NumberOfDeltasToBeConsolidated = 6;
-
-        for (LONG64 startKey = 0; startKey < 1000; startKey += 100)
-        {
-            {
-                auto txn = CreateWriteTransaction();
-
-                for (LONG64 key = startKey; key < startKey + 100; key++)
-                {
-                    SyncAwait(Store->AddAsync(*txn->StoreTransactionSPtr, key, GenerateString(key), DefaultTimeout, ktl::CancellationToken::None));
-                }
-
-                SyncAwait(txn->CommitAsync());
-            }
-
-            if (startKey < 900) // Don't checkpoint last keys added
-            {
-                Checkpoint();
-            }
-        }
-        
-        ktl::AwaitableCompletionSource<bool>::SPtr signalSPtr = nullptr;
-        NTSTATUS status = ktl::AwaitableCompletionSource<bool>::Create(GetAllocator(), ALLOC_TAG, signalSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        KSharedArray<ktl::Awaitable<void>>::SPtr tasks = _new(ALLOC_TAG, GetAllocator()) KSharedArray<ktl::Awaitable<void>>();
-
-        // Reads a total of 1200 items. 200 of which are from the checkpoint task and may not exist
-        for (ULONG32 t = 0; t < 20; t++)
-        {
-            tasks->Append(VerifyKeysExistAsync(t * 60, 60, *signalSPtr, false));
-        }
-
-        auto checkpointsTask = AddAndCheckpointAsync(10, 1000, 1200, *signalSPtr);
-
-        signalSPtr->SetResult(true); // Start the background readers and checkpoint task
-
-        SyncAwait(StoreUtilities::WhenAll<void>(*tasks, GetAllocator()));
-        SyncAwait(checkpointsTask);
+        SyncAwait(ConcurrentReadsAndsCheckpoints_MultipleDifferentials_ShouldSucceed_Test());
     }
 
 #pragma endregion
@@ -704,154 +1109,52 @@ namespace TStoreTests
 #pragma region Consolidated and Differential State Tests
     BOOST_AUTO_TEST_CASE(Checkpoint_EmptyDifferentialState_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GetStringValue(L"value");
-        
-        AddKey(key, value);
-        CheckpointAndRecover();
-        
-        // TODO: Verify checkpoint file size
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
-
-        CheckpointAndRecover();
-
-        // TODO: Verify checkpoint file size
-        VerifyCountInAllStores(1);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, StringEquals));
+        SyncAwait(Checkpoint_EmptyDifferentialState_ShouldSucceed_Test());
     }
        
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_Add_Delete_ShouldSucceed)
     {
-        LONG64 numItems = 100; // TODO: managed has this at 1024
-
-        for (LONG64 i = numItems - 1; i >= 0; i--)
-        {
-            AddKey(i, GenerateString(i));
-        }
-
-        Checkpoint(); // Consolidate
-
-        // Create a reverse differential state
-        for (LONG64 i = 0; i < numItems; i++)
-        {
-            RemoveKey(i);
-        }
-
-        Checkpoint();
-
-        VerifyCountInAllStores(0);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_Add_Delete_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_Add_Update_UpdateRepeated_ShouldSucceed)
     {
-        LONG64 numItems = 100; // TODO: Managed has this at 1024
-        ULONG32 numUpdateIterations = 8;
-
-        for (LONG64 i = numItems - 1; i >= 0; i--)
-        {
-            AddKey(i, GenerateString(i));
-        }
-
-        Checkpoint(); // Consolidate
-
-        // Create a reverse differential state
-        for (LONG64 i = 0; i < numItems; i++)
-        {
-            UpdateKey(i, GenerateString(i));
-        }
-
-        Checkpoint();
-
-        for (ULONG32 i = 0; i < numUpdateIterations; i++)
-        {
-            for (LONG64 j = 0; j < numItems; j++)
-            {
-                UpdateKey(j, GenerateString(j));
-            }
-
-            Checkpoint();
-        }
-
-        VerifyCountInAllStores(numItems);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_Add_Update_UpdateRepeated_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_AddPartialUpdate_ShouldSucceed)
     {
-        LONG64 numItems = 100; // TODO: Managed has this at 1024
-        ULONG32 numUpdateIterations = 8;
-
-        for (LONG64 i = numItems - 1; i >= 0; i--)
-        {
-            AddKey(i, GenerateString(i));
-        }
-
-        Checkpoint(); // Consolidate
-
-        // Create a reverse differential state
-        for (LONG64 i = 0; i < numItems; i++)
-        {
-            UpdateKey(i, GenerateString(i));
-        }
-
-        Checkpoint();
-
-        for (ULONG32 i = 0; i < numUpdateIterations; i++)
-        {
-            // Lower half
-            for (LONG64 j = 0; j < numItems/2; j++)
-            {
-                UpdateKey(j, GenerateString(j));
-            }
-
-            Checkpoint();
-            
-            // Upper half
-            for (LONG64 j = numItems/2; j < numItems; j++)
-            {
-                UpdateKey(j, GenerateString(j));
-            }
-
-            Checkpoint();
-        }
-
-        VerifyCountInAllStores(numItems);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_SameCount_WithIntersection_DifferentialAndConsolidatedPopulatedInReverseOrder_AddPartialUpdate_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_SameCount_NoIntersection_AddAdd_ShouldSucceed)
     {
-        // TODO: Managed has this at 512, 512. Making smaller for now
-        PopulateConsolidatedAndDifferential(50, 50, false);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_SameCount_NoIntersection_AddAdd_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_SameCount_NoIntersection_UpdateUpdate_ShouldSucceed)
     {
-        // TODO: Managed has this at 512, 512. Making smaller for now
-        PopulateConsolidatedAndDifferential(50, 50, true);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_SameCount_NoIntersection_UpdateUpdate_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_BiggerDifferential_NoIntersection_AddAdd_ShouldSucceed)
     {
-        // TODO: Managed has this at 512, 1024. Making smaller for now
-        PopulateConsolidatedAndDifferential(50, 100, false);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_BiggerDifferential_NoIntersection_AddAdd_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_BiggerDifferential_NoIntersection_UpdateUpdate_ShouldSucceed)
     {
-        // TODO: Managed has this at 512, 1024. Making smaller for now
-        PopulateConsolidatedAndDifferential(50, 100, true);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_BiggerDifferential_NoIntersection_UpdateUpdate_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_BiggerConsolidated_NoIntersection_AddAdd_ShouldSucceed)
     {
-        // TODO: Managed has this at 1024, 512. Making smaller for now
-        PopulateConsolidatedAndDifferential(100, 50, false);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_BiggerConsolidated_NoIntersection_AddAdd_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_DifferentialAndConsolidated_BiggerConsolidated_NoIntersection_UpdateUpdate_ShouldSucceed)
     {
-        // TODO: Managed has this at 1024, 512. Making smaller for now
-        PopulateConsolidatedAndDifferential(100, 50, true);
+        SyncAwait(Checkpoint_DifferentialAndConsolidated_BiggerConsolidated_NoIntersection_UpdateUpdate_ShouldSucceed_Test());
     }
 #pragma endregion
 
@@ -859,100 +1162,50 @@ namespace TStoreTests
 
     BOOST_AUTO_TEST_CASE(Checkpoint_TwoDeltaDifferentials_ZeroOne_ShouldSucceed)
     {
-        TwoDeltaTest(0, 1);
+        SyncAwait(Checkpoint_TwoDeltaDifferentials_ZeroOne_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_TwoDeltaDifferentials_OneZero_ShouldSucceed)
     {
-        TwoDeltaTest(1, 0);
+        SyncAwait(Checkpoint_TwoDeltaDifferentials_OneZero_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_TwoDeltaDifferentials_OneOne_ShouldSucceed)
     {
-        TwoDeltaTest(1, 1);
+        SyncAwait(Checkpoint_TwoDeltaDifferentials_OneOne_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_TwoDeltaDifferentials_TwoOne_ShouldSucceed)
     {
-        TwoDeltaTest(2, 1);
+        SyncAwait(Checkpoint_TwoDeltaDifferentials_TwoOne_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_TwoDeltaDifferentials_OneTwo_ShouldSucceed)
     {
-        TwoDeltaTest(1, 2);
+        SyncAwait(Checkpoint_TwoDeltaDifferentials_OneTwo_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_TwoDeltaDifferentials_TwoTwo_ShouldSucceed)
     {
-        TwoDeltaTest(2, 2);
+        SyncAwait(Checkpoint_TwoDeltaDifferentials_TwoTwo_ShouldSucceed_Test());
     }
 
 #pragma endregion
 
 BOOST_AUTO_TEST_CASE(Add100Checkpoint_WithValueRecovery_ShouldSucceed)
 {
-    Store->ShouldLoadValuesOnRecovery = true;
-    for (LONG64 i = 0; i < 100; i++)
-    {
-        auto key = i;
-        auto value = GenerateString(i);
-        AddKey(key, value);
-    }
-
-    CheckpointAndRecover();
-
-    VerifyCountInAllStores(100);
-    for (LONG64 i = 0; i < 100; i++)
-    {
-        auto key = i;
-        auto expectedValue = GenerateString(i);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, expectedValue, StringEquals));
-    }
+    SyncAwait(Add100Checkpoint_WithValueRecovery_ShouldSucceed_Test());
 }
 
 BOOST_AUTO_TEST_CASE(Add100Checkpoint_WithValueRecovery_MultipleInflightTasks_ShouldSucceed)
 {
-    Store->ShouldLoadValuesOnRecovery = true;
-    Store->MaxNumberOfInflightValueRecoveryTasks = 10;
-
-    for (LONG64 i = 0; i < 100; i++)
-    {
-        auto key = i;
-        auto value = GenerateString(i);
-        AddKey(key, value);
-    }
-
-    CheckpointAndRecover();
-
-    VerifyCountInAllStores(100);
-    for (LONG64 i = 0; i < 100; i++)
-    {
-        auto key = i;
-        auto expectedValue = GenerateString(i);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, expectedValue, StringEquals));
-    }
+    SyncAwait(Add100Checkpoint_WithValueRecovery_MultipleInflightTasks_ShouldSucceed_Test());
 }
 
 #pragma region Performance Tests
     BOOST_AUTO_TEST_CASE(Add1000Checkpoint_ShouldSucceed)
     {
-        for (LONG64 i = 0; i < 1000; i++)
-        {
-            auto key = i;
-            auto value = GenerateString(i);
-            AddKey(key, value);
-        }
-
-        CheckpointAndRecover();
-
-        //TODO: Verify checkpoint file size
-        VerifyCountInAllStores(1000);
-        for (LONG64 i = 0; i < 1000; i++)
-        {
-            auto key = i;
-            auto expectedValue = GenerateString(i);
-            SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, expectedValue, StringEquals));
-        }
+        SyncAwait(Add1000Checkpoint_ShouldSucceed_Test());
     }
 #pragma endregion
     BOOST_AUTO_TEST_SUITE_END()

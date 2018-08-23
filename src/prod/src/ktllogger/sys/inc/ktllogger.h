@@ -243,6 +243,19 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
                 __in_opt KAsyncContextBase* const ParentAsyncContext,
                 __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) = 0;
 
+            virtual VOID
+            StartWrite(
+                __in KtlLogAsn RecordAsn,
+                __in ULONGLONG Version,
+                __in ULONG MetaDataLength,
+                __in const KIoBuffer::SPtr& MetaDataBuffer,
+                __in const KIoBuffer::SPtr& IoBuffer,
+                __in ULONGLONG ReservationSpace,
+                __out ULONGLONG& LogSize,
+                __out ULONGLONG& LogSpaceRemaining,
+                __in_opt KAsyncContextBase* const ParentAsyncContext,
+                __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) = 0;
+
 #if defined(K_UseResumable)
             virtual ktl::Awaitable<NTSTATUS>
             WriteAsync(
@@ -252,6 +265,18 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
                 __in const KIoBuffer::SPtr& MetaDataBuffer,
                 __in const KIoBuffer::SPtr& IoBuffer,
                 __in ULONGLONG ReservationSpace,
+                __in_opt KAsyncContextBase* const ParentAsyncContext) = 0;
+
+            virtual ktl::Awaitable<NTSTATUS>
+            WriteAsync(
+                __in KtlLogAsn RecordAsn,
+                __in ULONGLONG Version,
+                __in ULONG MetaDataLength,
+                __in const KIoBuffer::SPtr& MetaDataBuffer,
+                __in const KIoBuffer::SPtr& IoBuffer,
+                __in ULONGLONG ReservationSpace,
+                __out ULONGLONG& LogSize,
+                __out ULONGLONG& LogSpaceRemaining,
                 __in_opt KAsyncContextBase* const ParentAsyncContext) = 0;
 #endif
         };
@@ -295,7 +320,7 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
             //
             //  STATUS_SUCCESS - The operation completed successfully.
             //  STATUS_NOT_FOUND - The specified log record does not exist.
-            //  STATUS_CRC_ERROR - The log record meta data failed CRC verificaiton.
+            //  STATUS_CRC_ERROR - The log record meta data failed CRC verification.
             //  STATUS_BUFFER_TOO_SMALL - Internal record metadata indicates a record too large
             //  STATUS_DATA_ERROR - Data on disk is not a valid log record.
             //  STATUS_DELETE_PENDING - The Stream is in the process of being deleted.
@@ -345,7 +370,7 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
             //
             //  STATUS_SUCCESS - The operation completed successfully.
             //  STATUS_NOT_FOUND - The specified log record does not exist.
-            //  STATUS_CRC_ERROR - The log record meta data failed CRC verificaiton.
+            //  STATUS_CRC_ERROR - The log record meta data failed CRC verification.
             //  STATUS_BUFFER_TOO_SMALL - Internal record metadata indicates a record too large
             //  STATUS_DATA_ERROR - Data on disk is not a valid log record.
             //  STATUS_DELETE_PENDING - The Stream is in the process of being deleted.
@@ -395,7 +420,7 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
             //
             //  STATUS_SUCCESS - The operation completed successfully.
             //  STATUS_NOT_FOUND - The specified log record does not exist.
-            //  STATUS_CRC_ERROR - The log record meta data failed CRC verificaiton.
+            //  STATUS_CRC_ERROR - The log record meta data failed CRC verification.
             //  STATUS_BUFFER_TOO_SMALL - Internal record metadata indicates a record too large
             //  STATUS_DATA_ERROR - Data on disk is not a valid log record.
             //  STATUS_DELETE_PENDING - The Stream is in the process of being deleted.
@@ -446,7 +471,7 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
             //
             //  STATUS_SUCCESS - The operation completed successfully.
             //  STATUS_NOT_FOUND - The specified log record does not exist.
-            //  STATUS_CRC_ERROR - The log record meta data failed CRC verificaiton.
+            //  STATUS_CRC_ERROR - The log record meta data failed CRC verification.
             //  STATUS_BUFFER_TOO_SMALL - Internal record metadata indicates a record too large
             //  STATUS_DATA_ERROR - Data on disk is not a valid log record.
             //  STATUS_DELETE_PENDING - The Stream is in the process of being deleted.
@@ -509,7 +534,7 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
             //
             //  STATUS_SUCCESS - The operation completed successfully.
             //  STATUS_NOT_FOUND - The specified log record does not exist.
-            //  STATUS_CRC_ERROR - The log record meta data failed CRC verificaiton.
+            //  STATUS_CRC_ERROR - The log record meta data failed CRC verification.
             //  STATUS_BUFFER_TOO_SMALL - Internal record metadata indicates a record too large
             //  STATUS_DATA_ERROR - Data on disk is not a valid log record.
             //  STATUS_DELETE_PENDING - The Stream is in the process of being deleted.
@@ -548,7 +573,7 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
 
         public:
             //
-            // This method asynchronously queries the meta data information of a specfic log record.
+            // This method asynchronously queries the meta data information of a specific log record.
             // For the current version, record meta data is assumed to be small enough
             // to fit into memory. 
             //
@@ -785,7 +810,7 @@ class KtlLogStream abstract : public KObject<KtlLogStream>, public KShared<KtlLo
             //
             //  STATUS_SUCCESS - The operation completed successfully.
             //  STATUS_NOT_FOUND - The specified log record does not exist.
-            //  STATUS_CRC_ERROR - The log record meta data failed CRC verificaiton.
+            //  STATUS_CRC_ERROR - The log record meta data failed CRC verification.
             //  STATUS_BUFFER_TOO_SMALL - Internal record metadata indicates a record too large
             //  STATUS_DATA_ERROR - Data on disk is not a valid log record.
             //  STATUS_DELETE_PENDING - The Stream is in the process of being deleted.
@@ -902,7 +927,13 @@ class KtlLogContainer abstract : public KObject<KtlLogContainer>, public KShared
         //
         virtual
         BOOLEAN IsFunctional() = 0;     
-        
+
+		//
+		// Define constants for throttling log container usage.
+		//
+		static const ULONG ThrottleFactor = 10;   // Start throttling when only 10% left
+		static const ULONG MinimumThrottleAmountInBytes = 4 * 1024 * 1024;  // 4MB
+		
         class AsyncCreateLogStreamContext abstract : public KAsyncContextBase
         {
             K_FORCE_SHARED_WITH_INHERITANCE(AsyncCreateLogStreamContext);
@@ -925,7 +956,7 @@ class KtlLogContainer abstract : public KObject<KtlLogContainer>, public KShared
             //      Different log stream types have different
             //      behaviors.
             //
-            //           LogicalLogLogStreamType is used for the Winfab
+            //           LogicalLogLogStreamType is used for the SF
             //           logical log and implements specific behaviors.
             //
             //  LogStreamAlias - An optional string that may serve as
@@ -1373,7 +1404,10 @@ class KtlLogManager abstract : public KAsyncServiceBase
         //        log operations are shutdown.
         //
         static NTSTATUS
-        Create(__in ULONG AllocationTag, __in KAllocator& Allocator, __out KtlLogManager::SPtr& Result);
+        CreateInproc(__in ULONG AllocationTag, __in KAllocator& Allocator, __out KtlLogManager::SPtr& Result);
+
+        static NTSTATUS
+        CreateDriver(__in ULONG AllocationTag, __in KAllocator& Allocator, __out KtlLogManager::SPtr& Result);
 
         virtual NTSTATUS
         StartOpenLogManager(

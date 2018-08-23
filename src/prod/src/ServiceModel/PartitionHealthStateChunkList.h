@@ -19,8 +19,8 @@ namespace ServiceModel
             ULONG totalCount, 
             std::vector<PartitionHealthStateChunk> && items);
 
-        PartitionHealthStateChunkList(PartitionHealthStateChunkList && other);
-        PartitionHealthStateChunkList & operator = (PartitionHealthStateChunkList && other);
+        PartitionHealthStateChunkList(PartitionHealthStateChunkList && other) = default;
+        PartitionHealthStateChunkList & operator = (PartitionHealthStateChunkList && other) = default;
 
         virtual ~PartitionHealthStateChunkList();
 

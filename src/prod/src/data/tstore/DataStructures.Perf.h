@@ -662,6 +662,188 @@ namespace TStoreTests
 
 #pragma endregion
 
+#pragma region ConcurrentHashTable Test
+        ktl::Awaitable<void> AddKeysAsync(
+            __in ConcurrentHashTable<TKey, TValue> & hashTable,
+            __in KSharedArray<TKey> & keys,
+            __in KSharedArray<TValue> & values,
+            __in ULONG offset,
+            __in ULONG count)
+        {
+            co_await CorHelper::ThreadPoolThread(ktlSystem_->DefaultThreadPool()); // Switch to background thread
+
+            for (ULONG i = offset; i < offset + count; i++)
+            {
+                TKey key = keys[i];
+                TValue value = values[i];
+                hashTable.TryAdd(key, value);
+            }
+        }
+
+        ktl::Awaitable<void> ReadKeyValuesAsync(
+            __in ConcurrentHashTable<TKey, TValue> & hashTable,
+            __in KSharedArray<TKey> & keys,
+            __in ULONG offset,
+            __in ULONG count)
+        {
+            co_await CorHelper::ThreadPoolThread(ktlSystem_->DefaultThreadPool()); // Switch to background thread
+
+            for (ULONG i = offset; i < offset + count; i++)
+            {
+                TKey key = keys[i];
+                TValue value;
+                hashTable.TryGetValue(key, value);
+            }
+        }
+
+        void ConcurrentHashTablePerf_SequentialAddReadTest(__in ULONG numKeys)
+        {
+            KSharedPtr<ConcurrentHashTable<TKey, TValue>> hashTableSPtr = nullptr;
+            ConcurrentHashTable<TKey, TValue>::Create(K_DefaultHashFunction, 16, GetAllocator(), hashTableSPtr);
+
+            Common::Stopwatch stopwatch;
+
+            for (ULONG i = 0; i < numKeys; i++)
+            {
+                TKey key;
+                TValue value;
+                CreateKey(i, key);
+                CreateValue(i, value);
+
+                stopwatch.Start();
+                hashTableSPtr->TryAdd(key, value);
+                stopwatch.Stop();
+            }
+
+            Trace.WriteInfo(
+                PERF_TRACE,
+                "ConcurrentHashTable_SequentialTest Add {0} keys: {1} ms",
+                numKeys, stopwatch.ElapsedMilliseconds);
+
+            stopwatch.Reset();
+
+            for (ULONG i = 0; i < numKeys; i++)
+            {
+                TKey key;
+                TValue value;
+                CreateKey(i, key);
+
+                stopwatch.Start();
+                hashTableSPtr->TryGetValue(key, value);
+                stopwatch.Stop();
+            }
+
+            Trace.WriteInfo(
+                PERF_TRACE,
+                "ConcurrentHashTable_SequentialTest Read {0} keys: {1} ms",
+                numKeys, stopwatch.ElapsedMilliseconds);
+        }
+
+        void ConcurrentHashTable_ConcurrentAddThenReadTest(__in ULONG numKeys, __in ULONG numTasks)
+        {
+            KSharedPtr<KSharedArray<TKey>> keys = _new(SKIPLISTPERFTEST_TAG, GetAllocator()) KSharedArray<TKey>();
+            KSharedPtr<KSharedArray<TValue>> values = _new(SKIPLISTPERFTEST_TAG, GetAllocator()) KSharedArray<TValue>();
+
+            for (ULONG i = 0; i < numKeys; i++)
+            {
+                TKey key;
+                TValue value;
+
+                CreateKey(i, key);
+                CreateValue(i, value);
+
+                keys->Append(key);
+                values->Append(value);
+            }
+
+            KSharedPtr<ConcurrentHashTable<TKey, TValue>> hashTableSPtr = nullptr;
+            ConcurrentHashTable<TKey, TValue>::Create(K_DefaultHashFunction, 16, GetAllocator(), hashTableSPtr);
+
+            KSharedArray<ktl::Awaitable<void>>::SPtr tasks = _new(SKIPLISTPERFTEST_TAG, GetAllocator()) KSharedArray<ktl::Awaitable<void>>();
+            ULONG numKeysPerTask = numKeys / numTasks;
+
+            Common::Stopwatch stopwatch;
+
+            stopwatch.Start();
+            for (ULONG offset = 0; offset < numKeys; offset += numKeysPerTask)
+            {
+                tasks->Append(AddKeysAsync(*hashTableSPtr, *keys, *values, offset, numKeysPerTask));
+            }
+
+            SyncAwait(StoreUtilities::WhenAll<void>(*tasks, GetAllocator()));
+            stopwatch.Stop();
+
+            Trace.WriteInfo(
+                PERF_TRACE,
+                "ConcurrentHashTable_LongByte_ConcurrentAddThenReadTest Add {0} keys with {1} tasks: {2} ms",
+                numKeys, numTasks, stopwatch.ElapsedMilliseconds);
+
+            tasks->Clear();
+            stopwatch.Reset();
+
+            stopwatch.Start();
+            for (ULONG offset = 0; offset < numKeys; offset += numKeysPerTask)
+            {
+                tasks->Append(ReadKeyValuesAsync(*hashTableSPtr, *keys, offset, numKeysPerTask));
+            }
+
+            SyncAwait(StoreUtilities::WhenAll<void>(*tasks, GetAllocator()));
+            stopwatch.Stop();
+
+            Trace.WriteInfo(
+                PERF_TRACE,
+                "ConcurrentHashTable_LongByte_ConcurrentAddThenReadTest Read {0} keys with {1} tasks: {2} ms",
+                numKeys, numTasks, stopwatch.ElapsedMilliseconds);
+        }
+
+        ktl::Awaitable<void> ReadSingleKey(
+            __in ConcurrentHashTable<TKey, TValue> & hashTable,
+            __in TKey key,
+            __in ULONG numReads)
+        {
+            co_await ktl::CorHelper::ThreadPoolThread(ktlSystem_->DefaultThreadPool());
+
+            TValue value;
+            for (ULONG32 i = 0; i < numReads; i++)
+            {
+                hashTable.TryGetValue(key, value);
+            }
+        }
+
+        void ConcurrentHashTable_SingleKeyReadPerfTest(__in ULONG numReads, __in ULONG numTasks)
+        {
+            KSharedPtr<ConcurrentHashTable<TKey, TValue>> hashTableSPtr = nullptr;
+            ConcurrentHashTable<TKey, TValue>::Create(K_DefaultHashFunction, 16, GetAllocator(), hashTableSPtr);
+
+            TKey key;
+            TValue value;
+
+            CreateKey(8, key);
+            CreateValue(8, value);
+            hashTableSPtr->TryAdd(key, value);
+
+            KSharedArray<ktl::Awaitable<void>>::SPtr tasks = _new(SKIPLISTPERFTEST_TAG, GetAllocator()) KSharedArray<ktl::Awaitable<void>>();
+            ULONG numReadsPerTask = numReads / numTasks;
+
+            Common::Stopwatch stopwatch;
+
+            stopwatch.Start();
+            for (ULONG i = 0; i < numTasks; i++)
+            {
+                tasks->Append(ReadSingleKey(*hashTableSPtr, key, numReadsPerTask));
+            }
+
+            SyncAwait(StoreUtilities::WhenAll<void>(*tasks, GetAllocator()));
+            stopwatch.Stop();
+
+            Trace.WriteInfo(
+                PERF_TRACE,
+                "ConcurrentHashTable_SingleKeyReadTest Read single key {0} times with {1} tasks: {2} ms",
+                numReads, numTasks, stopwatch.ElapsedMilliseconds);
+        }
+
+#pragma endregion
+
         ktl::Awaitable<void> EmptyTask()
         {
             // An empty task that can be used to measure KTL overhead

@@ -14,6 +14,7 @@ set( LINUX_SOURCES
     ../GetApplicationPagedListDeployedOnNodeQuerySpecification.cpp
     ../GetNodeListQuerySpecification.cpp
     ../GetApplicationServiceListQuerySpecification.cpp
+    ../GetReplicaResourceListQuerySpecification.cpp
     ../GetServicePartitionReplicaListQuerySpecification.cpp
     ../GetServicePartitionListQuerySpecification.cpp
     ../GetSystemServiceListQuerySpecification.cpp
@@ -21,6 +22,10 @@ set( LINUX_SOURCES
     ../GetUnplacedReplicaInformationQuerySpecificationHelper.cpp
     ../GetServiceNameQuerySpecificationHelper.cpp
     ../ParallelQuerySpecification.cpp
+    ../GetDeployedCodePackageParallelQuerySpecification.cpp
+    ../GetApplicationResourceListQuerySpecification.cpp
+    ../GetServiceResourceListQuerySpecification.cpp
+    ../GetContainerCodePackageLogsQuerySpecification.cpp
 )
 
 include_directories("..")

@@ -29,6 +29,17 @@ namespace Client
             __in FabricClientInternalSettings &);
 
         ~LruClientCacheManager();
+
+        Common::AsyncOperationSPtr BeginGetPsd(
+            Common::NamingUri const &,
+            Transport::FabricActivityHeader const &,
+            Common::TimeSpan const,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &);
+
+        Common::ErrorCode EndGetPsd(
+            Common::AsyncOperationSPtr const &, 
+            __out Naming::PartitionedServiceDescriptor &);
         
         Common::AsyncOperationSPtr BeginResolveService(
             Common::NamingUri const &,
@@ -133,6 +144,7 @@ namespace Client
 
     private:
         class CacheAsyncOperationBase;
+        class GetPsdAsyncOperation;
         class ResolveServiceAsyncOperation;
         class UpdateCacheEntryAsyncOperation;
         class ParallelUpdateCacheEntriesAsyncOperation;

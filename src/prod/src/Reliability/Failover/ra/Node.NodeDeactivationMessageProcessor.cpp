@@ -52,7 +52,11 @@ void NodeDeactivationMessageProcessor::Process(
 
     ChangeActivationState(activityId, sender, newInfo);
 
-    SendReply(activityId, sender, newInfo);
+    // For node deactivation, the reply will be sent to fm after all replicas are closed, not immediately
+    if (newInfo.IsActivated)
+    {
+        SendReply(activityId, sender, newInfo);
+    }
 }
 
 void NodeDeactivationMessageProcessor::ProcessNodeUpAck(
@@ -117,14 +121,9 @@ void NodeDeactivationMessageProcessor::SendReply(
     Reliability::FailoverManagerId const & sender,
     NodeDeactivationInfo const & newInfo) const
 {
-    if (!newInfo.IsActivated)
-    {
-        ra_.FMTransportObj.SendMessageToFM(sender, RSMessage::GetNodeDeactivateReply(), activityId, NodeDeactivateReplyMessageBody(newInfo.SequenceNumber));
-    }
-    else
-    {
-        ra_.FMTransportObj.SendMessageToFM(sender, RSMessage::GetNodeActivateReply(), activityId, NodeActivateReplyMessageBody(newInfo.SequenceNumber));
-    }
+    ASSERT_IF(!newInfo.IsActivated, "NodeDeactivationReply should not be sent here");
+
+    ra_.FMTransportObj.SendMessageToFM(sender, RSMessage::GetNodeActivateReply(), activityId, NodeActivateReplyMessageBody(newInfo.SequenceNumber));
 }
 
 void NodeDeactivationMessageProcessor::Close()

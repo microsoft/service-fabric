@@ -19,8 +19,8 @@ namespace ServiceModel
             FABRIC_REPLICA_ID replicaOrInstanceId,
             std::unique_ptr<ApplicationHealthPolicy> && healthPolicy);
 
-        ReplicaHealthQueryDescription(ReplicaHealthQueryDescription && other);
-        ReplicaHealthQueryDescription & operator = (ReplicaHealthQueryDescription && other);
+        ReplicaHealthQueryDescription(ReplicaHealthQueryDescription && other) = default;
+        ReplicaHealthQueryDescription & operator = (ReplicaHealthQueryDescription && other) = default;
 
         ~ReplicaHealthQueryDescription();
 

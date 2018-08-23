@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
@@ -448,6 +443,20 @@ typedef interface IFabricEseLocalStoreSettingsResult IFabricEseLocalStoreSetting
 typedef interface IFabricSecurityCredentialsResult IFabricSecurityCredentialsResult;
 
 #endif 	/* __IFabricSecurityCredentialsResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricCodePackageActivator_FWD_DEFINED__
+#define __IFabricCodePackageActivator_FWD_DEFINED__
+typedef interface IFabricCodePackageActivator IFabricCodePackageActivator;
+
+#endif 	/* __IFabricCodePackageActivator_FWD_DEFINED__ */
+
+
+#ifndef __IFabricCodePackageEventHandler_FWD_DEFINED__
+#define __IFabricCodePackageEventHandler_FWD_DEFINED__
+typedef interface IFabricCodePackageEventHandler IFabricCodePackageEventHandler;
+
+#endif 	/* __IFabricCodePackageEventHandler_FWD_DEFINED__ */
 
 
 #ifndef __FabricRuntime_FWD_DEFINED__
@@ -966,6 +975,20 @@ typedef interface IFabricSecurityCredentialsResult IFabricSecurityCredentialsRes
 #endif 	/* __IFabricSecurityCredentialsResult_FWD_DEFINED__ */
 
 
+#ifndef __IFabricCodePackageActivator_FWD_DEFINED__
+#define __IFabricCodePackageActivator_FWD_DEFINED__
+typedef interface IFabricCodePackageActivator IFabricCodePackageActivator;
+
+#endif 	/* __IFabricCodePackageActivator_FWD_DEFINED__ */
+
+
+#ifndef __IFabricCodePackageEventHandler_FWD_DEFINED__
+#define __IFabricCodePackageEventHandler_FWD_DEFINED__
+typedef interface IFabricCodePackageEventHandler IFabricCodePackageEventHandler;
+
+#endif 	/* __IFabricCodePackageEventHandler_FWD_DEFINED__ */
+
+
 /* header files for imported files */
 #include "Unknwn.h"
 #include "FabricTypes.h"
@@ -979,9 +1002,15 @@ extern "C"{
 /* interface __MIDL_itf_fabricruntime_0000_0000 */
 /* [local] */ 
 
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 #if ( _MSC_VER >= 1020 )
 #pragma once
 #endif
+
+
 
 
 
@@ -1067,6 +1096,8 @@ extern RPC_IF_HANDLE __MIDL_itf_fabricruntime_0000_0000_v0_0_s_ifspec;
 
 
 #pragma pack(push, 8)
+
+
 
 
 
@@ -9292,6 +9323,244 @@ EXTERN_C const IID IID_IFabricSecurityCredentialsResult;
 #endif 	/* __IFabricSecurityCredentialsResult_INTERFACE_DEFINED__ */
 
 
+#ifndef __IFabricCodePackageActivator_INTERFACE_DEFINED__
+#define __IFabricCodePackageActivator_INTERFACE_DEFINED__
+
+/* interface IFabricCodePackageActivator */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricCodePackageActivator;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("70BE1B10-B259-46FC-B813-0B75720E7183")
+    IFabricCodePackageActivator : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE BeginActivateCodePackage( 
+            /* [in] */ FABRIC_STRING_LIST *codePackageNames,
+            /* [in] */ FABRIC_STRING_MAP *environment,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndActivateCodePackage( 
+            /* [in] */ IFabricAsyncOperationContext *context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginDeactivateCodePackage( 
+            /* [in] */ FABRIC_STRING_LIST *codePackageNames,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndDeactivateCodePackage( 
+            /* [in] */ IFabricAsyncOperationContext *context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE AbortCodePackage( 
+            /* [in] */ FABRIC_STRING_LIST *codePackageNames) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE RegisterCodePackageEventHandler( 
+            /* [in] */ IFabricCodePackageEventHandler *eventHandler,
+            /* [retval][out] */ ULONGLONG *callbackHandle) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE UnregisterCodePackageEventHandler( 
+            /* [in] */ ULONGLONG callbackHandle) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricCodePackageActivatorVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricCodePackageActivator * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricCodePackageActivator * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricCodePackageActivator * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginActivateCodePackage )( 
+            IFabricCodePackageActivator * This,
+            /* [in] */ FABRIC_STRING_LIST *codePackageNames,
+            /* [in] */ FABRIC_STRING_MAP *environment,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndActivateCodePackage )( 
+            IFabricCodePackageActivator * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginDeactivateCodePackage )( 
+            IFabricCodePackageActivator * This,
+            /* [in] */ FABRIC_STRING_LIST *codePackageNames,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndDeactivateCodePackage )( 
+            IFabricCodePackageActivator * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *AbortCodePackage )( 
+            IFabricCodePackageActivator * This,
+            /* [in] */ FABRIC_STRING_LIST *codePackageNames);
+        
+        HRESULT ( STDMETHODCALLTYPE *RegisterCodePackageEventHandler )( 
+            IFabricCodePackageActivator * This,
+            /* [in] */ IFabricCodePackageEventHandler *eventHandler,
+            /* [retval][out] */ ULONGLONG *callbackHandle);
+        
+        HRESULT ( STDMETHODCALLTYPE *UnregisterCodePackageEventHandler )( 
+            IFabricCodePackageActivator * This,
+            /* [in] */ ULONGLONG callbackHandle);
+        
+        END_INTERFACE
+    } IFabricCodePackageActivatorVtbl;
+
+    interface IFabricCodePackageActivator
+    {
+        CONST_VTBL struct IFabricCodePackageActivatorVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricCodePackageActivator_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricCodePackageActivator_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricCodePackageActivator_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricCodePackageActivator_BeginActivateCodePackage(This,codePackageNames,environment,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginActivateCodePackage(This,codePackageNames,environment,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricCodePackageActivator_EndActivateCodePackage(This,context)	\
+    ( (This)->lpVtbl -> EndActivateCodePackage(This,context) ) 
+
+#define IFabricCodePackageActivator_BeginDeactivateCodePackage(This,codePackageNames,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginDeactivateCodePackage(This,codePackageNames,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricCodePackageActivator_EndDeactivateCodePackage(This,context)	\
+    ( (This)->lpVtbl -> EndDeactivateCodePackage(This,context) ) 
+
+#define IFabricCodePackageActivator_AbortCodePackage(This,codePackageNames)	\
+    ( (This)->lpVtbl -> AbortCodePackage(This,codePackageNames) ) 
+
+#define IFabricCodePackageActivator_RegisterCodePackageEventHandler(This,eventHandler,callbackHandle)	\
+    ( (This)->lpVtbl -> RegisterCodePackageEventHandler(This,eventHandler,callbackHandle) ) 
+
+#define IFabricCodePackageActivator_UnregisterCodePackageEventHandler(This,callbackHandle)	\
+    ( (This)->lpVtbl -> UnregisterCodePackageEventHandler(This,callbackHandle) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricCodePackageActivator_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricCodePackageEventHandler_INTERFACE_DEFINED__
+#define __IFabricCodePackageEventHandler_INTERFACE_DEFINED__
+
+/* interface IFabricCodePackageEventHandler */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricCodePackageEventHandler;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("899E0CA8-16DF-458E-8915-D0307B4AB101")
+    IFabricCodePackageEventHandler : public IUnknown
+    {
+    public:
+        virtual void STDMETHODCALLTYPE OnCodePackageEvent( 
+            /* [in] */ IFabricCodePackageActivator *source,
+            /* [in] */ const FABRIC_CODE_PACKAGE_EVENT_DESCRIPTION *eventDesc) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricCodePackageEventHandlerVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricCodePackageEventHandler * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricCodePackageEventHandler * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricCodePackageEventHandler * This);
+        
+        void ( STDMETHODCALLTYPE *OnCodePackageEvent )( 
+            IFabricCodePackageEventHandler * This,
+            /* [in] */ IFabricCodePackageActivator *source,
+            /* [in] */ const FABRIC_CODE_PACKAGE_EVENT_DESCRIPTION *eventDesc);
+        
+        END_INTERFACE
+    } IFabricCodePackageEventHandlerVtbl;
+
+    interface IFabricCodePackageEventHandler
+    {
+        CONST_VTBL struct IFabricCodePackageEventHandlerVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricCodePackageEventHandler_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricCodePackageEventHandler_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricCodePackageEventHandler_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricCodePackageEventHandler_OnCodePackageEvent(This,source,eventDesc)	\
+    ( (This)->lpVtbl -> OnCodePackageEvent(This,source,eventDesc) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricCodePackageEventHandler_INTERFACE_DEFINED__ */
+
+
 EXTERN_C const CLSID CLSID_FabricRuntime;
 
 #ifdef __cplusplus
@@ -9431,6 +9700,20 @@ FabricRuntime;
     /* [in] */ __RPC__in LPCWSTR configurationPackageName,
     /* [in] */ __RPC__in LPCWSTR sectionName,
     /* [retval][out] */ __RPC__deref_out_opt IFabricEseLocalStoreSettingsResult **settings);
+
+/* [entry] */ HRESULT FabricBeginGetCodePackageActivator( 
+    /* [in] */ __RPC__in REFIID riid,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ __RPC__in_opt IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ __RPC__deref_out_opt IFabricAsyncOperationContext **context);
+
+/* [entry] */ HRESULT FabricEndGetCodePackageActivator( 
+    /* [in] */ __RPC__in_opt IFabricAsyncOperationContext *context,
+    /* [retval][out] */ __RPC__deref_out_opt void **activator);
+
+/* [entry] */ HRESULT FabricGetCodePackageActivator( 
+    /* [in] */ __RPC__in REFIID riid,
+    /* [retval][out] */ __RPC__deref_out_opt void **activator);
 
 #endif /* __FabricRuntimeModule_MODULE_DEFINED__ */
 #endif /* __FabricRuntimeLib_LIBRARY_DEFINED__ */
@@ -11628,14 +11911,14 @@ EXTERN_C const IID IID_IFabricSecondaryEventHandler;
 #endif 	/* __IFabricSecondaryEventHandler_INTERFACE_DEFINED__ */
 
 
-/* interface __MIDL_itf_fabricruntime_0000_0073 */
+/* interface __MIDL_itf_fabricruntime_0000_0075 */
 /* [local] */ 
 
 typedef HRESULT (*FnFabricMain)(IFabricRuntime * runtime, IFabricCodePackageActivationContext * activationContext);
 
 
-extern RPC_IF_HANDLE __MIDL_itf_fabricruntime_0000_0073_v0_0_c_ifspec;
-extern RPC_IF_HANDLE __MIDL_itf_fabricruntime_0000_0073_v0_0_s_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_fabricruntime_0000_0075_v0_0_c_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_fabricruntime_0000_0075_v0_0_s_ifspec;
 
 /* Additional Prototypes for ALL interfaces */
 

@@ -41,7 +41,7 @@ namespace FabricTest
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricTest", MaxClientSessionIdleTimeout, Common::TimeSpan::FromSeconds(25), Common::ConfigEntryUpgradePolicy::Static)
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricTest", NodeDeallocationTimeout, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Static)
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricTest", ReplicaDeallocationTimeout, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Static)
-        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricTest", OpenTimeout, Common::TimeSpan::FromSeconds(90), Common::ConfigEntryUpgradePolicy::Static)
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricTest", OpenTimeout, Common::TimeSpan::FromSeconds(140), Common::ConfigEntryUpgradePolicy::Static)
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricTest", ApiDelayInterval, Common::TimeSpan::FromSeconds(5), Common::ConfigEntryUpgradePolicy::Static)
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricTest", DelayOpenAfterAbortNode, Common::TimeSpan::FromSeconds(5), Common::ConfigEntryUpgradePolicy::Static)
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricTest", PredeploymentTimeout, Common::TimeSpan::FromSeconds(120), Common::ConfigEntryUpgradePolicy::Static)

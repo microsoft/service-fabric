@@ -197,6 +197,17 @@ namespace Transport
         LEAVE;
     }
 
+    BOOST_AUTO_TEST_CASE(ThumprintNullTest)
+    {
+        ENTER;
+
+        ThumbprintSet thumbprintSet;
+        auto error = thumbprintSet.Add(nullptr);
+        VERIFY_IS_TRUE(error.IsError(ErrorCodeValue::ArgumentNull));
+
+        LEAVE;
+    }
+
     BOOST_AUTO_TEST_CASE(RoundTripTest9_2)
     {
         ENTER;
@@ -734,7 +745,6 @@ namespace Transport
         issuer2.IssuerStores = issuerStores2;
         issuer2.IssuerStoreCount = 1;
 
-        ex3.RemoteCertIssuerCount = 2;
         FABRIC_X509_ISSUER_NAME issuers[] = { issuer1, issuer2 };
         ex3.RemoteCertIssuers = issuers;
         ex3.RemoteCertIssuerCount = 2;
@@ -804,6 +814,40 @@ namespace Transport
         VERIFY_IS_TRUE(x509Ex3.RemoteCertIssuers[1].IssuerStoreCount == 1);
         VERIFY_IS_TRUE(StringUtility::AreEqualCaseInsensitive(x509Ex3.RemoteCertIssuers[1].Name, L"issuer2"));
         VERIFY_IS_TRUE(StringUtility::AreEqualCaseInsensitive(x509Ex3.RemoteCertIssuers[1].IssuerStores[0], L"Root"));
+        LEAVE;
+    }
+
+    BOOST_AUTO_TEST_CASE(PublicApiTestWithNullThumbprint)
+    {
+        ENTER;
+        
+        wstring const remoteName0 = L"remoteName0";
+        wstring const remoteName1 = L"remoteName1";
+        wchar_t* findValue = L"CN=LocalSubjectName";
+        FABRIC_X509_CREDENTIALS x509Credentials = {};
+        x509Credentials.FindType = FABRIC_X509_FIND_TYPE_FINDBYSUBJECTNAME;
+        x509Credentials.FindValue = findValue;
+        x509Credentials.StoreName = X509Default::StoreName().c_str();
+        x509Credentials.StoreLocation = FABRIC_X509_STORE_LOCATION_LOCALMACHINE;
+        x509Credentials.AllowedCommonNameCount = 2;
+        LPCWSTR remoteNames[] = { remoteName0.c_str(), remoteName1.c_str() };
+        x509Credentials.AllowedCommonNames = remoteNames;
+        ScopedHeap h;
+        ReferencePointer<FABRIC_X509_CREDENTIALS_EX2> x509Ex2RPtr = h.AddItem<FABRIC_X509_CREDENTIALS_EX2>();
+        ReferencePointer<FABRIC_X509_CREDENTIALS_EX1> x509Ex1RPtr = h.AddItem<FABRIC_X509_CREDENTIALS_EX1>();
+        x509Ex1RPtr->Reserved = x509Ex2RPtr.GetRawPointer();
+        x509Credentials.Reserved = x509Ex1RPtr.GetRawPointer();
+        FABRIC_X509_CREDENTIALS_EX1 & ex1 = *x509Ex1RPtr;
+        FABRIC_X509_CREDENTIALS_EX2 & ex2 = *((FABRIC_X509_CREDENTIALS_EX2*)(ex1.Reserved));
+        ex2.RemoteCertThumbprintCount = 1;
+        //Null Thumbprint
+        LPCWSTR remoteCertThumbprints[] = { nullptr };
+        ex2.RemoteCertThumbprints = remoteCertThumbprints;
+        FABRIC_SECURITY_CREDENTIALS credentials = { FABRIC_SECURITY_CREDENTIAL_KIND_X509, &x509Credentials };
+        SecuritySettings settings;
+        auto error = SecuritySettings::FromPublicApi(credentials, settings);
+        VERIFY_IS_TRUE(error.IsError(ErrorCodeValue::ArgumentNull));
+
         LEAVE;
     }
 
@@ -904,6 +948,7 @@ namespace Transport
         LEAVE;
     }
 
+  
     BOOST_AUTO_TEST_CASE(FromPublicApiTest2WithIssuers)
     {
         ENTER;
@@ -944,7 +989,6 @@ namespace Transport
         issuer2.IssuerStores = issuerStores2;
         issuer2.IssuerStoreCount = 1;
 
-        ex3.RemoteCertIssuerCount = 2;
         FABRIC_X509_ISSUER_NAME issuers[] = { issuer1, issuer2 };
         ex3.RemoteCertIssuers = issuers;
         ex3.RemoteCertIssuerCount = 2;

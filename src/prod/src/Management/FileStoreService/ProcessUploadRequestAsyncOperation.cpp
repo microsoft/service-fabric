@@ -23,7 +23,8 @@ ProcessUploadRequestAsyncOperation::ProcessUploadRequestAsyncOperation(
     AsyncOperationSPtr const & parent) 
     : ProcessRequestAsyncOperation(requestManager, uploadRequest.StoreRelativePath, OperationKind::Upload, move(receiverContext), activityId, timeout, callback, parent),
     stagingFullPath_(Path::Combine(requestManager.LocalStagingLocation, uploadRequest.StagingRelativePath)),
-    shouldOverwrite_(uploadRequest.ShouldOverwrite)
+    shouldOverwrite_(uploadRequest.ShouldOverwrite),
+    uploadRequestId_(Guid::NewGuid())
 {
 }
 
@@ -46,15 +47,16 @@ ErrorCode ProcessUploadRequestAsyncOperation::ValidateRequest()
     return ErrorCodeValue::Success;
 }
 
-AsyncOperationSPtr ProcessUploadRequestAsyncOperation::BeginOperation(                                
+AsyncOperationSPtr ProcessUploadRequestAsyncOperation::BeginOperation(
     AsyncCallback const & callback, 
     AsyncOperationSPtr const & parent)
 {       
     return AsyncOperation::CreateAndStart<FileUploadAsyncOperation>(
-        this->RequestManagerObj, 
+        this->RequestManagerObj,
         stagingFullPath_,
-        this->StoreRelativePath,         
-        shouldOverwrite_, 
+        this->StoreRelativePath,
+        shouldOverwrite_,
+        this->uploadRequestId_,
         this->RequestManagerObj.GetNextFileVersion(),
         this->ActivityId,
         timeoutHelper_.GetRemainingTime(),
@@ -67,22 +69,59 @@ ErrorCode ProcessUploadRequestAsyncOperation::EndOperation(
     Common::AsyncOperationSPtr const & asyncOperation)
 {
     auto errorCode = FileAsyncOperation::End(asyncOperation);
-    if(errorCode.IsSuccess())
+
+    // For simple transaction, transactions are processed in groups.
+    // If one of them fail, all of the transactions are canceled.
+    // It is possible for a transaction to be inactive resulting in incomplete rollback of metadata where metadata is left in unstable state.
+    // In case of error, unstable state metadata entry should not be present in the store and must be deleted (in a separate transaction).
+    if (!errorCode.IsSuccess())
+    {
+        if (DeleteIfMetadataNotInStableState(asyncOperation->Parent))
+        {
+            WriteWarning(
+                TraceComponent,
+                "Metadata was not in stable state and was deleted for  storeRelativePath:{0}, Error:{1}",
+                this->StoreRelativePath,
+                errorCode);
+        }
+    }
+
+    if(errorCode.IsSuccess() || errorCode.IsError(ErrorCodeValue::AlreadyExists))
     {
         reply = FileStoreServiceMessage::GetClientOperationSuccess(this->ActivityId);
+        return ErrorCodeValue::Success;
     }
+
     return errorCode;
 }
 
-void ProcessUploadRequestAsyncOperation::OnRequestCompleted(Common::ErrorCode & error)
-{   
-    // Override the base to NOT overwrite 'NotPrimary' ErrorCode with 'FileStoreServiceNotReady' since the copying staging has to done at the client side.
 
+void ProcessUploadRequestAsyncOperation::OnRequestCompleted(__inout Common::ErrorCode & error)
+{
+    // Override the base to NOT overwrite 'NotPrimary' ErrorCode with 'FileStoreServiceNotReady' since the copying staging has to done at the client side.
     ConvertObjectClosedErrorCode(error);
 
     // Delete the staging file except for FileUpdateInProgress error. Client will retry on FileUpdateInProgress.
-    if(!error.IsError(ErrorCodeValue::FileUpdateInProgress) && File::Exists(stagingFullPath_))
+    DeleteStagingFile(error);
+}
+
+void ProcessUploadRequestAsyncOperation::DeleteStagingFile(Common::ErrorCode const & error)
+{
+    if (!error.IsError(ErrorCodeValue::FileUpdateInProgress) && File::Exists(stagingFullPath_))
     {
-        File::Delete2(stagingFullPath_, true /*deleteReadOnlyFiles*/);
+        auto deleteError = File::Delete2(stagingFullPath_, true /*deleteReadOnlyFiles*/);
+        if (!deleteError.IsSuccess())
+        {
+            WriteWarning(
+                TraceComponent,
+                TraceId,
+                "Deleting staging file failed: Store:{0}, stagingFullPath:{1} deleteError{2} originalError{3}",
+                this->StoreRelativePath,
+                stagingFullPath_,
+                deleteError,
+                error);
+        }
     }
 }
+
+

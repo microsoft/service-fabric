@@ -14,6 +14,7 @@ StartRegisterApplicationHostRequest::StartRegisterApplicationHostRequest()
     type_(),
     processId_(0),
     isContainerHost_(false),
+    isCodePackageActivatorHost_(false),
     timeout_()
 {
 }
@@ -23,13 +24,20 @@ StartRegisterApplicationHostRequest::StartRegisterApplicationHostRequest(
     ApplicationHostType::Enum applicationHostType,
     DWORD applicationHostProcessId,
     bool isContainerHost,
+    bool isCodePackageActivatorHost,
     TimeSpan timeout)
     : id_(applicationHostId),
     type_(applicationHostType),
     processId_(applicationHostProcessId),
     isContainerHost_(isContainerHost),
+    isCodePackageActivatorHost_(isCodePackageActivatorHost),
     timeout_(timeout)
 {
+    ASSERT_IF(
+        type_ != ApplicationHostType::Activated_SingleCodePackage &&
+        type_ != ApplicationHostType::Activated_InProcess &&
+        isCodePackageActivatorHost_,
+        "Only SingleCodePackage or InProcess application host can have on-demand CP activation enabled.");
 }
 
 void StartRegisterApplicationHostRequest::WriteTo(TextWriter & w, FormatOptions const &) const
@@ -39,6 +47,7 @@ void StartRegisterApplicationHostRequest::WriteTo(TextWriter & w, FormatOptions 
     w.Write("Type = {0}, ", Type);
     w.Write("ProcessId = {0}, ", ProcessId);
     w.Write("IsContainerHost = {0}, ", IsContainerHost);
+    w.Write("IsCodePackageActivatorHost = {0}, ", IsCodePackageActivatorHost);
     w.Write("Timeout = {0}", Timeout);
     w.Write("}");
 }

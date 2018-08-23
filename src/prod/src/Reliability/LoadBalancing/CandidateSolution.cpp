@@ -39,7 +39,10 @@ CandidateSolution::CandidateSolution(
     validSwapCount_(0),
     validMoveCount_(0),
     validAddCount_(0),
-    dynamicNodeLoads_(originalPlacement_->BalanceCheckerObj->Nodes, originalPlacement_->BalanceCheckerObj->LBDomains),
+    dynamicNodeLoads_(
+        originalPlacement_->BalanceCheckerObj->Nodes,
+        originalPlacement_->BalanceCheckerObj->LBDomains,
+        originalPlacement_->Settings.NodesWithReservedLoadOverlap),
     score_(
         originalPlacement_->TotalMetricCount,
         originalPlacement_->LBDomains,

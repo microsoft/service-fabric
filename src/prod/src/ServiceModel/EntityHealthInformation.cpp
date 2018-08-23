@@ -34,23 +34,6 @@ EntityHealthInformation::EntityHealthInformation(FABRIC_HEALTH_REPORT_KIND kind)
 {
 }
 
-EntityHealthInformation::EntityHealthInformation(EntityHealthInformation && other)
-    : kind_(move(other.kind_))
-    , entityId_(move(other.entityId_))
-{
-}
-
-EntityHealthInformation & EntityHealthInformation::operator = (EntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        kind_ = move(other.kind_);
-        entityId_ = move(other.entityId_);
-    }
-
-    return *this;
-}
-
 EntityHealthInformation::~EntityHealthInformation()
 {
 }

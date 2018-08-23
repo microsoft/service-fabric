@@ -25,6 +25,8 @@ void RAEventSource::TraceEventData(
     case TraceEventType::ReconfigurationComplete :
     {    
         const ReconfigurationCompleteEventData & reconfigComplete = dynamic_cast<const ReconfigurationCompleteEventData&>(eventData);
+
+        // Eventually we need to deprecate the Query channel one in favor of Operational channel.
         ReconfigurationCompleted(reconfigComplete.FtId,
                                  nodeName,
                                  reconfigComplete.NodeInstance,
@@ -33,6 +35,16 @@ void RAEventSource::TraceEventData(
                                  reconfigComplete.Type,
                                  reconfigComplete.Result,
                                  reconfigComplete.PerfData);
+
+        ReconfigurationCompletedOperational(Guid::NewGuid(),
+                                reconfigComplete.FtId,
+                                nodeName,
+                                reconfigComplete.NodeInstance,
+                                reconfigComplete.ServiceType,
+                                reconfigComplete.CcEpoch,
+                                reconfigComplete.Type,
+                                reconfigComplete.Result,
+                                reconfigComplete.PerfData);
         break;
     }
     case TraceEventType::ReconfigurationSlow :
@@ -45,6 +57,19 @@ void RAEventSource::TraceEventData(
     {
         const ResourceUsageReportEventData & resourceUsage = dynamic_cast<const ResourceUsageReportEventData&>(eventData);
         ResourceUsageReportExclusiveHost(resourceUsage.FtId, resourceUsage.ReplicaId, ReplicaRole::Trace(resourceUsage.ReplicaRole), resourceUsage.NodeInstance, resourceUsage.CpuUsage, resourceUsage.MemoryUsage, resourceUsage.CpuUsageRaw, resourceUsage.MemoryUsageRaw);
+        break;
+    }
+    case TraceEventType::ReplicaStateChange :
+    {
+        const ReplicaStateChangeEventData & replicaStateChange = dynamic_cast<const ReplicaStateChangeEventData&>(eventData);
+        ReplicaStateChange(
+            replicaStateChange.NodeInstance,
+            replicaStateChange.FtId,
+            replicaStateChange.ReplicaId,
+            replicaStateChange.CurrentConfigurationEpoch,
+            replicaStateChange.ReplicaState,
+            replicaStateChange.ReplicaRole,
+            replicaStateChange.Reason);
         break;
     }
     default:

@@ -50,11 +50,20 @@ namespace Data
 
             static const LONG64 InvalidLsn = -1;
 
+            static const LONG64 InvalidTxnId = -1;
+            static const ULONG64 InvalidKeyHash = 0;
+
             // Default timeout for getting values in enumeration
             static const ULONG32 EnumerationGetValueTimeoutSeconds = 4;
 
             // Default timeout for acquiring metadata table lock
             static const ULONG32 MetadataTableLockTimeoutMilliseconds = 1000;
+
+            // Metadata size for VersionedItem
+            static const LONG64 ValueMetadataSizeBytes = 24;
+
+            // Used with rate performance counters and stopwatch
+            static const ULONG64 TicksPerSecond = 10'000'000;
         };
     }
 }

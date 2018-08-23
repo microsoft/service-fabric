@@ -24,8 +24,8 @@ namespace ServiceModel
             ServiceHealthStateChunkList && serviceHealthStateChunks,
             DeployedApplicationHealthStateChunkList && deployedApplicationHealthStateChunks);
 
-        ApplicationHealthStateChunk(ApplicationHealthStateChunk && other);
-        ApplicationHealthStateChunk & operator = (ApplicationHealthStateChunk && other);
+        ApplicationHealthStateChunk(ApplicationHealthStateChunk && other) = default;
+        ApplicationHealthStateChunk & operator = (ApplicationHealthStateChunk && other) = default;
 
         virtual ~ApplicationHealthStateChunk();
 

@@ -32,7 +32,6 @@ namespace
 {
     StringLiteral const TraceLifeCycle("LifeCycle");
     StringLiteral const TraceFailure("Failure");
-    StringLiteral const TraceNodeUp("NodeUp");
     StringLiteral const TraceReceive("Receive");
 }
 
@@ -57,12 +56,13 @@ FailoverManagerSPtr FailoverManager::CreateFMM(
     auto fmStore = make_unique<FailoverManagerStore>(move(replicatedStore));
     wstring fmId = federation->Instance.ToString() + L":" + StringUtility::ToWString(SequenceNumber::GetNext());
     ComPointer<IFabricStatefulServicePartition> servicePartition;
-    return make_shared<FailoverManager>(move(federation), healthClient, nodeConfig, true, move(fmStore), servicePartition, fmId, fmId);
+    return make_shared<FailoverManager>(move(federation), healthClient, Api::IServiceManagementClientPtr(), nodeConfig, true, move(fmStore), servicePartition, fmId, fmId);
 }
 
 FailoverManagerSPtr FailoverManager::CreateFM(
     FederationSubsystemSPtr && federation,
     HealthReportingComponentSPtr const & healthClient,
+    Api::IServiceManagementClientPtr serviceManagementClient,
     FabricNodeConfigSPtr const& nodeConfig,
     FailoverManagerStoreUPtr && fmStore,
     ComPointer<IFabricStatefulServicePartition> const& servicePartition,
@@ -74,6 +74,7 @@ FailoverManagerSPtr FailoverManager::CreateFM(
     return make_shared<FailoverManager>(
         move(federation),
         healthClient,
+        serviceManagementClient,
         nodeConfig,
         false, // IsMaster
         move(fmStore),
@@ -85,6 +86,7 @@ FailoverManagerSPtr FailoverManager::CreateFM(
 FailoverManager::FailoverManager(
     FederationSubsystemSPtr && federation,
     HealthReportingComponentSPtr const & healthClient,
+    Api::IServiceManagementClientPtr serviceManagementClient,
     FabricNodeConfigSPtr const& nodeConfig,
     bool isMaster,
     FailoverManagerStoreUPtr && fmStore,
@@ -98,6 +100,7 @@ FailoverManager::FailoverManager(
     FailoverManagerComponent::IFailoverManager(fmId),
     federation_(move(federation)),
     healthClient_(healthClient),
+    serviceManagementClient_(serviceManagementClient),
     nodeConfig_(nodeConfig),
     isMaster_(isMaster),
     messageProcessingActor_(isMaster_ ? Actor::FMM : Actor::FM),
@@ -119,7 +122,7 @@ FailoverManager::FailoverManager(
     lockObject_(),
     storeOpenTimeoutHelper_(TimeSpan::MaxValue),
     fmQueryHelper_(),
-    queueFullThrottle_(FailoverConfig::GetConfig().MinSecondsBetweenQueueFullRejectMessages),
+    queueFullThrottle_(FailoverConfig::GetConfig().MinSecondsBetweenQueueFullRejectMessagesEntry),
     healthReportFactory_(federation_->IdString, isMaster, nodeConfig->StateTraceIntervalEntry)
 {
     ASSERT_IF(fmStore_ == nullptr, "FM Store cannot be null.")    
@@ -565,6 +568,7 @@ InstrumentedPLBUPtr FailoverManager::CreatePLB(
         move(plbFailoverUnits),
         move(plbLoads),
         HealthClient,
+        serviceManagementClient_,
         FailoverConfig::GetConfig().IsSingletonReplicaMoveAllowedDuringUpgradeEntry);
 
     return InstrumentedPLB::CreateInstrumentedPLB(*this, move(plb));
@@ -980,6 +984,10 @@ MessageUPtr FailoverManager::ProcessOneWayMessage(Message & message, NodeInstanc
     else if (action == RSMessage::GetGenerationUpdateReject().Action)
     {
         GenerationUpdateRejectMessageHandler(message, from);
+    }
+    else if (action == RSMessage::GetAvailableContainerImages().Action)
+    {
+        AvailableContainerImagesMessageHandler(message);
     }
     else
     {
@@ -1682,31 +1690,18 @@ MessageUPtr FailoverManager::NodeUpMessageHandler(Message & request, NodeInstanc
         return nullptr;
     }
 
-    WriteInfo(TraceNodeUp, wformatString(from.Id),
+    WriteInfo(Constants::NodeUpSource, wformatString(from.Id),
         "Processing NodeUp from {0}: {1}",
         from, body);
 
     Common::FabricVersionInstance targetVersionInstance;
     vector<UpgradeDescription> upgrades;
 
-    wstring actualUpgradeDomain = NodeInfo::GetActualUpgradeDomain(from.Id, body.NodeUpgradeDomainId);
-
-    if (!FabricUpgradeManager.IsFabricUpgradeNeeded(body.VersionInstance, actualUpgradeDomain, targetVersionInstance))
+    ErrorCode error = NodeUp(from, body, targetVersionInstance, upgrades);
+    if (!error.IsSuccess() && !error.IsError(ErrorCodeValue::FMInvalidRolloutVersion))
     {
-        ErrorCode error = NodeUp(from, body, upgrades);
-
-        if (!error.IsSuccess())
-        {
-            WriteWarning(TraceNodeUp, wformatString(from.Id), "NodeUp from {0} failed with error {1}", from, error);
-            return nullptr;
-        }
-    }
-    else
-    {
-        WriteWarning(
-            TraceNodeUp, wformatString(from.Id),
-            "NodeUp from {0} ignored due to fabric version mismatch: Current={1}, Incoming={2}",
-            from, targetVersionInstance, body.VersionInstance);
+        WriteWarning(Constants::NodeUpSource, wformatString(from.Id), "NodeUp from {0} failed with error {1}", from, error);
+        return nullptr;
     }
 
     NodeDeactivationInfo nodeDeactivationInfo = NodeCacheObj.GetNodeDeactivationInfo(from.Id);
@@ -1715,7 +1710,7 @@ MessageUPtr FailoverManager::NodeUpMessageHandler(Message & request, NodeInstanc
 
     NodeUpAckMessageBody replyBody(move(targetVersionInstance), move(upgrades), isNodeActivated, nodeDeactivationInfo.SequenceNumber);
 
-    WriteInfo(TraceNodeUp, wformatString(from.Id), "Sending NodeUpAck message to {0}: {1}", from, replyBody);
+    WriteInfo(Constants::NodeUpSource, wformatString(from.Id), "Sending NodeUpAck message to {0}: {1}", from, replyBody);
 
     return RSMessage::GetNodeUpAck().CreateMessage(replyBody);
 }
@@ -1723,7 +1718,8 @@ MessageUPtr FailoverManager::NodeUpMessageHandler(Message & request, NodeInstanc
 ErrorCode FailoverManager::NodeUp(
     NodeInstance const & from,
     NodeUpMessageBody const & body,
-    vector<UpgradeDescription> & upgrades)
+    _Out_ FabricVersionInstance & targetVersionInstance,
+    _Out_ vector<UpgradeDescription> & upgrades)
 {
     NodeDescription nodeDescription(
         body.VersionInstance,
@@ -1735,16 +1731,13 @@ ErrorCode FailoverManager::NodeUp(
         body.NodeName,
         body.NodeType,
         body.IpAddressOrFQDN,
-        body.ClusterConnectionPort);
+        body.ClusterConnectionPort,
+        body.HttpGatewayPort);
 
-    NodeInfoSPtr nodeInfo =
-        make_shared<NodeInfo>(
-            from,
-            move(nodeDescription),
-            !body.AnyReplicaFound);
+    NodeInfoSPtr nodeInfo = make_shared<NodeInfo>(from, move(nodeDescription), !body.AnyReplicaFound);
 
     wstring upgradeDomainId = nodeInfo->ActualUpgradeDomainId;
-    ErrorCode error = NodeCacheObj.NodeUp(move(nodeInfo));
+    ErrorCode error = NodeCacheObj.NodeUp(move(nodeInfo), true /* IsVersionGatekeepingNeeded */, targetVersionInstance);
     if (!error.IsSuccess())
     {
         return error;
@@ -1833,7 +1826,7 @@ void FailoverManager::CheckUpgrade(
         {
             TRACE_AND_TESTASSERT(
                 WriteError,
-                TraceNodeUp, wformatString(from.Id),
+                Constants::NodeUpSource, wformatString(from.Id),
                 "Rollout version mismatch {0}/{1} found for {2}",
                 packageVersion,
                 versionInstance.Version.RolloutVersionValue,
@@ -2070,7 +2063,7 @@ void FailoverManager::DeleteServiceAsyncMessageHandler(Message & request, TimedR
     ActivityId const& activityId = RSMessage::GetActivityId(request);
     wstring const& serviceName = body.Value;
 
-    MessageEvents.DeleteServiceRequest(activityId, serviceName, body.InstanceId);
+    MessageEvents.DeleteServiceRequest(activityId, serviceName, body.InstanceId, body.IsForce);
 
     MoveUPtr<TimedRequestReceiverContext> contextMover(move(context));
 
@@ -2118,6 +2111,7 @@ void FailoverManager::CreateApplicationAsyncMessageHandler(Message & request, Ti
         0,  // updateId
         body.ApplicationCapacity,
         body.ResourceGovernanceDescription,
+        body.CodePackageContainersImages,
         [this, activityId, contextMover](AsyncOperationSPtr const & operation) mutable
         {
             ErrorCode error = ServiceCacheObj.EndCreateApplication(operation);
@@ -2464,56 +2458,6 @@ void FailoverManager::OnServiceTypeNotificationCompleted(
     SendToNodeAsync(move(reply), from);
 }
 
-void FailoverManager::PartitionNotificationAsyncMessageHandler(
-    Message & request,
-    NodeInstance const& from)
-{
-    PartitionNotificationMessageBody body;
-    if (!TryGetMessageBody(request, body))
-    {
-        return;
-    }
-
-    auto const& messageId = request.MessageId;
-    uint64 sequenceNum = body.SequenceNumber;
-
-    MessageEvents.PartitionNotification(messageId, from, body.SequenceNumber);
-
-    auto disabledPartitions = make_unique<vector<PartitionId>>(move(body.DisabledPartitions));
-
-    NodeCacheObj.BeginPartitionNotification(
-        move(*disabledPartitions),
-        sequenceNum,
-        from,
-        [this, messageId, sequenceNum, from](AsyncOperationSPtr const & operation) mutable
-    {
-        ErrorCode error = NodeCacheObj.EndPartitionNotification(operation);
-
-        OnPartitionNotificationCompleted(messageId, sequenceNum, from, error);
-    },
-        CreateAsyncOperationRoot());
-}
-
-void FailoverManager::OnPartitionNotificationCompleted(
-    MessageId const& messageId,
-    uint64 sequenceNum,
-    NodeInstance const& from,
-    ErrorCode error)
-{
-    if (error.IsSuccess())
-    {
-        MessageUPtr reply;
-
-        reply = RSMessage::GetPartitionNotificationReply().CreateMessage(
-            ServiceTypeUpdateReplyMessageBody(sequenceNum));
-
-        reply->Headers.Add(GenerationHeader(Generation, isMaster_));
-        SendToNodeAsync(move(reply), from);
-    }
-
-    MessageEvents.PartitionNotificationReply(messageId, error);
-}
-
 Transport::MessageUPtr FailoverManager::ReportLoadMessageHandler(Message & request)
 {
     ReportLoadMessageBody body;
@@ -2700,6 +2644,14 @@ void FailoverManager::OnPLBSafetyCheckProcessingDone(Common::AsyncOperationSPtr 
     }
 }
 
+void FailoverManager::UpdateFailoverUnitTargetReplicaCount(Common::Guid const & partitionId, int targetCount)
+{
+    FailoverUnitId failoverUnitId(partitionId);
+
+    DynamicStateMachineTaskUPtr task(new AutoScalingTask(targetCount));
+
+    failoverUnitCache_->TryProcessTaskAsync(failoverUnitId, task, this->Federation.Instance, true);
+}
 
 void FailoverManager::RegisterEvents(EventHandler const & readyEvent, EventHandler const & failureEvent)
 {
@@ -2945,4 +2897,16 @@ void FailoverManager::OnUpdateApplicationCompleted(TimedRequestReceiverContextUP
 
     MessageUPtr reply = RSMessage::GetUpdateApplicationReply().CreateMessage(BasicFailoverReplyMessageBody(error.ReadValue()));
     context->Reply(move(reply));
+}
+
+void FailoverManager::AvailableContainerImagesMessageHandler(Transport::Message & request)
+{
+    AvailableContainerImagesMessageBody body;
+    if (!TryGetMessageBody(request, body))
+    {
+        return;
+    }
+
+    // Sending available images to PLB 
+    this->plb_->UpdateAvailableImagesPerNode(body.NodeId, body.AvailableImages);
 }

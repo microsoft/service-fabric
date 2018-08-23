@@ -1,0 +1,256 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+namespace System.Fabric.Interop
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Fabric.Common;
+    using System.Fabric.Strings;
+    using System.IO;
+
+    internal static class InteropExceptionMap
+    {
+        public static IDictionary<int, Func<Exception, string, Exception>> NativeToManagedConversion { get; private set; }
+
+
+        [SuppressMessage("StyleCop.CSharp.LayoutRules", "SA1509:OpeningCurlyBracketsMustNotBePrecededByBlankLine", Justification = "Code represents compact lookup table.")]
+        [SuppressMessage(FxCop.Category.Maintainability, FxCop.Rule.AvoidUnmaintainableCode, Justification = "The code structure is most efficient for the specific purpose")]
+        static InteropExceptionMap()
+        {
+            unchecked
+            {
+
+                InteropExceptionMap.NativeToManagedConversion = new Dictionary<int, Func<Exception, string, Exception>>
+
+                {
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_PARTITION_KEY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidPartitionKey : msg), e, FabricErrorCode.InvalidPartitionKey) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_USER_ROLE_CLIENT_CERTIFICATE_NOT_CONFIGURED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_UserRoleClientCertificateNotConfigured : msg), e, FabricErrorCode.UserRoleClientCertificateNotConfigured) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NAME_ALREADY_EXISTS, (e, msg) => new FabricElementAlreadyExistsException((string.IsNullOrEmpty(msg) ? StringResources.Error_NameAlreadyExists : msg), e, FabricErrorCode.NameAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_ALREADY_EXISTS, (e, msg) => new FabricElementAlreadyExistsException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceAlreadyExists : msg), e, FabricErrorCode.ServiceAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_GROUP_ALREADY_EXISTS, (e, msg) => new FabricElementAlreadyExistsException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceGroupAlreadyExists : msg), e, FabricErrorCode.ServiceGroupAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_TYPE_ALREADY_EXISTS, (e, msg) => new FabricElementAlreadyExistsException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationTypeAlreadyExists : msg), e, FabricErrorCode.ApplicationTypeAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_ALREADY_EXISTS, (e, msg) => new FabricElementAlreadyExistsException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationAlreadyExists : msg), e, FabricErrorCode.ApplicationAlreadyExists) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NAME_DOES_NOT_EXIST, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_NameDoesNotExist : msg), e, FabricErrorCode.NameNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_PROPERTY_DOES_NOT_EXIST, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_PropertyDoesNotExist : msg), e, FabricErrorCode.PropertyNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_DOES_NOT_EXIST, (e, msg) => new FabricServiceNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceDoesNotExist : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_GROUP_DOES_NOT_EXIST, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceGroupDoesNotExist : msg), e, FabricErrorCode.ServiceGroupNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_TYPE_PROVISION_IN_PROGRESS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationTypeProvisionInProgress : msg), e, FabricErrorCode.ApplicationTypeProvisionInProgress) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_TYPE_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationTypeNotFound : msg), e, FabricErrorCode.ApplicationTypeNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_TYPE_IN_USE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationTypeInUse : msg), e, FabricErrorCode.ApplicationTypeInUse) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationNotFound : msg), e, FabricErrorCode.ApplicationNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_TYPE_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceTypeNotFound : msg), e, FabricErrorCode.ServiceTypeNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_TYPE_TEMPLATE_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceTypeTemplateNotFound : msg), e, FabricErrorCode.ServiceTemplateNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_MANIFEST_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceManifestNotFound : msg), e, FabricErrorCode.ServiceManifestNotFound) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NOT_PRIMARY, (e, msg) => new FabricNotPrimaryException((string.IsNullOrEmpty(msg) ? StringResources.Error_NotPrimary : msg), e, FabricErrorCode.NotPrimary) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NO_WRITE_QUORUM, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_NoWriteQuorum : msg), e, FabricErrorCode.NoWriteQuorum) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RECONFIGURATION_PENDING, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReconfigurationPending : msg), e, FabricErrorCode.ReconfigurationPending) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_REPLICATION_QUEUE_FULL, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReplicationQueueFull : msg), e, FabricErrorCode.ReplicationQueueFull) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_REPLICATION_OPERATION_TOO_LARGE, (e, msg) => new FabricReplicationOperationTooLargeException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReplicationOperationTooLarge : msg), e) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_ATOMIC_GROUP, (e, msg) => new FabricInvalidAtomicGroupException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidAtomicGroup : msg), e, FabricErrorCode.InvalidAtomicGroup) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_OFFLINE, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceOffline : msg), e, FabricErrorCode.ServiceOffline) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_METADATA_MISMATCH, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceMetadataMismatch : msg), e, FabricErrorCode.ServiceMetadataMismatch) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_AFFINITY_CHAIN_NOT_SUPPORTED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceAffinityChainNotSupported : msg), e, FabricErrorCode.ServiceAffinityChainNotSupported) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_UPGRADE_IN_PROGRESS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationUpgradeInProgress : msg), e, FabricErrorCode.ApplicationUpgradeInProgress) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_UPDATE_IN_PROGRESS, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationUpdateInProgress : msg), e, FabricErrorCode.ApplicationUpdateInProgress) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_UPGRADE_DOMAIN_ALREADY_COMPLETED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_UpgradeDomainAlreadyCompleted : msg), e, FabricErrorCode.UpgradeDomainAlreadyCompleted) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FABRIC_VERSION_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricVersionNotFound : msg), e, FabricErrorCode.FabricVersionNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FABRIC_VERSION_IN_USE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricVersionInUse : msg), e, FabricErrorCode.FabricVersionInUse) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FABRIC_VERSION_ALREADY_EXISTS, (e, msg) => new FabricElementAlreadyExistsException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricVersionAlreadyExists : msg), e, FabricErrorCode.FabricVersionAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FABRIC_ALREADY_IN_TARGET_VERSION, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricAlreadyInTargetVersion : msg), e, FabricErrorCode.FabricAlreadyInTargetVersion) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FABRIC_NOT_UPGRADING, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricNotUpgrading : msg), e, FabricErrorCode.FabricNotUpgrading) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FABRIC_UPGRADE_IN_PROGRESS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricUpgradeInProgress : msg), e, FabricErrorCode.FabricUpgradeInProgress) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FABRIC_UPGRADE_VALIDATION_ERROR, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricUpgradeValidationError : msg), e, FabricErrorCode.FabricUpgradeValidationError) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_HEALTH_MAX_REPORTS_REACHED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricHealthMaxReportsReached : msg), e, FabricErrorCode.FabricHealthMaxReportsReached) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_HEALTH_STALE_REPORT, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricHealthStaleReport : msg), e, FabricErrorCode.FabricHealthStaleReport) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_HEALTH_ENTITY_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricHealthEntityNotFound : msg), e, FabricErrorCode.FabricHealthEntityNotFound) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_NOT_UPGRADING, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationNotUpgrading : msg), e, FabricErrorCode.ApplicationNotUpgrading) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_ALREADY_IN_TARGET_VERSION, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationAlreadyInTargetVersion : msg), e, FabricErrorCode.ApplicationAlreadyInTargetVersion) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NODE_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NodeNotFound : msg), e, FabricErrorCode.NodeNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NODE_IS_UP, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NodeIsUp : msg), e, FabricErrorCode.NodeIsUp) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_WRITE_CONFLICT, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_WriteConflict : msg), e, FabricErrorCode.WriteConflict) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_APPLICATION_UPGRADE_VALIDATION_ERROR, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ApplicationUpgradeValidationError : msg), e, FabricErrorCode.ApplicationUpgradeValidationError) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_TYPE_MISMATCH, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceTypeMismatch : msg), e, FabricErrorCode.ServiceTypeMismatch) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_TYPE_ALREADY_REGISTERED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceTypeAlreadyRegistered : msg), e, FabricErrorCode.ServiceTypeAlreadyRegistered) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_TYPE_NOT_REGISTERED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceTypeNotRegistered : msg), e, FabricErrorCode.ServiceTypeNotRegistered) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CODE_PACKAGE_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_CodePackageNotFound : msg), e, FabricErrorCode.CodePackageNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DATA_PACKAGE_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_DataPackageNotFound : msg), e, FabricErrorCode.DataPackageNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONFIGURATION_PACKAGE_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ConfigPackageNotFound : msg), e, FabricErrorCode.ConfigurationPackageNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_ENDPOINT_RESOURCE_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_EndpointResourceNotFound : msg), e, FabricErrorCode.EndpointResourceNotFound) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NAME_NOT_EMPTY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NameNotEmpty : msg), e, FabricErrorCode.NameNotEmpty) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_CONFIGURATION, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidConfiguration : msg), e, FabricErrorCode.InvalidConfiguration) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_ADDRESS, (e, msg) => new FabricInvalidAddressException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidAddress : msg), e, FabricErrorCode.InvalidAddress) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_NAME_URI, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidNameUri : msg), e, FabricErrorCode.InvalidNameUri) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_VALUE_TOO_LARGE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ArgumentInvalid : msg), e, FabricErrorCode.ValueTooLarge) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_VALUE_EMPTY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ValueEmpty : msg), e, FabricErrorCode.PropertyValueEmpty) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_PROPERTY_CHECK_FAILED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_PropertyCheckFailed : msg), e, FabricErrorCode.PropertyCheckFailed) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NOT_READY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NotReady : msg), e, FabricErrorCode.NotReady) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_CREDENTIAL_TYPE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidCredentialType : msg), e, FabricErrorCode.InvalidCredentialType) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_X509_FIND_TYPE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidX509FindType : msg), e, FabricErrorCode.InvalidX509FindType) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_X509_STORE_LOCATION, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidX509StoreLocation : msg), e, FabricErrorCode.InvalidX509StoreLocation) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_X509_STORE_NAME, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidX509StoreName : msg), e, FabricErrorCode.InvalidX509StoreName) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_X509_THUMBPRINT, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidX509Thumbprint : msg), e, FabricErrorCode.InvalidX509Thumbprint) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_PROTECTION_LEVEL, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidProtectionLevel : msg), e, FabricErrorCode.InvalidProtectionLevel) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_X509_STORE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidX509Store : msg), e, FabricErrorCode.InvalidX509Store) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_SUBJECT_NAME, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidSubjectName : msg), e, FabricErrorCode.InvalidSubjectName) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_ALLOWED_COMMON_NAME_LIST, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidAllowedCommonNameList : msg), e, FabricErrorCode.InvalidAllowedCommonNameList) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_CREDENTIALS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidCredentials : msg), e, FabricErrorCode.InvalidCredentials) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DECRYPTION_FAILED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_DecryptionFailed : msg), e, FabricErrorCode.DecryptionFailed) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_ENCRYPTION_FAILED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_EncryptionFailed : msg), e, FabricErrorCode.EncryptionFailed) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVICE_TOO_BUSY, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServiceTooBusy : msg), e, FabricErrorCode.ServiceTooBusy) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_COMMUNICATION_ERROR, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_CommunicationError : msg), e, FabricErrorCode.CommunicationError) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_GATEWAY_NOT_REACHABLE, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_GatewayNotReachable : msg), e, FabricErrorCode.GatewayNotReachable) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_OBJECT_CLOSED, (e, msg) => new FabricObjectClosedException((string.IsNullOrEmpty(msg) ? StringResources.Error_ObjectClosed : msg), e, FabricErrorCode.ObjectClosed) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_OPERATION_NOT_COMPLETE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_OperationNotComplete : msg), e, FabricErrorCode.OperationNotComplete) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_ENUMERATION_COMPLETED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_EnumerationCompleted : msg), e, FabricErrorCode.EnumerationCompleted) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONFIGURATION_SECTION_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ConfigurationSectionNotFound : msg), e, FabricErrorCode.ConfigurationSectionNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONFIGURATION_PARAMETER_NOT_FOUND, (e, msg) => new FabricElementNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_ConfigurationParameterNotFound : msg), e, FabricErrorCode.ConfigurationParameterNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_IMAGEBUILDER_VALIDATION_ERROR, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ImageBuilderValidationError : msg), e, FabricErrorCode.ImageBuilderValidationError) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_PARTITION_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_PartitionNotFound : msg), e, FabricErrorCode.PartitionNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_REPLICA_DOES_NOT_EXIST, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReplicaDoesNotExist : msg), e, FabricErrorCode.ReplicaDoesNotExist) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_PROCESS_DEACTIVATED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ProcessDeactivated : msg), e, FabricErrorCode.ProcessDeactivated) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_PROCESS_ABORTED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ProcessAborted : msg), e, FabricErrorCode.ProcessAborted) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_KEY_TOO_LARGE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_KeyTooLarge : msg), e, FabricErrorCode.KeyTooLarge) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_KEY_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_KeyNotFound : msg), e, FabricErrorCode.KeyNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SEQUENCE_NUMBER_CHECK_FAILED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_SequenceNumberCheckFailed : msg), e, FabricErrorCode.SequenceNumberCheckFailed) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_TRANSACTION_NOT_ACTIVE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_TransactionNotActive : msg), e, FabricErrorCode.TransactionNotActive) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_TRANSACTION_TOO_LARGE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_TransactionTooLarge : msg), e, FabricErrorCode.TransactionTooLarge) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_MULTITHREADED_TRANSACTIONS_NOT_ALLOWED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_MultithreadedTransactionsNotAllowed : msg), e, FabricErrorCode.MultithreadedTransactionsNotAllowed) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_TRANSACTION_ABORTED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_TransactionAborted : msg), e, FabricErrorCode.TransactionAborted) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_INVALIDARG, (e, msg) => new ArgumentException((string.IsNullOrEmpty(msg) ? StringResources.Error_ArgumentInvalid : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_POINTER, (e, msg) => new ArgumentNullException((string.IsNullOrEmpty(msg) ? StringResources.Error_ArgumentInvalid : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_ABORT, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_OperationCanceled : msg), e, FabricErrorCode.OperationCanceled) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_ACCESSDENIED, (e, msg) => new UnauthorizedAccessException((string.IsNullOrEmpty(msg) ? StringResources.Error_AccessDenied : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_NOINTERFACE, (e, msg) => new InvalidCastException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidCast : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_NOTIMPL, (e, msg) => new NotImplementedException() },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_OUTOFMEMORY, (e, msg) => new OutOfMemoryException() },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_DIR_NOT_EMPTY, (e, msg) => new IOException(string.IsNullOrEmpty(msg) ? StringResources.Error_DirectoryNotEmpty: msg, e) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.E_NOT_FOUND, (e, msg) => new  KeyNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_NotFound : msg), e)},
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_OPERATION, (e, msg) => new InvalidOperationException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidOperation : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_TIMEOUT, (e, msg) => new TimeoutException((string.IsNullOrEmpty(msg) ? StringResources.Error_OperationTimedOut : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DIRECTORY_NOT_FOUND, (e, msg) => new DirectoryNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_DirectoryNotFound : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_DIRECTORY, (e, msg) => new IOException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidDirectory : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_PATH_TOO_LONG, (e, msg) => new PathTooLongException((string.IsNullOrEmpty(msg) ? StringResources.Error_PathTooLong : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FILE_NOT_FOUND, (e, msg) => new FileNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_FileNotFound : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_IMAGESTORE_IOERROR, (e, msg) => new FabricImageStoreException((string.IsNullOrEmpty(msg) ? StringResources.Error_ImageStoreIOException : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_ACQUIRE_FILE_LOCK_FAILED, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_ImageStoreAcquireFileLockFailed : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CORRUPTED_IMAGE_STORE_OBJECT_FOUND, (e, msg) => new FabricImageStoreException((string.IsNullOrEmpty(msg) ? StringResources.Error_CorruptedImageStoreObjectFound : msg), e, FabricErrorCode.CorruptedImageStoreObjectFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_IMAGEBUILDER_UNEXPECTED_ERROR, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ImageBuilderUnexpectedError : msg), e, FabricErrorCode.ImageBuilderUnexpectedError) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_IMAGEBUILDER_TIMEOUT, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_ImageBuilderTimeoutError : msg), e, FabricErrorCode.ImageBuilderTimeoutError) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_IMAGEBUILDER_ACCESS_DENIED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ImageBuilderAccessDeniedError : msg), e, FabricErrorCode.ImageBuilderAccessDeniedError) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_IMAGEBUILDER_INVALID_MSI_FILE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ImageBuilderInvalidMsiFile : msg), e, FabricErrorCode.ImageBuilderInvalidMsiFile) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_SERVICE_TYPE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidServiceType : msg), e, FabricErrorCode.InvalidServiceType) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_TRANSPORT_STARTUP_FAILURE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionTransportStartupFailure : msg), e, FabricErrorCode.ReliableSessionTransportStartupFailure) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_ALREADY_EXISTS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionAlreadyExists : msg), e, FabricErrorCode.ReliableSessionAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_CANNOT_CONNECT, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionCannotConnect : msg), e, FabricErrorCode.ReliableSessionCannotConnect) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_MANAGER_EXISTS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionManagerExists : msg), e, FabricErrorCode.ReliableSessionManagerExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_REJECTED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionRejected : msg), e, FabricErrorCode.ReliableSessionRejected) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionNotFound : msg), e, FabricErrorCode.ReliableSessionNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_QUEUE_EMPTY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionQueueEmpty : msg), e, FabricErrorCode.ReliableSessionQueueEmpty) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_QUOTA_EXCEEDED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionQuotaExceeded : msg), e, FabricErrorCode.ReliableSessionQuotaExceeded) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_SERVICE_FAULTED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionServiceFaulted : msg), e, FabricErrorCode.ReliableSessionServiceFaulted) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_MANAGER_ALREADY_LISTENING, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionManagerAlreadyListening : msg), e, FabricErrorCode.ReliableSessionManagerAlreadyListening) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_MANAGER_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionManagerNotFound : msg), e, FabricErrorCode.ReliableSessionManagerNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_MANAGER_NOT_LISTENING, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionManagerNotListening : msg), e, FabricErrorCode.ReliableSessionManagerNotListening) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_REPAIR_TASK_ALREADY_EXISTS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_RepairTaskAlreadyExists : msg), e, FabricErrorCode.RepairTaskAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_REPAIR_TASK_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_RepairTaskNotFound : msg), e, FabricErrorCode.RepairTaskNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RELIABLE_SESSION_INVALID_TARGET_PARTITION, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ReliableSessionInvalidTargetPartition : msg), e, FabricErrorCode.ReliableSessionInvalidTargetPartition) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INSTANCE_ID_MISMATCH, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InstanceIdMismatch : msg), e, FabricErrorCode.InstanceIdMismatch) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NODE_HAS_NOT_STOPPED_YET, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NodeHasNotStoppedYet : msg), e, FabricErrorCode.NodeHasNotStoppedYet) },                 
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INSUFFICIENT_CLUSTER_CAPACITY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InsufficientClusterCapacity : msg), e, FabricErrorCode.InsufficientClusterCapacity) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONSTRAINT_KEY_UNDEFINED, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_ConstraintKeyUndefined : msg), e, FabricErrorCode.ConstraintKeyUndefined)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_PACKAGE_SHARING_POLICY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidPackageSharingPolicy : msg), e, FabricErrorCode.InvalidPackageSharingPolicy) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_PREDEPLOYMENT_NOT_ALLOWED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_PredeploymentNotAllowed : msg), e, FabricErrorCode.PreDeploymentNotAllowed) },
+
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_BACKUP_SETTING, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidBackupSetting : msg), e, FabricErrorCode.InvalidBackupSetting) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_MISSING_FULL_BACKUP, (e, msg) => new FabricMissingFullBackupException((string.IsNullOrEmpty(msg) ? StringResources.Error_MissingFullBackup : msg), e)  },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_BACKUP_IN_PROGRESS, (e, msg) => new FabricBackupInProgressException((string.IsNullOrEmpty(msg) ? StringResources.Error_BackupInProgress : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_BACKUP_DIRECTORY_NOT_EMPTY, (e, msg) => new FabricBackupDirectoryNotEmptyException((string.IsNullOrEmpty(msg) ? StringResources.Error_BackupDirectoryNotEmpty : msg), e) },                    
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DUPLICATE_SERVICE_NOTIFICATION_FILTER_NAME, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_DuplicateServiceNotificationFilterName : msg), e, FabricErrorCode.DuplicateServiceNotificationFilterName)  },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_REPLICA_OPERATION, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidReplicaOperation : msg), e, FabricErrorCode.InvalidReplicaOperation)  },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_REPLICA_STATE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidReplicaState : msg), e, FabricErrorCode.InvalidReplicaStateForReplicaOperation)  },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_LOADBALANCER_NOT_READY, (e, msg)=> new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_LoadBalancerNotReady : msg), e, FabricErrorCode.PLBNotReady)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_PARTITION_OPERATION, (e, msg)=> new FabricException ((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidPartitionOperation : msg), e, FabricErrorCode.InvalidPartitionOperation)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_PRIMARY_ALREADY_EXISTS, (e, msg)=> new FabricElementAlreadyExistsException ((string.IsNullOrEmpty(msg) ? StringResources.Error_AlreadyPrimaryReplica : msg), e, FabricErrorCode.AlreadyPrimaryReplica)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SECONDARY_ALREADY_EXISTS, (e, msg)=> new FabricElementAlreadyExistsException ((string.IsNullOrEmpty(msg) ? StringResources.Error_AlreadySecondaryReplica : msg), e, FabricErrorCode.AlreadySecondaryReplica)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FORCE_NOT_SUPPORTED_FOR_REPLICA_OPERATION, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ForceNotSupportedForReplicaControlOperation : msg), e, FabricErrorCode.ForceNotSupportedForReplicaControlOperation)  },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONNECTION_DENIED, (e, msg) => new FabricConnectionDeniedException((string.IsNullOrEmpty(msg) ? StringResources.Error_ConnectionDenied : msg), e, FabricErrorCode.ConnectionDenied) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SERVER_AUTHENTICATION_FAILED, (e, msg) => new FabricServerAuthenticationFailedException((string.IsNullOrEmpty(msg) ? StringResources.Error_ServerAuthenticationFailed: msg), e, FabricErrorCode.ServerAuthenticationFailed) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CANNOT_CONNECT, (e, msg) => new FabricCannotConnectException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricCannotConnect: msg),e,FabricErrorCode.FabricCannotConnect)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONNECTION_CLOSED_BY_REMOTE_END, (e, msg) => new FabricCannotConnectException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricCannotConnect: msg),e,FabricErrorCode.FabricConnectionClosedByRemoteEnd)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_MESSAGE_TOO_LARGE, (e, msg) => new FabricMessageTooLargeException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricMessageTooLarge : msg), e)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONSTRAINT_NOT_SATISFIED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ConstraintNotSatisfied : msg), e, FabricErrorCode.ConstraintNotSatisfied)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_ENDPOINT_NOT_FOUND, (e, msg) => new FabricEndpointNotFoundException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricEndpointNotFound : msg), e)},
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DELETE_BACKUP_FILE_FAILED, (e, msg) => new FabricDeleteBackupFileFailedException((string.IsNullOrEmpty(msg) ? StringResources.Error_DeleteBackupFileFailed : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_TEST_COMMAND_STATE, (e, msg) => new FabricInvalidTestCommandStateException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidTestCommandState : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_TEST_COMMAND_OPERATION_ID_ALREADY_EXISTS, (e, msg) => new FabricTestCommandOperationIdAlreadyExistsException((string.IsNullOrEmpty(msg) ? StringResources.Error_TestCommandAlreadyExists : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CM_OPERATION_FAILED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_CMOperationFailed : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_IMAGEBUILDER_RESERVED_DIRECTORY_ERROR, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ImageBuilderReservedDirectoryError : msg), e, FabricErrorCode.ImageBuilderReservedDirectoryError) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CHAOS_ALREADY_RUNNING, (e, msg) => new FabricChaosAlreadyRunningException((string.IsNullOrEmpty(msg) ? StringResources.ChaosError_ChaosAlreadyRunning : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_RESTORE_DATA, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Backup_InvalidRestoreData : msg), e, FabricErrorCode.InvalidRestoreData) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_RESTORE_SAFE_CHECK_FAILED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Backup_RestoreSafeCheckFailed : msg), e, FabricErrorCode.RestoreSafeCheckFailed) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DUPLICATE_BACKUPS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Backup_DuplicateBackups : msg), e, FabricErrorCode.DuplicateBackups) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_BACKUP_CHAIN, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Backup_InvalidBackupChain : msg), e, FabricErrorCode.InvalidBackupChain) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_BACKUP, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Backup_InvalidBackup : msg), e, FabricErrorCode.InvalidBackup) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_FABRIC_DATA_ROOT_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_FabricDeployer_FabricDataRootNotFound_Formatted : msg), e, FabricErrorCode.FabricDataRootNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_STOP_IN_PROGRESS, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_StopInProgress : msg), e, FabricErrorCode.StopInProgress) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_ALREADY_STOPPED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_AlreadyStopped : msg), e, FabricErrorCode.AlreadyStopped) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NODE_IS_DOWN, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NodeIsDown : msg), e, FabricErrorCode.NodeIsDown) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NODE_TRANSITION_IN_PROGRESS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_NodeTransitionInProgress : msg), e, FabricErrorCode.NodeTransitionInProgress) },                    
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_INSTANCE_ID, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidInstanceId : msg), e, FabricErrorCode.InvalidInstanceId) },                    
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_DURATION, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidDuration : msg), e, FabricErrorCode.InvalidDuration) },   
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_UPLOAD_SESSION_RANGE_NOT_SATISFIABLE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_UploadSessionRangeNotSatisfiable : msg), e, FabricErrorCode.UploadSessionRangeNotSatisfiable) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_UPLOAD_SESSION_ID_CONFLICT, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_UploadSessionIdConflict : msg), e, FabricErrorCode.UploadSessionIdConflict) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONFIG_UPGRADE_FAILED, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ConfigUpgradeGeneric : msg), e, FabricErrorCode.ConfigUpgradeFailed) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_PARTITION_SELECTOR, (e, msg) => new FabricInvalidPartitionSelectorException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidPartitionSelector : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_REPLICA_SELECTOR, (e, msg) => new FabricInvalidReplicaSelectorException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidReplicaSelector : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DNS_SERVICE_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_DnsServiceNotFound : msg), e, FabricErrorCode.DnsServiceNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_DNS_NAME, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidDnsName : msg), e, FabricErrorCode.InvalidDnsName) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DNS_NAME_IN_USE, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_DnsNameInUse : msg), e, FabricErrorCode.DnsNameInUse) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_COMPOSE_DEPLOYMENT_ALREADY_EXISTS, (e, msg) => new FabricElementAlreadyExistsException((string.IsNullOrEmpty(msg) ? StringResources.Error_ComposeDeploymentAlreadyExists : msg), e, FabricErrorCode.ComposeDeploymentAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_COMPOSE_DEPLOYMENT_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ComposeDeploymentNotFound : msg), e, FabricErrorCode.ComposeDeploymentNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_FOR_STATEFUL_SERVICES, (e, msg) => new FabricInvalidForStatefulServicesException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidForStatefulServices : msg), e, FabricErrorCode.InvalidForStatefulServices) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_FOR_STATELESS_SERVICES, (e, msg) => new FabricInvalidForStatelessServicesException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidForStatelessServices : msg), e, FabricErrorCode.InvalidForStatelessServices) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_ONLY_VALID_FOR_STATEFUL_PERSISTENT_SERVICES, (e, msg) => new FabricOnlyValidForStatefulPersistentServicesException((string.IsNullOrEmpty(msg) ? StringResources.Error_OnlyValidForStatefulPersistentServices : msg), e, FabricErrorCode.OnlyValidForStatefulPersistentServices) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_UPLOAD_SESSION_ID, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidUploadSessionId : msg), e, FabricErrorCode.InvalidUploadSessionId) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_BACKUP_NOT_ENABLED, (e, msg) => new FabricPeriodicBackupNotEnabledException((string.IsNullOrEmpty(msg) ? StringResources.Error_BackupNotEnabled : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CONTAINER_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_ContainerNotFound : msg), e, FabricErrorCode.ContainerNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_OBJECT_DISPOSED, (e, msg) => new ObjectDisposedException((string.IsNullOrEmpty(msg) ? StringResources.Error_NotReadable : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_NOT_READABLE, (e, msg) => new FabricNotReadableException((string.IsNullOrEmpty(msg) ? StringResources.Error_NotReadable : msg), e) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SINGLE_INSTANCE_APPLICATION_ALREADY_EXISTS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_SingleInstanceApplicationAlreadyExists : msg), e, FabricErrorCode.SingleInstanceApplicationAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_SINGLE_INSTANCE_APPLICATION_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_SingleInstanceApplicationNotFound : msg), e, FabricErrorCode.SingleInstanceApplicationNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_VOLUME_ALREADY_EXISTS, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_VolumeAlreadyExists : msg), e, FabricErrorCode.VolumeAlreadyExists) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_VOLUME_NOT_FOUND, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_VolumeNotFound : msg), e, FabricErrorCode.VolumeNotFound) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_INVALID_SERVICE_SCALING_POLICY, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_InvalidServiceScalingPolicy : msg), e, FabricErrorCode.InvalidServiceScalingPolicy) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_DATABASE_MIGRATION_IN_PROGRESS, (e, msg) => new FabricTransientException((string.IsNullOrEmpty(msg) ? StringResources.Error_DatabaseMigrationInProgress : msg), e, FabricErrorCode.DatabaseMigrationInProgress) },
+                    { (int)NativeTypes.FABRIC_ERROR_CODE.FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC, (e, msg) => new FabricException((string.IsNullOrEmpty(msg) ? StringResources.Error_CentralSecretServiceGeneric : msg), e, FabricErrorCode.CentralSecretServiceGenericError) }
+                };
+            }
+        }
+    }
+}
+ 

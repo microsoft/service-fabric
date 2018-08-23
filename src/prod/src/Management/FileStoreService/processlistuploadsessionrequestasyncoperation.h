@@ -27,6 +27,8 @@ namespace Management
 
             virtual ~ProcessListUploadSessionRequestAsyncOperation();
 
+            virtual void WriteTrace(__in Common::ErrorCode const &error) override;
+
         protected:
 
             Common::AsyncOperationSPtr BeginOperation(

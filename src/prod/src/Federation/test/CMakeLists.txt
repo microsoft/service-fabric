@@ -37,6 +37,7 @@ target_link_libraries(${exe_Federation.Test}
   ${lib_Common}
   ${lib_ServiceModel}
   ${lib_Serialization}
+  ${lib_Pal}
   ${BoostTest2}
   ${Cxx}
   ${CxxABI}
@@ -54,8 +55,6 @@ target_link_libraries(${exe_Federation.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

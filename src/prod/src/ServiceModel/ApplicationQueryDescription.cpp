@@ -17,7 +17,7 @@ ApplicationQueryDescription::ApplicationQueryDescription()
     , applicationTypeNameFilter_()
     , applicationDefinitionKindFilter_(0)
     , excludeApplicationParameters_(false)
-    , queryPagingDescription_()
+    , queryPagingDescriptionUPtr_()
 {
 }
 
@@ -70,7 +70,7 @@ ErrorCode ApplicationQueryDescription::FromPublicApi(FABRIC_APPLICATION_QUERY_DE
             }
         }
 
-        queryPagingDescription_ = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryPagingDescriptionUPtr_ = make_unique<QueryPagingDescription>(move(pagingDescription));
     }
 
     return ErrorCodeValue::Success;
@@ -106,9 +106,9 @@ void ApplicationQueryDescription::GetQueryArgumentMap(__out QueryArgumentMap & a
             wformatString(excludeApplicationParameters_));
     }
 
-    if (queryPagingDescription_ != nullptr)
+    if (queryPagingDescriptionUPtr_ != nullptr)
     {
-        queryPagingDescription_->SetQueryArguments(argMap);
+        queryPagingDescriptionUPtr_->SetQueryArguments(argMap);
     }
 }
 
@@ -171,7 +171,7 @@ Common::ErrorCode ApplicationQueryDescription::GetDescriptionFromQueryArgumentMa
     auto error = pagingDescription.GetFromArgumentMap(queryArgs);
     if (error.IsSuccess())
     {
-        queryPagingDescription_ = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryPagingDescriptionUPtr_ = make_unique<QueryPagingDescription>(move(pagingDescription));
     }
 
     applicationNameFilter_ = NamingUri(trimmed);

@@ -33,7 +33,7 @@ ComposeDeploymentContext::ComposeDeploymentContext(
     Common::NamingUri const & appName)
     : DeletableRolloutContext(ComposeDeploymentContextType)
     , applicationName_(appName)
-    , deploymentName_(ClusterManagerReplica::GetComposeDeploymentNameFromAppName(appName.ToString()))
+    , deploymentName_(ClusterManagerReplica::GetDeploymentNameFromAppName(appName.ToString()))
     , applicationId_()
     , globalInstanceCount_(0)
     , appTypeName_()
@@ -120,11 +120,9 @@ ComposeDeploymentContext::ComposeDeploymentContext(
 {
 }
 
-void ComposeDeploymentContext::AddPendingDefaultService(NamingUri const & serviceName)
+void ComposeDeploymentContext::AddPendingDefaultService(ServiceModelServiceNameEx && name)
 {
     AcquireExclusiveLock lock(pendingDefaultServicesLock_);
-
-    ServiceModelServiceName name(serviceName.ToString());
 
     auto findIter = find(pendingDefaultServices_.begin(), pendingDefaultServices_.end(), name);
     if (findIter == pendingDefaultServices_.end())
@@ -192,7 +190,7 @@ ErrorCode ComposeDeploymentContext::FinishCreating(Store::StoreTransaction &stor
 {
     this->statusDetails_ = statusDetails;
     InnerUpdateComposeDeploymentStatus(ComposeDeploymentStatus::Ready);
-    return this->UpdateStatus(storeTx, RolloutStatus::Completed);
+    return this->Complete(storeTx);
 }
 
 ErrorCode ComposeDeploymentContext::ClearUpgrading(Store::StoreTransaction &storeTx, wstring const &statusDetails)

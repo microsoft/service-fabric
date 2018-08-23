@@ -10,6 +10,7 @@ namespace Data
     enum StateProviderKind : ULONG32
     {
        Store = 1,
-       ConcurrentQueue
+       ConcurrentQueue,
+       ReliableDictionary_Compat
     };
 }

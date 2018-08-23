@@ -15,21 +15,24 @@ ReportFaultRequestMessageBody::ReportFaultRequestMessageBody()
   faultType_(FaultType::Invalid),
   replicaId_(0),
   partitionId_(Guid::Empty()),
-  isForce_(false)
+  isForce_(false),
+  activityDescription_()
 {
 }
 
 ReportFaultRequestMessageBody::ReportFaultRequestMessageBody(
-    wstring nodeName,
+    wstring const & nodeName,
     FaultType::Enum faultType,
     int64 replicaId,
-    Guid partitionId,
-    bool isForce)
+    Guid const & partitionId,
+    bool isForce,
+    Common::ActivityDescription const & activityDescription)
 : nodeName_(move(nodeName)),
   faultType_(faultType),
   replicaId_(replicaId),
   partitionId_(partitionId),
-  isForce_(isForce)
+  isForce_(isForce),
+  activityDescription_(activityDescription)
 {
 }
 
@@ -38,7 +41,8 @@ ReportFaultRequestMessageBody::ReportFaultRequestMessageBody(ReportFaultRequestM
   faultType_(move(other.faultType_)),
   replicaId_(move(other.replicaId_)),
   partitionId_(move(other.partitionId_)),
-  isForce_(move(other.isForce_))
+  isForce_(move(other.isForce_)),
+  activityDescription_(move(other.activityDescription_))
 {
 }
 
@@ -51,6 +55,7 @@ ReportFaultRequestMessageBody & ReportFaultRequestMessageBody::operator=(ReportF
         replicaId_ = move(other.replicaId_);
         partitionId_ = move(other.partitionId_);
         isForce_ = move(other.isForce_);
+        activityDescription_ = move(other.activityDescription_);
     }
 
     return *this;
@@ -59,7 +64,7 @@ ReportFaultRequestMessageBody & ReportFaultRequestMessageBody::operator=(ReportF
 
 string ReportFaultRequestMessageBody::AddField(Common::TraceEvent & traceEvent, string const & name)
 {
-    string format = "Node = {0} Partition = {1} Replica = {2} FaultType = {3} IsForce = {4}";
+    string format = "Node = {0} Partition = {1} Replica = {2} FaultType = {3} IsForce = {4} ActivityDescription = {5}";
     size_t index = 0;
 
     traceEvent.AddEventField<wstring>(format, name + ".node", index);
@@ -67,6 +72,7 @@ string ReportFaultRequestMessageBody::AddField(Common::TraceEvent & traceEvent, 
     traceEvent.AddEventField<int64>(format, name + ".replica", index);
     traceEvent.AddEventField<FaultType::Trace>(format, name + ".faultType", index);
     traceEvent.AddEventField<bool>(format, name + ".isForce", index);
+    traceEvent.AddEventField<Common::ActivityDescription>(format, name + ".activityDescription", index);
 
     return format;
 }
@@ -78,9 +84,10 @@ void ReportFaultRequestMessageBody::FillEventData(TraceEventContext & context) c
     context.Write(replicaId_);
     context.WriteCopy<uint>(static_cast<uint>(faultType_));
     context.Write(isForce_);
+    context.Write(activityDescription_);
 }
 
 void ReportFaultRequestMessageBody::WriteTo(TextWriter& w, FormatOptions const &) const
 {
-    w.Write("Node = {0} Partition = {1} Replica = {2} FaultType = {3} IsForce = {4}", nodeName_, partitionId_, replicaId_, faultType_, isForce_);
+    w.Write("Node = {0} Partition = {1} Replica = {2} FaultType = {3} IsForce = {4} ActivityDescription = {5}", nodeName_, partitionId_, replicaId_, faultType_, isForce_, activityDescription_);
 }

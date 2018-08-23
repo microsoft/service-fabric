@@ -97,6 +97,7 @@ namespace Data
                __in ULONG64 logicalTimeStamp,
                __in KAllocator& allocator,
                __in StoreTraceComponent & traceComponent,
+               __in StorePerformanceCountersSPtr & perfCounters,
                __in bool isValueAReferenceType)
             {
                 SharedException::CSPtr exceptionSPtr = nullptr;
@@ -152,6 +153,9 @@ namespace Data
                         blockWriterSPtr);
                     Diagnostics::Validate(status);
 
+                    CheckpointPerformanceCounterWriter perfCounterWriter(perfCounters);
+                    perfCounterWriter.StartMeasurement();
+
                     while (sortedItemDataSPtr->MoveNext())
                     {
                         co_await blockWriterSPtr->BlockAlignedWriteItemAsync(sortedItemDataSPtr->Current(), nullptr, true);
@@ -159,6 +163,14 @@ namespace Data
 
                     // Flush both key and value checkpoints to disk.
                     co_await blockWriterSPtr->FlushAsync();
+
+                    perfCounterWriter.StopMeasurement();
+                    ULONG64 writeBytes = co_await checkpointFileSPtr->GetTotalFileSizeAsync(allocator);
+                    ULONG64 writeBytesPerSecond = perfCounterWriter.UpdatePerformanceCounter(writeBytes);
+                    
+                    StoreEventSource::Events->CheckpointFileWriteBytesPerSec(
+                        traceComponent.PartitionId, traceComponent.TraceTag,
+                        writeBytesPerSecond);
                 }
                 catch (ktl::Exception const& e)
                 {
@@ -245,6 +257,8 @@ namespace Data
             KString::SPtr valueFileNameSPtr_;
             KSharedPtr<KeyCheckpointFile> keyCheckpointFileSPtr_;
             KSharedPtr<ValueCheckpointFile> valueCheckpointFileSPtr_;
+            ULONG64 cachedFileSize_;
+            bool isFileSizeCached_;
             
             StoreTraceComponent::SPtr traceComponent_;
         };

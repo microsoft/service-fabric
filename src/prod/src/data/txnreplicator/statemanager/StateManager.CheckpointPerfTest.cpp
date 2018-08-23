@@ -62,6 +62,7 @@ namespace StateManagerTests
         __in ULONG itemsCount) noexcept
     {
         NTSTATUS status = STATUS_UNSUCCESSFUL;
+        SerializableMetadata::CSPtr serializableMetadataCSPtr = nullptr;
         KWString fileName = TestHelper::CreateFileName(L"Test_Checkpoint_Performance_Test_CreateAsyncAndOpenAsync.txt", GetAllocator());
 
         KGuid expectedPartitionId;
@@ -100,7 +101,12 @@ namespace StateManagerTests
             checkpointFileSPtr);
         VERIFY_IS_TRUE(NT_SUCCESS(status));
 
-        co_await checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None);
+        co_await checkpointFileSPtr->WriteAsync(
+            *SerializableMetadataArray, 
+            SerializationMode::Enum::Native, 
+            false, 
+            expectedPrepareCheckpointLSN, 
+            CancellationToken::None);
 
         stopwatch.Stop();
         Trace.WriteInfo(
@@ -116,10 +122,14 @@ namespace StateManagerTests
         co_await checkpointFileSPtr->ReadAsync(CancellationToken::None);
         CheckpointFileAsyncEnumerator::SPtr enumerator = checkpointFileSPtr->GetAsyncEnumerator();
 
-        while (co_await enumerator->MoveNextAsync(CancellationToken::None))
+        while (true)
         {
-            // We don't need to do anything with the returned serilizable metadata, so ignore it.
-            enumerator->GetCurrent();
+            // Since we are testing the performance of read, ignore the failure status check.
+            status = co_await enumerator->GetNextAsync(CancellationToken::None, serializableMetadataCSPtr);
+            if (status == STATUS_NOT_FOUND || !NT_SUCCESS(status))
+            {
+                break;
+            }
         }
 
         // Close the file stream and file 
@@ -128,24 +138,31 @@ namespace StateManagerTests
         stopwatch.Stop();
         Trace.WriteInfo(
             BoostTestTrace,
-            "Test_Checkpoint_Performance_Test_CreateAsyncAndOpenAsync with {0} items, Checkpoint Performance Test ReadAsync call completed in {1} ms",
+            "Test_Checkpoint_Performance_Test_CreateAsyncAndOpenAsync with {0} items, Checkpoint Performance Test ReadAsync call completed in {1} ms, Status: {2}",
             itemsCount,
-            stopwatch.ElapsedMilliseconds);
+            stopwatch.ElapsedMilliseconds,
+            status);
 
         // Verify the checkpoint file is the same as we wrote
         CheckpointFileAsyncEnumerator::SPtr enumeratorVerify = checkpointFileSPtr->GetAsyncEnumerator();
         ULONG i = 0;
 
-        while (co_await enumeratorVerify->MoveNextAsync(CancellationToken::None))
+        while (true)
         {
-            SerializableMetadata::CSPtr serializableMetadata = enumeratorVerify->GetCurrent();
+            status = co_await enumeratorVerify->GetNextAsync(CancellationToken::None, serializableMetadataCSPtr);
+            if (status == STATUS_NOT_FOUND)
+            {
+                break;
+            }
 
-            verifier = verifier ^ serializableMetadata->StateProviderId;
-            VERIFY_IS_TRUE(serializableMetadata->Name->Get(KUriView::eRaw).Compare(expectedNameView) == 0);
-            VERIFY_IS_TRUE(serializableMetadata->ParentStateProviderId == expectedParentId);
-            VERIFY_IS_TRUE(serializableMetadata->CreateLSN == expectedCreateLSN);
-            VERIFY_IS_TRUE(serializableMetadata->DeleteLSN == expectedDeleteLSN);
-            VERIFY_IS_TRUE(serializableMetadata->MetadataMode == expectedMetadataMode);
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+            verifier = verifier ^ serializableMetadataCSPtr->StateProviderId;
+            VERIFY_IS_TRUE(serializableMetadataCSPtr->Name->Get(KUriView::eRaw).Compare(expectedNameView) == 0);
+            VERIFY_IS_TRUE(serializableMetadataCSPtr->ParentStateProviderId == expectedParentId);
+            VERIFY_IS_TRUE(serializableMetadataCSPtr->CreateLSN == expectedCreateLSN);
+            VERIFY_IS_TRUE(serializableMetadataCSPtr->DeleteLSN == expectedDeleteLSN);
+            VERIFY_IS_TRUE(serializableMetadataCSPtr->MetadataMode == expectedMetadataMode);
 
             ++i;
         }

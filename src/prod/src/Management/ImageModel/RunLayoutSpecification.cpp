@@ -45,6 +45,12 @@ wstring RunLayoutSpecification::GetApplicationTempFolder(
     return Path::Combine(GetApplicationFolder(applicationId), L"temp");
 }
 
+wstring RunLayoutSpecification::GetApplicationSettingsFolder(
+    wstring const & applicationId) const
+{
+    return Path::Combine(GetApplicationFolder(applicationId), L"settings");
+}
+
 wstring RunLayoutSpecification::GetApplicationPackageFile(
     wstring const & applicationId,
     wstring const & applicationRolloutVersion) const

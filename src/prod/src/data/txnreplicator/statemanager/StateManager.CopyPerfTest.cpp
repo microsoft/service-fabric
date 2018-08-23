@@ -117,7 +117,7 @@ namespace StateManagerTests
             // Copy the states in the copy stream
             {
                 stopwatch.Start();
-                secondarystateManagerSPtr->BeginSettingCurrentState();
+                co_await secondarystateManagerSPtr->BeginSettingCurrentStateAsync();
                 stopwatch.Stop();
                 Trace.WriteInfo(
                     BoostTestTrace,

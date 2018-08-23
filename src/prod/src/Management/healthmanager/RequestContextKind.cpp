@@ -22,6 +22,7 @@ namespace Management
                     case Query: w << "Query"; return;
                     case QueryEntityHealthStateChunk: w << "QueryEntityHealthStateChunk"; return;
                     case QueryEntityHealthState: w << "QueryEntityHealthState"; return;
+                    case QueryEntityUnhealthyChildren: w << "QueryEntityUnhealthyChildren"; return;
                     default: w << "RequestContextKind(" << static_cast<uint>(e) << ')'; return;
                 }
             }

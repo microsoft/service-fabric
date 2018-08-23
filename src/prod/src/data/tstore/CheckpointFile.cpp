@@ -19,6 +19,7 @@ CheckpointFile::CheckpointFile(
     fileNameBaseSPtr_(nullptr),
     keyFileNameSPtr_(nullptr),
     valueFileNameSPtr_(nullptr),
+    isFileSizeCached_(false),
     traceComponent_(&traceComponent)
 {
     NTSTATUS status = KString::Create(fileNameBaseSPtr_, GetThisAllocator(), filename);
@@ -66,11 +67,16 @@ NTSTATUS CheckpointFile::Create(
 
 ktl::Awaitable<ULONG64> CheckpointFile::GetTotalFileSizeAsync(__in KAllocator& allocator)
 {
-    ULONG64 keyFileSize = co_await GetFileSizeAsync(*keyFileNameSPtr_, allocator);
-    ULONG64 valueFileSize = co_await GetFileSizeAsync(*valueFileNameSPtr_, allocator);
-    co_return keyFileSize + valueFileSize;
-}
+    if (!isFileSizeCached_)
+    {
+        ULONG64 keyFileSize = co_await GetFileSizeAsync(*keyFileNameSPtr_, allocator);
+        ULONG64 valueFileSize = co_await GetFileSizeAsync(*valueFileNameSPtr_, allocator);
+        cachedFileSize_ = keyFileSize + valueFileSize;
+        isFileSizeCached_ = true;
+    }
 
+    co_return cachedFileSize_;
+}
 
 ktl::Awaitable<KSharedPtr<CheckpointFile>> CheckpointFile::OpenAsync(
     __in KStringView& filename,

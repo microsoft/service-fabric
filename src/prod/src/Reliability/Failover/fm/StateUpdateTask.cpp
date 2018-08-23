@@ -132,8 +132,10 @@ void StateUpdateTask::CheckFailoverUnit(
         TryClearUpgradeFlags(applicationInfo, lockedFailoverUnit, replica);
 
         if (replica.IsUp &&
+            replica.IsCurrentConfigurationPrimary &&
             !replica.IsPrimaryToBeSwappedOut &&
             !failoverUnit.ToBePromotedReplicaExists &&
+            (replica.IsPreferredPrimaryLocation || !failoverUnit.PreferredPrimaryLocationExists) &&
             IsSwapPrimaryNeeded(applicationInfo, *lockedFailoverUnit, replica))
         {
             if (failoverUnit.TargetReplicaSetSize == 1)
@@ -151,8 +153,7 @@ void StateUpdateTask::CheckFailoverUnit(
             }
 
             if (FailoverConfig::GetConfig().RestoreReplicaLocationAfterUpgrade &&
-                !replica.NodeInfoObj->DeactivationInfo.IsDeactivated &&
-                !failoverUnit.PreferredPrimaryLocationExists)
+                !replica.NodeInfoObj->DeactivationInfo.IsDeactivated)
             {
                 lockedFailoverUnit.EnableUpdate();
                 replica.IsPreferredPrimaryLocation = true;
@@ -167,6 +168,7 @@ void StateUpdateTask::CheckFailoverUnit(
             bool isOkToPlacePrimary = true;
 
             if (fm_.FabricUpgradeManager.Upgrade &&
+                fm_.FabricUpgradeManager.Upgrade->IsDomainStarted(replica.NodeInfoObj->ActualUpgradeDomainId) &&
                 replica.NodeInfoObj->VersionInstance.Version != fm_.FabricUpgradeManager.Upgrade->Description.Version)
             {
                 // Fabric upgrade is going on and the node has not been upgraded
@@ -174,6 +176,7 @@ void StateUpdateTask::CheckFailoverUnit(
             }
             
             if (applicationInfo->Upgrade &&
+                applicationInfo->Upgrade->IsDomainStarted(replica.NodeInfoObj->ActualUpgradeDomainId) &&
                 (!applicationInfo->Upgrade->IsUpgradeCompletedOnNode(*replica.NodeInfoObj) ||
                 (!replica.IsDropped && replica.VersionInstance.Version != versionInstance.Version)))
             {

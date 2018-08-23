@@ -31,6 +31,7 @@ namespace Common
             , timestamp_(DateTime::Now())
             , stack_()
         {
+            SetTraceId(root_->TraceId);
             stack_.CaptureCurrentPosition();
         }
 

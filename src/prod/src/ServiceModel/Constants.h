@@ -7,7 +7,6 @@
 
 namespace ServiceModel
 {
-
     // "Test mutable constants" are used in product code like regular static const members
     // (i.e. Constants::MemberName) and are not exposed in any way through config.
     // However, you can change their values for testing purposes using Constants::Test_SetMemberName().
@@ -51,6 +50,8 @@ public: \
         static Common::WStringLiteral const ApplicationHealthPolicy;
         static Common::WStringLiteral const ApplicationHealthPolicyMap;
         static Common::WStringLiteral const ApplicationHealthPolicies;
+        static Common::WStringLiteral const instances;
+        static Common::WStringLiteral const instanceNames;
         static Common::WStringLiteral const MaxPercentServicesUnhealthy;
         static Common::WStringLiteral const MaxPercentDeployedApplicationsUnhealthy;
         static Common::WStringLiteral const Value;
@@ -207,6 +208,7 @@ public: \
         static Common::WStringLiteral const IsStateful;
         static Common::WStringLiteral const UseImplicitHost;
         static Common::WStringLiteral const UseImplicitFactory;
+        static Common::WStringLiteral const UseServiceFabricReplicatedStore;
         static Common::WStringLiteral const Extensions;
         static Common::WStringLiteral const LoadMetrics;
         static Common::WStringLiteral const ServiceTypeDescription;
@@ -313,6 +315,7 @@ public: \
         static Common::WStringLiteral const NodeHealthStateChunks;
         static Common::WStringLiteral const Metadata;
         static Common::WStringLiteral const ServiceDnsName;
+        static Common::WStringLiteral const ScalingPolicies;
         static Common::WStringLiteral const Key;
         static Common::WStringLiteral const LastBalancingStartTimeUtc;
         static Common::WStringLiteral const LastBalancingEndTimeUtc;
@@ -342,12 +345,14 @@ public: \
         static Common::WStringLiteral const BufferedNodeCapacityRemaining;
         static Common::WStringLiteral const NodeLoadMetricInformation;
         static Common::WStringLiteral const LoadMetricReports;
-        static Common::WStringLiteral const PrimaryLoadMetricReports ;
-        static Common::WStringLiteral const SecondaryLoadMetricReports ;
+        static Common::WStringLiteral const PrimaryLoadMetricReports;
+        static Common::WStringLiteral const SecondaryLoadMetricReports;
         static Common::WStringLiteral const NodeCapacities;
         static Common::WStringLiteral const ServiceStatus;
         static Common::WStringLiteral const Kind;
+        static Common::WStringLiteral const KindLowerCase;
         static Common::WStringLiteral const UnhealthyEvent;
+        static Common::WStringLiteral const unhealthyEvaluation;
         static Common::WStringLiteral const UnhealthyEvaluations;
         static Common::WStringLiteral const ApplicationUnhealthyEvaluations;
         static Common::WStringLiteral const HealthEvaluation;
@@ -369,6 +374,7 @@ public: \
         static Common::WStringLiteral const CurrentServiceOperation;
         static Common::WStringLiteral const CurrentServiceOperationStartTimeUtc;
         static Common::WStringLiteral const ReportedLoad;
+        static Common::WStringLiteral const CurrentValue;
         static Common::WStringLiteral const LastReportedUtc;
         static Common::WStringLiteral const CurrentReplicatorOperation;
         static Common::WStringLiteral const CurrentReplicatorOperationStartTimeUtc;
@@ -390,6 +396,7 @@ public: \
         static Common::WStringLiteral const Endpoints;
         static Common::WStringLiteral const PreviousRspVersion;
         static Common::WStringLiteral const CurrentConfigurationEpoch;
+        static Common::WStringLiteral const PrimaryEpoch;
         static Common::WStringLiteral const ConfigurationVersion;
         static Common::WStringLiteral const DataLossVersion;
         static Common::WStringLiteral const ContinuationToken;
@@ -423,8 +430,12 @@ public: \
         static Common::WStringLiteral const ErrorMessage;
         static Common::WStringLiteral const OperationIndex;
 
+        static Common::WStringLiteral const QueryPagingDescription;
+
         static Common::WStringLiteral const ChaosEvent;
+        static Common::WStringLiteral const ChaosEventsFilter;
         static Common::WStringLiteral const ChaosParameters;
+        static Common::WStringLiteral const ClientType;
         static Common::WStringLiteral const Reason;
         static Common::WStringLiteral const Faults;
         static Common::WStringLiteral const MaxClusterStabilizationTimeoutInSeconds;
@@ -439,6 +450,26 @@ public: \
         static Common::WStringLiteral const NodeTypeInclusionList;
         static Common::WStringLiteral const ApplicationInclusionList;
         static Common::WStringLiteral const ChaosTargetFilter;
+        static Common::WStringLiteral const Schedule;
+        static Common::WStringLiteral const ChaosStatus;
+        static Common::WStringLiteral const ChaosScheduleStatus;
+        static Common::WStringLiteral const StartDate;
+        static Common::WStringLiteral const ExpiryDate;
+        static Common::WStringLiteral const StartTime;
+        static Common::WStringLiteral const EndTime;
+        static Common::WStringLiteral const ChaosParametersMap;
+        static Common::WStringLiteral const Jobs;
+        static Common::WStringLiteral const Days;
+        static Common::WStringLiteral const Times;
+        static Common::WStringLiteral const Hour;
+        static Common::WStringLiteral const Minute;
+        static Common::WStringLiteral const Sunday;
+        static Common::WStringLiteral const Monday;
+        static Common::WStringLiteral const Tuesday;
+        static Common::WStringLiteral const Wednesday;
+        static Common::WStringLiteral const Thursday;
+        static Common::WStringLiteral const Friday;
+        static Common::WStringLiteral const Saturday;
 
         static Common::WStringLiteral const Scope;
         static Common::WStringLiteral const TaskId;
@@ -489,6 +520,20 @@ public: \
         static Common::WStringLiteral const ReconfigurationInformation;
         static Common::WStringLiteral const DeployedServiceReplica;
         static Common::WStringLiteral const DeployedServiceReplicaInstance;
+
+        //Auto scaling
+        static Common::WStringLiteral const MetricName;
+        static Common::WStringLiteral const MinInstanceCount;
+        static Common::WStringLiteral const MaxInstanceCount;
+        static Common::WStringLiteral const MaxPartitionCount;
+        static Common::WStringLiteral const MinPartitionCount;
+        static Common::WStringLiteral const LowerLoadThreshold;
+        static Common::WStringLiteral const UpperLoadThreshold;
+        static Common::WStringLiteral const UseOnlyPrimaryLoad;
+        static Common::WStringLiteral const ScaleIntervalInSeconds;
+        static Common::WStringLiteral const ScaleIncrement;
+        static Common::WStringLiteral const ScalingTrigger;
+        static Common::WStringLiteral const ScalingMechanism;
 
         // Replicator Query Specific
         static Common::WStringLiteral const ReplicatorStatus;
@@ -547,8 +592,7 @@ public: \
         static Common::WStringLiteral const ExpectedRanges;
         static Common::WStringLiteral const UploadSessions;
         static Common::WStringLiteral const IsRecursive;
-
-        static Common::GlobalWString const SFApplicationPackageExtension;
+        static Common::WStringLiteral const ChunkContent;
 
         static Common::GlobalWString EventSystemSourcePrefix;
 
@@ -606,6 +650,7 @@ public: \
         static Common::GlobalWString const HealthReplicaOpenStatusProperty;
         static Common::GlobalWString const HealthReplicaCloseStatusProperty;
         static Common::GlobalWString const HealthReplicaServiceTypeRegistrationStatusProperty;
+        static Common::GlobalWString const HealthRAStoreProvider;
         static Common::GlobalWString const HealthReplicaChangeRoleStatusProperty;
         static Common::GlobalWString const UpgradePrimarySwapHealthProperty;
         static Common::GlobalWString const BalancingUnsuccessfulProperty;
@@ -618,6 +663,7 @@ public: \
         static Common::GlobalWString const ResourceGovernanceReportProperty;
         static Common::GlobalWString const ReconfigurationProperty;
         static Common::GlobalWString const RebuildProperty;
+        static Common::GlobalWString const HealthReportCountProperty;
 
         // KVS replica query
         static Common::WStringLiteral const DatabaseRowCountEstimate;
@@ -625,6 +671,10 @@ public: \
         static Common::WStringLiteral const CopyNotificationCurrentKeyFilter;
         static Common::WStringLiteral const CopyNotificationCurrentProgress;
         static Common::WStringLiteral const StatusDetails;
+        static Common::WStringLiteral const MigrationStatus;
+        static Common::WStringLiteral const CurrentPhase;
+        static Common::WStringLiteral const NextPhase;
+        static Common::WStringLiteral const ProviderKind;
 
         //
         // Reliability
@@ -679,7 +729,14 @@ public: \
         static Common::WStringLiteral const NodeResult;
 
         //
-        // Compose application
+        // Secret Store Service
+        //
+        static int const SecretNameMaxLength = 256;
+        static int const SecretVersionMaxLength = 256;
+        static int const SecretValueMaxSize = 4 * 1024 * 1024; // 4MB
+
+        //
+        // Compose deployment
         //
         static Common::WStringLiteral const RegistryUserName;
         static Common::WStringLiteral const RegistryPassword;
@@ -692,6 +749,61 @@ public: \
         static Common::WStringLiteral const RepositoryCredential;
 
         static Common::WStringLiteral const ComposeDeploymentStatus;
+
+        //
+        // Single Instance
+        //
+        static Common::WStringLiteral const deploymentName;
+        static Common::WStringLiteral const applicationName;
+        static Common::WStringLiteral const applicationUri;
+        static Common::WStringLiteral const status;
+        static Common::WStringLiteral const statusDetails;
+        static Common::WStringLiteral const instanceCount;
+        static Common::WStringLiteral const properties;
+        static Common::WStringLiteral const containerRegistryServer;
+        static Common::WStringLiteral const containerRegistryUserName;
+        static Common::WStringLiteral const containerRegistryPassword;
+        static Common::WStringLiteral const restartPolicy;
+        static Common::WStringLiteral const volumes;
+        static Common::WStringLiteral const image;
+        static Common::WStringLiteral const command;
+        static Common::WStringLiteral const ports;
+        static Common::WStringLiteral const environmentVariables;
+        static Common::WStringLiteral const instanceView;
+        static Common::WStringLiteral const restartCount;
+        static Common::WStringLiteral const currentState;
+        static Common::WStringLiteral const previousState;
+        static Common::WStringLiteral const state;
+        static Common::WStringLiteral const exitCode;
+        static Common::WStringLiteral const resources;
+        static Common::WStringLiteral const resourcesRequests;
+        static Common::WStringLiteral const resourcesLimits;
+        static Common::WStringLiteral const volumeMounts;
+        static Common::WStringLiteral const memoryInGB;
+        static Common::WStringLiteral const cpu;
+        static Common::WStringLiteral const mountPath;
+        static Common::WStringLiteral const readOnly;
+        static Common::WStringLiteral const imageRegistryCredentials;
+        static Common::WStringLiteral const valueCamelCase;
+        static Common::WStringLiteral const port;
+        static Common::WStringLiteral const creationParameters;
+        static Common::WStringLiteral const nameCamelCase;
+        static Common::WStringLiteral const azureFile;
+        static Common::WStringLiteral const shareName;
+        static Common::WStringLiteral const storageAccountName;
+        static Common::WStringLiteral const storageAccountKey;
+        static Common::WStringLiteral const accountName;
+        static Common::WStringLiteral const accountKey;
+        static Common::WStringLiteral const sizeDisk;
+        static Common::WStringLiteral const volumeName;
+        static Common::WStringLiteral const volumeDescription;
+        static Common::WStringLiteral const volumeDescriptionForImageBuilder;
+        static Common::WStringLiteral const volumeParameters;
+        static Common::WStringLiteral const osType;
+
+        static Common::WStringLiteral const RemoveServiceFabricRuntimeAccess;
+        static Common::WStringLiteral const AzureFilePluginName;
+        static Common::GlobalWString const ModelV2ReservedDnsNameCharacters;
 
         static Common::Global<std::vector<std::wstring>> const ValidNodeIdGeneratorVersionList;
 

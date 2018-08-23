@@ -12,11 +12,11 @@ namespace Data
         class Comparer
         {
         public:
-            // TODO: #9019461 KUri should support Compare that actually orders.
+            // #9019461 KUri should support Compare that actually orders.
             // Compare function is used in the StateManager to sort the metadata array.
             static LONG32 Compare(__in Metadata::SPtr const & itemOne, __in Metadata::SPtr const & itemTwo);
 
-            // TODO: #9019461 KUri should support Compare that actually orders.
+            // #9019461 KUri should support Compare that actually orders.
             // Compare function is used in CheckpointManager Binary insertion sort to find the right position to insert.
             static LONG32 Compare(__in Metadata::CSPtr const & itemOne, __in Metadata::CSPtr const & itemTwo);
 

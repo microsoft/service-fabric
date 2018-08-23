@@ -28,27 +28,6 @@ NodeHealthStateFilter::NodeHealthStateFilter(
 {
 }
 
-NodeHealthStateFilter::NodeHealthStateFilter(NodeHealthStateFilter && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , healthStateFilter_(move(other.healthStateFilter_))
-    , nodeNameFilter_(move(other.nodeNameFilter_))
-{
-}
-
-NodeHealthStateFilter & NodeHealthStateFilter::operator =(NodeHealthStateFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-        nodeNameFilter_ = move(other.nodeNameFilter_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    return *this;
-}
-
 NodeHealthStateFilter::~NodeHealthStateFilter()
 {
 }

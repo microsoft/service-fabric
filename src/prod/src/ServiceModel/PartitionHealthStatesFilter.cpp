@@ -21,21 +21,6 @@ PartitionHealthStatesFilter::PartitionHealthStatesFilter(DWORD healthStateFilter
 {
 }
 
-PartitionHealthStatesFilter::PartitionHealthStatesFilter(PartitionHealthStatesFilter && other)
-    : healthStateFilter_(move(other.healthStateFilter_))
-{
-}
-
-PartitionHealthStatesFilter & PartitionHealthStatesFilter::operator =(PartitionHealthStatesFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-    }
-
-    return *this;
-}
-
 PartitionHealthStatesFilter::~PartitionHealthStatesFilter()
 {
 }

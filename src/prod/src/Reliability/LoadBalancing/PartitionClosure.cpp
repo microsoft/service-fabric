@@ -17,18 +17,18 @@ PartitionClosureType::Enum PartitionClosureType::FromPLBSchedulerAction(PLBSched
 {
     switch (action)
     {
-    case PLBSchedulerActionType::Creation:
-        return PartitionClosureType::Creation;
+    case PLBSchedulerActionType::NewReplicaPlacement:
+        return PartitionClosureType::NewReplicaPlacement;
 
     case PLBSchedulerActionType::ConstraintCheck:
         return PartitionClosureType::ConstraintCheck;
 
-    case PLBSchedulerActionType::FastBalancing:
-    case PLBSchedulerActionType::SlowBalancing:
+    case PLBSchedulerActionType::QuickLoadBalancing:
+    case PLBSchedulerActionType::LoadBalancing:
         return PartitionClosureType::Full;
 
-    case PLBSchedulerActionType::CreationWithMove:
-        return PartitionClosureType::CreationWithMove;
+    case PLBSchedulerActionType::NewReplicaPlacementWithMove:
+        return PartitionClosureType::NewReplicaPlacementWithMove;
 
     default:
         // Currently we don't expect that phase can be "Upgrade"

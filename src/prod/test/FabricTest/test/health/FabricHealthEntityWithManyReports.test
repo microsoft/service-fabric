@@ -1,0 +1,303 @@
+#
+# Tests scenarios involving enities with many health reports.
+# The entity is flagged through Health and if the number go over a certain number, automatic cleanup is triggered.
+#
+
+votes 10
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+
+set DummyPLBEnabled true
+
+set HealthOperationTimeout 20
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+
+# Retry queries frequently to speed up validation for operations executed directly on HM (default is 5 sec)
+set QueryOperationRetryDelay 1
+# Retry queries for longer (default 15 times) to allow time for stabilization (eg. in throttled cases)
+set QueryOperationRetryCount 45
+
+set HealthStoreCleanupInterval 3
+set HealthStoreCleanupGraceInterval 3
+set HealthStoreEntityWithoutSystemReportKeptInterval 5
+
+# Entity should have less than MaxSuggestedNumberOfEntityHealthReports reports and only MaxEntityHealthReportsAllowedPerTransaction can be deleted per tx
+set MaxSuggestedNumberOfEntityHealthReports 3
+set MaxEntityHealthReportsAllowedPerTransaction 6
+
+# Disable slow commits reports so when test runs under load health isn't impacted
+set SlowCommitCountThreshold 100000
+
+cleantest
++10
++20
++30
+verify
+
+# Wait for all system reports to be received
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:3;apps-ok:1
+queryhealth application appname=fabric:/System expectedstates=services-ok:3
+queryhealth service servicename=fabric:/System/NamingService expectedstates=partitions-ok:3
+queryhealth service servicename=fabric:/System/ClusterManagerService expectedstates=ok:1
+queryhealth service servicename=fabric:/System/FailoverManagerService expectedstates=ok:1
+
+####################################################################################
+# Testcase: Flag entities with more than MaxSuggestedNumberOfEntityHealthReports
+# reports with Warning.
+####################################################################################
+# Report 3 events that can't be deleted on an entity
+# ND = non-deletable, D = deletable
+# [System.FM+State, ND] - non deletable because it's system report
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State
+# [System.Test, ND] - non deletable because it's system report
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.Test transient=true timetoliveseconds=600
+# [FabricTest, ND] - non deletable because RemoveWhenExpired=false and TTL is not infinite
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=FabricTest transient=false timetoliveseconds=600
+queryhealth node nodeid=1111 expectedhealthstate=ok expectedeventcount=3
+
+#
+# Report more events, to go over the suggested limit
+#
+
+# [FabricTest+P1, D] - Doesn't affect health, user report with OK state and TTL infinite
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P1 timetoliveseconds=infinite
+# [FabricTest+P2, D] - Doesn't affect health, user report with OK state and RemoveWhenExpired=true
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P2 transient=true timetoliveseconds=600
+
+# More than MaxSuggestedNumberOfEntityHealthReports, less than MaxEntityHealthReportsAllowedPerTransaction, no automatic cleanup triggered
+# 5 reports + HM auto-generated report for too many reports per entity
+# [System.FM+State, ND], [System.Test, ND], [FabricTest, ND], [FabricTest+P1, D], [FabricTest+P2, D]
+queryhealth node nodeid=1111 expectedhealthstate=warning expectedeventcount=6 expectedreason=event,System.HM,HealthReportCount
+queryhealth node nodeid=1111 expectedhealthstate=warning eventsfilter=ok expectedeventcount=5 expectedreason=event,System.HM,HealthReportCount
+
+####################################################################################
+# Testcase: Reports with more than MaxEntityHealthReportsAllowedPerTransaction
+# are automatically cleaned up if they don't impact health.
+####################################################################################
+# Report events to go over max allowed count.
+
+# [FabricTest+P3, ND] - Affects health, error
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=error sourceid=FabricTest property=P3
+# [FabricTest+P4, ND] - Affects health, it can expire
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P4 transient=false timetoliveseconds=600
+# [FabricTest+P5, D] - Doesn't affect health, user report with OK state and TTL infinite
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P5 timetoliveseconds=infinite
+
+# [System.FM+State, ND], [System.Test, ND], [FabricTest, ND], [FabricTest+P1, D], [FabricTest+P2, D], [FabricTest+P3, ND], [FabricTest+P4, ND], [FabricTest+P5, D]
+# 8 reports, cleanup will remove 2 events that do not affect health (P1 and P2)
+queryhealth node nodeid=1111 expectedhealthstate=error expectedeventcount=7 expectedevents=System.HM,HealthReportCount,warning
+
+# Report 2 more events that affects health
+# [FabricTest+P6, ND] - Affects health, warning
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=FabricTest property=P6
+# [FabricTest+P7, ND] - Affects health, warning
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=FabricTest property=P7
+
+# Cleanup removes the only event that doesn't affect health. No more events can be cleaned up.
+# Before: [System.FM+State, ND], [System.Test, ND], [FabricTest, ND], [FabricTest+P3, ND], [FabricTest+P4, ND], [FabricTest+P5, D], [FabricTest+P6, ND], [FabricTest+P7, ND]
+# After:  [System.FM+State, ND], [System.Test, ND], [FabricTest, ND], [FabricTest+P3, ND], [FabricTest+P4, ND], [FabricTest+P6, ND], [FabricTest+P7, ND]
+queryhealth node nodeid=1111 expectedhealthstate=error expectedeventcount=8 expectedevents=System.HM,HealthReportCount,warning
+
+# Replace one of the non-deletable event with an event that can be cleaned up. After cleanup, the event goes away.
+# [System.FM+State, ND], [System.Test, ND], [FabricTest, ND], [FabricTest+P3, D], [FabricTest+P4, ND], [FabricTest+P6, ND], [FabricTest+P7, ND]
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=2 healthstate=ok sourceid=FabricTest property=P3 timetoliveseconds=infinite
+# [System.FM+State, ND], [System.Test, ND], [FabricTest, ND], [FabricTest+P4, ND], [FabricTest+P6, ND], [FabricTest+P7, ND]
+queryhealth node nodeid=1111 expectedhealthstate=warning expectedeventcount=7 expectedevents=System.HM,HealthReportCount,warning
+
+# Replace more of the non-deletable event with an event that can be cleaned up. Since we are below critical, no automatic cleanup.
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=2 healthstate=ok sourceid=FabricTest property=P6 timetoliveseconds=infinite
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=2 healthstate=warning sourceid=FabricTest property=P7 timetoliveseconds=infinite
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=2 healthstate=ok sourceid=FabricTest property=P4 transient=true timetoliveseconds=600
+
+# [System.FM+State, ND], [System.Test, ND], [FabricTest, ND], [FabricTest+P4, D], [FabricTest+P6, D], [FabricTest+P7, D]
+queryhealth node nodeid=1111 expectedhealthstate=warning expectedeventcount=7 expectedevents=System.HM,HealthReportCount,warning
+
+# Delete events until we are at suggested reports, no more warning.
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=3 healthstate=ok sourceid=FabricTest property=P4 transient=true timetoliveseconds=1
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=3 healthstate=ok sourceid=FabricTest property=P6 transient=true timetoliveseconds=1
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=3 healthstate=ok sourceid=FabricTest property=P7 transient=true timetoliveseconds=1
+
+# [System.FM+State, ND], [System.Test, ND], [FabricTest, ND]
+queryhealth node nodeid=1111 expectedhealthstate=ok expectedeventcount=3
+
+####################################################################################
+# Testcase: Delete entity with more events than MaxEntityHealthReportsAllowedPerTransaction,
+# and less than 2 * MaxEntityHealthReportsAllowedPerTransaction.
+# Delete entity removes MaxEntityHealthReportsAllowedPerTransaction, then cleanup entity removes the rest.
+####################################################################################
+# Report non-deletable events to get over MaxEntityHealthReportsAllowedPerTransaction.
+# The non-deletable events can't be removed by auto-cleanup logic.
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=4 healthstate=warning sourceid=FabricTest property=P4
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=4 healthstate=ok sourceid=FabricTest property=P5 timetoliveseconds=1000
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=4 healthstate=warning sourceid=FabricTest property=P6
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=4 healthstate=warning sourceid=FabricTest property=P7
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=4 healthstate=ok sourceid=FabricTest property=P8 timetoliveseconds=600
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=4 healthstate=warning sourceid=System.FabricTest property=P9
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=4 healthstate=ok sourceid=System.FabricTest property=P10
+reporthealthinternal node nodeid=1111 node.instanceid=1 sequencenumber=4 healthstate=warning sourceid=FabricTest property=P11
+
+queryhealth node nodeid=1111 expectedhealthstate=warning expectedeventcount=12 expectedevents=System.HM,HealthReportCount,warning
+
+# Delete can only delete MaxEntityHealthReportsAllowedPerTransaction events, the rest are deleted on Cleanup timer.
+deletehealth node nodeid=1111 node.instanceid=1 sourceid=System.FabricTest sequencenumber=5
+
+checkhmentity node nodeid=1111 state=deleted node.instanceid=1
+!pause 2
+checkhmentity node nodeid=1111 state=cleanedup expectedeventcount=0 node.instanceid=1
+
+####################################################################################
+# Testcase: Delete entity with more events than 3*MaxEntityHealthReportsAllowedPerTransaction.
+# Delete entity removes MaxEntityHealthReportsAllowedPerTransaction, cleanup entity removes MaxEntityHealthReportsAllowedPerTransaction,
+# and the rest are marked as leaked. After cleanup timer fires, all events are deleted.
+####################################################################################
+# Report non-deletable events, so they can't be removed by auto-cleanup logic.
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State
+queryhealth node nodeid=2222 expectedhealthstate=ok expectedeventcount=1
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P1
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P2
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P3
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P4
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P5
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P6
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P7
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P8
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P9
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P10
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P11
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P12
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P13
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P14
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P15
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P16
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P17
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P18
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P19
+reporthealthinternal node nodeid=2222 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P20
+
+queryhealth node nodeid=2222 expectedhealthstate=warning expectedeventcount=22 expectedevents=System.HM,HealthReportCount,warning 
+
+# Delete node.
+deletehealth node nodeid=2222 node.instanceid=1 sourceid=System.FabricTest sequencenumber=2
+checkhmentity node nodeid=2222 state=deleted node.instanceid=1 expectedeventcount=15
+
+# After cleanup timer interval, the attributes are deleted from store and 6 more events are deleted. The rest are leaked.
+checkhmentity node nodeid=2222 state=cleanedup expectedeventcount=9 node.instanceid=1
+
+# Next cleanup timer, 6 more events are deleted.
+checkhmentity node nodeid=2222 state=cleanedup expectedeventcount=3 node.instanceid=1
+
+# Next cleanup timer, all events are gone
+checkhmentity node nodeid=2222 state=cleanedup expectedeventcount=0
+
+####################################################################################
+# Testcase: Increase instance for an entity with more than MaxEntityHealthReportsAllowedPerTransaction.
+# Report fails, cleanup timer tries to remove all deletable events until eventually the report succeeds.
+####################################################################################
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State
+queryhealth node nodeid=3333 expectedhealthstate=ok expectedeventcount=1
+
+# Report delatable events and 6 non-deletable events.
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P1 timetoliveseconds=infinite
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P2 timetoliveseconds=infinite
+queryhealth node nodeid=3333 expectedhealthstate=ok expectedeventcount=3
+
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P3 timetoliveseconds=infinite
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P4 timetoliveseconds=infinite
+# ND - System report
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P5
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P6 timetoliveseconds=600 transient=true
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P7 timetoliveseconds=600 transient=true
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P8 timetoliveseconds=600 transient=true
+# ND - System report
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P9
+# ND - Warning
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=FabricTest property=P10
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P11 timetoliveseconds=infinite
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P12 timetoliveseconds=infinite
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P13 timetoliveseconds=infinite
+# ND - Warning
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=FabricTest property=P14 timetoliveseconds=infinite
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P15 timetoliveseconds=infinite
+# ND - Warning
+reporthealthinternal node nodeid=3333 node.instanceid=1 sequencenumber=1 healthstate=warning sourceid=FabricTest property=P16 timetoliveseconds=infinite
+
+queryhealth node nodeid=3333 expectedhealthstate=warning expectedeventcount=18
+
+# Report new instance, which retries internally until cleanup timer removes all deletable events.
+reporthealthinternal node nodeid=3333 node.instanceid=2 sequencenumber=2 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State 
+queryhealth node nodeid=3333 expectedhealthstate=ok expectedeventcount=1
+
+####################################################################################
+# Testcase: Increase instance for an events with more than MaxEntityHealthReportsAllowedPerTransaction.
+# Report fails, cleanup timer can't remove enuogh events, so the report is not accepted until manual intervention.
+####################################################################################
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:4444 sourceid=System.FM property=State
+queryhealth node nodeid=4444 expectedhealthstate=ok expectedeventcount=1
+
+# Report 6 non-deletable events.
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P1
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P2
+queryhealth node nodeid=4444 expectedhealthstate=ok expectedeventcount=3
+
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P3
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P4
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P5
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P6
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest property=P7
+queryhealth node nodeid=4444 expectedhealthstate=warning expectedeventcount=9
+
+# Report through fabric client, which retries internally until cleanup timer removes all deletable events.
+reporthealthinternal node nodeid=4444 node.instanceid=2 sequencenumber=2 healthstate=error ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:4444 sourceid=System.FM property=State 
+queryhealth node nodeid=4444 expectedhealthstate=warning expectedeventcount=9
+
+!pause 10
+queryhealth node nodeid=4444 expectedhealthstate=warning expectedeventcount=9
+
+# Delete one event and the report goes through
+reporthealthinternal node nodeid=4444 node.instanceid=1 sequencenumber=2 healthstate=ok sourceid=FabricTest property=P1 transient=true timetoliveseconds=1
+queryhealth node nodeid=4444 expectedhealthstate=error expectedeventcount=1
+
+####################################################################################
+# Testcase: Delete entity with more than MaxEntityHealthReportsAllowedPerTransaction
+# and before cleanup timer fires to cleanup the entity, report increased instance.
+####################################################################################
+# Increase cleanup timer
+set HealthStoreCleanupInterval 30
+
+# Ensure previous cleanup timer fires, so next one will fire using the longer period
+!pause 3
+
+# Report non-deletable events
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State
+queryhealth node nodeid=5555 expectedhealthstate=ok expectedeventcount=1
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P1
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P2
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P3
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P4
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P5
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P6
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P7 timetoliveseconds=infinite
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P8 timetoliveseconds=infinite
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P9 timetoliveseconds=infinite
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P10 timetoliveseconds=infinite
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P11
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P12
+reporthealthinternal node nodeid=5555 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest property=P13
+
+# 14 events plus the HM generated one
+queryhealth node nodeid=5555 expectedhealthstate=warning expectedeventcount=15
+
+# Delete node; first 6 events are removed, 8 events remaining
+deletehealth node nodeid=5555 node.instanceid=1 sourceid=System.FabricTest sequencenumber=2
+checkhmentity node nodeid=5555 state=deleted node.instanceid=1 expectedeventcount=8
+
+# Report higher instance, too many reports so the report fails until cleanup timer removes the next 6 events.
+reporthealthinternal node nodeid=5555 node.instanceid=2 sequencenumber=1 healthstate=error ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State
+
+# After cleanup timer executed cleanup entity, 2 events remain.
+# The event with newer instance is applied, all previous events are deleted.
+queryhealth node nodeid=5555 expectedhealthstate=error expectedeventcount=1
+
+!q

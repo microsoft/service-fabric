@@ -21,7 +21,7 @@ namespace ResourceMonitor
                 IFabricStatelessServiceFactory
             )
     public:
-        ResourceMonitorServiceFactory(IFabricRuntime * & pRuntime);
+        ResourceMonitorServiceFactory(Common::ComPointer<IFabricRuntime> const & fabricRuntimeCPtr);
         virtual ~ResourceMonitorServiceFactory();
 
         void Initialize();
@@ -35,6 +35,6 @@ namespace ResourceMonitor
             /* [in] */ FABRIC_INSTANCE_ID instanceId,
             /* [retval][out] */ IFabricStatelessServiceInstance **serviceInstance);
     private:
-        IFabricRuntime * pRuntime_;
+        Common::ComPointer<IFabricRuntime> fabricRuntimeCPtr_;
     };
 }

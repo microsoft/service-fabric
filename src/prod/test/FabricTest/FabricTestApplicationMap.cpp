@@ -367,18 +367,15 @@ bool FabricTestApplicationMap::VerifyUpgrade(
         verified = (find(upgradeStates.begin(), upgradeStates.end(), app->UpgradeState) != upgradeStates.end());
     }
 
-    if (!verified)
-    {
-        TestSession::WriteInfo(
-            "FabricTestApplicationMap", 
-            "Upgrade progress for {0} ({1}, {2}) (upgradePending={3} rollbackPending={4})  : {5}", 
-            appName, 
-            app->UpgradeMode,
-            app->UpgradeState,
-            app->IsUpgradePending,
-            app->IsRollbackPending,
-            app->CompletedUpgradeDomains);
-    }
+    TestSession::WriteInfo(
+        "FabricTestApplicationMap", 
+        "Upgrade progress for {0} ({1}, {2}) (upgradePending={3} rollbackPending={4})  : {5}", 
+        appName, 
+        app->UpgradeMode,
+        app->UpgradeState,
+        app->IsUpgradePending,
+        app->IsRollbackPending,
+        app->CompletedUpgradeDomains);
 
     return verified;
 }

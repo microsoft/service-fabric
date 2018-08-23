@@ -18,11 +18,11 @@ namespace ServiceModel
             BYTE maxPercentUnhealthyServices,
             BYTE maxPercentUnhealthyPartitionsPerService,
             BYTE maxPercentUnhealthyReplicasPerPartition);
-        ServiceTypeHealthPolicy(ServiceTypeHealthPolicy const & other);
-        ServiceTypeHealthPolicy(ServiceTypeHealthPolicy && other);
-
-        ServiceTypeHealthPolicy const & operator = (ServiceTypeHealthPolicy const & other);
-        ServiceTypeHealthPolicy const & operator = (ServiceTypeHealthPolicy && other);
+        ServiceTypeHealthPolicy(ServiceTypeHealthPolicy const & other) = default;
+        ServiceTypeHealthPolicy & operator = (ServiceTypeHealthPolicy const & other) = default;
+        
+        ServiceTypeHealthPolicy(ServiceTypeHealthPolicy && other) = default;
+        ServiceTypeHealthPolicy & operator = (ServiceTypeHealthPolicy && other) = default;
 
         bool operator == (ServiceTypeHealthPolicy const & other) const;
         bool operator != (ServiceTypeHealthPolicy const & other) const;

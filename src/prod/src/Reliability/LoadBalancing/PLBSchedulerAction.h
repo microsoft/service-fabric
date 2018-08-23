@@ -33,16 +33,14 @@ namespace Reliability
             void SetConstraintCheckLightness(bool lightness);
             void Reset();
             void End();
-            void Increase();
-            void MoveForward();
 
             void IncreaseIteration();
             bool CanRetry() const;
 
             bool IsConstraintCheck() const { return action_ == PLBSchedulerActionType::ConstraintCheck; }
-            bool IsBalancing() const { return action_ == PLBSchedulerActionType::FastBalancing || action_ == PLBSchedulerActionType::SlowBalancing; }
-            bool IsCreationWithMove() const { return action_ == PLBSchedulerActionType::CreationWithMove; }
-            bool IsCreation() const { return action_ == PLBSchedulerActionType::Creation; }
+            bool IsBalancing() const { return action_ == PLBSchedulerActionType::QuickLoadBalancing || action_ == PLBSchedulerActionType::LoadBalancing; }
+            bool IsCreationWithMove() const { return action_ == PLBSchedulerActionType::NewReplicaPlacementWithMove; }
+            bool IsCreation() const { return action_ == PLBSchedulerActionType::NewReplicaPlacement; }
 
             void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
             void WriteToEtw(uint16 contextSequenceId) const;

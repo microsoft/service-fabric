@@ -47,6 +47,8 @@ HRESULT MOCK_TxnReplicator_GetOrAddStateProviderAsync(
     __in TxnReplicatorHandle txnReplicator,
     __in TransactionHandle txn,
     __in LPCWSTR name,
+    __in LPCWSTR lang,
+    __in StateProvider_Info* stateProviderInfo,
     __in int64_t timeout,
     __out CancellationTokenSourceHandle* cts,
     __out StateProviderHandle* stateProvider,
@@ -90,6 +92,26 @@ HRESULT MOCK_TxnReplicator_BackupAsync(
         [](void* context, BOOL result) {
 
         },
+        nullptr);
+    callback(ctx, S_OK);
+    return S_OK;
+}
+
+HRESULT MOCK_TxnReplicator_BackupAsync2(
+    __in TxnReplicatorHandle txnReplicator,
+    __in fnUploadAsync2 uploadAsyncCallback,
+    __in Backup_Option backupOption,
+    __in int64_t timeout,
+    __out CancellationTokenSourceHandle* cts,
+    __in fnNotifyAsyncCompletion callback,
+    __in void* ctx,
+    __out BOOL* synchronousComplete)
+{
+    Backup_Info2 backup_info = {};
+    uploadAsyncCallback(ctx, &backup_info, sizeof(backup_info),
+        [](void* context, BOOL result) {
+
+    },
         nullptr);
     callback(ctx, S_OK);
     return S_OK;
@@ -495,6 +517,18 @@ void MOCK_AddRef(__in void* handle)
 
 }
 
+HRESULT MOCK_TxnReplicator_GetInfo(
+    __in TxnReplicatorHandle txnReplicator,
+    __inout TxnReplicator_Info* info)
+{
+    info->LastStableSequenceNumber = 1000;
+    info->LastCommittedSequenceNumber = 1000;
+    info->CurrentEpoch.DataLossNumber = 1;
+    info->CurrentEpoch.ConfigurationNumber = 1;
+    info->CurrentEpoch.Reserved = nullptr;
+    return S_OK;
+}
+
 void GetReliableCollectionMockApiTable(ReliableCollectionApis* reliableCollectionApis)
 {
     if (reliableCollectionApis == nullptr)
@@ -539,18 +573,20 @@ void GetReliableCollectionMockApiTable(ReliableCollectionApis* reliableCollectio
         MOCK_AddRef,
         MOCK_AddRef,
         MOCK_AddRef,
-        nullptr, // GetTransactionalReplicator
         nullptr, // SetNotifyStoreChangeCallbackMask
-        nullptr, // TxnReplicator_AddStateProviderAsync2
-        nullptr, // TxnReplicator_GetOrAddStateProviderAsync2
         MOCK_StateProvider_GetInfo,
         MOCK_AddRef,
         MOCK_Store_Release,
         nullptr, // Transaction_GetInfo
         nullptr, // Transaction_GetVisibilitySequenceNumberAsync
         nullptr, // Transaction_Dispose
-        nullptr, // Transaction_Release2
         MOCK_Store_CreateRangedEnumeratorAsync,
-        MOCK_Store_ContainsKeyAsync
+        MOCK_Store_ContainsKeyAsync,
+        MOCK_TxnReplicator_GetInfo,
+        nullptr, // PrimaryReplicator_UpdateReplicatorSettings
+        nullptr,
+        nullptr,
+        nullptr,
+        MOCK_TxnReplicator_BackupAsync2
     };
 }

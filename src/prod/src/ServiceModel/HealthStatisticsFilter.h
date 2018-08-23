@@ -17,8 +17,8 @@ namespace ServiceModel
         HealthStatisticsFilter();
         explicit HealthStatisticsFilter(bool excludeHealthStatistics);
 
-        HealthStatisticsFilter(HealthStatisticsFilter && other);
-        HealthStatisticsFilter & operator = (HealthStatisticsFilter && other);
+        HealthStatisticsFilter(HealthStatisticsFilter && other) = default;
+        HealthStatisticsFilter & operator = (HealthStatisticsFilter && other) = default;
 
         virtual ~HealthStatisticsFilter();
 

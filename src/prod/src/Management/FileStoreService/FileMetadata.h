@@ -10,12 +10,14 @@ namespace Management
     namespace FileStoreService
     {
         class FileMetadata : public Store::StoreData
-        {        
+        {
+            DEFAULT_COPY_CONSTRUCTOR(FileMetadata)
+            DEFAULT_MOVE_CONSTRUCTOR(FileMetadata)
         public:
             FileMetadata();
             FileMetadata(std::wstring const & relativeLocation);
-            FileMetadata(std::wstring const & relativeLocation, StoreFileVersion const currentVersion, FileState::Enum const state);
             FileMetadata(std::wstring const & relativeLocation, StoreFileVersion const currentVersion, FileState::Enum const state, CopyDescription const & copyDesc);
+            FileMetadata(std::wstring const & relativeLocation, StoreFileVersion const currentVersion, FileState::Enum const state, Common::Guid const & uploadRequestId);
             virtual ~FileMetadata();
 
             __declspec(property(get=get_RelativeLocation)) std::wstring const & StoreRelativeLocation;
@@ -42,9 +44,13 @@ namespace Management
             __declspec (property(get=get_Type)) std::wstring const & Type;
             virtual std::wstring const & get_Type() const { return *(Constants::StoreType::FileMetadata); }
 
-            virtual void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;        
+            __declspec(property(get = get_UploadRequestId, put = set_UploadRequestId)) Common::Guid UploadRequestId;
+            Common::Guid get_UploadRequestId() const { return uploadRequestId_; }
+            void set_UploadRequestId(Common::Guid const & value) { uploadRequestId_ = value; }
 
-            FABRIC_FIELDS_05(storeRelativeLocation_, currentVersion_, previousVersion_, state_, copyDesc_);
+            virtual void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
+
+            FABRIC_FIELDS_06(storeRelativeLocation_, currentVersion_, previousVersion_, state_, copyDesc_, uploadRequestId_);
 
         protected:
             virtual std::wstring ConstructKey() const;
@@ -55,6 +61,7 @@ namespace Management
             StoreFileVersion previousVersion_;
             FileState::Enum state_;
             CopyDescription copyDesc_;
+            Common::Guid uploadRequestId_;
         };
     }
 }

@@ -71,16 +71,16 @@ namespace Management
 
         protected:
             virtual Common::ErrorCode UpdateContextHealthPoliciesCallerHoldsLock(
-                __in QueryRequestContext & context) override;
+                __inout QueryRequestContext & context) override;
 
             virtual Common::ErrorCode SetDetailQueryResult(
-                __in QueryRequestContext & context,
+                __inout QueryRequestContext & context,
                 FABRIC_HEALTH_STATE entityEventsState,
                 std::vector<ServiceModel::HealthEvent> && queryEvents,
                 ServiceModel::HealthEvaluationList && unhealthyEvaluations) override;
 
             virtual Common::ErrorCode SetChildrenAggregatedHealthQueryResult(
-                __in QueryRequestContext & context) override;
+                __inout QueryRequestContext & context) override;
 
             bool CleanupChildren();
 
@@ -97,7 +97,7 @@ namespace Management
                 __inout ServiceModel::ClusterUpgradeHealthPolicySPtr & upgradeHealthPolicy);
 
             Common::ErrorCode GetNodesAggregatedHealthStates(
-                __in QueryRequestContext & context);
+                __inout QueryRequestContext & context);
 
             Common::ErrorCode EvaluateNodesForClusterUpgrade(
                 Common::ActivityId const & activityId,
@@ -161,20 +161,24 @@ namespace Management
                 __inout ServiceModel::HealthEvaluationList & unhealthyEvaluations);
 
             Common::ErrorCode ComputeDetailQueryResult(
-                __in QueryRequestContext & context,
+                __inout QueryRequestContext & context,
                 FABRIC_HEALTH_STATE entityEventsState,
                 std::vector<ServiceModel::HealthEvent> && queryEvents,
                 ServiceModel::HealthEvaluationList && unhealthyEvaluations);
 
             Common::ErrorCode ComputeQueryEntityHealthStateChunkResult(
-                __in QueryRequestContext & context,
+                __inout QueryRequestContext & context,
                 FABRIC_HEALTH_STATE entityEventsState);
 
             Common::ErrorCode GetApplicationsAggregatedHealthStates(
-                __in QueryRequestContext & context);
+                __inout QueryRequestContext & context);
+
+            // Get application aggregated health state and unhealthy evaluations
+            Common::ErrorCode GetApplicationUnhealthyEvaluations(
+                QueryRequestContext & context);
 
             Common::ErrorCode GetDeployedApplicationsOnNodeAggregatedHealthStates(
-                __in QueryRequestContext & context);
+                __inout QueryRequestContext & context);
 
             void HealthStatsTimerCallback();
 

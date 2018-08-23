@@ -36,31 +36,6 @@ ClusterHealthChunk::ClusterHealthChunk(
 {
 }
 
-ClusterHealthChunk::ClusterHealthChunk(ClusterHealthChunk && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , Common::ISizeEstimator(move(other))
-    , healthState_(move(other.healthState_))
-    , nodeHealthStateChunks_(move(other.nodeHealthStateChunks_))
-    , applicationHealthStateChunks_(move(other.applicationHealthStateChunks_))
-{
-}
-
-ClusterHealthChunk & ClusterHealthChunk::operator =(ClusterHealthChunk && other)
-{
-    if (this != &other)
-    {
-        healthState_ = move(other.healthState_);
-        nodeHealthStateChunks_ = move(other.nodeHealthStateChunks_);
-        applicationHealthStateChunks_ = move(other.applicationHealthStateChunks_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    Common::ISizeEstimator::operator=(move(other));
-    return *this;
-}
-
 ClusterHealthChunk::~ClusterHealthChunk()
 {
 }

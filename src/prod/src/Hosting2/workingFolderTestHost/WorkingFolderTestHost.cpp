@@ -7,16 +7,22 @@
 
 using namespace std;
 using namespace Common;
+using namespace ServiceModel;
+using namespace Hosting2;
 
 StringLiteral const TraceType("WorkingFolderTestHost");
 
 GlobalWString WorkingFolderTestHost::WorkingFolderAppId = make_global<wstring>(L"WorkingFolderTestApp_App0");
 
-WorkingFolderTestHost::WorkingFolderTestHost(wstring const & testName, bool isSetupEntryPoint)
-    : testName_(testName),
-    typeName_ (wformatString("{0}", testName_)),
-    console_(),
-    isSetupEntryPoint_(isSetupEntryPoint)
+WorkingFolderTestHost::WorkingFolderTestHost(
+    wstring const & testName, 
+    bool isSetupEntryPoint,
+    bool isActivator)
+    : testName_(testName)
+    , typeName_ (wformatString("{0}", testName_))
+    , console_()
+    , isSetupEntryPoint_(isSetupEntryPoint)
+    , isActivator_(isActivator)
 {
     traceId_ = wformatString("{0}", static_cast<void*>(this));
     WriteNoise(TraceType, traceId_, "ctor");
@@ -29,30 +35,53 @@ WorkingFolderTestHost::~WorkingFolderTestHost()
 
 ErrorCode WorkingFolderTestHost::OnOpen()
 {
-    auto hr = ::FabricGetActivationContext(
-        IID_IFabricCodePackageActivationContext2,
-        activationContext_.VoidInitializationAddress());    
-    if (FAILED(hr))
+    EnvironmentMap envMap;
+    if (!Environment::GetEnvironmentMap(envMap))
     {
-        WriteWarning(
-            TraceType, 
-            traceId_,
-            "Failed to get CodePackageActivationContext. HRESULT={0}",
-            hr);
-        return ErrorCode::FromHResult(hr);
+        console_.WriteLine("Failed to obtain environment block.");
+        return ErrorCode(ErrorCodeValue::OperationFailed);
     }
 
-    auto error = this->VerifyWorkingFolder();    
-    WriteTrace(
-        error.ToLogLevel(),
-        TraceType, 
-        traceId_,
-        "VerifyWorkingFolder: CurrentWorkingDirectory:{0}, Error={1}",
-        Directory::GetCurrentDirectoryW(),
-        hr);
+    auto error = ApplicationHostContext::FromEnvironmentMap(envMap, hostContext_);
+    if (!error.IsSuccess())
+    {
+        console_.WriteLine(
+            "ApplicationHostContext::FromEnvironmentMap() failed. ErrorCode={0}, EnvironmentBlock={1}",
+            error,
+            Environment::ToString(envMap));
+
+        return ErrorCode(ErrorCodeValue::OperationFailed);
+    }
+
+    error = CodePackageContext::FromEnvironmentMap(envMap, codePackageContext_);
+    if (!error.IsSuccess())
+    {
+        console_.WriteLine(
+            "CodePackageContext::FromEnvironmentMap() failed. ErrorCode={0}, EnvironmentBlock={1}",
+            error,
+            Environment::ToString(envMap));
+        return ErrorCode(ErrorCodeValue::OperationFailed);
+    }
+
+    auto hr = ::FabricGetActivationContext(
+        IID_IFabricCodePackageActivationContext2,
+        activationContext_.VoidInitializationAddress());
+    if (FAILED(hr))
+    {
+        auto err= ErrorCode::FromHResult(hr);
+        console_.WriteLine("Failed to get CodePackageActivationContext. Error={0}", err);
+        return err;
+    }
+
+    error = this->VerifyWorkingFolder();
     if(!error.IsSuccess())
     {
-        return error;    
+        console_.WriteLine(
+            "VerifyWorkingFolder: CurrentWorkingDirectory:{0}, Error={1}",
+            Directory::GetCurrentDirectoryW(),
+            error);
+
+        return error;
     }
 
     if(isSetupEntryPoint_) 
@@ -64,33 +93,145 @@ ErrorCode WorkingFolderTestHost::OnOpen()
     hr = ::FabricCreateRuntime(IID_IFabricRuntime, runtime_.VoidInitializationAddress());
     if (FAILED(hr))
     {
-        WriteWarning(
-            TraceType, 
-            traceId_,
-            "Failed to create FabricRuntime. HRESULT={0}",
-            hr);
-        return ErrorCode::FromHResult(hr);
-    }    
+        auto err = ErrorCode::FromHResult(hr);
+        console_.WriteLine("Failed to create FabricRuntime. Error={0}.", err);
+        return err;
+    }
 
-    WriteNoise(TraceType, traceId_, "FabricRuntime created.");
     console_.WriteLine("FabricRuntime created.");
 
     // create a service factory and register it for all the types
-    ComPointer<IFabricStatelessServiceFactory> serviceFactory = make_com<ComStatelessServiceFactory, IFabricStatelessServiceFactory>();
+    auto serviceFactory = make_com<ComStatelessServiceFactory, IFabricStatelessServiceFactory>();
 
     hr = runtime_->RegisterStatelessServiceFactory(typeName_.c_str(), serviceFactory.GetRawPointer());
     if (FAILED(hr))
     {
-        WriteWarning(
-        TraceType, 
-        traceId_,
-        "Failed to register stateless service factory for {1}. HRESULT={0}",
-        hr,
-        typeName_);
-        return ErrorCode::FromHResult(hr);
+        auto err = ErrorCode::FromHResult(hr);
+        console_.WriteLine(
+            "Failed to register stateless service factory for {1}. Error={0}.",
+            typeName_,
+            err);
+        return err;
     }
 
     console_.WriteLine("Registered ServiceFactory for type {0}", typeName_);
+
+    if (!isActivator_)
+    {
+        return ErrorCode::Success();
+    }
+
+    ComPointer<IFabricStringListResult> codePackageNameListCPtr;
+    hr = activationContext_->GetCodePackageNames(codePackageNameListCPtr.InitializationAddress());
+    if (FAILED(hr))
+    {
+        auto err = ErrorCode::FromHResult(hr);
+        console_.WriteLine("Failed to get code package names. Error={0}.", err);
+        return err;
+    }
+
+    FABRIC_STRING_LIST fabricStringList = {};
+    hr = codePackageNameListCPtr->GetStrings(&fabricStringList.Count, &fabricStringList.Items);
+    if (FAILED(hr))
+    {
+        auto err = ErrorCode::FromHResult(hr);
+        console_.WriteLine(
+            "codePackageNameListCPtr->GetStrings() failed. Error={0}",
+            err);
+        return err;
+    }
+
+    vector<wstring> codePackages;
+    error = StringList::FromPublicApi(fabricStringList, codePackages);
+    if (!error.IsSuccess())
+    {
+        console_.WriteLine(
+            "StringList::FromPublicApi() failed. Error={0}.",
+            error);
+        return error;
+    }
+
+    for(auto const & cpName : codePackages)
+    {
+        if (cpName == codePackageContext_.CodePackageInstanceId.CodePackageName)
+        {
+            continue;
+        }
+
+        dependentCodePackages_.push_back(cpName);
+    }
+
+    activationManager_ = make_com<ComGuestServiceCodePackageActivationManager>(*this);
+    error = activationManager_->Open();
+    if (!error.IsSuccess())
+    {
+        console_.WriteLine(
+            "Failed to open ComGuestServiceCodePackageActivationManager. Error={0}",
+            error);
+
+        //
+        // return success to keep the service host up.
+        // validation will fail i the test.
+        //
+        return ErrorCode::Success();
+    }
+
+    ::Sleep(15000);
+
+    auto activationWaiter = make_shared<AsyncOperationWaiter>();
+
+    EnvironmentMap environment;
+    environment.insert(make_pair(L"DummyEnvVarName1", L"DummyEnvVarValue1"));
+    environment.insert(make_pair(L"DummyEnvVarName2", L"DummyEnvVarValue2"));
+
+    auto operation = activationManager_->BeginActivateCodePackagesAndWaitForEvent(
+        move(environment),
+        TimeSpan::FromMinutes(3),
+        [this, activationWaiter](AsyncOperationSPtr const & operation)
+        { 
+            auto error = activationManager_->EndActivateCodePackagesAndWaitForEvent(operation);
+            activationWaiter->SetError(error);
+            activationWaiter->Set();
+        },
+        this->CreateAsyncOperationRoot());
+
+    activationWaiter->WaitOne();
+    error = activationWaiter->GetError();
+    if (!error.IsSuccess())
+    {
+        console_.WriteLine(
+            "Failed to activate dependent code packages. Error={0}",
+            error);
+
+        //
+        // return success to keep the service host up.
+        // validation will fail i the test.
+        //
+        return ErrorCode::Success();
+    }
+
+    ::Sleep(15000);
+
+    auto deactivationWaiter = make_shared<AsyncOperationWaiter>();
+
+    operation = activationManager_->BeginDeactivateCodePackages(
+        TimeSpan::FromMinutes(3),
+        [this, deactivationWaiter](AsyncOperationSPtr const & operation)
+        {
+            auto error = activationManager_->EndDeactivateCodePackages(operation);
+            deactivationWaiter->SetError(error);
+            deactivationWaiter->Set();
+        },
+        this->CreateAsyncOperationRoot());
+
+    deactivationWaiter->WaitOne();
+    error = deactivationWaiter->GetError();
+    if (!error.IsSuccess())
+    {
+        console_.WriteLine(
+            "Failed to deactivate dependent code packages. Error={0}",
+            error);
+    }
 
     return ErrorCode(ErrorCodeValue::Success);
 }
@@ -114,12 +255,30 @@ void WorkingFolderTestHost::OnAbort()
     {
         contextCleanup.Release();
     }
+
+    if (activationManager_)
+    {
+        activationManager_->Close();
+        activationManager_.Release();
+    }
+}
+
+ErrorCode WorkingFolderTestHost::GetCodePackageActivator(
+    _Out_ ComPointer<IFabricCodePackageActivator> & codePackageActivator)
+{
+    auto hr = ::FabricGetCodePackageActivator(
+        IID_IFabricCodePackageActivator, 
+        codePackageActivator.VoidInitializationAddress());
+
+    return ErrorCode::FromHResult(hr);
 }
 
 ErrorCode WorkingFolderTestHost::VerifyWorkingFolder()
-{    
+{
+    auto cpName = codePackageContext_.CodePackageInstanceId.CodePackageName;
+
     ComPointer<IFabricCodePackage> codePackage;
-    auto hr = activationContext_->GetCodePackage(testName_.c_str(), codePackage.InitializationAddress());
+    auto hr = activationContext_->GetCodePackage(cpName.c_str(), codePackage.InitializationAddress());
     if (FAILED(hr))
     {
         WriteWarning(
@@ -153,11 +312,11 @@ ErrorCode WorkingFolderTestHost::VerifyWorkingFolder()
     
     wstring currentWorkingDirectory = Directory::GetCurrentDirectoryW();
     wstring workDirectory = wstring(activationContext_->get_WorkDirectory());
-	
+
     console_.WriteLine("currentWorkingDirectory: [{0}]", currentWorkingDirectory);
 
 #if !defined(PLATFORM_UNIX)
-    Management::ImageModel::RunLayoutSpecification runLayout(Path::GetDirectoryName(Path::GetDirectoryName(workDirectory)));    
+    Management::ImageModel::RunLayoutSpecification runLayout(Path::GetDirectoryName(Path::GetDirectoryName(workDirectory)));
 #else
     Management::ImageModel::RunLayoutSpecification runLayout(Path::GetDirectoryName(Path::GetDirectoryName(workDirectory)));
 #endif

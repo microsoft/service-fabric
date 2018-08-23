@@ -939,12 +939,7 @@ ErrorCode ContainerActivatorServiceAgent::Initialize()
     ipcServer_ = move(ipcServer);
     ipcClient_ = move(ipcClient);
 
-#if !defined(PLATFORM_UNIX)
     this->processId_ = ::GetCurrentProcessId();
-#else
-    // On linux we need to provide PID of the wrapping shell script.
-    // read it from the environment.
-#endif
 
     return error;
 }

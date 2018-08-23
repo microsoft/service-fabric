@@ -35,4 +35,9 @@ namespace Hosting2
     typedef Common::EventT<ServiceTypeStatusEventArgs> ServiceTypeEnabledEvent;
     typedef ServiceTypeEnabledEvent::EventHandler ServiceTypeEnabledEventHandler;
     typedef ServiceTypeEnabledEvent::HHandler ServiceTypeEnabledEventHHandler;
+
+    // SendAvailableContainerImages
+    typedef Common::EventT<SendAvailableContainerImagesEventArgs> SendAvailableContainerImagesEvent;
+    typedef SendAvailableContainerImagesEvent::EventHandler AvailableContainerImagesEventHandler;
+    typedef SendAvailableContainerImagesEvent::HHandler AvailableContainerImagesEventHHandler;
 }

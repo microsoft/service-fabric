@@ -30,6 +30,12 @@
         <LoadMetric Name="MetricB" Weight="High"/>
       </LoadMetrics>
       <PlacementConstraints>String</PlacementConstraints>
+      <ServiceScalingPolicies>
+        <ScalingPolicy>
+            <AveragePartitionLoadScalingTrigger MetricName="MetricB" LowerLoadThreshold="1" UpperLoadThreshold="2" ScaleIntervalInSeconds="100"/>
+            <InstanceCountScalingMechanism MinInstanceCount="3" MaxInstanceCount="4" ScaleIncrement="1"/>
+        </ScalingPolicy>
+      </ServiceScalingPolicies>
     </StatelessService>
     <StatefulService ServiceTypeName="StatefulService1" MinReplicaSetSize="5" TargetReplicaSetSize="10">
       <UniformInt64Partition LowKey="10" HighKey="100" PartitionCount="5"></UniformInt64Partition>
@@ -88,6 +94,20 @@
         <ServiceCorrelations>
           <ServiceCorrelation ServiceName="AverseCalc" Scheme="Affinity"/>
         </ServiceCorrelations>
+      </StatelessService>
+    </Service>
+    <Service Name="Service4" ServicePackageActivationMode="ExclusiveProcess">
+      <StatelessService InstanceCount="1" ServiceTypeName="text">
+        <SingletonPartition/>
+        <LoadMetrics>
+          <LoadMetric Name="MetricA" Weight="Low"/>
+        </LoadMetrics>
+        <ServiceScalingPolicies>
+            <ScalingPolicy>
+                <AverageServiceLoadScalingTrigger MetricName="MetricA" LowerLoadThreshold="1" UpperLoadThreshold="2" ScaleIntervalInSeconds="100"/>
+                <InstanceCountScalingMechanism MinInstanceCount="1" MaxInstanceCount="2" ScaleIncrement="1"/>
+            </ScalingPolicy>
+        </ServiceScalingPolicies>
       </StatelessService>
     </Service>
   </DefaultServices>

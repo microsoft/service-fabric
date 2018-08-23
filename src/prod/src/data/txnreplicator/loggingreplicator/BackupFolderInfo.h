@@ -9,6 +9,13 @@ namespace Data
 {
     namespace LoggingReplicator
     {
+        /// <summary>
+        /// Class used to analyze an input backup folder.
+        /// Three core responsibilities
+        /// - Scan the folder to find all backup and create a backup chain
+        /// - Trim the chain so that it only contains the longest chain.
+        /// - Verify whether or not the input folder is restore-able.
+        /// </summary>
         class BackupFolderInfo final
             : public KObject<BackupFolderInfo>
             , public KShared<BackupFolderInfo>
@@ -23,7 +30,8 @@ namespace Data
                 __in Utilities::PartitionedReplicaId const & traceId,
                 __in KGuid const & id,
                 __in KString const & backupFolder,
-                __in KAllocator & allocator);
+                __in KAllocator & allocator,
+                __in bool test_doNotVerifyLogFile = false);
 
         public:
             __declspec(property(get = get_HighestBackedupEpoch)) TxnReplicator::Epoch HighestBackedupEpoch;
@@ -41,6 +49,9 @@ namespace Data
             __declspec(property(get = get_LogPathList)) KArray<KString::CSPtr> const & LogPathList;
             KArray<KString::CSPtr> const & get_LogPathList() const override;
 
+            __declspec(property(get = get_FullBackupFolderPath)) KString::SPtr FullBackupFolderPath;
+            KString::SPtr get_FullBackupFolderPath() const;
+
         public:
             ktl::Awaitable<void> AnalyzeAsync(
                 __in ktl::CancellationToken const & cancellationToken);
@@ -49,7 +60,8 @@ namespace Data
             BackupFolderInfo(
                 __in Utilities::PartitionedReplicaId const & traceId,
                 __in KGuid const & id,
-                __in KString const & backupFolder);
+                __in KString const & backupFolder,
+                __in bool test_doNotVerifyLogFile);
 
         private:
             ktl::Awaitable<void> AddFolderAsync(
@@ -57,6 +69,8 @@ namespace Data
                 __in wstring const & backupDirectoryPath,
                 __in wstring const & backupMetadataFilePath,
                 __in ktl::CancellationToken const & cancellationToken);
+
+            void Trim();
 
             ktl::Awaitable<void> VerifyAsync(
                 __in ktl::CancellationToken const & cancellationToken);
@@ -87,6 +101,13 @@ namespace Data
         private:
             KString::SPtr fullBackupFolderPath_;
             KString::CSPtr stateManagerBackupFolderPath_;
+
+            /// <summary>
+            /// Test only flag - DO NOT USE IN PRODUCTION
+            /// Normally as part of verification, each log file is opened to verify that they have valid footers (at least).
+            /// With this setting, this verification is by passed.
+            /// </summary>
+            bool const test_doNotVerifyLogFile_;
         };
     }
 }

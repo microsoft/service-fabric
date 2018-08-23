@@ -43,5 +43,7 @@ GlobalWString Constants::ErrorReason::MissingTimeoutHeader = make_global<wstring
 GlobalWString Constants::ErrorReason::IncorrectActor = make_global<wstring>(L"Incorrect Actor");
 GlobalWString Constants::ErrorReason::InvalidAction = make_global<wstring>(L"Invalid Action");
 
+double const Constants::StagingFileLockAcquireTimeoutInSeconds = 5.0;
+
 
 

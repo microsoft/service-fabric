@@ -14,7 +14,7 @@ namespace Hosting2
     public:
         CodePackageContext();
         CodePackageContext(
-            CodePackageInstanceIdentifier const & codePackageInstanceId,            
+            CodePackageInstanceIdentifier const & codePackageInstanceId,
             int64 codePackageInstanceSeqNum,
             int64 servicePackageInstanceSeqNum,
             ServiceModel::ServicePackageVersionInstance const & servicePackageVersionInstance,
@@ -49,7 +49,12 @@ namespace Hosting2
 
         static Common::ErrorCode FromEnvironmentMap(Common::EnvironmentMap const & envMap, __out CodePackageContext & codePackageContext);
 
-        FABRIC_FIELDS_05(codePackageInstanceId_, codePackageInstanceSeqNum_, servicePackageInstanceSeqNum_, servicePackageVersionInstance_, applicationName_);
+        FABRIC_FIELDS_05(
+            codePackageInstanceId_, 
+            codePackageInstanceSeqNum_, 
+            servicePackageInstanceSeqNum_, 
+            servicePackageVersionInstance_, 
+            applicationName_);
 
     private:
         CodePackageInstanceIdentifier codePackageInstanceId_;

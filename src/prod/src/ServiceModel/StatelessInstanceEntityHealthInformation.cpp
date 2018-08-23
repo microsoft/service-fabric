@@ -27,26 +27,6 @@ StatelessInstanceEntityHealthInformation::StatelessInstanceEntityHealthInformati
 {
 }
 
-StatelessInstanceEntityHealthInformation::StatelessInstanceEntityHealthInformation(StatelessInstanceEntityHealthInformation && other)
-    : EntityHealthInformation(move(other))
-    , partitionId_(move(other.partitionId_))
-    , replicaId_(move(other.replicaId_))
-{
-}
-
-StatelessInstanceEntityHealthInformation & StatelessInstanceEntityHealthInformation::operator = (StatelessInstanceEntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        partitionId_ = move(other.partitionId_);
-        replicaId_ = move(other.replicaId_);
-    }
-
-    EntityHealthInformation::operator=(move(other));
-
-    return *this;
-}
-
 ErrorCode StatelessInstanceEntityHealthInformation::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __in FABRIC_HEALTH_INFORMATION * commonHealthInformation,

@@ -760,6 +760,7 @@ private:
                 StringUtility::AreEqualCaseInsensitive(packageFolder, L"work") ||
                 StringUtility::AreEqualCaseInsensitive(packageFolder, L"temp") ||
                 StringUtility::AreEqualCaseInsensitive(packageFolder, L"log") ||
+				StringUtility::AreEqualCaseInsensitive(packageFolder, L"settings") ||
                 StringUtility::EndsWith<wstring>(packageFolder, L".new") ||
                 StringUtility::EndsWith<wstring>(packageFolder, L".isstmp")) {
                 continue;

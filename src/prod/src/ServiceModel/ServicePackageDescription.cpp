@@ -22,7 +22,9 @@ ServicePackageDescription::ServicePackageDescription()
     Diagnostics(),
     ManifestChecksum(),
     ContentChecksum(),
-    ResourceGovernanceDescription()
+    ResourceGovernanceDescription(),
+    SFRuntimeAccessDescription(),
+    ContainerPolicyDescription()
 {
 }
 
@@ -39,7 +41,9 @@ ServicePackageDescription::ServicePackageDescription(ServicePackageDescription c
     Diagnostics(other.Diagnostics),
     ManifestChecksum(other.ManifestChecksum),
     ContentChecksum(other.ContentChecksum),
-    ResourceGovernanceDescription(other.ResourceGovernanceDescription)
+    ResourceGovernanceDescription(other.ResourceGovernanceDescription),
+    SFRuntimeAccessDescription(other.SFRuntimeAccessDescription),
+    ContainerPolicyDescription(other.ContainerPolicyDescription)
 {
 }
 
@@ -56,7 +60,9 @@ ServicePackageDescription::ServicePackageDescription(ServicePackageDescription &
     Diagnostics(move(other.Diagnostics)),
     ManifestChecksum(move(other.ManifestChecksum)),
     ContentChecksum(move(other.ContentChecksum)),
-    ResourceGovernanceDescription(move(other.ResourceGovernanceDescription))
+    ResourceGovernanceDescription(move(other.ResourceGovernanceDescription)),
+    SFRuntimeAccessDescription(move(other.SFRuntimeAccessDescription)),
+    ContainerPolicyDescription(move(other.ContainerPolicyDescription))
 {
 }
 
@@ -77,6 +83,8 @@ ServicePackageDescription const & ServicePackageDescription::operator = (Service
         this->ManifestChecksum = other.ManifestChecksum;
         this->ContentChecksum = other.ContentChecksum;
         this->ResourceGovernanceDescription = other.ResourceGovernanceDescription;
+        this->SFRuntimeAccessDescription = other.SFRuntimeAccessDescription;
+        this->ContainerPolicyDescription = other.ContainerPolicyDescription;
     }
 
     return *this;
@@ -99,6 +107,8 @@ ServicePackageDescription const & ServicePackageDescription::operator = (Service
         this->ManifestChecksum = move(other.ManifestChecksum);
         this->ContentChecksum = move(other.ContentChecksum);
         this->ResourceGovernanceDescription = move(other.ResourceGovernanceDescription);
+        this->SFRuntimeAccessDescription = move(other.SFRuntimeAccessDescription);
+        this->ContainerPolicyDescription = move(other.ContainerPolicyDescription);
     }
 
     return *this;
@@ -114,6 +124,10 @@ void ServicePackageDescription::WriteTo(TextWriter & w, FormatOptions const &) c
     
     w.Write("ResourceGovernanceDescription { ");
     w.Write("{0}", ResourceGovernanceDescription);
+    w.Write("}, ");
+
+    w.Write("ContainerPolicyDescription { ");
+    w.Write("{0}", ContainerPolicyDescription);
     w.Write("}, ");
 
     w.Write("DigestedServiceTypes = {");
@@ -147,6 +161,10 @@ void ServicePackageDescription::WriteTo(TextWriter & w, FormatOptions const &) c
 
     w.Write("Diagnostics = {");
     w.Write("{0}", this->Diagnostics);
+    w.Write("}, ");
+    
+    w.Write("SFRuntimeAccessDescription = {");
+    w.Write("{0}", this->SFRuntimeAccessDescription);
     w.Write("}, ");
 
     w.Write("ManifestChecksum = {0}", ManifestChecksum);
@@ -197,6 +215,10 @@ void ServicePackageDescription::ReadFromXml(
 
     ParseResourceGovernanceDescription(xmlReader);
 
+    ParseContainerPolicyDescription(xmlReader);
+
+    ParseServiceFabricRuntimeAccessDescription(xmlReader);
+
     ParseDigestedServiceTypes(xmlReader);
 
     ParseDigestedCodePackages(xmlReader);
@@ -215,6 +237,17 @@ void ServicePackageDescription::ReadFromXml(
     ResourceGovernanceDescription.SetMemoryInMB(DigestedCodePackages);
 }
 
+void ServicePackageDescription::ParseServiceFabricRuntimeAccessDescription(
+    XmlReaderUPtr const& xmlReader)
+{
+    if (xmlReader->IsStartElement(
+        *SchemaNames::Element_ServiceFabricRuntimeAccessPolicy,
+        *SchemaNames::Namespace))
+    {
+        this->SFRuntimeAccessDescription.ReadFromXml(xmlReader);
+    }
+}
+
 void ServicePackageDescription::ParseResourceGovernanceDescription(
     XmlReaderUPtr const& xmlReader)
 {
@@ -223,6 +256,17 @@ void ServicePackageDescription::ParseResourceGovernanceDescription(
         *SchemaNames::Namespace))
     {
         this->ResourceGovernanceDescription.ReadFromXml(xmlReader);
+    }
+}
+
+void ServicePackageDescription::ParseContainerPolicyDescription(
+        XmlReaderUPtr const& xmlReader)
+{
+    if (xmlReader->IsStartElement(
+            *SchemaNames::Element_ServicePackageContainerPolicy,
+            *SchemaNames::Namespace))
+    {
+        this->ContainerPolicyDescription.ReadFromXml(xmlReader);
     }
 }
 
@@ -352,6 +396,12 @@ ErrorCode ServicePackageDescription::WriteToXml(XmlWriterUPtr const & xmlWriter)
 
 	xmlWriter->Flush();
     er = ResourceGovernanceDescription.WriteToXml(xmlWriter);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    xmlWriter->Flush();
+    er = ContainerPolicyDescription.WriteToXml(xmlWriter);
     if (!er.IsSuccess())
     {
         return er;

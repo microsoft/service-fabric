@@ -16,8 +16,8 @@ namespace ServiceModel
         DigestedCodePackageDescription(DigestedCodePackageDescription const & other);
         DigestedCodePackageDescription(DigestedCodePackageDescription && other);
 
-        DigestedCodePackageDescription const & operator = (DigestedCodePackageDescription const & other);
-        DigestedCodePackageDescription const & operator = (DigestedCodePackageDescription && other);
+        DigestedCodePackageDescription & operator = (DigestedCodePackageDescription const & other) = default;
+        DigestedCodePackageDescription & operator = (DigestedCodePackageDescription && other) = default;
 
         bool operator == (DigestedCodePackageDescription const & other) const;
         bool operator != (DigestedCodePackageDescription const & other) const;
@@ -38,6 +38,7 @@ namespace ServiceModel
         DebugParametersDescription DebugParameters;
         ContainerPoliciesDescription ContainerPolicies;
         ResourceGovernancePolicyDescription ResourceGovernancePolicy;
+        ConfigPackagePoliciesDescription ConfigPackagePolicy;
 
         bool IsShared;
 
@@ -49,6 +50,7 @@ namespace ServiceModel
         void ParseDebugParameters(Common::XmlReaderUPtr const & xmlReader);
         void ParseContainerPolicies(Common::XmlReaderUPtr const & xmlReader);
         void ParseResourceGovernancePolicy(Common::XmlReaderUPtr const & xmlReader);
+        void ParseConfigPackagePolicy(Common::XmlReaderUPtr const & xmlReader);
 
         Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const & xmlWriter);
     };

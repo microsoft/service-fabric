@@ -28,6 +28,7 @@ namespace Management
             FAS_RESOURCE(ChaosNodeTypeInclusionListTooLong, ChaosNodeTypeInclusionListTooLong)
             FAS_RESOURCE(ChaosApplicationInclusionListTooLong, ChaosApplicationInclusionListTooLong)
             FAS_RESOURCE(ChaosTargetFilterSpecificationNotFound, ChaosTargetFilterSpecificationNotFound)
+            FAS_RESOURCE(ChaosScheduleStatusUnknown, ChaosScheduleStatusUnknown)
         };
     }
 }

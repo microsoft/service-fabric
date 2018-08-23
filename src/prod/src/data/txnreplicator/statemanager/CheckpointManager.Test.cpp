@@ -40,13 +40,13 @@ namespace StateManagerTests
             GetCurrentDirectory(MAX_PATH, currentDirectoryPathCharArray);
 
             BOOL result = PathAppendW(currentDirectoryPathCharArray, fileStreamName);
-            CODING_ERROR_ASSERT(result == 1);
+            VERIFY_IS_TRUE(result == 1);
 
             KWString fileName(allocator, Common::Path::GetPathGlobalNamespaceWstr().c_str());
-            CODING_ERROR_ASSERT(NT_SUCCESS(fileName.Status()));
+            VERIFY_IS_TRUE(NT_SUCCESS(fileName.Status()));
 
             KWString currentFilePath(allocator, currentDirectoryPathCharArray);
-            CODING_ERROR_ASSERT(NT_SUCCESS(currentFilePath.Status()));
+            VERIFY_IS_TRUE(NT_SUCCESS(currentFilePath.Status()));
 
             fileName += currentFilePath;
 
@@ -64,7 +64,7 @@ namespace StateManagerTests
                 wchar_t number = static_cast<wchar_t>(i);
 
                 auto status = KUri::Create(KUriView(&number), GetAllocator(), expectedName);
-                CODING_ERROR_ASSERT(NT_SUCCESS(status));
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
 
                 auto metadata = TestHelper::CreateMetadata(*expectedName, false, i+1, GetAllocator());
 
@@ -78,13 +78,13 @@ namespace StateManagerTests
                 if (addActive)
                 {
                     bool isAdded = metadataManagerSPtr->TryAdd(*expectedName, *metadata);
-                    CODING_ERROR_ASSERT(isAdded == true);
+                    VERIFY_IS_TRUE(isAdded == true);
                 }
                 else
                 {
                     metadata->MetadataMode = MetadataMode::DelayDelete;
                     bool isAdded = metadataManagerSPtr->AddDeleted(i+1, *metadata);
-                    CODING_ERROR_ASSERT(isAdded == true);
+                    VERIFY_IS_TRUE(isAdded == true);
                 }
 
                 outArray->Append(metadata.RawPtr());
@@ -117,7 +117,7 @@ namespace StateManagerTests
                 serializationMode, 
                 GetAllocator(), 
                 checkpointManagerSPtr);
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
             KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
             // Setup 
@@ -185,14 +185,14 @@ namespace StateManagerTests
                 serializationMode, 
                 GetAllocator(), 
                 checkpointManagerSPtr);
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
             KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
             // Setup 
             MetadataManager::SPtr metadataManagerSPtr = TestHelper::CreateMetadataManager(GetAllocator());
             KUri::CSPtr expectedName;
             status = KUri::Create(KUriView(L"fabric:/sps/sp"), GetAllocator(), expectedName);
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
 
             auto metadata = TestHelper::CreateMetadata(*expectedName, false, GetAllocator());
             bool isAdded = metadataManagerSPtr->TryAdd(*expectedName, *metadata);
@@ -209,24 +209,32 @@ namespace StateManagerTests
                 KWString(GetAllocator(), *tempCheckpointFile), 
                 GetAllocator(),
                 checkpointFileReopenSPtr);
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
             SyncAwait(checkpointFileReopenSPtr->ReadAsync(CancellationToken::None));
 
-            auto enumerator = checkpointFileReopenSPtr->GetAsyncEnumerator();
+            CheckpointFileAsyncEnumerator::SPtr enumerator = checkpointFileReopenSPtr->GetAsyncEnumerator();
             ULONG32 i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
-                CODING_ERROR_ASSERT(sermeta->StateProviderId == metadata->StateProviderId);
-                CODING_ERROR_ASSERT(sermeta->ParentStateProviderId == metadata->ParentId);
-                CODING_ERROR_ASSERT(sermeta->CreateLSN == metadata->CreateLSN);
-                CODING_ERROR_ASSERT(sermeta->DeleteLSN == metadata->DeleteLSN);
+                SerializableMetadata::CSPtr serializableMetadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, serializableMetadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_IS_TRUE(serializableMetadata->StateProviderId == metadata->StateProviderId);
+                VERIFY_IS_TRUE(serializableMetadata->ParentStateProviderId == metadata->ParentId);
+                VERIFY_IS_TRUE(serializableMetadata->CreateLSN == metadata->CreateLSN);
+                VERIFY_IS_TRUE(serializableMetadata->DeleteLSN == metadata->DeleteLSN);
 
                 ++i;
             }
 
-            CODING_ERROR_ASSERT(i == 1);
+            VERIFY_IS_TRUE(i == 1);
 
             SyncAwait(enumerator->CloseAsync());
 
@@ -257,7 +265,7 @@ namespace StateManagerTests
                 serializationMode,
                 GetAllocator(), 
                 checkpointManagerSPtr); 
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
             KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
             // Setup 
@@ -357,7 +365,7 @@ namespace StateManagerTests
                 serializationMode,
                 GetAllocator(),
                 checkpointManagerSPtr); 
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
             KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
             // Setup 
@@ -375,7 +383,7 @@ namespace StateManagerTests
                 serializationMode,
                 GetAllocator(), 
                 recoverCheckpointManagerSPtr);
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
 
             MetadataManager::SPtr recoverMetadataManagerSPtr = TestHelper::CreateMetadataManager(GetAllocator());
 
@@ -390,11 +398,11 @@ namespace StateManagerTests
             {
                 // Verify the exception thrown and it's the one we expected 
                 isThrow = true;
-                CODING_ERROR_ASSERT(exception.GetStatus() == SF_STATUS_COMMUNICATION_ERROR);
+                VERIFY_IS_TRUE(exception.GetStatus() == SF_STATUS_COMMUNICATION_ERROR);
             }
 
             // Verify the exception catched.
-            CODING_ERROR_ASSERT(isThrow);
+            VERIFY_IS_TRUE(isThrow);
 
             Common::Directory::Delete(static_cast<LPCWSTR>(*workFolderPath), true);
         }
@@ -422,7 +430,7 @@ namespace StateManagerTests
                 serializationMode,
                 GetAllocator(),
                 checkpointManagerSPtr); 
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
             KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
             // Setup 
@@ -463,7 +471,7 @@ namespace StateManagerTests
                 serializationMode,
                 GetAllocator(),
                 checkpointManagerSPtr); 
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
             KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
             // Setup 
@@ -589,7 +597,7 @@ namespace StateManagerTests
             SerializationMode::Native,
             GetAllocator(),
             checkpointManagerSPtr); 
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
 
         // Test
         VERIFY_ARE_EQUAL(checkpointManagerSPtr->PrepareCheckpointLSN, FABRIC_INVALID_SEQUENCE_NUMBER);
@@ -708,14 +716,14 @@ namespace StateManagerTests
             SerializationMode::Native,
             GetAllocator(),
             checkpointManagerSPtr); 
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
         KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
         // Setup 
         MetadataManager::SPtr metadataManagerSPtr = TestHelper::CreateMetadataManager(GetAllocator());
         KUri::CSPtr expectedName;
         status = KUri::Create(KUriView(L"fabric:/sps/sp"), GetAllocator(), expectedName);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
 
         auto metadata = TestHelper::CreateMetadata(*expectedName, false, GetAllocator());
         bool isAdded = metadataManagerSPtr->TryAdd(*expectedName, *metadata);
@@ -734,24 +742,32 @@ namespace StateManagerTests
             tmpFileName, 
             GetAllocator(),
             checkpointFileReopenSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
         SyncAwait(checkpointFileReopenSPtr->ReadAsync(CancellationToken::None));
 
         auto enumerator = checkpointFileReopenSPtr->GetAsyncEnumerator();
         ULONG32 i = 0;
 
-        while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+        while (true)
         {
-            auto sermeta = enumerator->GetCurrent();
-            CODING_ERROR_ASSERT(sermeta->StateProviderId == metadata->StateProviderId);
-            CODING_ERROR_ASSERT(sermeta->ParentStateProviderId == metadata->ParentId);
-            CODING_ERROR_ASSERT(sermeta->CreateLSN == metadata->CreateLSN);
-            CODING_ERROR_ASSERT(sermeta->DeleteLSN == metadata->DeleteLSN);
+            SerializableMetadata::CSPtr serializableMetadata = nullptr;
+            status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, serializableMetadata));
+            if (status == STATUS_NOT_FOUND)
+            {
+                break;
+            }
+
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+            VERIFY_IS_TRUE(serializableMetadata->StateProviderId == metadata->StateProviderId);
+            VERIFY_IS_TRUE(serializableMetadata->ParentStateProviderId == metadata->ParentId);
+            VERIFY_IS_TRUE(serializableMetadata->CreateLSN == metadata->CreateLSN);
+            VERIFY_IS_TRUE(serializableMetadata->DeleteLSN == metadata->DeleteLSN);
 
             ++i;
         }
 
-        CODING_ERROR_ASSERT(i == 1);
+        VERIFY_IS_TRUE(i == 1);
         SyncAwait(enumerator->CloseAsync());
 
         VerifyFileExistAndCleanUpFile(*replicaFolderPath, true, false, false, *checkpointManagerSPtr);
@@ -781,14 +797,14 @@ namespace StateManagerTests
             SerializationMode::Native,
             GetAllocator(),
             checkpointManagerSPtr); 
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
         KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
         // Setup 
         MetadataManager::SPtr metadataManagerSPtr = TestHelper::CreateMetadataManager(GetAllocator());
         KUri::CSPtr expectedName;
         status = KUri::Create(KUriView(L"fabric:/sps/sp"), GetAllocator(), expectedName);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
 
         auto metadata = TestHelper::CreateMetadata(*expectedName, false, GetAllocator());
         bool isAdded = metadataManagerSPtr->TryAdd(*expectedName, *metadata);
@@ -836,14 +852,14 @@ namespace StateManagerTests
             SerializationMode::Native,
             GetAllocator(),
             checkpointManagerSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
         KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
         // Setup 
         MetadataManager::SPtr metadataManagerSPtr = TestHelper::CreateMetadataManager(GetAllocator());
         KUri::CSPtr expectedName;
         status = KUri::Create(KUriView(L"fabric:/sps/sp"), GetAllocator(), expectedName);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
 
         auto metadata = TestHelper::CreateMetadata(*expectedName, false, GetAllocator());
         bool isAdded = metadataManagerSPtr->TryAdd(*expectedName, *metadata);
@@ -882,14 +898,14 @@ namespace StateManagerTests
             SerializationMode::Native,
             GetAllocator(),
             checkpointManagerSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
         KSharedArray<Metadata::CSPtr>::SPtr metadataArray = nullptr;
 
         // Setup 
         MetadataManager::SPtr metadataManagerSPtr = TestHelper::CreateMetadataManager(GetAllocator());
         KUri::CSPtr expectedName;
         status = KUri::Create(KUriView(L"fabric:/sps/sp"), GetAllocator(), expectedName);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
 
         auto metadata = TestHelper::CreateMetadata(*expectedName, false, GetAllocator());
         bool isAdded = metadataManagerSPtr->TryAdd(*expectedName, *metadata);
@@ -909,24 +925,32 @@ namespace StateManagerTests
             fileName, 
             GetAllocator(),
             checkpointFileReopenSPtr);
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
         SyncAwait(checkpointFileReopenSPtr->ReadAsync(CancellationToken::None));
 
         auto enumerator = checkpointFileReopenSPtr->GetAsyncEnumerator();
         ULONG32 i = 0;
 
-        while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+        while (true)
         {
-            auto sermeta = enumerator->GetCurrent();
-            CODING_ERROR_ASSERT(sermeta->StateProviderId == metadata->StateProviderId);
-            CODING_ERROR_ASSERT(sermeta->ParentStateProviderId == metadata->ParentId);
-            CODING_ERROR_ASSERT(sermeta->CreateLSN == metadata->CreateLSN);
-            CODING_ERROR_ASSERT(sermeta->DeleteLSN == metadata->DeleteLSN);
+            SerializableMetadata::CSPtr serializableMetadata = nullptr;
+            status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, serializableMetadata));
+            if (status == STATUS_NOT_FOUND)
+            {
+                break;
+            }
+
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+            VERIFY_IS_TRUE(serializableMetadata->StateProviderId == metadata->StateProviderId);
+            VERIFY_IS_TRUE(serializableMetadata->ParentStateProviderId == metadata->ParentId);
+            VERIFY_IS_TRUE(serializableMetadata->CreateLSN == metadata->CreateLSN);
+            VERIFY_IS_TRUE(serializableMetadata->DeleteLSN == metadata->DeleteLSN);
 
             ++i;
         }
 
-        CODING_ERROR_ASSERT(i == 1);
+        VERIFY_IS_TRUE(i == 1);
         SyncAwait(enumerator->CloseAsync());
 
         VerifyFileExistAndCleanUpFile(*replicaFolderPath, true, false, false, *checkpointManagerSPtr);
@@ -985,13 +1009,13 @@ namespace StateManagerTests
             SerializationMode::Native,
             GetAllocator(),
             checkpointManagerSPtr); 
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
 
         MetadataManager::SPtr recoverMetadataManagerSPtr = TestHelper::CreateMetadataManager(GetAllocator());
         auto result = SyncAwait(checkpointManagerSPtr->RecoverCheckpointAsync(*recoverMetadataManagerSPtr, CancellationToken::None));
 
         // Tests
-        CODING_ERROR_ASSERT(result == nullptr);
+        VERIFY_IS_TRUE(result == nullptr);
         VerifyFileExistAndCleanUpFile(*replicaFolderPath, true, false, false, *checkpointManagerSPtr);
         Common::Directory::Delete(static_cast<LPCWSTR>(*workFolderPath), true);
     }

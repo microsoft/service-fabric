@@ -132,6 +132,7 @@ Command:createcompose
 Description: Create a compose deployment instance
 Usage: createcompose <deploymentname> <appbuild path> <type name> <type version> [options]*
 Options:
+isOverrideIB - override existing mock image builder parameter
 isSkipSetIB - skip setting mock image builder parameter
 verify - verify if compose creation completes
 asyncverify - verify at background
@@ -269,6 +270,10 @@ Usage: deletename <name> [error] [options]*
 Options:
 client - used named fabric client
 
+Command:dnsnameexists
+Description: Checks whether a DNS name exists in the store service.
+Usage: nameexists <dnsname> <expectedExists> [error] 
+
 Command:nameexists
 Description: Checks whether a name exists at the store service.
 Usage: nameexists <name> <expectedExists> [error] [options]*
@@ -362,6 +367,7 @@ noverify - <bool> wait for verification of GFUM before attempting to resolve
 skipverifyresults - <bool> once Resolve returns a result, use it without checking whether the location is valid with FM
 nodeconfig - <nodeId>: creates a local fabric client using the FabricNodeConfig of the specified node
 error - <string> expected error
+namedpartition - <bool> Partition is named, even if name can be parsed as integer
 
 Command:resolveusingclient
 Description: Resolves the replica location(s) for a service using a named client created via createclient command and names the returned entry for future use.
@@ -897,6 +903,7 @@ minreplica - min write quorum (int)
 instance - instance count (int)
 partitionnames - partition names (string, can't contain ';')
 servicePackageActivationMode - activation mode to use for this service (enum). Allowed values: SharedProcess|ExclusiveProcess
+serviceDnsName - service DNS name (string)
 
 Command:app.servicepack
 Description: Sets the service package for the application. If ClearAll is specified instead of service package name all existing services manifests are cleared
@@ -1372,6 +1379,12 @@ Options:
 SharingScope=[All|Code|Config|Data]
 SharedPackages=[Names of packages to be shared]
 
+Command:verifydeployedcodepackagecount
+Description: Verifies count of deployed code packages
+Usage: VerifyDeployedCodePackageCount ExpectedCount=<expected count> ApplicationName=<ApplicationName> NodeIdList=<comma delemites list of NodeId> [options]*
+Options:
+ServiceManifestName=<ServiceManifestName>
+
 Command:notificationclient
 Description: Creates a client registered for service notifications at the given list of nodes
 Usage: notificationclient [clientname=<name>] nodes=<list of node IDs>
@@ -1411,7 +1424,7 @@ Description: verify that all directories created from comman adddiskdrivefolders
 Usage: verifydeleteddiskdrivefolders
 
 Command:waitforalltoapplylsn
-Description: wait for all replicas to apply and acknowledge a given lsn
+Description: wait for all replicas to apply and acknowledge a given lsn. nodename and lsn are optional.
 Usage: waitforalltoapplylsn <servicename> <nodename> <lsn>
 
 Command::requestcheckpoint

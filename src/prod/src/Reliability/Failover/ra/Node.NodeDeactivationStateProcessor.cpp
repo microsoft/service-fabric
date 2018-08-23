@@ -17,7 +17,7 @@ void NodeDeactivationStateProcessor::ProcessActivationStateChange(
     NodeDeactivationState & state,
     NodeDeactivationInfo const & newInfo)
 {
-    if (!state.TryStartChange(newInfo))
+    if (!state.TryStartChange(activityId, newInfo))
     {
         return;
     }
@@ -71,7 +71,7 @@ bool NodeDeactivationStateProcessor::UpdateFailoverUnit(
     }
     else
     {
-        ra_.CloseLocalReplica(handlerParameters, ReplicaCloseMode::DeactivateNode);
+        ra_.CloseLocalReplica(handlerParameters, ReplicaCloseMode::DeactivateNode, ActivityDescription::Empty);
     }
 
     return true;

@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 namespace Query
 {
@@ -12,7 +12,7 @@ namespace Query
         , public Common::TextTraceComponent<Common::TraceTaskCodes::Query>
     {
     public:
-         explicit GetNodeListQuerySpecification(bool);         
+         explicit GetNodeListQuerySpecification(bool);
          static std::vector<QuerySpecificationSPtr> CreateSpecifications();
 
          virtual Common::ErrorCode OnParallelQueryExecutionComplete(
@@ -24,13 +24,13 @@ namespace Query
              QuerySpecificationSPtr const& querySpecification,
              Common::TimeSpan const& totalRemainingTime);
 
-         static std::wstring GetSpecificationId(ServiceModel::QueryArgumentMap const & queryArgs);   
+         static std::wstring GetSpecificationId(ServiceModel::QueryArgumentMap const & queryArgs);
 
     private:
         static const double CMGetNodeListTimeoutPercentage;
         std::map<Federation::NodeId, ServiceModel::NodeQueryResult> CreateNodeResultMap(
             std::vector<ServiceModel::NodeQueryResult> && nodeQueryResults);
-        static bool ExcludeStoppedNodeInfo(ServiceModel::QueryArgumentMap const & queryArgs); 
+        static bool ExcludeStoppedNodeInfo(ServiceModel::QueryArgumentMap const & queryArgs);
         static std::wstring GetInternalSpecificationId(bool excludeFAS);
     };
 }

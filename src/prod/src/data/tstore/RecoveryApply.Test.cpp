@@ -41,34 +41,38 @@ namespace TStoreTests
          return operationDataSPtr;
       }
 
-      void AddKey(int key, int value)
+      ktl::Awaitable<void> AddKeyAsync(int key, int value)
       {
          auto txn = CreateWriteTransaction();
-         SyncAwait(Store->AddAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-         SyncAwait(txn->CommitAsync());
+         co_await Store->AddAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+         co_await txn->CommitAsync();
+         co_return;
       }
 
-      void UpdateKey(int key, int value)
+      ktl::Awaitable<void> UpdateKeyAsync(int key, int value)
       {
          auto txn = CreateWriteTransaction();
-         SyncAwait(Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-         SyncAwait(txn->CommitAsync());
+         co_await Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+         co_await txn->CommitAsync();
+         co_return;
       }
 
-      void RemoveKey(int key)
+      ktl::Awaitable<void> RemoveKeyAsync(int key)
       {
           auto txn = CreateWriteTransaction();
-          SyncAwait(Store->ConditionalRemoveAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None));
-          SyncAwait(txn->CommitAsync());
+          co_await Store->ConditionalRemoveAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
+          co_await txn->CommitAsync();
+          co_return;
       }
 
-      void CheckpointAndRecover()
+      ktl::Awaitable<void> CheckpointAndRecoverAsync()
       {
-          Checkpoint();
-          CloseAndReOpenStore();
+          co_await CheckpointAsync();
+          co_await CloseAndReOpenStoreAsync();
+          co_return;
       }
 
-      void RecoverAdd(int key, int value, LONG64 commitLSN = -1)
+      ktl::Awaitable<void> RecoverAddAsync(int key, int value, LONG64 commitLSN = -1)
       {
           KAllocator& allocator = GetAllocator();
 
@@ -97,20 +101,22 @@ namespace TStoreTests
           OperationData::SPtr redoSPtr = redoDataSPtr.DownCast<OperationData>();
           OperationData::SPtr undoSPtr = nullptr;
 
-          auto operationContext = SyncAwait(Store->ApplyAsync(
+          auto operationContext = co_await Store->ApplyAsync(
              commitLSN,
              *txnCSPtr,
              ApplyContext::RecoveryRedo,
              metadataCSPtr.RawPtr(),
-             redoDataSPtr.RawPtr()));
+             redoDataSPtr.RawPtr());
 
           if (operationContext != nullptr)
           {
               Store->Unlock(*operationContext);
           }
+
+          co_return;
       }
 
-      void RecoverUpdate(int key, int value, LONG64 commitLSN = -1)
+      ktl::Awaitable<void> RecoverUpdateAsync(int key, int value, LONG64 commitLSN = -1)
       {
           KAllocator& allocator = GetAllocator();
           
@@ -138,20 +144,22 @@ namespace TStoreTests
           OperationData::SPtr redoSPtr = redoDataSPtr.DownCast<OperationData>();
           OperationData::SPtr undoSPtr = nullptr;
 
-          auto operationContext = SyncAwait(Store->ApplyAsync(
+          auto operationContext = co_await Store->ApplyAsync(
              commitLSN,
              *txnCSPtr,
              ApplyContext::RecoveryRedo,
              metadataCSPtr.RawPtr(),
-             redoDataSPtr.RawPtr()));
+             redoDataSPtr.RawPtr());
 
           if (operationContext != nullptr)
           {
               Store->Unlock(*operationContext);
           }
+
+          co_return;
       }
 
-      void RecoverRemove(int key, LONG64 commitLSN = -1)
+      ktl::Awaitable<void> RecoverRemoveAsync(int key, LONG64 commitLSN = -1)
       {
           KAllocator& allocator = GetAllocator();
           
@@ -178,306 +186,407 @@ namespace TStoreTests
           OperationData::SPtr redoSPtr = redoDataSPtr.DownCast<OperationData>();
           OperationData::SPtr undoSPtr = nullptr;
 
-          auto operationContext = SyncAwait(Store->ApplyAsync(
+          auto operationContext = co_await Store->ApplyAsync(
              commitLSN,
              *txnCSPtr,
              ApplyContext::RecoveryRedo,
              metadataCSPtr.RawPtr(),
-             redoDataSPtr.RawPtr()));
+             redoDataSPtr.RawPtr());
 
           if (operationContext != nullptr)
           {
               Store->Unlock(*operationContext);
           }
+
+          co_return;
       }
 
    private:
       KtlSystem* ktlSystem_;
       KSharedPtr<TestStateSerializer<int>> serializerSPtr_;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> Recover_AddOperation_ShouldSucceed_Test()
+       {
+           auto key = 7;
+           auto value = 6;
+           co_await RecoverAddAsync(key, value);
+           co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+           co_return;
+       }
+
+        ktl::Awaitable<void> Recover_UpdateOperation_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+            int updatedValue = 9;
+
+            co_await AddKeyAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+
+            co_await RecoverUpdateAsync(key, updatedValue);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, updatedValue);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_RemoveOperation_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+
+            co_await AddKeyAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+
+            co_await RecoverRemoveAsync(key);
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> RecoverAdd_Checkpoint_Recover_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+
+            co_await RecoverAddAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+
+            co_await CheckpointAndRecoverAsync();
+
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Add_RecoverUpdate_Checkpoint_Recover_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+            int updatedValue = 8;
+
+            co_await AddKeyAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+
+            co_await RecoverUpdateAsync(key, updatedValue);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, updatedValue);
+
+            co_await CheckpointAndRecoverAsync();
+        
+            co_await VerifyKeyExistsAsync(*Store, key, -1, updatedValue);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Add_RecoverRemove_Checkpoint_Recover_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+
+            co_await AddKeyAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+
+            co_await RecoverRemoveAsync(key);
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+
+            co_await CheckpointAndRecoverAsync();
+        
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Add_RecoverUpdate_Remove_Checkpoint_Recover_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+            int updateValue = 8;
+
+            co_await AddKeyAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+
+            co_await RecoverUpdateAsync(key, updateValue);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, updateValue);
+
+            co_await RemoveKeyAsync(key);
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+
+            co_await CheckpointAndRecoverAsync();
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+
+            co_return;
+        }
+
+        ktl::Awaitable<void> Add_RecoverAddDifferent_Checkpoint_Recover_ShouldSucceed_Test()
+        {
+            int key1 = 7;
+            int key2 = 8;
+            int value = 6;
+
+            co_await AddKeyAsync(key1, value);
+            co_await RecoverAddAsync(key2, value);
+
+            co_await VerifyKeyExistsAsync(*Store, key1, -1, value);
+            co_await VerifyKeyExistsAsync(*Store, key2, -1, value);
+
+            co_await CheckpointAndRecoverAsync();
+
+            co_await VerifyKeyExistsAsync(*Store, key1, -1, value);
+            co_await VerifyKeyExistsAsync(*Store, key2, -1, value);
+            co_return;
+        }
+
+        ktl::Awaitable<void> RecoveryApply_MultipleTimes_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+
+            co_await AddKeyAsync(key, value);
+
+            co_await CheckpointAndRecoverAsync();
+
+            for (ULONG32 i = 0; i < 81; i++)
+            {
+                switch (i % 3)
+                {
+                case 0: co_await RecoverUpdateAsync(key, value); break;
+                case 1: co_await RecoverRemoveAsync(key); break;
+                case 2: co_await RecoverAddAsync(key, value); break;
+                }
+            }
+
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+            co_await CheckpointAndRecoverAsync();
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Checkpoint_AddMany_RecoverRemoveMany_ShouldSucceed_Test()
+        {
+            LONG32 numItems = 100;
+        
+            for (int i = numItems - 1; i >= 0; i--)
+            {
+                co_await AddKeyAsync(i, i);
+            }
+
+            co_await CheckpointAsync();
+
+            for (int i = 0; i < numItems; i++)
+            {
+                co_await RecoverRemoveAsync(i);
+            }
+
+            co_await CheckpointAsync();
+
+            for (int i = 0; i < numItems; i++)
+            {
+                co_await VerifyKeyDoesNotExistAsync(*Store, i);
+            }
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_AddNotInCheckpoint_ShouldSucceed_Test()
+        {
+            co_await RecoverAddAsync(1, 1);
+            co_await RecoverAddAsync(2, 2);
+            co_await RecoverAddAsync(3, 3);
+
+            co_await UpdateKeyAsync(1, 11);
+            co_await UpdateKeyAsync(2, 22);
+            co_await UpdateKeyAsync(3, 33);
+
+            co_await RemoveKeyAsync(3);
+
+            co_await CheckpointAsync();
+
+            co_await AddKeyAsync(4, 44);  // This add won't be in the checkpoint
+
+            co_await CloseAndReOpenStoreAsync();  // Recover without checkpointing again
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, 4);
+
+            co_await RecoverAddAsync(4, 44); // Replay the add
+
+            co_await VerifyKeyExistsAsync(*Store, 4, -1, 44);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_UpdateNotInCheckpoint_ShouldSucceed_Test()
+        {
+            co_await RecoverAddAsync(1, 1);
+            co_await RecoverAddAsync(2, 2);
+            co_await RecoverAddAsync(3, 3);
+
+            co_await UpdateKeyAsync(1, 11);
+            co_await UpdateKeyAsync(2, 22);
+            co_await UpdateKeyAsync(3, 33);
+
+            co_await RemoveKeyAsync(3);
+
+            co_await AddKeyAsync(4, 4);
+
+            co_await CheckpointAsync();
+
+            co_await UpdateKeyAsync(4, 44);  // This update won't be in the checkpoint
+
+            co_await CloseAndReOpenStoreAsync();  // Recover without checkpointing again
+
+            co_await VerifyKeyExistsAsync(*Store, 4, -1, 4);
+
+            co_await RecoverUpdateAsync(4, 44); // Replay the update
+
+            co_await VerifyKeyExistsAsync(*Store, 4, -1, 44);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_RemoveNotInCheckpoint_ShouldSucceed_Test()
+        {
+            co_await RecoverAddAsync(1, 1);
+            co_await RecoverAddAsync(2, 2);
+            co_await RecoverAddAsync(3, 3);
+
+            co_await UpdateKeyAsync(1, 11);
+            co_await UpdateKeyAsync(2, 22);
+            co_await UpdateKeyAsync(3, 33);
+
+            co_await RemoveKeyAsync(3);
+
+            co_await AddKeyAsync(4, 4);
+
+            co_await CheckpointAsync();
+
+            co_await RemoveKeyAsync(4);  // This remove won't be in the checkpoint
+
+            co_await CloseAndReOpenStoreAsync();  // Recover without checkpointing again
+
+            co_await VerifyKeyExistsAsync(*Store, 4, -1, 4);
+
+            co_await RecoverRemoveAsync(4); // Replay the remove
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, 4);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_DuplicateAdd_ShouldSucceed_Test()
+        {
+            co_await AddKeyAsync(1, 1);
+            co_await CheckpointAndRecoverAsync();
+
+            LONG64 checkpointLSN;
+            Diagnostics::Validate(Replicator->GetLastCommittedSequenceNumber(checkpointLSN));
+
+            auto lastCommitLSN = checkpointLSN - 1; // Checkpoint LSN is +1 of last commit
+            co_await RecoverAddAsync(1, 1, lastCommitLSN);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_DuplicateUpdate_ShouldSucceed_Test()
+        {
+            co_await AddKeyAsync(1, 1);
+            co_await UpdateKeyAsync(1, 2);
+            co_await CheckpointAndRecoverAsync();
+
+            LONG64 checkpointLSN;
+            Diagnostics::Validate(Replicator->GetLastCommittedSequenceNumber(checkpointLSN));
+
+            auto lastCommitLSN = checkpointLSN - 1; // Checkpoint LSN is +1 of last commit
+            co_await RecoverAddAsync(1, 2, lastCommitLSN);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_DuplicateRemove_ShouldSucceed_Test()
+        {
+            co_await AddKeyAsync(1, 1);
+            co_await RemoveKeyAsync(1);
+            co_await CheckpointAndRecoverAsync();
+
+            LONG64 checkpointLSN;
+            Diagnostics::Validate(Replicator->GetLastCommittedSequenceNumber(checkpointLSN));
+
+            auto lastCommitLSN = checkpointLSN - 1; // Checkpoint LSN is +1 of last commit
+            co_await RecoverRemoveAsync(1, lastCommitLSN);
+            co_return;
+        }
+    #pragma endregion
    };
 
    BOOST_FIXTURE_TEST_SUITE(RecoveryApplyTestSuite, RecoveryApplyTest)
 
    BOOST_AUTO_TEST_CASE(Recover_AddOperation_ShouldSucceed)
    {
-       auto key = 7;
-       auto value = 6;
-       RecoverAdd(key, value);
-       SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
+       SyncAwait(Recover_AddOperation_ShouldSucceed_Test());
    }
 
     BOOST_AUTO_TEST_CASE(Recover_UpdateOperation_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-        int updatedValue = 9;
-
-        AddKey(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-
-        RecoverUpdate(key, updatedValue);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, updatedValue));
+        SyncAwait(Recover_UpdateOperation_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_RemoveOperation_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-
-        AddKey(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-
-        RecoverRemove(key);
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(Recover_RemoveOperation_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(RecoverAdd_Checkpoint_Recover_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-
-        RecoverAdd(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-
-        CheckpointAndRecover();
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
+        SyncAwait(RecoverAdd_Checkpoint_Recover_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Add_RecoverUpdate_Checkpoint_Recover_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-        int updatedValue = 8;
-
-        AddKey(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-
-        RecoverUpdate(key, updatedValue);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, updatedValue));
-
-        CheckpointAndRecover();
-        
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, updatedValue));
+        SyncAwait(Add_RecoverUpdate_Checkpoint_Recover_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Add_RecoverRemove_Checkpoint_Recover_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-
-        AddKey(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-
-        RecoverRemove(key);
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
-
-        CheckpointAndRecover();
-        
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(Add_RecoverRemove_Checkpoint_Recover_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Add_RecoverUpdate_Remove_Checkpoint_Recover_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-        int updateValue = 8;
-
-        AddKey(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-
-        RecoverUpdate(key, updateValue);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, updateValue));
-
-        RemoveKey(key);
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
-
-        CheckpointAndRecover();
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
-
+        SyncAwait(Add_RecoverUpdate_Remove_Checkpoint_Recover_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Add_RecoverAddDifferent_Checkpoint_Recover_ShouldSucceed)
     {
-        int key1 = 7;
-        int key2 = 8;
-        int value = 6;
-
-        AddKey(key1, value);
-        RecoverAdd(key2, value);
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, key1, -1, value));
-        SyncAwait(VerifyKeyExistsAsync(*Store, key2, -1, value));
-
-        CheckpointAndRecover();
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, key1, -1, value));
-        SyncAwait(VerifyKeyExistsAsync(*Store, key2, -1, value));
+        SyncAwait(Add_RecoverAddDifferent_Checkpoint_Recover_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(RecoveryApply_MultipleTimes_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-
-        AddKey(key, value);
-
-        CheckpointAndRecover();
-
-        for (ULONG32 i = 0; i < 81; i++)
-        {
-            switch (i % 3)
-            {
-            case 0: RecoverUpdate(key, value); break;
-            case 1: RecoverRemove(key); break;
-            case 2: RecoverAdd(key, value); break;
-            }
-        }
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-        CheckpointAndRecover();
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
+        SyncAwait(RecoveryApply_MultipleTimes_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Checkpoint_AddMany_RecoverRemoveMany_ShouldSucceed)
     {
-        LONG32 numItems = 100;
-        
-        for (int i = numItems - 1; i >= 0; i--)
-        {
-            AddKey(i, i);
-        }
-
-        Checkpoint();
-
-        for (int i = 0; i < numItems; i++)
-        {
-            RecoverRemove(i);
-        }
-
-        Checkpoint();
-
-        for (int i = 0; i < numItems; i++)
-        {
-            SyncAwait(VerifyKeyDoesNotExistAsync(*Store, i));
-        }
+        SyncAwait(Checkpoint_AddMany_RecoverRemoveMany_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_AddNotInCheckpoint_ShouldSucceed)
     {
-        RecoverAdd(1, 1);
-        RecoverAdd(2, 2);
-        RecoverAdd(3, 3);
-
-        UpdateKey(1, 11);
-        UpdateKey(2, 22);
-        UpdateKey(3, 33);
-
-        RemoveKey(3);
-
-        Checkpoint();
-
-        AddKey(4, 44);  // This add won't be in the checkpoint
-
-        CloseAndReOpenStore();  // Recover without checkpointing again
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, 4));
-
-        RecoverAdd(4, 44); // Replay the add
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, 4, -1, 44));
+        SyncAwait(Recover_AddNotInCheckpoint_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_UpdateNotInCheckpoint_ShouldSucceed)
     {
-        RecoverAdd(1, 1);
-        RecoverAdd(2, 2);
-        RecoverAdd(3, 3);
-
-        UpdateKey(1, 11);
-        UpdateKey(2, 22);
-        UpdateKey(3, 33);
-
-        RemoveKey(3);
-
-        AddKey(4, 4);
-
-        Checkpoint();
-
-        UpdateKey(4, 44);  // This update won't be in the checkpoint
-
-        CloseAndReOpenStore();  // Recover without checkpointing again
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, 4, -1, 4));
-
-        RecoverUpdate(4, 44); // Replay the update
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, 4, -1, 44));
+        SyncAwait(Recover_UpdateNotInCheckpoint_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_RemoveNotInCheckpoint_ShouldSucceed)
     {
-        RecoverAdd(1, 1);
-        RecoverAdd(2, 2);
-        RecoverAdd(3, 3);
-
-        UpdateKey(1, 11);
-        UpdateKey(2, 22);
-        UpdateKey(3, 33);
-
-        RemoveKey(3);
-
-        AddKey(4, 4);
-
-        Checkpoint();
-
-        RemoveKey(4);  // This remove won't be in the checkpoint
-
-        CloseAndReOpenStore();  // Recover without checkpointing again
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, 4, -1, 4));
-
-        RecoverRemove(4); // Replay the remove
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, 4));
+        SyncAwait(Recover_RemoveNotInCheckpoint_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_DuplicateAdd_ShouldSucceed)
     {
-        AddKey(1, 1);
-        CheckpointAndRecover();
-
-        LONG64 checkpointLSN;
-        Diagnostics::Validate(Replicator->GetLastCommittedSequenceNumber(checkpointLSN));
-
-        auto lastCommitLSN = checkpointLSN - 1; // Checkpoint LSN is +1 of last commit
-        RecoverAdd(1, 1, lastCommitLSN);
+        SyncAwait(Recover_DuplicateAdd_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_DuplicateUpdate_ShouldSucceed)
     {
-        AddKey(1, 1);
-        UpdateKey(1, 2);
-        CheckpointAndRecover();
-
-        LONG64 checkpointLSN;
-        Diagnostics::Validate(Replicator->GetLastCommittedSequenceNumber(checkpointLSN));
-
-        auto lastCommitLSN = checkpointLSN - 1; // Checkpoint LSN is +1 of last commit
-        RecoverAdd(1, 2, lastCommitLSN);
+        SyncAwait(Recover_DuplicateUpdate_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_DuplicateRemove_ShouldSucceed)
     {
-        AddKey(1, 1);
-        RemoveKey(1);
-        CheckpointAndRecover();
-
-        LONG64 checkpointLSN;
-        Diagnostics::Validate(Replicator->GetLastCommittedSequenceNumber(checkpointLSN));
-
-        auto lastCommitLSN = checkpointLSN - 1; // Checkpoint LSN is +1 of last commit
-        RecoverRemove(1, lastCommitLSN);
+        SyncAwait(Recover_DuplicateRemove_ShouldSucceed_Test());
     }
 
    BOOST_AUTO_TEST_SUITE_END()

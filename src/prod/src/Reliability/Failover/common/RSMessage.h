@@ -170,6 +170,8 @@ namespace Reliability
         static RSMessage const & GetPartitionNotification() { return PartitionNotification; }
         static RSMessage const & GetPartitionNotificationReply() { return PartitionNotificationReply; }
 
+        static RSMessage const & GetAvailableContainerImages() { return AvailableContainerImages; }
+
         // Creates a message without a body
         Transport::MessageUPtr CreateMessage(bool isHighPriority = false) const
         {
@@ -413,6 +415,8 @@ namespace Reliability
 
         static Common::Global<RSMessage> PartitionNotification;
         static Common::Global<RSMessage> PartitionNotificationReply;
+
+        static Common::Global<RSMessage> AvailableContainerImages;
 
         Transport::Actor::Enum actor_;
         Transport::ActionHeader actionHeader_;

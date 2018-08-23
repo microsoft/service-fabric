@@ -15,6 +15,7 @@ FileMetadata::FileMetadata()
     , previousVersion_()
     , state_()
     , copyDesc_()
+    , uploadRequestId_(Guid::NewGuid())
 {
 }
 
@@ -24,15 +25,7 @@ FileMetadata::FileMetadata(std::wstring const & storeRelativeLocation)
     , previousVersion_()
     , state_()
     , copyDesc_()
-{
-}
-
-FileMetadata::FileMetadata(std::wstring const & storeRelativeLocation, StoreFileVersion const currentVersion, FileState::Enum const state)
-: storeRelativeLocation_(storeRelativeLocation)
-, currentVersion_(currentVersion)
-, previousVersion_()
-, state_(state)
-, copyDesc_()
+    , uploadRequestId_(Guid::NewGuid())
 {
 }
 
@@ -42,8 +35,20 @@ FileMetadata::FileMetadata(std::wstring const & storeRelativeLocation, StoreFile
     , previousVersion_()
     , state_(state)
     , copyDesc_(copyDesc)
+    , uploadRequestId_(Guid::NewGuid())
 {
 }
+
+FileMetadata::FileMetadata(std::wstring const & storeRelativeLocation, StoreFileVersion const currentVersion, FileState::Enum const state, Guid const & uploadId)
+    : storeRelativeLocation_(storeRelativeLocation)
+    , currentVersion_(currentVersion)
+    , previousVersion_()
+    , state_(state)
+    , copyDesc_()
+    , uploadRequestId_(uploadId)
+{
+}
+
 
 FileMetadata::~FileMetadata()
 {
@@ -62,5 +67,5 @@ wstring FileMetadata::ConstructKey() const
 
 void FileMetadata::WriteTo(TextWriter & w, FormatOptions const &) const
 {    
-    w.Write("FileMetadata[{0}, {1}, {2}, {3}, {4}]", storeRelativeLocation_, currentVersion_, previousVersion_, state_, copyDesc_);
+    w.Write("FileMetadata[{0}, {1}, {2}, {3}, {4}, {5}]", storeRelativeLocation_, currentVersion_, previousVersion_, state_, copyDesc_, uploadRequestId_);
 }

@@ -78,6 +78,38 @@ BackupLogRecord::CSPtr BackupManager::GetLastCompletedBackupLogRecord() const
     return lastCompletedBackupLogRecordThreadSafeCache_.Get();
 }
 
+/// <summary>
+/// Undo the last completed backup log record.
+/// </summary>
+void BackupManager::UndoLastCompletedBackupLogRecord()
+{
+    BackupLogRecord::CSPtr lastCompletedBackupLogRecord = lastCompletedBackupLogRecordThreadSafeCache_.Get();
+
+    ASSERT_IFNOT(lastCompletedBackupLogRecord != nullptr && lastCompletedBackupLogRecord->IsZeroBackupLogRecord() == false, 
+        "{0}: If there has been no completed backup log record, it cannot be undone.", 
+        TraceId);
+
+    EventSource::Events->UndoBackupLogRecord(
+        TracePartitionId,
+        ReplicaId,
+        lastCompletedBackupLogRecord->Lsn,
+        lastCompletedBackupLogRecord->Psn,
+        lastCompletedBackupLogRecord->RecordPosition,
+        lastCompletedBackupLogRecord->HighestBackedupEpoch.DataLossVersion,
+        lastCompletedBackupLogRecord->HighestBackedupEpoch.ConfigurationVersion,
+        lastCompletedBackupLogRecord->HighestBackedupLsn);
+
+    // Note that given truncate tail can only undo one backup log record.
+    // In the current implementation, if a replica goes through truncate tail and the primary does not replicate any other backup log records
+    // this replica will be required to take a full backup when it becomes primary.
+    // The probability can be reduced by keeping track of the last the completed backup log records.
+    // In this way, if there is a LCB -1, LCB can become LCB -1 and backup in the last completed begin checkpoint otherwise.
+    InvalidLogRecords::SPtr invalidLogRecords = InvalidLogRecords::Create(GetThisAllocator());
+    BackupLogRecord::SPtr zeroBackupLogRecord = BackupLogRecord::CreateZeroBackupLogRecord(*(invalidLogRecords->Inv_PhysicalLogRecord), GetThisAllocator());
+
+    lastCompletedBackupLogRecordThreadSafeCache_.Put(zeroBackupLogRecord.RawPtr());
+}
+
 bool BackupManager::ShouldCleanState() const
 {
     // Port Note: Difference due to locking change.
@@ -107,7 +139,11 @@ ktl::Awaitable<TxnReplicator::BackupInfo> BackupManager::BackupAsync(
 {
     KShared$ApiEntry();
 
-    auto result = co_await BackupAsync(backupCallbackHandler, FABRIC_BACKUP_OPTION_FULL, Common::TimeSpan::MaxValue, CancellationToken::None);   
+    auto result = co_await BackupAsync(
+        backupCallbackHandler, 
+        FABRIC_BACKUP_OPTION_FULL, 
+        Common::TimeSpan::MaxValue, 
+        CancellationToken::None);
 
     co_return result;
 }
@@ -115,15 +151,12 @@ ktl::Awaitable<TxnReplicator::BackupInfo> BackupManager::BackupAsync(
 // Summary: This method backs up a replicator.
 //
 // Algorithm:
-// 1. Acquire backup Api lock & argument validation
-// 2. Prepare the backup folder.
-// 3. If Full, backup SM
-// 4. Get log records to be backed up.
-// 5. Backup log records.
-// 6. Write backup metadata
-// 7. Ensure that the backed up data is stabilized. (Replicated and await processing of a barrier)
-// 8. Call the user callback where they need to upload to external store.
-// 9. Replicate a backup log record indicating the latest backed up LSN.
+// 1. Argument validation & Prepare the backup.
+// 2. Backup SM if Full. Get log records and backup.
+// 3. Write backup metadata.
+// 4. Ensure that the backed up data is stabilized. (Replicated and await processing of a barrier).
+// 5. Call the user callback where they need to upload to external store.
+// 6. Replicate a backup log record indicating the latest backed up LSN.
 // 
 // TODO: Not implementing timeout - waiting for timer solution.
 // Port Note: The backup folder are calculated at construction instead of during this call.
@@ -137,30 +170,68 @@ ktl::Awaitable<TxnReplicator::BackupInfo> BackupManager::BackupAsync(
 
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
-    Stopwatch backupStopwatch;
-
     // Generate backup id for this backup.
     Common::Guid backupId = GenerateBackupId();
+    Common::Guid parentBackupId = Common::Guid();
+
+    // These variables used to do step trace, time duration + accumulated message.
+    int64 argValidateDuration = -1;
+    int64 stateManagerBackupDuration = -1;
+    int64 getLogRecordsAndBackupDuration = -1;
+    int64 writeMetadataDuration = -1;
+    int64 ensureStableDuration = -1;
+    int64 userCallBackDuration = -1;
+    int64 replicateBackupLogRecordDuration = -1;
+    int64 lastStepElapsedTime = 0;
+    Stopwatch backupStopwatch;
+    backupStopwatch.Start();
 
     // Can throw SF_STATUS_BACKUP_IN_PROGRESS
-    // Step 1: Acquire backup API lock. Used to ensure there is at max one backup at any given point of time.
-    AcquireEntryLock(backupId, LockRequester::Backup);
+    // Step 1: Argument validation & Prepare the backup.
+    // Acquire backup API lock. Used to ensure there is at max one backup at any given point of time.
+    co_await this->AcquireEntryLock(backupId, timeout, LockRequester::Backup);
     KFinally([&] { ReleaseEntryLock(); });
 
     // Argument validation
     ASSERT_IF(backupOption == FABRIC_BACKUP_OPTION_INVALID, "{0}: FABRIC_BACKUP_OPTION_INVALID requested.", TraceId);
     ThrowIfFullBackupIsMissing(backupOption, backupId);
 
-    // Indicates that Backup has been accepted.
-    EventSource::Events->AcceptBackup(
+    // Accept the backup call.
+    EventSource::Events->IBM_BackupAsyncStart(
         TracePartitionId,
         ReplicaId,
-        backupId);
+        backupId,
+        parentBackupId,
+        backupOption,
+        transactionalReplicatorConfig_->EnableIncrementalBackupsAcrossReplicas,
+        Epoch::InvalidEpoch().DataLossVersion,
+        Epoch::InvalidEpoch().ConfigurationVersion,
+        FABRIC_INVALID_SEQUENCE_NUMBER,
+        ToStringLiteral(*backupFolderCSPtr_));
 
-    // Step 2: Ensure that the replicator backup folder has been created and clean.
+    // Ensure that the replicator backup folder has been created and clean.
     co_await PrepareBackupFolderAsync(backupOption, backupId);
 
-    // Step 3 & 4: If Full, backup SM. Get log records to be backed up.
+    // Update step 1 time duration and trace.
+    argValidateDuration = backupStopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    lastStepElapsedTime = backupStopwatch.ElapsedMilliseconds;
+    EventSource::Events->IBM_BackupAsync(
+        TracePartitionId,
+        ReplicaId,
+        backupId,
+        parentBackupId, 
+        Epoch::InvalidEpoch().DataLossVersion,
+        Epoch::InvalidEpoch().ConfigurationVersion,
+        FABRIC_INVALID_SEQUENCE_NUMBER,
+        argValidateDuration,
+        stateManagerBackupDuration,
+        getLogRecordsAndBackupDuration,
+        writeMetadataDuration,
+        ensureStableDuration,
+        userCallBackDuration,
+        replicateBackupLogRecordDuration);
+
+    // Step 2: Backup SM if Full. Get log records and backup.
     IAsyncEnumerator<LogRecord::SPtr>::SPtr logRecords = nullptr;
     if (backupOption == FABRIC_BACKUP_OPTION_FULL)
     {
@@ -170,6 +241,8 @@ ktl::Awaitable<TxnReplicator::BackupInfo> BackupManager::BackupAsync(
             *smBackupFolderCSPtr_,
             timeout,
             cancellationToken);
+
+        stateManagerBackupDuration = backupStopwatch.ElapsedMilliseconds - lastStepElapsedTime;
     }
     else
     {
@@ -179,7 +252,6 @@ ktl::Awaitable<TxnReplicator::BackupInfo> BackupManager::BackupAsync(
             cancellationToken);
     }
 
-    // Step 5: Backup log records.
     ReplicatorBackup replicatorBackupInfo = ReplicatorBackup::Invalid();
     {
         KFinally([&] {logRecords->Dispose(); });
@@ -191,17 +263,59 @@ ktl::Awaitable<TxnReplicator::BackupInfo> BackupManager::BackupAsync(
     // Common reason for this is that records are serialized as logical and incremental filters records.
     ThrowIfAccumulatedIncrementalBackupLogsIsTooLarge(backupOption, backupId, replicatorBackupInfo);
 
-    // Step 6: Write backup metadata
+    // Update step 2 time duration and trace.
+    getLogRecordsAndBackupDuration = backupStopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    lastStepElapsedTime = backupStopwatch.ElapsedMilliseconds;
+    EventSource::Events->IBM_BackupAsync(
+        TracePartitionId,
+        ReplicaId,
+        backupId,
+        parentBackupId,
+        Epoch::InvalidEpoch().DataLossVersion,
+        Epoch::InvalidEpoch().ConfigurationVersion,
+        FABRIC_INVALID_SEQUENCE_NUMBER,
+        argValidateDuration,
+        stateManagerBackupDuration,
+        getLogRecordsAndBackupDuration,
+        writeMetadataDuration,
+        ensureStableDuration,
+        userCallBackDuration,
+        replicateBackupLogRecordDuration);
+
+    BackupLogRecord::CSPtr previousBackupLogRecord = lastCompletedBackupLogRecordThreadSafeCache_.Get();
+    parentBackupId = backupOption == FABRIC_BACKUP_OPTION_FULL ?
+        backupId :
+        Common::Guid(previousBackupLogRecord->BackupId);
+
+    // Step 3: Write backup metadata
     status = co_await WriteBackupMetadataFileAsync(
         backupOption,
         backupId,
+        parentBackupId, 
         replicatorBackupInfo,
         cancellationToken);
     THROW_ON_FAILURE(status);
 
-    int64 localBackupCompletedTimeAtMs = backupStopwatch.ElapsedMilliseconds;
+    // Update step 3 time duration and trace.
+    writeMetadataDuration = backupStopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    lastStepElapsedTime = backupStopwatch.ElapsedMilliseconds;
+    EventSource::Events->IBM_BackupAsync(
+        TracePartitionId,
+        ReplicaId,
+        backupId,
+        parentBackupId,
+        replicatorBackupInfo.EpochOfHighestBackedUpLogRecord.DataLossNumber,
+        replicatorBackupInfo.EpochOfHighestBackedUpLogRecord.ConfigurationNumber,
+        replicatorBackupInfo.LsnOfHighestBackedUpLogRecord,
+        argValidateDuration,
+        stateManagerBackupDuration,
+        getLogRecordsAndBackupDuration,
+        writeMetadataDuration,
+        ensureStableDuration,
+        userCallBackDuration,
+        replicateBackupLogRecordDuration);
 
-    // Step 7: Ensure that the backed up data is stabilized. (Replicated and await processing of a barrier)
+    // Step 4: Ensure that the backed up data is stabilized. (Replicated and await processing of a barrier)
     // Wait for the highest backed up lsn to be replicated to ensure no false progress.
     // This is only required when we have incremental backup.
     {
@@ -212,28 +326,82 @@ ktl::Awaitable<TxnReplicator::BackupInfo> BackupManager::BackupAsync(
         }
     }
 
+    // Update step 4 time duration and trace.
+    ensureStableDuration = backupStopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    lastStepElapsedTime = backupStopwatch.ElapsedMilliseconds;
+    EventSource::Events->IBM_BackupAsync(
+        TracePartitionId,
+        ReplicaId,
+        backupId,
+        parentBackupId,
+        replicatorBackupInfo.EpochOfHighestBackedUpLogRecord.DataLossNumber,
+        replicatorBackupInfo.EpochOfHighestBackedUpLogRecord.ConfigurationNumber,
+        replicatorBackupInfo.LsnOfHighestBackedUpLogRecord,
+        argValidateDuration,
+        stateManagerBackupDuration,
+        getLogRecordsAndBackupDuration,
+        writeMetadataDuration,
+        ensureStableDuration,
+        userCallBackDuration,
+        replicateBackupLogRecordDuration);
+
+    // Step 5: Call the user callback where they need to upload to external store.
     BackupVersion backupVersion(replicatorBackupInfo.EpochOfHighestBackedUpLogRecord, replicatorBackupInfo.LsnOfHighestBackedUpLogRecord);
-    BackupInfo backupInfo(backupId, *backupFolderCSPtr_, backupOption, backupVersion, GetThisAllocator());
+    BackupVersion startBackupVersion(replicatorBackupInfo.EpochOfFirstBackedUpLogRecord, replicatorBackupInfo.LsnOfFirstLogicalLogRecord);
+    
+    BackupInfo backupInfo(
+        *backupFolderCSPtr_, 
+        backupOption, 
+        backupVersion, 
+        startBackupVersion, 
+        backupId,
+        parentBackupId,
+        GetThisAllocator());
     THROW_ON_FAILURE(backupInfo.Status());
 
-    // Step 8: Call the user callback where they need to upload to external store.
     // Port Note: If return false from callback, this method will simply throw SF_STATUS_INVALID_OPERATION
-    int64 callbackCalledAtMs = backupStopwatch.ElapsedMilliseconds;
     status = co_await CallBackupCallbackAsync(backupId, backupInfo, backupCallbackHandler, cancellationToken);
     THROW_ON_FAILURE(status);
 
-    int64 callBackDurationInMs = backupStopwatch.ElapsedMilliseconds - callbackCalledAtMs;
+    // Update step 5 time duration and trace.
+    userCallBackDuration = backupStopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    lastStepElapsedTime = backupStopwatch.ElapsedMilliseconds;
+    EventSource::Events->IBM_BackupAsync(
+        TracePartitionId,
+        ReplicaId,
+        backupId,
+        parentBackupId,
+        replicatorBackupInfo.EpochOfHighestBackedUpLogRecord.DataLossNumber,
+        replicatorBackupInfo.EpochOfHighestBackedUpLogRecord.ConfigurationNumber,
+        replicatorBackupInfo.LsnOfHighestBackedUpLogRecord,
+        argValidateDuration,
+        stateManagerBackupDuration,
+        getLogRecordsAndBackupDuration,
+        writeMetadataDuration,
+        ensureStableDuration,
+        userCallBackDuration,
+        replicateBackupLogRecordDuration);
 
-    // Step 9: Replicate a backup log record indicating the latest backed up LSN.
+    // Step 6: Replicate a backup log record indicating the latest backed up LSN.
     status = co_await ReplicateBackupLogRecordAsync(backupId, replicatorBackupInfo);
     THROW_ON_FAILURE(status);
     
-    EventSource::Events->BackupAsyncCompleted(
+    replicateBackupLogRecordDuration = backupStopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    EventSource::Events->IBM_BackupAsyncFinish(
         TracePartitionId,
         ReplicaId,
-        localBackupCompletedTimeAtMs,
-        callBackDurationInMs,
-        backupStopwatch.ElapsedMilliseconds);
+        backupId,
+        parentBackupId,
+        replicatorBackupInfo.EpochOfHighestBackedUpLogRecord.DataLossNumber,
+        replicatorBackupInfo.EpochOfHighestBackedUpLogRecord.ConfigurationNumber,
+        replicatorBackupInfo.LsnOfHighestBackedUpLogRecord,
+        argValidateDuration,
+        stateManagerBackupDuration,
+        getLogRecordsAndBackupDuration,
+        writeMetadataDuration,
+        ensureStableDuration,
+        userCallBackDuration,
+        replicateBackupLogRecordDuration);
 
     co_return backupInfo;
 }
@@ -262,9 +430,18 @@ ktl::Awaitable<void> BackupManager::RestoreAsync(
     ThrowIfOnDataLossIsNotInflight();
 
     Guid restoreId = Guid::NewGuid();
-
     KGuid kRestoreId(restoreId.AsGUID());
 
+    // These variables used to do step trace, time duration + accumulated message.
+    int64 argValidateDuration = -1;
+    int64 stateManagerRestoreDuration = -1;
+    int64 replicatorRestoreDuration = -1;
+    int64 becomePrimaryDuration = -1;
+    int64 lastStepElapsedTime = 0;
+    Stopwatch stopwatch;
+    stopwatch.Start();
+
+    // Step 1: Argument validation + Prepare for restore
     // in Windows input backupFolder might not have GDN (//??//) prefix.
     // This causes problems later on. This ensures that backupFolderPath always has GDN prefixed when required
     KString::SPtr snapBackupFolderPath(KPath::CreatePath(backupFolder, GetThisAllocator()));
@@ -277,24 +454,23 @@ ktl::Awaitable<void> BackupManager::RestoreAsync(
     co_await backupFolderInfoSPtr->AnalyzeAsync(cancellationToken);
 
     // Can throw SF_STATUS_INVALID_OPERATION
-    // Step 1: Acquire backup API lock. Used to ensure there is at max one backup at any given point of time.
-    AcquireEntryLock(restoreId, LockRequester::Restore);
+    // Acquire backup API lock. Used to ensure there is at max one backup at any given point of time.
+    co_await this->AcquireEntryLock(restoreId, timeout, LockRequester::Restore);
     KFinally([&] { ReleaseEntryLock(); });
 
     // Caller holds lock.
     ThrowIfInvalidState(restoreId);
     ThrowIfNotSafe(restorePolicy, *backupFolderInfoSPtr, restoreId);
 
-    EventSource::Events->AcceptRestore(
+    EventSource::Events->IBM_RestoreAsyncStart(
         TracePartitionId,
         ReplicaId,
         restoreId,
-        ToStringLiteral(*snapBackupFolderPath),
         backupFolderInfoSPtr->HighestBackedupEpoch.ConfigurationVersion,
         backupFolderInfoSPtr->HighestBackedupEpoch.DataLossVersion,
-        backupFolderInfoSPtr->HighestBackedupLSN);
-
-    Stopwatch stopwatch;
+        backupFolderInfoSPtr->HighestBackedupLSN,
+        backupFolderInfoSPtr->LogPathList.Count(), 
+        ToStringLiteral(*snapBackupFolderPath));
 
     IBackupRestoreProvider::SPtr loggingReplicator = GetLoggingReplicator();
     status = co_await loggingReplicator->CancelTheAbortingOfTransactionsIfNecessaryAsync();
@@ -302,11 +478,37 @@ ktl::Awaitable<void> BackupManager::RestoreAsync(
 
     co_await CreateRestoreTokenAsync(restoreId);
 
+    // Update step 1 time duration and trace.
+    argValidateDuration = stopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    lastStepElapsedTime = stopwatch.ElapsedMilliseconds;
+    EventSource::Events->IBM_RestoreAsync(
+        TracePartitionId,
+        ReplicaId,
+        restoreId,
+        argValidateDuration,
+        stateManagerRestoreDuration,
+        replicatorRestoreDuration,
+        becomePrimaryDuration);
+
+    // Step 2: StateManager Restore
     status = co_await stateManagerSPtr_->RestoreCheckpointAsync(*backupFolderInfoSPtr->StateManagerBackupFolderPath, cancellationToken);
     THROW_ON_FAILURE(status);
 
+    // Update step 2 time duration and trace.
+    stateManagerRestoreDuration = stopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    lastStepElapsedTime = stopwatch.ElapsedMilliseconds;
+    EventSource::Events->IBM_RestoreAsync(
+        TracePartitionId,
+        ReplicaId,
+        restoreId,
+        argValidateDuration,
+        stateManagerRestoreDuration,
+        replicatorRestoreDuration,
+        becomePrimaryDuration);
+
     Epoch dataLossEpoch = replicatedLogManagerSPtr_->CurrentLogTailEpoch;
 
+    // Step 3: Replicator Restore
     // Close the replicator, delete log.
     status = co_await loggingReplicator->CloseAsync();
     THROW_ON_FAILURE(status);
@@ -326,6 +528,19 @@ ktl::Awaitable<void> BackupManager::RestoreAsync(
 
     isLogUnavailableDueToRestore_ = false;
 
+    // Update step 3 time duration and trace.
+    replicatorRestoreDuration = stopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    lastStepElapsedTime = stopwatch.ElapsedMilliseconds;
+    EventSource::Events->IBM_RestoreAsync(
+        TracePartitionId,
+        ReplicaId,
+        restoreId,
+        argValidateDuration,
+        stateManagerRestoreDuration,
+        replicatorRestoreDuration,
+        becomePrimaryDuration);
+
+    // Step 4: Reset the replica role and primary state. These would have been reset during recovery
     status = co_await loggingReplicator->BecomePrimaryAsync(true);
     THROW_ON_FAILURE(status);
 
@@ -339,14 +554,15 @@ ktl::Awaitable<void> BackupManager::RestoreAsync(
     ASSERT_IFNOT(restoreTokenExists, "{0}: Restore token must exist.", TraceId);
     DeleteRestoreToken(restoreId);
 
-    EventSource::Events->CompletedRestore(
+    becomePrimaryDuration = stopwatch.ElapsedMilliseconds - lastStepElapsedTime;
+    EventSource::Events->IBM_RestoreAsyncFinish(
         TracePartitionId,
         ReplicaId,
         restoreId,
-        ToStringLiteral(*snapBackupFolderPath),
-        backupFolderInfoSPtr->HighestBackedupEpoch.ConfigurationVersion,
-        backupFolderInfoSPtr->HighestBackedupEpoch.DataLossVersion,
-        backupFolderInfoSPtr->HighestBackedupLSN);
+        argValidateDuration,
+        stateManagerRestoreDuration,
+        replicatorRestoreDuration,
+        becomePrimaryDuration);
 }
 
 void BackupManager::EnableBackup() noexcept
@@ -500,9 +716,11 @@ void BackupManager::ThrowIfFullBackupIsMissing(
     BackupLogRecord::CSPtr lastCompletedBackupLogRecord = lastCompletedBackupLogRecordThreadSafeCache_.Get();
 
     Epoch snapOfCurrentEpoch = replicatedLogManagerSPtr_->CurrentLogTailEpoch;
-    if (snapOfCurrentEpoch == lastCompletedBackupLogRecord->HighestBackedupEpoch == false)
+
+    // If the partition has not take a full backup yet, then incremental backup cannot be allowed.
+    if (lastCompletedBackupLogRecord->IsZeroBackupLogRecord())
     {
-        EventSource::Events->BackupException(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId, 
             ReplicaId,
             backupId,
@@ -512,6 +730,58 @@ void BackupManager::ThrowIfFullBackupIsMissing(
 
         throw ktl::Exception(SF_STATUS_MISSING_FULL_BACKUP);
     }
+
+    // If the incremental backup request has been made in the same epoch as the previous backup,
+    // Then allow the incremental backup.
+    if (snapOfCurrentEpoch == lastCompletedBackupLogRecord->HighestBackedupEpoch)
+    {
+        return;
+    }
+
+    if (transactionalReplicatorConfig_->EnableIncrementalBackupsAcrossReplicas)
+    {
+        wstring message = Common::wformatString(
+            L"lastCompletedBackupLogRecord->HighestBackedupEpoch:<{0}: {1}>, currentEpoch:<{2}: {3}>",
+            lastCompletedBackupLogRecord->HighestBackedupEpoch.DataLossVersion,
+            lastCompletedBackupLogRecord->HighestBackedupEpoch.ConfigurationVersion,
+            snapOfCurrentEpoch.DataLossVersion,
+            snapOfCurrentEpoch.ConfigurationVersion);
+
+        EventSource::Events->IBM_BackupAsyncFinishError(
+            TracePartitionId,
+            ReplicaId,
+            backupId,
+            L"ErrorCode",
+            SF_STATUS_MISSING_FULL_BACKUP,
+            message);
+
+        // If the incremental backup request has been made in different data loss number as the previous backup, 
+        // do not allow the incremental backup.
+        // Allowing this case increases complexities in terms of potentially possible restore folders. 
+        // E.g.
+        // 1->2->3->4
+        //    |->5->6
+        // Note Epoch at incremental backup 4 could be ahead of 6 even though 6 was taken at a later time.
+        // This is because cluster which 2 is restored back to before starting the incremental backup 5 only verifies that new data loss number
+        // is greater than 2 not 4.
+        // Note that progress vector may have been trimmed. If trimmed, than we cannot do the incremental backup.
+        ProgressVectorEntry vectorEntry = replicatedLogManagerSPtr_->ProgressVectorValue->Find(lastCompletedBackupLogRecord->HighestBackedupEpoch);
+        bool result = vectorEntry != ProgressVectorEntry();
+        if (result && snapOfCurrentEpoch.DataLossVersion == lastCompletedBackupLogRecord->HighestBackedupEpoch.DataLossVersion)
+        {
+            return;
+        }
+    }
+
+    EventSource::Events->IBM_BackupAsyncFinishError(
+        TracePartitionId,
+        ReplicaId,
+        backupId,
+        L"ErrorCode",
+        SF_STATUS_MISSING_FULL_BACKUP,
+        L"Missing full backup (SF_STATUS_MISSING_FULL_BACKUP)");
+
+    throw ktl::Exception(SF_STATUS_MISSING_FULL_BACKUP);
 }
 
 ktl::Awaitable<void> BackupManager::PrepareBackupFolderAsync(
@@ -526,7 +796,7 @@ ktl::Awaitable<void> BackupManager::PrepareBackupFolderAsync(
         Common::ErrorCode errorCode = Directory::Delete(static_cast<wstring>(*backupFolderCSPtr_), true);
         if (errorCode.IsSuccess() == false)
         {
-            EventSource::Events->BackupException(
+            EventSource::Events->IBM_BackupAsyncFinishError(
                 TracePartitionId,
                 ReplicaId,
                 backupId,
@@ -553,7 +823,7 @@ ktl::Awaitable<void> BackupManager::PrepareBackupFolderAsync(
                     {
                         if (retryCount == MaxRetryCount)
                         {
-                            EventSource::Events->BackupException(
+                            EventSource::Events->IBM_BackupAsyncFinishError(
                                 TracePartitionId,
                                 ReplicaId,
                                 backupId,
@@ -577,7 +847,7 @@ ktl::Awaitable<void> BackupManager::PrepareBackupFolderAsync(
                         continue;
                     }
 
-                    EventSource::Events->BackupException(
+                    EventSource::Events->IBM_BackupAsyncFinishError(
                         TracePartitionId,
                         ReplicaId,
                         backupId,
@@ -597,7 +867,7 @@ ktl::Awaitable<void> BackupManager::PrepareBackupFolderAsync(
             {
                 if (retryCount == MaxRetryCount)
                 {
-                    EventSource::Events->BackupException(
+                    EventSource::Events->IBM_BackupAsyncFinishError(
                         TracePartitionId,
                         ReplicaId,
                         backupId,
@@ -617,7 +887,7 @@ ktl::Awaitable<void> BackupManager::PrepareBackupFolderAsync(
                 continue;
             }
 
-            EventSource::Events->BackupException(
+            EventSource::Events->IBM_BackupAsyncFinishError(
                 TracePartitionId,
                 ReplicaId,
                 backupId,
@@ -648,8 +918,6 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::BackupSta
     status = KString::Create(lockTakerName, GetThisAllocator(), backupId.ToString().c_str());
     THROW_ON_FAILURE(status);
 
-    Stopwatch stopWatch;
-    LONG64 timeToBackupStateManager = 0; 
     ICheckpointManager::SPtr checkpointManagerSPtr = GetCheckpointManager();
 
     // KDuration is in ticks.
@@ -657,7 +925,7 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::BackupSta
     bool backupConsistencyLockIsAcquired = co_await checkpointManagerSPtr->AcquireBackupAndCopyConsistencyLockAsync(*lockTakerName, duration, cancellationToken);
     if (backupConsistencyLockIsAcquired == false)
     {
-        EventSource::Events->BackupException(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             backupId,
@@ -673,10 +941,11 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::BackupSta
     status = StartDrainableBackupPhase();
     if (NT_SUCCESS(status) == false)
     {
-        EventSource::Events->BackupManager_Error(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             backupId,
+            L"status",
             status,
             L"StartDrainableBackupPhase failed.");
 
@@ -686,14 +955,15 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::BackupSta
     {
         KFinally([&] { CompleteDrainableBackupPhase(); });
 
-        IndexingLogRecord::CSPtr indexinLogRecord = replicatedLogManagerSPtr_->GetIndexingLogRecordForBackup();
+        IndexingLogRecord::CSPtr indexinLogRecord = this->GetIndexingLogRecordForFullBackup(*replicatedLogManagerSPtr_);
         bool isApiLockAcquired = co_await checkpointManagerSPtr->AcquireStateManagerApiLockAsync(*lockTakerName, duration, cancellationToken);
         if (isApiLockAcquired == false)
         {
-            EventSource::Events->BackupManager_Error(
+            EventSource::Events->IBM_BackupAsyncFinishError(
                 TracePartitionId,
                 ReplicaId,
                 backupId,
+                L"status",
                 status,
                 L"AcquireStateManagerApiLockAsync failed.");
 
@@ -706,9 +976,6 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::BackupSta
             status = co_await stateManagerSPtr_->BackupCheckpointAsync(stateManagerBackupFolderPath, cancellationToken);
             THROW_ON_FAILURE(status);
         }
-
-        timeToBackupStateManager = stopWatch.ElapsedMilliseconds;
-        stopWatch.Restart();
 
         logRecords = GetLogRecordsCallerHoldsLock(*indexinLogRecord, *lockTakerName);
     }
@@ -740,7 +1007,7 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::GetIncrem
     BackupLogRecord::CSPtr lastCompletedBackupLogRecord = lastCompletedBackupLogRecordThreadSafeCache_.Get();
     if (lastCompletedBackupLogRecord->Lsn == 0)
     {
-        EventSource::Events->BackupException(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             backupId,
@@ -756,10 +1023,11 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::GetIncrem
     status = StartDrainableBackupPhase();
     if (NT_SUCCESS(status) == false)
     {
-        EventSource::Events->BackupManager_Error(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             backupId,
+            L"status",
             status,
             L"StartDrainableBackupPhase failed.");
 
@@ -769,7 +1037,7 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::GetIncrem
     {
         KFinally([&] { CompleteDrainableBackupPhase(); });
 
-        LogRecord::CSPtr startingLogRecord = FindFirstLogRecordForIncrementalBackup(lastCompletedBackupLogRecord->HighestBackedupLsn);
+        LogRecord::CSPtr startingLogRecord = FindFirstLogRecordForIncrementalBackup(lastCompletedBackupLogRecord->HighestBackedupLsn, backupId);
 
         // Tail log record must be snapped to avoid races since it is not under a lock.
         LogRecord::SPtr tailLogRecord = logManagerSPtr_->CurrentLogTailRecord;
@@ -792,7 +1060,7 @@ ktl::Awaitable<IAsyncEnumerator<LogRecord::SPtr>::SPtr> BackupManager::GetIncrem
 
         if (physicalLogReader->IsValid == false)
         {
-            EventSource::Events->BackupException(
+            EventSource::Events->IBM_BackupAsyncFinishError(
                 TracePartitionId,
                 ReplicaId,
                 backupId,
@@ -866,6 +1134,87 @@ IAsyncEnumerator<LogRecord::SPtr>::SPtr BackupManager::GetLogRecordsCallerHoldsL
         transactionalReplicatorConfig_);
 }
 
+/// <summary>
+/// Gets the indexing log record which will be starting record for the full backup.
+/// </summary>
+/// <returns>
+/// The first indexing log record before the last pending being transaction of the last completed checkpoint.
+/// </returns>
+/// <remarks>
+/// Caller holds backup and copy consistency lock.
+/// </remarks>
+/// <devnote>
+/// Algorithm:
+/// 1. Find the last completed begin checkpoint and the relevant earliest pending transaction.
+/// 2. Use the backwards physical log record link to find the first indexing log record less than earliest pending transaction.
+/// </devnote>
+IndexingLogRecord::CSPtr BackupManager::GetIndexingLogRecordForFullBackup(
+    __in IReplicatedLogManager & replicatedLogManager)
+{
+    // Stage 1: Find the last completed begin checkpoint and the relevant earliest pending transaction.
+    Data::LogRecordLib::EndCheckpointLogRecord::SPtr lastCompeltedEndCheckpointLogRecord = replicatedLogManager.LastCompletedEndCheckpointRecord;
+    ASSERT_IFNOT(
+        lastCompeltedEndCheckpointLogRecord != nullptr && LogRecord::IsInvalid(lastCompeltedEndCheckpointLogRecord.RawPtr()) == false, 
+        "{0} EndCheckpointLogRecord is always expected to be valid.", 
+        TraceId);
+
+    BeginCheckpointLogRecord::SPtr completedBeginCheckpointRecord = lastCompeltedEndCheckpointLogRecord->LastCompletedBeginCheckpointRecord;
+    ASSERT_IFNOT(
+        completedBeginCheckpointRecord != nullptr && LogRecord::IsInvalid(completedBeginCheckpointRecord.RawPtr()) == false,
+        "{0} BeginCheckpointLogRecord is always expected to be valid.",
+        TraceId);
+
+    IndexingLogRecord::SPtr previousIndexingRecord = nullptr;
+    PhysicalLogRecord::SPtr previousPhysicalRecord = completedBeginCheckpointRecord.RawPtr();
+
+    BeginTransactionOperationLogRecord::SPtr earliestPendingBeginTransactionLogRecord = completedBeginCheckpointRecord->EarliestPendingTransaction;
+
+    // Stage 2: Use the backwards physical log record link to find the first indexing log record less than earliest pending transaction.
+    do
+    {
+        // Search back for the last indexing log record.
+        do
+        {
+            PhysicalLogRecord::SPtr tmp = previousPhysicalRecord;
+            previousPhysicalRecord = previousPhysicalRecord->PreviousPhysicalRecord;
+
+            // This method must be called under the backup and copy consistency lock.
+            // Because of this a racing truncate cannot happen between stage 1 and stage 2.
+            // In this light, below code asserts that there is an indexing record with LSN < EarliestPendingTransaction
+            // below the LastCompletedBeginCheckpointRecord.
+            ASSERT_IFNOT(
+                LogRecord::IsInvalid(previousPhysicalRecord.RawPtr()) == false,
+                "{0}: Physical record before PSN {1} must exist.",
+                TraceId,
+                tmp->Psn);
+        } while (previousPhysicalRecord->RecordType != LogRecordType::Indexing);
+
+        previousIndexingRecord = dynamic_cast<IndexingLogRecord *>(previousPhysicalRecord.RawPtr());
+
+        // Check to make sure that the indexing record is older that the earliest pending begin transaction record.
+        // If there is no pending begin transaction record, we are done since we started scanning back from last completed begin checkpoint.
+        if (earliestPendingBeginTransactionLogRecord == nullptr)
+        {
+            break;
+        }
+
+        // If indexing record is not old enough, keep scanning back.
+        if (previousIndexingRecord->RecordPosition >= earliestPendingBeginTransactionLogRecord->RecordPosition)
+        {
+            continue;
+        }
+
+        break;
+    } while (true);
+
+    ASSERT_IFNOT(
+        previousIndexingRecord != nullptr,
+        "{0}: Previous Indexing Record to start the backup from must not be null",
+        TraceId);
+
+    return previousIndexingRecord.RawPtr();
+}
+
 ktl::Awaitable<ReplicatorBackup> BackupManager::BackupReplicatorAsync(
     __in Common::Guid backupId,
     __in FABRIC_BACKUP_OPTION backupOption,
@@ -889,10 +1238,11 @@ ktl::Awaitable<ReplicatorBackup> BackupManager::BackupReplicatorAsync(
     status = StartDrainableBackupPhase();
     if (NT_SUCCESS(status) == false)
     {
-        EventSource::Events->BackupManager_Error(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             backupId,
+            L"status",
             status,
             L"Could not acquire the api lock.");
 
@@ -950,7 +1300,8 @@ ktl::Awaitable<ReplicatorBackup> BackupManager::BackupReplicatorAsync(
 // However, if incremental backups are coming in at high rate that can be much earlier.
 // This could cause unnecessary IO reading the ahead in the log until we find the log record to backup.
 LogRecord::CSPtr BackupManager::FindFirstLogRecordForIncrementalBackup(
-    __in FABRIC_SEQUENCE_NUMBER highestBackedUpLSN)
+    __in FABRIC_SEQUENCE_NUMBER highestBackedUpLSN,
+    __in Common::Guid const & backupId)
 {
     PhysicalLogRecord::SPtr previousPhysicalRecord(logManagerSPtr_->CurrentLogTailRecord->PreviousPhysicalRecord);
     ASSERT_IF(LogRecord::IsInvalid(previousPhysicalRecord.RawPtr()), "{0}: Last physical log record cannot be invalid.", TraceId);
@@ -961,9 +1312,11 @@ LogRecord::CSPtr BackupManager::FindFirstLogRecordForIncrementalBackup(
         previousPhysicalRecord = previousPhysicalRecord->PreviousPhysicalRecord;
         if (LogRecord::IsInvalid(previousPhysicalRecord.RawPtr()))
         {
-            EventSource::Events->IncrementalBackupException(
+            EventSource::Events->IBM_BackupAsyncFinishError(
                 TracePartitionId,
                 ReplicaId,
+                backupId,
+                L"status",
                 SF_STATUS_MISSING_FULL_BACKUP,
                 wformatString(
                     L"Physical record before the last highest backed up record is already truncated ({0})", highestBackedUpLSN));
@@ -980,20 +1333,20 @@ void BackupManager::ThrowIfAccumulatedIncrementalBackupLogsIsTooLarge(
     __in Common::Guid const & backupId,
     __in ReplicatorBackup const & replicatorBackup)
 {
-    UNREFERENCED_PARAMETER(backupId);
-
     if (backupOption != FABRIC_BACKUP_OPTION_FULL)
     {
         return;
     }
 
-    LONG64 snapOfMaxStreamSizeInMB = transactionalReplicatorConfig_->MaxStreamSizeInMB;
+    LONG64 snapOfMaxStreamSizeInMB = transactionalReplicatorConfig_->MaxStreamSizeInMB; 
     if (replicatorBackup.AccumulatedLogSizeInMB >= snapOfMaxStreamSizeInMB)
     {
         // TODO: We could add a more specific error code.
-        EventSource::Events->IncrementalBackupException(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId,
             ReplicaId,
+            backupId,
+            L"status",
             SF_STATUS_MISSING_FULL_BACKUP,
             wformatString(
                 L"Accumulated log size in MB ({0}) would be higher than MaxStreamSizeInMB ({1}).",
@@ -1007,9 +1360,11 @@ void BackupManager::ThrowIfAccumulatedIncrementalBackupLogsIsTooLarge(
     if (replicatorBackup.AccumulatedLogSizeInMB >= maxAccumulatedBackupLogSizeInMB)
     {
         // TODO: We could add a more specific error code.
-        EventSource::Events->IncrementalBackupException(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId,
             ReplicaId,
+            backupId,
+            L"status",
             SF_STATUS_MISSING_FULL_BACKUP,
             wformatString(
                 L"Accumulated log size in MB ({0}) would be higher than MaxAccumulatedBackupLogSizeInMB ({1}).",
@@ -1028,6 +1383,7 @@ void BackupManager::ThrowIfAccumulatedIncrementalBackupLogsIsTooLarge(
 Awaitable<NTSTATUS> BackupManager::WriteBackupMetadataFileAsync(
     __in FABRIC_BACKUP_OPTION backupOption,
     __in Common::Guid backupId,
+    __in Common::Guid parentBackupId,
     __in ReplicatorBackup const & replicatorBackup,
     __in ktl::CancellationToken const & cancellationToken) noexcept
 {
@@ -1051,15 +1407,9 @@ Awaitable<NTSTATUS> BackupManager::WriteBackupMetadataFileAsync(
         backupMetadataSPtr);
     BM_TRACE_AND_CO_RETURN_ON_FAILURE(L"WriteBackupMetadataFileAsync: BackupMetadataFile::Create failed", backupId, status);
 
-    BackupLogRecord::CSPtr previousBackupLogRecord = lastCompletedBackupLogRecordThreadSafeCache_.Get();
-
-    KGuid parentBackupId = backupOption == FABRIC_BACKUP_OPTION_FULL ?
-        KGuid(backupId.AsGUID()) :
-        KGuid(previousBackupLogRecord->BackupId);
-
     status = co_await backupMetadataSPtr->WriteAsync(
         backupOption,
-        parentBackupId,
+        KGuid(parentBackupId.AsGUID()),
         KGuid(backupId.AsGUID()),
         PartitionId,
         ReplicaId,
@@ -1123,7 +1473,7 @@ Awaitable<NTSTATUS> BackupManager::CallBackupCallbackAsync(
 
 // Replicated a backup log record.
 //
-// Port Note: (Managed difference) This has been moved in to the backup managed.
+// Port Note: (Managed difference) This has been moved in to the backup manager.
 Awaitable<NTSTATUS> BackupManager::ReplicateBackupLogRecordAsync(
     __in Common::Guid const & backupId,
     __in ReplicatorBackup const & replicatorBackup) noexcept
@@ -1173,13 +1523,51 @@ Awaitable<NTSTATUS> BackupManager::ReplicateAndAwaitBarrierLogRecordAsync(
 
     ICheckpointManager::SPtr checkpointManager = GetCheckpointManager();
     BarrierLogRecord::SPtr barrierRecordSPtr;
-    NTSTATUS status = checkpointManager->ReplicateBarrier(barrierRecordSPtr);
-    CO_RETURN_ON_FAILURE(status);
+    int retryCount = 0;
+
+    while (true)
+    {
+        NTSTATUS status = checkpointManager->ReplicateBarrier(barrierRecordSPtr);
+        if (NT_SUCCESS(status))
+        {
+            break;
+        }
+
+        if (status == SF_STATUS_RECONFIGURATION_PENDING)
+        {
+            NTSTATUS timerStatus = co_await KTimer::StartTimerAsync(
+                GetThisAllocator(),
+                GetThisAllocationTag(),
+                StartingBackoffInMilliSeconds * (++retryCount),
+                nullptr);
+
+            if (NT_SUCCESS(timerStatus) == false)
+            {
+                // If create timer failed, just return SF_STATUS_RECONFIGURATION_PENDING.
+                CO_RETURN_ON_FAILURE(status);
+            }
+
+            if (retryCount % 4 == 0)
+            {
+                EventSource::Events->IBM_BackupAsyncFinishError(
+                    TracePartitionId,
+                    ReplicaId,
+                    backupId,
+                    L"ErrorCode",
+                    SF_STATUS_RECONFIGURATION_PENDING,
+                    L"ReplicateAndAwaitBarrierLogRecordAsync: Replicate failed since reconfiguration, will retry until timeout");
+            }
+
+            continue;
+        }
+
+        CO_RETURN_ON_FAILURE(status);
+    }
 
     co_await logManagerSPtr_->FlushAsync(KStringView(backupId.ToString().c_str()));
 
     co_await barrierRecordSPtr->AwaitProcessing();
-    co_return status;
+    co_return STATUS_SUCCESS;
 }
 
 Awaitable<NTSTATUS> BackupManager::UnlockOnceApplyAndReplicationCompletesAsync(
@@ -1252,6 +1640,7 @@ bool BackupManager::CheckIfRestoreTokenExists()
 ktl::Awaitable<void> BackupManager::CreateRestoreTokenAsync(
     __in Common::Guid const & id)
 {
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     wstring restoreTokenPath(*restoreTokenFolderPathCSPtr_);
 
     if (Directory::Exists(restoreTokenPath) == false)
@@ -1259,15 +1648,17 @@ ktl::Awaitable<void> BackupManager::CreateRestoreTokenAsync(
         ErrorCode errorCode = Directory::Create2(restoreTokenPath);
         if (errorCode.IsSuccess() == false)
         {
-            EventSource::Events->RestoreException(
+            status = StatusConverter::Convert(errorCode.ToHResult());
+            EventSource::Events->IBM_RestoreAsyncFinishError(
                 TracePartitionId,
                 ReplicaId,
                 id,
+                status,
                 wformatString(
                     L"Failed to create restore token folder {0}",
                     restoreTokenPath));
 
-            throw Exception(StatusConverter::Convert(errorCode.ToHResult()));
+            throw Exception(status);
         }
     }
 
@@ -1282,7 +1673,7 @@ ktl::Awaitable<void> BackupManager::CreateRestoreTokenAsync(
 
     KWString tokenPath(GetThisAllocator(), *restoreTokenFilePathCSPtr_);
     KBlockFile::SPtr fileSPtr = nullptr;
-    NTSTATUS status = co_await KBlockFile::CreateSparseFileAsync(
+    status = co_await KBlockFile::CreateSparseFileAsync(
         tokenPath,
         FALSE,
         KBlockFile::eCreateAlways,
@@ -1294,13 +1685,13 @@ ktl::Awaitable<void> BackupManager::CreateRestoreTokenAsync(
 
     if (NT_SUCCESS(status) == false)
     {
-        EventSource::Events->RestoreException(
+        EventSource::Events->IBM_RestoreAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             id,
+            status, 
             wformatString(
-                L"Failed to create restore token: {0:x}\r\n{1}",
-                status,
+                L"Failed to create restore token. Token path: {0}",
                 ToStringLiteral(*restoreTokenFilePathCSPtr_)));
 
         throw Exception(status);
@@ -1319,12 +1710,12 @@ ktl::Awaitable<void> BackupManager::CreateRestoreTokenAsync(
 void BackupManager::DeleteRestoreToken(
     __in Common::Guid const & id)
 {
-
     if (testFlagNoOpDeleteRestoreToken_)
     {
-        EventSource::Events->RestoreException(
+        EventSource::Events->BackupRestoreWarning(
             TracePartitionId,
             ReplicaId,
+            false,
             id,
             wformatString(
                 L"Nooping deleting restore token since testFlagNoOpDeleteRestoreToken_ is on. {0}",
@@ -1344,15 +1735,17 @@ void BackupManager::DeleteRestoreToken(
     ErrorCode errorCode = File::Delete2(restorePath, true);
     if (errorCode.IsSuccess() == false)
     {
-        EventSource::Events->RestoreException(
+        NTSTATUS status = StatusConverter::Convert(errorCode.ToHResult());
+        EventSource::Events->IBM_RestoreAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             id,
+            status,
             wformatString(
                 L"Failed to delete the Restore Token {0}",
                 ToStringLiteral(*restoreTokenFilePathCSPtr_)));
 
-        throw Exception(StatusConverter::Convert(errorCode.ToHResult()));
+        throw Exception(status);
     }
 
     EventSource::Events->RestoreTokenDeleted(
@@ -1362,21 +1755,32 @@ void BackupManager::DeleteRestoreToken(
         ToStringLiteral(*restoreTokenFilePathCSPtr_));
 }
 
-void BackupManager::AcquireEntryLock(
+ktl::Awaitable<void> BackupManager::AcquireEntryLock(
     __in Common::Guid const & id,
+    __in Common::TimeSpan timeout,
     __in LockRequester requester)
 {
-    BOOLEAN isAcquired = backupAndRestoreLock_.TryAcquireExclusive();
+    bool isAcquired = false;
+    try
+    {
+        isAcquired = co_await backupAndRestoreLock_->AcquireWriteLockAsync(static_cast<ULONG32>(timeout.TotalMilliseconds()));
+    }
+    catch (Exception const &)
+    {
+        // Note: Ignore the exception here to keep the same behavior as before.
+        // In the Backup case throw SF_STATUS_BACKUP_IN_PROGRESS, in the restore case throw SF_STATUS_INVALID_OPERATION.
+    }
 
-    if (isAcquired == FALSE)
+    if (isAcquired == false)
     {
         // TODO: Consider adding SF_STATUS_BACKUP_OR_RESTORE_IN_PROGRESS
         NTSTATUS status = requester == LockRequester::Backup ? SF_STATUS_BACKUP_IN_PROGRESS : SF_STATUS_INVALID_OPERATION;
         
-        EventSource::Events->BackupManager_Error(
+        EventSource::Events->IBM_BackupAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             id,
+            L"status",
             status,
             L"AcquireEntryLock failed");
 
@@ -1386,7 +1790,7 @@ void BackupManager::AcquireEntryLock(
 
 void BackupManager::ReleaseEntryLock()
 {
-    backupAndRestoreLock_.ReleaseExclusive();
+    backupAndRestoreLock_->ReleaseWriteLock();
 }
 
 NTSTATUS BackupManager::StartDrainableBackupPhase() noexcept
@@ -1448,10 +1852,11 @@ void BackupManager::ThrowIfInvalidState(
     bool isTokenExists = CheckIfRestoreTokenExists();
     if (isTokenExists == true)
     {
-        EventSource::Events->RestoreExceptionWarning(
+        EventSource::Events->IBM_RestoreAsyncFinishError(
             TracePartitionId,
             ReplicaId,
             restoreId,
+            SF_STATUS_INVALID_OPERATION,
             L"A non-retry-able RestoreAsync exception has been retried.");
 
         throw Exception(SF_STATUS_INVALID_OPERATION);
@@ -1481,10 +1886,11 @@ void BackupManager::ThrowIfNotSafe(
         return;
     }
 
-    EventSource::Events->RestoreExceptionWarning(
+    EventSource::Events->IBM_RestoreAsyncFinishError(
         TracePartitionId,
         ReplicaId,
         restoreId,
+        STATUS_INVALID_PARAMETER,
         wformatString(
             L"Restore failed safety check. Current: <{0},{1}> {2}. Restore Folder: <{3},{4}> {5}.",
             currentTailEpoch.DataLossVersion,
@@ -1528,7 +1934,7 @@ void BackupManager::TraceException(
     bool getStack = exception.ToString(stackString);
     ASSERT_IFNOT(getStack, "{0}: KDynStringA allocation failed in TraceException", TraceId);
 
-    EventSource::Events->BackupException(
+    EventSource::Events->IBM_BackupAsyncFinishError(
         TracePartitionId,
         ReplicaId,
         backupId,
@@ -1566,6 +1972,9 @@ BackupManager::BackupManager(
     , restoreTokenFilePathCSPtr_(KPath::Combine(*restoreTokenFolderPathCSPtr_, RestoreTokenName, GetThisAllocator()).RawPtr())
     , lastCompletedBackupLogRecordThreadSafeCache_(BackupLogRecord::CreateZeroBackupLogRecord(*(invalidLogRecords.Inv_PhysicalLogRecord), GetThisAllocator()).RawPtr())
 {
+    NTSTATUS status = ReaderWriterAsyncLock::Create(GetThisAllocator(), BACKUP_MANAGER_TAG, backupAndRestoreLock_);
+    SetConstructorStatus(status);
+
     EventSource::Events->Ctor(
         TracePartitionId,
         ReplicaId,
@@ -1575,6 +1984,7 @@ BackupManager::BackupManager(
 
 BackupManager::~BackupManager()
 {
+    backupAndRestoreLock_->Close();
     EventSource::Events->Dtor(
         TracePartitionId,
         ReplicaId,

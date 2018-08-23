@@ -7,10 +7,14 @@
 
 using namespace std;
 using namespace Common;
-using namespace ServiceModel;
 
 ConfigSettings::ConfigSettings()
     : Sections()
+{
+}
+
+ConfigSettings::ConfigSettings(SectionMapType && sections)
+    : Sections(move(sections))
 {
 }
 
@@ -82,64 +86,6 @@ void ConfigSettings::WriteTo(TextWriter & w, FormatOptions const &) const
     w.Write("}");
 }
 
-void ConfigSettings::ReadFromXml(XmlReaderUPtr const & xmlReader)
-{
-    clear();
-
-    // ensure that we are positioned on <Settings 
-    xmlReader->StartElement(
-        *SchemaNames::Element_ConfigSettings, 
-        *SchemaNames::Namespace);
-
-    if (xmlReader->IsEmptyElement())
-    {
-        // <Settings ... />
-        xmlReader->ReadElement();
-    }
-    else
-    {
-        // <Settings ...>
-        xmlReader->ReadStartElement();
-
-        bool done = false;
-        while(!done)
-        {
-            // <Section ... >
-            if (xmlReader->IsStartElement(
-                *SchemaNames::Element_ConfigSection,
-                *SchemaNames::Namespace,
-                false))
-            {
-                ConfigSection section;
-                section.ReadFromXml(xmlReader);
-
-                wstring sectionName(section.Name);
-
-                if (!TryAddSection(move(section)))
-                {
-                    Trace.WriteError(
-                        "Common",
-                        L"XMlParser",
-                        "Parameter {0} with a different name than existing parameters in the section. Input={1}, Line={2}, Position={3}",
-                        sectionName,
-                        xmlReader->FileName,
-                        xmlReader->GetLineNumber(),
-                        xmlReader->GetLinePosition());
-
-                    throw XmlException(ErrorCode(ErrorCodeValue::XmlInvalidContent));
-                }
-            }
-            else
-            {
-                done = true;
-            }
-        }
-
-        // </Settings>
-        xmlReader->ReadEndElement();
-    }
-}
-
 void ConfigSettings::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_CONFIGURATION_SETTINGS & publicSettings) const
 {
     auto publicSectionList = heap.AddItem<FABRIC_CONFIGURATION_SECTION_LIST>();
@@ -154,27 +100,11 @@ void ConfigSettings::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_CONFIGURAT
         publicSectionList->Items = publicItems.GetRawArray();
 
         size_t ix = 0;
-        for(auto iter = this->Sections.cbegin(); iter != this->Sections.cend(); ++iter)
+        for (auto iter = this->Sections.cbegin(); iter != this->Sections.cend(); ++iter)
         {
             iter->second.ToPublicApi(heap, publicItems[ix]);
             ++ix;
         }
-    }
-}
-
-bool ConfigSettings::TryAddSection(ConfigSection && section)
-{
-    wstring sectionName(section.Name);
-
-    auto iter = this->Sections.find(sectionName);
-    if (iter != this->Sections.end())
-    {
-        return false;   
-    }
-    else
-    {
-        this->Sections.insert(make_pair(move(sectionName), move(section)));
-        return true;
     }
 }
 
@@ -197,6 +127,10 @@ void ConfigSettings::ApplyOverrides(ConfigSettingsOverride const& configSettings
 
             configParameter.Name = configParameterOverride.Name;
             configParameter.Value = configParameterOverride.Value;
+            if (!configParameterOverride.Type.empty())
+            {
+                configParameter.Type = configParameterOverride.Type;
+            }
         }
     }
 }

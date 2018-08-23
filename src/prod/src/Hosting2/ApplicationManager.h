@@ -70,6 +70,10 @@ namespace Hosting2
 
         bool ShouldReportHealth(ServicePackageInstanceIdentifier const & ServicePackageInstanceId) const;
 
+        void OnServiceTypesUnregistered(
+            ServicePackageInstanceIdentifier const & servicePackageInstanceId,
+            std::vector<ServiceTypeInstanceIdentifier> const & serviceTypeInstanceIds);
+
         __declspec(property(get=get_EnvironmentManagerObj)) EnvironmentManagerUPtr const & EnvironmentManagerObj;
         EnvironmentManagerUPtr const & get_EnvironmentManagerObj() { return this->environmentManager_; }
 
@@ -115,6 +119,8 @@ namespace Hosting2
             ServiceModel::RolloutVersion const & packageRolloutVersion,
             __out ServiceModel::ServicePackageDescription & packageDescription);
 
+        void OnRootContainerTerminated(Common::EventArgs const & eventArgs);
+
     private:
         class OpenAsyncOperation;
         class CloseAsyncOperation;
@@ -127,6 +133,7 @@ namespace Hosting2
         HostingSubsystem & hosting_;
         ApplicationMapUPtr applicationMap_;
         EnvironmentManagerUPtr environmentManager_;
+        std::unique_ptr<Common::ResourceHolder<Common::HHandler>> terminationNotificationHandler_;
         ActivatorUPtr activator_;
         DeactivatorUPtr deactivator_;
     };

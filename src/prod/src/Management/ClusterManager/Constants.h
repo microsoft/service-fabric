@@ -56,10 +56,12 @@ namespace Management
             static Common::GlobalWString StoreType_ApplicationUpgradeContext;
             static Common::GlobalWString StoreType_GoalStateApplicationUpgradeContext;
             static Common::GlobalWString StoreType_ComposeDeploymentContext;
+            static Common::GlobalWString StoreType_SingleInstanceDeploymentContext;
             static Common::GlobalWString StoreType_ServiceContext;
             static Common::GlobalWString StoreType_InfrastructureTaskContext;
             static Common::GlobalWString StoreType_ApplicationUpdateContext;
             static Common::GlobalWString StoreType_ComposeDeploymentUpgradeContext;
+            static Common::GlobalWString StoreType_SingleInstanceDeploymentUpgradeContext;
             
             static Common::GlobalWString StoreType_ApplicationIdMap;
             static Common::GlobalWString StoreType_ServicePackage;
@@ -69,9 +71,13 @@ namespace Management
             static Common::GlobalWString StoreType_ApplicationManifest;
             static Common::GlobalWString StoreType_ServiceManifest;
             static Common::GlobalWString StoreType_ComposeDeploymentInstance;
+            static Common::GlobalWString StoreType_ContainerGroupDeploymentInstance;
+            static Common::GlobalWString StoreType_SingleInstanceApplicationInstance;
 
             static Common::GlobalWString StoreType_ComposeDeploymentInstanceCounter;
             static Common::GlobalWString StoreKey_ComposeDeploymentInstanceCounter;
+
+            static Common::GlobalWString StoreType_Volume;
 
             // -------------------------------
             // Naming Data Keys
@@ -79,6 +85,7 @@ namespace Management
             
             static Common::GlobalWString ApplicationPropertyName;
             static Common::GlobalWString ComposeDeploymentTypePrefix;
+            static Common::GlobalWString SingleInstanceDeploymentTypePrefix;
 
             // -------------------------------
             // Test parameters

@@ -10,15 +10,16 @@ using namespace Data::LoggingReplicator;
 using namespace Data::LogRecordLib;
 using namespace TxnReplicator;
 using namespace Data::Utilities;
+using namespace Common;
 
-Common::StringLiteral const TraceComponent("LogTruncationManager");
+StringLiteral const TraceComponent("LogTruncationManager");
 
 ULONG const LogTruncationManager::ThrottleAfterPendingCheckpointCount = 4;
 ULONG const LogTruncationManager::AbortOldTxFactor = 2;
 ULONG const LogTruncationManager::MBtoBytesMultiplier = 1024 * 1024;
 ULONG const LogTruncationManager::MinTruncationFactor = 2;
 ULONG const LogTruncationManager::NumberOfIndexRecordsPerCheckpoint = 50;
-Common::TimeSpan const LogTruncationManager::ConfigUpdateIntervalInSeconds = Common::TimeSpan::FromSeconds(30);
+TimeSpan const LogTruncationManager::ConfigUpdateIntervalInSeconds = TimeSpan::FromSeconds(30);
 
 LogTruncationManager::LogTruncationManager(
     __in PartitionedReplicaId const & traceId,
@@ -28,9 +29,10 @@ LogTruncationManager::LogTruncationManager(
     , KObject()
     , PartitionedReplicaTraceComponent(traceId)
     , transactionalReplicatorConfig_(transactionalReplicatorConfig)
-    , configUpdateStopWatch_(Common::Stopwatch())
+    , configUpdateStopWatch_(Stopwatch())
     , replicatedLogManager_(&replicatedLogManager)
     , forceCheckpoint_(false)
+    , periodicCheckpointTruncationState_(PeriodicCheckpointTruncationState::NotStarted)
 {
     // Load the configuration values
     RefreshConfigurationValues(true);
@@ -65,7 +67,7 @@ LogTruncationManager::LogTruncationManager(
     EventSource::Events->Ctor(
         TracePartitionId,
         ReplicaId,
-        Common::wformatString("LogTruncationManager \r\n IndexInterval={0} \r\n CheckpointInterval={1} \r\n MinLogSize={2} \r\n TruncationThreshold={3} \r\n ThrottleAt={4} \r\n MinTruncation={5}",
+        wformatString("LogTruncationManager \r\n IndexInterval={0} \r\n CheckpointInterval={1} \r\n MinLogSize={2} \r\n TruncationThreshold={3} \r\n ThrottleAt={4} \r\n MinTruncation={5}",
             indexIntervalBytes_,
             checkpointIntervalBytes_,
             minLogSizeInBytes_,
@@ -186,9 +188,15 @@ KArray<BeginTransactionOperationLogRecord::SPtr> LogTruncationManager::GetOldTra
     return oldTransactions;
 }
 
-bool LogTruncationManager::IsGoodLogHeadCandidate(IndexingLogRecord & proposedLogHead)
+bool LogTruncationManager::IsGoodLogHeadCandidate(__in IndexingLogRecord & proposedLogHead)
 {
     RefreshConfigurationValues();
+
+    if (periodicCheckpointTruncationState_ == PeriodicCheckpointTruncationState::TruncationStarted)
+    {
+        // Configured truncation has been initiated, override minTruncationAmount and minLogSize requirements
+        return true;
+    }
 
     // This is a very recent indexing record and not a good candidate
     // We can say that because it has not yet been flushed to the disk
@@ -199,7 +207,8 @@ bool LogTruncationManager::IsGoodLogHeadCandidate(IndexingLogRecord & proposedLo
 
     // Is it worth truncating?
     // We do not want to truncate a couple of bytes since we would have to repeat the process soon.
-    if (proposedLogHead.RecordPosition - replicatedLogManager_->CurrentLogHeadRecord->RecordPosition < minTruncationAmountInBytes_)
+    // This threshold is overridden when periodic head truncation is enabled via config or explicitly requested by user
+    if ((proposedLogHead.RecordPosition - replicatedLogManager_->CurrentLogHeadRecord->RecordPosition < minTruncationAmountInBytes_))
     {
         return false;
     }
@@ -293,6 +302,11 @@ bool LogTruncationManager::ShouldTruncateHead()
         return false;
     }
 
+    if (ShouldInitiatePeriodicTruncation())
+    {
+        return true;
+    }
+
     // If the truncation threshold has not been reached, return false
     ULONG64 bytesUsedFromCurrentLogHead = GetBytesUsed(*replicatedLogManager_->CurrentLogHeadRecord);
     if(bytesUsedFromCurrentLogHead < truncationThresholdInBytes_)
@@ -381,6 +395,11 @@ bool LogTruncationManager::ShouldCheckpoint(
         return false;
     }
 
+    if (ShouldInitiatePeriodicCheckpoint())
+    {
+        return true;
+    }
+
     ULONG64 bytesUsedFromLastCheckpoint = GetBytesUsed(*replicatedLogManager_->LastCompletedBeginCheckpointRecord);
 
     // If there is enough data to checkpoint, we should try to look for 'bad' transactions that are preventing
@@ -444,4 +463,124 @@ void LogTruncationManager::RefreshConfigurationValues(bool forceRefresh)
 void LogTruncationManager::ForceCheckpoint()
 {
     forceCheckpoint_.store(true);
+}
+
+bool LogTruncationManager::ShouldInitiatePeriodicCheckpoint()
+{
+    bool periodicCheckpointRequested = periodicCheckpointTruncationState_ == PeriodicCheckpointTruncationState::Ready;
+    
+    if (periodicCheckpointRequested)
+    {
+        periodicCheckpointTruncationState_ = PeriodicCheckpointTruncationState::CheckpointStarted;
+    }
+
+    return periodicCheckpointRequested;
+}
+
+bool LogTruncationManager::ShouldInitiatePeriodicTruncation()
+{
+    bool periodicCheckpointCompleted = periodicCheckpointTruncationState_ == PeriodicCheckpointTruncationState::CheckpointCompleted;
+
+    if (periodicCheckpointCompleted)
+    {
+        periodicCheckpointTruncationState_ = PeriodicCheckpointTruncationState::TruncationStarted;
+    }
+    
+    return periodicCheckpointCompleted;
+}
+
+void LogTruncationManager::OnCheckpointCompleted(
+    __in NTSTATUS status,
+    __in Data::LogRecordLib::CheckpointState::Enum checkpointState,
+    __in bool isRecoveredCheckpoint)
+{
+    if (!isRecoveredCheckpoint && periodicCheckpointTruncationState_ != PeriodicCheckpointTruncationState::CheckpointStarted)
+    {
+        // Checkpoint not initiated by timer config
+        // This indicates a regular checkpoint
+        return;
+    }
+
+    if (!NT_SUCCESS(status) || checkpointState != CheckpointState::Completed)
+    {
+        // Checkpoint failed to complete successfully, reset periodic process to 'Ready'
+        periodicCheckpointTruncationState_ = PeriodicCheckpointTruncationState::Ready;
+        return;
+    }
+
+    periodicCheckpointTruncationState_ = PeriodicCheckpointTruncationState::CheckpointCompleted;
+}
+
+void LogTruncationManager::OnTruncationCompleted()
+{
+    // Reset the periodic process
+    periodicCheckpointTruncationState_ = PeriodicCheckpointTruncationState::NotStarted;
+}
+
+void LogTruncationManager::InitiatePeriodicCheckpoint()
+{
+    if (periodicCheckpointTruncationState_ == PeriodicCheckpointTruncationState::NotStarted)
+    {
+        periodicCheckpointTruncationState_ = PeriodicCheckpointTruncationState::Ready;
+    }
+}
+
+/*
+    Recovery Scenario 1:
+        Replica opens, chkptTime == truncTime == DateTime::Now()   [T1, time1]
+
+        Interval Timer expires
+
+        Checkpoint initiated
+            chkptTime updated value persisted                      [T2]
+            Checkpoint completes
+
+        Replica closes before truncation started
+            chkptTime [T2] persisted in BeginCPLR
+            truncTime [T1] not yet persisted (TruncateHeadLogRecord not created)
+
+        Replica re-opens
+             chkptTime == truncTime == DateTime::Now() [T3]
+        Replica recovers
+            chkptTime = [T2]
+            truncTime = [T3]
+
+        - T3 < T2, so stage = CheckpointCompleted
+            - Happy path would have updated 
+        - Next call to 'ShouldTruncateHead' will return true
+        - Timer is expected to wait the entire duration
+
+
+    Recovery Scenario 2:
+        Replica opens, chkptTime == truncTime == DateTime::Now()   [T1]
+            ZeroBeginCheckpointLogRecord flushed to disk with DateTime::Now()
+
+        Replica closes before interval timer has expired
+
+        Replica re-opens
+             chkptTime == truncTime == DateTime::Now()              [T2]
+
+        Replica recovers
+            chkptTime = [T1]
+            truncTime = 0
+
+        However, the 1st interval checkpoint has NOT ACTUALLY COMPLETED since the timer has not fired
+        In this scenario, truncTime should be set to chkptTime and timer started for remaining duration
+        
+        So, truncation is incomplete IF
+            truncTime < chkptTime
+*/
+
+void LogTruncationManager::Recover(
+    __in LONG64 recoveredCheckpointTime,
+    __in LONG64 recoveredTruncationTime)
+{
+    bool truncationIncomplete = recoveredTruncationTime < recoveredCheckpointTime;
+    if (truncationIncomplete)
+    {
+        OnCheckpointCompleted(
+            STATUS_SUCCESS,
+            CheckpointState::Completed,
+            true);
+    }
 }

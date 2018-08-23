@@ -12,6 +12,9 @@ set UpgradeStatusPollInterval 5
 set NamingOperationTimeout 30
 set NamingOperationRetryTimeout 150
 set UserReplicaRestartWaitDuration 3600
+set ExpectedReplicaUpgradeDuration 3600
+set ExpectedNodeFabricUpgradeDuration 3600
+set RestoreReplicaLocationAfterUpgrade true
 
 +10 ud=UD1
 +20 ud=UD2
@@ -69,7 +72,7 @@ createapp fabric:/test/MyApp TestApp 1.0
 verify
 
 # Give some time to PLB to balance the cluster
-!pause 5
+!pause 10
 
 verify
 
@@ -78,7 +81,7 @@ prepareupgradefabric code=4.2.765.0 config=version5
 provisionfabric code=4.2.765.0 config=version5
 upgradefabric code=4.2.765.0 config=version5 Rolling
 
-!rpause 10
+!rpause 30
 
 # Start application upgrade
 upgradeapp fabric:/test/MyApp 1.1 Rolling

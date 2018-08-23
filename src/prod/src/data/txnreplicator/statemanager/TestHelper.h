@@ -79,10 +79,10 @@ namespace StateManagerTests
 
         static TxnReplicator::IRuntimeFolders::SPtr CreateRuntimeFolders(__in KAllocator& allocator);
 
-        static KWfStatefulServicePartition::SPtr CreateStatefulServicePartition(
+        static Data::Utilities::IStatefulPartition::SPtr CreateStatefulServicePartition(
             __in KAllocator & allocator);
 
-        static KWfStatefulServicePartition::SPtr CreateStatefulServicePartition(
+        static Data::Utilities::IStatefulPartition::SPtr CreateStatefulServicePartition(
             __in Common::Guid partitionId, 
             __in KAllocator & allocator,
             __in FABRIC_SERVICE_PARTITION_ACCESS_STATUS readStatus = FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED,

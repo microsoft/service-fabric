@@ -13,7 +13,7 @@ namespace TxnReplicator
 
     public:
         virtual void OnTransactionCommitted(
-			__in ITransactionalReplicator & source,
+            __in ITransactionalReplicator & source,
             __in ITransaction const & transaction) = 0;
     };
 }

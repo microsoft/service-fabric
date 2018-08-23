@@ -42,7 +42,7 @@ BackgroundThreadContextUPtr FabricUpgradeContext::CreateNewContext() const
     return make_unique<FabricUpgradeContext>(fmId_, upgrade_, currentDomain_, voterCount_);
 }
 
-void FabricUpgradeContext::Initialize(FailoverManager & fm)
+bool FabricUpgradeContext::Initialize(FailoverManager & fm)
 {
     vector<NodeInfoSPtr> nodeInfos;
     fm.NodeCacheObj.GetNodes(nodeInfos);
@@ -51,30 +51,42 @@ void FabricUpgradeContext::Initialize(FailoverManager & fm)
     {
         if (nodeInfo->ActualUpgradeDomainId == currentDomain_)
         {
-            if (nodeInfo->IsUp)
+            LockedNodeInfo lockedNodeInfo;
+            ErrorCode error = fm.NodeCacheObj.GetLockedNode(nodeInfo->Id, lockedNodeInfo, TimeSpan::Zero);
+            if (!error.IsSuccess())
             {
-                if (nodeInfo->VersionInstance.Version != upgrade_.Description.Version ||
-                    nodeInfo->VersionInstance.InstanceId != upgrade_.Description.InstanceId)
+                fm.WriteInfo(
+                    FailoverManager::TraceFabricUpgrade,
+                    "Unable to lock node {0} during FabricUpgradeContext::Initialize: {1}", nodeInfo->Id, error);
+                return false;
+            }
+
+            if (lockedNodeInfo->IsUp)
+            {
+                if (lockedNodeInfo->VersionInstance.Version != upgrade_.Description.Version ||
+                    lockedNodeInfo->VersionInstance.InstanceId != upgrade_.Description.InstanceId)
                 {
-                    auto upgradeProgress = NodeUpgradeProgress(nodeInfo->Id, nodeInfo->NodeName, NodeUpgradePhase::Upgrading);
-                    AddReadyNode(nodeInfo->Id, upgradeProgress, nodeInfo);
+                    auto upgradeProgress = NodeUpgradeProgress(lockedNodeInfo->Id, lockedNodeInfo->NodeName, NodeUpgradePhase::Upgrading);
+                    AddReadyNode(lockedNodeInfo->Id, upgradeProgress, lockedNodeInfo.Get());
                 }
-                else if (!nodeInfo->IsReplicaUploaded)
+                else if (!lockedNodeInfo->IsReplicaUploaded)
                 {
                     notReadyNodes_.insert(nodeInfo->Id);
                 }
             }
-            else if (!nodeInfo->IsNodeStateRemoved &&
-                !nodeInfo->IsUnknown &&
-                nodeInfo->NodeDownTime > upgrade_.CurrentDomainStartedTime &&
-                DateTime::Now() - nodeInfo->NodeDownTime < FailoverConfig::GetConfig().ExpectedNodeFabricUpgradeDuration)
+            else if (!lockedNodeInfo->IsNodeStateRemoved &&
+                !lockedNodeInfo->IsUnknown &&
+                lockedNodeInfo->NodeDownTime > upgrade_.CurrentDomainStartedTime &&
+                DateTime::Now() - lockedNodeInfo->NodeDownTime < FailoverConfig::GetConfig().ExpectedNodeFabricUpgradeDuration)
             {
-                notReadyNodes_.insert(nodeInfo->Id);
+                notReadyNodes_.insert(lockedNodeInfo->Id);
             }
         }
     }
 
     ProcessSeedNodes(fm);
+
+    return true;
 }
 
 void FabricUpgradeContext::ProcessSeedNodes(FailoverManager & fm)
@@ -124,12 +136,7 @@ void FabricUpgradeContext::ProcessSeedNodes(FailoverManager & fm)
             seedNodeInfo->ActualUpgradeDomainId == currentDomain_ &&
             seedNodeInfo->VersionInstance.Version != upgrade_.Description.Version)
         {
-            if (seedNodeInfo->IsPendingNodeClose(fm))
-            {
-                auto upgradeProgress = NodeUpgradeProgress(seedNodeId, seedNodeInfo->NodeName, NodeUpgradePhase::Upgrading);
-                AddReadyNode(seedNodeId, upgradeProgress, seedNodeInfo);
-            }
-            else
+            if (!seedNodeInfo->IsPendingNodeClose(fm))
             {
                 candidates.push_back(seedNodeInfo);
             }
@@ -170,12 +177,7 @@ void FabricUpgradeContext::ProcessSeedNodes(FailoverManager & fm)
 
         for (size_t i = 0; i < candidates.size(); i++)
         {
-            if (static_cast<int>(i) < readyCount)
-            {
-                auto upgradeProgress = NodeUpgradeProgress(candidates[i]->Id, candidates[i]->NodeName, NodeUpgradePhase::Upgrading);
-                AddReadyNode(candidates[i]->Id, upgradeProgress, candidates[i]);
-            }
-            else
+            if (static_cast<int>(i) >= readyCount)
             {
                 auto upgradeProgress = NodeUpgradeProgress(candidates[i]->Id, candidates[i]->NodeName, NodeUpgradePhase::PreUpgradeSafetyCheck, UpgradeSafetyCheckKind::EnsureSeedNodeQuorum);
                 AddPendingNode(candidates[i]->Id, upgradeProgress);

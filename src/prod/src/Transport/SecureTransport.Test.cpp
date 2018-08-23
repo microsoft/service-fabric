@@ -10,6 +10,7 @@
 #include "Common/boost-taef.h"
 #include "TestCommon.h"
 #include "Common/CryptoTest.h"
+#include "Common/Types.h"
 
 using namespace Common;
 using namespace std;
@@ -610,7 +611,7 @@ namespace Transport
         {
             Trace.WriteInfo(TraceType, "ConnectionFaultHandler: target {0} at {1}, error ={2}", TextTracePtr(&st), st.Address(), fault);
             VERIFY_IS_TRUE(target.get() == &st);
-            if (fault.IsError(ErrorCodeValue::SecuritySessionExpired))
+            if (fault.IsError(SESSION_EXPIRATION_FAULT))
             {
                 sessionExpired.Set();
                 return;
@@ -863,8 +864,8 @@ namespace Transport
                     totalBytes += buffer.size();
                 }
 
-                auto buf = new BYTE[totalBytes];
-                KFinally([buf] { delete buf; });
+                auto bufUPtr = std::make_unique<BYTE[]>(totalBytes);
+                auto buf = bufUPtr.get(); 
 
                 auto ptr = buf;
                 for(auto const & buffer : buffers)
@@ -896,8 +897,8 @@ namespace Transport
                     totalBytes += buffer.size();
                 }
 
-                auto buf = new BYTE[totalBytes];
-                KFinally([buf] { delete buf; });
+                auto bufUPtr = std::make_unique<BYTE[]>(totalBytes);
+                auto buf = bufUPtr.get(); 
 
                 auto ptr = buf;
                 for(auto const & buffer : buffers)
@@ -1574,10 +1575,10 @@ namespace Transport
         msg->Headers.Add(MessageIdHeader());
 
         AutoResetEvent sendFailed(false);
-        msg->SetSendStatusCallback([&sendFailed](ErrorCodeValue::Enum error, MessageUPtr&&)
+        msg->SetSendStatusCallback([&sendFailed](ErrorCode const & error, MessageUPtr&&)
         {
             Trace.WriteInfo(TraceType, "send failed: {0}", error);
-            VERIFY_IS_TRUE(error == ErrorCodeValue::ConnectionDenied);
+            VERIFY_IS_TRUE(error.IsError(ErrorCodeValue::ConnectionDenied));
             sendFailed.Set();
         });
 
@@ -1623,10 +1624,10 @@ namespace Transport
         msg->Headers.Add(MessageIdHeader());
 
         AutoResetEvent sendFailed(false);
-        msg->SetSendStatusCallback([&sendFailed](ErrorCodeValue::Enum error, MessageUPtr&&)
+        msg->SetSendStatusCallback([&sendFailed](ErrorCode const & error, MessageUPtr&&)
         {
             Trace.WriteInfo(TraceType, "Send Completed : {0}", error);
-            VERIFY_IS_TRUE(error == ErrorCodeValue::Success);
+            VERIFY_IS_TRUE(error.IsSuccess());
             sendFailed.Set();
         });
 
@@ -2396,6 +2397,93 @@ namespace Transport
     {
         ENTER;
         X509CertIssuerMatchTest(L"bc 21 ae 9f 0b 88 cf 6e a9 b4 d6 23 3f 97 2a 60 63 b2 25 a9,b3 44 9b 01 8d 0f 68 39 a2 c5 d6 2b 5b 6c 6a c8 22 b6 f6 62", true);
+        LEAVE;
+    }
+
+
+    BOOST_AUTO_TEST_CASE(X509CertIssuerMatchTest_UntrustedRoot)
+    {
+        ENTER;
+
+        cout << "test with certs validated by subject + issuer, chained to untrusted root, success expected" << endl;
+
+        auto subjectName = L"untrusted-root.cert-issuer-match.test.servicefabric";
+        auto subject = wformatString("CN={0}", subjectName);
+        auto certKeyContainer = L"sf.transport.security.test";
+
+        Common::StringMap subjectIssuerMap;
+
+        // generate a self-signed certificate
+        InstallTestCertInScope cert(
+            true,                                           // do install
+            subject,
+            nullptr,                                        // no SANs
+            InstallTestCertInScope::DefaultCertExpiry(),
+            X509Default::StoreName(),
+            certKeyContainer,
+            X509StoreLocation::CurrentUser);
+
+        // 1. verify a matching cert (subject + issuer) with an untrusted root is accepted
+        subjectIssuerMap.clear();
+        subjectIssuerMap.insert(std::pair<wstring, wstring>(subjectName, cert.Thumbprint()->PrimaryToString()));
+        auto names = SecurityConfig::X509NameMap::Parse(subjectIssuerMap);
+        ThumbprintSet emptyX5tSet = {};
+        auto result = SecurityContextSsl::VerifyCertificate(
+            L"untrusted root cert test.1 - basic",  // trace id
+            cert.CertContext(),                     // cert being verified
+            0,                                      // no CRL check
+            true,                                   // ignore CRL offline
+            false,                                  // no peer authentication
+            emptyX5tSet,                            // no TP-based validation
+            names,                                  // match by subject and issuer
+            true);                                  // do trace cert
+        VERIFY_IS_TRUE(SUCCEEDED(result));
+
+        // 2. Verify a subject-matching cert is not accepted if the issuer is missing
+        subjectIssuerMap.clear();
+        subjectIssuerMap.insert(std::pair<wstring, wstring>(subjectName, L""));
+        names = SecurityConfig::X509NameMap::Parse(subjectIssuerMap);
+        result = SecurityContextSsl::VerifyCertificate(
+            L"untrusted root cert test.2 - no issuer",  // trace id
+            cert.CertContext(),                         // cert being verified
+            0,                                          // no CRL check
+            true,                                       // ignore CRL offline
+            false,                                      // no peer authentication
+            emptyX5tSet,                                // no TP-based validation
+            names,                                      // match by subject and issuer
+            true);                                      // do trace cert
+        VERIFY_IS_TRUE(ErrorCodeValue::CertificateNotMatched == result);
+
+        // 3. Verify a subject-matching cert is not accepted if the issuer does not match
+        subjectIssuerMap.clear();
+        subjectIssuerMap.insert(std::pair<wstring, wstring>(subjectName, L"deadbeef00deadbeef00deadbeef00deadbeef00"));
+        names = SecurityConfig::X509NameMap::Parse(subjectIssuerMap);
+        result = SecurityContextSsl::VerifyCertificate(
+            L"untrusted root cert test.3 - mismatching issuer", // trace id
+            cert.CertContext(),                                 // cert being verified
+            0,                                                  // no CRL check
+            true,                                               // ignore CRL offline
+            false,                                              // no peer authentication
+            emptyX5tSet,                                        // no TP-based validation
+            names,                                              // match by subject and issuer
+            true);                                              // do trace cert
+        VERIFY_IS_TRUE(ErrorCodeValue::CertificateNotMatched == result);
+
+        // 4. verify a non-matching cert is not accepted
+        subjectIssuerMap.clear();
+        subjectIssuerMap.insert(std::pair<wstring, wstring>(L"unexpected.match", cert.Thumbprint()->PrimaryToString()));
+        names = SecurityConfig::X509NameMap::Parse(subjectIssuerMap);
+        result = SecurityContextSsl::VerifyCertificate(
+            L"untrusted root cert test.4 - mismatching subject",// trace id
+            cert.CertContext(),                                 // cert being verified
+            0,                                                  // no CRL check
+            true,                                               // ignore CRL offline
+            false,                                              // no peer authentication
+            emptyX5tSet,                                        // no TP-based validation
+            names,                                              // match by subject and issuer
+            true);                                              // do trace cert
+        VERIFY_IS_TRUE(ErrorCodeValue::CertificateNotMatched == result);
+
         LEAVE;
     }
 

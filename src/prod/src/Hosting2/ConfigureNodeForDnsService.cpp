@@ -35,12 +35,11 @@ ConfigureNodeForDnsService::~ConfigureNodeForDnsService()
 
 Common::ErrorCode ConfigureNodeForDnsService::Configure(
     bool isDnsServiceEnabled,
-    bool setAsPreferredDns,
-    std::wstring const & sid)
+    bool setAsPreferredDns)
 {
     AcquireWriteLock lock(lock_);
 
-    Cleanup(sid);
+    Cleanup();
 
     if (!isDnsServiceEnabled)
     {
@@ -54,7 +53,7 @@ Common::ErrorCode ConfigureNodeForDnsService::Configure(
         error = this->ModifyDnsServerList();
         if (!error.IsSuccess())
         {
-            Cleanup(sid);
+            Cleanup();
             return error;
         }
     }
@@ -63,33 +62,35 @@ Common::ErrorCode ConfigureNodeForDnsService::Configure(
         WriteInfo(TraceType_Dns, Root.TraceId, "Not modifying the DNS chain of the node since SetAsPreferredDns flag is set to false.");
     }
 
-    error = SetHostsFileAcl(sid, false /*remove*/);
+    // Adjusting the cache is nice to have but not crucial.
+    // It should not prevent DnsService from being the preferred DNS.
+    // Trace the error but do not cleanup the environment.
+    error = SetHostsFileAcl(false /*remove*/);
     if (!error.IsSuccess())
     {
-        Cleanup(sid);
-        return error;
+        WriteWarning(TraceType_Dns, Root.TraceId,
+            "Failed to set ACL on the hosts file, error={0}. DnsService probably won't be able to flush the DNS cache.",
+            error);
     }
 
     error = DisableNegativeCache();
     if (!error.IsSuccess())
     {
-        Cleanup(sid);
-        return error;
+        WriteWarning(TraceType_Dns, Root.TraceId, "Failed to disable DNS negative cache, error={0}", error);
     }
 
     return ErrorCode::Success();
 }
 
-void ConfigureNodeForDnsService::Cleanup(std::wstring const & sid)
+void ConfigureNodeForDnsService::Cleanup()
 {
     this->RestoreDnsServerList();
-    SetHostsFileAcl(sid, true /*remove*/);
+    SetHostsFileAcl(true /*remove*/);
 }
 
 Common::ErrorCode ConfigureNodeForDnsService::ModifyDnsServerList()
 {
 #if !defined(PLATFORM_UNIX)
-
     typedef std::map<std::wstring, std::vector<Common::IPPrefix>> IpMap;
     typedef std::map<std::wstring, std::vector<std::wstring>> DnsMap;
 
@@ -199,7 +200,6 @@ Common::ErrorCode ConfigureNodeForDnsService::ModifyDnsServerList()
             return ErrorCode::FromHResult(E_FAIL, "Failed to validate change to DNS server list.");
         }
     }
-
 #endif
 
     return ErrorCode::Success();
@@ -211,7 +211,6 @@ Common::ErrorCode ConfigureNodeForDnsService::ModifyDnsServerListForAdapter(
     const std::vector<std::wstring> & dnsAddresses)
 {
 #if !defined(PLATFORM_UNIX)
-
     std::wstring keyPath = RegistryPath + adapterName;
 
     Common::RegistryKey key(keyPath, false/*readonly*/, true/*openExisting*/);
@@ -311,7 +310,6 @@ Common::ErrorCode ConfigureNodeForDnsService::ModifyDnsServerListForAdapter(
     WriteInfo(TraceType_Dns, Root.TraceId,
         "ModifyDnsServerListForAdapter successfully changed registry key {0} value {1} to {2}",
         keyPath, NameServerValueName, nameServerNewValue);
-
 #endif
 
     return ErrorCode::Success();
@@ -417,7 +415,6 @@ Common::ErrorCode ConfigureNodeForDnsService::RestoreDnsServerListForAdapter(
     WriteInfo(TraceType_Dns, Root.TraceId,
         "RestoreDnsServerListForAdapter successfully restored registry key {0} value {1} to {2}",
         keyPath, NameServerValueName, nameServerOldValue);
-
 #endif
 
     return ErrorCode::Success();
@@ -454,7 +451,7 @@ Common::ErrorCode ConfigureNodeForDnsService::DisableNegativeCache()
     return ErrorCode::Success();
 }
 
-Common::ErrorCode ConfigureNodeForDnsService::SetHostsFileAcl(std::wstring const & sid, bool remove)
+Common::ErrorCode ConfigureNodeForDnsService::SetHostsFileAcl(bool remove)
 {
 #if !defined(PLATFORM_UNIX)
     Common::ErrorCode error;
@@ -475,24 +472,12 @@ Common::ErrorCode ConfigureNodeForDnsService::SetHostsFileAcl(std::wstring const
     std::wstring hostsFilePath(wszSystem);
     hostsFilePath += HostFileRelativePath;
     Common::SidSPtr sidsptr;
-
-    // TODO: Please do NOT acl hosts file for WinNetworkServiceSid.
-    //       This is a temporary workaround, DnsService should not run as WinNetworkServiceSid.
-    if (sid.empty())
-    {
-        error = BufferedSid::CreateSPtr(WinNetworkServiceSid, sidsptr);
-    }
-    else
-    {
-        error = BufferedSid::CreateSPtrFromStringSid(sid, sidsptr);
-    }
-
+    
+    error = BufferedSid::CreateSPtr(WinNetworkServiceSid, sidsptr);
     if (!error.IsSuccess())
     {
         WriteWarning(TraceType_Dns, Root.TraceId,
-            "SetHostsFileAcl failed to create BufferedSid from sid {0}, error {1}",
-            sid, error);
-
+            "SetHostsFileAcl failed to create BufferedSid for WinNetworkService user, error {0}", error);
         return error;
     }
 
@@ -518,8 +503,7 @@ Common::ErrorCode ConfigureNodeForDnsService::SetHostsFileAcl(std::wstring const
     }
 
     WriteInfo(TraceType_Dns, Root.TraceId,
-        "SetHostsFileAcl successfully set write ACL for user {0} to file {1}",
-        sid, hostsFilePath);
+        "SetHostsFileAcl successfully set write ACL for WinNetworkService user to file {0}", hostsFilePath);
 #endif
 
     return ErrorCode::Success();
@@ -527,10 +511,10 @@ Common::ErrorCode ConfigureNodeForDnsService::SetHostsFileAcl(std::wstring const
 
 Common::ErrorCode ConfigureNodeForDnsService::SetStaticDnsChainRegistryValue(
     Common::RegistryKey & key,
-    const std::wstring & nameServerValue
-)
+    const std::wstring & nameServerValue)
 {
     Common::ErrorCode error;
+
 #if !defined(PLATFORM_UNIX)
     if (!key.SetValue(NameServerValueName, nameServerValue, true/*typeRegSz*/))
     {
@@ -552,6 +536,7 @@ Common::ErrorCode ConfigureNodeForDnsService::SetStaticDnsChainRegistryValue(
         }
     }
 #endif
+
     return error;
 }
 
@@ -635,5 +620,6 @@ Common::ErrorCode ConfigureNodeForDnsService::GetAdapterFriendlyName(
         pCurrAddresses = pCurrAddresses->Next;
     }
 #endif
+
     return ErrorCodeValue::NotFound;
 }

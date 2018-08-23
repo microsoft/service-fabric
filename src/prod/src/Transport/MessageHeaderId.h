@@ -137,12 +137,14 @@ namespace Transport
             // Replication
             ReplicationOperationBody = 0x804a,
 
-            CreateContainerApplicationRequest = 0x804b,
+            CreateComposeDeploymentRequest = 0x804b,
             // To be compatible with v6.0 which was using 0x804c conflicted with FabricTransportMessageHeader. From v6.1, the header id would be 0x804d.
             UpgradeComposeDeploymentRequest_Compatibility = 0x804c,
             //Fabric Transport V2
             FabricTransportMessageHeader = 0x804c,
             UpgradeComposeDeploymentRequest = 0x804d,
+            CreateVolumeRequest = 0x804e,
+            FileUploadCreateRequest = 0x804f,
 
             // Add new internal message header ids must be explicitly defined
             // ----------------------------------------------------------------

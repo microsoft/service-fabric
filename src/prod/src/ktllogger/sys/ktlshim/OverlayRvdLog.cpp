@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include "KtlLogShimKernel.h"
 
 //
@@ -148,6 +152,22 @@ OverlayLog::AsyncCreateLogStreamContextOverlay::FSMContinue(
                 return;
             }
 
+            ServiceWrapper::GlobalContext::SPtr globalContext;
+            Status = ServiceWrapper::GlobalContext::Create(_LogStreamId.Get(),
+                                                           GetThisAllocator(),
+                                                           GetThisAllocationTag(),
+                                                           globalContext);
+            
+            if (! NT_SUCCESS(Status))
+            {
+                KTraceFailedAsyncRequest(Status, this, _State, 0);
+                DoComplete(Status);
+                return;
+            }
+            
+            _FSCreateOperation->SetGlobalContext(up_cast<KAsyncGlobalContext, ServiceWrapper::GlobalContext>(globalContext));
+			
+			
             Status = _OverlayStreamFS->CreateSyncWaitContext(_SingleAccessWaitContext); 
             if (! NT_SUCCESS(Status))
             {
@@ -177,21 +197,6 @@ OverlayLog::AsyncCreateLogStreamContextOverlay::FSMContinue(
 
         case CreateOverlayStream:
         {
-            //
-            // If there is an alias then add it to the table
-            //
-            if (_Alias)
-            {
-                Status = _OverlayLog->AddOrUpdateAlias(*_Alias,
-                                                       _LogStreamId);
-                if (! NT_SUCCESS(Status))
-                {
-                    KTraceFailedAsyncRequest(Status, this, _State, 0);
-                    DoComplete(Status);
-                    return;
-                }
-            }
-                        
             //
             // Now that the stream data structures are created on disk,
             // open them up
@@ -243,6 +248,21 @@ OverlayLog::AsyncCreateLogStreamContextOverlay::FSMContinue(
 
         case OpenOverlayStream:
         {
+            //
+            // If there is an alias then add it to the table
+            //
+            if (_Alias)
+            {
+                Status = _OverlayLog->AddOrUpdateAlias(*_Alias,
+                                                       _LogStreamId);
+                if (! NT_SUCCESS(Status))
+                {
+                    KTraceFailedAsyncRequest(Status, this, _State, 0);
+                    DoComplete(Status);
+                    return;
+                }
+            }
+                        
             //
             // All done
             //

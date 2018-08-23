@@ -20,6 +20,8 @@ namespace Data
             static void GetExceptionStackTrace(
                 __in ktl::Exception const & exception,
                 __out KDynStringA& stackString);
+
+            static ULONG64 GetProcessMemoryUsageBytes();
         };
 
     }

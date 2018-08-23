@@ -21,8 +21,8 @@ namespace ServiceModel
             std::wstring && nodeName,
             std::unique_ptr<ApplicationHealthPolicy> && healthPolicy);
 
-        DeployedServicePackageHealthQueryDescription(DeployedServicePackageHealthQueryDescription && other);
-        DeployedServicePackageHealthQueryDescription & operator = (DeployedServicePackageHealthQueryDescription && other);
+        DeployedServicePackageHealthQueryDescription(DeployedServicePackageHealthQueryDescription && other) = default;
+        DeployedServicePackageHealthQueryDescription & operator = (DeployedServicePackageHealthQueryDescription && other) = default;
 
         ~DeployedServicePackageHealthQueryDescription();
 

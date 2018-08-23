@@ -2,6 +2,7 @@ set (lib_ReliableConcurrentQueue "ReliableConcurrentQueue" CACHE STRING "Reliabl
 
 set( LINUX_SOURCES
   ../stdafx.cpp
+  ../RCQStateProviderFactory.cpp
 )
 
 include_directories("..")

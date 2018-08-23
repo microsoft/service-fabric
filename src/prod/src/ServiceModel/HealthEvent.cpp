@@ -44,56 +44,6 @@ HealthEvent::HealthEvent(
 {
 }
 
-HealthEvent::HealthEvent(HealthEvent const & other)
-    : HealthInformation(other)
-    , lastModifiedUtcTimestamp_(other.lastModifiedUtcTimestamp_)
-    , isExpired_(other.isExpired_)
-    , lastOkTransitionAt_(other.lastOkTransitionAt_)
-    , lastWarningTransitionAt_(other.lastWarningTransitionAt_)
-    , lastErrorTransitionAt_(other.lastErrorTransitionAt_)
-{
-}
-
-HealthEvent & HealthEvent::operator = (HealthEvent const & other)
-{
-    if (this != &other)
-    {
-        lastModifiedUtcTimestamp_ = other.lastModifiedUtcTimestamp_;
-        isExpired_ = other.isExpired_;
-        lastOkTransitionAt_ = other.lastOkTransitionAt_;
-        lastErrorTransitionAt_ = other.lastErrorTransitionAt_;
-        lastWarningTransitionAt_ = other.lastWarningTransitionAt_;
-    }
-
-    HealthInformation::operator=(other);
-    return *this;
-}
-
-HealthEvent::HealthEvent(HealthEvent && other)
-    : HealthInformation(move(other))
-    , lastModifiedUtcTimestamp_(move(other.lastModifiedUtcTimestamp_))
-    , isExpired_(move(other.isExpired_))
-    , lastOkTransitionAt_(move(other.lastOkTransitionAt_))
-    , lastWarningTransitionAt_(move(other.lastWarningTransitionAt_))
-    , lastErrorTransitionAt_(move(other.lastErrorTransitionAt_))
-{
-}
-
-HealthEvent & HealthEvent::operator = (HealthEvent && other)
-{
-    if (this != &other)
-    {
-        lastModifiedUtcTimestamp_ = move(other.lastModifiedUtcTimestamp_);
-        isExpired_ = move(other.isExpired_);
-        lastOkTransitionAt_ = move(other.lastOkTransitionAt_);
-        lastErrorTransitionAt_ = move(other.lastErrorTransitionAt_);
-        lastWarningTransitionAt_ = move(other.lastWarningTransitionAt_);
-    }
-
-    HealthInformation::operator=(move(other));
-    return *this;
-}
-
 ErrorCode HealthEvent::ToPublicApi(
     __in ScopedHeap & heap,
     __out FABRIC_HEALTH_EVENT & healthEventInformation) const
@@ -147,7 +97,7 @@ ErrorCode HealthEvent::FromPublicApi(
 
 void HealthEvent::WriteTo(__in TextWriter& writer, FormatOptions const &) const
 {
-    writer.Write("{0} {1} {2} {3} {4} {5} {6} {7} expired={8} removeWhenExpired={9}",
+    writer.Write("SourceId:'{0}' Property:'{1}' {2} ttl:{3} sn:{4} sourceUtc:{5} '{6}' lastModifiedUtc:{7} expired:{8} removeWhenExpired:{9}",
         sourceId_,
         property_,
         state_,

@@ -18,9 +18,9 @@ set_target_properties(${exe_Transport.PerfTest.Client} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
 
 target_link_libraries(${exe_Transport.PerfTest.Client}
-  ${lib_Common}
   ${lib_Serialization}
   ${lib_Transport}
+  ${lib_Common}
   ${lib_ServiceModel} 
   ${Cxx}
   ${CxxABI}
@@ -38,8 +38,6 @@ target_link_libraries(${exe_Transport.PerfTest.Client}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
   ${BoostTest2}
 )
 

@@ -298,6 +298,8 @@ namespace Store
 
         isDatalossCallbackActive_.store(false);
 
+        isReadOnlyForMigration_ = false;
+
         //
         // Common member object creation
         //
@@ -427,6 +429,7 @@ namespace Store
                     *this,
                     this->TryGetTxReplicator(),
                     innerTxSPtr,
+                    txEventHandler_,
                     activityId,
                     settings);
 
@@ -618,10 +621,11 @@ namespace Store
 
                     simpleTransactionGroupSPtr_ = make_shared<SimpleTransactionGroup>(
                         *this,
-                        settings_.CommitBatchingSizeLimit,
                         this->TryGetTxReplicator(),
                         move(innerTxSPtr),
-                        activityId);
+                        txEventHandler_,
+                        activityId,
+                        settings_.CommitBatchingSizeLimit);
                     simpleTransactionGroupTimer_->Change(TimeSpan::FromMilliseconds(settings_.CommitBatchingPeriod));
 
                     simpleTxSPtr = simpleTransactionGroupSPtr_->CreateSimpleTransaction(activityId);
@@ -646,6 +650,7 @@ namespace Store
                 *this, 
                 this->TryGetTxReplicator(),
                 innerTxSPtr, 
+                txEventHandler_,
                 activityId);
         }
 
@@ -818,9 +823,9 @@ namespace Store
 
 		FILETIME currStoreFiletime = this->LocalStore->GetStoreUtcFILETIME();
 		
+        TransactionSPtr innerTxSPtr;
         if (error.IsSuccess())
         {
-            TransactionSPtr innerTxSPtr;
             error = castedTx.TryGetInnerTransaction(innerTxSPtr);
 
             if (error.IsSuccess())
@@ -849,6 +854,21 @@ namespace Store
 
         castedTx.ReleaseLock();
         
+        if (error.IsSuccess())
+        {
+            auto txHandler = txEventHandler_.lock();
+            if (txHandler.get() != nullptr)
+            {
+                error = txHandler->OnInsert(
+                    castedTx.ActivityId,
+                    castedTx.MigrationTxKey,
+                    type,
+                    key,
+                    value,
+                    valueSizeInBytes);
+            }
+        }
+
         if (!error.IsSuccess())
         {
             this->OnWriteError(castedTx, error);
@@ -919,6 +939,22 @@ namespace Store
 
         castedTx.ReleaseLock();
         
+        if (error.IsSuccess())
+        {
+            auto txHandler = txEventHandler_.lock();
+            if (txHandler.get() != nullptr)
+            {
+                error = txHandler->OnUpdate(
+                    castedTx.ActivityId,
+                    castedTx.MigrationTxKey,
+                    type,
+                    key,
+                    newValue,
+                    valueSizeInBytes);
+            }
+        }
+
+
         if (!error.IsSuccess())
         {
             this->OnWriteError(castedTx, error);
@@ -1011,6 +1047,19 @@ namespace Store
 
         castedTx.ReleaseLock();
 
+        if (error.IsSuccess())
+        {
+            auto txHandler = txEventHandler_.lock();
+            if (txHandler.get() != nullptr)
+            {
+                error = txHandler->OnDelete(
+                    castedTx.ActivityId,
+                    castedTx.MigrationTxKey,
+                    type,
+                    key);
+            }
+        }
+
         if (!error.IsSuccess())
         {
             this->OnWriteError(castedTx, error);
@@ -1067,6 +1116,11 @@ namespace Store
         __in AsyncCallback const & callback,
         __in AsyncOperationSPtr const & parent)
     {
+        ASSERT_IF(openMode == FABRIC_REPLICA_OPEN_MODE_INVALID, "Invalid openMode at {0}", this->TraceId);
+        partitionCPtr_ = partition;
+
+        ErrorCode openError(ErrorCodeValue::Success);
+
         if (replicatorCPtr_.GetRawPointer() == nullptr)
         {
             IStateProviderPtr stateProvider(this, this->Root.CreateComponentRoot());
@@ -1081,34 +1135,69 @@ namespace Store
                 &publicReplicatorSettings,
                 replicatorCPtr_.InitializationAddress(),
                 stateReplicatorCPtr_.InitializationAddress());
-            ASSERT_IFNOT(SUCCEEDED(hr), "{0} CreateReplicator failed: {1}", this->TraceId, hr);
+
+            auto error = ErrorCode::FromHResult(hr);
+            
+            if (!error.IsSuccess())
+            {
+                auto msg = wformatString("CreateReplicator failed: {0} ({1})", error, hr);
+
+                WriteWarning(TraceComponent, "{0} {1}", this->TraceId, msg);
+
+                openError = ErrorCode(error.ReadValue(), move(msg));
+            }
         }
         else
         {
             auto hr = replicatorCPtr_->QueryInterface(IID_IFabricStateReplicator, stateReplicatorCPtr_.VoidInitializationAddress());
-            ASSERT_IFNOT(SUCCEEDED(hr), "{0} QueryInterface(IFabricStateReplicator) failed: {1}", this->TraceId, hr);
+            auto error = ErrorCode::FromHResult(hr);
+
+            if (!error.IsSuccess())
+            {
+                auto msg = wformatString("QueryInterface(IFabricStateReplicator) failed: {0} ({1})", error, hr);
+
+                WriteWarning(TraceComponent, "{0} {1}", this->TraceId, msg);
+
+                openError = ErrorCode(error.ReadValue(), move(msg));
+            }
         }
 
-        auto hr = stateReplicatorCPtr_->QueryInterface(IID_IFabricInternalStateReplicator, internalStateReplicatorCPtr_.VoidInitializationAddress());
-        ASSERT_IFNOT(SUCCEEDED(hr), "{0} QueryInterface(IFabricInternalStateReplicator): {1}", this->TraceId, hr);
-
-        partitionCPtr_ = partition;
-
-        txReplicatorSPtr_ = make_shared<TransactionReplicator>(*this, stateReplicatorCPtr_, internalStateReplicatorCPtr_);
-        txReplicatorWPtr_ = txReplicatorSPtr_;
-        txTrackerUPtr_ = make_unique<TransactionTracker>(*this);
-
-        auto outerOperation = AsyncOperation::CreateAndStart<OpenAsyncOperation>(*this, callback, parent);
-
-        ASSERT_IF(openMode == FABRIC_REPLICA_OPEN_MODE_INVALID, "Invalid openMode at {0}", this->TraceId);
-
-        bool databaseShouldExist = openMode == FABRIC_REPLICA_OPEN_MODE_EXISTING ? true : false;
-
-        stateMachineUPtr_->PostOpenEvent([this, outerOperation, databaseShouldExist](ErrorCode const & error, ReplicatedStoreState::Enum state)
+        if (openError.IsSuccess())
         {
-            this->OpenEventCallback(outerOperation, error, state, databaseShouldExist);
-        },
-        this->Root.CreateComponentRoot());
+            auto hr = stateReplicatorCPtr_->QueryInterface(IID_IFabricInternalStateReplicator, internalStateReplicatorCPtr_.VoidInitializationAddress());
+            auto error = ErrorCode::FromHResult(hr);
+
+            if (!error.IsSuccess())
+            {
+                auto msg = wformatString("QueryInterface(IFabricInternalStateReplicator): {0} ({1})", error, hr);
+
+                WriteWarning(TraceComponent, "{0} {1}", this->TraceId, msg);
+
+                openError = ErrorCode(error.ReadValue(), move(msg));
+            }
+        }
+
+        AsyncOperationSPtr outerOperation;
+        if (openError.IsSuccess())
+        {
+            outerOperation = AsyncOperation::CreateAndStart<OpenAsyncOperation>(*this, callback, parent);
+
+            txReplicatorSPtr_ = make_shared<TransactionReplicator>(*this, stateReplicatorCPtr_, internalStateReplicatorCPtr_);
+            txReplicatorWPtr_ = txReplicatorSPtr_;
+            txTrackerUPtr_ = make_unique<TransactionTracker>(*this);
+
+            bool databaseShouldExist = openMode == FABRIC_REPLICA_OPEN_MODE_EXISTING ? true : false;
+
+            stateMachineUPtr_->PostOpenEvent([this, outerOperation, databaseShouldExist](ErrorCode const & error, ReplicatedStoreState::Enum state)
+            {
+                this->OpenEventCallback(outerOperation, error, state, databaseShouldExist);
+            },
+            this->Root.CreateComponentRoot());
+        }
+        else
+        {
+            outerOperation = AsyncOperation::CreateAndStart<OpenAsyncOperation>(*this, openError, callback, parent);
+        }
 
         return outerOperation;
     }
@@ -1121,7 +1210,11 @@ namespace Store
 
         if (!error.IsSuccess())
         {
-            stateMachineUPtr_->Abort();
+            // KeyValueStoreReplica open will attempt abort, but also abort here
+            // in case ReplicatedStore is used directly without the KVS layer
+            // (e.g. in unit tests).
+            //
+            this->Abort();
 
             replicatorCPtr_.Release();
             stateReplicatorCPtr_.Release();
@@ -1220,7 +1313,25 @@ namespace Store
 
     void ReplicatedStore::Abort()
     {
-        FabricComponent::Abort();
+        if (!this->FabricComponent::TryAbort())
+        {
+            // Ensure that a subsequent abort call takes 
+            // effect and actually calls OnAbort() if
+            // open is cancelled. FabricComponent::Abort() will
+            // skip calling OnAbort() unless the component has
+            // opened successfully.
+            //
+            // Alternatively, save the error in EndOpen and
+            // call FabricComponent::Open() regardless of
+            // success or failure and return the saved error
+            // in OnOpen(). Then FabricComponent:Open()
+            // will internally Abort(). 
+            //
+            // Prefer the first option since the latter is 
+            // actually more convoluted.
+            //
+            this->OnAbort();
+        }
     }
 
     // FM uses this to bypass the normal stateful service functions.
@@ -3654,10 +3765,16 @@ namespace Store
         }
 
         wstring queryStatusDetails;
+        shared_ptr<MigrationQueryResult> migrationDetails;
         {
             AcquireReadLock lock(queryStatusDetailsLock_);
 
             queryStatusDetails = queryStatusDetails_;
+
+            if (migrationDetails_.get() != nullptr)
+            {
+                migrationDetails = make_shared<MigrationQueryResult>(*migrationDetails_);
+            }
         }
 
         auto resultSPtr = make_shared<KeyValueStoreQueryResult>(
@@ -3665,7 +3782,9 @@ namespace Store
             estimatedDbSize,
             copyNotificationPrefix,
             copyNotificationProgress,
-            queryStatusDetails);
+            queryStatusDetails,
+            ProviderKind::ESE,
+            move(migrationDetails));
 
         WriteInfo(
             TraceComponent,
@@ -3702,6 +3821,29 @@ namespace Store
         AcquireWriteLock lock(queryStatusDetailsLock_);
 
         queryStatusDetails_.clear();
+    }
+
+    void ReplicatedStore::SetMigrationQueryResult(unique_ptr<MigrationQueryResult> && details)
+    {
+        AcquireWriteLock lock(queryStatusDetailsLock_);
+
+        migrationDetails_ = move(details);
+    }
+
+    void ReplicatedStore::SetTxEventHandler(IReplicatedStoreTxEventHandlerWPtr const & txEventHandler)
+    {
+        txEventHandler_ = txEventHandler;
+    }
+
+    void ReplicatedStore::AbortOutstandingTransactions()
+    {
+        txTrackerUPtr_->AbortOutstandingTransactions();
+    }
+
+    void ReplicatedStore::ClearTxEventHandlerAndBlockWrites()
+    {
+        txEventHandler_.reset();
+        isReadOnlyForMigration_ = true;
     }
 
     void ReplicatedStore::OnSlowCommit()
@@ -4136,8 +4278,9 @@ namespace Store
         TransactionSPtr const & txSPtr,
         wstring const & type)
     {
-        auto error = txSPtr ? txSPtr->CheckAborted() : ErrorCodeValue::Success;
+        if (isReadOnlyForMigration_) { return ErrorCodeValue::DatabaseMigrationInProgress; }
 
+        auto error = txSPtr ? txSPtr->CheckAborted() : ErrorCodeValue::Success;
         if (!error.IsSuccess()) { return error; }
 
         error = this->CheckTypeAccess(type);
@@ -5645,6 +5788,13 @@ namespace Store
                 type == Constants::FabricTimeDataType ||
                 type == Constants::LocalStoreIncrementalBackupDataType ||
                 type == Constants::PartialCopyProgressDataType);
+    }
+
+    bool ReplicatedStore::ShouldMigrateKey(std::wstring const & type, std::wstring const & key)
+    {
+        UNREFERENCED_PARAMETER(key);
+
+        return !IsStoreMetadataType(type);
     }
 
     wstring ReplicatedStore::CreateTombstoneKey1(wstring const & type, wstring const & key)

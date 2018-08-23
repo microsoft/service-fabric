@@ -44,8 +44,6 @@ namespace TxnReplicator
 
         virtual NTSTATUS GetCurrentEpoch(__out FABRIC_EPOCH & epoch) noexcept = 0;
 
-        virtual NTSTATUS RequestCheckpointAfterNextTransaction() noexcept = 0;
-
         virtual ktl::Awaitable<NTSTATUS> BackupAsync(
             __in IBackupCallbackHandler & backupCallbackHandler,
             __out BackupInfo & backupInfo) noexcept = 0;
@@ -65,11 +63,26 @@ namespace TxnReplicator
             __in FABRIC_RESTORE_POLICY restorePolicy,
             __in Common::TimeSpan const & timeout,
             __in ktl::CancellationToken const & cancellationToken) noexcept = 0;
-		
-	public: // Notification APIs
-		virtual NTSTATUS RegisterTransactionChangeHandler(
-			__in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept = 0;
+ 
+    public: // Notification APIs
+        virtual NTSTATUS RegisterTransactionChangeHandler(
+            __in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept = 0;
 
-		virtual NTSTATUS UnRegisterTransactionChangeHandler() noexcept = 0;
+        virtual NTSTATUS UnRegisterTransactionChangeHandler() noexcept = 0;
+
+    public: // Test support
+        virtual NTSTATUS Test_RequestCheckpointAfterNextTransaction() noexcept
+        {
+            CODING_ASSERT("Test_SetTestHookContext not implemented");
+        }
+
+        virtual NTSTATUS Test_GetPeriodicCheckpointAndTruncationTimestampTicks(
+            __out LONG64 & lastPeriodicCheckpointTimeTicks,
+            __out LONG64 & lastPeriodicTruncationTimeTicks) noexcept
+        {
+            UNREFERENCED_PARAMETER(lastPeriodicCheckpointTimeTicks);
+            UNREFERENCED_PARAMETER(lastPeriodicTruncationTimeTicks);
+            CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
+        }
     };
 }

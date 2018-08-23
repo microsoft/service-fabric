@@ -61,21 +61,23 @@ namespace Management
                     std::wstring const & storeLocation,
                     std::wstring const & storeName,
                     Common::SecureString const & ntlmPasswordSecret)
-                    : commonName_(std::move(commonName)), storeName_(std::move(storeName)), ntlmPasswordSecret_(std::move(ntlmPasswordSecret))
+                    : commonName_(commonName)
+                    , storeName_(storeName)
+                    , ntlmPasswordSecret_(ntlmPasswordSecret)
                 {
                     X509StoreLocation::Parse(storeLocation, storeLocation_);
                 }
 
-                __declspec(property(get = get_CommonName)) std::wstring & CommonName;
+                __declspec(property(get = get_CommonName)) std::wstring const & CommonName;
                 std::wstring const & get_CommonName() const { return commonName_; }
 
-                __declspec(property(get = get_StoreLocation)) X509StoreLocation::Enum & StoreLocation;
-                X509StoreLocation::Enum const & get_StoreLocation() const { return storeLocation_; }
+                __declspec(property(get = get_StoreLocation)) X509StoreLocation::Enum StoreLocation;
+                X509StoreLocation::Enum get_StoreLocation() const { return storeLocation_; }
 
-                __declspec(property(get = get_StoreName)) std::wstring & StoreName;
+                __declspec(property(get = get_StoreName)) std::wstring const & StoreName;
                 std::wstring const & get_StoreName() const { return storeName_; }
 
-                __declspec(property(get = get_NtlmPasswordSecret)) Common::SecureString & NtlmPasswordSecret;
+                __declspec(property(get = get_NtlmPasswordSecret)) Common::SecureString const & NtlmPasswordSecret;
                 Common::SecureString const & get_NtlmPasswordSecret() const { return ntlmPasswordSecret_; }
 
             private:

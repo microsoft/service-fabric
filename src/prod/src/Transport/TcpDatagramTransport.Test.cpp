@@ -52,14 +52,14 @@ namespace Transport
         auto server = TcpDatagramTransport::Create(TTestUtil::GetListenAddress());
 
         wstring testAction = TTestUtil::GetGuidAction();
-        AutoResetEvent messageReceived;
+        auto messageReceived = make_shared<AutoResetEvent>(false);
         TTestUtil::SetMessageHandler(
             server,
             testAction,
-            [testAction, &messageReceived](MessageUPtr & msg, ISendTarget::SPtr const & st) -> void
+            [testAction, messageReceived](MessageUPtr & msg, ISendTarget::SPtr const & st) -> void
             {
                 Trace.WriteInfo(TraceType, "server received message {0} from {1}", msg->TraceId(), st->Address());
-                messageReceived.Set();
+                messageReceived->Set();
             });
 
         VERIFY_IS_TRUE(server->Start().IsSuccess());
@@ -90,7 +90,7 @@ namespace Transport
             }
         }
 
-        VERIFY_IS_TRUE(messageReceived.WaitOne(TimeSpan::FromSeconds(3)));
+        VERIFY_IS_TRUE(messageReceived->WaitOne(TimeSpan::FromSeconds(3)));
 
         Trace.WriteInfo(TraceType, "AcceptThrottle dump: {0}", *AcceptThrottle::GetThrottle());
         auto connectionGroups = AcceptThrottle::GetThrottle()->Test_ConnectionGroups();
@@ -2498,6 +2498,115 @@ namespace Transport
         LEAVE;
     }
 
+    BOOST_AUTO_TEST_CASE(SendTimeoutTest)
+    {
+        ENTER;
+
+        auto saved1 = TransportConfig::GetConfig().SendTimeout;
+        TransportConfig::GetConfig().SendTimeout = TimeSpan::FromSeconds(1);
+        auto saved2 = TransportConfig::GetConfig().ConnectionIdleTimeout;
+        TransportConfig::GetConfig().ConnectionIdleTimeout = TimeSpan::FromSeconds(1);
+        KFinally([=]
+        {
+            TransportConfig::GetConfig().SendTimeout = saved1;
+            TransportConfig::GetConfig().ConnectionIdleTimeout = saved2;
+        });
+
+        auto node1 = TcpDatagramTransport::Create(TTestUtil::GetListenAddress());
+        node1->SetMessageHandler([=](MessageUPtr &, ISendTarget::SPtr const &) {});
+        auto connectionFaulted1 = make_shared<ManualResetEvent>(false);
+        node1->RegisterDisconnectEvent([=](const IDatagramTransport::DisconnectEventArgs& e)
+        {
+            Trace.WriteInfo(TraceType, "node1: disconnected: target={0}, fault={1}", e.Target->TraceId(), e.Fault);
+            if (!connectionFaulted1->IsSet())
+            {
+                VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::OperationCanceled));
+                connectionFaulted1->Set();
+            }
+        });
+
+
+        VERIFY_IS_TRUE(node1->Start().IsSuccess());
+
+        auto node2 = TcpDatagramTransport::Create(TTestUtil::GetListenAddress());
+        auto node2Received = make_shared<ManualResetEvent>(false);
+        auto completeTest = make_shared<ManualResetEvent>(false);
+        node2->SetMessageHandler([=](MessageUPtr & message, ISendTarget::SPtr const &)
+        {
+            Trace.WriteInfo(TraceType, "node2 received {0}, blocking receive thread, node1 send will time out", message->TraceId());
+            node2Received->Set();
+            completeTest->WaitOne(); //block to apply TCP back-pressure to sending side
+            Trace.WriteInfo(TraceType, "node2 receive thread unblocked");
+        });
+
+        auto connectionFaulted2 = make_shared<ManualResetEvent>(false);
+        node2->RegisterDisconnectEvent([=](const IDatagramTransport::DisconnectEventArgs& e)
+        {
+            Trace.WriteInfo(TraceType, "node2: disconnected: target={0}, fault={1}", e.Target->TraceId(), e.Fault);
+            connectionFaulted2->Set();
+        });
+
+        VERIFY_IS_TRUE(node2->Start().IsSuccess());
+
+        auto target1 = node2->ResolveTarget(node1->ListenAddress());
+        VERIFY_IS_TRUE(target1);
+
+        auto target2 = node1->ResolveTarget(node2->ListenAddress());
+        VERIFY_IS_TRUE(target2);
+
+        TestMessageBody body(64 * 1024);
+        auto firstMsg = make_unique<Message>(body);
+        firstMsg->Headers.Add(MessageIdHeader());
+        Trace.WriteInfo(TraceType, "node1 sending first message {0} to node2", firstMsg->TraceId());
+        node1->SendOneWay(target2, move(firstMsg));
+
+        //Ensure a connection is set up before node2 starts sending to avoid duplicate connections
+        VERIFY_IS_TRUE(node2Received->WaitOne(TimeSpan::FromSeconds(5)));
+
+        auto startTime = Stopwatch::Now();
+        while ((Stopwatch::Now() - startTime) < TimeSpan::FromMinutes(1))
+        {
+            Trace.WriteInfo(TraceType, "connectionFaulted1->IsSet() = {0}", connectionFaulted1->IsSet());
+            Trace.WriteInfo(TraceType, "connectionFaulted2->IsSet() = {0}", connectionFaulted2->IsSet());
+            if (connectionFaulted1->IsSet())
+            {
+                completeTest->Set();
+                if (connectionFaulted2->IsSet()) break;
+
+                Sleep(10);
+                continue;
+            }
+
+            if (target2->MessagesPendingForSend() == 0) //Check to avoid send queue full
+            {
+                auto testMsg = make_unique<Message>(body);
+                testMsg->Headers.Add(MessageIdHeader());
+                Trace.WriteInfo(TraceType, "node1 sending {0} to node2", testMsg->TraceId());
+                node1->SendOneWay(target2, move(testMsg));
+            }
+
+            if (target1->MessagesPendingForSend() == 0) //Check to avoid send queue full
+            {
+                auto testMsg = make_unique<Message>(body);
+                testMsg->Headers.Add(MessageIdHeader());
+                Trace.WriteInfo(TraceType, "node2 sending {0} to node1", testMsg->TraceId());
+                node2->SendOneWay(target1, move(testMsg));
+            }
+
+            Sleep(10);
+        }
+
+        Trace.WriteInfo(TraceType, "connectionFaulted1->IsSet() = {0}", connectionFaulted1->IsSet());
+        VERIFY_IS_TRUE(connectionFaulted1->IsSet());
+        Trace.WriteInfo(TraceType, "connectionFaulted2->IsSet() = {0}", connectionFaulted2->IsSet());
+        VERIFY_IS_TRUE(connectionFaulted2->IsSet());
+
+        node1->Stop(TimeSpan::FromSeconds(10));
+        node2->Stop(TimeSpan::FromSeconds(10));
+
+        LEAVE;
+    }
+
     BOOST_AUTO_TEST_CASE(SendQueueFullTest)
     {
         ENTER;
@@ -2589,8 +2698,8 @@ namespace Transport
                     totalBytes += buffer.size();
                 }
 
-                auto buf = new BYTE[totalBytes];
-                KFinally([buf] { delete buf; });
+                auto bufUPtr = std::make_unique<BYTE[]>(totalBytes);
+                auto buf = bufUPtr.get(); 
 
                 auto ptr = buf;
                 for(auto const & buffer : buffers)
@@ -2622,8 +2731,8 @@ namespace Transport
                     totalBytes += buffer.size();
                 }
 
-                auto buf = new BYTE[totalBytes];
-                KFinally([buf] { delete buf; });
+                auto bufUPtr = std::make_unique<BYTE[]>(totalBytes);
+                auto buf = bufUPtr.get(); 
 
                 auto ptr = buf;
                 for(auto const & buffer : buffers)
@@ -2811,10 +2920,10 @@ namespace Transport
             auto testMsg(make_unique<Message>(TestMessageBody(messageBodySize)));
             testMsg->Headers.Add(MessageIdHeader());
             testMsg->Headers.Add(ActionHeader(testAction));
-            testMsg->SetSendStatusCallback([messageExpired](ErrorCodeValue::Enum failure, MessageUPtr&&)
+            testMsg->SetSendStatusCallback([messageExpired](ErrorCode const & failure, MessageUPtr&&)
             {
                 Trace.WriteInfo(TraceType, "sender: send failed: {0}", failure);
-                if (failure == ErrorCodeValue::MessageExpired)
+                if (failure.IsError(ErrorCodeValue::MessageExpired))
                 {
                     messageExpired->Set();
                 }
@@ -3473,9 +3582,9 @@ namespace Transport
             auto testMsg(make_unique<Message>(body));
             testMsg->Headers.Add(ActionHeader(testAction));
             testMsg->Headers.Add(MessageIdHeader());
-            testMsg->SetSendStatusCallback([messageExpired](ErrorCodeValue::Enum failure, MessageUPtr&&)
+            testMsg->SetSendStatusCallback([messageExpired](ErrorCode const & failure, MessageUPtr&&)
             {
-                if (failure == ErrorCodeValue::MessageExpired)
+                if (failure.IsError(ErrorCodeValue::MessageExpired))
                 {
                     Trace.WriteInfo(TraceType, "[sender] message expired");
                     messageExpired->Set();

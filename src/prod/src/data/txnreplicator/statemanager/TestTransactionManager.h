@@ -27,6 +27,7 @@ namespace StateManagerTests
 
     public:
         __declspec(property(get = get_StateManager)) Data::StateManager::IStateManager::SPtr StateManager;
+        __declspec(noinline)
         Data::StateManager::IStateManager::SPtr get_StateManager() const
         {
             return stateManagerSPtr_.RawPtr();
@@ -44,7 +45,7 @@ namespace StateManagerTests
         }
 
     public: // ITransactionalReplicator interface.
-        KWfStatefulServicePartition::SPtr get_StatefulPartition() const override
+        Data::Utilities::IStatefulPartition::SPtr get_StatefulPartition() const override
         {
             CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
         }
@@ -68,11 +69,6 @@ namespace StateManagerTests
         {
             UNREFERENCED_PARAMETER(epoch);
 
-            CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
-        }
-
-        NTSTATUS Test_RequestCheckpointAfterNextTransaction() noexcept
-        {
             CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
         }
 

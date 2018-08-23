@@ -20,7 +20,8 @@ namespace Reliability
                     ReconfigurationSlow = 0,
                     ReconfigurationComplete,
                     ResourceUsageReport,
-                    LastValidEnum = ReconfigurationComplete
+                    ReplicaStateChange,
+                    LastValidEnum = ReplicaStateChange
                 };
 
                 void WriteToTextWriter(Common::TextWriter & w, Enum const & val);

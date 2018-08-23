@@ -11,6 +11,8 @@ namespace Common
     {
         class MonitoringData;
 
+        class MonitoringComponentMetadata;
+
         typedef std::pair<MonitoringData const *, FABRIC_SEQUENCE_NUMBER> MonitoringHealthEvent;
 
         typedef std::vector<MonitoringHealthEvent> MonitoringHealthEventList;
@@ -18,9 +20,9 @@ namespace Common
         class ApiCallDescription;
         typedef std::shared_ptr<ApiCallDescription> ApiCallDescriptionSPtr;
 
-        typedef std::function<void(MonitoringHealthEventList const &)> HealthReportCallback;
-        typedef std::function<void(MonitoringData const &)> ApiEventTraceCallback;
-        typedef std::function<void(MonitoringData const &, Common::TimeSpan, Common::ErrorCode const &)> ApiFinishTraceCallback;
+        typedef std::function<void(MonitoringHealthEventList const &, ApiMonitoring::MonitoringComponentMetadata const &)> HealthReportCallback;
+        typedef std::function<void(MonitoringData const &, ApiMonitoring::MonitoringComponentMetadata const &)> ApiEventTraceCallback;
+        typedef std::function<void(MonitoringData const &, Common::TimeSpan, Common::ErrorCode const &, ApiMonitoring::MonitoringComponentMetadata const &)> ApiFinishTraceCallback;
 
         class MonitoringComponent;
         typedef std::unique_ptr<MonitoringComponent> MonitoringComponentUPtr;

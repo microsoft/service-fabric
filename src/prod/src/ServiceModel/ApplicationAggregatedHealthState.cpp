@@ -31,40 +31,6 @@ ApplicationAggregatedHealthState::~ApplicationAggregatedHealthState()
 {
 }
 
-ApplicationAggregatedHealthState::ApplicationAggregatedHealthState(ApplicationAggregatedHealthState const & other)
-    : applicationName_(other.applicationName_)
-    , aggregatedHealthState_(other.aggregatedHealthState_)
-{
-}
-
-ApplicationAggregatedHealthState & ApplicationAggregatedHealthState::operator = (ApplicationAggregatedHealthState const & other)
-{
-    if (this != &other)
-    {
-        applicationName_ = other.applicationName_;
-        aggregatedHealthState_ = other.aggregatedHealthState_;
-    }
-
-    return *this;
-}
-
-ApplicationAggregatedHealthState::ApplicationAggregatedHealthState(ApplicationAggregatedHealthState && other)
-    : applicationName_(move(other.applicationName_))
-    , aggregatedHealthState_(move(other.aggregatedHealthState_))
-{
-}
-
-ApplicationAggregatedHealthState & ApplicationAggregatedHealthState::operator = (ApplicationAggregatedHealthState && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        aggregatedHealthState_ = move(other.aggregatedHealthState_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode ApplicationAggregatedHealthState::ToPublicApi(
     __in Common::ScopedHeap & heap,
     __out FABRIC_APPLICATION_HEALTH_STATE & publicApplicationAggregatedHealthState) const

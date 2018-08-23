@@ -97,7 +97,7 @@ NamingUri const & LruClientCacheManager::CacheAsyncOperationBase::GetNameWithout
     {
         AcquireWriteLock lock(nameWithoutMembersLock_);
 
-        if (!nameWithoutMembersSPtr_)
+        if (nameWithoutMembersSPtr_.get() == nullptr)
         {
             nameWithoutMembersSPtr_ = make_shared<NamingUri>(name_.GetTrimQueryAndFragmentName());
 
@@ -279,4 +279,11 @@ void LruClientCacheManager::CacheAsyncOperationBase::OnInvalidateCachedPsdComple
 
         this->TryComplete(thisSPtr, error);
     }
+}
+
+NamingUri const & LruClientCacheManager::CacheAsyncOperationBase::GetCacheEntryName(LruClientCacheEntrySPtr const & cacheEntry)
+{
+    // Need to pass the fullname for Service Group endpoint parsing
+    //
+    return this->FullName.Fragment.empty() ? cacheEntry->Name : this->FullName;
 }

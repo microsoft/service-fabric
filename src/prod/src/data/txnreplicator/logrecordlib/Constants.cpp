@@ -37,6 +37,7 @@ LPCWSTR const Constants::LogPathPrefix = L"";
 
 std::wstring const Constants::Test_Ktl_LoggingEngine(L"ktl");
 std::wstring const Constants::Test_File_LoggingEngine(L"file");
+std::wstring const Constants::SerialDispatchingMode(L"serial");
 
 ULONG const Constants::PhysicalLogWriterMovingAverageHistory = 10;
 

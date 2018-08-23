@@ -25,6 +25,8 @@ namespace ServiceModel
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
+        Common::ErrorCode FromPublicApi(FABRIC_CONTAINERHOST_ENTRY_POINT_DESCRIPTION const & publicDescription);
+        void ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_CONTAINERHOST_ENTRY_POINT_DESCRIPTION & publicDescription) const;
 
         void clear();
 
@@ -41,6 +43,6 @@ namespace ServiceModel
         friend struct EntryPointDescription;
 
         void ReadFromXml(Common::XmlReaderUPtr const &);
-		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
+        Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
     };
 }

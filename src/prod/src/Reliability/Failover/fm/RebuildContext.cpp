@@ -145,11 +145,12 @@ void RebuildContext::ProcessProposalReplyCallerHoldingLock(AsyncOperationSPtr co
     }
 
     if (result.IsError(ErrorCodeValue::Timeout))
-    {        
+    {
         auto healthReportThreshold = fm_.IsMaster ? FailoverConfig::GetConfig().MinRebuildRetryInterval : FailoverConfig::GetConfig().RebuildHealthReportThreshold;
-        if ((Common::Stopwatch::Now() - fm_.ActivateTime) > healthReportThreshold)
+        auto elapsedTime = Common::Stopwatch::Now() - fm_.ActivateTime;
+        if (elapsedTime > healthReportThreshold)
         {
-            fm_.HealthClient->AddHealthReport(fm_.HealthReportFactoryObj.GenerateRebuildStuckHealthReport());
+            fm_.HealthClient->AddHealthReport(fm_.HealthReportFactoryObj.GenerateRebuildStuckHealthReport(elapsedTime, healthReportThreshold));
         }
         fm_.WriteWarning(TraceProposal, "Rebuild broadcast is taking longer than expected to complete");
         PostReceiveForProposalReply(false);
@@ -343,9 +344,10 @@ void RebuildContext::OnTimer()
 
     fm_.WriteWarning(TraceReport, "Rebuild is waiting for nodes: {0}", targets);
     auto healthReportThreshold = fm_.IsMaster ? FailoverConfig::GetConfig().MinRebuildRetryInterval : FailoverConfig::GetConfig().RebuildHealthReportThreshold;
-    if (Common::Stopwatch::Now() - fm_.ActivateTime > healthReportThreshold)
+    auto elapsedTime = Common::Stopwatch::Now() - fm_.ActivateTime;
+    if (elapsedTime > healthReportThreshold)
     {
-        fm_.HealthClient->AddHealthReport(fm_.HealthReportFactoryObj.GenerateRebuildStuckHealthReport(targets));
+        fm_.HealthClient->AddHealthReport(fm_.HealthReportFactoryObj.GenerateRebuildStuckHealthReport(targets, elapsedTime, healthReportThreshold));
     }
 
     for (NodeInstance const & target : targets)
@@ -443,13 +445,16 @@ MessageUPtr RebuildContext::ProcessLFUMUpload(LFUMMessageBody const& body, Feder
                         node.NodeName,
                         node.NodeType,
                         node.IpAddressOrFQDN,
-                        node.ClusterConnectionPort);
+                        node.ClusterConnectionPort,
+                        node.HttpGatewayPort);
 
                     NodeInfoSPtr nodeInfo = make_shared<NodeInfo>(
                         from,
                         move(nodeDescription),
                         true);
-                    result = fm_.NodeCacheObj.NodeUp(move(nodeInfo));
+
+                    FabricVersionInstance versionInstance;
+                    result = fm_.NodeCacheObj.NodeUp(move(nodeInfo), false /* IsVersionGatekeepingNeeded */, versionInstance);
                 }
             }
 

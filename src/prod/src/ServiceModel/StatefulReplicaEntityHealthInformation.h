@@ -20,8 +20,8 @@ namespace ServiceModel
             FABRIC_REPLICA_ID replicaId,
             FABRIC_INSTANCE_ID replicaInstanceId);
 
-        StatefulReplicaEntityHealthInformation(StatefulReplicaEntityHealthInformation && other);
-        StatefulReplicaEntityHealthInformation & operator = (StatefulReplicaEntityHealthInformation && other);
+        StatefulReplicaEntityHealthInformation(StatefulReplicaEntityHealthInformation && other) = default;
+        StatefulReplicaEntityHealthInformation & operator = (StatefulReplicaEntityHealthInformation && other) = default;
         
          __declspec(property(get=get_PartitionId)) Common::Guid const& PartitionId;
         Common::Guid const& get_PartitionId() const { return partitionId_; }

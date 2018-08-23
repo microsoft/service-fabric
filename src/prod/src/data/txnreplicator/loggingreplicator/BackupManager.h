@@ -60,6 +60,8 @@ namespace Data
 
             LogRecordLib::BackupLogRecord::CSPtr GetLastCompletedBackupLogRecord() const override;
 
+            void UndoLastCompletedBackupLogRecord() override;
+
             bool ShouldCleanState() const override;
 
             void StateCleaningComplete() override;
@@ -134,6 +136,9 @@ namespace Data
                 __in LogRecordLib::LogRecord const & indexingLogRecord,
                 __in KString const & lockTakerName);
 
+            Data::LogRecordLib::IndexingLogRecord::CSPtr GetIndexingLogRecordForFullBackup(
+                __in IReplicatedLogManager & replicatedLogManager);
+
             ktl::Awaitable<ReplicatorBackup> BackupReplicatorAsync(
                 __in Common::Guid backupId, 
                 __in FABRIC_BACKUP_OPTION backupOption,
@@ -142,11 +147,13 @@ namespace Data
                 __in ktl::CancellationToken const & cancellationToken);
 
             LogRecordLib::LogRecord::CSPtr FindFirstLogRecordForIncrementalBackup(
-                __in FABRIC_SEQUENCE_NUMBER highestBackedUpLSN);
+                __in FABRIC_SEQUENCE_NUMBER highestBackedUpLSN,
+                __in Common::Guid const & backupId);
 
             ktl::Awaitable<NTSTATUS> WriteBackupMetadataFileAsync(
                 __in FABRIC_BACKUP_OPTION backupOption,
                 __in Common::Guid backupId,
+                __in Common::Guid parentBackupId,
                 __in ReplicatorBackup const & replicatorBackup,
                 __in ktl::CancellationToken const & cancellationToken) noexcept;
 
@@ -175,7 +182,7 @@ namespace Data
                 __in TxnReplicator::IBackupRestoreProvider & loggingReplicator,
                 __in TxnReplicator::Epoch & dataLossEpoch) noexcept;
 
-        private: // Restore Token methos
+        private: // Restore Token methods
             bool CheckIfRestoreTokenExists();
 
             ktl::Awaitable<void> CreateRestoreTokenAsync(
@@ -185,8 +192,9 @@ namespace Data
                 __in Common::Guid const & id);
 
         private: // Locks
-            void AcquireEntryLock(
+            ktl::Awaitable<void> AcquireEntryLock(
                 __in Common::Guid const & id,
+                __in Common::TimeSpan timeout,
                 __in LockRequester requester);
             void ReleaseEntryLock();
 
@@ -271,7 +279,10 @@ namespace Data
             KWeakRef<TxnReplicator::IBackupRestoreProvider>::SPtr backupRestoreProviderWRef_;
             KWeakRef<ICheckpointManager>::SPtr checkpointManagerWRef_;
             KWeakRef<IOperationProcessor>::SPtr operationProcessorWRef_;
-            KReaderWriterSpinLock backupAndRestoreLock_;
+
+            // Note: change SpinLock to ReaderWriterAsyncLock for the reason that coroutine will cause thread change thus
+            // we can not guarantee acquire lock and release lock in the same thread.
+            Data::Utilities::ReaderWriterAsyncLock::SPtr backupAndRestoreLock_;
             
         private:
             /// <summary>

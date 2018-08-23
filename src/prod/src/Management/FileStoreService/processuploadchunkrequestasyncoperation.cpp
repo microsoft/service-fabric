@@ -11,7 +11,7 @@ using namespace Federation;
 using namespace Transport;
 using namespace Management::FileStoreService;
 
-StringLiteral const TraceComponent("ProcessDeleteUploadSessionRequestAsyncOperation");
+StringLiteral const TraceComponent("ProcessUploadChunkRequestAsyncOperation");
 
 class ProcessUploadChunkRequestAsyncOperation::UploadChunkAsyncOperation
     : public Common::AsyncOperation
@@ -47,13 +47,82 @@ protected:
 
     void OnStart(Common::AsyncOperationSPtr const & thisSPtr)
     {
+        static int count = -1;
+        static bool incorrectUpdateSentOnce = false;
+        ++count;
+
+        if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
+        {
+            int fileChunkSize = 3145728;
+            if (!incorrectUpdateSentOnce && this->startPosition_ == fileChunkSize * 10) // seq. Id - 10
+            {
+                incorrectUpdateSentOnce = true;
+                WriteWarning(
+                    TraceComponent,
+                    this->requestManager_.TraceId,
+                    "Chaos enabled: Sending success without updating metadata : UploadChunkAsyncOperation: {0} start:end={1}:{2}",
+                    this->sessionId_,
+                    this->startPosition_,
+                    this->endPosition_);
+
+                // Do not update the metadata to simulate failure of missing chunk
+                this->TryComplete(thisSPtr, ErrorCodeValue::Success);
+
+                return;
+            }
+
+            if (count == 19)
+            {
+                WriteWarning(
+                    TraceComponent,
+                    this->requestManager_.TraceId,
+                    "Chaos enabled: Sending ErrorCodeValue::NotFound to simulate failover for UploadChunkAsyncOperation: {0} start:end={1}:{2}",
+                    this->sessionId_,
+                    this->startPosition_,
+                    this->endPosition_);
+
+                this->TryComplete(thisSPtr, ErrorCodeValue::NotFound);
+
+                return;
+            }
+
+            if (this->startPosition_ == fileChunkSize * 3)
+            {
+                // TO handle multiple request
+                Sleep(15000);
+            }
+        }
+
         ErrorCode error = this->requestManager_.UploadSessionMap->UpdateUploadSessionMapEntry(
             this->sessionId_,
             this->startPosition_,
             this->endPosition_,
             this->stagingFullPath_);
 
-        this->TryComplete(thisSPtr, error);
+        if (!error.IsSuccess())
+        {
+            UploadSessionMetadataSPtr uploadSessionMetadata;
+            auto sessionMetadataError = this->requestManager_.UploadSessionMap->GetUploadSessionMapEntry(this->sessionId_, uploadSessionMetadata);
+            if (sessionMetadataError.IsSuccess())
+            {
+                WriteWarning(
+                    TraceComponent,
+                    "Getting Staging location failed. sessionId:{0} error:{1} UploadSessionMetadata:{2}.",
+                    this->sessionId_,
+                    error,
+                    uploadSessionMetadata);
+            }
+            else
+            {
+                WriteWarning(
+                    TraceComponent,
+                    "Getting Staging location failed. sessionId:{0}: error:{1}",
+                    this->sessionId_,
+                    error);
+            }
+        }
+
+        this->TryComplete(thisSPtr, move(error));
     }
 
 private:
@@ -98,6 +167,15 @@ ErrorCode ProcessUploadChunkRequestAsyncOperation::ValidateRequest()
 
     if (!File::Exists(this->stagingFullPath_))
     {
+        WriteNoise(
+            TraceComponent,
+            "RequestManager",
+            "UploadChunkAsyncOperation: stagingFileNotFound: {0} start:end={1}:{2} path={3}",
+            this->sessionId_,
+            this->startPosition_,
+            this->endPosition_,
+            this->stagingFullPath_);
+
         return ErrorCodeValue::StagingFileNotFound;
     }
 
@@ -130,4 +208,46 @@ ErrorCode ProcessUploadChunkRequestAsyncOperation::EndOperation(
     }
 
     return errorCode;
+}
+
+void ProcessUploadChunkRequestAsyncOperation::OnRequestCompleted(__inout ErrorCode & error)
+{
+    ProcessRequestAsyncOperation::OnRequestCompleted(error);
+
+    // For error case, delete the staging file
+    // For error with FileStoreServiceNotReady, gateway would retry to upload to the new primary
+    if (!this->stagingFullPath_.empty() && 
+        !error.IsSuccess() && 
+        !error.IsError(ErrorCodeValue::FileStoreServiceNotReady))
+    {
+        // Delete staging file
+        if (File::Exists(this->stagingFullPath_))
+        {
+            auto deleteError = File::Delete2(this->stagingFullPath_, true);
+            if (!deleteError.IsSuccess())
+            {
+                WriteWarning(
+                    TraceComponent,
+                    TraceId,
+                    "Deleting staged chunk file:{0}, deleteError:{1} originalError:{2}",
+                    this->stagingFullPath_,
+                    deleteError,
+                    error);
+            }
+        }
+    }
+}
+
+void ProcessUploadChunkRequestAsyncOperation::WriteTrace(ErrorCode const &error)
+{
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "UploadChunk request failed with error {0}, sessionId:{1}, startPostion:{2}, endPosition:{3}",
+            error,
+            this->sessionId_,
+            this->startPosition_,
+            this->endPosition_);
+    }
 }

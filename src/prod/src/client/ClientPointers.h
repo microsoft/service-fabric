@@ -33,12 +33,12 @@ namespace Client
 
     class ServiceAddressTrackerCallbacks;
     typedef std::shared_ptr<ServiceAddressTrackerCallbacks> ServiceAddressTrackerCallbacksSPtr;
-    
+
     class FabricClientInternalSettings;
     typedef std::shared_ptr<FabricClientInternalSettings> FabricClientInternalSettingsSPtr;
 
     class HealthReportingTransport;
-    
+
     class HealthReportingComponent;
     typedef std::shared_ptr<HealthReportingComponent> HealthReportingComponentSPtr;
 
@@ -65,6 +65,18 @@ namespace Client
     class ChaosReportResult;
     typedef std::shared_ptr<ChaosReportResult> ChaosReportResultSPtr;
 
+    class ChaosEventsSegmentResult;
+    typedef std::shared_ptr<ChaosEventsSegmentResult> ChaosEventsSegmentResultSPtr;
+
+    class ChaosDescriptionResult;
+    typedef std::shared_ptr<ChaosDescriptionResult> ChaosDescriptionResultSPtr;
+
+    class ChaosScheduleDescriptionResult;
+    typedef std::shared_ptr<ChaosScheduleDescriptionResult> ChaosScheduleDescriptionResultPtr;
+
+    class CallSystemServiceResult;
+    typedef std::shared_ptr<CallSystemServiceResult> CallSystemServiceResultSPtr;
+
     class RestartNodeResult;
     typedef std::shared_ptr<RestartNodeResult> RestartNodeResultSPtr;
 
@@ -86,7 +98,6 @@ namespace Client
     class OrchestrationUpgradeStatusResult;
     typedef std::shared_ptr<OrchestrationUpgradeStatusResult> OrchestrationUpgradeStatusResultSPtr;
 
-	class UpgradeOrchestrationServiceStateResult;
-	typedef std::shared_ptr<UpgradeOrchestrationServiceStateResult> UpgradeOrchestrationServiceStateResultSPtr;
-
+    class UpgradeOrchestrationServiceStateResult;
+    typedef std::shared_ptr<UpgradeOrchestrationServiceStateResult> UpgradeOrchestrationServiceStateResultSPtr;
 }

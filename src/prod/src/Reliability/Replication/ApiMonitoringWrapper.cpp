@@ -72,11 +72,13 @@ void ApiMonitoringWrapper::Open(TimeSpan const & timeSpan)
     Common::ApiMonitoring::MonitoringComponentConstructorParameters parameters;
     parameters.Root = this;
     parameters.ScanInterval = timeSpan;
-    parameters.SlowHealthReportCallback = [this](MonitoringHealthEventList const & events) { this->SlowHealthCallback(events); };
-    parameters.ClearSlowHealthReportCallback = [this](MonitoringHealthEventList const & events) { this->ClearSlowHealth(events); };
+    parameters.SlowHealthReportCallback = [this](MonitoringHealthEventList const & events, MonitoringComponentMetadata const &) { this->SlowHealthCallback(events); };
+    parameters.ClearSlowHealthReportCallback = [this](MonitoringHealthEventList const & events, MonitoringComponentMetadata const &) { this->ClearSlowHealth(events); };
 
     monitor_ = MonitoringComponent::Create(parameters);
-    monitor_->Open();
+
+    // Curently we add NodeName and NodeInstance information for failover APIs. These information can be added for Replicator APIs in the future.
+    monitor_->Open(MonitoringComponentMetadata(L""/*NodeName*/, L""));
     isActive_ = true;
 }
 
@@ -210,7 +212,7 @@ ApiCallDescriptionSPtr ApiMonitoringWrapper::GetApiCallDescriptionFromName(
         case ApiName::GetNextCopyContext:
         case ApiName::GetNextCopyState:
         {
-            auto monitoringData = MonitoringData(currentReplicatorId.PartitionId, Federation::NodeInstance(), currentReplicatorId.ReplicaId, 0, nameDesc, Common::StopwatchTime::FromDateTime(Common::DateTime::Now()));
+            auto monitoringData = MonitoringData(currentReplicatorId.PartitionId, currentReplicatorId.ReplicaId, 0, nameDesc, Common::StopwatchTime::FromDateTime(Common::DateTime::Now()));
             auto monitoringParameters = MonitoringParameters(
                 true, // healthReportEnabled
                 true, // apiSlowTraceEnabled
@@ -223,7 +225,7 @@ ApiCallDescriptionSPtr ApiMonitoringWrapper::GetApiCallDescriptionFromName(
         case ApiName::UpdateEpoch:
         case ApiName::OnDataLoss:
         {
-            auto monitoringData = MonitoringData(currentReplicatorId.PartitionId, Federation::NodeInstance(), currentReplicatorId.ReplicaId, 0, nameDesc, Common::StopwatchTime::FromDateTime(Common::DateTime::Now()));
+            auto monitoringData = MonitoringData(currentReplicatorId.PartitionId, currentReplicatorId.ReplicaId, 0, nameDesc, Common::StopwatchTime::FromDateTime(Common::DateTime::Now()));
             auto monitoringParameters = MonitoringParameters(
                 false, // healthReportEnabled
                 true, // apiSlowTraceEnabled

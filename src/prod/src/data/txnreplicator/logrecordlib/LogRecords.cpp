@@ -22,7 +22,7 @@ LogRecords::LogRecords(
     __in KStringView const & readerName,
     __in LogReaderType::Enum readerType,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & config)
+    __in TRInternalSettingsSPtr const & config)
     : IAsyncEnumerator()
     , KObject()
     , KShared()
@@ -75,13 +75,13 @@ LogRecords::LogRecords(
 }
 
 LogRecords::LogRecords(
-    __in Data::Utilities::PartitionedReplicaId const & traceId,
+    __in PartitionedReplicaId const & traceId,
     __in Data::Log::ILogicalLogReadStream & readStream,
     __in InvalidLogRecords & invalidLogRecords,
     __in ULONG64 enumerationStartingPosition,
     __in ULONG64 enumerationEndingPosition,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & config)
+    __in TRInternalSettingsSPtr const & config)
     : IAsyncEnumerator()
     , KObject()
     , KShared()
@@ -121,7 +121,7 @@ LogRecords::~LogRecords()
 }
 
 IAsyncEnumerator<LogRecord::SPtr>::SPtr LogRecords::Create(
-    __in Data::Utilities::PartitionedReplicaId const & traceId,
+    __in PartitionedReplicaId const & traceId,
     __in ILogManagerReadOnly & logManager,
     __in ULONG64 enumerationStartingPosition,
     __in ULONG64 enumerationEndingPosition,
@@ -130,7 +130,7 @@ IAsyncEnumerator<LogRecord::SPtr>::SPtr LogRecords::Create(
     __in LogReaderType::Enum readerType,
     __in LONG64 readAheadCacheSize,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in KAllocator & allocator)
 {
     LogRecords * pointer = _new(LOGRECORDS_TAG, allocator) LogRecords(
@@ -150,13 +150,13 @@ IAsyncEnumerator<LogRecord::SPtr>::SPtr LogRecords::Create(
 }
 
 LogRecords::SPtr LogRecords::Create(
-    __in Data::Utilities::PartitionedReplicaId const & traceId,
+    __in PartitionedReplicaId const & traceId,
     __in Data::Log::ILogicalLogReadStream & readStream,
     __in InvalidLogRecords & invalidLogRecords,
     __in ULONG64 enumerationStartingPosition,
     __in ULONG64 enumerationEndingPosition,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in KAllocator & allocator)
 {
     LogRecords * pointer = _new(LOGRECORDS_TAG, allocator) LogRecords(

@@ -35,30 +35,6 @@ DeployedApplicationEntityHealthInformation::DeployedApplicationEntityHealthInfor
 {
 }
 
-DeployedApplicationEntityHealthInformation::DeployedApplicationEntityHealthInformation(DeployedApplicationEntityHealthInformation && other)
-    : EntityHealthInformation(move(other))
-    , applicationName_(move(other.applicationName_))
-    , nodeId_(move(other.nodeId_))
-    , nodeName_(move(other.nodeName_))
-    , applicationInstanceId_(move(other.applicationInstanceId_))
-{
-}
-
-DeployedApplicationEntityHealthInformation & DeployedApplicationEntityHealthInformation::operator = (DeployedApplicationEntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        nodeId_ = move(other.nodeId_);
-        nodeName_ = move(other.nodeName_);
-        applicationInstanceId_ = move(other.applicationInstanceId_);
-    }
-
-    EntityHealthInformation::operator=(move(other));
-
-    return *this;
-}
-
 std::wstring const & DeployedApplicationEntityHealthInformation::get_EntityId() const
 {
     if (entityId_.empty())

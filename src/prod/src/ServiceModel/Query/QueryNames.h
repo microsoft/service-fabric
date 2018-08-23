@@ -81,8 +81,16 @@ namespace Query
             GetComposeDeploymentStatusList = 67,
             GetComposeDeploymentUpgradeProgress = 68,
             GetContainerInfoDeployedOnNode = 69,
-            InvokeContainerApiOnNode = 70,
-            LAST_QUERY_PLUS_ONE = 71
+            GetDeployedCodePackageListByApplication = 70,
+            GetReplicaListByServiceNames = 71,
+            InvokeContainerApiOnNode = 72,
+            GetApplicationResourceList = 73,
+            GetServiceResourceList = 74,
+            GetContainerCodePackageLogs = 75,
+            GetReplicaResourceList = 76,
+            GetApplicationUnhealthyEvaluation = 77,
+            GetVolumeResourceList = 78,
+            LAST_QUERY_PLUS_ONE = 79
         };
 
         std::wstring ToString(Enum const & val);

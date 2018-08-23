@@ -149,6 +149,24 @@ bool TestLogTruncationManager::IsGoodLogHead(__in IndexingLogRecord & indexingRe
     return GetRandomBoolValue(isGoodLogHead_);
 }
 
+void TestLogTruncationManager::OnCheckpointCompleted(
+    __in NTSTATUS status,
+    __in Data::LogRecordLib::CheckpointState::Enum checkpointState,
+    __in bool isRecoveredCheckpoint)
+{
+    UNREFERENCED_PARAMETER(status);
+    UNREFERENCED_PARAMETER(checkpointState);
+    UNREFERENCED_PARAMETER(isRecoveredCheckpoint);
+}
+
+void TestLogTruncationManager::OnTruncationCompleted()
+{
+}
+
+void TestLogTruncationManager::InitiatePeriodicCheckpoint()
+{
+}
+
 void TestLogTruncationManager::SetIsGoodLogHead(OperationProbability value)
 {
     isGoodLogHead_ = value;

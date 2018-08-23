@@ -56,7 +56,8 @@ namespace Reliability
             std::wstring const & applicationName = L"",
             std::vector<ServiceModel::ServicePlacementPolicyDescription> const& placementPolicies = std::vector<ServiceModel::ServicePlacementPolicyDescription>(),
             ServiceModel::ServicePackageActivationMode::Enum servicePackageActivationMode = ServiceModel::ServicePackageActivationMode::SharedProcess,
-            std::wstring const& serviceDnsName = L""
+            std::wstring const& serviceDnsName = L"",
+            std::vector<Reliability::ServiceScalingPolicyDescription> const & scalingPolicies = std::vector<Reliability::ServiceScalingPolicyDescription>()
            );
         
         ServiceDescription & operator = (ServiceDescription const& other);
@@ -172,6 +173,10 @@ namespace Reliability
         ServiceModel::ServicePackageActivationMode::Enum get_PackageActivationMode() const { return servicePackageActivationMode_; }
         void put_PackageActivationMode(ServiceModel::ServicePackageActivationMode::Enum value) { servicePackageActivationMode_ = value; }
 
+        __declspec (property(get = get_ScalingPolicies, put = put_ScalingPolicies)) std::vector<Reliability::ServiceScalingPolicyDescription> const & ScalingPolicies;
+         std::vector<Reliability::ServiceScalingPolicyDescription> const& get_ScalingPolicies() const { return scalingPolicies_; }
+        void put_ScalingPolicies(std::vector<Reliability::ServiceScalingPolicyDescription> const & value) { scalingPolicies_ = value; }
+
         ServiceModel::ServicePackageActivationContext CreateActivationContext(Common::Guid const & partitionId) const
         {
             switch (servicePackageActivationMode_)
@@ -190,13 +195,13 @@ namespace Reliability
 
         void AddDefaultMetrics();
 
-        FABRIC_FIELDS_24(
+	FABRIC_FIELDS_25(
             name_, instance_, type_, applicationName_, packageVersionInstance_,
             partitionCount_, targetReplicaSetSize_,
             minReplicaSetSize_, isStateful_, hasPersistedState_, initializationData_, isServiceGroup_,
             serviceCorrelations_, placementConstraints_, scaleoutCount_, metrics_, defaultMoveCost_,
             replicaRestartWaitDuration_, quorumLossWaitDuration_, updateVersion_, placementPolicies_,
-            standByReplicaKeepDuration_, servicePackageActivationMode_, serviceDnsName_);
+            standByReplicaKeepDuration_, servicePackageActivationMode_, serviceDnsName_, scalingPolicies_);
 
         BEGIN_DYNAMIC_SIZE_ESTIMATION()
             DYNAMIC_SIZE_ESTIMATION_MEMBER(name_)
@@ -212,6 +217,7 @@ namespace Reliability
             DYNAMIC_SIZE_ESTIMATION_MEMBER(metrics_)
             DYNAMIC_SIZE_ESTIMATION_MEMBER(placementPolicies_)
             DYNAMIC_SIZE_ESTIMATION_MEMBER(serviceDnsName_)
+            DYNAMIC_SIZE_ESTIMATION_MEMBER(scalingPolicies_)
         END_DYNAMIC_SIZE_ESTIMATION()
 
     private:
@@ -243,5 +249,6 @@ namespace Reliability
         std::vector<ServiceModel::ServicePlacementPolicyDescription> placementPolicies_;
         ServiceModel::ServicePackageActivationMode::Enum servicePackageActivationMode_;
         std::wstring serviceDnsName_;
+        std::vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies_;
     };
 }

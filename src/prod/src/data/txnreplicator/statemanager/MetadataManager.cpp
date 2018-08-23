@@ -350,7 +350,7 @@ bool MetadataManager::TryGetDeletedMetadata(
     return deletedStateProvidersSPtr_->TryGetValue(stateProviderId, metadata);
 }
 
-// TODO: We could add support for differentiating between TransientCreate and TransientDelete.
+// 11908632: We could add support for differentiating between TransientCreate and TransientDelete.
 NTSTATUS MetadataManager::GetInMemoryMetadataArray(
     __in StateProviderFilterMode::FilterMode filterMode,
     __out KSharedArray<Metadata::CSPtr>::SPtr & outputArray) const noexcept
@@ -1072,7 +1072,7 @@ NTSTATUS MetadataManager::Unlock(__in StateManagerTransactionContext const & tra
         }
         else
         {
-            // TODO: What code path can cause this?
+            // #11908702: What code path can cause this?
             status = RemoveLock(*lockContextSPtr, transactionContext.TransactionId);
         }
     }

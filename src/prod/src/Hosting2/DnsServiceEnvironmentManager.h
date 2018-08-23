@@ -21,7 +21,6 @@ namespace Hosting2
         virtual ~DnsServiceEnvironmentManager();
 
         Common::AsyncOperationSPtr BeginSetupDnsEnvAndStartMonitor(
-            std::wstring const & sid,
             TimeSpan timeout,
             AsyncCallback const & callback,
             AsyncOperationSPtr const & parent);
@@ -45,7 +44,6 @@ namespace Hosting2
 
     private:
         HostingSubsystem & hosting_;
-        std::wstring sidString_;
         Common::TimerSPtr timer_;
         RwLock lock_;
 #if !defined(PLATFORM_UNIX)

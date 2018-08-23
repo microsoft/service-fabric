@@ -82,7 +82,6 @@ DistributionMap RandomDistribution::GenerateGaussianDistribution(
         }
         result[number]++;
     }
-    wcout << endl;
     return result;
 }
 

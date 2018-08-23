@@ -7,6 +7,8 @@
 
 typedef void(*removePartitionContextCallback)(long long key);
 typedef void(*addPartitionContextCallback)(long long key, TxnReplicatorHandle txReplicator, IFabricStatefulServicePartition* partition, GUID partitionId, long long replicaId);
+// Signature for callback when change role happens. Partition LowKey and the new role are passed to the callback.
+typedef void(*changeRoleCallback)(long long key, int32_t newRole);
 
 namespace TXRStatefulServiceBase
 {
@@ -39,7 +41,7 @@ namespace TXRStatefulServiceBase
 
         HRESULT STDMETHODCALLTYPE EndChangeRole( 
             /* [in] */ IFabricAsyncOperationContext *context,
-            /* [retval][out] */ IFabricStringResult **serviceEndpoint);
+            /* [retval][out] */ IFabricStringResult **serviceEndpoints);
 
         HRESULT STDMETHODCALLTYPE BeginClose( 
             /* [in] */ IFabricAsyncOperationCallback *callback,
@@ -50,15 +52,18 @@ namespace TXRStatefulServiceBase
 
         void STDMETHODCALLTYPE Abort();
 
+        HRESULT SetupEndpointAddresses();
+
 		Common::ComPointer<IFabricStateProvider2Factory> GetStateProviderFactory();
 
         Common::ComPointer<IFabricDataLossHandler> GetDataLossHandler();
 
         StatefulServiceBase(
-            __in ULONG httpListeningPort,
             __in FABRIC_PARTITION_ID partitionId,
             __in FABRIC_REPLICA_ID replicaId,
-            __in Common::ComponentRootSPtr const & root);
+            __in Common::ComponentRootSPtr const & root,
+            __in BOOL registerManifestEndpoints,
+            __in BOOL reportEndpointsOnlyOnPrimaryReplica);
         
         // Uses default http endpoint resource. Name is a const defined in Helpers::ServiceHttpEndpointResourceName in Helpers.cpp
         StatefulServiceBase(
@@ -69,10 +74,13 @@ namespace TXRStatefulServiceBase
         virtual ~StatefulServiceBase();
 
     public:
-        static void SetCallback(addPartitionContextCallback addCallback, removePartitionContextCallback removeCallback) 
+        static void SetCallback(addPartitionContextCallback addCallback, removePartitionContextCallback removeCallback, changeRoleCallback changeCallback) 
         {
             s_addPartitionContextCallbackFnptr = addCallback;
             s_removePartitionContextCallbackFnptr = removeCallback;
+
+            // This can be nullptr.
+            s_changeRoleCallbackFnPtr = changeCallback;
         }
 
 	protected:
@@ -100,17 +108,26 @@ namespace TXRStatefulServiceBase
 			return role_;
 		}
 
+        __declspec(property(get = get_RegisterManifestEndpoints)) BOOL RegisterManifestEndpoints;
+        BOOL get_RegisterManifestEndpoints() const 
+        {
+            return registerManifestEndpoints_;
+        }
+
+        __declspec(property(get = get_RegisterEndpointsOnlyOnPrimaryReplica)) BOOL RegisterEndpointsOnlyOnPrimaryReplica;
+        BOOL get_RegisterEndpointsOnlyOnPrimaryReplica() const 
+        {
+            return reportEndpointsOnlyOnPrimaryReplica_;
+        }
 
     private:
 
-		LONGLONG StatefulServiceBase::GetPartitionLowKey();
+		HRESULT GetPartitionLowKey(LONGLONG &lowKey);
 
         LONGLONG const instanceId_;
         Common::ComponentRootSPtr const root_;
         FABRIC_REPLICA_ID const replicaId_;
         FABRIC_PARTITION_ID const partitionId_;
-        std::wstring const httpListenAddress_;
-        std::wstring const changeRoleEndpoint_;
         
         FABRIC_REPLICA_ROLE role_;
 
@@ -118,9 +135,13 @@ namespace TXRStatefulServiceBase
         Common::ComPointer<IFabricPrimaryReplicator> primaryReplicator_;
 		TxnReplicatorHandle txReplicator_;
 
-    private:
+        BOOL registerManifestEndpoints_;
+        BOOL reportEndpointsOnlyOnPrimaryReplica_;
+        std::wstring endpoints_;
+
         static addPartitionContextCallback s_addPartitionContextCallbackFnptr;
         static removePartitionContextCallback s_removePartitionContextCallbackFnptr;
+        static changeRoleCallback s_changeRoleCallbackFnPtr;
     };
 
     typedef Common::ComPointer<StatefulServiceBase> StatefulServiceBaseCPtr;

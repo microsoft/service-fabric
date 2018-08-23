@@ -33,13 +33,13 @@ createapp fabric:/testcase1 TestAppTC1 vTC1
 createservice fabric:/testcase1/service1 ServiceTypeA y 1 1 persist appname=fabric:/testcase1 serviceDnsName=service1.foo
 
 nameexists fabric:/testcase1 true
-#getproperty fabric:/System/DnsService service1.foo fabric:/testcase1/service1
+dnsnameexists service1.foo fabric:/testcase1/service1
 
 deleteservice fabric:/testcase1/service1
 deleteapp fabric:/testcase1
 
 nameexists fabric:/testcase1 false
-getproperty fabric:/System/DnsService service1.foo xxx error=PropertyNotFound
+dnsnameexists service1.foo xxx error=PropertyNotFound
 
 ################################################################
 #

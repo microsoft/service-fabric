@@ -30,6 +30,9 @@ namespace Management
             Common::ErrorCode FromPublicApi(FABRIC_CHAOS_REPORT_FILTER const &);
             void ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_CHAOS_REPORT_FILTER &) const;
 
+            Common::ErrorCode FromPublicApi(FABRIC_CHAOS_EVENTS_SEGMENT_FILTER const &);
+            void ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_CHAOS_EVENTS_SEGMENT_FILTER &) const;
+
             FABRIC_FIELDS_02(
                 startTimeUtc_,
                 endTimeUtc_);

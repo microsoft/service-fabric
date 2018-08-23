@@ -95,9 +95,11 @@ namespace Naming
         case ErrorCodeValue::InsufficientClusterCapacity:
         case ErrorCodeValue::StaleServicePackageInstance:
         case ErrorCodeValue::ConstraintKeyUndefined:
+        case ErrorCodeValue::InvalidServiceScalingPolicy:
         //
         // Generic unexpected errors (avoid getting stuck)
         //
+        case ErrorCodeValue::FMServiceDoesNotExist:
         case ErrorCodeValue::InvalidNameUri:
         case ErrorCodeValue::InvalidArgument:
         case ErrorCodeValue::InvalidOperation:

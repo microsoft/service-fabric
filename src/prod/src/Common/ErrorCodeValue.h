@@ -1,4 +1,4 @@
-// ------------------------------------------------------------
+    // ------------------------------------------------------------
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
@@ -6,7 +6,7 @@
 #pragma once
 
 namespace Common
-{
+{ 
     namespace ErrorCodeValue
     {
         // Without casting FABRIC_E_ error codes to int, Clang will use consider them unsigned,
@@ -260,7 +260,7 @@ namespace Common
             InvalidInstanceId = (int)FABRIC_E_INVALID_INSTANCE_ID,
 
             InvalidDuration = (int)FABRIC_E_INVALID_DURATION,
-            
+
             UploadSessionRangeNotSatisfiable = (int)FABRIC_E_UPLOAD_SESSION_RANGE_NOT_SATISFIABLE,
 
             UploadSessionIdConflict = (int)FABRIC_E_UPLOAD_SESSION_ID_CONFLICT,
@@ -288,7 +288,11 @@ namespace Common
             OnlyValidForStatefulPersistentServices = (int)FABRIC_E_ONLY_VALID_FOR_STATEFUL_PERSISTENT_SERVICES,
 
             ContainerNotFound = (int)FABRIC_E_CONTAINER_NOT_FOUND,
-            
+
+            CentralSecretServiceGenericError = (int)FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC,
+            SecretInvalid = (int)FABRIC_E_SECRET_INVALID,
+            SecretVersionAlreadyExists = (int)FABRIC_E_SECRET_VERSION_ALREADY_EXISTS,
+
             InvalidUploadSessionId = (int)FABRIC_E_INVALID_UPLOAD_SESSION_ID,
 
             BackupNotEnabled = (int)FABRIC_E_BACKUP_NOT_ENABLED,
@@ -298,9 +302,21 @@ namespace Common
             RestoreAlreadyInProgress = (int)FABRIC_E_RESTORE_IN_PROGRESS,
             RestoreSourceTargetPartitionMismatch = (int)FABRIC_E_RESTORE_SOURCE_TARGET_PARTITION_MISMATCH,
             FaultAnalysisServiceNotEnabled = (int)FABRIC_E_FAULT_ANALYSIS_SERVICE_NOT_ENABLED,
+
             BackupCopierUnexpectedError = (int)FABRIC_E_BACKUPCOPIER_UNEXPECTED_ERROR,
             BackupCopierTimeout = (int)FABRIC_E_BACKUPCOPIER_TIMEOUT,
             BackupCopierAccessDenied = (int)FABRIC_E_BACKUPCOPIER_ACCESS_DENIED,
+            SingleInstanceApplicationAlreadyExists = (int)FABRIC_E_SINGLE_INSTANCE_APPLICATION_ALREADY_EXISTS,
+            SingleInstanceApplicationNotFound = (int)FABRIC_E_SINGLE_INSTANCE_APPLICATION_NOT_FOUND,
+            SingleInstanceApplicationUpgradeInProgress = (int)FABRIC_E_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS,
+            VolumeAlreadyExists = (int)FABRIC_E_VOLUME_ALREADY_EXISTS,
+            VolumeNotFound = (int)FABRIC_E_VOLUME_NOT_FOUND,
+            InvalidServiceScalingPolicy = (int)FABRIC_E_INVALID_SERVICE_SCALING_POLICY,
+
+            DatabaseMigrationInProgress = (int)FABRIC_E_DATABASE_MIGRATION_IN_PROGRESS,
+
+            OperationNotSupported = (int)FABRIC_E_OPERATION_NOT_SUPPORTED,
+
             // ----------------------------------------------------------------
             // Internal ErrorCodes
             //
@@ -310,15 +326,15 @@ namespace Common
             // This requires keeping this count in sync with the number of internal error codes.  If you get
             // a CIT error about this, update the following line as directed by the CIT output:
 
-            INTERNAL_ERROR_CODE_COUNT = 179, // <-- Update this number when adding new internal error codes
+            INTERNAL_ERROR_CODE_COUNT = 182, // <-- Update this number when adding new internal error codes
 
             FIRST_INTERNAL_ERROR_CODE_MINUS_ONE = (int)FABRIC_E_LAST_RESERVED_HRESULT - INTERNAL_ERROR_CODE_COUNT,
 
             //
-            // Add new internal error codes for the current release only between the 
+            // Add new internal error codes for the current release only between the
             // [Start ...] and [End ...] tags below.
             //
-            // New internal error codes should always be added above existing internal error codes. 
+            // New internal error codes should always be added above existing internal error codes.
             // For example:
             //
             // * Add new error code here
@@ -337,11 +353,14 @@ namespace Common
             //
             // [Start new internal error codes]
             //
+            UpdateContextFailed,
+            FSSPrimaryInDatalossRecovery,
             BackupCopierAborted,
             BackupCopierDisabled,
             BackupCopierRetryableError,
             ApplicationHostCrash,
             SharingAccessLockViolation,
+            ApplicationDeploymentInProgress,
             //
             // [End new internal error codes]
             //

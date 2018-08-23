@@ -52,8 +52,8 @@ namespace ServiceModel
         }
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
-            SERIALIZABLE_PROPERTY(Constants::Id, applicationId_)
             SERIALIZABLE_PROPERTY_CHAIN()
+            SERIALIZABLE_PROPERTY(Constants::Id, applicationId_)
         END_JSON_SERIALIZABLE_PROPERTIES()
 
     private:

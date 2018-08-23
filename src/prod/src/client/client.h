@@ -19,6 +19,7 @@
 #include "client/ClientConfig.h"
 #include "client/ClientServerTransport/ClientServerRequestMessage.h"
 #include "client/ClientServerTransport/ClientServerReplyMessage.h"
+#include "client/ClientServerTransport/ClientProtocolVersionHeader.h"
 
 // Health Reporting Component
 #include "client/HealthClient.h"

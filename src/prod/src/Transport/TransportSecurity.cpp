@@ -152,13 +152,10 @@ _Use_decl_annotations_ ErrorCode TransportSecurity::AcquireCredentials_CallerHol
         ErrorCode error;
         if (securitySettings_.IsSelfGeneratedCert())
         {
-            CertContextUPtr cert(securitySettings_.CertContext());
             error = SecurityCredentials::AcquireSsl(
-                cert,
+                *securitySettings_.CertContext(),
                 &credentials_,
                 isClientOnly_ ? nullptr : &svrCredentials_);
-
-            cert.release();
         }
         else
         {
@@ -486,13 +483,10 @@ void TransportSecurity::RefreshX509CredentialsIfNeeded()
     vector<SecurityCredentialsSPtr> credentials, svrCredentials;
     if (securitySettings_.IsSelfGeneratedCert())
     {
-        CertContextUPtr cert(securitySettings_.CertContext());
         error = SecurityCredentials::AcquireSsl(
-            cert,
+            *securitySettings_.CertContext(),
             &credentials,
             isClientOnly_ ? nullptr : &svrCredentials);
-
-        cert.release();
     }
     else
     {

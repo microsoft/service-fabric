@@ -33,16 +33,37 @@ namespace Data
             void set_Position(ULONG value)
             {
                 ULONG size = memChannel_.Size();
-                if(size < value)
+
+                if (size < value)
                 {
+                    // Calculate the difference between the current memChannel size and our target position
                     ULONG diff = value - size;
                     char dummy = '\0';
                     NTSTATUS status = STATUS_SUCCESS;
 
+                    // #11444928: Throwing coding error - BinaryWriter : set_Position memchannel cursor 95 is not equal to value 96
+                    // Ensure the cursor position is equal to the last valid position in the memChannel
+                    // This is necessary to ensure the below padding results in memChannel cursor == value 
+                    // Otherwise, final cursor position might not be equal to target position despite padding
+
+                    status = memChannel_.SetCursor(size, KMemChannel::eFromBegin);
+
+                    ASSERT_IFNOT(
+                        NT_SUCCESS(status),
+                        "BinaryWriter:set_Position: KMemChannel failed to set cursor. Actual: {0}. Target:{1}",
+                        memChannel_.GetCursor(),
+                        value);
+
                     while (diff > 0)
                     {
                         status = memChannel_.Write(sizeof(dummy), &dummy);
-                        THROW_ON_FAILURE(status);
+
+                        ASSERT_IFNOT(
+                            NT_SUCCESS(status),
+                            "BinaryWriter:set_Position: KMemChannel failed to write. Actual: {0}. Target:{1}. Current diff:{2}",
+                            memChannel_.GetCursor(),
+                            value,
+                            diff);
 
                         diff--;
                     }
@@ -50,10 +71,28 @@ namespace Data
                 else
                 {
                     NTSTATUS status = memChannel_.SetCursor(value, KMemChannel::eFromBegin);
-                    THROW_ON_FAILURE(status);
+                    ASSERT_IFNOT(
+                        NT_SUCCESS(status),
+                        "BinaryWriter:set_Position: KMemChannel failed to set cursor. Actual: {0}. Target:{1}",
+                        memChannel_.GetCursor(),
+                        value);
                 }
 
-                ASSERT_IFNOT(memChannel_.GetCursor() == value,"BinaryWriter:set_Position memchannel cursor {0} is not equal to value {1}", memChannel_.GetCursor(), value);
+                ASSERT_IFNOT(
+                    memChannel_.GetCursor() == value,
+                    "BinaryWriter:set_Position: KMemChannel cursor {0} is not equal to value {1}",
+                    memChannel_.GetCursor(),
+                    value);
+            }
+
+            //
+            // Gets the size of the underlying KMemChannel. 
+            // TEST ONLY
+            //
+            __declspec(property(get = get_TestSize)) ULONG Test_Size;
+            ULONG get_TestSize() const
+            {
+                return memChannel_.Size();
             }
 
             //

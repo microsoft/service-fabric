@@ -14,6 +14,10 @@ GlobalWString TestNameOption1 = make_global<wstring>(L"/testName:");
 GlobalWString TestNameOption2 = make_global<wstring>(L"-testName:");
 GlobalWString SetupEntryPointOption1 = make_global<wstring>(L"/setupEntryPoint");
 GlobalWString SetupEntryPointOption2 = make_global<wstring>(L"-setupEntryPoint");
+GlobalWString GuestExeOption1 = make_global<wstring>(L"/guestExe");
+GlobalWString GuestExeOption2 = make_global<wstring>(L"-guestExe");
+GlobalWString ActivatorOption1 = make_global<wstring>(L"/activator");
+GlobalWString ActivatorOption2 = make_global<wstring>(L"-activator");
 
 std::shared_ptr<WorkingFolderTestHost> host_;
 RealConsole console_;
@@ -23,6 +27,10 @@ void PrintUsage()
     console_.WriteLine();
     console_.WriteLine("Usage: WorkingFolderTestHost.exe /testName:<TestName> [-setupEntryPoint]");
     console_.WriteLine("Registers TestName as the service type if not SetupEntrypoint.");
+    console_.WriteLine("Usage: WorkingFolderTestHost.exe -guestExe");
+    console_.WriteLine("Behaves as a guest executable.");
+    console_.WriteLine("Usage: WorkingFolderTestHost.exe /testName:<TestName> -activator");
+    console_.WriteLine("Registers TestName as the service type and behaves as activator code package.");
     console_.WriteLine();
 }
 
@@ -59,28 +67,33 @@ bool CloseServiceHost()
     return true;
 }
 
-#if !defined(PLATFORM_UNIX)
-bool ParseArguments(__in int argc, __in_ecount(argc) wchar_t* argv[], __out wstring & testName, __out bool & isSetupEntryPoint)
+bool ParseArguments(
+    _In_ vector<wstring> const & arguments,
+    _Out_ wstring & testName, 
+    _Out_ bool & isSetupEntryPoint,
+    _Out_ bool & isGuestExe,
+    _Out_ bool & isActivator)
 {
-    if (argc < 2)
+    if (arguments.empty())
     {
         PrintUsage();
         return false;
-    }    
+    }
 
+    isActivator = false;
+    isGuestExe = false;
     isSetupEntryPoint = false;
     testName = L"";
-    for(int i = 1; i < argc; i++)
+
+    for(auto const & argument : arguments)
     {
-        wstring argument = wstring(argv[i]);
-        if ((StringUtility::CompareCaseInsensitive(argument, *HelpOption1) == 0) ||
-            (StringUtility::CompareCaseInsensitive(argument, *HelpOption2) == 0))
+        if (StringUtility::AreEqualCaseInsensitive(argument, *HelpOption1) ||
+            StringUtility::AreEqualCaseInsensitive(argument, *HelpOption2))
         {
             PrintUsage();
             return false;
         }
 
-        argument = wstring(argv[i]);
         if (StringUtility::StartsWithCaseInsensitive(argument, *TestNameOption1) ||
             StringUtility::StartsWithCaseInsensitive(argument, *TestNameOption2))
         {
@@ -94,10 +107,20 @@ bool ParseArguments(__in int argc, __in_ecount(argc) wchar_t* argv[], __out wstr
                 testName = value;
             }
         } 
-        else if (StringUtility::StartsWithCaseInsensitive(argument, *SetupEntryPointOption1) ||
-            StringUtility::StartsWithCaseInsensitive(argument, *SetupEntryPointOption2))
+        else if (StringUtility::AreEqualCaseInsensitive(argument, *SetupEntryPointOption1) ||
+            StringUtility::AreEqualCaseInsensitive(argument, *SetupEntryPointOption2))
         {
             isSetupEntryPoint = true;
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(argument, *GuestExeOption1) ||
+            StringUtility::AreEqualCaseInsensitive(argument, *GuestExeOption2))
+        {
+            isGuestExe = true;
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(argument, *ActivatorOption1) ||
+            StringUtility::AreEqualCaseInsensitive(argument, *ActivatorOption2))
+        {
+            isActivator = true;
         }
         else
         {
@@ -108,112 +131,67 @@ bool ParseArguments(__in int argc, __in_ecount(argc) wchar_t* argv[], __out wstr
     return true;
 }
 
+#if defined(PLATFORM_UNIX)
+int main(int argc, char* argv[])
+#else
 int __cdecl wmain(int argc, __in_ecount(argc) wchar_t* argv[])
+#endif
 {
     HeapSetInformation(GetProcessHeap(), HeapEnableTerminationOnCorruption, NULL, 0);
 
-    wstring testName;
-    bool isSetupEntryPoint;
-    auto success = ParseArguments(argc, argv, testName, isSetupEntryPoint);
-    if (!success) return -1;
-
-    console_.WriteLine("Arguments: TestName=[{0}], IsSetupEntryPoint=[{1}]", testName, isSetupEntryPoint);
-
-    host_ = make_shared<WorkingFolderTestHost>(testName, isSetupEntryPoint);
-    success = OpenServiceHost();
-    if (!success) return -1;
-        
-    if (!isSetupEntryPoint)
+    vector<wstring> arguments;
+    for (int i = 1; i < argc; i++)
     {
-        wchar_t singleChar;
-        wcin.getline(&singleChar, 1);
-    }
-
-    success = CloseServiceHost();
-    if (!success) return -1;
-
-    return 0;
-}
-
-#else
-
-bool ParseArguments(__in int argc, char* argv[], __out wstring & testName, __out bool & isSetupEntryPoint)
-{
-    if (argc < 2)
-    {
-        PrintUsage();
-        return false;
-    }    
-
-    isSetupEntryPoint = false;
-    testName = L"";
-    for(int i = 1; i < argc; i++)
-    {
-        string arg = argv[i];
+#if defined(PLATFORM_UNIX)
+        string arg(argv[i]);
         wstring argument;
         StringUtility::Utf8ToUtf16(arg, argument);
-        if ((StringUtility::CompareCaseInsensitive(argument, *HelpOption1) == 0) ||
-            (StringUtility::CompareCaseInsensitive(argument, *HelpOption2) == 0))
-        {
-            PrintUsage();
-            return false;
-        }
-        
-        //argument = wstring(argv[i]);
-        arg = argv[i];
-        StringUtility::Utf8ToUtf16(arg, argument);
-        if (StringUtility::StartsWithCaseInsensitive(argument, *TestNameOption1) ||
-            StringUtility::StartsWithCaseInsensitive(argument, *TestNameOption2))
-        {
-            wstring value = argument.substr(TestNameOption1->size());
-            if (value.empty()) 
-            { 
-                return false; 
-            }
-            else
-            {
-                testName = value;
-            }
-        } 
-        else if (StringUtility::StartsWithCaseInsensitive(argument, *SetupEntryPointOption1) ||
-            StringUtility::StartsWithCaseInsensitive(argument, *SetupEntryPointOption2))
-        {
-            isSetupEntryPoint = true;
-        }
-        else
-        {
-            return false;
-        }
+
+        arguments.push_back(argument);
+#else
+        arguments.push_back(wstring(argv[i]));
+#endif
     }
-
-    return true;
-}
-
-int main(int argc, char* argv[])
-{
-    HeapSetInformation(GetProcessHeap(), HeapEnableTerminationOnCorruption, NULL, 0);
 
     wstring testName;
     bool isSetupEntryPoint;
-    auto success = ParseArguments(argc, argv, testName, isSetupEntryPoint);
+    bool isGuestExe;
+    bool isActivator;
+    auto success = ParseArguments(arguments, testName, isSetupEntryPoint, isGuestExe, isActivator);
     if (!success) return -1;
 
-    console_.WriteLine("Arguments: TestName=[{0}], IsSetupEntryPoint=[{1}]", testName, isSetupEntryPoint);
+    console_.WriteLine(
+        "Arguments: TestName=[{0}], IsSetupEntryPoint=[{1}], IsGuestExe=[{2}], IsActivator=[{3}].",
+        testName, 
+        isSetupEntryPoint,
+        isGuestExe,
+        isActivator);
 
-    host_ = make_shared<WorkingFolderTestHost>(testName, isSetupEntryPoint);
-    success = OpenServiceHost();
-    if (!success) return -1;
-        
-    if (!isSetupEntryPoint)
+    if (isGuestExe)
     {
         wchar_t singleChar;
         wcin.getline(&singleChar, 1);
     }
+    else
+    {
+        auto fileName = Path::GetFileNameWithoutExtension(Environment::GetExecutableFileName());
+        auto pid = ::GetCurrentProcessId();
+        auto traceFileName = wformatString("{0}_{1}.trace", fileName, pid);
+        TraceTextFileSink::SetPath(traceFileName);
 
-    success = CloseServiceHost();
-    if (!success) return -1;
+        host_ = make_shared<WorkingFolderTestHost>(testName, isSetupEntryPoint, isActivator);
+        success = OpenServiceHost();
+        if (!success) return -1;
+
+        if (!isSetupEntryPoint)
+        {
+            wchar_t singleChar;
+            wcin.getline(&singleChar, 1);
+        }
+
+        success = CloseServiceHost();
+        if (!success) return -1;
+    }
 
     return 0;
 }
-
-#endif

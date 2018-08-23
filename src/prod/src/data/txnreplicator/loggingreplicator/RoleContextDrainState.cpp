@@ -10,14 +10,14 @@ using namespace Data::LoggingReplicator;
 using namespace TxnReplicator;
 using namespace Data::Utilities;
 
-RoleContextDrainState::RoleContextDrainState(__in KWfStatefulServicePartition & partition)
+RoleContextDrainState::RoleContextDrainState(__in IStatefulPartition & partition)
     : KShared()
     , KObject()
     , lock_()
     , partition_(&partition)
     , role_(FABRIC_REPLICA_ROLE_UNKNOWN)
     , drainingStream_(DrainingStream::Enum::Invalid)
-    , applyRedoContext_(TxnReplicator::ApplyContext::Enum::Invalid)
+    , applyRedoContext_(ApplyContext::Enum::Invalid)
     , isClosing_(false)
 {
     Reuse();
@@ -28,7 +28,7 @@ RoleContextDrainState::~RoleContextDrainState()
 }
 
 RoleContextDrainState::SPtr RoleContextDrainState::Create(
-    __in KWfStatefulServicePartition & partition,
+    __in IStatefulPartition & partition,
     __in KAllocator & allocator)
 {
     RoleContextDrainState * pointer = _new(LOGGINGREPLICATOR_TAG, allocator) RoleContextDrainState(partition);
@@ -44,7 +44,7 @@ void RoleContextDrainState::Reuse()
 
         role_ = FABRIC_REPLICA_ROLE_UNKNOWN;
         drainingStream_ = DrainingStream::Enum::Invalid;
-        applyRedoContext_ = TxnReplicator::ApplyContext::Enum::Invalid;
+        applyRedoContext_ = ApplyContext::Enum::Invalid;
         isClosing_.store(false);
 
         lock_.ReleaseExclusive();
@@ -82,7 +82,7 @@ void RoleContextDrainState::OnRecovery()
         ASSERT_IFNOT(role_ == FABRIC_REPLICA_ROLE_UNKNOWN, "Invalid replica role on recovery: {0}", role_);
 
         drainingStream_ = DrainingStream::Enum::Recovery;
-        applyRedoContext_ = TxnReplicator::ApplyContext::Enum::RecoveryRedo;
+        applyRedoContext_ = ApplyContext::Enum::RecoveryRedo;
 
         lock_.ReleaseExclusive();
     }
@@ -95,10 +95,10 @@ void RoleContextDrainState::OnRecoveryCompleted()
 
         ASSERT_IFNOT(drainingStream_ == DrainingStream::Enum::Recovery, "Unexpected valid drain stream state on recovery complete: {0}", drainingStream_);
         ASSERT_IFNOT(role_ == FABRIC_REPLICA_ROLE_UNKNOWN, "Invalid replica role on recovery complete: {0}", role_);
-        ASSERT_IFNOT(applyRedoContext_ == TxnReplicator::ApplyContext::Enum::RecoveryRedo, "Invalid apply redo context on recovery complete");
+        ASSERT_IFNOT(applyRedoContext_ == ApplyContext::Enum::RecoveryRedo, "Invalid apply redo context on recovery complete");
 
         drainingStream_ = DrainingStream::Enum::Invalid;
-        applyRedoContext_ = TxnReplicator::ApplyContext::Enum::Invalid;
+        applyRedoContext_ = ApplyContext::Enum::Invalid;
 
         lock_.ReleaseExclusive();
     }
@@ -113,7 +113,7 @@ void RoleContextDrainState::OnDrainState()
         ASSERT_IFNOT(role_ == FABRIC_REPLICA_ROLE_IDLE_SECONDARY, "Invalid replica role during drain: {0}", role_);
 
         drainingStream_ = DrainingStream::Enum::State;
-        applyRedoContext_ = TxnReplicator::ApplyContext::Enum::Invalid;
+        applyRedoContext_ = ApplyContext::Enum::Invalid;
 
         lock_.ReleaseExclusive();
     }
@@ -130,7 +130,7 @@ void RoleContextDrainState::OnDrainCopy()
         ASSERT_IFNOT(role_ == FABRIC_REPLICA_ROLE_IDLE_SECONDARY, "Invalid replica role during drain copy: {0}", role_);
 
         drainingStream_ = DrainingStream::Enum::Copy;
-        applyRedoContext_ = TxnReplicator::ApplyContext::Enum::SecondaryRedo;
+        applyRedoContext_ = ApplyContext::Enum::SecondaryRedo;
 
         lock_.ReleaseExclusive();
     }
@@ -151,7 +151,7 @@ void RoleContextDrainState::OnDrainReplication()
             "Invalid replica role on drain replication: {0}", role_);
 
         drainingStream_ = DrainingStream::Enum::Replication;
-        applyRedoContext_ = TxnReplicator::ApplyContext::Enum::SecondaryRedo;
+        applyRedoContext_ = ApplyContext::Enum::SecondaryRedo;
 
         lock_.ReleaseExclusive();
     }
@@ -168,7 +168,7 @@ void RoleContextDrainState::BecomePrimaryCallerholdsLock()
         "Unexpected valid drain stream state on becoming Primary: {0}", drainingStream_);
 
     drainingStream_ = DrainingStream::Enum::Primary;
-    applyRedoContext_ = TxnReplicator::ApplyContext::Enum::PrimaryRedo;
+    applyRedoContext_ = ApplyContext::Enum::PrimaryRedo;
     role_ = FABRIC_REPLICA_ROLE_PRIMARY;
 }
 

@@ -87,6 +87,10 @@ namespace Data
 
             TransactionMap(__in Data::Utilities::PartitionedReplicaId const & traceId);
             
+            void AddUnstableTransactionCallerHoldsLock(
+                __in LogRecordLib::BeginTransactionOperationLogRecord & beginTransactionRecord,
+                __in LogRecordLib::EndTransactionLogRecord & endTransactionRecord);
+            
             struct LsnKeyType
             {
                 LsnKeyType(LONG64 val)
@@ -96,31 +100,22 @@ namespace Data
 
                 LONG64 value;
             };
-
-            typedef KAvlTree<LogRecordLib::BeginTransactionOperationLogRecord::SPtr, LsnKeyType> LsnPendingTransactionsMap;
-
-            //
-            // < 0 - The left is less than the right.
-            //   0 - The left and the right are equal.
-            // > 0 - The left is greater than the right.
-            //
-            static LONG LsnCompareFunction(
-                __in LsnKeyType const & left,
-                __in LsnKeyType const & right);
-
-            void AddUnstableTransactionCallerHoldsLock(
-                __in LogRecordLib::BeginTransactionOperationLogRecord & beginTransactionRecord,
-                __in LogRecordLib::EndTransactionLogRecord & endTransactionRecord);
+            
+            struct LsnKeyTypeCmp
+            {
+                bool operator()(LsnKeyType const & lhs, LsnKeyType const & rhs) const
+                {
+                    return lhs.value < rhs.value;
+                }
+            };
 
             KSpinLock lock_;
 
             KArray<LogRecordLib::BeginTransactionOperationLogRecord::SPtr> completedTransactions_;
 
             std::unordered_map<LONG64, LogRecordLib::TransactionLogRecord::SPtr> latestRecords_;
-            
-            // Define the comparision function before the avl tree as the former is fed into the latter as an input. So the former must be initialized first
-            LsnPendingTransactionsMap::KeyComparisonFunc lsnCompareFunction_;
-            LsnPendingTransactionsMap lsnPendingTransactions_;
+
+            std::map<LsnKeyType, LogRecordLib::BeginTransactionOperationLogRecord::SPtr, LsnKeyTypeCmp> lsnPendingTransactions_;
             
             // needed to quickly find earliest pending tx. Order by lsn
             std::unordered_map<LONG64, LogRecordLib::BeginTransactionOperationLogRecord::SPtr> transactionIdPendingTransactionsPair_;

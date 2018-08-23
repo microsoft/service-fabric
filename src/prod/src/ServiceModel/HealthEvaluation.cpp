@@ -36,6 +36,19 @@ void HealthEvaluation::GenerateDescription(__in std::vector<HealthEvaluation> & 
     }
 }
 
+wstring HealthEvaluation::GetUnhealthyEvaluationDescription(vector<HealthEvaluation> const & evaluations)
+{
+    wstring ret;
+    StringWriter writer(ret);
+    for (auto const & eval : evaluations)
+    {
+        writer.Write(eval.Evaluation->GetUnhealthyEvaluationDescription());
+        writer.WriteLine();
+    }
+
+    return ret;
+}
+
 Common::ErrorCode HealthEvaluation::GenerateDescriptionAndTrimIfNeeded(
     __in std::vector<HealthEvaluation> & evaluations,
     size_t maxAllowedSize,

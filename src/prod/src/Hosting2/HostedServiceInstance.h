@@ -63,8 +63,13 @@ namespace Hosting2
 
         void DisableServiceInstance();
 
+        void TerminateServiceInstance();
+
         __declspec(property(get=get_HostedServiceActivationManager)) HostedServiceActivationManager & ActivationManager;
         HostedServiceActivationManager & get_HostedServiceActivationManager() { return this->hostedServiceHolder_.RootedObject.ActivationManager; }
+
+        __declspec(property(get = get_IProcessActivationContextSPtr)) IProcessActivationContextSPtr & ActivationContext;
+        IProcessActivationContextSPtr & get_IProcessActivationContextSPtr() { return activationContext_; }
 
         //_declspec(property(get=get_ProcessActivator)) ProcessActivatorUPtr const & ProcessActivator;
         //inline ProcessActivatorUPtr const & get_ProcessActivator() const { return this->hostedServiceHolder_.RootedObject.ActivationManager.ProcessActivator; }

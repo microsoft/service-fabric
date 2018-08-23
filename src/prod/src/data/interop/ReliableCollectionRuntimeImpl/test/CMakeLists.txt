@@ -14,6 +14,7 @@ add_executable(${exe_ReliableCollectionRuntimeImpl_test}
   ../ReliableCollectionRuntimeImpl.test.cpp
   ../ReliableCollectionRuntimeImpl.Rebuild.test.cpp
   ../StateProviderInfo.test.cpp
+  ../ReliableCollectionRuntimeImpl.Backup.test.cpp
 )
 
 add_precompiled_header(${exe_ReliableCollectionRuntimeImpl_test} ../stdafx.h)
@@ -26,14 +27,15 @@ target_link_libraries(${exe_ReliableCollectionRuntimeImpl_test}
   ${lib_data_integration_test}
   ${lib_ReliableCollectionRuntimeImpl}
   ${lib_TStore}
+  ${lib_ReliableConcurrentQueue}
   ${lib_TransactionalReplicator}
   ${lib_data_testcommon}
   ${lib_Replication}
   ${lib_Hosting2}
-  ${lib_Common}
   ${lib_ServiceModel}
   ${lib_Serialization}
   ${lib_Transport}
+  ${lib_Common}
   ${lib_ApiWrappers}
   ${lib_txnreplicator_testcommon}
   ${BoostTest2}
@@ -53,8 +55,6 @@ target_link_libraries(${exe_ReliableCollectionRuntimeImpl_test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

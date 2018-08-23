@@ -14,37 +14,37 @@ using namespace Data::Utilities;
 
 namespace LoggingReplicatorTests
 {
-	TestTransactionReplicator::SPtr TestTransactionReplicator::Create(
-		__in KAllocator & allocator)
-	{
-		SPtr result = _new(TESTTRANSACTIONREPLICATOR_TAG, allocator) TestTransactionReplicator();
-		CODING_ERROR_ASSERT(result != nullptr);
-		CODING_ERROR_ASSERT(NT_SUCCESS(result->Status()));
+    TestTransactionReplicator::SPtr TestTransactionReplicator::Create(
+        __in KAllocator & allocator)
+    {
+        SPtr result = _new(TESTTRANSACTIONREPLICATOR_TAG, allocator) TestTransactionReplicator();
+        CODING_ERROR_ASSERT(result != nullptr);
+        CODING_ERROR_ASSERT(NT_SUCCESS(result->Status()));
 
-		return result;
-	}
+        return result;
+    }
 
-	NTSTATUS TestTransactionReplicator::RegisterTransactionChangeHandler(
-		__in ITransactionChangeHandler & transactionChangeHandler) noexcept
-	{
-		UNREFERENCED_PARAMETER(transactionChangeHandler);
+    NTSTATUS TestTransactionReplicator::RegisterTransactionChangeHandler(
+        __in ITransactionChangeHandler & transactionChangeHandler) noexcept
+    {
+        UNREFERENCED_PARAMETER(transactionChangeHandler);
 
-		CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
-	}
+        CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
+    }
 
-	NTSTATUS TestTransactionReplicator::UnRegisterTransactionChangeHandler() noexcept
-	{
-		CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
-	}
+    NTSTATUS TestTransactionReplicator::UnRegisterTransactionChangeHandler() noexcept
+    {
+        CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
+    }
 
 
-	TestTransactionReplicator::TestTransactionReplicator()
-		: KObject()
-		, KShared()
-	{
-	}
+    TestTransactionReplicator::TestTransactionReplicator()
+        : KObject()
+        , KShared()
+    {
+    }
 
-	TestTransactionReplicator::~TestTransactionReplicator()
-	{
-	}
+    TestTransactionReplicator::~TestTransactionReplicator()
+    {
+    }
 }

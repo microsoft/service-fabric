@@ -770,7 +770,7 @@ Return Value:
         }
     }
 
-    Common::Assert::SetCrashLeasingApplicationCallback(CrashLeasingApplication);
+    Common::FabricGlobals::Get().GetCrashLeasingApplicationCallback().Set(CrashLeasingApplication);
 
     return TRUE;
 }
@@ -1502,6 +1502,7 @@ Return Value:
     if (NULL == LeasingApplication ||
         NULL == RemoteSocketAddress ||
         INVALID_HANDLE_VALUE == LeasingApplication ||
+        NULL == RemoteApplicationIdentifier ||
         S_OK != StringCchLength(
             RemoteApplicationIdentifier,
             MAX_PATH + 1,
@@ -2401,7 +2402,7 @@ Routine Description: Retrieve the existing lease relationship duration from driv
             RemoteSocketAddress->Address,
             RemoteSocketAddress->Port,
             DeviceIoctlQueryDurationOutputBuffer.TimeToLive);
-
+        
         return DeviceIoctlQueryDurationOutputBuffer.TimeToLive;
     }
 

@@ -16,12 +16,14 @@ StringLiteral const TraceType("Deactivator");
 // ********************************************************************************************************************
 // Deactivator::ServicePackageInstanceReplicaCountEntry Implementation
 //
-class Deactivator::ServicePackageInstanceReplicaCountEntry : private Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>
+class Deactivator::ServicePackageInstanceReplicaCountEntry :
+    private TextTraceComponent<TraceTaskCodes::Hosting>
 {
 public:
-    ServicePackageInstanceReplicaCountEntry(ServicePackageInstanceIdentifier const & servicePackageInstanceId, wstring const & traceId)
+    ServicePackageInstanceReplicaCountEntry(
+        ServicePackageInstanceIdentifier const & servicePackageInstanceId, wstring const & traceId)
         : id_(servicePackageInstanceId),
-        servicePackageUsageCount_(0),        
+        servicePackageUsageCount_(0),
         closing_(false),
         servicePackageSequenceNumber_(0),
         continuousDeactivationFailureCount_(0),
@@ -29,7 +31,7 @@ public:
         traceId_(traceId),
         entryLock_()
     {
-    }    
+    }
 
 public:
     ErrorCode IncrementUsageCount(Deactivator & deactivator)
@@ -116,9 +118,10 @@ public:
             AcquireReadLock readLock(entryLock_);
             if(closing_) { return ErrorCode(ErrorCodeValue::InvalidState); }
 
-            if(this->servicePackageUsageCount_ == 0 && HostingConfig::GetConfig().DeactivationGraceInterval != TimeSpan::MaxValue)
+            if(this->servicePackageUsageCount_ == 0 && 
+               this->GetDeactivationGraceInterval() != TimeSpan::MaxValue)
             {
-                sequenceNumber = this->servicePackageSequenceNumber_;                
+                sequenceNumber = this->servicePackageSequenceNumber_;
                 isDeactivationScheduled = true;
             }
             else
@@ -198,7 +201,7 @@ public:
         Deactivator & deactivator,
         uint64 sequenceNumber)
     {
-        auto dueTime = HostingConfig::GetConfig().DeactivationGraceInterval;
+        auto dueTime = GetDeactivationGraceInterval();
 
         deactivator.ScheduleServicePackageInstanceDeactivation(
             this->id_,
@@ -244,7 +247,14 @@ public:
             retryTime.TotalMilliseconds());
 
         deactivator.ScheduleServicePackageInstanceDeactivation(this->id_, sequenceNumber, retryTime);
-    }    
+    }
+
+    TimeSpan GetDeactivationGraceInterval()
+    {
+        return (id_.ActivationContext.IsExclusive ?
+            HostingConfig::GetConfig().ExclusiveModeDeactivationGraceInterval :
+            HostingConfig::GetConfig().DeactivationGraceInterval);
+    }
 
     bool IsClosing()
     {
@@ -255,14 +265,14 @@ public:
     wstring ToString()
     {
         return wformatString(
-            "ServicePackageInstanceReplicaCountEntry: ServicePackageInstance={0}, UsageCount={1}, SequenceNumber={2}",
+            "ServicePackageInstanceReplicaCountEntry: ServicePackageInstanceId={0}, UsageCount={1}, SequenceNumber={2}",
             this->id_,
-            this->servicePackageUsageCount_,            
+            this->servicePackageUsageCount_,
             this->servicePackageSequenceNumber_);
     }
 
 private:
-    ServicePackageInstanceIdentifier const id_;           
+    ServicePackageInstanceIdentifier const id_;
     wstring const traceId_;
     RwLock entryLock_;
 
@@ -277,7 +287,7 @@ private:
 // ********************************************************************************************************************
 // Deactivator::ApplicationReplicaCountEntry Implementation
 //
-class Deactivator::ApplicationReplicaCountEntry : private Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>
+class Deactivator::ApplicationReplicaCountEntry : private TextTraceComponent<TraceTaskCodes::Hosting>
 {
 public:
     ApplicationReplicaCountEntry(ApplicationIdentifier const & applicationId, wstring const & traceId)
@@ -397,15 +407,16 @@ public:
     }
 
     ErrorCode ScheduleDeactivationIfNotUsed(Deactivator & deactivator, bool & isDeactivationScheduled)
-    {        
+    {
         uint64 sequenceNumber = 0;
 
         {
             AcquireReadLock readLock(entryLock_);
             if(this->closing_) { return ErrorCode(ErrorCodeValue::InvalidState); }
 
-            if(this->applicationUsageCount_ == 0 && HostingConfig::GetConfig().DeactivationGraceInterval != TimeSpan::MaxValue)
-            {                
+            if(this->applicationUsageCount_ == 0 && 
+               HostingConfig::GetConfig().DeactivationGraceInterval != TimeSpan::MaxValue)
+            {
                 isDeactivationScheduled = true;
                 sequenceNumber = this->applicationSequenceNumber_;
             }
@@ -475,7 +486,7 @@ public:
         }
 
         return ErrorCode(ErrorCodeValue::Success);
-    }       
+    }
 
     bool OnDeactivateIfNotUsed(ServicePackageInstanceIdentifier const & servicePackageInstanceId, uint64 const servicePackageSequenceNumber)
     {        

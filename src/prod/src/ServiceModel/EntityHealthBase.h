@@ -22,13 +22,14 @@ namespace ServiceModel
             std::vector<HealthEvaluation> && unhealthyEvaluations,
             Management::HealthManager::HealthStatisticsUPtr && healthStatistics = nullptr);
         
-        EntityHealthBase(EntityHealthBase && other);
-        EntityHealthBase & operator = (EntityHealthBase && other);
+        EntityHealthBase(EntityHealthBase && other) = default;
+        EntityHealthBase & operator = (EntityHealthBase && other) = default;
 
         virtual ~EntityHealthBase();
 
         __declspec(property(get=get_UnhealthyEvaluations)) std::vector<HealthEvaluation> const & UnhealthyEvaluations;
         std::vector<HealthEvaluation> const & get_UnhealthyEvaluations() const { return unhealthyEvaluations_; }
+        std::vector<HealthEvaluation> && TakeUnhealthyEvaluations() { return std::move(unhealthyEvaluations_); }
 
          __declspec(property(get=get_Events)) std::vector<HealthEvent> const & Events;
         std::vector<HealthEvent> const & get_Events() const { return events_; }
@@ -49,6 +50,7 @@ namespace ServiceModel
         virtual void WriteTo(__in Common::TextWriter&, Common::FormatOptions const &) const;
         virtual void WriteToEtw(uint16 contextSequenceId) const;
         std::wstring ToString() const;
+        std::wstring GetUnhealthyEvaluationDescription() const;
 
         std::wstring GetStatsString() const;
 

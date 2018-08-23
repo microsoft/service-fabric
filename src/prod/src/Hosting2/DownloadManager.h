@@ -7,6 +7,24 @@
 
 namespace Hosting2
 {
+    struct FileDownloadSpec
+    {
+    public:
+        FileDownloadSpec()
+            : RemoteSourceLocation(),
+            LocalDestinationLocation(),
+            ChecksumFileLocation(),
+            Checksum(),
+            DownloadToCacheOnly(false)
+        {
+        }
+
+        std::wstring RemoteSourceLocation;
+        std::wstring LocalDestinationLocation;
+        std::wstring ChecksumFileLocation;
+        std::wstring Checksum;
+        bool DownloadToCacheOnly;
+    };
     // downloads application and service package from imagestore
     class DownloadManager :
         public Common::RootedObject,
@@ -34,12 +52,14 @@ namespace Hosting2
         Common::AsyncOperationSPtr BeginDownloadApplicationPackage(
             ServiceModel::ApplicationIdentifier const & applicationId,
             ServiceModel::ApplicationVersion const & applicationVersion,
+            ServiceModel::ServicePackageActivationContext const& activationContext,
             std::wstring const & applicationName,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
         Common::AsyncOperationSPtr BeginDownloadApplicationPackage(
             ServiceModel::ApplicationIdentifier const & applicationId,
             ServiceModel::ApplicationVersion const & applicationVersion,
+            ServiceModel::ServicePackageActivationContext const& activationContext,
             std::wstring const & applicationName,
             ULONG maxFailureCount,
             Common::AsyncCallback const & callback,
@@ -75,6 +95,7 @@ namespace Hosting2
             Common::AsyncOperationSPtr const & parent);
         Common::ErrorCode EndDownloadFabricUpgradePackage(Common::AsyncOperationSPtr const & operation);
 
+        //TODO: #12372718: Add a new API to force download the package during predeployment on node
         Common::AsyncOperationSPtr BeginDownloadServiceManifestPackages(
             std::wstring const & applicationTypeName,
             std::wstring const & applicationTypeVersion,
@@ -101,6 +122,9 @@ namespace Hosting2
         // Test hooks
         //
         std::vector<std::wstring> Test_GetNtlmUserThumbprints() const;
+
+        __declspec(property(get = test_Get_ImageStore)) Management::ImageStore::ImageStoreUPtr const & ImageStore;
+        Management::ImageStore::ImageStoreUPtr const & test_Get_ImageStore() const { return imageStore_; }
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -170,6 +194,10 @@ namespace Hosting2
         class DownloadFabricUpgradePackageAsyncOperation;
         class DownloadServiceManifestAsyncOperation;
         class DownloadContainerImagesAsyncOperation;
+        class DownloadApplicationPackageContentsAsyncOperation;
+        class DownloadServicePackageContentsAsyncOperation;
+        class DownloadServiceManifestContentsAsyncOperation;
+        class DownloadPackagesAsyncOperation;
 
     private:
         HostingSubsystem & hosting_;
@@ -180,6 +208,7 @@ namespace Hosting2
         Management::ImageModel::StoreLayoutSpecification const sharedLayout_;
         PendingOperationMapUPtr pendingDownloads_;
         Management::ImageStore::ImageStoreUPtr imageStore_;
+        ImageCacheManagerUPtr imageCacheManager_;
         Common::FabricNodeConfigSPtr nodeConfig_;
         Api::IClientFactoryPtr passThroughClientFactoryPtr_;
         Common::SynchronizedMap<std::wstring, Common::ErrorCode> nonRetryableFailedDownloads_;

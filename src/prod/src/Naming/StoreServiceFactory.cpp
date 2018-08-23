@@ -8,6 +8,7 @@
 using namespace Common;
 using namespace Reliability;
 using namespace std;
+using namespace Store;
 using namespace SystemServices;
 using namespace Transport;
 
@@ -26,15 +27,17 @@ namespace Naming
         ComponentRoot const & fabricRoot)
         : ComponentRoot() 
         , fabricRoot_(fabricRoot.CreateComponentRoot())
+        , storeServicesLock_()
+        , storeServicesWPtrMap_()
         , federation_(federation)
         , adminClient_(adminClient)
         , serviceResolver_(serviceResolver)
         , clientFactory_(clientFactory)
         , workingDir_(workingDir)
-        , storeServicesLock_()
-        , storeServicesWPtrMap_()
         , replicatorAddress_(replicatorAddress)
         , clusterSecuritySettings_(securitySettings)
+        , activeServices_()
+        , activeServicesLock_()
     {
         WriteNoise(
             TraceComponent, 
@@ -52,15 +55,13 @@ namespace Naming
     }
 
     ErrorCode StoreServiceFactory::CreateReplica(
-        std::wstring const & serviceType,
-        Common::NamingUri const & serviceName,
-        std::vector<byte> const & initializationData, 
-        Common::Guid const & partitionId,
+        wstring const & serviceType,
+        NamingUri const & serviceName,
+        vector<byte> const & initializationData, 
+        Guid const & partitionId,
         FABRIC_REPLICA_ID replicaId,
         __out Api::IStatefulServiceReplicaPtr & serviceReplica)
     {
-        UNREFERENCED_PARAMETER(initializationData);
-
         ASSERT_IF(serviceType != ServiceModel::ServiceTypeIdentifier::NamingStoreServiceTypeId->ServiceTypeName, "StoreServiceFactory cannot create service of type '{0}'", serviceType);
         ASSERT_IF(serviceName.ToString() != ServiceModel::SystemServiceApplicationNameHelper::PublicNamingServiceName, "StoreServiceFactory cannot create service '{0}'", serviceName);
 
@@ -107,7 +108,8 @@ namespace Naming
                     Path::Combine(workingDir_, Constants::NamingStoreDirectory),
                     NamingConfig::GetConfig().CompactionThresholdInMB),
                 clientFactory_,
-                serviceName);
+                serviceName,
+                initializationData);
 
             if (!error.IsSuccess()) { return error; }
 

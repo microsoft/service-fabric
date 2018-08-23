@@ -114,9 +114,11 @@ namespace Transport
             case ServiceCommunicationError: w << "ServiceCommunicationErrorHeader" ; return;
 
             case JoinThrottle: w << "JoinThrottle"; return;
-            case CreateContainerApplicationRequest: w << "CreateContainerApplicationRequest"; return;
+            case CreateComposeDeploymentRequest: w << "CreateComposeDeploymentRequest"; return;
             case FabricTransportMessageHeader: w << "FabricTransportMessageHeader"; return;
             case UpgradeComposeDeploymentRequest: w << "UpgradeComposeDeploymentRequest"; return;
+            case CreateVolumeRequest: w << "CreateVolumeRequest"; return;
+            case FileUploadCreateRequest: w << "FileUploadCreateRequest"; return;
 
             // Header IDs for tests follow this line.
             case Example: w << "Example"; return;

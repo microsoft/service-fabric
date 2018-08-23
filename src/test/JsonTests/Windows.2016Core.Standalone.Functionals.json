@@ -5,7 +5,7 @@
     {
       "Name": "SA_Onebox",
       "Type": "PowershellTest",
-      "Owners": "menchi,liphigao,ratando",
+      "Owners": "menchi,alsantam",
       "ResourcesRequired": "Server:1;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -18,7 +18,7 @@
     {
       "Name": "SA_OneboxRemote",
       "Type": "PowershellTest",
-      "Owners": "liphigao,ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:2;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -31,7 +31,7 @@
     {
       "Name": "SA_Multibox",
       "Type": "PowershellTest",
-      "Owners": "liphigao,ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:3;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -44,7 +44,7 @@
     {
       "Name": "SA_MultiboxRemote",
       "Type": "PowershellTest",
-      "Owners": "liphigao,ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:4;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -57,7 +57,7 @@
     {
       "Name": "SA_AddNode",
       "Type": "PowershellTest",
-      "Owners": "maburlik,menchi,liphigao,ratando",
+      "Owners": "maburlik,menchi,alsantam",
       "ResourcesRequired": "Server:4;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -70,7 +70,7 @@
     {
       "Name": "SA_CabDownload",
       "Type": "PowershellTest",
-      "Owners": "ratando,liphigao",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:4;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -83,7 +83,7 @@
     {
       "Name": "SA_ArpUninstall",
       "Type": "PowershellTest",
-      "Owners": "maburlik,ratando,liphigao,rsinha",
+      "Owners": "maburlik, alsantam",
       "ResourcesRequired": "Server:1;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -97,7 +97,7 @@
     {
       "Name": "ClusCertUpgrade1Box",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:1;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -110,7 +110,7 @@
     {
       "Name": "ClusCertCnUpgrade1Box",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:1;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -123,7 +123,7 @@
     {
       "Name": "ClusCertUpgradeMultiBox",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:4;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -136,7 +136,7 @@
     {
       "Name": "InterruptUpgrade",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:4;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -149,7 +149,7 @@
     {
       "Name": "UpgradeStandalone_WS2016Core",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:6;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -162,7 +162,7 @@
     {
       "Name": "LogCollectorSA",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam",
       "ResourcesRequired": "Server:1;Group=WS2016Core",
       "TestExecutionParameters": {
         "SetupTimeout": "900",

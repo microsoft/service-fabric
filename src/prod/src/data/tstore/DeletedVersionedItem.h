@@ -129,30 +129,22 @@ namespace Data
             }
 
             virtual ktl::Awaitable<TValue> GetValueAsync(
-               __in MetadataTable& metadataTable,
-               __in Data::StateManager::IStateSerializer<TValue>& valueSerializer,
-               __in StoreTraceComponent & traceComponent,
-               __in ktl::CancellationToken const & cancellationToken) override
+               __in MetadataTable&,
+               __in Data::StateManager::IStateSerializer<TValue>&,
+               __in ReadMode,
+               __in StoreTraceComponent &,
+               __in ktl::CancellationToken const &) override
             {
-               UNREFERENCED_PARAMETER(metadataTable);
-               UNREFERENCED_PARAMETER(valueSerializer);
-               UNREFERENCED_PARAMETER(traceComponent);
-               UNREFERENCED_PARAMETER(cancellationToken);
-
                throw ktl::Exception(SF_STATUS_INVALID_OPERATION);
             }
 
             virtual ktl::Awaitable<TValue> GetValueAsync(
-               __in FileMetadata& fileMetadata,
-               __in Data::StateManager::IStateSerializer<TValue>& valueSerializer,
-               __in StoreTraceComponent & traceComponent,
-               __in ktl::CancellationToken const & cancellationToken) override
+               __in FileMetadata&,
+               __in Data::StateManager::IStateSerializer<TValue>&,
+               __in ReadMode,
+               __in StoreTraceComponent &,
+               __in ktl::CancellationToken const &) override
             {
-               UNREFERENCED_PARAMETER(fileMetadata);
-               UNREFERENCED_PARAMETER(valueSerializer);
-               UNREFERENCED_PARAMETER(traceComponent);
-               UNREFERENCED_PARAMETER(cancellationToken);
-
                throw ktl::Exception(SF_STATUS_INVALID_OPERATION);
             }
         };

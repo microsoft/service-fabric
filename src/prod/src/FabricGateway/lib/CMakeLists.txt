@@ -1,6 +1,5 @@
 set( LINUX_SOURCES
     ../FabricGateway.cpp
-    ../FabricGatewayConfig.cpp
 )
 
 include_directories("..")

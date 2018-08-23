@@ -6,7 +6,7 @@
     {
       "Name": "EndToEndSmokeBvt",
       "Type": "V2_ScriptTest",
-      "Owners": "anmola,rsinha",
+      "Owners": "lemai,anmola,rsinha",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {        
         "SetupType": "Exe",
@@ -44,9 +44,9 @@
       }
     },
     {
-      "Name": "Backup-CIT",
+      "Name": "Backup-CIT_BVT",
       "Type": "V2_ScriptTest",
-      "Owners": "mcoskun,rajak",
+      "Owners": "zhol,mcoskun,rajak",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -60,7 +60,7 @@
     {
       "Name": "PLB_PlacementConstraint",
       "Type": "V2_DllTest",
-      "Owners": "chanli",
+      "Owners": "v-bogmar,sfplbtestfailures",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",

@@ -32,14 +32,14 @@ HealthReport HealthReportFactory::GenerateRebuildStuckHealthReport(const wstring
         ServiceModel::AttributeList());
 }
 
-HealthReport HealthReportFactory::GenerateRebuildStuckHealthReport()
+HealthReport HealthReportFactory::GenerateRebuildStuckHealthReport(Common::TimeSpan elapsedTime, Common::TimeSpan expectedTime)
 {
-    return GenerateRebuildStuckHealthReport(GenerateRebuildBroadcastStuckDescription());
+    return GenerateRebuildStuckHealthReport(GenerateRebuildBroadcastStuckDescription(elapsedTime, expectedTime));
 }
 
-HealthReport HealthReportFactory::GenerateRebuildStuckHealthReport(vector<NodeInstance> & stuckNodes)
+HealthReport HealthReportFactory::GenerateRebuildStuckHealthReport(vector<NodeInstance> & stuckNodes, Common::TimeSpan elapsedTime, Common::TimeSpan expectedTime)
 {
-    return GenerateRebuildStuckHealthReport(GenerateRebuildWaitingForNodesDescription(stuckNodes));
+    return GenerateRebuildStuckHealthReport(GenerateRebuildWaitingForNodesDescription(stuckNodes, elapsedTime, expectedTime));
 }
 
 HealthReport HealthReportFactory::GenerateClearRebuildStuckHealthReport()
@@ -231,12 +231,19 @@ HealthReport HealthReportFactory::GenerateFailoverUnitHealthReport(FailoverUnit 
 }
 
 
-wstring HealthReportFactory::GenerateRebuildBroadcastStuckDescription()
+wstring HealthReportFactory::GenerateRebuildBroadcastStuckDescription(Common::TimeSpan elapsedTime, Common::TimeSpan expectedTime)
 {
-    return wformatString(Common::StringResource::Get(IDS_FM_Rebuild_Stuck_Broadcast), nodeId_, documentationUrl_);
+    wstring description;
+    StringWriter writer(description);
+
+    writer.Write(wformatString(Common::StringResource::Get(IDS_FM_Rebuild_Stuck_Broadcast), nodeId_));
+    writer.Write(wformatString(Common::StringResource::Get(IDS_FM_Rebuild_Time_Info), elapsedTime, expectedTime));
+    writer.Write(wformatString(Common::StringResource::Get(IDS_FM_Rebuild_More_Info), documentationUrl_));
+
+    return description;
 }
 
-wstring HealthReportFactory::GenerateRebuildWaitingForNodesDescription(vector<Federation::NodeInstance> & stuckNodes)
+wstring HealthReportFactory::GenerateRebuildWaitingForNodesDescription(vector<Federation::NodeInstance> & stuckNodes, Common::TimeSpan elapsedTime, Common::TimeSpan expectedTime)
 {
     wstring description;    
     StringWriter writer(description);
@@ -257,6 +264,7 @@ wstring HealthReportFactory::GenerateRebuildWaitingForNodesDescription(vector<Fe
         }
     }
 
+    writer.Write(wformatString(Common::StringResource::Get(IDS_FM_Rebuild_Time_Info), elapsedTime, expectedTime));
     writer.Write(wformatString(Common::StringResource::Get(IDS_FM_Rebuild_More_Info), documentationUrl_));
 
     return description;

@@ -7,6 +7,8 @@
 
 namespace Common
 {
+    const StringLiteral TraceComponent_ComAsyncOperationContext("ComAsyncOperationContext");
+
     ComAsyncOperationContext::ComAsyncOperationContext(bool skipCompleteOnCancel)
         : ComUnknownBase(),
           state_(),
@@ -100,6 +102,12 @@ namespace Common
         state_.TransitionStarted();
 
         AsyncOperationSPtr proxySPtr = AsyncOperationRoot<ComAsyncOperationContextCPtr>::Create(thisCPtr);
+
+        Trace.WriteNoise(
+            TraceComponent_ComAsyncOperationContext,
+            proxySPtr->AsyncOperationTraceId,
+            "Calling OnStart");
+
         OnStart(proxySPtr);
 
         AsyncOperationSPtr cancel;
@@ -178,6 +186,12 @@ namespace Common
     {
         if (TryStartComplete())
         {
+            Trace.WriteNoise(
+                TraceComponent_ComAsyncOperationContext,
+                proxySPtr->AsyncOperationTraceId,
+                "FinishComplete calling with {0}",
+                result);
+
             FinishComplete(GetCPtr(proxySPtr), result);
             return true;
         }

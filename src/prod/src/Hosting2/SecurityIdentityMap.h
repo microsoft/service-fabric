@@ -22,6 +22,7 @@ namespace Hosting2
         Common::ErrorCode Get(std::wstring const &, __out T & obj);
         Common::ErrorCode Contains(std::wstring const &, __out bool & contains);
         Common::ErrorCode Remove(std::wstring const &, __out T & obj);
+        std::vector<T> GetAll();
 
         std::vector<T> Close();
 

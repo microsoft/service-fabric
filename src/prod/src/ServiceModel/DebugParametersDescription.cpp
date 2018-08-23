@@ -22,41 +22,8 @@ EnvironmentBlock(),
 EntryPointType(),
 ContainerEntryPoints(),
 ContainerMountedVolumes(),
-ContainerEnvironmentBlock()
-{
-}
-
-DebugParametersDescription::DebugParametersDescription(DebugParametersDescription const & other)
-: ExePath(other.ExePath),
-Arguments(other.Arguments),
-CodePackageLinkFolder(other.CodePackageLinkFolder),
-ConfigPackageLinkFolder(other.ConfigPackageLinkFolder),
-DataPackageLinkFolder(other.DataPackageLinkFolder),
-LockFile(other.LockFile),
-WorkingFolder(other.WorkingFolder),
-DebugParametersFile(other.DebugParametersFile),
-EnvironmentBlock(other.EnvironmentBlock),
-EntryPointType(other.EntryPointType),
-ContainerEntryPoints(other.ContainerEntryPoints),
-ContainerMountedVolumes(other.ContainerMountedVolumes),
-ContainerEnvironmentBlock(other.ContainerEnvironmentBlock)
-{
-}
-
-DebugParametersDescription::DebugParametersDescription(DebugParametersDescription && other)
-: ExePath(move(other.ExePath)),
-Arguments(move(other.Arguments)),
-CodePackageLinkFolder(move(other.CodePackageLinkFolder)),
-ConfigPackageLinkFolder(move(other.ConfigPackageLinkFolder)),
-DataPackageLinkFolder(move(other.DataPackageLinkFolder)),
-LockFile(move(other.LockFile)),
-WorkingFolder(move(other.WorkingFolder)),
-DebugParametersFile(move(other.DebugParametersFile)),
-EnvironmentBlock(move(other.EnvironmentBlock)),
-EntryPointType(move(other.EntryPointType)),
-ContainerEntryPoints(move(other.ContainerEntryPoints)),
-ContainerMountedVolumes(move(other.ContainerMountedVolumes)),
-ContainerEnvironmentBlock(move(other.ContainerEnvironmentBlock))
+ContainerEnvironmentBlock(),
+ContainerLabels()
 {
 }
 
@@ -73,10 +40,11 @@ DebugParametersDescription const & DebugParametersDescription::operator=(DebugPa
         this->WorkingFolder = other.WorkingFolder;
         this->DebugParametersFile = other.DebugParametersFile;
         this->EnvironmentBlock = other.EnvironmentBlock;
-		this->EntryPointType = other.EntryPointType;
+        this->EntryPointType = other.EntryPointType;
         this->ContainerEntryPoints = other.ContainerEntryPoints;
         this->ContainerMountedVolumes = other.ContainerMountedVolumes;
         this->ContainerEnvironmentBlock = other.ContainerEnvironmentBlock;
+        this->ContainerLabels = other.ContainerLabels;
     }
     return *this;
 }
@@ -94,10 +62,11 @@ DebugParametersDescription const & DebugParametersDescription::operator=(DebugPa
         this->WorkingFolder = move(other.WorkingFolder);
         this->DebugParametersFile = move(other.DebugParametersFile);
         this->EnvironmentBlock = move(other.EnvironmentBlock);
-		this->EntryPointType = move(other.EntryPointType);
+        this->EntryPointType = move(other.EntryPointType);
         this->ContainerEntryPoints = move(other.ContainerEntryPoints);
         this->ContainerMountedVolumes = move(other.ContainerMountedVolumes);
         this->ContainerEnvironmentBlock = move(other.ContainerEnvironmentBlock);
+        this->ContainerLabels = move(other.ContainerLabels);
     }
     return *this;
 }
@@ -118,30 +87,13 @@ bool DebugParametersDescription::operator== (DebugParametersDescription const & 
     {
         return equals;
     }
-    for (auto i = 0; i < ContainerEntryPoints.size(); i++)
-    {
-        equals = StringUtility::AreEqualCaseInsensitive(this->ContainerEntryPoints[i], other.ContainerEntryPoints[i]);
-        if (!equals)
-        {
-            return equals;
-        }
-    }
-    for (auto i = 0; i < ContainerMountedVolumes.size(); i++)
-    {
-        equals = StringUtility::AreEqualCaseInsensitive(this->ContainerMountedVolumes[i], other.ContainerMountedVolumes[i]);
-        if (!equals)
-        {
-            return equals;
-        }
-    }
-    for (auto i = 0; i < ContainerEnvironmentBlock.size(); i++)
-    {
-        equals = StringUtility::AreEqualCaseInsensitive(this->ContainerEnvironmentBlock[i], other.ContainerEnvironmentBlock[i]);
-        if (!equals)
-        {
-            return equals;
-        }
-    }
+
+    equals = (
+        AreEqual(this->ContainerEntryPoints, other.ContainerEntryPoints) &&
+        AreEqual(this->ContainerMountedVolumes, other.ContainerMountedVolumes) &&
+        AreEqual(this->ContainerEnvironmentBlock, other.ContainerEnvironmentBlock) &&
+        AreEqual(this->ContainerLabels, other.ContainerLabels));
+
     return equals;
 }
 
@@ -153,6 +105,7 @@ bool DebugParametersDescription::operator!= (DebugParametersDescription const & 
 void DebugParametersDescription::WriteTo(TextWriter & w, FormatOptions const &) const
 {
     w.Write("DebugParametersDescription { ");
+
     w.Write("ExePath = {0}, ", ExePath);
     w.Write("Arguments = {0}, ", Arguments);
     w.Write("CodePackageLinkFolder = {0}, ", CodePackageLinkFolder);
@@ -161,25 +114,36 @@ void DebugParametersDescription::WriteTo(TextWriter & w, FormatOptions const &) 
     w.Write("LockFile = {0}, ", LockFile);
     w.Write("WorkingFolder = {0}, ", WorkingFolder);
     w.Write("DebugParametersFile = {0}, ", DebugParametersFile);
-    w.Write("EnvironmentBlock = {)", EnvironmentBlock);
-    w.Write("ContainerEntryPoints { ");
-    for (auto i = 0; i < this->ContainerEntryPoints.size(); i++)
+    w.Write("EnvironmentBlock = {0},", EnvironmentBlock);
+    
+    w.Write("ContainerEntryPoints={");
+    for (auto entryPoint : this->ContainerEntryPoints)
     {
-        w.Write("ContainerEntryPoint = {0}", this->ContainerEntryPoints[i]);
+        w.Write("{0},", entryPoint);
+    }
+    w.Write("},");
+    
+    w.Write("ContainerMountedVolumes={");
+    for (auto volume : this->ContainerMountedVolumes)
+    {
+        w.Write("{0},", volume);
+    }
+    w.Write("},");
+    
+    w.Write("ContainerEnvironmentBlock={ ");
+    for (auto env : this->ContainerEnvironmentBlock)
+    {
+        w.Write("{0},", env);
     }
     w.Write("}");
-    w.Write("ContainerMountedVolumes { ");
-    for (auto i = 0; i < this->ContainerMountedVolumes.size(); i++)
+
+    w.Write("ContainerLabels={ ");
+    for (auto label : this->ContainerLabels)
     {
-        w.Write("ContainerMountedVolume = {0}", this->ContainerMountedVolumes[i]);
+        w.Write("{0},", label);
     }
     w.Write("}");
-    w.Write("ContainerEnvironmentBlock { ");
-    for (auto i = 0; i < this->ContainerEnvironmentBlock.size(); i++)
-    {
-        w.Write("ContainerEnvironmentBlock = {0}", this->ContainerEnvironmentBlock[i]);
-    }
-    w.Write("}");
+
     w.Write("}");
 }
 
@@ -190,14 +154,14 @@ void DebugParametersDescription::ReadFromXml(
         *SchemaNames::Element_DebugParameters,
         *SchemaNames::Namespace);
 
-	if (xmlReader->HasAttribute(*SchemaNames::Attribute_ProgramExePath))
-	{
-		this->ExePath = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_ProgramExePath);
-	}
-	if (xmlReader->HasAttribute(*SchemaNames::Attribute_DebuggerArguments))
-	{
-		this->Arguments = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_DebuggerArguments);
-	}
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_ProgramExePath))
+    {
+        this->ExePath = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_ProgramExePath);
+    }
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_DebuggerArguments))
+    {
+        this->Arguments = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_DebuggerArguments);
+    }
     if (xmlReader->HasAttribute(*SchemaNames::Attribute_EnvironmentBlock))
     {
         this->EnvironmentBlock = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_EnvironmentBlock);
@@ -280,6 +244,18 @@ void DebugParametersDescription::ReadFromXml(
             xmlReader->ReadEndElement();
             this->ContainerEnvironmentBlock.push_back(environmentBlock);
         }
+        else if (xmlReader->IsStartElement(
+            *SchemaNames::Element_ContainerLabel,
+            *SchemaNames::Namespace))
+        {
+            xmlReader->ReadStartElement();
+
+            auto label = xmlReader->ReadElementValue(true);
+
+            // </ContainerLabel>
+            xmlReader->ReadEndElement();
+            this->ContainerLabels.push_back(label);
+        }
         else
         {
             hasPolicies = false;
@@ -290,22 +266,25 @@ void DebugParametersDescription::ReadFromXml(
 }
 
 Common::ErrorCode DebugParametersDescription::WriteToXml(XmlWriterUPtr const & xmlWriter)
-{	//<DebugParameters>
-	ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_DebugParameters, L"", *SchemaNames::Namespace);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_ProgramExePath, this->ExePath);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_DebuggerArguments, this->Arguments);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
+{   
+    CODING_ERROR_ASSERT("DebugParametersDescription::WriteToXml() called in native code.");
+    
+    //<DebugParameters>
+    ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_DebugParameters, L"", *SchemaNames::Namespace);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_ProgramExePath, this->ExePath);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_DebuggerArguments, this->Arguments);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
     er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_CodePackageLinkFolder, this->CodePackageLinkFolder);
     if (!er.IsSuccess())
     {
@@ -336,18 +315,18 @@ Common::ErrorCode DebugParametersDescription::WriteToXml(XmlWriterUPtr const & x
     {
         return er;
     }
-	er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_EnvironmentBlock, this->EnvironmentBlock);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_EntryPointType, RunAsPolicyTypeEntryPointType::EnumToString(this->EntryPointType));
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	//</DebugParamters>
-	return xmlWriter->WriteEndElement();
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_EnvironmentBlock, this->EnvironmentBlock);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_EntryPointType, RunAsPolicyTypeEntryPointType::EnumToString(this->EntryPointType));
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    //</DebugParamters>
+    return xmlWriter->WriteEndElement();
 }
 
 void DebugParametersDescription::clear()
@@ -364,4 +343,24 @@ void DebugParametersDescription::clear()
     this->ContainerEntryPoints.clear();
     this->ContainerEnvironmentBlock.clear();
     this->ContainerMountedVolumes.clear();
+}
+
+bool DebugParametersDescription::AreEqual(
+    vector<wstring> const & first,
+    vector<wstring> const & second)
+{
+    if (first.size() != second.size())
+    {
+        return false;
+    }
+
+    for (auto i = 0; i < first.size(); i++)
+    {
+        if (StringUtility::AreEqualCaseInsensitive(first[i], second[i]) == false)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }

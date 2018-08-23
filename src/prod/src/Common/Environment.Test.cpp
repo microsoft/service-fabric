@@ -89,28 +89,6 @@ namespace Common
         VERIFY_ARE_EQUAL2(testEnvValue2, L"_TestEnvValue2");
     }
 
-    BOOST_AUTO_TEST_CASE(FileVersionTest)
-    {
-        ComPointer<IFabricStringResult> commonDllVersion;
-        auto hr  = ::FabricGetCommonDllVersion(commonDllVersion.InitializationAddress());
-        
-        VERIFY_ARE_EQUAL2(SUCCEEDED(hr), true);
-        WriteInfo(EnvironmentTraceType, "CommonDllVersion: {0}", commonDllVersion->get_String());
-
-         
-        ComPointer<IFabricStringResult> runtimeDllVersion;
-        hr  = ::FabricGetRuntimeDllVersion(runtimeDllVersion.InitializationAddress());
-         
-        VERIFY_ARE_EQUAL2(SUCCEEDED(hr), true);
-        WriteInfo(EnvironmentTraceType, "RuntimeDllVersion: {0}", runtimeDllVersion->get_String());
-
-        ComPointer<IFabricStringResult> clientDllVersion;
-        hr  = ::FabricGetClientDllVersion(clientDllVersion.InitializationAddress());
-         
-        VERIFY_ARE_EQUAL2(SUCCEEDED(hr), true);
-        WriteInfo(EnvironmentTraceType, "ClientDllVersion: {0}", clientDllVersion->get_String());
-     }
-
      BOOST_AUTO_TEST_CASE(LastRebootTimeTest)
      {
          ErrorCode error(ErrorCodeValue::Success);

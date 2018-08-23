@@ -56,6 +56,16 @@ IndexingLogRecord::CSPtr TestReplicatedLogManager::GetIndexingLogRecordForBackup
     return indexingLogRecordCSPtr_;
 }
 
+Data::LogRecordLib::EndCheckpointLogRecord::SPtr TestReplicatedLogManager::get_LastCompletedEndCheckpointRecord() const
+{
+    return nullptr;
+}
+
+Data::LogRecordLib::ProgressVector::SPtr TestReplicatedLogManager::get_ProgressVectorValue() const
+{
+    return nullptr;
+}
+
 NTSTATUS TestReplicatedLogManager::ReplicateAndLog(
     __in LogicalLogRecord & record,
     __out LONG64 & bufferedBytes,

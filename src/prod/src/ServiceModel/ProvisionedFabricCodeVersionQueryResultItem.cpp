@@ -19,36 +19,6 @@ ProvisionedFabricCodeVersionQueryResultItem::ProvisionedFabricCodeVersionQueryRe
 {
 }
 
-ProvisionedFabricCodeVersionQueryResultItem::ProvisionedFabricCodeVersionQueryResultItem(ProvisionedFabricCodeVersionQueryResultItem const & other)
-    : codeVersion_(other.codeVersion_)
-{
-}
-
-ProvisionedFabricCodeVersionQueryResultItem::ProvisionedFabricCodeVersionQueryResultItem(ProvisionedFabricCodeVersionQueryResultItem && other)
-    : codeVersion_(move(other.codeVersion_))
-{
-}
-
-ProvisionedFabricCodeVersionQueryResultItem const & ProvisionedFabricCodeVersionQueryResultItem::operator = (ProvisionedFabricCodeVersionQueryResultItem const & other)
-{
-    if (this != &other)
-    {
-        this->codeVersion_ = other.codeVersion_;
-    }
-
-    return *this;
-}
-
-ProvisionedFabricCodeVersionQueryResultItem const & ProvisionedFabricCodeVersionQueryResultItem::operator = (ProvisionedFabricCodeVersionQueryResultItem && other)
-{
-    if (this != &other)
-    {
-        this->codeVersion_ = move(other.codeVersion_);
-    }
-
-    return *this;
-}
-
 void ProvisionedFabricCodeVersionQueryResultItem::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_PROVISIONED_CODE_VERSION_QUERY_RESULT_ITEM & publicQueryResult) const 

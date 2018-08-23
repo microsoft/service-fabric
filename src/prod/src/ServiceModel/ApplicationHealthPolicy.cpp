@@ -31,48 +31,6 @@ ApplicationHealthPolicy::ApplicationHealthPolicy(
 {
 }
 
-ApplicationHealthPolicy::ApplicationHealthPolicy(ApplicationHealthPolicy const & other)
-    : ConsiderWarningAsError(other.ConsiderWarningAsError),
-    MaxPercentUnhealthyDeployedApplications(other.MaxPercentUnhealthyDeployedApplications),
-    DefaultServiceTypeHealthPolicy(other.DefaultServiceTypeHealthPolicy),
-    ServiceTypeHealthPolicies(other.ServiceTypeHealthPolicies)
-{
-}
-
-ApplicationHealthPolicy::ApplicationHealthPolicy(ApplicationHealthPolicy && other)
-    : ConsiderWarningAsError(other.ConsiderWarningAsError),
-    MaxPercentUnhealthyDeployedApplications(other.MaxPercentUnhealthyDeployedApplications),
-    DefaultServiceTypeHealthPolicy(move(other.DefaultServiceTypeHealthPolicy)),
-    ServiceTypeHealthPolicies(move(other.ServiceTypeHealthPolicies))
-{
-}
-
-ApplicationHealthPolicy const & ApplicationHealthPolicy::operator = (ApplicationHealthPolicy const & other)
-{
-    if (this != &other)
-    {
-        this->ConsiderWarningAsError = other.ConsiderWarningAsError;
-        this->MaxPercentUnhealthyDeployedApplications = other.MaxPercentUnhealthyDeployedApplications;
-        this->DefaultServiceTypeHealthPolicy = other.DefaultServiceTypeHealthPolicy;
-        this->ServiceTypeHealthPolicies = other.ServiceTypeHealthPolicies;
-    }
-
-    return *this;
-}
-
-ApplicationHealthPolicy const & ApplicationHealthPolicy::operator = (ApplicationHealthPolicy && other)
-{
-    if (this != &other)
-    {
-        this->ConsiderWarningAsError = other.ConsiderWarningAsError;
-        this->MaxPercentUnhealthyDeployedApplications = other.MaxPercentUnhealthyDeployedApplications;
-        this->DefaultServiceTypeHealthPolicy = move(other.DefaultServiceTypeHealthPolicy);
-        this->ServiceTypeHealthPolicies = move(other.ServiceTypeHealthPolicies);
-    }
-
-    return *this;
-}
-
 bool ApplicationHealthPolicy::operator == (ApplicationHealthPolicy const & other) const
 {
     bool equals = (this->ConsiderWarningAsError == other.ConsiderWarningAsError);

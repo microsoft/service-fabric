@@ -24,8 +24,8 @@ namespace Hosting2
         bool get_BlocklistingEnabled() const;
         void set_BlocklistingEnabled(bool value);
 
-    public:        
-        Common::ErrorCode GetState(ServiceTypeInstanceIdentifier const & serviceTypeId, __out ServiceTypeState & state);        
+    public:
+        Common::ErrorCode GetState(ServiceTypeInstanceIdentifier const & serviceTypeId, __out ServiceTypeState & state);
 
         std::vector<ServiceModel::DeployedServiceTypeQueryResult> GetDeployedServiceTypeQueryResult(
             ServiceModel::ApplicationIdentifier const & applicationId, 
@@ -35,18 +35,21 @@ namespace Hosting2
         Common::ErrorCode StartRegister(ServiceTypeInstanceIdentifier const & serviceTypeId, std::wstring const & applicationName, std::wstring const & runtimeId, std::wstring const & codePackageName, std::wstring const & hostId);
         Common::ErrorCode FinishRegister(ServiceTypeInstanceIdentifier const & serviceTypeId, bool isValid, FabricRuntimeContext const & runtimeContext);
         
-        void OnApplicationHostClosed(std::wstring const & hostId);
-        void OnRuntimeClosed(std::wstring const & runtimeId, std::wstring const & hostId);        
-        void OnServiceTypeNotRegistrationNotFoundAfterTimeout(ServiceTypeInstanceIdentifier const & serviceTypeId, uint64 const sequenceNumber);
-        Common::ErrorCode OnServicePackageActivated(std::vector<ServiceTypeInstanceIdentifier> const & serviceTypeIds, std::wstring const & applicationName, std::wstring const & componentId);
-        void OnServicePackageDeactivated(std::vector<ServiceTypeInstanceIdentifier> const & serviceTypeIds, std::wstring const & componentId);        
+        void OnApplicationHostClosed(Common::ActivityDescription const & activityDescription, std::wstring const & hostId);
+        void OnRuntimeClosed(std::wstring const & runtimeId, std::wstring const & hostId);
         
-        void Disable(ServiceTypeInstanceIdentifier const & serviceTypeId);        
-        void Disable(ServiceTypeInstanceIdentifier const & serviceTypeId, std::wstring const & applicationName, std::wstring const & failureId);        
+        void OnServiceTypeRegistrationNotFoundAfterTimeout(ServiceTypeInstanceIdentifier const & serviceTypeId, uint64 const sequenceNumber);
+        
+        Common::ErrorCode OnServicePackageActivated(std::vector<ServiceTypeInstanceIdentifier> const & serviceTypeIds, std::wstring const & applicationName, std::wstring const & componentId);
+        void OnServicePackageDeactivated(std::vector<ServiceTypeInstanceIdentifier> const & serviceTypeIds, std::wstring const & componentId);
+ 
+        void Disable(ServiceTypeInstanceIdentifier const & serviceTypeId);
+        void Disable(ServiceTypeInstanceIdentifier const & serviceTypeId, std::wstring const & applicationName, std::wstring const & failureId);
 
         void RegisterFailure(std::wstring const & failureId);
-        void UnregisterFailure(std::wstring const & failureId);        
-        
+
+        void UnregisterFailure(std::wstring const & failureId);
+
         void Close();
         
         bool Test_IsDisabled(ServiceTypeInstanceIdentifier const & serviceTypeId);
@@ -67,7 +70,7 @@ namespace Hosting2
         typedef std::shared_ptr<Entry> EntrySPtr;
         typedef std::map<ServiceTypeInstanceIdentifier, EntrySPtr> EntryMap;
 
-    private:        
+    private:
         Common::ErrorCode CreateNewServiceTypeEntry_CallerHoldsLock(ServiceTypeInstanceIdentifier const & serviceTypeId, std::wstring const & applicationName, __out EntrySPtr & entry);
         void RegisterSource_CallerHoldsLock(EntrySPtr const & entry, std::wstring const & componentId);
         void UnregisterSource_CallerHoldsLock(EntrySPtr const & entry, std::wstring const & componentId);
@@ -86,6 +89,23 @@ namespace Hosting2
         void CreateAndStartDisableTimer(EntrySPtr const & entry, Common::TimeSpan const disableInterval);
         void CreateAndStartRecoveryTimerIfNeeded(EntrySPtr const & entry);
         void CloseEntry(EntrySPtr const & entry);
+
+        void ReportHealth(
+            std::vector<ServiceTypeInstanceIdentifier> && serviceTypeInstanceIds,
+            ::FABRIC_SEQUENCE_NUMBER healthSequence);
+
+        void DisableAdhocTypes(std::vector<ServiceTypeInstanceIdentifier> && adhocDisableList);
+
+        void ProcessServiceTypeUnregistered_CallerHoldsLock(
+            bool isRuntimeClosed,
+            std::wstring const & runtimeOrHostId,
+            uint64 sequenceNumber,
+            _Out_ std::vector<ServiceTypeInstanceIdentifier> & adhocDisableList,
+            _Out_ std::vector<ServiceTypeInstanceIdentifier> & serviceTypeInstanceIds,
+            _Out_ std::vector<ServiceModel::ServiceTypeIdentifier> & serviceTypeIds,
+            _Out_ ServicePackageInstanceIdentifier & servicePackageInstanceId,
+            _Out_ ServiceModel::ServicePackageActivationContext & activationContext,
+            _Out_ std::wstring & servicePackageActivationId);
 
     private:
         // all process method are performed under the lock
@@ -115,6 +135,7 @@ namespace Hosting2
         void RaiseServiceTypeEnabledEvent_CallerHoldsLock(EntrySPtr const & entry);
         void RaiseServiceTypeDisabledEvent_CallerHoldsLock(EntrySPtr const & entry);
         void RaiseApplicationHostClosedEvent_CallerHoldsLock(
+            Common::ActivityDescription const & activityDescription,
             std::wstring const & hostId, 
             std::vector<ServiceModel::ServiceTypeIdentifier> const & serviceTypes,
             uint64 sequenceNumber,
@@ -140,6 +161,6 @@ namespace Hosting2
         std::map<std::wstring, std::set<ServiceTypeInstanceIdentifier>, Common::IsLessCaseInsensitiveComparer<std::wstring>> registeredFailuresMap_;
         bool isBlocklistingEnabled_;  
 
-        static Common::GlobalWString AdhocServiceType;        
+        static Common::GlobalWString AdhocServiceType;
     };
 }

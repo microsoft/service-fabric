@@ -15,40 +15,6 @@ EnvironmentOverridesDescription::EnvironmentOverridesDescription()
 {
 }
 
-EnvironmentOverridesDescription::EnvironmentOverridesDescription(EnvironmentOverridesDescription const & other)
-    : EnvironmentVariables(other.EnvironmentVariables),
-    CodePackageRef(other.CodePackageRef)
-{
-}
-
-EnvironmentOverridesDescription::EnvironmentOverridesDescription(EnvironmentOverridesDescription && other)
-    : EnvironmentVariables(move(other.EnvironmentVariables)),
-    CodePackageRef(move(other.CodePackageRef))
-{
-}
-
-EnvironmentOverridesDescription const & EnvironmentOverridesDescription::operator = (EnvironmentOverridesDescription const & other)
-{
-    if (this != &other)
-    {
-        this->EnvironmentVariables = other.EnvironmentVariables;
-        this->CodePackageRef = other.CodePackageRef;
-    }
-
-    return *this;
-}
-
-EnvironmentOverridesDescription const & EnvironmentOverridesDescription::operator = (EnvironmentOverridesDescription && other)
-{
-    if (this != &other)
-    {
-        this->EnvironmentVariables = move(other.EnvironmentVariables);
-        this->CodePackageRef = move(other.CodePackageRef);
-    }
-
-    return *this;
-}
-
 bool EnvironmentOverridesDescription::operator == (EnvironmentOverridesDescription const & other) const
 {
     bool equals = true;
@@ -97,7 +63,7 @@ void EnvironmentOverridesDescription::ReadFromXml(XmlReaderUPtr const & xmlReade
                 *SchemaNames::Namespace,
                 false))
             {
-                EnvironmentVariableDescription description;
+                EnvironmentVariableOverrideDescription description;
                 description.ReadFromXml(xmlReader);
                 EnvironmentVariables.push_back(description);
             }
@@ -114,17 +80,17 @@ void EnvironmentOverridesDescription::ReadFromXml(XmlReaderUPtr const & xmlReade
 
 ErrorCode EnvironmentOverridesDescription::WriteToXml(XmlWriterUPtr const & xmlWriter)
 {
-	//<EnvironmentVariables>
-	ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_EnvironmentOverrides, L"", *SchemaNames::Namespace);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_CodePackageRef, this->CodePackageRef);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
+    //<EnvironmentOverrides>
+    ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_EnvironmentOverrides, L"", *SchemaNames::Namespace);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_CodePackageRef, this->CodePackageRef);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
     for (auto i = 0; i < EnvironmentVariables.size(); i++)
     {
         er = EnvironmentVariables[i].WriteToXml(xmlWriter);
@@ -133,8 +99,8 @@ ErrorCode EnvironmentOverridesDescription::WriteToXml(XmlWriterUPtr const & xmlW
             return er;
         }
     }
-	//</EnvironmentVariables>
-	return xmlWriter->WriteEndElement();
+    //</EnvironmentOverrides>
+    return xmlWriter->WriteEndElement();
 }
 
 void EnvironmentOverridesDescription::clear()

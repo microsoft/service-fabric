@@ -76,6 +76,7 @@
 #include "Reliability/Failover/common/ReplicaFlags.h"
 #include "Reliability/Failover/common/FailoverUnitFlags.h"
 #include "Reliability/Failover/common/PartitionNotificationMessageBody.h"
+#include "Reliability/Failover/common/AvailableContainerImagesMessageBody.h"
 
 //Common job item root interface
 #include "Reliability/Failover/common/IMessageMetadata.h"

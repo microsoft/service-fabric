@@ -7,7 +7,6 @@
 
 using namespace std;
 using namespace Common;
-using namespace ServiceModel;
 using namespace Management::UpgradeService;
 
 DEFINE_SINGLETON_COMPONENT_CONFIG(UpgradeServiceConfig)

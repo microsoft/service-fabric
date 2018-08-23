@@ -31,6 +31,9 @@ namespace Transport
 
         TransportSecuritySPtr Security() const override;
 
+        void SetFrameHeaderErrorChecking(bool enabled) override { innerTransport_->SetFrameHeaderErrorChecking(enabled); }
+        void SetMessageErrorChecking(bool enabled) override { innerTransport_->SetMessageErrorChecking(enabled); }
+
         void SetMessageHandler(MessageHandler const & handler) override;
 
         size_t SendTargetCount() const override;

@@ -16,6 +16,8 @@ namespace Reliability
             DENY_COPY_ASSIGNMENT(FailoverUnitDescription);
 
         public:
+            // In case of auto-scaling, we will pass target replica set size.
+            // If there is no scaling policy it will be picked up from the service description.
             FailoverUnitDescription(
                 Common::Guid fuId,
                 std::wstring && serviceName,
@@ -24,7 +26,8 @@ namespace Reliability
                 int replicaDifference,
                 Reliability::FailoverUnitFlags::Flags flags = FailoverUnitFlags::Flags::None,
                 bool isReconfigurationInProgress = false,
-                bool isInQuorumLost = false);
+                bool isInQuorumLost = false,
+                int targetReplicaSetSize = 0);
 
             // Creates a FailoverUnitDescription which represents a failover unit is deleted
             FailoverUnitDescription(Common::Guid fuId, std::wstring && serviceName, uint64 serviceId = 0);
@@ -81,6 +84,10 @@ namespace Reliability
             int get_ReplicaDifference() const { return replicaDifference_; }
             void set_ReplicaDifference(int replicaDifference) { replicaDifference_ = replicaDifference; }
 
+            __declspec (property(get = get_TargetReplicaSetSize, put = set_TargetReplicaSetSize)) int TargetReplicaSetSize;
+            int get_TargetReplicaSetSize() const { return targetReplicaSetSize_; }
+            void set_TargetReplicaSetSize(int targetReplicaSetSize) { targetReplicaSetSize_ = targetReplicaSetSize; }
+
             __declspec (property(get=get_IsDeleted)) bool IsDeleted;
             bool get_IsDeleted() const { return plbFlags_.IsDeleted(); }
 
@@ -110,6 +117,7 @@ namespace Reliability
             int primaryReplicaIndex_;
             int replicaDifference_;
             uint64 serviceId_;
+            int targetReplicaSetSize_;
 
             Reliability::FailoverUnitFlags::Flags flags_;
             PLBFailoverUnitDescriptionFlags::Flags plbFlags_;

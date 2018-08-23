@@ -29,48 +29,6 @@ ClusterUpgradeHealthPolicy::ClusterUpgradeHealthPolicy(
 {
 }
 
-ClusterUpgradeHealthPolicy::ClusterUpgradeHealthPolicy(ClusterUpgradeHealthPolicy const & other)
-    : Common::IFabricJsonSerializable(other)
-    , Serialization::FabricSerializable(other)
-    , maxPercentDeltaUnhealthyNodes_(other.maxPercentDeltaUnhealthyNodes_)
-    , maxPercentUpgradeDomainDeltaUnhealthyNodes_(other.maxPercentUpgradeDomainDeltaUnhealthyNodes_)
-{
-}
-
-ClusterUpgradeHealthPolicy & ClusterUpgradeHealthPolicy::operator =(ClusterUpgradeHealthPolicy const & other)
-{
-    if (this != &other)
-    {
-        maxPercentDeltaUnhealthyNodes_ = other.maxPercentDeltaUnhealthyNodes_;
-        maxPercentUpgradeDomainDeltaUnhealthyNodes_ = other.maxPercentUpgradeDomainDeltaUnhealthyNodes_;
-    }
-
-    Common::IFabricJsonSerializable::operator=(other);
-    Serialization::FabricSerializable::operator=(other);
-    return *this;
-}
-
-ClusterUpgradeHealthPolicy::ClusterUpgradeHealthPolicy(ClusterUpgradeHealthPolicy && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , maxPercentDeltaUnhealthyNodes_(move(other.maxPercentDeltaUnhealthyNodes_))
-    , maxPercentUpgradeDomainDeltaUnhealthyNodes_(move(other.maxPercentUpgradeDomainDeltaUnhealthyNodes_))
-{
-}
-
-ClusterUpgradeHealthPolicy & ClusterUpgradeHealthPolicy::operator =(ClusterUpgradeHealthPolicy && other)
-{
-    if (this != &other)
-    {
-        maxPercentDeltaUnhealthyNodes_ = move(other.maxPercentDeltaUnhealthyNodes_);
-        maxPercentUpgradeDomainDeltaUnhealthyNodes_ = move(other.maxPercentUpgradeDomainDeltaUnhealthyNodes_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    return *this;
-}
-
 ClusterUpgradeHealthPolicy::~ClusterUpgradeHealthPolicy()
 {
 }

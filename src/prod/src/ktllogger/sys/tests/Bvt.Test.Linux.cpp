@@ -14,7 +14,6 @@
 #include <ktrace.h>
 #include <ktllogger.h>
 
-#include "RvdLoggerTests.h"
 #include "KtlLoggerTests.h"
 
 #include "RWTStress.h"
@@ -250,6 +249,7 @@ namespace KtlPhysicalLogTest
         bool Setup()
         {
             ::SetupOverlayLogTests(_diskId,
+								   _driveLetter,
                                    _startingAllocs,
                                    _system);
 
@@ -259,6 +259,7 @@ namespace KtlPhysicalLogTest
         bool Cleanup()
         {
             ::CleanupOverlayLogTests(_diskId,
+								   _driveLetter,
                                      _startingAllocs,
                                      _system);
 
@@ -272,13 +273,14 @@ namespace KtlPhysicalLogTest
         // hit. At some point we may want to delete them, but not yet.
         //
         KGuid _diskId;
+		UCHAR _driveLetter;
         ULONGLONG _startingAllocs;
         KtlSystem* _system;
 
     };
 
     BOOST_FIXTURE_TEST_SUITE(OverlayLogTestsSuite, OverlayLogTests)
-
+			
     BOOST_AUTO_TEST_CASE(DestagedWriteTest)
     {
         ::DestagedWriteTest(_diskId);

@@ -26,6 +26,7 @@ namespace Data
                 __in ReplicatedLogManager & replicatedLogManager,
                 __in TransactionMap & transactionsMap,
                 __in TxnReplicator::IStateProviderManager & stateManager,
+                __in IBackupManager & backupManager,
                 __in LONG64 tailLsn,
                 __in TxnReplicator::ApplyContext::Enum falseProgressApplyContext,
                 __in LogRecordLib::RecoveryPhysicalLogReader & recoveryLogsReader,
@@ -41,6 +42,7 @@ namespace Data
                 __in ReplicatedLogManager & replicatedLogManager,
                 __in TransactionMap & transactionsMap,
                 __in TxnReplicator::IStateProviderManager & stateManager,
+                __in IBackupManager & backupManager,
                 __in LONG64 tailLsn,
                 __in TxnReplicator::ApplyContext::Enum falseProgressApplyContext,
                 __in LogRecordLib::RecoveryPhysicalLogReader & recoveryLogsReader,
@@ -49,6 +51,7 @@ namespace Data
             ReplicatedLogManager::SPtr const replicatedLogManager_;
             TransactionMap::SPtr const transactionsMap_;
             TxnReplicator::IStateProviderManager::SPtr const stateManager_;
+            IBackupManager::SPtr const backupManager_;
             LONG64 const tailLsn_;
             TxnReplicator::ApplyContext::Enum const falseProgressApplyContext_;
             LogRecordLib::RecoveryPhysicalLogReader::SPtr const recoveryLogsReader_;

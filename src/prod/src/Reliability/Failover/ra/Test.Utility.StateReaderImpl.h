@@ -1893,7 +1893,7 @@ namespace Reliability
                             return false;
                         }
 
-                        rv = ReportFaultMessageBody(ftDesc, replica, faultType);
+                        rv = ReportFaultMessageBody(ftDesc, replica, faultType, Common::ActivityDescription::Empty);
                         return true;
                     }
                 };
@@ -3283,7 +3283,7 @@ namespace Reliability
                             }
                         }
 
-                        rv = Reliability::ReportFaultRequestMessageBody(std::move(nodeName), faultType, replicaId, partitionId, isForce);
+                        rv = Reliability::ReportFaultRequestMessageBody(std::move(nodeName), faultType, replicaId, partitionId, isForce, Common::ActivityDescription::Empty);
                         return true;
                     }
                 };
@@ -3297,13 +3297,15 @@ namespace Reliability
                         Reader reader(value, context);
 
                         Common::ErrorCode error;
-                        if (!reader.Read(L'\0', error))
+                        if (!reader.Read(L' ', error))
                         {
                             errLogger.Log(L"Error");
                             return false;
                         }
 
-                        rv = Reliability::ReportFaultReplyMessageBody(error);
+                        std::wstring errorMessage = reader.ReadString(L'\0');
+
+                        rv = Reliability::ReportFaultReplyMessageBody(error, errorMessage);
                         return true;
                     }
                 };

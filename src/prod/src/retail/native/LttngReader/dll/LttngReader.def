@@ -1,0 +1,7 @@
+LIBRARY LttngReader
+EXPORTS
+    initialize_trace_processing
+    finalize_trace_processing
+    read_next_event
+    get_lost_events_count
+    get_active_lttng_session_path 

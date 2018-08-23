@@ -16,8 +16,6 @@ StringLiteral const TraceComponent("ComposeDeploymentUpgradeContext");
 
 RolloutContextType::Enum const ComposeDeploymentUpgradeContextType(RolloutContextType::ComposeDeploymentUpgrade);
 
-// TODO DUring delete, we should find all versions of that deployment and unprovision. Because there can be a failure in application upgrade where we dont unprovision the type
-
 ComposeDeploymentUpgradeContext::ComposeDeploymentUpgradeContext()
     : RolloutContext(ComposeDeploymentUpgradeContextType)
     , deploymentName_()

@@ -28,6 +28,8 @@ target_link_libraries(${exe_FabricGateway}
   ${BoostFileSystem}
   ${lib_EntreeService}
   ${lib_FabricGateway}
+  ${lib_StoreService}
+  ${lib_Hosting2}
   ${lib_Client}
   ${lib_ManagementRepairManager}
   ${lib_ManagementCommon}
@@ -67,7 +69,5 @@ target_link_libraries(${exe_FabricGateway}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 

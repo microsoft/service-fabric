@@ -221,7 +221,7 @@ namespace Reliability
 
                 void ProcessRuntimeClosed(std::wstring const & ftShortName);
 
-                void ProcessAppHostClosed(std::wstring const & ftShortName);
+                void ProcessAppHostClosed(std::wstring const & ftShortName, Common::ActivityDescription const & activityDescrition = Common::ActivityDescription::Empty);
 
                 void ProcessServiceTypeRegistered(std::wstring const & ftShortName);
 
@@ -236,7 +236,7 @@ namespace Reliability
 
                 void ProcessRuntimeClosedAndDrain(std::wstring const & ftShortName);
 
-                void ProcessAppHostClosedAndDrain(std::wstring const & ftShortName);
+                void ProcessAppHostClosedAndDrain(std::wstring const & ftShortName, Common::ActivityDescription const & activityDescription = Common::ActivityDescription::Empty);
 
                 void ProcessServiceTypeRegisteredAndDrain(std::wstring const & ftShortName);
 

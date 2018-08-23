@@ -58,30 +58,6 @@ NTSTATUS TestStatefulServicePartition::GetWriteStatus(__out FABRIC_SERVICE_PARTI
     return STATUS_SUCCESS;
 }
 
-NTSTATUS TestStatefulServicePartition::CreateReplicator(
-    __in KWfStateProvider* StateProvider,
-    __in const FABRIC_REPLICATOR_SETTINGS* ReplicatorSettings,
-    __out KSharedPtr<KWfReplicator>& Replicator,
-    __out KSharedPtr<KWfStateReplicator>& StateReplicator)
-{
-    UNREFERENCED_PARAMETER(StateProvider);
-    UNREFERENCED_PARAMETER(ReplicatorSettings);
-    UNREFERENCED_PARAMETER(Replicator);
-    UNREFERENCED_PARAMETER(StateReplicator);
-    CODING_ERROR_ASSERT(false);
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS TestStatefulServicePartition::ReportLoad(
-    __in ULONG MetricCount,
-    __in_ecount(MetricCount) const FABRIC_LOAD_METRIC* Metrics)
-{
-    UNREFERENCED_PARAMETER(MetricCount);
-    UNREFERENCED_PARAMETER(Metrics);
-    CODING_ERROR_ASSERT(false);
-    return STATUS_SUCCESS;
-}
-        
 NTSTATUS TestStatefulServicePartition::ReportFault(__in FABRIC_FAULT_TYPE FaultType)
 {
     UNREFERENCED_PARAMETER(FaultType);

@@ -82,6 +82,7 @@ ktl::Awaitable<void> MetadataManager::OpenAsync(
         status = co_await fileStreamSPtr->OpenAsync(*blockFileSPtr);
         ASSERT_IFNOT(NT_SUCCESS(status), "Unable to open file stream for file {0}", (wchar_t *)(filename));
         co_await PopulateMetadataAsync(metadataTable, *fileStreamSPtr, fileStreamSPtr->GetLength(), allocator, traceComponent);
+        metadataTable.MetadataFileSize = fileStreamSPtr->GetLength();
     }
     catch (ktl::Exception const& e)
     {
@@ -245,6 +246,7 @@ ktl::Awaitable<void> MetadataManager::PopulateMetadataAsync(
     try
     {
         co_await PopulateMetadataAsync(metadataTable, *fileStreamSPtr, fileStreamSPtr->GetLength(), allocator, traceComponent);
+        metadataTable.MetadataFileSize = fileStreamSPtr->GetLength();
     }
     catch (ktl::Exception const& e)
     {
@@ -430,6 +432,7 @@ ktl::Awaitable<void> MetadataManager::WriteAsync(
     try
     {
         co_await WriteAsync(metadataTable, *fileStreamSPtr, allocator);
+        metadataTable.MetadataFileSize = fileStreamSPtr->GetLength();
     }
     catch (ktl::Exception const& e)
     {
@@ -554,8 +557,9 @@ Awaitable<void> MetadataManager::SafeFileReplaceAsync(
             StoreEventSource::Events->StoreException(
                 traceComponent.PartitionId, traceComponent.TraceTag,
                 L"MetadaManager::SafeFileReplaceAsync",
-                Data::Utilities::ToStringLiteral(stackString),
-                e.GetStatus());
+                -1, 0, // TODO: Replace with constants in a way that won't break Linux build
+                e.GetStatus(),
+                Data::Utilities::ToStringLiteral(stackString));
             throw;
         }
     }

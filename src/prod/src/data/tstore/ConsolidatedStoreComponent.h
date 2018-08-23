@@ -105,9 +105,7 @@ namespace Data
                 }
 
                 // Preethas: It is safe to assert here since sweep cannot race when consolidation is in progress.
-
-                // Disabling until #10584838 is resolved 
-                //ASSERT_IFNOT(size_ >= 0, "Size {0} should not be negative", size_);
+                ASSERT_IFNOT(size_ >= 0, "Size {0} should not be negative", size_);
             }
 
             KSharedPtr<VersionedItem<TValue>> Read(__in TKey& key) const
@@ -158,8 +156,7 @@ namespace Data
                // Decrement value size on sweep.
                InterlockedAdd64(&size_, -size);
 
-               // Disabling until #10584838 is resolved 
-               //ASSERT_IFNOT(size_ >= 0, "Size {0} should not be negative", size_);
+               ASSERT_IFNOT(size_ >= 0, "Size {0} should not be negative", size_);
             }
 
             void AddToMemorySize(__in LONG64 size)
@@ -167,6 +164,7 @@ namespace Data
                // Preethas : These elements could be present in one of the delta states but the size of consolidated state is incremented
                // It is okay to be approximate here.
                InterlockedAdd64(&size_, size);
+               ASSERT_IFNOT(size_ >= 0, "Size {0} should not be negative", size_);
             }
 
         private:

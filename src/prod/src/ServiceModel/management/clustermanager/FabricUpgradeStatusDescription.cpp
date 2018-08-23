@@ -219,7 +219,7 @@ FABRIC_UPGRADE_STATE FabricUpgradeStatusDescription::ToPublicUpgradeState() cons
         //
         // For Monitored, "pending" indicates that a health check is pending.
         //
-        if (inProgressUpgradeDomain_.empty() && !pendingUpgradeDomains_.empty())
+        if (inProgressUpgradeDomain_.empty() && !pendingUpgradeDomains_.empty() && this->GetRollingUpgradeMode() != RollingUpgradeMode::Enum::UnmonitoredAuto)
         {
             return FABRIC_UPGRADE_STATE_ROLLING_FORWARD_PENDING;
         }
@@ -229,7 +229,14 @@ FABRIC_UPGRADE_STATE FabricUpgradeStatusDescription::ToPublicUpgradeState() cons
         }
 
     case FabricUpgradeState::RollingBack:
-        return FABRIC_UPGRADE_STATE_ROLLING_BACK_IN_PROGRESS;
+        if (inProgressUpgradeDomain_.empty() && !pendingUpgradeDomains_.empty() && this->GetRollingUpgradeMode() != RollingUpgradeMode::Enum::UnmonitoredAuto)
+        {
+            return FABRIC_UPGRADE_STATE_ROLLING_BACK_PENDING;
+        }
+        else
+        {
+            return FABRIC_UPGRADE_STATE_ROLLING_BACK_IN_PROGRESS;
+        }
 
     case FabricUpgradeState::Failed:
         return FABRIC_UPGRADE_STATE_FAILED;

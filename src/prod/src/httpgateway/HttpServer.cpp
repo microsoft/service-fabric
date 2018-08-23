@@ -43,7 +43,7 @@ ErrorCode HttpGatewayImpl::InitializeServer()
 
     WriteInfo(TraceTypeLifeCycle, "Listening at Root Url - {0}", listenUrl_);
 
-    auto error = FabricClientWrapper::CreateFabricClient(config_, adminClient_, Common::SecurityConfig::GetConfig().IsClientRoleInEffect() ? RoleMask::Admin : RoleMask::None);
+    auto error = FabricClientWrapper::CreateFabricClient(config_, adminClient_, RoleMask::Admin);
     if (!error.IsSuccess()) { return error; }
 
     error = FabricClientWrapper::CreateFabricClient(config_, userClient_, RoleMask::User);
@@ -112,7 +112,16 @@ ErrorCode HttpGatewayImpl::RegisterHandlers()
     if (!error.IsSuccess()) { return error; }
 
     appGatewayRequestHandlerSPtr_ = make_shared<HttpApplicationGateway::GatewayRequestHandler>(*this);
+
+    error = RequestHandlerBase::Create<EventsStoreHandler>(*this, eventsStoreHandlerSPtr_);
+    if (!error.IsSuccess()) { return error; }
 #endif
+
+    error = RequestHandlerBase::Create<ApplicationsResourceHandler>(*this, applicationsResourceHandlerSPtr_);
+    if (!error.IsSuccess()) { return error; }
+
+    error = RequestHandlerBase::Create<VolumesHandler>(*this, volumesHandlerSPtr_);
+   if (!error.IsSuccess()) { return error; }
 
     return error;
 }
@@ -126,6 +135,7 @@ ErrorCode HttpGatewayImpl::CreateHttpClientRequest(
     KAllocator &allocator,
     __in bool allowRedirects,
     __in bool enableCookies,
+    __in bool enableWinauthAutoLogon,
     __out IHttpClientRequestSPtr &clientRequest)
 {
     return defaultHttpClientSPtr_->CreateHttpRequest(
@@ -136,7 +146,8 @@ ErrorCode HttpGatewayImpl::CreateHttpClientRequest(
         allocator,
         clientRequest,
         allowRedirects,
-        enableCookies);
+        enableCookies,
+        enableWinauthAutoLogon);
 }
 #endif
 
@@ -353,6 +364,8 @@ ErrorCode HttpGatewayImpl::InitializeSecurity()
         return ErrorCodeValue::InvalidCredentialType;
     }
 
+    AllowHttpGatewayOnOtherNodes(fabricClientSecuritySettings);
+
     auto securitySettingsCopy = fabricClientSecuritySettings;
     error = adminClient_->SetSecurity(move(fabricClientSecuritySettings));
     if (!error.IsSuccess()) { return error; }
@@ -388,15 +401,36 @@ ErrorCode HttpGatewayImpl::GetGatewayClientCertificateContext()
         return error;
     }
 
-    error = CryptoUtility::GetCertificate(
+    Common::Thumbprint gatewayCertThumbprint;
+
+    error = SecurityUtil::GetX509SvrCredThumbprint(
         X509Default::StoreLocation(),
         config_->ServerAuthX509StoreName,
         x509FindValue,
+        nullptr,
+        gatewayCertThumbprint);
+
+    if (!error.IsSuccess())
+    {
+        WriteError(TraceType, "GetX509SvrCredThumbprint failed, error = {0}", error);
+        return error;
+    }
+
+    WriteInfo(
+        TraceType,
+        "Gateway certificate thumbprint: {0}",
+        gatewayCertThumbprint);
+
+    error = CryptoUtility::GetCertificate(
+        X509Default::StoreLocation(),
+        config_->ServerAuthX509StoreName,
+        L"FindByThumbprint",
+        gatewayCertThumbprint.ToStrings().first,
         clientCertContext_);
 
     if (!error.IsSuccess())
     {
-        WriteError(TraceType, "Error getting the GatewayX509 certificate for connecting as a client: error = {0}", error);
+        WriteError(TraceType, "Error getting the GatewayX509 certificate for connecting as a client: selected thumbprint = {0}, error = {1}", gatewayCertThumbprint.ToStrings().first, error);
         return error;
     }
 
@@ -503,6 +537,23 @@ void HttpGatewayImpl::SecuritySettingsUpdateHandler(weak_ptr<ComponentRoot> cons
     }
 }
 
+void HttpGatewayImpl::AllowHttpGatewayOnOtherNodes(SecuritySettings const & clientSettings)
+{
+    // HTTP gateway instance that acccepts docker REST API call needs to forward the call
+    // to the gateway instance on the destination node, where the call is forwarded to
+    // container endpoint on loopback address. So here we need to treat gateway processes on 
+    // other nodes as admin clients (container API call requires admin role). We do not plan
+    // to support this when client role is disabled, thus they are only added for admin role.
+    if (securitySettings_.SecurityProvider() == SecurityProvider::Ssl)
+    {
+        securitySettings_.AddAdminClientX509Names(clientSettings.RemoteX509Names());
+    }
+    else if (SecurityProvider::IsWindowsProvider(securitySettings_.SecurityProvider()))
+    {
+        securitySettings_.AddAdminClientIdentities(clientSettings.RemoteIdentities());
+    }
+}
+
 ErrorCode HttpGatewayImpl::OnSecuritySettingsUpdated()
 {
     AcquireWriteLock writeLock(securitySettingsUpdateLock_);
@@ -585,6 +636,14 @@ ErrorCode HttpGatewayImpl::OnSecuritySettingsUpdated()
             return error;
         }
     }
+
+    // Update the client cert that gateway will present to services when used as a reverse proxy
+    error = GetGatewayClientCertificateContext();
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
 #endif
     // Update the auth handlers and fabricclientf
     for (auto handlerItr = httpAuthHandlers_.cbegin(); handlerItr != httpAuthHandlers_.cend(); ++handlerItr)
@@ -596,6 +655,8 @@ ErrorCode HttpGatewayImpl::OnSecuritySettingsUpdated()
             return error;
         }
     }
+
+    AllowHttpGatewayOnOtherNodes(fabricClientSecuritySettings);
 
     auto settingsCopy = fabricClientSecuritySettings;
     error = adminClient_->SetSecurity(move(fabricClientSecuritySettings));

@@ -71,10 +71,12 @@
 #include "client/ClientServerTransport/ToggleVerboseServicePlacementHealthReportingMessageBody.h"
 #include "client/ClientServerTransport/uploadsessionrequest.h"
 #include "client/ClientServerTransport/uploadchunkrequest.h"
+#include "client/ClientServerTransport/UploadChunkContentRequest.h"
 #include "client/ClientServerTransport/deleteuploadsessionrequest.h"
 #include "client/ClientServerTransport/createuploadsessionrequest.h"
 #include "client/ClientServerTransport/ImageStoreContentExistsReplyMessageBody.h"
 #include "client/ClientServerTransport/DeleteComposeDeploymentMessageBody.h"
+#include "client/ClientServerTransport/DeleteSingleInstanceDeploymentMessageBody.h"
 
 //
 // Internal ClientServer Transport public headers
@@ -88,16 +90,24 @@
 #include "client/ClientServerTransport/DeleteApplicationMessageBody.h"
 #include "client/ClientServerTransport/FabricVersionMessageBody.h"
 #include "client/ClientServerTransport/CreateServiceMessageBody.h"
+#include "client/ClientServerTransport/CreateApplicationResourceMessageBody.h"
 #include "client/ClientServerTransport/ClusterManagerTcpMessage.h"
 
-#include "client/ClientServerTransport/CreateContainerApplicationRequestHeader.h"
+#include "client/ClientServerTransport/ResourceManagerMessage.h"
+
+#include "client/ClientServerTransport/CreateComposeDeploymentRequestHeader.h"
 #include "client/ClientServerTransport/UpgradeComposeDeploymentRequestHeader.h"
 #include "client/ClientServerTransport/ContainerOperationTcpMessage.h"
+
+#include "client/ClientServerTransport/CreateVolumeMessageBody.h"
+#include "client/ClientServerTransport/DeleteVolumeMessageBody.h"
+#include "client/ClientServerTransport/VolumeOperationTcpMessage.h"
 
 #include "client/ClientServerTransport/QueryAddressHeader.h"
 #include "client/ClientServerTransport/QueryTcpMessage.h"
 #include "client/ClientServerTransport/FileSequenceHeader.h"
 #include "client/ClientServerTransport/FileUploadRequestHeader.h"
+#include "client/ClientServerTransport/FileUploadCreateRequestHeader.h"
 
 #include "client/ClientServerTransport/TokenValidationServiceTcpMessage.h"
 #include "client/ClientServerTransport/InfrastructureServiceTcpMessage.h"
@@ -106,6 +116,7 @@
 #include "client/ClientServerTransport/HealthManagerTcpMessage.h"
 #include "client/ClientServerTransport/RepairManagerTcpMessage.h"
 #include "client/ClientServerTransport/UpgradeOrchestrationServiceTcpMessage.h"
+#include "client/ClientServerTransport/CentralSecretServiceMessage.h"
 
 #include "client/ClientServerTransport/ClientProtocolVersionHeader.h"
 #include "client/ClientServerTransport/PingReplyMessageBody.h"

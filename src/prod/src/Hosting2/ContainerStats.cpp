@@ -14,9 +14,9 @@ Common::WStringLiteral const CpuUsage::TotalUsageParameter(L"total_usage");
 Common::WStringLiteral const CpuStats::CpuUsageParameter(L"cpu_usage");
 
 #if defined(PLATFORM_UNIX)
-Common::WStringLiteral const MemoryStats::CommitBytesParameter(L"usage");
+Common::WStringLiteral const MemoryStats::MemoryUsageParameter(L"usage");
 #else
-Common::WStringLiteral const MemoryStats::CommitBytesParameter(L"commitbytes");
+Common::WStringLiteral const MemoryStats::MemoryUsageParameter(L"privateworkingset");
 #endif
 
 Common::WStringLiteral const ContainerStatsResponse::MemoryStatsParameter(L"memory_stats");

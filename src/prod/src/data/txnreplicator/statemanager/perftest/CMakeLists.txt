@@ -61,8 +61,6 @@ target_link_libraries(${exe_statemanager_perftest}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

@@ -32,9 +32,6 @@ namespace Naming
         __declspec(property(get=Test_get_ActiveServices)) ActiveServiceMap const & Test_ActiveServices;
         ActiveServiceMap const & Test_get_ActiveServices() const { return activeServices_; }
 
-        __declspec (property(get=get_FabricRoot)) Common::ComponentRootSPtr const & FabricRoot;
-        Common::ComponentRootSPtr const & get_FabricRoot() const { return fabricRoot_; }
-
     public:
         
         //
@@ -55,6 +52,10 @@ namespace Naming
             Transport::SecuritySettings const & securitySettings);
 
     private:
+
+        __declspec (property(get=get_FabricRoot)) Common::ComponentRootSPtr const & FabricRoot;
+        Common::ComponentRootSPtr const & get_FabricRoot() const { return fabricRoot_; }
+
         void OnServiceChangeRole(SystemServices::SystemServiceLocation const &, Common::Guid const &, ::FABRIC_REPLICA_ID, ::FABRIC_REPLICA_ROLE);
         void OnServiceCloseReplica(SystemServices::SystemServiceLocation const &, std::shared_ptr<StoreService> const &);
 
@@ -64,7 +65,7 @@ namespace Naming
         Common::ComponentRootSPtr fabricRoot_;
 
         Common::RwLock storeServicesLock_;
-        std::map<Common::Guid, std::weak_ptr<StoreService> > storeServicesWPtrMap_;
+        std::map<Common::Guid, std::weak_ptr<StoreService>> storeServicesWPtrMap_;
 
         Reliability::FederationWrapper & federation_;
         Reliability::ServiceAdminClient & adminClient_;

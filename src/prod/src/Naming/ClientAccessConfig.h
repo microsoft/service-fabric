@@ -185,6 +185,9 @@ namespace Naming
         // Security configuration for starting a node transition
         DEFINE_SECURITY_CONFIG_ADMIN( StartNodeTransition )
 
+        // Get secret values
+        DEFINE_SECURITY_CONFIG_ADMIN(GetSecrets)
+
         // Induces StartClusterConfigurationUpgrade on a partition
         DEFINE_SECURITY_CONFIG_ADMIN( StartClusterConfigurationUpgrade )
 
@@ -211,6 +214,12 @@ namespace Naming
 
         // Invoke container API
         DEFINE_SECURITY_CONFIG_ADMIN( InvokeContainerApi )
+
+        // Creates a volume
+        DEFINE_SECURITY_CONFIG_ADMIN(CreateVolume)
+
+        // Deletes a volume
+        DEFINE_SECURITY_CONFIG_ADMIN(DeleteVolume)
 
         // Admin and User operations
         //

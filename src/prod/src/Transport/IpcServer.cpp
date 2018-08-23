@@ -317,6 +317,7 @@ void IpcServer::Cleanup()
     {
         tlsUnit_->Close();
     }
+    tlsSecurityUpdatedEvent_.Close();
 }
 
 AsyncOperationSPtr IpcServer::BeginRequest(
@@ -433,13 +434,21 @@ ErrorCode IpcServer::SetSecurityTls(Transport::SecuritySettings const & value)
         return ErrorCodeValue::InvalidArgument;
     }
 
-    return tlsUnit_->transport_->SetSecurity(value);
+    auto error = tlsUnit_->transport_->SetSecurity(value);
+    OnTlsSecuritySettingsUpdated();
+    return error;
 }
 
 SecuritySettings const & IpcServer::get_SecuritySettingsTls() const
 {
     Invariant(tlsUnit_);
     return tlsUnit_->transport_->Security()->Settings();
+}
+
+Common::Thumbprint const & IpcServer::get_ServerCertThumbprintTls() const
+{
+    Invariant(tlsUnit_);
+    return tlsUnit_->transport_->Security()->Credentails()->X509CertThumbprint();
 }
 
 void IpcServer::SetMaxIncomingMessageSize(uint value)
@@ -454,4 +463,19 @@ void IpcServer::SetMaxIncomingMessageSize(uint value)
 void IpcServer::DisableIncomingMessageSizeLimit()
 {
     SetMaxIncomingMessageSize((uint)TcpFrameHeader::FrameSizeHardLimit());
+}
+
+HHandler IpcServer::RegisterTlsSecuritySettingsUpdatedEvent(EventHandler const & handler)
+{
+    return tlsSecurityUpdatedEvent_.Add(handler);
+}
+
+bool IpcServer::UnRegisterTlsSecuritySettingsUpdatedEvent(HHandler hHandler)
+{
+    return tlsSecurityUpdatedEvent_.Remove(hHandler);
+}
+
+void IpcServer::OnTlsSecuritySettingsUpdated()
+{
+    tlsSecurityUpdatedEvent_.Fire(EventArgs());
 }

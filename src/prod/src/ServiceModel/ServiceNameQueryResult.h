@@ -12,16 +12,16 @@ namespace ServiceModel
     {
     public:
         ServiceNameQueryResult();
-        ServiceNameQueryResult(Common::Uri const & serviceName);
-        ServiceNameQueryResult(ServiceNameQueryResult const & other);
-        ServiceNameQueryResult(ServiceNameQueryResult && other);
+        explicit ServiceNameQueryResult(Common::Uri const & serviceName);
+
+        ServiceNameQueryResult(ServiceNameQueryResult const & other) = default;
+        ServiceNameQueryResult(ServiceNameQueryResult && other) = default;
+        ServiceNameQueryResult & operator = (ServiceNameQueryResult const & other) = default;
+        ServiceNameQueryResult & operator = (ServiceNameQueryResult && other) = default;
 
         __declspec(property(get=get_ServiceName)) Common::Uri const & ServiceName;
         Common::Uri const & get_ServiceName() const { return serviceName_; }
-
-        ServiceNameQueryResult const & operator = (ServiceNameQueryResult const & other);
-        ServiceNameQueryResult const & operator = (ServiceNameQueryResult && other);
-
+                
         void ToPublicApi(
             __in Common::ScopedHeap & heap, 
             __out FABRIC_SERVICE_NAME_QUERY_RESULT & publicQueryResult) const;

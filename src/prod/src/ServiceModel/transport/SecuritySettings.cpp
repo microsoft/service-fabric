@@ -112,7 +112,7 @@ ErrorCode SecuritySettings::CreateSelfGeneratedCertSslServer(SecuritySettings & 
             L"CN=" + commonName,
             L"CN=" + commonName,
             cert);
-    object.certContext_ = cert.release();
+    object.certContext_ = make_shared<CertContextUPtr>(move(cert));
 
     if (!error.IsSuccess()) { return error; }
 
@@ -120,7 +120,7 @@ ErrorCode SecuritySettings::CreateSelfGeneratedCertSslServer(SecuritySettings & 
     object.securityProvider_ = SecurityProvider::Ssl;
 
     Thumbprint thumbprint;
-    error = thumbprint.Initialize(object.certContext_);
+    error = thumbprint.Initialize(object.certContext_->get());
 
     if (!error.IsSuccess()) { return error; }
 
@@ -133,52 +133,8 @@ ErrorCode SecuritySettings::CreateSelfGeneratedCertSslServer(SecuritySettings & 
 }
 
 _Use_decl_annotations_
-ErrorCode SecuritySettings::GetServerThumbprint(wstring & serverThumbprint) const
-{
-    ASSERT_IFNOT(
-        securityProvider_ == SecurityProvider::Ssl,
-        "Unexpected security provider type at GetServerThumbprint: {0}",
-        securityProvider_);
-    
-    ErrorCode error;
-    if (isSelfGeneratedCert_)
-    {
-        Thumbprint thumbprint;
-        error = thumbprint.Initialize(certContext_);
-        if (!error.IsSuccess()) { return error; }
-        serverThumbprint = thumbprint.PrimaryToString();
-    }
-    else
-    {
-        CertContexts certs;
-        error = CryptoUtility::GetCertificate(
-            x509StoreLocation_,
-            x509StoreName_,
-            x509FindValue_,
-            certs);
-
-        if (!error.IsSuccess())
-        {
-            return error;
-        }
-
-        serverThumbprint = L"";
-        Thumbprint thumbprint;
-        for (auto const & cert : certs)
-        {
-            error = thumbprint.Initialize(cert.get());
-            if (!error.IsSuccess()) { return error; }
-            serverThumbprint += thumbprint.PrimaryToString();
-            serverThumbprint += L",";
-        }
-    }
-
-    return ErrorCode::Success();
-}
-
-_Use_decl_annotations_
 ErrorCode SecuritySettings::CreateSslClient(
-    Common::PCCertContext & certContext,
+    Common::CertContextUPtr & certContext,
     wstring const & serverThumbprint,
     SecuritySettings & object)
 {
@@ -190,7 +146,7 @@ ErrorCode SecuritySettings::CreateSslClient(
 
     object.isSelfGeneratedCert_ = true;
     object.securityProvider_ = SecurityProvider::Ssl;
-    object.certContext_ = certContext;
+    object.certContext_ = make_shared<CertContextUPtr>(move(certContext));
 
     object.SetRemoteCertThumbprints(serverThumbprint);
 
@@ -201,6 +157,21 @@ ErrorCode SecuritySettings::CreateSslClient(
     return ErrorCode::Success();
 }
 
+ErrorCode SecuritySettings::CreateSslClient(
+    wstring const & serverThumbprint,
+    _Out_ SecuritySettings & object)
+{
+    object = SecuritySettings();
+    object.securityProvider_ = SecurityProvider::Ssl;
+    object.isSelfGeneratedCert_ = false;
+    object.protectionLevel_ = ProtectionLevel::EncryptAndSign;
+
+    object.x509StoreLocation_ = X509StoreLocation::CurrentUser;
+    object.x509StoreName_ = L"MY";
+    X509FindValue::Create(X509FindType::FindByThumbprint, serverThumbprint, object.x509FindValue_);
+
+    return object.remoteCertThumbprints_.Add(serverThumbprint);
+}
 
 _Use_decl_annotations_
 ErrorCode SecuritySettings::CreateKerberos(
@@ -1076,6 +1047,26 @@ void SecuritySettings::AddClientToAdminRole(std::wstring const & clientIdentity)
     KInvariant(securityProvider_ == SecurityProvider::Ssl);
     adminClientX509Names_.Add(clientIdentity, defaultX509IssuerThumbprints_);
     remoteX509Names_.Add(clientIdentity, defaultX509IssuerThumbprints_);
+}
+
+void SecuritySettings::AddAdminClientX509Names(SecurityConfig::X509NameMap const & names)
+{
+    adminClientX509Names_.Add(names);
+    remoteX509Names_.Add(names);
+    WriteInfo(
+        TraceType,
+        "AddAdminClientX509Names: after: adminClientX509Names_: {0}; remoteX509Names_: {1}",
+        adminClientX509Names_, remoteX509Names_);
+}
+
+void SecuritySettings::AddAdminClientIdentities(IdentitySet const & identities)
+{
+    adminClientIdentities_.insert(identities.cbegin(), identities.cend());
+    remoteIdentities_.insert(identities.cbegin(), identities.cend());
+    WriteInfo(
+        TraceType,
+        "AddAdminClientIdentities: after: adminClientIdentities_: {0}; remoteIdentities_: {1}",
+        adminClientIdentities_, remoteIdentities_);
 }
 
 SecuritySettings::IdentitySet const & SecuritySettings::RemoteIdentities() const

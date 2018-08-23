@@ -38,7 +38,8 @@ PartitionEntry::PartitionEntry(
     int extraReplicas,
     map<Federation::NodeId, std::vector<uint>> const& ftSecondaryMap,
     std::vector<PlacementReplica *> && standbyReplicas,
-    SearcherSettings const & settings)
+    SearcherSettings const & settings,
+    int targetReplicaSetSize)
     : partitionId_(partitionId),
     version_(version),
     isInTransition_(isInTransition),
@@ -65,7 +66,8 @@ PartitionEntry::PartitionEntry(
     numberOfExtraReplicas_(extraReplicas),
     secondaryAverage_(secondary_),
     standbyReplicas_(move(standbyReplicas)),
-    settings_(settings)
+    settings_(settings),
+    targetReplicaSetSize_(targetReplicaSetSize)
 {
     for (auto itReplica = replicas.begin(); itReplica != replicas.end(); ++itReplica)
     {
@@ -157,7 +159,8 @@ PartitionEntry::PartitionEntry(PartitionEntry && other)
     secondaryMap_(move(other.secondaryMap_)),
     secondaryAverage_(move(other.secondaryAverage_)),
     standbyReplicas_(move(other.standbyReplicas_)),
-    settings_(other.settings_)
+    settings_(other.settings_),
+    targetReplicaSetSize_(other.targetReplicaSetSize_)
 {
     ForEachReplica([&](PlacementReplica * replica)
     {
@@ -200,6 +203,7 @@ PartitionEntry & PartitionEntry::operator = (PartitionEntry && other)
         secondaryMap_ = move(other.secondaryMap_);
         secondaryAverage_ = move(other.secondaryAverage_);
         standbyReplicas_ = move(other.standbyReplicas_);
+        targetReplicaSetSize_ = other.targetReplicaSetSize_;
 
         ForEachReplica([&](PlacementReplica * replica)
         {
@@ -426,7 +430,7 @@ void PartitionEntry::SetUpgradeIndex(size_t upgradeIndex)
 
 PlacementReplica const* PartitionEntry::FindMovableReplicaForSingletonReplicaUpgrade() const
 {
-    if (Service->IsTargetOne)
+    if (IsTargetOne)
     {
         // If partition is in singleton replica upgrade, then new secondary is movable one
         // Node:       N0          N1
@@ -547,18 +551,19 @@ void PartitionEntry::SetSecondaryLoadMap(map<Federation::NodeId, std::vector<uin
     }
 }
 
-GlobalWString const PartitionEntry::TraceDescription = make_global<wstring>(L"[Partitions]\r\n#partitionId serviceName version isInTransition movable primaryLoad secondaryLoad existingReplicas newReplicas standByLocations primarySwapOutLocation primaryUpgradeLocation secondaryUpgradeLocation inUpgrade upgradeIndex");
+GlobalWString const PartitionEntry::TraceDescription = make_global<wstring>(L"[Partitions]\r\n#partitionId serviceName version isInTransition movable primaryLoad secondaryLoad targetReplicaSetSize existingReplicas newReplicas standByLocations primarySwapOutLocation primaryUpgradeLocation secondaryUpgradeLocation inUpgrade upgradeIndex");
 
 void PartitionEntry::WriteTo(TextWriter& writer, FormatOptions const&) const
 {
-    writer.Write("{0} {1} {2} {3} {4} {5} {6} (",
+    writer.Write("{0} {1} {2} {3} {4} {5} {6} {7} (",
         partitionId_,
         service_->Name,
         version_,
         isInTransition_,
         movable_,
         primary_,
-        secondary_);
+        secondary_,
+        targetReplicaSetSize_);
 
     for (auto it = existingReplicas_.begin(); it != existingReplicas_.end(); ++it)
     {

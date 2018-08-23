@@ -20,6 +20,10 @@ namespace LoggingReplicatorTests
             __in KString const & externalBackupFolderPath,
             __in KAllocator & allocator);
 
+    public:
+        __declspec(property(get = get_BackupInfoArray)) KArray<TxnReplicator::BackupInfo> BackupInfoArray;
+        KArray<TxnReplicator::BackupInfo> get_BackupInfoArray() const;
+
     public: // IBackupCallbackHandler
         ktl::Awaitable<bool> UploadBackupAsync(
             __in TxnReplicator::BackupInfo backupInfo,

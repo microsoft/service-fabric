@@ -21,6 +21,7 @@ namespace Data
                 __in_opt PhysicalLogRecord * const lastLinkedPhysicalRecord,
                 __in PhysicalLogRecord & invalidPhysicalLogRecord,
                 __in bool isStable,
+                __in LONG64 periodicTruncationTimeStamp,
                 __in KAllocator & allocator);
 
             static TruncateHeadLogRecord::SPtr Create(
@@ -51,6 +52,12 @@ namespace Data
                 truncationState_ = value;
             }
 
+            __declspec(property(get = get_PeriodicTruncationTimeStamp)) LONG64 PeriodicTruncationTimeStampTicks;
+            LONG64 get_PeriodicTruncationTimeStamp()
+            {
+                return periodicTruncationTimeTicks_;
+            }
+
             bool Test_Equals(__in LogRecord const & other) const override;
 
         protected:
@@ -62,7 +69,8 @@ namespace Data
             void Write(
                 __in Utilities::BinaryWriter & binaryWriter,
                 __inout Utilities::OperationData & operationData,
-                __in bool isPhysicalWrite) override;
+                __in bool isPhysicalWrite, 
+                __in bool forceRecomputeOffsets) override;
 
         private:
 
@@ -78,13 +86,15 @@ namespace Data
                 __in LONG64 lsn,
                 __in_opt PhysicalLogRecord * const lastLinkedPhysicalRecord,
                 __in PhysicalLogRecord & invalidPhysicalLogRecord,
-                __in bool isStable);
+                __in bool isStable,
+                __in LONG64 periodicTruncationTimeStamp);
 
             static const ULONG DiskSpaceUsed;
 
             void UpdateApproximateDiskSize();
 
             bool isStable_;
+            LONG64 periodicTruncationTimeTicks_;
 
             // The state is not persisted
             TruncationState::Enum truncationState_;

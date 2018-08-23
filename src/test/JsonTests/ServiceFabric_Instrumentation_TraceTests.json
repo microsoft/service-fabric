@@ -1,0 +1,30 @@
+{
+  "Default": {
+    "IsCit": "true",
+    "RunLocally": "true"
+  },
+  "Tests": [
+    {
+      "Name": "Microsoft.ServiceFabric.Instrumentation.Tracing.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "vipind, ibabou",
+      "Tags": "Tracing, Instrumentation, EventStore, EventsStore",
+      "TestExecutionParameters": {
+        "TaskName": "Microsoft.ServiceFabric.Instrumentation.Tracing.Test\\Microsoft.ServiceFabric.Instrumentation.Tracing.Test.dll",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "Microsoft.Tracing.WinFabric.Instrumentation.Test.dll",
+      "Type": "TAEFTest",
+      "Owners": "t-jodech, aprameya",
+      "Tags": "TestUnitTest",
+      "IsCit": "false",
+      "TestExecutionParameters": {
+          "TaskName": "Microsoft.Tracing.WinFabric.Instrumentation.Test.dll",
+          "ExecutionTimeout": "43200",
+          "SetupType": "XCopy"
+      }
+    }
+  ]
+}

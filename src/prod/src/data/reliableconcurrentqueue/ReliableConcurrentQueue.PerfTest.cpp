@@ -90,8 +90,8 @@ namespace ReliableConcurrentQueueTests
                 for (int i = 0; i < numDequeues; ++i)
                 {
                     int value = -1;
-                    auto status = co_await rcq->TryDequeueAsync(*transactionSPtr, value, CancellationToken::None);
-                    CODING_ERROR_ASSERT(NT_SUCCESS(status));
+                    bool succeeded = co_await rcq->TryDequeueAsync(*transactionSPtr, value, Common::TimeSpan::MaxValue, CancellationToken::None);
+                    CODING_ERROR_ASSERT(succeeded);
                 }
 
                 co_await transactionSPtr->CommitAsync();
@@ -101,9 +101,9 @@ namespace ReliableConcurrentQueueTests
             lock.AcquireExclusive();
             total += stopwatch.ElapsedMilliseconds;
             deqCount++;
-            auto avg = total / deqCount;
+            // auto avg = total / deqCount;
             lock.ReleaseExclusive();
-            std::cout << avg << std::endl;
+            // std::cout << avg << std::endl;
         }
 
 
@@ -155,16 +155,19 @@ namespace ReliableConcurrentQueueTests
             NTSTATUS status = ktl::AwaitableCompletionSource<NTSTATUS>::Create(this->GetAllocator(), 0, signalCompletion);
             CODING_ERROR_ASSERT(NT_SUCCESS(status));
 
+            ULONG32 countPerTask = count / numTasks;
             for (ULONG32 i = 0; i < numTasks; i++)
             {
-                dequeueTasksSPtr->Append(ContinuouslyDequeueItems(count, *signalCompletion));
+                dequeueTasksSPtr->Append(ContinuouslyDequeueItems(countPerTask, *signalCompletion));
             }
 
             signalCompletion->SetResult(true);
             co_await StoreUtilities::WhenAll(*dequeueTasksSPtr, this->GetAllocator());
 
             stopwatch.Stop();
-            std::cout << stopwatch.ElapsedMilliseconds << std::endl;
+            std::cout << "ParallelEnqueuesOneItemPerTxnAsync(Count=" << count << ", Task=" << numTasks << ") = " << stopwatch.ElapsedMilliseconds << "ms" << std::endl;
+            std::cout << "    = " << count * 1.0f / (stopwatch.ElapsedMilliseconds * 1.0f / 1000.0f) << " OP/S" << std::endl;
+            std::cout << "    = " << stopwatch.ElapsedMilliseconds * 1.0f / count << " ms/OP" << std::endl;
             CODING_ERROR_ASSERT(this->get_RCQ()->Count == 0);
         }
 
@@ -182,7 +185,7 @@ namespace ReliableConcurrentQueueTests
             NTSTATUS status = ktl::AwaitableCompletionSource<NTSTATUS>::Create(this->GetAllocator(), 0, signalCompletion);
             CODING_ERROR_ASSERT(NT_SUCCESS(status));
 
-            LONG32 countPerTask = count / numTasks;
+            ULONG32 countPerTask = count / numTasks;
             for (ULONG32 i = 0; i < numTasks; i++)
             {             
                 enqueueTasksSPtr->Append(ContinuouslyEnqueueItems(countPerTask, *signalCompletion));
@@ -192,7 +195,9 @@ namespace ReliableConcurrentQueueTests
             co_await StoreUtilities::WhenAll(*enqueueTasksSPtr, this->GetAllocator());
 
             stopwatch.Stop();
-            std::cout << stopwatch.ElapsedMilliseconds << std::endl;
+            std::cout << "ParallelEnqueuesOneItemPerTxnAsync(Count=" << count << ", Task=" << numTasks << ") = " << stopwatch.ElapsedMilliseconds << "ms" << std::endl;
+            std::cout << "    = " << count * 1.0f / (stopwatch.ElapsedMilliseconds * 1.0f / 1000.0f) << " OP/S" << std::endl;
+            std::cout << "    = " << stopwatch.ElapsedMilliseconds * 1.0f / count << " ms/OP" << std::endl;
 
             CODING_ERROR_ASSERT(this->get_RCQ()->Count == count);
         }
@@ -235,35 +240,46 @@ namespace ReliableConcurrentQueueTests
 
     BOOST_FIXTURE_TEST_SUITE(ReliableConcurrentQueuePerfTestSuite, ReliableConcurrentQueuePerf)
 
+    BOOST_AUTO_TEST_CASE(ParallelDequeues_OneItemPerTxn_200Tasks)
+    {
+        std::cout << "Test Started : ParallelDequeues_OneItemPerTxn_200Tasks" << std::endl;
+        const ULONG32 totalCount = 1000000;
+        const ULONG32 tasks = 200;
+        std::cout << "Enqueue " << totalCount << " items using " << tasks << " tasks..." << std::endl;
+        SyncAwait(ParallelEnqueuesOneItemPerTxnAsync(totalCount, tasks));
+        std::cout << "Dequeue " << totalCount << " items using " << tasks << " tasks..." << std::endl;
+        SyncAwait(ParallelDequeuesOneItemPerTxnAsync(totalCount, tasks));
+        std::cout << "Test Ended : ParallelDequeues_OneItemPerTxn_200Tasks" << std::endl;
+    }
+
     BOOST_AUTO_TEST_CASE(ParallelEnqueues_OneItemPerTxn_OneMillion_1Task)
     {
+        std::cout << "Test Started : ParallelEnqueues_OneItemPerTxn_OneMillion_1Task" << std::endl;
         const LONG64 totalCount = 1000000;
         SyncAwait(ParallelEnqueuesOneItemPerTxnAsync(totalCount, 1));
+        std::cout << "Test Ended: ParallelEnqueues_OneItemPerTxn_OneMillion_1Task" << std::endl;
     }
 
     BOOST_AUTO_TEST_CASE(ParallelEnqueues_OneItemPerTxn_OneMillion_200Tasks)
     {
+        std::cout << "Test Started : ParallelEnqueues_OneItemPerTxn_OneMillion_200Tasks" << std::endl;
         const LONG64 totalCount = 1000000;
         SyncAwait(ParallelEnqueuesOneItemPerTxnAsync(totalCount, 200));
+        std::cout << "Test Ended: ParallelEnqueues_OneItemPerTxn_OneMillion_200Tasks" << std::endl;
     }
 
     BOOST_AUTO_TEST_CASE(ParallelEnqueues_OneItemPerTxn_1Task_1Minute)
     {
+        std::cout << "Test Started : ParallelEnqueues_OneItemPerTxn_1Task_1Minute" << std::endl;
         SyncAwait(ParallelEnqueuesOneItemPerTxnOneMinuteAsync(1));
+        std::cout << "Test Ended: ParallelEnqueues_OneItemPerTxn_1Task_1Minute" << std::endl;
     }
 
     BOOST_AUTO_TEST_CASE(ParallelEnqueues_OneItemPerTxn_200Tasks_1Minute)
     {
+        std::cout << "Test Started : ParallelEnqueues_OneItemPerTxn_200Tasks_1Minute" << std::endl;
         SyncAwait(ParallelEnqueuesOneItemPerTxnOneMinuteAsync(200));
-    }
-
-    BOOST_AUTO_TEST_CASE(ParallelDequeues_OneItemPerTxn_200Tasks)
-    {
-        const LONG64 totalCount = 1000000;
-        std::cout << L"Enque.." << std::endl;
-        SyncAwait(ParallelEnqueuesOneItemPerTxnAsync(totalCount, 200));
-        std::cout << L"Deque.." << std::endl;
-        SyncAwait(ParallelDequeuesOneItemPerTxnAsync(totalCount, 200));
+        std::cout << "Test Ended: ParallelEnqueues_OneItemPerTxn_200Tasks_1Minute" << std::endl;
     }
 
     BOOST_AUTO_TEST_CASE(OneEnqueue_OneDequeue_PerTxn_VaryEnqueueCount_Async)
@@ -295,7 +311,6 @@ namespace ReliableConcurrentQueueTests
     {
         SyncAwait(Test_ParallelEnqueuesDequeues_MultiplePerTxnAsync());
     }
-
     BOOST_AUTO_TEST_SUITE_END()
 
 #pragma region Test Functions
@@ -528,15 +543,14 @@ namespace ReliableConcurrentQueueTests
             KSharedPtr<TxnReplicator::Transaction> transactionSPtr = CreateReplicatorTransaction();
             KFinally([&] { transactionSPtr->Dispose(); });
 
-            NTSTATUS status;
-
+            bool succeeded;
             for (int i = 0; i < numDequeues; ++i)
             {
                 do
                 {
                     int value;
-                    status = co_await rcq->TryDequeueAsync(*transactionSPtr, value, CancellationToken::None);
-                } while (status == STATUS_UNSUCCESSFUL);
+                    succeeded = co_await rcq->TryDequeueAsync(*transactionSPtr, value, Common::TimeSpan::MaxValue, CancellationToken::None);
+                } while (!succeeded);
             }
             co_await transactionSPtr->CommitAsync();
         }
@@ -570,12 +584,12 @@ namespace ReliableConcurrentQueueTests
             KSharedPtr<TxnReplicator::Transaction> transactionSPtr = CreateReplicatorTransaction();
             KFinally([&] { transactionSPtr->Dispose(); });
             
-            NTSTATUS status;
+            bool succeeded;
             do
             {
                 int value;
-                status = co_await rcq->TryDequeueAsync(*transactionSPtr, value, CancellationToken::None);
-            } while (status == STATUS_UNSUCCESSFUL);
+                succeeded = co_await rcq->TryDequeueAsync(*transactionSPtr, value, Common::TimeSpan::MaxValue, CancellationToken::None);
+            } while (!succeeded);
 
             co_await transactionSPtr->CommitAsync();
         }

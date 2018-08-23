@@ -12,7 +12,7 @@ uint64 AsyncWorkJobItem::GlobalSequenceNumber = 0;
 
 AsyncWorkJobItem::AsyncWorkJobItem()
     : state_(AsyncWorkJobItemState::NotStarted)
-    , sequenceNumber_(InterlockedIncrement(&GlobalSequenceNumber))
+    , sequenceNumber_(InterlockedIncrement64((volatile LONGLONG*) &GlobalSequenceNumber))
     , enqueuedTime_(Stopwatch::Now())
     , workTimeout_(TimeSpan::MaxValue)
     , jobQueueCallback_()
@@ -22,7 +22,7 @@ AsyncWorkJobItem::AsyncWorkJobItem()
 
 AsyncWorkJobItem::AsyncWorkJobItem(TimeSpan const workTimeout)
     : state_(AsyncWorkJobItemState::NotStarted)
-    , sequenceNumber_(InterlockedIncrement(&GlobalSequenceNumber))
+    , sequenceNumber_(InterlockedIncrement64((volatile LONGLONG*) &GlobalSequenceNumber))
     , enqueuedTime_(Stopwatch::Now())
     , workTimeout_(workTimeout)
     , jobQueueCallback_()

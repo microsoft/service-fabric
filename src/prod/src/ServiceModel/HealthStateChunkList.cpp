@@ -27,25 +27,6 @@ HealthStateChunkList::HealthStateChunkList(ULONG totalCount)
 {
 }
 
-HealthStateChunkList::HealthStateChunkList(HealthStateChunkList && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , totalCount_(move(other.totalCount_))
-{
-}
-
-HealthStateChunkList & HealthStateChunkList::operator =(HealthStateChunkList && other)
-{
-    if (this != &other)
-    {
-        totalCount_ = move(other.totalCount_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    return *this;
-}
-
 HealthStateChunkList::~HealthStateChunkList()
 {
 }

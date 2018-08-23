@@ -499,7 +499,23 @@ private:
         auto error = owner_.requestReply_->EndNotification(operation, reply);
 
         // This would be sent over IPC, so clone the reply received from client
-        if (error.IsSuccess()) { reply_ = reply->Clone(); }
+        if (error.IsSuccess()) 
+        { 
+            if (reply.get() == nullptr)
+            {
+                WriteInfo(
+                    TraceComponent,
+                    owner_.TraceId,
+                    "null notification reply message");
+
+                error = ErrorCodeValue::OperationFailed;
+            }
+            else
+            {
+                reply_ = reply->Clone(); 
+            }
+        }
+
         TryComplete(operation->Parent, error);
     }
 

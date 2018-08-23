@@ -64,18 +64,18 @@ namespace PlacementAndLoadBalancingUnitTest
         shared_ptr<TestFM> fm_;
     };
 
-    BOOST_FIXTURE_TEST_SUITE(TestPLBBalancingSuite,TestPLBBalancing)
-    /*
-    BOOST_AUTO_TEST_CASE(BalancingWithGlobalAndIsolatedMetricTest2)
-    {
+    BOOST_FIXTURE_TEST_SUITE(TestPLBBalancingSuite, TestPLBBalancing)
+        /*
+        BOOST_AUTO_TEST_CASE(BalancingWithGlobalAndIsolatedMetricTest2)
+        {
         BalancingWithGlobalAndIsolatedMetricTest();
-    }
-    BOOST_AUTO_TEST_CASE(BalancingWithToBePlacedReplicasTest2)
-    {
+        }
+        BOOST_AUTO_TEST_CASE(BalancingWithToBePlacedReplicasTest2)
+        {
         BalancingWithToBePlacedReplicasTest();
-    }*/
+        }*/
 
-    BOOST_AUTO_TEST_CASE(BalancingBasicTest)
+        BOOST_AUTO_TEST_CASE(BalancingBasicTest)
     {
         Trace.WriteInfo("PLBBalancingTestSource", "BalancingBasicTest");
         PlacementAndLoadBalancing & plb = fm_->PLB;
@@ -1022,6 +1022,255 @@ namespace PlacementAndLoadBalancingUnitTest
         {
             VerifyNodeLoadQuery(plb, i, L"Count", expectedTotalValues);
         }
+    }
+
+    BOOST_AUTO_TEST_CASE(BalancingByPercentage)
+    {
+        // Test scenario there are 4 types of nodes with capacities 10/20/30/40
+        // All replicas are on node 3, and they suppose to get balanced
+        wstring testName = L"BalancingByPercentage";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+
+        PLBConfigScopeChange(MaxSimulatedAnnealingIterations, int, 10000);
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 5);
+
+        wstring metric = L"Metric";
+
+        PLBConfig::KeyIntegerValueMap placementStrategy;
+        placementStrategy.insert(make_pair(metric, 0));
+        PLBConfigScopeChange(PlacementStrategy, PLBConfig::KeyIntegerValueMap, placementStrategy);
+
+        PLBConfig::KeyBoolValueMap balancingByPercentage;
+        balancingByPercentage.insert(make_pair(metric, true));
+        PLBConfigScopeChange(BalancingByPercentage, PLBConfig::KeyBoolValueMap, balancingByPercentage);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        int nodeIndex = 0;
+        for (; nodeIndex < 2; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"A"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), L"Metric/10"));
+        }
+        for (; nodeIndex < 4; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"B"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), L"Metric/20"));
+        }
+        for (; nodeIndex < 6; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"C"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), L"Metric/30"));
+        }
+        for (; nodeIndex < 8; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"D"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), L"Metric/40"));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+        wchar_t metricStr[] = L"Metric/1.0/1/1";
+        int services = 20;
+        for (int i = 0; i < services; i++) {
+            wstring serviceName = wformatString("TestService{0}", i);
+            plb.UpdateService(CreateServiceDescription(serviceName, L"TestType", true, CreateMetrics(metricStr)));
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(i), wstring(serviceName), 0, CreateReplicas(L"P/3"), 0));
+        }
+
+        fm_->RefreshPLB(Stopwatch::Now());
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        
+        // Ideal balance would be 1/1/2/2/3/3/4/4 replicas on nodes 0-7, and in the start all replicas were on node 3
+        // Small deviations from ideal balance are allowed
+
+        VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(L"* move * 3=>0|1", value)) >= 1);
+        VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(L"* move * 3=>0|1", value)) <= 3);
+        VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(L"* move * 3=>2", value)) >= 1);
+        VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(L"* move * 3=>2", value)) <= 3);
+        VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(L"* move * 3=>4|5", value)) >= 5);
+        VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(L"* move * 3=>4|5", value)) <= 7);
+        VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(L"* move * 3=>6|7", value)) >= 7);
+        VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(L"* move * 3=>6|7", value)) <= 9);
+    }
+
+    BOOST_AUTO_TEST_CASE(ReservationOfLoadWithBalancingByPercentage)
+    {
+        // Scenario:
+        // Nodes:        0   1   2   3   4   5   6   7   8   9  10  11
+        // Loads:       18  18  18  18  10  10  10  10  10  10  10  10 
+        // Capacities:  22  22  22  22  22  22  22  22  22  22  16  16
+        // Goal is to have 2 empty nodes with maximum capacity, and the rest is balanced by percentage
+        // The ideal balance would be around 73%, which means around 16/22 usage on larger nodes and around 11-12/16 on smaller nodes, with 2 large nodes empty 
+
+        wstring testName = L"ReservationOfLoadWithBalancingByPercentage";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+
+        wstring metric = L"Metric";
+
+        PLBConfig::KeyIntegerValueMap placementStrategy;
+        placementStrategy.insert(make_pair(metric, 1));
+        PLBConfigScopeChange(PlacementStrategy, PLBConfig::KeyIntegerValueMap, placementStrategy);
+
+        PLBConfig::KeyBoolValueMap balancingByPercentage;
+        balancingByPercentage.insert(make_pair(metric, true));
+        PLBConfigScopeChange(BalancingByPercentage, PLBConfig::KeyBoolValueMap, balancingByPercentage);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        int freeNodesTarget = 2;
+        float defragWeight = 0.5f; // Balance beside emptying
+
+        PLBConfig::KeyDoubleValueMap defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold;
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric, freeNodesTarget));
+        PLBConfigScopeChange(
+            DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold,
+            PLBConfig::KeyDoubleValueMap,
+            defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragEmptyWeight;
+        scopedDefragEmptyWeight.insert(make_pair(metric, defragWeight));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragEmptyWeight);
+
+        PLBConfigScopeChange(MaxSimulatedAnnealingIterations, int, 10);
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 100);
+
+        PLBConfigScopeChange(EnableClusterSpecificInitialTemperature, bool, true);
+
+        PLBConfigScopeChange(ClusterSpecificTemperatureCoefficient, double, 0.001);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        int nodeIndex = 0;
+        for (; nodeIndex < 10; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"DB"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex % 5), wformatString(L"ud{0}", nodeIndex % 5), move(nodeProperties), L"Metric/22"));
+        }
+        for (; nodeIndex < 12; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"WF"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex % 5), wformatString(L"ud{0}", nodeIndex % 5), move(nodeProperties), L"Metric/16"));
+        }
+        
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestTypePrem"), set<NodeId>()));
+
+        wstring serviceName;
+
+        int replicaSize = 1;
+        int serviceCount = 0;
+        int failoverUnitId = 0;
+        // Classic services are placed on all nodes, they have low moveCost and 2 replicas
+        for (; serviceCount < 60; ++serviceCount)
+        {
+            serviceName = wformatString("Service_{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"TestType"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(),                          //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2}", metric, replicaSize, replicaSize)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                1,                                  // partition count
+                2,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}, S/{1}", serviceCount % 12, (serviceCount + 1) % 12)), 0));
+            failoverUnitId++;
+        }
+        // Prem services are placed only on DB nodes, they are larger (size 4), have high moveCost and 4 replicas
+        replicaSize = 4;
+        for (; serviceCount < 62; ++serviceCount)
+        {
+            serviceName = wformatString("ServicePrem{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"TestTypePrem"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(L"NodeType==DB"),           //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2}", metric, replicaSize, replicaSize)),
+                FABRIC_MOVE_COST_HIGH,
+                false,
+                1,                                  // partition count
+                4,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1, S/2, S/3"), 0));
+            failoverUnitId++;
+        }
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        // There should be max 2 moves to nodes 
+        nodeIndex = 0;
+        int emptyNodes = 0;
+        int balancedNodes = 0;
+        for (; nodeIndex < 4; ++nodeIndex) 
+        {
+            // Nodes 0-3 have more load and with higher moveCost replicas therefore they shouldn't be emptied
+            auto fromNode = CountIf(actionList, ActionMatch(wformatString("* move * {0}=>*", nodeIndex), value));
+            auto toNode = CountIf(actionList, ActionMatch(wformatString("* move * *=>{0}", nodeIndex), value));
+            auto load = 18 - fromNode + toNode;
+            if (load >= 15 && load <= 17)
+            {
+                balancedNodes++;
+            }
+        }
+
+        for (; nodeIndex < 10; ++nodeIndex) 
+        {
+            // Node 4-9 are beneficial for emptying
+            auto fromNode = CountIf(actionList, ActionMatch(wformatString("* move * {0}=>*", nodeIndex), value));
+            auto toNode = CountIf(actionList, ActionMatch(wformatString("* move * *=>{0}", nodeIndex), value));
+            auto load = 10 - fromNode + toNode;
+            if (load == 0)
+            {
+                emptyNodes++;
+            }
+            if (load >= 15 && load <= 17)
+            {
+                balancedNodes++;
+            }
+        }
+
+        for (; nodeIndex < 12; ++nodeIndex) 
+        {
+            // Nodes 10 and 11 (WF nodes) are too small for emptying, also they should have less load 11-12 (compared to DB nodes) to be considered balanced 
+            auto fromNode = CountIf(actionList, ActionMatch(wformatString("* move * {0}=>*", nodeIndex), value));
+            auto toNode = CountIf(actionList, ActionMatch(wformatString("* move * *=>{0}", nodeIndex), value));
+            auto load = 10 - fromNode + toNode;
+            if (load == 11 || load == 12)
+            {
+                balancedNodes++;
+            }
+        }
+        // Nodes must be emptied. Expectation is that all the other nodes will be perfectly balanced, but criteria os lowered to 9/10
+        VERIFY_IS_TRUE(emptyNodes == 2);
+        VERIFY_IS_TRUE(balancedNodes >= 9);
+        // Prem services shouldn't be moved
+        VERIFY_ARE_EQUAL(CountIf(actionList, ActionMatch(L"60|61 move * *=>*", value)), 0);
     }
 
     BOOST_AUTO_TEST_CASE(BalancingWithAffinityTest)
@@ -2035,7 +2284,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         PLBConfigScopeChange(PreventTransientOvercommit, bool, true);
         PLBConfigScopeChange(IsTestMode, bool, false); // TODO: remove with fix for 3422258
-        // PLBConfigScopeChange(SwapPrimaryProbability, double, 1); // TODO: allow with fix for 3422258
+                                                       // PLBConfigScopeChange(SwapPrimaryProbability, double, 1); // TODO: allow with fix for 3422258
 
         PLBConfig::KeyDoubleValueMap balancingThresholds;
         balancingThresholds.insert(make_pair(balancingMetric, 1));
@@ -2649,6 +2898,7 @@ namespace PlacementAndLoadBalancingUnitTest
                 switch (currentAction.Action)
                 {
                 case FailoverUnitMovementType::MoveSecondary:
+                case FailoverUnitMovementType::MoveInstance:
                     replicas[GetNodeId(currentAction.SourceNode)]--;
                     replicas[GetNodeId(currentAction.TargetNode)]++;
                     break;
@@ -2670,10 +2920,11 @@ namespace PlacementAndLoadBalancingUnitTest
                     break;
 
                 case FailoverUnitMovementType::AddSecondary:
+                case FailoverUnitMovementType::AddInstance:
                     replicas[GetNodeId(currentAction.TargetNode)]++;
                     break;
 
-                case FailoverUnitMovementType::Void:
+                case FailoverUnitMovementType::RequestedPlacementNotPossible:
                     break;
 
                 default:
@@ -3289,7 +3540,7 @@ namespace PlacementAndLoadBalancingUnitTest
         for (int j = 1; j < 7; j++)
         {
             plb.UpdateFailoverUnit(FailoverUnitDescription(
-                CreateGuid(j), wstring(L"BalancingNodeLoadsTrace2_Service0"), 0, CreateReplicas(wformatString("P/{0}", j*3).c_str()), 0));
+                CreateGuid(j), wstring(L"BalancingNodeLoadsTrace2_Service0"), 0, CreateReplicas(wformatString("P/{0}", j * 3).c_str()), 0));
         }
 
         StopwatchTime now = Stopwatch::Now();
@@ -3888,7 +4139,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         for (int i = 0; i < 20; i++)
         {
-            plb.UpdateNode(CreateNodeDescriptionWithDomainsAndCapacity(i, wformatString(L"dc0/r{0}", i/4), wformatString("{0}", i), L"DefragMetric/100"));
+            plb.UpdateNode(CreateNodeDescriptionWithDomainsAndCapacity(i, wformatString(L"dc0/r{0}", i / 4), wformatString("{0}", i), L"DefragMetric/100"));
         }
         plb.ProcessPendingUpdatesPeriodicTask();
 
@@ -4286,7 +4537,7 @@ namespace PlacementAndLoadBalancingUnitTest
             plb.UpdateService(CreateServiceDescription(serviceName, L"TestType", true, CreateMetrics(wformatString("{0}/1.0/10/10", defragMetric))));
             plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(4), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}, S/{1}", 12, 16)), 0));
 
-           serviceName = wformatString("TestService{0}", 5);
+            serviceName = wformatString("TestService{0}", 5);
             plb.UpdateService(CreateServiceDescription(serviceName, L"TestType", true, CreateMetrics(wformatString("{0}/1.0/10/10", defragMetric))));
             plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(5), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", 13)), 0));
 
@@ -4404,7 +4655,7 @@ namespace PlacementAndLoadBalancingUnitTest
         }
 
         fm_->RefreshPLB(Stopwatch::Now());
-        // Do one more refresh to force SlowBalancing run since the fast one is not able to find any solution.
+        // Do one more refresh to force LoadBalancing run since the fast one is not able to find any solution.
         // Opening bug 7217336 to track this.
         fm_->RefreshPLB(Stopwatch::Now() + PLBConfig::GetConfig().MinLoadBalancingInterval);
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
@@ -4756,7 +5007,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         plb.ProcessPendingUpdatesPeriodicTask();
 
-        // FU became InTransition - balancing operation should NOT be accepted
+        // FT became InTransition - balancing operation should NOT be accepted
         //  - IsInBuild
         //  - IsToBePromoted
         //  - started upgrade
@@ -4804,10 +5055,10 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->RefreshPLB(now);
         thread0->Cancel();
 
-        // only last FU is movable
+        // only last FT is movable
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_IS_TRUE(actionList.size() > 0u);
-        // First 10 FUs will not be movable due to updates
+        // First 10 FTs will not be movable due to updates
         for (int i = 0; i < 10; ++i)
         {
             VERIFY_IS_TRUE(CountIf(actionList, ActionMatch(wformatString(L"{0} move * *=>*", i), value)) == 0u);
@@ -4856,8 +5107,8 @@ namespace PlacementAndLoadBalancingUnitTest
         plb.UpdateServiceType(ServiceTypeDescription(wstring(tempTestType), move(blockList)));
         wstring tempServiceName = wformatString("{0}_TempService", testName);
         plb.UpdateService(CreateServiceDescription(tempServiceName, tempTestType, true, CreateMetrics(wformatString("{0}/1/50/50", metric))));
-            plb.UpdateFailoverUnit(FailoverUnitDescription(
-                CreateGuid(fus), wstring(tempServiceName), 0, CreateReplicas(L"P/0,S/1,S/2"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(
+            CreateGuid(fus), wstring(tempServiceName), 0, CreateReplicas(L"P/0,S/1,S/2"), 0));
 
         plb.ProcessPendingUpdatesPeriodicTask();
 
@@ -5200,7 +5451,7 @@ namespace PlacementAndLoadBalancingUnitTest
             1,                                  // target replica set size
             false));                            // persisted
 
-        // 1 service with 100 partitions, all with primary on node 0
+                                                // 1 service with 100 partitions, all with primary on node 0
         for (; fuIndex < 100; ++fuIndex)
         {
             plb.UpdateFailoverUnit(FailoverUnitDescription(
@@ -5425,7 +5676,7 @@ namespace PlacementAndLoadBalancingUnitTest
             plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(serviceName), 1, CreateReplicas(L"P/0,S/1,S/2"), 1));
         });
 
-        // remove missing replica in order not to have Creation phase
+        // remove missing replica in order not to have NewReplicaPlacement phase
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(serviceName), 2, CreateReplicas(L"P/0,S/1,S/2"), 0));
         plb.ProcessPendingUpdatesPeriodicTask();
 
@@ -6270,7 +6521,7 @@ namespace PlacementAndLoadBalancingUnitTest
             0,                                  // target replica set size
             false));                            // persisted
 
-        // stateless on every node with placement constraint Tenant || Test
+                                                // stateless on every node with placement constraint Tenant || Test
         plb.UpdateService(ServiceDescription(
             L"StatelessOnEveryNodeWithPlacementConstraint2",
             wstring(L"TestType"),
@@ -7058,6 +7309,971 @@ namespace PlacementAndLoadBalancingUnitTest
         VERIFY_IS_TRUE(UDCount == freeNodesTarget);
     }
 
+    BOOST_AUTO_TEST_CASE(DefragNodesWithReservationOverlapping)
+    {
+        wstring testName = L"DefragNodesWithReservationOverlapping";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+        wstring metric = L"DefragMetric";
+        wstring metric2 = L"DefragMetric2";
+
+        if (PLBConfig::GetConfig().IsTestMode)
+        {
+            // This test is slow - execute only in test mode (functional)
+            Trace.WriteInfo("PLBBalancingTestSource", "Skipping {0} (IsTestMode == false).", testName);
+            return;
+        }
+
+        PLBConfigScopeChange(NodesWithReservedLoadOverlap, bool, true);
+
+        PLBConfig::KeyBoolValueMap defragMetricMap;
+        defragMetricMap.insert(make_pair(metric, true));
+        defragMetricMap.insert(make_pair(metric2, true));
+        PLBConfigScopeChange(DefragmentationMetrics, PLBConfig::KeyBoolValueMap, defragMetricMap);
+
+        PLBConfig::KeyBoolValueMap scopedDefragMetricMap;
+        scopedDefragMetricMap.insert(make_pair(metric, true));
+        scopedDefragMetricMap.insert(make_pair(metric2, true));
+        PLBConfigScopeChange(DefragmentationScopedAlgorithmEnabled, PLBConfig::KeyBoolValueMap, scopedDefragMetricMap);
+
+        PLBConfig::KeyIntegerValueMap defragmentationMetricsEmptyNodeThresholds;
+        defragmentationMetricsEmptyNodeThresholds.insert(make_pair(metric2, 10));
+        PLBConfigScopeChange(MetricEmptyNodeThresholds, PLBConfig::KeyIntegerValueMap, defragmentationMetricsEmptyNodeThresholds);
+
+
+        // Change defrag triggering mechanism to not distribuite empty nodes
+        PLBConfig::KeyIntegerValueMap defragmentationEmptyNodeDistributionPolicy;
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric2, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        PLBConfigScopeChange(DefragmentationEmptyNodeDistributionPolicy,
+            PLBConfig::KeyIntegerValueMap,
+            defragmentationEmptyNodeDistributionPolicy);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        const int nodeCount = 10;
+        int freeNodesTarget = 3;
+        float defragWeight = 1.0f; // Don't balance
+
+        PLBConfig::KeyDoubleValueMap defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold;
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric, freeNodesTarget));
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric2, freeNodesTarget + 1));
+        PLBConfigScopeChange(
+            DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold,
+            PLBConfig::KeyDoubleValueMap,
+            defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragEmptyWeight;
+        scopedDefragEmptyWeight.insert(make_pair(metric, defragWeight));
+        scopedDefragEmptyWeight.insert(make_pair(metric2, defragWeight));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragEmptyWeight);
+
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 1500);
+
+        wstring capacities = wformatString("{0}/100,{1}/100", metric, metric2);
+        for (int i = 0; i < nodeCount; ++i)
+        {
+            plb.UpdateNode(CreateNodeDescriptionWithDomainsAndCapacity(i, wformatString("dc0/r{0}", i % 4), wformatString("{0}", i % 3), capacities));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        wstring testType = wformatString("{0}_ServiceType", testName);
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(testType), set<NodeId>()));
+
+        int cnt = 0;
+
+        auto fillNode = [&](int nodeIndex, int loadToAdd, int replicaSize, wstring metricx) -> void
+        {
+            int numToAdd = loadToAdd / replicaSize;
+
+            for (int i = 0; i < numToAdd; ++i)
+            {
+                wstring serviceName = wformatString("{0}_Service_{1}", testName, ++cnt);
+                if (replicaSize == 20)
+                {
+                    plb.UpdateService(
+                        CreateServiceDescription(
+                            serviceName, testType, true, CreateMetrics(wformatString("{0}/0.3/{1}/{2},{3}/0.3/{1}/{2}", metric, replicaSize, 0, metric2))));
+
+                    plb.UpdateFailoverUnit(
+                        FailoverUnitDescription(CreateGuid(cnt), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeIndex)), 0));
+                    fm_->FuMap.insert(
+                        make_pair(
+                            CreateGuid(cnt),
+                            FailoverUnitDescription(CreateGuid(cnt), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeIndex)), 0)));
+                    ++cnt;
+
+                    plb.UpdateFailoverUnit(
+                        FailoverUnitDescription(CreateGuid(cnt), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeIndex + 1)), 0));
+                    fm_->FuMap.insert(
+                        make_pair(
+                            CreateGuid(cnt), 
+                            FailoverUnitDescription(CreateGuid(cnt), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeIndex + 1)), 0)));
+                }
+                else
+                {
+                    plb.UpdateService(
+                        CreateServiceDescription(serviceName, testType, true, CreateMetrics(wformatString("{0}/0.3/{1}/{2}", metricx, replicaSize, 0))));
+
+                    plb.UpdateFailoverUnit(
+                        FailoverUnitDescription(CreateGuid(cnt), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeIndex)), 0));
+                    fm_->FuMap.insert(make_pair(
+                        CreateGuid(cnt), 
+                        FailoverUnitDescription(CreateGuid(cnt), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeIndex)), 0)));
+                }
+            }
+        };
+
+        int config[nodeCount][3] =
+        {
+            0, 50, 25,
+            1, 50, 25,
+            2, 50, 25,
+            3, 50, 25,
+            4, 50, 25,
+            5, 50, 25,
+            6, 50, 25,
+            7, 50, 25,
+            8, 0, 25,
+            9, 0, 25
+        };
+        int config2[nodeCount][3] =
+        {
+            0, 40, 20,
+            1, 50, 25,
+            2, 50, 25,
+            3, 50, 25,
+            4, 50, 25,
+            5, 50, 25,
+            6, 50, 25,
+            7, 50, 25,
+            8, 75, 25,
+            9, 0, 25
+        };
+
+        for (int i = 0; i < nodeCount; ++i)
+        {
+            if (config[i][1] > 0)
+            {
+                fillNode(config[i][0], config[i][1], config[i][2], metric);
+            }
+        }
+        for (int i = 0; i < nodeCount; ++i)
+        {
+            if (config2[i][1] > 0)
+            {
+                fillNode(config2[i][0], config2[i][1], config2[i][2], metric2);
+            }
+        }
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        auto countEmptyNodes = [&]() -> int
+        {
+            int count = 0;
+
+            for (size_t i = 0; i < nodeCount; ++i)
+            {
+                ServiceModel::NodeLoadInformationQueryResult queryResult;
+
+                ErrorCode retValue = plb.GetNodeLoadInformationQueryResult(NodeId(LargeInteger(0, i)), queryResult);
+
+                for (auto it = queryResult.NodeLoadMetricInformation.begin(); it != queryResult.NodeLoadMetricInformation.end(); ++it)
+                {
+                    if (!StringUtility::AreEqualCaseInsensitive(it->Name, metric)) continue;
+
+                    if (it->NodeLoad == 0) ++count;
+                }
+            }
+
+            return count;
+        };
+
+        StopwatchTime now = Stopwatch::Now();
+
+        fm_->ClearMoveActions();
+        fm_->RefreshPLB(now);
+
+        fm_->ApplyActions();
+        for (auto fud = fm_->FuMap.begin(); fud != fm_->FuMap.end(); ++fud)
+        {
+            plb.UpdateFailoverUnit(move(FailoverUnitDescription(fud->second)));
+        }
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        PLBConfigScopeChange(LoadBalancingEnabled, bool, false);
+        fm_->RefreshPLB(now);
+
+        int emptyNodeCount = countEmptyNodes();
+
+        VERIFY_IS_TRUE(emptyNodeCount == freeNodesTarget);
+    }
+
+    BOOST_AUTO_TEST_CASE(DefragTelemetryTest)
+    {
+        wstring testName = L"DefragMultiplePartitionsServicesOverlappingWithBlocklistedNodes";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+        wstring metric0 = L"BalancingMetric1"; //set as Defrag metric, but overrided with PlacementStrategy,
+                                               //also no service reports this metric but it has weight, so it should be counted
+        wstring metric1 = L"BalancingMetric2"; //if nothing set, metric will be balancing
+        wstring metric2 = L"DefragMetric"; //set with DefragmentationMetrics
+        wstring metric3 = L"BalancingWithReservationMetric1"; //set with PlacementStrategy
+        wstring metric4 = L"BalancingWithReservationMetric2"; //set with DefragMetric and EnableScopedDefrag
+        wstring metric5 = L"ReservationMetric"; //set with PlacementStrategy
+        wstring metric6 = L"DefragMetricWeight0"; //if weight is 0, it should be counted as otherMetric
+        // MetricCount per strategies 2/2/1/0/1, +1 other metric (weight 0)
+
+        PLBConfig::KeyBoolValueMap defragMetricMap;
+        defragMetricMap.insert(make_pair(metric0, true));
+        defragMetricMap.insert(make_pair(metric2, true));
+        defragMetricMap.insert(make_pair(metric4, true));
+        defragMetricMap.insert(make_pair(metric6, true));
+        PLBConfigScopeChange(DefragmentationMetrics, PLBConfig::KeyBoolValueMap, defragMetricMap);
+
+        PLBConfig::KeyBoolValueMap scopedDefragMetricMap;
+        scopedDefragMetricMap.insert(make_pair(metric4, true));
+        PLBConfigScopeChange(DefragmentationScopedAlgorithmEnabled, PLBConfig::KeyBoolValueMap, scopedDefragMetricMap);
+
+        PLBConfig::KeyIntegerValueMap placementStrategy;
+        placementStrategy.insert(make_pair(metric0, 0));
+        placementStrategy.insert(make_pair(metric3, 1));
+        placementStrategy.insert(make_pair(metric5, 2));
+        PLBConfigScopeChange(PlacementStrategy, PLBConfig::KeyIntegerValueMap, placementStrategy);
+
+        //Not important for test
+        PLBConfig::KeyIntegerValueMap reservationLoads;
+        reservationLoads.insert(make_pair(metric3, 100));
+        reservationLoads.insert(make_pair(metric4, 100));
+        reservationLoads.insert(make_pair(metric5, 100));
+        PLBConfigScopeChange(ReservedLoadPerNode, PLBConfig::KeyIntegerValueMap, reservationLoads);
+
+        PLBConfig::KeyIntegerValueMap defragmentationEmptyNodeDistributionPolicy;
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric3, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric4, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric5, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        PLBConfigScopeChange(DefragmentationEmptyNodeDistributionPolicy,
+            PLBConfig::KeyIntegerValueMap,
+            defragmentationEmptyNodeDistributionPolicy);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        PLBConfig::KeyDoubleValueMap defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold;
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric2, 1));
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric3, 1));
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric4, 1));
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric5, 1));
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric6, 1));
+        PLBConfigScopeChange(
+            DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold,
+            PLBConfig::KeyDoubleValueMap,
+            defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragEmptyWeight;
+        scopedDefragEmptyWeight.insert(make_pair(metric3, 0.5));
+        scopedDefragEmptyWeight.insert(make_pair(metric4, 0.5));
+        scopedDefragEmptyWeight.insert(make_pair(metric5, 0.5));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragEmptyWeight);
+
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 10);
+
+        PLBConfig::KeyDoubleValueMap globalMetricWeights;
+        globalMetricWeights.insert(make_pair(metric0, 1.0));
+        globalMetricWeights.insert(make_pair(metric1, 1.0));
+        globalMetricWeights.insert(make_pair(metric6, 0.0));
+        PLBConfigScopeChange(GlobalMetricWeights, PLBConfig::KeyDoubleValueMap, globalMetricWeights);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        wstring capacities = wformatString("{0}/100,{1}/100,{2}/100,{3}/100,{4}/100,{5}/100,{6}/100", metric0, metric1, metric2, metric3, metric4, metric5, metric6);
+        for (int i = 0; i < 5; ++i)
+        {
+            plb.UpdateNode(CreateNodeDescriptionWithDomainsAndCapacity(i, wformatString("dc0/r{0}", i % 4), wformatString("{0}", i % 3), capacities));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+
+        wstring metrics = wformatString("{0}/0.3/10/10,{1}/0.3/10/10,{2}/0.3/10/10,{3}/0.3/10/10,{4}/0.3/10/10,{5}/0.3/10/10", metric1, metric2, metric3, metric4, metric5, metric6);
+        wstring serviceName = wformatString("ServiceOnANodeType_{0}", 1);
+        plb.UpdateService(ServiceDescription(
+            wstring(serviceName),
+            wstring(L"TestType"),
+            wstring(L""),
+            true,                               //bool isStateful,
+            wstring(),                          //placementConstraints,
+            wstring(),                          //affinitizedService,
+            true,                               //alignedAffinity,
+            CreateMetrics(metrics),
+            FABRIC_MOVE_COST_LOW,
+            false,
+            1,                                  // partition count
+            2,                                  // target replica set size
+            false));                            // persisted
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1"), 0));
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        PlacementAndLoadBalancingTestHelper const& plbTestHelper = fm_->PLBTestHelper;
+
+        VERIFY_IS_TRUE(plbTestHelper.CheckDefragStatistics(2, 2, 1, 0, 1));
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        VERIFY_IS_TRUE(plbTestHelper.CheckDefragStatistics(2, 2, 1, 0, 1));
+
+        PLBConfig::KeyIntegerValueMap placementStrategyUpgrade;
+        placementStrategyUpgrade.insert(make_pair(metric0, 0));
+        placementStrategyUpgrade.insert(make_pair(metric3, 1));
+        placementStrategyUpgrade.insert(make_pair(metric5, 3)); // Strategy for this metric is changed from Reservation to ReservationWithPacking
+        PLBConfigScopeModify(PlacementStrategy, placementStrategyUpgrade);
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        VERIFY_IS_TRUE(plbTestHelper.CheckDefragStatistics(2, 2, 0, 1, 1));
+
+    }
+    BOOST_AUTO_TEST_CASE(DefragMultiplePartitionsServicesOverlappingWithBlocklistedNodes)
+    {
+        // Test scenario, 10 nodes with 100 capacity for both metrics, and 2 node types with loads as below:
+        // Node/type   0/A  1/A  2/A  3/A  4/A  5/B  6/B  7/B  8/B  9/B  
+        // Metric1      80   80	  60   60             40   40   40   20
+        // Metric2      60   60   60   60                            20
+        //
+        // There are 4 types of services, 2 of them multipartition, some reports only 1, some reports 2 metrics 
+        // With and without placement constraint to one of node types with replicas of 10 load for each reporting metric
+        // Goal is to have 3 fully empty nodes (100 reservation load) for both metrics (since they overlap) and 1 additional empty node for metric2
+        // Low temperature should increase heuristic moves, so 9th node should be emptied without any additional moves, moving only 2 replicas
+
+        wstring testName = L"DefragMultiplePartitionsServicesOverlappingWithBlocklistedNodes";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+        wstring metric = L"DefragMetric1";
+        wstring metric2 = L"DefragMetric2";
+
+        if (PLBConfig::GetConfig().IsTestMode)
+        {
+            // This test is slow - execute only in test mode (functional)
+            Trace.WriteInfo("PLBBalancingTestSource", "Skipping {0} (IsTestMode == false).", testName);
+            return;
+        }
+
+        PLBConfigScopeChange(NodesWithReservedLoadOverlap, bool, true);
+
+        PLBConfig::KeyBoolValueMap defragMetricMap;
+        defragMetricMap.insert(make_pair(metric, true));
+        defragMetricMap.insert(make_pair(metric2, true));
+        PLBConfigScopeChange(DefragmentationMetrics, PLBConfig::KeyBoolValueMap, defragMetricMap);
+
+        PLBConfig::KeyBoolValueMap scopedDefragMetricMap;
+        scopedDefragMetricMap.insert(make_pair(metric, true));
+        scopedDefragMetricMap.insert(make_pair(metric2, true));
+        PLBConfigScopeChange(DefragmentationScopedAlgorithmEnabled, PLBConfig::KeyBoolValueMap, scopedDefragMetricMap);
+
+        PLBConfig::KeyIntegerValueMap reservationLoads;
+        reservationLoads.insert(make_pair(metric, 100));
+        reservationLoads.insert(make_pair(metric2, 100));
+        PLBConfigScopeChange(ReservedLoadPerNode, PLBConfig::KeyIntegerValueMap, reservationLoads);
+
+        // Change defrag triggering mechanism to not distribuite empty nodes
+        PLBConfig::KeyIntegerValueMap defragmentationEmptyNodeDistributionPolicy;
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric2, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        PLBConfigScopeChange(DefragmentationEmptyNodeDistributionPolicy,
+            PLBConfig::KeyIntegerValueMap,
+            defragmentationEmptyNodeDistributionPolicy);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        int freeNodesTarget = 3;
+        float defragWeight = 1.0f; // Don't balance
+
+        PLBConfig::KeyDoubleValueMap defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold;
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric, freeNodesTarget));
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric2, freeNodesTarget + 1));
+        PLBConfigScopeChange(
+            DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold,
+            PLBConfig::KeyDoubleValueMap,
+            defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragEmptyWeight;
+        scopedDefragEmptyWeight.insert(make_pair(metric, defragWeight));
+        scopedDefragEmptyWeight.insert(make_pair(metric2, defragWeight));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragEmptyWeight);
+
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 1500);
+
+        PLBConfigScopeChange(EnableClusterSpecificInitialTemperature, bool, true);
+
+        PLBConfigScopeChange(ClusterSpecificTemperatureCoefficient, double, 0.001);
+
+        wstring capacities = wformatString("{0}/100,{1}/100", metric, metric2);
+        int nodeIndex = 0;
+        for (; nodeIndex < 5; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"A"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), capacities));
+        }
+        for (; nodeIndex < 10; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"B"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), capacities));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestTypeOnBNodes"), set<NodeId>()));
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"MultipartitionServiceType"), set<NodeId>()));
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"MultipartitionServiceTypeOnANodes"), set<NodeId>()));
+
+        wstring serviceName;
+
+        int replicaSize = 10;
+        int serviceCount = 0;
+        int failoverUnitId = 0;
+        for (; serviceCount < 2; ++serviceCount)
+        {
+            serviceName = wformatString("ServiceOnANodeType_{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"TestType"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(L"NodeType==A"),            //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2}", metric, replicaSize, replicaSize)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                1,                                  // partition count
+                2,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1"), 0));
+            failoverUnitId++;
+        }
+
+        for (; serviceCount < 4; ++serviceCount)
+        {
+            serviceName = wformatString("Service_{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"TestTypeOnBNodes"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(L"NodeType==B"),            //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2},{3}/0.3/{1}/{2}", metric, replicaSize, 0, metric2)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                1,                                  // partition count
+                1,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/9"), 0));
+            failoverUnitId++;
+        }
+
+        for (; serviceCount < 6; ++serviceCount)
+        {
+            serviceName = wformatString("ServiceOnANodeType_{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"MultipartitionServiceTypeOnANodes"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(L"NodeType==A"),            //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2},{3}/0.3/{1}/{2}", metric, replicaSize, replicaSize, metric2)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                3,                                  // partition count
+                4,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1, S/2, S/3"), 0));
+            failoverUnitId++;
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1, S/2, S/3"), 0));
+            failoverUnitId++;
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1, S/2, S/3"), 0));
+            failoverUnitId++;
+        }
+
+        for (; serviceCount < 8; ++serviceCount)
+        {
+            serviceName = wformatString("Service_{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"MultipartitionServiceType"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(L""),                       //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2}", metric, replicaSize, replicaSize)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                2,                                  // partition count
+                3,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/6, S/7, S/8"), 0));
+            failoverUnitId++;
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/6, S/7, S/8"), 0));
+            failoverUnitId++;
+        }
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        PlacementAndLoadBalancingTestHelper const& plbTestHelper = fm_->PLBTestHelper;
+
+        VERIFY_IS_TRUE(plbTestHelper.CheckDefragStatistics(0, 2, 0, 0, 0));
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        VERIFY_IS_TRUE(actionList.size() == 2);
+        VERIFY_ARE_EQUAL(2, CountIf(actionList, ActionMatch(L"* move * 9=>*", value)));
+    }
+
+    BOOST_AUTO_TEST_CASE(DefragReservationWithNodesWithLowerCapacityThanRequired)
+    {
+        // Test scenario, 9 nodes with capacity for both metrics and 3 node types with loads as below:
+        // Node/type         0/A  1/A  2/A  3/B  4/B  5/B  6/C  7/C  8/C    
+        // Load/Metric1       50   50    0   50   50    0   50   50    0
+        // Capacity/Metric1  120  120  120  100  100  100   50   50   50 
+        // Load/Metric2       50   50    0   50   50    0   50   50    0                        
+        // Capacity/Metric2   80   80   80  100  100  100  200  200  200
+        //
+        // Reservation goal is to reserve 100 load on 3 nodes for each metric
+        // For Metric 1, only A and B type have enough load if emptied; in start there are 2 enough empty nodes 2 and 5
+        // Beside node 8 is empty, it doesn't have enough load so it shouldn't be considered as reserved so one of nodes of A or B type
+        // Should be emptied a bit
+        // For Metric 2, only B and C type have enough load if emptied; in start there are 4 enough empty nodes 5, 6, 7 and 8
+        // Beside node 3 is empty, it doesn't have enough load so it shouldn't be considered as reserved while 6 and 7 should since there
+        // is already 150 empty amount. There are enough empty nodes for this metric
+        // Empty loads doesn't need to overlap so some replicas from nodes A or B should be moved to have enough reserved load for Metric1
+
+        wstring testName = L"DefragReservationWithNodesWithLowerCapacityThanRequired";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+        wstring metric = L"DefragMetric1";
+        wstring metric2 = L"DefragMetric2";
+
+        if (PLBConfig::GetConfig().IsTestMode)
+        {
+            // This test is slow - execute only in test mode (functional)
+            Trace.WriteInfo("PLBBalancingTestSource", "Skipping {0} (IsTestMode == false).", testName);
+            return;
+        }
+
+        PLBConfig::KeyBoolValueMap defragMetricMap;
+        defragMetricMap.insert(make_pair(metric, true));
+        defragMetricMap.insert(make_pair(metric2, true));
+        PLBConfigScopeChange(DefragmentationMetrics, PLBConfig::KeyBoolValueMap, defragMetricMap);
+
+        PLBConfig::KeyBoolValueMap scopedDefragMetricMap;
+        scopedDefragMetricMap.insert(make_pair(metric, true));
+        scopedDefragMetricMap.insert(make_pair(metric2, true));
+        PLBConfigScopeChange(DefragmentationScopedAlgorithmEnabled, PLBConfig::KeyBoolValueMap, scopedDefragMetricMap);
+
+        PLBConfig::KeyIntegerValueMap reservationLoads;
+        reservationLoads.insert(make_pair(metric, 100));
+        reservationLoads.insert(make_pair(metric2, 100));
+        PLBConfigScopeChange(ReservedLoadPerNode, PLBConfig::KeyIntegerValueMap, reservationLoads);
+
+        // Change defrag triggering mechanism to not distribuite empty nodes
+        PLBConfig::KeyIntegerValueMap defragmentationEmptyNodeDistributionPolicy;
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric2, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        PLBConfigScopeChange(DefragmentationEmptyNodeDistributionPolicy,
+            PLBConfig::KeyIntegerValueMap,
+            defragmentationEmptyNodeDistributionPolicy);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        int freeNodesTarget = 3;
+        float defragWeight = 1.0f; // Don't balance
+
+        PLBConfig::KeyDoubleValueMap defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold;
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric, freeNodesTarget));
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric2, freeNodesTarget));
+        PLBConfigScopeChange(
+            DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold,
+            PLBConfig::KeyDoubleValueMap,
+            defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragEmptyWeight;
+        scopedDefragEmptyWeight.insert(make_pair(metric, defragWeight));
+        scopedDefragEmptyWeight.insert(make_pair(metric2, defragWeight));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragEmptyWeight);
+
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 10);
+
+        PLBConfigScopeChange(EnableClusterSpecificInitialTemperature, bool, true);
+
+        PLBConfigScopeChange(ClusterSpecificTemperatureCoefficient, double, 0.001);
+
+        wstring capacities1 = wformatString("{0}/120,{1}/80", metric, metric2);
+        wstring capacities2 = wformatString("{0}/100,{1}/100", metric, metric2);
+        wstring capacities3 = wformatString("{0}/50,{1}/200", metric, metric2);
+        
+        int nodeIndex = 0;
+        for (; nodeIndex < 3; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"A"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), capacities1));
+        }
+        for (; nodeIndex < 6; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"B"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), capacities2));
+        }
+        for (; nodeIndex < 9; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"B"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), capacities3));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+
+        wstring serviceName;
+
+        int replicaSize = 10;
+        int serviceCount = 0;
+        int failoverUnitId = 0;
+
+        for (; serviceCount < 5; ++serviceCount)
+        {
+            serviceName = wformatString("ServiceOnANodeType_{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"TestType"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(),                          //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2},{3}/0.3/{1}/{2}", metric, replicaSize, replicaSize, metric2)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                1,                                  // partition count
+                6,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1, S/3, S/4, S/6, S/7"), 0));
+            failoverUnitId++;
+        }
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        // Only 3 replicas should be moved from node 0 or 1, no additional moves should be made
+        VERIFY_IS_TRUE(actionList.size() == 3);
+    }
+
+    BOOST_AUTO_TEST_CASE(DefragReservationWithBlocklistedNodes)
+    {
+        // Test scenario, 8 nodes of 2 types, with capacity and with loads as below:
+        // Node/type         0/A  1/A  2/A  3/A  4/B  5/B  6/B  7/B    
+        // Load/Metric1      150  100   50    0    0    0    0    0
+        // Capacity/Metric1  200  200  200  200  200  200  200  200 
+        
+        // Reservation goal is to reserve 200 load on 2 nodes
+        // All services are constrained on A nodeType, so even B type is empty, it is not good to reserve capacity on B type
+        // Due to that, 2 nodes of A type should have 200 reserved load
+        // Lower temperature should made only heuristic moves, least possible, so that would be emptying node 2 with removing
+        // all load from it - 5 replicas (each service has 1 replica of 10 load). Due to reservation with balancing, additional moves can be made
+
+        wstring testName = L"DefragReservationWithBlocklistedNodes";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+        wstring metric = L"DefragMetric1";
+
+        if (PLBConfig::GetConfig().IsTestMode)
+        {
+            // This test is slow - execute only in test mode (functional)
+            Trace.WriteInfo("PLBBalancingTestSource", "Skipping {0} (IsTestMode == false).", testName);
+            return;
+        }
+
+        PLBConfig::KeyBoolValueMap defragMetricMap;
+        defragMetricMap.insert(make_pair(metric, true));
+        PLBConfigScopeChange(DefragmentationMetrics, PLBConfig::KeyBoolValueMap, defragMetricMap);
+
+        PLBConfig::KeyBoolValueMap scopedDefragMetricMap;
+        scopedDefragMetricMap.insert(make_pair(metric, true));
+        PLBConfigScopeChange(DefragmentationScopedAlgorithmEnabled, PLBConfig::KeyBoolValueMap, scopedDefragMetricMap);
+
+        PLBConfig::KeyIntegerValueMap reservationLoads;
+        reservationLoads.insert(make_pair(metric, 200));
+        PLBConfigScopeChange(ReservedLoadPerNode, PLBConfig::KeyIntegerValueMap, reservationLoads);
+
+        // Change defrag triggering mechanism to not distribuite empty nodes
+        PLBConfig::KeyIntegerValueMap defragmentationEmptyNodeDistributionPolicy;
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric, Metric::DefragDistributionType::SpreadAcrossFDs_UDs));
+        PLBConfigScopeChange(DefragmentationEmptyNodeDistributionPolicy,
+            PLBConfig::KeyIntegerValueMap,
+            defragmentationEmptyNodeDistributionPolicy);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        int freeNodesTarget = 2;
+        float defragWeight = 0.5f; //Balance also
+
+        PLBConfig::KeyDoubleValueMap defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold;
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric, freeNodesTarget));
+        PLBConfigScopeChange(
+            DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold,
+            PLBConfig::KeyDoubleValueMap,
+            defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragEmptyWeight;
+        scopedDefragEmptyWeight.insert(make_pair(metric, defragWeight));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragEmptyWeight);
+
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 1000);
+
+        PLBConfigScopeChange(EnableClusterSpecificInitialTemperature, bool, true);
+
+        PLBConfigScopeChange(ClusterSpecificTemperatureCoefficient, double, 0.001);
+
+        wstring capacity = wformatString("{0}/200", metric);
+
+        int nodeIndex = 0;
+        for (; nodeIndex < 4; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"A"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), capacity));
+        }
+        for (; nodeIndex < 8; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"B"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), capacity));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+
+        wstring serviceName;
+
+        int replicaSize = 10;
+        int serviceCount = 0;
+        int failoverUnitId = 0;
+
+        for (; serviceCount < 30; ++serviceCount)
+        {
+            serviceName = wformatString("ServiceOnANodeType_{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"TestType"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(L"NodeType==A"),            //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2}", metric, replicaSize, 0)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                1,                                  // partition count
+                1,                                  // target replica set size
+                false));                            // persisted
+            
+            // 15 services on node 0, 10 on node 1, and 5 on node 2
+            int nodeId = 0;
+            if (failoverUnitId < 15)
+            {
+                nodeId = 0;
+            }
+            else if (failoverUnitId < 25)
+            {
+                nodeId = 1;
+            }
+            else
+            {
+                nodeId = 2;
+            }
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeId)), 0));
+            failoverUnitId++;
+        }
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+
+        VERIFY_ARE_EQUAL(5, CountIf(actionList, ActionMatch(L"* move * 2=>0|1", value)));
+    }
+
+    BOOST_AUTO_TEST_CASE(DefragMultipleMetricsPickMaxCapacityForReservation)
+    {
+        // Test scenario, 8 nodes of 2 types, with capacity and with loads as below:
+        // Node/type         0/A  1/A  2/A  3/A  4/A  5/A  6/B  7/B    
+        // Load/Metric1      100  100   50   50   10    0   10    0
+        // Capacity/Metric1  200  200  200  200  200  200  150  150 
+
+        // Amount of reservation load per node is not set only emptyNodeThreshold on 0, so we pick nodes with max capacity
+        // Number of nodes with reservation is 2, and A type have higher capacity, so one of A type should be emptied
+        // despite node 7 is empty(it is B type - doesn't have 200 capacity)
+        // Beside that reservation, all replicas have also 10 load for metric2 which is balancing metric and shouldn't destroy defrag goal
+
+        wstring testName = L"DefragMultipleMetricsPickMaxCapacityForReservation";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+        wstring defragMetric = L"DefragMetric";
+        wstring balancingMetric = L"BalancingMetric";
+
+        if (PLBConfig::GetConfig().IsTestMode)
+        {
+            // This test is slow - execute only in test mode (functional)
+            Trace.WriteInfo("PLBBalancingTestSource", "Skipping {0} (IsTestMode == false).", testName);
+            return;
+        }
+
+        PLBConfig::KeyBoolValueMap defragMetricMap;
+        defragMetricMap.insert(make_pair(defragMetric, true));
+        PLBConfigScopeChange(DefragmentationMetrics, PLBConfig::KeyBoolValueMap, defragMetricMap);
+
+        PLBConfig::KeyBoolValueMap scopedDefragMetricMap;
+        scopedDefragMetricMap.insert(make_pair(defragMetric, true));
+        PLBConfigScopeChange(DefragmentationScopedAlgorithmEnabled, PLBConfig::KeyBoolValueMap, scopedDefragMetricMap);
+
+        // Change defrag triggering mechanism to not distribuite empty nodes
+        PLBConfig::KeyIntegerValueMap defragmentationEmptyNodeDistributionPolicy;
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(defragMetric, Metric::DefragDistributionType::SpreadAcrossFDs_UDs));
+        PLBConfigScopeChange(DefragmentationEmptyNodeDistributionPolicy,
+            PLBConfig::KeyIntegerValueMap,
+            defragmentationEmptyNodeDistributionPolicy);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        int freeNodesTarget = 2;
+        float defragWeight = 0.5f; //Balance also
+
+        PLBConfig::KeyDoubleValueMap defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold;
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(defragMetric, freeNodesTarget));
+        PLBConfigScopeChange(
+            DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold,
+            PLBConfig::KeyDoubleValueMap,
+            defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragEmptyWeight;
+        scopedDefragEmptyWeight.insert(make_pair(defragMetric, defragWeight));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragEmptyWeight);
+
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 10);
+
+        PLBConfigScopeChange(EnableClusterSpecificInitialTemperature, bool, true);
+
+        PLBConfigScopeChange(ClusterSpecificTemperatureCoefficient, double, 0.001);
+
+        wstring capacities1 = wformatString("{0}/200,{1}/300", defragMetric, balancingMetric);
+        wstring capacities2 = wformatString("{0}/150,{1}/200", defragMetric, balancingMetric);
+
+        int nodeIndex = 0;
+        for (; nodeIndex < 6; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"A"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex % 3), wformatString(L"ud{0}", nodeIndex % 3), move(nodeProperties), capacities1));
+        }
+        for (; nodeIndex < 8; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"B"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex % 3), wformatString(L"ud{0}", nodeIndex % 3), move(nodeProperties), capacities2));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+
+        wstring serviceName;
+
+        int replicaSize = 10;
+        int serviceCount = 0;
+        int failoverUnitId = 0;
+
+        for (; serviceCount < 32; ++serviceCount)
+        {
+            serviceName = wformatString("Service_{0}", serviceCount);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"TestType"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(),            //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2},{3}/0.3/{1}/{2}", defragMetric, replicaSize, 0, balancingMetric)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                1,                                  // partition count
+                1,                                  // target replica set size
+                false));                            // persisted
+
+            // 10 services on node 0, 10 on node 1, 5 on node 2, 5 on node 3, 1 on node 4 and 1 on node 6
+            int nodeId = 0;
+            if (failoverUnitId < 10)
+            {
+                nodeId = 0;
+            }
+            else if (failoverUnitId < 20)
+            {
+                nodeId = 1;
+            }
+            else if (failoverUnitId < 25)
+            {
+                nodeId = 2;
+            }
+            else if (failoverUnitId < 30)
+            {
+                nodeId = 3;
+            }
+            else if (failoverUnitId < 31)
+            {
+                nodeId = 4;
+            }
+            else
+            {
+                nodeId = 6;
+            }
+
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(failoverUnitId), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeId)), 0));
+            failoverUnitId++;
+        }
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        // Low temperature should pick next move for defrag.
+        VERIFY_ARE_EQUAL(1, CountIf(actionList, ActionMatch(L"30 move primary 4=>*", value)));
+        // There will be more moves because of balancing also
+        VERIFY_IS_TRUE(actionList.size() > 0);
+    }
+
     BOOST_AUTO_TEST_CASE(DefragBalancedStartVerifyEmptyNodesInDifferentDomainsMultiplePartitionServices)
     {
         wstring testName = L"DefragBalancedStartVerifyEmptyNodesInDifferentDomainsMultiplePartitionServices";
@@ -7218,6 +8434,131 @@ namespace PlacementAndLoadBalancingUnitTest
         VERIFY_IS_TRUE(emptyNodeCount == freeNodesTarget);
         VERIFY_IS_TRUE(FDCount == freeNodesTarget);
         VERIFY_IS_TRUE(UDCount == freeNodesTarget);
+    }
+
+    BOOST_AUTO_TEST_CASE(LoadReservationWithDifferentNodeCapacityTest)
+    {
+        // Test scenario:
+        // Node/type   0/A  1/A  2/A  3/A  4/A  5/B  6/B  7/B  8/B  9/B  
+        // Capacity    200  200  200  200  200  110  110  110  110  110 
+        // Load        150  150   50   50   50   50   50   50   50   50
+        //
+        // Each replica has 10 load, there are 10 services with replicas on nodes 1 and 2, constrained to A nodeType
+        // and 5 other (primary)replicas from different services on each node
+        // PLB tries to reserve 70 load on 4 nodes (there are 3 "empty enough" nodes in start")
+        // Goal should be done by making only 1 move of replica from nodes 5-9
+
+        wstring testName = L"LoadReservationWithDifferentNodeCapacityTest";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+
+        PLBConfigScopeChange(MaxSimulatedAnnealingIterations, int, 10);
+        PLBConfigScopeChange(SimulatedAnnealingIterationsPerRound, int, 10);
+
+        wstring metric = L"Metric";
+
+        PLBConfig::KeyBoolValueMap defragMetricMap;
+        defragMetricMap.insert(make_pair(metric, true));
+        PLBConfigScopeChange(DefragmentationMetrics, PLBConfig::KeyBoolValueMap, defragMetricMap);
+
+        PLBConfig::KeyIntegerValueMap placementStrategy;
+        placementStrategy.insert(make_pair(metric, 2));
+        PLBConfigScopeChange(PlacementStrategy, PLBConfig::KeyIntegerValueMap, placementStrategy);
+
+        // Change defrag triggering mechanism to not distribuite empty nodes
+        PLBConfig::KeyIntegerValueMap defragmentationEmptyNodeDistributionPolicy;
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric, Metric::DefragDistributionType::NumberOfEmptyNodes));
+        PLBConfigScopeChange(DefragmentationEmptyNodeDistributionPolicy,
+            PLBConfig::KeyIntegerValueMap,
+            defragmentationEmptyNodeDistributionPolicy);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        int freeNodesTarget = 4;
+        float emptyNodeWeight = 1.0;
+        int reservedLoadOnNodes = 70;
+
+        PLBConfig::KeyDoubleValueMap nodesWithReservation;
+        nodesWithReservation.insert(make_pair(metric, freeNodesTarget));
+        PLBConfigScopeChange(DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold, PLBConfig::KeyDoubleValueMap, nodesWithReservation);
+
+        PLBConfig::KeyIntegerValueMap reservedLoadPerNode;
+        reservedLoadPerNode.insert(make_pair(metric, reservedLoadOnNodes));
+        PLBConfigScopeChange(ReservedLoadPerNode, PLBConfig::KeyIntegerValueMap, reservedLoadPerNode);
+
+        PLBConfig::KeyDoubleValueMap defragmentationEmptyNodeWeight;
+        defragmentationEmptyNodeWeight.insert(make_pair(metric, emptyNodeWeight));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, defragmentationEmptyNodeWeight);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        int nodeIndex = 0;
+        for (; nodeIndex < 5; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"A"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), L"Metric/200"));
+        }
+        for (; nodeIndex < 10; ++nodeIndex)
+        {
+            map<wstring, wstring> nodeProperties;
+            nodeProperties.insert(make_pair(L"NodeType", L"B"));
+            plb.UpdateNode(CreateNodeDescription(nodeIndex, wformatString(L"fd/{0}", nodeIndex), wformatString(L"ud{0}", nodeIndex), move(nodeProperties), L"Metric/110"));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"OtherType"), set<NodeId>()));
+
+        wstring serviceName;
+
+        int replicaSize = 10;
+        int j = 0;
+        for (; j < 10; ++j)
+        {
+            serviceName = wformatString("ServiceOnANodeType_{0}", j);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"TestType"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(L"NodeType==A"),            //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2}", metric, replicaSize, replicaSize)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                1,                                  // partition count
+                2,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(j), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1"), 0));
+        }
+
+        for (; j < 60; ++j)
+        {
+            serviceName = wformatString("Service_{0}", j);
+            plb.UpdateService(ServiceDescription(
+                wstring(serviceName),
+                wstring(L"OtherType"),
+                wstring(L""),
+                true,                               //bool isStateful,
+                wstring(L""),                       //placementConstraints,
+                wstring(),                          //affinitizedService,
+                true,                               //alignedAffinity,
+                CreateMetrics(wformatString("{0}/0.3/{1}/{2}", metric, replicaSize, 0)),
+                FABRIC_MOVE_COST_LOW,
+                false,
+                1,                                  // partition count
+                1,                                  // target replica set size
+                false));                            // persisted
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(j), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", j % 10)), 0));
+        }
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        VERIFY_IS_TRUE(1 <= CountIf(actionList, ActionMatch(L"* move * 5|6|7|8|9=>*", value)));
     }
 
     BOOST_AUTO_TEST_CASE(DefragScopedTriggeringEmptyNodesPositive)
@@ -7708,6 +9049,125 @@ namespace PlacementAndLoadBalancingUnitTest
         VERIFY_IS_FALSE(actionList.empty());
     }
 
+    BOOST_AUTO_TEST_CASE(DefragScopedNonEmptyNodesWeightTest)
+    {
+        wstring testName = L"DefragScopedNonEmptyNodesWeightTest";
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+        wstring metric = L"DefragMetric";
+
+        PLBConfig::KeyBoolValueMap defragMetricMap;
+        defragMetricMap.insert(make_pair(metric, true));
+        PLBConfigScopeChange(DefragmentationMetrics, PLBConfig::KeyBoolValueMap, defragMetricMap);
+
+        PLBConfig::KeyBoolValueMap scopedDefragMetricMap;
+        scopedDefragMetricMap.insert(make_pair(metric, true));
+        PLBConfigScopeChange(DefragmentationScopedAlgorithmEnabled, PLBConfig::KeyBoolValueMap, scopedDefragMetricMap);
+
+        // Change defrag triggering mechanism to not distribuite empty nodes
+        PLBConfig::KeyIntegerValueMap defragmentationEmptyNodeDistributionPolicy;
+        defragmentationEmptyNodeDistributionPolicy.insert(make_pair(metric, Metric::DefragDistributionType::SpreadAcrossFDs_UDs));
+        PLBConfigScopeChange(DefragmentationEmptyNodeDistributionPolicy,
+            PLBConfig::KeyIntegerValueMap,
+            defragmentationEmptyNodeDistributionPolicy);
+
+        PLBConfig::KeyDoubleValueMap placementHeuristicEmptySpacePercent;
+        placementHeuristicEmptySpacePercent.insert(make_pair(metric, 0.0));
+        PLBConfigScopeChange(PlacementHeuristicEmptySpacePercent, PLBConfig::KeyDoubleValueMap, placementHeuristicEmptySpacePercent);
+
+        PLBConfig::KeyDoubleValueMap placementIncomingLoadFactor;
+        placementIncomingLoadFactor.insert(make_pair(metric, 1.4));
+        PLBConfigScopeChange(PlacementHeuristicIncomingLoadFactor, PLBConfig::KeyDoubleValueMap, placementIncomingLoadFactor);
+
+        PLBConfigScopeChange(MinPlacementInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(MinConstraintCheckInterval, TimeSpan, TimeSpan::MaxValue);
+        PLBConfigScopeChange(ProcessPendingUpdatesInterval, TimeSpan, TimeSpan::MaxValue);
+
+        PLBConfig::KeyIntegerValueMap placementStrategy;
+        placementStrategy.insert(make_pair(metric, 1));
+        PLBConfigScopeChange(PlacementStrategy,
+            PLBConfig::KeyIntegerValueMap,
+            placementStrategy);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        const int nodeCount = 4;
+        int freeNodesTarget = 1;
+        float defragEmptyNodesWeight = 0.5;
+        float defragNonEmptyNodesWeight = 0;
+
+        PLBConfig::KeyDoubleValueMap defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold;
+        defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold.insert(make_pair(metric, freeNodesTarget));
+        PLBConfigScopeChange(DefragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold, PLBConfig::KeyDoubleValueMap, defragmentationMetricsPercentOrNumberOfEmptyNodesTriggeringThreshold);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragEmptyWeight;
+        scopedDefragEmptyWeight.insert(make_pair(metric, defragEmptyNodesWeight));
+        PLBConfigScopeChange(DefragmentationEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragEmptyWeight);
+
+        PLBConfig::KeyDoubleValueMap scopedDefragNonEmptyWeight;
+        scopedDefragNonEmptyWeight.insert(make_pair(metric, defragNonEmptyNodesWeight));
+        PLBConfigScopeChange(DefragmentationNonEmptyNodeWeight, PLBConfig::KeyDoubleValueMap, scopedDefragNonEmptyWeight);
+
+        PLBConfig::KeyDoubleValueMap balancingThresholds;
+        balancingThresholds.insert(make_pair(metric, 3.0));
+        PLBConfigScopeChange(MetricBalancingThresholds, PLBConfig::KeyDoubleValueMap, balancingThresholds);
+
+        for (int i = 0; i < nodeCount; ++i)
+        {
+            plb.UpdateNode(CreateNodeDescriptionWithDomainsAndCapacity(i, wformatString("dc0/r{0}", i % 4), wformatString("{0}", i % 3), wformatString("{0}/100", metric)));
+        }
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        wstring testType = wformatString("{0}_ServiceType", testName);
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(testType), set<NodeId>()));
+
+        int cnt = 0;
+
+        auto fillNode = [&](int nodeIndex, int loadToAdd, int replicaSize) -> void
+        {
+            int numToAdd = loadToAdd / replicaSize;
+
+            for (int i = 0; i < numToAdd; ++i)
+            {
+                wstring serviceName = wformatString("{0}_Service_{1}", testName, ++cnt);
+                plb.UpdateService(CreateServiceDescription(serviceName, testType, true, CreateMetrics(wformatString("{0}/1/{1}/{2}", metric, replicaSize, 0))));
+                plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(cnt), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeIndex)), 0));
+                fm_->FuMap.insert(make_pair(CreateGuid(cnt), FailoverUnitDescription(CreateGuid(cnt), wstring(serviceName), 0, CreateReplicas(wformatString("P/{0}", nodeIndex)), 0)));
+            }
+        };
+
+        fillNode(0, 10, 10);
+        fillNode(0, 40, 40);
+        fillNode(1, 10, 10);
+        fillNode(1, 20, 20);
+        fillNode(2, 10, 10);
+        fillNode(2, 20, 20);
+        fillNode(3, 10, 10);
+
+        // Initial placement:
+        // Nodes    | N0(M1:50/100) | N1(M1:30/100) | N2(M1:30/100) | N2(M1:10/100) |
+        // Service1 |       P       |               |               |               |
+        // Service2 |       P       |               |               |               |
+        // Service3 |               |       P       |               |               |
+        // Service4 |               |       P       |               |               |
+        // Service5 |               |               |       P       |               |
+        // Service6 |               |               |       P       |               |
+        // Service7 |               |               |               |       P       |
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        StopwatchTime now = Stopwatch::Now();
+
+        fm_->ClearMoveActions();
+        fm_->RefreshPLB(now);
+
+        VerifyPLBAction(plb, L"LoadBalancing");
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        VERIFY_ARE_EQUAL(1u, actionList.size());
+        VERIFY_ARE_EQUAL(1, CountIf(actionList, ActionMatch(L"7 move primary 3=>*", value)));
+    }
+
     BOOST_AUTO_TEST_CASE(RestrictedDefragBasicTest)
     {
         // There are 50 nodes, each with 8 replicas
@@ -7783,7 +9243,7 @@ namespace PlacementAndLoadBalancingUnitTest
             {
                 for (int j = 0; j < 8; ++j)
                 {
-                    int replicaSize = 10+j;
+                    int replicaSize = 10 + j;
                     wstring serviceName = wformatString("Service_{0}", ++cnt);
                     plb.UpdateService(ServiceDescription(
                         wstring(serviceName),
@@ -7806,7 +9266,7 @@ namespace PlacementAndLoadBalancingUnitTest
             {
                 for (int j = 0; j < 8; ++j)
                 {
-                    int replicaSize = 20+j;
+                    int replicaSize = 20 + j;
                     wstring serviceName = wformatString("Service_{0}", ++cnt);
                     plb.UpdateService(ServiceDescription(
                         wstring(serviceName),
@@ -8669,7 +10129,7 @@ namespace PlacementAndLoadBalancingUnitTest
     */
     BOOST_AUTO_TEST_SUITE_END()
 
-    void TestPLBBalancing::BalancingThrottlingHelper(uint limit)
+        void TestPLBBalancing::BalancingThrottlingHelper(uint limit)
     {
         // This test helper expects that number of movements is throttled to limit
         // Throttling is set in the test that is calling the helper

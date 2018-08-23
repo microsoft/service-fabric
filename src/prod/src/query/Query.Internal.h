@@ -21,10 +21,6 @@
 #include "query/QueryMessage.h"
 
 #include "query/QueryAddress.h"
-#include "query/QueryAddressGenerator.h"
-#include "query/QueryAddresses.h"
-
-#include "query/QueryArgument.h"
 #include "query/QuerySpecification.h"
 #include "query/QuerySpecificationStore.h"
 #include "query/ParallelQuerySpecification.h"
@@ -35,6 +31,7 @@
 
 #include "query/GetApplicationListQuerySpecification.h"
 #include "query/GetApplicationServiceListQuerySpecification.h"
+#include "query/GetDeployedCodePackageParallelQuerySpecification.h"
 #include "query/GetSystemServiceListQuerySpecification.h"
 #include "query/GetServicePartitionListQuerySpecification.h"
 #include "query/GetServicePartitionReplicaListQuerySpecification.h"
@@ -43,3 +40,7 @@
 #include "query/GetUnplacedReplicaInformationQuerySpecificationHelper.h"
 #include "query/GetServiceNameQuerySpecificationHelper.h"
 #include "query/GetApplicationPagedListDeployedOnNodeQuerySpecification.h"
+#include "query/GetApplicationResourceListQuerySpecification.h"
+#include "query/GetServiceResourceListQuerySpecification.h"
+#include "query/GetContainerCodePackageLogsQuerySpecification.h"
+#include "query/GetReplicaResourceListQuerySpecification.h"

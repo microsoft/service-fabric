@@ -137,9 +137,10 @@ ULONG TransactionLogRecord::GetSizeOnWire() const
 void TransactionLogRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
 
     if (replicatedData_ == nullptr)
     {
@@ -169,9 +170,12 @@ void TransactionLogRecord::Write(
         ULONG32 physicalStartPosition = binaryWriter.Position;
         binaryWriter.Position += sizeof(ULONG32);
         
-        if (parentTransactionRecordOffset_ == Constants::InvalidPhysicalRecordOffset)
+        if (parentTransactionRecordOffset_ == Constants::InvalidPhysicalRecordOffset || forceRecomputeOffsets == true)
         {
-            ASSERT_IFNOT(!LogRecord::IsInvalid(parentTransactionRecord_.RawPtr()), "Invalid parent xact log record");
+            ASSERT_IFNOT(
+                !LogRecord::IsInvalid(parentTransactionRecord_.RawPtr()) || forceRecomputeOffsets == true,
+                "Invalid parent xact log record. forceRecomputeOffsets={0}",
+                forceRecomputeOffsets);
 
             if (parentTransactionRecord_ == nullptr)
             {

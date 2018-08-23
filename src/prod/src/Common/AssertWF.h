@@ -238,8 +238,7 @@ namespace Common
         static bool IsStackTraceCaptureEnabled();
         static void LoadConfiguration(Common::Config & config);
         
-        static void SetCrashLeasingApplicationCallback(void(*callback) (void));
-
+        static std::wstring TryCaptureStackTrace();
     private:
         static __declspec(noreturn) void DoFailFast(std::string const & message);
         static void DoTestAssert(std::string const & message);

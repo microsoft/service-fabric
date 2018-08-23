@@ -63,14 +63,19 @@ ktl::Awaitable<bool> BackupLogFileAsyncEnumerator::MoveNextAsync(
             GetThisAllocationTag());
         THROW_ON_FAILURE(status);
 
+        ktl::io::KFileStream::SPtr localFileStream = nullptr;
         status = ktl::io::KFileStream::Create(
-            fileStreamSPtr_,
+            localFileStream,
             GetThisAllocator(),
             GetThisAllocationTag());
         THROW_ON_FAILURE(status);
 
-        status = co_await fileStreamSPtr_->OpenAsync(*fileSPtr_);
+        status = co_await localFileStream->OpenAsync(*fileSPtr_);
         THROW_ON_FAILURE(status);
+
+        // Create the local FileStream and set the member only if open file stream is successful.
+        // This is used to avoid CloseAsync call on fileStream if Create succeed but OpenAsync failed.
+        fileStreamSPtr_ = Ktl::Move(localFileStream);
     }
 
     // Step 2: If there are items in the cache that have not been returned yet,
@@ -109,8 +114,22 @@ ktl::Awaitable<void> BackupLogFileAsyncEnumerator::CloseAsync()
         co_return;
     }
 
-    co_await fileStreamSPtr_->CloseAsync();
-    fileSPtr_->Close();
+    // In the case of creating FileStream failed, fileStreamSPtr_ is nullptr, close call on it will AV.
+    if (fileStreamSPtr_ != nullptr)
+    {
+        NTSTATUS status = co_await fileStreamSPtr_->CloseAsync();
+        ASSERT_IFNOT(
+            NT_SUCCESS(status),
+            "BackupLogFileAsyncEnumerator: CloseAsync: Close file stream failed. Status: {0} FileName: {1}",
+            status,
+            static_cast<LPCWSTR>(fileName_));
+    }
+
+    // Note: Handle the case if KBlockFile throw exception, fileSPtr_ will be nullptr.
+    if (fileSPtr_ != nullptr)
+    {
+        fileSPtr_->Close();
+    }
 
     isDisposed_ = true;
 

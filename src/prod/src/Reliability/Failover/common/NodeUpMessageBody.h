@@ -89,6 +89,9 @@ namespace Reliability
         __declspec (property(get=get_ClusterConnectionPort)) ULONG ClusterConnectionPort;
         ULONG get_ClusterConnectionPort() const { return nodeDescription_.ClusterConnectionPort; }
 
+        __declspec (property(get = get_httpGatewayPort)) unsigned short HttpGatewayPort;
+        unsigned short get_httpGatewayPort() const { return nodeDescription_.HttpGatewayPort; }
+
         __declspec (property(get=get_AnyReplicaFound)) bool AnyReplicaFound;
         bool get_AnyReplicaFound() const { return anyReplicaFound_; }
 

@@ -36,13 +36,17 @@ namespace Hosting2
         ApplicationHostClosedEventHHandler RegisterApplicationHostClosedEventHandler(ApplicationHostClosedEventHandler const & handler);
         bool UnregisterApplicationHostClosedEventHandler(ApplicationHostClosedEventHHandler const & hHandler);
 
+        AvailableContainerImagesEventHHandler RegisterSendAvailableContainerImagesEventHandler(AvailableContainerImagesEventHandler const & handler);
+        bool UnregisterSendAvailableContainerImagesEventHandler(AvailableContainerImagesEventHHandler const & hHandler);
+
     public:
         void EnqueueServiceTypeEnabledEvent(ServiceTypeStatusEventArgs && eventArgs);
         void EnqueueServiceTypeDisabledEvent(ServiceTypeStatusEventArgs && eventArgs);
         void EnqueueServiceTypeRegisteredEvent(ServiceTypeRegistrationEventArgs && eventArgs);
         void EnqueueApplicationHostClosedEvent(ApplicationHostClosedEventArgs && eventArgs);
         void EnqueueRuntimeClosedEvent(RuntimeClosedEventArgs && eventArgs);
-        
+        void EnqueueAvaialableImagesEvent(SendAvailableContainerImagesEventArgs && eventArgs);
+
         Common::ErrorCode OnOpen();
         Common::ErrorCode OnClose();
         void OnAbort();
@@ -60,5 +64,7 @@ namespace Hosting2
         ServiceTypeEnabledEvent serviceTypeEnabledEvent_;
         RuntimeClosedEvent runtimeClosedEvent_;
         ApplicationHostClosedEvent applicationHostClosedEvent_;
+        HostingJobQueueUPtr availableContainerImagesQueue_;
+        SendAvailableContainerImagesEvent sendAvailableContainerImagesEvent_;
     };
 }

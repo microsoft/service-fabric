@@ -108,7 +108,7 @@ namespace
             e.Data = make_shared<MonitoringData>(monitoringData);
             e.SequenceNumber = 0;
             e.Elapsed = elapsed;
-            e.Error = error;
+			e.Error = error;
             events_.push_back(e);
         }
 
@@ -290,16 +290,16 @@ void TestMonitoringComponent::CreateComponent()
     root_ = make_shared<MyRoot>();
 
     MonitoringComponentConstructorParameters parameters;
-    parameters.ClearSlowHealthReportCallback = [this](MonitoringHealthEventList const & events) { eventList_.HealthCallback(EventName::ClearHealthSlow, events); };
-    parameters.SlowHealthReportCallback = [this](MonitoringHealthEventList const & events) { eventList_.HealthCallback(EventName::HealthSlow, events); };
+    parameters.ClearSlowHealthReportCallback = [this](MonitoringHealthEventList const & events, MonitoringComponentMetadata const &) { eventList_.HealthCallback(EventName::ClearHealthSlow, events); };
+    parameters.SlowHealthReportCallback = [this](MonitoringHealthEventList const & events, MonitoringComponentMetadata const &) { eventList_.HealthCallback(EventName::HealthSlow, events); };
     parameters.Root = root_.get();
     parameters.ScanInterval = TimeSpan::FromMinutes(20); // high value - dont want timer to actually fire in the test
 
     component_ = make_unique<MonitoringComponent>(
         parameters,
-        [this](MonitoringData const & data) { eventList_.ApiTrace(EventName::TraceStart, data, TimeSpan::Zero, ErrorCodeValue::Success); },
-        [this](MonitoringData const & data) { eventList_.ApiTrace(EventName::TraceSlow, data, TimeSpan::Zero, ErrorCodeValue::Success); },
-        [this](MonitoringData const & data, TimeSpan elapsed, ErrorCode const & error) { eventList_.ApiTrace(EventName::TraceEnd, data, elapsed, error); });
+        [this](MonitoringData const & data, MonitoringComponentMetadata const &) { eventList_.ApiTrace(EventName::TraceStart, data, TimeSpan::Zero, ErrorCodeValue::Success); },
+        [this](MonitoringData const & data, MonitoringComponentMetadata const &) { eventList_.ApiTrace(EventName::TraceSlow, data, TimeSpan::Zero, ErrorCodeValue::Success); },
+        [this](MonitoringData const & data, TimeSpan elapsed, ErrorCode const & error, MonitoringComponentMetadata const &) { eventList_.ApiTrace(EventName::TraceEnd, data, elapsed, error); });
 }
 
 void TestMonitoringComponent::TestSetup()
@@ -308,7 +308,7 @@ void TestMonitoringComponent::TestSetup()
 
     CreateComponent();
 
-    component_->Open();
+    component_->Open(MonitoringComponentMetadata(L"", L""));
 }
 
 bool TestMonitoringComponent::TestCleanup()

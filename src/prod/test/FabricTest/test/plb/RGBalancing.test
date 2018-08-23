@@ -1,0 +1,131 @@
+###############################################################################
+# Test: RGBalancing.Test
+# Owners: nipuzovi, yangli, anuragg
+# This test verifies that PLB will balance based on CPU and memory usage.
+# Conditions are constrained due to different node capacities, so balance can be
+# achieved only partially. Default metrics are not used in this test.
+###############################################################################
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set BalancingDelayAfterNewNode 0
+set NamingOperationTimeout 120
+#use fast balancing
+set PLBActionRetryTimes 30
+set DeactivationGraceInterval 5
+set DeactivationFailedRetryIntervalRange to 0
+set LocalResourceManagerTestMode true
+
++10 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:1024
++20 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:1024
++30 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:512
+verify
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+app.servicepack versionTC1 ServicePackageA version=v1 resources=CPU,2,MemoryInMB,512
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA version=v1
+
+app.add versionTC2 TestAppTC2 vTC2
+app.clear versionTC2
+app.servicepack versionTC2 ServicePackageA version=v1 resources=CPU,2,MemoryInMB,200
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC2 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.servicepack versionTC2 ServicePackageB version=v1 resources=CPU,2,MemoryInMB,50
+app.servicetypes versionTC2 ServicePackageB ServiceTypeB stateful persist
+app.codepack versionTC2 ServicePackageB CodeB types=ServiceTypeB version=v1
+
+app.upload versionTC1
+provisionapp versionTC1
+createapp fabric:/MyApp1 TestAppTC1 vTC1
+verify
+
+app.upload versionTC2
+provisionapp versionTC2
+createapp fabric:/MyApp2 TestAppTC2 vTC2
+verify
+
+createservice fabric:/MyApp1/service1 ServiceTypeA y 1 3 persist appname=fabric:/MyApp1 metrics=dummy,Low,0,0 servicePackageActivationMode=SharedProcess
+verify
+
+!waitforstate FM.Replica.State.fabric:/MyApp1/service1.10 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp1/service1.20 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp1/service1.30 Ready
+
+createservice fabric:/MyApp2/service2 ServiceTypeA y 1 2 persist appname=fabric:/MyApp2 metrics=dummy,Low,1,1 servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/MyApp2/service3 ServiceTypeA y 1 2 persist appname=fabric:/MyApp2 metrics=dummy,Low,1,1 servicePackageActivationMode=ExclusiveProcess
+verify
+
+!waitforstate FM.Replica.State.fabric:/MyApp2/service2.10 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp2/service2.20 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp2/service3.10 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp2/service3.20 Ready
+verifynodeload nodeid:10 servicefabric:/_CpuCores 6
+verifynodeload nodeid:20 servicefabric:/_CpuCores 6
+verifynodeload nodeid:30 servicefabric:/_CpuCores 2
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 912
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 912
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 512
+verifyresourceonnode 10 servicefabric:/_CpuCores 6
+verifyresourceonnode 20 servicefabric:/_CpuCores 6
+verifyresourceonnode 30 servicefabric:/_CpuCores 2
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 912
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 912
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 512
+
++40 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:300
+verify
+
+set QueryOperationRetryCount 20
+!pause 10
+#we can only move a single replica to the new node for balancing
+verifynodeload nodeid:40 servicefabric:/_CpuCores 2
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 200
+verifynodeload nodeid:40 dummy 1
+verifyresourceonnode 40 servicefabric:/_CpuCores 2
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 200
+
+createservice fabric:/MyApp2/service4 ServiceTypeB y 1 1 persist appname=fabric:/MyApp2 metrics=dummy,Low,0,0 servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/MyApp2/service5 ServiceTypeB y 1 1 persist appname=fabric:/MyApp2 metrics=dummy,Low,0,0 servicePackageActivationMode=SharedProcess
+verify
+
+!waitforstate FM.Replica.State.fabric:/MyApp2/service4.40 Ready
+!waitforstate FM.Replica.State.fabric:/MyApp2/service5.40 Ready
+verifynodeload nodeid:40 servicefabric:/_CpuCores 6
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 300
+verifynodeload nodeid:40 dummy 1
+verifyresourceonnode 40 servicefabric:/_CpuCores 6
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 300
+verify
+
++50 cap=servicefabric:/_CpuCores:6,servicefabric:/_MemoryInMB:300
+verify
+
+!pause 40
+verifynodeload nodeid:10 servicefabric:/_CpuCores 4
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 712
+verifyresourceonnode 10 servicefabric:/_CpuCores 4
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 712
+verifynodeload nodeid:10 dummy 1
+verifynodeload nodeid:20 servicefabric:/_CpuCores 4
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 712
+verifyresourceonnode 20 servicefabric:/_CpuCores 4
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 712
+verifynodeload nodeid:20 dummy 1
+verifynodeload nodeid:40 servicefabric:/_CpuCores 4
+verifynodeload nodeid:40 servicefabric:/_MemoryInMB 250
+verifyresourceonnode 40 servicefabric:/_CpuCores 4
+verifyresourceonnode 40 servicefabric:/_MemoryInMB 250
+verifynodeload nodeid:40 dummy 1
+verifynodeload nodeid:50 servicefabric:/_CpuCores 4
+verifynodeload nodeid:50 servicefabric:/_MemoryInMB 250
+verifyresourceonnode 50 servicefabric:/_CpuCores 4
+verifyresourceonnode 50 servicefabric:/_MemoryInMB 250
+verifynodeload nodeid:50 dummy 1
+
+!q
+

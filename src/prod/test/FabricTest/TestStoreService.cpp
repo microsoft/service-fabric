@@ -404,15 +404,46 @@ void TestStoreService::StartCopyOperationPump(Common::ComPointer<IFabricStateRep
 ErrorCode TestStoreService::GetReplicationQueueCounters(
     __out FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS & counters)
 {
-    ComPointer<IFabricInternalStateReplicator> internalReplicator;
-    HRESULT hr = replicator_->QueryInterface(IID_IFabricInternalStateReplicator, internalReplicator.VoidInitializationAddress());
+    ComPointer<IFabricInternalStateReplicator> internalStateReplicator;
+    HRESULT hr = replicator_->QueryInterface(IID_IFabricInternalStateReplicator, internalStateReplicator.VoidInitializationAddress());
 
     if(SUCCEEDED(hr))
     {
-        return ErrorCode::FromHResult(internalReplicator->GetReplicationQueueCounters(&counters));
+        return ErrorCode::FromHResult(internalStateReplicator->GetReplicationQueueCounters(&counters));
     }
 
     return ErrorCodeValue::NotFound;
+}
+
+ErrorCode TestStoreService::GetReplicatorQueryResult(__out ServiceModel::ReplicatorStatusQueryResultSPtr & result)
+{
+    ComPointer<IFabricInternalReplicator> internalReplicator;
+    HRESULT hr = replicator_->QueryInterface(IID_IFabricInternalReplicator, internalReplicator.VoidInitializationAddress());
+
+    if (SUCCEEDED(hr))
+    {
+        ComPointer<IFabricGetReplicatorStatusResult> replicatorStatusResult;
+        hr = internalReplicator->GetReplicatorStatus(replicatorStatusResult.InitializationAddress());
+
+        if (SUCCEEDED(hr))
+        {
+            FABRIC_REPLICA_ROLE role = replicatorStatusResult->get_ReplicatorStatus()->Role;
+            result = ServiceModel::ReplicatorStatusQueryResult::CreateSPtr(role);
+
+            if (role == FABRIC_REPLICA_ROLE_PRIMARY)
+            {
+                std::shared_ptr<ServiceModel::PrimaryReplicatorStatusQueryResult> primaryQueryResult = static_pointer_cast<ServiceModel::PrimaryReplicatorStatusQueryResult>(result);
+                primaryQueryResult->FromPublicApi(*replicatorStatusResult->get_ReplicatorStatus());
+                result = primaryQueryResult;
+            }
+            else
+            {
+                result->FromPublicApi(*replicatorStatusResult->get_ReplicatorStatus());
+            }
+        }
+    }
+
+    return ErrorCode::FromHResult(hr);
 }
 
 void TestStoreService::StartReplicationOperationPump(Common::ComPointer<IFabricStateReplicator> const & replicator)

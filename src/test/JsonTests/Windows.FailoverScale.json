@@ -5,7 +5,7 @@
     {
       "Name": "FMScale_SL_1I (PaaS)",
       "Type": "V2_Dll_Perf_Test_Quark",
-      "Owners": "chuxin,aprameyr",
+      "Owners": "chuxin,manojsi",
       "ResourcesRequired": "Server:11",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -22,10 +22,30 @@
         "CleanupTimeout": "3600"
       }
     },
+	{
+      "Name": "FMScale_SL_1I_SRPP (PaaS)",
+      "Type": "V2_Dll_Perf_Test_Quark",
+      "Owners": "chuxin,aprameyr",
+      "ResourcesRequired": "Server:11",
+      "TestExecutionParameters": {
+        "SetupType": "Perf",
+        "SetupTimeout": "3600",
+        "PerfTestTaskName": "FMScale_SL_1I_SRPP (PaaS)",
+        "ExpectedResultsFileName": "FailoverScalePerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\FailoverScale_SRPP.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "FailoverTestCases",
+        "TaskName": "FMScale_SL_1I",
+        "InstalledFeaturesFile": "WinFabricTest\\Config\\FailoverScaleInstalledFeatures.txt",
+        "ExecutionTimeout": "64800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "3600"
+      }
+    },
     {
       "Name": "FMScale_SV3R (PaaS)",
       "Type": "V2_Dll_Perf_Test_Quark",
-      "Owners": "chuxin,aprameyr",
+      "Owners": "chuxin,manojsi",
       "ResourcesRequired": "Server:11",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -45,7 +65,7 @@
     {
       "Name": "FMScale_SP3R (PaaS)",
       "Type": "V2_Dll_Perf_Test_Quark",
-      "Owners": "chuxin,aprameyr",
+      "Owners": "chuxin,manojsi",
       "ResourcesRequired": "Server:11",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -65,7 +85,7 @@
     {
       "Name": "FMScale_KVS3R (PaaS)",
       "Type": "V2_Dll_Perf_Test_Quark",
-      "Owners": "chuxin,aprameyr",
+      "Owners": "chuxin,manojsi",
       "ResourcesRequired": "Server:11",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -85,7 +105,7 @@
     {
       "Name": "FMScale_SP3R_stress (PaaS)",
       "Type": "V2_Dll_Perf_Test",
-      "Owners": "chuxin,aprameyr",
+      "Owners": "chuxin,manojsi",
       "ResourcesRequired": "Server:12",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -105,7 +125,7 @@
     {
       "Name": "FMScale_SP3R_phw (LAB)",
       "Type": "V2_Dll_Perf_Test_Quark",
-      "Owners": "chuxin,aprameyr",
+      "Owners": "chuxin,manojsi",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:21;Group=Failover-Scale",
       "TestExecutionParameters": {

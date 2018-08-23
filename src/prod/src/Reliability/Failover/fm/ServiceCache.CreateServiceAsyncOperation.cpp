@@ -96,6 +96,7 @@ void ServiceCache::CreateServiceAsyncOperation::OnStart(AsyncOperationSPtr const
         0, // update id default value
         ApplicationCapacityDescription(),
         ServiceModel::ServicePackageResourceGovernanceMap(),
+        ServiceModel::CodePackageContainersImagesMap(),
         lockedApplication_,
         isNewApplication_);
 
@@ -168,6 +169,7 @@ void ServiceCache::CreateServiceAsyncOperation::OnStart(AsyncOperationSPtr const
                 service_->IsServiceUpdateNeeded = false;
                 service_->IsToBeDeleted = false;
                 service_->IsDeleted = false;
+                service_->IsForceDelete = false;
                 service_->ClearFailoverUnitIds();
             }
         }
@@ -300,12 +302,21 @@ void ServiceCache::CreateServiceAsyncOperation::FinishCreateService(AsyncOperati
         for (auto const& consistencyUnitDescription : consistencyUnitDescriptions_)
         {
             serviceCache_.fm_.ServiceEvents.ServiceCreated(serviceDescription_.Name, serviceDescription_.Instance, consistencyUnitDescription.ConsistencyUnitId.ToString());
+
+            // Push data into Event Store.
             serviceCache_.fm_.ServiceEvents.ServiceCreatedOperational(
-                serviceDescription_.ApplicationName,
-                serviceDescription_.ApplicationId.ApplicationTypeName,
+                Common::Guid::NewGuid(),
                 serviceDescription_.Name,
                 serviceDescription_.Type.ServiceTypeName,
-                consistencyUnitDescription.ConsistencyUnitId.ToString());
+                serviceDescription_.ApplicationName,
+                serviceDescription_.ApplicationId.ApplicationTypeName,
+                serviceDescription_.Instance,
+                serviceDescription_.IsStateful,
+                serviceDescription_.PartitionCount,
+                serviceDescription_.TargetReplicaSetSize,
+                serviceDescription_.MinReplicaSetSize,
+                wformatString(serviceDescription_.PackageVersion),
+                consistencyUnitDescription.ConsistencyUnitId.Guid);
         }
     }
     else

@@ -13,7 +13,7 @@
 
 namespace Transport
 {
-    typedef std::function<void(Common::ErrorCodeValue::Enum error, MessageUPtr && message)> SendStatusCallback;
+    typedef std::function<void(Common::ErrorCode const & error, MessageUPtr && message)> SendStatusCallback;
     typedef std::vector<Common::const_buffer>::iterator BufferIterator;
 
     class Message : public Common::TextTraceComponent<Common::TraceTaskCodes::Transport>, public TransportObject
@@ -66,7 +66,7 @@ namespace Transport
 
         void SetSendStatusCallback(SendStatusCallback const & sendStatusCallback);
         bool HasSendStatusCallback() const;
-        void OnSendStatus(Common::ErrorCodeValue::Enum error, MessageUPtr && message);
+        void OnSendStatus(Common::ErrorCode const & error, MessageUPtr && message);
 
         // For tracing
         bool IsReply() const;

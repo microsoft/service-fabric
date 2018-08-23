@@ -15,12 +15,11 @@ namespace Management
             : public Serialization::FabricSerializable
             , public Common::IFabricJsonSerializable
         {
-            DENY_COPY(ChaosTargetFilter)
-
         public:
 
             ChaosTargetFilter();
-            ChaosTargetFilter(ChaosTargetFilter &&);
+            ChaosTargetFilter(ChaosTargetFilter const &) = default;
+            ChaosTargetFilter(ChaosTargetFilter &&) = default;
 
             __declspec(property(get = get_NodeTypeInclusionList)) Common::StringCollection const & NodeTypeInclusionList;
             Common::StringCollection const & get_NodeTypeInclusionList() const { return nodeTypeInclusionList_; }

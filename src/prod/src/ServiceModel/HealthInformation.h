@@ -42,8 +42,8 @@ namespace ServiceModel
 
         virtual ~HealthInformation();
 
-        HealthInformation(HealthInformation && other);
-        HealthInformation & operator = (HealthInformation && other);
+        HealthInformation(HealthInformation && other) = default;
+        HealthInformation & operator = (HealthInformation && other) = default;
 
         __declspec(property(get=get_SourceId)) std::wstring const& SourceId;
         std::wstring const& get_SourceId() const { return sourceId_; }

@@ -155,6 +155,7 @@ upgrade_package()
         echo "Installing debian file at ${packagePath}"
         apt-get update
         dpkg -i ${packagePath}
+        apt-get update
         apt-get install -fy
     elif [ $DistroInstallerType == DISTRO_RPM ]; then
         if [ $versionCompare -eq -1 ]; then # first version smaller

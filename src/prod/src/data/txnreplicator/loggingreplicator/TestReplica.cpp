@@ -192,18 +192,24 @@ void TestReplica::Initialize(
 void TestReplica::Initialize(
     __in int seed, 
     __in bool skipChangeRoleToPrimary, 
-    __in bool delayApis)
+    __in bool delayApis,
+    __in bool useTestLogTruncationManager,
+    __in TRANSACTIONAL_REPLICATOR_SETTINGS * publicSettings)
 {
     SyncAwait(InitializeAsync(
         seed,
         skipChangeRoleToPrimary,
-        delayApis));
+        delayApis,
+        useTestLogTruncationManager,
+        publicSettings));
 }
 
 Awaitable<void> TestReplica::InitializeAsync(
     __in int seed, 
     __in bool skipChangeRoleToPrimary, 
-    __in bool delayApis)
+    __in bool delayApis,
+    __in bool useTestLogTruncationManager,
+    __in TRANSACTIONAL_REPLICATOR_SETTINGS * publicSettings)
 {
     KShared$ApiEntry();
 
@@ -225,7 +231,15 @@ Awaitable<void> TestReplica::InitializeAsync(
         prId_->TracePartitionId.ToString(),
         prId_->ReplicaId);
 
-    config_ = TRInternalSettings::Create(nullptr, make_shared<TransactionalReplicatorConfig>());
+    TransactionalReplicatorSettingsUPtr tmp = nullptr;
+
+    if (publicSettings != nullptr)
+    {
+        auto error = TransactionalReplicatorSettings::FromPublicApi(*publicSettings, tmp);
+        VERIFY_IS_TRUE(error.IsSuccess());
+    }
+    
+    config_ = TRInternalSettings::Create(move(tmp), make_shared<TransactionalReplicatorConfig>());
 
     testPartition_ = TestStatefulServicePartition::Create(allocator);
     recoveredOrCopiedCheckpointState_ = RecoveredOrCopiedCheckpointState::Create(allocator);
@@ -242,7 +256,7 @@ Awaitable<void> TestReplica::InitializeAsync(
     versionManager_ = TestLoggingReplicatorToVersionManager::Create(allocator);
     transactionMap_ = TransactionMap::Create(*prId_, allocator);
     testStateReplicator_ = TestStateReplicator::Create(*apiFaultUtility_, allocator);
-	TestTransactionReplicator::SPtr txnReplicator = TestTransactionReplicator::Create(allocator);
+    TestTransactionReplicator::SPtr txnReplicator = TestTransactionReplicator::Create(allocator);
 
     co_await CreateLogManager();
     replicatedLogManager_ = ReplicatedLogManager::Create(
@@ -254,8 +268,6 @@ Awaitable<void> TestReplica::InitializeAsync(
         *testStateReplicator_,
         *invalidLogRecords_,
         allocator);
-
-    testLogTruncationManager_ = TestLogTruncationManager::Create(seed, *replicatedLogManager_, allocator);
 
     // Using random folder since it will not be used.
     KString::CSPtr mockWorkFolder = CreateFileName(L"IntegrationTests", allocator);
@@ -271,36 +283,66 @@ Awaitable<void> TestReplica::InitializeAsync(
         *invalidLogRecords_,
         allocator);
 
-    checkpointManager_ = CheckpointManager::Create(
-        *prId_,
-        *testLogTruncationManager_,
-        *recoveredOrCopiedCheckpointState_,
-        *replicatedLogManager_,
-        *transactionMap_,
-        *testStateManager_,
-        *backupManager_,
-        config_,
-        *invalidLogRecords_,
-        perfCounters_,
-        healthClient_,
-        allocator);
+    if (useTestLogTruncationManager)
+    {
+        testLogTruncationManager_ = TestLogTruncationManager::Create(seed, *replicatedLogManager_, allocator);
+
+        checkpointManager_ = CheckpointManager::Create(
+            *prId_,
+            *testLogTruncationManager_,
+            *recoveredOrCopiedCheckpointState_,
+            *replicatedLogManager_,
+            *transactionMap_,
+            *testStateManager_,
+            *backupManager_,
+            config_,
+            *invalidLogRecords_,
+            perfCounters_,
+            healthClient_,
+            allocator);
+    }
+    else
+    {
+        logTruncationManager_ = LogTruncationManager::Create(*prId_, *replicatedLogManager_, config_, allocator);
+
+        checkpointManager_ = CheckpointManager::Create(
+            *prId_,
+            *logTruncationManager_,
+            *recoveredOrCopiedCheckpointState_,
+            *replicatedLogManager_,
+            *transactionMap_,
+            *testStateManager_,
+            *backupManager_,
+            config_,
+            *invalidLogRecords_,
+            perfCounters_,
+            healthClient_,
+            allocator);
+    }
 
     checkpointManager_->CompletedRecordsProcessor = *this;
 
-	operationProcessor_ = OperationProcessor::Create(
-		*prId_,
-		*recoveredOrCopiedCheckpointState_,
-		*roleContextDrainState_,
-		*versionManager_,
-		*checkpointManager_,
-		*testStateManager_,
-		*backupManager_,
-		*invalidLogRecords_,
-		config_,
-		*txnReplicator,
-		allocator);
+    operationProcessor_ = OperationProcessor::Create(
+        *prId_,
+        *recoveredOrCopiedCheckpointState_,
+        *roleContextDrainState_,
+        *versionManager_,
+        *checkpointManager_,
+        *testStateManager_,
+        *backupManager_,
+        *invalidLogRecords_,
+        config_,
+        *txnReplicator,
+        allocator);
 
-    recordsDispatcher_ = LogRecordsDispatcher::Create(*prId_, *operationProcessor_, config_, allocator);
+    if (Common::DateTime::Now().Ticks % 2 == 0)
+    {
+        recordsDispatcher_ = SerialLogRecordsDispatcher::Create(*prId_, *operationProcessor_, config_, allocator);
+    }
+    else 
+    {
+        recordsDispatcher_ = ParallelLogRecordsDispatcher::Create(*prId_, *operationProcessor_, config_, allocator);
+    }
 
     ReplicatedLogManager::AppendCheckpointCallback callback(checkpointManager_.RawPtr(), &CheckpointManager::CheckpointIfNecessary);
     replicatedLogManager_->SetCheckpointCallback(callback);
@@ -369,7 +411,6 @@ Awaitable<void> TestReplica::CreateLogManager()
 {
     KShared$ApiEntry();
 
-    // TODO: Create ktl or other log managers here later
     KAllocator & allocator = *allocator_;
 
     // Create the LogManager from the Data::Log namespace
@@ -487,6 +528,9 @@ Awaitable<void> TestReplica::CloseAndQuiesceReplica()
         true,
         L"CloseAndQuiesceReplica");
 
+    // Cancel checkpoint timer
+    checkpointManager_->CancelPeriodicCheckpointTimer();
+
     co_await replicatedLogManager_->LastInformationRecord->AwaitProcessing();
 
     co_await operationProcessor_->WaitForAllRecordsProcessingAsync();
@@ -550,6 +594,7 @@ Awaitable<void> TestReplica::EndTestAsync(bool reset, bool cleanupLog)
         callbackManager_.Reset();
         transactionMap_.Reset();
         testLogTruncationManager_.Reset();
+        logTruncationManager_.Reset();
         testStateReplicator_.Reset();
         transactionManager_.Reset();
         testTransactionManager_.Reset();

@@ -16,15 +16,15 @@ namespace ServiceModel
         DENY_COPY(ComposeDeploymentStatusQueryResult)
 
     public:
-        ComposeDeploymentStatusQueryResult();
+        ComposeDeploymentStatusQueryResult() = default;
         ComposeDeploymentStatusQueryResult(
             std::wstring const & deploymentName_,
             Common::NamingUri const & applicationName,
             ComposeDeploymentStatus::Enum dockerComposeDeploymentStatus,
             std::wstring const & statusDetails);
 
-        ComposeDeploymentStatusQueryResult(ComposeDeploymentStatusQueryResult && other);
-        ComposeDeploymentStatusQueryResult & operator = (ComposeDeploymentStatusQueryResult && other);
+        ComposeDeploymentStatusQueryResult(ComposeDeploymentStatusQueryResult && other)= default;
+        ComposeDeploymentStatusQueryResult & operator = (ComposeDeploymentStatusQueryResult && other) = default;
 
         __declspec(property(get=get_DeploymentName)) std::wstring const & DeploymentName;
         std::wstring const & get_DeploymentName() const { return deploymentName_; }

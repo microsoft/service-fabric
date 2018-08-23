@@ -169,6 +169,9 @@ void ProcessInnerQueryRequestAsyncOperation::StartProcessQuery(Common::AsyncOper
     case QueryNames::GetAggregatedApplicationHealthList:
         error = CreateApplicationQueryListContext(context);
         break;
+    case QueryNames::GetApplicationUnhealthyEvaluation:
+        error = CreateApplicationUnhealthyEvaluationContext(context);
+        break;
     case QueryNames::GetAggregatedDeployedApplicationHealthList:
         error = CreateDeployedApplicationQueryListContext(context);
         break;
@@ -386,7 +389,7 @@ ErrorCode ProcessInnerQueryRequestAsyncOperation::CreateNodeQueryListContext(
     context.ContextId = wformatString("{0}:Get{1}List", clusterId, HealthEntityKind::Node);
     context.ChildrenKind = HealthEntityKind::Node;
     context.Filters = move(filters);
-    context.SetContinuationToken();
+    context.SetPagingStatus();
 
     auto error = context.SetClusterHealthPolicy();
     if (!error.IsSuccess())
@@ -668,6 +671,24 @@ ErrorCode ProcessInnerQueryRequestAsyncOperation::CreateApplicationQueryListCont
     context.Filters = move(filters);
 
     // TODO: add application health policy map
+
+    return entityManager_.Cluster.ProcessQuery(*Constants::StoreType_ClusterTypeString, context);
+}
+
+ErrorCode ProcessInnerQueryRequestAsyncOperation::CreateApplicationUnhealthyEvaluationContext(__in QueryRequestContext & context)
+{
+    AttributesMap filters;
+    wstring applicationName;
+    if (queryArgs_.TryGetValue(QueryResourceProperties::Application::ApplicationName, applicationName))
+    {
+        filters.insert(make_pair(HealthAttributeNames::ApplicationName, move(applicationName)));
+    }
+
+    context.ContextKind = RequestContextKind::QueryEntityUnhealthyChildren;
+    context.ContextId = wformatString("{0}:Get{1}UnhealthyList", *Constants::StoreType_ClusterTypeString, HealthEntityKind::Application);
+    context.ChildrenKind = HealthEntityKind::Application;
+    context.SetPagingStatus();
+    context.Filters = move(filters);
 
     return entityManager_.Cluster.ProcessQuery(*Constants::StoreType_ClusterTypeString, context);
 }

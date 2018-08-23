@@ -736,7 +736,7 @@ namespace Naming
         if (nameData.IsExplicit)
         {
             bool isInitialName = IsInitialName(nameString);
-            if ((isInitialName && !isExplicitRequest_) || !isInitialName)
+            if (!isInitialName || !isExplicitRequest_)
             {
                 WriteInfo(
                     TraceComponent,

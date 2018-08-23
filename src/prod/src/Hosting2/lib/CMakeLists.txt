@@ -36,7 +36,7 @@ set( LINUX_SOURCES
     ../ApplicationPrincipals.cpp
     ../ApplicationService.cpp
     ../ApplicationServiceMap.cpp
-    ../AssignIpAddressesReply.cpp 
+    ../AssignIpAddressesReply.cpp
     ../AssignIpAddressesRequest.cpp
     ../AzureVnetPluginProcessManager.cpp
     ../BuiltinServiceAccount.cpp
@@ -44,6 +44,7 @@ set( LINUX_SOURCES
     ../CertificateAclingManager.cpp
     ../CleanupApplicationPrincipalsReply.cpp
     ../CleanupSecurityPrincipalRequest.cpp
+    ../ClearContainerHelper.cpp
     ../CodePackageActivationContext.cpp
     ../CodePackageActivationId.cpp
     ../CodePackageContext.cpp
@@ -75,18 +76,29 @@ set( LINUX_SOURCES
     ../ConfigureSharedFolderACLRequest.cpp
     ../ConfigureSMBShareRequest.cpp
     ../Constants.cpp
-    ../ContainerActivatorLinux.cpp
+    ../ContainerEventTracker.cpp
+    ../ContainerActivator.cpp
     ../ContainerApiResult.cpp
-    ../ContainerImageDownloaderLinux.cpp
     ../ContainerEventConfig.cpp
     ../ContainerConfig.cpp
     ../ContainerConfigHelper.cpp
+    ../VolumeMapper.cpp
     ../ContainerHelper.cpp
     ../ContainerHostConfig.cpp
+    ../ContainerLogDriverConfig.cpp
     ../ContainerStats.cpp
     ../CrashDumpConfigurationManager.cpp
     ../CrashDumpProvider.cpp
     ../CreateSymbolicLinkRequest.cpp
+    ../ApplicationHostCodePackageOperationRequest.cpp
+    ../ApplicationHostCodePackageOperationReply.cpp
+    ../ApplicationHostCodePackageActivator.cpp
+    ../SingleCodePackageApplicationHostCodePackageActivator.cpp
+    ../InProcessApplicationHostCodePackageActivator.cpp
+    ../ComApplicationHostCodePackageActivator.cpp
+    ../ComGuestServiceCodePackageActivationManager.cpp
+    ../CodePackageEventNotificationRequest.cpp
+    ../CodePackageEventNotificationReply.cpp
     ../DeactivateCodePackageReply.cpp
     ../DeactivateCodePackageRequest.cpp
     ../DeactivateHostedServiceRequest.cpp
@@ -99,10 +111,11 @@ set( LINUX_SOURCES
     ../DeletionManager.cpp
     ../DisableNodeRequest.cpp
     ../DomainUser.cpp
-    ../DockerClient.cpp
     ../DockerProcessManager.cpp
+    ../DockerProcessTerminatedNotification.cpp
     ../DockerUtilities.cpp
     ../DownloadContainerImagesRequest.cpp
+    ../ImageCacheManager.cpp
     ../DownloadManager.cpp
     ../DnsServiceEnvironmentManager.cpp
     ../EnableNodeRequest.cpp
@@ -203,10 +216,14 @@ set( LINUX_SOURCES
     ../ServiceTypeState.cpp
     ../ServiceTypeStateManager.cpp
     ../ServiceTypeStatus.cpp
+    ../HostingHelpers.cpp
+    ../ComDummyReplicator.cpp
     ../SetupConfig.cpp
-    ../SetupContainerGroupRequest.cpp  
+    ../SetupContainerGroupRequest.cpp
     ../ComGuestServiceInstance.cpp
-    ../ComGuestServiceTypeFactory.cpp
+    ../ComGuestServiceReplica.cpp
+    ../ComStatelessGuestServiceTypeFactory.cpp
+    ../ComStatefulGuestServiceTypeFactory.cpp
     ../GuestServiceTypeHost.cpp
     ../SingleCodePackageApplicationHost.cpp
     ../InProcessApplicationHost.cpp
@@ -226,28 +243,38 @@ set( LINUX_SOURCES
     ../VersionedApplication.cpp
     ../VersionedServicePackage.cpp
     ../LocalResourceManager.cpp
+    ../LocalSecretServiceManager.cpp
+    ../HostingHelper.cpp
+    ../LocalResourceManager.cpp
     ../ContainerInfoReply.cpp
     ../GetContainerInfoReply.cpp
     ../GetContainerInfoRequest.cpp
+    ../GetImagesReply.cpp
+    ../NodeAvailableImages.cpp
     )
+
+set( LINUX_SOURCES_CRI
+    ../ContainerRuntimeHandler.cpp
+    ../cri-api.grpc.pb.cc
+    ../cri-api.pb.cc
+   )
 
 include_directories("..")
 
 set(Casablanca_LIBRARY ${LIB}cpprest)
 set(Casablanca_LIBRARIES ${Casablanca_LIBRARY} ${Boost_LIBRARIES} ${Boost_FRAMEWORK})
 
-
-
 add_library(objects_Hosting2 OBJECT ${LINUX_SOURCES})
+add_library(objects_Hosting2_CRI OBJECT ${LINUX_SOURCES_CRI})
 
 add_precompiled_header(objects_Hosting2 ../stdafx.h)
 
-add_library(${lib_Hosting2} STATIC $<TARGET_OBJECTS:objects_Hosting2>)
+add_library(${lib_Hosting2} STATIC $<TARGET_OBJECTS:objects_Hosting2> $<TARGET_OBJECTS:objects_Hosting2_CRI>)
 
 target_link_libraries( ${lib_Hosting2}
-    ${Casablanca_LIBRARIES} ssl crypto cgroup ${lib_ResourceMonitorConfig}
+    ${Casablanca_LIBRARIES} grpcxx_reflection grpcxx grpc protobuf gpr ares ssl crypto cgroup ${lib_ResourceMonitorConfig}
     )
 
-set_target_properties(${lib_Hosting2} PROPERTIES 
-    ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR}) 
+set_target_properties(${lib_Hosting2} PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR})
 

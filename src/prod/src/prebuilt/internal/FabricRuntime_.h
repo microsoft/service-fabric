@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
@@ -156,6 +151,13 @@ typedef interface IFabricInternalStatefulServiceReplica IFabricInternalStatefulS
 #endif 	/* __IFabricInternalStatefulServiceReplica_FWD_DEFINED__ */
 
 
+#ifndef __IFabricInternalStatefulServiceReplica2_FWD_DEFINED__
+#define __IFabricInternalStatefulServiceReplica2_FWD_DEFINED__
+typedef interface IFabricInternalStatefulServiceReplica2 IFabricInternalStatefulServiceReplica2;
+
+#endif 	/* __IFabricInternalStatefulServiceReplica2_FWD_DEFINED__ */
+
+
 #ifndef __IFabricStatefulServiceReplicaStatusResult_FWD_DEFINED__
 #define __IFabricStatefulServiceReplicaStatusResult_FWD_DEFINED__
 typedef interface IFabricStatefulServiceReplicaStatusResult IFabricStatefulServiceReplicaStatusResult;
@@ -275,6 +277,10 @@ extern "C"{
 /* interface __MIDL_itf_fabricruntime__0000_0000 */
 /* [local] */ 
 
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 #if ( _MSC_VER >= 1020 )
 #pragma once
 #endif
@@ -1776,6 +1782,96 @@ EXTERN_C const IID IID_IFabricInternalStatefulServiceReplica;
 
 
 #endif 	/* __IFabricInternalStatefulServiceReplica_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricInternalStatefulServiceReplica2_INTERFACE_DEFINED__
+#define __IFabricInternalStatefulServiceReplica2_INTERFACE_DEFINED__
+
+/* interface IFabricInternalStatefulServiceReplica2 */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricInternalStatefulServiceReplica2;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("1A670F6C-7C0E-4E64-850D-58DECCA2D88C")
+    IFabricInternalStatefulServiceReplica2 : public IFabricInternalStatefulServiceReplica
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE UpdateInitializationData( 
+            /* [in] */ ULONG bufferSize,
+            /* [in] */ const BYTE *buffer) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricInternalStatefulServiceReplica2Vtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricInternalStatefulServiceReplica2 * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricInternalStatefulServiceReplica2 * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricInternalStatefulServiceReplica2 * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *GetStatus )( 
+            IFabricInternalStatefulServiceReplica2 * This,
+            /* [retval][out] */ IFabricStatefulServiceReplicaStatusResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *UpdateInitializationData )( 
+            IFabricInternalStatefulServiceReplica2 * This,
+            /* [in] */ ULONG bufferSize,
+            /* [in] */ const BYTE *buffer);
+        
+        END_INTERFACE
+    } IFabricInternalStatefulServiceReplica2Vtbl;
+
+    interface IFabricInternalStatefulServiceReplica2
+    {
+        CONST_VTBL struct IFabricInternalStatefulServiceReplica2Vtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricInternalStatefulServiceReplica2_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricInternalStatefulServiceReplica2_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricInternalStatefulServiceReplica2_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricInternalStatefulServiceReplica2_GetStatus(This,result)	\
+    ( (This)->lpVtbl -> GetStatus(This,result) ) 
+
+
+#define IFabricInternalStatefulServiceReplica2_UpdateInitializationData(This,bufferSize,buffer)	\
+    ( (This)->lpVtbl -> UpdateInitializationData(This,bufferSize,buffer) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricInternalStatefulServiceReplica2_INTERFACE_DEFINED__ */
 
 
 #ifndef __IFabricStatefulServiceReplicaStatusResult_INTERFACE_DEFINED__

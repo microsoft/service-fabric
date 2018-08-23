@@ -59,7 +59,7 @@
     },
 
     "ArchiverProperties": {
-        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$"
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.json$"
     }
 
 }

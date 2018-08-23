@@ -98,6 +98,14 @@ void EntreeService::ForwardToTokenValidationServiceAsyncOperation::OnGetServiceP
         return;
     }
 
+    if (reply.get() == nullptr)
+    {
+        TRACE_WARNING_AND_TESTASSERT(TraceComponent, "{0}: null reply message on success", this->TraceId);
+
+        TryComplete(operation->Parent, ErrorCodeValue::OperationFailed);
+        return;
+    }
+
     QueryResult result;
     error = ErrorCodeValue::OperationFailed;
     if (reply->GetBody(result))

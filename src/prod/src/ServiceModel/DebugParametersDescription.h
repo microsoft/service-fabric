@@ -13,8 +13,8 @@ namespace ServiceModel
     public:
         DebugParametersDescription(); 
 
-        DebugParametersDescription(DebugParametersDescription const & other);
-        DebugParametersDescription(DebugParametersDescription && other);
+        DebugParametersDescription(DebugParametersDescription const & other) = default;
+        DebugParametersDescription(DebugParametersDescription && other) = default;
 
         DebugParametersDescription const & operator = (DebugParametersDescription const & other);
         DebugParametersDescription const & operator = (DebugParametersDescription && other);
@@ -23,7 +23,6 @@ namespace ServiceModel
         bool operator != (DebugParametersDescription const & other) const;
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
-
 
         void clear();
 
@@ -41,11 +40,17 @@ namespace ServiceModel
         std::vector<std::wstring> ContainerEntryPoints;
         std::vector<std::wstring> ContainerMountedVolumes;
         std::vector<std::wstring> ContainerEnvironmentBlock;
+        std::vector<std::wstring> ContainerLabels;
 
         void ReadFromXml(Common::XmlReaderUPtr const &);
         Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
 
     private:
+
+        static bool AreEqual(
+            std::vector<std::wstring> const & first,
+            std::vector<std::wstring> const & second);
+
         friend struct DigestedCodePackageDescription;
         friend struct ServicePackagePoliciesDescription;
     };

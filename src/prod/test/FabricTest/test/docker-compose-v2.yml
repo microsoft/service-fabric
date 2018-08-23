@@ -1,0 +1,17 @@
+# A dummy compose file for FabricTest
+version: '3'
+services:
+  FrontendService:
+    image: mfussell/sffrontend:v3
+    environment:
+      - HttpGatewayPort=19080
+      - BackendServiceName=SimpleContainerApp/BackendService
+    ports: 
+     - "80:8905/http"
+  BackendService:
+    image: mfussell/sfbackend:v1
+    ports:
+     - "8905/http"
+    deploy: 
+      mode: replicated
+      replicas: 4

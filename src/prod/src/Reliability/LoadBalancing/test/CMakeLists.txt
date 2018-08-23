@@ -7,6 +7,7 @@ add_definitions(-DNO_INLINE_EVENTDESCCREATE)
 
 add_executable(${exe_LoadBalancing.Test}
   # test code
+  ../PLBAutoscaling.Test.cpp
   ../PLBAuxiliaryStructures.Test.cpp
   ../PLBConstraintCheck.Test.cpp
   ../PLBScheduler.Test.cpp
@@ -60,8 +61,6 @@ target_link_libraries(${exe_LoadBalancing.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

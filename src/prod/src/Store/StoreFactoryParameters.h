@@ -9,7 +9,23 @@ namespace Store
 {
     struct StoreFactoryParameters
     {
+        StoreFactoryParameters()
+            : Type(StoreType::Invalid)
+            , NodeInstance()
+            , NodeName()
+            , ConnectionString()
+            , DirectoryPath()
+            , FileName()
+            , AssertOnFatalError(false)
+            , KtlLogger()
+            , AllowMigration(false)
+        {
+        }
+
         StoreType::Enum Type;
+
+        Federation::NodeInstance NodeInstance;
+        std::wstring NodeName;
 
         // Used by SQL store
         std::wstring ConnectionString;
@@ -21,6 +37,6 @@ namespace Store
 
         // Used by TStore
         KtlLogger::KtlLoggerNodeSPtr KtlLogger;
+        bool AllowMigration;
     };
 }
-

@@ -26,6 +26,7 @@ DigestedApplicationDescription::DigestedApplicationDescription(
     , ServiceTemplates(serviceTemplates)
     , DefaultServices(defaultServices)
     , ResourceGovernanceDescriptions(rgDescription)
+    , CodePackageContainersImages()
 {
     // Fix RG settings in case that user did not provide anything on SP level (but something on CP level exists).
     for (auto cpPair : CodePackages)
@@ -45,6 +46,24 @@ DigestedApplicationDescription::DigestedApplicationDescription(
                 ResourceGovernanceDescriptions.insert(make_pair(spIdentifier, move(newRGSetting)));
             }
         }
+
+        // Collect all container images
+        std::vector<wstring> containerImages;
+        for (auto const& cpDesc : cpPair.second)
+        {
+            if (cpDesc.CodePackage.EntryPoint.EntryPointType == EntryPointType::Enum::ContainerHost)
+            {
+                auto imageName = cpDesc.CodePackage.EntryPoint.ContainerEntryPoint.ImageName;
+                if (!imageName.empty() && (std::find(containerImages.begin(), containerImages.end(), imageName) == containerImages.end()))
+                {
+                    containerImages.push_back(move(imageName));
+                }
+            }
+        }
+
+        CodePackageContainersImagesDescription newCPContainersImages;
+        newCPContainersImages.SetContainersImages(move(containerImages));
+        CodePackageContainersImages.insert(make_pair(spIdentifier, move(newCPContainersImages)));
     }
 }
 
@@ -244,7 +263,7 @@ ErrorCode DigestedApplicationDescription::ComputeAffectedServiceTypes(
                 return (item.first == iter->PackageName);
             });
 
-            if (iter->PackageName == iter->PackageName &&
+            if (iter->PackageName == iter2->PackageName &&
                 originalRG != this->ResourceGovernanceDescriptions.end() &&
                 targetRG != targetDescription.ResourceGovernanceDescriptions.end())
             {
@@ -416,9 +435,9 @@ void DigestedApplicationDescription::AddCodePackage(
     auto findServicePackageIter = codePackages.find(servicePackageName);
     if (findServicePackageIter == codePackages.end())
     {
-        codePackages.insert(make_pair(servicePackageName, vector<wstring>()));
+        auto result = codePackages.insert(make_pair(servicePackageName, vector<wstring>()));
 
-        findServicePackageIter = codePackages.find(servicePackageName);
+        findServicePackageIter = result.first;
     }
 
     auto & codePackageList = findServicePackageIter->second;

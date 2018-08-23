@@ -54,6 +54,7 @@ namespace Reliability
         static Common::Global<ReservedIdRange> FaultAnalysisServiceIdRange;
         static Common::Global<ReservedIdRange> BackupRestoreServiceIdRange;
         static Common::Global<ReservedIdRange> UpgradeOrchestrationServiceIdRange;
+        static Common::Global<ReservedIdRange> CentralSecretServiceIdRange;
 
         static const ConsistencyUnitId Zero;
 
@@ -147,6 +148,11 @@ namespace Reliability
         bool IsUpgradeOrchestrationService() const
         {
             return IsInReservedIdRange(*UpgradeOrchestrationServiceIdRange);
+        }
+
+        bool IsCentralSecretService() const
+        {
+            return IsInReservedIdRange(*CentralSecretServiceIdRange);
         }
 
         // Comparison operators

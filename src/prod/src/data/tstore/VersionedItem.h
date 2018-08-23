@@ -190,6 +190,7 @@ namespace Data
          virtual ktl::Awaitable<TValue> GetValueAsync(
             __in MetadataTable& metadataTable,
             __in Data::StateManager::IStateSerializer<TValue>& valueSerializer,
+            __in ReadMode readMode,
             __in StoreTraceComponent & traceComponent,
             __in ktl::CancellationToken const & cancellationToken)
          {
@@ -199,7 +200,13 @@ namespace Data
 
             StoreTraceComponent::SPtr traceComponentSPtr = &traceComponent;
 
-            // Check is value needs to be loaded from the disk.
+            if (readMode == ReadMode::Off)
+            {
+                // Since we don't care about values for ReadMode::Off, it is OK to not take a lock
+                co_return this->GetValue();
+            }
+
+            // Check if value needs to be loaded from the disk.
             {
                this->AcquireLock();
 
@@ -221,36 +228,37 @@ namespace Data
                }
             }
 
-            if (loadValueFromDisk)
+            // load it from disk
+            TValue value = co_await MetadataManager::ReadValueAsync<TValue>(*metadataTableSPtr, *this, valueSerializer);
+
+            // Acquire lock before setting the flags
+
+            if (readMode == ReadMode::CacheResult)
             {
-               // load it from disk
-               TValue value = co_await MetadataManager::ReadValueAsync<TValue>(*metadataTableSPtr, *this, valueSerializer);
+                this->AcquireLock();
 
-               // Acquire lock before setting the flags
+                KFinally([&]
+                {
+                    this->ReleaseLock(*traceComponentSPtr);
+                });
 
-               this->AcquireLock();
+                // Always call set and get within the lock - if TValue is a shared ptr its access should be protected.
+                this->SetValue(value);
 
-               KFinally([&]
-               {
-                  this->ReleaseLock(*traceComponentSPtr);
-               });
+                // Update in memory after setting value
+                this->SetIsInMemory(true);
 
-               // Always call set and get within the lock - if TValue is a shared ptr its access should be protected.
-               this->SetValue(value);
-
-               // Update in memory after setting value
-               this->SetIsInMemory(true);
-
-               // Set in use only after updating the value
-               this->SetInUse(true);
-
-               co_return value;
+                // Set in use only after updating the value
+                this->SetInUse(true);
             }
+
+            co_return value;
          }
 
          virtual ktl::Awaitable<TValue> GetValueAsync(
             __in FileMetadata& fileMetadata,
             __in Data::StateManager::IStateSerializer<TValue>& valueSerializer,
+            __in ReadMode readMode,
             __in StoreTraceComponent & traceComponent,
             __in ktl::CancellationToken const & cancellationToken)
          {
@@ -259,6 +267,12 @@ namespace Data
             bool loadValueFromDisk = false;
 
             StoreTraceComponent::SPtr traceComponentSPtr = &traceComponent;
+
+            if (readMode == ReadMode::Off)
+            {
+                // Since we don't care about values for ReadMode::Off, it is OK to not take a lock
+                co_return this->GetValue();
+            }
 
             // Check if value needs to be loaded.
             {
@@ -280,30 +294,30 @@ namespace Data
                }
             }
 
-            if (loadValueFromDisk)
+            // load it from disk
+            TValue value = co_await MetadataManager::ReadValueAsync<TValue>(*fileMetadataSPtr, *this, valueSerializer);
+
+            if (readMode == ReadMode::CacheResult)
             {
-               // load it from disk
-               TValue value = co_await MetadataManager::ReadValueAsync<TValue>(*fileMetadataSPtr, *this, valueSerializer);
+                // Acquire lock before setting the flags
+                this->AcquireLock();
 
-               // Acquire lock before setting the flags
-               this->AcquireLock();
+                KFinally([&]
+                {
+                    this->ReleaseLock(*traceComponentSPtr);
+                });
 
-               KFinally([&]
-               {
-                  this->ReleaseLock(*traceComponentSPtr);
-               });
+                // Always call set and get within the lock - if TValue is a shared ptr its access should be protected.
+                this->SetValue(value);
 
-               // Always call set and get within the lock - if TValue is a shared ptr its access should be protected.
-               this->SetValue(value);
+                // Update in memory after setting value
+                this->SetIsInMemory(true);
 
-               // Update in memory after setting value
-               this->SetIsInMemory(true);
-
-               // Set in use only after updating the value
-               this->SetInUse(true);
-
-               co_return value;
+                // Set in use only after updating the value
+                this->SetInUse(true);
             }
+
+            co_return value;
          }
 
          virtual RecordKind GetRecordKind() const = 0;
@@ -320,10 +334,10 @@ namespace Data
          ULONG64    valueChecksum_ = 0;
 
       private:
-         const LONG64 IsInMemoryFlag = 1LL << 63;  // Most significant bit
-         const LONG64 InUseFlag = 1LL << 62;     // Most significant second bit
-         const LONG64 LockFlag = 1LL << 61; // Most significant third bit
-         const LONG64 MetadataMask = VersionedItem<TValue>::IsInMemoryFlag | VersionedItem<TValue>::InUseFlag | VersionedItem<TValue>::LockFlag;
+         static const LONG64 IsInMemoryFlag = 1LL << 63;  // Most significant bit
+         static const LONG64 InUseFlag = 1LL << 62;     // Most significant second bit
+         static const LONG64 LockFlag = 1LL << 61; // Most significant third bit
+         static const LONG64 MetadataMask = VersionedItem<TValue>::IsInMemoryFlag | VersionedItem<TValue>::InUseFlag | VersionedItem<TValue>::LockFlag;
       };
 
       template <typename TValue>

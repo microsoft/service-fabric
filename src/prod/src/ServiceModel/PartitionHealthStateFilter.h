@@ -19,8 +19,8 @@ namespace ServiceModel
         explicit PartitionHealthStateFilter(
             DWORD healthStateFilter);
 
-        PartitionHealthStateFilter(PartitionHealthStateFilter && other);
-        PartitionHealthStateFilter & operator = (PartitionHealthStateFilter && other);
+        PartitionHealthStateFilter(PartitionHealthStateFilter && other) = default;
+        PartitionHealthStateFilter & operator = (PartitionHealthStateFilter && other) = default;
 
         virtual ~PartitionHealthStateFilter();
 

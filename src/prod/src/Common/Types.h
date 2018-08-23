@@ -147,6 +147,8 @@ namespace Common
     typedef std::unique_ptr<void, CertStoreDisposer> CertStoreUPtr;
 
 #endif
+    // This type is needed due to the complexity of implementing CertContextSPtr on Linux
+    typedef std::shared_ptr<CertContextUPtr> CertContextUPtrSPtr; 
 
     typedef std::vector<CertContextUPtr> CertContexts; // sorted by expiration in descending order
 

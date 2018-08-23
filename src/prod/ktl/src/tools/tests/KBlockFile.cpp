@@ -1,0 +1,1 @@
+#include "../kblockfile/KBlockFileTests.cpp"

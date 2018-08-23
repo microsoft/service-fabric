@@ -66,10 +66,6 @@ namespace Reliability
             Common::FabricVersionInstance currentVersionInstance_;
             FabricUpgradeUPtr upgrade_;
 
-            // If a node belonging to the current UD comes up, we need to run the
-            // upgrade context again to make sure that the node gets upgraded
-            bool isNodeUpInCurrentUD_;
-
             MUTABLE_RWLOCK(FM.FabricUpgradeManager, lockObject_);
         };
     }

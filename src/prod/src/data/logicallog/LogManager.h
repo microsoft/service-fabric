@@ -42,12 +42,14 @@ namespace Data
                 __in Common::AsyncCallback const & callback,
                 __in Common::AsyncOperationSPtr const & parent,
                 __in ktl::CancellationToken const & cancellationToken,
-                __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings = nullptr);
+                __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings = nullptr,
+                __in_opt KtlLoggerMode ktlLoggerMode = KtlLoggerMode::Default);
             Common::ErrorCode EndOpen(__in Common::AsyncOperationSPtr const & asyncOperation);
 
             ktl::Awaitable<NTSTATUS> OpenAsync(
                 __in ktl::CancellationToken const & cancellationToken,
-                __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings = nullptr);
+                __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings = nullptr,
+                __in_opt KtlLoggerMode ktlLoggerMode = KtlLoggerMode::Default);
 
             Common::AsyncOperationSPtr BeginClose(
                 __in Common::AsyncCallback const & callback,
@@ -182,6 +184,7 @@ namespace Data
             KtlLogManager::SPtr ktlLogManager_;
             KtlLogger::SharedLogSettingsSPtr sharedLogSettings_;
             KString::SPtr sharedLogName_;
+            KtlLoggerMode ktlLoggerMode_;
         };
     }
 }

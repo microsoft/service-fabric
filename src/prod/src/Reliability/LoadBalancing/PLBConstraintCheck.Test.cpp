@@ -2462,7 +2462,7 @@ namespace PlacementAndLoadBalancingUnitTest
         VerifyNodeLoadQuery(plb, 0, L"CPU", 40);
         VerifyNodeLoadQuery(plb, 1, L"CPU", 25);
         //the new replica is using the default so there is no violation and we will go into creation (for -1 we always go into creation)
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         VERIFY_ARE_EQUAL(0u, actionList.size());
     }
 
@@ -2737,7 +2737,6 @@ namespace PlacementAndLoadBalancingUnitTest
         size_t badRuns = 0;
         for (int randomCase = 0; randomCase < randomCases; randomCase++)
         {
-            wcout << "Random case: " << randomCase << "/" << randomCases << endl;
             PlacementAndLoadBalancing & plb = fm_->PLB;
 
             size_t maxReplicas = 30;
@@ -2794,12 +2793,10 @@ namespace PlacementAndLoadBalancingUnitTest
                 for (size_t nodeId = 0; nodeId < nodesPerDomain[domainId]; nodeId++)
                 {
                     wstring faultDomain = wformatString("fd:/{0}/{1}", domainId, nodeId);
-                    wcout << "Node: " << globalNodeId << " FD: " << faultDomain << " UD: " << globalNodeId << endl;
                     plb.UpdateNode(CreateNodeDescriptionWithDomainsAndCapacity(globalNodeId, faultDomain, wformatString("{0}", globalNodeId), L""));
                     nodeDomain.insert(make_pair(globalNodeId, domainId));
                     globalNodeId++;
                 }
-                wcout << " " << endl;
             }
 
             plb.ProcessPendingUpdatesPeriodicTask();
@@ -2850,17 +2847,6 @@ namespace PlacementAndLoadBalancingUnitTest
             }
             violationsBefore /= 2;
 
-            wcout << "Replicas: " << replicas <<
-                " Domains: " << domains <<
-                " Iterations: " << iterations <<
-                " Nodes: " << nodes <<
-                " MaxReplicasPerDomain: " << maxReplicasPerDomain <<
-                " Violations before: " << violationsBefore << endl;
-
-            wcout << "Nodes    distribution across domains:        " << nodesDistributionForPrint << endl;
-            wcout << "Replicas distribution across domains before: " << replicasDistributionForPrint << endl;
-            wcout << "Replicas placement: " << replicasPlacement << endl;
-
             plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(serviceName), 0, CreateReplicas(replicasPlacement), 0));
 
             plb.ProcessPendingUpdatesPeriodicTask();
@@ -2868,11 +2854,6 @@ namespace PlacementAndLoadBalancingUnitTest
             fm_->RefreshPLB(Stopwatch::Now());
 
             vector<wstring> actionList = GetActionListString(fm_->MoveActions);
-            wcout << "Actions: " << actionList.size() << endl;
-            for (wstring action : actionList)
-            {
-                wcout << action << endl;
-            }
 
             // Update number of replicas per domain
             for (auto const& actionPair : fm_->MoveActions)
@@ -2880,6 +2861,7 @@ namespace PlacementAndLoadBalancingUnitTest
                 for (FailoverUnitMovement::PLBAction currentAction : actionPair.second.Actions)
                 {
                     if (currentAction.Action == FailoverUnitMovementType::MoveSecondary ||
+                        currentAction.Action == FailoverUnitMovementType::MoveInstance ||
                         currentAction.Action == FailoverUnitMovementType::MovePrimary)
                     {
                         replicasPerDomain[nodeDomain[static_cast<int>(currentAction.SourceNode.IdValue.Low)]]--;
@@ -2905,12 +2887,8 @@ namespace PlacementAndLoadBalancingUnitTest
                 replicasDistributionForPrint.append(wformatString("\t{0}", replicasPerDomain[domainId]));
             }
 
-            wcout << "Replicas distribution across domains after:  " << replicasDistributionForPrint << endl;
-            wcout << "Violations after: " << violationsAfter << endl;
-
             if (violationsAfter != 0)
             {
-                wcout << "BAD RUN !!!" << endl;
                 badRuns++;
             }
 
@@ -8043,7 +8021,7 @@ namespace PlacementAndLoadBalancingUnitTest
                 plb.Refresh(Stopwatch::Now());
                 actionList = GetActionListString(fm_->MoveActions);
 
-                // If Creation is not good enough, try Creation with movement
+                // If NewReplicaPlacement is not good enough, try NewReplicaPlacementWithMove
                 if (actionList.size() == 0)
                 {
                     plb.Refresh(Stopwatch::Now());
@@ -8213,7 +8191,7 @@ namespace PlacementAndLoadBalancingUnitTest
                                     plb.Refresh(Stopwatch::Now());
                                     actionList = GetActionListString(fm_->MoveActions);
 
-                                    // If Creation is not good enough, try Creation with movement
+                                    // If NewReplicaPlacement is not good enough, try NewReplicaPlacementWithMove
                                     if (actionList.size() == 0)
                                     {
                                         plb.Refresh(Stopwatch::Now());
@@ -8254,6 +8232,143 @@ namespace PlacementAndLoadBalancingUnitTest
         }
     }
     */
+
+    BOOST_AUTO_TEST_CASE(DiagnosticsConstraintCheckScaleoutCountWithStandByReplicas)
+    {
+        wstring testName = L"DiagnosticsConstraintCheckScaleoutCountWithStandByReplicas";
+        Trace.WriteInfo("PLBConstraintCheckTestSource", "{0}", testName);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        // Decrease ConstraintViolationHealthReportLimit and set test mode so that we can test diagnostics
+        PLBConfigScopeChange(ConstraintViolationHealthReportLimit, int, 1);
+        PLBConfigScopeChange(IsTestMode, bool, true);
+
+        for (int i = 0; i < 3; i++)
+        {
+            plb.UpdateNode(CreateNodeDescription(i));
+        }
+
+        wstring testType = wformatString("{0}Type", testName);
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(testType), set<NodeId>()));
+
+        int appScaleoutCount1 = 1;
+        wstring appName1 = wformatString("{0}Application1", testName);
+        plb.UpdateApplication(ApplicationDescription(wstring(appName1),
+            std::map<std::wstring,
+            ApplicationCapacitiesDescription>(),
+            appScaleoutCount1));
+
+        wstring service1 = wformatString("{0}_Service{1}", testName, L"1");
+        plb.UpdateService(CreateServiceDescriptionWithApplication(
+            service1,
+            testType,
+            appName1,
+            true,
+            CreateMetrics(L"MyMetric/1.0/1/1")));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(service1), 0, CreateReplicas(L"SB/0, P/1"), 0));
+
+        // Check that we won't assert
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        // Check that we couldn't move anything
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        VERIFY_ARE_EQUAL(0u, actionList.size());
+    }
+
+    BOOST_AUTO_TEST_CASE(DiagnosticsConstraintCheckScaleoutCountAndAffinityWithStandByReplicas)
+    {
+        wstring testName = L"DiagnosticsConstraintCheckScaleoutCountAndAffinityWithStandByReplicas";
+        Trace.WriteInfo("PLBConstraintCheckTestSource", "{0}", testName);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        // Decrease ConstraintViolationHealthReportLimit and set test mode so that we can test diagnostics
+        PLBConfigScopeChange(ConstraintViolationHealthReportLimit, int, 1);
+        PLBConfigScopeChange(IsTestMode, bool, true);
+
+        for (int i = 0; i < 3; i++)
+        {
+            plb.UpdateNode(CreateNodeDescription(i));
+        }
+
+        wstring testType = wformatString("{0}Type", testName);
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(testType), set<NodeId>()));
+
+        int appScaleoutCount1 = 1;
+        wstring appName1 = wformatString("{0}Application1", testName);
+        plb.UpdateApplication(ApplicationDescription(wstring(appName1),
+            std::map<std::wstring,
+            ApplicationCapacitiesDescription>(),
+            appScaleoutCount1));
+
+        wstring appName2 = wformatString("{0}Application2", testName);
+        plb.UpdateApplication(ApplicationDescription(
+            wstring(appName2),
+            std::map<std::wstring,
+            ApplicationCapacitiesDescription>(),
+            0));
+
+        wstring parentService = wformatString("{0}_ParentService{1}", testName, L"1");
+        plb.UpdateService(CreateServiceDescriptionWithApplication(
+            parentService,
+            testType,
+            appName2,
+            true,
+            CreateMetrics(L"MyMetric/1.0/1/1")));
+
+        wstring childService = wformatString("{0}_ChildService{1}", testName, L"1");
+        plb.UpdateService(CreateServiceDescriptionWithAffinityAndApplication(
+            childService,
+            testType,
+            true,
+            appName1,
+            parentService,
+            CreateMetrics(L"MyMetric/1.0/1/1")));
+
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(parentService), 0, CreateReplicas(L"P/1,S/2"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(childService), 0, CreateReplicas(L"SB/0,P/1"), 0));
+
+        // Check that we won't assert
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        // Check that we couldn't move anything
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        VERIFY_ARE_EQUAL(0u, actionList.size());
+    }
+
+    BOOST_AUTO_TEST_CASE(ConstraintCheckPreferExistingReplicaLocationsTest)
+    {
+        wstring testName = L"ConstraintCheckPreferExistingReplicaLocationsTest";
+        Trace.WriteInfo("PLBConstraintCheckTestSource", "{0}", testName);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        PLBConfigScopeChange(PreferExistingReplicaLocations, bool, false);
+
+        std::wstring metric = L"MyMetric";
+        for (int i = 0; i < 3; i++)
+        {
+            plb.UpdateNode(CreateNodeDescriptionWithCapacity(i, wformatString("{0}/10", metric)));
+        }
+
+        wstring testType = wformatString("{0}Type", testName);
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(testType), set<NodeId>()));
+
+        wstring serviceName = wformatString("service_{0}", testName);
+
+        // Node0 has capacity violation. Swap can fix the violation, but move primary of FT0 to node 2 make load more balanced
+        plb.UpdateService(CreateServiceDescription(serviceName, testType, true, CreateMetrics(wformatString("{0}/1.0/6/4", metric))));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(serviceName), 0, CreateReplicas(L"P/0,S/1"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(serviceName), 0, CreateReplicas(L"P/0"), 0));
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        VERIFY_ARE_EQUAL(1u, actionList.size());
+        VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"* move primary 0<=>2", value)));
+    }
 
     BOOST_AUTO_TEST_SUITE_END()
 

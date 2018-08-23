@@ -523,7 +523,8 @@ namespace Data
 
                   if (isValid == false)
                   {
-                     KNt::YieldExecution();
+                     // Using Sleep instead of YieldExeuction since the latter is an undocumented API
+                     KNt::Sleep(0);
                      continue;
                   }
 
@@ -756,7 +757,8 @@ namespace Data
          {
             while (node->IsInserted == false)
             {
-               KNt::YieldExecution();
+                // Using Sleep instead of YieldExeuction since the latter is an undocumented API
+                KNt::Sleep(0);
             }
          }
 

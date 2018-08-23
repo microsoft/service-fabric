@@ -8,7 +8,7 @@ add_definitions(-DNO_INLINE_EVENTDESCCREATE)
 add_executable(${exe_CommonTest}
   # boost.test main
   ../../../test/BoostUnitTest/btest.cpp
-
+  ../../../test/BoostUnitTest/FabricGlobalsInitializationFixture.Test.cpp
   # test code
   ../AccountHelper.Test.cpp
   ../ApiMonitoring.MonitoringComponent.Test.cpp
@@ -26,6 +26,7 @@ add_executable(${exe_CommonTest}
   ../ComUnknownBase.Test.cpp
   ../ComponentRoot.Test.cpp
   ../Config.Test.cpp
+  ../crc.test.cpp
   ../CryptoUtility.Test.cpp
   ../DateTime.Test.cpp
   ../Directory.test.cpp
@@ -96,6 +97,7 @@ target_link_libraries(${exe_CommonTest}
   ${lib_FabricCommon}
   ${lib_ServiceModel}
   ${BoostTest2}
+  ${lib_Pal}
   ${Cxx}
   ${CxxABI}
   ${lib_FabricResources}
@@ -111,8 +113,6 @@ target_link_libraries(${exe_CommonTest}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

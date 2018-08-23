@@ -43,6 +43,17 @@ namespace Data
                 checkpointLSN_ = value;
             }
 
+            __declspec(property(get = get_MetadataFileSize, put = set_MetadataFileSize)) ULONG64 MetadataFileSize;
+            ULONG64 get_MetadataFileSize() const
+            {
+                return metadataFileSize_;
+            }
+
+            void set_MetadataFileSize(__in ULONG64 value)
+            {
+                metadataFileSize_ = value;
+            }
+
             __declspec(property(get = get_Table, put = set_Table)) IDictionary<ULONG32, FileMetadata::SPtr>::SPtr Table;
             IDictionary<ULONG32, FileMetadata::SPtr>::SPtr get_Table()
             {
@@ -70,6 +81,7 @@ namespace Data
             LONG64 checkpointLSN_;
             bool isClosed_;
             LONG64 referenceCount_;
+            ULONG64 metadataFileSize_;
 
             IDictionary<ULONG32, FileMetadata::SPtr>::SPtr tableSPtr_;
         };

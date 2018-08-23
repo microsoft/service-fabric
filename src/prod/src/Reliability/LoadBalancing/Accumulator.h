@@ -12,8 +12,9 @@ namespace Reliability
         class Accumulator
         {
         public:
-            Accumulator();
-            Accumulator(Accumulator const& other);
+            explicit Accumulator(bool usePercentages);
+            Accumulator(Accumulator const& other) = default;
+            Accumulator & operator = (Accumulator const & other) = default;
 
             virtual ~Accumulator();
 
@@ -35,16 +36,32 @@ namespace Reliability
             __declspec (property(get=get_NormStdDev)) double NormStdDev;
             double get_NormStdDev() const;
 
-            virtual void Clear();
-            virtual void AddOneValue(int64 value);
-            virtual void AdjustOneValue(int64 oldValue, int64 newValue);
+            __declspec (property(get = get_UsePercentage)) bool UsePercentage;
+            bool get_UsePercentage() const { return usePercentage_; }
 
-            virtual Accumulator & operator = (Accumulator const & other);
+            __declspec (property(get = get_AbsoluteSum)) double AbsoluteSum;
+            double get_AbsoluteSum() const { return absoluteSum_; }
+
+            __declspec (property(get = get_CapacitySum)) double CapacitySum;
+            double get_CapacitySum() const { return capacitySum_; }
+
+            virtual void Clear();
+            virtual void AddOneValue(int64 value, int64 capacity);
+            virtual void AdjustOneValue(int64 oldValue, int64 newValue, int64 capacity);
 
         private:
+            // Number of values in accumulator
             size_t count_;
+            // Sum of values in accumulator (values can be percents)
             double sum_;
+            // Squared sum of values in accumulator (values can be percents)
             double squaredSum_;
+            // Shall accumulator contain percents or absolute values
+            bool usePercentage_;
+            // Sum of absolute values (same as sum_ if usePercentage_ is false)
+            double absoluteSum_;
+            // Sum of all capacities
+            double capacitySum_;
         };
     }
 }

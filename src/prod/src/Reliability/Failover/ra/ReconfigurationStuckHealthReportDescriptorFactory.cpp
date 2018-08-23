@@ -24,18 +24,9 @@ ReconfigurationStuckDescriptorSPtr ReconfigurationStuckHealthReportDescriptorFac
     vector<HealthReportReplica> replicas;
 
     //Populates the replica vector if appropriate for this reason for being stuck
-    switch (phaseStage) {
-        case ReconfigurationProgressStages::Phase1_WaitingForReadQuorum:
-        case ReconfigurationProgressStages::Phase3_PCBelowReadQuorum:
-        case ReconfigurationProgressStages::Phase3_WaitingForReplicas:
-        case ReconfigurationProgressStages::Phase4_UpReadyReplicasPending:
-        case ReconfigurationProgressStages::Phase4_ReplicaStuckIB:
-        case ReconfigurationProgressStages::Phase4_ReplicaPendingRestart:
-        case ReconfigurationProgressStages::Phase4_UpReadyReplicasActivated:
-            PopulateHealthReportReplicaVector(replicas, replicaStore, phaseStage);
-    }
-    
-   return make_shared<ReconfigurationStuckHealthReportDescriptor>(phaseStage, std::move(replicas), reconfigurationStartTime, reconfigurationPhaseStartTime);
+    PopulateHealthReportReplicaVector(replicas, replicaStore, phaseStage);
+
+    return make_shared<ReconfigurationStuckHealthReportDescriptor>(phaseStage, std::move(replicas), reconfigurationStartTime, reconfigurationPhaseStartTime);
 }
 
 ReconfigurationStuckDescriptorSPtr ReconfigurationStuckHealthReportDescriptorFactory::CreateReconfigurationStuckHealthReportDescriptor()
@@ -45,33 +36,109 @@ ReconfigurationStuckDescriptorSPtr ReconfigurationStuckHealthReportDescriptorFac
 
 void ReconfigurationStuckHealthReportDescriptorFactory::PopulateHealthReportReplicaVector(vector<HealthReportReplica> & v, ReplicaStore::ConfigurationReplicaStore const & replicaStore, ReconfigurationProgressStages::Enum phaseStage)
 {
-    for (auto const & replica : replicaStore)
+    std::function<bool(const Replica &replica)> replicaFilter;
+    switch (phaseStage)
     {
-        if (replica.IsInConfiguration && !replica.IsDropped)
+        case ReconfigurationProgressStages::Phase1_WaitingForReadQuorum:
         {
-            if (replica.IsLSNSet() && phaseStage == ReconfigurationProgressStages::Phase1_WaitingForReadQuorum)
+            replicaFilter = [&v](const Replica &replica)
             {
-                continue;
-            }
-
-            if (phaseStage != ReconfigurationProgressStages::Phase4_ReplicaPendingRestart && phaseStage != ReconfigurationProgressStages::Phase4_ReplicaStuckIB)
-            {
-                v.push_back(move(HealthReportReplica(replica)));
-            }            
-            else if (phaseStage == ReconfigurationProgressStages::Phase4_ReplicaStuckIB)
-            {
-                if (replica.IsInBuild)
+                if (replica.IsInConfiguration && !replica.IsDropped && !replica.IsLSNSet())
                 {
-                    v.push_back(move(HealthReportReplica(replica)));
+                    return true;
                 }
-            }
-            else if (phaseStage == ReconfigurationProgressStages::Phase4_ReplicaPendingRestart)
+                return false;
+            };
+        } break;
+        case ReconfigurationProgressStages::Phase3_PCBelowReadQuorum:
+        {
+            replicaFilter = [&v](const Replica &replica)
+            {
+                if (replica.IsInPreviousConfiguration && replica.MessageStage != ReplicaMessageStage::None && !replica.IsDropped)
+                {
+                    return true;
+                }
+                return false;
+            };
+        } break;
+        case ReconfigurationProgressStages::Phase3_WaitingForReplicas:
+        {
+            replicaFilter = [&v](const Replica &replica)
+            {
+                if (replica.IsInPreviousConfiguration && replica.IsUp && !replica.IsBuildInProgress && !replica.ToBeRestarted)
+                {
+                    return true;
+                }
+                return false;
+            };
+        } break;
+        case ReconfigurationProgressStages::Phase4_UpReadyReplicasPending:
+        {
+            replicaFilter = [&v](const Replica &replica)
+            {
+                if (!replica.ReplicatorRemovePending &&
+                    !replica.ToBeRestarted &&
+                    replica.IsInCurrentConfiguration &&
+                    replica.IsUp &&
+                    replica.IsReady &&
+                    replica.MessageStage!=ReplicaMessageStage::None)
+                {
+                    return true;
+                }
+                return false;
+            };
+        } break;
+        case ReconfigurationProgressStages::Phase4_ReplicaStuckIB:
+        {
+            replicaFilter = [&v](const Replica &replica)
+            {
+                if (!replica.ReplicatorRemovePending &&
+                    !replica.ToBeRestarted &&
+                    replica.IsInCurrentConfiguration &&
+                    replica.IsUp &&
+                    replica.IsInBuild &&
+                    replica.MessageStage != ReplicaMessageStage::None)
+                {
+                    return true;
+                }
+                return false;
+            };
+        } break;
+        case ReconfigurationProgressStages::Phase4_ReplicaPendingRestart:
+        {
+            replicaFilter = [&v](const Replica &replica)
             {
                 if (replica.ToBeRestarted)
                 {
-                    v.push_back(move(HealthReportReplica(replica)));
+                    return true;
                 }
-            }
-        }
+                return false;
+            };
+        } break;
+        case ReconfigurationProgressStages::Phase4_UpReadyReplicasActivated:
+        {
+            replicaFilter = [&v](const Replica &replica)
+            {
+                if (replica.ReplicatorRemovePending ||
+                    replica.IsInCurrentConfiguration &&
+                    replica.IsUp &&
+                    !replica.IsReady &&
+                    replica.MessageStage != ReplicaMessageStage::None)
+                {
+                    return true;
+                }
+                return false;
+            };
+        } break;
+        default:
+            return;
     }
+
+    for_each(replicaStore.begin(), replicaStore.end(), [&v,&replicaFilter](const Replica &replica)
+    {
+        if (replicaFilter(replica))
+        {
+            v.emplace_back(HealthReportReplica(replica));
+        }
+    });
 }

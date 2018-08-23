@@ -42,6 +42,9 @@ namespace ServiceModel
         virtual void SetDescription();
         virtual void GenerateDescription();
 
+        // Generate a string description that represents the entire reason. Used by v2 Application health model.
+        virtual std::wstring GetUnhealthyEvaluationDescription(std::wstring const & indent = L"") const;
+
         virtual Common::ErrorCode GenerateDescriptionAndTrimIfNeeded(
             size_t maxAllowedSize,
             __inout size_t & currentSize);

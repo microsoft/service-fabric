@@ -11,7 +11,6 @@ namespace Data
     {
         //
         // Represents the operations of a transaction or a single atomic/atomic-redo operation
-        // TODO: Rename to Lock since this is not a Txn::LockContext
         //
         class StateManagerLockContext 
             : public Utilities::IDisposable
@@ -25,7 +24,7 @@ namespace Data
             //
             // Creates the StateManagerTransactionContext::SPtr.
             // 
-            // Params:
+            // Parameters:
             // key                      Id of the parent transaction.
             // stateProviderId          Information on the lock that was taken for the operation.
             // metadataManager          Type of the operation for which the lock was taken.
@@ -87,7 +86,7 @@ namespace Data
 
             //
             // Release the lock outside of the Txn:LockContext.
-            // Port Note: Relase name is taken by KSharedBase, hence using ReleaseLock.
+            // Port Note: Release name is taken by KSharedBase, hence using ReleaseLock.
             //
             // Use: 
             // - Upgrading a read lock to write lock.
@@ -103,7 +102,7 @@ namespace Data
             // Simply forwards the Unlock call.
             //
             // Called when transaction unlocks (commit or abort).
-            // TODO: Remove LockContext from between TransactionContext and SPMM. Let TransactionContext call unlock directly.
+            // 11908685: Remove LockContext from between TransactionContext and SPMM. Let TransactionContext call unlock directly.
             // 
             NTSTATUS Unlock(__in StateManagerTransactionContext & transactionContext) noexcept;
 
@@ -141,13 +140,12 @@ namespace Data
             KWeakRef<MetadataManager>::SPtr metadataManagerSPtr_;
 
             // Indicates deletion of a lock.
-            // TODO: Consider renaming to isDeleted_
             bool isDisposed_;
 
             //
             // NOFAIL Constructor for StateManagerLockContext class.
             //
-            // Params:
+            // Parameters:
             // key                  Resource name being locked.
             // stateProviderId      StateProviderID that is locked..
             // metadataManager      Handle to the metadata manager.

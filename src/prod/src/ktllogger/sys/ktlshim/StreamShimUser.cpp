@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define KDRIVER 1
+#endif
+
 #include "KtlLogShimUser.h"
 
 //************************************************************************************
@@ -116,14 +120,6 @@ KtlLogStreamUser::~KtlLogStreamUser()
                                         nullptr);
 #endif
     }
-}
-
-KtlLogStream::KtlLogStream()
-{
-}
-
-KtlLogStream::~KtlLogStream()
-{
 }
 
 #ifdef UDRIVER
@@ -300,14 +296,6 @@ KtlLogStreamUser::AsyncQueryRecordRangeContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-
-KtlLogStream::AsyncQueryRecordRangeContext::AsyncQueryRecordRangeContext()
-{
-}
-
-KtlLogStream::AsyncQueryRecordRangeContext::~AsyncQueryRecordRangeContext()
-{
-}
 
 KtlLogStreamUser::AsyncQueryRecordRangeContextUser::AsyncQueryRecordRangeContextUser()
 {
@@ -540,14 +528,6 @@ KtlLogStreamUser::AsyncQueryRecordContextUser::OnReuse(
 }
 
 
-KtlLogStream::AsyncQueryRecordContext::AsyncQueryRecordContext()
-{
-}
-
-KtlLogStream::AsyncQueryRecordContext::~AsyncQueryRecordContext()
-{
-}
-
 KtlLogStreamUser::AsyncQueryRecordContextUser::AsyncQueryRecordContextUser()
 {
 }
@@ -733,14 +713,6 @@ KtlLogStreamUser::AsyncQueryRecordsContextUser::OnReuse(
 }
 
 
-KtlLogStream::AsyncQueryRecordsContext::AsyncQueryRecordsContext()
-{
-}
-
-KtlLogStream::AsyncQueryRecordsContext::~AsyncQueryRecordsContext()
-{
-}
-
 KtlLogStreamUser::AsyncQueryRecordsContextUser::AsyncQueryRecordsContextUser()
 {
 }
@@ -794,9 +766,6 @@ KtlLogStreamUser::CreateAsyncQueryRecordsContext(
     return(STATUS_SUCCESS); 
 }
 
-//
-// Write Record
-//
 VOID
 KtlLogStreamUser::AsyncWriteContextUser::WriteCompleted(
     __in_opt KAsyncContextBase* const ParentAsync,
@@ -807,31 +776,69 @@ KtlLogStreamUser::AsyncWriteContextUser::WriteCompleted(
     
     NTSTATUS status = Async.Status();
 
+    KFinally([&status, this]
+    {
+        if (NT_SUCCESS(status))
+        {
+            _InstrumentedOperation.EndOperation(_MetaDataBuffer->QuerySize() + _IoBuffer->QuerySize());
+        }
+
+        KDbgCheckpointWDataInformational(
+            _LogStream->GetActivityId(),
+            "UserWriteCompletion",
+            status,
+            (ULONGLONG)this,
+            _RecordAsn.Get(),
+            _Version,
+            0);
+
+        Complete(status);
+    });
+
     if (! NT_SUCCESS(status))
     {
         KTraceFailedAsyncRequest(status, this, 0, 0);
-    } else {
-		ULONG size = _MetaDataBuffer->QuerySize() + _IoBuffer->QuerySize();
+        return;
+    } 
 		
-        if (_MetaDataBuffer->QuerySize() > _LogStream->_PreAllocRecordMetadataSize)
-        {
-            _LogStream->_PreAllocRecordMetadataSize = _MetaDataBuffer->QuerySize();
-        }
-
-        if (_IoBuffer->QuerySize() > _LogStream->_PreAllocDataSize)
-        {
-            _LogStream->_PreAllocDataSize = _IoBuffer->QuerySize();
-        }
-
-        _LogStream->AdjustReservationSpace(-1 * _ReservationSpace);
-		
-		_InstrumentedOperation.EndOperation(size);
+    if (_MetaDataBuffer->QuerySize() > _LogStream->_PreAllocRecordMetadataSize)
+    {
+        _LogStream->_PreAllocRecordMetadataSize = _MetaDataBuffer->QuerySize();
     }
 
-    KDbgCheckpointWDataInformational(_LogStream->GetActivityId(),
-                        "UserWriteCompletion", status, (ULONGLONG)this, _RecordAsn.Get(), _Version, 0);
-    
-    Complete(status);
+    if (_IoBuffer->QuerySize() > _LogStream->_PreAllocDataSize)
+    {
+        _LogStream->_PreAllocDataSize = _IoBuffer->QuerySize();
+    }
+
+    _LogStream->AdjustReservationSpace(-1 * _ReservationSpace);
+
+    status = _Marshaller->InitializeForResponse(_DevIoCtl->GetOutBufferSize());
+
+    if (!NT_SUCCESS(status))
+    {
+        KTraceFailedAsyncRequest(status, this, 0, 0);
+        return;
+    }
+
+    if (_LogSize != nullptr)
+    {
+        KAssert(_LogSpaceRemaining != nullptr);
+
+        status = _Marshaller->ReadData<ULONGLONG>(*_LogSize);
+        if (!NT_SUCCESS(status))
+        {
+            KTraceFailedAsyncRequest(status, this, 0, 0);
+            return;
+        }
+
+        status = _Marshaller->ReadData<ULONGLONG>(*_LogSpaceRemaining);
+        if (!NT_SUCCESS(status))
+        {
+            KTraceFailedAsyncRequest(status, this, 0, 0);
+            return;
+        }
+    }
 }
 
 VOID
@@ -874,7 +881,7 @@ KtlLogStreamUser::AsyncWriteContextUser::OnStart(
     status = _Marshaller->InitializeForObjectMethod(static_cast<RequestMarshaller::OBJECT_TYPE>(_LogStream->GetObjectType()),
                                                     (ULONGLONG)this,
                                                     _LogStream->GetObjectId(),
-                                                    RequestMarshaller::Write);
+                                                    RequestMarshaller::WriteAndReturnLogUsage);
     if (! NT_SUCCESS(status))
     {
         KTraceFailedAsyncRequest(status, this, 0, 0);
@@ -963,8 +970,38 @@ KtlLogStreamUser::AsyncWriteContextUser::StartWrite(
     _MetaDataBuffer = MetaDataBuffer;
     _IoBuffer = IoBuffer;
     _ReservationSpace = ReservationSpace;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
     
     Start(ParentAsyncContext, CallbackPtr); 
+}
+
+VOID
+KtlLogStreamUser::AsyncWriteContextUser::StartWrite(
+    __in KtlLogAsn RecordAsn,
+    __in ULONGLONG Version,
+    __in ULONG MetaDataLength,
+    __in const KIoBuffer::SPtr& MetaDataBuffer,
+    __in const KIoBuffer::SPtr& IoBuffer,
+    __in ULONGLONG ReservationSpace,
+    __out ULONGLONG& LogSize,
+    __out ULONGLONG& LogSpaceRemaining,
+    __in_opt KAsyncContextBase* const ParentAsyncContext,
+    __in_opt KAsyncContextBase::CompletionCallback CallbackPtr
+)
+{
+    _InstrumentedOperation.BeginOperation();
+
+    _RecordAsn = RecordAsn;
+    _Version = Version;
+    _MetaDataLength = MetaDataLength;
+    _MetaDataBuffer = MetaDataBuffer;
+    _IoBuffer = IoBuffer;
+    _ReservationSpace = ReservationSpace;
+    _LogSize = &LogSize;
+    _LogSpaceRemaining = &LogSpaceRemaining;
+
+    Start(ParentAsyncContext, CallbackPtr);
 }
 
 #if defined(K_UseResumable)
@@ -987,6 +1024,39 @@ KtlLogStreamUser::AsyncWriteContextUser::WriteAsync(
     _MetaDataBuffer = MetaDataBuffer;
     _IoBuffer = IoBuffer;
     _ReservationSpace = ReservationSpace;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
+
+    NTSTATUS status;
+    ktl::kasync::InplaceStartAwaiter awaiter(*((KAsyncContextBase*)this), ParentAsyncContext, NULL);
+
+    status = co_await awaiter;
+    co_return status;
+}
+
+ktl::Awaitable<NTSTATUS>
+KtlLogStreamUser::AsyncWriteContextUser::WriteAsync(
+    __in KtlLogAsn RecordAsn,
+    __in ULONGLONG Version,
+    __in ULONG MetaDataLength,
+    __in const KIoBuffer::SPtr& MetaDataBuffer,
+    __in const KIoBuffer::SPtr& IoBuffer,
+    __in ULONGLONG ReservationSpace,
+    __out ULONGLONG& LogSize,
+    __out ULONGLONG& LogSpaceRemaining,
+    __in_opt KAsyncContextBase* const ParentAsyncContext
+)
+{
+    _InstrumentedOperation.BeginOperation();
+
+    _RecordAsn = RecordAsn;
+    _Version = Version;
+    _MetaDataLength = MetaDataLength;
+    _MetaDataBuffer = MetaDataBuffer;
+    _IoBuffer = IoBuffer;
+    _ReservationSpace = ReservationSpace;
+    _LogSize = &LogSize;
+    _LogSpaceRemaining = &LogSpaceRemaining;
 
     NTSTATUS status;
     ktl::kasync::InplaceStartAwaiter awaiter(*((KAsyncContextBase*)this), ParentAsyncContext, NULL);
@@ -1004,14 +1074,6 @@ KtlLogStreamUser::AsyncWriteContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-
-KtlLogStream::AsyncWriteContext::AsyncWriteContext()
-{
-}
-
-KtlLogStream::AsyncWriteContext::~AsyncWriteContext()
-{
-}
 
 KtlLogStreamUser::AsyncWriteContextUser::AsyncWriteContextUser()
 {
@@ -1191,14 +1253,6 @@ KtlLogStreamUser::AsyncReservationContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-
-KtlLogStream::AsyncReservationContext::AsyncReservationContext()
-{
-}
-
-KtlLogStream::AsyncReservationContext::~AsyncReservationContext()
-{
-}
 
 KtlLogStreamUser::AsyncReservationContextUser::AsyncReservationContextUser()
 {
@@ -1627,14 +1681,6 @@ KtlLogStreamUser::AsyncReadContextUser::OnReuse(
 }
 
 
-KtlLogStream::AsyncReadContext::AsyncReadContext()
-{
-}
-
-KtlLogStream::AsyncReadContext::~AsyncReadContext()
-{
-}
-
 KtlLogStreamUser::AsyncReadContextUser::AsyncReadContextUser()
 {
 }
@@ -1861,14 +1907,6 @@ KtlLogStreamUser::AsyncMultiRecordReadContextUser::OnReuse(
 }
 
 
-KtlLogStream::AsyncMultiRecordReadContext::AsyncMultiRecordReadContext()
-{
-}
-
-KtlLogStream::AsyncMultiRecordReadContext::~AsyncMultiRecordReadContext()
-{
-}
-
 KtlLogStreamUser::AsyncMultiRecordReadContextUser::AsyncMultiRecordReadContextUser()
 {
 }
@@ -2025,14 +2063,6 @@ KtlLogStreamUser::AsyncTruncateContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-
-KtlLogStream::AsyncTruncateContext::AsyncTruncateContext()
-{
-}
-
-KtlLogStream::AsyncTruncateContext::~AsyncTruncateContext()
-{
-}
 
 KtlLogStreamUser::AsyncTruncateContextUser::AsyncTruncateContextUser()
 {
@@ -2207,14 +2237,6 @@ KtlLogStreamUser::AsyncStreamNotificationContextUser::OnCancel(
     _DevIoCtl->Cancel();
 }
 
-KtlLogStream::AsyncStreamNotificationContext::AsyncStreamNotificationContext()
-{
-}
-
-KtlLogStream::AsyncStreamNotificationContext::~AsyncStreamNotificationContext()
-{
-}
-
 KtlLogStreamUser::AsyncStreamNotificationContextUser::AsyncStreamNotificationContextUser()
 {
 }
@@ -2374,14 +2396,6 @@ KtlLogStreamUser::AsyncWriteMetadataContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-
-KtlLogStream::AsyncWriteMetadataContext::AsyncWriteMetadataContext()
-{
-}
-
-KtlLogStream::AsyncWriteMetadataContext::~AsyncWriteMetadataContext()
-{
-}
 
 KtlLogStreamUser::AsyncWriteMetadataContextUser::AsyncWriteMetadataContextUser()
 {
@@ -2601,14 +2615,6 @@ KtlLogStreamUser::AsyncReadMetadataContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-
-KtlLogStream::AsyncReadMetadataContext::AsyncReadMetadataContext()
-{
-}
-
-KtlLogStream::AsyncReadMetadataContext::~AsyncReadMetadataContext()
-{
-}
 
 KtlLogStreamUser::AsyncReadMetadataContextUser::AsyncReadMetadataContextUser()
 {
@@ -2842,14 +2848,6 @@ KtlLogStreamUser::AsyncIoctlContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-
-KtlLogStream::AsyncIoctlContext::AsyncIoctlContext()
-{
-}
-
-KtlLogStream::AsyncIoctlContext::~AsyncIoctlContext()
-{
-}
 
 KtlLogStreamUser::AsyncIoctlContextUser::AsyncIoctlContextUser()
 {

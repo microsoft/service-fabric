@@ -16,7 +16,6 @@ const int ServicePackage2::ServicePackageActivatedEventVersion;
 const int ServicePackage2::ServicePackageDeactivatedEventVersion;
 const int ServicePackage2::ServicePackageUpgradedEventVersion;
 
-
 // ********************************************************************************************************************
 // ServicePackage2::ActivateAsyncOperation Implementation
 //
@@ -762,7 +761,7 @@ ServicePackage2::ServicePackage2(
     StateMachine(Inactive),
     hostingHolder_(hostingHolder),
     context_(move(packageInstanceContext)),
-    instanceId_(DateTime::Now().Ticks),
+    instanceId_(hostingHolder.RootedObject.GetNextSequenceNumber()),
     currentVersionInstance__(ServicePackageVersionInstance::Invalid),
     versionedServicePackage__(),
     packageDescription__(packageDescription),
@@ -873,6 +872,7 @@ void ServicePackage2::OnAbort()
     // code package termination, this will ensure that invalid registrations are not used anymore.
     HostingHolder.RootedObject.FabricRuntimeManagerObj->OnServicePackageClosed(Id, InstanceId);
 
+    // TODO: This should be traced as ServicePackgeAborted to differentiate from normal deactivation.
     hostingTrace.ServicePackageDeactivated(TraceId, Id.ToString(), packageVersionInstance.ToString(), InstanceId);
     hostingTrace.ServicePackageDeactivatedNotifyDca(
         ServicePackageDeactivatedEventVersion, 
@@ -967,6 +967,16 @@ VersionedServicePackageSPtr ServicePackage2::GetVersionedServicePackage() const
     {
         AcquireReadLock lock(Lock);
         return versionedServicePackage__;
+    }
+}
+
+void ServicePackage2::OnServiceTypesUnregistered(
+    vector<ServiceTypeInstanceIdentifier> const & serviceTypeInstanceIds)
+{
+    auto versionedServicePackage = this->GetVersionedServicePackage();
+    if (versionedServicePackage != nullptr)
+    {
+        versionedServicePackage->OnServiceTypesUnregistered(serviceTypeInstanceIds);
     }
 }
 
@@ -1088,18 +1098,13 @@ ErrorCode ServicePackage2::AnalyzeApplicationUpgrade(
 void ServicePackage2::OnServiceTypeRegistrationNotFound(
     uint64 const registrationTableVersion,
     VersionedServiceTypeIdentifier const & versionedServiceTypeId,
-	ServicePackageInstanceIdentifier const & servicePackageInstanceId)
+    ServicePackageInstanceIdentifier const & servicePackageInstanceId)
 {    
-    VersionedServicePackageSPtr versionedServicePackage;
-    {
-        AcquireReadLock lock(this->Lock);
-        versionedServicePackage = this->versionedServicePackage__;
-    }
-
+    auto versionedServicePackage = this->GetVersionedServicePackage();
     if(versionedServicePackage)
     {
         versionedServicePackage->OnServiceTypeRegistrationNotFound(registrationTableVersion, versionedServiceTypeId, servicePackageInstanceId);
-    }    
+    }
 }
 
 ServicePackageVersionInstance const & ServicePackage2::get_CurrentVersionInstance() const

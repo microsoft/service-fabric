@@ -20,11 +20,15 @@ namespace Store
 
         SimpleTransactionGroup(
             __in ReplicatedStore & store,
-            int commitBatchingSizeLimit,
             std::shared_ptr<TransactionReplicator> const &,
             __in TransactionSPtr && innerTransaction,
-            Common::ActivityId const & activityId);
+            IReplicatedStoreTxEventHandlerWPtr const &,
+            Common::ActivityId const & activityId,
+            int commitBatchingSizeLimit);
         virtual ~SimpleTransactionGroup();
+
+        __declspec(property(get=get_MigrationTxKey)) uint64 MigrationTxKey;
+        uint64 get_MigrationTxKey() const { return migrationTxKey_; }
 
         __declspec(property(get=get_ReplicatedStore)) Store::ReplicatedStore & ReplicatedStore;
         __declspec(property(get=get_ReplicationOperations)) std::vector<ReplicationOperation> const & ReplicationOperations;
@@ -91,6 +95,7 @@ namespace Store
         Store::ReplicatedStore & replicatedStore_;
         std::shared_ptr<TransactionReplicator> txReplicatorSPtr_;
         TransactionSPtr innerTransactionSPtr_;
+        IReplicatedStoreTxEventHandlerWPtr txEventHandler_;
         int commitBatchingSizeLimit_;
         Common::ErrorCode creationError_;
         bool rolledback_;
@@ -115,5 +120,7 @@ namespace Store
         size_t committedTxCount_;
         
         ::FABRIC_SEQUENCE_NUMBER operationLSN_;
+
+        uint64 migrationTxKey_;
     };
 }

@@ -10,6 +10,7 @@
 #include "PlacementAndLoadBalancing.h"
 #include "ReplicaDescription.h"
 #include "SearcherSettings.h"
+#include "ServiceDomain.h"
 
 using namespace std;
 using namespace Common;
@@ -180,6 +181,96 @@ uint Service::GetDefaultMetricLoad(uint metricIndex, ReplicaRole::Enum role) con
     {
         return (isPrimary ? (isStateful ? metric.PrimaryDefaultLoad : 0) : (isStateful ? metric.SecondaryDefaultLoad : metric.InstanceDefaultLoad));
     }
+}
+
+bool Service::IsLoadAvailableForPartitions(std::wstring const & metricName, ServiceDomain const & serviceDomain)
+{
+    for (auto ftId : failoverUnits_)
+    {
+        auto itFT = serviceDomain.FailoverUnits.find(ftId);
+        if (itFT != serviceDomain.FailoverUnits.end())
+        {
+            if (itFT->second.IsLoadAvailable(metricName))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Service::GetAverageLoadPerPartitions(std::wstring const & metricName, ServiceDomain const & serviceDomain, bool useOnlyPrimaryLoad, double & averageLoad) const
+{
+    // Get the average load for partitions where load is available.
+    bool isResource = metricName == *ServiceModel::Constants::SystemMetricNameCpuCores || metricName == *ServiceModel::Constants::SystemMetricNameMemoryInMB;
+    int metricIndex = -1;
+    double loadSum = 0.0;
+    size_t count = 0;
+
+    if (!isResource)
+    {
+        metricIndex = GetCustomLoadIndex(metricName);
+        if (metricIndex < 0)
+        {
+            return false;
+        }
+    }
+
+    for (auto ftId : failoverUnits_)
+    {
+        auto itFT = serviceDomain.FailoverUnits.find(ftId);
+        if (itFT != serviceDomain.FailoverUnits.end() && itFT->second.IsLoadAvailable(metricName))
+        {
+            count++;
+            if (serviceDesc_.IsStateful)
+            {
+                if (useOnlyPrimaryLoad) 
+                {
+                    if (isResource)
+                    {
+                        loadSum += itFT->second.GetResourcePrimaryLoad(metricName);
+                    }
+                    else
+                    {
+                        loadSum += itFT->second.PrimaryEntries[metricIndex];
+                    }
+                }
+                else
+                {
+                    if (isResource)
+                    {
+                        loadSum += itFT->second.GetResourceAverageLoad(metricName);
+                    }
+                    else
+                    {
+                        //Assumption primary replica exist always
+                        loadSum += itFT->second.GetAverageLoadForAutoScaling(metricIndex);
+                    }
+                }
+            }
+            else
+            {
+                if (isResource)
+                {
+                    loadSum += itFT->second.GetResourceAverageLoad(metricName);
+                }
+                else
+                {
+                    loadSum += itFT->second.GetSecondaryLoadForAutoScaling(metricIndex);
+                }
+            }
+        }
+    }
+
+    if (count > 0)
+    {
+        averageLoad = loadSum / count;
+    }
+    else
+    {
+        averageLoad = 0.0;
+    }
+    return true;
 }
 
 uint Service::GetDefaultMoveCost(ReplicaRole::Enum role) const

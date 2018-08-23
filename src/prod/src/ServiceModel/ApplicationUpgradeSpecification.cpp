@@ -18,7 +18,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification()
     isManual_(false),
     packageUpgrades_(),
     applicationName_(),
-    spRGSettings_()
+    spRGSettings_(),
+    cpContainersImages_()
 {
 }
 
@@ -32,7 +33,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification(
     bool isManual,
     vector<ServicePackageUpgradeSpecification> && packageUpgrades,
     vector<ServiceTypeRemovalSpecification> && removedTypes,
-    ServicePackageResourceGovernanceMap && spRGSettings)
+    ServicePackageResourceGovernanceMap && spRGSettings,
+    CodePackageContainersImagesMap && cpContainersImages)
     : applicationId_(applicationId),
     applicationVersion_(applicationVersion),
     instanceId_(instanceId),
@@ -42,7 +44,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification(
     packageUpgrades_(move(packageUpgrades)),
     removedTypes_(move(removedTypes)),
     applicationName_(move(applicationName)),
-    spRGSettings_(move(spRGSettings))
+    spRGSettings_(move(spRGSettings)),
+    cpContainersImages_(move(cpContainersImages))
 {
 }
 
@@ -56,7 +59,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification(ApplicationUpgr
     packageUpgrades_(other.packageUpgrades_),
     removedTypes_(other.removedTypes_),
     applicationName_(other.applicationName_),
-    spRGSettings_(other.spRGSettings_)
+    spRGSettings_(other.spRGSettings_),
+    cpContainersImages_(other.cpContainersImages_)
 {
 }
 
@@ -70,7 +74,8 @@ ApplicationUpgradeSpecification::ApplicationUpgradeSpecification(ApplicationUpgr
     packageUpgrades_(move(other.packageUpgrades_)),
     removedTypes_(move(other.removedTypes_)),
     applicationName_(move(other.applicationName_)),
-    spRGSettings_(move(other.spRGSettings_))
+    spRGSettings_(move(other.spRGSettings_)),
+    cpContainersImages_(move(other.cpContainersImages_))
 {
 }
 
@@ -89,6 +94,7 @@ ApplicationUpgradeSpecification const & ApplicationUpgradeSpecification::operato
         this->removedTypes_ = other.removedTypes_;
         this->applicationName_ = other.applicationName_;
         this->spRGSettings_ = other.spRGSettings_;
+        this->cpContainersImages_ = other.cpContainersImages_;
     }
 
     return *this;
@@ -108,6 +114,7 @@ ApplicationUpgradeSpecification const & ApplicationUpgradeSpecification::operato
         this->removedTypes_ = move(other.removedTypes_);
         this->applicationName_ = move(other.applicationName_);
         this->spRGSettings_ = move(other.spRGSettings_);
+        this->cpContainersImages_ = move(other.cpContainersImages_);
     }
 
     return *this;
@@ -261,6 +268,20 @@ void ApplicationUpgradeSpecification::WriteTo(TextWriter & w, FormatOptions cons
             w.Write("{0}", spRG.first);
             w.Write(",");
             w.Write("{0}", spRG.second);
+            w.Write("}");
+        }
+        w.Write("}");
+    }
+
+    if (!cpContainersImages_.empty())
+    {
+        w.Write(",CPContainersImages={");
+        for (auto & cpCI : cpContainersImages_)
+        {
+            w.Write("{");
+            w.Write("{0}", cpCI.first);
+            w.Write(",");
+            w.Write("{0}", cpCI.second);
             w.Write("}");
         }
         w.Write("}");

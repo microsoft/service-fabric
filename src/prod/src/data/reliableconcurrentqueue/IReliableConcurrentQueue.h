@@ -15,20 +15,20 @@ namespace Data
             K_SHARED_INTERFACE(IReliableConcurrentQueue)
 
         public:
-
             virtual ktl::Awaitable<void> EnqueueAsync(
                 __in TxnReplicator::TransactionBase& replicatorTransaction,
                 __in TValue value,
                 __in Common::TimeSpan timeout,
                 __in ktl::CancellationToken const & cancellationToken) = 0;
 
-            virtual ktl::Awaitable<NTSTATUS> TryDequeueAsync(
+            virtual ktl::Awaitable<bool> TryDequeueAsync(
                 __in TxnReplicator::TransactionBase& replicatorTransaction,
                 __out TValue& value,
+                __in Common::TimeSpan timeout,
                 __in ktl::CancellationToken const & cancellationToken) = 0;
 
-            // todo sangarg : Understand how IStore does this
-            // virtual int Count();
+            // Call it GetQueueCount to avoid conflicting with IStore (trigger ambiguity failure everywhere)
+            virtual LONG64 GetQueueCount() const = 0;
         };
     }
 }

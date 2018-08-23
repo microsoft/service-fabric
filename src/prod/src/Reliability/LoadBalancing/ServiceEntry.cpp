@@ -264,7 +264,7 @@ std::vector<PlacementReplica const*> ServiceEntry::AllAffinityAssociatedReplicas
     {
         // If partition has more replicas or it doesn't have any,
         // there are no candidates to be moved with the optimization
-        if (TargetReplicaSetSize != 1 || partition->ExistingReplicaCount == 0)
+        if (partition->TargetReplicaSetSize != 1 || partition->ExistingReplicaCount == 0)
         {
             continue;
         }
@@ -288,15 +288,11 @@ std::vector<PlacementReplica const*> ServiceEntry::AllAffinityAssociatedReplicas
     // Has children services
     for (auto childService : DependentServices)
     {
-        if (childService->TargetReplicaSetSize != 1)
-        {
-            continue;
-        }
         for (auto childPartition : childService->Partitions)
         {
             // If partition doesn't have any replicas,
             // there are no candidates to move (e.g. partition is new)
-            if (childPartition->ExistingReplicaCount == 0)
+            if (childPartition->ExistingReplicaCount == 0 || childPartition->TargetReplicaSetSize != 1)
             {
                 continue;
             }

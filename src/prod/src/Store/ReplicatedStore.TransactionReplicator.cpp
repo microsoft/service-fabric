@@ -29,6 +29,7 @@ namespace Store
             : ComProxyAsyncOperation(callback, parent)
             , replicationOperation_(std::move(replicationOperation))
             , innerReplicator_(innerReplicator)
+            , operationLSN_(-1)
         {
             ReplicatedStoreEventSource::Trace->PrimaryComReplAsyncCtor(TraceThis);
         }

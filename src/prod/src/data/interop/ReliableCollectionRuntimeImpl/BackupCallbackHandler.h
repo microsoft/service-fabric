@@ -19,6 +19,12 @@ public:
         __in void* uploadAsyncCallbackContext_,
         __out BackupCallbackHandler::SPtr& result);
 
+    static HRESULT Create(
+        __in KAllocator& allocator,
+        __in fnUploadAsync2 uploadAsyncCallback,
+        __in void* uploadAsyncCallbackContext_,
+        __out BackupCallbackHandler::SPtr& result);
+
     ktl::Awaitable<bool> UploadBackupAsync(
         __in TxnReplicator::BackupInfo backupInfo,
         __in ktl::CancellationToken const & cancellationToken);
@@ -27,8 +33,13 @@ private:
         __in fnUploadAsync uploadAsyncCallback,
         __in void* uploadAsyncCallbackContext);
 
+    BackupCallbackHandler(
+        __in fnUploadAsync2 uploadAsyncCallback,
+        __in void* uploadAsyncCallbackContext);
+
     void SetResult(__in bool result);
     fnUploadAsync uploadAsyncCallback_;
+    fnUploadAsync2 uploadAsyncCallback2_;
     void* uploadAsyncCallbackContext_;
     ktl::AwaitableCompletionSource<bool>::SPtr acsSPtr_;
 };

@@ -9,7 +9,7 @@ namespace Management
 {
     namespace ClusterManager
     {
-        class DockerComposeAppTypeNameVersionGenerator : public IDockerComposeAppTypeNameVersionGenerator
+        class DockerComposeAppTypeNameVersionGenerator : public IApplicationDeploymentTypeNameVersionGenerator
         {
             DENY_COPY(DockerComposeAppTypeNameVersionGenerator);
         public:
@@ -20,12 +20,13 @@ namespace Management
                 Store::StoreTransaction const &,
                 Common::NamingUri const &,
                 __out ServiceModelTypeName &,
-                __out ServiceModelVersion &);
+                __out ServiceModelVersion &) override;
 
             virtual Common::ErrorCode GetNextVersion(
                 Store::StoreTransaction const &,
-                ComposeDeploymentContext const &,
-                __out ServiceModelVersion &);
+                std::wstring const &,
+                ServiceModelVersion const &,
+                __out ServiceModelVersion &) override;
 
         private:
             Common::ErrorCode GetPreviousTargetVersion(Store::StoreTransaction const &, std::wstring const &deploymentName, __out ServiceModelVersion &);

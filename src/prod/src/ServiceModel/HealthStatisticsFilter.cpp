@@ -21,21 +21,6 @@ HealthStatisticsFilter::HealthStatisticsFilter(bool excludeHealthStatistics)
 {
 }
 
-HealthStatisticsFilter::HealthStatisticsFilter(HealthStatisticsFilter && other)
-    : excludeHealthStatistics_(move(other.excludeHealthStatistics_))
-{
-}
-
-HealthStatisticsFilter & HealthStatisticsFilter::operator =(HealthStatisticsFilter && other)
-{
-    if (this != &other)
-    {
-        excludeHealthStatistics_ = move(other.excludeHealthStatistics_);
-    }
-
-    return *this;
-}
-
 HealthStatisticsFilter::~HealthStatisticsFilter()
 {
 }

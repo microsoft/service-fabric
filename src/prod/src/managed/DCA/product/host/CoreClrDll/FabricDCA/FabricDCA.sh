@@ -26,4 +26,10 @@ if [ $linuxDistrib = "rhel" ]; then
   	exit $exitCode
   fi
 fi
+
+# using DCA's folder for for looking for libraries to make sure fixed babeltrace is used.
+# otherwise the babeltrace libs (which has a bug in the API) which could be installed in the system would be used.
+LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+
 exec dotnet FabricDCA.dll "$@"

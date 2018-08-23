@@ -37,6 +37,7 @@ namespace FabricTest
         Common::ErrorCode OnOpen(
             __in Common::ComPointer<IFabricStatefulServicePartition> const &,
             __in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
+            __in Common::ComPointer<IFabricPrimaryReplicator> & primaryReplicator,
             __in KAllocator & allocator);
 
         Common::ErrorCode OnChangeRole(::FABRIC_REPLICA_ROLE newRole);
@@ -139,6 +140,16 @@ namespace FabricTest
 
         Common::ErrorCode RequestCheckpoint() override;
 
+        Common::ErrorCode GetReplicationQueueCounters(
+            __out FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS & counters) override;
+
+        Common::ErrorCode GetReplicatorQueryResult(
+            __out ServiceModel::ReplicatorStatusQueryResultSPtr & result) override;
+
+        NTSTATUS GetPeriodicCheckpointAndTruncationTimestamps(
+            __out LONG64 & lastPeriodicCheckpoint,
+            __out LONG64 & lastPeriodicTruncation) override;
+
     protected:
         TxnReplicator::ITransactionalReplicator::SPtr GetTxnReplicator();
 
@@ -174,6 +185,8 @@ namespace FabricTest
         enum State { Initialized, Opened, Closed };
         StatefulPartitionWrapper<IFabricStatefulServicePartition3> partitionWrapper_;
         TxnReplicator::ITransactionalReplicator::SPtr transactionalReplicator_;
+        Common::ComPointer<IFabricPrimaryReplicator> primaryReplicator_;
+
         KAllocator * allocator_;
 
         std::wstring partitionId_;

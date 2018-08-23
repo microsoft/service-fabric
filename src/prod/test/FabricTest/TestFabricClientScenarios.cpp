@@ -276,10 +276,10 @@ bool TestFabricClientScenarios::ClusterManagerLargeKeys(
     
     TestFabricClientUpgrade upgradeClient(client);
 
-    upgradeClient.ProvisionApplicationTypeImpl(Path::Combine(L"incoming", TestBuildPath1), false, ApplicationPackageCleanupPolicy::Enum::NoCleanupApplicationPackageOnProvision, FABRIC_E_VALUE_TOO_LARGE);
-    upgradeClient.ProvisionApplicationTypeImpl(Path::Combine(L"incoming", TestBuildPath2), false, ApplicationPackageCleanupPolicy::Enum::NoCleanupApplicationPackageOnProvision, FABRIC_E_VALUE_TOO_LARGE);
-    upgradeClient.ProvisionApplicationTypeImpl(Path::Combine(L"incoming", TestBuildPath3), false, ApplicationPackageCleanupPolicy::Enum::NoCleanupApplicationPackageOnProvision, FABRIC_E_IMAGEBUILDER_UNEXPECTED_ERROR);
-    upgradeClient.ProvisionApplicationTypeImpl(Path::Combine(L"incoming", TestBuildPath4), false, ApplicationPackageCleanupPolicy::Enum::NoCleanupApplicationPackageOnProvision, FABRIC_E_IMAGEBUILDER_UNEXPECTED_ERROR);
+    upgradeClient.ProvisionApplicationTypeImpl(Path::Combine(L"incoming", TestBuildPath1), false, ApplicationPackageCleanupPolicy::Enum::Manual, FABRIC_E_VALUE_TOO_LARGE);
+    upgradeClient.ProvisionApplicationTypeImpl(Path::Combine(L"incoming", TestBuildPath2), false, ApplicationPackageCleanupPolicy::Enum::Manual, FABRIC_E_VALUE_TOO_LARGE);
+    upgradeClient.ProvisionApplicationTypeImpl(Path::Combine(L"incoming", TestBuildPath3), false, ApplicationPackageCleanupPolicy::Enum::Manual, FABRIC_E_IMAGEBUILDER_UNEXPECTED_ERROR);
+    upgradeClient.ProvisionApplicationTypeImpl(Path::Combine(L"incoming", TestBuildPath4), false, ApplicationPackageCleanupPolicy::Enum::Manual, FABRIC_E_IMAGEBUILDER_UNEXPECTED_ERROR);
 
     return true;
 }

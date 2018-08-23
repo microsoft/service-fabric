@@ -29,6 +29,9 @@ namespace Store
         __declspec(property(get=get_TraceId)) std::wstring const & TraceId;
         std::wstring const & get_TraceId() const { return PartitionedReplicaTraceComponent::TraceId; }
 
+        __declspec(property(get=get_Settings)) TSReplicatedStoreSettingsUPtr const & Settings;
+        TSReplicatedStoreSettingsUPtr const & get_Settings() const { return storeSettings_; }
+
         TSReplicatedStore * Test_GetReplicatedStore() const;
 
     public:
@@ -56,8 +59,20 @@ namespace Store
         //
 
         virtual Common::ErrorCode Initialize(std::wstring const & instanceName) override;
+
+        // Used by RA
+        //
         virtual Common::ErrorCode Initialize(std::wstring const & instanceName, Federation::NodeId const &) override;
 
+        // Used by KeyValueStoreMigrator
+        //
+        virtual Common::ErrorCode Initialize(
+            std::wstring const & instanceName, 
+            Common::Guid const & partitionId, 
+            FABRIC_REPLICA_ID,
+            FABRIC_EPOCH const &);
+
+        virtual Common::ErrorCode MarkCleanupInTerminate() override;
         virtual Common::ErrorCode Terminate() override;
 
         virtual void Drain() override;
@@ -107,6 +122,14 @@ namespace Store
 
     public:
 
+        //
+        // Helper functions
+        //
+
+        Common::ErrorCode DeleteDatabaseFiles(std::wstring const & sharedLogFilePath);
+
+    public:
+
 #if defined(PLATFORM_UNIX)
         Common::ErrorCode Lock(
                 TransactionSPtr const & transaction,
@@ -115,10 +138,6 @@ namespace Store
 
         Common::ErrorCode Flush() override;
 #endif
-
-    public:
-
-        void Test_PrepareForCleanup();
 
     protected:
 
@@ -137,8 +156,14 @@ namespace Store
 
         std::shared_ptr<InnerStoreRoot> GetStoreRoot() const;
 
+        Common::ErrorCode InnerInitialize(
+            std::wstring const & instanceName, 
+            Common::Guid const & partitionId, 
+            FABRIC_REPLICA_ID,
+            std::unique_ptr<FABRIC_EPOCH> const &);
+
         Common::ErrorCode InnerOpen();
-        Common::ErrorCode InnerChangeRolePrimary();
+        Common::ErrorCode InnerChangeRolePrimary(std::unique_ptr<FABRIC_EPOCH> const &);
         Common::ErrorCode InnerClose();
         Common::Guid ToGuid(Federation::NodeId const &);
 
@@ -160,6 +185,6 @@ namespace Store
 
         Common::atomic_bool isActive_;
 
-        bool test_ShouldCleanup_;
+        bool shouldCleanup_;
     };
 }

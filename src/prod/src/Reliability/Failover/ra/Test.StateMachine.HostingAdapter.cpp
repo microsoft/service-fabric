@@ -360,7 +360,6 @@ BOOST_AUTO_TEST_CASE(AppHostDownEnqueuesJobItemsOnlyForImpactedFT)
 
     test.AddInsertedFT(L"SL1");
     test.AddDeletedFT(L"SL2");
-
     test.ProcessAppHostClosed(L"SP1");
 
     auto actual = test.UTContext.ThreadpoolStubObj.FTQueue.Count;

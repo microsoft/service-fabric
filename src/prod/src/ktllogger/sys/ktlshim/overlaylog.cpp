@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include "KtlLogShimKernel.h"
 
 OverlayLog::~OverlayLog()
@@ -35,7 +39,8 @@ OverlayLog::OverlayLog(
 #if !defined(PLATFORM_UNIX)
         _PerfCounterSetInstance(nullptr),
 #endif
-        _ThrottledAllocator(&ThrottledAllocator)
+        _ThrottledAllocator(&ThrottledAllocator),
+        _ThrottledWritesList(OverlayStream::_ThrottleLinkageOffset)
 {
     NTSTATUS status;
     
@@ -98,7 +103,8 @@ OverlayLog::OverlayLog(
 #if !defined(PLATFORM_UNIX)
         _PerfCounterSetInstance(nullptr),
 #endif
-        _ThrottledAllocator(&ThrottledAllocator)
+        _ThrottledAllocator(&ThrottledAllocator),
+        _ThrottledWritesList(OverlayStream::_ThrottleLinkageOffset)
 {
     NTSTATUS status;
     
@@ -250,11 +256,12 @@ OverlayLog::StreamRecoveryCompletion(
 
         KTraceFailedAsyncRequest(status, this, entry.LogStreamId.Get().Data1, 0);
 
-        if ((status == STATUS_OBJECT_NAME_NOT_FOUND) ||
+
+       if ((status == STATUS_OBJECT_NAME_NOT_FOUND) ||
             (status == STATUS_OBJECT_PATH_NOT_FOUND) ||
             (status == K_STATUS_LOG_STRUCTURE_FAULT))
         {
-            //
+        //
             // These specific errors indicate that the dedicated log
             // file or directory containing it have been deleted or
             // have been detected as corrupted. In this unfortunate
@@ -313,9 +320,8 @@ OverlayLog::StreamRecoveryCompletion(
             operationDelete->StartDeleteOperation(ParentAsync,
                                                   failedCompletion);           
             return;
-        }
-
-        
+        }        		
+		
         //
         // Don't fail container open
         //
@@ -613,7 +619,7 @@ OverlayLog::OpenServiceFSM(
     switch (_State)
     {
         case OpenInitial:
-        {
+        {                   
             //
             // Flag this service for deferred close behavior to ensure
             // that all operations against the container are drained
@@ -680,6 +686,23 @@ OverlayLog::OpenServiceFSM(
             // metadata
             //
             _State = OpenLCMBInfo;
+
+
+            //
+            // Determine the throttle threshold
+            //
+            ULONGLONG totalSpace, freeSpace;
+            _BaseLogContainer->QuerySpaceInformation(&totalSpace,
+                                                     &freeSpace);
+
+            //
+            // start throttling at 95% or 4MB
+            //
+            _ThrottleThreshold = totalSpace / KtlLogContainer::ThrottleFactor;
+            if (_ThrottleThreshold == 0)
+            {
+                _ThrottleThreshold = KtlLogContainer::MinimumThrottleAmountInBytes;
+            }
             
             //
             // Open up the shared metadata to process each stream
@@ -1140,6 +1163,85 @@ OverlayLog::AccountForStreamClosed(
     RecomputeStreamQuotas(FALSE, _TotalDedicatedSpace);
 }
 
+BOOLEAN
+OverlayLog::IsUnderThrottleLimit(
+    __out ULONGLONG& TotalSpace,
+    __out ULONGLONG& FreeSpace
+    )
+{
+    _BaseLogContainer->QuerySpaceInformation(&TotalSpace,
+                                             &FreeSpace);
+    return(FreeSpace >= _ThrottleThreshold);
+}
+
+BOOLEAN
+OverlayLog::ShouldThrottleSharedLog(
+    __in OverlayStream::AsyncDestagingWriteContextOverlay& DestagingWriteContext,
+    __out ULONGLONG& TotalSpace,
+    __out ULONGLONG& FreeSpace
+)
+{
+    if (! IsUnderThrottleLimit(TotalSpace, FreeSpace))
+    {
+        K_LOCK_BLOCK(_ThrottleWriteLock)
+        {
+            _ThrottledWritesList.AppendTail(&DestagingWriteContext);
+        }
+        
+        return(TRUE);
+    }
+
+    return(FALSE);
+}
+
+VOID
+OverlayLog::ShouldUnthrottleSharedLog(
+    __in BOOLEAN ReleaseOne
+)
+{    
+    BOOLEAN continueUnthrottling = TRUE;
+    OverlayStream::AsyncDestagingWriteContextOverlay* throttledWrite = NULL;
+    ULONGLONG freeSpace = 0, totalSpace = 0;
+
+    while (continueUnthrottling)
+    {
+        throttledWrite = NULL;
+
+        K_LOCK_BLOCK(_ThrottleWriteLock)
+        {
+            throttledWrite = _ThrottledWritesList.PeekHead();
+
+            if (throttledWrite == NULL)
+            {
+                //
+                // If there is nothing on the list then nothing to
+                // unthrottle
+                //
+                return;
+            }
+
+            if (ReleaseOne || (IsUnderThrottleLimit(totalSpace, freeSpace)))
+            {
+                throttledWrite = _ThrottledWritesList.RemoveHead();
+            } else {
+                // TODO: Remove when stabilized
+                KDbgCheckpointWDataInformational(throttledWrite->GetActivityId(), "Didnt Unthrottled write", STATUS_SUCCESS,
+                                    (ULONGLONG)throttledWrite, totalSpace,
+                                    throttledWrite->GetRecordAsn().Get(), freeSpace);
+                return;
+            }
+            
+            ReleaseOne = FALSE;
+        }
+
+        // TODO: Remove when stabilized
+        KDbgCheckpointWDataInformational(throttledWrite->GetActivityId(), "Unthrottled write", STATUS_SUCCESS,
+                            (ULONGLONG)throttledWrite, totalSpace,
+                            throttledWrite->GetRecordAsn().Get(), freeSpace);
+        throttledWrite->OnStartAllocateBuffer();
+    }
+}
+
 VOID
 OverlayLog::RecomputeStreamQuotas(
     __in BOOLEAN IncludeClosedStreams,
@@ -1189,13 +1291,13 @@ OverlayLog::RecomputeStreamQuotas(
                                          (osfs->GetObjectState() == ServiceWrapper::Opening)))
             {
                 float fquota;
-                ULONGLONG quota;
+                LONGLONG quota;
 
                 fquota = scale * (float)osfs->GetStreamSize();
                 quota = (ULONGLONG)fquota;
-                if (quota > (ULONGLONG)osfs->GetStreamSize())
+                if (quota > osfs->GetStreamSize())
                 {
-                    quota = (ULONGLONG)osfs->GetStreamSize();
+                    quota = osfs->GetStreamSize();
                 }
 
 
@@ -1241,3 +1343,4 @@ OverlayLog::GetStreamQuota(
 
     return(status);
 }
+

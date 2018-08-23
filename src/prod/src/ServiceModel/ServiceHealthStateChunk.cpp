@@ -36,31 +36,6 @@ ServiceHealthStateChunk::ServiceHealthStateChunk(
 {
 }
 
-ServiceHealthStateChunk::ServiceHealthStateChunk(ServiceHealthStateChunk && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , Common::ISizeEstimator(move(other))
-    , serviceName_(move(other.serviceName_))
-    , healthState_(move(other.healthState_))
-    , partitionHealthStateChunks_(move(other.partitionHealthStateChunks_))
-{
-}
-
-ServiceHealthStateChunk & ServiceHealthStateChunk::operator =(ServiceHealthStateChunk && other)
-{
-    if (this != &other)
-    {
-        serviceName_ = move(other.serviceName_);
-        healthState_ = move(other.healthState_);
-        partitionHealthStateChunks_ = move(other.partitionHealthStateChunks_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    Common::ISizeEstimator::operator=(move(other));
-    return *this;
-}
-
 ServiceHealthStateChunk::~ServiceHealthStateChunk()
 {
 }

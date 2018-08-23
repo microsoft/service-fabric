@@ -1,0 +1,5 @@
+include_directories("./inc")
+add_definitions(-DTESTNAME=L"NA")
+add_subdirectory(tests)
+add_subdirectory(DiskPerfTool)
+add_subdirectory(linux)

@@ -17,8 +17,12 @@ namespace Reliability
         {
         public:
             virtual ~IFailoverManager() = 0 {}
+            // Processes FT movements that PLB generates.
             virtual void ProcessFailoverUnitMovements(FailoverUnitMovementTable && fuMovements, DecisionToken && dToken) = 0;
+            // Updates status of safety checks in case when resource governance is changing.
             virtual void UpdateAppUpgradePLBSafetyCheckStatus(ServiceModel::ApplicationIdentifier const&) = 0;
+            // Updates target instance count for a partition that is auto scaling number of instances
+            virtual void UpdateFailoverUnitTargetReplicaCount(Common::Guid const &, int targetCount) = 0;
         };
     }
 }

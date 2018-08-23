@@ -36,7 +36,7 @@ void ResourceUsage::Update(Management::ResourceMonitor::ResourceMeasurement cons
     {
         TimeSpan timeSpan = (measurement.TimeRead - lastRead_);
         int64 timeSpanInTicks = timeSpan.get_Ticks();
-        double cpuRatePerTimeSpanTick = (double)(TimeSpan::TicksPerSecond / CpuRateTicksPerSecond);
+        double cpuRatePerTimeSpanTick = (double)(CpuRateTicksPerSecond / TimeSpan::TicksPerSecond);
         cpuRateCurrent_ = (measurement.TotalCpuTime - totalCpuTime_) / (cpuRatePerTimeSpanTick * timeSpanInTicks);
 
         double lambdaMemory = ResourceMonitorServiceConfig::GetConfig().MemorySmoothingFactor;

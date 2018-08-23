@@ -34,33 +34,6 @@ ApplicationHealthStateFilter::ApplicationHealthStateFilter(
 {
 }
 
-ApplicationHealthStateFilter::ApplicationHealthStateFilter(ApplicationHealthStateFilter && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , healthStateFilter_(move(other.healthStateFilter_))
-    , applicationNameFilter_(move(other.applicationNameFilter_))
-    , serviceFilters_(move(other.serviceFilters_))
-    , deployedApplicationFilters_(move(other.deployedApplicationFilters_))
-    , applicationTypeNameFilter_(move(other.applicationTypeNameFilter_))
-{
-}
-
-ApplicationHealthStateFilter & ApplicationHealthStateFilter::operator =(ApplicationHealthStateFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-        applicationNameFilter_ = move(other.applicationNameFilter_);
-        serviceFilters_ = move(other.serviceFilters_);
-        deployedApplicationFilters_ = move(other.deployedApplicationFilters_);
-        applicationTypeNameFilter_ = move(other.applicationTypeNameFilter_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    return *this;
-}
-
 ApplicationHealthStateFilter::~ApplicationHealthStateFilter()
 {
 }

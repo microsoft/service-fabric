@@ -60,7 +60,7 @@ void ISubspace::GetTargetNodesForReplicas(
         // Node:        N0            N1
         // Replicas:   [P/LI/+1]    [P,S]
         if (replicas.size() > 1 &&
-            replica->Partition->Service->TargetReplicaSetSize == 1 &&
+            replica->Partition->TargetReplicaSetSize == 1 &&
             !replica->IsNew &&
             (Type == IConstraint::ReplicaExclusionStatic ||
                 Type == IConstraint::ReplicaExclusionDynamic))
@@ -163,7 +163,7 @@ bool ISubspace::FilterCandidateNodesForCapacityConstraints(
         // capacity for a set of replicas, the ones that are already placed should be excluded,
         // to avoid double load counting
         if (replicas.size() > 1 &&
-            replicaService->IsTargetOne &&
+            replica->Partition->IsTargetOne &&
             !replica->IsNew &&
             replica->Node == node &&
             (replica->Partition->Service->HasAffinityAssociatedSingletonReplicaInUpgrade ||
@@ -430,7 +430,7 @@ bool IStaticConstraint::AllowedPlacementOnDeactivatedNode(
     {
         ServiceEntry const* service = replica->Partition->Service;
 
-        if (service->IsTargetOne && solution.OriginalPlacement->IsSingletonReplicaMoveAllowedDuringUpgrade)
+        if (replica->Partition->IsTargetOne && solution.OriginalPlacement->IsSingletonReplicaMoveAllowedDuringUpgrade)
         {
             // New replicas for stateful volatile services with only one replica should not be created on deactivating nodes
             if (find(deactivatingNodesAllowPlacement.begin(),
@@ -521,7 +521,7 @@ void StaticSubspace::GetTargetNodes(
     {
         ServiceEntry const* service = replica->Partition->Service;
 
-        if (service->IsTargetOne && tempSolution.OriginalPlacement->IsSingletonReplicaMoveAllowedDuringUpgrade)
+        if (replica->Partition->IsTargetOne && tempSolution.OriginalPlacement->IsSingletonReplicaMoveAllowedDuringUpgrade)
         {
             // New replicas for stateful volatile services with only one replica should not be created on deactivating nodes
             candidateNodes.DeleteNodeVecWithIndex(tempSolution.OriginalPlacement->BalanceCheckerObj->DeactivatingNodesAllowPlacement);

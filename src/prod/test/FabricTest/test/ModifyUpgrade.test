@@ -382,10 +382,7 @@ verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud upgrademode=auto
 
 updateappupgrade fabric:/modifyupgradetest upgrademode=manual
 
-# wait for manual mode to take effect
-!pause,15
-
-verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud upgrademode=manual upgradestate=rollbackinprogress
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud upgrademode=manual upgradestate=rollbackpending
 
 updateappupgrade fabric:/modifyupgradetest upgrademode=monitored error=ApplicationUpgradeValidationError
 
@@ -414,7 +411,7 @@ removebehavior b1
 
 upgradeappmovenext fabric:/modifyupgradetest
 
-verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud,20_ud
+verifyupgradeapp fabric:/modifyupgradetest upgradedomains=10_ud,20_ud upgrademode=manual upgradestate=rollbackpending
 
 updateappupgrade fabric:/modifyupgradetest upgrademode=auto
 

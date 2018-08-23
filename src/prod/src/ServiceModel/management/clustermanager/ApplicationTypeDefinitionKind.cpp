@@ -21,6 +21,7 @@ namespace Management
                 {
                     case Enum::ServiceFabricApplicationPackage: w << "ServiceFabricApplicationPackage"; return;
                     case Enum::Compose: w << "Compose"; return;
+                    case Enum::MeshApplicationDescription: w << "MeshApplicationDescription"; return;
                 };
 
                 w << "ApplicationTypeDefinitionKind(" << static_cast<int>(e) << ')';
@@ -43,6 +44,11 @@ namespace Management
                     return true;
                 }
 
+                if (publicFilter & FABRIC_APPLICATION_TYPE_DEFINITION_KIND_FILTER_MESH_APPLICATION_DESCRIPTION && value == Enum::MeshApplicationDescription)
+                {
+                    return true;
+                }
+
                 return false;
             }
 
@@ -55,6 +61,9 @@ namespace Management
 
                     case Enum::Compose:
                         return FABRIC_APPLICATION_TYPE_DEFINITION_KIND_COMPOSE;
+
+                    case Enum::MeshApplicationDescription:
+                        return FABRIC_APPLICATION_TYPE_DEFINITION_KIND_MESH_APPLICATION_DESCRIPTION;
 
                     default:
                         return FABRIC_APPLICATION_TYPE_DEFINITION_KIND_INVALID;
@@ -70,6 +79,9 @@ namespace Management
 
                     case FABRIC_APPLICATION_TYPE_DEFINITION_KIND_COMPOSE:
                         return Enum::Compose;
+
+                    case FABRIC_APPLICATION_TYPE_DEFINITION_KIND_MESH_APPLICATION_DESCRIPTION:
+                        return Enum::MeshApplicationDescription;
 
                     default:
                         return Enum::Invalid;

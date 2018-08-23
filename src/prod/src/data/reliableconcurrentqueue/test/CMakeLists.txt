@@ -12,7 +12,12 @@ add_executable(${exe_ReliableConcurrentQueue_Test}
   ${PROJECT_SOURCE_DIR}/src/data/tstore/MockStateManager.cpp
   ${PROJECT_SOURCE_DIR}/src/data/tstore/TestTransactionContext.cpp
   ${PROJECT_SOURCE_DIR}/src/data/tstore/MockTransactionalReplicator.cpp
-  ../ReliableConcurrentQueue.BasicOperations.cpp
+  ../ReliableConcurrentQueue.BasicOperations.Test.cpp
+  ../ReliableConcurrentQueue.RecoveryApply.Test.cpp
+  ../ReliableConcurrentQueue.SecondaryApply.Test.cpp
+  ../ReliableConcurrentQueue.UndoFalseProgress.Test.cpp
+  ../ReliableConcurrentQueue.Stress.Test.cpp
+  ../ReliableConcurrentQueue.StateProvider.Test.cpp
 )
 
 add_precompiled_header(${exe_ReliableConcurrentQueue_Test} ../stdafx.h FORCEINCLUDE)
@@ -45,8 +50,6 @@ target_link_libraries(${exe_ReliableConcurrentQueue_Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

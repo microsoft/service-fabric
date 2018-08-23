@@ -83,6 +83,11 @@ Common::ErrorCode EventHealthEvaluation::FromPublicApi(
     return ErrorCode::Success();
 }
 
+wstring EventHealthEvaluation::GetUnhealthyEvaluationDescription(wstring const & indent) const
+{
+    return wformatString("{0}{1} '{2}'", indent, description_, unhealthyEvent_.Description);
+}
+
 void EventHealthEvaluation::SetDescription()
 {
     if (unhealthyEvent_.State == FABRIC_HEALTH_STATE_ERROR)

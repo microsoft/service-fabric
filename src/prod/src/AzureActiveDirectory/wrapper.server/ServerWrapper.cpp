@@ -36,7 +36,9 @@ ErrorCode ServerWrapper::ValidateClaims(
     __out wstring & claims,
     __out TimeSpan & expiration)
 {
-#if !defined(PLATFORM_UNIX)
+#if DotNetCoreClrIOT
+    return ValidateClaims_CoreIOT(jwt, claims, expiration);
+#elif !defined(PLATFORM_UNIX)
     return ValidateClaims_Windows(jwt, claims, expiration);
 #else
     return ValidateClaims_Linux(jwt, claims, expiration);
@@ -86,16 +88,16 @@ ErrorCode ServerWrapper::ValidateClaims_Windows(
     {
         auto errorMessage = wstring(move(&errMessageBuffer[0]));
 
-        Trace.WriteWarning(
-            TraceComponent,
-            "IsAdminRole failed: issuer={0} audience={1} roleClaim={2} cert={3} error={4}",
+        auto msg = wformatString(GET_COMMON_RC( IsAdmin_Role_Failed ), 
             expectedIssuer,
             expectedAudience,
             expectedRoleClaimKey,
             certEndpoint,
             errorMessage);
 
-        return ErrorCodeValue::InvalidCredentials;
+        Trace.WriteWarning(TraceComponent, "{0}", msg);
+
+        return ErrorCode(ErrorCodeValue::InvalidCredentials, move(msg));
     }
     else
     {
@@ -127,6 +129,20 @@ ErrorCode ServerWrapper::ValidateClaims_Linux(
 
     return ErrorCodeValue::NotImplemented;
 }
+
+#if DotNetCoreClrIOT
+ErrorCode ServerWrapper::ValidateClaims_CoreIOT(
+    wstring const &,
+    __out wstring &,
+    __out TimeSpan &)
+{
+    Trace.WriteError(
+        TraceComponent,
+        "Windows CoreIOT does not support in-proc claims validation. TokenValidationService must be enabled with AAD provider.");
+
+    return ErrorCodeValue::NotImplemented;
+}
+#endif
 
 bool ServerWrapper::TryOverrideClaimsConfigForAad()
 {

@@ -35,12 +35,12 @@ protected:
 
     void Start(NodeDeactivationInfo const & newInfo)
     {
-        state_->TryStartChange(newInfo);
+        state_->TryStartChange(L"", newInfo);
     }
 
     void StartAndVerifyState(NodeDeactivationInfo const & newInfo, NodeDeactivationInfo const & expected)
     {
-        state_->TryStartChange(newInfo);
+        state_->TryStartChange(L"", newInfo);
         NodeDeactivationInfo actual = state_->DeactivationInfo;
 
         Verify::AreEqualLogOnError(expected.IsActivated, actual.IsActivated, L"IsActivated");
@@ -50,7 +50,7 @@ protected:
 
     void StartAndVerifyReturnValue(NodeDeactivationInfo const & newInfo, bool expected)
     {
-        auto actual = state_->TryStartChange(newInfo);
+        auto actual = state_->TryStartChange(L"", newInfo);
 
         Verify::AreEqualLogOnError(expected, actual, L"Return Value from TryStart");
     }
@@ -163,11 +163,18 @@ BOOST_AUTO_TEST_CASE(Start_HigherInstanceReturnsTrue_SameIntent)
     StartAndVerifyReturnValue(NodeDeactivationInfo(true, 5), true);
 }
 
-BOOST_AUTO_TEST_CASE(Start_EqualInstanceReturnsFalse)
+BOOST_AUTO_TEST_CASE(Start_EqualInstanceReturnsFalseIfPreviouslyDeactivatedScenario1)
 {
-    Start(NodeDeactivationInfo(true, 4));
+    Start(NodeDeactivationInfo(false, 4));
 
     StartAndVerifyReturnValue(NodeDeactivationInfo(true, 4), false);
+}
+
+BOOST_AUTO_TEST_CASE(Start_EqualInstanceReturnsFalseIfPreviouslyDeactivatedScenario2)
+{
+    Start(NodeDeactivationInfo(false, 4));
+
+    StartAndVerifyReturnValue(NodeDeactivationInfo(false, 4), false);
 }
 
 BOOST_AUTO_TEST_CASE(Start_LowerInstanceReturnsFalse)

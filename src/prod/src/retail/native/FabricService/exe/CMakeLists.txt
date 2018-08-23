@@ -37,7 +37,7 @@ target_link_libraries(${exe_Fabric}
   ${lib_httpgateway}
   ${lib_httptransport}
   ${lib_ManagementRepairManager}
-  ${lib_KtlLogger}
+  ${lib_KtlLoggerNode}
   ${lib_EntreeService}
   ${lib_StoreService}
   ${lib_Hosting2}
@@ -73,7 +73,7 @@ target_link_libraries(${exe_Fabric}
   ${lib_DnsServiceConfig}
   ${KtlUser}
   ${KtlLoggerUser}
-  ${lib_KtlLoggerShimUPassthrough}
+  ${lib_KtlLoggerShimUnify}
   ${KtlLoggerUser}
   ${Cxx}
   ${CxxABI}
@@ -90,7 +90,5 @@ target_link_libraries(${exe_Fabric}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 

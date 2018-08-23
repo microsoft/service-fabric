@@ -33,29 +33,6 @@ ReplicaHealthStateChunk::ReplicaHealthStateChunk(
 {
 }
 
-ReplicaHealthStateChunk::ReplicaHealthStateChunk(ReplicaHealthStateChunk && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , Common::ISizeEstimator(move(other))
-    , replicaOrInstanceId_(move(other.replicaOrInstanceId_))
-    , healthState_(move(other.healthState_))
-{
-}
-
-ReplicaHealthStateChunk & ReplicaHealthStateChunk::operator =(ReplicaHealthStateChunk && other)
-{
-    if (this != &other)
-    {
-        replicaOrInstanceId_ = move(other.replicaOrInstanceId_);
-        healthState_ = move(other.healthState_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    Common::ISizeEstimator::operator=(move(other));
-    return *this;
-}
-
 ReplicaHealthStateChunk::~ReplicaHealthStateChunk()
 {
 }

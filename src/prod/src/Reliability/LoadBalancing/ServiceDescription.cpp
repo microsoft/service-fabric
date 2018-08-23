@@ -30,7 +30,8 @@ ServiceDescription::ServiceDescription(
     bool hasPersistedState,
     ServiceModel::ServicePackageIdentifier && servicePackageIdentifier,
     ServiceModel::ServicePackageActivationMode::Enum servicePackageActivationMode,
-    uint64 serviceInstance)
+    uint64 serviceInstance,
+    vector<Reliability::ServiceScalingPolicyDescription> && scalingPolicies)
     : serviceName_(move(serviceName)),
     serviceTypeName_(move(serviceTypeName)),
     applicationName_(move(applicationName)),
@@ -49,7 +50,8 @@ ServiceDescription::ServiceDescription(
     servicePackageId_(0),
     servicePackageIdentifier_(move(servicePackageIdentifier)),
     servicePackageActivationMode_(servicePackageActivationMode),
-    serviceInstance_(serviceInstance)
+    serviceInstance_(serviceInstance),
+    scalingPolicies_(move(scalingPolicies))
 {
 }
 
@@ -72,7 +74,8 @@ ServiceDescription::ServiceDescription(ServiceDescription const & other)
     servicePackageId_(other.servicePackageId_),
     servicePackageIdentifier_(other.servicePackageIdentifier_),
     servicePackageActivationMode_(other.servicePackageActivationMode_),
-    serviceInstance_(other.serviceInstance_)
+    serviceInstance_(other.serviceInstance_),
+    scalingPolicies_(other.scalingPolicies_)
 {
 }
 
@@ -95,7 +98,8 @@ ServiceDescription::ServiceDescription(ServiceDescription && other)
     servicePackageId_(other.servicePackageId_),
     servicePackageIdentifier_(move(other.servicePackageIdentifier_)),
     servicePackageActivationMode_(other.servicePackageActivationMode_),
-    serviceInstance_(other.serviceInstance_)
+    serviceInstance_(other.serviceInstance_),
+    scalingPolicies_(move(other.scalingPolicies_))
 {
 }
 
@@ -122,6 +126,7 @@ ServiceDescription & ServiceDescription::operator = (ServiceDescription && other
         servicePackageIdentifier_ = move(other.servicePackageIdentifier_);
         servicePackageActivationMode_ = other.servicePackageActivationMode_;
         serviceInstance_ = other.serviceInstance_;
+        scalingPolicies_ = move(other.scalingPolicies_);
     }
 
     return *this;
@@ -131,6 +136,21 @@ bool ServiceDescription::operator == (ServiceDescription const & other ) const
 {
     // it is only used when we update the service description
     ASSERT_IFNOT(serviceName_ == other.serviceName_, "Comparison between two different service");
+
+    if (scalingPolicies_.size() == other.scalingPolicies_.size())
+    {
+        for (auto index = 0; index < scalingPolicies_.size(); ++index)
+        {
+            if (!scalingPolicies_[index].Equals(other.scalingPolicies_[index], true))
+            {
+                return false;
+            }
+        }
+    }
+    else
+    {
+        return false;
+    }
 
     return (
         serviceTypeName_ == other.serviceTypeName_ &&
@@ -246,11 +266,25 @@ void ServiceDescription::ClearAffinitizedService()
     affinitizedService_ = L"";
 }
 
+Reliability::ServiceScalingPolicyDescription ServiceDescription::get_FirstAutoScalingPolicy() const
+{
+    if (scalingPolicies_.size() != 1)
+    {
+        // This should not happen, ignore in production
+        Common::Assert::TestAssert(
+            "Attempting to get scaling policy when no policy defined. Service={0}",
+            serviceName_);
+        return Reliability::ServiceScalingPolicyDescription();
+    }
+    return scalingPolicies_[0];
+}
+
+
 void ServiceDescription::WriteTo(TextWriter& writer, FormatOptions const&) const
 {
-    writer.Write("{0} type:{1} application:{2} stateful:{3} placementConstraints:{4} affinity:{5} alignedAffinity:{6} metrics:{7} defaultMoveCost:{8} everyNode:{9} partitionCount:{10} targetReplicaSetSize:{11} servicePackageIdentifier:{12} servicePackageActivationMode:{13} serviceInstance:{14}", 
+    writer.Write("{0} type:{1} application:{2} stateful:{3} placementConstraints:{4} affinity:{5} alignedAffinity:{6} metrics:{7} defaultMoveCost:{8} everyNode:{9} partitionCount:{10} targetReplicaSetSize:{11} servicePackageIdentifier:{12} servicePackageActivationMode:{13} serviceInstance:{14} scalingPolicies:{15}", 
         serviceName_, serviceTypeName_, applicationName_, isStateful_, placementConstraints_, affinitizedService_, alignedAffinity_,
-        metrics_, defaultMoveCost_, onEveryNode_, partitionCount_, targetReplicaSetSize_, servicePackageIdentifier_, servicePackageActivationMode_, serviceInstance_);
+        metrics_, defaultMoveCost_, onEveryNode_, partitionCount_, targetReplicaSetSize_, servicePackageIdentifier_, servicePackageActivationMode_, serviceInstance_, scalingPolicies_);
 }
 
 void ServiceDescription::WriteToEtw(uint16 contextSequenceId) const

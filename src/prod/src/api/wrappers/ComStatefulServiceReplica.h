@@ -13,6 +13,7 @@ namespace Api
 
     class ComStatefulServiceReplica :
         public IFabricStatefulServiceReplica,
+        public IFabricInternalStatefulServiceReplica2,
         protected Common::ComUnknownBase
     {
         DENY_COPY(ComStatefulServiceReplica)
@@ -20,6 +21,8 @@ namespace Api
         BEGIN_COM_INTERFACE_LIST(ComStatefulServiceReplica)
             COM_INTERFACE_ITEM(IID_IUnknown, IFabricStatefulServiceReplica)
             COM_INTERFACE_ITEM(IID_IFabricStatefulServiceReplica, IFabricStatefulServiceReplica)
+            COM_INTERFACE_ITEM(IID_IFabricInternalStatefulServiceReplica, IFabricInternalStatefulServiceReplica)
+            COM_INTERFACE_ITEM(IID_IFabricInternalStatefulServiceReplica2, IFabricInternalStatefulServiceReplica2)
             COM_INTERFACE_ITEM(CLSID_ComStatefulServiceReplica, ComStatefulServiceReplica)
         END_COM_INTERFACE_LIST()
 
@@ -59,6 +62,21 @@ namespace Api
             /* [in] */ IFabricAsyncOperationContext *context);
         
         void STDMETHODCALLTYPE Abort(void);
+
+        //
+        // IFabricInternalStatefulServiceReplica
+        //
+
+        HRESULT STDMETHODCALLTYPE GetStatus(
+            /* [out, retval] */ IFabricStatefulServiceReplicaStatusResult ** result);
+
+        //
+        // IFabricInternalStatefulServiceReplica2
+        //
+
+        HRESULT UpdateInitializationData(
+            /* [in] */ ULONG bufferSize,
+            /* [in] */ const BYTE * buffer);
 
     private:
         class OpenOperationContext;

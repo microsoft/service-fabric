@@ -10,33 +10,48 @@ using namespace std;
 
 namespace Store
 {
+    static atomic_uint64 NextMigrationTxKey;
+
     StringLiteral const TraceComponent("SimpleTransactionGroup");
 
     ReplicatedStore::SimpleTransactionGroup::SimpleTransactionGroup(
         __in Store::ReplicatedStore & store,
-        int commitBatchingSizeLimit,
         shared_ptr<TransactionReplicator> const & txReplicator,
         __in TransactionSPtr && innerTransaction,
-        Common::ActivityId const & activityId)
+        IReplicatedStoreTxEventHandlerWPtr const & txEventHandler,
+        Common::ActivityId const & activityId,
+        int commitBatchingSizeLimit)
         : ComponentRoot()
         , ReplicaActivityTraceComponent(store.PartitionedReplicaId, activityId)
         , storeRoot_(store.Root.CreateComponentRoot())
         , replicatedStore_(store)
-        , commitBatchingSizeLimit_(commitBatchingSizeLimit)
         , txReplicatorSPtr_(txReplicator)
         , innerTransactionSPtr_(move(innerTransaction))
-        , commitMap_()
-        , operationLSN_(0)
-        , closed_(false)
+        , txEventHandler_(txEventHandler)
+        , commitBatchingSizeLimit_(commitBatchingSizeLimit)
+        , creationError_(ErrorCodeValue::Success)
         , rolledback_(false)
+        , closed_(false)
+        , transactionLock_()
+        , lock_()
         , replicationMap_()
-        , committedTxCount_(0)
+        , replicationOperations_()
         , replicationSize_(0)
+        , commitMap_()
+        , committedTxCount_(0)
+        , operationLSN_(0)
+        , migrationTxKey_(++NextMigrationTxKey)
     {
         WriteInfo(
             TraceComponent, 
             "{0}: SimpleTransactionGroup::ctor", 
             this->TraceId);
+
+        auto txHandler = txEventHandler_.lock();
+        if (txHandler.get() != nullptr)
+        {
+            txHandler->OnCreateTransaction(this->ActivityId, this->MigrationTxKey);
+        }
     }
 
     ReplicatedStore::SimpleTransactionGroup::~SimpleTransactionGroup()
@@ -45,6 +60,12 @@ namespace Store
             TraceComponent, 
             "{0}: SimpleTransactionGroup::~dtor", 
             this->TraceId);
+
+        auto txHandler = txEventHandler_.lock();
+        if (txHandler.get() != nullptr)
+        {
+            txHandler->OnReleaseTransaction(this->ActivityId, this->MigrationTxKey);
+        }
     }
 
     TransactionBaseSPtr ReplicatedStore::SimpleTransactionGroup::CreateSimpleTransaction(Common::ActivityId const & activityId)
@@ -203,6 +224,15 @@ namespace Store
         ::FABRIC_SEQUENCE_NUMBER operationLSN = FABRIC_INVALID_SEQUENCE_NUMBER;
 
         auto error = txReplicatorSPtr_->EndReplicate(operation, operationLSN);
+
+        if (error.IsSuccess())
+        {
+            auto txHandler = txEventHandler_.lock();
+            if (txHandler.get() != nullptr)
+            {
+                error = txHandler->OnCommit(this->ActivityId, this->MigrationTxKey);
+            }
+        }
 
         thisSPtr->TryComplete(thisSPtr, error);
 

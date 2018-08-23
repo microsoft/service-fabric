@@ -267,6 +267,8 @@ void LeaseAgent::UnregisterLeasingApplication(HANDLE handle, wstring const & lea
         leasingApplicationId, leaseAgentConfig_.localLeaseAddress_);
 }
 
+// VoteManager -> GetLeasingApplicationExpirationTime
+// getIsLeaseExpired -> GetLeasingApplicationExpirationTime
 BOOL LeaseAgent::GetLeasingApplicationExpirationTime(PLONG milliseconds, PLONGLONG kernelCurrentTime) const
 {
     if (!dummyLeaseDriverEnabled_)
@@ -280,12 +282,16 @@ BOOL LeaseAgent::GetLeasingApplicationExpirationTime(PLONG milliseconds, PLONGLO
     }
 }
 
+// ApplicationHostManager -> GetLeasingApplicationExpirationTimeFromIPC, for initial app ttl
+// LeaseMonitor ->(IPC) HostingSubsystem -> GetLeasingApplicationExpirationTimeFromIPC
 BOOL LeaseAgent::GetLeasingApplicationExpirationTimeFromIPC(PLONG milliseconds, PLONGLONG kernelCurrentTime) const
 {
     calledFromIPC_ = true;
     return GetLeasingApplicationExpirationTime(milliseconds, kernelCurrentTime);
 }
 
+// static function
+// LeaseMonitor ->(function) GetLeasingApplicationExpirationTime
 BOOL LeaseAgent::GetLeasingApplicationExpirationTime(HANDLE appHandle, PLONG milliseconds, PLONGLONG kernelCurrentTime)
 {
     static bool configLoaded = false;
@@ -383,11 +389,17 @@ BOOL LeaseAgent::UpdateLeaseGlobalConfig()
         return FALSE;
     }
 
-    WriteInfo(TraceState, "Lease agent {0} updating global config", *this);
+    WriteInfo(TraceState, "Lease agent {0} updating global config, maintenanceInterval = {1}, processAssertExitTimeout = {2}, delayLeaseAgentCloseInterval = {3}",
+        *this,
+        static_cast<LONG>(Federation::FederationConfig::GetConfig().LeaseMaintenanceInterval.TotalMilliseconds()),
+        static_cast<LONG>(Federation::FederationConfig::GetConfig().ProcessAssertExitTimeout.TotalMilliseconds()),
+        static_cast<LONG>(Federation::FederationConfig::GetConfig().DelayLeaseAgentCloseInterval.TotalMilliseconds())
+        );
 
     LEASE_GLOBAL_CONFIG leaseGlobalConfig = {};
     leaseGlobalConfig.MaintenanceInterval = static_cast<LONG>(Federation::FederationConfig::GetConfig().LeaseMaintenanceInterval.TotalMilliseconds());
     leaseGlobalConfig.ProcessAssertExitTimeout = static_cast<LONG>(Federation::FederationConfig::GetConfig().ProcessAssertExitTimeout.TotalMilliseconds());
+    leaseGlobalConfig.DelayLeaseAgentCloseInterval = static_cast<LONG>(Federation::FederationConfig::GetConfig().DelayLeaseAgentCloseInterval.TotalMilliseconds());
     return ::UpdateLeaseGlobalConfig(&leaseGlobalConfig);
 }
 #endif
@@ -452,10 +464,12 @@ LeaseAgent::LeaseAgent(
 #if !defined(PLATFORM_UNIX)
     maintenanceIntervalChangeHandler_(0),
     processAssertExitTimeoutChangeHandler_(0),
+    delayLeaseAgentCloseIntervalChangeHandler_(0),
 #endif
+    random_(),
     heartbeatTimer_(),
-    diskProbingFileHandle_(),
-    diskProbingBuffer_(Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount * Federation::FederationConfig::GetConfig().DiskSectorSize, (unsigned char) Federation::FederationConfig::GetConfig().DiskProbeBufferData)
+    diskProbeFileHandle_(INVALID_HANDLE_VALUE),
+    diskProbeBuffer_(Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount * Federation::FederationConfig::GetConfig().DiskSectorSize, (unsigned char) Federation::FederationConfig::GetConfig().DiskProbeBufferData)
 {
 #ifndef PLATFORM_UNIX
     if (securitySettings.SecurityProvider() == SecurityProvider::Ssl)
@@ -714,6 +728,11 @@ ErrorCode LeaseAgent::OnOpen()
         this->UpdateLeaseGlobalConfig();
     });
 
+    delayLeaseAgentCloseIntervalChangeHandler_ = Federation::FederationConfig::GetConfig().DelayLeaseAgentCloseIntervalEntry.AddHandler([this, rootSPtr](EventArgs const&)
+    {
+        this->UpdateLeaseGlobalConfig();
+    });
+
     this->UpdateLeaseGlobalConfig();
 #endif
 
@@ -750,7 +769,7 @@ ErrorCode LeaseAgent::OnOpen()
             WriteError(TraceState, "Lease agent {0} register with driver failed with ERROR_REVISION_MISMATCH; Check if the driver is up to date.", *this);
         }
 
-        ASSERT_IF(
+        TESTASSERT_IF(
             errorCode == ERROR_INVALID_HANDLE ||
             errorCode == ERROR_FILE_NOT_FOUND ||
             errorCode == ERROR_ACCESS_DENIED ||
@@ -814,7 +833,10 @@ void LeaseAgent::Cleanup(bool isDelayed)
     if (heartbeatTimer_)
     {
         heartbeatTimer_->Cancel();
-        CloseHandle(diskProbingFileHandle_);
+        if (diskProbeFileHandle_ != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(diskProbeFileHandle_);
+        }
     }
 
     pRoot_ = nullptr; // Release Reference
@@ -867,8 +889,13 @@ HANDLE LeaseAgent::InternalClose()
     }
     if (processAssertExitTimeoutChangeHandler_)
     {
-        Federation::FederationConfig::GetConfig().LeaseMaintenanceIntervalEntry.RemoveHandler(processAssertExitTimeoutChangeHandler_);
+        Federation::FederationConfig::GetConfig().ProcessAssertExitTimeoutEntry.RemoveHandler(processAssertExitTimeoutChangeHandler_);
         processAssertExitTimeoutChangeHandler_ = 0;
+    }
+    if (delayLeaseAgentCloseIntervalChangeHandler_)
+    {
+        Federation::FederationConfig::GetConfig().DelayLeaseAgentCloseIntervalEntry.RemoveHandler(delayLeaseAgentCloseIntervalChangeHandler_);
+        delayLeaseAgentCloseIntervalChangeHandler_ = 0;
     }
 #endif
 
@@ -1423,49 +1450,142 @@ void LeaseAgent::TryStartHeartbeat()
     {
         wstring fabricDataRoot;
         ErrorCode errorCode = FabricEnvironment::GetFabricDataRoot(fabricDataRoot);
-
-        wstring fileName = Path::Combine(fabricDataRoot, DISK_PROBING_FILE_NAME);
-
-        diskProbingFileHandle_ = ::CreateFile(
-            fileName.c_str(),
-            GENERIC_WRITE,
-            FILE_SHARE_WRITE,
-            NULL,
-            OPEN_ALWAYS,
-            FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED,
-            NULL);
-
-        if (diskProbingFileHandle_ != INVALID_HANDLE_VALUE)
+        wstring filename;
+        wstring reopenFilename;
+        if (errorCode.IsSuccess())
         {
-            WriteInfo(TraceHeartbeat, "Disk probe buffer data, byte {0}, size {1}, sector count {2}, disk sector size {3}",
-                Federation::FederationConfig::GetConfig().DiskProbeBufferData,
-                Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount * Federation::FederationConfig::GetConfig().DiskSectorSize,
-                Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount,
-                Federation::FederationConfig::GetConfig().DiskSectorSize
-                );
+            filename = Path::Combine(fabricDataRoot, DISK_PROBE_FILE_NAME);
+            reopenFilename = Path::Combine(fabricDataRoot, DISK_PROBE_REOPEN_FILE_NAME);
+        }
+        else
+        {
+            filename = DISK_PROBE_FILE_NAME;
+            reopenFilename = DISK_PROBE_REOPEN_FILE_NAME;
+        }
 
-            ComponentRootSPtr pRoot = Root.shared_from_this();
-            heartbeatTimer_ = Timer::Create("Lease.HeartBeat", [this, pRoot, fabricDataRoot](TimerSPtr const & timer)
+        WriteInfo(TraceHeartbeat, "Disk probe {0}, filename = {1}, reopen filename = {2}, buffer data = {3}, size = {4}, sector count = {5}, disk sector size = {6}, reopen file = {7}",
+            *this,
+            filename,
+            reopenFilename,
+            Federation::FederationConfig::GetConfig().DiskProbeBufferData,
+            Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount * Federation::FederationConfig::GetConfig().DiskSectorSize,
+            Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount,
+            Federation::FederationConfig::GetConfig().DiskSectorSize,
+            Federation::FederationConfig::GetConfig().DiskProbeReopenFile
+            );
+
+        ComponentRootSPtr pRoot = Root.shared_from_this();
+        heartbeatTimer_ = Timer::Create("Lease.Heartbeat", [this, pRoot, fabricDataRoot, filename, reopenFilename](TimerSPtr const & timer)
+        {
+            int diskProbeBufferSectorCount = Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount;
+            int diskProbeBufferSize = Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount * Federation::FederationConfig::GetConfig().DiskSectorSize;
+            int diskProbeBufferData = Federation::FederationConfig::GetConfig().DiskProbeBufferData;
+            
+            if (diskProbeBufferSectorCount < 0 ||/* random size */
+                (diskProbeBufferSize >= 0 && diskProbeBufferSize != diskProbeBuffer_.size()) ||/* fixed size */
+                (diskProbeBufferSize != 0 && diskProbeBufferData < 0) ||/* random data*/
+                (diskProbeBuffer_.size() > 0 && diskProbeBuffer_[0] != diskProbeBufferData))/* fixed data*/
             {
-                int diskProbeBufferSize = Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount * Federation::FederationConfig::GetConfig().DiskSectorSize;
-                unsigned char diskProbeBufferData = (unsigned char) Federation::FederationConfig::GetConfig().DiskProbeBufferData;
-                if (diskProbeBufferSize != diskProbingBuffer_.size() || (diskProbingBuffer_.size() > 0 && diskProbingBuffer_[0] != diskProbeBufferData))
+                if (diskProbeBufferSectorCount < 0)// random size
                 {
-                    WriteInfo(TraceHeartbeat, "Disk probe update buffer data, byte {0} -> {1}, size {2} -> {3}, sector count {4}, disk sector size {5}",
-                        diskProbingBuffer_[0],
-                        (int) diskProbeBufferData,
-                        diskProbingBuffer_.size(),
-                        diskProbeBufferSize,
-                        Federation::FederationConfig::GetConfig().DiskProbeBufferSectorCount,
-                        Federation::FederationConfig::GetConfig().DiskSectorSize);
-                    diskProbingBuffer_.assign(diskProbeBufferSize, diskProbeBufferData);
+                    diskProbeBufferSize = (random_.Next(diskProbeBufferSectorCount * -1) + 1) * Federation::FederationConfig::GetConfig().DiskSectorSize;
                 }
 
-                Common::AsyncFile::BeginWriteFile(diskProbingFileHandle_, diskProbingBuffer_, TimeSpan::MaxValue, [timer, pRoot](AsyncOperationSPtr const& writeFileOperation)
+                WriteInfo(TraceHeartbeat, "Disk probe {0}, update buffer data = {1} -> {2}, size = {3} -> {4}, sector count = {5}, disk sector size = {6}",
+                    *this,
+                    diskProbeBuffer_.size() > 0 ? diskProbeBuffer_[0] : 0,
+                    (int) diskProbeBufferData,
+                    diskProbeBuffer_.size(),
+                    diskProbeBufferSize,
+                    diskProbeBufferSectorCount,
+                    Federation::FederationConfig::GetConfig().DiskSectorSize);
+
+                if (diskProbeBufferData >= 0)// fixed data
+                {
+                    diskProbeBuffer_.assign(diskProbeBufferSize, (char)diskProbeBufferData);
+                }
+                else// random data
+                {
+                    diskProbeBuffer_.resize(diskProbeBufferSize, (char)diskProbeBufferData);
+                    random_.NextBytes(diskProbeBuffer_);
+                }
+            }
+
+            HANDLE diskProbeReopenFileHandle = INVALID_HANDLE_VALUE;
+            // We cache this value in case the value changed during the disk probe process
+            bool diskProbeReopenFile = Federation::FederationConfig::GetConfig().DiskProbeReopenFile;
+            HANDLE currentDiskProbeFileHandle = INVALID_HANDLE_VALUE;
+
+            if (!diskProbeReopenFile)
+            {
+                // Do not reopen file, use single file
+                // if size is 0, disable disk probe
+                if (diskProbeBufferSize > 0 && diskProbeFileHandle_ == INVALID_HANDLE_VALUE)
+                {
+                    diskProbeFileHandle_ = ::CreateFile(
+                        filename.c_str(),
+                        GENERIC_WRITE,
+                        FILE_SHARE_WRITE,
+                        NULL,
+                        OPEN_ALWAYS,
+                        FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED,
+                        NULL);
+                    currentDiskProbeFileHandle = diskProbeFileHandle_;
+                }
+            }
+            else
+            {
+                // Reopen file
+                if (diskProbeBufferSize > 0)
+                {
+                    diskProbeReopenFileHandle = ::CreateFile(
+                        reopenFilename.c_str(),
+                        GENERIC_WRITE,
+                        FILE_SHARE_WRITE,
+                        NULL,
+                        OPEN_ALWAYS,
+                        FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED,
+                        NULL);
+                    currentDiskProbeFileHandle = diskProbeReopenFileHandle;
+                }
+            }
+
+            if (diskProbeBufferSize == 0)// disable disk probe, but still do heartbeat
+            {
+                WriteInfo(TraceHeartbeat, "Disk probe {0}, disabled, but continue heartbeat.", *this);
+
+                ::UpdateHeartbeatResult(ERROR_SUCCESS);
+
+                // restart timer
+                timer->Change(Federation::FederationConfig::GetConfig().HeartbeatInterval);
+            }
+            else if (currentDiskProbeFileHandle != INVALID_HANDLE_VALUE)// enable disk probe
+            {
+                // Create a stopwatchtime to time the write operation
+                Common::StopwatchTime writeStartTime = Common::Stopwatch::Now();
+
+                Common::AsyncFile::BeginWriteFile(currentDiskProbeFileHandle, diskProbeBuffer_, TimeSpan::MaxValue, [this, pRoot, timer, currentDiskProbeFileHandle, diskProbeReopenFile, writeStartTime](AsyncOperationSPtr const& writeFileOperation)
                 {
                     DWORD winError;
                     ErrorCode result = Common::AsyncFile::EndWriteFile(writeFileOperation, winError);
                     WriteInfo(TraceHeartbeat, "Disk probe error code = {0}", winError);
+
+                    // Write operation time = stop - start
+                    Common::StopwatchTime writeStopTime = Common::Stopwatch::Now();
+                    WriteInfo(TraceHeartbeat, "Disk probe time = {0}", writeStopTime - writeStartTime);
+
+                    // check to see if we want to reopen the file
+                    if (diskProbeReopenFile)
+                    {
+                        WriteInfo(TraceHeartbeat, "Disk probe reopen file.");
+
+                        BOOL closeRes = CloseHandle(currentDiskProbeFileHandle);
+                        if (closeRes == 0)
+                        {
+                            WriteWarning(TraceHeartbeat, "Cannot close disk probe file, error {0}", GetLastError());
+                        }
+                    }
+
                     // white list some error code
                     if (result.IsErrno(ERROR_DISK_FULL) || result.IsErrno(ERROR_HANDLE_DISK_FULL))
                     {
@@ -1479,19 +1599,24 @@ void LeaseAgent::TryStartHeartbeat()
                     // restart timer
                     timer->Change(Federation::FederationConfig::GetConfig().HeartbeatInterval);
                 }, nullptr);
-            });
+            }
+            else// file open error
+            {
+                WriteWarning(TraceHeartbeat, "Disk probe {0}, cannot open disk probing file, error {1}", *this, GetLastError());
+                // restart timer to retry
+                timer->Change(Federation::FederationConfig::GetConfig().HeartbeatInterval);
+            }
+        },
+        false/* concurrent */);
 
-            //start probing immediately
-            heartbeatTimer_->Change(TimeSpan::Zero);
-        }
-        else
-        {
-            WriteWarning(TraceHeartbeat, "Cannot open disk probing file, error {0}", GetLastError());
-        }
+        heartbeatTimer_->SetCancelWait();
+
+        //start probing immediately
+        heartbeatTimer_->Change(TimeSpan::Zero);
     }
     else
     {
-        WriteWarning(TraceHeartbeat, "Heartbeat is disabled, heartbeat interval = 0");
+        WriteWarning(TraceHeartbeat, "Heartbeat {0}, is disabled, heartbeat interval = 0", *this);
     }
     #endif
 }
@@ -1513,3 +1638,4 @@ void LeaseAgent::InvokeHealthReportCallback(int reportCode, LPCWSTR dynamicPrope
     }
 }
 #endif
+

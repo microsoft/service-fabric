@@ -108,7 +108,11 @@ namespace Transport
             _Out_ SecuritySettings & object);
 
         static Common::ErrorCode CreateSslClient(
-            Common::PCCertContext & certContext,
+            Common::CertContextUPtr & certContext,
+            std::wstring const & serverThumbprint,
+            _Out_ SecuritySettings & object);
+
+        static Common::ErrorCode CreateSslClient(
             std::wstring const & serverThumbprint,
             _Out_ SecuritySettings & object);
 
@@ -132,9 +136,6 @@ namespace Transport
             _Out_ Common::SecureString & certKey,
             _Out_ Common::CertContextUPtr & cert) const;
 
-        Common::ErrorCode GetServerThumbprint(
-            _Out_ std::wstring & serverThumbprint) const;
-
         void ToPublicApi(
             _In_ Common::ScopedHeap & heap,
             _Out_ FABRIC_SECURITY_CREDENTIALS & securityCredentials) const;
@@ -154,7 +155,7 @@ namespace Transport
         Common::X509FindValue::SPtr const& X509FindValue() const;
         std::wstring const& X509FindValueString() const;
 
-        Common::PCCertContext const & CertContext() const { return certContext_; }
+        Common::CertContextUPtrSPtr const & CertContext() const { return certContext_; }
 
         bool IsSelfGeneratedCert() const { return isSelfGeneratedCert_; }
 
@@ -204,6 +205,8 @@ namespace Transport
             std::wstring const & adminClientCommonNames);
 
         void AddClientToAdminRole(std::wstring const & clientIdentity);
+        void AddAdminClientIdentities(IdentitySet const & identities);
+        void AddAdminClientX509Names(Common::SecurityConfig::X509NameMap const & names);
         Common::ErrorCode AddAdminClientX509Name(PCCERT_CONTEXT certContext);
 
         // Enable claim based auth on clients automatically enables role based access control on clients
@@ -245,7 +248,7 @@ namespace Transport
         std::wstring x509StoreName_;
         std::shared_ptr<Common::X509FindValue> x509FindValue_;
 
-        Common::PCCertContext certContext_; 
+        Common::CertContextUPtrSPtr certContext_;
 
         // Expected thumbprints of remote certificates
         mutable Common::ThumbprintSet remoteCertThumbprints_;

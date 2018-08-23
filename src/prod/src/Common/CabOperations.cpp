@@ -72,10 +72,10 @@ public:
     {
         if (!FDIDestroy(fdiContext_))
         {
-            WriteError(TraceType, "FDIDestroy failed with error - {0}", fdiError_.erfOper, FDIErrorToString((FDIERROR)fdiError_.erfOper));
+            WriteError(TraceType, "FDIDestroy failed with error - {0} : {1}", fdiError_.erfOper, FDIErrorToString((FDIERROR)fdiError_.erfOper));
         }
 
-        if (fnFileClose(fileDescriptor_) != 0)
+        if (fileDescriptor_ > 0 && fnFileClose(fileDescriptor_) != 0)
         {
             WriteError(TraceType, "fnFileClose failed with error code {0}", ::GetLastError());
         }
@@ -370,7 +370,7 @@ public:
         WriteInfo(TraceType, "CabExtract FDICopy using cab:{0}, dir:{1}", cabFileName, cabDirectory);
         if (!FDICopy(fdiContext_, (LPSTR)cabFileName.c_str(), (LPSTR) cabDirectory.c_str(), 0, fnNotify, 0, this))
         {
-            WriteError(TraceType, "FDICopy failed with {0}\n", fdiError_.erfOper);
+            WriteError(TraceType, "CabExtract FDICopy failed with {0} : {1}\n", fdiError_.erfOper, FDIErrorToString((FDIERROR)fdiError_.erfOper));
             result = fdiError_.erfOper;
         }
 
@@ -466,13 +466,13 @@ public:
         std::string cabDirectory = formatString("{0}\\", Path::GetDirectoryName(cabPath_));
 
         // Extract https://msdn.microsoft.com/en-us/library/ff797927(v=vs.85).aspx
-        WriteInfo(TraceType, "CabExtract FDICopy using cab:{0}, dir:{1}", cabFileName.c_str(), cabDirectory.c_str());
+        WriteInfo(TraceType, "CabContains FDICopy using cab:{0}, dir:{1}", cabFileName.c_str(), cabDirectory.c_str());
         if (!FDICopy(fdiContext_, (LPSTR)cabFileName.c_str(), (LPSTR)cabDirectory.c_str(), 0, fnNotify, 0, this))
         {
             // If fileFound_ is true, error condition was forced to short-circuit the search
             if (!fileFound_)
             {
-                WriteError(TraceType, "FDICopy failed with {0}", fdiError_.erfOper);
+                WriteError(TraceType, "CabContains FDICopy failed with {0} : {1}", fdiError_.erfOper, FDIErrorToString((FDIERROR)fdiError_.erfOper));
                 error_ = fdiError_.erfOper;
             }
         }

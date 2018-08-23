@@ -349,10 +349,7 @@ verifyupgradefabric upgradedomains=10_ud upgrademode=auto upgradestate=rollbacki
 
 updatefabricupgrade upgrademode=manual
 
-# wait for manual mode to take effect
-!pause,15
-
-verifyupgradefabric upgradedomains=10_ud upgrademode=manual upgradestate=rollbackinprogress
+verifyupgradefabric upgradedomains=10_ud upgrademode=manual upgradestate=rollbackpending
 
 updatefabricupgrade upgrademode=monitored error=FabricUpgradeValidationError
 
@@ -382,7 +379,7 @@ removebehavior b1
 
 upgradefabricmovenext
 
-verifyupgradefabric upgradedomains=10_ud,20_ud
+verifyupgradefabric upgradedomains=10_ud,20_ud upgrademode=manual upgradestate=rollbackpending
 
 updatefabricupgrade upgrademode=auto
 

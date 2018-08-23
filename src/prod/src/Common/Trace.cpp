@@ -17,6 +17,12 @@ namespace Common
     GlobalWString FileTraceSection = make_global<wstring>(L"Trace/File");
     GlobalWString ConsoleTraceSection = make_global<wstring>(L"Trace/Console");
 
+#if defined(PLATFORM_UNIX)
+    // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+    GlobalWString CommonSection = make_global<wstring>(L"Common");
+    GlobalWString LinuxStructuredTracesEnabled = make_global<wstring>(L"LinuxStructuredTracesEnabled");
+#endif
+
     class TraceProvider::EventSource
     {
         DENY_COPY(EventSource);
@@ -113,6 +119,20 @@ namespace Common
                 }
             }
         }
+
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        void RefreshEnableLinuxStructuredTraces(bool enabled)
+        {
+            for (int i = 0; i < TraceEvent::PerTaskEvents; i++)
+            {
+                if (events_[i])
+                {
+                    events_[i]->RefreshEnableLinuxStructuredTraces(enabled);
+                }
+            }
+        }
+#endif
 
         void WriteManifest(TraceManifestGenerator & manifest, USHORT taskId)
         {
@@ -277,6 +297,12 @@ namespace Common
         filters_[TraceSinkType::ETW].SetDefaultLevel(LogLevel::Info);
         filters_[TraceSinkType::TextFile].SetDefaultLevel(LogLevel::Info);
         filters_[TraceSinkType::Console].SetDefaultLevel(LogLevel::Silent);
+
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        isLinuxstructuredTracesEnabled_ = false;
+#endif
+
     }
 
     void TraceProvider::AddEventSource(TraceTaskCodes::Enum taskId, StringLiteral taskName)
@@ -370,6 +396,20 @@ namespace Common
             }
         }
     }
+
+#if defined(PLATFORM_UNIX)
+    // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+    void TraceProvider::RefreshEnableLinuxStructuredTraces(bool enabled)
+    {
+        for (USHORT i = 0; i < TraceTaskCodes::MaxTask; i++)
+        {
+            if (sources_[i])
+            {
+                sources_[i]->RefreshEnableLinuxStructuredTraces(enabled);
+            }
+        }
+    }
+#endif
 
     TraceEvent & TraceProvider::CreateEvent(
         TraceTaskCodes::Enum taskId,
@@ -546,8 +586,25 @@ namespace Common
             {
                 StaticInit_Singleton()->LoadConfiguration(config, sections[i], false);
             }
+
+#if defined(PLATFORM_UNIX)
+            // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+            // This is needed to allow reading from manifest whether structured traces are enabled..
+            config.RegisterForUpdate(*CommonSection, StaticInit_Singleton());
+
+            StaticInit_Singleton()->LoadConfiguration(config, *CommonSection, false);
+#endif
         }
     }
+
+#if defined(PLATFORM_UNIX)
+    // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+    void TraceProvider::SetLinuxStructuredTraceEnabled(bool linuxStructuredTracesEnabled)
+    {
+        // change to isLinuxStructuredTraces_ (not doing now to not starting build from scratch)
+        isLinuxstructuredTracesEnabled_ = linuxStructuredTracesEnabled;
+    }
+#endif
 
     void TraceProvider::Test_ReloadConfiguration(Config & config)
     {
@@ -561,6 +618,21 @@ namespace Common
 
     void TraceProvider::LoadConfiguration(Config & config, wstring const & section, bool isUpdate)
     {
+
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        if (section == CommonSection)
+        {
+            std::wstring structuredTracesEnabled;
+            std::wstring defaultValue = L"false";
+            config.ReadUnencryptedConfig(section, *LinuxStructuredTracesEnabled, structuredTracesEnabled, defaultValue);
+            bool enableLinuxStructuredTraces = structuredTracesEnabled == L"true" || structuredTracesEnabled == L"True";
+            RefreshEnableLinuxStructuredTraces(enableLinuxStructuredTraces);
+
+            return;
+        }
+#endif
+
         StringCollection filters;
         config.ReadUnencryptedConfig<StringCollection>(section, L"Filters", filters, filters);
 
@@ -832,6 +904,9 @@ namespace Common
         AddEventSource(TraceTaskCodes::InfrastructureService, "IS");
         AddEventSource(TraceTaskCodes::FaultAnalysisService, "FAS");
         AddEventSource(TraceTaskCodes::UpgradeOrchestrationService, "UOS");
+        AddEventSource(TraceTaskCodes::CentralSecretService, "CentralSecretService");
+        AddEventSource(TraceTaskCodes::LocalSecretService, "LocalSecretService");
+        AddEventSource(TraceTaskCodes::ResourceManager, "ResourceManager");
         AddEventSource(TraceTaskCodes::RepairService, "RepairService");
         AddEventSource(TraceTaskCodes::RepairManager, "RM");
 
@@ -896,5 +971,7 @@ namespace Common
         AddEventSource(TraceTaskCodes::BAP, "BAP");
 
         AddEventSource(TraceTaskCodes::ResourceMonitor, "ResourceMonitor");
+
+        AddEventSource(TraceTaskCodes::RCR, "RCR");
     }
 }

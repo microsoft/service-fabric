@@ -31,7 +31,11 @@ namespace Hosting2
             bool runasPasswordEncrypted = false,
             std::wstring const & sslCertificateFindValue = std::wstring(),
             std::wstring const & sslCertStoreLocation = std::wstring(),
-            Common::X509FindType::Enum sslCertificateFindType = Common::X509FindType::FindByThumbprint);
+            Common::X509FindType::Enum sslCertificateFindType = Common::X509FindType::FindByThumbprint,
+            std::wstring const & cpusetCpus = std::wstring(),
+            uint cpuShares = 0,
+            uint memoryInMB = 0,
+            uint memorySwapInMB = 0);
 
         __declspec(property(get=get_ServiceName)) std::wstring const & ServiceName;
         std::wstring const & get_ServiceName() const { return serviceName_; }
@@ -59,6 +63,18 @@ namespace Hosting2
 
         __declspec(property(get=get_Port)) UINT Port;
         UINT get_Port() const { return port_; }
+
+        __declspec(property(get = get_CpusetCpus)) std::wstring const & CpusetCpus;
+        std::wstring const & get_CpusetCpus() const { return cpusetCpus_; }
+
+        __declspec(property(get = get_CpuShares)) uint CpuShares;
+        uint get_CpuShares() const { return cpuShares_; }
+
+        __declspec(property(get = get_MemoryInMB)) uint MemoryInMB;
+        uint get_MemoryInMB() const { return memoryInMB_; }
+
+        __declspec(property(get = get_MemorySwapInMB)) uint MemorySwapInMB;
+        uint get_MemorySwapInMB() const { return memorySwapInMB_; }
 
         __declspec(property(get=get_EndpointProtocol)) std::wstring const & EndpointProtocol;
         std::wstring const & get_EndpointProtocol() const { return protocol_; }
@@ -89,7 +105,7 @@ namespace Hosting2
 
         void WriteTo(__in Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_18(
+        FABRIC_FIELDS_22(
             serviceName_,
             exeName_,
             arguments_,
@@ -107,7 +123,11 @@ namespace Hosting2
             runasPasswordEncrypted_,
             sslCertificateFindValue_,
             sslCertStoreLocation_,
-            sslCertificateFindType_);
+            sslCertificateFindType_,
+            cpusetCpus_,
+            cpuShares_,
+            memoryInMB_,
+            memorySwapInMB_);
 
     private:
 
@@ -129,5 +149,9 @@ namespace Hosting2
         std::wstring sslCertificateFindValue_;
         std::wstring sslCertStoreLocation_;
         Common::X509FindType::Enum sslCertificateFindType_;
+        std::wstring cpusetCpus_;
+        uint cpuShares_;
+        uint memoryInMB_;
+        uint memorySwapInMB_;
     };
 }

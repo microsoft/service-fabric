@@ -152,18 +152,18 @@ namespace PlacementAndLoadBalancingUnitTest
 
         PLBConfigScopeChange(PreventTransientOvercommit, bool, true);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
         now += PLBConfig::GetConfig().MinPlacementInterval;
         // CreationWithMove will happen although intermediate overcommits are prevented
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::CreationWithMove);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacementWithMove);
 
         //CreationwithMove cant be done if movements are throttled
         PLBConfigScopeModify(PreventTransientOvercommit, false);
         systemState_.SetPlacementMoveCount(PLBConfig::GetConfig().GlobalMovementThrottleThreshold);
         now += PLBConfig::GetConfig().MinPlacementInterval;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
 
         //CreationwithMove cant be done if movements are throttled based on percentage
         // Throttle on 100 replicas * 10%
@@ -172,7 +172,7 @@ namespace PlacementAndLoadBalancingUnitTest
         systemState_.SetPlacementMoveCount(11);
         now += PLBConfig::GetConfig().MinPlacementInterval;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
         PLBConfigScopeModify(GlobalMovementThrottleThresholdPercentage, 0.0);
 
         // CreationWithMove can't be done if movements are throttled for placement based on percentage
@@ -181,7 +181,7 @@ namespace PlacementAndLoadBalancingUnitTest
         systemState_.SetPlacementMoveCount(11);
         now += PLBConfig::GetConfig().MinPlacementInterval;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
         PLBConfigScopeModify(GlobalMovementThrottleThresholdPercentageForPlacement, 0.0);
 
         // CreationWithMove can't be done if movements are throttled for placement based on percentage
@@ -189,19 +189,19 @@ namespace PlacementAndLoadBalancingUnitTest
         systemState_.SetPlacementMoveCount(11);
         now += PLBConfig::GetConfig().MinPlacementInterval;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
         PLBConfigScopeModify(GlobalMovementThrottleThresholdForPlacement, 0);
 
         // querying again returns CreationWithMove since last action was Creation
         systemState_.SetPlacementMoveCount(0);
         now += PLBConfig::GetConfig().MinPlacementInterval;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::CreationWithMove);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacementWithMove);
 
         // after CreationWithMove execution, return to Creation action
         now += PLBConfig::GetConfig().MinPlacementInterval;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
 
         // There are no replicas to place, so there should be no action needed.
         systemState_.SetHasNewReplica(false);
@@ -211,7 +211,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Next time we want to do creation, we will do regular Creation since last placement managed to place all replicas
         systemState_.SetHasNewReplica(true);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
 
         // We are done with new replicas
         systemState_.SetHasNewReplica(false);
@@ -237,7 +237,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Do one round of creation as it won't be throttled anyway (no moves involved)
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
 
         now += PLBConfig::GetConfig().MinPlacementInterval;
         now += PLBConfig::GetConfig().MinLoadBalancingInterval;
@@ -252,7 +252,7 @@ namespace PlacementAndLoadBalancingUnitTest
         PLBConfigScopeChange(GlobalMovementThrottleThresholdForBalancing, uint, 1000);
 
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
 
         // Change the load again, so that we do not throttle balancing.
         plbScheduler_->OnLoadChanged(now + TimeSpan::FromMilliseconds(1));
@@ -273,7 +273,7 @@ namespace PlacementAndLoadBalancingUnitTest
         PLBConfigScopeChange(GlobalMovementThrottleThresholdPercentageForBalancing, double, 0.1);
 
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
     }
 
     BOOST_AUTO_TEST_CASE(GetActionConstraintCheckTest)
@@ -329,13 +329,13 @@ namespace PlacementAndLoadBalancingUnitTest
 
         systemState_.SetIsBalanced(false);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         now += PLBConfig::GetConfig().MinLoadBalancingInterval;
         plbScheduler_->OnMovementGenerated(now, balancedAvgStdDev);
         plbScheduler_->OnLoadChanged(now - TimeSpan::FromMilliseconds(1));
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
 
         plbScheduler_->OnMovementGenerated(now, balancedAvgStdDev);
         plbScheduler_->RefreshAction(systemState_, now);
@@ -353,13 +353,13 @@ namespace PlacementAndLoadBalancingUnitTest
         now = now + config.MinLoadBalancingInterval;
         plbScheduler_->OnLoadChanged(now);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         now = now + config.BalancingDelayAfterNodeDown;
 
         plbScheduler_->OnLoadChanged(now);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
 
         plbScheduler_->OnNodeChanged(now);
         plbScheduler_->OnNodeUp(now);
@@ -367,7 +367,7 @@ namespace PlacementAndLoadBalancingUnitTest
         now += config.BalancingDelayAfterNewNode;
         plbScheduler_->RefreshAction(systemState_, now);
         systemState_.SetHasPartitionInAppUpgrade(true);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         plbScheduler_->OnNodeChanged(now);
         plbScheduler_->OnNodeUp(now);
@@ -399,14 +399,14 @@ namespace PlacementAndLoadBalancingUnitTest
         PLBConfigScopeChange(MinConstraintCheckInterval, Common::TimeSpan, Common::TimeSpan::MaxValue);
 
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         now = now + config.MinLoadBalancingInterval;
         plbScheduler_->OnLoadChanged(now);
 
         systemState_.SetAvgStdDev(balancedAvgStdDev * (1 + config.AvgStdDevDeltaThrottleThreshold) + 1e-5);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
 
         systemState_.SetAvgStdDev(balancedAvgStdDev * (1 + config.AvgStdDevDeltaThrottleThreshold) - 1e-5);
         plbScheduler_->RefreshAction(systemState_, now);
@@ -417,7 +417,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         plbScheduler_->OnFailoverUnitChanged(now, GetGuid(0));
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         plbScheduler_->OnMovementGenerated(now, balancedAvgStdDev);
         now = now + config.MinLoadBalancingInterval;
@@ -432,7 +432,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         now += max(config.BalancingDelayAfterNewNode, config.MinLoadBalancingInterval) + TimeSpan::FromSeconds(1);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
     }
 
     BOOST_AUTO_TEST_CASE(GetActionBalancingAvgStdDevBasedThrottleDisabledTest)
@@ -453,14 +453,14 @@ namespace PlacementAndLoadBalancingUnitTest
         PLBConfigScopeChange(MinConstraintCheckInterval, Common::TimeSpan, Common::TimeSpan::MaxValue);
 
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         plbScheduler_->OnMovementGenerated(now, avgStdDev);
         now = now + config.MinLoadBalancingInterval;
         plbScheduler_->OnLoadChanged(now);
 
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
     }
 
     BOOST_AUTO_TEST_CASE(GetActionBalancingGlobalMovementThrottleTest)
@@ -487,7 +487,7 @@ namespace PlacementAndLoadBalancingUnitTest
         }
 
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         // System state is changed, but number of movements is throttling the balancing.
         plbScheduler_->OnServiceChanged(now);
@@ -536,7 +536,7 @@ namespace PlacementAndLoadBalancingUnitTest
         }
 
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         // System state is changed, but number of movements is throttling the balancing.
         plbScheduler_->OnServiceChanged(now);
@@ -591,7 +591,7 @@ namespace PlacementAndLoadBalancingUnitTest
                 systemState_.InsertImbalancedFailoverUnit(fuId);
             }
 
-            plbScheduler_->SetAction(PLBSchedulerActionType::FastBalancing);
+            plbScheduler_->SetAction(PLBSchedulerActionType::QuickLoadBalancing);
             ActionExecutedWithMovePlan(now, 0.0, movementList);
         }
 
@@ -599,7 +599,7 @@ namespace PlacementAndLoadBalancingUnitTest
         now = now + config.MovementPerPartitionThrottleCountingInterval / 2 - config.MinLoadBalancingInterval;
         // the number of movement throttled FUs is small enough so we still do balancing
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         auto throttled = plbScheduler_->GetMovementThrottledFailoverUnits();
         set<Guid> expectedThrottled;
@@ -626,7 +626,7 @@ namespace PlacementAndLoadBalancingUnitTest
                 }
             }
 
-            plbScheduler_->SetAction(PLBSchedulerActionType::FastBalancing);
+            plbScheduler_->SetAction(PLBSchedulerActionType::QuickLoadBalancing);
             ActionExecutedWithMovePlan(now, 0.0, movementList);
         }
 
@@ -665,7 +665,7 @@ namespace PlacementAndLoadBalancingUnitTest
         }
 
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         ActionExecutedWithMovePlan(now, 0.0, movementList);
         plbScheduler_->OnLoadChanged(now);
@@ -680,7 +680,7 @@ namespace PlacementAndLoadBalancingUnitTest
         plbScheduler_->OnLoadChanged(now);
         systemState_.SetBalancingMoveCount(0);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
     }
 
     BOOST_AUTO_TEST_CASE(GetActionBalancingAfterServiceUpdate)
@@ -702,7 +702,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // First time we will do balancing
         systemState_.SetIsBalanced(false);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
         plbScheduler_->OnMovementGenerated(now, balancedAvgStdDev);
 
         // System is still not balanced, but there are no updates since last balancing
@@ -715,10 +715,10 @@ namespace PlacementAndLoadBalancingUnitTest
         plbScheduler_->OnServiceChanged(now);
 
         // System is not balanced, and service is updated - we should balance
-        // Maximum number of retries for FastBalancing is 1, so we should do slow
+        // Maximum number of retries for QuickLoadBalancing is 1, so we should do slow
         now = now + config.MinLoadBalancingInterval / 2;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
     }
 
     BOOST_AUTO_TEST_CASE(PlacementAndConstraintCheckWithBalancingDisabledAndViolations)
@@ -754,7 +754,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Placement needs to be allowed to run, since ConstraintCheck has already tried in the previous round.
         now += timeIncrement;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
         plbScheduler_->OnMovementGenerated(now);
 
         now += timeIncrement;
@@ -782,13 +782,13 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Balancing is executed and interrupted, no movements are generated
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
         plbScheduler_->OnDomainInterrupted(now);
 
         // Next time we will be allowed to do balancing since previous run was interrupted
         now += config.MinLoadBalancingInterval;
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
 
         // Search is not interrupted, searcher generated some movements
         plbScheduler_->OnMovementGenerated(now, 0.1);
@@ -815,7 +815,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Begin of the test, all timers expired so placement is executed
         systemState_.SetHasNewReplica(true);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
         plbScheduler_->OnMovementGenerated(now);
 
         // All timers are updated since there is no action needed
@@ -827,7 +827,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Placement timer expires, and there is a new replica to be placed
         systemState_.SetHasNewReplica(true);
         plbScheduler_->RefreshAction(systemState_, now + config.MinPlacementInterval);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
 
         // Creation & ConstraintCheck need to run
         // ConstraintCheck is executed because there is nothing to place
@@ -871,7 +871,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Second balancing run should pick up state change from node up, and should run
         now = now + Common::TimeSpan::FromSeconds(6);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         // Now set the min balancing interval to be larger than node up delay and add new node
         ScopeChangeObjectMinLoadBalancingInterval.SetValue(Common::TimeSpan::FromSeconds(11));
@@ -881,7 +881,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Balancing should run since we have a new node - slow balancing since previous run did not generate moves
         now = now + Common::TimeSpan::FromSeconds(12);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::SlowBalancing);
+        VerifyScheduler(PLBSchedulerActionType::LoadBalancing);
 
         // Just update the timer since we balanced the system, don't do anything else
         systemState_.SetIsBalanced(true);
@@ -922,7 +922,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Second balancing run should pick up state change from node up, and should run
         now = now + Common::TimeSpan::FromSeconds(6);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
     }
 
     BOOST_AUTO_TEST_CASE(BalancingLocalVariableBalancingDisabledThrottle)
@@ -956,7 +956,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Second balancing run should see that balancing is enabled and pick up load change, and should run
         now = now + Common::TimeSpan::FromSeconds(6);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
     }
 
 
@@ -979,7 +979,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Balancing should run, but is interrupted, so no movements are reported to the scheduler
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         now = now + Common::TimeSpan::FromSeconds(1);
 
@@ -991,10 +991,10 @@ namespace PlacementAndLoadBalancingUnitTest
         plbScheduler_->OnLoadChanged(now);
         systemState_.SetIsConstraintSatisfied(false);
 
-        // FastBalancing had finished iteration 0, but it should not be allowed to proceed to iteration 1
+        // QuickLoadBalancing had finished iteration 0, but it should not be allowed to proceed to iteration 1
         // Instead, scheduler should pick placement to place new replicas
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::Creation);
+        VerifyScheduler(PLBSchedulerActionType::NewReplicaPlacement);
     }
 
     BOOST_AUTO_TEST_CASE(ConstraintCheckWithInterruptions)
@@ -1016,7 +1016,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Balancing should run, but is interrupted, so no movements are reported to the scheduler
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
 
         now = now + Common::TimeSpan::FromSeconds(1);
 
@@ -1024,7 +1024,7 @@ namespace PlacementAndLoadBalancingUnitTest
         plbScheduler_->OnLoadChanged(now);
         systemState_.SetIsConstraintSatisfied(false);
 
-        // FastBalancing had finished iteration 0, but it should not be allowed to proceed to iteration 1
+        // QuickLoadBalancing had finished iteration 0, but it should not be allowed to proceed to iteration 1
         // Instead, scheduler should pick constraint check to fix capacity violation
         plbScheduler_->RefreshAction(systemState_, now);
         VerifyScheduler(PLBSchedulerActionType::ConstraintCheck);
@@ -1096,7 +1096,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Second balancing run should see that balancing is enabled and pick up load change, and should run
         now = now + Common::TimeSpan::FromSeconds(6);
         plbScheduler_->RefreshAction(systemState_, now);
-        VerifyScheduler(PLBSchedulerActionType::FastBalancing);
+        VerifyScheduler(PLBSchedulerActionType::QuickLoadBalancing);
     }
 
     FailoverUnitMovement TestPLBScheduler::GetMovement(size_t id) const

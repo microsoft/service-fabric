@@ -72,7 +72,7 @@ namespace Hosting2
             ServiceModel::UpgradeType::Enum const upgradeType,
             __out CaseInsensitiveStringSet & affectedRuntimeIds);
 
-        ULONG GetFailureCount() const;                
+        ULONG GetFailureCount() const;
 
         Common::ErrorCode GetSharedPackageFolders(
             std::wstring const & applicationTypeName,
@@ -81,7 +81,9 @@ namespace Hosting2
         void OnServiceTypeRegistrationNotFound(
             uint64 const registrationTableVersion,
             ServiceModel::VersionedServiceTypeIdentifier const & versionedServiceTypeId,
-			ServicePackageInstanceIdentifier const & servicePackageInstanceId);
+            ServicePackageInstanceIdentifier const & servicePackageInstanceId);
+
+        void OnServiceTypesUnregistered(std::vector<ServiceTypeInstanceIdentifier> const & serviceTypeInstanceIds);
 
         void NotifyDcaAboutServicePackages();
 
@@ -137,10 +139,10 @@ namespace Hosting2
     private:
         HostingSubsystemHolder const hostingHolder_;
         ServicePackageInstanceContext const context_;
-        int64 const instanceId_;        
+        int64 const instanceId_;
 
         VersionedServicePackageSPtr versionedServicePackage__;
-        ServiceModel::ServicePackageVersionInstance currentVersionInstance__;     
+        ServiceModel::ServicePackageVersionInstance currentVersionInstance__;
         ServiceModel::ServicePackageDescription packageDescription__;
 
         Management::ImageModel::RunLayoutSpecification const runLayout_;

@@ -23,6 +23,13 @@ namespace Api
             __inout ServiceModel::QueryResult &queryResult) = 0;
 
         virtual Common::AsyncOperationSPtr BeginGetNodeList(
+            ServiceModel::NodeQueryDescription const &queryDescription,
+            bool excludeStoppedNodeInfo,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent) = 0;
+
+        virtual Common::AsyncOperationSPtr BeginGetNodeList(
             std::wstring const &nodeNameFilter,
             std::wstring const &continuationToken,
             Common::TimeSpan const timeout,

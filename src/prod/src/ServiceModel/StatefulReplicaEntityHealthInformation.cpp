@@ -30,28 +30,6 @@ StatefulReplicaEntityHealthInformation::StatefulReplicaEntityHealthInformation(
 {
 }
 
-StatefulReplicaEntityHealthInformation::StatefulReplicaEntityHealthInformation(StatefulReplicaEntityHealthInformation && other)
-    : EntityHealthInformation(move(other))
-    , partitionId_(move(other.partitionId_))
-    , replicaId_(move(other.replicaId_))
-    , replicaInstanceId_(move(other.replicaInstanceId_))
-{
-}
-
-StatefulReplicaEntityHealthInformation & StatefulReplicaEntityHealthInformation::operator = (StatefulReplicaEntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        partitionId_ = move(other.partitionId_);
-        replicaId_ = move(other.replicaId_);
-        replicaInstanceId_ = move(other.replicaInstanceId_);
-    }
-
-    EntityHealthInformation::operator=(move(other));
-
-    return *this;
-}
-
 ErrorCode StatefulReplicaEntityHealthInformation::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __in FABRIC_HEALTH_INFORMATION * commonHealthInformation,

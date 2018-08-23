@@ -1,0 +1,16 @@
+﻿{
+    "AppSettings": 
+    {
+        "IncludeFolderNames": "FabricDrop,FabricUnitTests,KtlTest,WinFabricTest,loc,ServiceFabricSDKDrop,JsonTests,RunTests,DotnetCoreCli",
+        "ExcludeFolderPatterns": ".*WinFabricTest\\\\.*Test\\.Data.*, .*WinFabricTest\\\\.*Test\\.STR\\.Data.*, .*WinFabricTest\\\\Test, .*WinFabricTest\\\\.*log.*,.*FabricUnitTests\\\\log.*, .*FabricUnitTests\\\\.*(?<!Hosting\\.)Test\\.Data.*,.*RunTests\\\\log.*, .*RunTests\\\\.*(?<!Hosting\\.)Test\\.Data.*, .*WinFabricTest\\\\cygwin,.*FabricUnitTests\\\\KtlLogs",
+        "ExcludeFilePatterns": ".*\\.trace$, .*\\.etl$, .*\\.pdb$, .*\\.swp$, .*\\.sflog$, .*\\.SFLog$,  .*\\.ilk$",
+    },
+    "AppSettingsLinux":
+    {
+        "IncludeFolderNames": "FabricDrop,JsonTests,RunTests,test,ClusterDeployer",
+        "ExcludeFolderPatterns": "test/IntegrationTests$, test/test$, .*FabricUnitTests, .*FabricUnitTests/log.*, .*FabricUnitTests/.*(?<!Hosting\\.)Test\\.Data.*,.*RunTests/log.*, .*RunTests\\\\.*(?<!Hosting\\.)Test\\.Data.*, .*[a-z0-9]{10,}_[0-9]{8,}$, test/KtlLogs, test/symbols, FabricDrop/symbols",
+        "ExcludeFilePatterns": ".*\\.trace$, .*\\.etl$, .*\\.pdb$, .*\\.swp$, .*\\.o$, .*\\.cpt$, .*\\.cmake$, .*\\.sflog$, FabricDrop/bin/Fabric/Fabric.Code/*\\.a$, FabricDrop/bin/Fabric/Fabric.Code/*\\.so$",
+        "IncludeFiles": ""
+    }
+
+}

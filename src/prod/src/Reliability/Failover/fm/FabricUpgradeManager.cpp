@@ -17,10 +17,9 @@ FabricUpgradeManager::FabricUpgradeManager(
     FailoverManager & fm,
     FabricVersionInstance && currentVersionInstance,
     FabricUpgradeUPtr && upgrade)
-    : fm_(fm),
-      currentVersionInstance_(move(currentVersionInstance)),
-      upgrade_(move(upgrade)),
-      isNodeUpInCurrentUD_(false)
+    : fm_(fm)
+    , currentVersionInstance_(move(currentVersionInstance))
+    , upgrade_(move(upgrade))
 {
 }
 
@@ -192,8 +191,7 @@ void FabricUpgradeManager::UpdateFabricUpgradeProgress(
 {
     AcquireWriteLock grab(lockObject_);
 
-    if (!isNodeUpInCurrentUD_ &&
-        upgrade.Description.InstanceId == upgrade_->Description.InstanceId)
+    if (upgrade.Description.InstanceId == upgrade_->Description.InstanceId)
     {
         FabricUpgradeUPtr newUpgrade = make_unique<FabricUpgrade>(*upgrade_);
         bool isUpdated = newUpgrade->UpdateProgress(fm_, readyNodes, true, isCurrentDomainComplete);
@@ -213,8 +211,6 @@ void FabricUpgradeManager::UpdateFabricUpgradeProgress(
             CompleteFabricUpgradeCallerHoldsWriteLock();
         }
     }
-
-    isNodeUpInCurrentUD_ = false;
 }
 
 Common::ErrorCode FabricUpgradeManager::PersistUpgradeUpdateCallerHoldsWriteLock(FabricUpgradeUPtr && newUpgrade)
@@ -309,8 +305,6 @@ bool FabricUpgradeManager::IsFabricUpgradeNeeded(
             {
                 targetVersionInstance = (incomingVersionInstance < currentVersionInstance_ ? currentVersionInstance_ : incomingVersionInstance);
             }
-
-            isNodeUpInCurrentUD_ = true;
         }
         else if (upgrade_->CheckUpgradeDomain(upgradeDomain))
         {
@@ -372,8 +366,10 @@ void FabricUpgradeManager::AddFabricUpgradeContext(vector<BackgroundThreadContex
 
     if (context)
     {
-        context->Initialize(fm_);
-        contexts.push_back(move(context));
+        if (context->Initialize(fm_))
+        {
+            contexts.push_back(move(context));
+        }
     }
 }
 

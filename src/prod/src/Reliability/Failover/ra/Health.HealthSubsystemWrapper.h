@@ -21,6 +21,8 @@ namespace Reliability
                     bool isHealthReportingEnabled,
                     std::wstring const nodeName);
 
+                Common::ErrorCode ReportStoreProviderEvent(ServiceModel::HealthReport &&);
+
                 Common::ErrorCode ReportReplicaEvent(
                     ReplicaHealthEvent::Enum type,
                     FailoverUnitId const & ftId,

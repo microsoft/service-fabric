@@ -20,7 +20,7 @@ namespace Management
                 Common::AsyncCallback const &,
                 Common::AsyncOperationSPtr const &);
 
-            void OnStart(Common::AsyncOperationSPtr const &);
+            virtual void OnStart(Common::AsyncOperationSPtr const &);
 
             static Common::ErrorCode End(Common::AsyncOperationSPtr const &);
 
@@ -33,6 +33,7 @@ namespace Management
             DigestedApplicationDescription appDescription_;
             std::vector<ServiceContext> defaultServices_;
 
+            void SendCreateApplicationRequestToFM(Common::AsyncOperationSPtr const &);
             virtual void CreateServices(Common::AsyncOperationSPtr const &);
             void OnCreateServicesComplete(Common::AsyncOperationSPtr const &, bool expectedCompletedSynchronously);
             Common::ErrorCode ScheduleCreateService(Common::AsyncOperationSPtr const &, size_t operationIndex, ParallelOperationsCompletedCallback const &);
@@ -54,7 +55,7 @@ namespace Management
             void EndCreateName(Common::AsyncOperationSPtr const &);
             
             Common::AsyncOperationSPtr BeginCreateProperty(Common::AsyncOperationSPtr const &, Common::AsyncCallback const &);
-            void EndCreateProperty(Common::AsyncOperationSPtr const &);
+            virtual void EndCreateProperty(Common::AsyncOperationSPtr const &);
 
             void OnBuildApplicationComplete(Common::AsyncOperationSPtr const &, bool expectedCompletedSynchronously);
             virtual void CheckDefaultServicePackages(AsyncOperationSPtr const & thisSPtr, ErrorCode && error);
@@ -65,8 +66,6 @@ namespace Management
             virtual void FinishCreateApplication(Common::AsyncOperationSPtr const &);
             void OnReportApplicationPolicyComplete(__in ApplicationContext &, Common::AsyncOperationSPtr const &, Common::ErrorCode const &);
             void OnCompleted() override;
-
-            class CreateDefaultServiceWithDnsNameAsyncOperation;
         };
     }
 }

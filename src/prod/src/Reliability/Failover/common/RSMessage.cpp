@@ -246,6 +246,9 @@ Global<RSMessage> RSMessage::UpdateApplicationReply = CreateCommonToFMMessage(L"
 Global<RSMessage> RSMessage::PartitionNotification = CreateRAToFMMessage(L"PartitionNotification");
 Global<RSMessage> RSMessage::PartitionNotificationReply = CreateFMToRAMessage(L"PartitionNotificationReply");
 
+// Message sent from common to FM that will deliver available container images
+Global<RSMessage> RSMessage::AvailableContainerImages = CreateCommonToFMMessage(L"AvailableContainerImages");
+
 void RSMessage::AddActivityHeader(Transport::Message & message, Transport::FabricActivityHeader const & activityHeader)
 {
     bool exists = false;

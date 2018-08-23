@@ -27,6 +27,17 @@ namespace Management
 
             virtual ~ProcessCreateUploadSessionRequestAsyncOperation();
 
+            virtual void WriteTrace(__in Common::ErrorCode const &error) override;
+
+            __declspec(property(get = get_StoreRelativePath)) std::wstring const & StoreRelativePath;
+            std::wstring const & get_StoreRelativePath() const { return storeRelativePath_; }
+
+            __declspec(property(get = get_FileSize)) uint64 FileSize;
+            uint64 const get_FileSize() const { return fileSize_; }
+
+            __declspec(property(get = get_SessionId)) Common::Guid const & SessionId;
+            Common::Guid const & get_SessionId() const { return sessionId_; }
+
         protected:
 
             Common::AsyncOperationSPtr BeginOperation(
@@ -42,7 +53,6 @@ namespace Management
         private:
 
             class CreateUploadSessionAsyncOperation;
-
             std::wstring storeRelativePath_;
             Common::Guid sessionId_;
             uint64 fileSize_;

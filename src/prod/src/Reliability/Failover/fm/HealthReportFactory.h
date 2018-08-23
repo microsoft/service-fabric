@@ -17,8 +17,8 @@ namespace Reliability
             explicit HealthReportFactory(const std::wstring & nodeId, bool isFMM, const Common::ConfigEntry<Common::TimeSpan> & stateTraceIntervalEntry);
 
             //Rebuild
-            ServiceModel::HealthReport GenerateRebuildStuckHealthReport();
-            ServiceModel::HealthReport GenerateRebuildStuckHealthReport(vector<Federation::NodeInstance> & stuckNodes);
+            ServiceModel::HealthReport GenerateRebuildStuckHealthReport(Common::TimeSpan elapsedTime, Common::TimeSpan expectedTime);
+            ServiceModel::HealthReport GenerateRebuildStuckHealthReport(vector<Federation::NodeInstance> & stuckNodes, Common::TimeSpan elapsedTime, Common::TimeSpan expectedTime);
             ServiceModel::HealthReport GenerateClearRebuildStuckHealthReport();
 
             //NodeInfo
@@ -35,8 +35,8 @@ namespace Reliability
 
         private:
             ServiceModel::HealthReport GenerateRebuildStuckHealthReport(const wstring & description);
-            std::wstring GenerateRebuildBroadcastStuckDescription();
-            std::wstring GenerateRebuildWaitingForNodesDescription(vector<Federation::NodeInstance> & stuckNodes);
+            std::wstring GenerateRebuildBroadcastStuckDescription(Common::TimeSpan elapsedTime, Common::TimeSpan expectedTime);
+            std::wstring GenerateRebuildWaitingForNodesDescription(vector<Federation::NodeInstance> & stuckNodes, Common::TimeSpan elapsedTime, Common::TimeSpan expectedTime);
             void PopulateNodeAttributeList(ServiceModel::AttributeList & attributes, const NodeInfoSPtr & nodeInfo);
 
             static const std::wstring documentationUrl_;

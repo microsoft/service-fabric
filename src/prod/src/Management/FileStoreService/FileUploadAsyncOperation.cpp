@@ -150,6 +150,7 @@ FileUploadAsyncOperation::FileUploadAsyncOperation(
     wstring const & stagingFullPath,
     wstring const & storeRelativePath,
     bool shouldOverwrite,
+    Guid const & uploadRequestId,
     StoreFileVersion const & fileVersion,
     Common::ActivityId const & activityId,
     TimeSpan const & timeout,
@@ -167,6 +168,7 @@ FileUploadAsyncOperation::FileUploadAsyncOperation(
     stagingFullPath_(stagingFullPath),
     storeFullPath_(Utility::GetVersionedFileFullPath(requestManager.ReplicaObj.StoreRoot, storeRelativePath, fileVersion)),
     shouldOverwrite_(shouldOverwrite),
+    uploadRequestId_(uploadRequestId),
     fileVersion_(fileVersion)
 {
 }
@@ -177,31 +179,54 @@ FileUploadAsyncOperation::~FileUploadAsyncOperation()
 
 ErrorCode FileUploadAsyncOperation::TransitionToIntermediateState(StoreTransaction const & storeTx)
 {           
-    FileMetadata metadata(this->StoreRelativePath, fileVersion_, FileState::Updating);
+    FileMetadata metadata(this->StoreRelativePath, fileVersion_, FileState::Updating, this->uploadRequestId_);
     bool doesExist = false;
     auto error = this->ReplicatedStoreWrapperObj.TryReadOrInsertIfNotFound(this->ActivityId, storeTx, metadata, doesExist);
     WriteTrace(
         error.ToLogLevel(),
         TraceComponent,
         TraceId,
-        "TryReadOrInsertIfNotFound:{0}, Error:{1}, DoesExist:{2}",
+        "FileUploadAsyncOperation::TransitionToIntermediateState - TryReadOrInsertIfNotFound:{0}, Error:{1}, DoesExist:{2}",
         metadata,
         error,
         doesExist);
     if(!error.IsSuccess())
-    {             
+    {
         return error;
     }
 
     if(doesExist)
     {
+        if (metadata.UploadRequestId == this->uploadRequestId_)
+        {
+            if (FileState::IsStable(metadata.State))
+            {
+                return ErrorCodeValue::AlreadyExists;
+            }
+            else
+            {
+                // There can't be two active threads setting the metadata to "Updating" state which means previous transaction is interrupted.
+                // It is possible that previous transaction might have been failed leaving the state in 'updating' state.
+                // Return success here to  get to stable state for metadata.
+
+                WriteWarning(
+                    TraceComponent,
+                    TraceId,
+                    "Some previous transaction has left metadata in non-terminal state : {0} storePath{1}",
+                    metadata,
+                    storeFullPath_);
+                return ErrorCodeValue::Success;
+            }
+        }
+
         if(!FileState::IsStable(metadata.State))
         {
             WriteWarning(
                 TraceComponent,
                 TraceId,
-                "Failed to update the metadata for upload since its not in a stable state: {0}",
-                metadata);
+                "Failed to update the metadata for upload since its not in a stable state: {0} storePath{1}",
+                metadata,
+                storeFullPath_);
             return ErrorCodeValue::FileUpdateInProgress;
         }
 
@@ -210,9 +235,10 @@ ErrorCode FileUploadAsyncOperation::TransitionToIntermediateState(StoreTransacti
             return ErrorCodeValue::FileAlreadyExists;
         }
 
-        metadata.State = FileState::Updating;        
+        metadata.State = FileState::Updating;
         metadata.PreviousVersion = metadata.CurrentVersion;
         metadata.CurrentVersion = fileVersion_;
+        metadata.UploadRequestId = uploadRequestId_;
 
         metadata.CopyDesc = CopyDescription();
         
@@ -246,7 +272,7 @@ ErrorCode FileUploadAsyncOperation::TransitionToReplicatingState(StoreTransactio
         metadata,
         error);
     if(!error.IsSuccess())
-    {                      
+    {
         return error;
     }
 
@@ -294,7 +320,7 @@ ErrorCode FileUploadAsyncOperation::TransitionToCommittedState(StoreTransaction 
         metadata,
         error);
     if(!error.IsSuccess())
-    {                      
+    {
         return error;
     }
 
@@ -319,22 +345,40 @@ ErrorCode FileUploadAsyncOperation::TransitionToRolledbackState(StoreTransaction
         return error;
     }
 
-    ASSERT_IF(FileState::IsStable(metadata.State), "Rollback should only be called when state is stable. Metadata:{0}", metadata);            
+    ASSERT_IF(FileState::IsStable(metadata.State), "Rollback should only be called when state is stable. Metadata:{0}", metadata);
 
     if(metadata.PreviousVersion == StoreFileVersion::Default
         || !File::Exists(Utility::GetVersionedFileFullPath(this->RequestManagerObj.ReplicaObj.StoreRoot, this->StoreRelativePath, metadata.PreviousVersion)))
-    {                
-        error = storeTx.Delete(metadata);        
+    {
+        error = storeTx.Delete(metadata);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(
+                TraceComponent,
+                TraceId,
+                "Unable to delete metadata during rollback:{0}, Error:{1}",
+                metadata,
+                error);
+        }
     }
     else
     {
         metadata.CurrentVersion = metadata.PreviousVersion;
         metadata.PreviousVersion = StoreFileVersion::Default;
         metadata.State = FileState::Committed;
-
+        metadata.UploadRequestId = this->uploadRequestId_;
         metadata.CopyDesc = CopyDescription();
 
         error = storeTx.Update(metadata);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(
+                TraceComponent,
+                TraceId,
+                "Unable to restore metadata during rollback:{0}, Error:{1}",
+                metadata,
+                error);
+        }
     }
 
     return error;
@@ -344,6 +388,17 @@ AsyncOperationSPtr FileUploadAsyncOperation::OnBeginFileOperation(
     AsyncCallback const &callback,
     AsyncOperationSPtr const &parent)
 {
+    static int chaosCount = 0;
+    if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
+    {
+        // This is to test multiple commit requests from the client
+        ++chaosCount;
+        if (chaosCount % 11 == 0 && this->StoreRelativePath.find(L"xml") != std::string::npos)
+        {
+            Sleep(35000);
+        }
+    }
+
     return AsyncOperation::CreateAndStart<MoveAsyncOperation>(
         *this,
         stagingFullPath_,
@@ -359,7 +414,7 @@ ErrorCode FileUploadAsyncOperation::OnEndFileOperation(
 }
 
 void FileUploadAsyncOperation::UndoFileOperation()
-{    
+{
     if(File::Exists(storeFullPath_))
     {
         auto error = File::Delete2(storeFullPath_, true /*deleteReadOnlyFiles*/);
@@ -368,7 +423,7 @@ void FileUploadAsyncOperation::UndoFileOperation()
             WriteWarning(
                 TraceComponent,
                 TraceId,
-                "Unable to perform delete during rollback of upload. Path:{0}, Error:{1}",            
+                "Unable to perform delete during rollback of upload. Path:{0}, Error:{1}",
                 storeFullPath_,
                 error);
         }

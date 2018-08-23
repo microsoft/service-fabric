@@ -19,6 +19,7 @@
 #include "DynamicBitSet.h"
 #include "ReservationLoad.h"
 #include "ServicePackageNode.h"
+#include "AutoScaler.h"
 
 namespace Reliability
 {
@@ -36,7 +37,6 @@ namespace Reliability
         class PLBDiagnostics;
         typedef std::unique_ptr<BalanceChecker> BalanceCheckerUPtr;
         typedef std::shared_ptr<PLBDiagnostics> PLBDiagnosticsSPtr;
-
         class ServicePackageDescription;
         class FailoverUnitMovement;
         typedef std::map<Common::Guid, FailoverUnitMovement> FailoverUnitMovementTable;
@@ -48,6 +48,7 @@ namespace Reliability
         {
             friend class SystemState;
             friend class PlacementCreator;
+            friend class AutoScaler;
 
             DENY_COPY(ServiceDomain);
 
@@ -100,7 +101,7 @@ namespace Reliability
             };
 
 
-            ServiceDomain(DomainId && id, PlacementAndLoadBalancing const& plb);
+            ServiceDomain(DomainId && id, PlacementAndLoadBalancing & plb);
 
             ServiceDomain(ServiceDomain && other);
 
@@ -132,6 +133,9 @@ namespace Reliability
 
             __declspec (property(get = get_PartitionsInAppUpgradeCount)) uint64 PartitionsInAppUpgradeCount;
             uint64 get_PartitionsInAppUpgradeCount() const { return partitionsInAppUpgrade_; }
+
+            __declspec (property(get = get_AutoScalerComponent)) AutoScaler & AutoScalerComponent;
+            AutoScaler & get_AutoScalerComponent() { return autoScaler_; }
 
             size_t BalancingMovementCount() const;
             size_t PlacementMovementCount() const;
@@ -330,7 +334,7 @@ namespace Reliability
 
             DomainId domainId_;
 
-            PlacementAndLoadBalancing const& plb_;
+            PlacementAndLoadBalancing & plb_;
 
             Uint64UnorderedMap<Service> serviceTable_;
 
@@ -401,6 +405,9 @@ namespace Reliability
 
             //this represent the count of partitions whose apps are in upgrade
             uint64 partitionsInAppUpgrade_;
+
+			//Does autoscaling
+			AutoScaler autoScaler_;
 
             // Caching for block lists
             std::wstring lastEvaluatedPlacementConstraint_;

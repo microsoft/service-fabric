@@ -1,0 +1,22 @@
+{
+    "Default": {
+    },
+    "Tests": [
+        {
+            "Name": "DCollections-Linux",
+            "Type": "Linux_ScriptTest",
+            "Owners": "rapatchi, tyadam, yzha",
+            "Tags": "MData,Collections",
+            "ResourcesRequired": "Server:1&Azure:1",
+            "TestExecutionParameters": {
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
+              "TaskName": "DCollections-Linux.test",
+              "ExecutionTimeout": "3600",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "3600"
+            }
+        }
+    ]
+}

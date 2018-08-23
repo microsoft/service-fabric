@@ -21,6 +21,7 @@ ServicePartitionQueryResult::ServicePartitionQueryResult()
     , healthState_(FABRIC_HEALTH_STATE_UNKNOWN)
     , partitionStatus_(FABRIC_QUERY_SERVICE_PARTITION_STATUS_INVALID)
     , lastQuorumLossDurationInSeconds_(0)
+    , renameAsPrimaryEpoch_(false)
 {
 }
 
@@ -34,6 +35,7 @@ ServicePartitionQueryResult::ServicePartitionQueryResult(ServicePartitionQueryRe
     , partitionStatus_(move(other.partitionStatus_))
     , lastQuorumLossDurationInSeconds_(move(other.lastQuorumLossDurationInSeconds_))
     , currentConfigurationEpoch_(move(other.currentConfigurationEpoch_))
+    , renameAsPrimaryEpoch_(false)
 {    
 }
 
@@ -53,6 +55,7 @@ ServicePartitionQueryResult::ServicePartitionQueryResult(
     , partitionStatus_(partitionStatus)
     , lastQuorumLossDurationInSeconds_(lastQuorumLossDurationInSeconds)
     , currentConfigurationEpoch_(currentConfigurationEpoch)
+    , renameAsPrimaryEpoch_(false)
 {
 }
 
@@ -68,6 +71,7 @@ ServicePartitionQueryResult::ServicePartitionQueryResult(
     , healthState_(FABRIC_HEALTH_STATE_UNKNOWN)
     , partitionStatus_(partitionStatus)
     , lastQuorumLossDurationInSeconds_(0)
+    , renameAsPrimaryEpoch_(false)
 {
 }
 
@@ -83,6 +87,7 @@ ServicePartitionQueryResult const & ServicePartitionQueryResult::operator = (Ser
         healthState_ = other.healthState_;
         partitionStatus_ = other.partitionStatus_;
         lastQuorumLossDurationInSeconds_ = other.lastQuorumLossDurationInSeconds_;
+        renameAsPrimaryEpoch_ = other.renameAsPrimaryEpoch_;
     }
 
     return *this;
@@ -105,6 +110,12 @@ ServicePartitionQueryResult ServicePartitionQueryResult::CreateStatefulServicePa
     const Epoch & currentConfigurationEpoch)
 {
     return ServicePartitionQueryResult(partitionInformation, targetReplicaSetSize, minReplicaSetSize, partitionStatus, lastQuorumLossDurationInSeconds, currentConfigurationEpoch);
+}
+
+// Rename property CurrentConfigurationEpoch to PrimaryEpoch in serializer
+void ServicePartitionQueryResult::SetRenameAsPrimaryEpoch(bool renameAsPrimaryEpoch)
+{
+    renameAsPrimaryEpoch_ = renameAsPrimaryEpoch;
 }
 
 void ServicePartitionQueryResult::ToPublicApi(

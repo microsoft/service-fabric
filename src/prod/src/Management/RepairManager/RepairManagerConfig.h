@@ -104,7 +104,7 @@ namespace Management
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"RepairManager", HealthCheckClockSkewTolerance, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Dynamic);
             
             // Uses TStore for persisted stateful storage when set to true
-            INTERNAL_CONFIG_ENTRY(bool, L"RepairManager", EnableTStore, false, Common::ConfigEntryUpgradePolicy::NotAllowed);
+            INTERNAL_CONFIG_ENTRY(bool, L"RepairManager", EnableTStore, false, Common::ConfigEntryUpgradePolicy::Static);
 
             RE_INTERNAL_CONFIG_PROPERTIES(L"RepairManager/Replication", 50, 8192, 314572800, 16384, 314572800);
             TR_INTERNAL_CONFIG_PROPERTIES(L"RepairManager/TransactionalReplicator2");

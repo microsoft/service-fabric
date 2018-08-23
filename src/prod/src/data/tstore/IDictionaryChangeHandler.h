@@ -33,18 +33,21 @@ namespace Data
                 __in TxnReplicator::TransactionBase const& replicatorTransaction,
                 __in TKey key,
                 __in TValue value,
-                __in LONG64 sequenceNumber) noexcept = 0;
+                __in LONG64 sequenceNumber, 
+                __in bool isPrimary) noexcept = 0;
             
             virtual ktl::Awaitable<void> OnUpdatedAsync(
                 __in TxnReplicator::TransactionBase const& replicatorTransaction,
                 __in TKey key,
                 __in TValue value,
-                __in LONG64 sequenceNumber) noexcept = 0;
+                __in LONG64 sequenceNumber,
+                __in bool isPrimary) noexcept = 0;
 
             virtual ktl::Awaitable<void> OnRemovedAsync(
                 __in TxnReplicator::TransactionBase const& replicatorTransaction,
                 __in TKey key,
-                __in LONG64 sequenceNumber) noexcept = 0;
+                __in LONG64 sequenceNumber,
+                __in bool isPrimary) noexcept = 0;
 
             virtual ktl::Awaitable<void> OnRebuiltAsync(__in Utilities::IAsyncEnumerator<KeyValuePair<TKey, KeyValuePair<LONG64, TValue>>> & enumerableState) noexcept = 0;
         };

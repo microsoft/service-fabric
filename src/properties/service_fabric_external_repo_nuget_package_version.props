@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!--
+         Data.Extension package resides in SF-ReliableCollections repo.
+         Following is the version from that repo which is consumed to build SDK in winfab repo.
+         If you change the version do also make the following changes:
+             1. in .corext\corext.config update the version to pull in during init.cmd
+             2. change ReferenceDataExtensionsNugetPackageInstallPath below to specify where init.cmd installs the package. This is specified in .corext\gen\packageList.inc
+             3. change the sdk publish version for this package at .config\FabricVersions.Targets
+             4. Upload nupkg to linux blob storage for linux build.
+             5. Update src/build.sh with new version -->
+    <ReferenceDataExtensionsNugetPackageVersion>1.4.4</ReferenceDataExtensionsNugetPackageVersion>
+    <ReferenceDataExtensionsNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_Data_Extensions)</ReferenceDataExtensionsNugetPackageInstallPath>
+    <ReferenceReliableCollectionAspNetNugetPackageVersion>1.0.10-beta</ReferenceReliableCollectionAspNetNugetPackageVersion>
+    <ReferenceReliableCollectionAspNetNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_ReliableCollection_AspNet)</ReferenceReliableCollectionAspNetNugetPackageInstallPath>
+   </PropertyGroup>
+</Project>

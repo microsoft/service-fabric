@@ -10,7 +10,7 @@ namespace Data
     namespace Utilities
     {
         class Partition final
-            : public KWfStatefulServicePartition
+            : public IStatefulPartition
         {
             K_FORCE_SHARED(Partition)
 
@@ -19,41 +19,15 @@ namespace Data
             static NTSTATUS Create(
                 __in IFabricStatefulServicePartition & fabricPartition,
                 __in KAllocator & allocator,
-                __out KWfStatefulServicePartition::SPtr & result);
+                __out IStatefulPartition::SPtr & result);
 
-            NTSTATUS
-                GetPartitionInfo(
-                    __out const FABRIC_SERVICE_PARTITION_INFORMATION** BufferedValue
-                ) override;
+            NTSTATUS GetPartitionInfo(__out const FABRIC_SERVICE_PARTITION_INFORMATION** partitionInfo) override;
 
-            NTSTATUS
-                GetReadStatus(
-                    __out FABRIC_SERVICE_PARTITION_ACCESS_STATUS* ReadStatus
-                ) override;
+            NTSTATUS GetReadStatus(__out FABRIC_SERVICE_PARTITION_ACCESS_STATUS* readStatus) override;
 
-            NTSTATUS
-                GetWriteStatus(
-                    __out FABRIC_SERVICE_PARTITION_ACCESS_STATUS* WriteStatus
-                ) override;
+            NTSTATUS GetWriteStatus(__out FABRIC_SERVICE_PARTITION_ACCESS_STATUS* writeStatus) override;
 
-            NTSTATUS
-                CreateReplicator(
-                    __in KWfStateProvider* StateProvider,
-                    __in const FABRIC_REPLICATOR_SETTINGS* ReplicatorSettings,
-                    __out KSharedPtr<KWfReplicator>& Replicator,
-                    __out KSharedPtr<KWfStateReplicator>& StateReplicator
-                ) override;
-
-            NTSTATUS
-                ReportLoad(
-                    __in ULONG MetricCount,
-                    __in_ecount(MetricCount) const FABRIC_LOAD_METRIC* Metrics
-                ) override;
-
-            NTSTATUS
-                ReportFault(
-                    __in FABRIC_FAULT_TYPE FaultType
-                ) override;
+            NTSTATUS ReportFault(__in FABRIC_FAULT_TYPE faultType) override;
 
         private:
 

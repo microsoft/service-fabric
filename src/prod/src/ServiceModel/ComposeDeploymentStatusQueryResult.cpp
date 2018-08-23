@@ -11,14 +11,6 @@ using namespace ServiceModel;
 
 INITIALIZE_SIZE_ESTIMATION(ComposeDeploymentStatusQueryResult)
 
-ComposeDeploymentStatusQueryResult::ComposeDeploymentStatusQueryResult()
-    : deploymentName_()
-    , applicationName_()
-    , dockerComposeDeploymentStatus_(ComposeDeploymentStatus::Invalid)
-    , statusDetails_()
-{
-}
-
 ComposeDeploymentStatusQueryResult::ComposeDeploymentStatusQueryResult(
     wstring const & deploymentName,
     NamingUri const & applicationName,
@@ -29,27 +21,6 @@ ComposeDeploymentStatusQueryResult::ComposeDeploymentStatusQueryResult(
     , dockerComposeDeploymentStatus_(dockerComposeDeploymentStatus)
     , statusDetails_(statusDetails)
 {
-}
-
-ComposeDeploymentStatusQueryResult::ComposeDeploymentStatusQueryResult(ComposeDeploymentStatusQueryResult && other)
-    : deploymentName_(move(other.deploymentName_))
-    , applicationName_(move(other.applicationName_))
-    , dockerComposeDeploymentStatus_(move(other.dockerComposeDeploymentStatus_))
-    , statusDetails_(move(other.statusDetails_))
-{
-}
-
-ComposeDeploymentStatusQueryResult & ComposeDeploymentStatusQueryResult::operator = (ComposeDeploymentStatusQueryResult && other)
-{
-    if (this != & other)
-    {
-        deploymentName_ = move(other.deploymentName_);
-        applicationName_ = move(other.applicationName_);
-        dockerComposeDeploymentStatus_ = move(other.dockerComposeDeploymentStatus_);
-        statusDetails_ = move(statusDetails_);
-    }
-
-    return *this;
 }
 
 void ComposeDeploymentStatusQueryResult::ToPublicApi(

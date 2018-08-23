@@ -257,6 +257,8 @@ BeginCheckpointLogRecord::SPtr LoggingReplicatorTests::TestLogRecordUtility::Cre
         *invalidLogRecords->Inv_PhysicalLogRecord,
         *backupLogRecord,
         0,
+        0,
+        0,
         allocator);
 
     // Set record position
@@ -309,6 +311,7 @@ PhysicalLogRecord::SPtr LoggingReplicatorTests::TestLogRecordUtility::CreateLink
                 nullptr,
                 invalidPhysicalLogRecord,
                 true,
+                0, // timeStamp set to 0
                 allocator);
 
             recordToLink->RecordPosition = 1;

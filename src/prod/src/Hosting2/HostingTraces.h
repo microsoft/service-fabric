@@ -28,6 +28,7 @@ namespace Hosting2
         DECLARE_STRUCTURED_TRACE(ServiceTypeRegistered, std::wstring, uint64, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
         DECLARE_STRUCTURED_TRACE(FabricRuntimeClosed, std::wstring, uint64, std::wstring, std::wstring, std::wstring, std::wstring);
         DECLARE_STRUCTURED_TRACE(ApplicationHostClosed, std::wstring, uint64, std::wstring, std::wstring, std::wstring);
+        DECLARE_STRUCTURED_TRACE(AvailableContainerImages, std::wstring, std::wstring, int64);
         DECLARE_STRUCTURED_TRACE(ServiceTypeDisabled, std::wstring, uint64, std::wstring, std::wstring, std::wstring);
         DECLARE_STRUCTURED_TRACE(ServiceTypeEnabled, std::wstring, uint64, std::wstring, std::wstring, std::wstring);
         DECLARE_STRUCTURED_TRACE(NodeVersionUpgraded, std::wstring, std::wstring, Common::FabricVersionInstance, Common::FabricVersionInstance);
@@ -47,12 +48,15 @@ namespace Hosting2
         DECLARE_STRUCTURED_TRACE(ApplicationTypeContentDeletionSuccess, std::wstring, std::wstring, std::wstring);
         DECLARE_STRUCTURED_TRACE(ApplicationTypeContentDeletionFailed, std::wstring, std::wstring, std::wstring, Common::ErrorCode);
         DECLARE_STRUCTURED_TRACE(ProcessUnexpectedTermination, std::wstring, std::wstring, int64, std::wstring, int64, Common::DateTime);
-        DECLARE_STRUCTURED_TRACE(ContainerActivatedOperational, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
-        DECLARE_STRUCTURED_TRACE(ContainerDeactivatedOperational, std::wstring, std::wstring, std::wstring, std::wstring);
+        DECLARE_STRUCTURED_TRACE(ContainerActivatedOperational, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
+        DECLARE_STRUCTURED_TRACE(ContainerDeactivatedOperational, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
         DECLARE_STRUCTURED_TRACE(ActiveExecutablesAndContainersStats, int64, int64);
-        DECLARE_STRUCTURED_TRACE(ContainerTerminated, std::wstring, std::wstring, std::wstring, std::wstring);
-        DECLARE_STRUCTURED_TRACE(ContainerActivated, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
-        DECLARE_STRUCTURED_TRACE(ContainerDeactivated, std::wstring, std::wstring, std::wstring, std::wstring);
+        DECLARE_STRUCTURED_TRACE(ContainerTerminated, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
+        DECLARE_STRUCTURED_TRACE(ContainerActivated, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
+        DECLARE_STRUCTURED_TRACE(ContainerDeactivated, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
+        DECLARE_APPLICATIONS_OPERATIONAL_TRACE(ContainerExitedOperational, std::wstring, std::wstring, std::wstring, bool, std::wstring, ServiceModel::EntryPointType::Trace, std::wstring, std::wstring, std::wstring, int64, bool, Common::DateTime);
+        DECLARE_APPLICATIONS_OPERATIONAL_TRACE(ProcessExitedOperational, std::wstring, std::wstring, std::wstring, bool, std::wstring, ServiceModel::EntryPointType::Trace, std::wstring, int64, std::wstring, int64, bool, Common::DateTime);
+        DECLARE_STRUCTURED_TRACE(ApplicationHostTerminated, std::wstring, uint64, Common::ActivityDescription);
 
     public:
         HostingTraces() : 
@@ -325,22 +329,24 @@ namespace Hosting2
             ContainerActivatedOperational,
             34,
             Info,
-            "Container {1} with isolation {2} for application {3} service {4} is active.",
+            "Container {1} with isolation {2} for application {3} service {4} code package {5} is active.",
             "id",
             "Name",
             "IsolationMode",
             "ApplicationName",
-            "ServiceName"),
+            "ServiceName",
+            "CodePackageName"),
         HOSTING_OPERATIONAL_TRACE(
             Container,
             ContainerDeactivatedOperational,
             35,
             Info,
-            "Container {1}  with applicationname {2} and servicename {3} deactivated.",
+            "Container {1}  with applicationname {2}, servicename {3} and code package {4} deactivated.",
             "id",
             "Name",
             "ApplicationName",
-            "ServiceName"),
+            "ServiceName",
+            "CodePackageName"),
         HOSTING_STRUCTURED_TRACE(
             ActiveExecutablesAndContainersStats,
             36,
@@ -355,12 +361,13 @@ namespace Hosting2
             Info,
             Common::TraceChannelType::Admin,
             TRACE_KEYWORDS2(Default, ForQuery),
-            "Container {1} with isolation {2} for application {3} service {4} is active.",
+            "Container {1} with isolation {2} for application {3} service {4} code package {5} is active.",
             "id",
             "Name",
             "IsolationMode",
             "ApplicationName",
-            "ServiceName"),
+            "ServiceName",
+            "CodePackageName"),
         HOSTING_STRUCTURED_QUERY_TRACE(
             ContainerEvents,
             ContainerDeactivated,
@@ -368,11 +375,12 @@ namespace Hosting2
             Info,
             Common::TraceChannelType::Admin,
             TRACE_KEYWORDS2(Default, ForQuery),
-            "Container {1}  with applicationname {2} and servicename {3} deactivated.",
+            "Container {1}  with applicationname {2}, servicename {3} and code package {4} deactivated.",
             "id",
             "Name",
             "ApplicationName",
-            "ServiceName"),
+            "ServiceName",
+            "CodePackageName"),
         HOSTING_STRUCTURED_QUERY_TRACE(
             ContainerEvents,
             ContainerTerminated,
@@ -380,11 +388,71 @@ namespace Hosting2
             Info,
             Common::TraceChannelType::Admin,
             TRACE_KEYWORDS2(Default, ForQuery),
-            "Container {1}  with applicationname {2} and servicename {3} terminated.",
+            "Container {1}  with applicationname {2}, servicename {3} and code package {4} terminated.",
             "id",
             "Name",
             "ApplicationName",
-            "ServiceName")
+            "ServiceName",
+            "CodePackageName"),
+        APPLICATIONS_OPERATIONAL_TRACE(
+            ContainerExitedOperational,
+            L"ApplicationContainerInstanceExited",
+            OperationalStateTransitionCategory,
+            Hosting,
+            42,
+            Info,
+            "ContainerHostTerminated: \r\n ApplicationId={1},\r\n ServiceName={2},\r\n ServicePackageName={3},\r\n ServicePackageActivationId={4},\r\n IsExclusive={5},\r\n CodePackageName={6},\r\n EntryPointType={7},\r\n ImageName={8},\r\n ContainerName={9},\r\n HostId={10},\r\n ExitCode={11},\r\n UnexpectedTermination={12},\r\n StartTime={13}.",
+            "ServiceName",
+            "ServicePackageName",
+            "ServicePackageActivationId",
+            "IsExclusive",
+            "CodePackageName",
+            "EntryPointType",
+            "ImageName",
+            "ContainerName",
+            "HostId",
+            "ExitCode",
+            "UnexpectedTermination",
+            "StartTime"),
+        APPLICATIONS_OPERATIONAL_TRACE(
+            ProcessExitedOperational,
+            L"ApplicationProcessExited",
+            OperationalStateTransitionCategory,
+            Hosting,
+            43,
+            Info,
+            "ApplicationHostTerminated: \r\n ApplicationId={1},\r\n ServiceName={2},\r\n ServicePackageName={3},\r\n ServicePackageActivationId={4},\r\n IsExclusive={5},\r\n CodePackageName={6},\r\n EntryPointType={7},\r\n ExeName={8},\r\n ProcessId={9},\r\n HostId={10},\r\n ExitCode={11},\r\n UnexpectedTermination={12},\r\n StartTime={13}.",
+            "ServiceName",
+            "ServicePackageName",
+            "ServicePackageActivationId",
+            "IsExclusive",
+            "CodePackageName",
+            "EntryPointType",
+            "ExeName",
+            "ProcessId",
+            "HostId",
+            "ExitCode",
+            "UnexpectedTermination",
+            "StartTime"),
+        HOSTING_STRUCTURED_QUERY_TRACE(
+            ApplicationHostEvents,
+            ApplicationHostTerminated,
+            44,
+            Info,
+            Common::TraceChannelType::Admin,
+            TRACE_KEYWORDS2(Default, ForQuery),
+            "Processing termination of activated Application Host: HostId={0}, ExitCode={1} ActivityDescription={2}",
+            "HostId",
+            "ExitCode",
+            "ActivityDescription"),
+        HOSTING_STRUCTURED_TRACE(
+            AvailableContainerImages,
+            45,
+            Info,
+            "Receiving available images from node: NodeId={1}, Number of available images={2}",
+            "id",
+            "nodeId",
+            "numAvailableImages")
         {
         }
     };

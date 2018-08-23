@@ -73,11 +73,11 @@ void PendingTask::CheckFailoverUnit(LockedFailoverUnitPtr & lockedFailoverUnit, 
                  (failoverUnit.PreviousConfiguration.IsEmpty || 
                   failoverUnit.PreviousConfiguration.DeletedCount >= failoverUnit.PreviousConfiguration.ReadQuorumSize)))
             {
-				actions.push_back(make_unique<DeleteServiceAction>(failoverUnit.ServiceInfoObj, failoverUnit.Id));
+                actions.push_back(make_unique<DeleteServiceAction>(failoverUnit.ServiceInfoObj, failoverUnit.Id));
 
-				lockedFailoverUnit.EnableUpdate();
-				failoverUnit.SetOrphaned(fm_);
-			}
+                lockedFailoverUnit.EnableUpdate();
+                failoverUnit.SetOrphaned(fm_);
+            }
             else if (failoverUnit.CurrentConfiguration.DroppedCount == failoverUnit.CurrentConfiguration.ReplicaCount)
             {
                 lockedFailoverUnit.EnableUpdate();

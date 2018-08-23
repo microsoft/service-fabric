@@ -14,6 +14,7 @@ namespace ServiceModelTests
     using namespace std;
     using namespace Common;
     using namespace ServiceModel;
+    using namespace Reliability;
 
     StringLiteral const TestSource("ServiceModelParserTest");
 
@@ -423,7 +424,7 @@ namespace ServiceModelTests
         Trace.WriteNoise(TestSource, "ParseApplicationInstance={0}", error);
         VERIFY_IS_TRUE(error.IsSuccess(), L"ParseApplicationInstance.IsSuccess");
 
-        VERIFY_IS_TRUE(applicationInstance.DefaultServices.size() == 3, L"Default service count");
+        VERIFY_IS_TRUE(applicationInstance.DefaultServices.size() == 4, L"Default service count");
 
         VERIFY_IS_TRUE(applicationInstance.DefaultServices[0].Name == L"Service1", L"Default service Name.");
         VERIFY_IS_TRUE(applicationInstance.DefaultServices[0].PackageActivationMode == ServicePackageActivationMode::SharedProcess, L"Default service PackageActivationMode");
@@ -432,10 +433,30 @@ namespace ServiceModelTests
         VERIFY_IS_TRUE(applicationInstance.DefaultServices[1].Name == L"Service2", L"Default service Name.");
         VERIFY_IS_TRUE(applicationInstance.DefaultServices[1].PackageActivationMode == ServicePackageActivationMode::SharedProcess, L"Default service PackageActivationMode");
 		VERIFY_IS_TRUE(applicationInstance.DefaultServices[1].ServiceDnsName == L"", L"Default service ServiceDnsName");
+        VERIFY_IS_TRUE(applicationInstance.DefaultServices[1].DefaultService.ScalingPolicies.size() == 0, L"ScalingPolicies");
 
         VERIFY_IS_TRUE(applicationInstance.DefaultServices[2].Name == L"Service3", L"Default service Name.");
         VERIFY_IS_TRUE(applicationInstance.DefaultServices[2].PackageActivationMode == ServicePackageActivationMode::ExclusiveProcess, L"Default service PackageActivationMode");
 		VERIFY_IS_TRUE(applicationInstance.DefaultServices[2].ServiceDnsName == L"Service3.Dns.Name", L"Default service ServiceDnsName");
+
+        VERIFY_IS_TRUE(applicationInstance.DefaultServices[3].DefaultService.ScalingPolicies.size() == 1, L"ScalingPolicy");
+        VERIFY_IS_TRUE(applicationInstance.DefaultServices[3].DefaultService.ScalingPolicies[0].Mechanism->Kind == ScalingMechanismKind::Enum::PartitionInstanceCount, L"ScalingPolicyMechanismKind");
+        VERIFY_IS_TRUE(applicationInstance.DefaultServices[3].DefaultService.ScalingPolicies[0].Trigger->Kind == ScalingTriggerKind::Enum::AverageServiceLoad, L"ScalingPolicyTriggerKind");
+
+        auto averageLoadPolicy1 = (AveragePartitionLoadScalingTrigger const &)(*applicationInstance.DefaultServices[3].DefaultService.ScalingPolicies[0].Trigger);
+        VERIFY_IS_TRUE(averageLoadPolicy1.MetricName == L"MetricA", L"ScalingPolicyMetricName");
+
+        auto instanceCount = (InstanceCountScalingMechanism const &)(*applicationInstance.DefaultServices[3].DefaultService.ScalingPolicies[0].Mechanism);
+        VERIFY_IS_TRUE(instanceCount.ScaleIncrement == 1, L"ScalingPolicyIncrement");
+
+        VERIFY_IS_TRUE(applicationInstance.ServiceTemplates.size() == 6, L"Service template count");
+        VERIFY_IS_TRUE(applicationInstance.ServiceTemplates[1].ScalingPolicies.size() == 0, L"ScalingPolicy");
+        VERIFY_IS_TRUE(applicationInstance.ServiceTemplates[2].ScalingPolicies.size() == 1, L"ScalingPolicy");
+        VERIFY_IS_TRUE(applicationInstance.ServiceTemplates[2].ScalingPolicies[0].Trigger->Kind == ScalingTriggerKind::Enum::AveragePartitionLoad, L"ScalingPolicyTriggerKind");
+
+        auto averageLoadPolicy2 = (AverageServiceLoadScalingTrigger const &)(*applicationInstance.ServiceTemplates[2].ScalingPolicies[0].Trigger);
+        VERIFY_IS_TRUE(averageLoadPolicy2.MetricName == L"MetricB", L"ScalingPolicyMetricName");
+        VERIFY_IS_TRUE(averageLoadPolicy2.ScaleIntervalInSeconds == 100, L"ScalingPolicyInterval");
     }
 
     BOOST_AUTO_TEST_CASE(ApplicationInstanceWithDefaultServiceGroupTest)

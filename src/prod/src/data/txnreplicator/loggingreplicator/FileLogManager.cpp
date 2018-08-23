@@ -60,9 +60,9 @@ KString::SPtr FileLogManager::GetFullPathToLog(
 
 FileLogManager::FileLogManager(
     __in PartitionedReplicaId const & traceId,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
+    __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig)
     : LogManager(traceId, perfCounters, healthClient, transactionalReplicatorConfig)
     , perfCounters_(perfCounters)
     , transactionalReplicatorConfig_(transactionalReplicatorConfig)
@@ -76,9 +76,9 @@ FileLogManager::~FileLogManager()
 
 FileLogManager::SPtr FileLogManager::Create(
     __in PartitionedReplicaId const & traceId,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
+    __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in KAllocator & allocator)
 {
     FileLogManager * pointer = _new(FILELOGMANAGER_TAG, allocator)FileLogManager(traceId, perfCounters, healthClient, transactionalReplicatorConfig);
@@ -124,6 +124,7 @@ Awaitable<NTSTATUS> FileLogManager::CreateCopyLogAsync(
         *logicalLog_,
         *callbackManager,
         LogManager::DefaultWriteCacheSizeMB * 1024 * 1024,
+        false,
         *invalidLogRecords_->Inv_LogRecord,
         perfCounters_,
         healthClient_,
@@ -167,12 +168,17 @@ Awaitable<NTSTATUS> FileLogManager::DeleteLogAsync()
         CO_RETURN_ON_FAILURE(status);
     }
 
-    EventSource::Events->FileLogManagerDeleteFile(
-       TracePartitionId,
-        ReplicaId,
-        ToStringLiteral(*baseLogFileAlias_));
+    KString::SPtr backupFileAlias = LogManager::Concat(
+        *baseLogFileAlias_,
+        BackupSuffix,
+        GetThisAllocator());
 
-    DeleteLogFileAsync(*baseLogFileAlias_);
+    EventSource::Events->FileLogManagerDeleteFile(
+        TracePartitionId,
+        ReplicaId,
+        ToStringLiteral(*backupFileAlias));
+
+    DeleteLogFileAsync(*backupFileAlias);
 
     KString::SPtr copyFileAlias = LogManager::Concat(
         *baseLogFileAlias_,
@@ -186,17 +192,12 @@ Awaitable<NTSTATUS> FileLogManager::DeleteLogAsync()
 
     DeleteLogFileAsync(*copyFileAlias);
 
-    KString::SPtr backupFileAlias = LogManager::Concat(
-        *baseLogFileAlias_,
-        BackupSuffix,
-        GetThisAllocator());
-
     EventSource::Events->FileLogManagerDeleteFile(
-        TracePartitionId,
+       TracePartitionId,
         ReplicaId,
-        ToStringLiteral(*backupFileAlias));
+        ToStringLiteral(*baseLogFileAlias_));
 
-    DeleteLogFileAsync(*backupFileAlias);
+    DeleteLogFileAsync(*baseLogFileAlias_);
 
     co_return status;
 }
@@ -256,8 +257,11 @@ Awaitable<NTSTATUS> FileLogManager::CreateLogFileAsync(
         }
     }
     
-    FileLogicalLog::SPtr fileLog = nullptr;
-    NTSTATUS status = FileLogicalLog::Create(GetThisAllocator(), fileLog);
+    FaultyFileLog::SPtr fileLog = nullptr;
+    NTSTATUS status = FaultyFileLog::Create(
+        *PartitionedReplicaIdentifier,
+        GetThisAllocator(), 
+        fileLog);
 
     CO_RETURN_ON_FAILURE(status);
     
@@ -358,6 +362,7 @@ Awaitable<NTSTATUS> FileLogManager::RenameCopyLogAtomicallyAsync()
         *logicalLog_,
         *callBackManager,
         LogManager::DefaultWriteCacheSizeMB * 1024 * 1024,
+        false,
         *tailRecord,
         perfCounters_,
         healthClient_,

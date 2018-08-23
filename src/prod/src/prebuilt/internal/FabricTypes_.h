@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
@@ -52,6 +47,10 @@ extern "C"{
 /* interface __MIDL_itf_fabrictypes__0000_0000 */
 /* [local] */ 
 
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 #if ( _MSC_VER >= 1020 )
 #pragma once
 #endif
@@ -150,7 +149,9 @@ enum FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS
         FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_COUNT_THRESHOLD	= 0x4000,
         FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_TIME_THRESHOLD_SECONDS	= 0x8000,
         FABRIC_TRANSACTIONAL_REPLICATOR_SLOW_LOG_IO_HEALTH_REPORT_TTL_SECONDS	= 0x10000,
-        FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION	= 0x20000
+        FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION	= 0x20000,
+        FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_INCREMENTAL_BACKUPS_ACROSS_REPLICAS	= 0x40000,
+        FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS	= 0x80000
     } 	FABRIC_TRANSACTIONAL_REPLICATOR_SETTINGS_FLAGS;
 
 typedef /* [uuid][v1_enum] */  DECLSPEC_UUID("6e04d3b8-9a04-430e-ab35-58d480813cda") 
@@ -294,6 +295,8 @@ typedef struct TRANSACTIONAL_REPLICATOR_SETTINGS
     DWORD SlowLogIOTimeThresholdSeconds;
     DWORD SlowLogIOHealthReportTTLSeconds;
     DWORD SerializationVersion;
+    BOOLEAN EnableIncrementalBackupsAcrossReplicas;
+    DWORD LogTruncationIntervalSeconds;
     void *Reserved;
     } 	TRANSACTIONAL_REPLICATOR_SETTINGS;
 
@@ -385,8 +388,24 @@ enum FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE
         FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_BACK_IN_PROGRESS	= 0x6,
         FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_UNPROVISIONING_TARGET	= 0x7,
         FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_BACK_COMPLETED	= 0x8,
-        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_FAILED	= 0x9
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_FAILED	= 0x9,
+        FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE_ROLLING_BACK_PENDING	= 0xa
     } 	FABRIC_COMPOSE_DEPLOYMENT_UPGRADE_STATE;
+
+typedef /* [uuid][v1_enum] */  DECLSPEC_UUID("48b4b991-4bb4-489d-9dcb-a06936164c47") 
+enum FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE
+    {
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_INVALID	= 0,
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_CONTAINER_GROUP_SET	= 0x1
+    } 	FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE;
+
+typedef /* [uuid][v1_enum] */  DECLSPEC_UUID("5acb30ff-fc9c-487c-8309-623efdfac514") 
+enum FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER
+    {
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER_DEFAULT	= 0,
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER_ALL	= 0xffff,
+        FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER_CONTAINER_GROUP_SET	= 0x1
+    } 	FABRIC_SINGLE_INSTANCE_DEPLOYMENT_TYPE_FILTER;
 
 typedef /* [uuid][v1_enum] */  DECLSPEC_UUID("6fd2680b-63db-424a-988e-576c73977be2") 
 enum FABRIC_BACKUP_POLICY_TYPE
@@ -1101,6 +1120,19 @@ typedef struct FABRIC_CONTAINER_VOLUME_DESCRIPTION_LIST
     /* [size_is] */ const FABRIC_CONTAINER_VOLUME_DESCRIPTION *Items;
     } 	FABRIC_CONTAINER_VOLUME_DESCRIPTION_LIST;
 
+typedef struct FABRIC_CONTAINER_LABEL_DESCRIPTION
+    {
+    LPCWSTR Name;
+    LPCWSTR Value;
+    void *Reserved;
+    } 	FABRIC_CONTAINER_LABEL_DESCRIPTION;
+
+typedef struct FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST
+    {
+    ULONG Count;
+    /* [size_is] */ const FABRIC_CONTAINER_LABEL_DESCRIPTION *Items;
+    } 	FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST;
+
 typedef struct FABRIC_CONTAINER_LOG_CONFIG_DESCRIPTION
     {
     LPCWSTR Driver;
@@ -1153,6 +1185,21 @@ typedef struct FABRIC_CONTAINER_DESCRIPTION
     void *Reserved;
     } 	FABRIC_CONTAINER_DESCRIPTION;
 
+typedef struct FABRIC_CONTAINER_DESCRIPTION_EX1
+    {
+    BOOLEAN UseDefaultRepositoryCredentials;
+    FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST *Labels;
+    BOOLEAN RemoveServiceFabricRuntimeAccess;
+    FABRIC_STRING_PAIR_LIST *BindMounts;
+    void *Reserved;
+    } 	FABRIC_CONTAINER_DESCRIPTION_EX1;
+
+typedef struct FABRIC_CONTAINER_DESCRIPTION_EX2
+    {
+    BOOLEAN UseTokenAuthenticationCredentials;
+    void *Reserved;
+    } 	FABRIC_CONTAINER_DESCRIPTION_EX2;
+
 typedef struct FABRIC_PROCESS_DEBUG_PARAMETERS
     {
     LPCWSTR ExePath;
@@ -1166,6 +1213,12 @@ typedef struct FABRIC_PROCESS_DEBUG_PARAMETERS
     FABRIC_STRING_LIST *ContainerEnvironmentBlock;
     void *Reserved;
     } 	FABRIC_PROCESS_DEBUG_PARAMETERS;
+
+typedef struct FABRIC_PROCESS_DEBUG_PARAMETERS_EX1
+    {
+    FABRIC_STRING_LIST *ContainerLabels;
+    void *Reserved;
+    } 	FABRIC_PROCESS_DEBUG_PARAMETERS_EX1;
 
 typedef struct FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION
     {
@@ -1183,6 +1236,14 @@ typedef struct FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION
     ULONG CpuQuota;
     void *Reserved;
     } 	FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION;
+
+typedef struct FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION_EX1
+    {
+    ULONGLONG DiskQuotaInMB;
+    ULONGLONG KernelMemoryInMB;
+    ULONGLONG ShmSizeInMB;
+    void *Reserved;
+    } 	FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION_EX1;
 
 typedef struct FABRIC_SERVICE_PACKAGE_RESOURCE_GOVERNANCE_DESCRIPTION
     {
@@ -1214,8 +1275,15 @@ typedef struct FABRIC_PROCESS_DESCRIPTION
     FABRIC_RESOURCE_GOVERNANCE_POLICY_DESCRIPTION *ResourceGovernancePolicy;
     FABRIC_SERVICE_PACKAGE_RESOURCE_GOVERNANCE_DESCRIPTION *ServicePackageResourceGovernance;
     LPCWSTR CgroupName;
+    BOOLEAN IsHostedServiceProcess;
     void *Reserved;
     } 	FABRIC_PROCESS_DESCRIPTION;
+
+typedef struct FABRIC_PROCESS_DESCRIPTION_EX1
+    {
+    FABRIC_STRING_PAIR_LIST *EncryptedEnvironmentVariables;
+    void *Reserved;
+    } 	FABRIC_PROCESS_DESCRIPTION_EX1;
 
 typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION
     {
@@ -1223,6 +1291,18 @@ typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION
     FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION *RepositoryCredential;
     void *Reserved;
     } 	FABRIC_CONTAINER_IMAGE_DESCRIPTION;
+
+typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX1
+    {
+    BOOLEAN UseDefaultRepositoryCredentials;
+    void *Reserved;
+    } 	FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX1;
+
+typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX2
+    {
+    BOOLEAN UseTokenAuthenticationCredentials;
+    void *Reserved;
+    } 	FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX2;
 
 typedef struct FABRIC_CONTAINER_IMAGE_DESCRIPTION_LIST
     {
@@ -1254,19 +1334,7 @@ typedef struct FABRIC_CONTAINER_DEACTIVATION_ARGS
 
 typedef struct FABRIC_HOSTING_SETTINGS
     {
-    LPCWSTR ContainerPackageRootFolder;
-    LPCWSTR ContainerFabricBinRootFolder;
-    LPCWSTR ContainerFabricLogRootFolder;
-    LPCWSTR ContainerAppDeploymentRootFolder;
-    LONGLONG DockerRequestTimeout;
-    LONGLONG ContainerImageDownloadTimeout;
-    LONGLONG ContainerDeactivationTimeout;
-    LONG ContainerDeactivationRetryDelayInSec;
-    LONG ContainerTerminationMaxRetryCount;
-    LONG ContainerEventManagerMaxContinuousFailure;
-    LONG ContainerEventManagerFailureBackoffInSec;
-    BOOLEAN EnableDockerHealthCheckIntegration;
-    LPCWSTR ContainerServiceNamedPipeOrUnixSocketAddress;
+    FABRIC_STRING_PAIR_LIST *SettingsMap;
     void *Reserved;
     } 	FABRIC_HOSTING_SETTINGS;
 
@@ -1323,6 +1391,19 @@ typedef struct FABRIC_CONTAINER_API_EXECUTION_RESPONSE
     /* [size_is] */ BYTE *ResponseBodyBuffer;
     void *Reserved;
     } 	FABRIC_CONTAINER_API_EXECUTION_RESPONSE;
+
+typedef struct FABRIC_ETW_TRACE_EVENT_DATA_DESCRIPTOR_LIST
+    {
+    ULONG Count;
+    /* [size_is] */ void *UserDataDescriptor;
+    } 	FABRIC_ETW_TRACE_EVENT_DATA_DESCRIPTOR_LIST;
+
+typedef struct FABRIC_ETW_TRACE_EVENT_PAYLOAD
+    {
+    void *EventDescriptor;
+    FABRIC_ETW_TRACE_EVENT_DATA_DESCRIPTOR_LIST EventDataDescriptorList;
+    void *Reserved;
+    } 	FABRIC_ETW_TRACE_EVENT_PAYLOAD;
 
 
 #pragma pack(pop)

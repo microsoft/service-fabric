@@ -27,10 +27,10 @@ target_link_libraries(${exe_txnreplicator_test}
   ${lib_data_testcommon}
   ${lib_Replication}
   ${lib_Hosting2}
-  ${lib_Common}
   ${lib_ServiceModel}
   ${lib_Serialization}
   ${lib_Transport}
+  ${lib_Common}
   ${lib_ApiWrappers}
   ${lib_txnreplicator_testcommon}
   ${BoostTest2}
@@ -50,8 +50,6 @@ target_link_libraries(${exe_txnreplicator_test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

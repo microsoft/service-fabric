@@ -1003,10 +1003,9 @@ namespace TestCommon
         Common::StringWriterA sw(finalMessage);
         sw.Write(explanation);
 
-        Common::StackTrace currentStack;
-        currentStack.CaptureCurrentPosition();
+        wstring stackTraceString = Assert::TryCaptureStackTrace();;
 
-        TestSession::WriteError("TestFailure", "{0}:\n{1}", finalMessage, currentStack.ToString());
+        TestSession::WriteError("TestFailure", "{0}:\n{1}", finalMessage, stackTraceString);
         if (TestSession::assertOnFailTest_)
         {
             if (TestCommonConfig::GetConfig().AssertOnVerifyTimeout)

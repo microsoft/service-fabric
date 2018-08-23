@@ -197,7 +197,7 @@ private:
             WriteWarning(
                 TraceType,
                 owner_.TraceId,
-                "GetProcessDescriotion: ErrorCode={0}",
+                "GetProcessDescription: ErrorCode={0}",
                 error);
             TryComplete(thisSPtr, error);
             return;
@@ -286,11 +286,12 @@ private:
                 appHostProcessHandle);
             if (!err.IsSuccess())
             {
-                WriteError(
+                WriteWarning(
                     TraceType,
-                    "OpenProcess: ErrorCode={0}, ParentId={1}. Fabric will not monitor AppHost {2}",
+                    "MultiCodePackageApplicationHostProxy: OpenProcess: ErrorCode={0}, ProcessId={1}, ProcessPath={2}, AppHostId={3}. This means that process likely crashsed before Fabric could monitor the AppHost. Filter by AppHostId to get the lifecycle.",
                     err,
                     processId,
+                    processPath_,
                     owner_.HostId);
             }
             else
@@ -298,14 +299,13 @@ private:
                 HostingSubsystem & hosting = owner_.Hosting;
                 wstring hostId = owner_.HostId;
                 owner_.procHandle_ = move(appHostProcessHandle);
-
                 auto hostMonitor = ProcessWait::CreateAndStart(
                     Handle(owner_.procHandle_->Value, Handle::DUPLICATE()),
                     processId,
                     [&hosting, hostId](pid_t, ErrorCode const &, DWORD exitCode)
                 {
                     //LINUXTODO, what happens waitResult indicates wait failed?
-                    hosting.ApplicationHostManagerObj->OnApplicationHostTerminated(hostId, exitCode);
+                    hosting.ApplicationHostManagerObj->OnApplicationHostTerminated(ActivityDescription(ActivityId(), ActivityType::Enum::ServicePackageEvent), hostId, exitCode);
                 });
 
                 owner_.apphostMonitor_ = move(hostMonitor);
@@ -836,14 +836,20 @@ MultiCodePackageApplicationHostProxy::MultiCodePackageApplicationHostProxy(
     wstring const & hostId,
     ApplicationHostIsolationContext const & isolationContext,
     wstring const & runAsId,
-    ServicePackageInstanceIdentifier const & servicePackageInstanceId)
+    ServicePackageInstanceIdentifier const & servicePackageInstanceId,
+    bool removeServiceFabricRuntimeAccess)
     : ApplicationHostProxy(
         hostingHolder,
-        ApplicationHostContext(hostId, ApplicationHostType::Activated_MultiCodePackage, false),
+        ApplicationHostContext(
+            hostId, 
+            ApplicationHostType::Activated_MultiCodePackage,
+            false,
+            false),
         isolationContext,
         runAsId,
         servicePackageInstanceId,
-        EntryPointType::Enum::DllHost)
+        EntryPointType::Enum::DllHost,
+        removeServiceFabricRuntimeAccess)
     , hostedCodePackageTable_()
     , terminatedExternally_(false)
     , exitCode_(1)

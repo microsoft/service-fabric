@@ -15,6 +15,7 @@ Common::StringLiteral const Constants::FTSource("FT");
 Common::StringLiteral const Constants::FTUpdateFailureSource("FTUpdateFailure");
 
 Common::StringLiteral const Constants::NodeSource("Node");
+Common::StringLiteral const Constants::NodeUpSource("NodeUp");
 Common::StringLiteral const Constants::NodeUpdateSource("NodeUpdate");
 Common::StringLiteral const Constants::NodeCacheSource("NodeCache");
 Common::StringLiteral const Constants::NodeStateSource("NodeState");

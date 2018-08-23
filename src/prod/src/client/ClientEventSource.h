@@ -8,11 +8,27 @@
 namespace Client
 {
 
+#define CLIENT_STRUCTURED_QUERY_TRACE(trace_name, trace_id, trace_type, trace_level, ...) \
+            trace_name( \
+                Common::TraceTaskCodes::Client, \
+                trace_id, \
+                trace_type, \
+                Common::LogLevel::trace_level, \
+                Common::TraceChannelType::Debug, \
+                TRACE_KEYWORDS2(Default, ForQuery), \
+                __VA_ARGS__)
+
 #define DECLARE_CLIENT_TRACE( traceName, ... ) \
     DECLARE_STRUCTURED_TRACE( traceName, __VA_ARGS__ );
 
 #define CLIENT_TRACE( trace_name, trace_id, trace_level, ...) \
     STRUCTURED_TRACE(trace_name, Client, trace_id, trace_level, __VA_ARGS__),
+
+#define CLIENT_QUERY_TRACE(trace_name, trace_id, trace_type, trace_level, ...) \
+    CLIENT_STRUCTURED_QUERY_TRACE(trace_name, trace_id, trace_type, trace_level, __VA_ARGS__),
+
+#define DECLARE_CLIENT_QUERY_TRACE( traceName, ... ) \
+    DECLARE_STRUCTURED_TRACE( traceName, __VA_ARGS__ );
 
     class ClientEventSource
     {
@@ -113,7 +129,7 @@ namespace Client
         CLIENT_TRACE( EndInternalGetStoreLocation, 102, Info, "{1}: Error = {2}, StoreShareLocation = {3}", "id", "activityId", "error", "storeShareLocation")
         CLIENT_TRACE( BeginInternalListFile, 103, Info, "{1}: StoreRelativePath = {2}, ServiceName = {3}, PartitionId = {4}", "id", "activityId", "storeRelativePath", "serviceName", "partitionId")
         CLIENT_TRACE( EndInternalListFile, 104, Info, "{1}: Error = {2}, IsPresent = {3}, CurrentState = {4}, CurrentVersion = {5}, StoreShareLocation = {6}", "id", "activityId", "error", "isPresent", "currentState", "currentVersion", "storeShareLocation")
-        CLIENT_TRACE( BeginReportFault, 105, Info, "{1}: {2}", "id", "activityId", "body")
+        CLIENT_QUERY_TRACE( BeginReportFault, 105, "_Client_BeginReportFault", Info, "{1}: {2}", "id", "activityId", "body")
         CLIENT_TRACE( EndReportFault, 106, Info, "{1}: {2}", "id", "activityId", "error")
         CLIENT_TRACE(BeginSetAcl, 107, Info, "{1}: name = {2}, acl = {3}", "id", "activityId", "name", "acl")
         CLIENT_TRACE(BeginGetAcl, 108, Info, "{1}: name = {2}", "id", "activityId", "name")
@@ -175,6 +191,12 @@ namespace Client
         CLIENT_TRACE(BeginDeleteComposeDeployment, 167, Info, "{1}: DeploymentName = {2}", "id", "activityId", "deploymentName")
         CLIENT_TRACE(AcceptedNotification, 170, Info, "[{1}] accepted service notification ({2}): {3}", "id", "pageId", "serviceName", "partition")
         CLIENT_TRACE(BeginUpgradeComposeDeployment, 171, Info, "{1}: DeploymentName = {2}, ComposeFiles Count = {3}, SFSettings files Count = {4}", "id", "activityId", "deploymentName", "composeFileCount", "sfSettingsFilesCount")
+        CLIENT_TRACE(BeginDeleteSingleInstanceDeployment, 173, Info, "{1}: Description = {2}", "id", "activityId", "description")
+        CLIENT_TRACE(BeginCreateOrUpdateApplicationResource, 174, Info, "{1}: ApplicationName = {2}, Services = {3}", "id", "activityId", "applicationName", "serviceCount")
+        CLIENT_TRACE(BeginCreateVolume, 175, Info, "{1}: VolumeName = {2}", "id", "activityId", "volumeName")
+        CLIENT_TRACE(BeginDeleteVolume, 176, Info, "{1}: VolumeName = {2}", "id", "activityId", "volumeName")
+        CLIENT_TRACE(BeginUploadChunkContent, 177, Info, "{1}: SessionId = {2}, StartPosition = {3}, EndPosition = {4}, Size= {5}, PartitionId = {6}", "id", "activityId", "sessionId", "startPosition", "endPosition", "size", "partitionId")
+        CLIENT_TRACE(EndUploadChunkContent, 178, Info, "{1}: Error = {2}", "id", "activityId", "error")
 
         END_STRUCTURED_TRACES
         
@@ -255,7 +277,7 @@ namespace Client
         DECLARE_CLIENT_TRACE( EndInternalGetStoreLocation, std::wstring, Common::ActivityId, Common::ErrorCode, std::wstring)
         DECLARE_CLIENT_TRACE( BeginInternalListFile, std::wstring, Common::ActivityId, std::wstring, Common::NamingUri, Common::Guid)
         DECLARE_CLIENT_TRACE( EndInternalListFile, std::wstring, Common::ActivityId, Common::ErrorCode, bool, std::wstring, std::wstring, std::wstring)
-        DECLARE_CLIENT_TRACE( BeginReportFault, std::wstring, Common::ActivityId, Reliability::ReportFaultRequestMessageBody)
+        DECLARE_CLIENT_QUERY_TRACE( BeginReportFault, std::wstring, Common::ActivityId, Reliability::ReportFaultRequestMessageBody)
         DECLARE_CLIENT_TRACE( EndReportFault, std::wstring, Common::ActivityId, Common::ErrorCode)
         DECLARE_CLIENT_TRACE( NotificationUseCached, std::wstring, Common::ActivityId)
         DECLARE_CLIENT_TRACE( NotificationPollGateway, std::wstring, Common::ActivityId)
@@ -334,12 +356,19 @@ namespace Client
 
         DECLARE_CLIENT_TRACE( BeginCheckExistence, std::wstring, Common::ActivityId, std::wstring)
         DECLARE_CLIENT_TRACE( EndCheckExistence, std::wstring, Common::ActivityId, Common::ErrorCode)
+
         DECLARE_CLIENT_TRACE( BeginCreateComposeDeployment, std::wstring, Common::ActivityId, std::wstring, std::wstring, std::wstring)
         DECLARE_CLIENT_TRACE( BeginCreateComposeDeployment2, std::wstring, Common::ActivityId, std::wstring)
         DECLARE_CLIENT_TRACE( BeginDeleteComposeDeployment, std::wstring, Common::ActivityId, std::wstring)
-
         DECLARE_CLIENT_TRACE( AcceptedNotification, std::wstring, Naming::ServiceNotificationPageId, std::wstring, Reliability::ServiceTableEntry)
         DECLARE_CLIENT_TRACE( BeginUpgradeComposeDeployment, std::wstring, Common::ActivityId, std::wstring, uint64, uint64)
+        DECLARE_CLIENT_TRACE( BeginDeleteSingleInstanceDeployment, std::wstring, Common::ActivityId, ServiceModel::DeleteSingleInstanceDeploymentDescription )
+        DECLARE_CLIENT_TRACE( BeginCreateOrUpdateApplicationResource, std::wstring, Common::ActivityId, std::wstring, size_t)
+        DECLARE_CLIENT_TRACE( BeginCreateVolume, std::wstring, Common::ActivityId, std::wstring)
+        DECLARE_CLIENT_TRACE( BeginDeleteVolume, std::wstring, Common::ActivityId, std::wstring)
+
+        DECLARE_CLIENT_TRACE( BeginUploadChunkContent, std::wstring, Common::ActivityId, Common::Guid, uint64, uint64, uint64, Common::Guid);
+        DECLARE_CLIENT_TRACE( EndUploadChunkContent, std::wstring, Common::ActivityId, Common::ErrorCode)
     };
 }
 

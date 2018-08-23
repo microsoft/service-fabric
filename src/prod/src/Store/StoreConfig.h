@@ -7,7 +7,7 @@
 
 namespace Store
 {
-    class StoreConfig : Common::ComponentConfig
+    class StoreConfig : public Common::ComponentConfig
     {
         DECLARE_SINGLETON_COMPONENT_CONFIG(StoreConfig, "Store");
 
@@ -45,7 +45,7 @@ namespace Store
         INTERNAL_CONFIG_ENTRY(int, L"EseStore", SwapDatabaseRetryDelayMilliseconds, 1000, Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(int, L"EseStore", InvalidSessionThreadRetryDelayMilliseconds, 100, Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(int, L"EseStore", InvalidSessionThreadRetryCount, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
-        INTERNAL_CONFIG_ENTRY(int, L"EseStore", SecondaryApplyRetryCount, 50, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(int, L"EseStore", SecondaryApplyRetryCount, 300, Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(int, L"EseStore", SecondaryApplyRetryDelayMilliseconds, 100, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         //
@@ -162,6 +162,17 @@ namespace Store
         INTERNAL_CONFIG_ENTRY(bool, L"ReplicatedStore", IgnoreOpenLocalStoreFlag, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         INTERNAL_CONFIG_ENTRY(int, L"ReplicatedStore", LogTruncationIntervalInMinutes, 45, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // Maximum number of keys per transaction allowed during database migration
+        INTERNAL_CONFIG_ENTRY(int, L"ReplicatedStore", MigrationBatchSize, 100, Common::ConfigEntryUpgradePolicy::Dynamic);
+        // Timeout used for migration stream commits
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ReplicatedStore", MigrationCommitTimeout, Common::TimeSpan::FromSeconds(600), Common::ConfigEntryUpgradePolicy::Dynamic);
+        // Retry delay used to retry migration stream write conflicts
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ReplicatedStore", MigrationConflictRetryDelay, Common::TimeSpan::FromMilliseconds(100), Common::ConfigEntryUpgradePolicy::Dynamic);
+        // Name of the directory or container for storing backups after migration completes before swapping databases
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"ReplicatedStore", MigrationBackupDirectory, L"migration-backups", Common::ConfigEntryUpgradePolicy::Dynamic);
+        // Name of the connection string override used when uploading backups (file: and xstore: schemes are supported)
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"ReplicatedStore", MigrationBackupConnectionString, L"", Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // When true, overrides individual system service configurations to enable TStore in all supported system services (user services are unaffected)
 #ifdef PLATFORM_UNIX

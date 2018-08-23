@@ -32,6 +32,8 @@ namespace ServiceModel
         bool get_ConsiderWarningAsError() const { return considerWarningAsError_; }
 
         virtual void SetDescription() override;
+
+        virtual std::wstring GetUnhealthyEvaluationDescription(std::wstring const & indent = L"") const override;
         
         Common::ErrorCode ToPublicApi(
             __in Common::ScopedHeap & heap,

@@ -5,6 +5,17 @@
 
 #pragma once
 
+namespace web
+{
+    namespace http
+    {
+        namespace client
+        {
+             class http_client;
+        }
+    }
+}
+
 namespace Hosting2
 {
     class IPAMLinux :

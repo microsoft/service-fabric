@@ -1,0 +1,288 @@
+{
+  "Default": {
+    "IsCit": "true",
+    "RunLocally": "true"
+  },
+    "Tests": [
+        {
+            "Name": "KtlAwaitableTests.exe",
+            "Type": "Linux.KConsTest_Sequential",
+            "Owners": "alanwar,tyadam,richhas",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KtlAwaitableTests"
+            }
+        },
+
+        {
+            "Name": "KAllocationBitmapUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "KtlUser",
+            "TestExecutionParameters": {
+                "TaskName": "KAllocationBitmapUserTests"
+            }
+        },
+
+        {
+            "Name": "KBitmapUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KBitmapUserTests"
+            }
+        },
+
+        {
+            "Name": "KBlockFileUserTests.exe",
+            "Type": "Linux.KConsTest_Sequential",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KBlockFileUserTests"
+            }
+        },
+
+        {
+            "Name": "KBufferUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KBufferUserTests"
+            }
+        },
+
+        {
+            "Name": "KChecksumUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KChecksumUserTests"
+            }
+        },
+
+        {
+            "Name": "KHashTableUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KHashTableUserTests"
+            }
+        },
+
+        {
+            "Name": "KInvariantUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KInvariantUserTests"
+            }
+        },
+
+        {
+            "Name": "KIOBufferUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KIOBufferUserTests"
+            }
+        },
+
+        {
+            "Name": "KNetworkEndpointUserTests.exe",
+            "Type": "Linux.KConsTest_Sequential",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KNetworkEndpointUserTests"
+            }
+        },
+
+        {
+            "Name": "KNodeTableUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KNodeTableUserTests"
+            }
+        },
+
+        {
+            "Name": "KRTTUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KRTTUserTests"
+            }
+        },
+
+        {
+            "Name": "KSerialUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KSerialUserTests"
+            }
+        },
+
+        {
+            "Name": "KStreamUserTests.exe",
+            "Type": "Linux.KConsTest_Sequential",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KStreamUserTests"
+            }
+        },
+
+        {
+            "Name": "KStringViewUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KStringViewUserTests"
+            }
+        },
+
+        {
+            "Name": "KTaskUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KTaskUserTests"
+            }
+        },
+
+        {
+            "Name": "KThreadUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KThreadUserTests"
+            }
+        },
+
+        {
+            "Name": "KUriUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KUriUserTests"
+            }
+        },
+
+        {
+            "Name": "KVariantUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KVariantUserTests"
+            }
+        },
+
+        {
+            "Name": "KVolumeNamespaceUserTests.exe",
+            "Type": "Linux.KConsTest_Sequential",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KVolumeNamespaceUserTests"
+            }
+        },
+
+        {
+            "Name": "KWeakRefUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KWeakRefUserTests"
+            }
+        },
+
+        {
+            "Name": "KWStringTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KWStringTests"
+            }
+        },
+
+        {
+            "Name": "KAsyncContextUserTests.exe",
+            "Type": "Linux.KConsTest_Sequential",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL, LongRun",
+            "TestExecutionParameters": {
+                "TaskName": "KAsyncContextUserTests"
+            }
+        },
+
+        {
+            "Name": "KAsyncQueueUserTests.exe",
+            "Type": "Linux.KConsTest_Sequential",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL, LongRun",
+            "TestExecutionParameters": {
+                "TaskName": "KAsyncQueueUserTests"
+            }
+        },
+
+        {
+            "Name": "KMemChannelUserTests.exe",
+            "Type": "Linux.KConsTest_Sequential",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL, LongRun",
+            "TestExecutionParameters": {
+                "TaskName": "KMemChannelUserTests"
+            }
+        },
+
+        {
+            "Name": "KThreadPoolTests.exe",
+            "Type": "Linux.KConsTest_Isolated",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL, LongRun",
+            "TestExecutionParameters": {
+                "TaskName": "KThreadPoolTests"
+            }
+        },
+
+        {
+            "Name": "KtlCommonUserTests.exe",
+            "Type": "Linux.KConsTest_Isolated",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL, LongRun",
+            "TestExecutionParameters": {
+                "TaskName": "KtlCommonUserTests"
+            }
+        },
+
+        {
+            "Name": "KDeferredCallUserTests.exe",
+            "Type": "Linux.KConsTest",
+            "Owners": "alanwar,tyadam",
+            "Tags": "Admin, KTL",
+            "TestExecutionParameters": {
+                "TaskName": "KDeferredCallUserTests"
+            }
+        }
+
+    ]
+}

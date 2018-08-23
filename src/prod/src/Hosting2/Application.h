@@ -61,6 +61,10 @@ namespace Hosting2
 
         Common::ErrorCode IsCodePackageLockFilePresent(__out bool & isCodePackageLockFilePresent) const;
 
+        void OnServiceTypesUnregistered(
+            ServicePackageInstanceIdentifier const servicePackageInstanceId,
+            std::vector<ServiceTypeInstanceIdentifier> const & serviceTypeInstanceIds);
+
     public:
         //
         // activates specified versions of the service packages. 
@@ -133,12 +137,10 @@ namespace Hosting2
             ServiceModel::ApplicationUpgradeSpecification const & appUpgradeSpec,
             __out CaseInsensitiveStringSet & affectedRuntimeIds);
 
-        //Common::ErrorCode HasServicePackage(std::wstring const & servicePackageName, __out bool & exists);        
-
         void OnServiceTypeRegistrationNotFound(
             uint64 const registrationTableVersion,
             ServiceModel::VersionedServiceTypeIdentifier const & versionedServiceTypeId,
-			ServicePackageInstanceIdentifier const & servicePackageInstanceId);
+            ServicePackageInstanceIdentifier const & servicePackageInstanceId);
 
         void NotifyDcaAboutServicePackages();
 
@@ -154,7 +156,7 @@ namespace Hosting2
             ServiceModel::ApplicationVersion const & appVersion,
             __out ServiceModel::ApplicationPackageDescription & appPackageDescription);
 
-		uint64 GetActiveStatesMask() const;
+        uint64 GetActiveStatesMask() const;
 
     private:
         class ActivateAsyncOperation;
@@ -164,7 +166,7 @@ namespace Hosting2
         template<typename OperationType>
         class ServicePackagesAsyncOperationBase;
 
-        class ActivateServicePackageInstancesAsyncOperation;     
+        class ActivateServicePackageInstancesAsyncOperation;
         class DeactivateServicePackageInstancesAsyncOperation;
 
         class UpgradeServicePackagesAsyncOperation;
@@ -172,7 +174,7 @@ namespace Hosting2
         friend class VersionedApplication;
 
     private:
-        HostingSubsystemHolder const hostingHolder_;        
+        HostingSubsystemHolder const hostingHolder_;
 
         ServiceModel::ApplicationIdentifier const id_;
         std::wstring const appName_;

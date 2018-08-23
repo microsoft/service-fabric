@@ -556,7 +556,14 @@ void ReconfigurationAgent::CloseAllReplicas()
         return;
     }
 
-    auto fts = LocalFailoverUnitMapObj.GetAllFailoverUnitEntries(false);
+    // LFUM will be uninitialized if open fails before InitializeLFUM()
+    //
+    if (lfum_.get() == nullptr)
+    {
+        return;
+    }
+
+    auto fts = lfum_->GetAllFailoverUnitEntries(false);
 
     ManualResetEvent ev;
 
@@ -627,16 +634,18 @@ void ReconfigurationAgent::ProcessTransportRequestResponseRequest(Transport::Mes
 #pragma region Local Replica LifeCycle
 void ReconfigurationAgent::CloseLocalReplica(
     Infrastructure::HandlerParameters & handlerParameters,
-    ReplicaCloseMode closeMode)
+    ReplicaCloseMode closeMode,
+    Common::ActivityDescription const & activityDescription)
 {
     ASSERT_IF(closeMode == ReplicaCloseMode::Deactivate, "Use other overload");
-    CloseLocalReplica(handlerParameters, closeMode, ReconfigurationAgent::InvalidNode);
+    CloseLocalReplica(handlerParameters, closeMode, ReconfigurationAgent::InvalidNode, activityDescription);
 }
 
 void ReconfigurationAgent::CloseLocalReplica(
     Infrastructure::HandlerParameters & handlerParameters,
     ReplicaCloseMode closeMode,
-    Federation::NodeInstance const & senderNode)
+    Federation::NodeInstance const & senderNode,
+    Common::ActivityDescription const & activityDescription)
 {
     auto & failoverUnit = handlerParameters.FailoverUnit;
 
@@ -645,7 +654,7 @@ void ReconfigurationAgent::CloseLocalReplica(
         return;
     }
 
-    failoverUnit->StartCloseLocalReplica(closeMode, senderNode, handlerParameters.ExecutionContext);
+    failoverUnit->StartCloseLocalReplica(closeMode, senderNode, handlerParameters.ExecutionContext, activityDescription);
     if (failoverUnit->LocalReplicaClosePending.IsSet)
     {
         ProcessReplicaCloseMessageRetry(handlerParameters);
@@ -811,11 +820,11 @@ void ReconfigurationAgent::DeleteLocalReplica(
 
     if (failoverUnit->IsClosed)
     {
-        CloseLocalReplica(handlerParameters, ReplicaCloseMode::Delete);
+        CloseLocalReplica(handlerParameters, ReplicaCloseMode::Delete, ActivityDescription::Empty);
     }
     else
     {
-        CloseLocalReplica(handlerParameters, msgBody.IsForce ? ReplicaCloseMode::Obliterate : ReplicaCloseMode::Delete);
+        CloseLocalReplica(handlerParameters, msgBody.IsForce ? ReplicaCloseMode::Obliterate : ReplicaCloseMode::Delete, ActivityDescription::Empty);
     }
     return;
 }
@@ -1121,9 +1130,9 @@ bool ReconfigurationAgent::ServiceTypeRegisteredProcessor(HandlerParameters & ha
     return false;
 }
 
-void ReconfigurationAgent::ProcessAppHostClosed(wstring const & hostId)
+void ReconfigurationAgent::ProcessAppHostClosed(wstring const & hostId, Common::ActivityDescription const & activityDescription)
 {
-    HostingAdapterObj.EventHandler.ProcessAppHostClosed(hostId);
+    HostingAdapterObj.EventHandler.ProcessAppHostClosed(hostId, activityDescription);
 }
 
 bool ReconfigurationAgent::AppHostClosedProcessor(HandlerParameters & handlerParameters, JobItemContextBase &)
@@ -1166,7 +1175,7 @@ bool ReconfigurationAgent::AppHostClosedProcessor(HandlerParameters & handlerPar
     }
     else
     {
-        CloseLocalReplica(handlerParameters, closeMode);
+        CloseLocalReplica(handlerParameters, closeMode, input.ActivityDescription);
     }
 
     return true;
@@ -1196,7 +1205,7 @@ bool ReconfigurationAgent::RuntimeClosedProcessor(HandlerParameters & handlerPar
         return false;
     }
 
-    CloseLocalReplica(handlerParameters, closeMode);
+    CloseLocalReplica(handlerParameters, closeMode, ActivityDescription::Empty);
     return true;
 }
 
@@ -1224,14 +1233,15 @@ void ReconfigurationAgent::ClientReportFaultRequestHandler(MessageUPtr && reques
     // Force flag is not supported for RF transient
     if (body.IsForce && body.FaultType == FaultType::Transient)
     {
-        CompleteReportFaultRequest(activityId, *context, ErrorCodeValue::ForceNotSupportedForReplicaOperation);
+        CompleteReportFaultRequest(activityId, *context, ErrorCode(ErrorCodeValue::ForceNotSupportedForReplicaOperation, StringResource::Get(IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_TRANSIENT_WITH_FORCE)));
         return;
     }
 
     auto entry = LocalFailoverUnitMapObj.GetEntry(FailoverUnitId(body.PartitionId));
     if (entry == nullptr)
     {
-        CompleteReportFaultRequest(activityId, *context, ErrorCodeValue::REReplicaDoesNotExist);
+        CompleteReportFaultRequest
+        (activityId, *context, ErrorCode(ErrorCodeValue::REReplicaDoesNotExist, StringResource::Get(IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_FOR_NON_EXISTENT_FAILOVER_UNIT)));
         return;
     }
 
@@ -1253,6 +1263,15 @@ void ReconfigurationAgent::ClientReportFaultRequestHandler(MessageUPtr && reques
     auto jobItem = make_shared<ClientReportFaultJobItem>(move(parameters));
             
     JobQueueManager.ScheduleJobItem(move(jobItem));
+
+    RAEventSource::Events->ReportFaultProcessingBegin(
+        Guid::NewGuid(),
+        this->NodeInstanceIdStr,
+        body.PartitionId,
+        body.ReplicaId,
+        body.FaultType,
+        body.IsForce,
+        body.ActivityDescription);
 }
 
 void ReconfigurationAgent::ProcessRequest(
@@ -1519,7 +1538,7 @@ bool ReconfigurationAgent::ClientReportFaultRequestProcessor(HandlerParameters &
         // This can happen in the case when the report fault job item is created first
         // but before it can be enqueued into the scheduler the FT is deleted 
         // RA should handle this and complete the context otherwise Federation will keep retrying
-        CompleteReportFaultRequest(context, ErrorCodeValue::REReplicaDoesNotExist);
+        CompleteReportFaultRequest(context, ErrorCode(ErrorCodeValue::REReplicaDoesNotExist, StringResource::Get(IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_FOR_NON_EXISTENT_FAILOVER_UNIT)));
         return true;
     }
 
@@ -1527,38 +1546,38 @@ bool ReconfigurationAgent::ClientReportFaultRequestProcessor(HandlerParameters &
     auto hostType = Utility2::SystemServiceHelper::GetHostType(*failoverUnit);
     if (context.IsForce && hostType == Utility2::SystemServiceHelper::HostType::AdHoc)
     {
-        CompleteReportFaultRequest(context, ErrorCodeValue::ForceNotSupportedForReplicaOperation);
+        CompleteReportFaultRequest(context, ErrorCode(ErrorCodeValue::ForceNotSupportedForReplicaOperation, StringResource::Get(IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_WITH_FORCE_ON_ADHOC_SERVICE_REPLICA)));
         return true;
     }
 
     if (!failoverUnit->HasPersistedState && context.FaultType == FaultType::Transient)
     {
-        CompleteReportFaultRequest(context, ErrorCodeValue::InvalidReplicaOperation);
+        CompleteReportFaultRequest(context, ErrorCode(ErrorCodeValue::InvalidReplicaOperation, StringResource::Get(IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_TRANSIENT_FOR_NON_PERSISTED_SERVICE_REPLICA)));
         return true;
     }
 
     if (failoverUnit->LocalReplicaId != context.LocalReplicaId)
     {
-        CompleteReportFaultRequest(context, ErrorCodeValue::REReplicaDoesNotExist);
+        CompleteReportFaultRequest(context, ErrorCode(ErrorCodeValue::REReplicaDoesNotExist, StringResource::Get(IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_WITH_REPLICAID_MISMATCH)));
         return true;
     }
 
     // Force mode is allowed if the replica is not open or is closing
     if (!context.IsForce && (!failoverUnit->LocalReplicaOpen || failoverUnit->LocalReplicaClosePending.IsSet))
     {
-        CompleteReportFaultRequest(context, ErrorCodeValue::InvalidReplicaStateForReplicaOperation);
+        CompleteReportFaultRequest(context, ErrorCode(ErrorCodeValue::InvalidReplicaStateForReplicaOperation, StringResource::Get(IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_WITH_INVALID_REPLICA_STATE)));
         return true;
     }
 
     // Handle obliterate
     if (context.IsForce)
     {
-        CloseLocalReplica(handlerParameters, ReplicaCloseMode::Obliterate);
+        CloseLocalReplica(handlerParameters, ReplicaCloseMode::Obliterate, context.ActivityDescription);
         CompleteReportFaultRequest(context, ErrorCodeValue::Success);
         return true;
     }
 
-    ReportFaultHandler(handlerParameters, context.FaultType);
+    ReportFaultHandler(handlerParameters, context.FaultType, context.ActivityDescription);
 
     CompleteReportFaultRequest(context, ErrorCodeValue::Success);
     return true;
@@ -1567,14 +1586,14 @@ bool ReconfigurationAgent::ClientReportFaultRequestProcessor(HandlerParameters &
 void ReconfigurationAgent::CompleteReportFaultRequest(
     Common::ActivityId const & activityId,
     Federation::RequestReceiverContext & context, 
-    Common::ErrorCode error)
+    Common::ErrorCode const & error)
 {
-    ReportFaultReplyMessageBody reply(error);
+    ReportFaultReplyMessageBody reply(error, error.Message);
     Transport::MessageUPtr message = RSMessage::GetReportFaultReply().CreateMessage(activityId, reply);
     federationWrapper_->CompleteRequestReceiverContext(context, move(message));
 }
 
-void ReconfigurationAgent::CompleteReportFaultRequest(ClientReportFaultJobItemContext & context, Common::ErrorCode error)
+void ReconfigurationAgent::CompleteReportFaultRequest(ClientReportFaultJobItemContext & context, Common::ErrorCode const & error)
 {
     CompleteReportFaultRequest(context.ActivityId, *context.RequestContext, error);
 }
@@ -1646,7 +1665,7 @@ void ReconfigurationAgent::AddInstanceMessageProcessor(HandlerParameters & param
     {
         if (failoverUnit->LocalReplica.ReplicaId < msgBody.ReplicaDescription.ReplicaId)
         {
-            CloseLocalReplica(parameters, ReplicaCloseMode::Drop);
+            CloseLocalReplica(parameters, ReplicaCloseMode::Drop, ActivityDescription::Empty);
 
             return;
         }
@@ -1743,7 +1762,7 @@ void ReconfigurationAgent::AddPrimaryMessageProcessor(HandlerParameters & parame
     {
         if (failoverUnit->LocalReplica.ReplicaId < msgBody.ReplicaDescription.ReplicaId)
         {
-            CloseLocalReplica(parameters, ReplicaCloseMode::Drop);
+            CloseLocalReplica(parameters, ReplicaCloseMode::Drop, ActivityDescription::Empty);
             return;
         }
         else if (failoverUnit->LocalReplica.InstanceId == msgBody.ReplicaDescription.InstanceId)
@@ -2256,7 +2275,7 @@ void ReconfigurationAgent::CreateReplicaMessageProcessor(HandlerParameters & par
     {
         if (failoverUnit->LocalReplica.ReplicaId < msgBody.ReplicaDescription.ReplicaId)
         {
-            CloseLocalReplica(parameters, ReplicaCloseMode::Drop);
+            CloseLocalReplica(parameters, ReplicaCloseMode::Drop, ActivityDescription::Empty);
             return;
         }        
     }
@@ -2344,7 +2363,7 @@ void ReconfigurationAgent::CreateReplicaMessageProcessor(HandlerParameters & par
             *(failoverUnit), msgBody);
 
         // Restart only persisted service, close non persisted
-        CloseLocalReplica(parameters, failoverUnit->HasPersistedState ? ReplicaCloseMode::Restart : ReplicaCloseMode::Drop);
+        CloseLocalReplica(parameters, failoverUnit->HasPersistedState ? ReplicaCloseMode::Restart : ReplicaCloseMode::Drop, ActivityDescription::Empty);
 
         return;
     }
@@ -2572,7 +2591,7 @@ void ReconfigurationAgent::DeactivateMessageProcessor(HandlerParameters & parame
             ReplicaCloseMode closeMode = failoverUnit->HasPersistedState ? ReplicaCloseMode::Restart : ReplicaCloseMode::Deactivate;
             Federation::NodeInstance senderNode = failoverUnit->HasPersistedState ? ReconfigurationAgent::InvalidNode : from;
 
-            CloseLocalReplica(parameters, closeMode, from);
+            CloseLocalReplica(parameters, closeMode, from, ActivityDescription::Empty);
 
             return;
         }
@@ -2642,7 +2661,7 @@ void ReconfigurationAgent::DeactivateMessageProcessor(HandlerParameters & parame
             // This replica representing the FailoverUnit on this node is no longer participating in CC, 
             // need to clean itself up
             // The return is needed to ensure that deactivate reply is not sent
-            CloseLocalReplica(parameters, ReplicaCloseMode::Deactivate, from);
+            CloseLocalReplica(parameters, ReplicaCloseMode::Deactivate, from, ActivityDescription::Empty);
             return;
         }
 
@@ -3331,7 +3350,7 @@ bool ReconfigurationAgent::ReplicaUpReplyProcessor(HandlerParameters & handlerPa
         // The FT on the RA is Closed -> simply perform the delete
         if (failoverUnit->IsClosed)
         {
-            CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceDelete);
+            CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceDelete, ActivityDescription::Empty);
             return true;
         }
 
@@ -3343,7 +3362,7 @@ bool ReconfigurationAgent::ReplicaUpReplyProcessor(HandlerParameters & handlerPa
         //   for deleted applications to register their service types on node restart
         if (failoverUnit->LocalReplicaOpenPending.IsSet && !failoverUnit->IsRuntimeActive)
         {
-            CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceDelete);
+            CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceDelete, ActivityDescription::Empty);
             return true;
         }
 
@@ -3355,7 +3374,7 @@ bool ReconfigurationAgent::ReplicaUpReplyProcessor(HandlerParameters & handlerPa
             // Or a scenario where the open has completed and the RA sent SB U i2 and got back DD D i2
             // Start the drop over here since RA now supports transition from reopening to dropping
             // The drop must only happen if the node is activated
-            CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceDelete);
+            CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceDelete, ActivityDescription::Empty);
             return true;
         }
         else 
@@ -3367,12 +3386,12 @@ bool ReconfigurationAgent::ReplicaUpReplyProcessor(HandlerParameters & handlerPa
             // Try to close it again with ForceDelete which will do the right thing
             if (failoverUnit->LocalReplica.IsUp)
             {
-                CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceDelete);
+                CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceDelete, ActivityDescription::Empty);
                 return true;
             }
             else
             {
-                CloseLocalReplica(handlerParameters, ReplicaCloseMode::QueuedDelete);
+                CloseLocalReplica(handlerParameters, ReplicaCloseMode::QueuedDelete, ActivityDescription::Empty);
                 return true;
             }
         }
@@ -3385,7 +3404,7 @@ bool ReconfigurationAgent::ReplicaUpReplyProcessor(HandlerParameters & handlerPa
         // If RA sends Replica as dropped then FM is free to put it in Processed List
         if (failoverUnit->IsClosed && context.FTInfo.LocalReplica.State == Reliability::ReplicaStates::Dropped)
         {
-            CloseLocalReplica(handlerParameters, ReplicaCloseMode::Delete);
+            CloseLocalReplica(handlerParameters, ReplicaCloseMode::Delete, ActivityDescription::Empty);
         }
     }    
 
@@ -3724,10 +3743,10 @@ void ReconfigurationAgent::ReportFaultMessageHandler(HandlerParameters & paramet
 {
     parameters.AssertFTIsOpen();
 
-    ReportFaultHandler(parameters, msgContext.Body.FaultType);
+    ReportFaultHandler(parameters, msgContext.Body.FaultType, msgContext.Body.ActivityDescription);
 }
 
-void ReconfigurationAgent::ReportFaultHandler(HandlerParameters & handlerParameters, FaultType::Enum faultType)
+void ReconfigurationAgent::ReportFaultHandler(HandlerParameters & handlerParameters, FaultType::Enum faultType, ActivityDescription const & activityDescription)
 {
     auto & failoverUnit = handlerParameters.FailoverUnit;
 
@@ -3752,7 +3771,7 @@ void ReconfigurationAgent::ReportFaultHandler(HandlerParameters & handlerParamet
         return;
     };
 
-    CloseLocalReplica(handlerParameters, closeMode);
+    CloseLocalReplica(handlerParameters, closeMode, activityDescription);
 }
 
 void ReconfigurationAgent::StatefulServiceReopenReplyHandler(HandlerParameters & parameters, ProxyReplyMessageContext & msgContext)
@@ -3851,7 +3870,7 @@ void ReconfigurationAgent::ReplicaOpenReplyHandlerHelper(
         // If the node is deactivated short circuit all further processing and close
         if (!nodeState_->GetNodeDeactivationState(failoverUnit->Owner).IsActivated)
         {
-            CloseLocalReplica(parameters, ReplicaCloseMode::DeactivateNode);
+            CloseLocalReplica(parameters, ReplicaCloseMode::DeactivateNode, ActivityDescription::Empty);
             return;
         }
     }
@@ -3870,7 +3889,7 @@ void ReconfigurationAgent::ReplicaOpenReplyHandlerHelper(
 
         if (!nodeState_->GetNodeDeactivationState(failoverUnit->Owner).IsActivated)
         {
-            CloseLocalReplica(parameters, ReplicaCloseMode::DeactivateNode);
+            CloseLocalReplica(parameters, ReplicaCloseMode::DeactivateNode, ActivityDescription::Empty);
             return;
         }
 
@@ -4216,7 +4235,7 @@ bool ReconfigurationAgent::TryDropFMReplica(HandlerParameters & handlerParameter
     if (failoverUnit->LocalReplica.ReplicaId < body.ReplicaDescription.ReplicaId &&
         failoverUnit->CurrentConfigurationEpoch < body.FailoverUnitDescription.CurrentConfigurationEpoch)
     {
-        CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceAbort);
+        CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceAbort, ActivityDescription::Empty);
         return true;
     }
 

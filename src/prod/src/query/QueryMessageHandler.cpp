@@ -50,6 +50,7 @@ public:
     ProcessParallelQueryAsyncOperation(
         Query::QueryNames::Enum queryName,
         QueryArgumentMap const & queryArgs,
+        QuerySpecificationSPtr const & querySpecSPtr,
         QueryMessageHandler & owner,
         Transport::MessageHeaders & headers,
         TimeSpan timeout,
@@ -59,6 +60,7 @@ public:
         , owner_(owner)
         , queryName_(queryName)
         , queryArgs_(queryArgs)
+        , querySpecSPtr_(querySpecSPtr)
         , headers_(headers)
         , parallelQuerySpecification_()
         , resultMap_()
@@ -75,8 +77,11 @@ public:
             headers_.TryReadFirst(activityHeader_),
             "ActivityId should be available in the message");
 
-        auto querySpecification = QuerySpecificationStore::Get().GetSpecification(queryName_, queryArgs_);
-        parallelQuerySpecification_ = static_pointer_cast<ParallelQuerySpecification>(querySpecification);
+        if (querySpecSPtr_ == nullptr)
+        {
+            querySpecSPtr_ = QuerySpecificationStore::Get().GetSpecification(queryName_, queryArgs_);
+        }
+        parallelQuerySpecification_ = static_pointer_cast<ParallelQuerySpecification>(querySpecSPtr_);
 
         if (!parallelQuerySpecification_)
         {
@@ -89,7 +94,20 @@ public:
             return;
         }
 
-        pendingInnerQueryCount_.store(static_cast<LONG>(parallelQuerySpecification_->ParallelQuerySpecifications.size()));
+        LONG operationSize = static_cast<LONG>(parallelQuerySpecification_->ParallelQuerySpecifications.size());
+        if (operationSize == 0L)
+        {
+            WriteWarning(
+                TraceType,
+                "{0}, ParallelQuerySpecifications {1} is empty. Completing it.",
+                activityHeader_.ActivityId,
+                queryName_);
+
+            this->TryComplete(thisSPtr);
+            return;
+        }
+
+        pendingInnerQueryCount_.store(operationSize);
 
         QueryEventSource::EventSource->ProcessingParallelQuery(
                 activityHeader_.ActivityId,
@@ -101,10 +119,18 @@ public:
 
     void ExecuteParallelOperations(AsyncOperationSPtr const & thisSPtr)
     {
-        for (auto const & querySpecification : parallelQuerySpecification_->ParallelQuerySpecifications)
+        for (auto index = 0; index < parallelQuerySpecification_->ParallelQuerySpecifications.size(); ++index)
         {
+            QueryArgumentMap currentQueryArg = parallelQuerySpecification_->GetQueryArgumentMap(
+                index,
+                queryArgs_);
+
+            QuerySpecificationSPtr currentQuerySpecification = parallelQuerySpecification_->ParallelQuerySpecifications[index];
             wstring queryAddress;
-            auto queryGenerationError = querySpecification->GenerateAddress(activityHeader_.ActivityId, queryArgs_, queryAddress);
+            auto queryGenerationError = currentQuerySpecification->GenerateAddress(
+                activityHeader_.ActivityId, 
+                currentQueryArg,
+                queryAddress);
             // We assume that the parallel query specification should include all the arguments required for inner queries.
             // Hence if the address generation fails, there is something wrong with the configuration of query
             if (!queryGenerationError.IsSuccess())
@@ -113,24 +139,24 @@ public:
                     TraceType,
                     "{0}: Address could not be generated for query {1} as part of parallel query {2} execution. Error = {3}. Invalid configuration.",
                     activityHeader_.ActivityId,
-                    querySpecification->QueryName,
+                    currentQuerySpecification->QueryName,
                     queryName_,
                     queryGenerationError);
                 TryComplete(thisSPtr, ErrorCodeValue::InvalidConfiguration);
                 return;
             }
 
-            auto queryMessage = QueryMessage::CreateMessage(querySpecification->QueryName, querySpecification->QueryType, queryArgs_, queryAddress);
+            auto queryMessage = QueryMessage::CreateMessage(currentQuerySpecification->QueryName, currentQuerySpecification->QueryType, currentQueryArg, queryAddress);
 
             queryMessage->Headers.Add(activityHeader_);
 
             // We have the message for the sub-query that needs to be executed for parallel query. Execute the query.
             auto operation = owner_.BeginProcessQueryMessage(
                 *queryMessage,
-                parallelQuerySpecification_->GetParallelQueryExecutionTimeout(querySpecification, RemainingTime),
-                [this, querySpecification](AsyncOperationSPtr const & operation){ this->FinishProcessInnerQueryOperation(operation, querySpecification, false); },
+                parallelQuerySpecification_->GetParallelQueryExecutionTimeout(currentQuerySpecification, RemainingTime),
+                [this, currentQuerySpecification](AsyncOperationSPtr const & operation){ this->FinishProcessInnerQueryOperation(operation, currentQuerySpecification, false); },
                 thisSPtr);
-            this->FinishProcessInnerQueryOperation(operation, querySpecification, true);
+            this->FinishProcessInnerQueryOperation(operation, currentQuerySpecification, true);
         }
     }
 
@@ -227,6 +253,7 @@ private:
     QueryMessageHandler & owner_;
     QueryNames::Enum queryName_;
     QueryArgumentMap queryArgs_;
+    QuerySpecificationSPtr querySpecSPtr_;
     ParallelQuerySpecificationSPtr parallelQuerySpecification_;
     std::map<Query::QuerySpecificationSPtr, ServiceModel::QueryResult> resultMap_;
     Common::atomic_long errorCount_;
@@ -256,6 +283,7 @@ public:
         , innerQueriesProgressCount_(0)
         , activityHeader_()
         , sequentialQuerySpecification_()
+        , queryResults_()
     {
     }
 
@@ -280,19 +308,20 @@ public:
             return;
         }
 
-        QueryResult result;
-        ExecuteNextQuery(thisSPtr, sequentialQuerySpecification_, result);
+        ExecuteNextQuery(thisSPtr, sequentialQuerySpecification_);
     }
 
-    void ExecuteNextQuery(AsyncOperationSPtr const & thisSPtr, QuerySpecificationSPtr const & previousQuerySpec, QueryResult & previousResult)
+    void ExecuteNextQuery(AsyncOperationSPtr const & thisSPtr, QuerySpecificationSPtr const & previousQuerySpec)
     {
         QuerySpecificationSPtr currentQuerySpecSptr;
         ErrorCode error;
+        auto queryArgs = queryArgs_;
 
         innerQueriesProgressCount_ += 1;
         error = sequentialQuerySpecification_->GetNext(
             previousQuerySpec,
-            previousResult,
+            queryResults_,
+            queryArgs,
             currentQuerySpecSptr,
             ReplyMessage);
 
@@ -321,7 +350,7 @@ public:
             currentQuerySpecSptr->QueryName);
 
         wstring queryAddress;
-        error = currentQuerySpecSptr->GenerateAddress(activityHeader_.ActivityId, queryArgs_, queryAddress);
+        error = currentQuerySpecSptr->GenerateAddress(activityHeader_.ActivityId, queryArgs, queryAddress);
 
         // We assume that the sequential query specification should include all the arguments required for inner queries.
         // Hence if the address generation fails, there is something wrong with the configuration of query
@@ -340,12 +369,13 @@ public:
             return;
         }
 
-        auto queryMessage = QueryMessage::CreateMessage(currentQuerySpecSptr->QueryName, currentQuerySpecSptr->QueryType, queryArgs_, queryAddress);
+        auto queryMessage = QueryMessage::CreateMessage(currentQuerySpecSptr->QueryName, currentQuerySpecSptr->QueryType, queryArgs, queryAddress);
 
         queryMessage->Headers.Add(activityHeader_);
 
         auto operation = owner_.BeginProcessQueryMessage(
             *queryMessage,
+            currentQuerySpecSptr,
             RemainingTime,
             [this, currentQuerySpecSptr](AsyncOperationSPtr const & operation){ this->FinishProcessInnerQueryOperation(operation, currentQuerySpecSptr, false); },
             thisSPtr);
@@ -364,11 +394,12 @@ public:
         ServiceModel::QueryResult queryResult;
         auto error = owner_.EndProcessQueryMessage(operation, result);
 
-        if (error.IsSuccess())
+        if (sequentialQuerySpecification_->ShouldContinueSequentialQuery(processedQuerySpecification, error))
         {
             if (result->GetBody<ServiceModel::QueryResult>(queryResult))
             {
-                ExecuteNextQuery(operation->Parent, processedQuerySpecification, queryResult);
+                queryResults_[processedQuerySpecification->QueryName] = move(queryResult);
+                ExecuteNextQuery(operation->Parent, processedQuerySpecification);
             }
             else
             {
@@ -407,6 +438,7 @@ private:
     LONG innerQueriesProgressCount_;
     Transport::MessageHeaders & headers_;
     Transport::FabricActivityHeader activityHeader_;
+    std::unordered_map<QueryNames::Enum, QueryResult> queryResults_;
 };
 
 
@@ -416,6 +448,7 @@ class QueryMessageHandler::ProcessMessageAsyncOperation:
 public:
     ProcessMessageAsyncOperation(
         Message & message,
+        QuerySpecificationSPtr const & querySpecSPtr,
         QueryMessageHandler & owner,
         TimeSpan timeout,
         AsyncCallback const & callback,
@@ -423,6 +456,7 @@ public:
         : QueryMessageHandlerAsyncOperation(timeout, callback, parent)
         , owner_(owner)
         , requestMessage_(message)
+        , querySpecSPtr_(querySpecSPtr)
     {
     }
 
@@ -450,11 +484,15 @@ public:
             activityId,
             messageBody);
 
+        // querySpecSPtr_ is passed if a certain QuerySpecification is dynamically constructed in runtime.
+        // The processor should skip over reading from the query store if querySpecSPtr_ is not nullptr.
+        // It is currently only supported in Parallel query.
         if (parseResult == QueryMessageUtility::QueryMessageParseResult::Parallel)
         {
             auto operation = owner_.BeginProcessParallelQuery(
                 messageBody.QueryName,
                 messageBody.QueryArgs,
+                querySpecSPtr_,
                 requestMessage_.Headers,
                 RemainingTime,
                 [this](AsyncOperationSPtr const & operation) { this->FinishProcessParallelQuery(operation, false); },
@@ -549,7 +587,7 @@ public:
             return;
         }
 
-        TryComplete(operation->Parent, owner_.EndProcessParallelQuery(operation, ReplyMessage));
+        TryComplete(operation->Parent, owner_.EndProcessSequentialQuery(operation, ReplyMessage));
         ReleaseRegistrationsIfClosed();
     }
 
@@ -564,6 +602,7 @@ public:
 private:
     QueryMessageHandler & owner_;
     Message & requestMessage_;
+    QuerySpecificationSPtr querySpecSPtr_;
 };
 
 class QueryMessageHandler::ProcessQuerySynchronousCallerAsyncOperation
@@ -669,18 +708,34 @@ QueryMessageHandler::QueryMessageHandler(
 }
 
 AsyncOperationSPtr QueryMessageHandler::BeginProcessQueryMessage(
-        Message & message,
-        TimeSpan timeout,
-        AsyncCallback const & callback,
-        AsyncOperationSPtr const & parent)
- {
+    Message & message,
+    TimeSpan timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    return this->BeginProcessQueryMessage(
+        message,
+        nullptr,
+        timeout,
+        callback,
+        parent);
+}
+
+AsyncOperationSPtr QueryMessageHandler::BeginProcessQueryMessage(
+    Message & message,
+    QuerySpecificationSPtr const & querySpecSPtr,
+    TimeSpan timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
     return AsyncOperation::CreateAndStart<ProcessMessageAsyncOperation>(
         message,
+        querySpecSPtr,
         *this,
         timeout,
         callback,
         parent);
- }
+}
 
 ErrorCode QueryMessageHandler::EndProcessQueryMessage(
     AsyncOperationSPtr const & asyncOperation,
@@ -693,6 +748,7 @@ ErrorCode QueryMessageHandler::EndProcessQueryMessage(
 AsyncOperationSPtr QueryMessageHandler::BeginProcessParallelQuery(
     Query::QueryNames::Enum queryName,
     ServiceModel::QueryArgumentMap const & queryArgs,
+    QuerySpecificationSPtr const & querySpecSPtr,
     Transport::MessageHeaders & headers,
     Common::TimeSpan timeout,
     Common::AsyncCallback const & callback,
@@ -701,6 +757,7 @@ AsyncOperationSPtr QueryMessageHandler::BeginProcessParallelQuery(
     return AsyncOperation::CreateAndStart<ProcessParallelQueryAsyncOperation>(
          queryName,
          queryArgs,
+         querySpecSPtr,
          *this,
          headers,
          timeout,

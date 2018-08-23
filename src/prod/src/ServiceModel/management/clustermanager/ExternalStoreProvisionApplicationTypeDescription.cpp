@@ -88,7 +88,7 @@ ErrorCode ExternalStoreProvisionApplicationTypeDescription::IsValidSfpkgDownload
     }
 
     // Check .sfpkg extension
-    if (!StringUtility::EndsWithCaseInsensitive(downloadPath.Segments.back(), *Constants::SFApplicationPackageExtension))
+    if (!StringUtility::EndsWithCaseInsensitive(downloadPath.Segments.back(), *Path::SfpkgExtension))
     {
         return ErrorCode(
             ErrorCodeValue::InvalidArgument,

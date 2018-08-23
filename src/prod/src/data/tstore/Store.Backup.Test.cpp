@@ -73,7 +73,7 @@ namespace TStoreTests
             return backupDirectory.RawPtr();
         }
 
-        void PerformBackup(__in KString & backupDirectory)
+        ktl::Awaitable<void> PerformBackupAsync(__in KString & backupDirectory)
         {
             // Ensure the Backup directory exists.
             if (!Common::Directory::Exists(backupDirectory.operator LPCWSTR()))
@@ -86,23 +86,25 @@ namespace TStoreTests
             }
 
             // Perform a checkpoint first, to ensure we have all store state on disk.
-            Checkpoint(*Store);
+            co_await CheckpointAsync(*Store);
 
             // Perform the actual backup.
-            SyncAwait(Store->BackupCheckpointAsync(backupDirectory, CancellationToken::None));
+            co_await Store->BackupCheckpointAsync(backupDirectory, CancellationToken::None);
+            co_return;
         }
 
-        void RestoreFromBackup(__in KString & backupDirectory)
+        ktl::Awaitable<void> RestoreFromBackupAsync(__in KString & backupDirectory)
         {
             // Remove all state from this store, in preparation for the Restore.
-            SyncAwait(Store->ChangeRoleAsync(FABRIC_REPLICA_ROLE_NONE, CancellationToken::None));
-            SyncAwait(Store->RemoveStateAsync(CancellationToken::None));
+            co_await Store->ChangeRoleAsync(FABRIC_REPLICA_ROLE_NONE, CancellationToken::None);
+            co_await Store->RemoveStateAsync(CancellationToken::None);
 
             // Close and re-open the store.
-            RemoveStateAndReopenStore();
+            co_await RemoveStateAndReopenStoreAsync();
             // Restore from Backup.
-            SyncAwait(Store->RestoreCheckpointAsync(backupDirectory, CancellationToken::None));
-            SyncAwait(Store->RecoverCheckpointAsync(CancellationToken::None));
+            co_await Store->RestoreCheckpointAsync(backupDirectory, CancellationToken::None);
+            co_await Store->RecoverCheckpointAsync(CancellationToken::None);
+            co_return;
         }
 
         KString::SPtr ToString(__in ULONG seed)
@@ -116,163 +118,196 @@ namespace TStoreTests
 
         Common::CommonConfig config; // load the config object as it's needed for the tracing to work
         KString::SPtr backupDirectorySPtr;
-    };
 
-    BOOST_FIXTURE_TEST_SUITE(StoreBackupTestSuite, StoreBackupTest)
-
-    BOOST_AUTO_TEST_CASE(Backup_NoState)
-    {
-        PerformBackup(*backupDirectorySPtr);
-        RestoreFromBackup(*backupDirectorySPtr);
-        VerifyCount(0);
-    }
-
-    BOOST_AUTO_TEST_CASE(Backup_1000Add)
-    {
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> Backup_NoState_Test()
         {
-            WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-            for (int i = 0; i < 1000; i++)
-            {
-                SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, i, i, Common::TimeSpan::MaxValue, CancellationToken::None));
-            }
-
-            SyncAwait(tx->CommitAsync());
+            co_await PerformBackupAsync(*backupDirectorySPtr);
+            co_await RestoreFromBackupAsync(*backupDirectorySPtr);
+            VerifyCount(0);
+            co_return;
         }
 
-        PerformBackup(*backupDirectorySPtr);
-        RestoreFromBackup(*backupDirectorySPtr);
-        VerifyCount(1000);
-
-        {
-            WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-            for (int i = 0; i < 1000; i++)
-            {
-                SyncAwait(VerifyKeyExistsAsync(*Store, i, -1, i));
-            }
-
-            SyncAwait(tx->CommitAsync());
-        }
-    }
-
-    BOOST_AUTO_TEST_CASE(Backup_1000Add500Remove)
-    {
-        for (int i = 0; i < 1000; i++)
+        ktl::Awaitable<void> Backup_1000Add_Test()
         {
             {
                 WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-                SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None));
-                SyncAwait(tx->CommitAsync());
+                for (int i = 0; i < 1000; i++)
+                {
+                    co_await Store->AddAsync(*tx->StoreTransactionSPtr, i, i, Common::TimeSpan::MaxValue, CancellationToken::None);
+                }
+
+                co_await tx->CommitAsync();
             }
 
-            if (i % 2 == 0)
+            co_await PerformBackupAsync(*backupDirectorySPtr);
+            co_await RestoreFromBackupAsync(*backupDirectorySPtr);
+            VerifyCount(1000);
+
+            {
+                WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
+                for (int i = 0; i < 1000; i++)
+                {
+                    co_await VerifyKeyExistsAsync(*Store, i, -1, i);
+                }
+
+                co_await tx->CommitAsync();
+            }
+            co_return;
+        }
+
+        ktl::Awaitable<void> Backup_1000Add500Remove_Test()
+        {
+            for (int i = 0; i < 1000; i++)
             {
                 {
                     WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-                    SyncAwait(Store->ConditionalRemoveAsync(*tx->StoreTransactionSPtr, i, DefaultTimeout, CancellationToken::None));
-                    SyncAwait(tx->CommitAsync());
+                    co_await Store->AddAsync(*tx->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None);
+                    co_await tx->CommitAsync();
                 }
-            }
-        }
 
-        PerformBackup(*backupDirectorySPtr);
-        RestoreFromBackup(*backupDirectorySPtr);
-        VerifyCount(500);
-
-        {
-            WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-            for (int i = 0; i < 1000; i++)
-            {
                 if (i % 2 == 0)
                 {
-                    SyncAwait(VerifyKeyDoesNotExistAsync(*Store, i));
-                }
-                else
-                {
-                    SyncAwait(VerifyKeyExistsAsync(*Store, i, -1, i));
+                    {
+                        WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
+                        co_await Store->ConditionalRemoveAsync(*tx->StoreTransactionSPtr, i, DefaultTimeout, CancellationToken::None);
+                        co_await tx->CommitAsync();
+                    }
                 }
             }
 
-            SyncAwait(tx->AbortAsync());
-        }
-    }
+            co_await PerformBackupAsync(*backupDirectorySPtr);
+            co_await RestoreFromBackupAsync(*backupDirectorySPtr);
+            VerifyCount(500);
 
-    BOOST_AUTO_TEST_CASE(Backup_MultipleCheckpoints)
-    {
-        for (int i = 0; i < 1000; i++)
-        {
             {
                 WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-                SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, i, i, Common::TimeSpan::MaxValue, CancellationToken::None));
-                SyncAwait(tx->CommitAsync());
-            }
+                for (int i = 0; i < 1000; i++)
+                {
+                    if (i % 2 == 0)
+                    {
+                        co_await VerifyKeyDoesNotExistAsync(*Store, i);
+                    }
+                    else
+                    {
+                        co_await VerifyKeyExistsAsync(*Store, i, -1, i);
+                    }
+                }
 
-            if (i % 100 == 0)
-            {
-                Checkpoint(*Store);
+                co_await tx->AbortAsync();
             }
+            co_return;
         }
 
-        PerformBackup(*backupDirectorySPtr);
-        RestoreFromBackup(*backupDirectorySPtr);
-        VerifyCount(1000);
-
+        ktl::Awaitable<void> Backup_MultipleCheckpoints_Test()
         {
-            WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
             for (int i = 0; i < 1000; i++)
             {
-                SyncAwait(VerifyKeyExistsAsync(*Store, i, -1, i));
+                {
+                    WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
+                    co_await Store->AddAsync(*tx->StoreTransactionSPtr, i, i, Common::TimeSpan::MaxValue, CancellationToken::None);
+                    co_await tx->CommitAsync();
+                }
+
+                if (i % 100 == 0)
+                {
+                    co_await CheckpointAsync(*Store);
+                }
             }
 
-            SyncAwait(tx->AbortAsync());
-        }
-    }
+            co_await PerformBackupAsync(*backupDirectorySPtr);
+            co_await RestoreFromBackupAsync(*backupDirectorySPtr);
+            VerifyCount(1000);
 
-    BOOST_AUTO_TEST_CASE(Backup_MultipleBackups)
-    {
-        for (int i = 1; i <= 1000; i++)
-        {
             {
                 WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-                SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None));
-                SyncAwait(tx->CommitAsync());
+                for (int i = 0; i < 1000; i++)
+                {
+                    co_await VerifyKeyExistsAsync(*Store, i, -1, i);
+                }
+
+                co_await tx->AbortAsync();
+            }
+            co_return;
+        }
+
+        ktl::Awaitable<void> Backup_MultipleBackups_Test()
+        {
+            for (int i = 1; i <= 1000; i++)
+            {
+                {
+                    WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
+                    co_await Store->AddAsync(*tx->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None);
+                    co_await tx->CommitAsync();
+                }
+
+                if (i % 100 == 0)
+                {
+                    KString::SPtr backupSPtr;
+                    NTSTATUS status = KString::Create(backupSPtr, GetAllocator(), *backupDirectorySPtr);
+                    CODING_ERROR_ASSERT(NT_SUCCESS(status));
+                    auto concatSuccess = backupSPtr->Concat(Common::Path::GetPathSeparatorWstr().c_str());
+                    CODING_ERROR_ASSERT(concatSuccess == TRUE);
+                    concatSuccess = backupSPtr->Concat(*ToString(i));
+                    CODING_ERROR_ASSERT(concatSuccess == TRUE);
+
+                    co_await PerformBackupAsync(*backupSPtr);
+                }
             }
 
-            if (i % 100 == 0)
+            for (int backupId = 100; backupId <= 1000; backupId += 100)
             {
                 KString::SPtr backupSPtr;
                 NTSTATUS status = KString::Create(backupSPtr, GetAllocator(), *backupDirectorySPtr);
                 CODING_ERROR_ASSERT(NT_SUCCESS(status));
                 auto concatSuccess = backupSPtr->Concat(Common::Path::GetPathSeparatorWstr().c_str());
                 CODING_ERROR_ASSERT(concatSuccess == TRUE);
-                concatSuccess = backupSPtr->Concat(*ToString(i));
+                concatSuccess = backupSPtr->Concat(*ToString(backupId));
                 CODING_ERROR_ASSERT(concatSuccess == TRUE);
+                co_await RestoreFromBackupAsync(*backupSPtr);
+                VerifyCount(backupId);
 
-                PerformBackup(*backupSPtr);
-            }
-        }
-
-        for (int backupId = 100; backupId <= 1000; backupId += 100)
-        {
-            KString::SPtr backupSPtr;
-            NTSTATUS status = KString::Create(backupSPtr, GetAllocator(), *backupDirectorySPtr);
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
-            auto concatSuccess = backupSPtr->Concat(Common::Path::GetPathSeparatorWstr().c_str());
-            CODING_ERROR_ASSERT(concatSuccess == TRUE);
-            concatSuccess = backupSPtr->Concat(*ToString(backupId));
-            CODING_ERROR_ASSERT(concatSuccess == TRUE);
-            RestoreFromBackup(*backupSPtr);
-            VerifyCount(backupId);
-
-            {
-                WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-                for (int i = 1; i <= backupId; i++)
                 {
-                    SyncAwait(VerifyKeyExistsAsync(*Store, i, -1, i));
-                }
+                    WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
+                    for (int i = 1; i <= backupId; i++)
+                    {
+                        co_await VerifyKeyExistsAsync(*Store, i, -1, i);
+                    }
 
-                SyncAwait(tx->AbortAsync());
+                    co_await tx->AbortAsync();
+                }
             }
+            co_return;
         }
+    #pragma endregion
+    };
+
+    BOOST_FIXTURE_TEST_SUITE(StoreBackupTestSuite, StoreBackupTest)
+
+    BOOST_AUTO_TEST_CASE(Backup_NoState)
+    {
+        SyncAwait(Backup_NoState_Test());
+    }
+
+    BOOST_AUTO_TEST_CASE(Backup_1000Add)
+    {
+        SyncAwait(Backup_1000Add_Test());
+    }
+
+    BOOST_AUTO_TEST_CASE(Backup_1000Add500Remove)
+    {
+        SyncAwait(Backup_1000Add500Remove_Test());
+    }
+
+    BOOST_AUTO_TEST_CASE(Backup_MultipleCheckpoints)
+    {
+        SyncAwait(Backup_MultipleCheckpoints_Test());
+    }
+
+    BOOST_AUTO_TEST_CASE(Backup_MultipleBackups)
+    {
+        SyncAwait(Backup_MultipleBackups_Test());
     }
 
     BOOST_AUTO_TEST_SUITE_END()

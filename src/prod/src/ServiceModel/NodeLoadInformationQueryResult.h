@@ -17,12 +17,12 @@ namespace ServiceModel
         NodeLoadInformationQueryResult(
             std::wstring const & nodeName,
             std::vector<ServiceModel::NodeLoadMetricInformation> && nodeLoadMetricInformation);
-                    
-        NodeLoadInformationQueryResult(NodeLoadInformationQueryResult const & other);
-        NodeLoadInformationQueryResult(NodeLoadInformationQueryResult && other);
 
-        NodeLoadInformationQueryResult const & operator = (NodeLoadInformationQueryResult const & other);
-        NodeLoadInformationQueryResult const & operator = (NodeLoadInformationQueryResult && other);
+        NodeLoadInformationQueryResult(NodeLoadInformationQueryResult const & other) = default;
+        NodeLoadInformationQueryResult(NodeLoadInformationQueryResult && other) = default;
+
+        NodeLoadInformationQueryResult & operator = (NodeLoadInformationQueryResult const & other) = default;
+        NodeLoadInformationQueryResult & operator = (NodeLoadInformationQueryResult && other) = default;
         
         __declspec(property(get=get_NodeName, put=put_NodeName)) std::wstring const& NodeName;
         std::wstring const& get_NodeName() const { return nodeName_; }

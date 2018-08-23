@@ -690,6 +690,86 @@ namespace Common
 
             return ErrorCode::Success();
         }
+
+        template<typename T>
+        static ErrorCode Deserialize(
+            std::vector<T> &object,
+            __in ByteBufferUPtr const &bytesUPtr,
+            JsonSerializerFlags serializerFlags = JsonSerializerFlags::Default)
+        {
+            JsonReader::InitParams initParams((char*)(bytesUPtr->data()), static_cast<ULONG>(bytesUPtr->size()));
+            ComPointer<JsonReader> jsonReader = make_com<JsonReader>(initParams);
+            JsonReaderVisitor readerVisitor(jsonReader.GetRawPointer(), serializerFlags);
+
+            HRESULT hr = jsonReader->Read();
+            if (FAILED(hr))
+            {
+                return ErrorCodeValue::SerializationError;
+            }
+
+            hr = readerVisitor.StartObject(nullptr);
+            if (FAILED(hr))
+            {
+                return ErrorCodeValue::SerializationError;
+            }
+
+            hr = JsonReaderVisitor::SetArray<T>(&readerVisitor, &object);
+            if (FAILED(hr))
+            {
+                return ErrorCodeValue::SerializationError;
+            }
+
+            return ErrorCodeValue::Success;
+        }
+
+        // Deserialize vector of objects from json string
+        template<typename T>
+        static ErrorCode Deserialize(
+            std::vector<T> &object,
+            __in std::wstring const &jsonString,
+            JsonSerializerFlags serializerFlags = JsonSerializerFlags::Default)
+        {
+            auto bufferUPtr = make_unique<ByteBuffer>();
+#if !defined(PLATFORM_UNIX)
+            DWORD flags = WC_ERR_INVALID_CHARS;
+#else
+            DWORD flags = 0; // CLR PAL does not support WC_ERR_INVALID_CHARS.
+#endif                        
+
+            int ret = WideCharToMultiByte(
+                CP_UTF8,
+                flags,
+                jsonString.c_str(),
+                (int)jsonString.length(),
+                nullptr,
+                0,
+                NULL,
+                NULL);
+
+            if (ret == 0)
+            {
+                return ErrorCodeValue::SerializationError;
+            }
+
+            bufferUPtr->resize(ret);
+
+            ret = WideCharToMultiByte(
+                CP_UTF8,
+                flags,
+                jsonString.c_str(),
+                (int)jsonString.length(),
+                (char*)(bufferUPtr->data()),
+                ret,
+                NULL,
+                NULL);
+
+            if (ret == 0)
+            {
+                return ErrorCodeValue::SerializationError;
+            }
+
+            Deserialize(object, bufferUPtr, serializerFlags);
+            return ErrorCodeValue::Success;
+        }
     };
 }
-

@@ -166,13 +166,12 @@ void HostingEventHandler::ProcessRuntimeClosed(std::wstring const & hostId, std:
     CreateAndStartWork(activityId, filter, move(input), factory, ra_);
 }
 
-void HostingEventHandler::ProcessAppHostClosed(wstring const & hostId)
+void HostingEventHandler::ProcessAppHostClosed(wstring const & hostId, ActivityDescription const & activityDescription)
 {
     ASSERT_IFNOT(hostId.size() > 0, "Empty apphost id during AppHost failure processing");
 
-    auto activityId = CreateActivityId();
-    RAEventSource::Events->HostingProcessClosedEvent(ra_.NodeInstanceIdStr, HostingEventName::AppHostDown, hostId, wstring(), activityId);
-    if (!CanProcessEvent(activityId, false))
+    RAEventSource::Events->HostingProcessClosedEvent(ra_.NodeInstanceIdStr, HostingEventName::AppHostDown, hostId, wstring(), activityDescription.ActivityId.ToString());
+    if (!CanProcessEvent(activityDescription.ActivityId.ToString(), false))
     {
         return;
     }
@@ -214,8 +213,8 @@ void HostingEventHandler::ProcessAppHostClosed(wstring const & hostId)
         return make_shared<AppHostClosedJobItem>(move(jobItemParameters));
     };
 
-    AppHostClosedInput input(hostId);
-    CreateAndStartWork(activityId, filter, move(input), factory, ra_);
+    AppHostClosedInput input(activityDescription, hostId);
+    CreateAndStartWork(activityDescription.ActivityId.ToString(), filter, move(input), factory, ra_);
 }
 
 wstring HostingEventHandler::CreateActivityId() const

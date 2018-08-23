@@ -34,6 +34,7 @@ namespace ServiceModel
         HealthEvaluationList const & get_UnhealthyEvaluations() const { return unhealthyEvaluations_; }
 
         virtual void GenerateDescription() override;
+        virtual std::wstring GetUnhealthyEvaluationDescription(std::wstring const & indent = L"") const override;
 
         // Generate the description string.
         // If the object with description but without children doesn't respect maxAllowedSize, return EntryTooLarge.

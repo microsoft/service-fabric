@@ -87,7 +87,7 @@ void ContainerEntryPointDescription::WriteTo(TextWriter & w, FormatOptions const
     w.Write("ContainerEntryPointDescription { ");
     w.Write("ImageName = {0}, ", ImageName);
     w.Write("Commands = {0}, ", Commands);
-    w.Write("EntryPoint = {0}", EntryPoint);
+    w.Write("EntryPoint = {0}, ", EntryPoint);
     w.Write("FromSource = {0}", FromSource);
     w.Write("}");
 }
@@ -185,7 +185,7 @@ void ContainerEntryPointDescription::ReadFromXml(
             xmlReader->ReadEndElement();
         }
     }
-   // </ContainerHost>
+    // </ContainerHost>
     xmlReader->ReadEndElement();
 }
 
@@ -233,6 +233,48 @@ ErrorCode ContainerEntryPointDescription::WriteToXml(XmlWriterUPtr const & xmlWr
     }
 	//</ContainerHost>
 	return xmlWriter->WriteEndElement();
+}
+
+ErrorCode ContainerEntryPointDescription::FromPublicApi(FABRIC_CONTAINERHOST_ENTRY_POINT_DESCRIPTION const & description)
+{
+    this->clear();
+
+    this->ImageName = description.ImageName;
+
+    if (description.Commands != NULL)
+    {
+        this->Commands = description.Commands;
+    }
+
+    if (description.EntryPoint != NULL)
+    {
+        this->EntryPoint = description.EntryPoint;
+    }
+
+    return ErrorCode::Success();
+}
+
+void ContainerEntryPointDescription::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_CONTAINERHOST_ENTRY_POINT_DESCRIPTION & publicDescription) const
+{
+    publicDescription.ImageName = heap.AddString(this->ImageName);
+
+    if (this->Commands.empty())
+    {
+        publicDescription.Commands = NULL;
+    }
+    else
+    {
+        publicDescription.Commands = heap.AddString(this->Commands);
+    }
+
+    if (this->EntryPoint.empty())
+    {
+        publicDescription.EntryPoint = NULL;
+    }
+    else
+    {
+        publicDescription.EntryPoint = heap.AddString(this->EntryPoint);
+    }
 }
 
 void ContainerEntryPointDescription::clear()

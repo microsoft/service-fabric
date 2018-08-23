@@ -476,10 +476,3 @@ void LruClientCacheManager::ResolveServiceAsyncOperation::OnSuccess(
 
     this->TryComplete(thisSPtr, error);
 }
-
-NamingUri const & LruClientCacheManager::ResolveServiceAsyncOperation::GetCacheEntryName(LruClientCacheEntrySPtr const & cacheEntry)
-{
-    // Need to pass the fullname for Service Group endpoint parsing
-    //
-    return this->FullName.Fragment.empty() ? cacheEntry->Name : this->FullName;
-}

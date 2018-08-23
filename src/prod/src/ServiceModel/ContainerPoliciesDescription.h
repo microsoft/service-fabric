@@ -36,12 +36,16 @@ namespace ServiceModel
         std::vector<ContainerCertificateDescription> CertificateRef;
         std::vector<SecurityOptionsDescription> SecurityOptions;
         ImageOverridesDescription ImageOverrides;
+        std::vector<ContainerLabelDescription> Labels;
 
         std::wstring CodePackageRef;
+        bool UseDefaultRepositoryCredentials;
+        bool UseTokenAuthenticationCredentials;
         ContainerIsolationMode::Enum Isolation;
         std::wstring Hostname;
         bool RunInteractive;
         LONG ContainersRetentionCount;
+        std::wstring AutoRemove;
 
     private:
         friend struct DigestedCodePackageDescription;
@@ -50,5 +54,7 @@ namespace ServiceModel
 
         void ReadFromXml(Common::XmlReaderUPtr const &);
         Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
+		Common::ErrorCode WriteContainerConfigSettings(Common::XmlWriterUPtr const & xmlWriter);
+		void ParseContainerConfigSettings(Common::XmlReaderUPtr const & xmlReader);
     };
 }

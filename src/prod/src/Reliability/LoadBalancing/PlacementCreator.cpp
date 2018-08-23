@@ -208,8 +208,9 @@ void PlacementCreator::CreateServicePackageEntries()
 
         if (itServicePackage != plb_.servicePackageToIdMap_.end())
         {
-            TESTASSERT_IF(servicePackage->Description.RequiredResources.size() == 0,
-                "Service Package {0} should have some resources defined or it should not be in closure.",
+            TESTASSERT_IF(servicePackage->Description.RequiredResources.size() == 0 &&
+                servicePackage->Description.ContainersImages.size() == 0,
+                "Service Package {0} should have some resources defined or some container images or it should not be in closure.",
                 servicePackage->Description);
             LoadEntry resources(balanceChecker_->TotalMetricCount);
             for (auto requiredResource : servicePackage->Description.CorrectedRequiredResources)
@@ -222,10 +223,18 @@ void PlacementCreator::CreateServicePackageEntries()
                 }
                 else
                 {
-                    TESTASSERT_IF(itMetricNameToIndex == metricNameToGlobalIndex_.end(), "Metric {0} not found in the name to index mapping", requiredResource.first);
+                    TESTASSERT_IF(itMetricNameToIndex == metricNameToGlobalIndex_.end(),
+                        "Metric {0} not found in the name to index mapping", requiredResource.first);
                 }
             }
-            servicePackageEntries_.push_back(ServicePackageEntry(servicePackage->Description.Name, move(resources)));
+
+            // Get all container images for this SP
+            auto containerImages = servicePackage->Description.ContainersImages;
+
+            servicePackageEntries_.push_back(ServicePackageEntry(
+                servicePackage->Description.Name,
+                move(resources),
+                move(containerImages)));
             servicePackageDict_.insert(make_pair(itServicePackage->second, &(servicePackageEntries_.back())));
 
             //we setup the initial replica counts on the nodes
@@ -300,23 +309,27 @@ void PlacementCreator::CreateServiceEntries()
         //    "Number of FD nodes {0} and number of UD nodes {1} for the service {2} should match",
         //    fdNodeCount, udNodeCount, serviceDesc.Name);
 
-        // Calculating if switch from '+1' to quorum based logic should be done (cases when '+1' logic is too strict and new nodes can't be utilized)
+        // If auto-scaling is turned on, then service will always respect quorum based FD/UD distribution.
+        // Otherwise, calculating if switch from '+1' to quorum based logic should be done (cases when '+1' logic is too strict and new nodes can't be utilized)
         // Calculation is determined by formula: 
         //     target replica set size is divisible by both number of FDs/UDs and number of FD/UD nodes is less than a product of number of FDs/UDs
         bool autoSwitchToQuorumBasedLogic = 
-            plb_.Settings.QuorumBasedLogicAutoSwitch &&
-            fdDomainCount != 0 && udDomainCount != 0 &&
-            fdNodeCount != 0 && udNodeCount != 0 &&
-            serviceDesc.TargetReplicaSetSize != 0 &&
-            serviceDesc.TargetReplicaSetSize % fdDomainCount == 0 &&
-            serviceDesc.TargetReplicaSetSize % udDomainCount == 0 &&
-            fdNodeCount <= fdDomainCount * udDomainCount &&
-            udNodeCount <= fdDomainCount * udDomainCount;
+            serviceDesc.IsAutoScalingDefined ||
+                (plb_.Settings.QuorumBasedLogicAutoSwitch &&
+                fdDomainCount != 0 && udDomainCount != 0 &&
+                fdNodeCount != 0 && udNodeCount != 0 &&
+                serviceDesc.TargetReplicaSetSize != 0 &&
+                serviceDesc.TargetReplicaSetSize % fdDomainCount == 0 &&
+                serviceDesc.TargetReplicaSetSize % udDomainCount == 0 &&
+                fdNodeCount <= fdDomainCount * udDomainCount &&
+                udNodeCount <= fdDomainCount * udDomainCount);
 
         if (autoSwitchToQuorumBasedLogic ||
-            plb_.Settings.QuorumBasedReplicaDistributionPerFaultDomains || plb_.Settings.QuorumBasedReplicaDistributionPerUpgradeDomains)
+            plb_.Settings.QuorumBasedReplicaDistributionPerFaultDomains ||
+            plb_.Settings.QuorumBasedReplicaDistributionPerUpgradeDomains)
         {
             quorumBasedServicesCount_++;
+            quorumBasedServicesTempCache_.insert(serviceDesc.ServiceId);
         }
 
         ApplicationEntry const* applicationEntry = nullptr;
@@ -826,7 +839,8 @@ void PlacementCreator::CreatePartitionEntries()
             extraReplicaCount,
             failoverUnit.SecondaryEntriesMap,
             move(partitionStandBy),
-            balanceChecker_->Settings));
+            balanceChecker_->Settings,
+            failoverUnit.TargetReplicaSetSize));
     }
 }
 
@@ -990,5 +1004,6 @@ PlacementUPtr PlacementCreator::Create(int randomSeed)
         partitionClosure_->PartialClosureFailoverUnits,
         move(servicePackagePlacement_),
         quorumBasedServicesCount_,
-        quorumBasedPartitionsCount_);
+        quorumBasedPartitionsCount_,
+        move(quorumBasedServicesTempCache_));
 }

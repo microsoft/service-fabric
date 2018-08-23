@@ -160,7 +160,7 @@ namespace HttpGateway
                 {
                     ///ListContent API always return success error code no matter whether the path is existed or not
                     ///That design need to be changed in the future to return more accurate code 
-                    ///Here the second call is to verify the existence of the path
+                    ///Here the second call is to verify the existence of the path 
                     bool isExists;
                     auto &client = handlerOperation->FabricClient;
                     error = client.NativeImageStoreClient->DoesContentExist(relativePath, handlerOperation->Timeout, isExists);
@@ -172,12 +172,25 @@ namespace HttpGateway
 
                     if (!isExists)
                     {
-                        handlerOperation->OnError(operation->Parent, Constants::StatusNotFound, *Constants::StatusDescriptionNotFound);
+                        if (handlerOperation->Uri.ApiVersion < Constants::V62ApiVersion)
+                        {
+                            handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr), Constants::StatusNotFound, *Constants::StatusDescriptionNotFound);
+                        }
+                        else
+                        {
+                            handlerOperation->OnError(operation->Parent, Constants::StatusNotFound, *Constants::StatusDescriptionNotFound);
+                        }
                         return;
                     }
                 }
-
-                handlerOperation->OnError(operation->Parent, Constants::StatusNoContent, *Constants::StatusDescriptionNoContent);
+                if (handlerOperation->Uri.ApiVersion < Constants::V62ApiVersion)
+                {
+                    handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr), Constants::StatusNoContent, *Constants::StatusDescriptionNoContent);
+                }
+                else
+                {
+                    handlerOperation->OnError(operation->Parent, Constants::StatusNoContent, *Constants::StatusDescriptionNoContent);
+                }
             }
         }
     };

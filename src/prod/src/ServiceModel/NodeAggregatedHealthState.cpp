@@ -34,44 +34,6 @@ NodeAggregatedHealthState::~NodeAggregatedHealthState()
 {
 }
 
-NodeAggregatedHealthState::NodeAggregatedHealthState(NodeAggregatedHealthState const & other)
-    : nodeName_(other.nodeName_)
-    , nodeId_(other.nodeId_)
-    , aggregatedHealthState_(other.aggregatedHealthState_)
-{
-}
-
-NodeAggregatedHealthState & NodeAggregatedHealthState::operator = (NodeAggregatedHealthState const & other)
-{
-    if (this != &other)
-    {
-        nodeName_ = other.nodeName_;
-        nodeId_ = other.nodeId_;
-        aggregatedHealthState_ = other.aggregatedHealthState_;
-    }
-
-    return *this;
-}
-
-NodeAggregatedHealthState::NodeAggregatedHealthState(NodeAggregatedHealthState && other)
-    : nodeName_(move(other.nodeName_)) 
-    , nodeId_(move(other.nodeId_))
-    , aggregatedHealthState_(move(other.aggregatedHealthState_))
-{
-}
-
-NodeAggregatedHealthState & NodeAggregatedHealthState::operator = (NodeAggregatedHealthState && other)
-{
-    if (this != &other)
-    {
-        nodeName_ = move(other.nodeName_);
-        nodeId_ = move(other.nodeId_);
-        aggregatedHealthState_ = move(other.aggregatedHealthState_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode NodeAggregatedHealthState::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_NODE_HEALTH_STATE & publicNodeAggregatedHealthState) const 

@@ -378,16 +378,16 @@ private:
 TSReplicatedStore::TSReplicatedStore(
     Guid const & partitionId,
     ::FABRIC_REPLICA_ID replicaId,
-    TSReplicatedStoreSettingsUPtr && storeSettings,
     ReplicatorSettingsUPtr && replicatorSettings,
+    TSReplicatedStoreSettingsUPtr && storeSettings,
     Api::IStoreEventHandlerPtr const & storeEventHandler,
     Api::ISecondaryEventHandlerPtr const & secondaryEventHandler,
     ComponentRoot const & root)
     : RootedObject(root)
     , PartitionedReplicaTraceComponent(partitionId, replicaId)
     , TSComponent()
-    , storeSettings_(move(storeSettings))
     , replicatorSettings_(move(replicatorSettings))
+    , storeSettings_(move(storeSettings))
     , ktlSystem_()
     , stateReplicator_()
     , transactionalReplicator_()
@@ -402,6 +402,9 @@ TSReplicatedStore::TSReplicatedStore(
     , initializedEvent_(false)
     , replicaRole_(FABRIC_REPLICA_ROLE_NONE)
     , isActive_(true)
+    , queryStatusDetailsLock_()
+    , queryStatusDetails_()
+    , migrationDetails_()
     , testHookContext_()
 {
     WriteNoise(
@@ -779,6 +782,67 @@ ErrorCode TSReplicatedStore::UpdateReplicatorSettings(ReplicatorSettingsUPtr con
     }
 
     return ErrorCode::FromHResult(hr);
+}
+
+ErrorCode TSReplicatedStore::GetQueryStatus(__out Api::IStatefulServiceReplicaStatusResultPtr & result)
+{
+    wstring queryStatusDetails;
+    shared_ptr<MigrationQueryResult> migrationDetails;
+    {
+        AcquireReadLock lock(queryStatusDetailsLock_);
+
+        queryStatusDetails = queryStatusDetails_;
+
+        if (migrationDetails_.get() != nullptr)
+        {
+            migrationDetails = make_shared<MigrationQueryResult>(*migrationDetails_);
+        }
+    }
+
+    size_t estimatedRowCount = 0;
+    auto innerStore = this->TryGetTStore();
+    if (innerStore.RawPtr() != nullptr)
+    {
+        estimatedRowCount = innerStore->Count;
+    }
+
+    auto resultSPtr = make_shared<KeyValueStoreQueryResult>(
+        estimatedRowCount,
+        0, // TODO: estimatedDbSize
+        shared_ptr<wstring>(), // copyNotificationPrefix
+        0, // copyNotificationProgress
+        queryStatusDetails,
+        ProviderKind::TStore,
+        move(migrationDetails)); // migration details
+
+    WriteInfo(
+        TraceComponent,
+        "{0}: QueryStatus: {1}",
+        this->TraceId,
+        *resultSPtr);
+
+    auto wrapperSPtr = make_shared<KeyValueStoreQueryResultWrapper>(move(resultSPtr));
+
+    result = Api::IStatefulServiceReplicaStatusResultPtr(
+        wrapperSPtr.get(),
+        wrapperSPtr->CreateComponentRoot());
+
+    return ErrorCodeValue::Success;
+
+}
+
+void TSReplicatedStore::SetQueryStatusDetails(wstring const & status)
+{
+    AcquireWriteLock lock(queryStatusDetailsLock_);
+
+    queryStatusDetails_ = status;
+}
+
+void TSReplicatedStore::SetMigrationQueryResult(unique_ptr<MigrationQueryResult> && details)
+{
+    AcquireWriteLock lock(queryStatusDetailsLock_);
+
+    migrationDetails_ = move(details);
 }
 
 void TSReplicatedStore::Test_SetTestHookContext(TestHooks::TestHookContext const & testHookContext)
@@ -1468,7 +1532,7 @@ IKvs::SPtr TSReplicatedStore::TryGetTStore() const
 IKvsTransaction::SPtr TSReplicatedStore::GetTStoreTransaction(TransactionSPtr const & txSPtr)
 {
     TSTransaction * castedTx = dynamic_cast<TSTransaction *>(txSPtr.get()); 
-
+    ASSERT_IF(castedTx == nullptr, "Failed to cast to TSTransaction");
     return castedTx->GetTStoreTransaction();
 }
 

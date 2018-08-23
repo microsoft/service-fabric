@@ -5,7 +5,7 @@
     {
       "Name": "UpgradeStandalone",
       "Type": "V2_ScriptTest",
-      "Owners": "rsinha,ratando,liphigao",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -18,7 +18,7 @@
     {
       "Name": "UpgradeFailover",
       "Type": "V2_ScriptTest",
-      "Owners": "rsinha,ratando,liphigao",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -31,7 +31,7 @@
     {
       "Name": "InterruptSimpleUpgrade",
       "Type": "V2_ScriptTest",
-      "Owners": "rsinha, ratando,liphigao",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -44,7 +44,7 @@
     {
       "Name": "ScaleUpDownReliability",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:8",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -57,7 +57,7 @@
     {
       "Name": "RemovePrimaryNonSeed",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -70,7 +70,7 @@
     {
       "Name": "RemoveNonPrimary",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -83,7 +83,7 @@
     {
       "Name": "X509Remove",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -96,7 +96,7 @@
     {
       "Name": "RemovePrimarySeed",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -109,7 +109,7 @@
     {
       "Name": "RemovePrimarySeedScaleDown",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -122,7 +122,7 @@
     {
       "Name": "RemoveFailure",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -135,7 +135,7 @@
     {
       "Name": "RemoveUOSPrimary",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -148,7 +148,7 @@
     {
       "Name": "AddPrimary",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:5",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -161,7 +161,7 @@
     {
       "Name": "AddNonPrimary",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -172,9 +172,22 @@
       }
     },
     {
+      "Name": "ConfigUpgradeWithHealthCheck",
+      "Type": "V2_ScriptTest",
+      "Owners": "alsantam,jkochhar",
+      "ResourcesRequired": "Server:6",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_ConfigUpgradeWithHealthCheck.test",
+        "ExecutionTimeout": "14400",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
       "Name": "AddPrimaryScale",
       "Type": "V2_ScriptTest",
-      "Owners": "ratando, liphigao, rsinha",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:6",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -187,7 +200,7 @@
     {
       "Name": "ClusCertUpgrade1Box",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -200,7 +213,7 @@
     {
       "Name": "ClusCertCnUpgrade1Box",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -213,7 +226,7 @@
     {
       "Name": "ClusCertUpgradeMultiBox",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, ratando",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -224,9 +237,61 @@
       }
     },
     {
+      "Name": "StandAloneCodeUpgradeUOS",
+      "Type": "V2_ScriptTest",
+      "Owners": "jkochhar,alsantam",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_CodeUpgradeUOS.test",
+        "ExecutionTimeout": "9000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "StandAloneAutoCodeUpgradeUOS",
+      "Type": "V2_ScriptTest",
+      "Owners": "jkochhar,alsantam",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_AutoCodeUpgradeUOS.test",
+        "ExecutionTimeout": "9000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "StandAloneAutoCodeUpgradeUOSRetry1",
+      "Type": "V2_ScriptTest",
+      "Owners": "jkochhar,alsantam",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_AutoCodeUpgradeUOSRetry1.test",
+        "ExecutionTimeout": "9000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "StandAloneAutoCodeUpgradeUOSRetry2",
+      "Type": "V2_ScriptTest",
+      "Owners": "jkochhar,alsantam",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\StandaloneTests.txt",
+        "TaskName": "UpgradeFabricSA_AutoCodeUpgradeUOSRetry2.test",
+        "ExecutionTimeout": "9000",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
       "Name": "SA_OneNode",
       "Type": "PowershellTest",
-      "Owners": "liphigao,ratando",
+      "Owners": "alsantam,alsantam",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -239,7 +304,7 @@
     {
       "Name": "SA_OneBox",
       "Type": "PowershellTest",
-      "Owners": "maburlik,liphigao,ratando",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -252,7 +317,7 @@
     {
       "Name": "SA_OneboxRemote",
       "Type": "PowershellTest",
-      "Owners": "maburlik,liphigao,ratando",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:2",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -265,7 +330,7 @@
     {
       "Name": "SA_Multibox",
       "Type": "PowershellTest",
-      "Owners": "maburlik,liphigao,ratando",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -278,7 +343,7 @@
     {
       "Name": "SA_MultiboxRemote",
       "Type": "PowershellTest",
-      "Owners": "maburlik,liphigao,ratando",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -291,7 +356,7 @@
     {
       "Name": "SA_AddNode",
       "Type": "PowershellTest",
-      "Owners": "maburlik,liphigao,ratando",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -301,10 +366,24 @@
         "CleanupTimeout": "2100"
       }
     },
+	{
+      "Name": "SA_AddNodeX509",
+      "Type": "PowershellTest",
+	  "Environment": "Iaas",
+      "Owners": "maburlik,liphigao",
+      "ResourcesRequired": "Server:4",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "PSScriptName": ".\\WinFabricTest\\StandaloneNodeTest.ps1",
+        "Arguments": "-StandalonePackagePath ..\\..\\..\\FabricDrop\\StandalonePackage -MachineList '[MACHINES]' -TestName SA_AddNodeX509 -GenerateX509Cert",
+        "ExecutionTimeout": "4200",
+        "CleanupTimeout": "2100"
+      }
+    },
     {
       "Name": "SA_CabDownload",
       "Type": "PowershellTest",
-      "Owners": "maburlik,ratando,liphigao",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -317,7 +396,7 @@
     {
       "Name": "SA_ArpUninstall",
       "Type": "PowershellTest",
-      "Owners": "maburlik,ratando,liphigao,rsinha",
+      "Owners": "maburlik,alsantam,",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -330,7 +409,7 @@
     {
       "Name": "StandAloneOneNodeUnsecure",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao, taxi",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -343,7 +422,7 @@
     {
       "Name": "StandAloneOneNodeX509",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao,taxi",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -357,7 +436,7 @@
       "Name": "StandAloneOneNodeWindows",
       "Type": "V2_ScriptTest",
       "Environment": "Iaas",
-      "Owners": "liphigao,taxi",      
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -371,7 +450,7 @@
       "Name": "SA_OneboxGenX509",
       "Type": "PowershellTest",
       "Environment": "Iaas",
-      "Owners": "maburlik,liphigao,ratando,taxi",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -385,7 +464,7 @@
       "Name": "SA_OnenodeGenX509",
       "Type": "PowershellTest",
       "Environment": "Iaas",
-      "Owners": "maburlik,liphigao,ratando,taxi",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -399,7 +478,7 @@
       "Name": "SA_MulboxGenX509",
       "Type": "PowershellTest",
       "Environment": "Iaas",
-      "Owners": "maburlik,liphigao,ratando,taxi",
+      "Owners": "maburlik,alsantam",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -412,8 +491,8 @@
     {
       "Name": "EndToEndSmokeTestWindowsFabricGMSA",
       "Type": "V2_ScriptTest",
-      "Owners": "rsinha,ratando",      
-      "ResourcesRequired": "Server:4;Group=adtestvm1",
+      "Owners": "alsantam,jkochhar",
+      "ResourcesRequired": "Server:4;Group=adtestvm2",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
         "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
@@ -425,8 +504,8 @@
     {
       "Name": "UpgradeFabricGMSAAddNonPrimary",
       "Type": "V2_ScriptTest",
-      "Owners": "rsinha,ratando",      
-      "ResourcesRequired": "Server:6;Group=adtestvm1",
+      "Owners": "alsantam,jkochhar",      
+      "ResourcesRequired": "Server:6;Group=adtestvm2",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
         "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
@@ -438,8 +517,8 @@
     {
       "Name": "UpgradeFabricGMSAAddPrimary",
       "Type": "V2_ScriptTest",
-      "Owners": "rsinha,ratando",      
-      "ResourcesRequired": "Server:5;Group=adtestvm1",
+      "Owners": "alsantam,jkochhar",      
+      "ResourcesRequired": "Server:5;Group=adtestvm2",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
         "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
@@ -451,8 +530,8 @@
     {
       "Name": "UpgradeFabricGMSAAddPrimaryScale",
       "Type": "V2_ScriptTest",
-      "Owners": "rsinha,ratando",      
-      "ResourcesRequired": "Server:6;Group=adtestvm1",
+      "Owners": "alsantam,jkochhar",      
+      "ResourcesRequired": "Server:6;Group=adtestvm2",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
         "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
@@ -464,8 +543,8 @@
     {
       "Name": "UpgradeFabricSA_gMSAAddFailover",
       "Type": "V2_ScriptTest",
-      "Owners": "rsinha,ratando",      
-      "ResourcesRequired": "Server:6;Group=adtestvm1",
+      "Owners": "alsantam,jkochhar",      
+      "ResourcesRequired": "Server:6;Group=adtestvm2",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
         "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
@@ -477,8 +556,9 @@
     {
       "Name": "UpdateSvcUpgrade",
       "Type": "PowershellTest",
-      "Owners": "liphigao",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
+      "IsEnabled": "false",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
         "PSScriptName": ".\\WinFabricTest\\StandaloneUpdateSvcTest.ps1",
@@ -490,8 +570,9 @@
     {
       "Name": "UpdateSvcTelemetry",
       "Type": "PowershellTest",
-      "Owners": "liphigao",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
+      "IsEnabled": "false",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
         "PSScriptName": ".\\WinFabricTest\\StandaloneTelemetrySvcTest.ps1",
@@ -500,10 +581,10 @@
         "CleanupTimeout": "2100"
       }
     },
-     {
+    {
       "Name": "LogCollectorSA",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -516,7 +597,7 @@
     {
       "Name": "UosDataLossSA",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -529,7 +610,7 @@
     {
       "Name": "BPA",
       "Type": "PowershellTest_BPA",
-      "Owners": "alsantam",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:2",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -542,7 +623,7 @@
     {
       "Name": "BPA_ports",
       "Type": "PowershellTest_BPA",
-      "Owners": "alsantam",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -556,7 +637,7 @@
     {
       "Name": "BPA_CleanInstall",
       "Type": "PowershellTest_BPA",
-      "Owners": "alsantam",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -570,7 +651,7 @@
     {
       "Name": "BPA_DataRoot",
       "Type": "PowershellTest_BPA",
-      "Owners": "alsantam",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -584,7 +665,7 @@
     {
       "Name": "SA_UnhealthyTest",
       "Type": "PowershellTest",
-      "Owners": "alsantam",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -597,7 +678,7 @@
     {
       "Name": "SA_UnhealthyAdd",
       "Type": "PowershellTest_BPA",
-      "Owners": "alsantam",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -610,7 +691,7 @@
     {
       "Name": "SA_1UnhealthyTest",
       "Type": "V2_ScriptTest",
-      "Owners": "alsantam",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",
@@ -623,7 +704,7 @@
     {
       "Name": "SA_2UnhealthyTest",
       "Type": "V2_ScriptTest",
-      "Owners": "alsantam",
+      "Owners": "alsantam,jkochhar",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",

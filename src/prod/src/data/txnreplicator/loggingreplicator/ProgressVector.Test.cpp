@@ -2597,7 +2597,6 @@ namespace LoggingReplicatorTests
                 ProgressVectorEntry expectedTargetProgressVectorEntry(*CreateUpdateEpochLogRecord(0, 5, 0, 13));
                 ULONG const expectedTargetIndex = 2;
                 LONG64 const expectedTargetStartingLsn = Constants::InvalidLsn;
-                std::string expectedFailedValidationMsg = "FailureLsn incremented must be <= 1. It is 2";
 
                 // Setup/input 
                 ProgressVector::SPtr sourceProgressVector = ProgressVector::Create(allocator);
@@ -2640,8 +2639,6 @@ namespace LoggingReplicatorTests
                 VERIFY_ARE_EQUAL(expectedTargetProgressVectorEntry, result.SharedProgressVector.TargetProgressVectorEntry);
                 VERIFY_ARE_EQUAL(expectedTargetIndex, result.SharedProgressVector.TargetIndex);
                 VERIFY_ARE_EQUAL(expectedTargetStartingLsn, result.TargetStartingLsn);
-
-                VERIFY_ARE_EQUAL(expectedFailedValidationMsg, result.SharedProgressVector.FailedValidationMsg);
             }
 
             // SourceEntry != TargetEntry Validation Failure
@@ -2698,6 +2695,66 @@ namespace LoggingReplicatorTests
                 VERIFY_ARE_EQUAL(expectedFailedValidationMsg, result.SharedProgressVector.FailedValidationMsg);
             }
 #endif
+        }
+    }
+
+    BOOST_AUTO_TEST_CASE(FindCopyMode_FullCopy_TargetHavingDataLossAfterSharedPoint)
+    {
+        TEST_TRACE_BEGIN("FindCopyMode_FullCopy_TargetHavingDataLossAfterSharedPoint")
+        {
+            invalidRecords_ = InvalidLogRecords::Create(allocator);
+            CODING_ERROR_ASSERT(invalidRecords_ != nullptr);
+
+            // Expected output
+            int const expectedCopyMode = CopyModeFlag::Enum::Full;
+            FullCopyReason::Enum const expectedFullCopyReason = FullCopyReason::Enum::DataLoss;
+            ProgressVectorEntry expectedSourceProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 3, 1, 10));
+            ULONG const expectedSourceIndex = 2;
+            LONG64 const expectedSourceStartingLsn = Constants::InvalidLsn;
+            ProgressVectorEntry expectedTargetProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 3, 1, 10));
+            ULONG const expectedTargetIndex = 2;
+            LONG64 const expectedTargetStartingLsn = Constants::InvalidLsn;
+
+            // Setup/input 
+            ProgressVector::SPtr sourceProgressVector = ProgressVector::Create(allocator);
+            Epoch sourceLogHeadEpoch = Epoch::ZeroEpoch();
+            LONG64 sourceLogHeadLsn = Constants::ZeroLsn;
+            LONG64 sourceCurrentTailLsn = 12;
+            sourceProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(0, 0, 0, 0)));
+            sourceProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 1, 1, 0)));
+            sourceProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 3, 1, 10)));
+            sourceProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(2, 7, 1, 12)));
+
+            ProgressVector::SPtr targetProgressVector = ProgressVector::Create(allocator);
+            Epoch targetLogHeadEpoch = Epoch::ZeroEpoch();
+            LONG64 targetLogHeadLsn = Constants::ZeroLsn;
+            LONG64 targetCurrentTailLsn = 17;
+            targetProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(0, 0, 0, 0)));
+            targetProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 1, 1, 0)));
+            targetProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 3, 1, 10)));
+            targetProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 4, 1, 12)));
+            targetProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 5, 1, 15)));
+            targetProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(1, 6, 1, 16)));
+            targetProgressVector->Append(ProgressVectorEntry(*CreateUpdateEpochLogRecord(2, 7, 1, 17)));
+
+            LONG64 lastRecoveredAtomicRedoOperationAtTarget = Constants::InvalidLsn;
+
+            CopyContextParameters sourceCopyContextParameters(*sourceProgressVector, sourceLogHeadEpoch, sourceLogHeadLsn, sourceCurrentTailLsn);
+            CopyContextParameters targetCopyContextParameters(*targetProgressVector, targetLogHeadEpoch, targetLogHeadLsn, targetCurrentTailLsn);
+
+            CopyModeResult result = ProgressVector::FindCopyMode(
+                sourceCopyContextParameters,
+                targetCopyContextParameters,
+                lastRecoveredAtomicRedoOperationAtTarget);
+
+            VERIFY_ARE_EQUAL(expectedCopyMode, result.CopyModeEnum);
+            VERIFY_ARE_EQUAL(expectedFullCopyReason, result.FullCopyReasonEnum);
+            VERIFY_ARE_EQUAL(expectedSourceProgressVectorEntry, result.SharedProgressVector.SourceProgressVectorEntry);
+            VERIFY_ARE_EQUAL(expectedSourceIndex, result.SharedProgressVector.SourceIndex);
+            VERIFY_ARE_EQUAL(expectedSourceStartingLsn, result.SourceStartingLsn);
+            VERIFY_ARE_EQUAL(expectedTargetProgressVectorEntry, result.SharedProgressVector.TargetProgressVectorEntry);
+            VERIFY_ARE_EQUAL(expectedTargetIndex, result.SharedProgressVector.TargetIndex);
+            VERIFY_ARE_EQUAL(expectedTargetStartingLsn, result.TargetStartingLsn);
         }
     }
 

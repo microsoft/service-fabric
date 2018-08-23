@@ -62,7 +62,6 @@ clientget fabric:/servicegroup2#test3 20 20Data1
 setsignal 50 fabric:/servicegroup2#test3 provider.statechangedondataloss
 
 addbehavior b3 * * StatefulServiceReopenReply
-addbehavior b4 * * ReplicaDown
 -80 removedata
 -70 removedata
 -60 removedata
@@ -89,7 +88,6 @@ removebehavior b3
 !waitforstate FM.Replica.State.fabric:/servicegroup2.40 Ready
 !waitforstate FM.Replica.State.fabric:/servicegroup2.50 Ready
 verify
-removebehavior b4
 
 # First data should still be retrievable
 clientget fabric:/servicegroup2#test3 10 10Data1

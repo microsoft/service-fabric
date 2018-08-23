@@ -22,6 +22,10 @@
           </ExeHost>
       </EntryPoint>      
     </CodePackage>
+	<ConfigPackagePolicies CodePackageRef="AppUpgradeService.Code">
+	 <ConfigPackage Name="AppUpgradeService.Config" SectionName="UserServiceHostSection" EnvironmentVariableName="SomeFoo" />
+	 <ConfigPackage Name="AppUpgradeService.Config" SectionName="CustomSection" />
+	</ConfigPackagePolicies>
   </DigestedCodePackage>
   <DigestedConfigPackage RolloutVersion="1.0">
     <ConfigPackage Name="AppUpgradeService.Config" Version="1.0" />

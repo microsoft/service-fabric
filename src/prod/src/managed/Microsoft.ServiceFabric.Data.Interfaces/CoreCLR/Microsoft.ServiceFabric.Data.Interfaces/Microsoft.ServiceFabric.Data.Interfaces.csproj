@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Microsoft.ServiceFabric.Data.Interfaces Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Microsoft.ServiceFabric.Data.Interfaces</AssemblyName>
+    <PackageId>Microsoft.ServiceFabric.Data.Interfaces</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+	<DebugType>full</DebugType>
+     <!-- this must be static. todo: move to separate repo bug/6079488 -->
+     <AssemblyVersion>5.0.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\_friends.cs;
+	  ..\..\BackupDescription.cs;
+      ..\..\BackupInfo.cs;
+      ..\..\BackupOption.cs;
+      ..\..\Collections\IReliableConcurrentQueue.cs;
+      ..\..\Collections\QueueFullException.cs;
+      ..\..\ConditionalResult.cs;
+      ..\..\EnumerationMode.cs;
+      ..\..\IAsyncEnumerable.cs;
+      ..\..\IAsyncEnumerator.cs;
+      ..\..\IReliableStateManagerReplica.cs;
+      ..\..\IReliableStateManagerReplica2.cs;
+      ..\..\IReliableState.cs;
+      ..\..\IReliableStateManager.cs;
+      ..\..\IReliableStream.cs;
+      ..\..\IStateProviderReplica.cs;
+      ..\..\IStateProviderReplica2.cs;
+      ..\..\IStateSerializer.cs;
+      ..\..\ITransaction.cs;
+      ..\..\IReliableCollection.cs;
+      ..\..\IReliableDictionary.cs;
+      ..\..\IReliableDictionary2.cs;
+      ..\..\IReliableQueue.cs;
+      ..\..\LockMode.cs;
+      ..\..\Notifications\NotifyDictionaryChangedEventArgs.cs;
+      ..\..\Notifications\NotifyStateManagerChangedAction.cs;
+      ..\..\Notifications\NotifyStateManagerChangedEventArgs.cs;
+      ..\..\Notifications\NotifyStateManagerRebuildEventArgs.cs;
+      ..\..\Notifications\NotifyStateManagerSingleEntityChangedEventArgs.cs;
+      ..\..\Notifications\NotifyTransactionChangedAction.cs;
+      ..\..\Notifications\NotifyTransactionChangedEventArgs.cs;
+      ..\..\ReliableStateManagerConfiguration.cs;
+      ..\..\ReliableStateManagerReplicatorSettings.cs;
+      ..\..\RestoreContext.cs;
+      ..\..\RestoreDescription.cs;
+      ..\..\RestorePolicy.cs" Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

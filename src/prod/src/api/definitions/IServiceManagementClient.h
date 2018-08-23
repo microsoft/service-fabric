@@ -74,6 +74,15 @@ namespace Api
             Common::AsyncOperationSPtr const & operation,
             __inout Naming::PartitionedServiceDescriptor & description) = 0;
 
+        virtual Common::AsyncOperationSPtr BeginGetCachedServiceDescription(
+            Common::NamingUri const & name,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent) = 0;
+        virtual Common::ErrorCode EndGetCachedServiceDescription(
+            Common::AsyncOperationSPtr const & operation,
+            __inout Naming::PartitionedServiceDescriptor & description) = 0;
+
         virtual Common::AsyncOperationSPtr BeginInternalGetServiceDescription(
             Common::NamingUri  const &name,
             Common::ActivityId const& activityId,

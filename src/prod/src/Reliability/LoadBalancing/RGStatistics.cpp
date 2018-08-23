@@ -158,6 +158,12 @@ void RGStatistics::RemoveNode(NodeDescription const& node)
     }
 }
 
+void RGStatistics::UpdateNode(NodeDescription const& node1, NodeDescription const& node2)
+{
+    RemoveNode(node1);
+    AddNode(node2);
+}
+
 void RGStatistics::AddService(ServiceDescription const& serviceDescription)
 {
     if (serviceDescription.ServicePackageActivationMode == ServiceModel::ServicePackageActivationMode::Enum::ExclusiveProcess)
@@ -188,6 +194,12 @@ void RGStatistics::DeleteService(ServiceDescription const& serviceDescription)
     {
         Common::Assert::TestAssert("Unknown service package activation mode found in RGStatistics. Description={0}", serviceDescription);
     }
+}
+
+void RGStatistics::UpdateService(ServiceDescription const & service1, ServiceDescription const & service2)
+{
+    DeleteService(service1);
+    AddService(service2);
 }
 
 void RGStatistics::Update(Snapshot const & snapshot)

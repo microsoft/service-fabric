@@ -40,7 +40,9 @@ ServiceDescription::ServiceDescription()
       isServiceGroup_(false),
       scaleoutCount_(0),
       defaultMoveCost_(FABRIC_MOVE_COST_LOW),
-      servicePackageActivationMode_(ServiceModel::ServicePackageActivationMode::SharedProcess)
+      servicePackageActivationMode_(ServiceModel::ServicePackageActivationMode::SharedProcess),
+      serviceDnsName_(),
+      scalingPolicies_()
 {
 }
 
@@ -70,7 +72,8 @@ ServiceDescription::ServiceDescription(
       placementPolicies_(other.placementPolicies_),
       defaultMoveCost_(other.defaultMoveCost_),
       servicePackageActivationMode_(other.servicePackageActivationMode_),
-      serviceDnsName_(other.serviceDnsName_)
+      serviceDnsName_(other.serviceDnsName_),
+      scalingPolicies_(other.scalingPolicies_)
 {
 }
 
@@ -100,7 +103,8 @@ ServiceDescription::ServiceDescription(
     placementPolicies_(other.placementPolicies_),
     defaultMoveCost_(other.defaultMoveCost_),
     servicePackageActivationMode_(other.servicePackageActivationMode_),
-    serviceDnsName_(other.serviceDnsName_)
+    serviceDnsName_(other.serviceDnsName_),
+    scalingPolicies_(other.scalingPolicies_)
 {
 }
 
@@ -134,7 +138,8 @@ ServiceDescription::ServiceDescription(
     placementPolicies_(other.placementPolicies_),
     defaultMoveCost_(defaultMoveCostOverride),
     servicePackageActivationMode_(other.servicePackageActivationMode_),
-    serviceDnsName_(other.serviceDnsName_)
+    serviceDnsName_(other.serviceDnsName_),
+    scalingPolicies_(other.scalingPolicies_)
 {
 }
 
@@ -164,7 +169,8 @@ ServiceDescription::ServiceDescription(
         defaultMoveCost_(other.defaultMoveCost_),
         initializationData_(other.initializationData_),
         servicePackageActivationMode_(other.servicePackageActivationMode_),
-        serviceDnsName_(other.serviceDnsName_)
+        serviceDnsName_(other.serviceDnsName_),
+        scalingPolicies_(other.scalingPolicies_)
 {
 }
 
@@ -190,7 +196,8 @@ ServiceDescription::ServiceDescription(
     std::wstring const & applicationName,
     vector<ServiceModel::ServicePlacementPolicyDescription> const& placementPolicies,
     ServiceModel::ServicePackageActivationMode::Enum servicePackageActivationMode,
-    std::wstring const & serviceDnsName) :
+    std::wstring const & serviceDnsName,
+    std::vector<Reliability::ServiceScalingPolicyDescription> const & scalingPolicies) :
       name_(name),
       instance_(instance),
       updateVersion_(updateVersion),
@@ -214,7 +221,8 @@ ServiceDescription::ServiceDescription(
       initializationData_(std::move(initializationData)),
       placementPolicies_(placementPolicies),
       servicePackageActivationMode_(servicePackageActivationMode),
-      serviceDnsName_(serviceDnsName)
+      serviceDnsName_(serviceDnsName),
+      scalingPolicies_(scalingPolicies)
 {
     StringUtility::ToLower(serviceDnsName_);
 
@@ -280,6 +288,7 @@ ServiceDescription & ServiceDescription::operator = (ServiceDescription const& o
         initializationData_ = other.initializationData_;
         servicePackageActivationMode_ = other.servicePackageActivationMode_;
         serviceDnsName_ = other.serviceDnsName_;
+        scalingPolicies_ = other.scalingPolicies_;
     }
 
     return *this;
@@ -313,6 +322,7 @@ ServiceDescription & ServiceDescription::operator = (ServiceDescription && other
         placementPolicies_ = std::move(other.placementPolicies_);
         servicePackageActivationMode_ = std::move(other.servicePackageActivationMode_);
         serviceDnsName_ = std::move(other.serviceDnsName_);
+        scalingPolicies_ = std::move(other.scalingPolicies_);
     }
 
     return *this;
@@ -384,14 +394,15 @@ void ServiceDescription::WriteTo(TextWriter& writer, FormatOptions const&) const
         hasPersistedState_ && quorumLossWaitDuration_ >= TimeSpan::Zero ? formatString(quorumLossWaitDuration_) : "",
         hasPersistedState_ && standByReplicaKeepDuration_ >= TimeSpan::Zero ? formatString(standByReplicaKeepDuration_) : "");
 
-    writer.Write(" {0} {1} {2} {3} {4} {5} {6}",
+    writer.Write(" {0} {1} {2} {3} {4} {5} {6} init={7}bytes",
         serviceCorrelations_,
         placementConstraints_,
         scaleoutCount_,
         metrics_,
         defaultMoveCost_,
         placementPolicies_,
-        isServiceGroup_);
+        isServiceGroup_,
+        initializationData_.size());
 }
 
 void ServiceDescription::WriteToEtw(uint16 contextSequenceId) const
@@ -405,14 +416,15 @@ void ServiceDescription::WriteToEtw(uint16 contextSequenceId) const
         hasPersistedState_ ? formatString(QuorumLossWaitDuration) : "",
         hasPersistedState_ ? formatString(StandByReplicaKeepDuration) : "");
 
-    std::wstring details2 = wformatString(" {0} {1} {2} {3} {4} {5} {6}",
+    std::wstring details2 = wformatString(" {0} {1} {2} {3} {4} {5} {6} init={7}bytes",
         serviceCorrelations_,
         placementConstraints_,
         scaleoutCount_,
         metrics_,
         defaultMoveCost_,
         placementPolicies_,
-        isServiceGroup_);
+        isServiceGroup_,
+        initializationData_.size());
 
     details.append(details2);
 
@@ -473,29 +485,45 @@ bool ServiceDescription::operator == (ServiceDescription const & other) const
             }
         }
     }
-         
+
+    if (isEqual)
+    {
+        isEqual = (scalingPolicies_.size() == other.scalingPolicies_.size());
+        if (isEqual)
+        {
+            for (size_t index = 0; index < scalingPolicies_.size(); ++index)
+            {
+                isEqual = scalingPolicies_[index].Equals(other.scalingPolicies_[index], true);
+                if (!isEqual)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
     return isEqual &&
         (name_ == other.name_ &&
-        type_ == other.type_ &&
-        applicationName_ == other.applicationName_ &&
-        packageVersionInstance_ == other.packageVersionInstance_ &&
+            type_ == other.type_ &&
+            applicationName_ == other.applicationName_ &&
+            packageVersionInstance_ == other.packageVersionInstance_ &&
 
-        partitionCount_ == other.partitionCount_ &&
-        targetReplicaSetSize_ == other.targetReplicaSetSize_ &&
-        minReplicaSetSize_ == other.minReplicaSetSize_ &&
-        isStateful_ == other.isStateful_ &&
-        hasPersistedState_ == other.hasPersistedState_ &&
-        replicaRestartWaitDuration_ == other.replicaRestartWaitDuration_ &&
-        quorumLossWaitDuration_ == other.quorumLossWaitDuration_ &&
-        standByReplicaKeepDuration_ == other.standByReplicaKeepDuration_ &&
-        isServiceGroup_ == other.isServiceGroup_ &&
+            partitionCount_ == other.partitionCount_ &&
+            targetReplicaSetSize_ == other.targetReplicaSetSize_ &&
+            minReplicaSetSize_ == other.minReplicaSetSize_ &&
+            isStateful_ == other.isStateful_ &&
+            hasPersistedState_ == other.hasPersistedState_ &&
+            replicaRestartWaitDuration_ == other.replicaRestartWaitDuration_ &&
+            quorumLossWaitDuration_ == other.quorumLossWaitDuration_ &&
+            standByReplicaKeepDuration_ == other.standByReplicaKeepDuration_ &&
+            isServiceGroup_ == other.isServiceGroup_ &&
 
-        placementConstraints_ == other.placementConstraints_ &&
-        placementPolicies_ == other.placementPolicies_ &&
-        scaleoutCount_ == other.scaleoutCount_ &&
-        defaultMoveCost_ == other.defaultMoveCost_ &&
-        servicePackageActivationMode_ == other.servicePackageActivationMode_ &&
-        StringUtility::AreEqualCaseInsensitive(serviceDnsName_, other.serviceDnsName_));
+            placementConstraints_ == other.placementConstraints_ &&
+            placementPolicies_ == other.placementPolicies_ &&
+            scaleoutCount_ == other.scaleoutCount_ &&
+            defaultMoveCost_ == other.defaultMoveCost_ &&
+            servicePackageActivationMode_ == other.servicePackageActivationMode_ &&
+            StringUtility::AreEqualCaseInsensitive(serviceDnsName_, other.serviceDnsName_));
 }
 
 bool ServiceDescription::operator != (ServiceDescription const & other) const

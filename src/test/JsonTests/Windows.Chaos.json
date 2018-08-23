@@ -5,7 +5,7 @@
     {
       "Name": "AzureChaosTest",
       "Type": "Azure_Chaos",
-      "Owners": "motanv,anmola,likevi",
+      "Owners": "motanv,likevi",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -20,7 +20,7 @@
     {
       "Name": "AzureChaosTestWithGlobalUnreliableTransport_All_OneInAHundred_1_59",
       "Type": "Azure_Chaos",
-      "Owners": "motanv,anmola,likevi",
+      "Owners": "motanv,likevi",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -35,7 +35,7 @@
 	{
       "Name": "RandomTestDefault",
       "Type": "Server_Chaos",
-      "Owners": "motanv,anmola,likevi",
+      "Owners": "motanv,likevi",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
         "SetupTimeout": "900",

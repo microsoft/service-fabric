@@ -9,9 +9,9 @@ using namespace std;
 using namespace Common;
 using namespace ServiceModel;
 
-ApplicationServiceDescription::ApplicationServiceDescription() 
-    : 
-    ServiceTypeName(), 
+ApplicationServiceDescription::ApplicationServiceDescription()
+    :
+    ServiceTypeName(),
     IsStateful(),
     IsServiceGroup(),
     Partition(),
@@ -30,106 +30,6 @@ ApplicationServiceDescription::ApplicationServiceDescription()
     DefaultMoveCost(FABRIC_MOVE_COST_LOW),
     IsDefaultMoveCostSpecified(false)
 {
-}
-
-ApplicationServiceDescription::ApplicationServiceDescription(ApplicationServiceDescription const & other) 
-    : 
-    ServiceTypeName(other.ServiceTypeName),  
-    IsStateful(other.IsStateful),
-    IsServiceGroup(other.IsServiceGroup),
-    Partition(other.Partition),
-    InstanceCount(other.InstanceCount),
-    TargetReplicaSetSize(other.TargetReplicaSetSize),
-    MinReplicaSetSize(other.MinReplicaSetSize),
-    ReplicaRestartWaitDuration(other.ReplicaRestartWaitDuration),
-    QuorumLossWaitDuration(other.QuorumLossWaitDuration),
-    StandByReplicaKeepDuration(other.StandByReplicaKeepDuration),
-    PlacementConstraints(other.PlacementConstraints),
-    IsPlacementConstraintsSpecified(other.IsPlacementConstraintsSpecified),
-    LoadMetrics(other.LoadMetrics),
-    ServiceCorrelations(other.ServiceCorrelations),
-    ServiceGroupMembers(other.ServiceGroupMembers),
-    ServicePlacementPolicies(other.ServicePlacementPolicies),
-    DefaultMoveCost(other.DefaultMoveCost),
-    IsDefaultMoveCostSpecified(other.IsDefaultMoveCostSpecified)
-{
-}
-
-ApplicationServiceDescription::ApplicationServiceDescription(ApplicationServiceDescription && other) 
-    : 
-    ServiceTypeName(move(other.ServiceTypeName)), 
-    IsStateful(other.IsStateful),
-    IsServiceGroup(other.IsServiceGroup),
-    Partition(move(other.Partition)),
-    InstanceCount(move(other.InstanceCount)),
-    TargetReplicaSetSize(move(other.TargetReplicaSetSize)),
-    MinReplicaSetSize(move(other.MinReplicaSetSize)),
-    ReplicaRestartWaitDuration(other.ReplicaRestartWaitDuration),
-    QuorumLossWaitDuration(other.QuorumLossWaitDuration),
-    StandByReplicaKeepDuration(other.StandByReplicaKeepDuration),
-    PlacementConstraints(move(other.PlacementConstraints)),
-    IsPlacementConstraintsSpecified(move(other.IsPlacementConstraintsSpecified)),
-    LoadMetrics(move(other.LoadMetrics)),
-    ServiceCorrelations(move(other.ServiceCorrelations)),
-    ServiceGroupMembers(move(other.ServiceGroupMembers)),
-    ServicePlacementPolicies(other.ServicePlacementPolicies),
-    DefaultMoveCost(other.DefaultMoveCost),
-    IsDefaultMoveCostSpecified(other.IsDefaultMoveCostSpecified)
-{
-}
-
-ApplicationServiceDescription const & ApplicationServiceDescription::operator = (ApplicationServiceDescription const & other)
-{
-    if (this != &other)
-    {
-        this->ServiceTypeName = other.ServiceTypeName;
-        this->IsStateful = other.IsStateful;
-        this->IsServiceGroup = other.IsServiceGroup;
-        this->Partition = other.Partition;
-        this->InstanceCount = other.InstanceCount;
-        this->TargetReplicaSetSize = other.TargetReplicaSetSize;
-        this->MinReplicaSetSize = other.MinReplicaSetSize;
-        this->ReplicaRestartWaitDuration = other.ReplicaRestartWaitDuration;
-        this->QuorumLossWaitDuration = other.QuorumLossWaitDuration;
-        this->StandByReplicaKeepDuration = other.StandByReplicaKeepDuration;
-        this->PlacementConstraints = other.PlacementConstraints;
-        this->IsPlacementConstraintsSpecified = other.IsPlacementConstraintsSpecified;
-        this->LoadMetrics = other.LoadMetrics;
-        this->ServiceCorrelations = other.ServiceCorrelations;
-        this->ServiceGroupMembers = other.ServiceGroupMembers;
-        this->ServicePlacementPolicies = other.ServicePlacementPolicies;
-        this->DefaultMoveCost = other.DefaultMoveCost;
-        this->IsDefaultMoveCostSpecified = other.IsDefaultMoveCostSpecified;
-    }
-
-    return *this;
-}
-
-ApplicationServiceDescription const & ApplicationServiceDescription::operator = (ApplicationServiceDescription && other)
-{
-    if (this != &other)
-    {
-        this->ServiceTypeName = move(other.ServiceTypeName);
-        this->IsStateful = move(other.IsStateful);
-        this->IsServiceGroup = other.IsServiceGroup;
-        this->Partition = move(other.Partition);
-        this->InstanceCount = move(other.InstanceCount);
-        this->TargetReplicaSetSize = move(other.TargetReplicaSetSize);
-        this->MinReplicaSetSize = move(other.MinReplicaSetSize);
-        this->ReplicaRestartWaitDuration = other.ReplicaRestartWaitDuration;
-        this->QuorumLossWaitDuration = other.QuorumLossWaitDuration;
-        this->StandByReplicaKeepDuration = other.StandByReplicaKeepDuration;
-        this->PlacementConstraints = move(other.PlacementConstraints);
-        this->IsPlacementConstraintsSpecified = move(other.IsPlacementConstraintsSpecified);
-        this->LoadMetrics = move(other.LoadMetrics);
-        this->ServiceCorrelations = move(other.ServiceCorrelations);
-        this->ServiceGroupMembers = move(other.ServiceGroupMembers);
-        this->ServicePlacementPolicies = move(other.ServicePlacementPolicies);
-        this->DefaultMoveCost = other.DefaultMoveCost;
-        this->IsDefaultMoveCostSpecified = other.IsDefaultMoveCostSpecified;
-    }
-
-    return *this;
 }
 
 bool ApplicationServiceDescription::operator == (ApplicationServiceDescription const & other) const
@@ -206,6 +106,24 @@ bool ApplicationServiceDescription::operator == (ApplicationServiceDescription c
         if (!equals) { return equals; }
     }
 
+    if (equals)
+    {
+        equals = (ScalingPolicies.size() == other.ScalingPolicies.size());
+        if (equals)
+        {
+            for (size_t index = 0; index < ScalingPolicies.size(); ++index)
+            {
+                equals = ScalingPolicies[index].Equals(other.ScalingPolicies[index], true);
+                if (!equals)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!equals) { return equals; }
+
 
     return equals;
 }
@@ -260,6 +178,12 @@ void ApplicationServiceDescription::WriteTo(__in TextWriter & w, FormatOptions c
     for(auto iter = ServicePlacementPolicies.cbegin(); iter != ServicePlacementPolicies.cend(); ++ iter)
     {
         w.Write("{0},",*iter);
+    }
+    w.Write("}");
+    w.Write("ServiceScalingPolicies = {");
+    for (auto & scalingPolicy : ScalingPolicies)
+    {
+        w.Write("{0},", scalingPolicy);
     }
     w.Write("}");
 
@@ -442,6 +366,7 @@ void ApplicationServiceDescription::ReadFromXml(XmlReaderUPtr const & xmlReader,
     ParsePlacementConstraints(xmlReader);
     ParseServiceCorrelations(xmlReader);
     ParseServicePlacementPolicies(xmlReader);
+    ParseScalingPolicy(xmlReader);
 
     if (isServiceGroup)
     {
@@ -676,6 +601,35 @@ void ApplicationServiceDescription::ParseServiceGroupMembers(Common::XmlReaderUP
     }
 }
 
+void ApplicationServiceDescription::ParseScalingPolicy(XmlReaderUPtr const & xmlReader)
+{
+    if (xmlReader->IsStartElement(
+        *SchemaNames::Element_ServiceScalingPolicies,
+        *SchemaNames::Namespace,
+        false))
+    {
+        xmlReader->ReadStartElement();
+
+        bool done = false;
+        while (!done)
+        {
+            if (xmlReader->IsStartElement(
+                *SchemaNames::Element_ScalingPolicy,
+                *SchemaNames::Namespace))
+            {
+                Reliability::ServiceScalingPolicyDescription scalingDescription;
+                scalingDescription.ReadFromXml(xmlReader);
+                this->ScalingPolicies.push_back(scalingDescription);
+            }
+            else
+            {
+                done = true;
+            }
+        }
+
+        xmlReader->ReadEndElement();
+    }
+}
 
 ErrorCode ApplicationServiceDescription::WriteToXml(XmlWriterUPtr const & xmlWriter)
 {
@@ -795,6 +749,13 @@ ErrorCode ApplicationServiceDescription::WriteToXml(XmlWriterUPtr const & xmlWri
 	{
 		return er;
 	}
+
+    er = WriteScalingPolicy(xmlWriter);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+
 	if (this->IsServiceGroup)
 	{
 		er = WriteMembers(xmlWriter);
@@ -878,6 +839,28 @@ ErrorCode ApplicationServiceDescription::WriteServicePlacementPolicies(XmlWriter
 	return xmlWriter->WriteEndElement();
 }
 
+ErrorCode ApplicationServiceDescription::WriteScalingPolicy(XmlWriterUPtr const & xmlWriter)
+{
+    if (this->ScalingPolicies.size() == 0)
+    {
+        return ErrorCode::Success();
+    }
+    ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_ServiceScalingPolicies, L"", *SchemaNames::Namespace);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    for (auto & scalingPolicy : ScalingPolicies)
+    {
+        er = scalingPolicy.WriteToXml(xmlWriter);
+        if (!er.IsSuccess())
+        {
+            return er;
+        }
+    }
+    return xmlWriter->WriteEndElement();
+}
+
 ErrorCode ApplicationServiceDescription::WriteMembers(XmlWriterUPtr const & xmlWriter)
 {
 	//Open <Members>
@@ -921,4 +904,5 @@ void ApplicationServiceDescription::clear()
     this->ServiceTypeName.clear();
     this->Partition.clear();
     this->ServiceGroupMembers.clear();
+    this->ScalingPolicies.clear();
 }

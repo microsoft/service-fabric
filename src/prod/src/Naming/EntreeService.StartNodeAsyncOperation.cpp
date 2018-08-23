@@ -104,14 +104,24 @@ namespace Naming
         {                           
             if (messageIsForCurrentNode)
             {
-                if ((startNodeRequestBody_.InstanceId != 0) && // 0 means the user does not care about a specific instance
-                    (!IncomingInstanceIdMatchesFile(startNodeRequestBody_)))
-                {
-                    this->SetReplyAndComplete(
-                        thisSPtr, 
-                        NamingMessage::GetStartNodeReply(), 
-                        ErrorCodeValue::InstanceIdMismatch);
-                    return;
+                if (startNodeRequestBody_.InstanceId != 0)  // 0 means the user does not care about a specific instance
+                {                    
+                    ErrorCode fileError = IncomingInstanceIdMatchesFile(startNodeRequestBody_);
+                    if (!fileError.IsSuccess())
+                    {
+                        ErrorCodeValue::Enum inner = fileError.ReadValue();
+                        if (inner == ErrorCodeValue::FileNotFound)
+                        {
+                            // This means another start just happened is in-flight - this node should go down soon, then come up as a normal node.
+                            inner = ErrorCodeValue::Success;
+                        }
+                        
+                        this->SetReplyAndComplete(
+                            thisSPtr, 
+                            NamingMessage::GetStartNodeReply(), 
+                            inner);
+                        return;
+                    }                  
                 }
 
                 // Delete the file
@@ -469,10 +479,9 @@ namespace Naming
         return error; 
     }
 
-    bool EntreeService::StartNodeAsyncOperation::IncomingInstanceIdMatchesFile(StartNodeRequestMessageBody const & body)
+    ErrorCode EntreeService::StartNodeAsyncOperation::IncomingInstanceIdMatchesFile(StartNodeRequestMessageBody const & body)
     {
-        wstring lockFile = wformatString("{0}.lock", Properties.AbsolutePathToStartStopFile);
-
+        wstring lockFile = wformatString("{0}.lock", Properties.AbsolutePathToStartStopFile);        
         uint64 instanceIdFromFile = 0;
         {
             ExclusiveFile fileLock(lockFile);
@@ -486,11 +495,17 @@ namespace Naming
                     lockFile,
                     err);
 
-                return false;
+                return ErrorCodeValue::Timeout;
             }
 
-	    std::string absolutePathToStartFile;
-            StringUtility::Utf16ToUtf8(Properties.AbsolutePathToStartStopFile, absolutePathToStartFile);
+            std::string absolutePathToStartFile;
+            if (!File::Exists(Properties.AbsolutePathToStartStopFile))
+            {
+                return ErrorCodeValue::FileNotFound;
+            }
+            
+            StringUtility::Utf16ToUtf8(Properties.AbsolutePathToStartStopFile, absolutePathToStartFile);            
+            
 #if !defined(PLATFORM_UNIX)            
             std::wifstream startStopFile(absolutePathToStartFile);
 #else
@@ -507,7 +522,14 @@ namespace Naming
             instanceIdFromFile,
             body.InstanceId);      
 
-        return body.InstanceId == instanceIdFromFile;       
+        if (body.InstanceId == instanceIdFromFile)
+        {
+            return ErrorCodeValue::Success;
+        }
+        else
+        {
+            return ErrorCodeValue::InstanceIdMismatch;
+        }
     }    
     
     bool EntreeService::StartNodeAsyncOperation::IsNodeRunning(FABRIC_QUERY_NODE_STATUS nodeStatus)

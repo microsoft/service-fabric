@@ -21,7 +21,7 @@ namespace Reliability
 
                 void ProcessRuntimeClosed(std::wstring const & hostId, std::wstring const & runtimeId);
 
-                void ProcessAppHostClosed(std::wstring const & hostId);
+                void ProcessAppHostClosed(std::wstring const & hostId, Common::ActivityDescription const & activityDescription);
 
             private:
                 bool CanProcessEvent(std::wstring const & activityId, bool doesEventCauseReplicaOpen);                

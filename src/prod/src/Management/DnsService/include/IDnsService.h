@@ -36,7 +36,9 @@ namespace DNS
             NodeDnsCacheHealthCheckIntervalInSeconds(5),
             NumberOfConcurrentQueries(1),
             MaxMessageSizeInKB(8),
-            MaxCacheSize(5000)
+            MaxCacheSize(5000),
+            AllowMultipleListeners(false),
+            EnablePartitionedQuery(false)
         {
         }
 
@@ -51,6 +53,10 @@ namespace DNS
         ULONG NumberOfConcurrentQueries;
         ULONG MaxMessageSizeInKB;
         ULONG MaxCacheSize;
+        bool AllowMultipleListeners;      // Set socket SO_REUSEADDR flag.
+        KString::SPtr PartitionPrefix;
+        KString::SPtr PartitionSuffix;
+        bool EnablePartitionedQuery;
     };
 
     void CreateDnsService(

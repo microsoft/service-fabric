@@ -12,11 +12,12 @@ using namespace Common;
 NTSTATUS CopyManager::Create(
     __in StoreTraceComponent & traceComponent,
     __in KAllocator & allocator,
+    __in StorePerformanceCountersSPtr & perfCounters,
     __out SPtr & result)
 {
     NTSTATUS status;
 
-    SPtr output = _new(COPY_MANAGER_TAG, allocator) CopyManager(traceComponent);
+    SPtr output = _new(COPY_MANAGER_TAG, allocator) CopyManager(traceComponent, perfCounters);
 
     if (!output)
     {
@@ -34,14 +35,16 @@ NTSTATUS CopyManager::Create(
 }
 
 CopyManager::CopyManager(
-    __in StoreTraceComponent & traceComponent) :
+    __in StoreTraceComponent & traceComponent,
+    __in StorePerformanceCountersSPtr & perfCounters) :
     copyCompleted_(true), // Starting at true in case of empty copy
     currentCopyFileNameSPtr_(nullptr),
     currentCopyFileStreamSPtr_(nullptr),
     copyProtocolVersion_(InvalidCopyProtocolVersion),
     fileCount_(0),
     metadataTableSPtr_(nullptr),
-    traceComponent_(&traceComponent)
+    traceComponent_(&traceComponent),
+    perfCounterWriter_(perfCounters)
 {
 }
 
@@ -254,7 +257,9 @@ ktl::Awaitable<void> CopyManager::ProcessStartKeyFileCopyOperationAsync(__in KSt
         STORE_ASSERT(NT_SUCCESS(status), "Unable to open file stream for file {1}", fullCopyFileName->operator LPCWSTR());
 
         // Write everything in the buffer up to the fileId
+        perfCounterWriter_.StartMeasurement();
         status = co_await currentCopyFileStreamSPtr_->WriteAsync(*dataSPtr, 0, fileIdOffset);
+        perfCounterWriter_.StopMeasurement(fileIdOffset);
         Diagnostics::Validate(status);
     }
     catch (ktl::Exception const & e)
@@ -277,12 +282,13 @@ ktl::Awaitable<void> CopyManager::ProcessWriteKeyFileCopyOperationAsync(__in KSt
 
     try
     {
+        ULONG32 receivedBytes = data.QuerySize();
         StoreEventSource::Events->CopyManagerProcessWriteKeyFileCopyOperation(
             traceComponent_->PartitionId,
             traceComponent_->TraceTag,
             ToStringLiteral(directory), 
             ToStringLiteral(*currentCopyFileNameSPtr_),
-            data.QuerySize());
+            receivedBytes);
 
         // Consistency checks
         STORE_ASSERT(copyProtocolVersion_ != InvalidCopyProtocolVersion, "unexpected copy operation: WriteKeyFile received before Version operation");
@@ -290,7 +296,10 @@ ktl::Awaitable<void> CopyManager::ProcessWriteKeyFileCopyOperationAsync(__in KSt
         STORE_ASSERT(currentCopyFileStreamSPtr_ != nullptr, "unexpected copy operation: WriteKeyFile received before StartKeyFile");
 
         // Append the data to the existing checkpoint file stream
+        
+        perfCounterWriter_.StartMeasurement();
         auto status = co_await currentCopyFileStreamSPtr_->WriteAsync(data);
+        perfCounterWriter_.StopMeasurement(receivedBytes);
         Diagnostics::Validate(status);
     }
     catch (ktl::Exception const & e)
@@ -326,7 +335,9 @@ ktl::Awaitable<void> CopyManager::ProcessEndKeyFileCopyOperationAsync(__in KStri
             currentCopyFileStreamSPtr_->Position);
 
         // Flush and close the current copied checkpoint file stream.
+        perfCounterWriter_.StartMeasurement();
         auto status = co_await currentCopyFileStreamSPtr_->FlushAsync();
+        perfCounterWriter_.StopMeasurement();
         Diagnostics::Validate(status);
 
         if (currentCopyFileStreamSPtr_ != nullptr)
@@ -407,7 +418,9 @@ ktl::Awaitable<void> CopyManager::ProcessStartValueFileCopyOperationAsync(__in K
         STORE_ASSERT(NT_SUCCESS(status), "Unable to open file stream for file {1}", fullCopyFileName->operator LPCWSTR());
 
         // Write everything in the buffer up to the fileId
+        perfCounterWriter_.StartMeasurement();
         status = co_await currentCopyFileStreamSPtr_->WriteAsync(*dataSPtr, 0, fileIdOffset);
+        perfCounterWriter_.StopMeasurement(fileIdOffset);
         Diagnostics::Validate(status);
     }
     catch (ktl::Exception const & e)
@@ -430,12 +443,13 @@ ktl::Awaitable<void> CopyManager::ProcessWriteValueFileCopyOperationAsync(__in K
 
     try
     {
+        ULONG32 receivedBytes = data.QuerySize();
         StoreEventSource::Events->CopyManagerProcessWriteValueFileCopyOperation(
             traceComponent_->PartitionId,
             traceComponent_->TraceTag,
             ToStringLiteral(directory),
             ToStringLiteral(*currentCopyFileNameSPtr_),
-            data.QuerySize());
+            receivedBytes);
 
         // Consistency checks
         STORE_ASSERT(copyProtocolVersion_ != InvalidCopyProtocolVersion, "unexpected copy operation: WriteValueFile before Version operation");
@@ -443,7 +457,9 @@ ktl::Awaitable<void> CopyManager::ProcessWriteValueFileCopyOperationAsync(__in K
         STORE_ASSERT(currentCopyFileStreamSPtr_ != nullptr, "unexpected copy operation: WriteValueFile received before StartKeyFile");
 
         // Append the data to the existing checkpoint file stream
+        perfCounterWriter_.StartMeasurement();
         auto status = co_await currentCopyFileStreamSPtr_->WriteAsync(data);
+        perfCounterWriter_.StopMeasurement(receivedBytes);
         Diagnostics::Validate(status);
     }
     catch (ktl::Exception const & e)
@@ -479,7 +495,9 @@ ktl::Awaitable<void> CopyManager::ProcessEndValueFileCopyOperationAsync(__in KSt
         STORE_ASSERT(currentCopyFileNameSPtr_ != nullptr, "unexpected copy operation: EndValueFile received when we don't have a valid checkpoint file");
 
         // Flush and close the current copied checkpoint file stream.
+        perfCounterWriter_.StartMeasurement();
         auto status = co_await currentCopyFileStreamSPtr_->FlushAsync();
+        perfCounterWriter_.StopMeasurement();
         Diagnostics::Validate(status);
 
         if (currentCopyFileStreamSPtr_ != nullptr)
@@ -511,11 +529,16 @@ ktl::Awaitable<void> CopyManager::ProcessEndValueFileCopyOperationAsync(__in KSt
 
 ktl::Awaitable<void> CopyManager::ProcessCompleteCopyOperationAsync(__in KStringView const & directory)
 {
+    perfCounterWriter_.UpdatePerformanceCounter();
     SharedException::CSPtr exceptionCSPtr = nullptr;
     
     try
     {
-        StoreEventSource::Events->CopyManagerProcessCompleteCopyOperation(traceComponent_->PartitionId, traceComponent_->TraceTag, ToStringLiteral(directory));
+        StoreEventSource::Events->CopyManagerProcessCompleteCopyOperation(
+            traceComponent_->PartitionId,
+            traceComponent_->TraceTag,
+            ToStringLiteral(directory),
+            perfCounterWriter_.AvgDiskTransferBytesPerSec);
 
         // Consistency checks
         STORE_ASSERT(copyProtocolVersion_ != InvalidCopyProtocolVersion, "unexpected copy operation: Complete received before Version operation");

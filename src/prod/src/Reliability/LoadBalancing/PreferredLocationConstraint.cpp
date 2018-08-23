@@ -173,7 +173,7 @@ bool PreferredLocationSubspace::IsNodeInOverloadedDomain(
         {
             size_t replicaLimit = partition->MaxReplicasPerDomain;
 
-            if (childDomainsCount * replicaLimit < partition->Service->TargetReplicaSetSize)
+            if (childDomainsCount * replicaLimit < partition->TargetReplicaSetSize)
             {
                 ++replicaLimit;
             }
@@ -269,16 +269,22 @@ void PreferredLocationConstraint::GetTargetNodes(
     bool hasPreferredLocations = partition->ExistsUpgradeLocation || !partition->StandByLocations.empty();
 
     set<Common::TreeNodeIndex> const& upgradedUDs = PreferredLocationConstraint::GetUpgradedUDs(tempSolution, partition);
-    bool hasUpgradCompletedUDs = !upgradedUDs.empty();
+    bool hasUpgradeCompletedUDs = !upgradedUDs.empty();
 
-    if (replica->IsNew && !hasPreferredLocations && !hasUpgradCompletedUDs)
+    // preferred container placement is enabled if config for it is enabled and replica has some required images
+    bool hasPreferredContainerPlacement =
+        tempSolution.OriginalPlacement->Settings.PreferNodesForContainerPlacement &&
+        replica->Partition->Service->ServicePackage != nullptr &&
+        !replica->Partition->Service->ServicePackage->ContainerImages.empty();
+
+    if (replica->IsNew && !hasPreferredLocations && !hasUpgradeCompletedUDs && !hasPreferredContainerPlacement)
     {
         return;
     }
 
     // Use prefer locations if exist, otherwise, use completed UDs
     NodeSet nodesUpgradedUDs(candidateNodes);
-    if (!hasPreferredLocations && hasUpgradCompletedUDs)
+    if (!hasPreferredLocations && hasUpgradeCompletedUDs)
     {
         // Only prefer upgraded nodes if SB/Upgrade location is empty
         nodesUpgradedUDs.Filter([&](NodeEntry const *node) -> bool
@@ -287,6 +293,14 @@ void PreferredLocationConstraint::GetTargetNodes(
         });
     }
 
+    NodeSet nodesPreferredContainerPlacement(candidateNodes);
+    if (hasPreferredContainerPlacement)
+    {
+        // for container replicas use nodes with images
+        FilterPreferredNodesWithImages(nodesPreferredContainerPlacement, replica);
+    }
+
+    bool preferExistingReplicaLocations = tempSolution.OriginalPlacement->Settings.PreferExistingReplicaLocations;
     candidateNodes.Intersect([=](function<void(NodeEntry const *)> f)
     {
         // During singleton replica upgrade, there could be replicas which are not in upgrade,
@@ -312,17 +326,47 @@ void PreferredLocationConstraint::GetTargetNodes(
             f(*itNode);
         }
 
-        partition->ForEachExistingReplica([&f](PlacementReplica const* r)
+        if (preferExistingReplicaLocations)
         {
-            f(r->Node);
-        }, true, false);
-
+            partition->ForEachExistingReplica([&f](PlacementReplica const* r)
+            {
+                f(r->Node);
+            }, true, false);
+        }
     });
 
-    if (!hasPreferredLocations && hasUpgradCompletedUDs)
+    if (hasPreferredContainerPlacement)
+    {
+        // for container replicas use nodes with images
+        candidateNodes.Union(nodesPreferredContainerPlacement);
+    }
+
+    if (!hasPreferredLocations && hasUpgradeCompletedUDs)
     {
         candidateNodes.Union(nodesUpgradedUDs);
     }
+}
+
+void PreferredLocationConstraint::FilterPreferredNodesWithImages(
+    NodeSet & nodesPreferredContainerPlacement,
+    PlacementReplica const* replica) const
+{
+    auto requiredImages = replica->Partition->Service->ServicePackage->ContainerImages;
+    int minRequiredImages = requiredImages.size() == 1 ? 1 : static_cast<int>(floor((requiredImages.size() / 2)));
+    // Filter out the nodes which have at least half of the number of the required images
+    nodesPreferredContainerPlacement.Filter([&requiredImages, &minRequiredImages](NodeEntry const *node) -> bool
+    {
+        int numberOfRequiredImagesOnNode = 0;
+        for (auto& image : requiredImages)
+        {
+            if (std::find(node->NodeImages.begin(), node->NodeImages.end(), image) != node->NodeImages.end())
+            {
+                numberOfRequiredImagesOnNode++;
+            }
+        }
+        // Node is candidate if has at least half of the required images
+        return numberOfRequiredImagesOnNode >= minRequiredImages;
+    });
 }
 
 bool PreferredLocationConstraint::CheckReplica(TempSolution const& tempSolution, PlacementReplica const* replica, NodeEntry const* target) const
@@ -379,13 +423,16 @@ bool PreferredLocationConstraint::CheckReplica(TempSolution const& tempSolution,
 
     // If no standby locations or replica is not in the locations, check if there is already replica in the target location;
     // This will help prefer swap over move
-    PlacementReplica const* r = partition->GetReplica(target);
-
-    if (r == nullptr)
+    bool preferExistingReplicaLocations = tempSolution.OriginalPlacement->Settings.PreferExistingReplicaLocations;
+    if (preferExistingReplicaLocations)
     {
-        return false;
+        PlacementReplica const* r = partition->GetReplica(target);
+        if (r == nullptr)
+        {
+            return false;
+        }
     }
-    
+
     return true;
 
 }

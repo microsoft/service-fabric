@@ -31,6 +31,9 @@ namespace Transport
         TransportSecuritySPtr Security() const override;
         Common::ErrorCode SetSecurity(SecuritySettings const & securitySettings) override;
 
+        void SetFrameHeaderErrorChecking(bool) override {}
+        void SetMessageErrorChecking(bool) override {}
+
         void SetMessageHandler(MessageHandler const & handler) override;
 
         size_t SendTargetCount() const override;

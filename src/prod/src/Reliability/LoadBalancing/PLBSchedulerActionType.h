@@ -14,17 +14,17 @@ namespace Reliability
             enum Enum
             {
                 None = 0,
-                Creation = 1,
-                CreationWithMove = 2,
+                NewReplicaPlacement = 1,
+                NewReplicaPlacementWithMove = 2,
                 ConstraintCheck = 3,
-                FastBalancing = 4,
-                SlowBalancing = 5,
+                QuickLoadBalancing = 4,
+                LoadBalancing = 5,
                 NoActionNeeded = 6,
                 Upgrade = 7,
-                ClientPromoteToPrimaryApiCall = 8,
-                ClientMovePrimaryApiCall = 9,
-                ClientMoveSecondaryApiCall = 10,
-                LastValidEnum = ClientMoveSecondaryApiCall
+                ClientApiPromoteToPrimary = 8,
+                ClientApiMovePrimary = 9,
+                ClientApiMoveSecondary = 10,
+                LastValidEnum = ClientApiMoveSecondary
             };
 
             std::wstring ToString(PLBSchedulerActionType::Enum shedulerActionType);

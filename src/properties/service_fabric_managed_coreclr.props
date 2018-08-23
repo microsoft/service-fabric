@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Import Project="$(SRCROOT)\properties\service_fabric_strong_name_keys.props" />
+
+  <!-- Linux build system env properties -->
+  <PropertyGroup Condition="$(BuildLinux) == 'true'">
+    <NetStandardCliLocation>/usr/share/dotnet/</NetStandardCliLocation>
+    <NetStandardSdkVersion>2.0.3</NetStandardSdkVersion>
+    <CscToolExe>RunCsc.sh</CscToolExe>
+    <!-- Unify NetStandardImplicitPackageVersion in linux and windows : RDBug #12679665 -->
+    <NetStandardImplicitPackageVersion>2.0.2</NetStandardImplicitPackageVersion>
+    <WindowsPublicKey>$(SRCROOT)/../external/ServiceFabric.Linux.Coreclr.BuildArtifacts/certs/windows.snk</WindowsPublicKey>
+    <!-- Do not use the Restore task. Use CLI for now. -->
+    <DotnetCliExe>$(NetStandardCliLocation)dotnet</DotnetCliExe>
+  </PropertyGroup>
+
+  <!-- Windows Properties -->
+  <PropertyGroup Condition="$(BuildLinux) != 'true'">
+    <NetStandardCliLocation>$(dotnetcli)\b\</NetStandardCliLocation>
+    <NetStandardSdkVersion>2.0.0-preview2-006497</NetStandardSdkVersion>
+    <CscToolExe>RunCsc.cmd</CscToolExe>
+    <NetStandardImplicitPackageVersion>2.0.0</NetStandardImplicitPackageVersion>
+    <!-- Do not use the Restore task. Use CLI for now. -->
+    <DotnetCliExe>$(NetStandardCliLocation)dotnet.exe</DotnetCliExe>
+  </PropertyGroup>
+
+  <!-- Common properties valid both for linux and windows build env-->
+  <PropertyGroup>
+    <IntermediateOutputPath Condition="$(TargetsWindows)=='true'">$(IntermediateOutputPath)w</IntermediateOutputPath>
+    <IntermediateOutputPath Condition="$(TargetsLinux)=='true'">$(IntermediateOutputPath)l</IntermediateOutputPath>
+    <OutDirCopy>$(OutDir)</OutDirCopy>
+    <OutDir>$(OutDir)\$(TargetFramework)\$(CurrentRuntimeIdentifier)\</OutDir>
+
+    <DotnetPackagesDir>$(BinariesBuildTypeArchDirectory)\CorePackages</DotnetPackagesDir>
+
+    <!-- Update the compiler for CoreCLR projects -->
+    <CscToolPath>$(NetStandardCliLocation)sdk\$(NetStandardSdkVersion)\Roslyn</CscToolPath>
+
+    <!-- Disable auto include of files in projects -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+
+    <!-- Workaround for MCG pdb reader bug -->
+    <DebugType>full</DebugType>
+
+    <!-- Set this explicitly to skip adding mscorlib reference by corext -->
+    <NoStdLib>true</NoStdLib>
+
+    <!-- Update these path to redirect corext msbuild targets to NetStandard SDK. -->
+    <MSBuildExtensionsPath>$(NetStandardCliLocation)sdk\$(NetStandardSdkVersion)\</MSBuildExtensionsPath>
+    <LanguageTargets>$(MSBuildExtensionsPath)\Microsoft.CSharp.CurrentVersion.targets</LanguageTargets>
+    <RoslynTargetsPath>$(NetStandardCliLocation)sdk\$(NetStandardSdkVersion)\Roslyn</RoslynTargetsPath>
+
+    <!-- Clear this for CoreCLR projects -->
+    <TargetFrameworkVersion></TargetFrameworkVersion>
+
+    <!-- Supported RIDs for ServiceFabric. This helps to do a restore in a single command.
+         Update NetStandard\osgroups.props too if you add more runtimes here.-->
+    <!--<RuntimeIdentifiers>@(SFSupportedRuntimes -> '%(Identity)')</RuntimeIdentifiers>-->
+
+    <!-- Disable the project local props file for CoreXT compilation -->
+    <ImportProjectExtensionProps>false</ImportProjectExtensionProps>
+    <ImportProjectExtensionTargets>false</ImportProjectExtensionTargets>
+
+    <!-- Common CoreCLR Properties -->
+    <!-- TargetFramework is overridden in apps -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <DefineConstants>$(DefineConstants);DotNetCoreClr</DefineConstants>
+    <DisableImplicitAssetTargetFallback>true</DisableImplicitAssetTargetFallback>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <!-- This is needed to workaround a MCG Pdb reader bug -->
+    <DebugType>full</DebugType>
+
+    <!-- Enable delay signing for NetStandard assemblies -->
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>$(WindowsPublicKey)</AssemblyOriginatorKeyFile>
+
+    <!-- Enable /highentropyva linker flag in coreclr -->
+    <HighEntropyVA>true</HighEntropyVA>
+
+    <RuntimeFrameworkVersion>2.0.7</RuntimeFrameworkVersion>
+  </PropertyGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_task_override.tasks" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_osgroups.props" />
+  <Import Project="$(NetStandardCliLocation)\sdk\$(NetStandardSdkVersion)\Sdks\Microsoft.NET.Sdk\Sdk\Sdk.props" />
+  <!--<Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_project_specific.props" />-->
+</Project>

@@ -12,6 +12,8 @@ using namespace std;
 
 namespace Common
 {
+    // Every major release, this is incremented by 10. For CU's, it's incremented by 1.
+    USHORT version = 2;
     int TraceEvent::SamplingCount = 0;
     uint16 TraceEvent::ContextSequenceId = 0;
     ULONGLONG TraceEvent::AdminChannelKeywordMask = 0x8000000000000000;
@@ -51,6 +53,9 @@ namespace Common
             etwHandle_(etwHandle),
             consoleFilter_(consoleFilter),
             testKeyword_(InitializeTestKeyword())
+#if defined(PLATFORM_UNIX)
+            ,enableLinuxStructuredTrace_(false)
+#endif
     {
         if (eventName.size() == 0 || eventId >= (PerTaskEvents) || level < LogLevel::Critical || level > LogLevel::Noise 
             || channel < TraceChannelType::Admin || channel > TraceChannelType::Debug)
@@ -85,7 +90,7 @@ namespace Common
             break;
         }
 
-        EventDescCreate(&descriptor_, (taskId << PerTaskEventBits) + eventId, 0, static_cast<UCHAR>(channel), static_cast<UCHAR>(level), taskId, 0, (static_cast<ULONGLONG>(keywords) | keywordMask));
+        EventDescCreate(&descriptor_, (taskId << PerTaskEventBits) + eventId, static_cast<UCHAR>(version), static_cast<UCHAR>(channel), static_cast<UCHAR>(level), taskId, 0, (static_cast<ULONGLONG>(keywords) | keywordMask));
 
         descriptor_.Keyword = descriptor_.Keyword | testKeyword_;
 
@@ -149,7 +154,7 @@ namespace Common
         return maxIndex;
     }
 
-    void UpdateArg(string & format, size_t oldIndex, size_t newIndex)
+    void TraceEvent::UpdateArgument(string & format, size_t oldIndex, size_t newIndex)
     {
         string arg = "{" + Common::formatString(oldIndex) + "}";
         string newArg = "{" + Common::formatString(newIndex) + "}";
@@ -173,13 +178,13 @@ namespace Common
 
         for (int i = static_cast<int>(currentCount) - 1; i > static_cast<int>(index); i--)
         {
-            UpdateArg(format, i, i + innerCount - 1);
+            UpdateArgument(format, i, i + innerCount - 1);
         }
 
         string newFormat = innerFormat;
         for (int i = static_cast<int>(innerCount) - 1; i >= 0; i--)
         {
-            UpdateArg(newFormat, i, index + i);
+            UpdateArgument(newFormat, i, index + i);
         }
 
         string currentArg = "{" + Common::formatString(index) + "}";
@@ -204,6 +209,14 @@ namespace Common
             }
         }
     }
+
+#if defined(PLATFORM_UNIX)
+    // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+    void TraceEvent::RefreshEnableLinuxStructuredTraces(bool enabled)
+    {
+       enableLinuxStructuredTrace_ = enabled;
+    }
+#endif
 
     void TraceEvent::RefreshFilterStates(TraceSinkType::Enum sinkType, TraceSinkFilter const & filter)
     {
@@ -244,23 +257,31 @@ namespace Common
     {
         if (useETW)
         {
-#if !defined(PLATFORM_UNIX)
-            TraceEventContext context(3);
+#if defined(PLATFORM_UNIX)
+            // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+            if (enableLinuxStructuredTrace_)
+            {
+#endif
+                TraceEventContext context(3);
 
-            context.Write(id);
-            context.Write(type);
-            context.Write(text);
+                context.Write(id);
+                context.Write(type);
+                context.Write(text);
 
-            Write(context.GetEvents());
-#else
-            string taskName;
-            StringWriterA w1(taskName);
-            w1.Write(taskName_);
-            string eventName;
-            StringWriterA w2(eventName);
-            w2.Write(type);
+                Write(context.GetEvents());
+#if defined(PLATFORM_UNIX)
+            }
+            else
+            {
+                string taskName;
+                StringWriterA w1(taskName);
+                w1.Write(taskName_);
+                string eventName;
+                StringWriterA w2(eventName);
+                w2.Write(type);
 
-            TraceWrapper(taskName.c_str(), eventName.c_str(), level_, (char *)id.c_str(), (char *)text.c_str());
+                TraceWrapper(taskName.c_str(), eventName.c_str(), level_, (char *)id.c_str(), (char *)text.c_str());
+            }
 #endif
         }
 
@@ -375,6 +396,7 @@ namespace Common
         eventsWriter << "              task=\"" << taskName_ << "\"" << "\r\n";
         eventsWriter << "              template=\"ntid_" << descriptor_.Id << "\"" << "\r\n";
         eventsWriter << "              value=\""  << descriptor_.Id << "\"" << "\r\n";
+        eventsWriter << "              version=\"" << version << "\"" << "\r\n";
         eventsWriter << "              />\r\n";
 
         StringWriterA & templateWriter = manifest.GetTemplateWriter();

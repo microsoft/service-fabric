@@ -125,7 +125,7 @@ namespace Data
          }
 
          ktl::Awaitable<void> CloseAsync();
-         ktl::Awaitable<ULONG64> GetFileSize();
+         ktl::Awaitable<ULONG64> GetFileSizeAsync();
          void Write(__in BinaryWriter& writer);
 
          static FileMetadata::SPtr Read(

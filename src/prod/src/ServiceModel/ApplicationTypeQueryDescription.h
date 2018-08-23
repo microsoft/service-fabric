@@ -14,8 +14,8 @@ namespace ServiceModel
     public:
         ApplicationTypeQueryDescription();
 
-        ApplicationTypeQueryDescription(ApplicationTypeQueryDescription && other);
-        ApplicationTypeQueryDescription & operator = (ApplicationTypeQueryDescription && other);
+        ApplicationTypeQueryDescription(ApplicationTypeQueryDescription && other) = default;
+        ApplicationTypeQueryDescription & operator = (ApplicationTypeQueryDescription && other) = default;
 
         virtual ~ApplicationTypeQueryDescription();
 

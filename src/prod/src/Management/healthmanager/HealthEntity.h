@@ -55,6 +55,8 @@ namespace Management
 
             bool HasExpiredEventChanges();
 
+            bool ShouldAutoCleanupEvents() const;
+
             bool IsDeletedOrCleanedUp() const;
 
             Common::ErrorCode TryReserveCleanupJob(Common::ActivityId const & activityId);
@@ -91,7 +93,7 @@ namespace Management
             // The cleanup will happen when the cleanup task runs.
             void StartProcessReport(
                 IHealthJobItemSPtr const & jobItem,
-                std::vector<ReportRequestContext> const & contexts,
+                __in std::vector<ReportRequestContext> & contexts,
                 bool isDeleteRequest);
 
             void EndProcessReport(
@@ -125,6 +127,16 @@ namespace Management
                 IHealthJobItemSPtr const & jobItem);
 
             void EndCleanupExpiredTransientEvents(
+                __in IHealthJobItem & jobItem,
+                Common::AsyncOperationSPtr const & operation);
+
+            // Auto-cleanup of events when the entity has too many reports.
+            // Only events that do not impact health can be removed.
+            // The events that impact health must be deleted by users or admins and not handled automatically by HM.
+            void StartAutoCleanupEvents(
+                IHealthJobItemSPtr const & jobItem);
+
+            void EndAutoCleanupEvents(
                 __in IHealthJobItem & jobItem,
                 Common::AsyncOperationSPtr const & operation);
 
@@ -293,7 +305,7 @@ namespace Management
             bool IsDeletedOrCleanedUpCallerHoldsLock() const;
 
             bool TryCreatePendingReportInformationCallerHoldsLock(
-                ReportRequestContext const & context,
+                __in ReportRequestContext & context,
                 bool isDeleteRequest);
 
             void UpdateInMemoryDataCallerHoldsLock(Store::ReplicaActivityId const & replicaActivityId);
@@ -365,19 +377,54 @@ namespace Management
                 __in IHealthJobItem & jobItem,
                 Common::AsyncOperationSPtr const & operation);
 
+            //
+            // Auto cleanup of events when there are too many events.
+            //
+            Common::ErrorCode PreparePersistAutoCleanupEventsTx(
+                Store::ReplicaActivityId const & replicaActivityId,
+                __out Store::IStoreBase::TransactionSPtr & tx);
+
+            void StartPersistAutoCleanupEvents(
+                IHealthJobItemSPtr const & jobItem);
+
+            void OnPersistAutoCleanupEventsCompleted(
+                __in IHealthJobItem & jobItem,
+                Common::AsyncOperationSPtr const & operation);
+
+            void ResetPendingEventsCallerHoldsLock();
 
             FABRIC_HEALTH_STATE GetEventsHealthStateCallerHoldsLock(
                 Common::ActivityId const & activityId,
                 bool considerWarningAsError,
                 bool setUnhealthyEvaluations,
                 __inout std::vector<ServiceModel::HealthEvaluation> & unhealthyEvaluations,
-                __out bool & hasAuthoritySourceReport);
+                __inout std::vector<ServiceModel::HealthEvent> & nonPersistedEvents);
 
-            ServiceModel::HealthEvent GetMissingAuthorityReportHealthEvent() const;
+            std::wstring GetMissingAuthorityReportHealthDescription() const;
 
+            std::wstring GetTooManyReportsHealthDescription(
+                int totalEvents,
+                int maxSuggested) const;
+
+            void AddGeneratedEventsCallerHoldsLock(
+                Common::ActivityId const & activityId,
+                std::wstring const & reportProperty,
+                FABRIC_HEALTH_STATE reportState,
+                std::wstring && reportDescription,
+                bool setUnhealthyEvaluations,
+                bool considerWarningAsError,
+                __inout FABRIC_HEALTH_STATE & aggregatedState,
+                __inout std::vector<ServiceModel::HealthEvaluation> & unhealthyEvaluations,
+                __inout std::vector<ServiceModel::HealthEvent> & nonPersistedEvents);
+            
+            ServiceModel::HealthEvent GenerateNonPersistedEvent(
+                Common::ActivityId const & activityId,
+                std::wstring const & property,
+                std::wstring && description,
+                FABRIC_HEALTH_STATE state) const;
+            
             // The memory state must be in sync with store data.
             // Otherwise, we need to bring the replica down.
-            void VerifyInMemoryAgainstStoreData(Common::ActivityId const & activityId);
             bool VerifyInMemoryAgainstStoreEventsCallerHoldsLock(
                 Common::ActivityId const & activityId,
                 Common::ErrorCode const & eventsLoadError,
@@ -387,6 +434,23 @@ namespace Management
                 HealthEventStoreData const & event,
                 __out bool & hasSystemReport,
                 __out int & systemErrorCount) const;
+
+            // Update the health report in the provided context so that the EntityInformation field is congruent with the
+            // latest instance of the entity. This will not override existing values, but instead, update to the latest
+            // instance only if an instance is not already provided.
+            void UpdateEntityInstanceInHealthReport(
+                __in ReportRequestContext & context);
+
+            Common::ErrorCode AddDeleteEventsToTx(
+                Common::ActivityId const & activityId,
+                __in Store::IStoreBase::TransactionSPtr & tx);
+
+            void UpdateDeletedEventsCallerHoldsLock();
+
+            void AppendEventDataForTrace(
+                __in Common::StringWriter & writer,
+                HealthEventStoreDataUPtr const & entry,
+                __inout int & traceCount);
 
         private:
             // Id of the entity.
@@ -399,7 +463,7 @@ namespace Management
             HealthManagerReplica & healthManagerReplica_;
 
             // List of attributes currently active in the entity.
-            // Set after persistance to the store.
+            // Set after persistence to the store.
             // Note that before reading all from memory at startup,
             // the attributes are not set.
             AttributesStoreDataSPtr attributes_;
@@ -465,6 +529,7 @@ namespace Management
             return error;
         }
 
+        // This does not do a safety check during cast in non-debug mode. Does not check for nullptr in debug mode.
         template <class TAttributesType>
         TAttributesType & HealthEntity::GetCastedAttributes(AttributesStoreDataSPtr const & attributes)
         {
@@ -474,8 +539,6 @@ namespace Management
             return *static_cast<TAttributesType*>(attributes.get());
 #endif
         }
-
-
 
 #define HEALTH_ENTITY_TEMPLATED_METHODS_DECLARATIONS( ATTRIB_TYPE ) \
     public: \

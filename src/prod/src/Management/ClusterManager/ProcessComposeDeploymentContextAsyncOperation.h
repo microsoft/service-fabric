@@ -51,7 +51,6 @@ namespace Management
             void StartTimer(Common::AsyncOperationSPtr const & thisSPtr, RetryCallback const & callback, Common::TimeSpan const delay);
             Common::ErrorCode RefreshContext();
 
-
             ComposeDeploymentContext & context_;
             ApplicationTypeContext applicationTypeContext_;
             std::wstring applicationManifestId_;

@@ -81,7 +81,7 @@ namespace LoggingReplicatorTests
             __in FABRIC_REPLICA_ID targetReplicaId,
             __out TxnReplicator::OperationDataStream::SPtr & result) noexcept override;
 
-        NTSTATUS BeginSettingCurrentState() noexcept override;
+        ktl::Awaitable<NTSTATUS> BeginSettingCurrentStateAsync() noexcept override;
         
         ktl::Awaitable<NTSTATUS> EndSettingCurrentState() noexcept override;
 

@@ -27,15 +27,18 @@ namespace ServiceModel
 
     public:
         ServiceManifestReference ServiceManifestRef;
-        std::vector<Common::ConfigOverrideDescription> ConfigOverrides;
+        std::vector<ConfigOverrideDescription> ConfigOverrides;
         ResourceOverridesDescription ResourceOverrides;
         std::vector<RunAsPolicyDescription> RunAsPolicies;
         std::vector<SecurityAccessPolicyDescription> SecurityAccessPolicies;
         std::vector<PackageSharingPolicyDescription> PackageSharingPolicies;
         std::vector<EndpointBindingPolicyDescription> EndpointBindingPolicies;
         std::vector<ContainerPoliciesDescription> ContainerHostPolicies;
+        ServicePackageContainerPolicyDescription ServicePackageContainerPolicy;
         std::vector<EnvironmentOverridesDescription> EnvironmentOverrides;
         ServicePackageResourceGovernanceDescription ResourceGovernanceDescription;
+        ServiceFabricRuntimeAccessDescription SFRuntimeAccessDescription;
+        std::vector<ConfigPackagePoliciesDescription> ConfigPackagePolicies;
 
     private:
         friend struct ApplicationManifestDescription;

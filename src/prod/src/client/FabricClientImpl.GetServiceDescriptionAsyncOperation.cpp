@@ -18,42 +18,76 @@ namespace Client
 
     FabricClientImpl::GetServiceDescriptionAsyncOperation::GetServiceDescriptionAsyncOperation(
         __in FabricClientImpl &client,
-        __in NamingUri const &associatedName,
+        NamingUri const &associatedName,
+        bool fetchCached,
         __in FabricActivityHeader && activityHeader,
-        __in Common::TimeSpan const timeout,
-        __in Common::AsyncCallback const &callback,
-        __in Common::AsyncOperationSPtr const &parent,
+        Common::TimeSpan const timeout,
+        Common::AsyncCallback const &callback,
+        Common::AsyncOperationSPtr const &parent,
         __in_opt ErrorCode && passThroughError)
         : ClientAsyncOperationBase(client, move(activityHeader), move(passThroughError), timeout, callback, parent)
         , associatedName_(associatedName)
+        , fetchCached_(fetchCached)
+        , description_()
     {
     }
 
     void FabricClientImpl::GetServiceDescriptionAsyncOperation::OnStartOperation(AsyncOperationSPtr const& thisSPtr)
     {
-        auto inner = this->Client.BeginInternalGetServiceDescription(
+        if (fetchCached_ && this->Client.lruCacheManager_.get() != nullptr)
+        {
+            this->FetchFromCache(thisSPtr);
+        }
+        else
+        {
+            this->FetchFromNamingService(thisSPtr);
+        }
+    }
+
+    void FabricClientImpl::GetServiceDescriptionAsyncOperation::FetchFromCache(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto operation = this->Client.lruCacheManager_->BeginGetPsd(
             associatedName_.Fragment.empty() ? associatedName_ : NamingUri(associatedName_.Path),
             this->ActivityHeader,
             this->RemainingTime,
-            [this](AsyncOperationSPtr const operation)
-            {
-                this->OnGetServiceDescriptionComplete(operation, false);
-            },
+            [this](AsyncOperationSPtr const operation) { this->OnFetchFromCacheComplete(operation, false); },
             thisSPtr);
-        this->OnGetServiceDescriptionComplete(inner, true);
+        this->OnFetchFromCacheComplete(operation, true);
     }
 
-    void FabricClientImpl::GetServiceDescriptionAsyncOperation::OnGetServiceDescriptionComplete(
+    void FabricClientImpl::GetServiceDescriptionAsyncOperation::OnFetchFromCacheComplete(
+        AsyncOperationSPtr const & operation, 
+        bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+        auto const & thisSPtr = operation->Parent;
+
+        auto error = this->Client.lruCacheManager_->EndGetPsd(operation, description_);
+
+        this->TryComplete(thisSPtr, error);
+    }
+
+    void FabricClientImpl::GetServiceDescriptionAsyncOperation::FetchFromNamingService(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto operation = this->Client.BeginInternalGetServiceDescription(
+            associatedName_.Fragment.empty() ? associatedName_ : NamingUri(associatedName_.Path),
+            this->ActivityHeader,
+            this->RemainingTime,
+            [this](AsyncOperationSPtr const operation) { this->OnFetchFromNamingServiceComplete(operation, false); },
+            thisSPtr);
+        this->OnFetchFromNamingServiceComplete(operation, true);
+    }
+
+    void FabricClientImpl::GetServiceDescriptionAsyncOperation::OnFetchFromNamingServiceComplete(
         AsyncOperationSPtr const& operation, 
         bool expectedCompletedSynchronously)
     {
-        if (expectedCompletedSynchronously != operation->CompletedSynchronously)
-        {
-            return;
-        }
+        if (expectedCompletedSynchronously != operation->CompletedSynchronously) { return; }
 
         auto error = this->Client.EndInternalGetServiceDescription(operation, description_);
-        TryComplete(operation->Parent, error);
+
+        this->TryComplete(operation->Parent, error);
     }
 
     ErrorCode FabricClientImpl::GetServiceDescriptionAsyncOperation::EndGetServiceDescription(

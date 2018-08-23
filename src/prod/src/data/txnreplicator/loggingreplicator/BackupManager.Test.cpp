@@ -24,6 +24,11 @@ namespace LoggingReplicatorTests
     class BackupManagerTests
     {
     public:
+        Awaitable<void> Test_BackupInfo_Sanity(
+            __in KString const & backupFolder,
+            __in Common::Random & rndNumber,
+            __in int seed);
+
         Awaitable<void> Test_ShouldCleanState(
             __in KString const & backupFolder,
             __in bool restoreTokenExists);
@@ -50,6 +55,66 @@ namespace LoggingReplicatorTests
         PartitionedReplicaId::SPtr prId_;
         KtlSystem * underlyingSystem_;
     };
+
+    Awaitable<void> BackupManagerTests::Test_BackupInfo_Sanity(
+        __in KString const & backupFolder,
+        __in Common::Random & rndNumber,
+        __in int seed)
+    {
+        // Setup
+        KAllocator & allocator = underlyingSystem_->PagedAllocator();
+
+        {
+            InvalidLogRecords::SPtr invalidLogRecords = InvalidLogRecords::Create(allocator);
+            ApiFaultUtility::SPtr apiFaultUtility = ApiFaultUtility::Create(allocator);
+            TestBackupCallbackHandler::SPtr backupCallbackHandler = TestBackupCallbackHandler::Create(backupFolder, allocator);
+
+            TestReplica::SPtr replica = TestReplica::Create(
+                pId_,
+                *invalidLogRecords,
+                true, // isPrimary 
+                nullptr,
+                *apiFaultUtility,
+                allocator);
+
+            co_await replica->InitializeAsync(
+                seed,
+                false, // skipRecovery
+                true); // delayApis
+
+                       // Setup backup manager
+            BackupManager::SPtr backupManager(replica->BackupManager);
+
+            backupManager->EnableBackup();
+
+            // 1. Do full backup to get started.
+            co_await backupManager->BackupAsync(*backupCallbackHandler);
+
+            // 2. Do multiple operations
+            {
+                Transaction::SPtr transaction = Transaction::CreateTransaction(*replica->TestTransactionManager, allocator);
+                KFinally([&] { transaction->Dispose(); });
+                AddOperationToTransaction(*transaction, rndNumber, *replica->StateManager);
+                co_await transaction->CommitAsync();
+            }
+
+            // 3. Do an incremental backup
+            co_await backupManager->BackupAsync(*backupCallbackHandler, FABRIC_BACKUP_OPTION_INCREMENTAL, TimeSpan::FromMinutes(1), CancellationToken::None);
+
+            // 4. Verification
+            KArray<TxnReplicator::BackupInfo> backupInfoArray = backupCallbackHandler->BackupInfoArray;
+            VERIFY_ARE_EQUAL(backupInfoArray.Count(), static_cast<ULONG>(2));
+            VERIFY_ARE_EQUAL(backupInfoArray[0].BackupId, backupInfoArray[0].ParentBackupId);
+            VERIFY_ARE_EQUAL(backupInfoArray[1].ParentBackupId, backupInfoArray[0].BackupId);
+
+            // 5. Close the replica.
+            co_await backupManager->DisableBackupAndDrainAsync();
+            co_await replica->CloseAndQuiesceReplica();
+            co_await replica->EndTestAsync(false, true);
+        }
+
+        co_return;
+    }
 
     Awaitable<void> BackupManagerTests::Test_ShouldCleanState(
         __in KString const & backupFolder,
@@ -148,7 +213,11 @@ namespace LoggingReplicatorTests
             }
 
             // 3. Do an incremental backup
-            co_await backupManager->BackupAsync(*backupCallbackHandler, FABRIC_BACKUP_OPTION_INCREMENTAL, TimeSpan::FromMinutes(1), CancellationToken::None);
+            co_await backupManager->BackupAsync(
+                *backupCallbackHandler, 
+                FABRIC_BACKUP_OPTION_INCREMENTAL, 
+                TimeSpan::FromMinutes(1), 
+                CancellationToken::None);
 
             // 4. Verification
             KGuid readId;
@@ -209,7 +278,7 @@ namespace LoggingReplicatorTests
 
         Trace.WriteInfo(
             TraceComponent,
-            "{0}: Adding Operation Data with buffer count {1} bufferSize {2} to Tx {3}",
+            "{0}: Adding Operation Data with buffer count {1} bufferSize {2} to Txn {3}",
             prId_->TraceId,
             bufferCount,
             bufferSize,
@@ -248,6 +317,25 @@ namespace LoggingReplicatorTests
     }
 
     BOOST_FIXTURE_TEST_SUITE(BackupManagerTestSuite, BackupManagerTests);
+
+    BOOST_AUTO_TEST_CASE(BackupInfo_Sanity)
+    {
+        // Setup
+        wstring testName(L"BackupInfo_Sanity");
+        wstring testFolderPath = CreateFileName(testName);
+
+        // Pre-clean up
+        Directory::Delete_WithRetry(testFolderPath, true, true);
+
+        TEST_TRACE_BEGIN(testName)
+        {
+            KString::SPtr folderPath = KPath::CreatePath(testFolderPath.c_str(), allocator);
+            SyncAwait(Test_BackupInfo_Sanity(*folderPath, r, seed));
+        }
+
+        // Post clean up
+        Directory::Delete_WithRetry(testFolderPath, true, true);
+    }
 
     BOOST_AUTO_TEST_CASE(ShouldCleanState_RestoreTokenDoesNotExist_ReturnFalse)
     {

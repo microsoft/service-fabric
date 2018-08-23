@@ -62,7 +62,7 @@ namespace KtlLogger
     public:
 
         SharedLogSettings()
-            : settings_(std::move(make_unique<KtlLogManager::SharedLogContainerSettings>()))
+            : settings_(make_unique<KtlLogManager::SharedLogContainerSettings>())
         {
         }
 
@@ -73,6 +73,33 @@ namespace KtlLogger
 
         __declspec(property(get = get_Settings)) KtlLogManager::SharedLogContainerSettings const & Settings;
         KtlLogManager::SharedLogContainerSettings const & get_Settings() const { return *settings_; }
+
+        Common::ErrorCode FromServiceModel(TxnReplicator::KtlLoggerSharedLogSettings const & settings)
+        {
+            auto hr = StringCchCopyW(settings_->Path, sizeof(settings_->Path) / 2, settings.ContainerPath.c_str());
+            if (FAILED(hr)) 
+            { 
+                Trace.WriteWarning("SharedLogSettings", "Copy container path '{0}' failed: {1}", settings.ContainerPath, hr);
+                return Common::ErrorCode::FromHResult(hr); 
+            }
+
+            settings_->DiskId = KGuid(Common::Guid(KtlLogger::Constants::NullGuidString).AsGUID());
+
+            Common::Guid containerId;
+            if (!Common::Guid::TryParse(settings.ContainerId, containerId))
+            {
+                Trace.WriteWarning("SharedLogSettings", "Failed to parsed '{0}' as GUID", settings.ContainerId);
+                return Common::ErrorCodeValue::OperationFailed;
+            }
+
+            settings_->LogContainerId = KGuid(containerId.AsGUID());
+            settings_->LogSize = static_cast<LONGLONG>(settings.LogSize);
+            settings_->MaximumNumberStreams = settings.MaximumNumberStreams;
+            settings_->MaximumRecordSize = settings.MaximumRecordSize;
+            settings_->Flags = settings.CreateFlags;
+
+            return Common::ErrorCodeValue::Success;
+        }
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const
         {

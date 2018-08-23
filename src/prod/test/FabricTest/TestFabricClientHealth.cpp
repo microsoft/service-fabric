@@ -89,7 +89,7 @@ void TestFabricClientHealth::ParallelReportHealthBatch(vector<HealthReport> && r
         {
             batch.push_back(move(reports[i]));
         }
-    
+
         chunks.push_back(move(batch));
         remainingCount -= nextCount;
     }
@@ -153,7 +153,7 @@ void TestFabricClientHealth::ParallelReportHealthBatch(vector<HealthReport> && r
                                 localChunk.push_back(move(ck));
                             }
                         }
-                        
+
                         // Sleep and retry
                         TestSession::WriteInfo(TraceSource, "Report batch {0} with {1} items failed with error {2}, remaining {3}, sleep and retry", idx, temp.size(), error, localChunk.size());
                         Sleep(static_cast<DWORD>(FabricTestSessionConfig::GetConfig().QueryOperationRetryDelay.TotalMilliseconds()));
@@ -163,7 +163,7 @@ void TestFabricClientHealth::ParallelReportHealthBatch(vector<HealthReport> && r
                 else
                 {
                     TestSession::FailTest("Report batch {0} failed with unexpected error {1}", idx, error);
-                }                
+                }
             }
         });
     }
@@ -188,15 +188,15 @@ bool TestFabricClientHealth::HMLoadTest(Common::StringCollection const & params)
     int replicaCount;
     parser.TryGetInt(L"replicaCount", replicaCount, 3);
     TestSession::FailTestIf(replicaCount <= 0, "replica count must be positive, not {0}", replicaCount);
-    
+
     // Report through internal health client
     CreateInternalFabricHealthClient(FABRICSESSION.FabricDispatcher.Federation);
-    
+
     NamingUri appUri;
     vector<NamingUri> serviceNames = TestFabricClient::GetPerformanceTestNames(serviceCount, parser, appUri);
     wstring appName = appUri.ToString();
-    
-    vector<vector<HealthReport>> reports; 
+
+    vector<vector<HealthReport>> reports;
 
     vector<StringCollection> queryArgs;
     wstring expectedHealthStateParam(L"expectedhealthstate=ok");
@@ -209,16 +209,16 @@ bool TestFabricClientHealth::HMLoadTest(Common::StringCollection const & params)
     AddReport(reports, EntityHealthInformation::CreateApplicationEntityHealthInformation(appName, 1), move(appAttribs));
     StringCollection appParams;
     appParams.push_back(L"application");
-    appParams.push_back(wformatString("appname={0}", appName)); 
+    appParams.push_back(wformatString("appname={0}", appName));
     appParams.push_back(expectedHealthStateParam);
     appParams.push_back(retryServiceTooBusy);
 
     queryArgs.push_back(move(appParams));
-    
+
     TestSession::WriteInfo(
-        TraceSource, 
-        "Create reports for {0} services ({1}, ...), {2} partitions and {3} replicas", 
-        serviceCount, 
+        TraceSource,
+        "Create reports for {0} services ({1}, ...), {2} partitions and {3} replicas",
+        serviceCount,
         serviceNames[0].ToString(),
         partitionCount * serviceCount,
         partitionCount * serviceCount * replicaCount);
@@ -281,7 +281,7 @@ bool TestFabricClientHealth::HMLoadTest(Common::StringCollection const & params)
                 replicaAttribs.AddAttribute(HealthAttributeNames::NodeId, wformatString(nodeId));
                 replicaAttribs.AddAttribute(HealthAttributeNames::NodeInstanceId, wformatString(nodeInstanceId));
 
-                auto entityInfo = isStateful 
+                auto entityInfo = isStateful
                     ? EntityHealthInformation::CreateStatefulReplicaEntityHealthInformation(partitionId, replicaId, 1)
                     : EntityHealthInformation::CreateStatelessInstanceEntityHealthInformation(partitionId, replicaId);
 
@@ -292,7 +292,7 @@ bool TestFabricClientHealth::HMLoadTest(Common::StringCollection const & params)
     }
 
     Stopwatch totalDurationStopwatch;
-    
+
     int maxParallelQueries = 50;
     Common::atomic_long failedQueries(0);
     Common::atomic_long successfulQueries(0);
@@ -301,7 +301,7 @@ bool TestFabricClientHealth::HMLoadTest(Common::StringCollection const & params)
 
     StringCollection checkClientParams;
     checkClientParams.push_back(L"reportcount=0");
-    
+
     totalDurationStopwatch.Start();
     for (size_t i = 0; i < reports.size(); ++i)
     {
@@ -339,22 +339,22 @@ bool TestFabricClientHealth::HMLoadTest(Common::StringCollection const & params)
 
         // Wait for the client to drain reports before sending next batch
         TestSession::FailTestIfNot(CheckHealthClient(checkClientParams), "CheckHealthClient failed for batch {0}", i);
-    }        
+    }
 
     TestSession::FailTestIf(queryIndex != queryArgs.size(), "Query index {0} != queryArgs.size {1}", queryIndex, queryArgs.size());
-    
+
     queryBatchDone.WaitOne();
     totalDurationStopwatch.Stop();
 
     TestSession::WriteInfo(
-        TraceSource, 
+        TraceSource,
         "TotalEntities={0}, max parallel query={1}, query ok/failed {2}/{3}, total duration={4} msec",
         queryArgs.size(),
         maxParallelQueries,
         successfulQueries.load(),
         failedQueries.load(),
         totalDurationStopwatch.ElapsedMilliseconds);
-    
+
     TestSession::FailTestIfNot(failedQueries.load() == 0, "Not all entities were created/queried successfully");
     TestSession::FailTestIfNot(successfulQueries.load() == queryArgs.size(), "successful queries count {0} doesn't match expected count {1}", successfulQueries.load(), queryArgs.size());
 
@@ -624,7 +624,7 @@ bool TestFabricClientHealth::CheckHResult(HRESULT hr, vector<HRESULT> const & ex
             return true;
         }
     }
-            
+
     TestSession::WriteWarning(TraceSource, "Operation failed with unexpected error: {0}", actualError);
     return false;
 }
@@ -811,7 +811,7 @@ bool TestFabricClientHealth::ReportHealthInternal(StringCollection const & param
         {
             return false;
         }
-    }    
+    }
     else if (StringUtility::AreEqualCaseInsensitive(entityType, L"replica"))
     {
         if (!CreateInternalReplicaHealthReport(parser, healthReport))
@@ -869,13 +869,13 @@ bool TestFabricClientHealth::ReportHealthInternal(StringCollection const & param
 
     int remainingRetries = FabricTestSessionConfig::GetConfig().QueryOperationRetryCount;
     ErrorCode reportError(ErrorCodeValue::Success);
-    do 
+    do
     {
         --remainingRetries;
         auto healthVectorCopy = healthVector;
 
         reportError = ReportHealthThroughInternalClientOrHmPrimary(parser, move(healthVectorCopy));
-            
+
         if (errorValue == reportError.ReadValue())
         {
             break;
@@ -897,6 +897,10 @@ bool TestFabricClientHealth::ReportHealthStress(StringCollection const & params)
     int reportCount;
     int interval;
     int reportsPerMessage;
+    // Critical reports are counted as part of the total reports.
+    // For example, if the test command is "reporthealth stress reports=1 reportsPerMessage=4 criticalreports=2", then this means that
+    // a total of 4 reports are generated, out of which 2 are critical reports. Therefore, if the max pending reports is 1,
+    // then 1 critical report and 1 non critical report is accepted.
     int criticalReports;
     int iterations;
 
@@ -908,7 +912,7 @@ bool TestFabricClientHealth::ReportHealthStress(StringCollection const & params)
     parser.TryGetInt(L"iterations", iterations, 1);
 
     auto timeout = ClientConfig::GetConfig().HealthOperationTimeout;
-    
+
     double timeoutSec;
     if (parser.TryGetDouble(L"timeout", timeoutSec))
     {
@@ -934,7 +938,7 @@ bool TestFabricClientHealth::ReportHealthStress(StringCollection const & params)
         Stopwatch stopwatch;
 
         stopwatch.Start();
-        
+
         for (int i = 0; i < reportCount; i++)
         {
             vector<HealthReport> reports;
@@ -955,7 +959,7 @@ bool TestFabricClientHealth::ReportHealthStress(StringCollection const & params)
 
                 AttributeList attributes;
                 attributes.AddAttribute(*HealthAttributeNames::NodeName, nodeName);
-                
+
                 HealthReport healthReport(
                     EntityHealthInformation::CreateNodeEntityHealthInformation(nodeId, nodeName, DateTime::Now().Ticks),
                     sourceId,
@@ -966,7 +970,7 @@ bool TestFabricClientHealth::ReportHealthStress(StringCollection const & params)
                     Common::SequenceNumber::GetNext(),
                     false,
                     move(attributes));
-            
+
                 reports.push_back(move(healthReport));
             }
 
@@ -974,13 +978,13 @@ bool TestFabricClientHealth::ReportHealthStress(StringCollection const & params)
             auto requestMessage = HealthManagerTcpMessage::GetReportHealth(
                 activityId,
                 Common::make_unique<ReportHealthMessageBody>(move(reports), std::vector<SequenceStreamInformation>()))->GetTcpMessage();
-            
+
             hmPrimary->Test_BeginProcessRequest(
                 move(requestMessage),
                 activityId,
                 timeout,
-                [&hmPrimary, &event, &pendingCount, &successCount](AsyncOperationSPtr const & operation) 
-                { 
+                [&hmPrimary, &event, &pendingCount, &successCount](AsyncOperationSPtr const & operation)
+                {
                     Transport::MessageUPtr reply;
                     auto error = hmPrimary->Test_EndProcessRequest(operation, reply);
 
@@ -1019,10 +1023,10 @@ bool TestFabricClientHealth::ReportHealthStress(StringCollection const & params)
         }
 
         TestSession::WriteInfo(
-            TraceSource, 
-            "[{0}] Waiting for {1}*{2} reports...", 
+            TraceSource,
+            "[{0}] Waiting for {1}*{2} reports...",
             iteration,
-            reportCount, 
+            reportCount,
             reportsPerMessage);
 
         event.WaitOne();
@@ -1033,11 +1037,11 @@ bool TestFabricClientHealth::ReportHealthStress(StringCollection const & params)
         auto effectiveThroughput = (static_cast<double>(successCount.load() * reportsPerMessage) / stopwatch.Elapsed.TotalPositiveMilliseconds()) * 1000;
 
         TestSession::WriteInfo(
-            TraceSource, 
-            "[{0}] {1}*{2} reports created, {3} critical per message, {4} successful, {5} reports/sec, {6} effective reports/sec", 
+            TraceSource,
+            "[{0}] {1}*{2} reports created, {3} critical per message, {4} successful, {5} reports/sec, {6} effective reports/sec",
             iteration,
-            reportCount, 
-            reportsPerMessage, 
+            reportCount,
+            reportsPerMessage,
             criticalReports,
             successCount.load(),
             throughput,
@@ -1063,9 +1067,9 @@ Common::ErrorCode TestFabricClientHealth::ReportHealthThroughInternalClientOrHmP
         Transport::MessageUPtr requestMessage = move(HealthManagerTcpMessage::GetReportHealth(
             activityId,
             Common::make_unique<ReportHealthMessageBody>(move(reports), std::vector<SequenceStreamInformation>()))->GetTcpMessage());
-        
+
         auto timeout = ClientConfig::GetConfig().HealthOperationTimeout;
-        
+
         double timeoutSec;
         if (parser.TryGetDouble(L"timeout", timeoutSec))
         {
@@ -1240,7 +1244,7 @@ bool TestFabricClientHealth::ReportHealth(StringCollection const & params)
     Random r;
 
     int remainingRetries = FabricTestSessionConfig::GetConfig().QueryOperationRetryCount;
-    do 
+    do
     {
         --remainingRetries;
 
@@ -1278,8 +1282,8 @@ bool TestFabricClientHealth::ReportHealthIpc(StringCollection const & params)
     {
         return false;
     }
-    
-    wstring reportType = params[0];    
+
+    wstring reportType = params[0];
     CommandLineParser parser(params, 1);
 
     wstring nodeIdString;
@@ -1332,7 +1336,7 @@ bool TestFabricClientHealth::ReportHealthIpc(StringCollection const & params)
         TestSession::WriteWarning(TraceSource, "Failed to find service {0} on node {1}.", serviceName, nodeId);
         return false;
     }
-    
+
     ErrorCode error;
     if (StringUtility::AreEqualCaseInsensitive(reportType, L"partition"))
     {
@@ -1387,7 +1391,7 @@ bool TestFabricClientHealth::CheckHealthClient(Common::StringCollection const & 
 
     CreateInternalFabricHealthClient(FABRICSESSION.FabricDispatcher.Federation);
     FabricClientImpl * fcImpl = static_cast<FabricClientImpl*>(internalHealthClient_.get());
-    
+
     int remainingRetries = FabricTestSessionConfig::GetConfig().QueryOperationRetryCount;
     do
     {
@@ -1667,14 +1671,14 @@ bool TestFabricClientHealth::CorruptHMEntity(Common::StringCollection const & pa
             return false;
         }
 
-		wstring servicePackageActivationId;
+        wstring servicePackageActivationId;
         if (!ParseServicePackageActivationId(parser, servicePackageActivationId))
-		{
+        {
             return false;
-		}
+        }
 
         TestSession::WriteInfo(TraceSource, "CorruptHMEntity(): Using ServicePackageActivationId=[{0}] for deployedservicepackage.", servicePackageActivationId);
-		
+
         NodeId nodeId;
         FABRIC_NODE_INSTANCE_ID nodeInstanceId;
         std::wstring nodeName;
@@ -1795,7 +1799,7 @@ bool TestFabricClientHealth::CorruptHMEntity(Common::StringCollection const & pa
 bool TestFabricClientHealth::QueryHealthStateChunk(StringCollection const & params)
 {
     CreateFabricHealthClient(FABRICSESSION.FabricDispatcher.Federation);
-    
+
     CommandLineParser parser(params, 0);
 
     bool requiresValidation = false;
@@ -1806,7 +1810,7 @@ bool TestFabricClientHealth::QueryHealthStateChunk(StringCollection const & para
     requiresValidation |= parser.TryGetString(L"expectedhealthstate", expectedHealthStateString);
     requiresValidation |= parser.TryGetString(L"expectedstates", expectedHealthStatesString);
     requiresValidation |= parser.TryGetString(L"expectedapps", expectedApplicationsString);
-    
+
     vector<HRESULT> expectedErrors;
     std::wstring error;
     if (parser.TryGetString(L"expectederror", error, L"Success"))
@@ -1830,7 +1834,7 @@ bool TestFabricClientHealth::QueryHealthStateChunk(StringCollection const & para
     vector<HRESULT> retryableErrors;
     retryableErrors.push_back(FABRIC_E_NOT_READY);
     retryableErrors.push_back(FABRIC_E_HEALTH_ENTITY_NOT_FOUND);
-    
+
     if (!requiresValidation)
     {
         retryableErrors.push_back(FABRIC_E_SERVICE_TOO_BUSY);
@@ -1969,7 +1973,7 @@ bool TestFabricClientHealth::GetClusterHealthChunk(StringCollection const & para
     ScopedHeap heap;
 
     auto queryDescription = heap.AddItem<FABRIC_CLUSTER_HEALTH_CHUNK_QUERY_DESCRIPTION>();
-        
+
     wstring nodeFiltersString;
     if (parser.TryGetString(L"nodefilters", nodeFiltersString))
     {
@@ -1993,7 +1997,7 @@ bool TestFabricClientHealth::GetClusterHealthChunk(StringCollection const & para
         error = applicationFilters.ToPublicApi(heap, *applicationFiltersPublic);
         queryDescription->ApplicationFilters = applicationFiltersPublic.GetRawPointer();
     }
-    
+
     std::unique_ptr<ClusterHealthPolicy> healthPolicy;
     if (!ParseClusterHealthPolicy(parser, healthPolicy))
     {
@@ -2008,7 +2012,7 @@ bool TestFabricClientHealth::GetClusterHealthChunk(StringCollection const & para
         healthPolicy->ToPublicApi(heap, *clusterHealthPolicy);
         queryDescription->ClusterHealthPolicy = clusterHealthPolicy.GetRawPointer();
     }
-    
+
     // Parse application health policy map passed as a Json string
     ApplicationHealthPolicyMapSPtr applicationHealthPolicies;
     if (!GetApplicationHealthPolicies(parser, applicationHealthPolicies))
@@ -2022,7 +2026,7 @@ bool TestFabricClientHealth::GetClusterHealthChunk(StringCollection const & para
         applicationHealthPolicies->ToPublicApi(heap, *applicationHealthPolicyMap);
         queryDescription->ApplicationHealthPolicyMap = applicationHealthPolicyMap.GetRawPointer();
     }
-        
+
     wstring expectedErrorMessage;
     parser.TryGetString(L"expectederrormessage", expectedErrorMessage);
 
@@ -2307,7 +2311,7 @@ bool TestFabricClientHealth::GetNodeHealth(StringCollection const & params)
 {
     CommandLineParser parser(params, 0);
     ScopedHeap heap;
-    
+
     auto queryDescription = heap.AddItem<FABRIC_NODE_HEALTH_QUERY_DESCRIPTION>();
 
     wstring eventsFilterString;
@@ -2333,7 +2337,7 @@ bool TestFabricClientHealth::GetNodeHealth(StringCollection const & params)
     }
 
     queryDescription->NodeName = heap.AddString(nodeName);
-    
+
     std::unique_ptr<ClusterHealthPolicy> healthPolicy;
     if (!ParseClusterHealthPolicy(parser, healthPolicy))
     {
@@ -2395,7 +2399,7 @@ bool TestFabricClientHealth::GetReplicaHealth(StringCollection const & params)
     }
 
     FABRIC_REPLICA_ID replicaId;
-    FABRIC_INSTANCE_ID replicaInstanceId;   
+    FABRIC_INSTANCE_ID replicaInstanceId;
     Common::Guid partitionGuid;
     if (!ParseReplicaId(parser, partitionGuid, replicaId, replicaInstanceId))
     {
@@ -2489,7 +2493,7 @@ bool TestFabricClientHealth::GetPartitionHealth(StringCollection const & params)
         ex1->HealthStatisticsFilter = statsFilter.GetRawPointer();
         queryDescription->Reserved = ex1.GetRawPointer();
     }
-    
+
     Common::Guid partitionGuid;
     if (!ParsePartitionId(parser, partitionGuid))
     {
@@ -2512,7 +2516,7 @@ bool TestFabricClientHealth::GetPartitionHealth(StringCollection const & params)
         healthPolicy->ToPublicApi(heap, *partitionHealthPolicy);
         queryDescription->HealthPolicy = partitionHealthPolicy.GetRawPointer();
     }
-    
+
     ComPointer<IFabricPartitionHealthResult> partitionHealthResult;
     return PerformHealthQueryClientOperation(
         parser,
@@ -2578,7 +2582,7 @@ bool TestFabricClientHealth::GetServiceHealth(StringCollection const & params)
         return false;
     }
     queryDescription->ServiceName = heap.AddString(serviceNameString);
-      
+
     std::unique_ptr<ApplicationHealthPolicy> healthPolicy;
     if (!ParseApplicationHealthPolicy(parser, healthPolicy))
     {
@@ -2672,7 +2676,7 @@ bool TestFabricClientHealth::GetDeployedApplicationHealth(StringCollection const
     }
 
     queryDescription->ApplicationName = heap.AddString(applicationNameString);
-      
+
     NodeId nodeId;
     FABRIC_NODE_INSTANCE_ID nodeInstanceId;
     std::wstring nodeName;
@@ -2770,7 +2774,7 @@ bool TestFabricClientHealth::GetDeployedServicePackageHealth(StringCollection co
     }
 
     queryDescription->ServiceManifestName = heap.AddString(serviceManifestNameString);
-      
+
     NodeId nodeId;
     FABRIC_NODE_INSTANCE_ID nodeInstanceId;
     std::wstring nodeName;
@@ -2812,7 +2816,7 @@ bool TestFabricClientHealth::GetDeployedServicePackageHealth(StringCollection co
     auto queryDescriptionEx1 = heap.AddItem<FABRIC_DEPLOYED_SERVICE_PACKAGE_HEALTH_QUERY_DESCRIPTION_EX1>();
     queryDescriptionEx1->ServicePackageActivationId = heap.AddString(servicePackageActivationId);
     queryDescription->Reserved = queryDescriptionEx1.GetRawPointer();
-    
+
     ComPointer<IFabricDeployedServicePackageHealthResult> deployedServicePackageHealthResult;
     return PerformHealthQueryClientOperation(
         parser,
@@ -2832,15 +2836,15 @@ bool TestFabricClientHealth::GetDeployedServicePackageHealth(StringCollection co
         [this, &parser, &deployedServicePackageHealthResult, &applicationNameString, &nodeName, &serviceManifestNameString, &servicePackageActivationId](bool expectEmpty, bool requiresValidation)
         {
             bool result = ValidateDeployedServicePackageHealth(
-                parser, 
-                *deployedServicePackageHealthResult->get_DeployedServicePackageHealth(), 
-                applicationNameString, 
+                parser,
+                *deployedServicePackageHealthResult->get_DeployedServicePackageHealth(),
+                applicationNameString,
                 serviceManifestNameString,
                 servicePackageActivationId,
-                nodeName, 
-                expectEmpty, 
+                nodeName,
+                expectEmpty,
                 requiresValidation);
-            
+
             deployedServicePackageHealthResult.Release();
             return result;
         });
@@ -2901,7 +2905,7 @@ bool TestFabricClientHealth::GetApplicationHealth(StringCollection const & param
         return false;
     }
     queryDescription->ApplicationName = heap.AddString(applicationNameString);
-  
+
     std::unique_ptr<ApplicationHealthPolicy> healthPolicy;
     if (!ParseApplicationHealthPolicy(parser, healthPolicy))
     {
@@ -3033,7 +3037,7 @@ bool TestFabricClientHealth::QueryHealthList(StringCollection const & params)
     {
         queryArgs.Insert(QueryResourceProperties::QueryMetadata::ContinuationToken, continuationToken);
     }
-    
+
     auto internalQueryClient = TestFabricClientQuery::CreateInternalFabricQueryClient(FABRICSESSION.FabricDispatcher.Federation);
 
     int remainingRetries = FabricTestSessionConfig::GetConfig().QueryOperationRetryCount;
@@ -3273,7 +3277,7 @@ bool TestFabricClientHealth::CreateNodeHealthQueryList(CommandLineParser & parse
         queryArgs.Insert(Query::QueryResourceProperties::Node::Name, nodeName);
     }
 
-    // No required paramters
+    // No required parameters
     return true;
 }
 
@@ -3485,7 +3489,7 @@ bool TestFabricClientHealth::CreateApplicationHealthQueryList(CommandLineParser 
         queryArgs.Insert(Query::QueryResourceProperties::Deployment::ApplicationDefinitionKindFilter, move(applicationDefinitionKindFilter));
     }
 
-    // No required paramters
+    // No required parameters
     return true;
 }
 
@@ -3597,8 +3601,24 @@ bool TestFabricClientHealth::ParseCommonHealthInformation(CommandLineParser & pa
     // Use Auto as default so the system generates a sequence number
     parser.TryGetInt64(L"sequencenumber", sequenceNumber, FABRIC_AUTO_SEQUENCE_NUMBER);
 
-    // Use default ttl large enough for events not to expire before validation in general case
-    parser.TryGetInt64(L"timetoliveseconds", timeToLiveSeconds, 60 * 60);
+    wstring ttlString;
+    if (parser.TryGetString(L"timetoliveseconds", ttlString))
+    {
+        if (ttlString == L"infinite")
+        {
+            timeToLiveSeconds = FABRIC_HEALTH_REPORT_INFINITE_TTL;
+        }
+        else if (!parser.TryGetInt64(L"timetoliveseconds", timeToLiveSeconds, 60 * 60))
+        {
+            TestSession::WriteInfo(TraceSource, "Invalid TTL specified: {0}. Expected int64 of infinite.", ttlString);
+            return false;
+        }
+    }
+    else
+    {
+        // Use default ttl large enough for events not to expire before validation in general case
+        timeToLiveSeconds = 60 * 60;
+    }
 
     wstring healthStateString;
     if (!parser.TryGetString(L"healthstate", healthStateString, L""))
@@ -3627,7 +3647,7 @@ bool TestFabricClientHealth::ParsePartitionId(CommandLineParser & parser, __inou
     {
         partitionGuid = Guid(partitionGuidString);
     }
-    else 
+    else
     {
         if (!parser.TryGetString(L"partitionid", partitionIdString, wstring()))
         {
@@ -3671,7 +3691,7 @@ bool TestFabricClientHealth::ParseReplicaId(CommandLineParser & parser, __inout 
         partitionGuid = failoverUnit->Id.Guid;
         replicaId = replica.ReplicaId;
 
-        // Replace the instance id with the test passed one 
+        // Replace the instance id with the test passed one
         wstring replicaInstanceIdString;
         if (parser.TryGetString(L"replica.instanceid", replicaInstanceIdString, wstring()))
         {
@@ -3729,7 +3749,7 @@ bool TestFabricClientHealth::ParseNodeHealthInformation(CommandLineParser & pars
         TestSession::WriteInfo(TraceSource, "Could not parse nodeid parameter");
         return false;
     }
-   
+
     nodeId = FABRICSESSION.FabricDispatcher.ParseNodeId(nodeIdString);
     if (!parser.TryGetString(L"nodename", nodeName))
     {
@@ -3762,8 +3782,8 @@ bool TestFabricClientHealth::ParseNodeHealthInformation(CommandLineParser & pars
 }
 
 bool TestFabricClientHealth::CreateCommonHealthInformation(
-    CommandLineParser & parser, 
-    ScopedHeap & heap, 
+    CommandLineParser & parser,
+    ScopedHeap & heap,
     FABRIC_HEALTH_INFORMATION & healthInformation)
 {
     wstring sourceId;
@@ -3777,7 +3797,7 @@ bool TestFabricClientHealth::CreateCommonHealthInformation(
     {
         return false;
     }
-        
+
     healthInformation.Description = heap.AddString(description);
     healthInformation.SourceId = heap.AddString(sourceId);
     healthInformation.Property = heap.AddString(property);
@@ -3792,16 +3812,16 @@ bool TestFabricClientHealth::CreateCommonHealthInformation(
 bool TestFabricClientHealth::CreateClusterHealthReport(CommandLineParser & parser, ScopedHeap & heap, FABRIC_HEALTH_REPORT & healthReport)
 {
     auto clusterHealthReport = heap.AddItem<FABRIC_CLUSTER_HEALTH_REPORT>();
-    
+
     ReferencePointer<FABRIC_HEALTH_INFORMATION> healthInformation = heap.AddItem<FABRIC_HEALTH_INFORMATION>();
     bool success = CreateCommonHealthInformation(parser, heap, *healthInformation);
     if (!success)
     {
         return success;
     }
-    
+
     clusterHealthReport->HealthInformation = healthInformation.GetRawPointer();
-    
+
     healthReport.Value = clusterHealthReport.GetRawPointer();
     healthReport.Kind = FABRIC_HEALTH_REPORT_KIND_CLUSTER;
 
@@ -3811,7 +3831,7 @@ bool TestFabricClientHealth::CreateClusterHealthReport(CommandLineParser & parse
 bool TestFabricClientHealth::CreateReplicaHealthReport(CommandLineParser & parser, ScopedHeap & heap, FABRIC_HEALTH_REPORT & healthReport)
 {
     FABRIC_REPLICA_ID replicaId;
-    FABRIC_INSTANCE_ID replicaInstanceId;   
+    FABRIC_INSTANCE_ID replicaInstanceId;
     Common::Guid partitionGuid;
     if (!ParseReplicaId(parser, partitionGuid, replicaId, replicaInstanceId))
     {
@@ -3828,9 +3848,9 @@ bool TestFabricClientHealth::CreateReplicaHealthReport(CommandLineParser & parse
     {
         return success;
     }
-    
+
     replicaHealthReport->HealthInformation = healthInformation.GetRawPointer();
-    
+
     healthReport.Value = replicaHealthReport.GetRawPointer();
     healthReport.Kind = FABRIC_HEALTH_REPORT_KIND_STATEFUL_SERVICE_REPLICA;
 
@@ -3840,7 +3860,7 @@ bool TestFabricClientHealth::CreateReplicaHealthReport(CommandLineParser & parse
 bool TestFabricClientHealth::CreateInstanceHealthReport(CommandLineParser & parser, ScopedHeap & heap, FABRIC_HEALTH_REPORT & healthReport)
 {
     FABRIC_REPLICA_ID replicaId;
-    FABRIC_INSTANCE_ID replicaInstanceId;   
+    FABRIC_INSTANCE_ID replicaInstanceId;
     Common::Guid partitionGuid;
     if (!ParseReplicaId(parser, partitionGuid, replicaId, replicaInstanceId))
     {
@@ -4081,7 +4101,7 @@ bool TestFabricClientHealth::CreateApplicationHealthDeleteReport(CommandLinePars
 
     healthReport = ServiceModel::HealthReport::CreateHealthInformationForDelete(
         EntityHealthInformation::CreateApplicationEntityHealthInformation(appNameString, instanceId),
-        move(sourceId), 
+        move(sourceId),
         sequenceNumber);
 
     return true;
@@ -4110,7 +4130,7 @@ bool TestFabricClientHealth::CreateServiceHealthDeleteReport(CommandLineParser &
 
     healthReport = ServiceModel::HealthReport::CreateHealthInformationForDelete(
         EntityHealthInformation::CreateServiceEntityHealthInformation(serviceNameString, instanceId),
-        move(sourceId), 
+        move(sourceId),
         sequenceNumber);
 
     return true;
@@ -4119,7 +4139,7 @@ bool TestFabricClientHealth::CreateServiceHealthDeleteReport(CommandLineParser &
 bool TestFabricClientHealth::CreateReplicaHealthDeleteReport(CommandLineParser & parser,  __inout ServiceModel::HealthReport & healthReport)
 {
     FABRIC_REPLICA_ID replicaId;
-    FABRIC_INSTANCE_ID replicaInstanceId;   
+    FABRIC_INSTANCE_ID replicaInstanceId;
     Common::Guid partitionGuid;
     if (!ParseReplicaId(parser, partitionGuid, replicaId, replicaInstanceId))
     {
@@ -4133,7 +4153,7 @@ bool TestFabricClientHealth::CreateReplicaHealthDeleteReport(CommandLineParser &
 
     healthReport = ServiceModel::HealthReport::CreateHealthInformationForDelete(
         EntityHealthInformation::CreateStatefulReplicaEntityHealthInformation(partitionGuid, replicaId, replicaInstanceId),
-        move(sourceId), 
+        move(sourceId),
         sequenceNumber);
 
     return true;
@@ -4142,7 +4162,7 @@ bool TestFabricClientHealth::CreateReplicaHealthDeleteReport(CommandLineParser &
 bool TestFabricClientHealth::CreateInstanceHealthDeleteReport(CommandLineParser & parser,  __inout ServiceModel::HealthReport & healthReport)
 {
     FABRIC_REPLICA_ID replicaId;
-    FABRIC_INSTANCE_ID replicaInstanceId;   
+    FABRIC_INSTANCE_ID replicaInstanceId;
     Common::Guid partitionGuid;
     if (!ParseReplicaId(parser, partitionGuid, replicaId, replicaInstanceId))
     {
@@ -4156,7 +4176,7 @@ bool TestFabricClientHealth::CreateInstanceHealthDeleteReport(CommandLineParser 
 
     healthReport = ServiceModel::HealthReport::CreateHealthInformationForDelete(
         EntityHealthInformation::CreateStatelessInstanceEntityHealthInformation(partitionGuid, replicaId),
-        move(sourceId), 
+        move(sourceId),
         sequenceNumber);
 
     return true;
@@ -4179,7 +4199,7 @@ bool TestFabricClientHealth::CreatePartitionHealthDeleteReport(CommandLineParser
 
     healthReport = ServiceModel::HealthReport::CreateHealthInformationForDelete(
         EntityHealthInformation::CreatePartitionEntityHealthInformation(partitionGuid),
-        move(sourceId), 
+        move(sourceId),
         sequenceNumber);
 
     return true;
@@ -4202,7 +4222,7 @@ bool TestFabricClientHealth::CreateNodeHealthDeleteReport(CommandLineParser & pa
 
     healthReport = ServiceModel::HealthReport::CreateHealthInformationForDelete(
         EntityHealthInformation::CreateNodeEntityHealthInformation(nodeId.IdValue, nodeName, nodeInstanceId),
-        move(sourceId), 
+        move(sourceId),
         sequenceNumber);
 
     return true;
@@ -4235,7 +4255,7 @@ bool TestFabricClientHealth::CreateDeployedApplicationHealthDeleteReport(Command
 
     healthReport = ServiceModel::HealthReport::CreateHealthInformationForDelete(
         EntityHealthInformation::CreateDeployedApplicationEntityHealthInformation(appName, nodeId.IdValue, nodeName, appInstanceId),
-        move(sourceId), 
+        move(sourceId),
         sequenceNumber);
 
     return true;
@@ -4283,7 +4303,7 @@ bool TestFabricClientHealth::CreateDeployedServicePackageHealthDeleteReport(Comm
 
     healthReport = ServiceModel::HealthReport::CreateHealthInformationForDelete(
         EntityHealthInformation::CreateDeployedServicePackageEntityHealthInformation(appName, serviceManifestName, servicePackageActivationId, nodeId.IdValue, nodeName, servicePackageInstanceId),
-        move(sourceId), 
+        move(sourceId),
         sequenceNumber);
 
     return true;
@@ -4323,7 +4343,7 @@ bool TestFabricClientHealth::CreateInternalClusterHealthReport(CommandLineParser
 bool TestFabricClientHealth::CreateInternalReplicaHealthReport(CommandLineParser & parser,  __inout ServiceModel::HealthReport & healthReport)
 {
     FABRIC_REPLICA_ID replicaId;
-    FABRIC_INSTANCE_ID replicaInstanceId;   
+    FABRIC_INSTANCE_ID replicaInstanceId;
     Common::Guid partitionGuid;
     if (!ParseReplicaId(parser, partitionGuid, replicaId, replicaInstanceId))
     {
@@ -4370,7 +4390,7 @@ bool TestFabricClientHealth::CreateInternalReplicaHealthReport(CommandLineParser
 bool TestFabricClientHealth::CreateInternalInstanceHealthReport(CommandLineParser & parser,  __inout ServiceModel::HealthReport & healthReport)
 {
     FABRIC_REPLICA_ID replicaId;
-    FABRIC_INSTANCE_ID replicaInstanceId;   
+    FABRIC_INSTANCE_ID replicaInstanceId;
     Common::Guid partitionGuid;
     if (!ParseReplicaId(parser, partitionGuid, replicaId, replicaInstanceId))
     {
@@ -4401,7 +4421,7 @@ bool TestFabricClientHealth::CreateInternalInstanceHealthReport(CommandLineParse
     }
 
     healthReport = HealthReport(
-        EntityHealthInformation::CreateStatelessInstanceEntityHealthInformation(partitionGuid, replicaId),  
+        EntityHealthInformation::CreateStatelessInstanceEntityHealthInformation(partitionGuid, replicaId),
         sourceId,
         property,
         TimeSpan::FromSeconds(static_cast<double>(timeToLiveSeconds)),
@@ -4478,6 +4498,8 @@ bool TestFabricClientHealth::CreateInternalNodeHealthReport(CommandLineParser & 
         return false;
     }
 
+    TimeSpan ttl = (timeToLiveSeconds == FABRIC_HEALTH_REPORT_INFINITE_TTL) ? TimeSpan::MaxValue : TimeSpan::FromSeconds(static_cast<double>(timeToLiveSeconds));
+
     AttributeList attributeList;
 
     wstring ipAddressOrFqdn;
@@ -4502,12 +4524,12 @@ bool TestFabricClientHealth::CreateInternalNodeHealthReport(CommandLineParser & 
     {
         attributeList.AddAttribute(*HealthAttributeNames::NodeName, nodeName);
     }
-            
+
     healthReport = HealthReport(
         EntityHealthInformation::CreateNodeEntityHealthInformation(nodeId.IdValue, nodeName, nodeInstanceId),
         sourceId,
         property,
-        TimeSpan::FromSeconds(static_cast<double>(timeToLiveSeconds)),
+        ttl,
         healthState,
         description,
         sequenceNumber,
@@ -4543,7 +4565,7 @@ bool TestFabricClientHealth::CreateInternalDeployedServicePackageHealthReport(Co
 
     FABRIC_INSTANCE_ID servicePackageInstanceId;
     parser.TryGetInt64(L"servicepackageinstanceid", servicePackageInstanceId, FABRIC_INVALID_INSTANCE_ID);
-    
+
     wstring sourceId;
     FABRIC_SEQUENCE_NUMBER sequenceNumber;
     FABRIC_HEALTH_STATE healthState;
@@ -4598,7 +4620,7 @@ bool TestFabricClientHealth::CreateInternalDeployedApplicationHealthReport(Comma
     {
         return false;
     }
-    
+
     wstring appName;
     if (!parser.TryGetString(L"appname", appName, wstring()))
     {
@@ -4608,7 +4630,7 @@ bool TestFabricClientHealth::CreateInternalDeployedApplicationHealthReport(Comma
 
     FABRIC_INSTANCE_ID applicationInstanceId;
     parser.TryGetInt64(L"appinstanceid", applicationInstanceId, FABRIC_INVALID_INSTANCE_ID);
-    
+
     wstring sourceId;
     FABRIC_SEQUENCE_NUMBER sequenceNumber;
     FABRIC_HEALTH_STATE healthState;
@@ -4654,7 +4676,7 @@ bool TestFabricClientHealth::CreateInternalApplicationHealthReport(CommandLinePa
         TestSession::WriteError(TraceSource, "Could not parse appname parameter");
         return false;
     }
-    
+
     wstring sourceId;
     FABRIC_SEQUENCE_NUMBER sequenceNumber;
     FABRIC_HEALTH_STATE healthState;
@@ -4691,7 +4713,7 @@ bool TestFabricClientHealth::CreateInternalApplicationHealthReport(CommandLinePa
         TestSession::WriteNoise(TraceSource, "Add app policy {0}", healthPolicyString);
         attributeList.AddAttribute(HealthAttributeNames::ApplicationHealthPolicy, healthPolicyString);
     }
- 
+
     healthReport = HealthReport(
         EntityHealthInformation::CreateApplicationEntityHealthInformation(appName, applicationInstanceId),
         sourceId,
@@ -4782,7 +4804,7 @@ bool TestFabricClientHealth::ParseClusterHealthPolicy(CommandLineParser & parser
     }
 
     bool considerWarningAsError = false;
-    
+
     int maxUnhealthyNodes = 0;
     int maxUnhealthyApplications = 0;
     for (auto it = tokens.begin(); it != tokens.end(); ++it)
@@ -5192,7 +5214,7 @@ bool TestFabricClientHealth::ValidateClusterHealth(CommandLineParser & parser, F
     if (requiresValidation)
     {
         TestSession::WriteInfo(TraceSource, "GetClusterHealth returned {0}", clusterHealth);
-        
+
         if (!VerifyEntityEventsAndHealthState(parser, false, clusterHealth.Events, clusterHealth.AggregatedHealthState, clusterHealth.UnhealthyEvaluations, expectEmpty))
         {
             TestSession::WriteWarning(TraceSource,  "GetClusterHealth events and health state verification failed");
@@ -5207,13 +5229,13 @@ bool TestFabricClientHealth::ValidateClusterHealth(CommandLineParser & parser, F
         }
 
         resultsPerChildrenType.insert(make_pair(EntityKind::Application, move(appResults)));
-        
+
         HealthStateCount nodeResults;
         for (auto it = clusterHealth.NodesAggregatedHealthStates.begin(); it != clusterHealth.NodesAggregatedHealthStates.end(); ++it)
         {
             nodeResults.Add(it->AggregatedHealthState);
         }
-        
+
         resultsPerChildrenType.insert(make_pair(EntityKind::Node, move(nodeResults)));
 
         if (!VerifyAggregatedHealthStates(parser, resultsPerChildrenType))
@@ -5243,7 +5265,7 @@ bool TestFabricClientHealth::ValidateClusterHealth(CommandLineParser & parser, F
         {
             writer.WriteLine("\t{0}", *it);
         }
-        
+
         if (clusterHealth.HealthStats)
         {
             writer.WriteLine("\nStats:{0}", *clusterHealth.HealthStats);
@@ -5269,7 +5291,7 @@ bool TestFabricClientHealth::ValidateNodeHealth(CommandLineParser & parser, FABR
     }
 
     TestSession::FailTestIf(nodeHealth.NodeName != nodeName, "GetNodeHealth entity information verification failed: expected nodeName {0}, received {1}", nodeName, nodeHealth.NodeName);
-          
+
     bool success = true;
     if (requiresValidation)
     {
@@ -5329,14 +5351,14 @@ bool TestFabricClientHealth::ValidatePartitionHealth(CommandLineParser & parser,
     bool success = true;
     if (requiresValidation)
     {
-        TestSession::WriteNoise(TraceSource, "GetPartitionHealth {0} returned {1}", partitionHealth.PartitionId, partitionHealth);    
+        TestSession::WriteNoise(TraceSource, "GetPartitionHealth {0} returned {1}", partitionHealth.PartitionId, partitionHealth);
 
         if (!VerifyEntityEventsAndHealthState(parser, true, partitionHealth.Events, partitionHealth.AggregatedHealthState, partitionHealth.UnhealthyEvaluations, expectEmpty))
         {
             TestSession::WriteWarning(TraceSource,  "GetPartitionHealth events and health state verification failed");
             success = false;
         }
-        
+
         HealthStateCount results;
         for (auto it = partitionHealth.ReplicasAggregatedHealthStates.begin(); it != partitionHealth.ReplicasAggregatedHealthStates.end(); ++it)
         {
@@ -5359,7 +5381,7 @@ bool TestFabricClientHealth::ValidatePartitionHealth(CommandLineParser & parser,
     if (!success || !requiresValidation)
     {
         wstring trace = GetEntityHealthBaseDetails(partitionHealth);
-        
+
         StringWriter writer(trace);
         writer.WriteLine("Children:");
         for (auto it = partitionHealth.ReplicasAggregatedHealthStates.begin(); it != partitionHealth.ReplicasAggregatedHealthStates.end(); ++it)
@@ -5379,13 +5401,13 @@ bool TestFabricClientHealth::ValidatePartitionHealth(CommandLineParser & parser,
 }
 
 bool TestFabricClientHealth::ValidateDeployedServicePackageHealth(
-    CommandLineParser & parser, 
-    FABRIC_DEPLOYED_SERVICE_PACKAGE_HEALTH const & publicDeployedServicePackageHealth, 
-    std::wstring const & appName, 
+    CommandLineParser & parser,
+    FABRIC_DEPLOYED_SERVICE_PACKAGE_HEALTH const & publicDeployedServicePackageHealth,
+    std::wstring const & appName,
     std::wstring const & serviceManifestName,
     std::wstring const & servicePackageActivationId,
-    std::wstring const & nodeName, 
-    bool expectEmpty, 
+    std::wstring const & nodeName,
+    bool expectEmpty,
     bool requiresValidation)
 {
     DeployedServicePackageHealth deployedServicePackageHealth;
@@ -5393,7 +5415,7 @@ bool TestFabricClientHealth::ValidateDeployedServicePackageHealth(
     TestSession::FailTestIfNot(error.IsSuccess(), "GetDeployedServicePackageHealth: DeployedServicePackageHealth.FromPublicApi failed with unexpected error = {0}", error);
     TestSession::FailTestIf(deployedServicePackageHealth.ApplicationName != appName, "GetDeployedServicePackageHealth entity information verification failed: expected appName {0}, received {1}", appName, deployedServicePackageHealth.ApplicationName);
     TestSession::FailTestIf(deployedServicePackageHealth.ServiceManifestName != serviceManifestName, "GetDeployedServicePackageHealth entity information verification failed: expected deployedServiceManifestName {0}, received {1}", serviceManifestName, deployedServicePackageHealth.ServiceManifestName);
-    
+
     TestSession::FailTestIf(
         deployedServicePackageHealth.ServicePackageActivationId != servicePackageActivationId,
         "GetDeployedServicePackageHealth entity information verification failed: expected ServicePackageActivationId={0}, received={1}.",
@@ -5406,7 +5428,7 @@ bool TestFabricClientHealth::ValidateDeployedServicePackageHealth(
         // FM health report is not yet received, so node name is not populated
         return false;
     }
-    
+
     TestSession::FailTestIf(deployedServicePackageHealth.NodeName != nodeName, "GetDeployedServicePackageHealth entity information verification failed: expected nodeName {0}, received {1}", nodeName, deployedServicePackageHealth.NodeName);
 
     bool success = true;
@@ -5458,7 +5480,7 @@ bool TestFabricClientHealth::ValidateDeployedApplicationHealth(CommandLineParser
         {
             results.Add(it->AggregatedHealthState);
         }
-                
+
         HealthStateCountMap resultsMap;
         resultsMap.insert(make_pair(EntityKind::DeployedServicePackage, move(results)));
         if (!VerifyAggregatedHealthStates(parser, resultsMap))
@@ -5475,9 +5497,9 @@ bool TestFabricClientHealth::ValidateDeployedApplicationHealth(CommandLineParser
     if (!success || !requiresValidation)
     {
         wstring trace = GetEntityHealthBaseDetails(deployedApplicationHealth);
-        
+
         StringWriter writer(trace);
-        
+
         writer.WriteLine("Children:");
         for (auto it = deployedApplicationHealth.DeployedServicePackagesAggregatedHealthStates.begin(); it != deployedApplicationHealth.DeployedServicePackagesAggregatedHealthStates.end(); ++it)
         {
@@ -5534,9 +5556,9 @@ bool TestFabricClientHealth::ValidateServiceHealth(CommandLineParser & parser, F
     if (!success || !requiresValidation)
     {
         wstring trace = GetEntityHealthBaseDetails(serviceHealth);
-        
+
         StringWriter writer(trace);
-        
+
         writer.WriteLine("Children:");
         for (auto it = serviceHealth.PartitionsAggregatedHealthStates.begin(); it != serviceHealth.PartitionsAggregatedHealthStates.end(); ++it)
         {
@@ -5579,7 +5601,7 @@ bool TestFabricClientHealth::ValidateApplicationHealth(CommandLineParser & parse
         }
 
         resultsMap.insert(make_pair(EntityKind::Service, move(serviceResults)));
-        
+
         HealthStateCount daResults;
         for (auto it = applicationHealth.DeployedApplicationsAggregatedHealthStates.begin(); it != applicationHealth.DeployedApplicationsAggregatedHealthStates.end(); ++it)
         {
@@ -5602,9 +5624,9 @@ bool TestFabricClientHealth::ValidateApplicationHealth(CommandLineParser & parse
     if (!success || !requiresValidation)
     {
         wstring trace = GetEntityHealthBaseDetails(applicationHealth);
-        
+
         StringWriter writer(trace);
-        
+
         writer.WriteLine("Service Children:");
         for (auto it = applicationHealth.ServicesAggregatedHealthStates.begin(); it != applicationHealth.ServicesAggregatedHealthStates.end(); ++it)
         {
@@ -5629,10 +5651,10 @@ bool TestFabricClientHealth::ValidateApplicationHealth(CommandLineParser & parse
 }
 
 bool TestFabricClientHealth::ParseEvents(std::wstring const & eventsString, __out map<wstring, StringCollection> & events)
-{    
+{
     vector<wstring> eventsSegments;
     StringUtility::Split<wstring>(eventsString, eventsSegments, L";");
-        
+
     for (auto it = eventsSegments.begin(); it != eventsSegments.end(); ++it)
     {
         vector<wstring> expectedEventTokens;
@@ -5647,7 +5669,7 @@ bool TestFabricClientHealth::ParseEvents(std::wstring const & eventsString, __ou
         wstring const & property = expectedEventTokens[1];
         events.insert(make_pair(source + property, move(expectedEventTokens)));
     }
-    
+
     return true;
 }
 
@@ -5683,12 +5705,12 @@ bool TestFabricClientHealth::ParseServicePackageActivationId(CommandLineParser &
             return false;
         }
     }
-    
+
     return true;
 }
 
 bool TestFabricClientHealth::VerifyEntityEventsAndHealthState(
-    CommandLineParser & parser, 
+    CommandLineParser & parser,
     bool isEntityPersisted,
     vector<ServiceModel::HealthEvent> const & events,
     FABRIC_HEALTH_STATE resultAggregatedHealthState,
@@ -5719,8 +5741,8 @@ bool TestFabricClientHealth::VerifyEntityEventsAndHealthState(
 
     wstring expectedHealthStateString;
     bool checkHealthState = parser.TryGetString(L"expectedhealthstate", expectedHealthStateString);
-    
-    wstring expectedHealthDescString; 
+
+    wstring expectedHealthDescString;
     map<wstring, wstring> expectedDescriptions;
     size_t expectedDescriptionsChecked = 0;
     if (parser.TryGetString(L"expecteddesc", expectedHealthDescString))
@@ -5752,7 +5774,7 @@ bool TestFabricClientHealth::VerifyEntityEventsAndHealthState(
     {
         return true;
     }
-    
+
     if (receivedEventsCount == 0 && isEntityPersisted && expectedEventCount != 0)
     {
         TestSession::WriteInfo(TraceSource, "Invalid health query result count {0}.", receivedEventsCount);
@@ -5781,17 +5803,17 @@ bool TestFabricClientHealth::VerifyEntityEventsAndHealthState(
     {
         TestSession::FailTest("Aggregated health state {0}: invalid evaluation reasons count {1}.", resultAggregatedHealthState, unhealthyEvaluations.size());
     }
-    
+
     for (size_t i = 0; i < receivedEventsCount; ++i)
     {
         if (checkHealthState && (events[i].State > expectedHealthState) && !events[i].IsExpired)
         {
-            TestSession::WriteInfo(TraceSource, "Event health state does not match expected aggregated health:{0} actual:{1}, event not expired ({2})", 
+            TestSession::WriteInfo(TraceSource, "Event health state does not match expected aggregated health:{0} actual:{1}, event not expired ({2})",
                 expectedHealthStateString, GetHealthStateString(events[i].State), events[i]);
 
             return false;
         }
-        
+
         wstring const & eventSource = events[i].SourceId;
         wstring const & eventProperty = events[i].Property;
         wstring const & eventDesc = events[i].Description;
@@ -5830,7 +5852,7 @@ bool TestFabricClientHealth::VerifyEntityEventsAndHealthState(
 
         auto & currentStateTransitionTime = healthStateTransitions[0].second;
         TestSession::FailTestIf(currentStateTransitionTime == DateTime::Zero, "Validate event {0} failed: Current state transition time should be set", events[i]);
-        
+
         auto previousState = FABRIC_HEALTH_STATE_INVALID;
         if (healthStateTransitions[1].second != DateTime::Zero)
         {
@@ -5842,7 +5864,7 @@ bool TestFabricClientHealth::VerifyEntityEventsAndHealthState(
                 previousState,
                 currentStateTransitionTime);
         }
-        
+
         auto oldestState = FABRIC_HEALTH_STATE_INVALID;
         if (healthStateTransitions[2].second != DateTime::Zero)
         {
@@ -5875,7 +5897,7 @@ bool TestFabricClientHealth::VerifyEntityEventsAndHealthState(
                     TestSession::WriteInfo(TraceSource, "Validate event {0}: previous health state failed. Expected {1} ({2}), actual previous state = {3}", events[i], expectedEventsString, previousDesiredHealthState, previousState);
                     return false;
                 }
-                
+
                 if (itExpectedEvents->second.size() > 4)
                 {
                     FABRIC_HEALTH_STATE oldestDesiredHealthState = GetHealthState(itExpectedEvents->second[4]);
@@ -5926,16 +5948,16 @@ bool TestFabricClientHealth::VerifyEntityEventsAndHealthState(
 bool TestFabricClientHealth::VerifyExpectedHealthEvaluations(FABRIC_HEALTH_EVALUATION_LIST const * publicHealthEvaluations, std::wstring const & expectedEvaluation)
 {
     TestSession::FailTestIf(publicHealthEvaluations == NULL, "ExpectedHealthEvaluation evaluation {0}, but no reasons returned", expectedEvaluation);
-        
+
     vector<HealthEvaluation> unhealthyEvaluations;
     auto error = PublicApiHelper::FromPublicApiList<HealthEvaluation, FABRIC_HEALTH_EVALUATION_LIST>(
         publicHealthEvaluations,
         unhealthyEvaluations);
     TestSession::FailTestIfNot(
-        error.IsSuccess(), 
+        error.IsSuccess(),
         "UnhealthyEvaluations FromPublicApiList error={0}",
         error);
-    
+
     return VerifyExpectedHealthEvaluations(expectedEvaluation, unhealthyEvaluations);
 }
 
@@ -5947,6 +5969,13 @@ bool TestFabricClientHealth::VerifyExpectedHealthEvaluations(std::wstring const 
     TestSession::FailTestIf(!evaluation, "EvaluationWrapper contains null evaluation evaluation");
     TestSession::FailTestIf(evaluation->Description.empty(), "Description is empty for {0}. Expected {1}", evaluation, expectedEvaluation);
 
+    // Print the concatenated recursive health evaluation description.
+    // This is used for Mesh as workaround until we add the proper hierarchy for v2 applications.
+    // The description concatenates all hierarchy evaluations, so it must include the description for event,
+    // unless it is truncated.
+    wstring unhealthyEvalsDescription = HealthEvaluation::GetUnhealthyEvaluationDescription(unhealthyEvaluations);
+    TestSession::WriteNoise(TraceSource, "v2Application HealthEvaluationDescription: {0}", unhealthyEvalsDescription);
+    
     vector<wstring> tokens;
     StringUtility::Split<wstring>(expectedEvaluation, tokens, L",");
     if (tokens.size() == 0)
@@ -5954,7 +5983,7 @@ bool TestFabricClientHealth::VerifyExpectedHealthEvaluations(std::wstring const 
         TestSession::WriteError(TraceSource, "Could not parse evaluationreason parameter - too few arguments {0}", expectedEvaluation);
         return false;
     }
-                
+
     if (tokens[0] == L"event")
     {
         if (!VerifyEventEvaluation(tokens, evaluation))
@@ -6148,9 +6177,9 @@ void TestFabricClientHealth::PrintHealthEvaluations(vector<HealthEvaluation> con
     {
         return;
     }
-    
+
     TestSession::FailTestIfNot(unhealthyEvaluations.size() == 1, "Evaluation reasons count is not valid: {0}", unhealthyEvaluations.size());
-    
+
     HealthEvaluationBaseSPtr evaluation = unhealthyEvaluations[0].Evaluation;
     TestSession::FailTestIfNot(evaluation != nullptr, "EvaluationWrapper contains null evaluation evaluation");
     TestSession::FailTestIf(evaluation->Description.empty(), "Description is empty for {0}.", evaluation);
@@ -6192,7 +6221,7 @@ bool TestFabricClientHealth::VerifyNodesEvaluation(HealthEvaluationBaseSPtr cons
         TestSession::WriteInfo(TraceSource, "Verify evaluations: children are trimmed: {0}", typedEvaluation->Description);
         return true;
     }
-    
+
     for (auto itInner = typedEvaluation->UnhealthyEvaluations.begin(); itInner != typedEvaluation->UnhealthyEvaluations.end(); ++itInner)
     {
         if (!VerifyNodeEvaluation(itInner->Evaluation))
@@ -6288,7 +6317,7 @@ bool TestFabricClientHealth::VerifyReplicasEvaluation(HealthEvaluationBaseSPtr c
     auto typedEvaluation = dynamic_cast<ReplicasHealthEvaluation *>(evaluation.get());
     TestSession::FailTestIf(typedEvaluation == NULL, "Conversion to type returned null for {0}", evaluation);
     TestSession::FailTestIf(typedEvaluation->TotalCount == 0, "There should be at least one child for {0}", evaluation);
-    
+
     // The children may be trimmed
     if (typedEvaluation->UnhealthyEvaluations.empty())
     {
@@ -6457,7 +6486,7 @@ bool TestFabricClientHealth::VerifyDeployedServicePackagesEvaluation(HealthEvalu
     auto typedEvaluation = dynamic_cast<DeployedServicePackagesHealthEvaluation *>(evaluation.get());
     TestSession::FailTestIf(typedEvaluation == NULL, "Conversion to type returned null for {0}", evaluation);
     TestSession::FailTestIf(typedEvaluation->TotalCount == 0, "There should be at least one child for {0}", evaluation);
-    
+
     // The children may be trimmed
     if (typedEvaluation->UnhealthyEvaluations.empty())
     {
@@ -6503,7 +6532,7 @@ bool TestFabricClientHealth::VerifyDeployedApplicationsEvaluation(HealthEvaluati
     auto typedEvaluation = dynamic_cast<DeployedApplicationsHealthEvaluation *>(evaluation.get());
     TestSession::FailTestIf(typedEvaluation == NULL, "Conversion to type returned null for {0}", evaluation);
     TestSession::FailTestIf(typedEvaluation->TotalCount == 0, "There should be at least one child for {0}", evaluation);
-    
+
     if (typedEvaluation->UnhealthyEvaluations.empty())
     {
         TestSession::WriteInfo(TraceSource, "Verify evaluations: children are trimmed: {0}", typedEvaluation->Description);
@@ -6580,7 +6609,7 @@ bool TestFabricClientHealth::VerifySystemApplicationEvaluation(HealthEvaluationB
     TestSession::FailTestIf(typedEvaluation == NULL, "Conversion to type returned null for {0}", evaluation);
     TestSession::FailTestIfNot(typedEvaluation->AggregatedHealthState == FABRIC_HEALTH_STATE_WARNING || evaluation->AggregatedHealthState == FABRIC_HEALTH_STATE_ERROR, "Child should be at warning or error not {0}", evaluation->AggregatedHealthState);
     TestSession::FailTestIf(typedEvaluation->Description.empty(), "Description is empty for {0}.", evaluation);
-    
+
     if (typedEvaluation->UnhealthyEvaluations.empty())
     {
         TestSession::WriteInfo(TraceSource, "Verify evaluations: children are trimmed: {0}", typedEvaluation->Description);
@@ -6606,7 +6635,7 @@ bool TestFabricClientHealth::VerifyApplicationsEvaluation(HealthEvaluationBaseSP
     auto typedEvaluation = dynamic_cast<ApplicationsHealthEvaluation *>(evaluation.get());
     TestSession::FailTestIf(typedEvaluation == NULL, "Conversion to type returned null for {0}", evaluation);
     TestSession::FailTestIf(typedEvaluation->TotalCount == 0, "There should be at least one child for {0}", evaluation);
-    
+
     if (typedEvaluation->UnhealthyEvaluations.empty())
     {
         TestSession::WriteInfo(TraceSource, "Verify evaluations: children are trimmed: {0}", typedEvaluation->Description);
@@ -6655,7 +6684,7 @@ bool TestFabricClientHealth::VerifyApplicationEvaluation(HealthEvaluationBaseSPt
     TestSession::FailTestIf(typedEvaluation == NULL, "Conversion to type returned null for child {0}", evaluation);
     TestSession::FailTestIfNot(typedEvaluation->AggregatedHealthState == FABRIC_HEALTH_STATE_WARNING || evaluation->AggregatedHealthState == FABRIC_HEALTH_STATE_ERROR, "Child should be at warning or error not {0}", evaluation->AggregatedHealthState);
     TestSession::FailTestIf(typedEvaluation->Description.empty(), "Description is empty for {0}.", evaluation);
-    
+
     if (typedEvaluation->UnhealthyEvaluations.empty())
     {
         TestSession::WriteInfo(TraceSource, "Verify evaluations: children are trimmed: {0}", typedEvaluation->Description);
@@ -6695,7 +6724,7 @@ bool TestFabricClientHealth::VerifyDeltaNodesEvaluation(HealthEvaluationBaseSPtr
     }
 
     TestSession::FailTestIf(typedEvaluation->UnhealthyEvaluations.empty(), "There should be at least one unhealthy entry for {0}", evaluation);
-    
+
     for (auto itInner = typedEvaluation->UnhealthyEvaluations.begin(); itInner != typedEvaluation->UnhealthyEvaluations.end(); ++itInner)
     {
         if (!VerifyNodeEvaluation(itInner->Evaluation))
@@ -6708,11 +6737,11 @@ bool TestFabricClientHealth::VerifyDeltaNodesEvaluation(HealthEvaluationBaseSPtr
 }
 
 bool TestFabricClientHealth::VerifyChildrenEvaluation(
-    std::vector<std::wstring> const & expectedEvaluationTokens, 
+    std::vector<std::wstring> const & expectedEvaluationTokens,
     std::vector<ServiceModel::HealthEvaluation> const & unhealthyEvaluations,
     FABRIC_HEALTH_EVALUATION_KIND expectedChildrenKind,
-    ULONG totalCount, 
-    BYTE maxUnhealthy, 
+    ULONG totalCount,
+    BYTE maxUnhealthy,
     std::wstring const & description)
 {
     TestSession::FailTestIf(totalCount == 0, "There should be at least one child for {0}", description);
@@ -6914,7 +6943,7 @@ bool TestFabricClientHealth::VerifyDeployedServicePackagesEvaluation(std::vector
 
     auto typedReason = dynamic_cast<DeployedServicePackagesHealthEvaluation *>(evaluation.get());
     TestSession::FailTestIf(typedReason == NULL, "Conversion to type returned null for {0}", evaluation);
-    
+
     BYTE invalid = static_cast<BYTE>(-1);
     if (!VerifyChildrenEvaluation(expectedEvaluationTokens, typedReason->UnhealthyEvaluations, FABRIC_HEALTH_EVALUATION_KIND_DEPLOYED_SERVICE_PACKAGE, typedReason->TotalCount, invalid, evaluation->Description))
     {
@@ -6956,7 +6985,7 @@ bool TestFabricClientHealth::VerifyReplicasEvaluation(std::vector<std::wstring> 
         }
     }
 
-    return true;    
+    return true;
 }
 
 bool TestFabricClientHealth::VerifyPartitionsEvaluation(std::vector<std::wstring> const & expectedEvaluationTokens, HealthEvaluationBaseSPtr const & evaluation)
@@ -7415,7 +7444,7 @@ bool TestFabricClientHealth::VerifyHealthStateCount(
             case FABRIC_HEALTH_STATE_WARNING: expectedWarningCount = expectedStateCount; break;
             case FABRIC_HEALTH_STATE_ERROR: expectedErrorCount = expectedStateCount; break;
             default: TestSession::FailTest("Unknown health state {0}", innerTokens[0]);
-            }    
+            }
         }
     }
 
@@ -7432,14 +7461,14 @@ bool TestFabricClientHealth::VerifyHealthStateCount(
             return false;
         }
     }
-    else if (expectedOkCount != receivedOkCount || 
+    else if (expectedOkCount != receivedOkCount ||
         expectedWarningCount != receivedWarningCount ||
         expectedErrorCount != receivedErrorCount)
     {
         TestSession::WriteInfo(TraceSource, "Invalid health query state count: expected {0}/{1}/{2}, actual {3}/{4}/{5}.", expectedOkCount, expectedWarningCount, expectedErrorCount, receivedOkCount, receivedWarningCount, receivedErrorCount);
         return false;
-    }   
-    
+    }
+
     return true;
 }
 
@@ -7449,7 +7478,7 @@ bool TestFabricClientHealth::VerifyHealthStateCountMap(
 {
     TestSession::WriteInfo(TraceSource, "VerifyHealthStateCountMap: Received health state map: {0}", results);
 
-    // Parameter format: 
+    // Parameter format:
     // expectedstates=<type>+
     // Where per type info can be either the total count, total count per states (ok/warning/error) or count and count per states for each type (nodes, apps etc)
     // Example:
@@ -7588,8 +7617,8 @@ bool TestFabricClientHealth::CheckClusterEntityState(CommandLineParser & parser,
 
 bool TestFabricClientHealth::CheckNodeEntityState(CommandLineParser & parser, Management::HealthManager::HealthManagerReplicaSPtr const & hmPrimary, bool & success)
 {
-    NodeId nodeId; 
-    FABRIC_NODE_INSTANCE_ID nodeInstanceId; 
+    NodeId nodeId;
+    FABRIC_NODE_INSTANCE_ID nodeInstanceId;
     std::wstring nodeName;
     if (!ParseNodeHealthInformation(parser, nodeId, nodeInstanceId, nodeName))
     {
@@ -7607,14 +7636,14 @@ bool TestFabricClientHealth::CheckNodeEntityState(CommandLineParser & parser, Ma
     if (baseAttributes)
     {
         auto attributes = static_cast<NodeAttributesStoreData*>(baseAttributes.get());
-        
+
         if (attributes->HasSystemReport && nodeName != attributes->NodeName)
         {
             TestSession::WriteInfo(TraceSource, "CheckNodeEntityState: nodeName mismatch: expected '{0}'/ actual '{1}'", nodeName, attributes->NodeName);
             success = false;
             return true;
         }
-        
+
         if (nodeInstanceId != attributes->NodeInstanceId)
         {
             TestSession::WriteInfo(TraceSource, "CheckNodeEntityState: nodeInstanceId mismatch: expected '{0}'/ actual '{1}'", nodeInstanceId, attributes->InstanceId);
@@ -7645,7 +7674,7 @@ bool TestFabricClientHealth::CheckNodeEntityState(CommandLineParser & parser, Ma
                     TestSession::WriteInfo(TraceSource, "CheckNodeEntityState: ud mismatch expected: '{0}'/ actual '{1}'", upgradeDomain, attributes->UpgradeDomain);
                     success = false;
                     return true;
-                }            
+                }
             }
 
             wstring faultDomain;
@@ -7668,14 +7697,14 @@ bool TestFabricClientHealth::CheckNodeEntityState(CommandLineParser & parser, Ma
 bool TestFabricClientHealth::CheckReplicaEntityState(CommandLineParser & parser, Management::HealthManager::HealthManagerReplicaSPtr const & hmPrimary, bool & success)
 {
     FABRIC_REPLICA_ID replicaId;
-    FABRIC_INSTANCE_ID replicaInstanceId;   
+    FABRIC_INSTANCE_ID replicaInstanceId;
     Common::Guid partitionGuid;
     if (!ParseReplicaId(parser, partitionGuid, replicaId, replicaInstanceId))
     {
         return false;
     }
 
-    AttributesStoreDataSPtr baseAttributes; 
+    AttributesStoreDataSPtr baseAttributes;
     auto entity = hmPrimary->EntityManager->Replicas.GetEntity(ReplicaHealthId(partitionGuid, replicaId));
     success = CheckHealthEntityCommonParameters(parser, entity, baseAttributes);
     if (!success)
@@ -7696,12 +7725,12 @@ bool TestFabricClientHealth::CheckReplicaEntityState(CommandLineParser & parser,
 
         if (!attributes->IsMarkedForDeletion && !attributes->IsCleanedUp)
         {
-            NodeId nodeId; 
-            FABRIC_NODE_INSTANCE_ID nodeInstanceId; 
+            NodeId nodeId;
+            FABRIC_NODE_INSTANCE_ID nodeInstanceId;
             std::wstring nodeName;
             if (ParseNodeHealthInformation(parser, nodeId, nodeInstanceId, nodeName))
             {
-                if (!attributes->AttributeSetFlags.IsNodeIdSet() || 
+                if (!attributes->AttributeSetFlags.IsNodeIdSet() ||
                     attributes->NodeId != nodeId.IdValue)
                 {
                     TestSession::WriteInfo(TraceSource, "CheckEntityState: nodeid mismatch expected: '{0}'/ actual '{1}'", nodeId, attributes->NodeId);
@@ -7709,7 +7738,7 @@ bool TestFabricClientHealth::CheckReplicaEntityState(CommandLineParser & parser,
                     return true;
                 }
 
-                if (!attributes->AttributeSetFlags.IsNodeInstanceIdSet() || 
+                if (!attributes->AttributeSetFlags.IsNodeInstanceIdSet() ||
                     attributes->NodeInstanceId != nodeInstanceId)
                 {
                     TestSession::WriteInfo(TraceSource, "CheckEntityState: nodeInstanceId mismatch expected: '{0}'/ actual '{1}'", nodeInstanceId, attributes->NodeInstanceId);
@@ -7742,7 +7771,7 @@ bool TestFabricClientHealth::CheckPartitionEntityState(CommandLineParser & parse
     if (baseAttributes)
     {
         auto attributes = static_cast<PartitionAttributesStoreData*>(baseAttributes.get());
-        
+
         if (!attributes->IsMarkedForDeletion && !attributes->IsCleanedUp)
         {
             wstring serviceName;
@@ -7758,7 +7787,7 @@ bool TestFabricClientHealth::CheckPartitionEntityState(CommandLineParser & parse
             }
         }
     }
- 
+
     return true;
 }
 
@@ -7835,8 +7864,8 @@ bool TestFabricClientHealth::CheckDeployedServicePackageEntityState(CommandLineP
 
     TestSession::WriteInfo(TraceSource, "CheckDeployedServicePackageEntityState(): Using servicePackageActivationId=[{0}].", servicePackageActivationId);
 
-    NodeId nodeId; 
-    FABRIC_NODE_INSTANCE_ID nodeInstanceId; 
+    NodeId nodeId;
+    FABRIC_NODE_INSTANCE_ID nodeInstanceId;
     std::wstring nodeName;
     if (!ParseNodeHealthInformation(parser, nodeId, nodeInstanceId, nodeName))
     {
@@ -7890,8 +7919,8 @@ bool TestFabricClientHealth::CheckDeployedApplicationEntityState(CommandLinePars
         return false;
     }
 
-    NodeId nodeId; 
-    FABRIC_NODE_INSTANCE_ID nodeInstanceId; 
+    NodeId nodeId;
+    FABRIC_NODE_INSTANCE_ID nodeInstanceId;
     std::wstring nodeName;
     if (!ParseNodeHealthInformation(parser, nodeId, nodeInstanceId, nodeName))
     {
@@ -8069,12 +8098,12 @@ bool TestFabricClientHealth::CheckEntityState(std::wstring const & expectedState
         TestSession::WriteInfo(TraceSource, "CheckEntityState failed: unknown expectedState={0}, actual: {1}", expectedState, attributes);
         success = false;
     }
-    
+
     if (!success)
     {
         TestSession::WriteInfo(TraceSource, "CheckEntityState failed: expectedState={0}, actual: {1}", expectedState, attributes);
     }
-    
+
     return success;
 }
 
@@ -8124,14 +8153,14 @@ bool TestFabricClientHealth::ParseSnapshot(std::wstring const & input, Managemen
         StringUtility::Split<wstring>(entry, uds, L":");
         if (uds.size() == 1)
         {
-            // global 
+            // global
             ULONG error;
             ULONG total;
             if (!ParseUnhealthyState(uds[0], error, total))
             {
                 return false;
             }
-            
+
             snapshot.SetGlobalState(error, total);
         }
         else if (uds.size() == 2)
@@ -8160,7 +8189,7 @@ bool TestFabricClientHealth::TakeClusterHealthSnapshot(StringCollection const & 
     CommandLineParser parser(params);
 
     bool requiresValidation = false;
-    
+
     wstring snapshotString;
     ClusterUpgradeStateSnapshot expectedSnapshot;
     if (parser.TryGetString(L"expected", snapshotString))
@@ -8200,11 +8229,11 @@ bool TestFabricClientHealth::TakeClusterHealthSnapshot(StringCollection const & 
         if (expectedSnapshot.GlobalUnhealthyState != actualSnapshot.GlobalUnhealthyState)
         {
             TestSession::WriteInfo(
-                TraceSource, 
-                "Snapshot global mismatch: expected {0}/{1}, actual {2}/{3}", 
-                expectedSnapshot.GlobalUnhealthyState.ErrorCount, 
-                expectedSnapshot.GlobalUnhealthyState.TotalCount, 
-                actualSnapshot.GlobalUnhealthyState.ErrorCount, 
+                TraceSource,
+                "Snapshot global mismatch: expected {0}/{1}, actual {2}/{3}",
+                expectedSnapshot.GlobalUnhealthyState.ErrorCount,
+                expectedSnapshot.GlobalUnhealthyState.TotalCount,
+                actualSnapshot.GlobalUnhealthyState.ErrorCount,
                 actualSnapshot.GlobalUnhealthyState.TotalCount);
             return false;
         }
@@ -8229,9 +8258,9 @@ bool TestFabricClientHealth::TakeClusterHealthSnapshot(StringCollection const & 
             if (entry.second != expectedState)
             {
                 TestSession::WriteInfo(
-                    TraceSource, 
-                    "Snapshot UD mismatch for {0}: expected {1}/{2}, actual {3}/{4}", 
-                    entry.first, 
+                    TraceSource,
+                    "Snapshot UD mismatch for {0}: expected {1}/{2}, actual {3}/{4}",
+                    entry.first,
                     expectedState.ErrorCount,
                     expectedState.TotalCount,
                     entry.second.ErrorCount,
@@ -8331,7 +8360,7 @@ bool TestFabricClientHealth::CheckIsClusterHealthy(StringCollection const & para
     }
 
     StringUtility::Split<wstring>(upgradeDomainList, upgradeDomains, L",");
-    
+
     size_t expectedAppsWithoutAppTypeCount;
     int expectedAppsWithoutAppTypeCountInt;
     parser.TryGetInt(L"expectedappswithoutapptypecount", expectedAppsWithoutAppTypeCountInt, 0);
@@ -8364,7 +8393,7 @@ bool TestFabricClientHealth::CheckIsClusterHealthy(StringCollection const & para
     if (!GetApplicationHealthPolicies(parser, applicationHealthPolicies))
     {
         return false;
-    }    
+    }
 
     Management::HealthManager::HealthManagerReplicaSPtr hmPrimary;
     if (!GetHMPrimaryWithRetries(hmPrimary))
@@ -8386,7 +8415,7 @@ bool TestFabricClientHealth::CheckIsClusterHealthy(StringCollection const & para
         actualIsHealthy,
         unhealthyEvaluations,
         actualAppsWithoutAppType);
-    
+
     if (expectedAppsWithoutAppTypeCount > 0)
     {
         // Expect to receive error
@@ -8396,7 +8425,7 @@ bool TestFabricClientHealth::CheckIsClusterHealthy(StringCollection const & para
             TestSession::WriteInfo(TraceSource, "{0}: mismatch for apps without app types count: expected {1}, actual {2}", activityId, expectedAppsWithoutAppTypeCount, actualAppsWithoutAppType.size());
             return false;
         }
-        
+
         if (!expectedAppsWithoutAppType.empty())
         {
             // Sort the vectors
@@ -8416,7 +8445,7 @@ bool TestFabricClientHealth::CheckIsClusterHealthy(StringCollection const & para
     }
 
     TestSession::FailTestIfNot(error.IsSuccess(), "{0}: Error executing Test_IsClusterHealthy: {1}", activityId, error);
-    
+
     if (actualIsHealthy)
     {
         if (!unhealthyEvaluations.empty())
@@ -8434,7 +8463,7 @@ bool TestFabricClientHealth::CheckIsClusterHealthy(StringCollection const & para
         TestSession::WriteInfo(TraceSource, "{0}: mismatch for isHealthy result: expected {1}, actual {2}", activityId, expectedIsHealthy, actualIsHealthy);
         return false;
     }
-    
+
     wstring expectedEvaluation;
     if (parser.TryGetString(L"expectedreason", expectedEvaluation))
     {
@@ -8496,7 +8525,7 @@ bool TestFabricClientHealth::CheckHealthStats(__in CommandLineParser & parser, H
         // No need to validate
         return true;
     }
-    
+
     HealthStateCountMap results;
 
     if (healthStats)
@@ -8530,7 +8559,7 @@ bool TestFabricClientHealth::CheckHM(StringCollection const & params)
     CommandLineParser parser(params);
     int expectedCount = -1;
     parser.TryGetInt(L"expectedcount", expectedCount);
-    
+
     ErrorCode error;
     size_t actualCount;
     int remainingRetries = FabricTestSessionConfig::GetConfig().QueryOperationRetryCount;
@@ -8538,7 +8567,7 @@ bool TestFabricClientHealth::CheckHM(StringCollection const & params)
     do
     {
         --remainingRetries;
-    
+
         vector<HealthEntitySPtr> entities;
         if (params[0] == L"nodes")
         {
@@ -8580,11 +8609,22 @@ bool TestFabricClientHealth::CheckHM(StringCollection const & params)
             return true;
         }
 
-        TestSession::WriteInfo(TraceSource, "CheckHM failed: expectedCount={0}, actualCount={1}, remaining retries {2}", expectedCount, actualCount, remainingRetries);
+        // Create entitiesId string, because WriteInfo doesn't know how to trace out entities by default.
+        wstring entitiesId;
+        if (actualCount > 0)
+        {
+            entitiesId = wformatString(L"\r\nThe list of actual {0} entities by ID:\r\n", entities[0]->EntityKind);
+            for (auto const & entity : entities)
+            {
+                entitiesId.append(wformatString(L"{0}\r\n", entity->EntityIdString));
+            }
+        }
+
+        TestSession::WriteInfo(TraceSource, "CheckHM failed: expectedCount={0}, actualCount={1}, remaining retries {2}{3}", expectedCount, actualCount, remainingRetries, entitiesId);
         Sleep(static_cast<DWORD>(FabricTestSessionConfig::GetConfig().QueryOperationRetryDelay.TotalMilliseconds()));
     }
     while (remainingRetries > 0);
-    
+
     TestSession::WriteWarning(TraceSource, "CheckHM failed: expectedCount={0}, timeout expired", expectedCount);
     return false;
 }
@@ -8971,7 +9011,7 @@ bool TestFabricClientHealth::VerifyParititionHealthReports(HealthManagerReplicaS
 }
 
 bool TestFabricClientHealth::VerifyReplicaHealthReports(
-    HealthManagerReplicaSPtr const & hm, 
+    HealthManagerReplicaSPtr const & hm,
     map<FailoverUnitId, FailoverUnitSnapshot> const & failoverUnits)
 {
     map<wstring, bool> fmReplicas;
@@ -9055,10 +9095,10 @@ bool TestFabricClientHealth::VerifyReplicaHealthReports(
                 {
                     TestSession::WriteInfo(TraceSource, "Replica {0} in HM is not healthy", *it);
 
-                    // This is a special check because ClearError health report may not be propertly generated due to bug 7188617. 
+                    // This is a special check because ClearError health report may not be propertly generated due to bug 7188617.
                     // This will be removed after that bug is fixed.
                     if (it->State == FABRIC_HEALTH_STATE_ERROR &&
-                        it->Property == *ServiceModel::Constants::HealthReplicaChangeRoleStatusProperty &&                      
+                        it->Property == *ServiceModel::Constants::HealthReplicaChangeRoleStatusProperty &&
                         itFailoverUnit->second.IsInReconfiguration)
                     {
                         TestSession::WriteInfo(TraceSource, "Ignore health verification for replica {0} event {1} because ClearError health report may not be generated properly.", replica->EntityIdString, *it);
@@ -9165,7 +9205,7 @@ bool TestFabricClientHealth::VerifyServiceHealthReports(HealthManagerReplicaSPtr
                 {
                     auto partitions = service->GetPartitions();
                     wstring partitionOutput;
-                    
+
                     for (PartitionEntitySPtr const & partition : partitions)
                     {
                         if (!dispatcher_.IsRebuildLostFailoverUnit(partition->EntityId))
@@ -9364,9 +9404,6 @@ bool TestFabricClientHealth::VerifyDeployedServicePackageAndApplicationHealthRep
 
     for (DeployedServicePackageEntitySPtr const & package : hmDeployedServicePackages)
     {
-        // For debugging only
-        TestSession::WriteInfo(TraceSource, "HM DeployedServicePackageEntityId: {0}.", package->EntityId);
-
         HealthEntityState::Enum entityState;
         shared_ptr<AttributesStoreData> entityBase;
         vector<HealthEvent> events;

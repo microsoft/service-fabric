@@ -149,4 +149,85 @@ namespace Store
             make_unique<KtlLoggerSharedLogSettings>(*castedLogSettings));
         return RootedObjectPointer<Api::IKeyValueStoreReplicaSettings_V2Result>(settings.get(), settings->CreateComponentRoot());
     }
+
+    ErrorCode TSReplicatedStoreSettings::DeleteDatabaseFiles(Guid const & partitionId, FABRIC_REPLICA_ID replicaId)
+    {
+        return DeleteDatabaseFiles(partitionId, replicaId, L"");
+    }
+
+    // Since this function blindly deletes the shared log file, it should only be used by the migration workflow to clean up old copies of 
+    // the database files that might exist. Replicas should continue to use ILocalStore::Cleanup to properly drop replicas.
+    //
+    ErrorCode TSReplicatedStoreSettings::DeleteDatabaseFiles(Guid const & partitionId, FABRIC_REPLICA_ID replicaId, wstring const & sharedLogFilePathArg)
+    {
+        auto sharedLogFilePath = sharedLogFilePathArg.empty() ? this->SharedLogSettings->ContainerPath : sharedLogFilePathArg;
+        auto checkpointsFolder = Path::Combine(this->WorkingDirectory, wformatString("{0}_{1}", partitionId, replicaId));
+        auto dedicatedLogFolder = this->WorkingDirectory;
+        auto dedicatedLogFilePattern = L"*.SFLog";
+
+        if (File::Exists(sharedLogFilePath))
+        {
+            auto error = File::Delete2(sharedLogFilePath);
+            if (error.IsSuccess())
+            {
+                WriteInfo(TraceComponent, "deleted existing {0}", sharedLogFilePath);
+            }
+            else
+            {
+                return TraceAndGetError(wformatString("failed to delete existing {0}", sharedLogFilePath), error);
+            }
+        }
+        else
+        {
+            WriteInfo(TraceComponent, "{0} already does not exist", sharedLogFilePath);
+        }
+
+        if (Directory::Exists(checkpointsFolder))
+        {
+            auto error = Directory::Delete(checkpointsFolder, true); // recursive
+            if (error.IsSuccess())
+            {
+                WriteInfo(TraceComponent, "deleted existing {0}", checkpointsFolder);
+            }
+            else
+            {
+                return TraceAndGetError(wformatString("failed to delete existing {0}", checkpointsFolder), error);
+            }
+        }
+        else
+        {
+            WriteInfo(TraceComponent, "{0} already does not exist", checkpointsFolder);
+        }
+
+        // fullPath - true
+        // topDirectoryOnly - true
+        //
+        for (auto const & dedicatedLogFilePath : Directory::GetFiles(dedicatedLogFolder, dedicatedLogFilePattern, true, true))
+        {
+            auto error = File::Delete2(dedicatedLogFilePath);
+            if (error.IsSuccess())
+            {
+                WriteInfo(TraceComponent, "deleted existing {0}", dedicatedLogFilePath);
+            }
+            else
+            {
+                return TraceAndGetError(wformatString("failed to delete existing {0}", dedicatedLogFilePath), error);
+            }
+        }
+
+        return ErrorCodeValue::Success;
+    }
+
+    ErrorCode TSReplicatedStoreSettings::TraceAndGetError(wstring && msg, ErrorCode const & error)
+    {
+        if (!error.Message.empty())
+        {
+            msg.append(L"; ");
+            msg.append(error.Message);
+        }
+
+        WriteWarning(TraceComponent, "{0}: {1}", msg, error);
+
+        return ErrorCode(error.ReadValue(), move(msg));
+    }
 }

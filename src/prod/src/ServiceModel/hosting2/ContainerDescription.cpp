@@ -22,19 +22,27 @@ ContainerDescription::ContainerDescription()
     portBindings_(),
     logConfig_(),
     volumes_(),
+    labels_(),
     assignedIp_(),
     dnsServers_(),
     repositoryCredentials_(),
     healthConfig_(),
     securityOptions_(),
     entryPoint_(),
+    removeServiceFabricRuntimeAccess_(true),
+#if defined(PLATFORM_UNIX)
+    podDescription_(),
+#endif
     groupContainerName_(),
+    useDefaultRepositoryCredentials_(false),
+    useTokenAuthenticationCredentials_(false),
     autoRemove_(true),
     runInteractive_(false),
     isContainerRoot_(false),
     codePackageName_(),
     servicePackageActivationId_(),
-    partitionId_()
+    partitionId_(),
+    bindMounts_()
 {
 }
 
@@ -52,23 +60,33 @@ ContainerDescription::ContainerDescription(
     std::map<std::wstring, std::wstring> const & portBindings,
     LogConfigDescription const & logConfig,
     vector<ContainerVolumeDescription> const & volumes,
+    vector<ContainerLabelDescription> const & labels,
     vector<wstring> const & dnsServers,
     RepositoryCredentialsDescription const & repositoryCredentials,
     ContainerHealthConfigDescription const & healthConfig,
     vector<wstring> const & securityOptions,
+#if defined(PLATFORM_UNIX)
+    ContainerPodDescription const & podDesc,
+#endif
+    bool removeServiceFabricRuntimeAccess,
     wstring const & groupContainerName,
+    bool useDefaultRepositoryCredentials,
+    bool useTokenAuthenticationCredentials,
     bool autoRemove,
     bool runInteractive,
     bool isContainerRoot,
     wstring const & codePackageName,
     wstring const & servicePackageActivationId,
-    wstring const & partitionId)
+    wstring const & partitionId,
+    map<wstring, wstring> const& bindMounts)
     : applicationName_(applicationName),
     serviceName_(serviceName),
     applicationId_(applicationId),
     containerName_(containerName),
     entryPoint_(entryPoint),
     isolationMode_(isolationMode),
+    useDefaultRepositoryCredentials_(useDefaultRepositoryCredentials),
+    useTokenAuthenticationCredentials_(useTokenAuthenticationCredentials),
     hostName_(hostName),
     deploymentFolder_(deploymentFolder),
     nodeWorkFolder_(nodeWorkFolder),
@@ -76,166 +94,54 @@ ContainerDescription::ContainerDescription(
     portBindings_(portBindings),
     logConfig_(logConfig),
     volumes_(volumes),
+    labels_(labels),
     dnsServers_(dnsServers),
     repositoryCredentials_(repositoryCredentials),
     healthConfig_(healthConfig),
     securityOptions_(securityOptions),
+    removeServiceFabricRuntimeAccess_(removeServiceFabricRuntimeAccess),
+#if defined(PLATFORM_UNIX)
+    podDescription_(podDesc),
+#endif
     groupContainerName_(groupContainerName),
     autoRemove_(autoRemove),
     runInteractive_(runInteractive),
     isContainerRoot_(isContainerRoot),
     codePackageName_(codePackageName),
     servicePackageActivationId_(servicePackageActivationId),
-    partitionId_(partitionId)
+    partitionId_(partitionId),
+    bindMounts_(bindMounts)
 {
-}
-
-ContainerDescription::ContainerDescription(ContainerDescription const & other)
-    : applicationName_(other.applicationName_),
-    serviceName_(other.serviceName_),
-    applicationId_(other.applicationId_),
-    containerName_(other.containerName_),
-    entryPoint_(other.entryPoint_),
-    isolationMode_(other.isolationMode_),
-    hostName_(other.hostName_),
-    deploymentFolder_(other.deploymentFolder_),
-    nodeWorkFolder_(other.nodeWorkFolder_),
-    portBindings_(other.portBindings_),
-    logConfig_(other.logConfig_),
-    volumes_(other.volumes_),
-    assignedIp_(other.assignedIp_),
-    dnsServers_(other.dnsServers_),
-    repositoryCredentials_(other.repositoryCredentials_),
-    healthConfig_(other.healthConfig_),
-    securityOptions_(other.securityOptions_),
-    groupContainerName_(other.groupContainerName_),
-    autoRemove_(other.autoRemove_),
-    runInteractive_(other.runInteractive_),
-    isContainerRoot_(other.isContainerRoot_),
-    codePackageName_(other.codePackageName_),
-    servicePackageActivationId_(other.servicePackageActivationId_),
-    partitionId_(other.partitionId_)
-{
-}
-
-ContainerDescription::ContainerDescription(ContainerDescription && other)
-    : applicationName_(move(other.applicationName_)),
-    serviceName_(move(other.serviceName_)),
-    applicationId_(move(other.applicationId_)),
-    containerName_(move(other.containerName_)),
-    entryPoint_(move(other.entryPoint_)),
-    isolationMode_(move(other.isolationMode_)),
-    hostName_(move(other.hostName_)),
-    deploymentFolder_(move(other.deploymentFolder_)),
-    nodeWorkFolder_(move(other.nodeWorkFolder_)),
-    portBindings_(move(other.portBindings_)),
-    logConfig_(move(other.logConfig_)),
-    volumes_(move(other.volumes_)),
-    assignedIp_(move(other.assignedIp_)),
-    dnsServers_(move(other.dnsServers_)),
-    repositoryCredentials_(move(other.repositoryCredentials_)),
-    healthConfig_(move(other.healthConfig_)),
-    securityOptions_(move(other.securityOptions_)),
-    groupContainerName_(move(other.groupContainerName_)),
-    autoRemove_(other.autoRemove_),
-    runInteractive_(other.runInteractive_),
-    isContainerRoot_(other.isContainerRoot_),
-    codePackageName_(move(other.codePackageName_)),
-    servicePackageActivationId_(move(other.servicePackageActivationId_)),
-    partitionId_(move(other.partitionId_))
-{
-}
-
-ContainerDescription::~ContainerDescription()
-{
-}
-
-ContainerDescription const & ContainerDescription::operator=(ContainerDescription const & other)
-{
-    if(this != &other)
-    {
-        this->applicationName_ = other.applicationName_;
-        this->serviceName_ = other.serviceName_;
-        this->applicationId_ = other.applicationId_;
-        this->containerName_ = other.containerName_;
-        this->entryPoint_ = other.entryPoint_;
-        this->isolationMode_ = other.isolationMode_;
-        this->hostName_ = other.hostName_;
-        this->deploymentFolder_ = other.deploymentFolder_;
-        this->nodeWorkFolder_ = other.nodeWorkFolder_;
-        this->portBindings_ = other.portBindings_;
-        this->logConfig_ = other.logConfig_;
-        this->volumes_ = other.volumes_;
-        this->assignedIp_ = other.assignedIp_;
-        this->dnsServers_ = other.dnsServers_;
-        this->repositoryCredentials_ = other.repositoryCredentials_;
-        this->healthConfig_ = other.healthConfig_;
-        this->securityOptions_ = other.securityOptions_;
-        this->groupContainerName_ = other.groupContainerName_;
-        this->autoRemove_ = other.autoRemove_;
-        this->runInteractive_ = other.runInteractive_;
-        this->isContainerRoot_ = other.isContainerRoot_;
-        this->codePackageName_ = other.codePackageName_;
-        this->servicePackageActivationId_ = other.servicePackageActivationId_;
-        this->partitionId_ = other.partitionId_;
-    }
-    return *this;
-}
-
-ContainerDescription const & ContainerDescription::operator=(ContainerDescription && other)
-{
-    if(this != &other)
-    {
-        this->applicationName_ = move(other.applicationName_);
-        this->serviceName_ = move(other.serviceName_);
-        this->applicationId_ = move(other.applicationId_);
-        this->containerName_ = move(other.containerName_);
-        this->entryPoint_ = move(other.entryPoint_);
-        this->isolationMode_ = move(other.isolationMode_);
-        this->hostName_ = move(other.hostName_);
-        this->deploymentFolder_ = move(other.deploymentFolder_);
-        this->nodeWorkFolder_ = move(other.nodeWorkFolder_);
-        this->portBindings_ = move(other.portBindings_);
-        this->logConfig_ = move(other.logConfig_);
-        this->volumes_ = move(other.volumes_);
-        this->assignedIp_ = move(other.assignedIp_);
-        this->dnsServers_ = move(other.dnsServers_);
-        this->repositoryCredentials_ = move(other.repositoryCredentials_);
-        this->healthConfig_ = move(other.healthConfig_);
-        this->securityOptions_ = move(other.securityOptions_);
-        this->groupContainerName_ = move(other.groupContainerName_);
-        this->autoRemove_ = other.autoRemove_;
-        this->runInteractive_ = other.runInteractive_;
-        this->isContainerRoot_ = other.isContainerRoot_;
-        this->codePackageName_ = move(other.codePackageName_);
-        this->servicePackageActivationId_ = move(other.servicePackageActivationId_);
-        this->partitionId_ = move(other.partitionId_);
-    }
-    return *this;
 }
 
 void ContainerDescription::WriteTo(TextWriter & w, FormatOptions const &) const
 {
     w.Write("ContainerDescription { ");
-    w.Write("ApplicationName = {0}", ApplicationName);
-    w.Write("ServiceName = {0}", serviceName_);
-    w.Write("ApplicationId = {0}", ApplicationId);
-    w.Write("ContainerName = {0}, ", ContainerName);
-    w.Write("EntryPoint = {0}", EntryPoint);
-    w.Write("IsolationMode = {0}", IsolationMode);
-    w.Write("Hostname = {0}", hostName_);
-    w.Write("DeploymentFolder = {0}, ", DeploymentFolder);
-    w.Write("NodeWorkingFolder = {0}, ", NodeWorkFolder);
-    w.Write("LogConfig = {0}", LogConfig);
+    w.Write("ApplicationName = {0} ", ApplicationName);
+    w.Write("ServiceName = {0} ", serviceName_);
+    w.Write("ApplicationId = {0} ", ApplicationId);
+    w.Write("ContainerName = {0} ", ContainerName);
+    w.Write("EntryPoint = {0} ", EntryPoint);
+    w.Write("IsolationMode = {0} ", IsolationMode);
+    w.Write("Hostname = {0} ", hostName_);
+    w.Write("DeploymentFolder = {0} ", DeploymentFolder);
+    w.Write("NodeWorkingFolder = {0} ", NodeWorkFolder);
+    w.Write("LogConfig = {0} ", LogConfig);
     w.Write("AssignedIP = {0}", assignedIp_);
-    w.Write("GroupContainerName = {0}", groupContainerName_);
-    w.Write("AutoRemove = {0}", autoRemove_);
-    w.Write("RunInteractive = {0}", runInteractive_);
-    w.Write("IsContainerRoot = {0}", isContainerRoot_);
-    w.Write("HealthConfig = {0}", healthConfig_);
-    w.Write("CodePackageName = {0}", codePackageName_);
-    w.Write("ServicePackageActivationId = {0}", servicePackageActivationId_);
-    w.Write("PartitionId = {0}", partitionId_);
+    w.Write("RemoveServiceFabricRuntimeAccess = {0}", removeServiceFabricRuntimeAccess_);
+#if defined(PLATFORM_UNIX)
+    w.Write("ContainerPodDescription = {0}", podDescription_);
+#endif
+    w.Write("GroupContainerName = {0} ", groupContainerName_);
+    w.Write("UseDefaultRepositoryCredentials = {0}", UseDefaultRepositoryCredentials);
+    w.Write("UseTokenAuthenticationCredentials = {0}", UseTokenAuthenticationCredentials);
+    w.Write("AutoRemove = {0} ", autoRemove_);
+    w.Write("RunInteractive = {0} ", runInteractive_);
+    w.Write("IsContainerRoot = {0} ", isContainerRoot_);
+    w.Write("HealthConfig = {0} ", healthConfig_);
+    w.Write("CodePackageName = {0} ", codePackageName_);
+    w.Write("ServicePackageActivationId = {0} ", servicePackageActivationId_);
+    w.Write("PartitionId = {0} ", partitionId_);
     w.Write("}");
 }
 
@@ -313,8 +219,36 @@ ErrorCode ContainerDescription::ToPublicApi(
     fabricContainerDescription.ServicePackageActivationId = heap.AddString(this->ServicePackageActivationId);
     fabricContainerDescription.PartitionId = heap.AddString(this->PartitionId);
 
-    fabricContainerDescription.Reserved = nullptr;
+
+    auto fabricContainerDescEx1 = heap.AddItem<FABRIC_CONTAINER_DESCRIPTION_EX1>();
+    fabricContainerDescEx1->UseDefaultRepositoryCredentials = this->UseDefaultRepositoryCredentials;
+
+    auto fabricContainerDescEx2 = heap.AddItem<FABRIC_CONTAINER_DESCRIPTION_EX2>();
+    fabricContainerDescEx2->UseTokenAuthenticationCredentials = this->UseTokenAuthenticationCredentials;
+
+    auto labels = heap.AddItem<FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST>();
+    error = PublicApiHelper::ToPublicApiList<
+        ContainerLabelDescription,
+        FABRIC_CONTAINER_LABEL_DESCRIPTION,
+        FABRIC_CONTAINER_LABEL_DESCRIPTION_LIST>(heap, this->ContainerLabels, *labels);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+    fabricContainerDescEx1->Labels = labels.GetRawPointer();
+    fabricContainerDescEx1->RemoveServiceFabricRuntimeAccess = this->removeServiceFabricRuntimeAccess_;
+
+    auto bindMounts = heap.AddItem<FABRIC_STRING_PAIR_LIST>();
+    error = PublicApiHelper::ToPublicApiStringPairList(heap, this->BindMounts, *bindMounts);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+    fabricContainerDescEx1->BindMounts = bindMounts.GetRawPointer();
+
+    fabricContainerDescription.Reserved = fabricContainerDescEx1.GetRawPointer();
+    fabricContainerDescEx1->Reserved = fabricContainerDescEx2.GetRawPointer();
+    fabricContainerDescEx2->Reserved = nullptr;
 
     return ErrorCode::Success();
 }
-

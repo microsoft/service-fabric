@@ -9,6 +9,7 @@ cmservice 3 1
 cleantest
 
 set UpgradeStatusPollInterval 5
+set RestoreReplicaLocationAfterUpgrade true
 set UserReplicaRestartWaitDuration 9999
 set DeletedReplicaKeepDuration 1
 

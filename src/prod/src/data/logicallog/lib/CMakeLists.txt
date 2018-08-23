@@ -1,7 +1,7 @@
 add_definitions(-DUPASSTHROUGH=1)
 
 set( LINUX_SOURCES
-  ../FakeLogicalLog.cpp
+  ../KtlLoggerMode.cpp
   ../FakeLogManager.cpp
   ../FakePhysicalLog.cpp
   ../FileLogicalLog.cpp
@@ -30,11 +30,11 @@ add_precompiled_header(objects_LogicalLog ../stdafx.h)
 add_library(${lib_LogicalLog} STATIC $<TARGET_OBJECTS:objects_LogicalLog>)
 
 target_link_libraries(${lib_LogicalLog}
-  ${lib_KtlLogger}
+  ${lib_KtlLoggerNode}
   ${lib_Common}
   ${lib_data_utilities}
   ${KtlLoggerUser}
-  ${lib_KtlLoggerShimUPassthrough}
+  ${lib_KtlLoggerShimUnify}
   ${KtlLoggerUser}
   ${Ktlfull}
     )

@@ -19,6 +19,7 @@ namespace Hosting2
     public:
         std::wstring HostPort;
         static Common::WStringLiteral const HostPortParameter;
+        void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
     };
 
     class ContainerLogConfig : public Common::IFabricJsonSerializable
@@ -39,6 +40,7 @@ namespace Hosting2
         std::map<std::wstring, std::wstring> DriverOpts;
         static Common::WStringLiteral const TypeParameter;
         static Common::WStringLiteral const ConfigParameter;
+        void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
     };
 
     class ContainerVolumeConfig : public Common::IFabricJsonSerializable
@@ -64,6 +66,7 @@ namespace Hosting2
         static Common::WStringLiteral const NameParameter;
         static Common::WStringLiteral const DriverParameter;
         static Common::WStringLiteral const DriverOptsParameter;
+        void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
     };
 
     class ContainerHostConfig
@@ -92,6 +95,9 @@ namespace Hosting2
           SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::MaximumIOpsParameter, MaximumIOps, (MaximumIOps != 0))
           SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::MaximumIOBytespsParameter, MaximumIOBytesps, (MaximumIOBytesps != 0))
           SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::BlockIOWeightParameter, BlockIOWeight, (BlockIOWeight != 0))
+          SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::DiskQuotaParameter, DiskQuota, (DiskQuota != 0))
+          SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::KernelMemoryParameter, KernelMemory, (KernelMemory != 0))
+          SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::ShmSizeParameter, ShmSize, (ShmSize != 0))
           SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::ContainerLogConfigParameter, LogConfig, (!LogConfig.Type.empty()))
           SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::IsolationParameter, Isolation, (!Isolation.empty()))
           SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::CpusetCpusParameter, CpusetCpus, (!CpusetCpus.empty() && NanoCpus == 0))
@@ -123,6 +129,9 @@ namespace Hosting2
         uint MaximumIOps;
         uint MaximumIOBytesps;
         uint BlockIOWeight;
+        uint64 DiskQuota;
+        uint64 KernelMemory;
+        uint64 ShmSize;
         ContainerLogConfig LogConfig;
         std::wstring CpusetCpus;
         std::vector<std::wstring> Dns;
@@ -155,6 +164,9 @@ namespace Hosting2
         static Common::WStringLiteral const MaximumIOpsParameter;
         static Common::WStringLiteral const MaximumIOBytespsParameter;
         static Common::WStringLiteral const BlockIOWeightParameter;
+        static Common::WStringLiteral const DiskQuotaParameter;
+        static Common::WStringLiteral const KernelMemoryParameter;
+        static Common::WStringLiteral const ShmSizeParameter;
         static Common::WStringLiteral const ContainerLogConfigParameter;
         static Common::WStringLiteral const CpusetCpusParameter;
         static Common::WStringLiteral const DnsParameter;
@@ -167,5 +179,37 @@ namespace Hosting2
         static Common::WStringLiteral const IpcModeParameter;
         static Common::WStringLiteral const UsernsModeParameter;
         static Common::WStringLiteral const CgroupNameParameter;
+        void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
+    };
+
+    class TestContainerHostConfig
+        : public Common::IFabricJsonSerializable
+    {
+    public:
+        TestContainerHostConfig();
+
+        ~TestContainerHostConfig();
+
+        BEGIN_JSON_SERIALIZABLE_PROPERTIES()
+            SERIALIZABLE_PROPERTY_INT64_AS_NUM_IF(ContainerHostConfig::MemoryParameter, Memory, (Memory != 0))
+            SERIALIZABLE_PROPERTY_INT64_AS_NUM_IF(ContainerHostConfig::NanoCpusParameter, NanoCpus, (NanoCpus != 0))
+            SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::PidModeParameter, PidMode, !PidMode.empty())
+            SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::UTSModeParameter, UTSMode, !UTSMode.empty())
+            SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::IpcModeParameter, IpcMode, !IpcMode.empty())
+            SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::UsernsModeParameter, UsernsMode, !UsernsMode.empty())
+            SERIALIZABLE_PROPERTY_IF(ContainerHostConfig::CgroupNameParameter, CgroupName, !CgroupName.empty())
+            END_JSON_SERIALIZABLE_PROPERTIES()
+
+    public:
+        uint64 Memory;
+        uint64 NanoCpus;
+
+        // used for PODS
+        std::wstring PidMode;
+        std::wstring UTSMode;
+        std::wstring IpcMode;
+        std::wstring UsernsMode;
+
+        std::wstring CgroupName;
     };
 }

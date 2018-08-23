@@ -57,7 +57,8 @@ namespace Reliability
                 int extraReplicas,
                 std::map<Federation::NodeId, std::vector<uint>> const& ftSecondaryMap,
                 std::vector<PlacementReplica *> && standbyReplicas,
-                SearcherSettings const & settings);
+                SearcherSettings const & settings,
+                int targetReplicaSetSize);
 
             PartitionEntry(PartitionEntry && other);
 
@@ -124,6 +125,12 @@ namespace Reliability
             __declspec (property(get=get_Order)) int Order;
             int get_Order() const { return order_; }
 
+            __declspec (property(get = get_TargetReplicaSetSize)) int TargetReplicaSetSize;
+            int get_TargetReplicaSetSize() const { return targetReplicaSetSize_; }
+
+            __declspec (property(get = get_IsTargetOne)) bool IsTargetOne;
+            bool get_IsTargetOne() const { return TargetReplicaSetSize == 1; }
+
             __declspec (property(get=get_NumberOfExtraReplicas)) int NumberOfExtraReplicas;
             int get_NumberOfExtraReplicas() const { return numberOfExtraReplicas_; }
 
@@ -149,10 +156,10 @@ namespace Reliability
             size_t get_UpgradeIndex() const { return upgradeIndex_; }
 
             __declspec (property(get = get_WriteQuorumSize)) size_t WriteQuorumSize;
-            size_t get_WriteQuorumSize() const { return service_->TargetReplicaSetSize / 2 + 1; }
+            size_t get_WriteQuorumSize() const { return TargetReplicaSetSize / 2 + 1; }
 
             __declspec (property(get = get_MaxReplicasPerDomain)) size_t MaxReplicasPerDomain;
-            size_t get_MaxReplicasPerDomain() const { return std::max(service_->TargetReplicaSetSize - WriteQuorumSize, size_t(1)); }
+            size_t get_MaxReplicasPerDomain() const { return std::max(TargetReplicaSetSize - WriteQuorumSize, size_t(1)); }
 
             void ConstructReplicas();
 
@@ -243,6 +250,8 @@ namespace Reliability
             std::vector<PlacementReplica *> standbyReplicas_;
 
             SearcherSettings const & settings_;
+
+            int targetReplicaSetSize_;
 
             void SetSecondaryLoadMap(std::map<Federation::NodeId, std::vector<uint>> const& inputMap, Federation::NodeId const& node);
         };

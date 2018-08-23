@@ -32,10 +32,15 @@ NTSTATUS SerializableMetadataEnumerator::Create(
 
 SerializableMetadata::CSPtr SerializableMetadataEnumerator::Current()
 {
-    return CheckpointFileAsyncEnumerator::ReadMetadata(
+    SerializableMetadata::CSPtr serializableMetadataCSPtr = nullptr;
+    NTSTATUS status = CheckpointFileAsyncEnumerator::ReadMetadata(
         *PartitionedReplicaIdentifier, 
         itemReader_, 
-        GetThisAllocator());
+        GetThisAllocator(),
+        serializableMetadataCSPtr);
+    THROW_ON_FAILURE(status);
+
+    return serializableMetadataCSPtr;
 }
 
 bool SerializableMetadataEnumerator::MoveNext()

@@ -291,9 +291,11 @@ void TempSolution::PromoteSecondaryForPartitions(std::vector<PartitionEntry cons
     }
 }
 
-void TempSolution::PromoteSecondary(PartitionEntry const* partition, Random & random, NodeEntry const* targetNode)
+size_t TempSolution::PromoteSecondary(PartitionEntry const* partition, Random & random, NodeEntry const* targetNode)
 {
     UNREFERENCED_PARAMETER(random);
+
+    size_t movementUpgradeIndex = SIZE_MAX;
     ASSERT_IF(partition == nullptr || targetNode == nullptr, "Replica invalid or node invalid");
     TESTASSERT_IF(!targetNode->IsUp, "Moving to a down node");
 
@@ -305,10 +307,12 @@ void TempSolution::PromoteSecondary(PartitionEntry const* partition, Random & ra
 
         if (partition->UpgradeIndex != SIZE_MAX)
         {
-            size_t movementUpgradeIndex = partition->UpgradeIndex + BaseSolution.MaxNumberOfCreation;
+             movementUpgradeIndex = partition->UpgradeIndex + BaseSolution.MaxNumberOfCreation;
             AddMovement(movementUpgradeIndex, move(newMove));
         }
     }
+
+    return movementUpgradeIndex;
 }
 
 void TempSolution::AddVoidMovement(PartitionEntry const* partition, Random & random, NodeEntry const* sourceNode)

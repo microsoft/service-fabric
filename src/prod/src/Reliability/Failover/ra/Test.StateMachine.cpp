@@ -188,7 +188,6 @@ BOOST_AUTO_TEST_CASE(ReplicaCloseReportsHealth)
 BOOST_AUTO_TEST_CASE(ReplicaRestartOnServiceTypeRegisteredReportsHealth)
 {
     test_->AddFT(L"SP1", L"O None 000/000/411 1:1 CM [N/N/P RD U N F 1:1]");
-
     test_->ProcessAppHostClosedAndDrain(L"SP1");
     test_->ValidateReplicaHealthEvent(Health::ReplicaHealthEvent::Close, L"SP1", 1, 1);
     test_->ResetAll();
@@ -5247,6 +5246,32 @@ BOOST_AUTO_TEST_CASE(SwapPrimary_CancelCatchup_ResetReplicatorUpdateConfiguratio
     scenarioTest_->ValidateFT(L"SP1", L"O None 411/000/422 1:1 CM [P/N/P RD U N 0 1:1] [S/N/S DD D N 0 2:1] [S/N/S RD U N 0 3:1]");
 }
 
+BOOST_AUTO_TEST_CASE(SwapPrimary_ChangeConfigurationNotPerformed)
+{
+    // During SwapPrimary, ChangeConfiguration will not be performed if a replica exists with better catchup capability
+    scenarioTest_->AddFT(L"SP1", L"O None 000/000/411 1:1 CM [N/N/S RD U N F 1:1] [N/N/P RD U N F 2:1] [N/N/S RD U N F 3:1] [N/N/S RD U N F 4:1]");
+
+    scenarioTest_->ProcessFMMessageAndDrain<MessageType::DoReconfiguration>(L"SP1", L"411/422 [S/P RD U 1:1] [P/S RD U 2:1] [S/S RD U 3:1] [S/S RD U 4:1] 10");
+    scenarioTest_->DumpFT(L"SP1");
+
+    // Replica one node 1 doesn't have catch up capability
+    scenarioTest_->ProcessRAPMessageAndDrain<MessageType::ReplicatorUpdateEpochAndGetStatusReply>(L"SP1", L"411/422 [P/S RD U 1:1 0 2] Success");
+    scenarioTest_->DumpFT(L"SP1");
+
+    scenarioTest_->ProcessRemoteRAMessageAndDrain<MessageType::GetLSNReply>(4, L"SP1", L"411/422 {411:0} [N/S RD U 4:1 1 1] Success");
+    scenarioTest_->DumpFT(L"SP1");
+    
+    scenarioTest_->ProcessRemoteRAMessageAndDrain<MessageType::GetLSNReply>(2, L"SP1", L"411/422 {411:0} [N/P RD U 2:1 2 2] Success");
+    scenarioTest_->DumpFT(L"SP1");
+
+    scenarioTest_->ProcessRemoteRAMessageAndDrain<MessageType::GetLSNReply>(3, L"SP1", L"411/422 {411:0} [N/S RD U 3:1 2 2] Success");
+    scenarioTest_->DumpFT(L"SP1");
+
+    // Verify that RA sends Deactivate message to node 4, instead of performing ChangeConfiguration
+    scenarioTest_->ValidateRAMessage<MessageType::Deactivate>(4);
+}
+
+
 BOOST_AUTO_TEST_CASE(SwapPrimary_UpdateReplicatorConfigurationShouldBeReset)
 {
     // The UpdateReplicatorConfiguration flag should be reset when RA gets a UC Reply from RAP
@@ -5721,7 +5746,7 @@ void TestStateMachine_Reopen::RestartNegativeTestHelper(wstring const & ftShortN
 
     scenarioTest.ExecuteJobItemHandler<JobItemContextBase>(ftShortName, [](HandlerParameters & handlerParameters, JobItemContextBase &)
     {
-        handlerParameters.RA.CloseLocalReplica(handlerParameters, ReplicaCloseMode::Restart);
+        handlerParameters.RA.CloseLocalReplica(handlerParameters, ReplicaCloseMode::Restart, ActivityDescription::Empty);
         return true;
     });
     
@@ -7354,12 +7379,12 @@ protected:
 
     void TestNotReadyScenario(wstring const & ftShortName, wstring const & initial, wstring const & message)
     {
-        TestScenarioWithError(ftShortName, initial, message, ErrorCodeValue::InvalidReplicaStateForReplicaOperation);
+        TestScenarioWithError(ftShortName, initial, message, ErrorCodeValue::InvalidReplicaStateForReplicaOperation, L"Cannot close replica that is not open or has close in progress.");
     }
 
-    void TestScenarioWithError(wstring const & ftShortName, wstring const & initial, wstring const & message, ErrorCode error)
+    void TestScenarioWithError(wstring const & ftShortName, wstring const & initial, wstring const & message, ErrorCode error, std::wstring errorMessage)
     {
-        TestScenario(ftShortName, initial, message, error, initial);
+        TestScenario(ftShortName, initial, message, error, initial, errorMessage);
     }
 
     void TestSuccessScenario(wstring const & ftShortName, wstring const & initial, wstring const & message, wstring const & final)
@@ -7378,7 +7403,22 @@ protected:
         wstring const & ftShortName,
         wstring const & initial,
         wstring const & message,
+        ErrorCode reply,
+        wstring const & final,
+        std::wstring errorMessage);
+
+    void TestScenario(
+        wstring const & ftShortName,
+        wstring const & initial,
+        wstring const & message,
         ErrorCode reply);
+
+    void TestScenarioInternal(
+        wstring const & ftShortName,
+        wstring const & initial,
+        wstring const & message,
+        ErrorCode reply,
+        std::wstring errorMessage);
 
     ScenarioTest & GetScenarioTest()
     {
@@ -7406,13 +7446,25 @@ void TestStateMachine_ClientReportFault::TestScenario(
     wstring const & message,
     ErrorCode reply)
 {
+    TestScenarioInternal(ftShortName, initial, message, reply, L"");
+}
+
+void TestStateMachine_ClientReportFault::TestScenarioInternal(
+    wstring const & ftShortName,
+    wstring const & initial,
+    wstring const & message,
+    ErrorCode reply,
+    std::wstring errorMessage)
+{
     holder_->Recreate();
     auto & scenarioTest = GetScenarioTest();
 
     scenarioTest.AddFT(ftShortName, initial);
 
+    auto msgReply = wformatString("{0} {1}", reply, errorMessage);
+
     scenarioTest.ProcessRequestReceiverContextAndDrain<MessageType::ClientReportFaultRequest>(L"z", message);
-    scenarioTest.ValidateRequestReceiverContextReply<MessageType::ClientReportFaultReply>(L"z", wformatString(reply));
+    scenarioTest.ValidateRequestReceiverContextReply<MessageType::ClientReportFaultReply>(L"z", msgReply);
 }
 
 void TestStateMachine_ClientReportFault::TestScenario(
@@ -7422,7 +7474,18 @@ void TestStateMachine_ClientReportFault::TestScenario(
     ErrorCode reply,
     wstring const & final)
 {
-    TestScenario(ftShortName, initial, message, reply);
+    TestScenario(ftShortName, initial, message, reply, final, L"");
+}
+
+void TestStateMachine_ClientReportFault::TestScenario(
+    wstring const & ftShortName,
+    wstring const & initial,
+    wstring const & message,
+    ErrorCode reply,
+    wstring const & final,
+    std::wstring errorMessage)
+{
+    TestScenarioInternal(ftShortName, initial, message, reply, errorMessage);
 
     GetScenarioTest().ValidateFT(ftShortName, final);
 }
@@ -7470,7 +7533,7 @@ BOOST_AUTO_TEST_CASE(MissingPartitionReturnsReplicaNotFound)
 {
     auto & scenarioTest = GetScenarioTest();
     scenarioTest.ProcessRequestReceiverContextAndDrain<MessageType::ClientReportFaultRequest>(L"z", L"Node1 SL1 1 Permanent");
-    scenarioTest.ValidateRequestReceiverContextReply<MessageType::ClientReportFaultReply>(L"z", L"FABRIC_E_REPLICA_DOES_NOT_EXIST");
+    scenarioTest.ValidateRequestReceiverContextReply<MessageType::ClientReportFaultReply>(L"z", L"FABRIC_E_REPLICA_DOES_NOT_EXIST Cannot close replica as provided partition does not exist.");
 }
 
 BOOST_AUTO_TEST_CASE(MissingReplicaReturnsReplicaNotFound)
@@ -7482,7 +7545,8 @@ BOOST_AUTO_TEST_CASE(MissingReplicaReturnsReplicaNotFound)
         L"SP1",
         L"O None 000/000/411 1:1 CM [N/N/P RD U N F 1:1]",
         L"Node1 SP1 2 Permanent",
-        ErrorCodeValue::REReplicaDoesNotExist);
+        ErrorCodeValue::REReplicaDoesNotExist,
+        L"Cannot close replica as provided ReplicaId do not match.");
 }
 
 BOOST_AUTO_TEST_CASE(TransientFaultForStatelessCompletesWithUnsupported)
@@ -7491,7 +7555,8 @@ BOOST_AUTO_TEST_CASE(TransientFaultForStatelessCompletesWithUnsupported)
         L"SL1",
         L"C None 000/000/411 1:1 -",
         L"Node1 SL1 1 Transient",
-        ErrorCodeValue::InvalidReplicaOperation);
+        ErrorCodeValue::InvalidReplicaOperation,
+        L"Non persisted replica cannot be restarted. Please remove this replica.");
 }
 
 BOOST_AUTO_TEST_CASE(TransientFaultForStatefulVolatileCompletesWithUnsupported)
@@ -7500,7 +7565,8 @@ BOOST_AUTO_TEST_CASE(TransientFaultForStatefulVolatileCompletesWithUnsupported)
         L"SV1",
         L"C None 000/000/411 1:1 -",
         L"Node1 SV1 1 Transient",
-        ErrorCodeValue::InvalidReplicaOperation);
+        ErrorCodeValue::InvalidReplicaOperation,
+        L"Non persisted replica cannot be restarted. Please remove this replica.");
 }
 
 BOOST_AUTO_TEST_CASE(ForceNotSupportedForRestart)
@@ -7509,7 +7575,8 @@ BOOST_AUTO_TEST_CASE(ForceNotSupportedForRestart)
         L"SP1",
         L"O None 000/000/411 1:1 CM [N/N/P RD U N F 1:1]",
         L"Node1 SP1 1 Transient true",
-        ErrorCodeValue::ForceNotSupportedForReplicaOperation);
+        ErrorCodeValue::ForceNotSupportedForReplicaOperation,
+        L"Force parameter not supported for restarting replica.");
 }
 
 BOOST_AUTO_TEST_CASE(ForceNotSupportedForAdHoc)
@@ -7518,7 +7585,8 @@ BOOST_AUTO_TEST_CASE(ForceNotSupportedForAdHoc)
         L"ASP1",
         L"O None 000/000/411 1:1 CM [N/N/P RD U N F 1:1]",
         L"Node1 ASP1 1 Permanent true",
-        ErrorCodeValue::ForceNotSupportedForReplicaOperation);
+        ErrorCodeValue::ForceNotSupportedForReplicaOperation,
+        L"Cannot close replica using Force for AdHoc type replica.");
 }
 
 BOOST_AUTO_TEST_CASE(NotReadyTests)
@@ -8028,7 +8096,7 @@ BOOST_FIXTURE_TEST_SUITE(TestStateMachine_RegressionSuite, TestStateMachine_Regr
             L"FM",
             [&](HandlerParameters & handlerParameters, JobItemContextBase &)
         {            
-            handlerParameters.RA.CloseLocalReplica(handlerParameters, ReplicaCloseMode::Delete, ReconfigurationAgent::InvalidNode);
+            handlerParameters.RA.CloseLocalReplica(handlerParameters, ReplicaCloseMode::Delete, ReconfigurationAgent::InvalidNode, ActivityDescription::Empty);
             return true;
         });
 

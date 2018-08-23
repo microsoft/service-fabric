@@ -22,6 +22,7 @@ namespace TxnReplicator
         , public IFabricTransactionalReplicator
         , public IFabricInternalReplicator
         , public IFabricReplicatorCatchupSpecificQuorum
+        , public IFabricInternalStateReplicator
         , public Data::Utilities::PartitionedReplicaTraceComponent<Common::TraceTaskCodes::TR>
     {
         K_FORCE_SHARED(ComTransactionalReplicator)
@@ -33,6 +34,7 @@ namespace TxnReplicator
             COM_INTERFACE_ITEM(IID_IFabricTransactionalReplicator, IFabricTransactionalReplicator)
             COM_INTERFACE_ITEM(IID_IFabricInternalReplicator, IFabricInternalReplicator)
             COM_INTERFACE_ITEM(IID_IFabricReplicatorCatchupSpecificQuorum, IFabricReplicatorCatchupSpecificQuorum)
+            COM_INTERFACE_ITEM(IID_IFabricInternalStateReplicator, IFabricInternalStateReplicator)
         K_END_COM_INTERFACE_LIST()
 
     public:
@@ -145,7 +147,45 @@ namespace TxnReplicator
         // IFabricInternalReplicator methods
         STDMETHOD_(HRESULT, GetReplicatorStatus)(
             __in IFabricGetReplicatorStatusResult **replicatorStatus)override;
-        
+
+        // IFabricInternalStateReplicator methods
+        STDMETHOD_(HRESULT, BeginReplicateBatch)(
+            __in IFabricBatchOperationData * operationData,
+            __in IFabricAsyncOperationCallback * callback,
+            __out IFabricAsyncOperationContext ** context)override
+        {
+            UNREFERENCED_PARAMETER(operationData);
+            UNREFERENCED_PARAMETER(callback);
+            UNREFERENCED_PARAMETER(context);
+            return E_FAIL;
+        }
+
+        STDMETHOD_(HRESULT, EndReplicateBatch)(
+            __in IFabricAsyncOperationContext * operationData)override
+        {
+            UNREFERENCED_PARAMETER(operationData);
+            return E_FAIL;
+        }
+
+        STDMETHOD_(HRESULT, ReserveSequenceNumber)(
+            __in BOOLEAN alwaysReserveWhenPrimary,
+            __out FABRIC_SEQUENCE_NUMBER * sequenceNumber)override
+        {
+            UNREFERENCED_PARAMETER(alwaysReserveWhenPrimary);
+            UNREFERENCED_PARAMETER(sequenceNumber);
+            return E_FAIL;
+        }
+
+        STDMETHOD_(HRESULT, GetBatchReplicationStream)(
+            __in IFabricBatchOperationStream **batchStream)override
+        {
+            UNREFERENCED_PARAMETER(batchStream);
+            return E_FAIL;
+        }
+
+        STDMETHOD_(HRESULT, GetReplicationQueueCounters)(
+            __out FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS * counters)override;
+
         void Test_SetFaulted();
 
     private:

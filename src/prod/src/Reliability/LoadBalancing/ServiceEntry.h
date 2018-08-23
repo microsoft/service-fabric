@@ -234,7 +234,6 @@ namespace Reliability
             // empty if no need to create ud structure, or we use placement's ud structure, or the service is on every node
             BalanceChecker::DomainTree upgradeDomainStructure_;
 
-
             bool hasAffinity_; // whether the service has parent service or not
 
             ApplicationEntry const* application_;

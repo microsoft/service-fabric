@@ -21,21 +21,6 @@ ServiceHealthStatesFilter::ServiceHealthStatesFilter(DWORD healthStateFilter)
 {
 }
 
-ServiceHealthStatesFilter::ServiceHealthStatesFilter(ServiceHealthStatesFilter && other)
-    : healthStateFilter_(move(other.healthStateFilter_))
-{
-}
-
-ServiceHealthStatesFilter & ServiceHealthStatesFilter::operator =(ServiceHealthStatesFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-    }
-
-    return *this;
-}
-
 ServiceHealthStatesFilter::~ServiceHealthStatesFilter()
 {
 }

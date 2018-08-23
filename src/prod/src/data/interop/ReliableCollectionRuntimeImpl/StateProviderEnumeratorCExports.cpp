@@ -8,6 +8,7 @@
 using namespace Data;
 using namespace Data::TStore;
 using namespace Data::Utilities;
+using namespace Data::Interop;
 
 extern "C" HRESULT StateProviderEnumerator_MoveNext(
     __in StateProviderEnumeratorHandle enumeratorHandle,
@@ -25,6 +26,15 @@ extern "C" HRESULT StateProviderEnumerator_MoveNext(
     KeyValuePair<KUri::CSPtr, KSharedPtr<TxnReplicator::IStateProvider2>> kvPair = enumerator->Current();
     KUri::CSPtr uri = kvPair.Key;
     TxnReplicator::IStateProvider2::SPtr stateProviderSPtr = kvPair.Value;
+
+    // Is this is wrapper state provider for compat distributed dictionary state provider
+    if (dynamic_cast<CompatRDStateProvider*>(stateProviderSPtr.RawPtr()) != nullptr)
+    {
+        CompatRDStateProvider* pCompatRDStateProvider = dynamic_cast<CompatRDStateProvider*>(stateProviderSPtr.RawPtr());
+        // Get actual data store state provider
+        stateProviderSPtr = dynamic_cast<TxnReplicator::IStateProvider2*>(pCompatRDStateProvider->DataStore.RawPtr());
+    }
+
     *providerName = static_cast<LPCWSTR>((KUriView)*uri);
     *provider = stateProviderSPtr.Detach();
     return StatusConverter::ToHResult(status);

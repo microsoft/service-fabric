@@ -16,6 +16,12 @@ using namespace std;
 
 namespace Transport
 {
+    struct RequestReplyTestRoot : public ComponentRoot
+    {
+        IDatagramTransportSPtr client;
+        shared_ptr<RequestReply> requestReply;
+    };
+
     class SessionExpirationTestBase
     {
     protected:
@@ -65,7 +71,7 @@ namespace Transport
             [disconnected, disconnectCount](const IDatagramTransport::DisconnectEventArgs& e)
         {
             Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, ++(*disconnectCount));
-            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             disconnected->Set();
         });
 
@@ -185,7 +191,7 @@ namespace Transport
         auto cde = client->RegisterDisconnectEvent([disconnected, disconnectCount](const IDatagramTransport::DisconnectEventArgs& e)
         {
             Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, ++(*disconnectCount));
-            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             disconnected->Set();
         });
 
@@ -297,7 +303,7 @@ namespace Transport
         auto de1 = node1->RegisterDisconnectEvent([disconnected1, disconnectCount1](const IDatagramTransport::DisconnectEventArgs& e)
         {
             Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, ++(*disconnectCount1));
-            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             disconnected1->Set();
         });
 
@@ -441,7 +447,7 @@ namespace Transport
         auto cde = client->RegisterDisconnectEvent([disconnected, disconnectCount](const IDatagramTransport::DisconnectEventArgs& e)
         {
             Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, ++(*disconnectCount));
-            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             disconnected->Set();
         });
 
@@ -652,7 +658,7 @@ namespace Transport
             Trace.WriteInfo(TraceType, "server connection faults: {0}", *serverConnectionFaults);
             VERIFY_IS_TRUE(serverConnectionFaults->size() == 3);
             VERIFY_IS_TRUE(serverConnectionFaults->at(0).IsError(ErrorCodeValue::ConnectionDenied));
-            VERIFY_IS_TRUE(serverConnectionFaults->at(1).IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(serverConnectionFaults->at(1).IsError(SESSION_EXPIRATION_FAULT));
             VERIFY_IS_TRUE(serverConnectionFaults->at(2).IsError(ErrorCodeValue::ConnectionDenied));
         }
 
@@ -699,7 +705,7 @@ namespace Transport
         auto cde = client->RegisterDisconnectEvent([disconnected, disconnectCount](const IDatagramTransport::DisconnectEventArgs& e)
         {
             Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, ++(*disconnectCount));
-            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             disconnected->Set();
         });
 
@@ -803,6 +809,23 @@ namespace Transport
             testCert.Thumbprint()->PrimaryToString(),
             L"");
 
+        RequestReplyAtSessionExpiration(securitySettings);
+
+        LEAVE;
+    }
+
+    BOOST_AUTO_TEST_CASE(X509_RequestReplyAtSessionExpiration_RefreshDisabled)
+    {
+        ENTER;
+
+        InstallTestCertInScope testCert;
+        SecuritySettings securitySettings = TTestUtil::CreateX509SettingsTp(
+            testCert.Thumbprint()->PrimaryToString(),
+            L"",
+            testCert.Thumbprint()->PrimaryToString(),
+            L"");
+
+        securitySettings.SetReadyNewSessionBeforeExpirationCallback([] { return false; });
         RequestReplyAtSessionExpiration(securitySettings);
 
         LEAVE;
@@ -1003,7 +1026,7 @@ namespace Transport
             {
                 auto dc = ++(*disconnectCount);
                 Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, dc);
-                VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd) || e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+                VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd) || e.Fault.IsError(SESSION_EXPIRATION_FAULT));
                 if (dc == 2)
                 {
                     disconnected->Set();
@@ -1140,7 +1163,7 @@ namespace Transport
         {
             auto dc = ++(*disconnectCount);
             Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, dc);
-            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd) || e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd) || e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             if (dc == 2)
             {
                 disconnected->Set();
@@ -1275,7 +1298,7 @@ namespace Transport
         {
             auto dc = ++(*disconnectCount);
             Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, dc);
-            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd) || e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd) || e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             disconnected->Set();
         });
 
@@ -1387,7 +1410,7 @@ namespace Transport
         {
             auto dc = ++(*disconnectCount);
             Trace.WriteInfo(TraceType, "client: disconnected: target={0}, fault={1}, count = {2}", e.Target->TraceId(), e.Fault, dc);
-            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd) || e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_TRUE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd) || e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             disconnected->Set();
         });
 
@@ -1572,24 +1595,28 @@ namespace Transport
             TransportConfig::GetConfig().CloseDrainTimeout = saved3;
         });
 
-        auto client = DatagramTransportFactory::CreateTcpClient();
+        auto testRoot = make_shared<RequestReplyTestRoot>();
+        testRoot->client = DatagramTransportFactory::CreateTcpClient();
+        testRoot->requestReply = make_shared<RequestReply>(*testRoot, testRoot->client);
+
+        auto client = testRoot->client;
         VERIFY_IS_TRUE(client->SetSecurity(securitySettings).IsSuccess());
-        wstring testAction = TTestUtil::GetGuidAction();
-        AutoResetEvent clientReceivedReply(false);
-        TTestUtil::SetMessageHandler(client, testAction, [&clientReceivedReply](MessageUPtr & reply, ISendTarget::SPtr const &) -> void
+
+        client->SetMessageHandler([testRoot](MessageUPtr & message, ISendTarget::SPtr const & sender)
         {
-            Trace.WriteInfo(TraceType, "client received reply {0}", reply->TraceId());
-            clientReceivedReply.Set();
+            Trace.WriteInfo(TraceType, "client: received message {0} from {1}", message->TraceId(), sender->Address());
+            testRoot->requestReply->OnReplyMessage(*message, sender);
         });
 
-        AutoResetEvent sessionExpired;
-        client->SetConnectionFaultHandler([&sessionExpired](ISendTarget const &, ErrorCode fault)
+        auto sessionExpired = make_shared<AutoResetEvent>();
+        client->SetConnectionFaultHandler([sessionExpired](ISendTarget const &, ErrorCode fault)
         {
             Trace.WriteInfo(TraceType, "client: connection faulted: {0}", fault);
-            VERIFY_IS_TRUE(fault.IsError(ErrorCodeValue::SecuritySessionExpired));
-            sessionExpired.Set();
+            VERIFY_IS_TRUE(fault.IsError(SESSION_EXPIRATION_FAULT));
+            sessionExpired->Set();
         });
 
+        testRoot->requestReply->Open();
         VERIFY_IS_TRUE(client->Start().IsSuccess());
 
         auto server = DatagramTransportFactory::CreateTcp(TTestUtil::GetListenAddress());
@@ -1599,7 +1626,7 @@ namespace Transport
         // connection is "removed" for sending after the new connection is ready. We want the reply to be sent
         // out after client side has "removed" the connection.
         auto replyDelay = SecurityConfig::GetConfig().SessionExpiration + TimeSpan::FromSeconds(2);
-
+        wstring testAction = TTestUtil::GetGuidAction();
         TTestUtil::SetMessageHandler(
             server,
             testAction,
@@ -1632,28 +1659,35 @@ namespace Transport
         auto msg = make_unique<Message>();
         msg->Headers.Add(ActionHeader(testAction));
         msg->Headers.Add(MessageIdHeader());
-        auto error = client->SendOneWay(serverTarget, move(msg));
-        VERIFY_IS_TRUE(error.IsSuccess());
 
-        Trace.WriteInfo(TraceType, "client waiting for reply");
-        VERIFY_IS_TRUE(clientReceivedReply.WaitOne(replyDelay + TimeSpan::FromSeconds(10)));
+        auto requestCompleted = make_shared<AutoResetEvent>(false);
+        auto requestOp = testRoot->requestReply->BeginRequest(
+            move(msg),
+            serverTarget,
+            replyDelay + TimeSpan::FromSeconds(10),
+            [=](AsyncOperationSPtr const &)
+            {
+                Trace.WriteInfo(TraceType, "request operation completed");
+                requestCompleted->Set();
+            },
+            testRoot->CreateAsyncOperationRoot());
 
         auto verifyWait = SecurityConfig::GetConfig().SessionExpiration +
             SecurityConfig::GetConfig().SessionExpirationCloseDelay +
             TransportConfig::GetConfig().CloseDrainTimeout +
             TimeSpan::FromSeconds(30);
 
-        VERIFY_IS_TRUE(sessionExpired.WaitOne(verifyWait));
+        Trace.WriteInfo(TraceType, "waiting for session expiration");
+        VERIFY_IS_TRUE(sessionExpired->WaitOne(verifyWait));
         Trace.WriteInfo(TraceType, "session expiration verified");
 
-        // connection fault due to session epxiration may happen before connection closes, so we still need to wait for the same "verifyWait"
-        VERIFY_IS_TRUE(
-            TTestUtil::WaitUntil([]
-                {
-                    Trace.WriteInfo(TraceType, "TcpConnection::GetObjCount() = {0}", TcpConnection::GetObjCount());
-                    return TcpConnection::GetObjCount() == 2;
-                },
-                verifyWait));
+        Trace.WriteInfo(TraceType, "client waiting for reply");
+        VERIFY_IS_TRUE(requestCompleted->WaitOne());
+
+        MessageUPtr reply;
+        ErrorCode endRequestErrorCode = testRoot->requestReply->EndRequest(requestOp, reply);
+        VERIFY_IS_TRUE(endRequestErrorCode.IsSuccess());
+        VERIFY_IS_TRUE(reply);
 
         client->Stop();
         server->Stop();
@@ -1708,7 +1742,11 @@ namespace Transport
                 auto reply = make_unique<Message>();
                 reply->Headers.Add(ActionHeader(testAction));
                 reply->Headers.Add(MessageIdHeader());
-                VERIFY_IS_TRUE(server->SendOneWay(st, move(reply)).IsSuccess());
+
+                //a large number of messages are sent and received in this test,
+                //use Invariant instead of boost test macros to avoid excessive output 
+                //at boost log level 'all', which slows down the test too much.
+                Invariant(server->SendOneWay(st, move(reply)).IsSuccess());
             });
 
         VERIFY_IS_TRUE(server->Start().IsSuccess());
@@ -1731,7 +1769,11 @@ namespace Transport
                 msg->Headers.Add(ActionHeader(testAction));
                 msg->Headers.Add(MessageIdHeader());
                 lastMessageSent = msg->MessageId;
-                VERIFY_IS_TRUE(client->SendOneWay(receiverTarget, move(msg)).IsSuccess());
+
+                //a large number of messages are sent and received in this test,
+                //use Invariant instead of boost test macros to avoid excessive output 
+                //at boost log level 'all', which slows down the test too much.
+                Invariant(client->SendOneWay(receiverTarget, move(msg)).IsSuccess());
                 ++sentCount;
             }
             this_thread::yield();
@@ -1787,7 +1829,11 @@ namespace Transport
         node1->SetMessageHandler([&node1ReceiveCount](MessageUPtr & msg, ISendTarget::SPtr const &) -> void
         {
             vector<const_buffer> buffers;
-            VERIFY_IS_TRUE(msg->GetBody(buffers));
+
+            //a large number of messages are sent and received in this test,
+            //use Invariant instead of boost test macros to avoid excessive output 
+            //at boost log level 'all', which slows down the test too much.
+            Invariant(msg->GetBody(buffers));
 
             size_t totalBytes = 0;
             for(auto const & buffer : buffers)
@@ -1795,8 +1841,8 @@ namespace Transport
                 totalBytes += buffer.size();
             }
 
-            auto buf = new BYTE[totalBytes];
-            KFinally([buf] { delete buf; });
+            auto bufUPtr = std::make_unique<BYTE[]>(totalBytes);
+            auto buf = bufUPtr.get(); 
 
             auto ptr = buf;
             for(auto const & buffer : buffers)
@@ -1807,7 +1853,11 @@ namespace Transport
 
             auto testLeaseMessage = (TestLeaseMessage*)buf;
             Trace.WriteInfo(TraceType, "node1 receive message {0}", testLeaseMessage->MessageIdentifier.QuadPart);
-            VERIFY_IS_TRUE(testLeaseMessage->Verify());
+
+            //a large number of messages are sent and received in this test,
+            //use Invariant instead of boost test macros to avoid excessive output 
+            //at boost log level 'all', which slows down the test too much.
+            Invariant(testLeaseMessage->Verify());
 
             ++node1ReceiveCount;
         });
@@ -1832,7 +1882,11 @@ namespace Transport
         node2->SetMessageHandler([&node2ReceiveCount](MessageUPtr & msg, ISendTarget::SPtr const &) -> void
         {
             vector<const_buffer> buffers;
-            VERIFY_IS_TRUE(msg->GetBody(buffers));
+
+            //a large number of messages are sent and received in this test,
+            //use Invariant instead of boost test macros to avoid excessive output 
+            //at boost log level 'all', which slows down the test too much.
+            Invariant(msg->GetBody(buffers));
 
             size_t totalBytes = 0;
             for(auto const & buffer : buffers)
@@ -1852,7 +1906,11 @@ namespace Transport
 
             auto testLeaseMessage = (TestLeaseMessage*)buf;
             Trace.WriteInfo(TraceType, "node2 receive message {0}", testLeaseMessage->MessageIdentifier.QuadPart);
-            VERIFY_IS_TRUE(testLeaseMessage->Verify());
+
+            //a large number of messages are sent and received in this test,
+            //use Invariant instead of boost test macros to avoid excessive output 
+            //at boost log level 'all', which slows down the test too much.
+            Invariant(testLeaseMessage->Verify());
 
             ++node2ReceiveCount;
         });
@@ -1912,7 +1970,7 @@ namespace Transport
         stopwatch.Start();
 
         sentCount = 0;
-        constexpr size_t pendingLimit = 10000;
+        constexpr size_t pendingLimit = 1000;
         uint64 msgId = 1;
         uint64 lastMessageSent = msgId;
         while (stopwatch.Elapsed < sendDuration)
@@ -1929,7 +1987,11 @@ namespace Transport
                 Trace.WriteInfo(TraceType, "node {0} sending {1}", node->TraceId(), msgId); 
                 lastMessageSent = msgId++;
                 auto error = node->SendOneWay(target, move(msg));
-                VERIFY_IS_TRUE(error.IsSuccess());
+
+                //a large number of messages are sent and received in this test,
+                //use Invariant instead of boost test macros to avoid excessive output 
+                //at boost log level 'all', which slows down the test too much.
+                Invariant(error.IsSuccess());
                 ++sentCount;
             }
             this_thread::yield();
@@ -1960,7 +2022,7 @@ namespace Transport
         auto de1 = node1->RegisterDisconnectEvent([&firstConnection](const IDatagramTransport::DisconnectEventArgs& e)
         {
             Trace.WriteInfo(TraceType, "node1: disconnected: target={0}, fault={1}", e.Target->TraceId(), e.Fault);
-            VERIFY_IS_FALSE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_FALSE(e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             VERIFY_IS_FALSE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd));
             auto currentConnection = ((TcpSendTarget&)(*e.Target)).Test_ActiveConnection();
             Trace.WriteInfo(TraceType, "firstConnection = {0}, currentConnection = {1}", TextTracePtr(firstConnection), TextTracePtr(currentConnection));
@@ -1988,7 +2050,7 @@ namespace Transport
         auto de2 = node2->RegisterDisconnectEvent([disconnected](const IDatagramTransport::DisconnectEventArgs& e)
         {
             Trace.WriteInfo(TraceType, "node2: disconnected: target={0}, fault={1}", e.Target->TraceId(), e.Fault);
-            VERIFY_IS_FALSE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpired));
+            VERIFY_IS_FALSE(e.Fault.IsError(SESSION_EXPIRATION_FAULT));
             VERIFY_IS_FALSE(e.Fault.IsError(ErrorCodeValue::SecuritySessionExpiredByRemoteEnd));
         });
 

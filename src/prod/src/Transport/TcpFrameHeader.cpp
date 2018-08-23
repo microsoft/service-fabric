@@ -9,7 +9,9 @@
 
 namespace Transport
 {
-    TcpFrameHeader::TcpFrameHeader() : frameLength_(0), securityProviderMask_(SecurityProvider::None), reserved2_(0), headerLength_(0), reserved3_(0)
+    static Common::StringLiteral const TraceType("FrameHeader");
+
+    TcpFrameHeader::TcpFrameHeader() : frameLength_(0), securityProviderMask_(SecurityProvider::None), headerLength_(0)
     {
         static_assert(
             sizeof(TcpFrameHeader) == (sizeof(uint32)+sizeof(uint16)+sizeof(uint16)+sizeof(uint32)),
@@ -18,9 +20,7 @@ namespace Transport
 
     TcpFrameHeader::TcpFrameHeader(MessageUPtr const & message, byte securityProviderMask)
         : securityProviderMask_(securityProviderMask)
-        , reserved2_(0)
         , headerLength_((uint16)message->SerializedHeaderSize())
-        , reserved3_(0)
     {
         auto status = UIntAdd((uint)sizeof(TcpFrameHeader), message->SerializedSize(), &frameLength_);
         ASSERT_IF(status != S_OK, "frame size overflows: {0:x}", status);
@@ -44,25 +44,89 @@ namespace Transport
         return securityProviderMask_;
     }
 
-    bool TcpFrameHeader::IsValid() const
+    byte TcpFrameHeader::SetFrameHeaderCRC()
     {
-        return ((uint32)sizeof(TcpFrameHeader) + headerLength_) <= frameLength_;
+        auto copy = *this;
+        copy.frameHeaderCRC_ = 0;
+        copy.frameBodyCRC_ = 0;
+
+        Common::crc8 crc(&copy, sizeof(copy));
+        frameHeaderCRC_ = crc.Value();
+        return frameHeaderCRC_;
+    }
+
+    bool TcpFrameHeader::Validate(bool firstFrame, byte expectedSecurityProviderMask, std::wstring const & traceId) const
+    {
+        if (FrameHeaderCRC())
+        {
+            auto frameHeaderCopy = *this;
+            auto computedFrameHeaderCRC = frameHeaderCopy.SetFrameHeaderCRC();
+            if (computedFrameHeaderCRC != FrameHeaderCRC())
+            {
+                if (firstFrame)
+                {
+                    textTrace.WriteInfo(TraceType, "ignore message from non-fabric endpoint");
+                    return false;
+                }
+
+                textTrace.WriteError(
+                        TraceType, traceId,
+                        "frame header CRC verification failure: incoming = 0x{0:x}, computed = 0x{1:x}, currentFrame: {2}",
+                        FrameHeaderCRC(), computedFrameHeaderCRC, *this);
+
+                return false;
+            }
+        }
+
+        //
+        // more validations in case CRC missed something
+        //
+        if (((uint32)sizeof(TcpFrameHeader) + headerLength_) > frameLength_)
+        {
+            if (firstFrame)
+            {
+                textTrace.WriteInfo(TraceType, "ignore message from non-fabric endpoint: {0}", *this);
+                return false;
+            }
+
+            textTrace.WriteError(TraceType, traceId, "invalid lengths: {0}", *this); 
+            return false;
+        }
+
+        if (!firstFrame && (securityProviderMask_ != expectedSecurityProviderMask))
+        {
+            textTrace.WriteError(
+                TraceType, traceId,
+                "SecurityProviderMask mismatch: expected: {0}, currentFrame: {1}",
+                expectedSecurityProviderMask,
+                *this);
+
+            return false;
+        }
+
+#if DBG
+        if (FrameHeaderCRC())
+        {
+            textTrace.WriteNoise(TraceType, traceId, "frame header CRC verified");
+        }
+#endif
+        return true;
     }
 
     void TcpFrameHeader::WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const
     {
-        w.Write("length={0:x},SecurityProviderMask=", frameLength_);
+        w.Write("len={0:x},sp=", frameLength_);
         SecurityProvider::WriteMaskToTextWriter(w, securityProviderMask_);
-        w.Write(",r2={0:x},header={1:x},r3={2:x}", reserved2_, headerLength_, reserved3_);
+        w.Write(",fhCRC={0:x},mhLen={1:x},fbCRC={2:x}", frameHeaderCRC_, headerLength_, frameBodyCRC_);
     }
 
     std::string TcpFrameHeader::AddField(Common::TraceEvent & traceEvent, std::string const & name)
     {
-        traceEvent.AddField<uint32>(name + ".length");
-        traceEvent.AddField<byte>(name + ".securityProviders");
-        traceEvent.AddField<byte>(name + ".r2");
-        traceEvent.AddField<uint16>(name + ".header");
-        traceEvent.AddField<uint32>(name + ".r3");
+        traceEvent.AddField<uint32>(name + ".len");
+        traceEvent.AddField<byte>(name + ".sp");
+        traceEvent.AddField<byte>(name + ".fhCRC");
+        traceEvent.AddField<uint16>(name + ".msLen");
+        traceEvent.AddField<uint32>(name + ".fbCRC");
 
         return TRACE_FMT;
     }
@@ -71,8 +135,8 @@ namespace Transport
     {
         context.Write<uint32>(frameLength_);
         context.Write<byte>(securityProviderMask_);
-        context.Write<byte>(reserved2_);
+        context.Write<byte>(frameHeaderCRC_);
         context.Write<uint16>(headerLength_);
-        context.Write<uint32>(reserved3_);
+        context.Write<uint32>(frameBodyCRC_);
     }
 }

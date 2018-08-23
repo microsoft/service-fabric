@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(EnvironmentConfig)" />
+    <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+    <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+    <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+    <PropertyGroup>
+        <Description>FabricDCA</Description>
+        <TargetFramework>netcoreapp2.0</TargetFramework>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AssemblyName>FabricDCA</AssemblyName>
+        <OutputType>Exe</OutputType>
+        <PackageId>FabricDCA</PackageId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\..\AppInstance.cs;
+      ..\..\AppInstanceEtlFileDataReader.cs;
+      ..\..\AppInstanceEtwDataReader.cs;
+      ..\..\AppInstanceManager.cs;
+      ..\..\ConfigUpdateHandler.cs;
+      ..\..\ConsumerFactory.cs;
+      ..\..\ContainerManager.cs;
+      ..\..\DCASettings.cs;
+      ..\..\EtwEventTimestamp.cs;
+      ..\..\FabricDCA.cs;
+      ..\..\ProducerFactory.cs;
+      ..\..\Program.cs;
+      ..\..\ServicePackageTable.cs;
+      ..\..\ServicePackageTableBackup.cs;
+      ..\..\ServicePackageTableManager.cs;
+      ..\..\ServicePackageTableRecord.cs;
+      ..\..\StandardPlugins.cs;
+      ..\..\TelemetryConsumerBase.cs;
+      ..\..\TelemetryConsumerLinux.cs;
+      ..\..\TelemetryConsumerWindows.cs;
+      ..\..\TelemetryEtwSink.cs;
+      ..\..\TelemetryPerformanceInstrumentation.cs;
+      ..\..\TelemetryScheduler.cs;
+      ..\..\TelemetryWriterFactory.cs;
+      ..\..\TelemetryUtility.cs;
+      ..\..\TelemetryFilter.cs;
+      ..\..\EnvironmentTelemetry.cs;
+      ..\..\DriveInfoTelemetry.cs"
+          Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="FabricDCA.sh">
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
+        <None Update="FabricDCA.bat">
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
+    </ItemGroup>
+
+  <ItemGroup>
+        <ProjectReference Include="..\..\..\plugins\azure\blob\CoreCLRDll\AzureFileUploader\AzureFileUploader.csproj" />
+        <ProjectReference Include="..\..\..\plugins\azure\table\CoreCLRDll\AzureTableUploader\AzureTableUploader.csproj" />
+        <ProjectReference Include="..\..\..\plugins\azure\common\CoreCLRDll\AzureUploaderCommon\AzureUploaderCommon.csproj" />
+        <ProjectReference Include="..\..\..\plugins\folderproducer\CoreCLRDll\FolderProducer\FolderProducer.csproj" />
+        <ProjectReference Include="..\..\..\plugins\lttproducer\CoreCLRDll\LttProducer\LttProducer.csproj" />
+        <ProjectReference Include="..\..\..\..\..\LttngReader\CoreCLR\dll\LttngReader.csproj" /> <!-- This should be transitive reference from project LttngProducer but there is a bug in dotnet and it does not work in current version-->
+        <ProjectReference Include="..\..\..\..\..\CoreCLR\EtlReader\EtlReader.csproj" />
+        <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+        <ProjectReference Include="..\..\..\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
+        <ProjectReference Include="..\..\..\..\..\TelemetryAggregation\CoreCLRDll\TelemetryAggregation\TelemetryAggregation.csproj" />
+        <ProjectReference Include="..\..\..\plugins\telemetry\telemetrywriters\CoreCLRDll\TelemetryWriters\TelemetryWriters.csproj" />
+        <ProjectReference Include="..\..\..\..\..\CoreCLR\EtlReader\EtlReader.csproj" />
+        <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj" />
+        <ProjectReference Include="..\..\..\plugins\etlproducer\CoreCLRDll\EtlProducer\EtlProducer.csproj" />
+        <ProjectReference Include="..\..\..\plugins\etlinmemoryproducer\CoreCLRDll\EtlInMemoryProducer\EtlInMemoryProducer.csproj" />
+        <ProjectReference Include="..\..\..\plugins\fileshareuploader\CoreCLRDll\FileShareUploader\FileShareUploader.csproj" />
+        <ProjectReference Include="..\..\..\..\..\TelemetryAggregation\ConfigParser\CoreCLRDll\ConfigParser\ConfigParser.csproj" />
+  </ItemGroup>
+
+    <ItemGroup Condition=" '$(TargetsLinux)' == 'true' ">
+      <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    </ItemGroup>
+
+    <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" />
+    <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+    <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_iot.props" />
+
+  <ItemGroup>
+    <PublishExtraFilesInList Include="..\..\..\..\..\..\..\tools\CoreCLRUtilites\SfTrace\lttng_handler.sh" />
+    <PublishExtraFilesInList Include="..\..\..\..\..\..\..\src\prebuilt\config\EventsRegex.config" />
+    <PublishExtraFilesInList Include="..\..\tconfig.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <PublishExtraFilesOutList Include="$(PublishDir)\lttng_handler.sh" />
+    <PublishExtraFilesOutList Include="$(PublishDir)\TableEvents.config" />
+    <PublishExtraFilesOutList Include="$(PublishDir)\tconfig.ini" />
+  </ItemGroup>
+  <Target Name="PubishExtraFiles" AfterTargets="Publish" >
+    <Copy SourceFiles="@(PublishExtraFilesInList)" DestinationFiles="@(PublishExtraFilesOutList)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

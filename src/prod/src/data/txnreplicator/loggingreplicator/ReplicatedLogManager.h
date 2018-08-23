@@ -73,7 +73,7 @@ namespace Data
             }
 
             __declspec(property(get = get_LastCompletedEndCheckpointRecord)) LogRecordLib::EndCheckpointLogRecord::SPtr LastCompletedEndCheckpointRecord;
-            LogRecordLib::EndCheckpointLogRecord::SPtr get_LastCompletedEndCheckpointRecord() const
+            LogRecordLib::EndCheckpointLogRecord::SPtr get_LastCompletedEndCheckpointRecord() const override
             {
                 return lastCompletedEndCheckpointRecord_.Get();
             }
@@ -116,7 +116,7 @@ namespace Data
             }
 
             __declspec(property(get = get_ProgressVectorValue)) LogRecordLib::ProgressVector::SPtr ProgressVectorValue;
-            LogRecordLib::ProgressVector::SPtr get_ProgressVectorValue() const
+            LogRecordLib::ProgressVector::SPtr get_ProgressVectorValue() const override
             {
                 LogRecordLib::ProgressVector::SPtr result;
 
@@ -216,6 +216,7 @@ namespace Data
 
             LogRecordLib::TruncateHeadLogRecord::SPtr TruncateHead(
                 __in bool isStable,
+                __in LONG64 lastPeriodicTruncationTimeStampTicks,
                 __in IsGoodLogHeadCandidateCalculator & isGoodLogHeadCandidateCalculator);
 
             void TruncateTail(__in LONG64 tailLsn);
@@ -252,7 +253,7 @@ namespace Data
             LONG64 InsertBufferedRecordCallerHoldsLock(
                 __in LogRecordLib::LogicalLogRecord & record,
                 __in bool isPrimary,
-                __out ktl::AwaitableCompletionSource<void>::SPtr & lsnOrderingTcsToSignal);
+                __out LONG & pendingCount);
 
             LONG64 LsnOrderingInsertCallerHoldsLock(
                 __in LogRecordLib::LogicalLogRecord & record,
@@ -266,7 +267,8 @@ namespace Data
             void OnOperationAcceptance();
 
             void OnOperationAcceptanceException(); // We are not inside lsnorderinglock_ here
-            void OnOperationLogInitiationCallerHoldsLock(__out ktl::AwaitableCompletionSource<void>::SPtr & lsnOrderingTcsToSignal);
+
+            LONG OnOperationLogInitiationCallerHoldsLock();
 
             NTSTATUS BeginReplicate(__in LogRecordLib::LogicalLogRecord & record);
 

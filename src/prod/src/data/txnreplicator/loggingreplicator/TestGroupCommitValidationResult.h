@@ -93,22 +93,22 @@ namespace LoggingReplicatorTests
 
         UINT IncrementAbortedTxCount()
         {
-            return InterlockedIncrement(&abortedTxCount_);
+            return InterlockedIncrement((volatile LONG*)&abortedTxCount_);
         }
 
         UINT IncrementCommittedTxCount()
         {
-            return InterlockedIncrement(&committedTxCount_);
+            return InterlockedIncrement((volatile LONG*)&committedTxCount_);
         }
 
         UINT IncrementPendingTxCount()
         {
-            return InterlockedIncrement(&pendingTxCount_);
+            return InterlockedIncrement((volatile LONG*)&pendingTxCount_);
         }
 
         UINT DecrementPendingTxCount()
         {
-            return InterlockedDecrement(&pendingTxCount_);
+            return InterlockedDecrement((volatile LONG*)&pendingTxCount_);
         }
 
     private:

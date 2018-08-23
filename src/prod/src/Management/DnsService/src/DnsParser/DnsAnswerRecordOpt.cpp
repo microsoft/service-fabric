@@ -38,8 +38,8 @@ bool DnsAnswerRecordOpt::Serialize(
     // OPT is special, it repurposes the header.
     // TTL is actually an extended RCODE.
     // CLASS is the max payload size.
+    // RFC 6891
 
-    ttl = 0;
     if (!__super::Serialize(writer, ttl, _size))
     {
         return false;

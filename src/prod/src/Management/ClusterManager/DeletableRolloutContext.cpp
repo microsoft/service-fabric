@@ -38,26 +38,6 @@ DeletableRolloutContext::DeletableRolloutContext(
 }
 
 DeletableRolloutContext::DeletableRolloutContext(
-    DeletableRolloutContext && other)
-    : RolloutContext(move(other))
-    , isForceDelete_(move(other.isForceDelete_))
-    , isConvertToForceDelete_(move(other.isConvertToForceDelete_))
-{
-}
-
-DeletableRolloutContext & DeletableRolloutContext::operator=(
-    DeletableRolloutContext && other)
-{
-    if (this != &other)
-    {
-        __super::operator = (move(other));
-        isForceDelete_ = move(other.isForceDelete_);
-        isConvertToForceDelete_ = move(other.isConvertToForceDelete_);
-    }
-    return *this;
-}
-
-DeletableRolloutContext::DeletableRolloutContext(
     RolloutContextType::Enum contextType,
     ComponentRoot const & replica,
     ClientRequestSPtr const & clientRequest)

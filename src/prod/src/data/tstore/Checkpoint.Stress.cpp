@@ -84,7 +84,6 @@ namespace TStoreTests
 
             for (ULONG32 i = startCount; i < endCount; i++)
             {
-                Trace.WriteInfo("AddKey", "key={0}", i);
                 {
                     auto key = CreateString(i);
                     auto value = CreateBuffer(128, static_cast<byte>(i & 0xff));
@@ -109,7 +108,7 @@ namespace TStoreTests
             KSharedArray<Awaitable<void>>::SPtr tasks = _new(ALLOC_TAG, GetAllocator()) KSharedArray<Awaitable<void>>;
             for (ULONG32 i = 0; i < numTasks; i++)
             {
-                tasks->Append(AddItemsAsync(startKey, countPerTask));
+                tasks->Append(AddItemsAsync(startKey, startKey+countPerTask));
                 startKey += countPerTask;
             }
             
@@ -296,23 +295,6 @@ namespace TStoreTests
             }
         }
 
-        Awaitable<void> CheckpointAndSweepAsync(
-            __in AwaitableCompletionSource<void> & startTcs, 
-            __in CancellationToken & cancellationToken)
-        {
-            co_await startTcs.GetAwaitable();
-
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                co_await CheckpointAsync();
-
-                // Checkpoint will not start sweep if it does not consolidate, so starting sweep to ensure sweep is covered.
-                // If checkpoint has already started sweep, this sweep will be a no-op
-                // Not co_awaiting since this starts a background task
-                Store->TryStartSweepAsync();
-            }
-        }
-
         Awaitable<void> RepeatedlyCheckpointAsync(
             __in AwaitableCompletionSource<void> & startTcs,
             __in CancellationToken & cancellationToken)
@@ -416,6 +398,7 @@ namespace TStoreTests
 
             Store->EnableBackgroundConsolidation = enableBackgroundSweep;
             Store->EnableSweep = true;
+            Store->StartBackgroundSweep();
 
             Common::Random random = GetRandom();
 
@@ -474,10 +457,18 @@ namespace TStoreTests
                 addOrUpdateTasks = nullptr;
 
                 RemoveStateAndReopenStore();
-                cout << "Finished iteration " << i+1 << endl;
+                cout << "Finished iteration " << i + 1 << endl;
             }
 
             cout << "Consolidation test complete" << endl;
+        }
+
+        LONG64 GetKeysAndMetadataSize(
+            __in LONG64 estimatedKeySize,
+            __in ULONG32 numDifferential,
+            __in ULONG32 numNonDifferential)
+        {
+            return numDifferential * (2 * Constants::ValueMetadataSizeBytes + estimatedKeySize) + numNonDifferential * (estimatedKeySize + Constants::ValueMetadataSizeBytes);
         }
 
     private:
@@ -503,7 +494,7 @@ namespace TStoreTests
         ULONG32 maxCount = 1'000'000;
 
         auto addTask = AddItemsAsync(*startTcs, 1, maxCount);
-        auto checkpointTask = CheckpointAndSweepAsync(*startTcs, token);
+        auto checkpointTask = RepeatedlyCheckpointAsync(*startTcs, token);
         auto readTask = ReadItemsAsync(*startTcs, MAXULONG32, StoreTransactionReadIsolationLevel::ReadRepeatable, token);
 
         startTcs->Set();
@@ -517,6 +508,44 @@ namespace TStoreTests
         SyncAwait(readTask);
 
         cout << "Add_Read_Checkpoint_ConcurrentOverlapping - completed" << endl;
+    }
+
+    BOOST_AUTO_TEST_CASE(Add_Read_Checkpoint_Sweep_ConcurrentOverlapping)
+    {
+        Store->EnableSweep = true;
+        Store->SweepManagerSPtr->TimeoutInMS = 30'000;
+        Store->StartBackgroundSweep();
+
+        AwaitableCompletionSource<void>::SPtr startTcs = nullptr;
+        AwaitableCompletionSource<void>::Create(GetAllocator(), ALLOC_TAG, startTcs);
+
+        CancellationTokenSource::SPtr source = nullptr;
+        CancellationTokenSource::Create(GetAllocator(), ALLOC_TAG, source);
+        CancellationToken token = source->Token;
+
+        auto memoryTask = TraceMemoryUsagePeriodically(Common::TimeSpan::FromSeconds(10), true, token);
+
+        // Add some keys to start for the read task
+        SyncAwait(AddItemsAsync(0, 1));
+
+        ULONG32 maxCount = 1'000'000;
+
+        auto addTask = AddItemsAsync(*startTcs, 1, maxCount);
+        auto checkpointTask = RepeatedlyCheckpointAsync(*startTcs, token);
+        auto readTask = ReadItemsAsync(*startTcs, MAXULONG32, StoreTransactionReadIsolationLevel::ReadRepeatable, token);
+
+        startTcs->Set();
+        
+        cout << "Add_Read_Checkpoint_Sweep_ConcurrentOverlapping - started" << endl;
+
+        // Wait for add to finish and then stop the read and checkpoint tasks
+        SyncAwait(addTask);
+        source->Cancel();
+        SyncAwait(checkpointTask);
+        SyncAwait(readTask);
+        SyncAwait(memoryTask);
+
+        cout << "Add_Read_Checkpoint_Sweep_ConcurrentOverlapping - completed" << endl;
     }
 
 /*
@@ -553,6 +582,46 @@ namespace TStoreTests
     }
 */
 
+    BOOST_AUTO_TEST_CASE(Update_ReadWithSnapshot_Checkpoint_Sweep_ConcurrentOverlapping)
+    {
+        Store->EnableSweep = true;
+        Store->SweepManagerSPtr->TimeoutInMS = 30'000;
+        Store->StartBackgroundSweep();
+
+        AwaitableCompletionSource<void>::SPtr startTcs = nullptr;
+        AwaitableCompletionSource<void>::Create(GetAllocator(), ALLOC_TAG, startTcs);
+
+        CancellationTokenSource::SPtr source = nullptr;
+        CancellationTokenSource::Create(GetAllocator(), ALLOC_TAG, source);
+        CancellationToken token = source->Token;
+
+        auto memoryTask = TraceMemoryUsagePeriodically(Common::TimeSpan::FromSeconds(10), true, token);
+
+        ULONG32 maxCount = 1'000'000;
+
+        SyncAwait(AddItemsAsync(0, maxCount-1, 12));
+        
+        auto updateTask = UpdateItemsAsync(*startTcs, maxCount);
+        auto checkpointTask = RepeatedlyCheckpointAsync(*startTcs, token);
+        auto readTask = ReadItemsAsync(*startTcs, MAXULONG32, StoreTransactionReadIsolationLevel::Snapshot, token);
+
+        startTcs->Set();
+        
+        cout << "Update_ReadWithSnapshot_Checkpoint_Sweep_ConcurrentOverlapping - started" << endl;
+
+        // Wait for update to finish and then stop the read and checkpoint tasks
+        SyncAwait(updateTask);
+        source->Cancel();
+        SyncAwait(checkpointTask);
+        SyncAwait(readTask);
+        
+        CloseAndReOpenStore();
+
+        cout << "Update_ReadWithSnapshot_Checkpoint_Sweep_ConcurrentOverlapping - completed" << endl;
+
+        SyncAwait(memoryTask);
+    }
+
     BOOST_AUTO_TEST_CASE(Update_ReadWithSnapshot_Checkpoint_ConcurrentOverlapping)
     {
         AwaitableCompletionSource<void>::SPtr startTcs = nullptr;
@@ -567,7 +636,7 @@ namespace TStoreTests
         SyncAwait(AddItemsAsync(0, maxCount, 12));
         
         auto updateTask = UpdateItemsAsync(*startTcs, maxCount);
-        auto checkpointTask = CheckpointAndSweepAsync(*startTcs, token);
+        auto checkpointTask = RepeatedlyCheckpointAsync(*startTcs, token);
         auto readTask = ReadItemsAsync(*startTcs, MAXULONG32, StoreTransactionReadIsolationLevel::Snapshot, token);
 
         startTcs->Set();
@@ -598,7 +667,7 @@ namespace TStoreTests
 
         SyncAwait(AddItemsAsync(0, maxCount, 12));
         
-        auto checkpointTask = CheckpointAndSweepAsync(*startTcs, token);
+        auto checkpointTask = RepeatedlyCheckpointAsync(*startTcs, token);
         auto readTask = ReadItemsAsync(*startTcs, maxCount, StoreTransactionReadIsolationLevel::ReadRepeatable, token);
         startTcs->Set();
         
@@ -610,6 +679,70 @@ namespace TStoreTests
         SyncAwait(checkpointTask);
         
         cout << "Read_Checkpoint_ConcurrentOverlapping - completed" << endl;
+    }
+
+    BOOST_AUTO_TEST_CASE(Read_Checkpoint_Sweep_ConcurrentOverlapping)
+    {
+        AwaitableCompletionSource<void>::SPtr startTcs = nullptr;
+        AwaitableCompletionSource<void>::Create(GetAllocator(), ALLOC_TAG, startTcs);
+
+        CancellationTokenSource::SPtr source = nullptr;
+        CancellationTokenSource::Create(GetAllocator(), ALLOC_TAG, source);
+        CancellationToken token = source->Token;
+
+        auto memoryTask = TraceMemoryUsagePeriodically(Common::TimeSpan::FromSeconds(15), true, token);
+
+        ULONG32 maxCount = 1'000'000;
+
+        SyncAwait(AddItemsAsync(0, maxCount, 12));
+        
+        auto checkpointTask = RepeatedlyCheckpointAsync(*startTcs, token);
+        auto readTask = ReadItemsAsync(*startTcs, maxCount, StoreTransactionReadIsolationLevel::ReadRepeatable, token);
+        startTcs->Set();
+        
+        cout << "Read_Checkpoint_Sweep_ConcurrentOverlapping - started" << endl;
+
+        // Wait for update to finish and then stop the read and checkpoint tasks
+        SyncAwait(readTask);
+        source->Cancel();
+        SyncAwait(checkpointTask);
+
+        SyncAwait(memoryTask);
+        
+        cout << "Read_Checkpoint_Sweep_ConcurrentOverlapping - completed" << endl;
+    }
+
+    BOOST_AUTO_TEST_CASE(Add_Checkpoint_Sweep_VerifySize)
+    {
+        Store->EnableSweep = true;
+        Store->ConsolidationManagerSPtr->NumberOfDeltasToBeConsolidated = 1;
+
+        ULONG32 noOfItemsPerIteration = 1000;
+        ULONG32 valueSize = 128;
+
+        for (ULONG32 i = 0; i < 4; i++)
+        {
+            ULONG32 start = i * noOfItemsPerIteration;
+            ULONG32 end = start + noOfItemsPerIteration;
+            SyncAwait(AddItemsAsync(start, end));
+            SyncAwait(CheckpointAsync());
+
+            // Check size
+            LONG64 expectedKeysAndMetadatasSize = GetKeysAndMetadataSize(Store->GetEstimatedKeySize(), 0, (i + 1) * noOfItemsPerIteration);
+            LONG64 expectedValuesSize = (i + 1) * noOfItemsPerIteration * (valueSize + sizeof(ULONG32));
+            LONG64 expectedSize = expectedKeysAndMetadatasSize + expectedValuesSize;
+
+            LONG64 consolidatedComponentSize = Store->ConsolidationManagerSPtr->GetMemorySize(Store->GetEstimatedKeySize());
+            CODING_ERROR_ASSERT(consolidatedComponentSize == expectedSize);
+        }
+
+        // Throw things out from the cache.
+        Store->ConsolidationManagerSPtr->SweepConsolidatedState(CancellationToken::None);
+        Store->ConsolidationManagerSPtr->SweepConsolidatedState(CancellationToken::None);
+
+        LONG64 expectedKeysAndMetadatasSize = GetKeysAndMetadataSize(Store->GetEstimatedKeySize(), 0, 4000);
+        LONG64 consolidatedComponentSize = Store->ConsolidationManagerSPtr->GetMemorySize(Store->GetEstimatedKeySize());
+        CODING_ERROR_ASSERT(consolidatedComponentSize == expectedKeysAndMetadatasSize);
     }
 
     BOOST_AUTO_TEST_CASE(SweepStressTest_ShouldSucceed)
@@ -627,9 +760,9 @@ namespace TStoreTests
             expectedState);
         CODING_ERROR_ASSERT(NT_SUCCESS(status));
 
-        SyncAwait(AddItemsAsync(1, 500));
+        SyncAwait(AddItemsAsync(1, 502));
 
-        for (ULONG32 i = 1; i < 500; i++)
+        for (ULONG32 i = 1; i <= 500; i++)
         {
             bool added = expectedState->TryAdd(CreateString(i), CreateBuffer(128, i & 0xff));
             CODING_ERROR_ASSERT(added);
@@ -644,10 +777,7 @@ namespace TStoreTests
         for (ULONG32 i = 1; i <= maxCount; i++)
         {
             Checkpoint();
-            ktl::AwaitableCompletionSource<bool>::SPtr sweepTcs = nullptr;
-            ktl::AwaitableCompletionSource<bool>::Create(GetAllocator(), ALLOC_TAG, sweepTcs);
-
-            Store->ConsolidationManagerSPtr->Sweep(CancellationToken::None, *sweepTcs);
+            Store->ConsolidationManagerSPtr->SweepConsolidatedState(CancellationToken::None);
 
             // Update items 1 to 100
             for (ULONG32 j = 1; j <= 100; j++)

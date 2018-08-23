@@ -8,6 +8,7 @@
 namespace ServiceModel
 {
     typedef std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> ServicePackageResourceGovernanceMap;
+    typedef std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> CodePackageContainersImagesMap;
 
     class ApplicationUpgradeSpecification : public Serialization::FabricSerializable
     {
@@ -23,7 +24,8 @@ namespace ServiceModel
             bool isManual,
             std::vector<ServicePackageUpgradeSpecification> && packageUpgrades,
             std::vector<ServiceTypeRemovalSpecification> && removedTypes,
-            ServicePackageResourceGovernanceMap && spRGSettings = ServicePackageResourceGovernanceMap());
+            ServicePackageResourceGovernanceMap && spRGSettings = ServicePackageResourceGovernanceMap(),
+            CodePackageContainersImagesMap && cpContainersImages = CodePackageContainersImagesMap());
         ApplicationUpgradeSpecification(ApplicationUpgradeSpecification const & other);
         ApplicationUpgradeSpecification(ApplicationUpgradeSpecification && other);
 
@@ -64,6 +66,9 @@ namespace ServiceModel
         __declspec(property(get=get_UpgradedRGSettings)) std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> & UpgradedRGSettings;
         std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> const& get_UpgradedRGSettings() const { return spRGSettings_; }
 
+        __declspec(property(get = get_UpgradedCPContainersImages)) std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> & UpgradedCPContainersImages;
+        std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> const& get_UpgradedCPContainersImages() const { return cpContainersImages_; }
+
         ApplicationUpgradeSpecification const & operator = (ApplicationUpgradeSpecification const & other);
         ApplicationUpgradeSpecification const & operator = (ApplicationUpgradeSpecification && other);
 
@@ -78,10 +83,21 @@ namespace ServiceModel
 
         void WriteTo(__in Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_10(applicationId_, applicationVersion_, instanceId_, upgradeType_, isMonitored_, packageUpgrades_, applicationName_, removedTypes_, isManual_, spRGSettings_);
+        FABRIC_FIELDS_11(
+            applicationId_,
+            applicationVersion_,
+            instanceId_,
+            upgradeType_,
+            isMonitored_,
+            packageUpgrades_,
+            applicationName_,
+            removedTypes_,
+            isManual_,
+            spRGSettings_,
+            cpContainersImages_);
 
         static std::string AddField(Common::TraceEvent & traceEvent, std::string const & name)
-        {            
+        {
             std::string format = "UpgradeDescription: {Id={{0}};Version={1};AppName={2};InstanceId={3};UpgradeType={4};IsMonitored={5};IsManual={6};PackageUpgrades={7};RemovedTypes={8}}";
 
             size_t index = 0;
@@ -112,5 +128,6 @@ namespace ServiceModel
         std::vector<ServicePackageUpgradeSpecification> packageUpgrades_;
         std::vector<ServiceTypeRemovalSpecification> removedTypes_;
         std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> spRGSettings_;
+        std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> cpContainersImages_;
     };
 }

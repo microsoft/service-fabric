@@ -25,6 +25,8 @@ namespace Transport
         virtual Common::ErrorCode Prepare() = 0;
         virtual void Consume(size_t length) = 0;
 
+        auto SentByteTotal() const { return sentByteTotal_; }
+
         void SetPerfCounters(PerfCountersSPtr const & perfCounters);
         void SetSecurityProviderMask(SecurityProvider::Enum securityProvider);
 
@@ -44,6 +46,11 @@ namespace Transport
 
         void DelayEncryptEnqueue();
         void EnableEncryptEnqueue();
+
+        auto FrameHeaderErrorCheckingEnabled() const { return frameHeaderErrorCheckingEnabled_; } 
+        auto MessageErrorCheckingEnabled() const { return messageErrorCheckingEnabled_; }
+        void SetFrameHeaderErrorChecking(bool value) { frameHeaderErrorCheckingEnabled_ = value; }
+        void SetMessageErrorChecking(bool value) { messageErrorCheckingEnabled_ = value; }
 
         virtual void Abort() = 0;
 
@@ -72,9 +79,12 @@ namespace Transport
         bool canEnqueueEncrypt_ = false; // can enqueue messages that requires encryption
         bool shouldSendConnect_ = false;
         bool firstEnqueueCall_ = false;
+        bool frameHeaderErrorCheckingEnabled_ = false;
+        bool messageErrorCheckingEnabled_ = false;
         const uint sendBatchLimitInBytes_;
         int64 totalBufferedBytes_ = 0;
         uint64 messageSentCount_ = 0;
+        uint64 sentByteTotal_ = 0;
         ULONGLONG queuedBytesMax_ = 0;
         std::vector<MessageUPtr> messagesDelayedBySecurityNegotiation_;
         std::vector<Common::TimeSpan> expirationOfDelayedMessages_;

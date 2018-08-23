@@ -17,12 +17,14 @@ BackupFolderInfo::SPtr BackupFolderInfo::Create(
     __in Data::Utilities::PartitionedReplicaId const & traceId,
     __in KGuid const & id,
     __in KString const & backupFolder,
-    __in KAllocator & allocator)
+    __in KAllocator & allocator,
+    __in bool test_doNotVerifyLogFile)
 {
     BackupFolderInfo * pointer = _new(BACKUP_FOLDER_INFO_TAG, allocator) BackupFolderInfo(
         traceId,
         id,
-        backupFolder);
+        backupFolder,
+        test_doNotVerifyLogFile);
 
     THROW_ON_ALLOCATION_FAILURE(pointer);
     THROW_ON_FAILURE(pointer->Status());
@@ -66,6 +68,15 @@ KArray<KString::CSPtr> const & BackupFolderInfo::get_LogPathList() const
     return logFilePathArray_;
 }
 
+KString::SPtr BackupFolderInfo::get_FullBackupFolderPath() const
+{
+    return fullBackupFolderPath_;
+}
+
+// Algorithm:
+// 1. Scan the folder to find all backups and create corresponding sorted arrays.
+// 2. Trim the chain so that it only contains the longest chain.
+// 3. Verify whether or not the input folder is restore-able.
 ktl::Awaitable<void> BackupFolderInfo::AnalyzeAsync(
     __in ktl::CancellationToken const & cancellationToken)
 {
@@ -123,15 +134,20 @@ ktl::Awaitable<void> BackupFolderInfo::AnalyzeAsync(
         }
     }
 
+    Trim();
+
     co_await VerifyAsync(cancellationToken);
 
     co_return;
 }
 
 // Summary: Adds a folder into the BackupFolderInfo.
-//
+// 
 // Port Note: Merged incremental and full to reduce code.
 // Port Note: Upper layer passes the directory as well as the metadata file path to avoid recomputation.
+// Note: Replicate backup log record is the following step of user callback, it may throw transient exception and leads
+// to user re-try the BackupAsync call. In this case, two same backups may be uploaded to the same folder, so we allow
+// two same keys(BackupVersion) added to the array.
 ktl::Awaitable<void> BackupFolderInfo::AddFolderAsync(
     __in FABRIC_BACKUP_OPTION backupOption,
     __in wstring const & backupDirectoryPath,
@@ -201,16 +217,20 @@ ktl::Awaitable<void> BackupFolderInfo::AddFolderAsync(
 
     // Note: Binary search for empty array (full backup case) returns immediately.
     LONG32 index = Sort<BackupVersion>::BinarySearch(version, true, BackupVersion::Compare, backupVersionArray_);
-    ASSERT_IFNOT(index <= 0, "{0}: Insert failed.", TraceId);
+
+    // If item is found, the right position will be returned, otherwise, a negative number that 
+    // is the bitwise complement of the index of the next element which is larger than the item or, if there is no
+    // larger element, the bitwise complement of list count.
+    LONG32 insertPos = index < 0 ? ~index : index;
 
     // Port Note: Instead of using two SortedList, I use one array for the key and two arrays for the two types of values.
     // This reduces the number of arrays. In future, this could be turned into a data structure.
     // Insert version to version list.
-    status = backupVersionArray_.InsertAt(~index, version);
+    status = backupVersionArray_.InsertAt(insertPos, version);
     ThrowIfNecessary(status, L"AddFolderAsync: Version list insert.");
 
     // Insert the metadata in the metadata list in the corresponding section.
-    status = metadataArray_.InsertAt(~index, backupMetadataFile.RawPtr());
+    status = metadataArray_.InsertAt(insertPos, backupMetadataFile.RawPtr());
     ThrowIfNecessary(status, L"AddFolderAsync: Metadata list insert.");
 
     KString::SPtr logFilePath = nullptr;
@@ -221,10 +241,162 @@ ktl::Awaitable<void> BackupFolderInfo::AddFolderAsync(
     KPath::CombineInPlace(*logFilePath, BackupManager::ReplicatorBackupLogName);
 
     // Insert the path in the log path list in the corresponding section.
-    status = logFilePathArray_.InsertAt(~index, logFilePath.RawPtr());
+    status = logFilePathArray_.InsertAt(insertPos, logFilePath.RawPtr());
     ThrowIfNecessary(status, L"AddFolderAsync: log file list insert.");
 
     co_return;
+}
+
+/// <summary>
+/// Function that trims the backup chain to only include the longest chain (removes all unnecessary divergent links).
+/// This is to be able to turn on backup stitching across replicas without requiring customer code change.
+/// As such it only handles issues in the backup chain that can be caused by stitching.
+/// Specifically a shared link can be present in a backup because a replica uploaded the backup folder but failed to 
+/// log/replicate the backup log record.
+/// 
+/// Invariants (for all backups)
+/// 1. A backup folder customer has uploaded, can never have false progress.
+/// 2. All backup data loss numbers across all links in the chain must be same.
+/// 3. First chain in a valid backup chain must start with a full backup and can contain only one full backup.
+/// 
+/// We can only trim when the input chain obeys the following rules
+/// 1. There can be multiple divergent chains from each divergence point, but only one of the divergent chains can have more than one link.
+/// 
+/// </summary>
+/// <devnote>
+/// Terminology
+/// Backup Link:        A backup folder that participates in a backup chain.
+/// Backup Chain:       A set of backup folders that start with a full backup and set of incremental backups that each build on the previous backup.
+/// Divergent Links:    One or more Backup Links that have the same parent.
+/// Shared Link:        A backup link that is parent of multiple backup links.
+/// </devnote>
+void BackupFolderInfo::Trim()
+{
+    ASSERT_IFNOT(
+        backupVersionArray_.Count() != 0 && backupVersionArray_.Count() == metadataArray_.Count() && backupVersionArray_.Count() == logFilePathArray_.Count(),
+        "{0}: backupVersionArray_.Count() {1} metadataArray_.Count() {2} logFilePathArray_.Count() {3}, Backup folder: {4}",
+        TraceId,
+        backupVersionArray_.Count(),
+        metadataArray_.Count(),
+        logFilePathArray_.Count(),
+        backupFolderCSPtr_->operator LPCWSTR());
+
+    LoggingReplicator::BackupMetadataFile::CSPtr headMetadataFile = metadataArray_[0];
+    if (headMetadataFile->BackupOption != FABRIC_BACKUP_OPTION_FULL)
+    {
+        LR_TRACE_UNEXPECTEDEXCEPTION_STATUS(
+            ToStringLiteral(
+                wformatString(
+                    L"Folder: {0} Beginning of the backup chain must be full backup. BackupId: {1} ParentId: {2} DL: {3} CN: {4} LSN: {5}",
+                    backupFolderCSPtr_->operator LPCWSTR(),
+                    Common::Guid(headMetadataFile->BackupId),
+                    Common::Guid(headMetadataFile->ParentBackupId),
+                    headMetadataFile->BackupEpoch.DataLossVersion, 
+                    headMetadataFile->BackupEpoch.ConfigurationVersion,
+                    headMetadataFile->BackupLSN)),
+            STATUS_INVALID_PARAMETER);
+
+        throw Exception(STATUS_INVALID_PARAMETER);
+    }
+
+    // If there are less than two backup folders, there is no chain to trim.
+    if (metadataArray_.Count() < 2)
+    {
+        return;
+    }
+
+    // The last backup in the sorted list must be the one with the newest state since it is sorted using the BackupVersion.
+    LoggingReplicator::BackupMetadataFile::CSPtr currentMetadataFile = metadataArray_[metadataArray_.Count() - 1];
+    LONG32 nextIndex = metadataArray_.Count() - 2;
+
+    // Go back through the chain and remove an divergent branches.
+    // Note that head (0) is handled specially because instead of removing we throw an exception:
+    // Head which is suppose to be the full backup cannot be trimmed.
+    while (nextIndex >= 0)
+    {
+        LoggingReplicator::BackupMetadataFile::CSPtr nextMetadataFile = metadataArray_[nextIndex];
+        ASSERT_IFNOT(
+            nextIndex == 0 || nextMetadataFile->BackupOption == FABRIC_BACKUP_OPTION_INCREMENTAL,
+            "{0}: nextIndex is {1} BackupOption is {2} Backup folder: {3}",
+            TraceId,
+            nextIndex,
+            static_cast<int>(nextMetadataFile->BackupOption),
+            backupFolderCSPtr_->operator LPCWSTR());
+
+        // Enforcing invariant 2: If data loss number has changed, this is cannot be trimmed or restored.
+        if (currentMetadataFile->BackupEpoch.DataLossVersion != nextMetadataFile->BackupEpoch.DataLossVersion)
+        {
+            LR_TRACE_UNEXPECTEDEXCEPTION_STATUS(
+                ToStringLiteral(
+                    wformatString(
+                        L"Folder: {0} A backup chain cannot contain backups from different data loss numbers. BackupId: {1} ParentId: {2} DL: {3} CN: {4} LSN: {5}",
+                        backupFolderCSPtr_->operator LPCWSTR(),
+                        Common::Guid(headMetadataFile->BackupId),
+                        Common::Guid(headMetadataFile->ParentBackupId),
+                        headMetadataFile->BackupEpoch.DataLossVersion,
+                        headMetadataFile->BackupEpoch.ConfigurationVersion,
+                        headMetadataFile->BackupLSN)),
+                STATUS_INVALID_PARAMETER);
+
+            throw Exception(STATUS_INVALID_PARAMETER);
+        }
+
+        // Enforcing weakly invariant 1.
+        // Note that this also enforces rule 1.
+        if (currentMetadataFile->BackupLSN < nextMetadataFile->BackupLSN)
+        {
+            LR_TRACE_UNEXPECTEDEXCEPTION_STATUS(
+                ToStringLiteral(
+                    wformatString(
+                        L"Folder: {0} Backups corrupted. Backup lsn order does not match. CurrentMetadataFile BackupLSN: {1} NextMetadataFile BackupLSN: {2}",
+                        backupFolderCSPtr_->operator LPCWSTR(),
+                        headMetadataFile->BackupLSN,
+                        nextMetadataFile->BackupLSN)),
+                STATUS_INVALID_PARAMETER);
+
+            throw Exception(STATUS_INVALID_PARAMETER);
+        }
+
+        // If appropriate chain link, continue;
+        if (currentMetadataFile->ParentBackupId == nextMetadataFile->BackupId)
+        {
+            currentMetadataFile = nextMetadataFile;
+            --nextIndex;
+            continue;
+        }
+
+        // If the longest chain does not link into head (full) than throw since full backup cannot be removed.
+        if (nextIndex == 0)
+        {
+            LR_TRACE_UNEXPECTEDEXCEPTION_STATUS(
+                ToStringLiteral(
+                    wformatString(
+                        L"Folder: {0} Incremental backup chain broken. Parent id {1} must match backup id {2}.",
+                        backupFolderCSPtr_->operator LPCWSTR(),
+                        Common::Guid(headMetadataFile->BackupId),
+                            Common::Guid(currentMetadataFile->ParentBackupId))),
+                STATUS_INVALID_PARAMETER);
+
+            throw Exception(STATUS_INVALID_PARAMETER);
+        }
+
+        // Remove the divergent duplicate link.
+        EventSource::Events->BackupFolderWarning(
+            TracePartitionId,
+            ReplicaId,
+            ToStringLiteral(
+                wformatString(
+                    L"Trimming the following backup chain link. Index: {0} NextMetadataFile: BackupId: {1} ParentBackupId: {2}.",
+                    nextIndex,
+                    Common::Guid(nextMetadataFile->BackupId),
+                        Common::Guid(nextMetadataFile->ParentBackupId))),
+            backupFolderCSPtr_->operator LPCWSTR(),
+            STATUS_SUCCESS);
+
+        metadataArray_.Remove(nextIndex);
+        logFilePathArray_.Remove(nextIndex);
+        --nextIndex;
+    }
 }
 
 ktl::Awaitable<void> BackupFolderInfo::VerifyAsync(
@@ -238,8 +410,20 @@ ktl::Awaitable<void> BackupFolderInfo::VerifyAsync(
     // Port Note: Added a method for readability.
     VerifyMetadataList();
 
-    // Note: This is an expensive verification.
-    co_await VerifyLogFilesAsync(cancellationToken);
+    if (test_doNotVerifyLogFile_)
+    {
+        EventSource::Events->BackupFolderWarning(
+            TracePartitionId,
+            ReplicaId,
+            L"Skipping log file validation because test setting is turned on",
+            backupFolderCSPtr_->operator LPCWSTR(),
+            STATUS_SUCCESS);
+    }
+    else
+    {
+        // Note: This is an expensive verification.
+        co_await VerifyLogFilesAsync(cancellationToken);
+    }
 
     co_return;
 }
@@ -247,11 +431,11 @@ ktl::Awaitable<void> BackupFolderInfo::VerifyAsync(
 void BackupFolderInfo::VerifyMetadataList()
 {
     ASSERT_IFNOT(
-        backupVersionArray_.Count() == metadataArray_.Count(),
-        "{0}: backupVersionList_.Count() {1} == metadataList_.Count() {2}",
+        metadataArray_.Count() == logFilePathArray_.Count(),
+        "{0}: metadataArray_.Count() {1} == logFilePathArray_.Count() {2}",
         TraceId,
-        backupVersionArray_.Count(),
-        metadataArray_.Count());
+        metadataArray_.Count(),
+        logFilePathArray_.Count());
 
     BackupMetadataFile::CSPtr lastBackupMetadataFile = nullptr;
     for (BackupMetadataFile::CSPtr metadataFile : metadataArray_)
@@ -363,7 +547,8 @@ void BackupFolderInfo::ThrowIfNecessary(
 BackupFolderInfo::BackupFolderInfo(
     __in Data::Utilities::PartitionedReplicaId const & traceId,
     __in KGuid const & id,
-    __in KString const & backupFolder)
+    __in KString const & backupFolder,
+    __in bool test_doNotVerifyLogFile)
     : KShared()
     , KObject()
     , PartitionedReplicaTraceComponent(traceId)
@@ -372,6 +557,7 @@ BackupFolderInfo::BackupFolderInfo(
     , backupVersionArray_(GetThisAllocator())
     , metadataArray_(GetThisAllocator())
     , logFilePathArray_(GetThisAllocator())
+    , test_doNotVerifyLogFile_(test_doNotVerifyLogFile)
 {
     if (NT_SUCCESS(backupVersionArray_.Status()) == false)
     {

@@ -5,6 +5,7 @@
 
 #if !defined(PLATFORM_UNIX)
 #include <ktl.h>
+#include <conio.h>
 #include "Common/KtlSF.Common.h"
 #endif
 #include "HttpTransport.Server.h"

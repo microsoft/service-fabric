@@ -136,5 +136,9 @@ namespace Naming
         CLIENT_OPERATION_ACE_INIT(DeleteComposeDeployment)
         CLIENT_OPERATION_ACE_INIT(UpgradeComposeDeployment)
         CLIENT_OPERATION_ACE_INIT(InvokeContainerApi)
+        CLIENT_OPERATION_ACE_INIT(CreateVolume)
+        CLIENT_OPERATION_ACE_INIT(DeleteVolume)
+
+        CLIENT_OPERATION_ACE_INIT(GetSecrets)
     }
 }

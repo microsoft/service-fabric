@@ -65,6 +65,7 @@ namespace HttpGateway
         // handler can process.
         //
         std::vector<HandlerUriTemplate> validHandlerUris;
+        bool allowHierarchicalEntityKeys = true;
 
     private:
 

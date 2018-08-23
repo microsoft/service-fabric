@@ -19,27 +19,6 @@ ClusterHealthChunkQueryDescription::ClusterHealthChunkQueryDescription()
 {
 }
 
-ClusterHealthChunkQueryDescription::ClusterHealthChunkQueryDescription(ClusterHealthChunkQueryDescription && other)
-    : healthPolicy_(move(other.healthPolicy_))
-    , applicationHealthPolicies_(move(other.applicationHealthPolicies_))
-    , applicationFilters_(move(other.applicationFilters_))
-    , nodeFilters_(move(other.nodeFilters_))
-{
-}
-
-ClusterHealthChunkQueryDescription & ClusterHealthChunkQueryDescription::operator =(ClusterHealthChunkQueryDescription && other)
-{
-    if (this != &other)
-    {
-        healthPolicy_ = move(other.healthPolicy_);
-        applicationHealthPolicies_ = move(other.applicationHealthPolicies_);
-        applicationFilters_ = move(other.applicationFilters_);
-        nodeFilters_ = move(other.nodeFilters_);
-    }
-
-    return *this;
-}
-
 ClusterHealthChunkQueryDescription::~ClusterHealthChunkQueryDescription()
 {
 }

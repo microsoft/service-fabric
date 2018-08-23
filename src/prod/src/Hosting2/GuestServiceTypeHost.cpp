@@ -66,8 +66,8 @@ private:
             error.ToLogLevel(),
             TraceType,
             owner_.TraceId,
-            "InitializeApplicationHost: HostId={0}, ServicePackageActivationId={1}, RuntimeServiceAddress={2}, ErrorCode={3}.",
-            owner_.HostId,
+            "InitializeApplicationHost: HostContext={0}, ServicePackageActivationId={1}, RuntimeServiceAddress={2}, ErrorCode={3}.",
+            owner_.HostContext,
             owner_.ServicePackageActivationId,
             owner_.runtimeServiceAddress_,
             error);
@@ -86,8 +86,8 @@ private:
         WriteNoise(
             TraceType,
             owner_.TraceId,
-            "Begin(OpenApplicationHost): HostId={0}, ServicePackageActivationId={1}, Timeout={2}.",
-            owner_.HostId,
+            "Begin(OpenApplicationHost): HostContext={0}, ServicePackageActivationId={1}, Timeout={2}.",
+            owner_.HostContext,
             owner_.ServicePackageActivationId,
             timeoutHelper_.GetRemainingTime());
         
@@ -112,8 +112,8 @@ private:
             error.ToLogLevel(),
             TraceType,
             owner_.TraceId,
-            "End(OpenApplicationHost): HostId={0}, ServicePackageActivationId={1}, ErrorCode={2}",
-            owner_.HostId,
+            "End(OpenApplicationHost): HostContext={0}, ServicePackageActivationId={1}, ErrorCode={2}",
+            owner_.HostContext,
             owner_.ServicePackageActivationId,
             error);
         
@@ -123,12 +123,31 @@ private:
             return;
         }
 
-        CreateComFabricRuntime(operation->Parent);
+        if (owner_.applicationhost_->HostContext.IsCodePackageActivatorHost)
+        {
+            owner_.activationManager_ = make_com<ComGuestServiceCodePackageActivationManager>(owner_);
+            error = owner_.activationManager_->Open();
+            if (!error.IsSuccess())
+            {
+                WriteWarning(
+                    TraceType,
+                    owner_.TraceId,
+                    "OpenGuestServiceCodePackageActivationManager: HostContext={0}, ServicePackageActivationId={1}, ErrorCode={2}",
+                    owner_.HostContext,
+                    owner_.ServicePackageActivationId,
+                    error);
+
+                this->TryComplete(operation->Parent, error);
+                return;
+            }
+        }
+        
+        this->CreateComFabricRuntime(operation->Parent);
     }
 
     void CreateComFabricRuntime(AsyncOperationSPtr const & thisSPtr)
     {
-        WriteInfo(
+        WriteNoise(
             TraceType,
             owner_.TraceId,
             "Begin(CreateComFabricRuntime): HostId={0}, ServicePackageActivationId={1}, Timeout={2}",
@@ -175,26 +194,55 @@ private:
 
     void RegisterServiceTypes(AsyncOperationSPtr const & thisSPtr)
     {
-        auto serviceFactory = make_com<ComGuestServiceTypeFactory, IFabricStatelessServiceFactory>(owner_.endpointDescriptions_);
+        auto statelessServiceFactory = 
+            make_com<ComStatelessGuestServiceTypeFactory, IFabricStatelessServiceFactory>(owner_);
+
+        auto statefulServiceFactory =
+            make_com<ComStatefulGuestServiceTypeFactory, IFabricStatefulServiceFactory>(owner_);
 
         for (auto const & guestType : owner_.serviceTypesToHost_)
         {
-            auto hr = owner_.runtime_->RegisterStatelessServiceFactory(guestType.c_str(), serviceFactory.GetRawPointer());
+            auto hr = S_OK;
             
-            if (FAILED(hr))
+            if (guestType.IsStateful)
+            {
+                hr = owner_.runtime_->RegisterStatefulServiceFactory(
+                    guestType.ServiceTypeName.c_str(), 
+                    statefulServiceFactory.GetRawPointer());
+            }
+            else
+            {
+                hr = owner_.runtime_->RegisterStatelessServiceFactory(
+                    guestType.ServiceTypeName.c_str(), 
+                    statelessServiceFactory.GetRawPointer());
+            }
+
+            auto error = ErrorCode::FromHResult(hr);
+
+            if (!error.IsSuccess())
             {
                 WriteWarning(
                     TraceType,
                     owner_.TraceId,
-                    "Failed to register ComGuestServiceTypeFactory for {0}. HostId={1}, ServicePackageActivationId={2}, HRESULT={3}",
-                    guestType,
+                    "Failed to register GuestServiceTypeFactory for {0}. HostId={1}, ServicePackageActivationId={2}, IsStateful={3}, Error={4}.",
+                    guestType.ServiceTypeName,
                     owner_.HostId,
                     owner_.ServicePackageActivationId,
-                    hr);
+                    guestType.IsStateful,
+                    error);
 
-                TryComplete(thisSPtr, ErrorCode::FromHResult(hr));
+                TryComplete(thisSPtr, error);
                 return;
             }
+
+            WriteNoise(
+                TraceType,
+                owner_.TraceId,
+                "Succesfully registered GuestServiceTypeFactory for {0}. HostId={1}, ServicePackageActivationId={2}, IsStateful={3}.",
+                guestType.ServiceTypeName,
+                owner_.HostId,
+                owner_.ServicePackageActivationId,
+                guestType.IsStateful);
         }
 
         TryComplete(thisSPtr, ErrorCode::Success());
@@ -249,12 +297,20 @@ protected:
             owner_.ServicePackageActivationId,
             timeoutHelper_.GetRemainingTime());
 
-        CloseApplicationHost(thisSPtr);
+        this->CloseApplicationHost(thisSPtr);
     }
 
 private:
     void CloseApplicationHost(AsyncOperationSPtr const & thisSPtr)
     {
+        if (owner_.applicationhost_->HostContext.IsCodePackageActivatorHost)
+        {
+            owner_.activationManager_->Close();
+            owner_.activationManager_.Release();
+        }
+
+        owner_.runtime_.Release();
+
         WriteNoise(
             TraceType,
             owner_.TraceId,
@@ -289,29 +345,13 @@ private:
             owner_.ServicePackageActivationId,
             lastError_);
 
-        CloseRuntime(operation->Parent);
-    }
-
-    void CloseRuntime(AsyncOperationSPtr const & thisSPtr)
-    {
-        WriteNoise(
-            TraceType,
-            owner_.TraceId,
-            "Releasing runtime: HostId={0}, ServicePackageActivationId={1}.",
-            owner_.HostId,
-            owner_.ServicePackageActivationId);
-        
-        owner_.runtime_.Release();
-        
-        TryComplete(thisSPtr, lastError_);
-        
-        return;
+        this->TryComplete(operation->Parent, lastError_);
     }
 
 private:
     GuestServiceTypeHost & owner_;
     TimeoutHelper timeoutHelper_;
-	ErrorCode lastError_;
+    ErrorCode lastError_;
 };
 
 // ********************************************************************************************************************
@@ -319,44 +359,36 @@ private:
 //
 GuestServiceTypeHost::GuestServiceTypeHost(
     HostingSubsystemHolder const & hostingHolder,
-    wstring const & hostId,
-    vector<std::wstring> const & serviceTypesToHost,
+    ApplicationHostContext const & hostContext,
+    vector<GuestServiceTypeInfo> const & serviceTypesToHost,
     CodePackageContext const & codePackageContext,
     wstring const & runtimeServiceAddress,
+    vector<wstring> && depdendentCodePackages,
     vector<EndpointDescription> && endpointDescriptions)
     : hostingHolder_(hostingHolder)
-    , hostId_(hostId)
+    , hostContext_(hostContext)
     , serviceTypesToHost_(serviceTypesToHost)
     , codePackageContext_(codePackageContext)
     , runtimeServiceAddress_(runtimeServiceAddress)
     , runtimeId_(Guid::NewGuid().ToString())
     , applicationhost_()
     , runtime_()
+    , activationManager_()
+    , depdendentCodePackages_(depdendentCodePackages)
     , endpointDescriptions_(endpointDescriptions)
 {
-    WriteNoise(
-        TraceType, 
-        TraceId, 
-        "ctor: HostId={0}, ServicePackageActivationId={1}.",
-        hostId,
-        codePackageContext_.CodePackageInstanceId.ServicePackageInstanceId.PublicActivationId);
 }
 
 GuestServiceTypeHost::~GuestServiceTypeHost()
 {
-    WriteNoise(
-        TraceType, 
-        TraceId, 
-        "dtor: HostId={0}, ServicePackageActivationId={1}.",
-        this->HostId,
-        this->ServicePackageActivationId);
 }
 
 ErrorCode GuestServiceTypeHost::InitializeApplicationHost()
 {
     return InProcessApplicationHost::Create(
-        hostId_,
+        *this,
         runtimeServiceAddress_,
+        hostContext_,
         codePackageContext_,
         applicationhost_);
 }
@@ -397,9 +429,10 @@ ErrorCode GuestServiceTypeHost::OnEndClose(AsyncOperationSPtr const & asyncOpera
 
 void GuestServiceTypeHost::OnAbort()
 {
-    if (applicationhost_)
+    if (hostContext_.IsCodePackageActivatorHost && activationManager_)
     {
-        applicationhost_->Abort();
+        activationManager_->Close();
+        activationManager_.Release();
     }
 
     if (runtime_)
@@ -407,10 +440,25 @@ void GuestServiceTypeHost::OnAbort()
         runtime_.Release();
     }
 
-    WriteNoise(
-        TraceType,
-        this->TraceId,
-        "Aborted: HostId={0}, ServicePackageActivationId={1}.",
-        this->HostId,
-        this->ServicePackageActivationId);
+    if (applicationhost_)
+    {
+        applicationhost_->Abort();
+    }
+}
+
+void GuestServiceTypeHost::ProcessCodePackageEvent(CodePackageEventDescription eventDescription)
+{
+    if (this->State.Value > FabricComponentState::Opened)
+    {
+        // no need to notify if type host is closing down
+        return;
+    }
+
+    applicationhost_->ProcessCodePackageEvent(eventDescription);
+}
+
+ErrorCode GuestServiceTypeHost::GetCodePackageActivator(
+    _Out_ Common::ComPointer<IFabricCodePackageActivator> & codePackageActivator)
+{
+    return applicationhost_->GetCodePackageActivator(codePackageActivator);
 }

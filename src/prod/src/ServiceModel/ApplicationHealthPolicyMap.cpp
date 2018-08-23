@@ -14,37 +14,6 @@ ApplicationHealthPolicyMap::ApplicationHealthPolicyMap()
 {
 }
 
-ApplicationHealthPolicyMap::ApplicationHealthPolicyMap(ApplicationHealthPolicyMap const & other)
-    : map_(other.map_)
-{
-}
-
-ApplicationHealthPolicyMap const & ApplicationHealthPolicyMap::operator = (ApplicationHealthPolicyMap const & other)
-{
-    if (this != &other)
-    {
-        map_ = other.map_;
-    }
-
-    return *this;
-}
-
-
-ApplicationHealthPolicyMap::ApplicationHealthPolicyMap(ApplicationHealthPolicyMap && other)
-    : map_(move(other.map_))
-{
-}
-
-ApplicationHealthPolicyMap const & ApplicationHealthPolicyMap::operator = (ApplicationHealthPolicyMap && other)
-{
-    if (this != &other)
-    {
-        map_ = move(other.map_);
-    }
-
-    return *this;
-}
-
 #if defined(PLATFORM_UNIX)
 void ApplicationHealthPolicyMap::Insert(std::wstring & appName, ApplicationHealthPolicy && policy)
 {

@@ -127,8 +127,9 @@ namespace Query
         __declspec(property(get=get_QueryName)) Query::QueryNames::Enum QueryName;
         Query::QueryNames::Enum get_QueryName() const { return queryName_; };
 
-        __declspec(property(get=get_QueryId)) std::wstring QuerySpecificationId;
+        __declspec(property(get=get_QueryId, put=put_QueryId)) std::wstring QuerySpecificationId;
         std::wstring get_QueryId() const { return querySpecificationId_; };
+        void put_QueryId(std::wstring const & value) { querySpecificationId_ = value; }
 
         __declspec(property(get=get_QueryType)) Query::QueryType::Enum QueryType;
         Query::QueryType::Enum get_QueryType() const { return queryType_; }

@@ -19,9 +19,9 @@ namespace Reliability
                 std::map<Federation::NodeId, NodeDeactivationIntent::Enum> const& nodesToDeactivate,
                 std::wstring const& batchId);
 
-            void CheckSeedNodes(FailoverManager & fm);
-
             virtual BackgroundThreadContextUPtr CreateNewContext() const;
+
+            void Initialize(FailoverManager & fm);
 
             virtual void Process(FailoverManager const& fm, FailoverUnit const& failoverUnit);
 
@@ -33,11 +33,15 @@ namespace Reliability
 
         private:
 
+            void CheckSeedNodes(FailoverManager & fm);
+
             virtual bool IsReplicaSetCheckNeeded() const;
 
             virtual bool IsReplicaWaitNeeded(Replica const& replica) const;
 
             virtual bool IsReplicaMoveNeeded(Replica const& replica) const;
+
+            bool IsRemoveNodeOrDataReplicaWaitNeeded(NodeInfoSPtr const & nodeInfo) const;
 
             void SendNodeDeactivateMessage(FailoverManager & fm, NodeInfo const& nodeInfo) const;
 

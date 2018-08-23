@@ -3,6 +3,8 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#pragma once
+
 class WrappedServiceBase;
 class ServiceWrapper : public KObject<ServiceWrapper>, public KShared<ServiceWrapper>
 {

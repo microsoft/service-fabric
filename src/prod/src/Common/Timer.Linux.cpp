@@ -15,15 +15,17 @@ class Common::TimerFinalizer
     DENY_COPY(TimerFinalizer);
 
 public:
-    TimerFinalizer() : enqueueCount_(0), dequeueCount_(0), shouldStartWorkerThread_(true)
+    TimerFinalizer()
+        // In order to use bitwise AND in place of modulo operation, _capacity must be a power of 2. This also
+        // allow us to ignore overflow when incrementing _enqueueCount/_dequeueCount, since a power of 2 within
+        // size_t's limit must be a divisor of the capacity of size_t, _enqueueCount/_dequeueCount's type
+        : capacity_((size_t)1 << CommonConfig::GetConfig().TimerFinalizerQueueCapacityBitCount)
+        , modularMask_(capacity_ - 1) 
     {
+        Timer::WriteInfo(FinalizerTrace, "queue capacity_ = 0x{0:x}, modularMask_ = 0x{1:x}", capacity_, modularMask_);
         Invariant(capacity_ > CommonConfig::GetConfig().PosixTimerLimit);
         Invariant(capacity_ > CommonConfig::GetConfig().PosixTimerLimit_Fabric);
-
-        for(auto & t : queue_)
-        {
-            t = nullptr;
-        }
+        queue_.resize(capacity_);
     }
 
     void Enqueue(Timer* timer)
@@ -134,17 +136,14 @@ private:
 private:
     RwLock lock_;
 
-    // In order to use bitwise AND in place of modulo operation, _capacity is made a power of 2. This also
-    // allow us to ignore overflow when incrementing _enqueueCount/_dequeueCount, since a power of 2 within
-    // size_t's limit must be a divisor of the capacity of size_t, _enqueueCount/_dequeueCount's type
-    static const size_t capacity_ = 1<<20; //1024*1024
-    static const size_t modularMask_ = capacity_ - 1;
-    Timer* queue_[capacity_];
+    size_t capacity_ = 0; 
+    size_t modularMask_ = 0; 
+    vector<Timer*> queue_;
 
-    size_t enqueueCount_;
-    size_t dequeueCount_;
+    size_t enqueueCount_ = 0;
+    size_t dequeueCount_ = 0;
 
-    bool shouldStartWorkerThread_;
+    bool shouldStartWorkerThread_ = true;
 };
 
 atomic_uint64 Timer::ObjCount(0);

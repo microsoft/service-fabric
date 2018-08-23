@@ -93,6 +93,9 @@ namespace Management
             void ExternalFail() { isExternallyFailed_ = true; }
             bool IsExternallyFailed() { return isExternallyFailed_; }
 
+            virtual Common::ErrorCode SwitchReplaceToCreate(Store::StoreTransaction const & storeTx);
+            bool ShouldKeepInQueue() { return shouldKeepInQueue_; }
+
             FABRIC_FIELDS_02(status_, timeout_);
 
         protected:
@@ -115,6 +118,10 @@ namespace Management
             // processing to failure.
             //
             bool isExternallyFailed_;
+
+            // true - keep this RolloutContext in manager's queue even operation success
+            // It is reserved to handle "Replacement" requests
+            bool shouldKeepInQueue_;
 
             Common::Stopwatch operationRetryStopwatch_;
             size_t timeoutCount_;

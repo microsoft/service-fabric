@@ -126,6 +126,7 @@ namespace TStoreTests
             __in ULONG32 fileId = 1)
         {
             auto bufferSerializerSPtr = CreateBufferSerializer();
+            StorePerformanceCountersSPtr perfCounters = nullptr;
             return CheckpointFile::CreateAsync<KBuffer::SPtr, KBuffer::SPtr>(
                 fileId,
                 filepath,
@@ -135,6 +136,7 @@ namespace TStoreTests
                 1,
                 GetAllocator(),
                 *CreateTraceComponent(),
+                perfCounters,
                 true);
         }
 

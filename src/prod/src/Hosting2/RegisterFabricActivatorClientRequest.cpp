@@ -12,15 +12,18 @@ using namespace Hosting2;
 
 RegisterFabricActivatorClientRequest::RegisterFabricActivatorClientRequest() 
     : parentProcessId_(),
-    nodeId_()
+    nodeId_(),
+    nodeInstanceId_()
 {
 }
 
 RegisterFabricActivatorClientRequest::RegisterFabricActivatorClientRequest(
     DWORD parentProcessId,
-    wstring const & nodeId)
+    wstring const & nodeId,
+    uint64 nodeInstanceId)
     : parentProcessId_(parentProcessId),
-    nodeId_(nodeId)
+    nodeId_(nodeId),
+    nodeInstanceId_(nodeInstanceId)
 {
 }
 
@@ -29,5 +32,6 @@ void RegisterFabricActivatorClientRequest::WriteTo(TextWriter & w, FormatOptions
     w.Write("RegisterFabricActivatorClientRequest { ");
     w.Write("ParentProcessId = {0}", parentProcessId_);
     w.Write("NodeId = {0}", nodeId_);
+    w.Write("NodeInstanceId = {0}", nodeInstanceId_);
     w.Write("}");
 }

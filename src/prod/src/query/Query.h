@@ -13,6 +13,8 @@
 #include "query/QueryConfig.h"
 #include "query/QueryAddressGenerator.h"
 #include "query/QueryAddresses.h"
+#include "query/QueryArgument.h"
+#include "query/QuerySpecification.h"
 #include "query/QueryMessageHandler.h"
 #include "query/QueryGateway.h"
 

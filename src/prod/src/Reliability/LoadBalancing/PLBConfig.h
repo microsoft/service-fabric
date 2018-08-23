@@ -306,12 +306,21 @@ namespace Reliability
             //Defragmentation will work if maxNodeLoad/minNodeLoad in at least one FD or UD is smaller than MetricBalancingThresholds.
             PUBLIC_CONFIG_GROUP(KeyDoubleValueMap, L"MetricBalancingThresholds", MetricBalancingThresholds, Common::ConfigEntryUpgradePolicy::Dynamic);
 
+            //Deprecated, please use ReservedLoadPerNode instead
             //Determines the set of MetricEmptyNodeThresholds for the metrics in the cluster.
-            //Determines how much load on a node is needed to be free for that node to be considered empty.
+            //Determines how much load on a node can exist to be free for that node to be considered empty.
             INTERNAL_CONFIG_GROUP(KeyIntegerValueMap, L"MetricEmptyNodeThresholds", MetricEmptyNodeThresholds, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            //Determines the set of ReservedLoadPerNode for the metrics in the cluster.
+            //Determines how much load should be reserved on a node.
+            INTERNAL_CONFIG_GROUP(KeyIntegerValueMap, L"ReservedLoadPerNode", ReservedLoadPerNode, Common::ConfigEntryUpgradePolicy::Dynamic);
 
             //Determines the set of GlobalMetricWeights for the metrics in the cluster.
             PUBLIC_CONFIG_GROUP(KeyDoubleValueMap, L"GlobalMetricWeights", GlobalMetricWeights, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            //Determines the set of metrices where balancing is done by percentage of load on node, instead of absolute load
+            //Available if every node has defined and limited capacity
+            INTERNAL_CONFIG_GROUP(KeyBoolValueMap, L"BalancingByPercentage", BalancingByPercentage, Common::ConfigEntryUpgradePolicy::Dynamic);
 
             //Determines the set of metrices that should be used for defragmentation and not for load balancing.
             PUBLIC_CONFIG_GROUP(KeyBoolValueMap, L"DefragmentationMetrics", DefragmentationMetrics, Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -337,11 +346,21 @@ namespace Reliability
             //Specifies whether the restricted defragmentation heuristic should be used (as additional solution)
             INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", RestrictedDefragmentationHeuristicEnabled, false, Common::ConfigEntryUpgradePolicy::Dynamic);
 
-            //Specifies the ratio of node emptying and balancing to be used in the calculations of score
-            //0.0 - balancing only
-            //1.0 - empty nodes, don't balance
-            //0.0 - 1.0 - empty nodes and balance across non-empty nodes. Higher values insure empty nodes at the cost of a less balanced state and vice versa
+            //Specifies the ratio of node emptying used in the calculations of score, for specified metric
+            //0.0 - don't do any extra moves to free up space on nodes, reservation of capacity doesn't improve score
+            //> 0.0 - allow certain moves if the score will be improved during emptying nodes, emptying load is included in score
+            //1.0 - Max value
             INTERNAL_CONFIG_GROUP(KeyDoubleValueMap, L"DefragmentationEmptyNodeWeight", DefragmentationEmptyNodeWeight, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            //Specifies the ratio of balancing used in the calculations of score, for specified metric
+            //0.0 - don't do any extra moves to improve balancing phase
+            //> 0.0 - allow certain moves if the score will be improved during balancing
+            //1.0 - Max value
+            INTERNAL_CONFIG_GROUP(KeyDoubleValueMap, L"DefragmentationNonEmptyNodeWeight", DefragmentationNonEmptyNodeWeight, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            //Specifies whether empty nodes for multiple scoped defrag metrics have to overlap
+            //If set to false, empty nodes can overlap, but it's not required
+            INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", NodesWithReservedLoadOverlap, false, Common::ConfigEntryUpgradePolicy::Dynamic);
 
             //Determines factor for standard deviation of load across all nodes during calculating stdDev.
             INTERNAL_CONFIG_ENTRY(double, L"PlacementAndLoadBalancing", DefragmentationNodesStdDevFactor, 1, Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -445,12 +464,12 @@ namespace Reliability
             //Setting which determines if parent replicas can be moved to fix affinity constraints
             PUBLIC_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", MoveParentToFixAffinityViolation, false, Common::ConfigEntryUpgradePolicy::Dynamic)
 
-            //Setting which determines after which transition we will try to find solution by moving parent replicas if MoveParentToFixAffinityViolation is true
-            //If MoveParentToFixAffinityViolation is false this flag does nothing
-            INTERNAL_CONFIG_ENTRY(double, L"PlacementAndLoadBalancing", MoveParentToFixAffinityViolationTransitionPercentage, 0.2, Common::ConfigEntryUpgradePolicy::Dynamic)
+                //Setting which determines after which transition we will try to find solution by moving parent replicas if MoveParentToFixAffinityViolation is true
+                //If MoveParentToFixAffinityViolation is false this flag does nothing
+                INTERNAL_CONFIG_ENTRY(double, L"PlacementAndLoadBalancing", MoveParentToFixAffinityViolationTransitionPercentage, 0.2, Common::ConfigEntryUpgradePolicy::Dynamic)
 
-            //Setting which determines if to move existing replica during placement
-            PUBLIC_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", MoveExistingReplicaForPlacement, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+                //Setting which determines if to move existing replica during placement
+                PUBLIC_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", MoveExistingReplicaForPlacement, true, Common::ConfigEntryUpgradePolicy::Dynamic);
 
             //Setting which determines if use different secondary load
             PUBLIC_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", UseSeparateSecondaryLoad, true, Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -595,6 +614,16 @@ namespace Reliability
 
             // Determines how often statistics are traced out.
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"PlacementAndLoadBalancing", StatisticsTracingInterval, Common::TimeSpan::FromSeconds(60.0), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // When service is auto scaled by adding or removing partitions, there is a call to client to perform the actual scaling operation.
+            // This setting determines how long is the timeout for waiting on the client to reply.
+            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"PlacementAndLoadBalancing", ServiceRepartitionForAutoScalingTimeout, Common::TimeSpan::FromSeconds(60.0), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // Prefer exisint replica locations during PreferredLocation check if it is true.
+            INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", PreferExistingReplicaLocations, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+            // Prefer nodes that have some required images when placing containers if the config is enabled
+            INTERNAL_CONFIG_ENTRY(bool, L"PlacementAndLoadBalancing", PreferNodesForContainerPlacement, true, Common::ConfigEntryUpgradePolicy::Dynamic);
         };
     }
 }

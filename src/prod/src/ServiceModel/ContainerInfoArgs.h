@@ -11,5 +11,6 @@ namespace ServiceModel
     {
     public:
         static Common::GlobalWString Tail;
+        static Common::GlobalWString Previous;
     };
 }

@@ -45,8 +45,8 @@ PLBScheduler::PLBScheduler(
       lastBalancingAvgStdDev_(),
       movementCounterPerFU_()
 {
-    placementAction_.SetAction(PLBSchedulerActionType::Creation);
-    balancingAction_.SetAction(PLBSchedulerActionType::FastBalancing);
+    placementAction_.SetAction(PLBSchedulerActionType::NewReplicaPlacement);
+    balancingAction_.SetAction(PLBSchedulerActionType::QuickLoadBalancing);
 }
 
 PLBScheduler::PLBScheduler(PLBScheduler && other)
@@ -272,27 +272,28 @@ void PLBScheduler::RefreshAction(ISystemState const & systemState, StopwatchTime
                 //Re-evaluate throttling conditions for creationwithmove...
                 if (placementAction_.IsCreationWithMove() && IsCreationWithMoveThrottled(systemState))
                 {
-                    // Creation with move is throttled, fall back to creation
-                    placementAction_.SetAction(PLBSchedulerActionType::Creation);
+                    // NewReplicaPlacementWithMove is throttled, fall back to creation
+                    placementAction_.SetAction(PLBSchedulerActionType::NewReplicaPlacement);
                 }
 
-                // Select this action (Creation or CreationWithMove) to run for this service domain
+                // Select this action (NewReplicaPlacement or NewReplicaPlacementWithMove) to run for this service domain
                 currentAction_ = placementAction_;
 
-                // Advance the creation action, so that we can switch to CreationWithMove if enabled.
+                // Advance the creation action, so that we can switch to NewReplicaPlacementWithMove if enabled.
                 // This value will be looked at only after MinPlacementInterval passes again
                 placementAction_.IncreaseIteration();
                 if (!placementAction_.CanRetry())
                 {
-                    if (placementAction_.Action == PLBSchedulerActionType::Creation && creationWithMoveEnabled)
+                    if (placementAction_.Action == PLBSchedulerActionType::NewReplicaPlacement && creationWithMoveEnabled)
                     {
-                            // Creation has reached maximum number of attempts, try CreationWithMove after MinPlacementInterval passes
-                            placementAction_.SetAction(PLBSchedulerActionType::CreationWithMove);
+                            // NewReplicaPlacement has reached maximum number of attempts,
+                            // try NewReplicaPlacementWithMove after MinPlacementInterval passes
+                            placementAction_.SetAction(PLBSchedulerActionType::NewReplicaPlacementWithMove);
                     }
                     else
                     {
-                        // Creation with move can't retry, fall back to creation
-                        placementAction_.SetAction(PLBSchedulerActionType::Creation);
+                        // NewReplicaPlacementWithMove can't retry, fall back to creation
+                        placementAction_.SetAction(PLBSchedulerActionType::NewReplicaPlacement);
                     }
                 }
 
@@ -310,7 +311,7 @@ void PLBScheduler::RefreshAction(ISystemState const & systemState, StopwatchTime
             {
                 // Placement stage is not needed, just pass onto next eligible action
                 trace_.SchedulerActionSkip(serviceDomainId_, L"Placement", L"it is not needed");
-                placementAction_.SetAction(PLBSchedulerActionType::Creation);
+                placementAction_.SetAction(PLBSchedulerActionType::NewReplicaPlacement);
             }
             break;
         case SchedulerStage::Stage::ConstraintCheck: // ConstraintCheck stage
@@ -385,8 +386,8 @@ void PLBScheduler::RefreshAction(ISystemState const & systemState, StopwatchTime
             {
                 trace_.SchedulerActionSkip(serviceDomainId_, L"Balancing", L"system is balanced");
                 lastBalancing_ = timeStamp;
-                // FastBalancing did the job, no need to move towards SlowBalancing
-                balancingAction_.SetAction(PLBSchedulerActionType::FastBalancing);
+                // QuickLoadBalancing did the job, no need to move towards LoadBalancing
+                balancingAction_.SetAction(PLBSchedulerActionType::QuickLoadBalancing);
 
                 //Diagnostics
                 {
@@ -416,20 +417,20 @@ void PLBScheduler::RefreshAction(ISystemState const & systemState, StopwatchTime
                     stageDiagnosticsSPtr->decisionScheduled_ = true;
                 }
 
-                // Advance the balancing action, so that we can switch to SlowBalancing if FastBalancing does not find a solution.
+                // Advance the balancing action, so that we can switch to LoadBalancing if QuickLoadBalancing does not find a solution.
                 // This value will be looked at only after MinLoadBalancingInterval passes again
                 balancingAction_.IncreaseIteration();
                 if (!balancingAction_.CanRetry())
                 {
-                    if (balancingAction_.Action == PLBSchedulerActionType::FastBalancing)
+                    if (balancingAction_.Action == PLBSchedulerActionType::QuickLoadBalancing)
                     {
-                        // After we do FastBalancing for PLBActionRetryTimes times, switch to slow after MinBalancingIntervalExpires.
-                        balancingAction_.SetAction(PLBSchedulerActionType::SlowBalancing);
+                        // After we do QuickLoadBalancing for PLBActionRetryTimes times, switch to slow after MinBalancingIntervalExpires.
+                        balancingAction_.SetAction(PLBSchedulerActionType::LoadBalancing);
                     }
                     else
                     {
-                        // After we do SlowBalancing for PLBActionRetryTimes times, switch to fast after MinBalancingIntervalExpires.
-                        balancingAction_.SetAction(PLBSchedulerActionType::FastBalancing);
+                        // After we do LoadBalancing for PLBActionRetryTimes times, switch to fast after MinBalancingIntervalExpires.
+                        balancingAction_.SetAction(PLBSchedulerActionType::QuickLoadBalancing);
                     }
                 }
                 // Select balancing action for this domain. No tracing here, since PLBDomainStart will trace the action.
@@ -512,8 +513,8 @@ void PLBScheduler::Merge(StopwatchTime timeStamp, PLBScheduler && other)
     // if two schedulers are getting merged, we assume the system has changed so we update lastStateChange_ to the current timestamp
     lastStateChange_ = timeStamp;
     currentAction_.Reset();
-    placementAction_.SetAction(PLBSchedulerActionType::Creation);
-    balancingAction_.SetAction(PLBSchedulerActionType::FastBalancing);
+    placementAction_.SetAction(PLBSchedulerActionType::NewReplicaPlacement);
+    balancingAction_.SetAction(PLBSchedulerActionType::QuickLoadBalancing);
     hasLastBalancingAvgStdDev_ = false;
     lastBalancingAvgStdDev_ = 0.0;
     movementCounterPerFU_.insert(other.movementCounterPerFU_.begin(), other.movementCounterPerFU_.end());
@@ -622,7 +623,7 @@ bool PLBScheduler::IsBalancingThrottled(StopwatchTime timeStamp, ISystemState co
 
 bool PLBScheduler::IsCreationWithMoveThrottled(ISystemState const & systemState)
 {
-    if (ThrottleGlobalMovements(systemState, L"CreationWithMove") || ThrottleGlobalPlacementMovements(systemState))
+    if (ThrottleGlobalMovements(systemState, L"NewReplicaPlacementWithMove") || ThrottleGlobalPlacementMovements(systemState))
     {
         return true;
     }
@@ -636,7 +637,7 @@ bool PLBScheduler::IsCreationWithMoveThrottled(ISystemState const & systemState)
 
 void PLBScheduler::SystemStateChanged(StopwatchTime timeStamp)
 {
-    placementAction_.SetAction(PLBSchedulerActionType::Creation);
+    placementAction_.SetAction(PLBSchedulerActionType::NewReplicaPlacement);
     lastStateChange_ = timeStamp;
 }
 

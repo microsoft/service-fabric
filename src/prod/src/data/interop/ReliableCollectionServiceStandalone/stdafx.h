@@ -8,6 +8,7 @@
 // External dependencies
 #include "../../txnreplicator/TransactionalReplicator.Public.h"
 #include "../../tstore/Store.Public.h"
+#include "../../logicallog/LogicalLog.Public.h"
 #ifndef WIN32
 #define UNDER_PAL
 #endif

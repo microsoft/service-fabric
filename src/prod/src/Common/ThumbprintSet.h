@@ -12,6 +12,8 @@ namespace Common
     public:
         Common::ErrorCode Set(std::wstring const & thumbprints);
         Common::ErrorCode Add(std::wstring const & thumbprintString);
+        Common::ErrorCode Add(LPCWSTR thumbprintString);
+
         void Add(Thumbprint const & thumbprint);
         void Add(ThumbprintSet const & other);
 

@@ -548,9 +548,9 @@ ErrorCode Gateway::CreateSecuritySettings(SecuritySettings &serverSecuritySettin
         securityConfig.ClientIdentities,
         serverSecuritySettings);
 
-    serverSecuritySettings.SetSessionDurationCallback([] { return FabricGatewayConfig::GetConfig().SessionExpiration; });
+    serverSecuritySettings.SetSessionDurationCallback([] { return ServiceModel::ServiceModelConfig::GetConfig().SessionExpiration; });
 
-    //todo, return a FabricGatewayConfig setting from callback, when auto refresh is implemented for high priority connection
+    //todo, return a gateway setting from callback, when auto refresh is implemented for high priority connection
     serverSecuritySettings.SetReadyNewSessionBeforeExpirationCallback([] { return false; });
 
     if (!error.IsSuccess())

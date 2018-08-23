@@ -33,31 +33,6 @@ ApplicationHealthQueryDescription::ApplicationHealthQueryDescription(
 {
 }
 
-ApplicationHealthQueryDescription::ApplicationHealthQueryDescription(ApplicationHealthQueryDescription && other)
-    : applicationName_(move(other.applicationName_))
-    , healthPolicy_(move(other.healthPolicy_))
-    , eventsFilter_(move(other.eventsFilter_))
-    , servicesFilter_(move(other.servicesFilter_))
-    , deployedApplicationsFilter_(move(other.deployedApplicationsFilter_))
-    , healthStatsFilter_(move(other.healthStatsFilter_))
-{
-}
-
-ApplicationHealthQueryDescription & ApplicationHealthQueryDescription::operator =(ApplicationHealthQueryDescription && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        healthPolicy_ = move(other.healthPolicy_);
-        eventsFilter_ = move(other.eventsFilter_);
-        servicesFilter_ = move(other.servicesFilter_);
-        deployedApplicationsFilter_ = move(other.deployedApplicationsFilter_);
-        healthStatsFilter_ = move(other.healthStatsFilter_);
-    }
-
-    return *this;
-}
-
 ApplicationHealthQueryDescription::~ApplicationHealthQueryDescription()
 {
 }

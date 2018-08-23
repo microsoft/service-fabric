@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Data>
+    <Table Id="Test">
+        <ParameterTypes>
+            <ParameterType Name="Parameters" Array="true">String</ParameterType>
+        </ParameterTypes>
+        <Row Name="Test">
+            <Parameter Name="Parameters">
+                <Value>XmlBasicTest:C:{c:\Windows\System32\cmd.exe /c .\DoXmlDiff.cmd c:}</Value>
+                <Value>DomBasicTest:</Value>
+            </Parameter>
+        </Row>
+    </Table>
+</Data>

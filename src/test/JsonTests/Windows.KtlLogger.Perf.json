@@ -5,7 +5,7 @@
     {
         "Name": "Logical Log Perf (IAAS)",
         "Type": "Generic",
-        "Owners": "alanwar,richhas",
+        "Owners": "alanwar",
         "Tags": "",
         "TestExecutionParameters": {
           "TaskName": "FabricUnitTests\\loglogperf.exe",
@@ -16,7 +16,7 @@
     {
         "Name": "Ktl Logger Perf On SSD (LAB)",
         "Type": "Generic",
-        "Owners": "alanwar,richhas",
+        "Owners": "alanwar",
         "Environment": "Iaas",
         "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
         "Tags": "",
@@ -29,7 +29,7 @@
     {
         "Name": "Ktl Logger Perf On Spinning (LAB)",
         "Type": "Generic",
-        "Owners": "alanwar,richhas",
+        "Owners": "alanwar",
         "Environment": "Iaas",
         "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
         "Tags": "",

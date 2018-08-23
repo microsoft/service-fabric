@@ -11,7 +11,6 @@ int TestFabricCommon ()
 {
     IID iid;
     FabricGetConfigStore(iid, nullptr, nullptr);
-    FabricGetConfigStoreEnvironmentVariable(nullptr, nullptr);
     FabricSetLastErrorMessage(nullptr, nullptr);
     FabricGetLastErrorMessage(nullptr);
     FabricClearLastErrorMessage(0);

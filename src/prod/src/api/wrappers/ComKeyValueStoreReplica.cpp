@@ -1090,21 +1090,3 @@ HRESULT ComKeyValueStoreReplica::EnumerateMetadataByKey2(
 
     return S_OK;
 }
-
-HRESULT ComKeyValueStoreReplica::GetStatus(
-    /* [out, retval] */ IFabricStatefulServiceReplicaStatusResult ** result)
-{
-    if (result == NULL) { return ComUtility::OnPublicApiReturn(E_POINTER); }
-
-    IStatefulServiceReplicaStatusResultPtr resultImpl;
-    auto error = impl_->GetQueryStatus(resultImpl);
-    Trace.WriteNoise(TraceComponent, "Error returned from GetQueryStatus : {0}", error); //Trace added to investigate RDBug 9191222
-
-    if (!error.IsSuccess()) { return ComUtility::OnPublicApiReturn(error.ToHResult()); }
-
-    TESTASSERT_IF(resultImpl.get() == nullptr, "Result cannot be null.");
-    auto resultCPtr = WrapperFactory::create_com_wrapper(resultImpl);
-    *result = resultCPtr.DetachNoRelease();
-
-    return S_OK;
-}

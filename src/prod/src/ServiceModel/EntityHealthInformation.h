@@ -3,20 +3,21 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 namespace ServiceModel
 {
 
 #define DEFINE_INSTANCE_FIELD(FIELD_NAME) \
     FABRIC_INSTANCE_ID get_EntityInstance() const { return FIELD_NAME; } \
-    bool HasUnknownInstance() const { return FIELD_NAME == FABRIC_INVALID_INSTANCE_ID; } \
+    virtual void set_EntityInstance(FABRIC_INSTANCE_ID value) { FIELD_NAME = value; } \
+    bool HasUnknownInstance() const { return FIELD_NAME == FABRIC_INVALID_INSTANCE_ID; }
 
-
+// FIELD_NAME has type FABRIC_NODE_INSTANCE_ID
 #define DEFINE_NODE_INSTANCE_FIELD(FIELD_NAME) \
     FABRIC_INSTANCE_ID get_EntityInstance() const { return static_cast<FABRIC_INSTANCE_ID>(FIELD_NAME); } \
-    bool HasUnknownInstance() const { return FIELD_NAME == FABRIC_INVALID_NODE_INSTANCE_ID; } \
-
+    virtual void set_EntityInstance(FABRIC_INSTANCE_ID value) { FIELD_NAME = (value > 0 ) ? static_cast<FABRIC_NODE_INSTANCE_ID>(value) : 0; } \
+    bool HasUnknownInstance() const { return FIELD_NAME == FABRIC_INVALID_NODE_INSTANCE_ID; }
 
     class EntityHealthInformation;
     typedef std::shared_ptr<EntityHealthInformation> EntityHealthInformationSPtr;
@@ -32,8 +33,8 @@ namespace ServiceModel
 
         explicit EntityHealthInformation(FABRIC_HEALTH_REPORT_KIND kind);
 
-        EntityHealthInformation(EntityHealthInformation && other);
-        EntityHealthInformation & operator = (EntityHealthInformation && other);
+        EntityHealthInformation(EntityHealthInformation && other) = default;
+        EntityHealthInformation & operator = (EntityHealthInformation && other) = default;
 
         virtual ~EntityHealthInformation();
 
@@ -43,10 +44,11 @@ namespace ServiceModel
         __declspec(property(get = get_EntityId)) std::wstring const& EntityId;
         virtual std::wstring const & get_EntityId() const { return entityId_; }
 
-        __declspec(property(get = get_EntityInstance)) FABRIC_INSTANCE_ID EntityInstance;
+        __declspec(property(get = get_EntityInstance, put = set_EntityInstance)) FABRIC_INSTANCE_ID EntityInstance;
         virtual FABRIC_INSTANCE_ID get_EntityInstance() const { return FABRIC_INVALID_INSTANCE_ID; }
+        virtual void set_EntityInstance(FABRIC_INSTANCE_ID value) { UNREFERENCED_PARAMETER(value); Common::Assert::CodingError("EntityHealthInformation base or derived object does not have implementation of set_EntityInstance"); }
 
-        // Should be overriden by all entities with instance
+        // Should be overridden by all entities with instance
         virtual bool HasUnknownInstance() const { return false; }
 
         Common::ErrorCode CheckAgainstInstance(
@@ -58,7 +60,7 @@ namespace ServiceModel
         BEGIN_BASE_DYNAMIC_SIZE_ESTIMATION()
             DYNAMIC_SIZE_ESTIMATION_MEMBER(entityId_)
         END_DYNAMIC_SIZE_ESTIMATION()
-                
+
         static EntityHealthInformationSPtr CreateClusterEntityHealthInformation();
 
         static EntityHealthInformationSPtr CreatePartitionEntityHealthInformation(
@@ -79,7 +81,7 @@ namespace ServiceModel
             FABRIC_NODE_INSTANCE_ID nodeInstanceId);
 
         static EntityHealthInformationSPtr CreateDeployedServicePackageEntityHealthInformation(
-            std::wstring const & applicationName,          
+            std::wstring const & applicationName,
             std::wstring const & serviceManifestName,
             std::wstring const & servicePackageActivationId_,
             Common::LargeInteger const & nodeId,
@@ -87,7 +89,7 @@ namespace ServiceModel
             FABRIC_INSTANCE_ID servicePackageInstanceId);
 
         static EntityHealthInformationSPtr CreateDeployedApplicationEntityHealthInformation(
-            std::wstring const & applicationName,          
+            std::wstring const & applicationName,
             Common::LargeInteger const & nodeId,
             std::wstring const & nodeName,
             FABRIC_INSTANCE_ID applicationInstanceId);
@@ -104,7 +106,7 @@ namespace ServiceModel
         std::wstring ToString() const;
 
         virtual Common::ErrorCode ToPublicApi(
-            __in Common::ScopedHeap & heap, 
+            __in Common::ScopedHeap & heap,
             __in FABRIC_HEALTH_INFORMATION * commonHealthInformation,
             __out FABRIC_HEALTH_REPORT & healthReport) const;
 
@@ -122,7 +124,7 @@ namespace ServiceModel
 
         static EntityHealthInformation * CreateNew(FABRIC_HEALTH_REPORT_KIND kind);
         static EntityHealthInformationSPtr CreateSPtr(FABRIC_HEALTH_REPORT_KIND kind);
-        
+
         class LessThanComparitor
         {
         public:
@@ -141,7 +143,7 @@ namespace ServiceModel
     template<FABRIC_HEALTH_REPORT_KIND Kind>
     class EntityHealthInformationSerializationTypeActivator
     {
-    public:        
+    public:
         static EntityHealthInformation * CreateNew()
         {
             return new EntityHealthInformation(FABRIC_QUERY_RESULT_ITEM_KIND_INVALID);

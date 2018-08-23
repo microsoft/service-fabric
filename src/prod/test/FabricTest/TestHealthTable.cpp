@@ -455,22 +455,41 @@ void TestEntity::UpdateExpiredEvents(std::vector<ServiceModel::HealthEvent> cons
 
 void TestEntity::UpdateInstance(shared_ptr<AttributesStoreData> const & attr, bool allowLowerInstance)
 {
-    auto instance = attr->InstanceId;
+    FABRIC_INSTANCE_ID instance = attr->InstanceId;
     if (instance > instance_)
     {
         TestSession::WriteInfo(TraceSource, id_, "Update instance from {0} to {1}. {2}", instance_, instance, *attr);
         instance_ = instance;
+        return;
     }
-    else if (instance < instance_ && instance > 0)
+    
+    if (instance <= 0)
+    {
+        // Nothing to do, not a valid instance
+        return;
+    }
+
+    // More checks to investigate 8099892
+    ASSERT_IFNOT(
+        instance == attr->InstanceId,
+        "UpdateInstance for {0}: test got instance {1} for HM, then instance {2}. {3}. Use count: {4}",
+        id_,
+        instance,
+        attr->InstanceId,
+        *attr,
+        attr.use_count());
+
+    if (instance < instance_)
     {
         ASSERT_IFNOT(
             allowLowerInstance,
-            "UpdateInstance for {0}: HM instance {1} < test instance {2}. {3}. IsStale: {4}",
+            "UpdateInstance for {0}: HM instance {1} < test instance {2}. Attr instance: {3}. {4}. Use count: {5}",
             id_,
             instance,
             instance_,
+            attr->InstanceId,
             *attr,
-            attr->IsStale);
+            attr.use_count());
 
         TestSession::WriteInfo(TraceSource, id_, "Update instance from {0} to {1}. Allow smaller instance due to rebuild. {2}", instance_, instance, *attr);
         instance_ = instance;

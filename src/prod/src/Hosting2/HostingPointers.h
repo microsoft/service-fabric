@@ -65,8 +65,8 @@ namespace Hosting2
     typedef std::map<std::wstring, CodePackageSPtr, Common::IsLessCaseInsensitiveComparer<std::wstring>> CodePackageMap;
 
     class CodePackageInstance;
-    typedef std::shared_ptr<CodePackageInstance> CodePackageInstanceSPtr;    
-    typedef std::unique_ptr<CodePackageInstance> CodePackageInstanceUPtr;    
+    typedef std::shared_ptr<CodePackageInstance> CodePackageInstanceSPtr;
+    typedef std::unique_ptr<CodePackageInstance> CodePackageInstanceUPtr;
 
     class EnvironmentManager;
     typedef std::unique_ptr<EnvironmentManager> EnvironmentManagerUPtr;
@@ -126,6 +126,9 @@ namespace Hosting2
     class DownloadManager;
     typedef std::unique_ptr<DownloadManager> DownloadManagerUPtr;
 
+    class ImageCacheManager;
+    typedef std::unique_ptr<ImageCacheManager> ImageCacheManagerUPtr;
+
     class Activator;
     typedef std::unique_ptr<Activator> ActivatorUPtr;
 
@@ -165,6 +168,10 @@ namespace Hosting2
 
     class IContainerActivator;
     typedef std::unique_ptr<IContainerActivator> IContainerActivatorUPtr;
+
+    class ApplicationHostCodePackageActivator;
+    typedef std::unique_ptr<ApplicationHostCodePackageActivator> ApplicationHostCodePackageActivatorUPtr;
+    typedef std::shared_ptr<ApplicationHostCodePackageActivator> ApplicationHostCodePackageActivatorSPtr;
 
     class FabricRestartManager;
     typedef std::unique_ptr<FabricRestartManager> FabricRestartManagerUPtr;
@@ -223,9 +230,9 @@ namespace Hosting2
         std::wstring const & principalSid)> PortCertificateBindingCallback;
 
     typedef std::function<void(std::wstring, std::wstring, DWORD)> ContainerTerminationCallback;
-    typedef std::function<void()> ContainerEngineTerminationCallback;
+    typedef std::function<void(DWORD, ULONG, Common::TimeSpan)> ContainerEngineTerminationCallback;
 
-    typedef std::function<void(DWORD, std::wstring , Common::ErrorCode)> FabricHostClientProcessTerminationCallback;
+    typedef std::function<void(DWORD, std::wstring , Common::ErrorCode, uint64)> FabricHostClientProcessTerminationCallback;
 
     class ContainerHealthStatusInfo;
     typedef std::function<void(std::wstring, std::vector<ContainerHealthStatusInfo>)> ContainerHealthCheckStatusCallback;
@@ -262,6 +269,8 @@ namespace Hosting2
 
     class IFabricActivatorClient;
     typedef std::shared_ptr<IFabricActivatorClient> IFabricActivatorClientSPtr;
+
+    class ISecretStoreClientPtr;
 
     class ActivateProcessRequest;
     class ConfigureSecurityPrincipalRequest;
@@ -326,6 +335,9 @@ namespace Hosting2
 
     class LocalResourceManager;
     typedef std::unique_ptr<LocalResourceManager> LocalResourceManagerUPtr;
+
+    class LocalSecretServiceManager;
+    typedef std::unique_ptr<LocalSecretServiceManager> LocalSecretServiceManagerUPtr;
 
     class IIPAM;
     typedef std::shared_ptr<IIPAM> IIPAMSPtr;

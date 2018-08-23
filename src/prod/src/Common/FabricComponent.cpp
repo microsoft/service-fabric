@@ -69,6 +69,11 @@ ErrorCode FabricComponent::Close()
 
 void FabricComponent::Abort()
 {
+    this->TryAbort();
+}
+
+bool FabricComponent::TryAbort()
+{
     bool shouldCallOnAbort;
     state_.TransitionToAborted(shouldCallOnAbort);
 
@@ -77,6 +82,8 @@ void FabricComponent::Abort()
     {
         OnAbort();
     }
+
+    return shouldCallOnAbort;
 }
 
 void FabricComponent::ThrowIfCreatedOrOpening()

@@ -131,8 +131,7 @@ namespace Common
 
             if (!description.empty())
             {
-                DWORD threadId = 0;
-                ::FabricSetLastErrorMessage(description.c_str(), &threadId);
+                FabricGlobals::Get().GetThreadErrorMessages().SetMessage(description);
             }
         } 
         
@@ -141,8 +140,7 @@ namespace Common
 
     HRESULT ComUtility::OnPublicApiReturn(Common::ErrorCode const & error)
     {
-        wstring errorMessage = error.Message;
-        return OnPublicApiReturn(error.ToHResult(), move(errorMessage));
+        return OnPublicApiReturn(error.ToHResult(), wstring(error.Message));
     }
 
     HRESULT ComUtility::OnPublicApiReturn(Common::ErrorCode && error)

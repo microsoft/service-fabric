@@ -17,7 +17,7 @@ using namespace Data::StateManager;
 TestTransactionManager::SPtr StateManagerTestBase::CreateReplica(
     __in PartitionedReplicaId const& traceId,
     __in IRuntimeFolders & runtimeFolders,
-    __in KWfStatefulServicePartition& partition)
+    __in IStatefulPartition& partition)
 {
     auto internalSettings = TRInternalSettings::Create(
         move(this->CreateNativeTRSettings()),
@@ -28,7 +28,7 @@ TestTransactionManager::SPtr StateManagerTestBase::CreateReplica(
 TestTransactionManager::SPtr StateManagerTestBase::CreateReplica(
     __in PartitionedReplicaId const& traceId, 
     __in IRuntimeFolders & runtimeFolders, 
-    __in KWfStatefulServicePartition& partition,
+    __in IStatefulPartition& partition,
     __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
 {
     auto txnReplicator = TestTransactionManager::Create(GetAllocator());
@@ -49,7 +49,7 @@ TestTransactionManager::SPtr StateManagerTestBase::CreateReplica(
 StateManager::SPtr StateManagerTestBase::CreateStateManager(
     __in PartitionedReplicaId const & traceId,
     __in IRuntimeFolders & runtimeFolders, 
-    __in KWfStatefulServicePartition & partition,
+    __in IStatefulPartition & partition,
     __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
 {
     StateManager::SPtr stateManagerSPtr = nullptr;

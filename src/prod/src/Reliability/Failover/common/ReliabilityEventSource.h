@@ -123,7 +123,8 @@ namespace Reliability
             uint16,
             Reliability::FailoverUnitDescription,
             Reliability::ReplicaDescription,
-            Reliability::FaultType::Trace);
+            Reliability::FaultType::Trace,
+            Common::ActivityDescription);
 
         DECLARE_RELIABILITY_STRUCTURED_TRACE(FailoverUnitId,
             uint16,
@@ -374,7 +375,7 @@ namespace Reliability
             RELIABILITY_STRUCTURED_TRACE(ReplicaUpMessageBody,                          15, "ReplicaUpMessageBody",                         Info, "ReplicaList ,IsLast = {1}, IsFromFMM = {2}):\r\n{3}\r\nDroppedReplicas:\r\n{4}", "contextSequenceId", "isLast", "isFromFMM", "replicaList", "droppedReplicas"),
             RELIABILITY_STRUCTURED_TRACE(UpgradeDescription,                            16, "UpgradeDescription",                           Info, "{1}", "contextSequenceId", "upgradeSpecification"),
             RELIABILITY_STRUCTURED_TRACE(ReplicaListMessageBody,                        17, "ReplicaListMessageBody",                       Info, "{1}", "contextSequenceId", "replicas"),
-            RELIABILITY_STRUCTURED_TRACE(ReportFaultMessageBody,                        18, "ReportFaultMessageBody",                       Info, "{1} {2} {3}", "contextSequenceId", "failoverUnitDescription", "replicaDescription", "faultType"),
+            RELIABILITY_STRUCTURED_TRACE(ReportFaultMessageBody,                        18, "ReportFaultMessageBody",                       Info, "{1} {2} {3} {4}", "contextSequenceId", "failoverUnitDescription", "replicaDescription", "faultType", "activityDescription"),
             RELIABILITY_STRUCTURED_TRACE(FailoverUnitId,                                19, "FailoverUnitId",                               Info, "{1}\r\n", "contextSequenceId", "ftId"),
             RELIABILITY_STRUCTURED_TRACE(DeactivateMessageBody,                         20, "DeactivateMessageBody",                        Info, "{1} {2}\r\n{3}{4} DeactivationInfo = {5}", "contextSequenceId", "failoverUnitDescription", "sdUpdateVersion", "replicas", "isForce", "deactivationInfo"),
             RELIABILITY_STRUCTURED_TRACE(SystemServiceLocation,                         22, "SystemServiceLocation",                        Info, "{1}+{2}+{3}+{4}", "contextSequenceId", "node", "partitionId", "replicaId", "replicaInstance"),

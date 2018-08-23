@@ -271,7 +271,7 @@ namespace Naming
 
         if (error.IsSuccess())
         {
-            this->TryComplete(thisSPtr, move(validationError_));
+            this->TryComplete(thisSPtr, move(this->IsPrimaryRecovery ? error : validationError_));
         }
         else
         {

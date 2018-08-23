@@ -1,0 +1,33 @@
+﻿{
+    "Providers": {
+        "UploadBuildProvider": {
+            "ProviderName": "DefaultUploadBuildProvider",
+            "ProviderType": "UploadBuildV2.BasicUploadBuild, UploadBuildV2"
+        },
+
+        "TestTypeProviders": [
+            {
+                "ProviderName": "DefaultTestTypeProvider",
+                "ProviderType": "JsonTestTypeProvider.JSONTestTypeProvider, JsonTestTypeProvider"
+            }
+        ]
+    },
+
+    "TestTypeExecutionMode": {
+        "ParallelTestTypes": "Linux.KConsTest",
+        "SequentialTestTypes": "Linux.KConsTest_Sequential,Linux.KConsLongTest"
+    },
+
+    "AppSettings": {
+        "JSONTestsPath": "test\\JsonTests",
+        "JSONTestTypesPath": "test\\JsonTestTypes",
+        "LogsFolderPath": "test\\log",
+        "MsiInstalled": "false",
+        "NumberOfTestsPerGroup": "25",
+        "NumberOfGroups": "20",
+        "RunTestsExe": "test\\RunTests.exe",
+        "ConfigFilesPath": "test",
+        "TimeToWaitForWERFaultExitInSeconds": "900",
+        "LinuxSuiteWhitelist": "SingleMachine-CIT.json,SingleMachine-Functional.json",
+    }
+}

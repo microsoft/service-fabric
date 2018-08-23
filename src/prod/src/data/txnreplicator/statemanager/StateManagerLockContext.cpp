@@ -41,7 +41,7 @@ ktl::Awaitable<NTSTATUS> StateManagerLockContext::AcquireReadLockAsync(
     InterlockedIncrement(&lockWaiterCount_);
     KFinally([&]() { InterlockedDecrement(&lockWaiterCount_); });
 
-    // No exception handling since no need to convert ObjectClosed ot ObjectDisposed
+    // No exception handling since no need to convert ObjectClosed to ObjectDisposed
     bool lockAcquired = true;
     try
     {
@@ -54,7 +54,6 @@ ktl::Awaitable<NTSTATUS> StateManagerLockContext::AcquireReadLockAsync(
             // This is used to distinguish between lock disappearing underneath the transaction.
             // Example case, Transaction that created the lock being aborted, causes lock to close underneath a parallel read transaction 
             // waiting for the lock.
-            // TODO: This should not be required once we move to lock manager.
             co_return SF_STATUS_OBJECT_DISPOSED;
         }
 
@@ -80,7 +79,7 @@ ktl::Awaitable<NTSTATUS> StateManagerLockContext::AcquireWriteLockAsync(
     InterlockedIncrement(&lockWaiterCount_);
     KFinally([&]() { InterlockedDecrement(&lockWaiterCount_); });
 
-    // No exception handling since no need to convert ObjectClosed ot ObjectDisposed
+    // No exception handling since no need to convert ObjectClosed to ObjectDisposed
     bool lockAcquired = true;
     try
     {
@@ -93,7 +92,6 @@ ktl::Awaitable<NTSTATUS> StateManagerLockContext::AcquireWriteLockAsync(
             // This is used to distinguish between lock disappearing underneath the transaction.
             // Example case, Transaction that created the lock being aborted, causes lock to close underneath a parallel write transaction 
             // waiting for the lock.
-            // TODO: This should not be required once we move to lock manager.
             co_return SF_STATUS_OBJECT_DISPOSED;
         }
 
@@ -122,7 +120,7 @@ NTSTATUS StateManagerLockContext::ReleaseLock(__in LONG64 transactionId) noexcep
         // This class does not know which transaction holds the lock, hence does not do re-entrency.
         // Instead SPMM keeps track of map of txn to held locks and SMLockContext exposes grantor count for SPMM to increment
         // On the release path (!Txn:Unlock), it decrements to clean up SPMM map if necessary.
-        // TODO: Consider moving the logic here so that SMLockContext knows who acquired the lock and can do re-entrancy fully.
+        // #11908695: Consider moving the logic here so that SMLockContext knows who acquired the lock and can do re-entrancy fully.
         // 
         grantorCount_--;
         ASSERT_IFNOT(grantorCount_ >= 0, "Lock grantor count should not be negative during releasing locks in state manager lock context");
@@ -143,8 +141,6 @@ NTSTATUS StateManagerLockContext::ReleaseLock(__in LONG64 transactionId) noexcep
             {
                 KHashSet<KUri::CSPtr>::SPtr keyLockCollection = nullptr;
                 metadataManagerSPtr->TryRemoveInflightTransaction(transactionId, keyLockCollection);
-
-                // TODO: Trace.
             }
         }
     }
@@ -164,8 +160,6 @@ NTSTATUS StateManagerLockContext::ReleaseLock(__in LONG64 transactionId) noexcep
         {
             KHashSet<KUri::CSPtr>::SPtr keyLockCollection = nullptr;
             metadataManagerSPtr->TryRemoveInflightTransaction(transactionId, keyLockCollection);
-
-            // TODO: Trace.
         }
     }
 

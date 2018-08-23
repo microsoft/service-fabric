@@ -1085,6 +1085,14 @@ ErrorCode HostingQueryManager::GetCodePackageListDeployedOnNode(
         versionedServicePackages.push_back(versionedServicePackage);
     }
 
+    wstring codePackageInstanceArgument;
+    FABRIC_INSTANCE_ID codePackageInstance{};
+    bool codePackageInstanceSpecified = false;
+    if (queryArgument.TryGetValue(QueryResourceProperties::CodePackage::InstanceId, codePackageInstanceArgument))
+    {
+        codePackageInstanceSpecified = StringUtility::TryFromWString(codePackageInstanceArgument, codePackageInstance);
+    }
+
     wstring codePackageNameArgument;
     queryArgument.TryGetValue(QueryResourceProperties::CodePackage::CodePackageName, codePackageNameArgument);
     for (auto versionedServicePackageIter = versionedServicePackages.begin(); versionedServicePackageIter != versionedServicePackages.end(); ++versionedServicePackageIter)
@@ -1093,7 +1101,12 @@ ErrorCode HostingQueryManager::GetCodePackageListDeployedOnNode(
         for (auto itCodePackage = codePackages.begin(); itCodePackage != codePackages.end(); ++itCodePackage)
         {
             auto deployedCodePackageQueryResult = (*itCodePackage)->GetDeployedCodePackageQueryResult();
-            codePackageQueryResult.push_back(move(deployedCodePackageQueryResult));
+            if (!codePackageInstanceSpecified ||
+                (deployedCodePackageQueryResult.EntryPoint.InstanceId == (uint64)codePackageInstance))
+            {
+                deployedCodePackageQueryResult.NodeName = hosting_.NodeName;
+                codePackageQueryResult.push_back(move(deployedCodePackageQueryResult));
+            }
         }
     }
 

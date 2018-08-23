@@ -58,7 +58,11 @@ ForceCloseTest(
     //
     KtlLogManager::SPtr logManager;
     KServiceSynchronizer openSync;
-    status = KtlLogManager::Create(KTL_TAG_TEST, *g_Allocator, logManager);
+#ifdef UPASSTHROUGH
+    status = KtlLogManager::CreateInproc(KTL_TAG_TEST, *g_Allocator, logManager);
+#else
+    status = KtlLogManager::CreateDriver(KTL_TAG_TEST, *g_Allocator, logManager);
+#endif
     VERIFY_IS_TRUE(NT_SUCCESS(status));
 
     status = logManager->StartOpenLogManager(NULL, // ParentAsync
@@ -441,7 +445,11 @@ ForceCloseOnDeleteContainerWaitTest(
         //
         KtlLogManager::SPtr logManager;
         KServiceSynchronizer openSync;
-        status = KtlLogManager::Create(KTL_TAG_TEST, *g_Allocator, logManager);
+#ifdef UPASSTHROUGH
+        status = KtlLogManager::CreateInproc(KTL_TAG_TEST, *g_Allocator, logManager);
+#else
+        status = KtlLogManager::CreateDriver(KTL_TAG_TEST, *g_Allocator, logManager);
+#endif
         VERIFY_IS_TRUE(NT_SUCCESS(status));
 
         status = logManager->StartOpenLogManager(NULL, // ParentAsync
@@ -542,7 +550,11 @@ ForceCloseOnDeleteContainerWaitTest(
             KtlLogManager::SPtr logManager1;
             KServiceSynchronizer openSync1;
             KSynchronizer sync;
-            status = KtlLogManager::Create(KTL_TAG_TEST, *g_Allocator, logManager1);
+#ifdef UPASSTHROUGH
+            status = KtlLogManager::CreateInproc(KTL_TAG_TEST, *g_Allocator, logManager1);
+#else
+            status = KtlLogManager::CreateDriver(KTL_TAG_TEST, *g_Allocator, logManager1);
+#endif
             VERIFY_IS_TRUE(NT_SUCCESS(status));
 
             status = logManager1->StartOpenLogManager(NULL, // ParentAsync

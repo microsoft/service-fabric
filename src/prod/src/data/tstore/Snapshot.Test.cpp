@@ -13,6 +13,7 @@
 namespace TStoreTests
 {
     using namespace ktl;
+    using namespace Data::Utilities;
 
     class SnapshotTest
     {
@@ -131,222 +132,273 @@ namespace TStoreTests
         KtlSystem* ktlSystem_;
         IComparer<int>::SPtr keyComparerSPtr_;
         Data::StateManager::IStateSerializer<int>::SPtr valueSerializerSPtr_;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> SnapshotComponent_AddSingleVersion_ShouldSucceed_Test()
+        {
+            auto snapshotContainerSPtr = CreateSnapshotContainer();
+            auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
+
+            int key = 3;
+            int value = 5;
+
+            VersionedItem<int>::SPtr item = CreateVersionedItem(1, value);
+
+            snapshotComponentSPtr->Add(key, *item);
+
+            StoreComponentReadResult<int>::SPtr result = co_await snapshotComponentSPtr->ReadAsync(key, 1, ReadMode::CacheResult);
+            CODING_ERROR_ASSERT(result->Value == value);
+
+            co_await snapshotContainerSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> SnapshotComponent_UpdateWithNewerVersion_ShouldSucceed_Test()
+        {
+            auto snapshotContainerSPtr = CreateSnapshotContainer();
+            auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
+
+            int key = 3;
+
+            int oldValue = 5;
+            int newValue = 6;
+
+            int oldVersion = 1;
+            int newVersion = 2;
+
+            VersionedItem<int>::SPtr oldItem = CreateVersionedItem(oldVersion, oldValue);
+            VersionedItem<int>::SPtr newItem = CreateVersionedItem(newVersion, newValue);
+
+            snapshotComponentSPtr->Add(key, *oldItem);
+            snapshotComponentSPtr->Add(key, *newItem);
+
+            StoreComponentReadResult<int>::SPtr result = co_await snapshotComponentSPtr->ReadAsync(key, newVersion, ReadMode::CacheResult);
+            CODING_ERROR_ASSERT(result->Value == newValue);
+
+            co_await snapshotContainerSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> SnapshotComponent_UpdateWithOlderVersion_ShouldSucceed_Test()
+        {
+            auto snapshotContainerSPtr = CreateSnapshotContainer();
+            auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
+
+            int key = 3;
+
+            int oldValue = 5;
+            int newValue = 6;
+
+            int oldVersion = 1;
+            int newVersion = 2;
+
+            VersionedItem<int>::SPtr oldItem = CreateVersionedItem(oldVersion, oldValue);
+            VersionedItem<int>::SPtr newItem = CreateVersionedItem(newVersion, newValue);
+
+            snapshotComponentSPtr->Add(key, *newItem);
+            snapshotComponentSPtr->Add(key, *oldItem);
+
+            StoreComponentReadResult<int>::SPtr result = co_await snapshotComponentSPtr->ReadAsync(key, newVersion, ReadMode::CacheResult);
+            CODING_ERROR_ASSERT(result->Value == newValue);
+
+            co_await snapshotContainerSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> SnapshotComponent_GetOlderVersion_ShouldSucceed_Test()
+        {
+            auto snapshotContainerSPtr = CreateSnapshotContainer();
+            auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
+
+            int key = 3;
+            int newValue = 6;
+
+            int oldVersion = 1;
+            int newVersion = 2;
+
+            VersionedItem<int>::SPtr newItem = CreateVersionedItem(newVersion, newValue);
+
+            snapshotComponentSPtr->Add(key, *newItem);
+
+            StoreComponentReadResult<int>::SPtr result = co_await snapshotComponentSPtr->ReadAsync(key, oldVersion, ReadMode::CacheResult);
+            CODING_ERROR_ASSERT(result->VersionedItem == nullptr);
+
+            co_await snapshotContainerSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> SnapshotComponent_GetEnumerable_ShouldSucceed_Test()
+        {
+            auto snapshotContainerSPtr = CreateSnapshotContainer();
+            auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
+
+            int key = 3;
+            int value = 6;
+            VersionedItem<int>::SPtr item = CreateVersionedItem(1, value);
+        
+            snapshotComponentSPtr->Add(key, *item);
+
+            auto enumeratorSPtr = snapshotComponentSPtr->GetEnumerable();
+            bool result = enumeratorSPtr->MoveNext();
+            CODING_ERROR_ASSERT(result);
+
+            int currentKey = enumeratorSPtr->Current();
+            CODING_ERROR_ASSERT(currentKey == key);
+
+            result = enumeratorSPtr->MoveNext();
+            CODING_ERROR_ASSERT(!result);
+
+            co_await snapshotContainerSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> SnapshotContainer_AddReadSingleComponent_ShouldSucceed_Test()
+        {
+            auto snapshotContainerSPtr = CreateSnapshotContainer();
+            auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
+
+            int key = 3;
+            int value = 6;
+            VersionedItem<int>::SPtr item = CreateVersionedItem(1, value);
+            snapshotComponentSPtr->Add(key, *item);
+        
+            LONG64 lsn = 1;
+            SnapshotComponent<int, int>::SPtr componentSPtr = snapshotContainerSPtr->GetOrAdd(lsn, *snapshotComponentSPtr);
+            CODING_ERROR_ASSERT(componentSPtr != nullptr);
+
+            auto readResult = co_await componentSPtr->ReadAsync(key, 1, ReadMode::CacheResult);
+            CODING_ERROR_ASSERT(readResult->Value == 6);
+
+            componentSPtr = snapshotContainerSPtr->Read(lsn);
+            CODING_ERROR_ASSERT(componentSPtr != nullptr);
+
+            readResult = co_await componentSPtr->ReadAsync(key, 1, ReadMode::CacheResult);
+            CODING_ERROR_ASSERT(readResult->Value == 6);
+
+            co_await snapshotContainerSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> SnapshotContainer_AddFileMetadata_MultipleTimes_ShouldSucceed_Test()
+        {
+            auto snapshotContainerSPtr = CreateSnapshotContainer();
+
+            LONG64 lsn = 1;
+        
+            ULONG32 fileId = 1;
+            FileMetadata::SPtr metadataSPtr = CreateFileMetadata(fileId);
+        
+            auto previousRefCount = metadataSPtr->ReferenceCount;
+            auto result = snapshotContainerSPtr->TryAddFileMetadata(lsn, *metadataSPtr);
+            CODING_ERROR_ASSERT(result == true);
+            CODING_ERROR_ASSERT(metadataSPtr->ReferenceCount == previousRefCount + 1);
+        
+            // Adding it again should not change anything
+            previousRefCount = metadataSPtr->ReferenceCount;
+            result = snapshotContainerSPtr->TryAddFileMetadata(lsn, *metadataSPtr);
+            CODING_ERROR_ASSERT(result == false);
+            CODING_ERROR_ASSERT(metadataSPtr->ReferenceCount == previousRefCount);
+
+            co_await snapshotContainerSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> SnapshotContainer_Remove_ShouldSucceed_Test()
+        {
+            LONG64 lsn1 = 1;
+            LONG64 lsn2 = 2;
+
+            auto snapshotContainerSPtr = CreateSnapshotContainer();
+
+            int snapshotKey = 3;
+            int snapshotValue = 6;
+
+            auto snapshotComponent1SPtr = CreateSnapshotComponent(snapshotContainerSPtr);
+            auto snapshotComponent2SPtr = CreateSnapshotComponent(snapshotContainerSPtr);
+
+            VersionedItem<int>::SPtr item1 = CreateVersionedItem(1, snapshotValue);
+            snapshotComponent1SPtr->Add(snapshotKey, *item1);
+
+            VersionedItem<int>::SPtr item2 = CreateVersionedItem(2, snapshotValue);
+            snapshotComponent2SPtr->Add(snapshotKey, *item2);
+
+            snapshotContainerSPtr->GetOrAdd(lsn1, *snapshotComponent1SPtr);
+            snapshotContainerSPtr->GetOrAdd(lsn2, *snapshotComponent2SPtr);
+
+            // File metadata for LSN 1
+            FileMetadata::SPtr fileMetadata1SPtr = CreateFileMetadata(1);
+            snapshotContainerSPtr->TryAddFileMetadata(lsn1, *fileMetadata1SPtr);
+
+            // File metadata for LSN 2
+            FileMetadata::SPtr fileMetadata2SPtr = CreateFileMetadata(2);
+            FileMetadata::SPtr fileMetadata3SPtr = CreateFileMetadata(3);
+            snapshotContainerSPtr->TryAddFileMetadata(lsn2, *fileMetadata2SPtr);
+            snapshotContainerSPtr->TryAddFileMetadata(lsn2, *fileMetadata3SPtr);
+
+            CODING_ERROR_ASSERT(snapshotContainerSPtr->GetCount() == 2);
+
+            auto previousRefCount1 = fileMetadata1SPtr->ReferenceCount;
+            auto previousRefCount2 = fileMetadata2SPtr->ReferenceCount;
+            auto previousRefCount3 = fileMetadata3SPtr->ReferenceCount;
+
+            co_await snapshotContainerSPtr->RemoveAsync(lsn2);
+
+            CODING_ERROR_ASSERT(snapshotContainerSPtr->GetCount() == 1);
+
+            CODING_ERROR_ASSERT(fileMetadata1SPtr->ReferenceCount == previousRefCount1);
+            CODING_ERROR_ASSERT(fileMetadata2SPtr->ReferenceCount == previousRefCount2 - 1);
+            CODING_ERROR_ASSERT(fileMetadata3SPtr->ReferenceCount == previousRefCount3 - 1);
+
+            CODING_ERROR_ASSERT(snapshotContainerSPtr->Read(lsn1) != nullptr);
+            CODING_ERROR_ASSERT(snapshotContainerSPtr->Read(lsn2) == nullptr);
+        
+            co_await snapshotContainerSPtr->CloseAsync();
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(SnapshotTestSuite, SnapshotTest)
 
     BOOST_AUTO_TEST_CASE(SnapshotComponent_AddSingleVersion_ShouldSucceed)
     {
-        auto snapshotContainerSPtr = CreateSnapshotContainer();
-        auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
-
-        int key = 3;
-        int value = 5;
-
-        VersionedItem<int>::SPtr item = CreateVersionedItem(1, value);
-
-        snapshotComponentSPtr->Add(key, *item);
-
-        StoreComponentReadResult<int>::SPtr result = SyncAwait(snapshotComponentSPtr->ReadAsync(key, 1));
-        CODING_ERROR_ASSERT(result->Value == value);
-
-        SyncAwait(snapshotContainerSPtr->CloseAsync());
+        SyncAwait(SnapshotComponent_AddSingleVersion_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(SnapshotComponent_UpdateWithNewerVersion_ShouldSucceed)
     {
-        auto snapshotContainerSPtr = CreateSnapshotContainer();
-        auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
-
-        int key = 3;
-
-        int oldValue = 5;
-        int newValue = 6;
-
-        int oldVersion = 1;
-        int newVersion = 2;
-
-        VersionedItem<int>::SPtr oldItem = CreateVersionedItem(oldVersion, oldValue);
-        VersionedItem<int>::SPtr newItem = CreateVersionedItem(newVersion, newValue);
-
-        snapshotComponentSPtr->Add(key, *oldItem);
-        snapshotComponentSPtr->Add(key, *newItem);
-
-        StoreComponentReadResult<int>::SPtr result = SyncAwait(snapshotComponentSPtr->ReadAsync(key, newVersion));
-        CODING_ERROR_ASSERT(result->Value == newValue);
-
-        SyncAwait(snapshotContainerSPtr->CloseAsync());
+        SyncAwait(SnapshotComponent_UpdateWithNewerVersion_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(SnapshotComponent_UpdateWithOlderVersion_ShouldSucceed)
     {
-        auto snapshotContainerSPtr = CreateSnapshotContainer();
-        auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
-
-        int key = 3;
-
-        int oldValue = 5;
-        int newValue = 6;
-
-        int oldVersion = 1;
-        int newVersion = 2;
-
-        VersionedItem<int>::SPtr oldItem = CreateVersionedItem(oldVersion, oldValue);
-        VersionedItem<int>::SPtr newItem = CreateVersionedItem(newVersion, newValue);
-
-        snapshotComponentSPtr->Add(key, *newItem);
-        snapshotComponentSPtr->Add(key, *oldItem);
-
-        StoreComponentReadResult<int>::SPtr result = SyncAwait(snapshotComponentSPtr->ReadAsync(key, newVersion));
-        CODING_ERROR_ASSERT(result->Value == newValue);
-
-        SyncAwait(snapshotContainerSPtr->CloseAsync());
+        SyncAwait(SnapshotComponent_UpdateWithOlderVersion_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(SnapshotComponent_GetOlderVersion_ShouldSucceed)
     {
-        auto snapshotContainerSPtr = CreateSnapshotContainer();
-        auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
-
-        int key = 3;
-        int newValue = 6;
-
-        int oldVersion = 1;
-        int newVersion = 2;
-
-        VersionedItem<int>::SPtr newItem = CreateVersionedItem(newVersion, newValue);
-
-        snapshotComponentSPtr->Add(key, *newItem);
-
-        StoreComponentReadResult<int>::SPtr result = SyncAwait(snapshotComponentSPtr->ReadAsync(key, oldVersion));
-        CODING_ERROR_ASSERT(result->VersionedItem == nullptr);
-
-        SyncAwait(snapshotContainerSPtr->CloseAsync());
+        SyncAwait(SnapshotComponent_GetOlderVersion_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(SnapshotComponent_GetEnumerable_ShouldSucceed)
     {
-        auto snapshotContainerSPtr = CreateSnapshotContainer();
-        auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
-
-        int key = 3;
-        int value = 6;
-        VersionedItem<int>::SPtr item = CreateVersionedItem(1, value);
-        
-        snapshotComponentSPtr->Add(key, *item);
-
-        auto enumeratorSPtr = snapshotComponentSPtr->GetEnumerable();
-        bool result = enumeratorSPtr->MoveNext();
-        CODING_ERROR_ASSERT(result);
-
-        int currentKey = enumeratorSPtr->Current();
-        CODING_ERROR_ASSERT(currentKey == key);
-
-        result = enumeratorSPtr->MoveNext();
-        CODING_ERROR_ASSERT(!result);
-
-        SyncAwait(snapshotContainerSPtr->CloseAsync());
+        SyncAwait(SnapshotComponent_GetEnumerable_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(SnapshotContainer_AddReadSingleComponent_ShouldSucceed)
     {
-        auto snapshotContainerSPtr = CreateSnapshotContainer();
-        auto snapshotComponentSPtr = CreateSnapshotComponent(snapshotContainerSPtr);
-
-        int key = 3;
-        int value = 6;
-        VersionedItem<int>::SPtr item = CreateVersionedItem(1, value);
-        snapshotComponentSPtr->Add(key, *item);
-        
-        LONG64 lsn = 1;
-        SnapshotComponent<int, int>::SPtr componentSPtr = snapshotContainerSPtr->GetOrAdd(lsn, *snapshotComponentSPtr);
-        CODING_ERROR_ASSERT(componentSPtr != nullptr);
-
-        auto readResult = SyncAwait(componentSPtr->ReadAsync(key, 1));
-        CODING_ERROR_ASSERT(readResult->Value == 6);
-
-        componentSPtr = snapshotContainerSPtr->Read(lsn);
-        CODING_ERROR_ASSERT(componentSPtr != nullptr);
-
-        readResult = SyncAwait(componentSPtr->ReadAsync(key, 1));
-        CODING_ERROR_ASSERT(readResult->Value == 6);
-
-        SyncAwait(snapshotContainerSPtr->CloseAsync());
+        SyncAwait(SnapshotContainer_AddReadSingleComponent_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(SnapshotContainer_AddFileMetadata_MultipleTimes_ShouldSucceed)
     {
-        auto snapshotContainerSPtr = CreateSnapshotContainer();
-
-        LONG64 lsn = 1;
-        
-        ULONG32 fileId = 1;
-        FileMetadata::SPtr metadataSPtr = CreateFileMetadata(fileId);
-        
-        auto previousRefCount = metadataSPtr->ReferenceCount;
-        auto result = snapshotContainerSPtr->TryAddFileMetadata(lsn, *metadataSPtr);
-        CODING_ERROR_ASSERT(result == true);
-        CODING_ERROR_ASSERT(metadataSPtr->ReferenceCount == previousRefCount + 1);
-        
-        // Adding it again should not change anything
-        previousRefCount = metadataSPtr->ReferenceCount;
-        result = snapshotContainerSPtr->TryAddFileMetadata(lsn, *metadataSPtr);
-        CODING_ERROR_ASSERT(result == false);
-        CODING_ERROR_ASSERT(metadataSPtr->ReferenceCount == previousRefCount);
-
-        SyncAwait(snapshotContainerSPtr->CloseAsync());
+        SyncAwait(SnapshotContainer_AddFileMetadata_MultipleTimes_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(SnapshotContainer_Remove_ShouldSucceed)
     {
-        LONG64 lsn1 = 1;
-        LONG64 lsn2 = 2;
-
-        auto snapshotContainerSPtr = CreateSnapshotContainer();
-
-        int snapshotKey = 3;
-        int snapshotValue = 6;
-
-        auto snapshotComponent1SPtr = CreateSnapshotComponent(snapshotContainerSPtr);
-        auto snapshotComponent2SPtr = CreateSnapshotComponent(snapshotContainerSPtr);
-
-        VersionedItem<int>::SPtr item1 = CreateVersionedItem(1, snapshotValue);
-        snapshotComponent1SPtr->Add(snapshotKey, *item1);
-
-        VersionedItem<int>::SPtr item2 = CreateVersionedItem(2, snapshotValue);
-        snapshotComponent2SPtr->Add(snapshotKey, *item2);
-
-        snapshotContainerSPtr->GetOrAdd(lsn1, *snapshotComponent1SPtr);
-        snapshotContainerSPtr->GetOrAdd(lsn2, *snapshotComponent2SPtr);
-
-        // File metadata for LSN 1
-        FileMetadata::SPtr fileMetadata1SPtr = CreateFileMetadata(1);
-        snapshotContainerSPtr->TryAddFileMetadata(lsn1, *fileMetadata1SPtr);
-
-        // File metadata for LSN 2
-        FileMetadata::SPtr fileMetadata2SPtr = CreateFileMetadata(2);
-        FileMetadata::SPtr fileMetadata3SPtr = CreateFileMetadata(3);
-        snapshotContainerSPtr->TryAddFileMetadata(lsn2, *fileMetadata2SPtr);
-        snapshotContainerSPtr->TryAddFileMetadata(lsn2, *fileMetadata3SPtr);
-
-        CODING_ERROR_ASSERT(snapshotContainerSPtr->GetCount() == 2);
-
-        auto previousRefCount1 = fileMetadata1SPtr->ReferenceCount;
-        auto previousRefCount2 = fileMetadata2SPtr->ReferenceCount;
-        auto previousRefCount3 = fileMetadata3SPtr->ReferenceCount;
-
-        SyncAwait(snapshotContainerSPtr->RemoveAsync(lsn2));
-
-        CODING_ERROR_ASSERT(snapshotContainerSPtr->GetCount() == 1);
-
-        CODING_ERROR_ASSERT(fileMetadata1SPtr->ReferenceCount == previousRefCount1);
-        CODING_ERROR_ASSERT(fileMetadata2SPtr->ReferenceCount == previousRefCount2 - 1);
-        CODING_ERROR_ASSERT(fileMetadata3SPtr->ReferenceCount == previousRefCount3 - 1);
-
-        CODING_ERROR_ASSERT(snapshotContainerSPtr->Read(lsn1) != nullptr);
-        CODING_ERROR_ASSERT(snapshotContainerSPtr->Read(lsn2) == nullptr);
-        
-        SyncAwait(snapshotContainerSPtr->CloseAsync());
+        SyncAwait(SnapshotContainer_Remove_ShouldSucceed_Test());
     }
 
     // TODO: Remove this test

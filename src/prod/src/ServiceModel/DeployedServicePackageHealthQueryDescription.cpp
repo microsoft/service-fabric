@@ -36,31 +36,6 @@ DeployedServicePackageHealthQueryDescription::DeployedServicePackageHealthQueryD
 {
 }
 
-DeployedServicePackageHealthQueryDescription::DeployedServicePackageHealthQueryDescription(DeployedServicePackageHealthQueryDescription && other)
-    : applicationName_(move(other.applicationName_))
-    , nodeName_(move(other.nodeName_))
-    , serviceManifestName_(move(other.serviceManifestName_))
-    , servicePackageActivationId_(move(other.servicePackageActivationId_))
-    , healthPolicy_(move(other.healthPolicy_))
-    , eventsFilter_(move(other.eventsFilter_))
-{
-}
-
-DeployedServicePackageHealthQueryDescription & DeployedServicePackageHealthQueryDescription::operator =(DeployedServicePackageHealthQueryDescription && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        nodeName_ = move(other.nodeName_);
-        serviceManifestName_ = move(other.serviceManifestName_);
-        servicePackageActivationId_ = move(other.servicePackageActivationId_);
-        healthPolicy_ = move(other.healthPolicy_);
-        eventsFilter_ = move(other.eventsFilter_);
-    }
-
-    return *this;
-}
-
 DeployedServicePackageHealthQueryDescription::~DeployedServicePackageHealthQueryDescription()
 {
 }

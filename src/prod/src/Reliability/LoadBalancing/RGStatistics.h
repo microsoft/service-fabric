@@ -66,10 +66,12 @@ namespace Reliability
             // We want to avoid that and to track how much resources are in the cluster, even if there are such nodes.
             void AddNode(NodeDescription const&);
             void RemoveNode(NodeDescription const&);
+            void UpdateNode(NodeDescription const&, NodeDescription const&);
 
             // Tracking services for statistics (add, delete, update)
             void AddService(ServiceDescription const&);
             void DeleteService(ServiceDescription const&);
+            void UpdateService(ServiceDescription const & service1, ServiceDescription const & service2);
 
             // Updates loads and configuration parameters
             void Update(Snapshot const&);

@@ -32,6 +32,7 @@ ktl::Task StoreConditionalGetAsyncInternal(
     Transaction* txn,
     LPCWSTR key,
     int64 timeout,
+    Store_LockMode lockMode,
     size_t* objectHandle,
     Buffer* value,
     LONG64* versionSequenceNumber,
@@ -62,6 +63,11 @@ ktl::Task StoreConditionalGetAsyncInternal(
         status = ktl::CancellationTokenSource::Create(txn->GetThisAllocator(), RELIABLECOLLECTIONRUNTIME_TAG, cancellationTokenSource);
         CO_RETURN_VOID_ON_FAILURE(status);
         cancellationToken = cancellationTokenSource->Token;
+    }
+
+    if (lockMode == Store_LockMode_Update)
+    {
+        storeTxn->set_LockingHints(LockingHints::UpdateLock);
     }
 
     storeTxn->ReadIsolationLevel = IsolationHelper::GetIsolationLevel(*txn, IsolationHelper::OperationType::SingleEntity);
@@ -319,6 +325,7 @@ ktl::Task StoreContainsKeyAsyncInternal(
     Transaction* txn,
     LPCWSTR key,
     int64 timeout,
+    Store_LockMode lockMode,
     ktl::CancellationTokenSource** cts,
     BOOL* found,
     fnNotifyContainsKeyAsyncCompletion callback,
@@ -339,6 +346,11 @@ ktl::Task StoreContainsKeyAsyncInternal(
 
     EXCEPTION_TO_STATUS(store->CreateOrFindTransaction(*txn, storeTxn), status);
     CO_RETURN_VOID_ON_FAILURE(status);
+
+    if (lockMode == Store_LockMode_Update)
+    {
+        storeTxn->set_LockingHints(LockingHints::UpdateLock);
+    }
 
     if (cts != nullptr)
     {
@@ -382,7 +394,6 @@ extern "C" HRESULT Store_ConditionalGetAsync(
     __out BOOL* synchronousComplete)
 {
     NTSTATUS status;
-    UNREFERENCED_PARAMETER(lockMode);
 
     IStateProvider2* stateProvider = reinterpret_cast<IStateProvider2*>(stateProviderHandle);
     IStore<KString::SPtr, KBuffer::SPtr>* store = dynamic_cast<IStore<KString::SPtr, KBuffer::SPtr>*>(stateProvider);
@@ -394,6 +405,7 @@ extern "C" HRESULT Store_ConditionalGetAsync(
         (Transaction*)txn, 
         key,
         timeout,
+        lockMode,
         objectHandle,
         value,
         versionSequenceNumber, 
@@ -508,14 +520,8 @@ extern "C" HRESULT Store_GetCount(
     if (store == nullptr)
         return E_INVALIDARG;
 
-    try
-    {
-        *count = store->Count;
-    }
-    catch (ktl::Exception const & e)
-    {
-        status = e.GetStatus();
-    }
+    EXCEPTION_TO_STATUS(*count = store->Count, status);
+
     return StatusConverter::ToHResult(status);
 }
 
@@ -757,7 +763,6 @@ extern "C" HRESULT Store_ContainsKeyAsync(
     __out BOOL* synchronousComplete)
 {
     NTSTATUS status;
-    UNREFERENCED_PARAMETER(lockMode);
 
     IStateProvider2* stateProvider = reinterpret_cast<IStateProvider2*>(stateProviderHandle);
     IStore<KString::SPtr, KBuffer::SPtr>* store = dynamic_cast<IStore<KString::SPtr, KBuffer::SPtr>*>(stateProvider);
@@ -767,7 +772,7 @@ extern "C" HRESULT Store_ContainsKeyAsync(
     StoreContainsKeyAsyncInternal(
         store,
         (Transaction*)txn,
-        key, timeout,
+        key, timeout, lockMode,
         (ktl::CancellationTokenSource**)cts,
         found, callback,
         ctx, status, *synchronousComplete);

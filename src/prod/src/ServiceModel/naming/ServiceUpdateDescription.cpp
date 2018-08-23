@@ -9,8 +9,9 @@ using namespace std;
 using namespace Common;
 using namespace ServiceModel;
 using namespace Reliability;
-
 using namespace Naming;
+
+StringLiteral const TraceComponent("KeyValueStoreReplica");    
 
 ServiceUpdateDescription::ServiceUpdateDescription()
     : updateFlags_(Flags::None)
@@ -26,24 +27,27 @@ ServiceUpdateDescription::ServiceUpdateDescription()
     , placementPolicies_()
     , defaultMoveCost_(FABRIC_MOVE_COST_LOW)
     , repartitionDescription_()
+    , scalingPolicies_()
+    , initializationData_()
 {
 }
 
-ServiceUpdateDescription::ServiceUpdateDescription(ServiceUpdateDescription && other)
-    : updateFlags_(move(other.updateFlags_))
-    , serviceKind_(move(other.serviceKind_))
-    , targetReplicaSetSize_(move(other.targetReplicaSetSize_))
-    , minReplicaSetSize_(move(other.minReplicaSetSize_))
-    , replicaRestartWaitDuration_(move(other.replicaRestartWaitDuration_))
-    , quorumLossWaitDuration_(move(other.quorumLossWaitDuration_))
-    , standByReplicaKeepDuration_(move(other.standByReplicaKeepDuration_))
-    , serviceCorrelations_(move(other.serviceCorrelations_))
-    , placementConstraints_(move(other.placementConstraints_))
-    , metrics_(move(other.metrics_))
-    , placementPolicies_(move(other.placementPolicies_))
-    , defaultMoveCost_(move(other.defaultMoveCost_))
-    , repartitionDescription_(move(other.repartitionDescription_))
+ServiceUpdateDescription::ServiceUpdateDescription(
+    bool isStateful,
+    std::vector<std::wstring> && namesToAdd,
+    std::vector<std::wstring> && namesToRemove)
+    : ServiceUpdateDescription()
 {
+    // Initialize all to default, and only set repartition information
+    if (isStateful)
+    {
+        serviceKind_ = FABRIC_SERVICE_KIND::FABRIC_SERVICE_KIND_STATEFUL;
+    }
+    else
+    {
+        serviceKind_ = FABRIC_SERVICE_KIND::FABRIC_SERVICE_KIND_STATELESS;
+    }
+    repartitionDescription_ = make_shared<Naming::NamedRepartitionDescription>(move(namesToAdd), move(namesToRemove));
 }
 
 ErrorCode ServiceUpdateDescription::FromPublicApi(FABRIC_SERVICE_UPDATE_DESCRIPTION const & updateDescription)
@@ -63,9 +67,13 @@ ErrorCode ServiceUpdateDescription::FromPublicApi(FABRIC_SERVICE_UPDATE_DESCRIPT
             FABRIC_STATELESS_SERVICE_POLICY_LIST |
             FABRIC_STATELESS_SERVICE_CORRELATIONS |
             FABRIC_STATELESS_SERVICE_METRICS |
-            FABRIC_STATELESS_SERVICE_MOVE_COST;
+            FABRIC_STATELESS_SERVICE_MOVE_COST |
+            FABRIC_STATELESS_SERVICE_SCALING_POLICY;
 
-        if ((flags & ~validFlags) != 0) { return ErrorCodeValue::InvalidArgument; }
+        if ((flags & ~validFlags) != 0) 
+        { 
+            return TraceAndGetInvalidArgumentError(wformatString(GET_NS_RC( Invalid_Flags ), flags));
+        }
         
         serviceKind_ = FABRIC_SERVICE_KIND::FABRIC_SERVICE_KIND_STATELESS;
 
@@ -129,7 +137,6 @@ ErrorCode ServiceUpdateDescription::FromPublicApi(FABRIC_SERVICE_UPDATE_DESCRIPT
                 ServicePlacementPolicyHelper::PolicyDescriptionToDomainName(policyDesc, domainName);
                 placementPolicies_.push_back(ServiceModel::ServicePlacementPolicyDescription(move(domainName), policyDesc.Type));
             }
-
         }
 
         if (statelessEx1->Reserved == nullptr) { break; }
@@ -148,6 +155,31 @@ ErrorCode ServiceUpdateDescription::FromPublicApi(FABRIC_SERVICE_UPDATE_DESCRIPT
 
         auto error = this->FromRepartitionDescription(statelessEx3->RepartitionKind, statelessEx3->RepartitionDescription);
         if (!error.IsSuccess()) { return error; }
+
+        if ((flags & FABRIC_STATELESS_SERVICE_SCALING_POLICY) != 0)
+        {
+            updateFlags_ |= Flags::ScalingPolicy;
+
+            if (statelessEx3->ScalingPolicyCount > 1)
+            {
+                // Currently, only one scaling policy is allowed per service.
+                // Vector is there for future uses (when services could have multiple scaling policies).
+                return ErrorCode(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), statelessEx3->ScalingPolicyCount));
+            }
+            if (statelessEx3->ScalingPolicyCount > 0)
+            {
+                for (ULONG i = 0; i < statelessEx3->ScalingPolicyCount; i++)
+                {
+                    Reliability::ServiceScalingPolicyDescription scalingDescription;
+                    auto scalingError = scalingDescription.FromPublicApi(statelessEx3->ServiceScalingPolicies[i]);
+                    if (!scalingError.IsSuccess())
+                    {
+                        return scalingError;
+                    }
+                    scalingPolicies_.push_back(move(scalingDescription));
+                }
+            }
+        }
 
         break;
 
@@ -170,9 +202,13 @@ ErrorCode ServiceUpdateDescription::FromPublicApi(FABRIC_SERVICE_UPDATE_DESCRIPT
                           FABRIC_STATEFUL_SERVICE_POLICY_LIST |
                           FABRIC_STATEFUL_SERVICE_CORRELATIONS |
                           FABRIC_STATEFUL_SERVICE_METRICS |
-                          FABRIC_STATEFUL_SERVICE_MOVE_COST;
+                          FABRIC_STATEFUL_SERVICE_MOVE_COST |
+                          FABRIC_STATEFUL_SERVICE_SCALING_POLICY;
 
-        if ((flags & ~validFlags) != 0) { return ErrorCodeValue::InvalidArgument; }
+        if ((flags & ~validFlags) != 0) 
+        { 
+            return TraceAndGetInvalidArgumentError(wformatString(GET_NS_RC( Invalid_Flags ), flags));
+        }
 
         serviceKind_ = FABRIC_SERVICE_KIND::FABRIC_SERVICE_KIND_STATEFUL;
 
@@ -288,12 +324,37 @@ ErrorCode ServiceUpdateDescription::FromPublicApi(FABRIC_SERVICE_UPDATE_DESCRIPT
         auto error = this->FromRepartitionDescription(statefulEx5->RepartitionKind, statefulEx5->RepartitionDescription);
         if (!error.IsSuccess()) { return error; }
 
+        if ((flags & FABRIC_STATEFUL_SERVICE_SCALING_POLICY) != 0)
+        {
+            updateFlags_ |= Flags::ScalingPolicy;
+
+            if (statefulEx5->ScalingPolicyCount > 1)
+            {
+                // Currently, only one scaling policy is allowed per service.
+                // Vector is there for future uses (when services could have multiple scaling policies).
+                return ErrorCode(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), statefulEx5->ScalingPolicyCount));
+            }
+            if (statefulEx5->ScalingPolicyCount > 0)
+            {
+                for (ULONG i = 0; i < statefulEx5->ScalingPolicyCount; i++)
+                {
+                    Reliability::ServiceScalingPolicyDescription scalingDescription;
+                    auto scalingError = scalingDescription.FromPublicApi(statefulEx5->ServiceScalingPolicies[i]);
+                    if (!scalingError.IsSuccess())
+                    {
+                        return scalingError;
+                    }
+                    scalingPolicies_.push_back(move(scalingDescription));
+                }
+            }
+        }
+
         break;
 
     } // case stateful
 
     default:
-        return ErrorCodeValue::InvalidArgument;
+        return TraceAndGetInvalidArgumentError(wformatString("{0} {1}", GET_NS_RC( Invalid_Service_Kind ), static_cast<int>(updateDescription.Kind)));
     };
 
     return ErrorCodeValue::Success;
@@ -303,13 +364,17 @@ ErrorCode ServiceUpdateDescription::FromRepartitionDescription(
     FABRIC_SERVICE_PARTITION_KIND const publicKind,
     void * publicDescription)
 {
+    if (publicDescription == nullptr || publicKind == FABRIC_SERVICE_PARTITION_KIND_INVALID)
+    {
+        return ErrorCodeValue::Success;
+    }
+
     auto kind = PartitionKind::FromPublicApi(publicKind);
     if (kind != PartitionKind::Named)
     {
-        return ErrorCode(
-            ErrorCodeValue::InvalidArgument,
-            wformatString(GET_NS_RC(Update_Unsupported_Scheme), 
-            (kind == PartitionKind::Invalid) ? static_cast<int>(publicKind) : kind));
+        return TraceAndGetInvalidArgumentError(wformatString(GET_NS_RC(Update_Unsupported_Scheme), (kind == PartitionKind::Invalid) 
+            ? static_cast<int>(publicKind) 
+            : kind));
     }
 
     auto * casted = reinterpret_cast<FABRIC_NAMED_REPARTITION_DESCRIPTION*>(publicDescription);
@@ -331,7 +396,7 @@ ErrorCode ServiceUpdateDescription::IsValid() const
 {
     if (updateFlags_ & ~Flags::ValidServiceUpdateFlags)
     {
-        return ErrorCodeValue::InvalidArgument;
+        return TraceAndGetInvalidArgumentError(wformatString(GET_NS_RC( Invalid_Flags ), updateFlags_));
     }
 
     return ErrorCode::Success();
@@ -376,9 +441,7 @@ ErrorCode ServiceUpdateDescription::TryUpdateServiceDescription(
             break;
         }
         default:
-            return ErrorCode(
-                ErrorCodeValue::InvalidArgument,
-                wformatString(GET_NS_RC(Update_Unsupported_Scheme), Repartition->Kind));
+            return TraceAndGetInvalidArgumentError(wformatString(GET_NS_RC(Update_Unsupported_Scheme), Repartition->Kind));
         }
     }
 
@@ -405,9 +468,7 @@ ErrorCode ServiceUpdateDescription::TryUpdateServiceDescription(
     if ((serviceKind_ == FABRIC_SERVICE_KIND::FABRIC_SERVICE_KIND_STATELESS && serviceDescription.IsStateful) ||
         (serviceKind_ == FABRIC_SERVICE_KIND::FABRIC_SERVICE_KIND_STATEFUL && !serviceDescription.IsStateful))
     {
-        return ErrorCode(
-            ErrorCodeValue::InvalidArgument,
-            wformatString("{0} {1}", GET_NS_RC(Invalid_Service_Kind), serviceKind_));
+        return TraceAndGetInvalidArgumentError(wformatString("{0} {1}", GET_NS_RC(Invalid_Service_Kind), serviceKind_));
     }
 
     if (UpdateTargetReplicaSetSize)
@@ -416,15 +477,11 @@ ErrorCode ServiceUpdateDescription::TryUpdateServiceDescription(
 
         if (targetReplicaSetSize_ < 1 && (targetReplicaSetSize_ != -1 || serviceDescription.IsStateful))
         {
-            return ErrorCode(
-                ErrorCodeValue::InvalidArgument,
-                wformatString("{0} {1}", GET_NS_RC(Invalid_Target_Replicas), targetReplicaSetSize_));
+            return TraceAndGetInvalidArgumentError(wformatString("{0} {1}", GET_NS_RC(Invalid_Target_Replicas), targetReplicaSetSize_));
         }
         else if (serviceDescription.IsStateful && minReplicaSetSize > targetReplicaSetSize_)
         {
-            return ErrorCode(
-                ErrorCodeValue::InvalidArgument,
-                wformatString("{0} ({1}, {2})", GET_NS_RC(Invalid_Minimum_Target), minReplicaSetSize, targetReplicaSetSize_));
+            return TraceAndGetInvalidArgumentError(wformatString("{0} ({1}, {2})", GET_NS_RC(Invalid_Minimum_Target), minReplicaSetSize, targetReplicaSetSize_));
         }
 
         serviceDescription.TargetReplicaSetSize = targetReplicaSetSize_;
@@ -433,12 +490,9 @@ ErrorCode ServiceUpdateDescription::TryUpdateServiceDescription(
 
     if (UpdateMinReplicaSetSize)
     {
-        if (minReplicaSetSize_ < 1 ||
-            minReplicaSetSize_ > serviceDescription.TargetReplicaSetSize)
+        if (minReplicaSetSize_ < 1 || minReplicaSetSize_ > serviceDescription.TargetReplicaSetSize)
         {
-            return ErrorCode(
-                ErrorCodeValue::InvalidArgument,
-                wformatString("{0} ({1}, {2})", GET_NS_RC(Invalid_Minimum_Target), minReplicaSetSize_, serviceDescription.TargetReplicaSetSize));
+            return TraceAndGetInvalidArgumentError(wformatString("{0} ({1}, {2})", GET_NS_RC(Invalid_Minimum_Target), minReplicaSetSize_, serviceDescription.TargetReplicaSetSize));
         }
 
         serviceDescription.MinReplicaSetSize = minReplicaSetSize_;
@@ -495,7 +549,19 @@ ErrorCode ServiceUpdateDescription::TryUpdateServiceDescription(
 
     if (Repartition && !allowRepartition)
     {
-        return ErrorCode(ErrorCodeValue::InvalidArgument, GET_NS_RC(Update_Unsupported_Repartition));
+        return TraceAndGetInvalidArgumentError(wformatString(GET_NS_RC(Update_Unsupported_Repartition)));
+    }
+
+    if (InitializationData)
+    {
+        serviceDescription.InitializationData = vector<byte>(*InitializationData);
+        isUpdated = true;
+    }
+
+    if (UpdateScalingPolicy)
+    {
+        serviceDescription.ScalingPolicies = scalingPolicies_;
+        isUpdated = true;
     }
 
     if (isUpdated)
@@ -657,6 +723,34 @@ ErrorCode ServiceUpdateDescription::TryDiffForUpgrade(
         rollbackUpdateDescription->Repartition = make_shared<NamedRepartitionDescription>(removedNames, addedNames);
     }
 
+    bool shouldUpdateInitData = (active.InitializationData.size() !=  target.InitializationData.size());
+
+    if (!shouldUpdateInitData)
+    {
+        for (auto ix=0; ix<active.InitializationData.size(); ++ix)
+        {
+            if (active.InitializationData[ix] != target.InitializationData[ix])
+            {
+                shouldUpdateInitData = true;
+                break;
+            }
+        }
+    }
+
+    if (shouldUpdateInitData)
+    {
+        updateDescription->InitializationData = make_shared<vector<byte>>(target.InitializationData);
+        rollbackUpdateDescription->InitializationData = make_shared<vector<byte>>(active.InitializationData);
+    }
+
+    if (active.ScalingPolicies != target.ScalingPolicies)
+    {
+        updateDescription->UpdateScalingPolicy = true;
+        updateDescription->ScalingPolicies = target.ScalingPolicies;
+        rollbackUpdateDescription->UpdateScalingPolicy = true;
+        rollbackUpdateDescription->ScalingPolicies = active.ScalingPolicies;
+    }
+
     if (updateDescription->UpdateFlags != 0 || updateDescription->Repartition.get() != nullptr)
     {
         updateDescriptionResult = move(updateDescription);
@@ -681,7 +775,8 @@ void ServiceUpdateDescription::WriteToEtw(uint16 contextSequenceId) const
         metrics_,
         placementPolicies_,
         static_cast<int>(defaultMoveCost_),
-        repartitionDescription_.get() == nullptr ? RepartitionDescription() : *repartitionDescription_);
+        repartitionDescription_.get() == nullptr ? RepartitionDescription() : *repartitionDescription_,
+        initializationData_.get() == nullptr ? -1 : static_cast<int>(initializationData_->size()));
 }
 
 void ServiceUpdateDescription::WriteTo(__in Common::TextWriter& w, Common::FormatOptions const&) const
@@ -697,6 +792,7 @@ void ServiceUpdateDescription::WriteTo(__in Common::TextWriter& w, Common::Forma
     w << ", metrics=" << metrics_;
     w << ", policies=" << placementPolicies_;
     w << ", movecost=" << defaultMoveCost_;
+
     if (repartitionDescription_) 
     { 
         w << ", repartition=[" << *repartitionDescription_ << "]"; 
@@ -705,4 +801,22 @@ void ServiceUpdateDescription::WriteTo(__in Common::TextWriter& w, Common::Forma
     {
         w << ", repartition=null";
     }
+
+    w << ", scalingPolicies=" << scalingPolicies_;
+    
+    if (initializationData_)
+    {
+        w << ", initData=" << initializationData_->size() << "bytes";
+    }
+    else
+    {
+        w << ", initData=null";
+    }
+}
+
+ErrorCode ServiceUpdateDescription::TraceAndGetInvalidArgumentError(std::wstring && msg) const
+{
+    Trace.WriteWarning(TraceComponent, "{0}", msg);
+
+    return ErrorCode(ErrorCodeValue::InvalidArgument, move(msg));
 }

@@ -441,7 +441,7 @@ private:
         ErrorCode error = ErrorCode(ErrorCodeValue::Success);
 
         //
-        // For multi code package application host, if application host context is at application level,
+        // For multi code package application host, if ApplicationHostIsolationContext is at application level,
         // multiple thread can try to create the proxy for first time. While loop here handles this scenario.
         // TODO: Add a GetOrAdd() function to activation table itself as it is already thread safe.
         //
@@ -454,7 +454,9 @@ private:
             }
 
             error = ApplicationHostProxy::Create(
-                HostingSubsystemHolder(owner_.hosting_, owner_.hosting_.Root.CreateComponentRoot()),
+                HostingSubsystemHolder(
+                    owner_.hosting_, 
+                    owner_.hosting_.Root.CreateComponentRoot()),
                 hostIsolationContext_,
                 codePackageInstance_,
                 hostProxy_);
@@ -484,7 +486,10 @@ private:
         
         auto operation = hostProxy_->BeginOpen(
             timeout, 
-            [this](AsyncOperationSPtr const & operation){ this->OnApplicationHostProxyOpened(operation); },
+            [this](AsyncOperationSPtr const & operation)
+            { 
+                this->OnApplicationHostProxyOpened(operation); 
+            },
             thisSPtr);
 
         if (operation->CompletedSynchronously)
@@ -523,7 +528,10 @@ private:
         auto operation = hostProxy_->BeginActivateCodePackage(
             codePackageInstance_,
             timeout,
-            [this](AsyncOperationSPtr const & operation) { this->OnCodePackageActivated(operation); },
+            [this](AsyncOperationSPtr const & operation)
+            { 
+                this->OnCodePackageActivated(operation);
+            },
             thisSPtr);
         
         if (operation->CompletedSynchronously)
@@ -548,9 +556,8 @@ private:
 
     ApplicationHostIsolationContext CreateHostIsolationContext(CodePackageInstanceSPtr const & codePackageInstance)
     {
-        CodePackageIsolationPolicyType::Enum codePackageIsolationPolicy = codePackageInstance->IsolationPolicyType;
+        auto codePackageIsolationPolicy = codePackageInstance->IsolationPolicyType;
 
-        // TODO: This generates warning for containers. Fix this if check.
         if ((codePackageInstance->EntryPoint.EntryPointType == EntryPointType::Exe ||
             codePackageInstance->EntryPoint.EntryPointType == EntryPointType::ContainerHost) &&
             (codePackageIsolationPolicy != CodePackageIsolationPolicyType::DedicatedProcess))
@@ -945,6 +952,40 @@ private:
         }
 
         auto error = hostProxy_->EndUpdateCodePackageContext(operation);
+
+        if (error.IsError(ErrorCodeValue::UpdateContextFailed))
+        {
+            // Do a lookup in the registrationTable if the AppHost is registered or not. If it is, then something is wrong and Abort the AppHostProxy.
+            // If the AppHost is not registered then when the AppHost registers it will create the correct CodePackageActivationContext with correct ServiceType version
+            // since it reads the Package xml file which will have correct contents.
+
+            // Lookup in RegistrationTable and updating the flag should be under one lock. If you just protect flag by lock there will be a race where
+            // you do a registration lookup and you don't find appHost. Then appHost registers you do a check for a flag and it's set to false.
+            // Then you set the appHost flag for update from UpdateContext and never end up bringing down appHost for update.
+            {
+                AcquireWriteLock lock(owner_.updateContextlock_);
+                ApplicationHostRegistrationSPtr registration;
+                auto hostId = hostProxy_->HostId;
+                auto result = owner_.registrationTable_->Find(hostId, registration);
+                if (!result.IsSuccess())
+                {
+                    hostProxy_->IsUpdateContextPending = true;
+
+                    WriteInfo(
+                        TraceType,
+                        owner_.Root.TraceId,
+                        "ApplicationHostProxy needs an update {0}",
+                        hostId);
+
+                    TryComplete(operation->Parent, ErrorCodeValue::Success);
+                    return;
+                }
+
+            }
+
+            hostProxy_->Abort();
+        }
+
         TryComplete(operation->Parent, error);
     }
 
@@ -1019,7 +1060,7 @@ protected:
                 hostId_);
 
             owner_.hosting_.GuestServiceTypeHostManagerObj->AbortGuestServiceTypeHost(
-                hostId_);
+                hostProxy_->Context);
 
             thisSPtr->TryComplete(thisSPtr, ErrorCodeValue::Success);
             return;
@@ -1071,6 +1112,157 @@ private:
 };
 
 // ********************************************************************************************************************
+// ApplicationHostManager::ApplicationHostCodePackageOperationCompleted Implementation
+//
+class ApplicationHostManager::ApplicationHostCodePackageAsyncOperation :
+    public AsyncOperation,
+    TextTraceComponent<TraceTaskCodes::Hosting>
+{
+    DENY_COPY(ApplicationHostCodePackageAsyncOperation)
+
+public:
+    ApplicationHostCodePackageAsyncOperation(
+        _In_ ApplicationHostManager & owner,
+        ApplicationHostCodePackageOperationRequest const & request,
+        IpcReceiverContextUPtr && receiverContext,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(callback, parent)
+        , owner_(owner)
+        , request_(request)
+        , receiverContext_(move(receiverContext))
+    {
+    }
+
+    virtual ~ApplicationHostCodePackageAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<ApplicationHostCodePackageAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (!this->IsSupportedRequest())
+        {
+            //
+            // This should not happen normally unless there is environment
+            // corruption in ApplicationHost. Trace as error rather than asserting
+            // to avoid bringing down the node completely.
+            //
+            WriteError(
+                TraceType,
+                owner_.Root.TraceId,
+                "ApplicationHostCodePackageOperation: Unsuppoted request received: [{0}].",
+                request_);
+
+            this->SendOperationReplyAndComplete(ErrorCodeValue::OperationNotSupported, thisSPtr);
+            return;
+        }
+
+        auto error = owner_.activationTable_->Find(request_.HostContext.HostId, hostProxy_);
+        if (!error.IsSuccess())
+        {
+            WriteNoise(
+                TraceType,
+                owner_.Root.TraceId,
+                "ApplicationHostCodePackageOperation: HostId not found for request={0}.",
+                request_);
+
+            this->SendOperationReplyAndComplete(error, thisSPtr);
+            return;
+        }
+
+        if (hostProxy_->Context.IsCodePackageActivatorHost == false)
+        {
+            //
+            // This should not happen normally unless there is environment
+            // corruption in ApplicationHost. Trace as error rather than asserting
+            // to avoid bringing down the node completely.
+            //
+            WriteError(
+                TraceType,
+                owner_.Root.TraceId,
+                "ApplicationHostCodePackageOperation: Matching ApplicationHostProxy don't support requested operation. Request=[{0}].",
+                request_);
+
+            this->SendOperationReplyAndComplete(ErrorCodeValue::OperationNotSupported, thisSPtr);
+            return;
+        }
+
+        this->StartApplicationHostCodePackageOperation(thisSPtr);
+    }
+
+    void StartApplicationHostCodePackageOperation(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto operation = hostProxy_->BeginApplicationHostCodePackageOperation(
+            request_,
+            [this](AsyncOperationSPtr const & operation)
+            {
+                this->FinishApplicationHostCodePackageOperation(operation, false);
+            },
+            thisSPtr);
+
+        this->FinishApplicationHostCodePackageOperation(operation, true);
+    }
+
+    void FinishApplicationHostCodePackageOperation(
+        AsyncOperationSPtr const & operation,
+        bool expectedCompletedAsynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedAsynchronously)
+        {
+            return;
+        }
+
+        auto error = hostProxy_->EndApplicationHostCodePackageOperation(operation);
+        
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.Root.TraceId,
+            "FinishApplicationHostCodePackageOperation: Request={0}, Error={1}.",
+            request_,
+            error);
+
+        this->SendOperationReplyAndComplete(error, operation->Parent);
+    }
+
+private:
+    bool IsSupportedRequest()
+    {
+        auto hostContext = request_.HostContext;
+
+        return 
+            ((hostContext.HostType == ApplicationHostType::Activated_InProcess ||
+            hostContext.HostType == ApplicationHostType::Activated_SingleCodePackage) &&
+            hostContext.IsCodePackageActivatorHost == true);
+    }
+
+    void SendOperationReplyAndComplete(
+        ErrorCode const & error,
+        AsyncOperationSPtr const & thisSPtr)
+    {
+        if (receiverContext_ != nullptr)
+        {
+            owner_.SendApplicationHostCodePackageOperationReply(error, move(receiverContext_));
+        }
+
+        this->TryComplete(thisSPtr, error);
+    }
+
+private:
+    ApplicationHostManager & owner_;
+    ApplicationHostCodePackageOperationRequest request_;
+    IpcReceiverContextUPtr receiverContext_;
+    ApplicationHostProxySPtr hostProxy_;
+};
+
+// ********************************************************************************************************************
 // ApplicationHostManager Implementation
 //
 ApplicationHostManager::ApplicationHostManager(
@@ -1081,7 +1273,8 @@ RootedObject(root),
     registrationTable_(),
     activationTable_(),
     processId_(::GetCurrentProcessId()),
-    processSid_()
+    processSid_(),
+    updateContextlock_()
 {
     auto registrationTable = make_unique<ApplicationHostRegistrationTable>(root);
     auto activationTable = make_unique<ApplicationHostActivationTable>(root, hosting_);
@@ -1192,9 +1385,31 @@ AsyncOperationSPtr ApplicationHostManager::BeginGetContainerInfo(
         parent);
 }
 
-ErrorCode ApplicationHostManager::EndGetContainerInfo(AsyncOperationSPtr const & operation, __out wstring & containerInfo)
+ErrorCode ApplicationHostManager::EndGetContainerInfo(
+    AsyncOperationSPtr const & operation, 
+    __out wstring & containerInfo)
 {
     return GetContainerInfoAsyncOperation::End(operation, containerInfo);
+}
+
+void ApplicationHostManager::SendDependentCodePackageEvent(
+    CodePackageEventDescription const & eventDescription,
+    CodePackageActivationId const & codePackageActivationId)
+{
+    ApplicationHostProxySPtr hostProxy;
+    auto error = activationTable_->Find(codePackageActivationId.HostId, hostProxy);
+    if (!error.IsSuccess())
+    {
+        WriteInfo(
+            TraceType,
+            Root.TraceId,
+            "SendDependentCodePackageEvent: ApplicationHostProxy not found for Event={0}, CodePackageActivationId={1}.",
+            eventDescription,
+            codePackageActivationId);
+        return;
+    }
+
+    hostProxy->SendDependentCodePackageEvent(eventDescription);
 }
 
 void ApplicationHostManager::TerminateCodePackage(CodePackageActivationId const & activationId)
@@ -1264,6 +1479,25 @@ ErrorCode ApplicationHostManager::EndTerminateServiceHost(
     AsyncOperationSPtr const & operation)
 {
     return TerminateServiceHostAsyncOperation::End(operation);
+}
+
+AsyncOperationSPtr ApplicationHostManager::BeginApplicationHostCodePackageOperation(
+    ApplicationHostCodePackageOperationRequest const & request,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<ApplicationHostCodePackageAsyncOperation>(
+        *this,
+        request,
+        move(IpcReceiverContextUPtr()),
+        callback,
+        parent);
+}
+
+ErrorCode ApplicationHostManager::EndApplicationHostCodePackageOperation(
+    AsyncOperationSPtr const & operation)
+{
+    return ApplicationHostCodePackageAsyncOperation::End(operation);
 }
 
 AsyncOperationSPtr ApplicationHostManager::OnBeginOpen(
@@ -1370,6 +1604,10 @@ void ApplicationHostManager::ProcessIpcMessage(
     {
         this->ProcessRegisterResourceMonitorService(message, context);
     }
+    else if (action == Hosting2::Protocol::Actions::ApplicationHostCodePackageOperationRequest)
+    {
+        this->ProcessApplicationHostCodePackageOperationRequest(message, move(context));
+    }
     else
     {
         WriteWarning(
@@ -1385,6 +1623,51 @@ void ApplicationHostManager::ReportHealthReportMessageHandler(Message & message,
     // Just send the report to HM
     MessageUPtr messagePtr = make_unique<Message>(message);
     hosting_.SendToHealthManager(move(messagePtr), move(context));
+}
+
+void ApplicationHostManager::ProcessApplicationHostCodePackageOperationRequest(
+    __in Message & message,
+    __in IpcReceiverContextUPtr && context)
+{
+    ApplicationHostCodePackageOperationRequest requestBody;
+    if (!message.GetBody<ApplicationHostCodePackageOperationRequest>(requestBody))
+    {
+        auto error = ErrorCode::FromNtStatus(message.Status);
+        WriteError(
+            TraceType,
+            Root.TraceId,
+            "GetBody<ApplicationHostCodePackageOperationRequest> failed: Message={0}, ErrorCode={1}",
+            message,
+            error);
+
+        this->SendApplicationHostCodePackageOperationReply(error, move(context));
+        return;
+    }
+
+    auto operation = AsyncOperation::CreateAndStart<ApplicationHostCodePackageAsyncOperation>(
+        *this,
+        requestBody,
+        move(context),
+        [this](AsyncOperationSPtr const & operation)
+        {
+            this->EndApplicationHostCodePackageOperation(operation);
+        },
+        this->Root.CreateAsyncOperationRoot());
+}
+
+void ApplicationHostManager::SendApplicationHostCodePackageOperationReply(
+    ErrorCode error,
+    __in IpcReceiverContextUPtr && context)
+{
+    ApplicationHostCodePackageOperationReply replyBody(error);
+    auto reply = make_unique<Message>(replyBody);
+    context->Reply(move(reply));
+
+    WriteNoise(
+        TraceType,
+        this->Root.TraceId,
+        "SendApplicationHostCodePackageOperationReply: ReplyBody={1}",
+        replyBody);
 }
 
 void ApplicationHostManager::ProcessGetFabricProcessSidRequest(
@@ -1440,25 +1723,57 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
         requestBody.ProcessId,
         requestBody.Timeout);
 
-    // step 1: create entry in the registration table
-    auto registration = make_shared<ApplicationHostRegistration>(requestBody.Id, requestBody.Type);
-    auto error = registrationTable_->Add(registration);
-    WriteTrace(
-        error.ToLogLevel(),
-        TraceType,
-        Root.TraceId,
-        "StartRegisterApplicationHostRequest: Add Registration: ErrorCode={0}, HostId={1}",
-        error,
-        requestBody.Id);
-    if (!error.IsSuccess()) 
+    wstring hostId(requestBody.Id);
+    ErrorCode error(ErrorCodeValue::Success);
+    ApplicationHostRegistrationSPtr registration;
+    ApplicationHostProxySPtr hostProxySPtr;
+
+    //Todo: If we remove support for NonActivatedApplicationHosts we can return error for regsitrations if hostId is not present.
+    auto result = activationTable_->Find(hostId, hostProxySPtr);
+
+    // step 1: If pending Update then abort to update the versions.
+    bool doesAppHostNeedsUpdate = false;
+    {
+        AcquireReadLock lock(updateContextlock_);
+        // If no AppHost present then it already went down.
+        if (result.IsSuccess() && hostProxySPtr->IsUpdateContextPending)
+        {
+            doesAppHostNeedsUpdate = true;
+        }
+        else
+        {
+            // step 2: create entry in the registration table
+            registration = make_shared<ApplicationHostRegistration>(requestBody.Id, requestBody.Type);
+            error = registrationTable_->Add(registration);
+            WriteTrace(
+                error.ToLogLevel(),
+                TraceType,
+                Root.TraceId,
+                "StartRegisterApplicationHostRequest: Add Registration: ErrorCode={0}, HostId={1}",
+                error,
+                requestBody.Id);
+        }
+    }
+
+    if (doesAppHostNeedsUpdate)
+    {
+        WriteInfo(
+            TraceType,
+            Root.TraceId,
+            "StartRegisterApplicationHostRequest: Aborting AppHostProxy since update was pending for it. HostId={0}",
+            hostId);
+        hostProxySPtr->Abort();
+        return;
+    }
+
+    if (!error.IsSuccess())
     {
         this->SendStartRegisterApplicationHostReply(requestBody, error, context);
         return;
     }
 
-    // step 2: create a timer for the registration process to finish
+    // step 3: create a timer for the registration process to finish
     auto root = Root.CreateComponentRoot();
-    wstring hostId(requestBody.Id);
     TimeSpan timeout = requestBody.Timeout;
     TimerSPtr finishRegistrationTimer = Timer::Create(
         "Hosting.ApplicationHostRegistrationTimedout",
@@ -1481,7 +1796,7 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
 
     if(requestBody.Type == ApplicationHostType::Enum::NonActivated)
     {
-        // step 3: establish monitoring with the application host
+        // step 4: establish monitoring with the application host
         HandleUPtr appHostProcessHandle;
         error = ProcessUtility::OpenProcess(
             SYNCHRONIZE, 
@@ -1506,7 +1821,7 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
             requestBody.ProcessId,
             [root, this, hostId](pid_t, ErrorCode const & waitResult, DWORD)
         {
-            this->OnRegisteredApplicationHostTerminated(hostId, waitResult);
+            this->OnRegisteredApplicationHostTerminated(ActivityDescription(ActivityId(), ActivityType::Enum::ServicePackageEvent), hostId, waitResult);
         });
         error = registration->OnMonitoringInitialized(move(hostMonitor));
         WriteTrace(
@@ -1522,8 +1837,8 @@ void ApplicationHostManager::ProcessStartRegisterApplicationHostRequest(
             return;
         }
     }
-    // step 4: send success response
-    this->SendStartRegisterApplicationHostReply(requestBody, ErrorCode(ErrorCodeValue::Success), context);
+    // step 5: send success response
+    this->SendStartRegisterApplicationHostReply(requestBody, error, context);
     return;
 }
 
@@ -1756,8 +2071,9 @@ void ApplicationHostManager::ProcessUnregisterApplicationHostRequest(
     WriteNoise(
         TraceType,
         Root.TraceId,
-        "Processing UnregisterApplicationHostRequest: HostId={0}",
-        requestBody.Id);
+        "Processing UnregisterApplicationHostRequest: HostId={0} ActivityDescription={1}",
+        requestBody.Id,
+        requestBody.ActivityDescription);
 
     // remove registration from registrationt table
     ApplicationHostRegistrationSPtr registration;
@@ -1766,15 +2082,16 @@ void ApplicationHostManager::ProcessUnregisterApplicationHostRequest(
         error.ToLogLevel(),
         TraceType,
         Root.TraceId,
-        "FinishRegisterApplicationHost: Remove Registration: ErrorCode={0}, HostId={1}",
+        "FinishRegisterApplicationHost: Remove Registration: ErrorCode={0}, HostId={1} ActivityDescription={2}",
         error,
-        requestBody.Id);
+        requestBody.Id,
+        requestBody.ActivityDescription);
 
     // send the reponse
     this->SendUnregisterApplicationHostReply(requestBody, error, context);
     if (error.IsSuccess())
     {
-        this->OnApplicationHostUnregistered(registration->HostId);
+        this->OnApplicationHostUnregistered(requestBody.ActivityDescription, registration->HostId);
     }
 
     hosting_.IpcServerObj.RemoveClient(requestBody.Id); 
@@ -1947,19 +2264,21 @@ void ApplicationHostManager::OnApplicationHostRegistered(ApplicationHostRegistra
     hostProxy->OnApplicationHostRegistered();
 }
 
-void ApplicationHostManager::OnApplicationHostUnregistered(wstring const & hostId)
+void ApplicationHostManager::OnApplicationHostUnregistered(ActivityDescription const & activityDescription, wstring const & hostId)
 {
     WriteNoise(
         TraceType,
         Root.TraceId,
-        "OnApplicationHostUnregistered: HostId={0}",
-        hostId);
+        "OnApplicationHostUnregistered: HostId={0} ActivityDescription={1}",
+        hostId,
+        activityDescription);
 
     // notify fabric runtime manager to take action on application host doing down
-    hosting_.FabricRuntimeManagerObj->OnApplicationHostUnregistered(hostId);
+    hosting_.FabricRuntimeManagerObj->OnApplicationHostUnregistered(activityDescription, hostId);
 }
 
 void ApplicationHostManager::OnRegisteredApplicationHostTerminated(
+    ActivityDescription const & activityDescritption,
     wstring const & hostId,
     ErrorCode const & waitResult)
 {
@@ -1980,24 +2299,27 @@ void ApplicationHostManager::OnRegisteredApplicationHostTerminated(
     WriteNoise(
         TraceType,
         Root.TraceId,
-        "Processing termination of registered Application Host: HostId={0}",
-        hostId);
+        "Processing termination of registered Application Host: HostId={0} ActivityDescription={1}",
+        hostId,
+        activityDescritption);
 
     hosting_.IpcServerObj.RemoveClient(hostId); 
 
     ApplicationHostRegistrationSPtr registration;
     registrationTable_->Remove(hostId, registration).ReadValue();
-    this->OnApplicationHostUnregistered(hostId);
+    this->OnApplicationHostUnregistered(activityDescritption, hostId);
 }
 
 void ApplicationHostManager::OnActivatedApplicationHostTerminated(
     EventArgs const & eventArgs)
 {
     ApplicationHostTerminatedEventArgs args = dynamic_cast<ApplicationHostTerminatedEventArgs const &>(eventArgs);
-    OnApplicationHostTerminated(args.HostId, args.ExitCode);
+
+    OnApplicationHostTerminated(args.ActivityDescription, args.HostId, args.ExitCode);
 }
 
 void ApplicationHostManager::OnApplicationHostTerminated(
+    ActivityDescription const & activityDescription,
     wstring const & hostId,
     DWORD exitCode)
 {
@@ -2017,11 +2339,14 @@ void ApplicationHostManager::OnApplicationHostTerminated(
         (exitCode == 0 || exitCode == ProcessActivator::ProcessDeactivateExitCode || exitCode == STATUS_CONTROL_C_EXIT) ? LogLevel::Info : LogLevel::Warning,
         TraceType,
         Root.TraceId,
-        "Processing termination of activated Application Host: HostId={0}, ExitCode={1}",
+        "Processing termination of activated Application Host: HostId={0}, ExitCode={1} ActivityDescription={2}",
         hostId,
-        exitCode);
+        exitCode,
+        activityDescription);
 
-    this->OnRegisteredApplicationHostTerminated(hostId, ErrorCode(ErrorCodeValue::InvalidArgument));
+    hostingTrace.ApplicationHostTerminated(hostId, exitCode, activityDescription);
+
+    this->OnRegisteredApplicationHostTerminated(activityDescription, hostId, ErrorCode(ErrorCodeValue::InvalidArgument));
 
     ApplicationHostProxySPtr hostProxy;
     auto error = this->activationTable_->Remove(hostId, hostProxy);

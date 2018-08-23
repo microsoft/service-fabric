@@ -18,11 +18,22 @@ LoadBalancingDomainEntry::LoadBalancingDomainEntry(std::vector<Metric> && metric
     metricWeightSum_(metricWeightSum),
     metricStartIndex_(metricStartIndex),
     serviceIndex_(serviceIndex),
-    loadStats_(MetricCount),
     fdLoadStats_(MetricCount),
     udLoadStats_(MetricCount),
     isBalanced_(false)
 {
+    for (size_t i = 0; i < MetricCount; i++)
+    {
+        Metric & metric = metrics_[i];
+        if (metric.BalancingByPercentage)
+        {
+            loadStats_.push_back(AccumulatorWithMinMax(true));
+        }
+        else
+        {
+            loadStats_.push_back(AccumulatorWithMinMax(false));
+        }
+    }
 }
 
 LoadBalancingDomainEntry::LoadBalancingDomainEntry(LoadBalancingDomainEntry && other)
@@ -44,7 +55,7 @@ LoadBalancingDomainEntry & LoadBalancingDomainEntry::operator = (LoadBalancingDo
         metrics_ = move(other.metrics_);
         metricWeightSum_ = other.metricWeightSum_;
         metricStartIndex_ = other.metricStartIndex_,
-        serviceIndex_ = other.serviceIndex_;
+            serviceIndex_ = other.serviceIndex_;
         loadStats_ = move(other.loadStats_);
         fdLoadStats_ = move(other.fdLoadStats_);
         udLoadStats_ = move(other.udLoadStats_);
@@ -59,6 +70,7 @@ void LoadBalancingDomainEntry::RefreshIsBalanced(
     LoadBalancingDomainEntry const& globalLBDomain,
     DomainAccMinMaxTree const& fdsTotalLoads,
     DomainAccMinMaxTree const& udsTotalLoads,
+    DynamicNodeLoadSet& dynamicLoads,
     BalancingDiagnosticsDataSPtr balancingDiagnosticsDataSPtr /* = nullptr */)
 {
     isBalanced_ = true;
@@ -71,6 +83,17 @@ void LoadBalancingDomainEntry::RefreshIsBalanced(
     {
         Metric & metric = metrics_[i];
         metric.IsBalanced = true;
+
+        // always check against the max load of the corresponding global metric
+        size_t globalMetricIndex = globalMetricIndices == nullptr ? i : (*globalMetricIndices)[i] - globalLBDomain.MetricStartIndex;
+        TESTASSERT_IFNOT(globalMetricIndex < globalLBDomain.MetricCount,
+            "Global metric index {0} should be less than global metric count {1}", globalMetricIndex, globalLBDomain.MetricCount);
+
+        size_t totalMetricIndex = metricStartIndex_ + i;
+
+        metric.IndexInLocalDomain = i;
+        metric.IndexInGlobalDomain = globalMetricIndex;
+        metric.IndexInTotalDomain = totalMetricIndex;
 
         if (metric.Weight <= 0.0 || metric.BalancingThreshold <= 0.0)
         {
@@ -96,13 +119,7 @@ void LoadBalancingDomainEntry::RefreshIsBalanced(
                 continue;
             }
 
-            // always check against the max load of the corresponding global metric
-            size_t globalMetricIndex = globalMetricIndices == nullptr ? i : (*globalMetricIndices)[i] - globalLBDomain.MetricStartIndex;
-            ASSERT_IFNOT(globalMetricIndex < globalLBDomain.MetricCount,
-                "Global metric index {0} should be less than global metric count {1}", globalMetricIndex, globalLBDomain.MetricCount);
-
-            size_t totalMetricIndex = metricStartIndex_ + i;
-
+            
             // defragmentation should work if maxNodeLoad/minNodeLoad in at least one FD or UD is smaller than MetricBalancingThresholds
             bool shouldDefrag = false;
 
@@ -111,7 +128,7 @@ void LoadBalancingDomainEntry::RefreshIsBalanced(
                 // Every FDs/UDs need to have satisfied defragmentation rule which is maxNodeLoad/minNodeLoad > MetricBalancingThreshold
                 shouldDefrag = ShouldDefragRunByDomain(fdsTotalLoads, udsTotalLoads, totalMetricIndex, metric);
             }
-            else if (metric.DefragNodeCount > 0)
+            else if (metric.DefragNodeCount > 0 && (metric.DefragmentationEmptyNodeWeight > 0 || !metric.DefragmentationScopedAlgorithmEnabled))
             {
                 switch (metric.DefragDistribution)
                 {
@@ -125,18 +142,22 @@ void LoadBalancingDomainEntry::RefreshIsBalanced(
                     shouldDefrag = ShouldDefragRunByNumberOfEmptyNodes(fdsTotalLoads, totalMetricIndex, metric);
                     break;
                 }
+
+                // Even if there are enough empty nodes for the current defrag metric, check do they overlap with other defrag metrics
+                if (dynamicLoads.Overlapping && !shouldDefrag && globalMetricIndices == nullptr)
+                {
+                    if (!dynamicLoads.IsEnoughLoadReserved(totalMetricIndex, metric.DefragNodeCount, metric.DefragDistribution, metric.ReservationLoad))
+                    {
+                        shouldDefrag = true;
+                    }
+                }
             }
 
             if (!shouldDefrag)
             {
-                if (!metric.DefragmentationScopedAlgorithmEnabled || metric.DefragmentationEmptyNodeWeight >= 1)
-                {
-                    continue;
-                }
-
-                // If DefragmentationEmptyNodeWeight is set to 1, then balancing/defragmentation will never be triggered
-                // since no movements are allowed if there are required number of empty nodes
-                if (metric.DefragmentationEmptyNodeWeight >= 1)
+                // If DefragmentationNonEmptyNodeWeight is set to 0, then balancing/defragmentation will never be triggered
+                // since no movements are allowed if there are required number of empty nodes 
+                if (!metric.DefragmentationScopedAlgorithmEnabled || metric.DefragmentationNonEmptyNodeWeight <= 0)
                 {
                     continue;
                 }
@@ -207,11 +228,6 @@ void LoadBalancingDomainEntry::RefreshIsBalanced(
 
             if (metric.ActivityThreshold > 0)
             {
-                // always check against the max load of the corresponding global metric
-                size_t globalMetricIndex = globalMetricIndices == nullptr ? i : (*globalMetricIndices)[i] - globalLBDomain.MetricStartIndex;
-                ASSERT_IFNOT(globalMetricIndex < globalLBDomain.MetricCount,
-                    "Global metric index {0} should be less than global metric count {1}", globalMetricIndex, globalLBDomain.MetricCount);
-
                 AccumulatorWithMinMax const& globalMetricLoadStat = globalLBDomain.GetLoadStat(globalMetricIndex);
                 if (globalMetricLoadStat.Max <= metric.ActivityThreshold)
                 {
@@ -266,9 +282,9 @@ void LoadBalancingDomainEntry::RefreshIsBalanced(
         if (balancingDiagnosticsDataSPtr != nullptr)
         {
             metricDiagnostics.isBalanced_ = metric.IsBalanced;
-            metricDiagnostics.metricBalancingThreshold_  = metric.BalancingThreshold;
+            metricDiagnostics.metricBalancingThreshold_ = metric.BalancingThreshold;
             metricDiagnostics.metricName_ = metric.Name;
-            metricDiagnostics.globalOrServiceIndex_  = ServiceIndex;
+            metricDiagnostics.globalOrServiceIndex_ = ServiceIndex;
 
             if (ServiceIndex != -1)
             {

@@ -39,6 +39,9 @@ namespace ServiceModel
         __declspec(property(get=get_TargetReplicaSetSize)) uint TargetReplicaSetSize;
         uint get_TargetReplicaSetSize() const { return targetReplicaSetSize_; }
 
+        __declspec(property(get=get_MinReplicaSetSize)) uint MinReplicaSetSize;
+        uint get_MinReplicaSetSize() const { return minReplicaSetSize_; }
+
         __declspec(property(get=get_InQuorumLoss)) bool InQuorumLoss;
         bool get_InQuorumLoss() const { return partitionStatus_ == FABRIC_QUERY_SERVICE_PARTITION_STATUS_IN_QUORUM_LOSS; }
 
@@ -48,6 +51,8 @@ namespace ServiceModel
 
         __declspec(property(get = get_PartitionInformation)) ServicePartitionInformation const & PartitionInformation;
         ServicePartitionInformation const & get_PartitionInformation() const { return partitionInformation_; }
+
+        void SetRenameAsPrimaryEpoch(bool renameAsPrimaryEpoch);
 
         ServicePartitionQueryResult const & operator = (ServicePartitionQueryResult && other);
 
@@ -66,7 +71,7 @@ namespace ServiceModel
             SERIALIZABLE_PROPERTY_ENUM(Constants::HealthState, healthState_)
             SERIALIZABLE_PROPERTY_ENUM(Constants::PartitionStatus, partitionStatus_)
             SERIALIZABLE_PROPERTY_IF(Constants::LastQuorumLossDurationInSeconds, lastQuorumLossDurationInSeconds_, serviceResultKind_ == FABRIC_SERVICE_KIND_STATEFUL)
-            SERIALIZABLE_PROPERTY_IF(Constants::CurrentConfigurationEpoch, currentConfigurationEpoch_, serviceResultKind_ == FABRIC_SERVICE_KIND_STATEFUL)
+            SERIALIZABLE_PROPERTY_IF(renameAsPrimaryEpoch_? Constants::PrimaryEpoch: Constants::CurrentConfigurationEpoch, currentConfigurationEpoch_, serviceResultKind_ == FABRIC_SERVICE_KIND_STATEFUL)
         END_JSON_SERIALIZABLE_PROPERTIES()
 
         // TODO: DYNAMIC_SIZE_ESTIMATION_MEMBER(currentConfigurationEpoch_) ?
@@ -110,6 +115,7 @@ namespace ServiceModel
         FABRIC_QUERY_SERVICE_PARTITION_STATUS partitionStatus_;
         int64 lastQuorumLossDurationInSeconds_;
         Reliability::Epoch currentConfigurationEpoch_;
+        bool renameAsPrimaryEpoch_;
     };
 
     // Used to serialize results in REST

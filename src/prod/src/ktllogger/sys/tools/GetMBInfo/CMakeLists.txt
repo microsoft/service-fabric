@@ -44,8 +44,6 @@ target_link_libraries(${exe_GetMBInfo}
    dl
    xml2
    uuid
-   unwind
-   unwind-x86_64
 )
 
 # share test lib

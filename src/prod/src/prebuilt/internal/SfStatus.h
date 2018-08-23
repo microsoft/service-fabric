@@ -1,7 +1,15 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
+/*--
+
+ Copyright (c) Microsoft Corporation.  All rights reserved.
+
+ Abstract:
+   This module contains the specific error codes and messages returned
+   by SF modules
+
+ Author: Mert Coskun (MCoskun)   12-12-2016
+ Environment: User and Kernel modes
+
+ --*/
 
 #pragma once
 
@@ -1839,4 +1847,103 @@ const USHORT FacilitySF = 0x43;
 // Indicates that the backup copier was denied required access to complete operation.
 //
 #define SF_STATUS_BACKUPCOPIER_ACCESS_DENIED ((NTSTATUS)0xE0431C7FL)
+
+//
+// MessageId: SF_STATUS_INVALID_SERVICE_SCALING_POLICY
+//
+// MessageText:
+//
+// Indicates that the scaling policy specified for the service is invalid
+//
+#define SF_STATUS_INVALID_SERVICE_SCALING_POLICY ((NTSTATUS)0xE0431C80L)
+
+//
+// MessageId: SF_STATUS_SINGLE_INSTANCE_APPLICATION_ALREADY_EXISTS
+//
+// MessageText:
+//
+// Indicates that the single instance application already exists.
+//
+#define SF_STATUS_SINGLE_INSTANCE_APPLICATION_ALREADY_EXISTS ((NTSTATUS)0xE0431C81L)
+
+//
+// MessageId: SF_STATUS_SINGLE_INSTANCE_APPLICATION_NOT_FOUND
+//
+// MessageText:
+//
+// Indicates that the single instance application is not found.
+//
+#define SF_STATUS_SINGLE_INSTANCE_APPLICATION_NOT_FOUND ((NTSTATUS)0xE0431C82L)
+
+//
+// MessageId: SF_STATUS_VOLUME_ALREADY_EXISTS
+//
+// MessageText:
+//
+// Volume already exists.
+//
+#define SF_STATUS_VOLUME_ALREADY_EXISTS  ((NTSTATUS)0xE0431C83L)
+
+//
+// MessageId: SF_STATUS_VOLUME_NOT_FOUND
+//
+// MessageText:
+//
+// Indicates that the specified volume is not found.
+//
+#define SF_STATUS_VOLUME_NOT_FOUND       ((NTSTATUS)0xE0431C84L)
+
+//
+// MessageId: SF_STATUS_DATABASE_MIGRATION_IN_PROGRESS
+//
+// MessageText:
+//
+// Indicates that the service is undergoing database migration and unavailable for writes
+//
+#define SF_STATUS_DATABASE_MIGRATION_IN_PROGRESS ((NTSTATUS)0xE0431C85L)
+
+//
+// MessageId: SF_STATUS_CENTRAL_SECRET_SERVICE_GENERIC
+//
+// MessageText:
+//
+// Central Secret Service generic error.
+//
+#define SF_STATUS_CENTRAL_SECRET_SERVICE_GENERIC ((NTSTATUS)0xE0431C86L)
+
+//
+// MessageId: SF_STATUS_SECRET_INVALID
+//
+// MessageText:
+//
+// Invalid secret error.
+//
+#define SF_STATUS_SECRET_INVALID         ((NTSTATUS)0xE0431C87L)
+
+//
+// MessageId: SF_STATUS_SECRET_VERSION_ALREADY_EXISTS
+//
+// MessageText:
+//
+// The secret version already exists.
+//
+#define SF_STATUS_SECRET_VERSION_ALREADY_EXISTS ((NTSTATUS)0xE0431C88L)
+
+//
+// MessageId: SF_STATUS_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS
+//
+// MessageText:
+//
+// Single instance application is currently being upgraded
+//
+#define SF_STATUS_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS ((NTSTATUS)0xE0431C89L)
+
+//
+// MessageId: SF_STATUS_OPERATION_NOT_SUPPORTED
+//
+// MessageText:
+//
+// Indicates that the attempted operation is not supported.
+//
+#define SF_STATUS_OPERATION_NOT_SUPPORTED ((NTSTATUS)0xE0431C90L)
 

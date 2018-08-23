@@ -155,6 +155,7 @@ namespace Api
             Common::NamingUri const & applicationName,
             std::wstring const & serviceManifestName,
             std::wstring const & codePackageName,
+            FABRIC_INSTANCE_ID codePackageInstance,
             ServiceModel::ContainerInfoArgMap & containerInfoArgMap,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,

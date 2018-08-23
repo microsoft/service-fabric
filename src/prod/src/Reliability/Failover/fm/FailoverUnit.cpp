@@ -294,6 +294,29 @@ void FailoverUnit::SetToBeDeleted()
     }
 }
 
+void FailoverUnit::set_TargetReplicaSetSize(int value)
+{
+    if (TargetReplicaSetSize != value)
+    {
+        failoverUnitDesc_.TargetReplicaSetSize = value;
+        PersistenceState = PersistenceState::ToBeUpdated;
+    }
+}
+
+int FailoverUnit::get_TargetReplicaSetSize() const 
+{
+    // If no autoscaling is defined we should keep on using the target size from service description.
+    // Otherwise, if auto scaling is done by changing instance count, then use the one from FT
+    if (serviceInfo_->ServiceDescription.ScalingPolicies.size() > 0 && serviceInfo_->ServiceDescription.ScalingPolicies[0].IsPartitionScaled())
+    {
+        return failoverUnitDesc_.TargetReplicaSetSize;
+    }
+    else
+    {
+        return serviceInfo_->ServiceDescription.TargetReplicaSetSize;
+    }
+}
+
 void FailoverUnit::set_IsSwappingPrimary(bool value)
 {
     if (IsSwappingPrimary != value)
@@ -885,7 +908,13 @@ void FailoverUnit::UpdatePointers(FailoverManager & fm, NodeCache const& nodeCac
         ASSERT_IF(ServiceInfoObj == nullptr, "Service {0} not found for {1}",
             serviceName_, IdString);
 
-        failoverUnitDesc_.TargetReplicaSetSize = TargetReplicaSetSize;
+        //if there is a scaling policy we should not be reseting the target count
+        //the target count from SD should be only used during initial placement
+        //if the user clears an existing scaling policy we should set the target back from SD
+        if (ServiceInfoObj->ServiceDescription.ScalingPolicies.size() == 0 || !ServiceInfoObj->ServiceDescription.ScalingPolicies[0].IsPartitionScaled())
+        {
+            failoverUnitDesc_.TargetReplicaSetSize = ServiceInfoObj->ServiceDescription.TargetReplicaSetSize;
+        }
         failoverUnitDesc_.MinReplicaSetSize = MinReplicaSetSize;
     }
 
@@ -1346,9 +1375,12 @@ void FailoverUnit::VerifyConsistency() const
     ASSERT_IF(serviceInfo_ == nullptr, "FailoverUnit {0} doesn't have valid service info", *this);
     ASSERT_IF(serviceInfo_->ServiceType == nullptr, "Service '{0}' doesn't have a valid ServiceType.", serviceInfo_->Name);
 
-    ASSERT_IFNOT(
-        failoverUnitDesc_.TargetReplicaSetSize == serviceInfo_->ServiceDescription.TargetReplicaSetSize,
-        "TargetReplicaSetSize {0} is not consistent with ServiceInfo: {1}", failoverUnitDesc_.TargetReplicaSetSize, *this);
+    if (serviceInfo_->ServiceDescription.ScalingPolicies.size() == 0 || !serviceInfo_->ServiceDescription.ScalingPolicies[0].IsPartitionScaled())
+    {
+        ASSERT_IFNOT(
+            failoverUnitDesc_.TargetReplicaSetSize == serviceInfo_->ServiceDescription.TargetReplicaSetSize,
+            "TargetReplicaSetSize {0} is not consistent with ServiceInfo: {1}", failoverUnitDesc_.TargetReplicaSetSize, *this);
+    }
 
     ASSERT_IFNOT(
         failoverUnitDesc_.MinReplicaSetSize == serviceInfo_->ServiceDescription.MinReplicaSetSize,
@@ -1651,7 +1683,8 @@ LoadBalancingComponent::FailoverUnitDescription FailoverUnit::GetPLBFailoverUnit
         ReplicaDifference,
         this->FailoverUnitFlags,
         IsChangingConfiguration || IsStateful && !CurrentConfiguration.IsPrimaryAvailable,
-        IsQuorumLost());
+        IsQuorumLost(),
+        FailoverUnitDescription.TargetReplicaSetSize);
 }
 
 bool FailoverUnit::get_IsUnhealthy() const
@@ -1808,7 +1841,11 @@ void FailoverUnit::AddDetailedHealthReportDescription(__out std::wstring & extra
 
         writer.WriteLine("  (Showing {0} out of {1} instances. Total available instances: {2})", numReplicasWritten, numTotalReplicas, availableReplicaCount);
     }
- 
+
+    if (ServiceInfoObj->ServiceDescription.ScalingPolicies.size() > 0 && ServiceInfoObj->ServiceDescription.ScalingPolicies[0].IsPartitionScaled())
+    {
+        writer.WriteLine("Autoscaling is enabled for this partition. Desired instance count is {0}", TargetReplicaSetSize);
+    }
     writer.WriteLine();
     writer.Write("For more information see: http://aka.ms/sfhealth");
 }

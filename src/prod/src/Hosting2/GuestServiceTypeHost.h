@@ -8,6 +8,7 @@
 namespace Hosting2
 {
     class GuestServiceTypeHost :
+        public IGuestServiceTypeHost,
         public Common::ComponentRoot,
         public Common::AsyncFabricComponent,
         Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>
@@ -17,10 +18,11 @@ namespace Hosting2
     public:
         GuestServiceTypeHost(
             HostingSubsystemHolder const & hostingHolder,
-            std::wstring const & hostId,
-            std::vector<std::wstring> const & serviceTypesToHost,
+            ApplicationHostContext const & hostContext,
+            std::vector<GuestServiceTypeInfo> const & serviceTypesToHost,
             CodePackageContext const & codePackageContext,
             std::wstring const & runtimeServiceAddress,
+            vector<wstring> && depdendentCodePackages,
             std::vector<ServiceModel::EndpointDescription> && endpointDescriptions);
 
         virtual ~GuestServiceTypeHost();
@@ -31,11 +33,41 @@ namespace Hosting2
             return codePackageContext_.CodePackageInstanceId.ServicePackageInstanceId.PublicActivationId;
         }
 
+        __declspec(property(get = get_HostContext)) ApplicationHostContext const & HostContext;
+        ApplicationHostContext const & get_HostContext() override { return hostContext_; }
+
+        __declspec(property(get = get_CodeContext)) CodePackageContext const & CodeContext;
+        CodePackageContext const & get_CodeContext() override { return codePackageContext_; }
+
         __declspec(property(get = get_HostId)) std::wstring const & HostId;
-        inline std::wstring const & get_HostId() const { return hostId_; }
+        inline std::wstring const & get_HostId() const { return hostContext_.HostId; }
 
         __declspec(property(get = get_RuntimeId)) std::wstring const & RuntimeId;
         inline std::wstring const & get_RuntimeId() const { return runtimeId_; }
+
+        __declspec(property(get = get_Hosting)) HostingSubsystem & Hosting;
+        inline HostingSubsystem & get_Hosting() const { return hostingHolder_.Value; }
+
+        __declspec(property(get = get_ServiceTypes)) std::vector<GuestServiceTypeInfo> const & ServiceTypes;
+        inline std::vector<GuestServiceTypeInfo> const & get_ServiceTypes() const { return serviceTypesToHost_; }
+
+        __declspec(property(get = get_InProcAppHost)) InProcessApplicationHostSPtr const & InProcAppHost;
+        inline InProcessApplicationHostSPtr const & get_InProcAppHost() const { return applicationhost_; }
+
+        __declspec(property(get = get_DependentCodePackages)) std::vector<std::wstring> const & DependentCodePackages;
+        std::vector<std::wstring> const & get_DependentCodePackages() override { return depdendentCodePackages_; }
+
+        __declspec(property(get = get_ActivationManager)) Common::ComPointer<ComGuestServiceCodePackageActivationManager> & ActivationManager;
+        Common::ComPointer<ComGuestServiceCodePackageActivationManager> & get_ActivationManager() override { return activationManager_; }
+
+        __declspec(property(get = get_Endpoints)) std::vector<ServiceModel::EndpointDescription> const & Endpoints;
+        std::vector<ServiceModel::EndpointDescription> const & get_Endpoints() override { return endpointDescriptions_; }
+
+    public:
+        void ProcessCodePackageEvent(CodePackageEventDescription eventDescription);
+
+        Common::ErrorCode GetCodePackageActivator(
+            _Out_ Common::ComPointer<IFabricCodePackageActivator> & codePackageActivator) override;
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -63,15 +95,16 @@ namespace Hosting2
         Common::ErrorCode InitializeApplicationHost();
 
     private:
-        std::wstring const hostId_;
         HostingSubsystemHolder const hostingHolder_;
-        std::vector<std::wstring> const serviceTypesToHost_;
+        ApplicationHostContext const hostContext_;
+        std::vector<GuestServiceTypeInfo> const serviceTypesToHost_;
         CodePackageContext const codePackageContext_;
         std::wstring const runtimeServiceAddress_;
-        std::vector<ServiceModel::EndpointDescription> endpointDescriptions_;
-
         std::wstring runtimeId_;
-        ApplicationHostSPtr applicationhost_;
+        InProcessApplicationHostSPtr applicationhost_;
         Common::ComPointer<ComFabricRuntime> runtime_;
+        Common::ComPointer<ComGuestServiceCodePackageActivationManager> activationManager_;
+        std::vector<std::wstring> depdendentCodePackages_;
+        std::vector<ServiceModel::EndpointDescription> endpointDescriptions_;
     };
 }

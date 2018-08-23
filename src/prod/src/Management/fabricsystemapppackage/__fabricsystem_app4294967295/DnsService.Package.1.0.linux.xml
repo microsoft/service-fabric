@@ -20,6 +20,11 @@
                 </ExeHost>
             </EntryPoint>
         </CodePackage>
+        <!-- 
+        By default, services run as sfuser (LocalUser). DNS service needs to run as root on 
+        Linux platform so as to bind to DNS port 53 (privileged). Hence, DnsUser is mapped to 
+        LocalSystem (root). 
+        --> 
         <RunAsPolicy CodePackageRef="Code" UserRef="DnsUser"/>
     </DigestedCodePackage>
     <DigestedResources RolloutVersion="1.0">

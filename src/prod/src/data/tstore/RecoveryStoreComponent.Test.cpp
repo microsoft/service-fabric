@@ -149,7 +149,7 @@ namespace TStoreTests
             return itemsArray;
         }
 
-        CheckpointFile::SPtr CreateCheckpointFile(
+        ktl::Awaitable<CheckpointFile::SPtr> CreateCheckpointFileAsync(
             __in KStringView & filename, 
             __in ULONG32 fileId,
             __in ULONG32 numItems, 
@@ -169,7 +169,8 @@ namespace TStoreTests
             KSharedPtr<KSharedArray<KeyValuePair<int, KSharedPtr<VersionedItem<ULONG32>>>>> checkpointFileData = GenerateCheckpointData(numItems, keySeedStart, sequenceNumberStart);
             KSharedPtr<KSharedArray<KeyValuePair<int, KSharedPtr<VersionedItem<ULONG32>>>> const> items = checkpointFileData.RawPtr();
 
-            return SyncAwait(CheckpointFile::CreateAsync<int, ULONG32>(
+            StorePerformanceCountersSPtr perfCounters = nullptr;
+            auto checkpointFileSPtr = co_await CheckpointFile::CreateAsync<int, ULONG32>(
                 fileId, 
                 *filepath, 
                 *(GetEnumerator(*items)),
@@ -178,176 +179,216 @@ namespace TStoreTests
                 1,
                 GetAllocator(),
                 *traceId,
-                true));
+                perfCounters,
+                true);
+            co_return checkpointFileSPtr;
          }
 
     private:
         KtlSystem* ktlSystem_;
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> Recover_EmptyMetadataTable_ShouldSucceed_Test()
+        {
+            MetadataTable::SPtr metadataTableSPtr;
+            MetadataTable::Create(GetAllocator(), metadataTableSPtr);
+            RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
+            CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
+            co_await recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None);
+            co_await metadataTableSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_MetadataTableOneEntry_OneKey_ShouldSucceed_Test()
+        {
+            KString::SPtr checkpointFileName;
+            KString::Create(checkpointFileName, GetAllocator(), L"Recover_MetadataTableOneEntry_OneKey_ShouldSucceed_Checkpoint.txt");
+
+            // Create checkpoint file and immediately close since recovery will re-open it
+            auto checkpointFileSPtr = co_await CreateCheckpointFileAsync(*checkpointFileName, 1, 1);
+            co_await checkpointFileSPtr->CloseAsync();
+
+            MetadataTable::SPtr metadataTableSPtr;
+            MetadataTable::Create(GetAllocator(), metadataTableSPtr);
+
+            FileMetadata::SPtr fileMetadataSPtr;
+            FileMetadata::Create(1, *checkpointFileName, 1, 1, 1, 0, true, GetAllocator(), *CreateTraceComponent(), fileMetadataSPtr);
+
+            MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *fileMetadataSPtr);
+
+            RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
+            CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
+
+            co_await recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None);
+
+            co_await metadataTableSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_MetadataTableOneEntry_1000Keys_ShouldSucceed_Test()
+        {
+            KString::SPtr checkpointFileName;
+            KString::Create(checkpointFileName, GetAllocator(), L"Recover_MetadataTableOneEntry_1000Keys_ShouldSucceed_Checkpoint.txt");
+
+            // Create checkpoint file and immediately close since recovery will re-open it
+            auto checkpointFileSPtr = co_await CreateCheckpointFileAsync(*checkpointFileName, 1, 1000);
+            co_await checkpointFileSPtr->CloseAsync();
+
+            MetadataTable::SPtr metadataTableSPtr;
+            MetadataTable::Create(GetAllocator(), metadataTableSPtr);
+
+            FileMetadata::SPtr fileMetadataSPtr;
+            FileMetadata::Create(1, *checkpointFileName, 1000, 1000, 1, 0, true, GetAllocator(), *CreateTraceComponent(), fileMetadataSPtr);
+
+            MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *fileMetadataSPtr);
+
+            RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
+            CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
+
+            co_await recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None);
+
+            co_await metadataTableSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_MetadataTableTwoEntries_SecondEntryReplacesFirst_ShouldSucceed_Test()
+        {
+            KString::SPtr checkpoint1FileName;
+            KString::Create(checkpoint1FileName, GetAllocator(), L"Recover_MetadataTableTwoEntries_SecondEntryReplacesFirst_ShouldSucceed_1");
+
+            KString::SPtr checkpoint2FileName;
+            KString::Create(checkpoint2FileName, GetAllocator(), L"Recover_MetadataTableTwoEntries_SecondEntryReplacesFirst_ShouldSucceed_2");
+
+            // Create checkpoint file and immediately close since recovery will re-open it
+            auto checkpointFile1SPtr = co_await CreateCheckpointFileAsync(*checkpoint1FileName, 1, 100, 0, 0);
+            co_await checkpointFile1SPtr->CloseAsync();
+            auto checkpointFile2SPtr = co_await CreateCheckpointFileAsync(*checkpoint2FileName, 2, 100, 0, 100); // Same keys, newer sequence numbers
+            co_await checkpointFile2SPtr->CloseAsync();
+
+            MetadataTable::SPtr metadataTableSPtr;
+            MetadataTable::Create(GetAllocator(), metadataTableSPtr);
+
+            FileMetadata::SPtr file1MetadataSPtr;
+            FileMetadata::Create(1, *checkpoint1FileName, 100, 100, 1, 0, true, GetAllocator(), *CreateTraceComponent(), file1MetadataSPtr);
+
+            FileMetadata::SPtr file2MetadataSPtr;
+            FileMetadata::Create(2, *checkpoint2FileName, 100, 100, 2, 0, true, GetAllocator(), *CreateTraceComponent(), file2MetadataSPtr);
+
+            MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *file1MetadataSPtr);
+            MetadataManager::AddFile(*(metadataTableSPtr->Table), 2, *file2MetadataSPtr);
+
+            RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
+            CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
+
+            co_await recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None);
+
+            co_await metadataTableSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> Recover_MetadataTableTwoEntries_SecondEntryDoesNotReplaceFirst_ShouldSucceed_Test()
+        {
+            KString::SPtr checkpoint1FileName;
+            KString::Create(checkpoint1FileName, GetAllocator(), L"Recover_MetadataTableTwoEntries_SecondEntryDoesNotReplaceFirst_ShouldSucceed_1");
+
+            KString::SPtr checkpoint2FileName;
+            KString::Create(checkpoint2FileName, GetAllocator(), L"Recover_MetadataTableTwoEntries_SecondEntryDoesNotReplaceFirst_ShouldSucceed_2");
+
+            // Create checkpoint file and immediately close since recovery will re-open it
+            auto checkpointFile1SPtr = co_await CreateCheckpointFileAsync(*checkpoint1FileName, 1, 100, 0, 100);
+            co_await checkpointFile1SPtr->CloseAsync();
+            auto checkpointFile2SPtr = co_await CreateCheckpointFileAsync(*checkpoint2FileName, 2, 100, 0, 0); // Same keys, older sequence numbers
+            co_await checkpointFile2SPtr->CloseAsync();
+
+            MetadataTable::SPtr metadataTableSPtr;
+            MetadataTable::Create(GetAllocator(), metadataTableSPtr);
+
+            FileMetadata::SPtr file1MetadataSPtr;
+            FileMetadata::Create(1, *checkpoint1FileName, 100, 100, 1, 0, true, GetAllocator(), *CreateTraceComponent(), file1MetadataSPtr);
+
+            FileMetadata::SPtr file2MetadataSPtr;
+            FileMetadata::Create(2, *checkpoint2FileName, 100, 100, 2, 0, true, GetAllocator(), *CreateTraceComponent(), file2MetadataSPtr);
+
+            MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *file1MetadataSPtr);
+            MetadataManager::AddFile(*(metadataTableSPtr->Table), 2, *file2MetadataSPtr);
+
+            RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
+            CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
+
+            co_await recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None);
+
+            co_await metadataTableSPtr->CloseAsync();
+            co_return;
+        }
+
+        ktl::Awaitable<void> Enumerate_MetadataTableSingleEntry_100Keys_ShouldSucceed_Test()
+        {
+            KString::SPtr checkpointFileName;
+            KString::Create(checkpointFileName, GetAllocator(), L"Enumerate_MetadataTableSingleEntry_ShouldSucceed");
+
+            // Create checkpoint file and immediately close since recovery will re-open it
+            auto checkpointFileSPtr = co_await CreateCheckpointFileAsync(*checkpointFileName, 1, 100);
+            co_await checkpointFileSPtr->CloseAsync();
+
+            MetadataTable::SPtr metadataTableSPtr;
+            MetadataTable::Create(GetAllocator(), metadataTableSPtr);
+
+            FileMetadata::SPtr fileMetadataSPtr;
+            FileMetadata::Create(1, *checkpointFileName, 1, 1, 1, 0, true, GetAllocator(), *CreateTraceComponent(), fileMetadataSPtr);
+
+            MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *fileMetadataSPtr);
+
+            RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
+            CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
+
+            co_await recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None);
+
+            auto enumeratorSPtr = recoveryStoreComponentSPtr->GetEnumerable();
+
+            ULONG32 count = 0;
+            while (enumeratorSPtr->MoveNext())
+            {
+                auto current = enumeratorSPtr->Current();
+                count++;
+            }
+            CODING_ERROR_ASSERT(count == 100);
+
+            co_await metadataTableSPtr->CloseAsync();
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(RecoveryStoreComponentTestSuite, RecoveryStoreComponentTest)
 
     BOOST_AUTO_TEST_CASE(Recover_EmptyMetadataTable_ShouldSucceed)
     {
-        MetadataTable::SPtr metadataTableSPtr;
-        MetadataTable::Create(GetAllocator(), metadataTableSPtr);
-        RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
-        CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
-        SyncAwait(recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None));
-        SyncAwait(metadataTableSPtr->CloseAsync());
+        SyncAwait(Recover_EmptyMetadataTable_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_MetadataTableOneEntry_OneKey_ShouldSucceed)
     {
-        KString::SPtr checkpointFileName;
-        KString::Create(checkpointFileName, GetAllocator(), L"Recover_MetadataTableOneEntry_OneKey_ShouldSucceed_Checkpoint.txt");
-
-        // Create checkpoint file and immediately close since recovery will re-open it
-        auto checkpointFileSPtr = CreateCheckpointFile(*checkpointFileName, 1, 1);
-        SyncAwait(checkpointFileSPtr->CloseAsync());
-
-        MetadataTable::SPtr metadataTableSPtr;
-        MetadataTable::Create(GetAllocator(), metadataTableSPtr);
-
-        FileMetadata::SPtr fileMetadataSPtr;
-        FileMetadata::Create(1, *checkpointFileName, 1, 1, 1, 0, true, GetAllocator(), *CreateTraceComponent(), fileMetadataSPtr);
-
-        MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *fileMetadataSPtr);
-
-        RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
-        CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
-
-        SyncAwait(recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None));
-
-        SyncAwait(metadataTableSPtr->CloseAsync());
+        SyncAwait(Recover_MetadataTableOneEntry_OneKey_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_MetadataTableOneEntry_1000Keys_ShouldSucceed)
     {
-        KString::SPtr checkpointFileName;
-        KString::Create(checkpointFileName, GetAllocator(), L"Recover_MetadataTableOneEntry_1000Keys_ShouldSucceed_Checkpoint.txt");
-
-        // Create checkpoint file and immediately close since recovery will re-open it
-        auto checkpointFileSPtr = CreateCheckpointFile(*checkpointFileName, 1, 1000);
-        SyncAwait(checkpointFileSPtr->CloseAsync());
-
-        MetadataTable::SPtr metadataTableSPtr;
-        MetadataTable::Create(GetAllocator(), metadataTableSPtr);
-
-        FileMetadata::SPtr fileMetadataSPtr;
-        FileMetadata::Create(1, *checkpointFileName, 1000, 1000, 1, 0, true, GetAllocator(), *CreateTraceComponent(), fileMetadataSPtr);
-
-        MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *fileMetadataSPtr);
-
-        RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
-        CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
-
-        SyncAwait(recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None));
-
-        SyncAwait(metadataTableSPtr->CloseAsync());
+        SyncAwait(Recover_MetadataTableOneEntry_1000Keys_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_MetadataTableTwoEntries_SecondEntryReplacesFirst_ShouldSucceed)
     {
-        KString::SPtr checkpoint1FileName;
-        KString::Create(checkpoint1FileName, GetAllocator(), L"Recover_MetadataTableTwoEntries_SecondEntryReplacesFirst_ShouldSucceed_1");
-
-        KString::SPtr checkpoint2FileName;
-        KString::Create(checkpoint2FileName, GetAllocator(), L"Recover_MetadataTableTwoEntries_SecondEntryReplacesFirst_ShouldSucceed_2");
-
-        // Create checkpoint file and immediately close since recovery will re-open it
-        auto checkpointFile1SPtr = CreateCheckpointFile(*checkpoint1FileName, 1, 100, 0, 0);
-        SyncAwait(checkpointFile1SPtr->CloseAsync());
-        auto checkpointFile2SPtr = CreateCheckpointFile(*checkpoint2FileName, 2, 100, 0, 100); // Same keys, newer sequence numbers
-        SyncAwait(checkpointFile2SPtr->CloseAsync());
-
-        MetadataTable::SPtr metadataTableSPtr;
-        MetadataTable::Create(GetAllocator(), metadataTableSPtr);
-
-        FileMetadata::SPtr file1MetadataSPtr;
-        FileMetadata::Create(1, *checkpoint1FileName, 100, 100, 1, 0, true, GetAllocator(), *CreateTraceComponent(), file1MetadataSPtr);
-
-        FileMetadata::SPtr file2MetadataSPtr;
-        FileMetadata::Create(2, *checkpoint2FileName, 100, 100, 2, 0, true, GetAllocator(), *CreateTraceComponent(), file2MetadataSPtr);
-
-        MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *file1MetadataSPtr);
-        MetadataManager::AddFile(*(metadataTableSPtr->Table), 2, *file2MetadataSPtr);
-
-        RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
-        CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
-
-        SyncAwait(recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None));
-
-        SyncAwait(metadataTableSPtr->CloseAsync());
+        SyncAwait(Recover_MetadataTableTwoEntries_SecondEntryReplacesFirst_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Recover_MetadataTableTwoEntries_SecondEntryDoesNotReplaceFirst_ShouldSucceed)
     {
-        KString::SPtr checkpoint1FileName;
-        KString::Create(checkpoint1FileName, GetAllocator(), L"Recover_MetadataTableTwoEntries_SecondEntryDoesNotReplaceFirst_ShouldSucceed_1");
-
-        KString::SPtr checkpoint2FileName;
-        KString::Create(checkpoint2FileName, GetAllocator(), L"Recover_MetadataTableTwoEntries_SecondEntryDoesNotReplaceFirst_ShouldSucceed_2");
-
-        // Create checkpoint file and immediately close since recovery will re-open it
-        auto checkpointFile1SPtr = CreateCheckpointFile(*checkpoint1FileName, 1, 100, 0, 100);
-        SyncAwait(checkpointFile1SPtr->CloseAsync());
-        auto checkpointFile2SPtr = CreateCheckpointFile(*checkpoint2FileName, 2, 100, 0, 0); // Same keys, older sequence numbers
-        SyncAwait(checkpointFile2SPtr->CloseAsync());
-
-        MetadataTable::SPtr metadataTableSPtr;
-        MetadataTable::Create(GetAllocator(), metadataTableSPtr);
-
-        FileMetadata::SPtr file1MetadataSPtr;
-        FileMetadata::Create(1, *checkpoint1FileName, 100, 100, 1, 0, true, GetAllocator(), *CreateTraceComponent(), file1MetadataSPtr);
-
-        FileMetadata::SPtr file2MetadataSPtr;
-        FileMetadata::Create(2, *checkpoint2FileName, 100, 100, 2, 0, true, GetAllocator(), *CreateTraceComponent(), file2MetadataSPtr);
-
-        MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *file1MetadataSPtr);
-        MetadataManager::AddFile(*(metadataTableSPtr->Table), 2, *file2MetadataSPtr);
-
-        RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
-        CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
-
-        SyncAwait(recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None));
-
-        SyncAwait(metadataTableSPtr->CloseAsync());
+        SyncAwait(Recover_MetadataTableTwoEntries_SecondEntryDoesNotReplaceFirst_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Enumerate_MetadataTableSingleEntry_100Keys_ShouldSucceed)
     {
-        KString::SPtr checkpointFileName;
-        KString::Create(checkpointFileName, GetAllocator(), L"Enumerate_MetadataTableSingleEntry_ShouldSucceed");
-
-        // Create checkpoint file and immediately close since recovery will re-open it
-        auto checkpointFileSPtr = CreateCheckpointFile(*checkpointFileName, 1, 100);
-        SyncAwait(checkpointFileSPtr->CloseAsync());
-
-        MetadataTable::SPtr metadataTableSPtr;
-        MetadataTable::Create(GetAllocator(), metadataTableSPtr);
-
-        FileMetadata::SPtr fileMetadataSPtr;
-        FileMetadata::Create(1, *checkpointFileName, 1, 1, 1, 0, true, GetAllocator(), *CreateTraceComponent(), fileMetadataSPtr);
-
-        MetadataManager::AddFile(*(metadataTableSPtr->Table), 1, *fileMetadataSPtr);
-
-        RecoveryStoreComponent<int, ULONG32>::SPtr recoveryStoreComponentSPtr;
-        CreateRecoveryStoreComponent(*metadataTableSPtr, recoveryStoreComponentSPtr);
-
-        SyncAwait(recoveryStoreComponentSPtr->RecoverAsync(CancellationToken::None));
-
-        auto enumeratorSPtr = recoveryStoreComponentSPtr->GetEnumerable();
-
-        ULONG32 count = 0;
-        while (enumeratorSPtr->MoveNext())
-        {
-            auto current = enumeratorSPtr->Current();
-            count++;
-        }
-        CODING_ERROR_ASSERT(count == 100);
-
-        SyncAwait(metadataTableSPtr->CloseAsync());
+        SyncAwait(Enumerate_MetadataTableSingleEntry_100Keys_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_SUITE_END()

@@ -1330,12 +1330,12 @@ void FailoverUnit::ActivateCompleted(
 
     // see #5790069
     // temporary work around to handle the case when a replica transitions IB->RD
-	// with ToBeActivated not being cleared because FM finds out about RD S due to rebuild
-	// Retry from RA should fix this
+    // with ToBeActivated not being cleared because FM finds out about RD S due to rebuild
+    // Retry from RA should fix this
     if (replica.ToBeActivated)
-	{
-		return;
-	}
+    {
+        return;
+    }
 
     if (ReconfigurationStage == FailoverUnitReconfigurationStage::Phase4_Activate)
     {
@@ -1375,14 +1375,6 @@ bool FailoverUnit::CanProcessDoReconfiguration(
         {
             SendChangeConfiguration(executionContext.Queue);
         }
-
-        return false;
-    }
-    else if (IsUpdateReplicatorConfiguration && LocalReplica.CurrentConfigurationRole == ReplicaRole::Primary)
-    {
-        // The replicator configuration is not up to date and a new reconfiguration is requested
-        // Use this as a retry for that message, the flag will be reset by the UC reply handler
-        SendUpdateConfigurationMessage(executionContext.Queue);
 
         return false;
     }
@@ -1812,43 +1804,43 @@ ReconfigurationType::Enum FailoverUnit::IdentifyReconfigurationType(
         At step 3 the replica is a ready primary and is transitioning to a RD primary so it must not do GetLSN
     */
 
-	/*
-		The check for reconfigState_.Result is added to fix RDBug 10730785. In following scenario, it satisfies the condistions
-		described above but the ReconfigurationType should be Failover instead of Other.
+    /*
+        The check for reconfigState_.Result is added to fix RDBug 10730785. In following scenario, it satisfies the condistions
+        described above but the ReconfigurationType should be Failover instead of Other.
 
-		1. 0/e0 [N/P RD U n1] [N/S RD U n2] [N/S RD U n3] [N/S RD U n4]
-		2. e0/e1 [P/S RD U n1] [S/P RD U n2] [S/S RD U n3] [S/S RD U n4] -> This reconfig failed in Phase4_Activate before it can activate n1 since AppHost crashed
-		3. e0/e2 [P/P RD U n1] [S/S RD D n2] [S/S RD U n3] [S/S RD U n4] -> In this reconfig, RA on n1 getS all GetLSNReply and based on Deactivation Info,
-			it found replica on n3 should be the new primary. It sent ChangeConfiguration to FM. This reconfig completed with result ChangeConfiguration.
-		"
-		2018-1-17 09:52:46.008	RA.SendFM@2aef1317-62b9-46f0-adef-8e99787d33f3	4752	RA on node n1:131606484171798747 sending message ChangeConfiguration to FM, body:
-		2aef1317-62b9-46f0-adef-8e99787d33f3 e0/e2 1
-		N/P RD U n1:131606484171798747 131606487555329532:131606487555329533 -1 -1 1.0:1.0:0
-		N/S RD U n3:131606484171173721 131606487540203284:131606487540203287 6850 6850 1.0:1.0:0
-		N/S RD U n4:131606553122365516 131606546882262452:131606546882262453 -1 -1 1.0:1.0:0
-		N/S RD D n2:131606551685421848 131606551905314463:131606551905314464 -1 -1 1.0:1.0:0
-		"
-		After getting above message, FM send DoReconfiguration to new primary on node n3, which resulted in the next reconfiguration (e0/e3)
-		"
-		2018-1-17 09:52:46.071	FM.FTUpdate@2aef1317-62b9-46f0-adef-8e99787d33f3	5436	Updated: fabric:/persistedservice1 4 1 2aef1317-62b9-46f0-adef-8e99787d33f3 e0/e3 SP 164 2262 2011 8485 false 2018-01-17 09:52:46.008
-		S/P RD U - n3:131606484171173721 131606487540203284:131606487540203287 1 1.0:1.0:0 2018-01-17 09:01:43.387/2018-01-17 09:52:46.008
-		P/S RD U - n1:131606484171798747 131606487555329532:131606487555329533 1 1.0:1.0:0 2018-01-17 09:10:04.070/2018-01-17 09:52:46.008
-		S/S RD U - n4:131606553122365516 131606546882262452:131606546882262453 1 1.0:1.0:0 2018-01-17 09:35:32.622/2018-01-17 09:52:38.867
-		S/S RD D - n2:131606551685421848 131606551905314463:131606551905314464 1 1.0:1.0:0 2018-01-17 09:52:45.211/2018-01-17 09:52:45.211
-		Actions: (DoReconfiguration->n3 [n3 S/P] [n1 P/S] [n4 S/S] [n2 S/S] ChangeConfigurationReply->n1 [S_OK] DoReconfiguration->n3 [n3 S/P] [n1 P/S] [n4 S/S] [n2 S/S])
-		"
-		4. e0/e3 [P/S RD U n1] [S/S RD D n2] [S/P RD U n3] [S/S RD U n4] -> This reconfig failed in Phase2_Catchup due to RAReportFault on node n3
-		5. e0/e4 [P/P RD U n1] [S/S RD D n2] [S/S RD D n3] [N/S RD U n4] -> This DoReconfiguration on n1 should not skip Phase1_GetLSN
-	
-		In last reconfiguration, the type should be Failover, not Other.
-		Add this new check is a short term fix. In long term, we should think about other solutions like recording the "actual" replica state during reconfiguration,
-		instead using previous reconfiguration result to determine reconfiguration type.
-	*/
-	
-	if (reconfigState_.Result != ReconfigurationResult::ChangeConfiguration &&
-		LocalReplica.CurrentConfigurationRole == ReplicaRole::Primary &&
-		LocalReplica.IsReady &&
-		newReplicaDesc.CurrentConfigurationRole == ReplicaRole::Primary)
+        1. 0/e0 [N/P RD U n1] [N/S RD U n2] [N/S RD U n3] [N/S RD U n4]
+        2. e0/e1 [P/S RD U n1] [S/P RD U n2] [S/S RD U n3] [S/S RD U n4] -> This reconfig failed in Phase4_Activate before it can activate n1 since AppHost crashed
+        3. e0/e2 [P/P RD U n1] [S/S RD D n2] [S/S RD U n3] [S/S RD U n4] -> In this reconfig, RA on n1 getS all GetLSNReply and based on Deactivation Info,
+            it found replica on n3 should be the new primary. It sent ChangeConfiguration to FM. This reconfig completed with result ChangeConfiguration.
+        "
+        2018-1-17 09:52:46.008	RA.SendFM@2aef1317-62b9-46f0-adef-8e99787d33f3	4752	RA on node n1:131606484171798747 sending message ChangeConfiguration to FM, body:
+        2aef1317-62b9-46f0-adef-8e99787d33f3 e0/e2 1
+        N/P RD U n1:131606484171798747 131606487555329532:131606487555329533 -1 -1 1.0:1.0:0
+        N/S RD U n3:131606484171173721 131606487540203284:131606487540203287 6850 6850 1.0:1.0:0
+        N/S RD U n4:131606553122365516 131606546882262452:131606546882262453 -1 -1 1.0:1.0:0
+        N/S RD D n2:131606551685421848 131606551905314463:131606551905314464 -1 -1 1.0:1.0:0
+        "
+        After getting above message, FM send DoReconfiguration to new primary on node n3, which resulted in the next reconfiguration (e0/e3)
+        "
+        2018-1-17 09:52:46.071	FM.FTUpdate@2aef1317-62b9-46f0-adef-8e99787d33f3	5436	Updated: fabric:/persistedservice1 4 1 2aef1317-62b9-46f0-adef-8e99787d33f3 e0/e3 SP 164 2262 2011 8485 false 2018-01-17 09:52:46.008
+        S/P RD U - n3:131606484171173721 131606487540203284:131606487540203287 1 1.0:1.0:0 2018-01-17 09:01:43.387/2018-01-17 09:52:46.008
+        P/S RD U - n1:131606484171798747 131606487555329532:131606487555329533 1 1.0:1.0:0 2018-01-17 09:10:04.070/2018-01-17 09:52:46.008
+        S/S RD U - n4:131606553122365516 131606546882262452:131606546882262453 1 1.0:1.0:0 2018-01-17 09:35:32.622/2018-01-17 09:52:38.867
+        S/S RD D - n2:131606551685421848 131606551905314463:131606551905314464 1 1.0:1.0:0 2018-01-17 09:52:45.211/2018-01-17 09:52:45.211
+        Actions: (DoReconfiguration->n3 [n3 S/P] [n1 P/S] [n4 S/S] [n2 S/S] ChangeConfigurationReply->n1 [S_OK] DoReconfiguration->n3 [n3 S/P] [n1 P/S] [n4 S/S] [n2 S/S])
+        "
+        4. e0/e3 [P/S RD U n1] [S/S RD D n2] [S/P RD U n3] [S/S RD U n4] -> This reconfig failed in Phase2_Catchup due to RAReportFault on node n3
+        5. e0/e4 [P/P RD U n1] [S/S RD D n2] [S/S RD D n3] [N/S RD U n4] -> This DoReconfiguration on n1 should not skip Phase1_GetLSN
+    
+        In last reconfiguration, the type should be Failover, not Other.
+        Add this new check is a short term fix. In long term, we should think about other solutions like recording the "actual" replica state during reconfiguration,
+        instead using previous reconfiguration result to determine reconfiguration type.
+    */
+    
+    if (reconfigState_.Result != ReconfigurationResult::ChangeConfiguration &&
+        LocalReplica.CurrentConfigurationRole == ReplicaRole::Primary &&
+        LocalReplica.IsReady &&
+        newReplicaDesc.CurrentConfigurationRole == ReplicaRole::Primary)
     {
         return ReconfigurationType::Other;
     }
@@ -2012,7 +2004,11 @@ void FailoverUnit::RemoveReplicasWithOldDeactivationEpoch(ReplicaPointerList & r
         /*
             Only replicas that have not completed catchup are left at this point
         */
-        TESTASSERT_IF(!failoverUnitDesc_.IsDataLossBetweenPCAndCC, "Must have data loss as no replica was found with a valid deactivation epoch {0}", *this);
+        TESTASSERT_IF(
+            FailoverConfig::GetConfig().IsDataLossLsnCheckEnabled && !failoverUnitDesc_.IsDataLossBetweenPCAndCC, 
+            "Must have data loss as no replica was found with a valid deactivation epoch {0}", 
+            *this);
+
         return;
     }
 
@@ -2032,18 +2028,18 @@ void FailoverUnit::RemoveReplicasWithOldDeactivationEpoch(ReplicaPointerList & r
 int64 FailoverUnit::FindReplicaWithHighestLastLSN(
     ReplicaPointerList const & replicas) const
 {
-	return (*FindReplicaIteratorWithHighestLastLSN(replicas))->ReplicaId;
+    return (*FindReplicaIteratorWithHighestLastLSN(replicas))->ReplicaId;
 }
 
 FailoverUnit::ReplicaPointerList::const_iterator FailoverUnit::FindReplicaIteratorWithHighestLastLSN(
-	ReplicaPointerList const & replicas) const
+    ReplicaPointerList const & replicas) const
 {
-	ASSERT_IF(replicas.empty(), "Cannot be empty {0}", *this);
+    ASSERT_IF(replicas.empty(), "Cannot be empty {0}", *this);
 
-	return max_element(replicas.cbegin(), replicas.cend(), [](Replica const * left, Replica const * right)
-	{
-		return left->GetLastAcknowledgedLSN() < right->GetLastAcknowledgedLSN();
-	});
+    return max_element(replicas.cbegin(), replicas.cend(), [](Replica const * left, Replica const * right)
+    {
+        return left->GetLastAcknowledgedLSN() < right->GetLastAcknowledgedLSN();
+    });
 }
 
 int64 FailoverUnit::FindPrimaryWithBestCatchupCapability(ReplicaPointerList const & replicas) const
@@ -2092,7 +2088,7 @@ int64 FailoverUnit::FindPrimaryWithBestCatchupCapability(ReplicaPointerList cons
         ((localReplicaFirstAcknowledegedLSN > lowestLastLSN + 1) ||
         (localReplicaFirstAcknowledegedLSN == 0)));
 
-	return isFound ? (*candidate)->ReplicaId : LocalReplicaId;
+    return isFound ? (*candidate)->ReplicaId : LocalReplicaId;
  }
 
 bool FailoverUnit::TryFindPrimary(int64 & replicaId) const
@@ -2111,7 +2107,11 @@ bool FailoverUnit::TryFindPrimary(int64 & replicaId) const
 
             Promote the local replica as primary
         */
-        TESTASSERT_IF(!failoverUnitDesc_.IsDataLossBetweenPCAndCC, "Dataloss must have been declared {0}", *this);
+        TESTASSERT_IF(
+            FailoverConfig::GetConfig().IsDataLossLsnCheckEnabled && !failoverUnitDesc_.IsDataLossBetweenPCAndCC, 
+            "Dataloss must have been declared {0}", 
+            *this);
+
         TESTASSERT_IF(!deactivationInfo_.IsDropped, "Deactivation info for local replica must be dropped else it should have been eligible {0}", *this);
         return TryFindPrimaryDuringDataLoss(replicaId);
     }
@@ -2133,15 +2133,15 @@ bool FailoverUnit::TryFindPrimary(int64 & replicaId) const
         return TryFindPrimaryDuringDataLoss(replicaId);
     }
 
-	if (!TryFindPrimary(eligibleReplicas, replicaId))
-	{
-		/*
-			Still could not find a primary
-			Example: The local replica is not eligible and
-			the only eligible replicas are down
-		*/
-		return false;
-	}
+    if (!TryFindPrimary(eligibleReplicas, replicaId))
+    {
+        /*
+            Still could not find a primary
+            Example: The local replica is not eligible and
+            the only eligible replicas are down
+        */
+        return false;
+    }
 
     /*
         The check below should only be performed if it is a failover and the current replica should be the primary. 
@@ -2151,7 +2151,7 @@ bool FailoverUnit::TryFindPrimary(int64 & replicaId) const
     TESTASSERT_IF(reconfigState_.ReconfigType == ReconfigurationType::Other, "Cannot be other {0}", *this);
     if (reconfigState_.ReconfigType == ReconfigurationType::Failover && replicaId == LocalReplicaId)
     {
-		replicaId = FindPrimaryWithBestCatchupCapability(eligibleReplicas);
+        replicaId = FindPrimaryWithBestCatchupCapability(eligibleReplicas);
     }
 
     return true;
@@ -2171,34 +2171,34 @@ bool FailoverUnit::TryFindPrimaryDuringDataLoss(int64 & primary) const
         return true;
     }
 
-	primary = FindReplicaWithHighestLastLSN(eligibleReplicas);
-	return true;
+    primary = FindReplicaWithHighestLastLSN(eligibleReplicas);
+    return true;
 }
 
 bool FailoverUnit::TryFindPrimary(ReplicaPointerList const & eligibleReplicas, int64 & primary) const
 {
-	/*
-		Return the first up replica with the highest LSN
-		If all replica(s) with the highest LSN are down then 
-		return false to not continue and wait here in QL
-	*/
-	auto highestLastLSN = (*FindReplicaIteratorWithHighestLastLSN(eligibleReplicas))->GetLastAcknowledgedLSN();
+    /*
+        Return the first up replica with the highest LSN
+        If all replica(s) with the highest LSN are down then 
+        return false to not continue and wait here in QL
+    */
+    auto highestLastLSN = (*FindReplicaIteratorWithHighestLastLSN(eligibleReplicas))->GetLastAcknowledgedLSN();
 
-	auto candidate = find_if(eligibleReplicas.begin(), eligibleReplicas.end(), [highestLastLSN](Replica const * iter)
-	{
-		return iter->GetLastAcknowledgedLSN() == highestLastLSN && iter->IsUp;
-	});
+    auto candidate = find_if(eligibleReplicas.begin(), eligibleReplicas.end(), [highestLastLSN](Replica const * iter)
+    {
+        return iter->GetLastAcknowledgedLSN() == highestLastLSN && iter->IsUp;
+    });
 
-	if (candidate != eligibleReplicas.end())
-	{
-		primary = (*candidate)->ReplicaId;
-		return true;
-	}
-	else
-	{
-		primary = -1;
-		return false;
-	}
+    if (candidate != eligibleReplicas.end())
+    {
+        primary = (*candidate)->ReplicaId;
+        return true;
+    }
+    else
+    {
+        primary = -1;
+        return false;
+    }
 }
 
 void FailoverUnit::StartPhase1GetLSN(FailoverUnitEntityExecutionContext & executionContext)
@@ -2385,7 +2385,11 @@ void FailoverUnit::UpdateLocalStateOnPhase2Catchup(
 
         if (isNewReplica || wasNotCaughtUpAndIsBeingPromotedToPrimary)
         {
-            TESTASSERT_IF(!failoverUnitDesc_.IsDataLossBetweenPCAndCC, "There must be data loss {0}", *this);
+            TESTASSERT_IF(
+                FailoverConfig::GetConfig().IsDataLossLsnCheckEnabled && !failoverUnitDesc_.IsDataLossBetweenPCAndCC, 
+                "There must be data loss {0}", 
+                *this);
+
             deactivationInfo_ = ReplicaDeactivationInfo(CurrentConfigurationEpoch, LocalReplica.GetLastAcknowledgedLSN());
         }
     }
@@ -2872,10 +2876,10 @@ bool FailoverUnit::SendActivateMessage(Replica const & replica, StateMachineActi
 }
 
 void FailoverUnit::FinishPhase1GetLSN(
-	int64 primaryReplicaId,
+    int64 primaryReplicaId,
     FailoverUnitEntityExecutionContext & executionContext)
 {
-	ASSERT_IF(primaryReplicaId == -1, "Phase1 completed and did not find a primary {0}", *this);
+    ASSERT_IF(primaryReplicaId == -1, "Phase1 completed and did not find a primary {0}", *this);
 
     executionContext.UpdateContextObj.EnableUpdate();
 
@@ -2890,7 +2894,7 @@ void FailoverUnit::FinishPhase1GetLSN(
         */
         auto closeMode = HasPersistedState ? ReplicaCloseMode::Restart : ReplicaCloseMode::Drop;
         TESTASSERT_IF(!CanCloseLocalReplica(closeMode), "Must be able to restart/drop here");
-        StartCloseLocalReplica(closeMode, ReconfigurationAgent::InvalidNode, executionContext);
+        StartCloseLocalReplica(closeMode, ReconfigurationAgent::InvalidNode, executionContext, ActivityDescription::Empty);
         SendReplicaCloseMessage(executionContext.Queue);
         return;
     }
@@ -3008,7 +3012,7 @@ void FailoverUnit::UpdateReplicaSetCountsAtPhase1GetLSN(
 
 ReconfigurationProgressStages::Enum FailoverUnit::CheckPhase1GetLSNProgress(int64 & primaryReplicaId, FailoverUnitEntityExecutionContext & executionContext)
 {
-	primaryReplicaId = -1;
+    primaryReplicaId = -1;
 
     auto & actionQueue = executionContext.Queue;
 
@@ -3094,23 +3098,23 @@ bool FailoverUnit::ShouldSkipPhase3Deactivate(ReplicaStore::ConfigurationReplica
 
         The above translates to the following conditions:
         
-	    - PC = CC
-	    Example: Swap primary, replicas going down at mrss etc
-	
-	    - |PC|=|CC|=n, n is even, |PC ∩ CC|=n −1
-	    Example: [P/P] [S/I] [I/S] [S/S] [S/S]
-	
-	    - PC ⊂ CC, |CC − PC|=1
-	    Any upshift where one replica is being added
-	
-	    - PC ⊂ CC, |CC − PC|=2, |PC|is even
-	    Any upshift where PC is even and two replicas are being added
-	
-	    - CC ⊂ PC, |PC − CC|=1
-	    Any downshift where one replica is being removed
-	
-	    - CC ⊂ PC, |PC − CC|=2, |CC|is even
-	    Any downshift where PC is even and two replicas are being removed
+        - PC = CC
+        Example: Swap primary, replicas going down at mrss etc
+    
+        - |PC|=|CC|=n, n is even, |PC ∩ CC|=n −1
+        Example: [P/P] [S/I] [I/S] [S/S] [S/S]
+    
+        - PC ⊂ CC, |CC − PC|=1
+        Any upshift where one replica is being added
+    
+        - PC ⊂ CC, |CC − PC|=2, |PC|is even
+        Any upshift where PC is even and two replicas are being added
+    
+        - CC ⊂ PC, |PC − CC|=1
+        Any downshift where one replica is being removed
+    
+        - CC ⊂ PC, |PC − CC|=2, |CC|is even
+        Any downshift where PC is even and two replicas are being removed
 
         At this time, the state machine does not support in parallel phase3 and phase4 so only consider
         the first optimization where PC and CC are exactly the same
@@ -3147,7 +3151,7 @@ ReconfigurationProgressStages::Enum FailoverUnit::CheckPhase3DeactivateProgress(
     {
         return ReconfigurationProgressStages::Phase3_PCBelowReadQuorum;
     }
-    else if (!pcBelowReadQuorum && pcUpReplicaWaitingCount != 0)
+    else if (pcUpReplicaWaitingCount != 0)
     {
         return ReconfigurationProgressStages::Phase3_WaitingForReplicas;
     }
@@ -3934,7 +3938,7 @@ void FailoverUnit::ProcessNodeUpAck(
         */
         if (shouldDropReplicaDueToDeletedServiceType)
         {
-            StartCloseLocalReplica(ReplicaCloseMode::ForceDelete, ReconfigurationAgent::InvalidNode, context);
+            StartCloseLocalReplica(ReplicaCloseMode::ForceDelete, ReconfigurationAgent::InvalidNode, context, ActivityDescription::Empty);
         }
         else if (isNodeActivated)
         {
@@ -3973,6 +3977,8 @@ void FailoverUnit::UpdateStateOnLFUMLoad(
     }
     else
     {
+        ASSERT_IF(FailoverConfig::GetConfig().AssertOnNodeIdMismatchAtLfumLoad && currentNodeInstance.Id != LocalReplica.FederationNodeId, "NodeId mismatch on Load. Current: {0}\r\nLocal: {1}", currentNodeInstance, *this);
+
         if (HasPersistedState)
         {
             UpdateStateOnLocalReplicaDown(hosting, queue);
@@ -4403,15 +4409,7 @@ void FailoverUnit::AssertRemoteReplicaInvariants(Replica const & replica) const
     TESTASSERT_IF(replica.ToBeActivated && replica.ToBeDeactivated, "Invalid flags ToBeActivated & ToBeDeactivated. Replica = {0}\r\n. {1}", replica, *this);
     TESTASSERT_IF(replica.ToBeActivated && !replica.IsUp, "Replica Up and ToBeActivated. Replica = {0}\r\n {1}", replica, *this);
     TESTASSERT_IF(replica.ToBeDeactivated && !replica.IsUp, "Replica Up and ToBeDeactivated. Replica = {0}\r\n {1}", replica, *this);
-
-    // RDBug 10031012: weakening the assert to check only if there is no data loss between PC and CC (for feature_data2 branch)
-    TESTASSERT_IF(
-        FailoverUnitDescription.PreviousConfigurationEpoch.IsValid() && 
-        !FailoverUnitDescription.IsDataLossBetweenPCAndCC &&
-        replica.ToBeRestarted && 
-        !replica.IsReady, 
-        "Replica that is not ready marked to be restarted Replica = {0}\r\n{1}", replica, *this);
-
+    TESTASSERT_IF(replica.ToBeRestarted && !replica.IsReady, "Replica that is not ready marked to be restarted Replica = {0}\r\n{1}", replica, *this);
     TESTASSERT_IF(validateICRole && replica.IntermediateConfigurationRole != replica.CurrentConfigurationRole, "IC Role does not match CC Role {0}\r\n{1}", replica, *this);
     TESTASSERT_IF(replica.PreviousConfigurationRole == ReplicaRole::Idle && replica.CurrentConfigurationRole == ReplicaRole::Idle, "Cannot have I/N/I {0}\r\n{1}", replica, *this);
 }
@@ -4918,7 +4916,8 @@ bool FailoverUnit::IsLocalReplicaClosed(
 void FailoverUnit::StartCloseLocalReplica(
     ReplicaCloseMode closeMode,
     Federation::NodeInstance const & senderNode,
-    FailoverUnitEntityExecutionContext & executionContext)
+    FailoverUnitEntityExecutionContext & executionContext,
+    ActivityDescription const & activityDescription)
 {
     auto & queue = executionContext.Queue;
 
@@ -4961,6 +4960,18 @@ void FailoverUnit::StartCloseLocalReplica(
     {
         return;
     }
+
+    Diagnostics::ReplicaStateChangeEventData data(
+        executionContext.NodeInstance.ToString(),
+        FailoverUnitId.Guid,
+        LocalReplicaId,
+        CurrentConfigurationEpoch,
+        ReplicaLifeCycleState::Enum::Closing,
+        LocalReplicaRole,
+        activityDescription);
+
+    auto action = make_unique<Diagnostics::TraceEventStateMachineAction<Diagnostics::ReplicaStateChangeEventData>>(move(data));
+    queue.Enqueue(move(action));
 
     executionContext.UpdateContextObj.EnableInMemoryUpdate();
 
@@ -5228,7 +5239,7 @@ void FailoverUnit::ProcessOpenFailure(
         // and then RA was trying to change role
         // CR has hit the failure threshold so the replica needs to be dropped
         // Since RAP still has the replica as open send a message to CR(None) it and drop
-        StartCloseLocalReplica(ReplicaCloseMode::Abort, ReconfigurationAgent::InvalidNode, executionContext);        
+        StartCloseLocalReplica(ReplicaCloseMode::Abort, ReconfigurationAgent::InvalidNode, executionContext, ActivityDescription::Empty);        
     }
     else
     {
@@ -5384,7 +5395,7 @@ void FailoverUnit::ProcessReplicaCloseReply(
         if (action == RetryableErrorAction::Drop)
         {
             // force drop the replica
-            StartCloseLocalReplica(ReplicaCloseMode::ForceAbort, ReconfigurationAgent::InvalidNode, executionContext);
+            StartCloseLocalReplica(ReplicaCloseMode::ForceAbort, ReconfigurationAgent::InvalidNode, executionContext, ActivityDescription::Empty);
             return;
         }
 
@@ -5420,10 +5431,10 @@ void FailoverUnit::ProcessHealthOnRoleTransition(
     StateMachineActionQueue & queue = executionContext.Queue;
     auto & config = executionContext.Config;
 
-	if (proxyErrorCode.IsError(ErrorCodeValue::RAProxyDemoteCompleted))
-	{
-		TESTASSERT_IF(proxyErrorCode.IsUserApiFailure, "proxyErrorCode {0} should not be UserApiFailure {1}", proxyErrorCode, *this);
-	}
+    if (proxyErrorCode.IsError(ErrorCodeValue::RAProxyDemoteCompleted))
+    {
+        TESTASSERT_IF(proxyErrorCode.IsUserApiFailure, "proxyErrorCode {0} should not be UserApiFailure {1}", proxyErrorCode, *this);
+    }
 
     if (proxyErrorCode.IsUserApiFailure)
     {
@@ -5434,11 +5445,11 @@ void FailoverUnit::ProcessHealthOnRoleTransition(
             // Restart replica
             if (HasPersistedState)
             {
-                StartCloseLocalReplica(ReplicaCloseMode::Restart, ReconfigurationAgent::InvalidNode, executionContext);
+                StartCloseLocalReplica(ReplicaCloseMode::Restart, ReconfigurationAgent::InvalidNode, executionContext, ActivityDescription::Empty);
             }
             else
             {
-                StartCloseLocalReplica(ReplicaCloseMode::Drop, ReconfigurationAgent::InvalidNode, executionContext);
+                StartCloseLocalReplica(ReplicaCloseMode::Drop, ReconfigurationAgent::InvalidNode, executionContext, ActivityDescription::Empty);
             }
         }
         else if (action == RetryableErrorAction::ReportHealthError)

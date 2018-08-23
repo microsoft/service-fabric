@@ -13,12 +13,7 @@ set( LINUX_SOURCES
     ../KeyCheckpointFile.cpp
     ../KeyCheckpointFileProperties.cpp
     ../KeyChunkMetadata.cpp
-    ../LockControlBlock.cpp
-    ../LockHashTable.cpp
-    ../LockHashValue.cpp
-    ../LockManager.cpp
-    ../LockModeComparer.cpp
-    ../LockResourceControlBlock.cpp
+    ../KeySizeEstimator.cpp
     ../MemoryBuffer.cpp
     ../MetadataManager.cpp
     ../MetadataManagerFileProperties.cpp
@@ -27,7 +22,6 @@ set( LINUX_SOURCES
     ../MergeHelper.cpp
     ../NullableStringStateSerializer.cpp
     ../PostMergeMetadataTableInformation.cpp
-    ../PrimeLockRequest.cpp
     ../PropertyChunkMetadata.cpp
     ../SharedBinaryReader.cpp
     ../RedoUndoOperationData.cpp
@@ -43,6 +37,10 @@ set( LINUX_SOURCES
     ../StoreInitializationParameters.cpp
     ../StoreStateProviderFactory.cpp
     ../FileMetaDataComparer.cpp
+    ../StorePerformanceCounters.cpp
+    ../PerformanceCounterWriter.cpp
+    ../CheckpointPerformanceCounterWriter.cpp
+    ../CopyPerformanceCounterWriter.cpp
 )
 
 include_directories("..")

@@ -14,6 +14,10 @@ namespace ClientServerTransport
         // Request actions
         static Common::GlobalWString FileContentAction;
         static Common::GlobalWString FileDownloadAction;
+        static Common::GlobalWString FileCreateAction;
+        static Common::GlobalWString FileUploadCommitAction;
+        static Common::GlobalWString FileUploadCommitAckAction;
+        static Common::GlobalWString FileUploadDeleteSessionAction;
 
         // Reply action
         static Common::GlobalWString ClientOperationSuccessAction;
@@ -93,7 +97,35 @@ namespace ClientServerTransport
             Transport::Actor::Enum actor)
         { 
             return Common::make_unique<FileTransferTcpMessage>(FileContentAction, buffer, sequenceNumber, isLast, operationId, actor);
-        }    
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetFileCreateMessage(
+            Common::Guid const & operationId,
+            Transport::Actor::Enum actor)
+        {
+            return Common::make_unique<FileTransferTcpMessage>(FileCreateAction, operationId, actor);
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetFileUploadCommitMessage(
+            Common::Guid const & operationId,
+            Transport::Actor::Enum actor)
+        {
+            return Common::make_unique<FileTransferTcpMessage>(FileUploadCommitAction, operationId, actor);
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetFileUploadCommitAckMessage(
+            Common::Guid const & operationId,
+            Transport::Actor::Enum actor)
+        {
+            return Common::make_unique<FileTransferTcpMessage>(FileUploadCommitAckAction, operationId, actor);
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetFileUploadDeleteSessionMessage(
+            Common::Guid const & operationId,
+            Transport::Actor::Enum actor)
+        {
+            return Common::make_unique<FileTransferTcpMessage>(FileUploadDeleteSessionAction, operationId, actor);
+        }
 
         static Client::ClientServerRequestMessageUPtr GetFileDownloadMessage(
             std::wstring const & serviceName,

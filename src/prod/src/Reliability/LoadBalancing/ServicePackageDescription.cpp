@@ -15,30 +15,37 @@ GlobalWString const ServicePackageDescription::FormatHeader = make_global<wstrin
 
 ServicePackageDescription::ServicePackageDescription(
     ServiceModel::ServicePackageIdentifier  && servicePackageIdentifier,
-    std::map<std::wstring, double> && requiredResources)
+    std::map<std::wstring, double> && requiredResources,
+    std::vector<std::wstring> && containersImages)
     : servicePackageIdentifier_(move(servicePackageIdentifier)),
-    requiredResources_(move(requiredResources))
+    requiredResources_(move(requiredResources)),
+    containersImages_(move(containersImages))
 {
     CorrectCpuMetric();
 }
 
 ServicePackageDescription::ServicePackageDescription(ServicePackageDescription const& other)
     : servicePackageIdentifier_(other.servicePackageIdentifier_),
-    requiredResources_(other.requiredResources_)
+    requiredResources_(other.requiredResources_),
+    containersImages_(other.containersImages_)
 {
     CorrectCpuMetric();
 }
 
 ServicePackageDescription::ServicePackageDescription(ServicePackageDescription && other)
     : servicePackageIdentifier_(move(other.servicePackageIdentifier_)),
-    requiredResources_(move(other.requiredResources_))
+    requiredResources_(move(other.requiredResources_)),
+    containersImages_(move(other.containersImages_))
 {
     CorrectCpuMetric();
 }
 
-Reliability::LoadBalancingComponent::ServicePackageDescription::ServicePackageDescription(ServicePackageDescription const & sp1, ServicePackageDescription const & sp2)
+Reliability::LoadBalancingComponent::ServicePackageDescription::ServicePackageDescription(
+    ServicePackageDescription const & sp1,
+    ServicePackageDescription const & sp2)
     : servicePackageIdentifier_(sp1.servicePackageIdentifier_),
-    requiredResources_(sp1.requiredResources_)
+    requiredResources_(sp1.requiredResources_),
+    containersImages_(sp1.containersImages_)
 {
     TESTASSERT_IFNOT(sp1.servicePackageIdentifier_ == sp2.servicePackageIdentifier_,
         "Illegal merge of two service packages {0} and {1}",
@@ -57,6 +64,15 @@ Reliability::LoadBalancingComponent::ServicePackageDescription::ServicePackageDe
             sp1ResourceIt->second = resource.second;
         }
     }
+
+    for (auto const& imageName : sp2.containersImages_)
+    {
+        if (std::find(containersImages_.begin(), containersImages_.end(), imageName) == containersImages_.end())
+        {
+            containersImages_.push_back(imageName);
+        }
+    }
+
     CorrectCpuMetric();
 }
 
@@ -66,6 +82,7 @@ ServicePackageDescription & ServicePackageDescription::operator = (ServicePackag
     {
         servicePackageIdentifier_ = move(other.servicePackageIdentifier_);
         requiredResources_ = move(other.requiredResources_);
+        containersImages_ = move(other.containersImages_);
         CorrectCpuMetric();
     }
     return *this;
@@ -74,7 +91,8 @@ ServicePackageDescription & ServicePackageDescription::operator = (ServicePackag
 bool ServicePackageDescription::operator == (ServicePackageDescription const& other) const
 {
     return servicePackageIdentifier_ == other.servicePackageIdentifier_ &&
-        requiredResources_ == other.requiredResources_;
+        requiredResources_ == other.requiredResources_ &&
+        containersImages_ == other.containersImages_;
 }
 
 bool ServicePackageDescription::operator != (ServicePackageDescription const& other) const
@@ -118,7 +136,7 @@ bool ServicePackageDescription::IsAnyResourceReservationIncreased(ServicePackage
 
 void ServicePackageDescription::WriteTo(TextWriter& writer, FormatOptions const &) const
 {
-    writer.Write("{0} {1}", servicePackageIdentifier_, requiredResources_);
+    writer.Write("{0} {1} {2}", servicePackageIdentifier_, requiredResources_, containersImages_);
 }
 
 void ServicePackageDescription::WriteToEtw(uint16 contextSequenceId) const
@@ -143,4 +161,3 @@ void ServicePackageDescription::CorrectCpuMetric()
         correctedRequiredResources_.insert(make_pair(reqResource.first, value));
     }
 }
-

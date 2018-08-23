@@ -41,6 +41,9 @@ namespace Hosting2
         ApplicationHostClosedEventHHandler RegisterApplicationHostClosedEventHandler(ApplicationHostClosedEventHandler const & handler);
         bool UnregisterApplicationHostClosedEventHandler(ApplicationHostClosedEventHHandler const & hHandler);
 
+        AvailableContainerImagesEventHHandler RegisterSendAvailableContainerImagesEventHandler(AvailableContainerImagesEventHandler const & handler);
+        bool UnregisterSendAvailableContainerImagesEventHandler(AvailableContainerImagesEventHHandler const & hHandler);
+
         Common::ErrorCode FindServiceTypeRegistration(
             ServiceModel::VersionedServiceTypeIdentifier const & versionedServiceTypeId,
             Reliability::ServiceDescription const & serviceDescription,
@@ -215,6 +218,9 @@ namespace Hosting2
         __declspec(property(get = get_LocalResourceManager)) LocalResourceManagerUPtr const & LocalResourceManagerObj;
         inline LocalResourceManagerUPtr const & get_LocalResourceManager() const { return this->localResourceManager_; }
 
+        __declspec(property(get = get_LocalSecretServiceManagerObj)) LocalSecretServiceManagerUPtr const & LocalSecretServiceManagerObj;
+        inline LocalSecretServiceManagerUPtr const & get_LocalSecretServiceManagerObj() { return this->localSecretServiceManager_; }
+
         __declspec(property(get=get_DeploymentFolder)) std::wstring const & DeploymentFolder;
         inline std::wstring const & get_DeploymentFolder() const { return deploymentFolder_; }
 
@@ -255,6 +261,9 @@ namespace Hosting2
         __declspec(property(get = get_RepairManagementClient)) Api::IRepairManagementClientPtr const & RepairManagementClient;
         inline Api::IRepairManagementClientPtr const & get_RepairManagementClient() const { return repairMgmtClientPtr_; }
 
+        __declspec(property(get = get_SecretStoreClient)) Api::ISecretStoreClientPtr const & SecretStoreClient;
+        inline Api::ISecretStoreClientPtr const & get_SecretStoreClient() const { return secretStoreClient_; }
+
         __declspec(property(get = get_ApplicationSharedLogSettings)) KtlLogger::SharedLogSettingsSPtr ApplicationSharedLogSettings;
         KtlLogger::SharedLogSettingsSPtr get_ApplicationSharedLogSettings() const;
 
@@ -265,7 +274,7 @@ namespace Hosting2
         inline DnsServiceEnvironmentManagerUPtr const & get_DnsEnvManager() const { return dnsEnvManager_; }
 
         Common::ErrorCode GetDllHostPathAndArguments(std::wstring & dllHostPath, std::wstring & dllHostArguments);
-        Common::ErrorCode GetTypeHostPath(std::wstring & typeHostPath);
+        Common::ErrorCode GetTypeHostPath(std::wstring & typeHostPath, bool useSFReplicatedStore);
 
         static Common::ErrorCode GetDeploymentFolder(
             __in Common::FabricNodeConfig & fabricNodeConfig,
@@ -283,7 +292,7 @@ namespace Hosting2
         bool HostingSubsystem::TryGetExclusiveServicePackageServiceName(
             ServiceModel::ServicePackageIdentifier const & servicePackageId,
             ServiceModel::ServicePackageActivationContext const & activationContext,
-            __out std::wstring & serviceName);
+			__out std::wstring & serviceName) const;
 
         std::wstring GetOrAddServicePackagePublicActivationId(
             ServiceModel::ServicePackageIdentifier const & servicePackageId,
@@ -292,7 +301,7 @@ namespace Hosting2
 
         int64 GetNextSequenceNumber() const;
 
-        void Test_SetFabricActivatorClient(IFabricActivatorClientSPtr && testFabricActivatorClient);
+        void Test_SetFabricActivatorClient(IFabricActivatorClientSPtr && testFabricActivatorClient);      
 
         HostingQueryManagerUPtr & Test_GetHostingQueryManager() { return hostingQueryManager_; }
 
@@ -300,6 +309,7 @@ namespace Hosting2
         uint64 GetResourceNodeCapacity(std::wstring const& resourceName) const;
 
         void Test_SetFabricNodeConfig(Common::FabricNodeConfigSPtr && fabricNodeConfig);
+        void Test_SetSecretStoreClient(Api::ISecretStoreClientPtr secretStoreClient);
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -367,6 +377,7 @@ namespace Hosting2
         Transport::IpcServer & ipcServer_;
         DeletionManagerUPtr deletionManager_;
         LocalResourceManagerUPtr localResourceManager_;
+        LocalSecretServiceManagerUPtr localSecretServiceManager_;
         std::wstring const imageCacheFolder_;
         std::wstring const deploymentFolder_;
         std::wstring const fabricUpgradeDeploymentFolder_;
@@ -382,7 +393,7 @@ namespace Hosting2
         Api::IClientFactoryPtr passThroughClientFactoryPtr_;
         Api::IQueryClientPtr queryClientPtr_;
         Api::IRepairManagementClientPtr repairMgmtClientPtr_;
-
+        Api::ISecretStoreClientPtr secretStoreClient_;
         Common::RwLock hostPathInitializationLock_;
         std::wstring dllHostPath_;
         std::wstring dllHostArguments_;

@@ -11,7 +11,6 @@ using namespace Store;
 
 StringLiteral const TraceComponent("StoreTransaction");
 
-
 // ************************************
 // Helper class for asynchronous commit
 // ************************************
@@ -96,10 +95,10 @@ private:
     {
         if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
-        int64 operationLSN;
+        int64 operationLSN = -1;
         ErrorCode error = storeTx_.Transaction->EndCommit(operation, operationLSN);
 
-        if (error.IsSuccess() && storeDataHolder_)
+        if (error.IsSuccess() && storeDataHolder_ && operationLSN > 0)
         {
             storeDataHolder_->StoreDataObj.SetSequenceNumber(operationLSN);
         }
@@ -304,7 +303,7 @@ ErrorCode StoreTransactionTemplate<TReplicatedStore>::InternalReadExact(
     if (!storeError_.IsSuccess()) { return storeError_; }
 
     vector<byte> buffer;
-    __int64 operationLsn;
+    __int64 operationLsn = -1;
 
     auto error = this->OnReadExact(type, key, buffer, operationLsn);
     if (!error.IsSuccess()) { return error; } 
@@ -315,6 +314,14 @@ ErrorCode StoreTransactionTemplate<TReplicatedStore>::InternalReadExact(
 
         if (error.IsSuccess())
         {
+            if (operationLsn < 0)
+            {
+                TRACE_ERROR_AND_TESTASSERT(
+                    TraceComponent, 
+                    "{0} Invalid LSN during InternalReadExact", 
+                    this->TraceId);
+            }
+
             result->SetSequenceNumber(operationLsn);
             result->ReInitializeTracing(this->ReplicaActivityId);
         }

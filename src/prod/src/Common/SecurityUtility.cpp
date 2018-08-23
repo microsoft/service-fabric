@@ -222,7 +222,7 @@ ErrorCode SecurityUtility::OverwriteFileAcl(
 }
 
 ErrorCode SecurityUtility::InstallCoreFxCertificate(
-	wstring const & userName,
+    wstring const & userName,
     wstring const & x509FindValue,
     wstring const & x509StoreName,
     X509FindType::Enum findType)
@@ -235,7 +235,7 @@ ErrorCode SecurityUtility::InstallCoreFxCertificate(
             TraceTaskCodes::Common,
             TraceType_SecurityUtility,
             "InstallCoreFxCertificate: GetCertificate [{0}] failed: {1}",
-			x509FindValue,
+            x509FindValue,
             error);
 
         return error;
@@ -246,62 +246,68 @@ ErrorCode SecurityUtility::InstallCoreFxCertificate(
         TraceType_SecurityUtility,
         "InstallCoreFxCertificate: {0} certificates found for [{1}].",
         certContexts.size(),
-		x509FindValue);
+        x509FindValue);
 
+    bool errorsFound = false;
     for (auto certContextIter = certContexts.begin(); certContextIter != certContexts.end(); ++certContextIter)
     {
         ErrorCode installCoreFxCertErr = LinuxCryptUtil().InstallCoreFxCertificate(StringUtility::Utf16ToUtf8(userName), *certContextIter);
         if (!installCoreFxCertErr.IsSuccess())
         {
-			wstring thumbprintStr;
-			Thumbprint thumbprint;
-			auto error2 = thumbprint.Initialize(certContextIter->get());
-			if (!error2.IsSuccess())
-			{
-				// Will not return on this error as thumprint is not required after that.
-				TraceWarning(
-					TraceTaskCodes::Common,
-					TraceType_SecurityUtility,
-					"Can't read certificate thumbprint. ErrorCode: {0}", error2);
-			}
-			else
-			{
-				thumbprintStr = thumbprint.PrimaryToString();
-			}
+            wstring thumbprintStr;
+            Thumbprint thumbprint;
+            auto error2 = thumbprint.Initialize(certContextIter->get());
+            if (!error2.IsSuccess())
+            {
+                // Will not return on this error as thumprint is not required after that.
+                TraceWarning(
+                    TraceTaskCodes::Common,
+                    TraceType_SecurityUtility,
+                    "Can't read certificate thumbprint. ErrorCode: {0}", error2);
+            }
+            else
+            {
+                thumbprintStr = thumbprint.PrimaryToString();
+            }
 
-            error = ErrorCode::FromHResult(E_FAIL);
+            errorsFound = true;
             TraceError(
                 TraceTaskCodes::Common,
                 TraceType_SecurityUtility,
                 "Failed to Install CoreFx Certificate [{0}]. Error: {1}",
-				thumbprintStr,
-                error);
+                thumbprintStr,
+                installCoreFxCertErr);
         }
+    }
+
+    if (errorsFound)
+    {
+        error = ErrorCode::FromHResult(E_FAIL);
     }
 
     return error;
 }
 
 ErrorCode SecurityUtility::SetCertificateAcls(
-	wstring const & x509FindValue,
-	wstring const & x509StoreName,
-	X509FindType::Enum findType,
-	vector<SidSPtr> const & sids,
-	DWORD accessMask,
-	TimeSpan const & timeout)
+    wstring const & x509FindValue,
+    wstring const & x509StoreName,
+    X509FindType::Enum findType,
+    vector<SidSPtr> const & sids,
+    DWORD accessMask,
+    TimeSpan const & timeout)
 {
-	vector<string> userNames;
-	return SetCertificateAcls(x509FindValue, x509StoreName, findType, userNames, sids, accessMask, timeout);
+    vector<string> userNames;
+    return SetCertificateAcls(x509FindValue, x509StoreName, findType, userNames, sids, accessMask, timeout);
 }
 
 Common::ErrorCode SecurityUtility::SetCertificateAcls(
-	wstring const & x509FindValue,
-	wstring const & x509StoreName,
-	X509FindType::Enum findType,
-	vector<string> const & userNames,
-	vector<SidSPtr> const & sids,
-	DWORD accessMask,
-	Common::TimeSpan const & timeout)
+    wstring const & x509FindValue,
+    wstring const & x509StoreName,
+    X509FindType::Enum findType,
+    vector<string> const & userNames,
+    vector<SidSPtr> const & sids,
+    DWORD accessMask,
+    Common::TimeSpan const & timeout)
 {
     CertContexts certContexts;
     ErrorCode error = CryptoUtility::GetCertificate(X509StoreLocation::LocalMachine, x509StoreName, X509FindType::EnumToString(findType), x509FindValue, certContexts);
@@ -322,18 +328,24 @@ Common::ErrorCode SecurityUtility::SetCertificateAcls(
         "SetCertificateAcls: {0} certificates found.",
         certContexts.size());
 
+    bool errorsFound = false;
     for (auto certContextIter = certContexts.begin(); certContextIter != certContexts.end(); ++certContextIter)
-    { 
+    {
         ErrorCode setCertAclError = SetCertificateAcls(*certContextIter, userNames, sids, accessMask, timeout);
         if (!setCertAclError.IsSuccess())
         {
-            error = ErrorCode::FromHResult(E_FAIL);
+            errorsFound = true;
             TraceError(
                 TraceTaskCodes::Common,
                 TraceType_SecurityUtility,
                 "Failed to set certificate acls. Error: {0}",
-                error);
+                setCertAclError);
         }
+    }
+
+    if (errorsFound)
+    {
+        error = ErrorCode::FromHResult(E_FAIL);
     }
 
     return error;
@@ -341,7 +353,7 @@ Common::ErrorCode SecurityUtility::SetCertificateAcls(
 
 ErrorCode SecurityUtility::SetCertificateAcls(
     CertContextUPtr & certContextUPtr,
-	vector<string> const & userNames,
+    vector<string> const & userNames,
     vector<SidSPtr> const & sids,
     DWORD accessMask,
     TimeSpan const & timeout)
@@ -354,14 +366,14 @@ ErrorCode SecurityUtility::SetCertificateAcls(
     LinuxCryptUtil().ReadPrivateKeyPaths(certContextUPtr, files);
     files.push_back(filePath);
 
-	for (auto userNameIter = userNames.begin(); userNameIter != userNames.end(); userNameIter++)
-	{
-		string coreFxProvateKeyFilePath;
-		if (LinuxCryptUtil().ReadCoreFxPrivateKeyPath(certContextUPtr, *userNameIter, coreFxProvateKeyFilePath).IsSuccess())
-		{
-			files.push_back(coreFxProvateKeyFilePath);
-		}
-	}
+    for (auto userNameIter = userNames.begin(); userNameIter != userNames.end(); userNameIter++)
+    {
+        string coreFxProvateKeyFilePath;
+        if (LinuxCryptUtil().ReadCoreFxPrivateKeyPath(certContextUPtr, *userNameIter, coreFxProvateKeyFilePath).IsSuccess())
+        {
+            files.push_back(coreFxProvateKeyFilePath);
+        }
+    }
 
     sort(files.begin(), files.end());
     files.erase(unique(files.begin(), files.end()), files.end());
@@ -383,6 +395,8 @@ ErrorCode SecurityUtility::SetCertificateAcls(
             dirName = dirname(pathBuf);
         }
     }
+
+    bool errorsFound = false;
     for (auto it = accessMap.begin(); it != accessMap.end(); it++) {
         string path = it->first;
         unsigned int mask = it->second;
@@ -427,7 +441,7 @@ ErrorCode SecurityUtility::SetCertificateAcls(
                     "SetCertificateAcls: command failed: {0}",
                     cmd);
 
-                error = ErrorCode::FromHResult(E_FAIL);
+                errorsFound = true;
                 break;
             }
             else
@@ -439,6 +453,11 @@ ErrorCode SecurityUtility::SetCertificateAcls(
                     cmd);
             }
         }
+    }
+
+    if (errorsFound)
+    {
+        error = ErrorCode::FromHResult(E_FAIL);
     }
 
     return error;
@@ -1443,19 +1462,24 @@ ErrorCode SecurityUtility::SetCertificateAcls(
         "SetCertificateAcls. {0} Private key files found.",
         privateKeyFiles.size());
 
+    bool errorsFound = false;
     for (auto privateKeyFile : privateKeyFiles)
     {
         auto setPrvKeyFileAclError = SetPrivateKeyFileAcls(privateKeyFile, sids, accessMask, timeout);
         if (!setPrvKeyFileAclError.IsSuccess())
         {
-            error = ErrorCode::FromHResult(E_FAIL);
             TraceError(
                 TraceTaskCodes::Common,
                 TraceType_SecurityUtility,
                 "Failed to set private key file ACL. File:{0}. Error: {1}",
                 privateKeyFile,
-                error);
+                setPrvKeyFileAclError);
         }
+    }
+
+    if (errorsFound)
+    {
+        error = ErrorCode::FromHResult(E_FAIL);
     }
 
     return error;

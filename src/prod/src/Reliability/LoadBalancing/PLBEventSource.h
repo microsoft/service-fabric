@@ -24,17 +24,22 @@
 #include "PLBSchedulerActionType.h"
 #include "FailoverUnitMovementType.h"
 #include "SearchInsight.h"
+#include "AutoScaleStatistics.h"
 #include "RGStatistics.h"
+#include "DefragStatistics.h"
 
 namespace Reliability
 {
     namespace LoadBalancingComponent
     {
-    #define PLB_STRUCTURED_TRACE(traceName, traceId, traceLevel, ...) \
+#define PLB_STRUCTURED_TRACE(traceName, traceId, traceLevel, ...) \
         traceName(taskCode, traceId, #traceName, Common::LogLevel::traceLevel, __VA_ARGS__)
 
-    // Exclude MasterCRM traces from customer info channel.
-    #define PLB_CUSTOMERINFO_TRACE(traceName, traceId, traceLevel, ...) \
+#define PLB_QUERY_TRACE(traceName, traceId, traceType, traceLevel, ...) \
+            traceName(Common::TraceTaskCodes::CRM, traceId, traceType, Common::LogLevel::traceLevel, Common::TraceChannelType::Debug, TRACE_KEYWORDS2(Default, ForQuery), __VA_ARGS__)
+
+        // Exclude MasterCRM traces from customer info channel.
+#define PLB_CUSTOMERINFO_TRACE(traceName, traceId, traceLevel, ...) \
         traceName(taskCode, traceId, #traceName, Common::LogLevel::traceLevel, Common::TraceChannelType::Debug, taskCode == Common::TraceTaskCodes::MCRM ? Common::TraceKeywords::Default : TRACE_KEYWORDS2(Default, CustomerInfo), __VA_ARGS__)
 
         class PLBEventSource
@@ -112,6 +117,7 @@ namespace Reliability
             DECLARE_STRUCTURED_TRACE(UpdateLoadOnNode, Common::Guid, std::wstring, std::wstring, uint, Federation::NodeId);
             DECLARE_STRUCTURED_TRACE(UnplacedReplica, Common::Guid, std::wstring, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(OperationIgnored, Common::Guid, PlbMovementIgnoredReasons, Common::Guid);
+            DECLARE_STRUCTURED_TRACE(OperationIgnoredQuery, Common::Guid, PlbMovementIgnoredReasons, Common::Guid);
             DECLARE_STRUCTURED_TRACE(PLBPrepareStart);
             DECLARE_STRUCTURED_TRACE(PLBPrepareEnd, int64);
             DECLARE_STRUCTURED_TRACE(ResetPartitionLoadStart, Common::Guid);
@@ -120,7 +126,7 @@ namespace Reliability
             DECLARE_STRUCTURED_TRACE(ToggleVerboseServicePlacementHealthReporting, bool);
             DECLARE_STRUCTURED_TRACE(ResourceBalancerEvent, Common::Guid, Common::Guid, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(UpdateServiceDomainId, std::wstring, std::wstring);
-            DECLARE_STRUCTURED_TRACE(UnplacedReplicaDetails, Common::Guid, std::wstring,std::wstring, std::wstring, std::wstring);
+            DECLARE_STRUCTURED_TRACE(UnplacedReplicaDetails, Common::Guid, std::wstring, std::wstring, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(UnplacedPartition, Common::Guid, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(UnswappableUpgradePartition, Common::Guid, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(UnswappableUpgradePartitionDetails, Common::Guid, std::wstring, std::wstring, std::wstring);
@@ -130,7 +136,7 @@ namespace Reliability
             DECLARE_STRUCTURED_TRACE(AddApplicationToServiceDomain, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(ChangeApplicationServiceDomain, std::wstring, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(NotFoundInAppPartitionsMap, std::wstring, std::wstring);
-            DECLARE_STRUCTURED_TRACE(PLBRefreshTiming, uint64, uint64, uint64, uint64, uint64, uint64, uint64);
+            DECLARE_STRUCTURED_TRACE(PLBRefreshTiming, uint64, uint64, uint64, uint64, uint64, uint64, uint64, uint64);
             DECLARE_STRUCTURED_TRACE(PLBProcessPendingUpdates, size_t, uint64);
             DECLARE_STRUCTURED_TRACE(UnfixableConstraintViolation, Common::Guid, std::wstring, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(UnfixableConstraintViolationDetails, Common::Guid, std::wstring, std::wstring, std::wstring, std::wstring);
@@ -147,6 +153,7 @@ namespace Reliability
             DECLARE_STRUCTURED_TRACE(SchedulerAction, std::wstring, Common::Guid, std::wstring, ServiceDomainSchedulerStageDiagnostics);
             DECLARE_STRUCTURED_TRACE(Decision, Common::Guid, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(Operation, Common::Guid, Common::Guid, PLBSchedulerActionType::Trace, FailoverUnitMovementType::Trace, std::wstring, Federation::NodeId, Federation::NodeId);
+            DECLARE_STRUCTURED_TRACE(OperationQuery, Common::Guid, Common::Guid, PLBSchedulerActionType::Trace, FailoverUnitMovementType::Trace, std::wstring, std::wstring, std::wstring);
             DECLARE_STRUCTURED_TRACE(DecisionToken1, uint16, Common::Guid, int32, bool, bool, bool, bool, bool, bool);
             DECLARE_STRUCTURED_TRACE(DecisionToken2, uint16, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool);
             DECLARE_STRUCTURED_TRACE(DecisionToken0, uint16, DecisionToken);
@@ -173,6 +180,13 @@ namespace Reliability
             DECLARE_STRUCTURED_TRACE(SearcherBatchPlacement, size_t, int);
             DECLARE_STRUCTURED_TRACE(DetailedSimulatedAnnealingStatistic, size_t, std::wstring);
             DECLARE_STRUCTURED_TRACE(ResourceGovernanceStatistics, RGStatistics);
+            DECLARE_STRUCTURED_TRACE(AutoScalingStatistics, AutoScaleStatistics);
+            DECLARE_STRUCTURED_TRACE(AutoScalingRepartitionFailed, uint64_t, Common::ErrorCode);
+            DECLARE_STRUCTURED_TRACE(AutoScaler, std::wstring);
+            DECLARE_STRUCTURED_TRACE(DefragmentationStatistics, DefragStatistics);
+            DECLARE_STRUCTURED_TRACE(AvailableImagesFromNode, std::wstring);
+            DECLARE_STRUCTURED_TRACE(UpdateNodeImages, std::wstring);
+
 
             PLBEventSource(Common::TraceTaskCodes::Enum taskCode) :
                 PLB_STRUCTURED_TRACE(UpdateFailoverUnit, 7, Info, "Updating failover unit with {1} actualReplicaDiff:{2} interruptBalancing:{3}", "id", "fuDescription", "actualReplicaDiff", "interrupt"),
@@ -264,7 +278,7 @@ namespace Reliability
                 PLB_STRUCTURED_TRACE(AddApplicationToServiceDomain, 97, Info, "Add application {0} to service domain {1}", "applicationName", "id"),
                 PLB_STRUCTURED_TRACE(ChangeApplicationServiceDomain, 98, Info, "Change application {0} service domain from {1} to {2}", "applicationName", "domain1", "domain2"),
                 PLB_STRUCTURED_TRACE(NotFoundInAppPartitionsMap, 99, Warning, "{0}: application {1} is NOT in application partitions map", "reason", "applicationName"),
-                PLB_STRUCTURED_TRACE(PLBRefreshTiming, 100, Info, "Timing for phases of refresh: total={0} processingUpdates={1} beginRefresh={2} endRefresh={3} snapshot={4} engine={5} remainder={6}", "Total", "PendingUpdates", "BeginRefresh", "EndRefresh", "Snapshot", "Engine", "Remainder"),
+                PLB_STRUCTURED_TRACE(PLBRefreshTiming, 100, Info, "Timing for phases of refresh: total={0} processingUpdates={1} beginRefresh={2} endRefresh={3} snapshot={4} engine={5} autoScaling={6} remainder={7}", "Total", "PendingUpdates", "BeginRefresh", "EndRefresh", "Snapshot", "Engine", "AutoScaling", "Remainder"),
                 PLB_STRUCTURED_TRACE(PLBProcessPendingUpdates, 101, Info, "PLB processed {0} updates in {1} ms", "NumUpdates", "Time"),
                 PLB_STRUCTURED_TRACE(UnfixableConstraintViolation, 102, Info, "{1} {2} Partition {0} constraint violation could not be fixed:{3}", "id", "ServiceName", "Role", "Reasons"),
                 PLB_STRUCTURED_TRACE(UnfixableConstraintViolationDetails, 103, Info, "{1} {2} Partition {0} constraint violation could not be fixed:{3} {4}", "id", "ServiceName", "Role", "Reasons", "Nodes"),
@@ -306,10 +320,18 @@ namespace Reliability
                 PLB_STRUCTURED_TRACE(PLBSearchInsight, 139, Info, "Search insight: \r\n {0}", "searchInsight"),
                 PLB_STRUCTURED_TRACE(SearcherBatchPlacement, 140, Info, "Batch placement would be run; New replica count in placement {0} is greater than configed BatchPlacementReplicaCount {1}", "ReplicaCount", "ConfigCount"),
                 PLB_STRUCTURED_TRACE(DetailedSimulatedAnnealingStatistic, 141, Info, "Detailed simmulated annealing statistic: number of solutions {0}.\r\nTotal successful tries: {1}", "solutionsNumber", "successfulTriesPerSolution"),
-                PLB_STRUCTURED_TRACE(ResourceGovernanceStatistics, 142, Info, "{0}", "rgStatistics")
-                {
+                PLB_STRUCTURED_TRACE(ResourceGovernanceStatistics, 142, Info, "{0}", "rgStatistics"),
+                PLB_QUERY_TRACE(OperationQuery, 143, "_Partitions_Operation", Info, "Operation Details: Phase: {2} Action: {3} Service: {4} DecisionId: {1} PartitionId: {0} SourceNode: {5} TargetNode: {6}", "id", "decisionId", "SchedulerPhase", "Action", "ServiceName", "SourceNode", "TargetNode"),
+                PLB_QUERY_TRACE(OperationIgnoredQuery, 144, "_Partitions_OperationIgnored", Info, "An Operation on FailoverUnit {0} was ignored because of reason '{1}'. Decision Id: {2}.", "FailoverUnitId", "Reason", "DecisionId"),
+                PLB_STRUCTURED_TRACE(AutoScalingStatistics, 145, Info, "{0}", "autoscaleStatistics"),
+                PLB_STRUCTURED_TRACE(AutoScalingRepartitionFailed, 146, Warning, "Repartitioning of service with id{0} failed with error {1}", "serviceId", "error"),
+                PLB_STRUCTURED_TRACE(AutoScaler, 147, Info, "{0}", "message"),
+                PLB_STRUCTURED_TRACE(DefragmentationStatistics, 148, Info, "{0}", "defragStatistics"),
+                PLB_STRUCTURED_TRACE(AvailableImagesFromNode, 149, Info, "{0}", "message"),
+                PLB_STRUCTURED_TRACE(UpdateNodeImages, 150, Info, "{0}", "message")
+            {
 
-                }
+            }
         };
     }
 }

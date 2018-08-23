@@ -8,7 +8,6 @@
 
 #include "Reliability/Replication/reconfig.h"
 #include "client/HealthReportingTransport.h"
-#include "FabricGateway/FabricGatewayConfig.h"
 #include "Management/ApplicationGateway/Http/HttpApplicationGatewayConfig.h"
 #include "FabricClient.h"
 #include "FabricClient_.h"

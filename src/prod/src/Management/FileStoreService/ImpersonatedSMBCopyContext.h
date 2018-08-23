@@ -26,6 +26,8 @@ namespace Management
 
             static bool IsRetryableError(ErrorCode const & error);
 
+            static bool IsRetryableNetworkError(ErrorCode const & error);
+
             ImpersonatedSMBCopyContext(
                 AccessTokensCollection && accessTokens,
                 GetAccessTokensCallback getAccessTokensCallback);

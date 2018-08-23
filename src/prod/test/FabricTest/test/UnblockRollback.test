@@ -80,12 +80,19 @@ verify
 upgradeapp fabric:/app1 V2 Rolling upgrademode=manual
 
 verifyupgradeapp fabric:/app1 upgradedomains=10_ud
+!waitforstate FM.Node.IsUp.10 true
+!waitforstate FM.Replica.IsUp.fabric:/app1/ServiceX.10 true
+!waitforstate FM.Replica.IsUp.fabric:/app1/ServiceX.20 true
+!waitforstate FM.Replica.IsUp.fabric:/app1/ServiceX.30 true
 
 -20
 !waitforstate FM.Node.IsUp.20 false
+!waitforstate FM.Replica.IsUp.fabric:/app1/ServiceX.10 true
+!waitforstate FM.Replica.IsUp.fabric:/app1/ServiceX.20 false
+!waitforstate FM.Replica.IsUp.fabric:/app1/ServiceX.30 true
 
 # Upgrade domain timeout must be greater than the combined healthcheckwait and healthcheckstable durations
-updateappupgrade fabric:/app1 upgrademode=monitored failaction=rollback udtimeout=10 healthcheckretry=8 healthcheckstable=0
+updateappupgrade fabric:/app1 upgrademode=monitored failaction=rollback udtimeout=20 healthcheckretry=8 healthcheckstable=0
 
 setrollbackapp fabric:/app1 V1 failurereason=UpgradeDomainTimeout jsonfailureprogress={"DomainName":"30_ud","NodeUpgradeProgressList":[{"NodeName":"nodeid:30","UpgradePhase":1,"PendingSafetyChecks":[{"SafetyCheck":{"Kind":2}}]}]}
 

@@ -23,6 +23,12 @@ namespace Data
             __declspec(property(get = get_LastInformationRecord)) LogRecordLib::InformationLogRecord::SPtr LastInformationRecord;
             virtual LogRecordLib::InformationLogRecord::SPtr get_LastInformationRecord() const = 0;
 
+            __declspec(property(get = get_LastCompletedEndCheckpointRecord)) LogRecordLib::EndCheckpointLogRecord::SPtr LastCompletedEndCheckpointRecord;
+            virtual LogRecordLib::EndCheckpointLogRecord::SPtr get_LastCompletedEndCheckpointRecord() const = 0;
+
+            __declspec(property(get = get_ProgressVectorValue)) LogRecordLib::ProgressVector::SPtr ProgressVectorValue;
+            virtual LogRecordLib::ProgressVector::SPtr get_ProgressVectorValue() const = 0;
+
             virtual TxnReplicator::Epoch GetEpoch(
                 __in FABRIC_SEQUENCE_NUMBER LSN) const = 0;
 

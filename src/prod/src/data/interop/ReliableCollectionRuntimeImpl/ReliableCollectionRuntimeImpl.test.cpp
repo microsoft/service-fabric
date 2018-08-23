@@ -57,9 +57,11 @@ namespace Data
             Awaitable<Replica::SPtr> CreateReplica();
             void CloseReplica();
 
-            void AddStateProvider(
+            void AddStore(
                 __in KUri::CSPtr &stateProviderName);
-            LONG64 AddKeyValuePair(
+            void AddRCQ(
+                __in KUri::CSPtr &stateProviderName);
+             LONG64 AddKeyValuePair(
                 __in IStateProvider2* stateProvider,
                 __in wstring const &key,
                 __in size_t objHandle,
@@ -217,7 +219,7 @@ namespace Data
             return spName;
         }
 
-        void ReliableCollectionRuntimeImplTests::AddStateProvider(
+        void ReliableCollectionRuntimeImplTests::AddStore(
             __in KUri::CSPtr &stateProviderName)
         {
             NTSTATUS status = STATUS_SUCCESS;
@@ -228,6 +230,24 @@ namespace Data
             KFinally([&] {txn->Dispose(); });
 
             status = SyncAwait(replica_->TxnReplicator->AddAsync(*txn, *stateProviderName, L"0\1\1\n"));
+            THROW_ON_FAILURE(status);
+
+            status = SyncAwait(txn->CommitAsync());
+            THROW_ON_FAILURE(status);
+        }
+
+        void ReliableCollectionRuntimeImplTests::AddRCQ(
+            __in KUri::CSPtr &stateProviderName)
+        {
+            NTSTATUS status = S_OK;
+            Transaction::SPtr txn;
+
+            status = replica_->TxnReplicator->CreateTransaction(txn);
+            THROW_ON_FAILURE(status);
+            KFinally([&] {txn->Dispose(); });
+
+            // Version = 1, StateProvider_Kind = ConcurrentQueue
+            status = SyncAwait(replica_->TxnReplicator->AddAsync(*txn, *stateProviderName, L"0\1\2\n"));
             THROW_ON_FAILURE(status);
 
             status = SyncAwait(txn->CommitAsync());
@@ -288,7 +308,7 @@ namespace Data
                 TxnReplicator::Transaction* txn;
                 HRESULT hresult = TxnReplicator_CreateTransaction(replica_->TxnReplicator.RawPtr(), (TransactionHandle*)&txn);
                 VERIFY_IS_TRUE(SUCCEEDED(hresult));
-                KFinally([&] {Transaction_Release(txn); });
+                KFinally([&] {Transaction_Dispose(txn); Transaction_Release(txn); });
             }
         }
         
@@ -343,52 +363,6 @@ namespace Data
             }
         }
         
-        BOOST_AUTO_TEST_CASE(TxnReplicator_GetOrAddDictAsync_SUCCESS)
-        {
-            wstring testName(L"TxnReplicator_GetOrAddDictAsync_SUCCESS");
-
-            TEST_TRACE_BEGIN(testName)
-            {
-                BOOL synchronouscomplete;
-                BOOL alreadyExist = false;
-                ktl::CancellationTokenSource* cts;
-                wstring stateProviderName(L"fabric:/store/dict1");
-                AwaitableCompletionSource<IStateProvider2*>::SPtr acsGetOrCreateDictAsync = nullptr;
-                IStateProvider2* stateProvider = nullptr;
-                AwaitableCompletionSource<IStateProvider2*>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acsGetOrCreateDictAsync);
-                HRESULT hresult = TxnReplicator_GetOrAddStateProviderAsync(
-                    replica_->TxnReplicator.RawPtr(), 
-                    nullptr,
-                    stateProviderName.c_str(), 
-                    std::numeric_limits<int64>::max(),
-                    (CancellationTokenSourceHandle*)&cts,
-                    (StateProviderHandle*)&stateProvider,
-                    &alreadyExist,
-                    [](void* acsHandle, HRESULT _hresult, StateProviderHandle stateProviderHandle, BOOL exist) {
-                        auto acs = *(ktl::AwaitableCompletionSource<IStateProvider2*>::SPtr*)acsHandle;
-                        if (SUCCEEDED(_hresult))
-                        {
-                            VERIFY_IS_FALSE(exist);
-                            VERIFY_IS_NOT_NULL(stateProviderHandle);
-                            acs->SetResult((IStateProvider2*)stateProviderHandle);
-                        }
-                        else
-                            acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
-                    }, 
-                    &acsGetOrCreateDictAsync, 
-                    &synchronouscomplete);
-                VERIFY_IS_TRUE(SUCCEEDED(hresult));
-                if (!synchronouscomplete)
-                {
-                    //Ignore cts
-                    CancellationTokenSource_Release(cts);
-                    stateProvider = SyncAwait(acsGetOrCreateDictAsync->GetAwaitable());
-                }
-
-                Store_Release(stateProvider);
-            }
-        }
-
         BOOST_AUTO_TEST_CASE(TxnReplicator_AddDictThenGetOrAddAsync_SUCCESS)
         {
             wstring testName(L"TxnReplicator_AddDictThenGetOrAddAsync_SUCCESS");
@@ -399,10 +373,17 @@ namespace Data
                 BOOL alreadyExist = false;
                 ktl::CancellationTokenSource* cts;
                 wstring stateProviderName(L"fabric:/store/dict1");
+                wstring lang = L"CSHARP";
+                wstring langTypeInfo = L"Microsoft.ServiceFabric.ReliableCollections.ReliableDictionaryImpl";
+                StateProvider_Info stateProviderInfo = {
+                    StateProvider_Info_V1_Size,
+                    StateProvider_Kind_Store,
+                    langTypeInfo.c_str()
+                };
                 KUri::CSPtr spName;
                 NTSTATUS status = KUri::Create(KStringView(stateProviderName.c_str()), underlyingSystem_->PagedAllocator(), spName);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
-                AddStateProvider(spName);
+                AddStore(spName);
                 AwaitableCompletionSource<IStateProvider2*>::SPtr acs = nullptr;
                 IStateProvider2* stateProvider = nullptr;
                 AwaitableCompletionSource<IStateProvider2*>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
@@ -410,6 +391,8 @@ namespace Data
                     replica_->TxnReplicator.RawPtr(),
                     nullptr,
                     stateProviderName.c_str(),
+                    lang.c_str(),
+                    &stateProviderInfo,
                     std::numeric_limits<int64>::max(),
                     (CancellationTokenSourceHandle*)&cts,
                     (StoreHandle*)&stateProvider,
@@ -438,7 +421,7 @@ namespace Data
                 Store_Release(stateProvider);
             }
         }
-
+        
         BOOST_AUTO_TEST_CASE(TxnReplicator_AddDictThenGet_SUCCESS)
         {
             wstring testName(L"TxnReplicator_AddDictThenGet_SUCCESS");
@@ -446,7 +429,7 @@ namespace Data
             TEST_TRACE_BEGIN(testName)
             {
                 KUri::CSPtr stateProviderName = GetStateProviderName(3);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
                 IStateProvider2* stateProvider = nullptr;
                 HRESULT hresult = TxnReplicator_GetStateProvider(
                     replica_->TxnReplicator.RawPtr(),
@@ -490,7 +473,7 @@ namespace Data
                 AwaitableCompletionSource<void>::SPtr acs = nullptr;
 
                 KUri::CSPtr stateProviderName = GetStateProviderName(3);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
@@ -505,14 +488,24 @@ namespace Data
                 wstring value(L"value1");
                 AwaitableCompletionSource<void>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
 
-                HRESULT hresult = Store_AddAsync(stateProvider.RawPtr(), txn.RawPtr(), L"key1", 0, (void*)value.c_str(), (uint32_t)(value.size() * sizeof(value[0])), std::numeric_limits<int64>::max(), (CancellationTokenSourceHandle*)&cts,
-                            [](void* acsHandle, HRESULT _hresult) {
-                                AwaitableCompletionSource<void>* acs = (AwaitableCompletionSource<void>*)acsHandle;
-                                if (!SUCCEEDED(_hresult))
-                                    acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
-                                else
-                                    acs->Set();
-                            }, acs.RawPtr(), &synchronouscomplete); // TODO cts should be passed as SPtr ref
+                HRESULT hresult = Store_AddAsync(
+                    stateProvider.RawPtr(), 
+                    txn.RawPtr(), 
+                    L"key1", 
+                    0, 
+                    (void*)value.c_str(), 
+                    (uint32_t)((value.size() + 1) * sizeof(value[0])), 
+                    std::numeric_limits<int64>::max(), 
+                    (CancellationTokenSourceHandle*)&cts,
+                    [](void* acsHandle, HRESULT _hresult) {
+                        AwaitableCompletionSource<void>* acs = (AwaitableCompletionSource<void>*)acsHandle;
+                        if (!SUCCEEDED(_hresult))
+                            acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
+                        else
+                            acs->Set();
+                    }, 
+                    acs.RawPtr(), 
+                    &synchronouscomplete); // TODO cts should be passed as SPtr ref
 
                 VERIFY_IS_TRUE(SUCCEEDED(hresult));
 
@@ -544,12 +537,11 @@ namespace Data
                 AwaitableCompletionSource<bool>::SPtr acs = nullptr;
 
                 KUri::CSPtr stateProviderName = GetStateProviderName(4);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
                 VERIFY_IS_NOT_NULL(stateProvider);
-                //VERIFY_ARE_EQUAL(*stateProviderName, stateProvider->GetName());
 
                 AddKeyValuePair(stateProvider.RawPtr(), L"key1", 1, L"value1");
 
@@ -586,7 +578,7 @@ namespace Data
             }
         }
 
-		BOOST_AUTO_TEST_CASE(Store_ContainsKeyAsync_SUCCESS)
+	BOOST_AUTO_TEST_CASE(Store_ContainsKeyAsync_SUCCESS)
         {
             wstring testName(L"Store_ContainsKeyAsync_SUCCESS");
 
@@ -600,7 +592,7 @@ namespace Data
                 AwaitableCompletionSource<bool>::SPtr acs = nullptr;
 
                 KUri::CSPtr stateProviderName = GetStateProviderName(4);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
@@ -654,10 +646,10 @@ namespace Data
                 ktl::CancellationTokenSource* cts;
                 BOOL synchronouscomplete;
                 IStateProvider2::SPtr stateProvider;
-                AwaitableCompletionSource<tuple<bool, size_t, byte*, uint32_t, LONG64>>::SPtr acs = nullptr;
+                AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t, LONG64>>::SPtr acs = nullptr;
 
                 KUri::CSPtr stateProviderName = GetStateProviderName(0);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
@@ -671,7 +663,7 @@ namespace Data
                 THROW_ON_FAILURE(status);
                 KFinally([&] {txn->Dispose(); });
 
-                AwaitableCompletionSource<tuple<bool, size_t, byte*, uint32_t, LONG64>>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
+                AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t, LONG64>>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
 
                 HRESULT hresult = Store_ConditionalGetAsync(
                     stateProvider.RawPtr(),
@@ -685,7 +677,7 @@ namespace Data
                     (CancellationTokenSourceHandle*)&cts,
                     &found,
                     [](void* acsHandle, HRESULT _hresult, BOOL r, size_t handle, void* bytes, uint32_t bytesLength, LONG64 lsn) {
-                        auto acs = (AwaitableCompletionSource<tuple<bool, size_t, byte*, uint32_t, LONG64>>*)acsHandle;
+                        auto acs = (AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t, LONG64>>*)acsHandle;
                         if (!SUCCEEDED(_hresult))
                             acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
                         else
@@ -764,7 +756,7 @@ namespace Data
                     },
                     context);                                    
 
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
                 VERIFY_IS_TRUE(context->added);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
@@ -785,7 +777,7 @@ namespace Data
                 IStateProvider2::SPtr stateProvider;
 
                 KUri::CSPtr stateProviderName = GetStateProviderName(0);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
@@ -840,7 +832,7 @@ namespace Data
                 IStateProvider2::SPtr stateProvider;
 
                 KUri::CSPtr stateProviderName = GetStateProviderName(0);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
@@ -903,7 +895,7 @@ namespace Data
                 AwaitableCompletionSource<Data::IEnumerator<KString::SPtr>*>::SPtr acs = nullptr;
 
                 KUri::CSPtr stateProviderName = GetStateProviderName(1);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
@@ -978,7 +970,7 @@ namespace Data
                 AwaitableCompletionSource<Utilities::IAsyncEnumerator<Data::KeyValuePair<KString::SPtr, Data::KeyValuePair<LONG64, KBuffer::SPtr>>>*>::SPtr acs = nullptr;
 
                 KUri::CSPtr stateProviderName = GetStateProviderName(2);
-                AddStateProvider(stateProviderName);
+                AddStore(stateProviderName);
 
                 status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
@@ -1071,9 +1063,9 @@ namespace Data
             }
         }
 
-        BOOST_AUTO_TEST_CASE(TxnReplicator_AddStateProvider2_SUCCESS)
+        BOOST_AUTO_TEST_CASE(TxnReplicator_AddStateProvider_SUCCESS)
         {
-            wstring testName(L"TxnReplicator_AddStateProvider2_SUCCESS");
+            wstring testName(L"TxnReplicator_AddStateProvider_SUCCESS");
 
             TEST_TRACE_BEGIN(testName)
             {
@@ -1095,7 +1087,7 @@ namespace Data
 
                 AwaitableCompletionSource<void>::SPtr acs = nullptr;
                 AwaitableCompletionSource<void>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
-                HRESULT hresult = TxnReplicator_AddStateProviderAsync2(
+                HRESULT hresult = TxnReplicator_AddStateProviderAsync(
                     replica_->TxnReplicator.RawPtr(),
                     txn.RawPtr(),
                     stateProviderName.c_str(),
@@ -1147,10 +1139,10 @@ namespace Data
                 VERIFY_IS_TRUE(stateProvider_Info.LangMetadata == nullptr);
             }
         }
-        
-        BOOST_AUTO_TEST_CASE(TxnReplicator_GetOrAddStateProvider2_SUCCESS)
+       
+        BOOST_AUTO_TEST_CASE(TxnReplicator_GetOrAddStateProvider_SUCCESS)
         {
-            wstring testName(L"TxnReplicator_GetOrAddStateProvider2_SUCCESS");
+            wstring testName(L"TxnReplicator_GetOrAddStateProvider_SUCCESS");
 
             TEST_TRACE_BEGIN(testName)
             {
@@ -1174,7 +1166,7 @@ namespace Data
 
                 AwaitableCompletionSource<IStateProvider2*>::SPtr acs = nullptr;
                 AwaitableCompletionSource<IStateProvider2*>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
-                HRESULT hresult = TxnReplicator_GetOrAddStateProviderAsync2(
+                HRESULT hresult = TxnReplicator_GetOrAddStateProviderAsync(
                     replica_->TxnReplicator.RawPtr(),
                     txn.RawPtr(),
                     stateProviderName.c_str(),
@@ -1222,11 +1214,471 @@ namespace Data
                 StateProvider_Release(stateProviderHandle);
             }
         }
+        
+        BOOST_AUTO_TEST_CASE(TxnReplicator_GetInfo_SUCCESS)
+        {
+            wstring testName(L"TxnReplicator_GetInfo_SUCCESS");
 
+            TEST_TRACE_BEGIN(testName)
+            {
+                TxnReplicator_Info info1, info2;
+                info1.Size = sizeof(TxnReplicator_Info);
+                HRESULT hr = TxnReplicator_GetInfo(replica_->TxnReplicator.RawPtr(), &info1);
+                VERIFY_IS_TRUE(hr == S_OK);
+
+                wstring stateProviderName(L"fabric:/store/dict1");
+                KUri::CSPtr spName;
+                NTSTATUS status = KUri::Create(KStringView(stateProviderName.c_str()), underlyingSystem_->PagedAllocator(), spName);
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+                AddStore(spName);
+
+
+                info2.Size = sizeof(TxnReplicator_Info);
+                hr = TxnReplicator_GetInfo(replica_->TxnReplicator.RawPtr(), &info2);
+                VERIFY_IS_TRUE(hr == S_OK);
+
+                VERIFY_IS_TRUE(info2.LastStableSequenceNumber > info1.LastStableSequenceNumber);
+                VERIFY_IS_TRUE(info2.LastCommittedSequenceNumber > info1.LastCommittedSequenceNumber);
+                VERIFY_IS_TRUE(info2.CurrentEpoch.DataLossNumber == info1.CurrentEpoch.DataLossNumber);
+                VERIFY_IS_TRUE(info2.CurrentEpoch.ConfigurationNumber == info1.CurrentEpoch.ConfigurationNumber);
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(TxnReplicator_GetOrAddConcurrentQueueAsync_SUCCESS)
+        {
+            wstring testName(L"TxnReplicator_GetOrAddConcurrentQueueAsync_SUCCESS");
+
+            TEST_TRACE_BEGIN(testName)
+            {
+                BOOL synchronouscomplete;
+                ktl::CancellationTokenSource* cts;
+                StateProviderHandle stateProviderHandle;
+                BOOL alreadyExists;
+                wstring stateProviderName(L"fabric:/rcq/rcq1");
+                wstring lang = L"CSHARP";
+                wstring langTypeInfo = L"Microsoft.ServiceFabric.ReliableCollections.ReliableConcurrentQueueImpl";
+                StateProvider_Info stateProviderInfo = {
+                    StateProvider_Info_V1_Size,
+                    StateProvider_Kind_ConcurrentQueue,
+                    langTypeInfo.c_str()
+                };
+
+                Transaction::SPtr txn;
+                NTSTATUS status = replica_->TxnReplicator->CreateTransaction(txn);
+                THROW_ON_FAILURE(status);
+                KFinally([&] {txn->Dispose(); });
+
+                AwaitableCompletionSource<IStateProvider2*>::SPtr acs = nullptr;
+                AwaitableCompletionSource<IStateProvider2*>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
+                HRESULT hresult = TxnReplicator_GetOrAddStateProviderAsync(
+                    replica_->TxnReplicator.RawPtr(),
+                    txn.RawPtr(),
+                    stateProviderName.c_str(),
+                    lang.c_str(),
+                    &stateProviderInfo,
+                    std::numeric_limits<int64>::max(),
+                    (CancellationTokenSourceHandle*)&cts,
+                    &stateProviderHandle,
+                    &alreadyExists,
+                    [](void* acsHandle, HRESULT _hresult, StateProviderHandle stateProviderHandle, BOOL exist) {
+                        auto acs = *(ktl::AwaitableCompletionSource<IStateProvider2*>::SPtr*)acsHandle;
+                        if (SUCCEEDED(_hresult))
+                        {
+                            VERIFY_IS_TRUE(exist);
+                            VERIFY_IS_NOT_NULL(stateProviderHandle);
+                            acs->SetResult((IStateProvider2*)stateProviderHandle);
+                        }
+                        else
+                            acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
+                    },
+                    acs.RawPtr(),
+                    &synchronouscomplete);
+                VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                if (!synchronouscomplete)
+                {
+                    //Ignore cts
+                    CancellationTokenSource_Release(cts);
+                    stateProviderHandle = SyncAwait(acs->GetAwaitable());
+                }
+
+                VERIFY_IS_TRUE(stateProviderHandle != nullptr);
+                VERIFY_IS_TRUE(alreadyExists == false);
+
+                status = SyncAwait(txn->CommitAsync());
+                THROW_ON_FAILURE(status);
+
+                StateProvider_Info stateProvider_Info;
+                stateProvider_Info.Size = sizeof(StateProvider_Info);
+                hresult = StateProvider_GetInfo(stateProviderHandle, lang.c_str(), &stateProvider_Info);
+                VERIFY_IS_TRUE(SUCCEEDED(hresult));
+
+                VERIFY_IS_TRUE(stateProvider_Info.Kind == StateProvider_Kind_ConcurrentQueue);
+                VERIFY_IS_TRUE(langTypeInfo.compare(stateProvider_Info.LangMetadata) == 0);
+
+                StateProvider_Release(stateProviderHandle);
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(ConcurrentQueue_EnqueueDequeueAsync_SUCCESS)
+        {
+            wstring testName(L"ConcurrentQueue_EnqueueDequeueAsync_SUCCESS");
+
+            TEST_TRACE_BEGIN(testName)
+            {
+                NTSTATUS status;
+                BOOL synchronouscomplete;
+                ktl::CancellationTokenSource* cts;
+                IStateProvider2::SPtr stateProvider;
+
+                //
+                // Create RCQ
+                //
+                KUri::CSPtr stateProviderName = GetStateProviderName(3);
+                AddRCQ(stateProviderName);
+
+                status = replica_->TxnReplicator->Get(*stateProviderName, stateProvider);
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+                VERIFY_IS_NOT_NULL(stateProvider);
+
+                //
+                // EnqueueAsync
+                //
+                wstring value(L"value1");
+                {
+                    Transaction::SPtr txn;
+                    status = replica_->TxnReplicator->CreateTransaction(txn);
+                    THROW_ON_FAILURE(status);
+                    KFinally([&] {txn->Dispose(); });
+
+                    AwaitableCompletionSource<void>::SPtr acs = nullptr;
+                    AwaitableCompletionSource<void>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
+
+                    HRESULT hresult = ConcurrentQueue_EnqueueAsync(
+                        stateProvider.RawPtr(), 
+                        txn.RawPtr(), 
+                        0,              // object handle
+                        (void*)value.c_str(), 
+                        (uint32_t)((value.size() + 1) * sizeof(value[0])), 
+                        std::numeric_limits<int64>::max(), 
+                        (CancellationTokenSourceHandle*)&cts,
+                        [](void* acsHandle, HRESULT _hresult) {
+                            AwaitableCompletionSource<void>* acs = (AwaitableCompletionSource<void>*)acsHandle;
+                            if (!SUCCEEDED(_hresult))
+                                acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
+                            else
+                                acs->Set();
+                        }, 
+                        acs.RawPtr(), 
+                        &synchronouscomplete);
+
+                    VERIFY_IS_TRUE(SUCCEEDED(hresult));
+
+                    if (!synchronouscomplete)
+                    {
+                        CancellationTokenSource_Release(cts);
+                        SyncAwait(acs->GetAwaitable());
+                    }
+
+                    SyncAwait(txn->CommitAsync());
+
+                    LONG64 count;
+                    hresult = ConcurrentQueue_GetCount(stateProvider.RawPtr(), &count);
+                    VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                    VERIFY_IS_TRUE(count == 1);
+                }
+
+                //
+                // TryDequeueAsync
+                //
+                {
+                    Transaction::SPtr txn;
+                    status = replica_->TxnReplicator->CreateTransaction(txn);
+                    THROW_ON_FAILURE(status);
+                    KFinally([&] {txn->Dispose(); });
+
+                    AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t>>::SPtr acs = nullptr;
+                    AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t>>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
+
+                    Buffer buffer;
+                    BOOL succeeded;
+                    byte *bytesValue;
+                    uint32_t bytesValueLength;
+                    size_t objectHandle;
+
+                    HRESULT hresult = ConcurrentQueue_TryDequeueAsync(
+                        stateProvider.RawPtr(),
+                        txn.RawPtr(), 
+                        std::numeric_limits<int64>::max(), 
+                        &objectHandle,
+                        &buffer, 
+                        (CancellationTokenSourceHandle*)&cts,
+                        &succeeded,
+                        [](void* acsHandle, HRESULT _hresult, BOOL _succeeded, size_t handle, void* bytes, uint32_t bytesLength) {
+                            auto acs = (AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t>>*)acsHandle;
+                            if (!SUCCEEDED(_hresult))
+                                acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
+                            else
+                                acs->SetResult(make_tuple(_succeeded, handle, (byte*)bytes, bytesLength));
+                        }, 
+                        acs.RawPtr(), 
+                        &synchronouscomplete);
+
+                    VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                    if (synchronouscomplete)
+                    {
+                        bytesValue = (byte*)buffer.Bytes;
+                        bytesValueLength = buffer.Length;
+                    }
+                    else
+                    {
+                        CancellationTokenSource_Release(cts);
+                        tie(succeeded, objectHandle, bytesValue, bytesValueLength) = SyncAwait(acs->GetAwaitable());
+                    }
+
+                    VERIFY_IS_TRUE(succeeded);
+
+#ifdef FEATURE_CACHE_OBJHANDLE             
+                    VERIFY_IS_TRUE(objectHandle == 1);
+#endif
+
+                    wstring str((LPCWSTR)bytesValue);
+                    VERIFY_IS_TRUE(str.compare(L"value1") == 0);
+                    VERIFY_IS_TRUE(bytesValueLength == (str.length() + 1) * (sizeof(unsigned short)));
+
+                    SyncAwait(txn->CommitAsync());
+                    if (synchronouscomplete)
+                        Buffer_Release(buffer.Handle);
+
+                    LONG64 count;
+                    hresult = ConcurrentQueue_GetCount(stateProvider.RawPtr(), &count);
+                    VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                    VERIFY_IS_TRUE(count == 0);
+                }
+
+                //
+                // TryDequeueAsync on empty queue
+                //
+                {
+                    Transaction::SPtr txn;
+                    status = replica_->TxnReplicator->CreateTransaction(txn);
+                    THROW_ON_FAILURE(status);
+                    KFinally([&] {txn->Dispose(); });
+
+                    AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t>>::SPtr acs = nullptr;
+                    AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t>>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
+
+                    Buffer buffer;
+                    BOOL succeeded;
+                    byte *bytesValue;
+                    uint32_t bytesValueLength;
+                    size_t objectHandle;
+
+                    HRESULT hresult = ConcurrentQueue_TryDequeueAsync(
+                        stateProvider.RawPtr(),
+                        txn.RawPtr(), 
+                        std::numeric_limits<int64>::max(), 
+                        &objectHandle,
+                        &buffer, 
+                        (CancellationTokenSourceHandle*)&cts,
+                        &succeeded,
+                        [](void* acsHandle, HRESULT _hresult, BOOL _succeeded, size_t handle, void* bytes, uint32_t bytesLength) {
+                            auto acs = (AwaitableCompletionSource<tuple<BOOL, size_t, byte*, uint32_t>>*)acsHandle;
+                            if (!SUCCEEDED(_hresult))
+                                acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
+                            else
+                                acs->SetResult(make_tuple(_succeeded, handle, (byte*)bytes, bytesLength));
+                        }, 
+                        acs.RawPtr(), 
+                        &synchronouscomplete);
+
+                    VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                    if (synchronouscomplete)
+                    {
+                        bytesValue = (byte*)buffer.Bytes;
+                        bytesValueLength = buffer.Length;
+                    }
+                    else
+                    {
+                        CancellationTokenSource_Release(cts);
+                        tie(succeeded, objectHandle, bytesValue, bytesValueLength) = SyncAwait(acs->GetAwaitable());
+                    }
+
+                    VERIFY_IS_TRUE(!succeeded);
+
+                    SyncAwait(txn->CommitAsync());
+
+                    LONG64 count;
+                    hresult = ConcurrentQueue_GetCount(stateProvider.RawPtr(), &count);
+                    VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                    VERIFY_IS_TRUE(count == 0);
+                }
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(TxnReplicator_AddStateProvider_Compat_SUCCESS)
+        {
+            wstring testName(L"TxnReplicator_AddStateProvider_Compat_SUCCESS");
+
+            TEST_TRACE_BEGIN(testName)
+            {
+                NTSTATUS status;
+                HRESULT hresult;
+                BOOL synchronouscomplete;
+                ktl::CancellationTokenSource* cts;
+                wstring stateProviderName(L"fabric:/store/dict1");
+                wstring lang = L"CSHARP";
+                wstring langTypeInfo = L"Microsoft.ServiceFabric.Data.Collections.DistributedDictionary";
+                StateProvider_Info stateProviderInfo = {
+                    StateProvider_Info_V1_Size,
+                    StateProvider_Kind_ReliableDictionary_Compat,
+                    langTypeInfo.c_str()
+                };
+
+                Transaction::SPtr txn;
+                status = replica_->TxnReplicator->CreateTransaction(txn);
+                THROW_ON_FAILURE(status);
+                KFinally([&] {txn->Dispose(); });
+
+                AwaitableCompletionSource<void>::SPtr acs = nullptr;
+                AwaitableCompletionSource<void>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
+                hresult = TxnReplicator_AddStateProviderAsync(
+                    replica_->TxnReplicator.RawPtr(),
+                    txn.RawPtr(),
+                    stateProviderName.c_str(),
+                    lang.c_str(),
+                    &stateProviderInfo,
+                    std::numeric_limits<int64>::max(),
+                    (CancellationTokenSourceHandle*)&cts,
+                    [](void* acsHandle, HRESULT _hresult) {
+                        AwaitableCompletionSource<void>* acs = (AwaitableCompletionSource<void>*)acsHandle;
+                        if (SUCCEEDED(_hresult))
+                            acs->Set();
+                        else
+                            acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
+                    },
+                    acs.RawPtr(),
+                    &synchronouscomplete);
+                VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                if (!synchronouscomplete)
+                {
+                    //Ignore cts
+                    CancellationTokenSource_Release(cts);
+                    SyncAwait(acs->GetAwaitable());
+                }
+
+                status = SyncAwait(txn->CommitAsync());
+                THROW_ON_FAILURE(status);
+
+                IStateProvider2* stateProvider;
+                StateProvider_Info stateProvider_Info;
+
+                hresult = TxnReplicator_GetStateProvider(replica_->TxnReplicator.RawPtr(), stateProviderName.c_str(), (StateProviderHandle*)&stateProvider);
+                VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                     
+                stateProvider_Info.Size = sizeof(StateProvider_Info);
+                hresult = StateProvider_GetInfo(stateProvider, lang.c_str(), &stateProvider_Info);
+                VERIFY_IS_TRUE(SUCCEEDED(hresult));
+
+                VERIFY_IS_TRUE(stateProvider_Info.Kind == StateProvider_Kind_Store);
+                VERIFY_IS_TRUE(langTypeInfo.compare(stateProvider_Info.LangMetadata) == 0);
+
+                // Verify that you can add to state provider
+                AddKeyValuePair(stateProvider, L"key1", 1, L"value1");
+
+                StateProvider_Release(stateProvider);
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(TxnReplicator_GetOrAddStateProvider_Compat_SUCCESS)
+        {
+            wstring testName(L"TxnReplicator_GetOrAddStateProvider_Compat_SUCCESS");
+
+            TEST_TRACE_BEGIN(testName)
+            {
+                NTSTATUS status;
+                HRESULT hresult;
+                BOOL synchronouscomplete;
+                ktl::CancellationTokenSource* cts;
+                wstring stateProviderName(L"fabric:/TxnReplicator_GetOrAddStateProvider_Compat/dict1");
+                wstring lang = L"CSHARP";
+                wstring langTypeInfo = L"Microsoft.ServiceFabric.Data.Collections.DistributedDictionary";
+                StateProviderHandle stateProviderHandle;
+                BOOL alreadyExists;
+                StateProvider_Info stateProviderInfo = {
+                    StateProvider_Info_V1_Size,
+                    StateProvider_Kind_ReliableDictionary_Compat,
+                    langTypeInfo.c_str()
+                };
+
+                Transaction::SPtr txn;
+                status = replica_->TxnReplicator->CreateTransaction(txn);
+                THROW_ON_FAILURE(status);
+                KFinally([&] {txn->Dispose(); });
+
+                AwaitableCompletionSource<IStateProvider2*>::SPtr acs = nullptr;
+                AwaitableCompletionSource<IStateProvider2*>::Create(underlyingSystem_->PagedAllocator(), TEST_CEXPORT_TAG, acs);
+                hresult = TxnReplicator_GetOrAddStateProviderAsync(
+                    replica_->TxnReplicator.RawPtr(),
+                    nullptr,
+                    stateProviderName.c_str(),
+                    lang.c_str(),
+                    &stateProviderInfo,
+                    std::numeric_limits<int64>::max(),
+                    (CancellationTokenSourceHandle*)&cts,
+                    &stateProviderHandle,
+                    &alreadyExists,
+                    [](void* acsHandle, HRESULT _hresult, StateProviderHandle stateProviderHandle, BOOL exist) {
+                        auto acs = *(ktl::AwaitableCompletionSource<IStateProvider2*>::SPtr*)acsHandle;
+                        if (SUCCEEDED(_hresult))
+                        {
+                            VERIFY_IS_TRUE(exist == false);
+                            VERIFY_IS_NOT_NULL(stateProviderHandle);
+                            acs->SetResult((IStateProvider2*)stateProviderHandle);
+                        }
+                        else
+                            acs->SetException(ktl::Exception(StatusConverter::Convert(_hresult)));
+                    },
+                    &acs,
+                    &synchronouscomplete);
+                VERIFY_IS_TRUE(SUCCEEDED(hresult));
+                if (!synchronouscomplete)
+                {
+                    //Ignore cts
+                    CancellationTokenSource_Release(cts);
+                    stateProviderHandle = SyncAwait(acs->GetAwaitable());
+                }
+                else
+                {
+                    VERIFY_IS_TRUE(alreadyExists == false);
+                }
+
+                VERIFY_IS_TRUE(stateProviderHandle != nullptr);
+                
+
+                StateProvider_Info stateProvider_Info;
+                stateProvider_Info.Size = sizeof(StateProvider_Info);
+                hresult = StateProvider_GetInfo(stateProviderHandle, lang.c_str(), &stateProvider_Info);
+                VERIFY_IS_TRUE(SUCCEEDED(hresult));
+
+                VERIFY_IS_TRUE(stateProvider_Info.Kind == StateProvider_Kind_Store);
+                VERIFY_IS_TRUE(langTypeInfo.compare(stateProvider_Info.LangMetadata) == 0);
+
+                // Verify that you can add to state provider
+                AddKeyValuePair((IStateProvider2*)stateProviderHandle, L"key1", 1, L"value1");
+
+                status = SyncAwait(txn->CommitAsync());
+                THROW_ON_FAILURE(status);
+
+                StateProvider_Release(stateProviderHandle);
+            }
+        } 
 
         BOOST_AUTO_TEST_SUITE_END();
     }
 }
+
+// Dummy methods required to satisfy link of ReliableCollectionRuntimeImpl.test.exe
+// These methods are not used at runtime for ReliableCollectionRuntimeImpl.test.exe
 
 HRESULT FabricGetActivationContext( 
     REFIID riid,
@@ -1247,6 +1699,19 @@ HRESULT FabricLoadReplicatorSettings(
     UNREFERENCED_PARAMETER(configurationPackageName);
     UNREFERENCED_PARAMETER(sectionName);
     UNREFERENCED_PARAMETER(replicatorSettings);
+    return S_OK;
+}
+
+HRESULT FabricLoadSecurityCredentials(
+    IFabricCodePackageActivationContext const * codePackageActivationContext,
+    LPCWSTR configurationPackageName,
+    LPCWSTR sectionName,
+    IFabricSecurityCredentialsResult ** securitySettings)
+{
+    UNREFERENCED_PARAMETER(codePackageActivationContext);
+    UNREFERENCED_PARAMETER(configurationPackageName);
+    UNREFERENCED_PARAMETER(sectionName);
+    UNREFERENCED_PARAMETER(securitySettings);
     return S_OK;
 }
 

@@ -2,6 +2,7 @@ set( LINUX_SOURCES
     ../HealthReportFactory.cpp
     ../ApplicationInfo.cpp
     ../ApplicationUpgradeContext.cpp
+    ../AutoScalingTask.cpp
     ../BackgroundManager.cpp
     ../BackgroundThreadContext.cpp
     ../CacheEntry.cpp

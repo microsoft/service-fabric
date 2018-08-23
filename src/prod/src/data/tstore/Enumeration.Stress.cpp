@@ -29,14 +29,6 @@ namespace TStoreTests
             Cleanup();
         }
 
-        Random GetRandom()
-        {
-            auto seed = Stopwatch::Now().Ticks;
-            Random random(static_cast<int>(seed));
-            cout << "Random seed (use this seed to reproduce test failures): " << seed << endl;
-            return random;
-        }
-
         Task CheckpointTask(__in AwaitableCompletionSource<void> & completionSignal)
         {
             co_await Store->PerformCheckpointAsync(CancellationToken::None);
@@ -58,18 +50,18 @@ namespace TStoreTests
 
         ktl::Awaitable<void> PopulateAsync(
             __in ULONG32 count, 
-            __in Random & random,
+            __in RandomGenerator & random,
             __in FastSkipList<LONG64, LONG64> & resultsDict)
         {
             co_await CorHelper::ThreadPoolThread(GetAllocator().GetKtlSystem().DefaultThreadPool());
 
             for (ULONG32 i = 0; i < count; i++)
             {
-                LONG64 key = random.Next();
+                LONG64 key = static_cast<LONG64>(random.Next());
                 {
                     auto txn = CreateWriteTransaction();
 
-                    LONG64 value = random.Next();
+                    LONG64 value = static_cast<LONG64>(random.Next());
 
                     txn->StoreTransactionSPtr->LockingHints = LockingHints::Enum::UpdateLock;
                     bool exists = co_await Store->ContainsKeyAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
@@ -92,7 +84,7 @@ namespace TStoreTests
 
         ktl::Awaitable<void> PopulateAsync(
             __in ULONG32 count,
-            __in Random & random,
+            __in RandomGenerator & random,
             __in FastSkipList<LONG64, LONG64> & resultsDict,
             __in ULONG32 numTasks)
         {
@@ -133,7 +125,6 @@ namespace TStoreTests
                     auto txn = CreateWriteTransaction();
                     bool removed = SyncAwait(Store->ConditionalRemoveAsync(*txn->StoreTransactionSPtr, row.Key, DefaultTimeout, CancellationToken::None));
                     CODING_ERROR_ASSERT(removed);
-                    SyncAwait(txn->CommitAsync());
                 }
             }
         }
@@ -180,7 +171,7 @@ namespace TStoreTests
     {
         ULONG32 NumberOfItemsPerComponent = 256'000;
 
-        Random random = GetRandom();
+        RandomGenerator random;
 
         FastSkipList<LONG64, LONG64>::SPtr expectedState = nullptr;
         FastSkipList<LONG64, LONG64>::Create(Store->KeyComparerSPtr, GetAllocator(), expectedState);
@@ -218,7 +209,8 @@ namespace TStoreTests
 
             try
             {
-                LONG64 randomKey = random.Next();
+                LONG64 randomKey = static_cast<LONG64>(random.Next());
+
                 SyncAwait(Store->AddAsync(*testTxn->StoreTransactionSPtr, randomKey, randomKey, DefaultTimeout, CancellationToken::None));
                 expectedState->Add(randomKey, randomKey);
             }

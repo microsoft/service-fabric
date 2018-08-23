@@ -1,0 +1,1252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2011 sp1 (x64) (http://www.altova.com) by Vipul Modi (MICROSOFT CORPORATION) -->
+<!-- WARNING: Any Updates to the model must update both native and managed ServiceModel in the code. -->
+<xs:schema xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://schemas.microsoft.com/2011/01/fabric" elementFormDefault="qualified" attributeFormDefault="unqualified" xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:wsman="http://schemas.xmlsoap.org/ws/2005/02/management">
+  <s:Envelope>
+    <s:Header>
+      <wsa:To>http://1.2.3.4/wsman/$/wsman:microsoft.os.windows/storage/logicalDisk</wsa:To>
+      <wsa:ReplyTo>
+        <wsa:Address>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</wsa:Address>
+      </wsa:ReplyTo>
+      <wsa:Action s:mustUnderstand="true">http://schemas.xmlsoap.org/ws/2004/01/transfer/Get</wsa:Action>
+      <wsa:MessageID s:mustUnderstand="true" id="f12">uuid:d9726315-bc91-430b-9ed8-ce5ffb858a87</wsa:MessageID>
+      <wsman:SelectorSet>
+        <wsman:Selector Name="Drive">c:</wsman:Selector>
+      </wsman:SelectorSet>
+      <wsman:OperationTimeout>PT30S</wsman:OperationTimeout>
+      <wsman:Locale xml:lang="en-us"/>
+    </s:Header>
+    <s:Body>
+      <wsman:Rename>
+        <wsa:EndpointReference>
+          <wsa:Address>abc</wsa:Address>
+          <wsman:SelectorSet>
+            <wsman:Selector Name="Drive">c:</wsman:Selector>
+          </wsman:SelectorSet>
+          <wsman:SendBookmarks/>
+          <wsman:Bookmark/>
+        </wsa:EndpointReference>
+      </wsman:Rename>
+      <wsman:XmlFragment xml:lang="en-us">22</wsman:XmlFragment>
+    </s:Body>
+  </s:Envelope>
+  <xs:annotation>
+		<xs:documentation>Windows Fabric Service Model. (Version: 0.7.5.3) (Author: Vipul Modi)</xs:documentation>
+	</xs:annotation>
+	<!-- Copyright (c) Microsoft Corporation.  All rights reserved.-->
+	<xs:element name="ClusterManifest" type="ClusterManifestType">
+		<xs:annotation>
+			<xs:documentation>Describes a Windows Fabric Cluster.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="ApplicationManifest" type="ApplicationManifestType">
+		<xs:annotation>
+			<xs:documentation>Describes a manifest for an application type that can be instantiated in a Windows Fabric cluster. The manifest allows use of parameters to customize application instances for a particular cluster.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="ServiceManifest" type="ServiceManifestType">
+		<xs:annotation>
+			<xs:documentation>Manifest of a packaged Windows Fabric service. A Service Manifest is a unit of deployment and activation. It consists of independetly upgradable units of code, configuration and data.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="Settings" type="SettingsType">
+		<xs:annotation>
+			<xs:documentation>Defiles configurable settings for the code packages of a service. Windows Fabric does not interpret the settings, however it makes them available via Runtime APIs for use by the code components.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<!-- ****** Types used by ClusterManifest *****-->
+	<xs:complexType name="ClusterManifestType">
+		<xs:annotation>
+			<xs:documentation>Describes a Windows Fabric Cluster.</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="NodeTypes" minOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="NodeType" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>Describe a node type.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:all>
+									<xs:element name="PlacementProperties" minOccurs="0">
+										<xs:annotation>
+											<xs:documentation>Describe the properties for this NodeType that will be used as placement constraints</xs:documentation>
+										</xs:annotation>
+										<xs:complexType>
+											<xs:sequence>
+												<xs:element name="Property" type="KeyValuePairType" minOccurs="0" maxOccurs="unbounded"/>
+											</xs:sequence>
+										</xs:complexType>
+									</xs:element>
+									<xs:element name="Capacities" minOccurs="0">
+										<xs:annotation>
+											<xs:documentation>The capacities of various metrics for this node type</xs:documentation>
+										</xs:annotation>
+										<xs:complexType>
+											<xs:sequence>
+												<xs:element name="Capacity" type="KeyValuePairType" minOccurs="0" maxOccurs="unbounded"/>
+											</xs:sequence>
+										</xs:complexType>
+									</xs:element>
+									<xs:element name="CapacityRatios" minOccurs="0">
+										<xs:annotation>
+											<xs:documentation>The capacity ratios of various metrics for this node type</xs:documentation>
+										</xs:annotation>
+										<xs:complexType>
+											<xs:sequence>
+												<xs:element name="CapcacityRatio" type="KeyValuePairType" minOccurs="0" maxOccurs="unbounded"/>
+											</xs:sequence>
+										</xs:complexType>
+									</xs:element>
+								</xs:all>
+								<xs:attribute name="Name" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation>Name of the NodeType</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Infrastructure">
+				<xs:complexType>
+					<xs:choice>
+						<xs:element name="WindowsServer">
+							<xs:complexType>
+								<xs:complexContent>
+									<xs:extension base="WindowsInfrastructureType">
+										<xs:attribute name="IsScaleMin" type="xs:boolean" default="false"/>
+									</xs:extension>
+								</xs:complexContent>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="WindowsAzure">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="NodeList">
+										<xs:complexType>
+											<xs:sequence>
+												<xs:element name="Node" type="AzureNodeType" maxOccurs="unbounded"/>
+											</xs:sequence>
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
+								<xs:attribute name="SeedNodeCount" type="xs:int" use="required">
+									<xs:annotation>
+										<xs:documentation>The number of seed nodes in this azure deployment.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:complexType>
+						</xs:element>
+					</xs:choice>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="FabricSettings">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="SettingsOverridesType">
+							<xs:sequence>
+								<xs:element name="Security" minOccurs="0">
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="ClusterSecurity" type="SecurityType" minOccurs="0"/>
+											<xs:element name="ClientSecurity" type="SecurityType" minOccurs="0"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+							</xs:sequence>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+		</xs:all>
+		<xs:attribute name="Name" use="required">
+			<xs:annotation>
+				<xs:documentation>Name of the Cluster.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Version" use="required">
+			<xs:annotation>
+				<xs:documentation>User defined version string for the cluster manifest document.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Description">
+			<xs:annotation>
+				<xs:documentation>Description for the Cluster Manifest.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="WindowsInfrastructureType">
+		<xs:sequence>
+			<xs:element name="NodeList">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Node" type="FabricNodeType" maxOccurs="unbounded"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FabricCertificateType">
+		<xs:annotation>
+			<xs:documentation>This is Used only when credential is X509. This specifies the certificate StoreLocation.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="X509StoreName" type="xs:string" default="My">
+			<xs:annotation>
+				<xs:documentation>This is Used only when credential is X509. This specifies the certificate StoreName.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="X509StoreLocation" default="LocalMachine">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="CurrentUser"/>
+					<xs:enumeration value="LocalMachine"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="X509FindType" default="FindByThumbprint">
+			<xs:annotation>
+				<xs:documentation>This is Used only when credential is X509. This specifies how to find the certificate whether by the name or the thumbprint </xs:documentation>
+			</xs:annotation>
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="FindByThumbprint"/>
+					<xs:enumeration value="FindBySubjectName"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="X509FindValue" use="required">
+			<xs:annotation>
+				<xs:documentation>This is Used only when credential is X509. This is the  actual name or thumbprint of the certificate.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="FabricNodeType">
+		<xs:annotation>
+			<xs:documentation>Describes a Windows Fabric Node.</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="Endpoints" type="FabricEndpointsType"/>
+			<xs:element name="Certificates" type="CertificatesType" minOccurs="0"/>
+		</xs:all>
+		<xs:attribute name="NodeName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>The name of the node instance.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="IPAddressOrFQDN" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>The IP address or the FQDN of the machine on which to place this node.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="IsSeedNode" type="xs:boolean" default="false">
+			<xs:annotation>
+				<xs:documentation>A flag indicating whether or not this node is a seed node.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="NodeTypeRef" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Name of the nodetype defined in the NodeTypes section.       </xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="FaultDomain" type="xs:anyURI" use="optional">
+			<xs:annotation>
+				<xs:documentation>
+The fault domain of this node.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="UpgradeDomain" type="xs:anyURI" use="optional">
+			<xs:annotation>
+				<xs:documentation>
+The upgrade domain of this node.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="FabricEndpointsType">
+		<xs:all>
+			<xs:element name="ClientConnectionEndpoint" type="InputEndpointType"/>
+			<xs:element name="LeaseDriverEndpoint" type="InternalEndpointType"/>
+			<xs:element name="ClusterConnectionEndpoint" type="InternalEndpointType"/>
+			<xs:element name="ServiceConnectionEndpoint" type="InternalEndpointType" minOccurs="0"/>
+			<xs:element name="ClusterManagerReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
+			<xs:element name="NamingReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
+			<xs:element name="FailoverManagerReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
+			<xs:element name="DefaultReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
+			<xs:element name="ApplicationEndpoints" minOccurs="0">
+				<xs:complexType>
+					<xs:attribute name="StartPort" type="xs:int" use="required"/>
+					<xs:attribute name="EndPort" type="xs:int" use="required"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="KeyValuePairType">
+		<xs:attributeGroup ref="NameValuePair"/>
+	</xs:complexType>
+	<xs:complexType name="InternalEndpointType">
+		<xs:attribute name="Port" type="xs:int" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="InputEndpointType">
+		<xs:attribute name="Port" type="xs:int" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="DefaultInternalEndpointType">
+		<xs:attribute name="Port" type="xs:int" use="optional" default="0"/>
+	</xs:complexType>
+	<xs:complexType name="SecurityType">
+		<xs:attribute name="CredentialType" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="None"/>
+					<xs:enumeration value="X509"/>
+					<xs:enumeration value="Windows"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="ProtectionLevel" default="None">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="None"/>
+					<xs:enumeration value="Sign"/>
+					<xs:enumeration value="EncryptAndSign"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="AllowedSubjectNames" type="xs:string"/>
+	</xs:complexType>
+	<!-- ****** Types used by Application Manifest *****-->
+	<xs:complexType name="ApplicationManifestType">
+		<xs:annotation>
+			<xs:documentation>Describes a manifest for an application type that can be instantiated in a Windows Fabric cluster. The manifest allows use of parameters to customize application instances for a particular cluster.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Description" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Text describing this application.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Parameters" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Declares the parameters that are used in this application manifests. The value of these parameters can be supplied at the time of creating instances of this application.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Parameter" block="" minOccurs="0" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:attribute name="Name" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation>Name of the paramter that can be used in the manifest as "[Name]" to delay bind the value at application creation time.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+								<xs:attribute name="DefaultValue" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation>Default value fo the parameter.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="ServiceManifestImport" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Imports the manifest created by the service developer.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="ServiceManifestRef" type="ServiceManifestRefType"/>
+						<xs:element name="ConfigOverrides" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Describes the configuration overrides for the imported service manifest.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="ConfigOverride" type="ConfigOverrideType" minOccurs="0" maxOccurs="unbounded"/>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="Policies" type="ServiceManifestImportPoliciesType" minOccurs="0"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="ServiceTemplates" type="ServiceTemplatesType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Defines the templates for creating the service types from the imported manifest.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="RequiredServices" type="RequiredServicesType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Lists the services that are required for functioning of any instances of this application type.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Principals" type="SecurityPrincipalsType" minOccurs="0"/>
+			<xs:element name="Policies" type="ApplicationPoliciesType" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attributeGroup ref="ApplicationManifestAttrGroup"/>
+	</xs:complexType>
+	<xs:complexType name="ServiceManifestRefType">
+		<xs:annotation>
+			<xs:documentation>Imports the service manifest by reference. Currently the service manifest file must be present in the build package under the folder named as the name of the service manifest and must be called "ServiceManifest.xml"</xs:documentation>
+		</xs:annotation>
+		<xs:attributeGroup ref="ServiceManifestIdentifier"/>
+	</xs:complexType>
+	<xs:complexType name="ServiceManifestImportPoliciesType">
+		<xs:annotation>
+			<xs:documentation>Describes Policies to be applied on the imported Service Manifest.</xs:documentation>
+		</xs:annotation>
+		<xs:choice minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="RunAsPolicy" type="RunAsPolicyType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Specifies the user a code package will run as.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="SecurityAccessPolicy" type="SecurityAccessPolicyType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Grants permissions to a principal  on an environment resource alredy defined at service level.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="RunAsPolicyType">
+		<xs:attribute name="CodePackageRef" type="xs:string" use="required"/>
+		<xs:attribute name="UserRef" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="SecurityAccessPolicyType">
+		<xs:attribute name="ResourceRef" type="xs:string" use="required"/>
+		<xs:attribute name="PrincipalRef" type="xs:string" use="required"/>
+		<xs:attribute name="GrantRights" default="Read">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="Read"/>
+					<xs:enumeration value="Change"/>
+					<xs:enumeration value="Full"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="ConfigOverrideType">
+		<xs:annotation>
+			<xs:documentation>Describes the configuration overrides for a particular config package in the imported service manifest.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Settings" type="SettingsOverridesType" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attribute name="Name" use="required">
+			<xs:annotation>
+				<xs:documentation>Name of the config package that is defined in the referenced ServiceManifest that is being overridden.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="SettingsOverridesType">
+		<xs:annotation>
+			<xs:documentation>Describes user defined settings for a ServiceComponent or an Application. It consists of one or more sections of key-value pairs.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Section" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>A user defined named section.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Parameter" minOccurs="0" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:attributeGroup ref="NameValuePair"/>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+					<xs:attribute name="Name" type="xs:string" use="required"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ServiceTemplatesType">
+		<xs:annotation>
+			<xs:documentation>Defines the templates to be used while creating services that are part of the applications of this type.</xs:documentation>
+		</xs:annotation>
+		<xs:choice minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="StatelessService" type="StatelessServiceType"/>
+			<xs:element name="StatefulService" type="StatefulServiceType"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="RequiredServicesType">
+		<xs:annotation>
+			<xs:documentation>Lists the services that are required for functioning of any instances of this application type.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Service" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:choice minOccurs="0">
+						<xs:element name="StatelessService" type="StatelessServiceType"/>
+						<xs:element name="StatefulService" type="StatefulServiceType"/>
+					</xs:choice>
+					<xs:attribute name="Name" type="xs:string" use="required">
+						<xs:annotation>
+							<xs:documentation>Name of this service relative to this application NameUri. Fully qualified Name of the service is a combination of NameUri of the Application and this Name.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ServiceType">
+		<xs:annotation>
+			<xs:documentation>Base type that defines a Windows Fabric service.</xs:documentation>
+		</xs:annotation>
+		<xs:group ref="PartitionDescriptionGroup"/>
+		<xs:attribute name="ScaleoutCount" type="xs:string" default="0">
+			<xs:annotation>
+				<xs:documentation>Maximum number of nodes that can be used. This should be a non-negative integer.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="ServiceTypeName" use="required">
+			<xs:annotation>
+				<xs:documentation>Name of the ServiceType that needs to be instantiated.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="StatelessServiceType">
+		<xs:annotation>
+			<xs:documentation>Defines a stateless service.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="ServiceType">
+				<xs:attribute name="InstanceCount" type="xs:string" default="1">
+					<xs:annotation>
+						<xs:documentation>Number of instances required for this stateless service (positive integer).</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="StatefulServiceType">
+		<xs:annotation>
+			<xs:documentation>Defines a stateful service.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="ServiceType">
+				<xs:attribute name="TargetReplicaSetSize" type="xs:string" default="1">
+					<xs:annotation>
+						<xs:documentation>Desired replica set size for the partitions of this stateful service (positive integer). This is a target size; a replica set is still functional with less members. The quorum is a majority based quorum.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="MinReplicaSetSize" type="xs:string" default="1">
+					<xs:annotation>
+						<xs:documentation>Minimum number of members required in the replica set to allow writes (positive integer less than TargetReplicaSetSize). </xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:group name="PartitionDescriptionGroup">
+		<xs:annotation>
+			<xs:documentation>Defines the partitioning scheme for a service.</xs:documentation>
+		</xs:annotation>
+		<xs:choice>
+			<xs:element name="SingletonPartition">
+				<xs:annotation>
+					<xs:documentation>Declares that this service has only one partition.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType/>
+			</xs:element>
+			<xs:element name="UniformInt64Partition">
+				<xs:annotation>
+					<xs:documentation>Describes a uniform partiotining scheme based on Int64 keys.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:attribute name="PartitionCount" type="xs:string" use="required">
+						<xs:annotation>
+							<xs:documentation>Total number of partitions (positive integer).</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+					<xs:attribute name="LowKey" type="xs:string" use="required">
+						<xs:annotation>
+							<xs:documentation>Inclusive low range of the partition (long).</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+					<xs:attribute name="HighKey" type="xs:string" use="required">
+						<xs:annotation>
+							<xs:documentation>Inclusive high range of the partition (long).</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:complexType>
+			</xs:element>
+		</xs:choice>
+	</xs:group>
+	<xs:complexType name="EnvironmentType">
+		<xs:sequence>
+			<xs:element name="Principals" type="SecurityPrincipalsType"/>
+			<xs:element name="Policies" type="ApplicationPoliciesType"/>
+		</xs:sequence>
+		<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+	</xs:complexType>
+	<xs:complexType name="SecurityPrincipalsType">
+		<xs:annotation>
+			<xs:documentation>Describes the security principles (users, groups) required for this application that are used to secure resources and referenced in the policies.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Groups" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Group" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="Membership">
+										<xs:complexType>
+											<xs:choice maxOccurs="unbounded">
+												<xs:element name="DomainGroup" minOccurs="0" maxOccurs="unbounded">
+													<xs:complexType>
+														<xs:attribute name="Name" type="xs:string" use="required"/>
+													</xs:complexType>
+												</xs:element>
+												<xs:element name="SystemGroup" minOccurs="0" maxOccurs="unbounded">
+													<xs:complexType>
+														<xs:attribute name="Name" type="xs:string" use="required"/>
+													</xs:complexType>
+												</xs:element>
+												<xs:element name="DomainUser" minOccurs="0" maxOccurs="unbounded">
+													<xs:complexType>
+														<xs:attribute name="Name" type="xs:string" use="required"/>
+													</xs:complexType>
+												</xs:element>
+											</xs:choice>
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
+								<xs:attribute name="Name" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation>Name of the local  group account. The name will be prefixed with the application id.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Users" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="User" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="MemberOf" minOccurs="0">
+										<xs:complexType>
+											<xs:choice maxOccurs="unbounded">
+												<xs:element name="SystemGroup" minOccurs="0" maxOccurs="unbounded">
+													<xs:complexType>
+														<xs:attribute name="Name" type="xs:string" use="required"/>
+													</xs:complexType>
+												</xs:element>
+												<xs:element name="Group" minOccurs="0" maxOccurs="unbounded">
+													<xs:complexType>
+														<xs:attribute name="NameRef" type="xs:string" use="required"/>
+													</xs:complexType>
+												</xs:element>
+											</xs:choice>
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
+								<xs:attribute name="Name" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation>Name of the local user account. The name will be prefixed with the application id.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ApplicationPoliciesType">
+		<xs:annotation>
+			<xs:documentation>Describes the Policies to be applied at an application level.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="LogCollectionPolicies" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Specifies whether log collection is enabled. Works only on Azure environment</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence maxOccurs="unbounded">
+						<xs:element name="LogCollectionPolicy">
+							<xs:complexType>
+								<xs:attribute name="Path" type="xs:string" use="optional"/>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="DefaultRunAsPolicy" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Specifies the user a code package will run as.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:attribute name="UserRef" type="xs:string" use="required"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- ****** Types used by Service Manifest *****-->
+	<xs:complexType name="ServiceManifestType">
+		<xs:annotation>
+			<xs:documentation>Manifest of a packaged Windows Fabric service. A Service Manifest is a unit of deployment and activation. It consists of independetly upgradable units of code, configuration and data.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Description" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Text describing this service.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="ServiceTypes" type="ServiceTypesType">
+				<xs:annotation>
+					<xs:documentation>Defines the type of services supported by components of this manifest.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="CodePackage" type="CodePackageType" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Describes the code packages that implements above defined service types. Upon needing to place one of the service types of this service Windows Fabric will activate all of the code packages defined here.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="ConfigPackage" type="ConfigPackageType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Describes the configuration of a ServiceComponent or an Application. It consists of user defined settings (sections of key-value pairs) and environment needed for the service. The settings must be stored in Settings.xml file and environment must be stored in the Environment.xml file in this package's folder.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="DataPackage" type="DataPackageType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Defines data package used by the code.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Resources" type="ResourcesType" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attributeGroup ref="VersionedName"/>
+	</xs:complexType>
+	<xs:complexType name="ServiceTypesType">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="StatefulServiceType" type="StatefulServiceTypeType">
+				<xs:annotation>
+					<xs:documentation>Describes a stateless ServiceType.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="StatelessServiceType" type="StatelessServiceTypeType">
+				<xs:annotation>
+					<xs:documentation>Describes a stateful ServiceType.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="ServiceTypeType">
+		<xs:annotation>
+			<xs:documentation>Base type that describes a stateful or a stateless ServiceType.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="LoadMetrics" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Load metrics reported by this service.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="LoadMetric" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:attribute name="Name" type="xs:string" use="required"/>
+								<xs:attribute name="DefaultLoad" type="xs:double" use="optional" default="0"/>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="PlacementConstraints" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Constraints for the placement of services that are part of this package.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element ref="Extensions" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attribute name="ServiceTypeName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>User defined type identifier for a Windows Fabric Service. .e.g QueueType, CalculatorType</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="ExtensionsType">
+		<xs:annotation>
+			<xs:documentation>Describes extensions that can be applied to other elements.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Extension" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:any namespace="##other" processContents="lax"/>
+					</xs:sequence>
+					<xs:attribute name="Name" type="xs:string" use="required"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Extensions" type="ExtensionsType">
+		<xs:annotation>
+			<xs:documentation>Describes extensions that can be applied to other elements.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:complexType name="ServiceTypeExtensionPolicyPropertiesType">
+		<xs:annotation>
+			<xs:documentation>Defines Properties for the Persistence and Evication policies.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Property" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:attribute name="Name" type="xs:string" use="required"/>
+					<xs:attribute name="Value" type="xs:string" use="required"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="PersistencePolicy">
+		<xs:annotation>
+			<xs:documentation>Persistence Policy extension for the Service Type</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Properties" type="ServiceTypeExtensionPolicyPropertiesType" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="Name" type="xs:string" use="required"/>
+			<xs:attribute name="Mode" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="Synchronous"/>
+						<xs:enumeration value="Asynchronous"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="WriteBehind" type="xs:string" use="required"/>
+			<xs:attribute name="Provider" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="EvictionPolicy">
+		<xs:annotation>
+			<xs:documentation>Eviction Policy extension for the Service Type.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Properties" type="ServiceTypeExtensionPolicyPropertiesType" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="Name" type="xs:string" use="required"/>
+			<xs:attribute name="Provider" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="StatefulServiceTypeType">
+		<xs:annotation>
+			<xs:documentation>Describes a stateful ServiceType.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="ServiceTypeType">
+				<xs:attribute name="HasPersistedState" type="xs:boolean" default="false"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="StatelessServiceTypeType">
+		<xs:annotation>
+			<xs:documentation>Describes a stateless ServiceType.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="ServiceTypeType"/>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="CodePackageType">
+		<xs:annotation>
+			<xs:documentation>Describes a code package in a ServiceManifest.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="EntryPoint" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Defines the entry point of this component. For SupportComponents oinly "Process" entry points are supported. Thus this defines the path of the executable with full command line parameters. The executable path is relative to the root of the application deployment package.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:simpleContent>
+						<xs:extension base="xs:string">
+							<xs:attribute name="Type" use="required">
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:enumeration value="Exe"/>
+										<xs:enumeration value="Dll"/>
+										<xs:enumeration value=".Net"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:attribute>
+						</xs:extension>
+					</xs:simpleContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="RunFrequency" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Controls the run frequency of this ServiceComponent. Unlike HostComponent, run frequency of the SupportComponent can be changed from "Continuous" to "Periodic".</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:choice>
+						<xs:element name="Continuous">
+							<xs:annotation>
+								<xs:documentation>Once activated as part of the ServicePackage actrivation, this component is always kept running by Windows Fabric. Windows Fabric monitors and restarts this component in the event of a crash, as long as the ServicePackage is activated.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType/>
+						</xs:element>
+						<xs:element name="Periodic">
+							<xs:annotation>
+								<xs:documentation>Once activated, this component is restarted periodically, if not already running.</xs:documentation>
+							</xs:annotation>
+							<xs:complexType>
+								<xs:attribute name="IntervalInSeconds" type="xs:long" use="required"/>
+							</xs:complexType>
+						</xs:element>
+					</xs:choice>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attributeGroup ref="VersionedName"/>
+		<xs:attribute name="IsShared" type="xs:boolean" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>If a code package is marked as shared then its upgrade will recycle of all of the other code packages.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="IsolationPolicy" use="optional" default="DedicatedProcess">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="SharedDomain"/>
+					<xs:enumeration value="DedicatedDomain"/>
+					<xs:enumeration value="DedicatedProcess"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="ConfigPackageType">
+		<xs:annotation>
+			<xs:documentation>Describes a configuration package in a ServiceManifest.</xs:documentation>
+		</xs:annotation>
+		<xs:attributeGroup ref="VersionedName"/>
+	</xs:complexType>
+	<xs:complexType name="DataPackageType">
+		<xs:annotation>
+			<xs:documentation>Describes a data package in a ServiceManifest.</xs:documentation>
+		</xs:annotation>
+		<xs:attributeGroup ref="VersionedName"/>
+	</xs:complexType>
+	<xs:complexType name="ResourcesType">
+		<xs:annotation>
+			<xs:documentation>Describes the resources required by components of this Service Manifest.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Certificates" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Placeholder for certificate schema.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Endpoints" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Defines endpoints the services need to function properly.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Endpoint" type="EndpointType" maxOccurs="unbounded"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="EndpointType">
+		<xs:attribute name="Name" type="xs:string" use="required"/>
+		<xs:attribute name="Protocol" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="http"/>
+					<xs:enumeration value="https"/>
+					<xs:enumeration value="tcp"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="Type" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="Input"/>
+					<xs:enumeration value="Internal"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="CertificateRef"/>
+		<xs:attribute name="Port" type="xs:positiveInteger">
+			<xs:annotation>
+				<xs:documentation>The port will be replaced with a port determined by Windows Fabric after registering with Http.sys or BFE.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- ****** Types used by Settings *****-->
+	<xs:complexType name="SettingsType">
+		<xs:annotation>
+			<xs:documentation>Describes user defined settings for a ServiceComponent or an Application. It consists of one or more sections of key-value pairs.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Section" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>A user defined named section.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Parameter" minOccurs="0" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:attribute name="Name" type="xs:string" use="required"/>
+								<xs:attribute name="Value" type="xs:string" use="required"/>
+								<xs:attribute name="MustOverride" type="xs:boolean" default="false">
+									<xs:annotation>
+										<xs:documentation>If true, the value of this parameter must be overridden by higher level configuration.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+					<xs:attribute name="Name" type="xs:string" use="required"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- ****** Other Global Types *****-->
+	<xs:simpleType name="FabricUri">
+		<xs:annotation>
+			<xs:documentation>A Uri that is used as a stable identifier of services by Windows Fabric Naming system. </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:anyURI"/>
+	</xs:simpleType>
+	<xs:attributeGroup name="VersionedName">
+		<xs:annotation>
+			<xs:documentation>Attribute group that includes a Name and a Version.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="Name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Name of the versioned item.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Version" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Version of the versioned item.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="ServiceManifestIdentifier">
+		<xs:annotation>
+			<xs:documentation>Identifies a service manifest.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="ServiceManifestName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Name if the ServiceManifed being referenced.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="ServiceManifestVersion" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Version of the ServiceManifest being referenced.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="ApplicationManifestAttrGroup">
+		<xs:annotation>
+			<xs:documentation>Attribute group for application manifest.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="ApplicationTypeName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Type Identifier for this application.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="ApplicationTypeVersion" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>The version of this application type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="LoadBalancingDomainName" type="xs:string" default="">
+			<xs:annotation>
+				<xs:documentation>Name of the Load Balancing Domain of which the instances of this application type will be part of.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="NameValuePair">
+		<xs:annotation>
+			<xs:documentation>Name and Value defined as an attribute.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="Name" type="xs:string" use="required"/>
+		<xs:attribute name="Value" type="xs:string" use="required"/>
+	</xs:attributeGroup>
+	<!--*********** Following are the internal types that are used for the digested form of application ********************-->
+	<xs:element name="ApplicationInstance" type="ApplicationInstanceType">
+		<xs:annotation>
+			<xs:documentation>Describes an instance of a Windows Fabric application.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:complexType name="ApplicationInstanceType">
+		<xs:annotation>
+			<xs:documentation>Describes an instance of a Windows Fabric application.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="ApplicationPackageRef">
+				<xs:complexType>
+					<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="ServicePackageRef" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:attribute name="Name" use="required"/>
+					<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="ServiceTemplates" type="ServiceTemplatesType"/>
+			<xs:element name="RequiredServices" type="RequiredServicesType"/>
+		</xs:sequence>
+		<xs:attribute name="Version" type="xs:int" use="required">
+			<xs:annotation>
+				<xs:documentation>The version of the ApplicationInstance document.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attributeGroup ref="ApplicationInstanceAttrGroup"/>
+		<xs:attributeGroup ref="ApplicationManifestAttrGroup"/>
+	</xs:complexType>
+	<xs:element name="ApplicationPackage" type="ApplicationPackageType">
+		<xs:annotation>
+			<xs:documentation>ApplicationPackage represents the versioned Application information required by the node.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:complexType name="ApplicationPackageType">
+		<xs:annotation>
+			<xs:documentation>ApplicationPackage represents the versioned Application information required by the node.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="DigestedEnvironment" type="EnvironmentType"/>
+		</xs:sequence>
+		<xs:attribute name="ApplicationTypeName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Type identifier for this application.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+		<xs:attributeGroup ref="ApplicationInstanceAttrGroup"/>
+	</xs:complexType>
+	<xs:element name="ServicePackage" type="ServicePackageType">
+		<xs:annotation>
+			<xs:documentation>ServicePackage represents a versioned unit of deployment and activation. The version of the ServicePackage is determined based on the manifest version and the version of the overrides.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:complexType name="ServicePackageType">
+		<xs:annotation>
+			<xs:documentation>ServicePackage represents a versioned unit of deployment and activation. The version of the ServicePackage is determined based on the manifest version and the version of the overrides.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Description" type="xs:string" minOccurs="0"/>
+			<xs:element name="DigestedServiceTypes">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="ServiceTypes" type="ServiceTypesType"/>
+					</xs:sequence>
+					<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="DigestedCodePackage" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="CodePackage" type="CodePackageType"/>
+						<xs:element name="RunAsPolicy" type="RunAsPolicyType" minOccurs="0"/>
+					</xs:sequence>
+					<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="DigestedConfigPackage" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="ConfigPackage" type="ConfigPackageType"/>
+						<xs:element name="ConfigOverride" type="ConfigOverrideType" minOccurs="0"/>
+					</xs:sequence>
+					<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="DigestedDataPackage" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="DataPackage" type="DataPackageType"/>
+					</xs:sequence>
+					<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="DigestedResources" minOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="DigestedEndpoints" minOccurs="0">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="DigestedEndpoint" minOccurs="0" maxOccurs="unbounded">
+										<xs:complexType>
+											<xs:sequence>
+												<xs:element name="Endpoint" type="EndpointType"/>
+												<xs:element name="SecurityAccessPolicy" type="SecurityAccessPolicyType" minOccurs="0"/>
+											</xs:sequence>
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="DigestedCertificates" minOccurs="0"/>
+					</xs:sequence>
+					<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="required"/>
+		<xs:attribute name="ManifestVersion" type="xs:string" use="required"/>
+		<xs:attributeGroup ref="VersionedItemAttrGroup"/>
+	</xs:complexType>
+	<xs:attributeGroup name="ConfigOverridesIdentifier">
+		<xs:annotation>
+			<xs:documentation>Identifies configuration overrides for a service package.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="ServicePackageName" type="xs:string" use="required"/>
+		<xs:attribute name="RolloutVersion" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>ID of the rollout in which changes were made to the overrides lement.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="ApplicationInstanceAttrGroup">
+		<xs:annotation>
+			<xs:documentation>Attribute group for application instance.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="NameUri" type="FabricUri" use="required">
+			<xs:annotation>
+				<xs:documentation>Fully qualified name of the application.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="ApplicationId" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Id of this application.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="VersionedItemAttrGroup">
+		<xs:annotation>
+			<xs:documentation>Attribute group for versioning sections in ApplicationInstance and ServicePackage documents.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="RolloutVersion" type="xs:string" use="required"/>
+	</xs:attributeGroup>
+	<xs:complexType name="CertificatesType">
+		<xs:sequence>
+			<xs:element name="ClusterCertificate" type="FabricCertificateType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>The certificate used to secure the intra cluster communication.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="ClientCertificate" type="FabricCertificateType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>The certificate used to secure client server communication.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="AzureNodeType">
+		<xs:sequence>
+			<xs:element name="Certificates" type="CertificatesType" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attribute name="NodeTypeRef" type="xs:string" use="required"/>
+		<xs:attribute name="NodeInstanceId" type="xs:int" use="required"/>
+	</xs:complexType>
+</xs:schema>

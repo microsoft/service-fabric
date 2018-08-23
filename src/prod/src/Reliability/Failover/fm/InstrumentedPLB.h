@@ -72,6 +72,8 @@ namespace Reliability
 
             virtual Common::ErrorCode ToggleVerboseServicePlacementHealthReporting(bool enabled);
 
+            virtual void UpdateAvailableImagesPerNode(std::wstring const& nodeId, std::vector<std::wstring> const& images);
+
         private:
             virtual void UpdateNode(LoadBalancingComponent::NodeDescription && nodeDescription);
             virtual void UpdateServiceType(LoadBalancingComponent::ServiceTypeDescription && serviceTypeDescription);

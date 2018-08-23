@@ -17,6 +17,7 @@ template ErrorCode SecurityIdentityMap<SecurityGroupSPtr>::Get( wstring const & 
 template ErrorCode SecurityIdentityMap<SecurityGroupSPtr>::Contains( wstring const & principalId, __out bool & contains);
 template ErrorCode SecurityIdentityMap<SecurityGroupSPtr>::Remove( wstring const & principalId, __out SecurityGroupSPtr & principal);
 template vector<SecurityGroupSPtr> SecurityIdentityMap<SecurityGroupSPtr>::Close();
+template vector<SecurityGroupSPtr> SecurityIdentityMap<SecurityGroupSPtr>::GetAll();
 
 template SecurityIdentityMap<NodeEnvironmentManagerSPtr>::SecurityIdentityMap();
 template SecurityIdentityMap<NodeEnvironmentManagerSPtr>::~SecurityIdentityMap<NodeEnvironmentManagerSPtr>();
@@ -25,6 +26,7 @@ template ErrorCode SecurityIdentityMap<NodeEnvironmentManagerSPtr>::Get( wstring
 template ErrorCode SecurityIdentityMap<NodeEnvironmentManagerSPtr>::Contains( wstring const & principalId, __out bool & contains);
 template ErrorCode SecurityIdentityMap<NodeEnvironmentManagerSPtr>::Remove( wstring const & principalId, __out NodeEnvironmentManagerSPtr & principal);
 template vector<NodeEnvironmentManagerSPtr> SecurityIdentityMap<NodeEnvironmentManagerSPtr>::Close();
+template vector<NodeEnvironmentManagerSPtr> SecurityIdentityMap<NodeEnvironmentManagerSPtr>::GetAll();
 
 template SecurityIdentityMap<ActivatorRequestorSPtr>::SecurityIdentityMap();
 template SecurityIdentityMap<ActivatorRequestorSPtr>::~SecurityIdentityMap<ActivatorRequestorSPtr>();
@@ -33,7 +35,7 @@ template ErrorCode SecurityIdentityMap<ActivatorRequestorSPtr>::Get( wstring con
 template ErrorCode SecurityIdentityMap<ActivatorRequestorSPtr>::Contains( wstring const & principalId, __out bool & contains);
 template ErrorCode SecurityIdentityMap<ActivatorRequestorSPtr>::Remove( wstring const & principalId, __out ActivatorRequestorSPtr & principal);
 template vector<ActivatorRequestorSPtr> SecurityIdentityMap<ActivatorRequestorSPtr>::Close();
-
+template vector<ActivatorRequestorSPtr> SecurityIdentityMap<ActivatorRequestorSPtr>::GetAll();
 
 template <class T>
 SecurityIdentityMap<T>::SecurityIdentityMap()
@@ -148,6 +150,25 @@ vector<T> SecurityIdentityMap<T>::Close()
 
             map_.clear();
             isClosed_ = true;
+        }
+    }
+
+    return retval;
+}
+
+template <class T>
+vector<T> SecurityIdentityMap<T>::GetAll()
+{
+    vector<T> retval;
+
+    {
+        AcquireReadLock lock(lock_);
+        if (!isClosed_)
+        {
+            for (auto i = map_.begin(); i != map_.end(); ++i)
+            {
+                retval.push_back(i->second);
+            }
         }
     }
 

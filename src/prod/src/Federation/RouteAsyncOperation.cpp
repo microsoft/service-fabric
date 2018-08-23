@@ -182,8 +182,9 @@ namespace Federation
         {
             RoutingManager::WriteInfo(
                 "Complete",
-                "Message {0}({1}) completed with timeout",
+                "Message {0}({1}) header {2} completed with timeout",
                 this->message_->MessageId,
+                this->header_,
                 this->retryCount_);
         }
 
@@ -247,8 +248,8 @@ namespace Federation
             {
                 RoutingManager::WriteInfo(
                     "Complete",
-                    "Routing of message {0}({1}) failed with {2}",
-                    message_->MessageId, retryCount_, error);
+                    "Routing of message {0}({1}) header {2} failed with {3}",
+                    message_->MessageId, retryCount_, header_, error);
             }
 
             if (error.IsError(ErrorCodeValue::RoutingNodeDoesNotMatchFault) &&

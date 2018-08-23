@@ -17,6 +17,15 @@ namespace Data
         using namespace ktl;
         using namespace Data::Utilities;
         using namespace Data::TStore;
+        using namespace Data::Log;
+
+        class RCStandaloneCommonConfig : ComponentConfig
+        {
+            DECLARE_SINGLETON_COMPONENT_CONFIG(RCStandaloneCommonConfig, "RCStandaloneCommonConfig")
+
+            PUBLIC_CONFIG_ENTRY(int, L"Trace/Etw", Sampling, 1, ConfigEntryUpgradePolicy::Dynamic);
+            PUBLIC_CONFIG_ENTRY(int, L"Trace/Etw", Level, 4, ConfigEntryUpgradePolicy::Dynamic);
+        };
 
         class CExportTests
         {
@@ -24,10 +33,9 @@ namespace Data
             CExportTests(wstring const & testName)
             {
                 testName_ = testName;
-                epoch_ = 0;
             }
 
-            void Setup();
+            void Setup(__in bool allowRecovery);
             void Cleanup();
             void OpenReplica();
             void RequestCheckpointAfterNextTransaction();
@@ -63,7 +71,7 @@ namespace Data
             void CloseReplica();
             Awaitable<void> OpenReplicaAsync();
 
-            CommonConfig config; // load the config object as its needed for the tracing to work
+            RCStandaloneCommonConfig config; // load the config object as its needed for the tracing to work
             KtlSystem * underlyingSystem_;
 
             KGuid pId_;
@@ -76,35 +84,45 @@ namespace Data
             wstring testFolderPath_;
             wstring testName_;
             LONGLONG epoch_;
+
+            static const wstring DEFAULT_TEST_PARTITION_GUID;
+            static const long DEFAULT_TEST_REPLICA_ID;
         };
 
-        void CExportTests::Setup()
+        const wstring CExportTests::DEFAULT_TEST_PARTITION_GUID = L"45AEFD6F-1CCE-4A2E-8C58-9AD7D6A9CC7C";
+        const long CExportTests::DEFAULT_TEST_REPLICA_ID = 1234567890;
+
+        void CExportTests::Setup(__in bool allowRecovery)
         {
             NTSTATUS status;
 
             testFolderPath_ = CreateFileName(testName_);
             wstring TestLogFileName = testName_.append(L".log");
 
-            Directory::Delete_WithRetry(testFolderPath_, true, true);
-
             status = KtlSystem::Initialize(FALSE, &underlyingSystem_); 
             ASSERT_IFNOT(NT_SUCCESS(status), "Status not success: {0}", status); 
 
-            underlyingSystem_->SetStrictAllocationChecks(TRUE); 
-            KAllocator & allocator = underlyingSystem_->PagedAllocator(); 
-            int seed = GetTickCount(); 
-            Common::Random r(seed); 
-            rId_ = r.Next(); 
-            pId_.CreateNew(); 
-            prId_ = PartitionedReplicaId::Create(pId_, rId_, allocator); 
+            if (!allowRecovery)
+               Directory::Delete_WithRetry(testFolderPath_, true, true);
+
+            rId_ = DEFAULT_TEST_REPLICA_ID;
+            Guid guid(DEFAULT_TEST_PARTITION_GUID);
+            KGuid paritionGuid(guid.AsGUID());
+            pId_ = paritionGuid;
+            underlyingSystem_->SetStrictAllocationChecks(TRUE);
+            KAllocator & allocator = underlyingSystem_->PagedAllocator();
+            prId_ = PartitionedReplicaId::Create(pId_, rId_, allocator);
 
             KtlLogger::SharedLogSettingsSPtr sharedLogSettings;
             InitializeKtlConfig(testFolderPath_, TestLogFileName, underlyingSystem_->PagedAllocator(), sharedLogSettings);
 
+            TraceProvider::GetSingleton()->SetDefaultLevel(TraceSinkType::ETW, LogLevel::Noise);
+            RegisterKtlTraceCallback(Common::ServiceFabricKtlTraceCallback);
+
             status = Data::Log::LogManager::Create(underlyingSystem_->PagedAllocator(), logManager_);
             CODING_ERROR_ASSERT(NT_SUCCESS(status));
 
-            status = SyncAwait(logManager_->OpenAsync(CancellationToken::None, sharedLogSettings));
+            status = SyncAwait(logManager_->OpenAsync(CancellationToken::None, sharedLogSettings, KtlLoggerMode::InProc));
             CODING_ERROR_ASSERT(NT_SUCCESS(status));
 
             replica_ = CreateReplica();
@@ -117,7 +135,7 @@ namespace Data
             wstring testFolder = Path::Combine(testFolderPath_, L"work");
             StateProviderFactory::SPtr factory;
             StateProviderFactory::Create(underlyingSystem_->PagedAllocator(), factory);
-            
+
             Replica::SPtr replica = Replica::Create(
                 pId_,
                 rId_,
@@ -137,9 +155,13 @@ namespace Data
         {
             co_await replica_->OpenAsync();
 
-            epoch_++;
-            FABRIC_EPOCH epoch1; epoch1.DataLossNumber = epoch_; epoch1.ConfigurationNumber = epoch_; epoch1.Reserved = nullptr;
-            co_await replica_->ChangeRoleAsync(epoch1, FABRIC_REPLICA_ROLE_PRIMARY);
+            FABRIC_EPOCH epoch;
+            NTSTATUS status = replica_->TxnReplicator->GetCurrentEpoch(epoch);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            LONG64 currentConfigurationNumber = epoch.ConfigurationNumber;
+            currentConfigurationNumber++;
+            epoch.ConfigurationNumber = currentConfigurationNumber;
+            co_await replica_->ChangeRoleAsync(epoch, FABRIC_REPLICA_ROLE_PRIMARY);
 
             replica_->SetReadStatus(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED);
             replica_->SetWriteStatus(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED);
@@ -217,27 +239,29 @@ namespace Data
             KInvariant(sharedLogFileName->LengthInBytes() + sizeof(WCHAR) < 512 * sizeof(WCHAR)); // check to make sure there is space for the null terminator
             KMemCpySafe(&settings->Path[0], 512 * sizeof(WCHAR), sharedLogFileName->operator PVOID(), sharedLogFileName->LengthInBytes());
             settings->Path[sharedLogFileName->LengthInBytes() / sizeof(WCHAR)] = L'\0'; // set the null terminator
-            settings->LogContainerId.GetReference().CreateNew();
+            settings->LogContainerId = KGuid(KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID()); // always use staging log for standalone
             settings->LogSize = 1024 * 1024 * 512; // 512 MB.
             settings->MaximumNumberStreams = 0;
             settings->MaximumRecordSize = 0;
-            settings->Flags = static_cast<ULONG>(Data::Log::LogCreationFlags::UseSparseFile);
+            settings->Flags = static_cast<ULONG>(Data::Log::LogCreationFlags::UseNonSparseFile);
             sharedLogSettings = make_shared<KtlLogger::SharedLogSettings>(std::move(settings));
         };
+
     }
 }
 
-static Data::Interop::CExportTests* t = nullptr;
+static Data::Interop::CExportTests* tests = nullptr;
 
-extern "C" HRESULT Initialize(
+extern "C" HRESULT ReliableCollectionStandalone_Initialize(
     __in LPCWSTR testname, 
+    __in bool allowRecovery,
     __out void** txnReplicator, 
     __out void** partition,
     __out GUID* partitionId,
     __out int64_t* replicaId)
 {
     wstring env;
-    HRESULT hr = ReliableCollectionRuntime_Initialize(RELIABLECOLLECTION_API_VERSION);
+    HRESULT hr = ReliableCollectionRuntime_Initialize2(RELIABLECOLLECTION_API_VERSION, /*standaloneMode*/ true);
     if (!SUCCEEDED(hr))
         return hr;
 
@@ -248,38 +272,38 @@ extern "C" HRESULT Initialize(
         return S_OK;
     }
 
-    t = new Data::Interop::CExportTests(testname);
-    t->Setup();
-    *txnReplicator = t->GetTxnReplicator();
+    tests = new Data::Interop::CExportTests(testname);
+    tests->Setup(allowRecovery);
+    *txnReplicator = tests->GetTxnReplicator();
     *partition = nullptr;
-    *partitionId = t->PartitionId;
-    *replicaId = t->ReplicaId;
+    *partitionId = tests->PartitionId;
+    *replicaId = tests->ReplicaId;
     return S_OK;
 }
 
-extern "C" void ResetReplica(__out void** txnReplicator)
+extern "C" void ReliableCollectionStandalone_ResetReplica(__out void** txnReplicator)
 {
-    t->ResetReplica();
-    *txnReplicator = t->GetTxnReplicator();
+    tests->ResetReplica();
+    *txnReplicator = tests->GetTxnReplicator();
 }
 
-extern "C" void OpenReplica()
+extern "C" void ReliableCollectionStandalone_OpenReplica()
 {
-    t->OpenReplica();
+    tests->OpenReplica();
 }
 
-extern "C" void RequestCheckpointAfterNextTransaction()
+extern "C" void ReliableCollectionStandalone_RequestCheckpointAfterNextTransaction()
 {
-    t->RequestCheckpointAfterNextTransaction();
+    tests->RequestCheckpointAfterNextTransaction();
 }
 
-extern "C" void Cleanup()
+extern "C" void ReliableCollectionStandalone_Cleanup()
 {
-    if (t != nullptr)
+    if (tests != nullptr)
     {
-        t->Cleanup();
-        delete t;
-        t = nullptr;
+        tests->Cleanup();
+        delete tests;
+        tests = nullptr;
     }
 }
 
@@ -301,6 +325,8 @@ extern "C" HRESULT FabricGetReliableCollectionApiTable(uint16_t apiVersion, Reli
     return S_OK;
 }
 
+// Dummy methods required to satisfy link of ReliableCollectionServiceStandalone.dll
+// These methods are not used at runtime for ReliableCollectionServiceStandalone
 HRESULT FabricGetActivationContext( 
     REFIID riid,
     void **activationContext)
@@ -320,6 +346,19 @@ HRESULT FabricLoadReplicatorSettings(
     UNREFERENCED_PARAMETER(configurationPackageName);
     UNREFERENCED_PARAMETER(sectionName);
     UNREFERENCED_PARAMETER(replicatorSettings);
+    return S_OK;
+}
+
+HRESULT FabricLoadSecurityCredentials(
+    IFabricCodePackageActivationContext const * codePackageActivationContext,
+    LPCWSTR configurationPackageName,
+    LPCWSTR sectionName,
+    IFabricSecurityCredentialsResult ** securitySettings)
+{
+    UNREFERENCED_PARAMETER(codePackageActivationContext);
+    UNREFERENCED_PARAMETER(configurationPackageName);
+    UNREFERENCED_PARAMETER(sectionName);
+    UNREFERENCED_PARAMETER(securitySettings);
     return S_OK;
 }
 

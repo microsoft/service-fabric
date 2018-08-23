@@ -18,6 +18,8 @@ namespace Naming
         AsyncCallback const & callback, 
         AsyncOperationSPtr const & parent)
       : NamingRequestAsyncOperationBase (properties, std::move(receivedMessage), timeout, callback, parent)
+      , requestBody_()
+      , systemServiceUpdate_(false)
     {
     }
 

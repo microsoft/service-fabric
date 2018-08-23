@@ -23,35 +23,6 @@ ServiceQueryResult::ServiceQueryResult()
 {
 }
 
-ServiceQueryResult::ServiceQueryResult(ServiceQueryResult && other)
-    : serviceKind_(other.serviceKind_)
-    , serviceName_(move(other.serviceName_))
-    , serviceTypeName_(move(other.serviceTypeName_))
-    , serviceManifestVersion_(move(other.serviceManifestVersion_))
-    , hasPersistedState_(move(other.hasPersistedState_))
-    , healthState_(move(other.healthState_))
-    , serviceStatus_(other.serviceStatus_)
-    , isServiceGroup_(other.isServiceGroup_)
-{
-}
-
-ServiceQueryResult const & ServiceQueryResult::operator = (ServiceQueryResult && other)
-{
-    if (this != &other)
-    {
-        serviceKind_ = other.serviceKind_;
-        serviceName_ = move(other.serviceName_);
-        serviceTypeName_ = move(other.serviceTypeName_);
-        serviceManifestVersion_ = move(other.serviceManifestVersion_);
-        hasPersistedState_ = move(other.hasPersistedState_);
-        healthState_ = move(other.healthState_);
-        serviceStatus_ = move(other.serviceStatus_);
-        isServiceGroup_ = move(other.isServiceGroup_);
-    }
-
-    return *this;
-}
-
 ServiceQueryResult::ServiceQueryResult(
     Common::Uri const & serviceName,        
     std::wstring const & serviceTypeName,

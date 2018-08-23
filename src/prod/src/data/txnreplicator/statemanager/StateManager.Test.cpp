@@ -594,7 +594,7 @@ namespace StateManagerTests
 
         PartitionedReplicaId::SPtr partitionedReplicaId = PartitionedReplicaId::Create(partitionId, random_.Next(), GetAllocator());
         auto runtimeFolders = TestHelper::CreateRuntimeFolders(GetAllocator());
-        KWfStatefulServicePartition::SPtr partition = TestHelper::CreateStatefulServicePartition(
+        IStatefulPartition::SPtr partition = TestHelper::CreateStatefulServicePartition(
             Guid::NewGuid(),
             GetAllocator(),
             FABRIC_SERVICE_PARTITION_ACCESS_STATUS_RECONFIGURATION_PENDING,
@@ -620,7 +620,7 @@ namespace StateManagerTests
                 TestStateProvider::TypeName,
                 outStateProvider,
                 alreadyExist);
-            VERIFY_ARE_EQUAL(status, SF_STATUS_NOT_READY);
+            VERIFY_ARE_EQUAL(status, SF_STATUS_NOT_READABLE);
             VERIFY_IS_NULL(outStateProvider);
         }
 

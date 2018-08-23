@@ -19,36 +19,6 @@ ProvisionedFabricConfigVersionQueryResultItem::ProvisionedFabricConfigVersionQue
 {
 }
 
-ProvisionedFabricConfigVersionQueryResultItem::ProvisionedFabricConfigVersionQueryResultItem(ProvisionedFabricConfigVersionQueryResultItem const & other)
-    : configVersion_(other.configVersion_)
-{
-}
-
-ProvisionedFabricConfigVersionQueryResultItem::ProvisionedFabricConfigVersionQueryResultItem(ProvisionedFabricConfigVersionQueryResultItem && other)
-    : configVersion_(move(other.configVersion_))
-{
-}
-
-ProvisionedFabricConfigVersionQueryResultItem const & ProvisionedFabricConfigVersionQueryResultItem::operator = (ProvisionedFabricConfigVersionQueryResultItem const & other)
-{
-    if (this != &other)
-    {
-        this->configVersion_ = other.configVersion_;
-    }
-
-    return *this;
-}
-
-ProvisionedFabricConfigVersionQueryResultItem const & ProvisionedFabricConfigVersionQueryResultItem::operator = (ProvisionedFabricConfigVersionQueryResultItem && other)
-{
-    if (this != &other)
-    {
-        this->configVersion_ = move(other.configVersion_);
-    }
-
-    return *this;
-}
-
 void ProvisionedFabricConfigVersionQueryResultItem::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_PROVISIONED_CONFIG_VERSION_QUERY_RESULT_ITEM & publicQueryResult) const 

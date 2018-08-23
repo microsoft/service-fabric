@@ -1,0 +1,125 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "Func_UnreliableNData0",
+      "Type": "RandomTest",
+      "Owners": "imang, zhol",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_338_UnreliableRandom.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_UnreliableNData",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_UnreliableNData1",
+      "Type": "RandomTest",
+      "Owners": "imang, zhol",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_338_UnreliableRandom.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_UnreliableNData",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_UnreliableNData2",
+      "Type": "RandomTest",
+      "Owners": "imang, zhol",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_338_UnreliableRandom.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_UnreliableNData",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_UnreliableNData3",
+      "Type": "RandomTest",
+      "Owners": "imang, zhol",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_338_UnreliableRandom.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_UnreliableNData",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Unreliable_Sec_OnNData",
+      "Type": "RandomTest",
+      "Owners": "imang, zhol",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_391_UnreliableRandom_Sec_ON.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_UnreliableNData",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Rebuild_Sec_OnNData",
+      "Type": "RandomTest",
+      "Owners": "imang, zhol",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_392_RebuildRandom_Sec_ON.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_RebuildNData",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "Func_Upgrade_SecOnNData",
+      "Type": "RandomTest",
+      "Owners": "imang, zhol",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_393_UpgradeRandom_Sec_ON.txt",
+        "DllPath": "MS.Test.WinFabric.Cases.dll",
+        "ClassName": "NonFijiTestCases",
+        "TaskName": "Func_UpgradeNData",
+        "ExecutionTimeout": "72000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

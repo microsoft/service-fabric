@@ -34,44 +34,6 @@ DeployedApplicationAggregatedHealthState::~DeployedApplicationAggregatedHealthSt
 {
 }
 
-DeployedApplicationAggregatedHealthState::DeployedApplicationAggregatedHealthState(DeployedApplicationAggregatedHealthState const & other)
-    : applicationName_(other.applicationName_)
-    , nodeName_(other.nodeName_)
-    , aggregatedHealthState_(other.aggregatedHealthState_)
-{
-}
-
-DeployedApplicationAggregatedHealthState & DeployedApplicationAggregatedHealthState::operator = (DeployedApplicationAggregatedHealthState const & other)
-{
-    if (this != &other)
-    {
-        applicationName_ = other.applicationName_;
-        nodeName_ = other.nodeName_;
-        aggregatedHealthState_ = other.aggregatedHealthState_;
-    }
-
-    return *this;
-}
-
-DeployedApplicationAggregatedHealthState::DeployedApplicationAggregatedHealthState(DeployedApplicationAggregatedHealthState && other)
-    : applicationName_(move(other.applicationName_))
-    , nodeName_(move(other.nodeName_))
-    , aggregatedHealthState_(move(other.aggregatedHealthState_))
-{
-}
-
-DeployedApplicationAggregatedHealthState & DeployedApplicationAggregatedHealthState::operator = (DeployedApplicationAggregatedHealthState && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        nodeName_ = move(other.nodeName_);
-        aggregatedHealthState_ = move(other.aggregatedHealthState_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode DeployedApplicationAggregatedHealthState::ToPublicApi(
     __in Common::ScopedHeap & heap,
     __out FABRIC_DEPLOYED_APPLICATION_HEALTH_STATE & publicDeployedApplicationAggregatedHealthState) const

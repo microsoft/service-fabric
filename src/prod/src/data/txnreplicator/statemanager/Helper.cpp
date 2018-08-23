@@ -37,7 +37,7 @@ KString::SPtr Helper::StateProviderIDToKStringSPtr(
 }
 
 /*
-* TODO: #8734667: Use when CreateDirectoryAsync is introduced.
+* #8734667: Use when CreateDirectoryAsync is introduced.
 */
 NTSTATUS Helper::CreateFolder(__in KStringView const & folderPath)
 {
@@ -56,7 +56,7 @@ NTSTATUS Helper::CreateFolder(__in KStringView const & folderPath)
 }
 
 /*
-* TODO: #8734667: Use when CreateDirectoryAsync is introduced.
+* #8734667: Use when CreateDirectoryAsync is introduced.
 */
 NTSTATUS Helper::CreateFolder(
     __in KStringView const & folderPath,
@@ -71,7 +71,6 @@ NTSTATUS Helper::CreateFolder(
     Common::ErrorCode errorCode = Common::Directory::Create2(static_cast<LPCWSTR>(folderPath));
     if (errorCode.IsSuccess() == false)
     {
-        // TODO: This is a verbose trace. Should be removed before shipping.
         wstring message = Common::wformatString(
             "Folder could not be created. Folder Path: {0} ErrorCode: {1}",
             wstring(static_cast<LPCWSTR>(folderPath)),

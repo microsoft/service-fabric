@@ -42,11 +42,11 @@ void LoadBalancingCounters::UpdateCategoricalPerformanceCounters(uint64 moveCoun
 
     switch (perfCounterCategory.Action)
     {
-    case PLBSchedulerActionType::Creation:
+    case PLBSchedulerActionType::NewReplicaPlacement:
         NumberOfPLBSchedulerCreationActions.Value += static_cast<Common::PerformanceCounterValue>(moveCount); if (moveCount != 0) { isCreationsUpdated = true; }
         NumberOfMillisecondsGeneratingCreationActions.Value += static_cast<Common::PerformanceCounterValue>(msTimeCount); if (msTimeCount != 0) { isCreationsDurationUpdated = true; }
         break;
-    case PLBSchedulerActionType::CreationWithMove:
+    case PLBSchedulerActionType::NewReplicaPlacementWithMove:
         NumberOfPLBSchedulerCreationWithMoveActions.Value += static_cast<Common::PerformanceCounterValue>(moveCount); if (moveCount != 0) { isCreationWithMoveUpdated = true; }
         NumberOfMillisecondsGeneratingCreationWithMoveActions.Value += static_cast<Common::PerformanceCounterValue>(msTimeCount); if (msTimeCount != 0) { isCreationWithMoveDurationUpdated = true; }
         break;
@@ -54,11 +54,11 @@ void LoadBalancingCounters::UpdateCategoricalPerformanceCounters(uint64 moveCoun
         NumberOfPLBSchedulerConstraintCheckActions.Value += static_cast<Common::PerformanceCounterValue>(moveCount); if (moveCount != 0) { isConstraintUpdated = true; }
         NumberOfMillisecondsGeneratingConstraintCheckActions.Value += static_cast<Common::PerformanceCounterValue>(msTimeCount); if (msTimeCount != 0) { isConstraintDurationUpdated = true; }
         break;
-    case PLBSchedulerActionType::FastBalancing:
+    case PLBSchedulerActionType::QuickLoadBalancing:
         NumberOfPLBSchedulerFastBalancingActions.Value += static_cast<Common::PerformanceCounterValue>(moveCount); if (moveCount != 0) { isFastBalancingUpdated = true; }
         NumberOfMillisecondsGeneratingFastBalancingActions.Value += static_cast<Common::PerformanceCounterValue>(msTimeCount); if (msTimeCount != 0) { isFastBalancingDurationUpdated = true; }
         break;
-    case PLBSchedulerActionType::SlowBalancing:
+    case PLBSchedulerActionType::LoadBalancing:
         NumberOfPLBSchedulerSlowBalancingActions.Value += static_cast<Common::PerformanceCounterValue>(moveCount); if (moveCount != 0) { isSlowBalancingUpdated = true; }
         NumberOfMillisecondsGeneratingSlowBalancingActions.Value += static_cast<Common::PerformanceCounterValue>(msTimeCount); if (msTimeCount != 0) { isSlowBalancingDurationUpdated = true; }
         break;

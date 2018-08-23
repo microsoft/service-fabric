@@ -67,6 +67,7 @@ ProxyActionsList::ConcurrentExecutionCompatibilityLookupTable::ConcurrentExecuti
     lookupTable_[ProxyActionsListTypes::ReplicatorBuildIdleReplica][ProxyActionsListTypes::StatefulServiceFinishDemoteToSecondary] = true;
     lookupTable_[ProxyActionsListTypes::ReplicatorBuildIdleReplica][ProxyActionsListTypes::StatefulServiceEndReconfiguration] = true;
     lookupTable_[ProxyActionsListTypes::ReplicatorBuildIdleReplica][ProxyActionsListTypes::StatefulServicePromoteToPrimary] = true;
+    lookupTable_[ProxyActionsListTypes::ReplicatorBuildIdleReplica][ProxyActionsListTypes::CancelCatchupReplicaSet] = true;
 
     lookupTable_[ProxyActionsListTypes::ReplicatorRemoveIdleReplica][ProxyActionsListTypes::ReplicatorBuildIdleReplica] = true;
     lookupTable_[ProxyActionsListTypes::ReplicatorRemoveIdleReplica][ProxyActionsListTypes::ReplicatorRemoveIdleReplica] = true;

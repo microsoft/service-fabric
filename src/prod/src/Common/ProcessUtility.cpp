@@ -691,14 +691,10 @@ ErrorCode ProcessUtility::CreateDefaultEnvironmentBlock(__out vector<wchar_t> & 
     EnvironmentMap envMap;
     if (!Environment::GetEnvironmentMap(envMap)) { return ErrorCode(ErrorCodeValue::OperationFailed); }
 
-    wstring configStoreEnvVarName;
-    wstring configStoreEnvVarValue;
-
-    auto error = ComProxyConfigStore::FabricGetConfigStoreEnvironmentVariable(configStoreEnvVarName, configStoreEnvVarValue);
-    if (!error.IsSuccess()) { return error; }
-    if (!configStoreEnvVarName.empty())
+    auto const & configStoreDesc = FabricGlobals::Get().GetConfigStore();
+    if (!configStoreDesc.StoreEnvironmentVariableName.empty())
     {
-        envMap[configStoreEnvVarName] = configStoreEnvVarValue;
+        envMap[configStoreDesc.StoreEnvironmentVariableName] = configStoreDesc.StoreEnvironmentVariableValue;
     }
 
     Environment::ToEnvironmentBlock(envMap, envBlock);

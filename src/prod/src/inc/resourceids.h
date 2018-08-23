@@ -22,6 +22,10 @@
 // Do NOT make resource ID changes that will cause existing IDs to change their
 // underlying value.  (i.e. adding/deleting/modifying IDs that will shift their
 // index relative to a component)
+//
+// Do not strip trailing white spaces on each line, the space is used as part of
+// the string.
+//
 // ******************************************************************************
 
 
@@ -48,6 +52,21 @@
 #define IDS_COMMON_Invalid_String_Boolean_Value             IDS_COMMON( 17 ) // The parameter {0} has invalid value '{1}'. Expected true/false.
 #define IDS_COMMON_Max_Results_Reached                      IDS_COMMON( 18 ) // Reached max configured results of {0} entries per one page.
 #define IDS_COMMON_Reserved_Field_Not_Null                  IDS_COMMON( 19 ) // Internal error: expected NULL Reserved field.
+#define IDS_COMMON_Zip_Failed                               IDS_COMMON( 20 ) // TryZipDirectory failed: src={0} dest={1}
+#define IDS_COMMON_Unzip_Failed                             IDS_COMMON( 21 ) // TryUnzipDirectory failed: src={0} dest={1}
+#define IDS_COMMON_Win_Long_Paths                           IDS_COMMON( 22 ) // Note that long paths exceeding the Windows MAX_PATH limit are not supported for compressed packages.
+#define IDS_COMMON_Access_Token_Failed                      IDS_COMMON( 23 ) // GetAccessToken failed: authority={0} cluster={1} client={2} error={3}
+#define IDS_COMMON_IsAdmin_Role_Failed                      IDS_COMMON( 24 ) // IsAdminRole failed: issuer={0} audience={1} roleClaim={2} cert={3} error={4}
+#define IDS_COMMON_InvalidOperationOnRootNameURI            IDS_COMMON( 25 ) // The operation can't be performed on the root name URI '{0}'.
+#define IDS_COMMON_InvalidNameQueryCharacter                IDS_COMMON( 26 ) // The name '{0}' is invalid: character '?' is not supported.
+#define IDS_COMMON_InvalidNameServiceGroupCharacter         IDS_COMMON( 27 ) // The name '{0}' is invalid: character '#' is reserved by Service Groups.
+#define IDS_COMMON_InvalidNameExceedsMaxSize                IDS_COMMON( 28 ) // The name '{0}' (size {1}) exceeds the max allowed size, {2}.
+#define IDS_COMMON_FileNotFound                             IDS_COMMON( 29 ) // The file '{0}' doesn't exist.
+#define IDS_COMMON_Invalid_Sfpkg_Name                       IDS_COMMON( 30 ) // The file '{0}' doesn't have the required '.sfpkg' extension.
+#define IDS_COMMON_ZipToChildDirectoryFails                 IDS_COMMON( 31 ) // Zip to directory '{0}' fails because it's a child of the source directory '{1}'.
+#define IDS_COMMON_ExpandSfpkgDirectoryNotEmpty             IDS_COMMON( 32 ) // The directory '{0}' is not empty. Please delete the content or provide another directory as application package root.
+#define IDS_COMMON_DirectoryNotFound                        IDS_COMMON( 33 ) // The directory '{0}' doesn't exist.
+
 
 #define IDS_EXE( Index )                                    RESOURCE_ID( 11000, Index )
 #define IDS_FABRICHOST( Index )                             RESOURCE_ID( IDS_EXE( 0 ), Index )
@@ -99,9 +118,10 @@
 #define IDS_FM( Index )                                     RESOURCE_ID( 27000, Index )
 #define IDS_FM_Rebuild_Stuck                                IDS_FM( 1 ) // FM rebuild is taking longer than expected. 
 #define IDS_FM_Rebuild_Healthy                              IDS_FM( 2 ) // FM rebuild is healthy.
-#define IDS_FM_Rebuild_Stuck_Broadcast                      IDS_FM( 3 ) // Node {0} is waiting for broadcast reply from other nodes. For more information see: {1}
+#define IDS_FM_Rebuild_Stuck_Broadcast                      IDS_FM( 3 ) // Node {0} is waiting for broadcast reply from other nodes
 #define IDS_FM_Rebuild_Stuck_Nodes                          IDS_FM( 4 ) // Node {0} is waiting for response from nodes:
 #define IDS_FM_Rebuild_More_Info                            IDS_FM( 5 ) // . For more information see: {0}
+#define IDS_FM_Rebuild_Time_Info                            IDS_FM( 6 ) // . Rebuild elapsed time: {0}. Rebuild expected time: {1}
 
 #define IDS_FMM( Index )                                    RESOURCE_ID( 28000, Index )
 #define IDS_FMM_Rebuild_Stuck                               IDS_FMM( 1 ) // FMM rebuild is taking longer than expected. 
@@ -119,6 +139,10 @@
 #define IDS_RA_HEALTH_REPLICA_STR_STATUS_HEALTHY            IDS_RA( 9 ) // Replica has service type registered successfully.
 #define IDS_RA_HEALTH_RECONFIGURATION_STATUS_WARNING        IDS_RA( 10 ) // Reconfiguration is stuck.
 #define IDS_RA_HEALTH_RECONFIGURATION_STATUS_HEALTHY        IDS_RA( 11 ) // Reconfiguration is healthy.
+#define IDS_RA_STORE_PROVIDER_HEALTHY                       IDS_RA( 12 ) // Store provider type {0} created and opened successfully.
+#define IDS_RA_STORE_PROVIDER_UNHEALTHY                     IDS_RA( 13 ) // Store provider type {0} creation failed: {1}
+#define IDS_RA_STORE_ESE_MIGRATION_BLOCKED                  IDS_RA( 14 ) // Config setting AllowLocalStoreMigration is disabled and TStore database {0} exists
+#define IDS_RA_STORE_TSTORE_MIGRATION_BLOCKED               IDS_RA( 15 ) // Config setting AllowLocalStoreMigration is disabled and ESE database {0} exists
 
 #define IDS_RAP( Index )                                    RESOURCE_ID( IDS_RA( 200 ), Index )
 #define IDS_RAP_HEALTH_START_TIME                           IDS_RAP( 1 ) // The api
@@ -166,6 +190,24 @@
 #define IDS_NAMING_Update_Unsupported_AddRemove                     IDS_NAMING( 40 ) // Both adding and removing partitions in the same update is not supported for service '{0}'. Please perform two separate updates.
 #define IDS_NAMING_Named_Partition_Not_Found                        IDS_NAMING( 41 ) // Named partition '{0}' not found.
 #define IDS_NAMING_Exceeded_Max_Partition_Count                     IDS_NAMING( 42 ) // Exceeded maximum partition count of '{0}': count={1}.
+#define IDS_NAMING_ScalingPolicy_Scaling_Count                      IDS_NAMING( 43 ) // Only one scaling policy per service is supported. Specified count: {0}.
+#define IDS_NAMING_ScalingPolicy_Named_Partitions                   IDS_NAMING( 44 ) // Scaling on the number of partitions is only supported for named partitions. Expected format of names is '0', '1', ...'N-1'.
+#define IDS_NAMING_ScalingPolicy_Instance_Count                     IDS_NAMING( 45 ) // Scaling on the number of instances is only supported for stateless services.
+#define IDS_NAMING_ScalingPolicy_Metric_Name                        IDS_NAMING( 46 ) // Metric {0} specified for scaling is neither a resource nor a metric of the service.
+#define IDS_NAMING_ScalingPolicy_Partitions_Scaling                 IDS_NAMING( 47 ) // Scaling the number of partitions is only supported with average service load.
+#define IDS_NAMING_ScalingPolicy_Instances_Scaling                  IDS_NAMING( 48 ) // Scaling the number of instances is only supported with average partition load.
+#define IDS_NAMING_ScalingPolicy_Increment                          IDS_NAMING( 49 ) // Scaling increment should be greater than 0.
+#define IDS_NAMING_ScalingPolicy_MinMaxPartitions                   IDS_NAMING( 50 ) // Minimum number of partitions {0} cannot be greater than maximum number of partitions {1}.
+#define IDS_NAMING_ScalingPolicy_MinMaxInstances                    IDS_NAMING( 51 ) // Minimum number of instances {0} cannot be greater than maximum number of instances {1}.
+#define IDS_NAMING_ScalingPolicy_Threshold                          IDS_NAMING( 52 ) // Lower load threshold {0} cannot be greater than upper load threshold {1}.
+#define IDS_NAMING_ScalingPolicy_LowerLoadThreshold                 IDS_NAMING( 53 ) // Lower load threshold {0} must be greater than or equal to zero.
+#define IDS_NAMING_ScalingPolicy_UpperLoadThreshold                 IDS_NAMING( 54 ) // Upper load threshold {0} must be greater than zero.
+#define IDS_NAMING_ScalingPolicy_MinInstanceCount                   IDS_NAMING( 55 ) // Minimum instance count {0} must be greater than or equal to zero.
+#define IDS_NAMING_ScalingPolicy_MaxInstanceCount                   IDS_NAMING( 56 ) // Maximum instance count {0} must be either equal to -1 (unlimited) or greater than zero.
+#define IDS_NAMING_ScalingPolicy_MinPartitionCount                  IDS_NAMING( 57 ) // Minimum partition count {0} must be greater than or equal to zero.
+#define IDS_NAMING_ScalingPolicy_MaxPartitionCount                  IDS_NAMING( 58 ) // Maximum partition count {0} must be either equal to -1 (unlimited) or greater than zero.
+#define IDS_NAMING_Invalid_Flags                                    IDS_NAMING( 59 ) // Invalid flags: 0x{0:x}
+#define IDS_NAMING_ScalingPolicy_UseOnlyPrimaryLoad                 IDS_NAMING( 60 ) // Use of primary load for auto scaling is allowed only for stateful services.
 
 #define IDS_STORE( Index )                                  RESOURCE_ID( IDS_NAMING( 500 ), Index )
 #define IDS_STORE_Slow_Commit                               IDS_STORE( 1 ) // Slow commits detected: count={0} time=[{1}, {2}]
@@ -191,6 +233,17 @@
 #define IDS_STORE_RestoreDataFileMissing                    IDS_STORE( 22 ) // Restore data file [{0}] not found.
 #define IDS_STORE_RestorePartitionInfoMismatch              IDS_STORE( 23 ) // Restore metadata partition info mismatch: current = [{0}], restore = [{1}], MetadataFile = [{2}].
 #define IDS_STORE_RestoreLsnCheckFailed                     IDS_STORE( 24 ) // Backup provided for restore has older data than present in service. RestoreSequenceNumber=[{0}], CurrentSequenceNumber=[{1}].
+#define IDS_STORE_ESE_Error                                 IDS_STORE( 25 ) // Encountered ESE error: {0}
+#define IDS_STORE_MigrationBatchProgress                    IDS_STORE( 26 ) // completed migration batch: type='{0}' key='{1}' error={2} count=[{3} batch, {4} total] done={5}
+#define IDS_STORE_MigrationMirrorCommitFailed               IDS_STORE( 27 ) // failed to mirror commit
+#define IDS_STORE_MigrationDestTxLookupFailed               IDS_STORE( 28 ) // failed to find destination transaction: src={0}
+#define IDS_STORE_MigrationRestoreInterruption              IDS_STORE( 29 ) // cannot interrupt migration in processing state with restore
+#define IDS_STORE_MigrationPhaseFailed                      IDS_STORE( 30 ) // migration phase {0} failed: {1} ({2})
+#define IDS_STORE_MigrationSourceTxExists                   IDS_STORE( 31 ) // source tx already exists: {0}
+#define IDS_STORE_MigrationCreateTxFailed                   IDS_STORE( 32 ) // failed to create target store transaction: {0}
+#define IDS_STORE_MigrationLocalBackup                      IDS_STORE( 33 ) // backing up source store to '{0}'
+#define IDS_STORE_MigrationArchiveBackup                    IDS_STORE( 34 ) // archiving source store backup to '{0}'
+#define IDS_STORE_MigrationArchiveUpload                    IDS_STORE( 35 ) // uploading archived backup to '{0}'
 
 #define IDS_MANAGEMENT( Index )                                         RESOURCE_ID( 15000, Index )
 #define IDS_CM( Index )                                                 RESOURCE_ID( IDS_MANAGEMENT( 0 ), Index )
@@ -202,14 +255,14 @@
 #define IDS_CM_Invalid_Service_Name                                     IDS_CM( 6 ) // Application name must not equal service name. Requested service name:
 #define IDS_CM_Invalid_Upgrade_Mode                                     IDS_CM( 7 ) // Upgrade mode must be unmonitored manual. Current mode:
 #define IDS_CM_Invalid_Upgrade_Instance                                 IDS_CM( 8 ) // Upgrade instance must match current upgrade instance. Requested target and current instances:
-#define IDS_CM_Invalid_Upgrade_Domain                                   IDS_CM( 9 ) // Upgrade domain must match next expected upgrade domain. Requested target and expected upgrade domains:
+#define IDS_CM_Invalid_Upgrade_Domain                                   IDS_CM( 9 ) // Requested upgrade domain target '{0}' does not match the next expected upgrade domain '{1}'. Current in-progress='{2}'.
 #define IDS_CM_Invalid_Fabric_Version                                   IDS_CM( 10 ) // Must provision either a valid Fabric code or config version. Requested value:
 #define IDS_CM_Invalid_First_Upgrade                                    IDS_CM( 11 ) // The first Fabric upgrade must specify both the code and config versions. Requested value:
 #define IDS_CM_Invalid_Fabric_Upgrade                                   IDS_CM( 12 ) // Must specify either a valid target code or config version for Fabric upgrade. Requested value:
 #define IDS_CM_ServiceType_Removal                                      IDS_CM( 13 ) // Services must be explicitly deleted before removing their Service Types. Removed Service Type:
 #define IDS_CM_ServiceType_Move                                         IDS_CM( 14 ) // Services must be explicitly deleted before moving their Service Types between packages. Moved Service Type:
 #define IDS_CM_Default_ServiceType                                      IDS_CM( 15 ) // Service Type must exist before creating a default service. Requested default service and Service Type:
-#define IDS_CM_Default_Service_Description                              IDS_CM( 16 ) // Default service descriptions can not be modified as part of upgrade. Modified default service: {0}. To allow it, set EnableDefaultServicesUpgrade to true.
+#define IDS_CM_Default_Service_Description                              IDS_CM( 16 ) // Default service descriptions can not be modified as part of upgrade. Modified default service: {0}. To allow it, set EnableDefaultServicesUpgrade to true. Refer to: https://aka.ms/upgrade-defaultservices
 #define IDS_CM_Invalid_Upgrade_Failure_Action                           IDS_CM( 17 ) // Invalid upgrade failure action.
 #define IDS_CM_Invalid_Overall_Timeout                                  IDS_CM( 18 ) // Overall upgrade timeout must be greater than the combined health check wait and retry timeouts. Requested values (overall timeout, wait, retry):
 #define IDS_CM_Invalid_Domain_Timeout                                   IDS_CM( 19 ) // Upgrade domain timeout must be greater than the combined health check wait and retry timeouts. Requested values (domain timeout, wait, retry):
@@ -276,6 +329,23 @@
 #define IDS_CM_Mismatched_Application2                                  IDS_CM( 80 ) // Service '{0}' already exists under a different application: requested='{1}' existing='{2}'
 #define IDS_CM_Goal_State_App_Upgrade                                   IDS_CM( 81 ) // Upgrade will restart with target version '{0}' after rollback completes (use the explicit rollback API to clear)
 #define IDS_CM_Invalid_Application_Parameter_Format                     IDS_CM( 82 ) // Cannot have newline characters \\r or \\n in application parameters. Found newline in parameter '{0}'
+#define IDS_CM_Application_Read_Failed                                  IDS_CM( 83 ) // Persisted application context read failed for {0}, error {1}.
+#define IDS_CM_Container_Group_Creation_Failed                          IDS_CM( 84 ) // Application creation failed due to '{0}' : {1}.
+#define IDS_CM_Application_Type_Read_Failed                             IDS_CM( 85 ) // Persisted application type context read failed for {0} {1}, error {2}.
+#define IDS_CM_Store_Data_Single_Instance_Application_Read_Failed       IDS_CM( 86 ) // Persisted store data single instance application instance read failed for {0}, {1}, error {2}.
+#define IDS_CM_Invalid_Deployment_Type_Filter                           IDS_CM( 87 ) // The deployment type filter is invalid.
+#define IDS_CM_Invalid_Application_Definition_Kind_Operation            IDS_CM( 88 ) // Invalid operation on {0} defined application. Use corresponding operation.
+#define IDS_CM_Volume_Not_Found                                         IDS_CM( 89 ) // Volume {0} does not exist.
+#define IDS_CM_VolumeNameNotSpecified                                   IDS_CM( 90 ) // Volume name not specified in volume description
+#define IDS_CM_VolumeKindInvalid                                        IDS_CM( 91 ) // Volume kind is invalid
+#define IDS_CM_VolumeDiskVolumeNameTooLong                              IDS_CM( 92 ) // Volume name length should not exceed {0} characters
+#define IDS_CM_AzureFileVolumeAccountNameNotSpecified                   IDS_CM( 93 ) // Account name not specified for Azure Files volume {0}
+#define IDS_CM_AzureFileVolumeAccountKeyNotSpecified                    IDS_CM( 94 ) // Account key not specified for Azure Files volume {0}
+#define IDS_CM_AzureFileVolumeShareNameNotSpecified                     IDS_CM( 95 ) // Share name not specified for Azure Files volume {0}
+#define IDS_CM_VolumeDescriptionMissing                                 IDS_CM( 96 ) // Volume description missing
+#define IDS_CM_UnsupportedPreviewFeature_Upgrade_Failed                 IDS_CM( 97 ) // Cannot upgrade cluster with unsupported preview features enabled : version {0}
+#define IDS_CM_AzureFileVolumeAccountKeyNotDisplayed                    IDS_CM( 98 ) // AccountKeyNotDisplayed
+
 
 #define IDS_HM( Index )                                     RESOURCE_ID( IDS_MANAGEMENT( 200 ), Index )
 #define IDS_HM_Health_Evaluation_Error_Event                IDS_HM( 1 ) // Error event:
@@ -343,6 +413,8 @@
 #define IDS_HM_IncludeSystemApplication_With_ExcludeStats               IDS_HM( 63 ) // Can't set IncludeSystemApplicationHealthStatistics because ExcludeHealthStatistics is true.
 #define IDS_HM_EntityTooLarge_NoUnhealthyEvaluations                    IDS_HM( 64 ) // The entity's estimated size {0} is bigger than max allowed size {1}. Consider applying filters to the query to reduce the returned information.
 #define IDS_HM_EntityTooLarge_WithUnhealthyEvaluations                  IDS_HM( 65 ) // The trimmed entity doesn't fit in the max allowed size of {0}. Minimum size needed with trimmed evaluations is {1}.
+#define IDS_HM_TooManyHealthReports                                     IDS_HM( 66 ) // The entity has {0} reports, which is more than the tolerated number, {1}. Check the health reporting logic. A possible cause is that the health report source and property are not correctly set.
+
 
 #define IDS_RM( Index )                                     RESOURCE_ID( IDS_MANAGEMENT( 400 ), Index )
 #define IDS_RM_Invalid_State_Transition                     IDS_RM( 1 ) // The state transition is not allowed:
@@ -448,6 +520,16 @@
 
 #define IDS_FSS( Index )                                    RESOURCE_ID( 21000, Index )
 #define IDS_FSS_Invalid_SecurityPrincipalAccountType        IDS_FSS( 1 ) // The security principal account type '{0}' is not recognized as a valid value.
+#define IDS_FSS_Staging_SMBCopy_NetworkFailure              IDS_FSS( 2 ) // Unable to copy file to the image store service primary's staging location due to network error '{0}'. Please make sure SMB port 445 is enabled in the cluster's Network Security Group(NSG).
+#define IDS_FSS_Staging_SMBCopyFailure                      IDS_FSS( 3 ) // Unable to copy file to the image store service primary's staging location due to error '{0}'. Please retry.
+
+#define IDS_FSS_CLIENT( Index )                             RESOURCE_ID( IDS_FSS( 500 ), Index )
+#define IDS_FSS_CLIENT_SendChunkFailure                     IDS_FSS_CLIENT( 1 ) // Unable to send file chunks to the image store. Please retry after network congestion is reduced.
+#define IDS_FSS_CLIENT_UnableToUploadFile                   IDS_FSS_CLIENT( 2 ) // Unable to upload a file to the image store relative path '{0}'. Please retry.
+#define IDS_FSS_CLIENT_OperationCanceled                    IDS_FSS_CLIENT( 3 ) // The operation is canceled by the cluster. Please retry.
+#define IDS_FSS_CLIENT_ConnectionConfirmWaitExpired         IDS_FSS_CLIENT( 4 ) // Unable to establish connection with image store service. Please retry.
+#define IDS_FSS_CLIENT_OperationFailed                      IDS_FSS_CLIENT( 5 ) // The operation failed due to internal error in uploading a file to the image store path '{0}'. Please retry.
+#define IDS_FSS_CLIENT_FSSNtlmAuthenticationDisabled        IDS_FSS_CLIENT( 6 ) // Unable to upload application package to the cluster due to the usage of obsolete upload protocol. Please use latest SDK client to upload the package.
 
 #define IDS_FABRICAPPLICATIONGATEWAY( Index )                            RESOURCE_ID( IDS_EXE( 12000 ), Index )
 #define IDS_FABRICAPPLICATIONGATEWAY_STARTING                            IDS_FABRICAPPLICATIONGATEWAY( 1 ) // Starting Fabric Application Gateway.
@@ -476,6 +558,12 @@
 #define IDS_FAS_ChaosNodeTypeInclusionListTooLong           IDS_FAS( 12 ) // NodeTypeInclusionList cannot have more than 100 NodeTypes.
 #define IDS_FAS_ChaosApplicationInclusionListTooLong        IDS_FAS( 13 ) // ApplicationInclusionList cannot have more than 1000 applications.
 #define IDS_FAS_ChaosTargetFilterSpecificationNotFound      IDS_FAS( 14 ) // NodeTypeInclusionList and ApplicationInclusionList in ChaosTargetFilter cannot both be empty.
+#define IDS_FAS_ChaosScheduleStatusUnknown                  IDS_FAS( 15 ) // Unknown ChaosScheduleStatus.
+#define IDS_FAS_GetChaosEventsArgumentInvalid               IDS_FAS( 16 ) // Invalid argument combination in GetChaosEvents; use either ChaosEventsFilter or ContinuationToken, but not both.
+
+//
+// IDS_ERROR_MESSAGE is used by HTTP gateway to return friendly error message strings
+//
 
 #define IDS_ERROR_MESSAGE( Index )                                                                    RESOURCE_ID( 25000, Index )
 #define IDS_ERROR_MESSAGE_FABRIC_E_INVALID_PARTITION_KEY                                      IDS_ERROR_MESSAGE( 1 )  // Invalid partition key/ID
@@ -644,11 +732,43 @@
 #define IDS_ERROR_MESSAGE_FABRIC_E_DNS_SERVICE_NOT_FOUND                                      IDS_ERROR_MESSAGE( 164 )  // DnsService is not enabled on the cluster.
 #define IDS_ERROR_MESSAGE_FABRIC_E_INVALID_DNS_NAME                                           IDS_ERROR_MESSAGE( 165 )  // Service DNS name is invalid.
 #define IDS_ERROR_MESSAGE_FABRIC_E_DNS_NAME_IN_USE                                            IDS_ERROR_MESSAGE( 166 )  // Service DNS name already in use by another service.
-#define IDS_ERROR_MESSAGE_FABRIC_E_COMPOSE_DEPLOYMENT_ALREADY_EXISTS                         IDS_ERROR_MESSAGE( 167 )  // Compose deployment already exists.
-#define IDS_ERROR_MESSAGE_FABRIC_E_COMPOSE_DEPLOYMENT_NOT_FOUND                              IDS_ERROR_MESSAGE( 168 )  // Compose deployment not found.
+#define IDS_ERROR_MESSAGE_FABRIC_E_COMPOSE_DEPLOYMENT_ALREADY_EXISTS                          IDS_ERROR_MESSAGE( 167 )  // Compose deployment already exists.
+#define IDS_ERROR_MESSAGE_FABRIC_E_COMPOSE_DEPLOYMENT_NOT_FOUND                               IDS_ERROR_MESSAGE( 168 )  // Compose deployment not found.
 #define IDS_ERROR_MESSAGE_FABRIC_E_INVALID_FOR_STATEFUL_SERVICES                              IDS_ERROR_MESSAGE( 169 )  // Operation only valid for stateless services.
 #define IDS_ERROR_MESSAGE_FABRIC_E_INVALID_FOR_STATELESS_SERVICES                             IDS_ERROR_MESSAGE( 170 )  // Operation only valid for stateful services.
 #define IDS_ERROR_MESSAGE_FABRIC_E_ONLY_VALID_FOR_STATEFUL_PERSISTENT_SERVICES                IDS_ERROR_MESSAGE( 171 )  // Operation only valid for stateful persistent services.
 #define IDS_ERROR_MESSAGE_FABRIC_E_RA_NOT_READY_FOR_USE                                       IDS_ERROR_MESSAGE( 172 )  // Node is not ready to process this message.
 #define IDS_ERROR_MESSAGE_FABRIC_E_INVALID_UPLOAD_SESSION_ID                                  IDS_ERROR_MESSAGE( 173 )  // The upload session identity is invalid.
+#define IDS_ERROR_MESSAGE_FABRIC_E_SINGLE_INSTANCE_APPLICATION_ALREADY_EXISTS                 IDS_ERROR_MESSAGE( 174 )  // Single instance application already exists.
+#define IDS_ERROR_MESSAGE_FABRIC_E_SINGLE_INSTANCE_APPLICATION_NOT_FOUND                      IDS_ERROR_MESSAGE( 175 )  // Single instance application not found.
 #define IDS_ERROR_MESSAGE_FABRIC_E_CONTAINER_NOT_FOUND                                        IDS_ERROR_MESSAGE( 176 )  // Container not found.
+#define IDS_ERROR_MESSAGE_FABRIC_E_VOLUME_ALREADY_EXISTS                                      IDS_ERROR_MESSAGE( 177 )  // Volume already exists.
+#define IDS_ERROR_MESSAGE_FABRIC_E_VOLUME_NOT_FOUND                                           IDS_ERROR_MESSAGE( 178 )  // Volume not found.
+#define IDS_ERROR_MESSAGE_FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC                             IDS_ERROR_MESSAGE( 179 )  // Central Secret Service generic error.
+#define IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_WITH_FORCE_ON_ADHOC_SERVICE_REPLICA           IDS_ERROR_MESSAGE( 180 )  // Cannot close replica using Force for AdHoc type replica.
+#define IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_FOR_NON_EXISTENT_FAILOVER_UNIT                IDS_ERROR_MESSAGE( 181 )  // Cannot close replica as provided partition does not exist.
+#define IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_TRANSIENT_WITH_FORCE                          IDS_ERROR_MESSAGE( 182 )  // Force parameter not supported for restarting replica.
+#define IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_TRANSIENT_FOR_NON_PERSISTED_SERVICE_REPLICA   IDS_ERROR_MESSAGE( 183 )  // Non persisted replica cannot be restarted. Please remove this replica.
+#define IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_WITH_REPLICAID_MISMATCH                       IDS_ERROR_MESSAGE( 184 )  // Cannot close replica as provided ReplicaId do not match.
+#define IDS_ERROR_MESSAGE_FABRIC_E_REPORT_FAULT_WITH_INVALID_REPLICA_STATE                    IDS_ERROR_MESSAGE( 185 )  // Cannot close replica that is not open or has close in progress.
+#define IDS_ERROR_MESSAGE_FABRIC_E_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS            IDS_ERROR_MESSAGE( 186 )  // Single Instance application upgrade in progress.
+
+#define IDS_MODELV2( Index )                                        RESOURCE_ID( 26000, Index )
+#define IDS_MODELV2_ContainerImageNotSpecified                      IDS_MODELV2( 1 ) // '{0}': 'image' not specified.
+#define IDS_MODELV2_ContainerResourceRequestMemoryNotValid          IDS_MODELV2( 2 ) // '{0}': Resource request 'memory' not specified.
+#define IDS_MODELV2_ContainerResourceRequestCpuNotValid             IDS_MODELV2( 3 ) // '{0}': Resource request 'cpu' not specified.
+#define IDS_MODELV2_ContainerRegistryPasswordNotSpecified           IDS_MODELV2( 4 ) // '{0}': Container registry password not specified.
+#define IDS_MODELV2_CodePackageNotSpecified                         IDS_MODELV2( 5 ) // '{0}': At least one code package must be specified.
+#define IDS_MODELV2_ContainerEndpointNameNotSpecified               IDS_MODELV2( 6 ) // '{0}': Endpoint name not specified.
+#define IDS_MODELV2_NameNotSpecified                                IDS_MODELV2( 7 ) // '{0}': 'name' not specified.
+#define IDS_MODELV2_VolumeDestinationPathInvalidFormat              IDS_MODELV2( 8 ) // '{0}': Format of the 'destinationPath' '{1}' in volumes/volumeRefs is invalid.
+#define IDS_MODELV2_ContainerImageTagNotSpecified                   IDS_MODELV2( 9 ) // '{0}': Image tag not specified.
+#define IDS_MODELV2_EndpointNameNotUnique                           IDS_MODELV2( 10 ) // '{0}': Endpoint name '{1}' not unique.
+#define IDS_MODELV2_ServiceNameNotUnique                            IDS_MODELV2( 11 ) // '{0}': Service name '{1}' not unique.
+#define IDS_MODELV2_CodePackageNameNotUnique                        IDS_MODELV2( 12 ) // '{0}': CodePackage name '{1}' not unique.
+#define IDS_MODELV2_ValueNotSpecified                               IDS_MODELV2( 13 ) // '{0}': 'value' not specified.
+#define IDS_MODELV2_ApplicationScopedVolumeKindInvalid              IDS_MODELV2( 14 ) // '{0}': Application-scoped volume kind is invalid.
+#define IDS_MODELV2_VolumeNameNotSpecified                          IDS_MODELV2( 15 ) // '{0}': Volume name not specified in volumes/volumeRefs
+#define IDS_MODELV2_VolumeCreationParametersNotSpecified            IDS_MODELV2( 16 ) // '{0}': 'creationParameters' not specified in application-scoped volume ref.
+#define IDS_MODELV2_InvalidCharactersInName                         IDS_MODELV2( 17 ) // '{0}': characters '{1}' are not allowed in name '{2}'
+#define IDS_MODELV2_ServiceNotSpecified                             IDS_MODELV2( 18 ) // '{0}': At least one service description should be specified.

@@ -520,7 +520,13 @@ public:
         std::wstring const & assignedIPAddress,
         std::wstring const & appfolder,
         std::wstring const & appId,
+        std::wstring const & appName,
+        std::wstring const & partitionId,
+        std::wstring const & servicePackageActivationId,
         ServiceModel::ServicePackageResourceGovernanceDescription const & spRg,
+#if defined(PLATFORM_UNIX)
+        ContainerPodDescription const & podDesc,
+#endif
         bool isCleanup,
         Common::TimeSpan timeout,
         Common::AsyncCallback const & callback,
@@ -531,8 +537,14 @@ public:
         UNREFERENCED_PARAMETER(assignedIPAddress);
         UNREFERENCED_PARAMETER(appfolder);
         UNREFERENCED_PARAMETER(appId);
+        UNREFERENCED_PARAMETER(appName);
+        UNREFERENCED_PARAMETER(partitionId);
+        UNREFERENCED_PARAMETER(servicePackageActivationId);
         UNREFERENCED_PARAMETER(isCleanup);
         UNREFERENCED_PARAMETER(spRg);
+#if defined(PLATFORM_UNIX)
+        UNREFERENCED_PARAMETER(podDesc);
+#endif
 
         return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
             ErrorCodeValue::Success,
@@ -547,32 +559,52 @@ public:
         UNREFERENCED_PARAMETER(data);
         return CompletedAsyncOperation::End(operation);
     }
-    
+
     AsyncOperationSPtr BeginGetContainerInfo(
-		wstring const & containerName,
-		wstring const & containerInfoType,
+        std::wstring const & ,
+        bool ,
+        wstring const & containerInfoType,
         wstring const & containerInfoArgs,
-		TimeSpan timeout,
-		AsyncCallback const & callback,
-		AsyncOperationSPtr const & parent)
-	{
-		UNREFERENCED_PARAMETER(timeout);
-		UNREFERENCED_PARAMETER(containerName);
+        TimeSpan timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+    {
+        UNREFERENCED_PARAMETER(timeout);
         UNREFERENCED_PARAMETER(containerInfoType);
         UNREFERENCED_PARAMETER(containerInfoArgs);
-		return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-			ErrorCodeValue::Success,
-			callback,
-			parent);
-	}
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
+            ErrorCodeValue::Success,
+            callback,
+            parent);
+    }
 
-	ErrorCode EndGetContainerInfo(
-		AsyncOperationSPtr const & operation,
-		__out wstring & containerInfo)
-	{
-		UNREFERENCED_PARAMETER(containerInfo);
-		return CompletedAsyncOperation::End(operation);
-	}
+    ErrorCode EndGetContainerInfo(
+        AsyncOperationSPtr const & operation,
+        __out wstring & containerInfo)
+    {
+        UNREFERENCED_PARAMETER(containerInfo);
+        return CompletedAsyncOperation::End(operation);
+    }
+
+    AsyncOperationSPtr BeginGetImages(
+        Common::TimeSpan timeout,
+        Common::AsyncCallback const & callback,
+        Common::AsyncOperationSPtr const & parent)
+    {
+        UNREFERENCED_PARAMETER(timeout);
+        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
+            ErrorCodeValue::Success,
+            callback,
+            parent);
+    }
+
+    ErrorCode EndGetImages(
+        Common::AsyncOperationSPtr const & operation,
+        __out std::vector<wstring> & images)
+    {
+        UNREFERENCED_PARAMETER(images);
+        return CompletedAsyncOperation::End(operation);
+    }
 
     AsyncOperationSPtr BeginConfigureSharedFolderPermissions(
         vector<std::wstring> const & sharedFolders,
@@ -711,6 +743,16 @@ public:
         healthEvent_.Remove(handler);
     }
 
+    Common::HHandler AddRootContainerTerminationHandler(Common::EventHandler const & eventhandler)
+    {
+        return event_.Add(eventhandler);
+    }
+
+    void RemoveRootContainerTerminationHandler(Common::HHandler const & handler)
+    {
+        event_.Remove(handler);
+    }
+
     bool IsIpcClientInitialized()
     {
         return false;
@@ -718,13 +760,11 @@ public:
 
     Common::AsyncOperationSPtr BeginConfigureNodeForDnsService(
         bool isDnsServiceEnabled,
-        std::wstring const & sid,
         TimeSpan timeout,
         AsyncCallback const & callback,
         AsyncOperationSPtr const & parent)
     {
         UNREFERENCED_PARAMETER(isDnsServiceEnabled);
-        UNREFERENCED_PARAMETER(sid);
         UNREFERENCED_PARAMETER(timeout);
         return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
             ErrorCodeValue::Success,

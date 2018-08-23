@@ -42,6 +42,7 @@ namespace DNS
     private:
         USHORT _id;
         USHORT _flags;
+        KDateTime _time;
         KArray<IDnsRecord::SPtr> _arrQuestions;
         KArray<IDnsRecord::SPtr> _arrAnswers;
     };

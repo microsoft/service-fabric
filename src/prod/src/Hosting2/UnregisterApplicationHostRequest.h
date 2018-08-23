@@ -11,16 +11,20 @@ namespace Hosting2
     {
     public:
         UnregisterApplicationHostRequest();
-        UnregisterApplicationHostRequest(std::wstring const & hostId);
+        UnregisterApplicationHostRequest(Common::ActivityDescription const & activityDescription, std::wstring const & hostId);
+
+        __declspec(property(get=get_ActivityDescription)) Common::ActivityDescription const & ActivityDescription;
+        Common::ActivityDescription const & get_ActivityDescription() const { return activityDescription_; }
 
         __declspec(property(get=get_hostId)) std::wstring const & Id;
         std::wstring const & get_hostId() const { return id_; }
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_01(id_);
+        FABRIC_FIELDS_02(activityDescription_, id_);
 
     private:
+        Common::ActivityDescription activityDescription_;
         std::wstring id_;
     };
 }

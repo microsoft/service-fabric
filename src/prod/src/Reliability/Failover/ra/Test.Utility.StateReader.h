@@ -139,7 +139,7 @@ Notation:
 
 - ClientReportFaultRequestMessageBody: node_name ShortName ReplicaId FaultType
 
-- ClientReportFaultReplyMessageBody: errorcode
+- ClientReportFaultReplyMessageBody: errorcode errorMessage
 
 - HealthReport: delete <HealthReportCode> NodeId:NodeInstance:ReplicaId:ReplicaInstance
               : create <HealthReportCode> NodeId:NodeInstance:ReplicaId:ReplicaInstance Property Description 

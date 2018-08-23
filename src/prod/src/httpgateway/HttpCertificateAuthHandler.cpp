@@ -22,7 +22,8 @@ void HttpCertificateAuthHandler::OnCheckAccess(AsyncOperationSPtr const& operati
 {
     auto thisOperation = AsyncOperation::Get<AccessCheckAsyncOperation>(operation);
 
-    thisOperation->request_.BeginGetClientCertificate(
+	thisOperation->request_.BeginGetClientCertificate(
+        thisOperation->RemainingTime,
         [this](AsyncOperationSPtr const& operation)
         {
             this->OnCertificateReadComplete(operation);
@@ -32,7 +33,7 @@ void HttpCertificateAuthHandler::OnCheckAccess(AsyncOperationSPtr const& operati
 
 void HttpCertificateAuthHandler::OnCertificateReadComplete(AsyncOperationSPtr const& operation)
 {
-    auto accessCheckOperation = AsyncOperation::Get<AccessCheckAsyncOperation>(operation->Parent);  
+	auto accessCheckOperation = AsyncOperation::Get<AccessCheckAsyncOperation>(operation->Parent);   
     SECURITY_STATUS status = SEC_E_CERT_UNKNOWN;
 #if !defined(PLATFORM_UNIX)    
     CertContextUPtr certContext;
@@ -44,7 +45,7 @@ void HttpCertificateAuthHandler::OnCertificateReadComplete(AsyncOperationSPtr co
 #endif    
     if (!error.IsSuccess())
     {
-        WriteInfo(TraceType, "Client certificate missing for uri: {0}", accessCheckOperation->request_.GetUrl());
+        WriteInfo(TraceType, "Client certificate missing for uri: {0}, error: {1}.", accessCheckOperation->request_.GetUrl(), error);
         UpdateAuthenticationHeaderOnFailure(operation->Parent);
         accessCheckOperation->TryComplete(operation->Parent, ErrorCodeValue::InvalidCredentials);
         return;

@@ -43,12 +43,13 @@ SecondaryDrainManager::SecondaryDrainManager(
     __in RoleContextDrainState & roleContextDrainState,
     __in OperationProcessor & recordsProcessor,
     __in IStateReplicator & fabricReplicator,
+    __in IBackupManager & backupManager,
     __in CheckpointManager & checkpointManager,
     __in TransactionManager & transactionManager,
     __in ReplicatedLogManager & replicatedLogManager,
     __in IStateProviderManager & stateManager,
     __in RecoveryManager & recoveryManager,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in InvalidLogRecords & invalidLogRecords)
     : KObject()
     , KShared()
@@ -57,6 +58,7 @@ SecondaryDrainManager::SecondaryDrainManager(
     , checkpointManager_(&checkpointManager)
     , transactionManager_(&transactionManager)
     , fabricReplicator_(&fabricReplicator)
+    , backupManager_(&backupManager)
     , stateManager_(&stateManager)
     , recoveryManager_(&recoveryManager)
     , transactionalReplicatorConfig_(transactionalReplicatorConfig)
@@ -103,12 +105,13 @@ SecondaryDrainManager::SPtr SecondaryDrainManager::Create(
     __in RoleContextDrainState & roleContextDrainState,
     __in OperationProcessor & recordsProcessor,
     __in IStateReplicator & fabricReplicator,
+    __in IBackupManager & backupManager,
     __in CheckpointManager & checkpointManager,
     __in TransactionManager & transactionManager,
     __in ReplicatedLogManager & replicatedLogManager,
     __in IStateProviderManager & stateManager,
     __in RecoveryManager & recoveryManager,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in InvalidLogRecords & invalidLogRecords,
     __in KAllocator & allocator)
 {
@@ -118,6 +121,7 @@ SecondaryDrainManager::SPtr SecondaryDrainManager::Create(
         roleContextDrainState,
         recordsProcessor,
         fabricReplicator,
+        backupManager,
         checkpointManager,
         transactionManager,
         replicatedLogManager,
@@ -993,7 +997,7 @@ Awaitable<NTSTATUS> SecondaryDrainManager::DrainStateStreamAsync(
 
     roleContextDrainState_->OnDrainState();
 
-    status = stateManager_->BeginSettingCurrentState();
+    status = co_await stateManager_->BeginSettingCurrentStateAsync();
 
     CO_RETURN_ON_FAILURE(status);
 
@@ -1213,13 +1217,14 @@ Awaitable<NTSTATUS> SecondaryDrainManager::TruncateTailAsync(__in LONG64 tailLsn
         TraceId,
         checkpointManager_->get_LastStableLsn());
 
-    TxnReplicator::ApplyContext::Enum falseProgressApplyContext = TxnReplicator::ApplyContext::Enum::SecondaryFalseProgress;
+    ApplyContext::Enum falseProgressApplyContext = ApplyContext::Enum::SecondaryFalseProgress;
 
     TruncateTailManager::SPtr truncateTailManager = TruncateTailManager::Create(
         *get_PartitionedReplicaId(),
         *replicatedLogManager_,
         *(transactionManager_->TransactionMapObject),
         *stateManager_,
+        *backupManager_,
         tailLsn,
         falseProgressApplyContext,
         *recoveryManager_->RecoveryLogsReader,

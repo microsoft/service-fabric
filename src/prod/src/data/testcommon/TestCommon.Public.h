@@ -15,7 +15,6 @@ namespace Data
     using ::_delete;
 }
 
-#include <kwfruntime.h>
 #include "../txnreplicator/common/TransactionalReplicator.Common.Public.h"
 
 #include "ComAsyncOperationCallbackTestHelper.h"

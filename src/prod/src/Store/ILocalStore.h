@@ -27,8 +27,20 @@ namespace Store
         static const _int64 SequenceNumberIgnore = 0;
                 
         virtual bool StoreExists() { return false; };
+
         virtual Common::ErrorCode Initialize(std::wstring const &) { return Common::ErrorCodeValue::Success; };
-        virtual Common::ErrorCode Initialize(std::wstring const & instanceName, Federation::NodeId const & nodeId) { return this->Initialize(Common::wformatString("{0}{1}", instanceName, nodeId)); };
+
+        virtual Common::ErrorCode Initialize(std::wstring const & instanceName, Federation::NodeId const & nodeId) 
+        { 
+            return this->Initialize(Common::wformatString("{0}-{1}", instanceName, nodeId)); 
+        };
+
+        virtual Common::ErrorCode Initialize(std::wstring const &, Common::Guid const &, FABRIC_REPLICA_ID, FABRIC_EPOCH const &)
+        { 
+            return Common::ErrorCodeValue::NotImplemented;
+        };
+
+        virtual Common::ErrorCode MarkCleanupInTerminate() { return Common::ErrorCodeValue::NotImplemented; };
         virtual Common::ErrorCode Terminate() { return Common::ErrorCodeValue::Success; };
         virtual void Drain() { };
         virtual Common::ErrorCode Cleanup() { return Common::ErrorCodeValue::Success; };
@@ -204,15 +216,6 @@ namespace Store
         virtual Common::ErrorCode EstimateDbSizeBytes(__out size_t &)
         {
             return Common::ErrorCodeValue::NotImplemented;
-        }
-
-        //
-        // Test Hooks
-        //
-
-        virtual void Test_PrepareForCleanup()
-        {
-            // no-op
         }
     };
 }

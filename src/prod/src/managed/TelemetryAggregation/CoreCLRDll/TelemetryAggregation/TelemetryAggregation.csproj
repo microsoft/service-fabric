@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>TelemetryAggregation Class Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>TelemetryAggregation</AssemblyName>
+    <PackageId>TelemetryAggregation</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+    ..\..\Aggregation.cs;
+    ..\..\FieldAggregationConfig.cs;
+    ..\..\Field.cs;
+    ..\..\TelemetryCollection.cs;
+    ..\..\TraceAggregationConfig.cs;
+    ..\..\TraceAggregator.cs;
+    ..\..\DictionaryAsArrayResolver.cs;
+    ..\..\FieldAggregator.cs;
+    ..\..\ITelemetryWriter.cs;
+    ..\..\TelemetryIdentifiers.cs;
+    ..\..\TraceAggregationKey.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Reflection" Version="4.1.0" />
+    <PackageReference Include="System.Reflection.TypeExtensions" Version="4.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

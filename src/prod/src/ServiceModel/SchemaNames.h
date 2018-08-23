@@ -45,11 +45,13 @@ namespace ServiceModel
         static Common::GlobalWString const Element_ContainerHost;
         static Common::GlobalWString const Element_ContainerImageName;
         static Common::GlobalWString const Element_ContainerHostPolicies;
+        static Common::GlobalWString const Element_ServicePackageContainerPolicy;
         static Common::GlobalWString const Element_RepositoryCredentials;
         static Common::GlobalWString const Element_HealthConfig;
         static Common::GlobalWString const Element_PortBinding;
         static Common::GlobalWString const Element_LogConfig;
         static Common::GlobalWString const Element_Volume;
+        static Common::GlobalWString const Element_Label;
         static Common::GlobalWString const Element_NetworkConfig;
         static Common::GlobalWString const Element_CertificateRef;
         static Common::GlobalWString const Element_DriverOption;
@@ -113,6 +115,12 @@ namespace ServiceModel
         static Common::GlobalWString const Element_StatelessServiceGroup;
         static Common::GlobalWString const Element_ServiceCorrelations;
         static Common::GlobalWString const Element_ServiceCorrelation;
+        static Common::GlobalWString const Element_ServiceScalingPolicies;
+        static Common::GlobalWString const Element_ScalingPolicy;
+        static Common::GlobalWString const Element_ScalingMechanismPartitionInstanceCount;
+        static Common::GlobalWString const Element_ScalingMechanismAddRemoveIncrementalNamedPartition;
+        static Common::GlobalWString const Element_ScalingTriggerAveragePartitionLoad;
+        static Common::GlobalWString const Element_ScalingTriggerAverageServiceLoad;
         static Common::GlobalWString const Element_ServicePlacementPolicies;
         static Common::GlobalWString const Element_ServicePlacementPolicy;
         static Common::GlobalWString const Element_SecretsCertificate;
@@ -163,11 +171,14 @@ namespace ServiceModel
         static Common::GlobalWString const Element_EnvironmentOverrides;
         static Common::GlobalWString const Element_ResourceGovernancePolicy;
         static Common::GlobalWString const Element_ServicePackageResourceGovernancePolicy;
+        static Common::GlobalWString const Element_ServiceFabricRuntimeAccessPolicy;
         static Common::GlobalWString const Element_ContainerEntryPoint;
         static Common::GlobalWString const Element_ContainerMountedVolume;
         static Common::GlobalWString const Element_ContainerEnvironmentBlock;
+        static Common::GlobalWString const Element_ContainerLabel;
         static Common::GlobalWString const Element_ImageOverrides;
         static Common::GlobalWString const Element_Image;
+        static Common::GlobalWString const Element_ConfigPackagePolicies;
 
         static Common::GlobalWString const Attribute_ApplicationId;
         static Common::GlobalWString const Attribute_ApplicationTypeName;
@@ -194,6 +205,7 @@ namespace ServiceModel
         static Common::GlobalWString const Attribute_Weight;
         static Common::GlobalWString const Attribute_IsExternalExecutable;
         static Common::GlobalWString const Attribute_IsShared;
+        static Common::GlobalWString const Attribute_IsActivator;
         static Common::GlobalWString const Attribute_Type;
         static Common::GlobalWString const Attribute_IntervalInSeconds;
         static Common::GlobalWString const Attribute_Value;
@@ -207,6 +219,8 @@ namespace ServiceModel
         static Common::GlobalWString const Attribute_Port;
         static Common::GlobalWString const Attribute_NameRef;
         static Common::GlobalWString const Attribute_CodePackageRef;
+        static Common::GlobalWString const Attribute_UseDefaultRepositoryCredentials;
+        static Common::GlobalWString const Attribute_UseTokenAuthenticationCredentials;
         static Common::GlobalWString const Attribute_DataPackageRef;
         static Common::GlobalWString const Attribute_DataPackageVersion;
         static Common::GlobalWString const Attribute_PackageRef;
@@ -238,6 +252,7 @@ namespace ServiceModel
         static Common::GlobalWString const Attribute_X509FindValueSecondary;
         static Common::GlobalWString const Attribute_X509Thumbprint;
         static Common::GlobalWString const Attribute_UseImplicitHost;
+        static Common::GlobalWString const Attribute_UseServiceFabricReplicatedStore;
         static Common::GlobalWString const Attribute_FileRetentionCount;
         static Common::GlobalWString const Attribute_FileMaxSizeInKb;
         static Common::GlobalWString const Attribute_NameUri;
@@ -302,6 +317,9 @@ namespace ServiceModel
         static Common::GlobalWString const Attribute_MaximumIOps;
         static Common::GlobalWString const Attribute_MaximumIOBytesps;
         static Common::GlobalWString const Attribute_BlockIOWeight;
+        static Common::GlobalWString const Attribute_DiskQuotaInMB;
+        static Common::GlobalWString const Attribute_KernelMemoryInMB;
+        static Common::GlobalWString const Attribute_ShmSizeInMB;
         static Common::GlobalWString const Attribute_Driver;
         static Common::GlobalWString const Attribute_AdditionalProperties;
         static Common::GlobalWString const Attribute_Source;
@@ -311,11 +329,25 @@ namespace ServiceModel
         static Common::GlobalWString const Attribute_Hostname;
         static Common::GlobalWString const Attribute_CpuCores;
         static Common::GlobalWString const Attribute_NetworkType;
+        static Common::GlobalWString const Attribute_RemoveServiceFabricRuntimeAccess;
         static Common::GlobalWString const Attribute_IncludeDockerHealthStatusInSystemHealthReport;
         static Common::GlobalWString const Attribute_RestartContainerOnUnhealthyDockerHealthStatus;
         static Common::GlobalWString const Attribute_AutoRemove;
         static Common::GlobalWString const Attribute_RunInteractive;
         static Common::GlobalWString const Attribute_ContainersRetentionCount;
         static Common::GlobalWString const Attribute_Os;
+        static Common::GlobalWString const Attribute_ScalingPolicyMetricName;
+        static Common::GlobalWString const Attribute_ScalingPolicyLowerLoadThreshold;
+        static Common::GlobalWString const Attribute_ScalingPolicyUpperLoadThreshold;
+        static Common::GlobalWString const Attribute_ScalingPolicyMinInstanceCount;
+        static Common::GlobalWString const Attribute_ScalingPolicyMaxInstanceCount;
+        static Common::GlobalWString const Attribute_ScalingPolicyMinPartitionCount;
+        static Common::GlobalWString const Attribute_ScalingPolicyMaxPartitionCount;
+        static Common::GlobalWString const Attribute_ScalingPolicyUseOnlyPrimaryLoad;
+        static Common::GlobalWString const Attribute_ScalingPolicyScaleInterval;
+        static Common::GlobalWString const Attribute_ScalingPolicyScaleIncrement;
+        static Common::GlobalWString const Attribute_SectionName;
+        static Common::GlobalWString const Attribute_MountPoint;
+        static Common::GlobalWString const Attribute_EnvironmentVariableName;
     };
 }

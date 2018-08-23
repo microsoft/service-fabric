@@ -346,7 +346,8 @@ public:
         KAllocator & allocator,
         IHttpClientRequestSPtr & clientRequest,
         bool allowRedirects = true,
-        bool enableCookies = true) override
+        bool enableCookies = true,
+        bool enableWinauthAutoLogon = false) override
     {
         UNREFERENCED_PARAMETER(requestUri);
         UNREFERENCED_PARAMETER(connectTimeout);
@@ -356,6 +357,7 @@ public:
         UNREFERENCED_PARAMETER(clientRequest);
         UNREFERENCED_PARAMETER(allowRedirects);
         UNREFERENCED_PARAMETER(enableCookies);
+        UNREFERENCED_PARAMETER(enableWinauthAutoLogon);
 
         return ErrorCode(ErrorCodeValue::NotImplemented);
     }
@@ -367,13 +369,15 @@ public:
         TimeSpan const & receiveTimeout,
         IHttpClientRequestSPtr & clientRequest,
         bool allowRedirects = true,
-        bool enableCookies = true) override
+        bool enableCookies = true,
+        bool enableWinauthAutoLogon = false) override
     {
         UNREFERENCED_PARAMETER(connectTimeout);
         UNREFERENCED_PARAMETER(sendTimeout);
         UNREFERENCED_PARAMETER(receiveTimeout);
         UNREFERENCED_PARAMETER(allowRedirects);
         UNREFERENCED_PARAMETER(enableCookies);
+        UNREFERENCED_PARAMETER(enableWinauthAutoLogon);
 
         const string &msgBody = this->refreshBodyList_[this->refreshIndex_];
         if (this->refreshIndex_ < this->refreshBodyList_.size() - 1)

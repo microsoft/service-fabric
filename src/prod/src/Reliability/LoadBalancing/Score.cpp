@@ -169,7 +169,7 @@ void Score::Calculate(double moveCost)
     CalculateEnergy();
 }
 
-void Score::ForEachValidMetric(NodeEntry const* node, std::function<void(size_t, bool, bool)> processor)
+void Score::ForEachValidMetric(NodeEntry const* node, std::function<void(size_t, size_t, bool, bool)> processor)
 {
     if (node->IsDeactivated || !node->IsUp)
     {
@@ -183,7 +183,7 @@ void Score::ForEachValidMetric(NodeEntry const* node, std::function<void(size_t,
         {
             if (itMetric->IsValidNode(node->NodeIndex))
             {
-                processor(totalMetricIndex, itMetric->IsDefrag, itMetric->DefragmentationScopedAlgorithmEnabled);
+                processor(totalMetricIndex, itMetric->IndexInGlobalDomain, itMetric->IsDefrag, itMetric->DefragmentationScopedAlgorithmEnabled);
             }
             ++totalMetricIndex;
         }
@@ -195,6 +195,7 @@ void Score::UpdateDomainLoads(
     Common::TreeNodeIndex const& nodeDomainIndex,
     int64 nodeLoadOld,
     int64 nodeLoadNew,
+    int64 nodeCapacity,
     size_t totalMetricIndex,
     std::vector<Accumulator> & aggregatedDomainLoads,
     bool updateAggregates)
@@ -206,11 +207,11 @@ void Score::UpdateDomainLoads(
 
     // applying node change to domain tree and after that, applying domain change to aggregated domain loads.
     double fdLoadOld = domainLoads.GetNodeByIndex(nodeDomainIndex).Data.AccEntries[totalMetricIndex].Sum;
-    domainLoads.GetNodeByIndex(nodeDomainIndex).DataRef.AccEntries[totalMetricIndex].AdjustOneValue(nodeLoadOld, nodeLoadNew);
+    domainLoads.GetNodeByIndex(nodeDomainIndex).DataRef.AccEntries[totalMetricIndex].AdjustOneValue(nodeLoadOld, nodeLoadNew, nodeCapacity);
     if (updateAggregates)
     {
         double fdLoadNew = domainLoads.GetNodeByIndex(nodeDomainIndex).Data.AccEntries[totalMetricIndex].Sum;
-        aggregatedDomainLoads[totalMetricIndex].AdjustOneValue((int64)fdLoadOld, (int64)fdLoadNew);
+        aggregatedDomainLoads[totalMetricIndex].AdjustOneValue((int64)fdLoadOld, (int64)fdLoadNew, nodeCapacity);
     }
 }
 
@@ -243,12 +244,13 @@ void Score::UpdateMetricScores(NodeMetrics const& nodeChanges)
         LoadEntry const& changes = p.second;
         NodeEntry const* node = p.first;
 
-        ForEachValidMetric(node, [&](size_t totalMetricIndex, bool isDefragMetric, bool isScopedDefragMetric)
+        ForEachValidMetric(node, [&](size_t totalMetricIndex, size_t globalMetricIndex, bool isDefragMetric, bool isScopedDefragMetric)
         {
             int64 loadLevelOld = node->GetLoadLevel(totalMetricIndex);
             int64 loadLevelNew = node->GetLoadLevel(totalMetricIndex, changes.Values[totalMetricIndex]);
 
-            nodeMetricScores_[totalMetricIndex].AdjustOneValue(loadLevelOld, loadLevelNew);
+            int64 nodeCapacity = node->GetNodeCapacity(globalMetricIndex);
+            nodeMetricScores_[totalMetricIndex].AdjustOneValue(loadLevelOld, loadLevelNew, nodeCapacity);
 
             if (isDefragMetric)
             {
@@ -257,6 +259,7 @@ void Score::UpdateMetricScores(NodeMetrics const& nodeChanges)
                     node->FaultDomainIndex,
                     loadLevelOld,
                     loadLevelNew,
+                    nodeCapacity,
                     totalMetricIndex,
                     fdMetricScores_);
 
@@ -265,6 +268,7 @@ void Score::UpdateMetricScores(NodeMetrics const& nodeChanges)
                     node->UpgradeDomainIndex,
                     loadLevelOld,
                     loadLevelNew,
+                    nodeCapacity,
                     totalMetricIndex,
                     udMetricScores_);
 
@@ -296,12 +300,13 @@ void Score::UpdateMetricScores(NodeMetrics const& newNodeChanges, NodeMetrics co
             LoadEntry const& oldChanges = p.second;
             NodeEntry const* node = p.first;
 
-            ForEachValidMetric(node, [&](size_t totalMetricIndex, bool isDefragMetric, bool isScopedDefragMetric)
+            ForEachValidMetric(node, [&](size_t totalMetricIndex, size_t globalMetricIndex, bool isDefragMetric, bool isScopedDefragMetric)
             {
                 UNREFERENCED_PARAMETER(isScopedDefragMetric);
 
                 int64 loadLevelOld = node->GetLoadLevel(totalMetricIndex);
                 int64 loadLevelNew = node->GetLoadLevel(totalMetricIndex, oldChanges.Values[totalMetricIndex]);
+                int64 nodeCapacity = node->GetNodeCapacity(globalMetricIndex);
 
                 if (isDefragMetric)
                 {
@@ -310,6 +315,7 @@ void Score::UpdateMetricScores(NodeMetrics const& newNodeChanges, NodeMetrics co
                         node->FaultDomainIndex,
                         loadLevelOld,
                         loadLevelNew,
+                        nodeCapacity,
                         totalMetricIndex,
                         fdMetricScores_,
                         false);
@@ -319,6 +325,7 @@ void Score::UpdateMetricScores(NodeMetrics const& newNodeChanges, NodeMetrics co
                         node->UpgradeDomainIndex,
                         loadLevelOld,
                         loadLevelNew,
+                        nodeCapacity,
                         totalMetricIndex,
                         udMetricScores_,
                         false);
@@ -336,13 +343,13 @@ void Score::UpdateMetricScores(NodeMetrics const& newNodeChanges, NodeMetrics co
 
         LoadEntry const& oldChanges = oldNodeChanges[node];
 
-        ForEachValidMetric(node, [&](size_t totalMetricIndex, bool isDefragMetric, bool isScopedDefragMetric)
+        ForEachValidMetric(node, [&](size_t totalMetricIndex, size_t globalMetricIndex, bool isDefragMetric, bool isScopedDefragMetric)
         {
             int64 loadLevelOld = oldChanges.Values.empty() ?
                 node->GetLoadLevel(totalMetricIndex) : node->GetLoadLevel(totalMetricIndex, oldChanges.Values[totalMetricIndex]);
             int64 loadLevelNew = node->GetLoadLevel(totalMetricIndex, newChanges.Values[totalMetricIndex]);
-
-            nodeMetricScores_[totalMetricIndex].AdjustOneValue(loadLevelOld, loadLevelNew);
+            int64 nodeCapacity = node->GetNodeCapacity(globalMetricIndex);
+            nodeMetricScores_[totalMetricIndex].AdjustOneValue(loadLevelOld, loadLevelNew, nodeCapacity);
 
             if (isDefragMetric)
             {
@@ -351,6 +358,7 @@ void Score::UpdateMetricScores(NodeMetrics const& newNodeChanges, NodeMetrics co
                     node->FaultDomainIndex,
                     loadLevelOld,
                     loadLevelNew,
+                    nodeCapacity,
                     totalMetricIndex,
                     fdMetricScores_);
 
@@ -359,6 +367,7 @@ void Score::UpdateMetricScores(NodeMetrics const& newNodeChanges, NodeMetrics co
                     node->UpgradeDomainIndex,
                     loadLevelOld,
                     loadLevelNew,
+                    nodeCapacity,
                     totalMetricIndex,
                     udMetricScores_);
 
@@ -385,8 +394,9 @@ void Score::UndoMetricScoresForDynamicLoads(NodeMetrics const& newNodeChanges, N
         NodeEntry const* node = p.first;
         LoadEntry const& oldChanges = oldNodeChanges[node];
 
-        ForEachValidMetric(node, [&](size_t totalMetricIndex, bool isDefragMetric, bool isScopedDefragMetric)
+        ForEachValidMetric(node, [&](size_t totalMetricIndex, size_t globalMetricIndex, bool isDefragMetric, bool isScopedDefragMetric)
         {
+            UNREFERENCED_PARAMETER(globalMetricIndex);
             if (isDefragMetric && isScopedDefragMetric)
             {
                 // Restore old dynamic load state
@@ -405,8 +415,9 @@ double Score::StdDevCaculationHelper(size_t metricScoreIndex,
     Metric::PlacementStrategy const& placementStrategy,
     int32 emptyNodesTarget,
     double defragEmptyNodeWeight,
+    double defragNonEmptyNodeWeight,
     Metric::DefragDistributionType const& defragDistributionType,
-    size_t defragEmptyNodeLoadThreshold,
+    size_t reservationLoad,
     double weight)
 {
     if (isDefrag)
@@ -422,23 +433,23 @@ double Score::StdDevCaculationHelper(size_t metricScoreIndex,
         else
         {
             // When using the new defrag algorithm, we reward the emptiness of the nodes as well as the balance of the cluster
-            // The weight of these in the calculation is controlled with defragEmptyNodeWeight
+            // The weight of these in the calculation is controlled with defragEmptyNodeWeight(emptiness) and nonEmptyNodeWeight(balance)
             if (placementStrategy == Metric::PlacementStrategy::ReservationAndBalance)
             {
                 return weight * (
-                    (1 - defragEmptyNodeWeight) *
+                    defragNonEmptyNodeWeight *
                     (
                         settings_.DefragmentationNodesStdDevFactor * nodeMetricScores_[metricScoreIndex].NormStdDev
                         )
                     +
                     defragEmptyNodeWeight *
-                    CalculateFreeNodeScoreHelper(metricScoreIndex, emptyNodesTarget, defragDistributionType, defragEmptyNodeLoadThreshold)
+                    CalculateFreeNodeScoreHelper(metricScoreIndex, emptyNodesTarget, defragDistributionType, reservationLoad)
                     );
             }
             else if (placementStrategy == Metric::PlacementStrategy::ReservationAndPack)
             {
                 return weight * (
-                    (1 - defragEmptyNodeWeight) *
+                    defragNonEmptyNodeWeight *
                     (
                         settings_.DefragmentationNodesStdDevFactor -
                         settings_.DefragmentationNodesStdDevFactor * nodeMetricScores_[metricScoreIndex].NormStdDev +
@@ -447,14 +458,14 @@ double Score::StdDevCaculationHelper(size_t metricScoreIndex,
                         )
                     +
                     defragEmptyNodeWeight *
-                    CalculateFreeNodeScoreHelper(metricScoreIndex, emptyNodesTarget, defragDistributionType, defragEmptyNodeLoadThreshold)
+                    CalculateFreeNodeScoreHelper(metricScoreIndex, emptyNodesTarget, defragDistributionType, reservationLoad)
                     );
             }
             // Placement strategy is NoPreference
             else
             {
                 return weight * defragEmptyNodeWeight *
-                    CalculateFreeNodeScoreHelper(metricScoreIndex, emptyNodesTarget, defragDistributionType, defragEmptyNodeLoadThreshold);
+                    CalculateFreeNodeScoreHelper(metricScoreIndex, emptyNodesTarget, defragDistributionType, reservationLoad);
             }
         }
     }
@@ -483,8 +494,9 @@ double Score::CalculateAvgStdDevForMetric(wstring const & metricName)
                 metric.placementStrategy,
                 metric.DefragNodeCount,
                 metric.DefragmentationEmptyNodeWeight,
+                metric.DefragmentationNonEmptyNodeWeight,
                 metric.DefragDistribution,
-                metric.DefragEmptyNodeLoadThreshold,
+                metric.ReservationLoad,
                 metric.Weight);
 
             break;
@@ -520,8 +532,9 @@ void Score::CalculateAvgStdDev()
                 metric.placementStrategy,
                 metric.DefragNodeCount,
                 metric.DefragmentationEmptyNodeWeight,
+                metric.DefragmentationNonEmptyNodeWeight,
                 metric.DefragDistribution,
-                metric.DefragEmptyNodeLoadThreshold,
+                metric.ReservationLoad,
                 metric.Weight);
 
             currentIndex++;
@@ -577,14 +590,14 @@ void Score::CalculateEnergy()
 double Score::CalculateFreeNodeScoreHelper(size_t metricScoreIndex,
     int32 emptyNodesTarget,
     Metric::DefragDistributionType const& defragDistributionType,
-    size_t defragEmptyNodeLoadThreshold)
+    size_t reservationLoad)
 {
     // We reward emptyNodesTarget for value up to 1
     // We additionaly reward for 1 when a node is completely empty to enforce empty nodes
     // Here we initialize with the worst case and improve from there
     double score = emptyNodesTarget * 2;
 
-    dynamicNodeLoads_->ForEachCandidateNode(metricScoreIndex, emptyNodesTarget, defragDistributionType, defragEmptyNodeLoadThreshold, [&](double percentage)
+    dynamicNodeLoads_->ForEachCandidateNode(metricScoreIndex, emptyNodesTarget, defragDistributionType, reservationLoad, [&](double percentage)
     {
         score -= pow(1 - percentage, 2);
 

@@ -11,8 +11,13 @@ namespace Store
     {
     public:
         virtual Common::ErrorCode CreateLocalStore(
-            StoreFactoryParameters const & factoryParameters,
-            __out ILocalStoreSPtr & store) = 0;
+            StoreFactoryParameters const &,
+            __out ILocalStoreSPtr &) = 0;
+
+        virtual Common::ErrorCode CreateLocalStore(
+            StoreFactoryParameters const &,
+            __out ILocalStoreSPtr &,
+            __out ServiceModel::HealthReport &) = 0;
 
         virtual ~IStoreFactory() {}
     };

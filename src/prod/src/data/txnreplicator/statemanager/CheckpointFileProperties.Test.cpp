@@ -102,6 +102,7 @@ namespace StateManagerTests
                 expectedReplicaId,
                 expectedRootStateProviderCount,
                 expectedStateProviderCount,
+                false,
                 expectedPrepareCheckpointLSN,
                 allocator,
                 checkpointFilePropertiesSPtr);

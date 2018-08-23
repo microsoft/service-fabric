@@ -21,13 +21,15 @@ namespace DNS
             __out UdpListener::SPtr& spServer,
             __in KAllocator& allocator,
             __in const IDnsTracer::SPtr& spTracer,
-            __in const INetIoManager::SPtr& spManager
+            __in const INetIoManager::SPtr& spManager,
+            __in bool fEnableSocketAddressReuse
         );
 
     private:
         UdpListener(
             __in const IDnsTracer::SPtr& spTracer,
-            __in const INetIoManager::SPtr& spManager
+            __in const INetIoManager::SPtr& spManager,
+            __in bool fEnableSocketAddressReuse
         );
 
     public:
@@ -83,5 +85,6 @@ namespace DNS
         UdpListenerCallback _closeCallback;
         SOCKET _socket;
         PVOID _ioRegistrationContext;
+        bool _fEnableSocketAddressReuse;
     };
 }

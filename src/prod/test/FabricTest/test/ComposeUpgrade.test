@@ -68,7 +68,6 @@ query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentNa
 verifyupgradeapp fabric:/app upgradedomains=UD1,UD2
 
 upgradeappmovenext fabric:/app
-query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardPending,TargetApplicationTypeVersion=v1
 verifyupgradeapp fabric:/app upgradedomains=UD1,UD2,UD3
 
 verify

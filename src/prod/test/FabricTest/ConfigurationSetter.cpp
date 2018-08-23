@@ -153,17 +153,17 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(FailoverConfig::GetConfig().PlacementTimeLimitEntry);
     AddMapEntry(FailoverConfig::GetConfig().ProcessingQueueSizeEntry);
     AddMapEntry(FailoverConfig::GetConfig().ProcessingQueueThreadCountEntry);
-	AddMapEntry(FailoverConfig::GetConfig().ProxyOutgoingMessageRetryTimerIntervalEntry);
+    AddMapEntry(FailoverConfig::GetConfig().ProxyOutgoingMessageRetryTimerIntervalEntry);
     AddMapEntry(FailoverConfig::GetConfig().RAUpgradeProgressCheckIntervalEntry);
     AddMapEntry(FailoverConfig::GetConfig().RAPMessageRetryIntervalEntry);
-	AddMapEntry(FailoverConfig::GetConfig().RebuildPartitionTimeLimitEntry);
+    AddMapEntry(FailoverConfig::GetConfig().RebuildPartitionTimeLimitEntry);
     AddMapEntry(FailoverConfig::GetConfig().ReconfigurationHealthReportThresholdEntry);
-	AddMapEntry(FailoverConfig::GetConfig().ReconfigurationMessageRetryIntervalEntry);
-	AddMapEntry(FailoverConfig::GetConfig().ReconfigurationTimeLimitEntry);
-	AddMapEntry(FailoverConfig::GetConfig().ReopenSuccessWaitIntervalEntry);
-	AddMapEntry(FailoverConfig::GetConfig().ReplicaOpenFailureMaxRetryThresholdEntry);
-	AddMapEntry(FailoverConfig::GetConfig().ReplicaOpenFailureWarningReportThresholdEntry);
-	AddMapEntry(FailoverConfig::GetConfig().ReplicaOpenFailureErrorReportThresholdEntry);
+    AddMapEntry(FailoverConfig::GetConfig().ReconfigurationMessageRetryIntervalEntry);
+    AddMapEntry(FailoverConfig::GetConfig().ReconfigurationTimeLimitEntry);
+    AddMapEntry(FailoverConfig::GetConfig().ReopenSuccessWaitIntervalEntry);
+    AddMapEntry(FailoverConfig::GetConfig().ReplicaOpenFailureMaxRetryThresholdEntry);
+    AddMapEntry(FailoverConfig::GetConfig().ReplicaOpenFailureWarningReportThresholdEntry);
+    AddMapEntry(FailoverConfig::GetConfig().ReplicaOpenFailureErrorReportThresholdEntry);
     AddMapEntry(FailoverConfig::GetConfig().ReplicaOpenFailureRestartThresholdEntry);
     AddMapEntry(FailoverConfig::GetConfig().ReplicaCloseFailureMaxRetryThresholdEntry);
     AddMapEntry(FailoverConfig::GetConfig().ReplicaCloseFailureWarningReportThresholdEntry);
@@ -211,6 +211,7 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(FailoverConfig::GetConfig().RAPApiOKHealthEventDurationEntry);
     AddMapEntry(FailoverConfig::GetConfig().StandByReplicaKeepDurationEntry, L"FMStandByReplicaKeepDuration");
     AddMapEntry(FailoverConfig::GetConfig().IsStrongSafetyCheckEnabledEntry);
+    AddMapEntry(FailoverConfig::GetConfig().RemoveNodeOrDataUpReplicaTimeoutEntry);
     #pragma endregion "FailoverConfig"
 
     #pragma region "FederationConfig"
@@ -230,7 +231,9 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(Hosting2::HostingConfig::GetConfig().ServiceTypeDisableGraceIntervalEntry);
     AddMapEntry(Hosting2::HostingConfig::GetConfig().ServiceTypeRegistrationTimeoutEntry);
     AddMapEntry(Hosting2::HostingConfig::GetConfig().LocalResourceManagerTestModeEntry);
-    AddMapEntry(Hosting2::HostingConfig::GetConfig().DisableContainerServiceStartOnContainerActivatorOpenEntry);
+    AddMapEntry(Hosting2::HostingConfig::GetConfig().DisableContainersEntry);
+    AddMapEntry(Hosting2::HostingConfig::GetConfig().ExclusiveModeDeactivationGraceIntervalEntry);
+    AddMapEntry(Hosting2::HostingConfig::GetConfig().GovernOnlyMainMemoryForProcessesEntry);
     #pragma endregion "HostingConfig"
 
     #pragma region "ManagementConfig"
@@ -280,6 +283,8 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(ManagementConfig::GetConfig().NamingJobQueueMaxPendingWorkCountEntry);
     AddMapEntry(ManagementConfig::GetConfig().TestComposeDeploymentTestModeEntry);
     AddMapEntry(ManagementConfig::GetConfig().StandByReplicaKeepDurationEntry, L"CMStandByReplicaKeepDuration");
+    AddMapEntry(ManagementConfig::GetConfig().MaxSuggestedNumberOfEntityHealthReportsEntry);
+    AddMapEntry(ManagementConfig::GetConfig().MaxEntityHealthReportsAllowedPerTransactionEntry);
 
     #pragma endregion "ManagementConfig"
 
@@ -337,6 +342,7 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MoveParentToFixAffinityViolationEntry);
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().MoveParentToFixAffinityViolationTransitionPercentageEntry);
     AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().SlowBalancingSearchTimeoutEntry);
+    AddMapEntry(Reliability::LoadBalancingComponent::PLBConfig::GetConfig().PreferNodesForContainerPlacementEntry);
     #pragma endregion "PLBConfig"
 
     #pragma region "RepairManagerConfig"
@@ -377,6 +383,7 @@ void ConfigurationSetter::PopulateConfigMap()
     AddMapEntry(StoreConfig::GetConfig().EnableTombstoneCleanup2Entry);
     AddMapEntry(StoreConfig::GetConfig().EnableReferenceTrackingEntry, L"StoreEnableReferenceTracking");
     AddMapEntry(StoreConfig::GetConfig().TStoreInitializationRetryDelayEntry);
+    AddMapEntry(StoreConfig::GetConfig().IgnoreOpenLocalStoreFlagEntry);
     #pragma endregion "StoreConfig"
 
     #pragma region "TransportConfig"

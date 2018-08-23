@@ -1,0 +1,136 @@
+votes 10 20 30
+cleantest
+
+fmservice 1 1
+cmservice 1 1
+namingservice 1 1 1
+
+set NamingOperationTimeout 15
+set NamingOperationRetryTimeout 60
+
++10 ud=UD1
++20 ud=UD2 
++30 ud=UD3 
+verify
+
+#
+# Create a stateful service with 3 partitions, no auto scaling defined
+#
+
+createservice fabric:/stateful TestPersistedStoreServiceType y 3 3 persist partitionnames=0,1,2 metrics=CPU,High,4,15
+verify
+
+# Verify that auto scaling did not happen yet
+resolve fabric:/stateful 0 savecuid namedpartition
+resolve fabric:/stateful 1 savecuid namedpartition
+resolve fabric:/stateful 2 savecuid namedpartition
+resolve fabric:/stateful 3 namedpartition error=InvalidServicePartition
+
+getservicedescription fabric:/stateful verify partitionnames=0,1,2
+
+#
+# Add auto scaling for this service, so that it scales up based on default load
+#
+
+updateservice fabric:/stateful Stateful scalingPolicy=type:partition,metricname:CPU,minCount:2,maxCount:4,metriclow:2,metrichigh:8,scaleincrement:2,scaleinterval:1,useonlyprimaryload:false
+verify
+
+!pause 10
+
+# Verify that one more partition (3) has been added
+resolve fabric:/stateful 0 verifycuid namedpartition
+resolve fabric:/stateful 1 verifycuid namedpartition
+resolve fabric:/stateful 2 verifycuid namedpartition
+resolve fabric:/stateful 3 namedpartition
+resolve fabric:/stateful 4 namedpartition error=InvalidServicePartition
+
+getservicedescription fabric:/stateful verify partitionnames=0,1,2,3
+
+#
+# Change the auto scaling settings so that the service will scale down to 3 partitions
+#
+updateservice fabric:/stateful Stateful scalingPolicy=type:partition,metricname:CPU,minCount:3,maxCount:4,metriclow:20,metrichigh:40,scaleincrement:2,scaleinterval:1
+verify
+
+!pause 10
+
+resolve fabric:/stateful 0 verifycuid namedpartition
+resolve fabric:/stateful 1 verifycuid namedpartition
+resolve fabric:/stateful 2 verifycuid namedpartition
+resolve fabric:/stateful 3 namedpartition error=InvalidServicePartition
+
+getservicedescription fabric:/stateful verify partitionnames=0,1,2
+
+#
+# Change the auto scaling settings so that the service will scale based on primary replica load only. It shouldn't scale up as primary load is 4
+#
+
+updateservice fabric:/stateful Stateful scalingPolicy=type:partition,metricname:CPU,minCount:2,maxCount:4,metriclow:2,metrichigh:8,scaleincrement:2,scaleinterval:1,useonlyprimaryload:true
+verify
+
+!pause 10
+
+resolve fabric:/stateful 0 verifycuid namedpartition
+resolve fabric:/stateful 1 verifycuid namedpartition
+resolve fabric:/stateful 2 verifycuid namedpartition
+resolve fabric:/stateful 3 namedpartition error=InvalidServicePartition
+
+getservicedescription fabric:/stateful verify partitionnames=0,1,2
+
+#
+# Change the auto scaling settings so that the service will scale based on primary replica load only. It should scale now
+#
+
+updateservice fabric:/stateful Stateful scalingPolicy=type:partition,metricname:CPU,minCount:2,maxCount:4,metriclow:2,metrichigh:3,scaleincrement:2,scaleinterval:1,useonlyprimaryload:true
+verify
+
+!pause 10
+
+# Verify that one more partition (3) has been added
+resolve fabric:/stateful 0 verifycuid namedpartition
+resolve fabric:/stateful 1 verifycuid namedpartition
+resolve fabric:/stateful 2 verifycuid namedpartition
+resolve fabric:/stateful 3 namedpartition
+resolve fabric:/stateful 4 namedpartition error=InvalidServicePartition
+
+getservicedescription fabric:/stateful verify partitionnames=0,1,2,3
+
+#
+# Stateless service
+#
+
+# Create the service without scaling policy.
+createservice fabric:/stateless CalculatorServiceType n 2 1 partitionnames=0,1 metrics=CPU,High,10,0
+verify
+
+resolve fabric:/stateless 0 savecuid namedpartition
+resolve fabric:/stateless 1 savecuid namedpartition
+
+getservicedescription fabric:/stateless verify partitionnames=0,1
+
+# Update service so that it immediately scales up
+updateservice fabric:/stateless Stateless scalingPolicy=type:partition,metricname:CPU,minCount:2,maxCount:3,metriclow:2,metrichigh:8,scaleincrement:1,scaleinterval:1
+
+!pause 10
+
+resolve fabric:/stateless 0 verifycuid namedpartition
+resolve fabric:/stateless 1 verifycuid namedpartition
+resolve fabric:/stateless 2 namedpartition
+resolve fabric:/stateless 3 namedpartition error=InvalidServicePartition
+
+getservicedescription fabric:/stateless verify partitionnames=0,1,2
+
+# Change default load so that the service scales down
+updateservice fabric:/stateless Stateless metrics=CPU,High,1,0
+
+!pause 10
+
+resolve fabric:/stateless 0 verifycuid namedpartition
+resolve fabric:/stateless 1 verifycuid namedpartition
+resolve fabric:/stateless 2 namedpartition error=InvalidServicePartition
+
+getservicedescription fabric:/stateless verify partitionnames=0,1
+
+!q
+
+

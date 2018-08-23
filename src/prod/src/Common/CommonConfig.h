@@ -54,6 +54,9 @@ namespace Common
         INTERNAL_CONFIG_ENTRY(uint, L"Common", PosixTimerLimit, 3000, ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(uint, L"Common", PosixTimerLimit_Fabric, 8000, ConfigEntryUpgradePolicy::Dynamic);
 
+        // Bit count of capacity for timer finalizer queue, with the default value, queue capacity is 2M
+        INTERNAL_CONFIG_ENTRY(uint, L"Common", TimerFinalizerQueueCapacityBitCount, 21, ConfigEntryUpgradePolicy::Static, Common::InRange<uint>(10, 32));
+
         // Dispatch time threshold for TimerQueue timer, longer dispatch time will be traced out
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Common", TimerQueueDispatchTimeThreshold, Common::TimeSpan::FromSeconds(0.1), Common::ConfigEntryUpgradePolicy::Static, Common::TimeSpanGreaterThan(Common::TimeSpan::Zero));
 
@@ -61,8 +64,11 @@ namespace Common
         DEPRECATED_CONFIG_ENTRY(uint, L"Common", EventLoopConcurrency, 0, Common::ConfigEntryUpgradePolicy::Static);
         // Cleanup delay for fd context used in event loop
         DEPRECATED_CONFIG_ENTRY(Common::TimeSpan, L"Common", EventLoopCleanupDelay, Common::TimeSpan::FromSeconds(120), Common::ConfigEntryUpgradePolicy::Static, Common::TimeSpanGreaterThan(Common::TimeSpan::Zero));
-
 #endif
+        // Switch to support upgrade and downgrade scenarios without trace loss for transitioning into Structured traces in linux using config upgrade
+        // TODO - remove after transition to structured traces is complete
+        INTERNAL_CONFIG_ENTRY(bool, L"Common", LinuxStructuredTracesEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
+
 
         // See 7268869 and 7278671.  Prior to this, some managed system services did not secure their replicator endpoints.  This config is used to determine whether to read in cluster
         // security settings and pass them into the replicator.  For existing clusters, this config is false and can never be changed.  For new clusters, this should be explicitly set to true so the aforementioned services
@@ -84,5 +90,8 @@ namespace Common
 
         // Timeout used for ComponentRoot leak detection timer
         TEST_CONFIG_ENTRY(TimeSpan, L"Common", LeakDetectionTimeout, TimeSpan::FromSeconds(60), ConfigEntryUpgradePolicy::Static);
+
+        // Enables features that are in preview and not supported in production.
+        INTERNAL_CONFIG_ENTRY(bool, L"Common", EnableUnsupportedPreviewFeatures, false, ConfigEntryUpgradePolicy::NotAllowed);
     };
 }

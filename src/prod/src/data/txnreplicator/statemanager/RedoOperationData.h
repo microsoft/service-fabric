@@ -10,7 +10,7 @@ namespace Data
     namespace StateManager
     {
         /// <summary>
-        /// RedoOperationData for StateManager opertions like Add and Remove State Provider.
+        /// RedoOperationData for StateManager operations like Add and Remove State Provider.
         /// </summary>
         /// <dataformat>
         /// Managed:
@@ -25,8 +25,8 @@ namespace Data
         ///
         /// Note: The different between Managed code and Native code are the initialization parameter part.
         /// For the managed code, it will write the size of buffer then the actual byte array, if the initialization parameter
-        /// is null, write -1. So for managed, the posible value are -1, 0, 1, 2...MAXLONG32. However, for the native, BufferCount
-        /// is positive number(becasue include the header), to write the value, we take a complement of the origin size. So the posible 
+        /// is null, write -1. So for managed, the possible value are -1, 0, 1, 2...MAXLONG32. However, for the native, BufferCount
+        /// is positive number(because include the header), to write the value, we take a complement of the origin size. So the possible 
         /// value for native is -2, -3...MINLONG32.
         /// In this way, after we read in the BufferCount, we can distinguish between managed and native format.
         /// </dataformat>
@@ -38,7 +38,7 @@ namespace Data
 
         public:
             /// <summary>
-            /// Creates an RedoOperationData::SPtr from intputs.
+            /// Creates an RedoOperationData::SPtr from inputs.
             /// Used in the IN path.
             /// </summary>
             static NTSTATUS Create(

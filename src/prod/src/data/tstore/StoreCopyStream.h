@@ -23,6 +23,7 @@ namespace Data
                 __in IStoreCopyProvider & copyProvider,
                 __in StoreTraceComponent & traceComponent,
                 __in KAllocator & allocator,
+                __in StorePerformanceCountersSPtr & perfCounters,
                 __out SPtr & result);
 
 
@@ -80,8 +81,9 @@ namespace Data
             void TraceException(__in KStringView const & methodName, __in ktl::Exception const & exception);
 
             StoreCopyStream(
-                __in IStoreCopyProvider & copyProvider, 
-                __in StoreTraceComponent & traceComponent);
+                __in IStoreCopyProvider & copyProvider,
+                __in StoreTraceComponent & traceComponent,
+                __in StorePerformanceCountersSPtr & perfCounters);
 
             IStoreCopyProvider::SPtr copyProviderSPtr_;
             CopyStage::Enum copyStage_;
@@ -93,6 +95,7 @@ namespace Data
             bool isClosed_;
 
             StoreTraceComponent::SPtr traceComponent_;
+            CopyPerformanceCounterWriter perfCounterWriter_;
         };
     }
 }

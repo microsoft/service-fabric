@@ -404,7 +404,7 @@ protected:
 
     HRESULT EndComAsyncOperation(IFabricAsyncOperationContext * context)
     {
-        return comImpl_.EndGetTestCommandStatusList(context, (IFabricTestCommandStatusResult**)&result_);   
+        return comImpl_.EndGetTestCommandStatusList(context, (IFabricTestCommandStatusResult**)&result_);
     }
 
     IFabricFaultAnalysisService & comImpl_;
@@ -483,7 +483,7 @@ public:
         , timeout_(timeout)
     {
     }
-    
+
     virtual ~StartChaosAsyncOperation() { }
 
     static ErrorCode End(AsyncOperationSPtr const & operation)
@@ -491,7 +491,7 @@ public:
         auto casted = AsyncOperation::End<StartChaosAsyncOperation>(operation);
         return casted->Error;
     }
-    
+
     protected:
     DWORD GetDWORDTimeout() { return static_cast<DWORD>(timeout_.TotalMilliseconds()); }
 
@@ -538,7 +538,7 @@ public:
         , timeout_(timeout)
     {
     }
-    
+
     virtual ~StopChaosAsyncOperation() { }
 
     static ErrorCode End(AsyncOperationSPtr const & operation)
@@ -557,7 +557,7 @@ protected:
                 callback,
                 context);
     }
-    
+
     HRESULT EndComAsyncOperation(IFabricAsyncOperationContext * context)
     {
         ;      return comImpl_.EndStopChaos(context);
@@ -750,12 +750,12 @@ class ComProxyFaultAnalysisService::GetStoppedNodeListAsyncOperation : public Co
 
 public:
     GetStoppedNodeListAsyncOperation(
-        __in IFabricFaultAnalysisService & comImpl,        
+        __in IFabricFaultAnalysisService & comImpl,
         TimeSpan const & timeout,
         AsyncCallback const & callback,
         AsyncOperationSPtr const & parent)
         : ComProxyAsyncOperation(callback, parent)
-        , comImpl_(comImpl)        
+        , comImpl_(comImpl)
         , timeout_(timeout)
     {
     }
@@ -781,14 +781,14 @@ protected:
     {
         Trace.WriteInfo(TraceComponent, "GetStoppedNodeListAsyncOperation BeginComAsyncOperation");
 
-        return comImpl_.BeginGetStoppedNodeList(            
+        return comImpl_.BeginGetStoppedNodeList(
             this->GetDWORDTimeout(),
             callback,
             context);
     }
 
     HRESULT EndComAsyncOperation(IFabricAsyncOperationContext * context)
-    {       
+    {
         ComPointer<IFabricStringResult> result;
         auto hr = comImpl_.EndGetStoppedNodeList(context, result.InitializationAddress());
 
@@ -805,7 +805,7 @@ protected:
         return hr;
     }
 
-    IFabricFaultAnalysisService & comImpl_;    
+    IFabricFaultAnalysisService & comImpl_;
     wstring result_;
 
     TimeSpan const timeout_;
@@ -1092,14 +1092,14 @@ AsyncOperationSPtr ComProxyFaultAnalysisService::BeginGetStoppedNodeList(
 }
 
 ErrorCode ComProxyFaultAnalysisService::EndGetStoppedNodeList(
-    AsyncOperationSPtr const & asyncOperation,   
+    AsyncOperationSPtr const & asyncOperation,
     wstring & reply)
 {
     return GetStoppedNodeListAsyncOperation::End(asyncOperation, reply);
 };
 
-AsyncOperationSPtr ComProxyFaultAnalysisService::BeginStartNodeTransition(   
-    FABRIC_NODE_TRANSITION_DESCRIPTION* description,    
+AsyncOperationSPtr ComProxyFaultAnalysisService::BeginStartNodeTransition(
+    FABRIC_NODE_TRANSITION_DESCRIPTION* description,
     TimeSpan const timeout,
     AsyncCallback const & callback,
     AsyncOperationSPtr const & parent)
@@ -1148,25 +1148,25 @@ ErrorCode ComProxyFaultAnalysisService::EndGetNodeTransitionProgress(
 
 // SystemServiceCall
 AsyncOperationSPtr ComProxyFaultAnalysisService::BeginCallSystemService(
-	std::wstring const & action,
-	std::wstring const & inputBlob,
-	Common::TimeSpan const timeout,
-	Common::AsyncCallback const & callback,
-	Common::AsyncOperationSPtr const & parent)
+    std::wstring const & action,
+    std::wstring const & inputBlob,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
 {
-	return this->BeginCallSystemServiceInternal(
-		action,
-		inputBlob,
-		timeout,
-		callback,
-		parent);
+    return this->BeginCallSystemServiceInternal(
+        action,
+        inputBlob,
+        timeout,
+        callback,
+        parent);
 }
 
 ErrorCode ComProxyFaultAnalysisService::EndCallSystemService(
-	Common::AsyncOperationSPtr const & asyncOperation,
-	__inout std::wstring & outputBlob)
+    Common::AsyncOperationSPtr const & asyncOperation,
+    __inout std::wstring & outputBlob)
 {
-	return this->EndCallSystemServiceInternal(
-		asyncOperation,
-		outputBlob);
+    return this->EndCallSystemServiceInternal(
+        asyncOperation,
+        outputBlob);
 }

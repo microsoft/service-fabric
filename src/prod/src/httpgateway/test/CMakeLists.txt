@@ -46,8 +46,6 @@ target_link_libraries(${exe_httpgatewayTest}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 

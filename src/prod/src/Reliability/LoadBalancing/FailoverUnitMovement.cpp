@@ -101,7 +101,7 @@ bool FailoverUnitMovement::ContainCreation()
     bool ret = false;
     for (size_t i = 0; i < actions_.size(); ++i)
     {
-        if (actions_[i].Action == FailoverUnitMovementType::AddPrimary || actions_[i].Action == FailoverUnitMovementType::AddSecondary)
+        if (actions_[i].IsAdd)
         {
             ret = true;
             break;

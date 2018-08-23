@@ -15,6 +15,7 @@ add_executable(${exe_data_utilities_test}
   ../FileFormat.Test.cpp
   ../KHashSet.Test.cpp
   ../KPath.Test.cpp
+  ../LockManager.Test.cpp
   ../PartitionedReplicaTraceComponent.Test.cpp
   ../ReaderWriterAsyncLock.Test.cpp
   ../ConcurrentSkipList.Test.cpp
@@ -51,8 +52,6 @@ target_link_libraries(${exe_data_utilities_test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

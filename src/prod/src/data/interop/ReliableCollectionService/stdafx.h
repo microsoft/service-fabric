@@ -18,6 +18,7 @@
 
 
 #include "Helpers.h"
+#include "EndpointsDescription.h"
 #include "StatefulServiceBase.h"
 #include "Factory.h"
 #include "ComFactory.h"

@@ -1,0 +1,114 @@
+# Test cases to verify create/upgrade behavior for apps with default services with dns names.  
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+fmservice 3 1
+dnsservice true 
+cleantest
+
+set NamingOperationTimeout 120
+set EnableDefaultServicesUpgrade true
+set IsStrongSafetyCheckEnabled false
+
++10 
++20 
++30 
+verify
+
+#
+# Application version 1.0
+#
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA stateless
+app.codepack version10 ServicePackageA CodeA types=ServiceTypeA version=1.0
+
+# default services 
+app.reqservices version10 defaultservicea ServiceTypeA stateless singlepartition instance=2 serviceDnsName=defaultservicea.version10
+
+app.upload version10
+provisionapp version10
+
+#
+# Application version 1.1
+#
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA stateless
+app.codepack version11 ServicePackageA CodeA types=ServiceTypeA version=1.1
+
+# default services
+app.reqservices version11 defaultservicea ServiceTypeA stateless singlepartition instance=2 serviceDnsName=defaultservicea.version11
+
+app.upload version11
+provisionapp version11
+
+#
+# Application version 2.0
+#
+app.add version20 TestApp 2.0
+app.clear version20
+app.servicepack version20 ServicePackageA version=1.0
+app.servicetypes version20 ServicePackageA ServiceTypeA stateless
+app.codepack version20 ServicePackageA CodeA types=ServiceTypeA version=1.0
+app.servicepack version20 ServicePackageB version=1.0
+app.servicetypes version20 ServicePackageB ServiceTypeB stateless
+app.codepack version20 ServicePackageB CodeB types=ServiceTypeB version=1.0
+
+# default services
+app.reqservices version20 defaultservicea ServiceTypeA stateless singlepartition instance=2 serviceDnsName=defaultservicea.version10
+app.reqservices version20 defaultserviceb ServiceTypeB stateless singlepartition instance=2 serviceDnsName=defaultserviceb.version10
+
+app.upload version20
+provisionapp version20
+
+##########################################################################
+#
+# Testcase 1: Create an app instance with a default service with DNS name
+#
+##########################################################################
+
+createapp fabric:/mytestapp TestApp 1.0
+verify
+
+nameexists fabric:/mytestapp true
+nameexists fabric:/mytestapp/defaultservicea true
+
+dnsnameexists defaultservicea.version10 fabric:/mytestapp/defaultservicea
+
+##############################################################################
+#
+# Testcase 2: Upgrade app instance with a default service with DNS name change
+#
+##############################################################################
+
+upgradeapp fabric:/mytestapp 1.1 Rolling upgrademode=auto errors=ApplicationUpgradeValidationError
+
+dnsnameexists defaultservicea.version11 xxx error=PropertyNotFound
+
+##########################################################################
+#
+#
+# Testcase 3: Upgrade app instance with a new default service with DNS name
+#
+###########################################################################
+
+upgradeapp fabric:/mytestapp 2.0 Rolling upgrademode=auto
+
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/mytestapp/defaultservicea 2
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/mytestapp/defaultservicea 1
+!waitforstate FM.Service.TargetReplicaSetSize.fabric:/mytestapp/defaultserviceb 2
+!waitforstate FM.Service.MinReplicaSetSize.fabric:/mytestapp/defaultserviceb 1
+verifyupgradeapp fabric:/mytestapp
+
+nameexists fabric:/mytestapp true
+nameexists fabric:/mytestapp/defaultservicea true
+nameexists fabric:/mytestapp/defaultserviceb true
+
+dnsnameexists defaultservicea.version10 fabric:/mytestapp/defaultservicea
+dnsnameexists defaultserviceb.version10 fabric:/mytestapp/defaultserviceb
+
+!q

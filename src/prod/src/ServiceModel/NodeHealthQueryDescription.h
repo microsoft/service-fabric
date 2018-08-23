@@ -18,8 +18,8 @@ namespace ServiceModel
             std::wstring && nodeName,
             std::unique_ptr<ClusterHealthPolicy> && healthPolicy);
 
-        NodeHealthQueryDescription(NodeHealthQueryDescription && other);
-        NodeHealthQueryDescription & operator = (NodeHealthQueryDescription && other);
+        NodeHealthQueryDescription(NodeHealthQueryDescription && other) = default;
+        NodeHealthQueryDescription & operator = (NodeHealthQueryDescription && other) = default;
 
         ~NodeHealthQueryDescription();
 

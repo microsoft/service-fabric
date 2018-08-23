@@ -5,7 +5,7 @@
     {
       "Name": "Linux.Smoke",
       "Type": "Linux_ScriptTest",
-      "Owners": "anmola,xunlu,chenxu,jefchen",
+      "Owners": "lemai,anmola,xunlu,chenxu,jefchen",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -19,7 +19,7 @@
     {
       "Name": "SfrpLinuxUbuntu.Smoke.Test",
       "Type": "Linux_SFRP_ScriptTest",
-      "Owners": "anmola,maburlik,chenxu",
+      "Owners": "lemai,anmola,maburlik,chenxu",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -40,7 +40,7 @@
             "SetupTimeout": "900",
             "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
             "TaskName": "SfrpWindows.Smoke.Test",
-            "ExecutionTimeout": "3000",
+            "ExecutionTimeout": "7200",
             "CleanupType": "XCopy",
             "CleanupTimeout": "2100"
         }
@@ -48,7 +48,7 @@
     {
       "Name": "EndToEndSmokeBvtX509",
       "Type": "V2_ScriptTest",
-      "Owners": "anmola,rsinha",
+      "Owners": "lemai,heeldin,anmola,rsinha",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {        
         "SetupType": "Exe",
@@ -75,7 +75,7 @@
     {
       "Name": "PLB_PlacementConstraint",
       "Type": "V2_DllTest",
-      "Owners": "chanli",
+      "Owners": "yangli",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
         "SetupTimeout": "900",

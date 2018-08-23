@@ -15,5 +15,6 @@ namespace Api
         DECLARE_SINGLETON_RESOURCE(ComFabricClientFASResource)
 
         FAS_COMFABRICCLIENT_RESOURCE(GetChaosReportArgumentInvalid, GetChaosReportArgumentInvalid)
+        FAS_COMFABRICCLIENT_RESOURCE(GetChaosEventsArgumentInvalid, GetChaosEventsArgumentInvalid)
     };
 }

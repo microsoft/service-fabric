@@ -6,7 +6,7 @@
 #pragma once
 
 #include "client/ClientConnectionManager.h"  
-#include "client/FileSender.h"  
+#include "client/FileSender.h"
 #include "client/FileReceiver.h" 
 
 namespace Naming
@@ -43,6 +43,14 @@ namespace Naming
 
         bool AccessCheck(Transport::Message & mesasge);
 
+        void ProcessFileChunkUploadRequest(
+            std::wstring const & serviceName,
+            std::wstring const & storeRelativePath,
+            bool const shouldOverwrite,
+            uint64 const fileSize,
+            Common::Guid const & operationId,
+            Transport::ISendTarget::SPtr const & target,
+            Common::TimeSpan const & timeout);
         void ProcessFileUploadRequest(
             std::wstring const & serviceName,
             std::wstring const & storeRelativePath,
@@ -59,8 +67,13 @@ namespace Naming
             Transport::ISendTarget::SPtr const & target,
             Common::TimeSpan const & timeout);
 
-        void SendResponseToClient(Common::ErrorCode const & error, Transport::ISendTarget::SPtr target, Transport::Actor::Enum const actor, Common::Guid const operationId_);
+        void SendResponseToClient(Common::ErrorCode const & error, Transport::ISendTarget::SPtr target, Transport::Actor::Enum const actor, Common::Guid const operationId_, bool useSingleFileUploadProtocolVersion = false);
+        Common::ErrorCode ReplyToSender(Transport::ISendTarget::SPtr const & sendTarget, Common::Guid const & operationId, uint64 const sequenceId, Common::ErrorCode const & error, Common::TimeSpan timeout);
 
+        void CleanupUploadChunks();
+        bool IsNativeImageStoreEnabled() const;
+
+        class UploadChunkAsyncOperation;
         class UploadAsyncOperation;
         class DownloadAsyncOperation;
 
@@ -78,5 +91,6 @@ namespace Naming
         Transport::IDatagramTransportSPtr &transport_;
         Transport::DemuxerUPtr &demuxer_;
         Federation::NodeInstance instance_;
+        Common::SynchronizedMap<Common::Guid, Common::AsyncOperationSPtr> pendingOperations_;
     };
 }

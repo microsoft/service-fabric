@@ -182,7 +182,7 @@ namespace Ktl
             // In either case TryCompleteOperation is called exactly once. 
             // Thus, when the state reaches 2 the operation can complete.
 
-            if (::InterlockedIncrement(&_State) != 2)
+            if (::InterlockedIncrement((volatile LONG*)&_State) != 2)
             {
                 return;
             }

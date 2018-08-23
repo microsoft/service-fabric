@@ -709,7 +709,7 @@ namespace Close
         {            
             auto & context = base.As<FailoverUnitEntityExecutionContext>();
             NodeInstance nodeInstance = closeMode == ReplicaCloseMode::Deactivate ? SenderNode : ReconfigurationAgent::InvalidNode;            
-            test.GetFT(ftShortName).StartCloseLocalReplica(closeMode, nodeInstance, context);
+            test.GetFT(ftShortName).StartCloseLocalReplica(closeMode, nodeInstance, context, ActivityDescription::Empty);
         });
     }
 
@@ -723,7 +723,7 @@ namespace Close
             [&](HandlerParameters & handlerParameters, JobItemContextBase &)
         {
             NodeInstance nodeInstance = closeMode == ReplicaCloseMode::Deactivate ? SenderNode : ReconfigurationAgent::InvalidNode;
-            handlerParameters.RA.CloseLocalReplica(handlerParameters, closeMode, nodeInstance);
+            handlerParameters.RA.CloseLocalReplica(handlerParameters, closeMode, nodeInstance, ActivityDescription::Empty);
             return true;
         });
 

@@ -72,35 +72,6 @@ HealthInformation::~HealthInformation()
 {
 }
 
-HealthInformation::HealthInformation(HealthInformation && other)
-    : sourceId_(move(other.sourceId_))
-    , property_(move(other.property_))
-    , timeToLive_(move(other.timeToLive_))
-    , state_(move(other.state_))
-    , description_(move(other.description_))
-    , sequenceNumber_(move(other.sequenceNumber_))
-    , removeWhenExpired_(move(other.removeWhenExpired_))
-    , sourceUtcTimestamp_(move(other.sourceUtcTimestamp_))
-{
-}
-
-HealthInformation & HealthInformation::operator = (HealthInformation && other)
-{
-    if (this != &other)
-    {
-        sourceId_ = move(other.sourceId_);
-        property_ = move(other.property_);
-        timeToLive_ = move(other.timeToLive_);
-        state_ = move(other.state_);
-        description_ = move(other.description_);
-        sequenceNumber_ = move(other.sequenceNumber_);
-        removeWhenExpired_ = move(other.removeWhenExpired_);
-        sourceUtcTimestamp_ = move(other.sourceUtcTimestamp_);
-    }
-
-    return *this;
-}
-
 ErrorCode HealthInformation::ToCommonPublicApi(
     __in ScopedHeap & heap, 
     __out FABRIC_HEALTH_INFORMATION & healthInformation) const

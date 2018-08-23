@@ -221,8 +221,12 @@ PlacementUPtr const& SystemState::GetPlacement(PartitionClosureType::Enum closur
     if (placement_ == nullptr)
     {
         GetBalanceChecker(closureType);
-        set<Guid> throttledPartitions = (closureType == PartitionClosureType::Full || closureType == PartitionClosureType::CreationWithMove) ?
-            serviceDomain_.Scheduler.GetMovementThrottledFailoverUnits() : set<Guid>();
+
+        set<Guid> throttledPartitions =
+            (closureType == PartitionClosureType::Full || closureType == PartitionClosureType::NewReplicaPlacementWithMove) ?
+            serviceDomain_.Scheduler.GetMovementThrottledFailoverUnits() :
+            set<Guid>();
+
         placement_ = serviceDomain_.GetPlacement(partitionClosure_, move(balanceChecker_), move(throttledPartitions));
         balanceChecker_ = nullptr;
         checker_ = make_unique<Checker>(&(*placement_), trace_, plbDiagnosticsSPtr_);

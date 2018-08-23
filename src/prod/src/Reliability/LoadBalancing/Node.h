@@ -26,12 +26,17 @@ namespace Reliability
             __declspec (property(get=get_NodeDescription)) NodeDescription const& NodeDescriptionObj;
             NodeDescription const& get_NodeDescription() const { return nodeDescription_; }
 
+            __declspec (property(get = get_NodeImages)) std::vector<std::wstring> const& NodeImages;
+            std::vector<std::wstring> const& get_NodeImages() const { return nodeImages_; }
+
             void UpdateDescription(NodeDescription && description);
+            void UpdateNodeImages(std::vector<std::wstring>&& images);
 
             void WriteTo(Common::TextWriter& writer, Common::FormatOptions const&) const;
 
         private:
             NodeDescription nodeDescription_;
+            std::vector<std::wstring> nodeImages_;
         };
     }
 }

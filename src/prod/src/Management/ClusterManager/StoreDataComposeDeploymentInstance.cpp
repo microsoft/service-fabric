@@ -108,7 +108,7 @@ std::wstring StoreDataComposeDeploymentInstance::GetDeploymentNameKeyPrefix() co
 void StoreDataComposeDeploymentInstance::WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const
 {
     w.Write(
-        "StoreDataComposeDeploymentInstance({0}:{1}, ComposeFiles : {2}, sfSettingsFiles : {3}, repo user name ={4}]", 
+        "StoreDataComposeDeploymentInstance({0}:{1}, ComposeFiles : {2}, sfSettingsFiles : {3}, repo user name ={4})", 
         deploymentName_, 
         version_, 
         composeFiles_.size(),

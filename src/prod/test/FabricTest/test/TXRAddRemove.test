@@ -217,6 +217,9 @@ clientdelete fabric:/test6 40
 clientdelete fabric:/test6 50
 !wait
 
+# Ensure all replicas have caught up
+waitforalltoapplylsn fabric:/test6
+
 reportfault 40 fabric:/test6 transient
 !waitforstate FM.Replica.Role.fabric:/test6.30 Primary
 
@@ -233,36 +236,39 @@ verify
 
 ##############################################################################################
 #
-# TestCase 8 - Report fault permanent on primary
+# TestCase 7 - Report fault permanent on primary
 #
 ##############################################################################################
 
-createservice fabric:/test8 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
-!waitforstate FM.Replica.Role.fabric:/test8.40 Primary
-!waitforstate FM.Replica.Role.fabric:/test8.30 Secondary
-!waitforstate FM.Replica.Role.fabric:/test8.20 Secondary
+createservice fabric:/test7 TXRServiceType y 1 3 persist constraint=(system!=true) initdata=RE_InitialPrimaryReplicationQueueSize:2;RE_MaxPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:4
+!waitforstate FM.Replica.Role.fabric:/test7.40 Primary
+!waitforstate FM.Replica.Role.fabric:/test7.30 Secondary
+!waitforstate FM.Replica.Role.fabric:/test7.20 Secondary
 verify 
 
-clientput fabric:/test8 10 ten
-clientput fabric:/test8 20 twenty
-clientput fabric:/test8 30 thirty
-clientput fabric:/test8 40 forty
-clientput fabric:/test8 50 fifty
+clientput fabric:/test7 10 ten
+clientput fabric:/test7 20 twenty
+clientput fabric:/test7 30 thirty
+clientput fabric:/test7 40 forty
+clientput fabric:/test7 50 fifty
 !wait
-clientget fabric:/test8 10 ten
-clientget fabric:/test8 50 fifty
+clientget fabric:/test7 10 ten
+clientget fabric:/test7 50 fifty
+!wait
+
+# Ensure all replicas have caught up
+waitforalltoapplylsn fabric:/test7 
+
+reportfault 40 fabric:/test7 permanent
+!waitforstate FM.Replica.Role.fabric:/test7.30 Primary 
+clientget fabric:/test7 10 ten
+clientget fabric:/test7 20 twenty 
+clientget fabric:/test7 30 thirty
+clientget fabric:/test7 40 forty
+clientget fabric:/test7 50 fifty
 !wait 
 
-reportfault 40 fabric:/test8 permanent
-!waitforstate FM.Replica.Role.fabric:/test8.30 Primary 
-clientget fabric:/test8 10 ten
-clientget fabric:/test8 20 twenty 
-clientget fabric:/test8 30 thirty
-clientget fabric:/test8 40 forty
-clientget fabric:/test8 50 fifty
-!wait 
-
-deleteservice fabric:/test8
+deleteservice fabric:/test7
 verify 
 
 !q

@@ -31,75 +31,114 @@ namespace TStoreTests
 
 
       Common::CommonConfig config; // load the config object as its needed for the tracing to work
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> SlowAdd_ShouldTimeout_Test()
+       {
+          int key1 = 5;
+          int key2 = 6;
+          int value = 6;
+
+          {
+             WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
+             co_await Store->AddAsync(*tx->StoreTransactionSPtr, key1, value, DefaultTimeout, CancellationToken::None);
+             NTSTATUS status = STATUS_SUCCESS;
+
+             try
+             {
+                 co_await Store->AddAsync(*tx->StoreTransactionSPtr, key2, value, DefaultTimeout, CancellationToken::None);
+                 CODING_ERROR_ASSERT(false);
+             }
+             catch (ktl::Exception& e)
+             {
+                 status = e.GetStatus();
+             }
+
+             if (!NT_SUCCESS(status))
+             {
+                 co_await tx->AbortAsync();
+                 CODING_ERROR_ASSERT(status == SF_STATUS_TIMEOUT);
+             }
+          }
+           co_return;
+       }
+
+        ktl::Awaitable<void> SlowConditionalUpdateAsync_ShouldTimeout_Test()
+       {
+           int key = 5;
+           int value = 6;
+
+           {
+               WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
+               co_await Store->AddAsync(*tx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+               NTSTATUS status = STATUS_SUCCESS;
+
+               try
+               {
+                   co_await Store->ConditionalUpdateAsync(*tx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+                   CODING_ERROR_ASSERT(false);
+               }
+               catch (ktl::Exception& e)
+               {
+                   status = e.GetStatus();
+               }
+
+               if (!NT_SUCCESS(status))
+               {
+                   co_await tx->AbortAsync();
+                   CODING_ERROR_ASSERT(status == SF_STATUS_TIMEOUT);
+               }
+           }
+           co_return;
+       }
+
+        ktl::Awaitable<void> SlowConditionalRemoveAsync_ShouldTimeout_Test()
+       {
+           int key = 5;
+           int value = 6;
+
+           {
+               WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
+               co_await Store->AddAsync(*tx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+               NTSTATUS status = STATUS_SUCCESS;
+
+               try
+               {
+                   co_await Store->ConditionalRemoveAsync(*tx->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
+                   CODING_ERROR_ASSERT(false);
+               }
+               catch (ktl::Exception& e)
+               {
+                   status = e.GetStatus();
+               }
+
+               if (!NT_SUCCESS(status))
+               {
+                   co_await tx->AbortAsync();
+                   CODING_ERROR_ASSERT(status == SF_STATUS_TIMEOUT);
+               }
+           }
+           co_return;
+       }
+    #pragma endregion
    };
 
    BOOST_FIXTURE_TEST_SUITE(StoreTestTimeOutSuite, StoreTestTimeOut)
 
    BOOST_AUTO_TEST_CASE(SlowAdd_ShouldTimeout)
    {
-      int key1 = 5;
-      int key2 = 6;
-      int value = 6;
-
-      {
-         WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-         SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, key1, value, DefaultTimeout, CancellationToken::None));
-
-         try
-         {
-             SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, key2, value, DefaultTimeout, CancellationToken::None));
-             CODING_ERROR_ASSERT(false);
-         }
-         catch (ktl::Exception& e)
-         {
-             SyncAwait(tx->AbortAsync());
-             CODING_ERROR_ASSERT(e.GetStatus() == SF_STATUS_TIMEOUT);
-         }
-      }
+       SyncAwait(SlowAdd_ShouldTimeout_Test());
    }
 
    BOOST_AUTO_TEST_CASE(SlowConditionalUpdateAsync_ShouldTimeout)
    {
-       int key = 5;
-       int value = 6;
-
-       {
-           WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-           SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-
-           try
-           {
-               SyncAwait(Store->ConditionalUpdateAsync(*tx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-               CODING_ERROR_ASSERT(false);
-           }
-           catch (ktl::Exception& e)
-           {
-               SyncAwait(tx->AbortAsync());
-               CODING_ERROR_ASSERT(e.GetStatus() == SF_STATUS_TIMEOUT);
-           }
-       }
+       SyncAwait(SlowConditionalUpdateAsync_ShouldTimeout_Test());
    }
 
    BOOST_AUTO_TEST_CASE(SlowConditionalRemoveAsync_ShouldTimeout)
    {
-       int key = 5;
-       int value = 6;
-
-       {
-           WriteTransaction<int, int>::SPtr tx = CreateWriteTransaction();
-           SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-
-           try
-           {
-               SyncAwait(Store->ConditionalRemoveAsync(*tx->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None));
-               CODING_ERROR_ASSERT(false);
-           }
-           catch (ktl::Exception& e)
-           {
-               SyncAwait(tx->AbortAsync());
-               CODING_ERROR_ASSERT(e.GetStatus() == SF_STATUS_TIMEOUT);
-           }
-       }
+       SyncAwait(SlowConditionalRemoveAsync_ShouldTimeout_Test());
    }
 
    BOOST_AUTO_TEST_SUITE_END()

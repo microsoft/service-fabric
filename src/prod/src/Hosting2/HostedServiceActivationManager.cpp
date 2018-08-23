@@ -109,14 +109,13 @@ private:
             return;
         }
 
-#if !defined(PLATFORM_UNIX)
-        if (HostingConfig::GetConfig().DisableContainerServiceStartOnContainerActivatorOpen)
+        if (HostingConfig::GetConfig().DisableContainers)
         {
             Trace.WriteInfo(
                 TraceType_ActivationManager,
                 owner_.Root.TraceId,
-                "Ignoring FabricCAS.exe activation since DisableContainerServiceStartOnContainerActivatorOpen is set to {0}",
-                HostingConfig::GetConfig().DisableContainerServiceStartOnContainerActivatorOpen);
+                "Ignoring FabricCAS.exe activation since DisableContainers is set to {0}",
+                HostingConfig::GetConfig().DisableContainers);
 
             StartHostedServices(thisSPtr);
         }
@@ -124,9 +123,6 @@ private:
         {
             StartContainerActivatorService(thisSPtr);
         }
-#else
-        StartHostedServices(thisSPtr);
-#endif
     }
 
     void StartContainerActivatorService(AsyncOperationSPtr const & thisSPtr)
@@ -1056,6 +1052,7 @@ ErrorCode HostedServiceActivationManager::CreateContainerActivatorService(
         L"",
         L"",
         X509FindType::FindByThumbprint,
+        ServiceModel::ResourceGovernancePolicyDescription(),
         containerActivatorSerivce);
 
     return ErrorCode::Success();
@@ -1075,6 +1072,7 @@ HostedServiceSPtr HostedServiceActivationManager::CreateHostedService(wstring co
     wstring sslCertStoreLocation;
     wstring serviceNodeName;
     X509FindType::Enum sslCertFindType = X509FindType::FindByThumbprint;
+    ServiceModel::ResourceGovernancePolicyDescription rgPolicyDescription = ServiceModel::ResourceGovernancePolicyDescription();
 
     bool disabled = false;
     bool ctrlCSpecified = false;
@@ -1124,6 +1122,46 @@ HostedServiceSPtr HostedServiceActivationManager::CreateHostedService(wstring co
                     section);
                 disabled = true;
             }
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(it->first, Constants::HostedServiceCpusetCpus))
+        {
+            rgPolicyDescription.CpusetCpus = it->second;
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(it->first, Constants::HostedServiceCpuShares))
+        {
+            if (!Config::TryParse<UINT>(rgPolicyDescription.CpuShares, it->second))
+            {
+                Trace.WriteWarning(TraceType_ActivationManager,
+                    Root.TraceId,
+                    "Failed to parse process CpuShares limit, marking service {1} as disabled",
+                    it->second,
+                    section);
+                disabled = true;
+            };
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(it->first, Constants::HostedServiceMemoryInMB))
+        {
+            if (!Config::TryParse<UINT>(rgPolicyDescription.MemoryInMB, it->second))
+            {
+                Trace.WriteWarning(TraceType_ActivationManager,
+                    Root.TraceId,
+                    "Failed to parse process MemoryInMB limit, marking service {1} as disabled",
+                    it->second,
+                    section);
+                disabled = true;
+            };
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(it->first, Constants::HostedServiceMemorySwapInMB))
+        {
+            if (!Config::TryParse<UINT>(rgPolicyDescription.MemorySwapInMB, it->second))
+            {
+                Trace.WriteWarning(TraceType_ActivationManager,
+                    Root.TraceId,
+                    "Failed to parse process MemorySwapInMB limit, marking service {1} as disabled",
+                    it->second,
+                    section);
+                disabled = true;
+            };
         }
         else if(StringUtility::AreEqualCaseInsensitive(it->first, Constants::HostedServiceSSLCertStoreName))
         {
@@ -1185,6 +1223,7 @@ HostedServiceSPtr HostedServiceActivationManager::CreateHostedService(wstring co
                 sslCertFindValue,
                 sslCertStoreLocation,
                 sslCertFindType,
+                rgPolicyDescription,
                 hostedService);  
         }
     }
@@ -1219,6 +1258,13 @@ HostedServiceSPtr HostedServiceActivationManager::CreateHostedService(HostedServ
 
         if (error.IsSuccess())
         {
+            // Create resource governance policy
+            ServiceModel::ResourceGovernancePolicyDescription rgPolicyDescription = ServiceModel::ResourceGovernancePolicyDescription();
+            rgPolicyDescription.CpusetCpus = params.CpusetCpus;
+            rgPolicyDescription.CpuShares = params.CpuShares;
+            rgPolicyDescription.MemoryInMB = params.MemoryInMB;
+            rgPolicyDescription.MemorySwapInMB = params.MemorySwapInMB;
+
             HostedService::Create(
                 HostedServiceActivationManagerHolder(*this, this->Root.CreateComponentRoot()),
                 params.ServiceName,
@@ -1234,6 +1280,7 @@ HostedServiceSPtr HostedServiceActivationManager::CreateHostedService(HostedServ
                 params.SslCertificateFindValue,
                 params.SslCertificateStoreLocation,
                 params.SslCertificateFindType,
+                rgPolicyDescription,
                 hostedService
                 );
         }
@@ -1260,8 +1307,6 @@ void HostedServiceActivationManager::EnableChangeMonitoring()
 
 void HostedServiceActivationManager::OnConfigChange(wstring const & section, wstring const & key)
 {
-    UNREFERENCED_PARAMETER(key);
-
     Trace.WriteNoise(
         TraceType_ActivationManager,
         Root.TraceId,
@@ -1413,7 +1458,7 @@ void HostedServiceActivationManager::OnConfigChange(wstring const & section, wst
                 }
             }
 
-            shouldUpdate = hostedService->IsUpdateNeeded(secUser, thumbprint, arguments);
+            shouldUpdate = hostedService->IsUpdateNeeded(secUser, thumbprint, arguments) || hostedService->IsRGPolicyUpdateNeeded(entries);
         }
     }
 
@@ -1471,6 +1516,8 @@ void HostedServiceActivationManager::OnHostedServiceTerminated(
 
     if (error.IsSuccess())
     {
+        this->NotifyHostedServiceTermination(serviceName);
+
         vector<wstring> childServiceNames;
         hostedService->ClearChildServices(childServiceNames);
         if (! childServiceNames.empty())
@@ -1581,6 +1628,16 @@ void HostedServiceActivationManager::OnHostedServiceTerminated(
     {
         hostingTrace.HostedServiceActivationLimitExceeded(exeName, serviceName);
         ExitProcess(0);
+    }
+}
+
+void HostedServiceActivationManager::NotifyHostedServiceTermination(wstring const & hostedServiceName)
+{
+    if (StringUtility::AreEqualCaseInsensitive(
+        hostedServiceName, 
+        Constants::FabricContainerActivatorServiceName))
+    {
+        fabricHost_.ProcessActivationManagerObj->OnContainerActivatorServiceTerminated();
     }
 }
 
@@ -1759,7 +1816,7 @@ void HostedServiceActivationManager::ProcessActivateHostedServiceRequest(
                 return;
             }
 
-            shouldUpdate = hostedService->IsUpdateNeeded(secUser, params.SslCertificateFindValue, params.Arguments);
+            shouldUpdate = hostedService->IsUpdateNeeded(secUser, params.SslCertificateFindValue, params.Arguments) || hostedService->IsRGPolicyUpdateNeeded(params);
         }
     }
     

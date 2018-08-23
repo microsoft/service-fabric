@@ -11,7 +11,7 @@ using namespace Transport;
 using namespace ServiceModel;
 using namespace Hosting2;
 
-StringLiteral const TraceType("ApplicationHostManager");
+StringLiteral const TraceType("GuestServiceTypeHostManager");
 
 // ********************************************************************************************************************
 // GuestServiceTypeHostManager::GuestServiceTypeHostMap Implementation
@@ -116,10 +116,27 @@ public:
         return ErrorCode(ErrorCodeValue::Success);
     }
 
+    vector<GuestServiceTypeHostSPtr> GetServiceTypeHosts()
+    {
+        vector<GuestServiceTypeHostSPtr> retval;
+
+        {
+            AcquireReadLock readlock(lock_);
+            if (!closed_)
+            {
+                for (auto const & entry : map_)
+                {
+                    retval.push_back(move(entry.second));
+                }
+            }
+        }
+
+        return move(retval);
+    }
+
 private:
     mutable RwLock lock_;
     bool closed_;
-        
     map<wstring, GuestServiceTypeHostSPtr, IsLessCaseInsensitiveComparer<wstring>> map_;
 };
 
@@ -256,18 +273,20 @@ class GuestServiceTypeHostManager::OpenGuestServiceTypeHostAsyncOperation
 public:
     OpenGuestServiceTypeHostAsyncOperation(
         GuestServiceTypeHostManager & owner,
-        wstring const & hostId,
-        vector<wstring> const & typesToHost,
+        ApplicationHostContext const & appHostContext,
+        vector<GuestServiceTypeInfo> const & typesToHost,
         CodePackageContext const & codePackageContext,
+        vector<wstring> && depdendentCodePackages,
         vector<EndpointDescription> && endpointDescriptions,
         TimeSpan const timeout,
         AsyncCallback const & callback,
         AsyncOperationSPtr const & parent)
         : AsyncOperation(callback, parent)
         , owner_(owner)
-        , hostId_(hostId)
+        , appHostContext_(appHostContext)
         , typesToHost_(typesToHost)
         , codePackageContext_(codePackageContext)
+        , depdendentCodePackages_(move(depdendentCodePackages))
         , endpointDescriptions_(move(endpointDescriptions))
         , timeoutHelper_(timeout)
         , typeHostSPtr_()
@@ -290,8 +309,9 @@ protected:
         WriteNoise(
             TraceType,
             owner_.Root.TraceId,
-            "Start OpenGuestServiceTypeHostAsyncOperation: Id={0}, Timeout={1}",
-            hostId_,
+            "Start OpenGuestServiceTypeHostAsyncOperation: HostContext={0}, CodePackageContext={1}, Timeout={2}",
+            appHostContext_,
+            codePackageContext_,
             timeoutHelper_.GetRemainingTime());
 
         CreateGuestServiceTypeHost(thisSPtr);
@@ -300,11 +320,14 @@ protected:
     void CreateGuestServiceTypeHost(AsyncOperationSPtr const & thisSPtr)
     {
         auto typeHost = make_shared<GuestServiceTypeHost>(
-            HostingSubsystemHolder(owner_.hosting_, owner_.hosting_.Root.CreateComponentRoot()),
-            hostId_,
+            HostingSubsystemHolder(
+                owner_.hosting_, 
+                owner_.hosting_.Root.CreateComponentRoot()),
+            appHostContext_,
             typesToHost_,
             codePackageContext_,
             owner_.hosting_.RuntimeServiceAddress,
+            move(depdendentCodePackages_),
             move(endpointDescriptions_));
 
         typeHostSPtr_ = move(typeHost);
@@ -316,8 +339,9 @@ protected:
             WriteWarning(
                 TraceType,
                 owner_.Root.TraceId,
-                "Failed to add GuestServiceTypeHost to map: Id={0}, Timeout={2}",
-                hostId_,
+                "Failed to add GuestServiceTypeHost to map: HostContext={0}, CodePackageContext={1}, Timeout={2}",
+                appHostContext_,
+                codePackageContext_,
                 timeoutHelper_.GetRemainingTime());
 
             TryComplete(thisSPtr, error);
@@ -351,8 +375,9 @@ protected:
             error.ToLogLevel(),
             TraceType,
             owner_.Root.TraceId,
-            "End OpenGuestServiceTypeHostAsyncOperation: Id={0}, Timeout={1}, Error={2}",
-            hostId_,
+            "End OpenGuestServiceTypeHostAsyncOperation: HostContext={0}, CodePackageContext={1}, Timeout={2}, Error={3}.",
+            appHostContext_,
+            codePackageContext_,
             timeoutHelper_.GetRemainingTime(),
             error);
 
@@ -368,12 +393,13 @@ protected:
 
 private:
     GuestServiceTypeHostManager & owner_;
-    wstring hostId_;
-    vector<wstring> typesToHost_;
+    ApplicationHostContext const & appHostContext_;
+    vector<GuestServiceTypeInfo> typesToHost_;
     CodePackageContext codePackageContext_;
+    vector<wstring> depdendentCodePackages_;
     vector<EndpointDescription> endpointDescriptions_;
     TimeoutHelper timeoutHelper_;
-    GuestServiceTypeHostSPtr typeHostSPtr_;    
+    GuestServiceTypeHostSPtr typeHostSPtr_;
 };
 
 // ********************************************************************************************************************
@@ -388,13 +414,13 @@ class GuestServiceTypeHostManager::CloseGuestServiceTypeHostAsyncOperation
 public:
     CloseGuestServiceTypeHostAsyncOperation(
         GuestServiceTypeHostManager & owner,
-        wstring const & hostId,
+        ApplicationHostContext const & appHostContext,
         TimeSpan const timeout,
         AsyncCallback const & callback,
         AsyncOperationSPtr const & parent)
         : AsyncOperation(callback, parent)
         , owner_(owner)
-        , hostId_(hostId)
+        , appHostContext_(appHostContext)
         , timeoutHelper_(timeout)
         , typeHostToCloseSPtr_()
     {
@@ -416,8 +442,8 @@ protected:
         WriteNoise(
             TraceType,
             owner_.Root.TraceId,
-            "Start CloseGuestServiceTypeHostAsyncOperation: Id={0}, Timeout={1}",
-            hostId_,
+            "Start CloseGuestServiceTypeHostAsyncOperation: HostContext={0}, Timeout={2}",
+            appHostContext_,
             timeoutHelper_.GetRemainingTime());
 
         FindGuestServiceTypeHost(thisSPtr);
@@ -425,15 +451,15 @@ protected:
 
     void FindGuestServiceTypeHost(AsyncOperationSPtr const & thisSPtr)
     {
-        auto error = owner_.typeHostMap_->Find(hostId_, typeHostToCloseSPtr_);
+        auto error = owner_.typeHostMap_->Find(appHostContext_.HostId, typeHostToCloseSPtr_);
 
         if (error.IsError(ErrorCodeValue::NotFound))
         {
             WriteWarning(
                 TraceType,
                 owner_.Root.TraceId,
-                "Failed to find GuestServiceTypeHost for HostId={0}. Completing stop operation.",
-                hostId_);
+                "Failed to find GuestServiceTypeHost for HostContext={0}. Completing stop operation.",
+                appHostContext_);
 
             TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::Success));
             return;
@@ -444,8 +470,8 @@ protected:
             WriteWarning(
                 TraceType,
                 owner_.Root.TraceId,
-                "Failed to find ApplicationHostProxy for HostId={0}. ErrorCode={1}.",
-                hostId_,
+                "Failed to find ApplicationHostProxy for HostContext={0}. ErrorCode={1}.",
+                appHostContext_,
                 error);
 
             TryComplete(thisSPtr, error);
@@ -479,17 +505,17 @@ protected:
             error.ToLogLevel(),
             TraceType,
             owner_.Root.TraceId,
-            "End CloseGuestServiceTypeHostAsyncOperation: Id={0}, Timeout={1}, Error={2}",
-            hostId_,
+            "End CloseGuestServiceTypeHostAsyncOperation: HostContext={0}, Timeout={1}, Error={2}.",
+            appHostContext_,
             timeoutHelper_.GetRemainingTime(),
             error);
 
         GuestServiceTypeHostSPtr removed;
-        owner_.typeHostMap_->Remove(hostId_, removed).ReadValue();
+        owner_.typeHostMap_->Remove(appHostContext_.HostId, removed).ReadValue();
 
         if (error.IsSuccess())
         {
-            owner_.NotifyAppHostHostManager(hostId_, ProcessActivator::ProcessDeactivateExitCode);
+            owner_.NotifyAppHostHostManager(appHostContext_.HostId, ProcessActivator::ProcessDeactivateExitCode);
         }
 
         TryComplete(operation->Parent, error);
@@ -498,7 +524,7 @@ protected:
 
 private:
     GuestServiceTypeHostManager & owner_;
-    wstring hostId_;
+    ApplicationHostContext const & appHostContext_;
     TimeoutHelper timeoutHelper_;
     GuestServiceTypeHostSPtr typeHostToCloseSPtr_;
 };
@@ -522,9 +548,10 @@ GuestServiceTypeHostManager::~GuestServiceTypeHostManager()
 }
 
 AsyncOperationSPtr GuestServiceTypeHostManager::BeginOpenGuestServiceTypeHost(
-    wstring const & hostId,
-    vector<wstring> const & typesToHost,
+    ApplicationHostContext const & appHostContext,
+    vector<GuestServiceTypeInfo> const & typesToHost,
     CodePackageContext const & codePackageContext,
+    vector<wstring> && depdendentCodePackages,
     vector<EndpointDescription> && endpointDescriptions,
     TimeSpan const timeout,
     AsyncCallback const & callback,
@@ -532,9 +559,10 @@ AsyncOperationSPtr GuestServiceTypeHostManager::BeginOpenGuestServiceTypeHost(
 {
     return AsyncOperation::CreateAndStart<OpenGuestServiceTypeHostAsyncOperation>(
         *this,
-        hostId,
+        appHostContext,
         typesToHost,
         codePackageContext,
+        move(depdendentCodePackages),
         move(endpointDescriptions),
         timeout,
         callback,
@@ -547,14 +575,14 @@ ErrorCode GuestServiceTypeHostManager::EndOpenGuestServiceTypeHost(AsyncOperatio
 }
 
 AsyncOperationSPtr GuestServiceTypeHostManager::BeginCloseGuestServiceTypeHost(
-    wstring const & hostId,
+    ApplicationHostContext const & appHostContext,
     TimeSpan const timeout,
     AsyncCallback const & callback,
     AsyncOperationSPtr const & parent)
 {
     return AsyncOperation::CreateAndStart<CloseGuestServiceTypeHostAsyncOperation>(
         *this,
-        hostId,
+        appHostContext,
         timeout,
         callback,
         parent);
@@ -565,25 +593,50 @@ ErrorCode GuestServiceTypeHostManager::EndCloseGuestServiceTypeHost(AsyncOperati
     return CloseGuestServiceTypeHostAsyncOperation::End(operation);
 }
 
-void GuestServiceTypeHostManager::AbortGuestServiceTypeHost(wstring const & hostId)
+void GuestServiceTypeHostManager::AbortGuestServiceTypeHost(ApplicationHostContext const & appHostContext)
 {
     GuestServiceTypeHostSPtr typeHost;
-    auto error = typeHostMap_->Remove(hostId, typeHost);
+    auto error = typeHostMap_->Remove(appHostContext.HostId, typeHost);
    
     if (!error.IsSuccess())
     {
         WriteWarning(
             TraceType,
             Root.TraceId,
-            "Failed to find GuestServiceTypeHost for HostId={0}. Error={1}.",
-            hostId,
+            "Failed to find GuestServiceTypeHost for HostContext={0}. Error={1}.",
+            appHostContext,
             error);
         return;
     }
 
     typeHost->Abort();
 
-    this->NotifyAppHostHostManager(hostId, ProcessActivator::ProcessAbortExitCode);
+    this->NotifyAppHostHostManager(appHostContext.HostId, ProcessActivator::ProcessAbortExitCode);
+}
+
+void GuestServiceTypeHostManager::ProcessCodePackageEvent(
+    ApplicationHostContext const & appHostContext,
+    CodePackageEventDescription eventDescription)
+{
+    GuestServiceTypeHostSPtr typeHost;
+    auto error = typeHostMap_->Find(appHostContext.HostId, typeHost);
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceType,
+            Root.TraceId,
+            "Failed to find GuestServiceTypeHost for HostContext={0}. Error={1}.",
+            appHostContext,
+            error);
+        return;
+    }
+
+    auto componentRoot = this->Root.CreateComponentRoot();
+    Threadpool::Post(
+        [this, typeHost, eventDescription, componentRoot]()
+        {
+            typeHost->ProcessCodePackageEvent(eventDescription);
+        });
 }
 
 AsyncOperationSPtr GuestServiceTypeHostManager::OnBeginOpen(
@@ -663,11 +716,17 @@ void GuestServiceTypeHostManager::NotifyAppHostHostManager(std::wstring const & 
     Threadpool::Post(
         [this, hostId, exitCode, componentRoot]()
         {
-            this->hosting_.ApplicationHostManagerObj->OnApplicationHostTerminated(hostId, exitCode);
+            this->hosting_.ApplicationHostManagerObj->OnApplicationHostTerminated(
+                ActivityDescription(
+                    ActivityId(),
+                    ActivityType::Enum::ServicePackageEvent),
+                hostId, 
+                exitCode);
         });
 }
 
-ErrorCode GuestServiceTypeHostManager::Test_HasGuestServiceTypeHost(wstring const & hostId, __out bool & isPresent)
+ErrorCode GuestServiceTypeHostManager::Test_HasGuestServiceTypeHost(
+    wstring const & hostId, __out bool & isPresent)
 {
     GuestServiceTypeHostSPtr typeHost;
     auto error = typeHostMap_->Find(hostId, typeHost);
@@ -682,14 +741,16 @@ ErrorCode GuestServiceTypeHostManager::Test_HasGuestServiceTypeHost(wstring cons
     return error;
 }
 
-ErrorCode GuestServiceTypeHostManager::Test_GetRuntimeId(std::wstring const & hostId, __out std::wstring & runtimeId)
+ErrorCode GuestServiceTypeHostManager::Test_GetTypeHost(
+    std::wstring const & hostId, 
+    __out GuestServiceTypeHostSPtr & guestTypeHost)
 {
     GuestServiceTypeHostSPtr typeHost;
     auto error = typeHostMap_->Find(hostId, typeHost);
 
     if (error.IsSuccess())
     {
-        runtimeId = typeHost->RuntimeId;
+        guestTypeHost = typeHost;
     }
 
     return error;
@@ -699,3 +760,22 @@ ErrorCode GuestServiceTypeHostManager::Test_GetTypeHostCount(__out size_t & type
 {
     return typeHostMap_->Count(typeHostCount);
 }
+
+ErrorCode GuestServiceTypeHostManager::Test_GetTypeHost(
+    ServicePackageInstanceIdentifier const & servicePackageInstanceId,
+    _Out_ GuestServiceTypeHostSPtr & guestTypeHost)
+{
+    auto typeHosts = typeHostMap_->GetServiceTypeHosts();
+
+    for (auto const & kvPair : typeHosts)
+    {
+        if (kvPair->CodeContext.CodePackageInstanceId.ServicePackageInstanceId == servicePackageInstanceId)
+        {
+            guestTypeHost = kvPair;
+            return ErrorCode::Success();
+        }
+    }
+
+    return ErrorCode(ErrorCodeValue::NotFound);
+}
+

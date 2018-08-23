@@ -22,11 +22,11 @@ namespace Reliability
             enum Enum
             {
                 None = 0,
-                Creation = 1,
+                NewReplicaPlacement = 1,
                 ConstraintCheck = 2,
-                Full = 3,            
-                // CreationWithMove closure(used for placement with move) includes two closures: Partial and Full closure
-                CreationWithMove = 4,
+                Full = 3,
+                // NewReplicaPlacementWithMove closure(used for placement with move) includes two closures: Partial and Full closure
+                NewReplicaPlacementWithMove = 4,
             };
 
             static PartitionClosureType::Enum FromPLBSchedulerAction(PLBSchedulerActionType::Enum action);
@@ -78,7 +78,7 @@ namespace Reliability
             std::vector<Application const*> applications_;
             std::vector<Service const*> services_;
             std::vector<FailoverUnit const*> partitions_;
-            // partition used for CreationWithMove phase with partial closure
+            // partition used for NewReplicaPlacementWithMove phase with partial closure
             std::set<Common::Guid> partialClosureFailoverUnits_;
             std::vector<ServicePackage const*> servicePackages_;
             PartitionClosureType::Enum type_;

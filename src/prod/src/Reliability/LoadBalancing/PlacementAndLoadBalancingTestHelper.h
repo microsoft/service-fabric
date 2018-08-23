@@ -92,6 +92,8 @@ namespace Reliability
             void RefreshServicePackageForRG(bool & hasServicePackage, bool & hasApp);
             void Refresh(Common::StopwatchTime now);
 
+            virtual void UpdateAvailableImagesPerNode(std::wstring const& nodeId, std::vector<std::wstring> const& images);
+
             /******************************************************************
              *                             Test Helper Methods                 *
              ******************************************************************/
@@ -139,6 +141,7 @@ namespace Reliability
                 int64 & reservedCapacity, 
                 int64& size) const;
 
+            bool CheckAutoScalingStatistics(std::wstring const & metricName, int partitionCount) const;
             // Verifies that numbers related to Service Packages are correct in RG statistics.
             bool CheckRGSPStatistics(uint64_t numSPs, uint64_t numGovernedSPs) const;
 
@@ -151,6 +154,21 @@ namespace Reliability
                 double minUsage,
                 double maxUsage,
                 int64 capacity) const;
+
+            bool CheckDefragStatistics(
+                uint64 numberOfBalancingMetrics,
+                uint64 numberOfBalancingReservationMetrics,
+                uint64 numberOfReservationMetrics,
+                uint64 numberOfPackReservationMetrics,
+                uint64 numberOfDefragMetrics) const;
+
+            // Retreives partition count change for auto scaling
+            int GetPartitionCountChangeForService(std::wstring const & serviceName) const;
+
+            // Clear pending repartitions
+            void ClearPendingRepartitions();
+
+            void InduceRepartitioningFailure(std::wstring const& serviceName, Common::ErrorCode error);
 
             uint64 RefreshTime;
 

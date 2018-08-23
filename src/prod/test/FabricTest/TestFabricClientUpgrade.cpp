@@ -301,20 +301,20 @@ bool TestFabricClientUpgrade::ProvisionApplicationType(StringCollection const & 
     {
         wstring applicationPackageCleanupPolicyStr;
         parser.TryGetString(L"applicationPackageCleanupPolicy", applicationPackageCleanupPolicyStr);
-        ApplicationPackageCleanupPolicy::Enum cleanupPolicy = ApplicationPackageCleanupPolicy::Enum::ClusterDefault;
+        ApplicationPackageCleanupPolicy::Enum cleanupPolicy = ApplicationPackageCleanupPolicy::Enum::Default;
 
         wstring incomingBuildPath = Path::Combine(ApplicationBuilder::ApplicationPackageFolderInImageStore, path);
-        if (applicationPackageCleanupPolicyStr == L"CleanupApplicationPackageOnSuccessfulProvision")
+        if (applicationPackageCleanupPolicyStr == L"Automatic")
         {
-            cleanupPolicy = ApplicationPackageCleanupPolicy::Enum::CleanupApplicationPackageOnSuccessfulProvision;
+            cleanupPolicy = ApplicationPackageCleanupPolicy::Enum::Automatic;
         }
-        else if (applicationPackageCleanupPolicyStr == L"NoCleanupApplicationPackageOnProvision")
+        else if (applicationPackageCleanupPolicyStr == L"Manual")
         {
-            cleanupPolicy = ApplicationPackageCleanupPolicy::Enum::NoCleanupApplicationPackageOnProvision;
+            cleanupPolicy = ApplicationPackageCleanupPolicy::Enum::Manual;
         }
-        else if (applicationPackageCleanupPolicyStr == L"ClusterDefault")
+        else if (applicationPackageCleanupPolicyStr == L"Default")
         {
-            cleanupPolicy = ApplicationPackageCleanupPolicy::Enum::ClusterDefault;
+            cleanupPolicy = ApplicationPackageCleanupPolicy::Enum::Default;
         }
         else
         {
@@ -2486,7 +2486,7 @@ bool TestFabricClientUpgrade::MoveNextApplicationUpgradeDomain(StringCollection 
 
 bool TestFabricClientUpgrade::CreateComposeDeployment(StringCollection const & params)
 {
-    if (params.size() > 5)
+    if (params.size() > 6)
     {
         FABRICSESSION.PrintHelp(FabricTestCommands::CreateComposeCommand);
         return false;
@@ -2495,6 +2495,7 @@ bool TestFabricClientUpgrade::CreateComposeDeployment(StringCollection const & p
     wstring deploymentName = params[0];
 
     CommandLineParser parser(params, 1);
+    bool IsOverrideIB = parser.GetBool(L"isOverrideIB");
     bool isSkipSetIB = parser.GetBool(L"isSkipSetIB");
 
     if (!isSkipSetIB)
@@ -2506,6 +2507,10 @@ bool TestFabricClientUpgrade::CreateComposeDeployment(StringCollection const & p
         mockImageBuilderProperties.push_back(incomingBuildPath);// appBuildPath
         mockImageBuilderProperties.push_back(params[2]);// appTypeName
         mockImageBuilderProperties.push_back(params[3]);// appTypeVersion
+        if (IsOverrideIB)
+        {
+            FABRICSESSION.FabricDispatcher.EraseMockImageBuilderProperties(mockImageBuilderProperties[0]);
+        }
         if (!FABRICSESSION.FabricDispatcher.SetMockImageBuilderProperties(mockImageBuilderProperties))
         {
             TestSession::WriteError(
@@ -2585,7 +2590,7 @@ bool TestFabricClientUpgrade::CreateComposeDeployment(StringCollection const & p
 
             for (auto iter = defaultServices.begin(); iter != defaultServices.end(); iter++)
             {
-                defaultServiceNames.push_back(appNameWithSlash.append(*iter));
+                defaultServiceNames.push_back(appNameWithSlash + (*iter));
             }
 
             vector<PartitionedServiceDescriptor> serviceDescriptors;
@@ -2634,7 +2639,7 @@ bool TestFabricClientUpgrade::CreateComposeDeployment(StringCollection const & p
 
                 for (auto iter = defaultServices.begin(); iter != defaultServices.end(); iter++)
                 {
-                    defaultServiceNames.push_back(appNameWithSlash.append(*iter));
+                    defaultServiceNames.push_back(appNameWithSlash + (*iter));
                 }
 
                 vector<PartitionedServiceDescriptor> serviceDescriptors;
@@ -2996,6 +3001,10 @@ bool TestFabricClientUpgrade::PrintUpgradeProgress(bool printDetails, ComPointer
                 applicationUpgradeState = L"RollbackInProgress";
                 break;
 
+            case FABRIC_APPLICATION_UPGRADE_STATE_ROLLING_BACK_PENDING:
+                applicationUpgradeState = L"RollbackPending";
+                break;
+
             case FABRIC_APPLICATION_UPGRADE_STATE_FAILED:
                 applicationUpgradeState = L"Failed";
                 break;
@@ -3293,6 +3302,11 @@ bool TestFabricClientUpgrade::PrintUpgradeProgress(bool printDetails, ComPointer
             case FABRIC_UPGRADE_STATE_ROLLING_BACK_IN_PROGRESS:
                 fabricUpgradeState = L"RollbackInProgress";
                 break;
+
+            case FABRIC_UPGRADE_STATE_ROLLING_BACK_PENDING:
+                fabricUpgradeState = L"RollbackPending";
+                break;
+
         }
 
         vector<wstring> completedDomains;
@@ -3619,8 +3633,8 @@ void TestFabricClientUpgrade::ProvisionApplicationTypeImpl(
 
         // There is a possibility that application package could be deleted by previous provision for retry scenario
         HRESULT acceptableErrorOnRetry = FABRIC_E_APPLICATION_TYPE_ALREADY_EXISTS;
-        if (applicationPackageCleanupPolicy == ApplicationPackageCleanupPolicy::Enum::CleanupApplicationPackageOnSuccessfulProvision ||
-            ((applicationPackageCleanupPolicy == ApplicationPackageCleanupPolicy::Enum::ClusterDefault || 
+        if (applicationPackageCleanupPolicy == ApplicationPackageCleanupPolicy::Enum::Automatic ||
+            ((applicationPackageCleanupPolicy == ApplicationPackageCleanupPolicy::Enum::Default || 
                 applicationPackageCleanupPolicy == ApplicationPackageCleanupPolicy::Enum::Invalid) &&
                 Management::ManagementConfig::GetConfig().CleanupApplicationPackageOnProvisionSuccess))
         {

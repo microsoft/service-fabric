@@ -19,6 +19,8 @@ namespace Store
 
         virtual ~SimpleTransaction();
 
+        uint64 get_MigrationTxKey() const override { return parent_.MigrationTxKey; }
+        
         bool get_IsEnumerationSupported() const override { return false; };
 
         Common::ErrorCode TryGetInnerTransaction(__out TransactionSPtr &) override;

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Microsoft.ServiceFabric.Internal Class Library</Description>
+    <DefineConstants>$(DefineConstants);INTERNAL_COMMON_ASSEMBLY</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Microsoft.ServiceFabric.Internal</AssemblyName>
+    <PackageId>Microsoft.ServiceFabric.Internal</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+	<DebugType>full</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Dlls\Microsoft.ServiceFabric.Internal\_friends.cs" />
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreReplica_V2.cs" />
+    <Compile Include="..\..\src\System\Fabric\KeyValueStoreReplicaSettings_V2.cs" />
+    <Compile Include="..\..\src\System\Fabric\SharedLogSettings.cs" />
+    <Compile Include="..\..\src\System\Fabric\ReadOnlyOperationData.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\AppTrace.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\IFabricPerformanceCountersDefinition.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricBaselessPerformanceCounterWriter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterCategoryType.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterDefinition.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterInterop.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterSet.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterSetDefinition.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterSetInstance.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterType.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricPerformanceCounterWriter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricAverageCount64PerformanceCounterWriter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Counters\FabricNumberOfItems64PerformanceCounterWriter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Pool\BufferPool.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Pool\SynchronizedPool.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\FabricDirectory.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\FabricEnvironment.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\FabricFile.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\FxCop.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\IConfigStore.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\IConfigStoreUpdateHandler.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Interop\Kernel32Types.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Interop\NTTypes.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\ItemList.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\NativeConfigStore.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\ReleaseAssert.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Requires.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\TimeoutHelper.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\FabricServiceModel.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\FabricPath.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\NativeHelper.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\AgeBasedCache.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\EventChannel.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\EventDataArrayBuilder.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\GenericEventDescriptor.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\ICache.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\IGenericEventSink.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\IVariantEventWriter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\FabricEventSource.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\ManagedInternalEventSources.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\ProvisionalMetadataAttribute.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\EventExtendedMetadataAttribute.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\FabricEventSourceConstants.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceConfig.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceFilterDescription.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceConsoleSink.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceConsoleEventSink.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceTextFileSink.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceSinkFilter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceSinkType.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceEvent.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\TraceViaNative.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\Variant.cs" />
+    <Compile Include="..\..\src\System\Fabric\Common\Tracing\VariantId.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\AsyncCallOutAdapter2.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\AsyncTaskCallInAdapter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\InteropExceptionMap.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\InteropExceptionTracePolicy.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\InteropApi.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\IPinNode.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeClient.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeRuntime.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeCommon.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\NativeTypes.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\PinArray.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\PinBlittable.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\PinCollection.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\SecureStringPinNode.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\SafePinHandle.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\SharedNativeObject.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\StringCollectionResult.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\StringResult.cs" />
+    <Compile Include="..\..\src\System\Fabric\Interop\Utility.cs" />
+    <Compile Include="..\..\src\System\Fabric\Utility\SecurityCredentialExtension.cs" />
+    <Compile Include="..\..\src\System\Fabric\Utility\NativeClaimsCredentialConverter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Utility\NativeNoneCredentialConverter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Utility\NativeWindowsCredentialConverter.cs" />
+    <Compile Include="..\..\src\System\Fabric\Utility\NativeX509CredentialConverter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Private.CompilerServices.ICastable" Version="1.0.1" />
+  </ItemGroup>
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg.targets" />
+</Project>

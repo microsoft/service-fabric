@@ -3,34 +3,6 @@
   },
   "Tests": [
     {
-      "Name": "ReplicatorTest",
-      "Type": "V2_ScriptTest",
-      "Owners": "hanagar",
-      "ResourcesRequired": "Server:3",
-      "TestExecutionParameters": {
-        "SetupType": "XCopy",
-        "SetupTimeout": "600",
-        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
-        "TaskName": "Replicator.test",
-        "ExecutionTimeout": "14400",
-        "CleanupTimeout": "2100"
-      }
-    },
-    {
-      "Name": "RollingUpgradeTest",
-      "Type": "V2_ScriptTest",
-      "Owners": "hanagar, richhas",
-      "ResourcesRequired": "Server:3",
-      "TestExecutionParameters": {
-        "SetupType": "XCopy",
-        "SetupTimeout": "600",
-        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
-        "TaskName": "RollingUpgrade.test",
-        "ExecutionTimeout": "1200",
-        "CleanupTimeout": "2100"
-      }
-    },
-    {
       "Name": "DistributedQueueCIT",
       "Type": "V2_ScriptTest",
       "Owners": "mcoskun, preethas, richhas",

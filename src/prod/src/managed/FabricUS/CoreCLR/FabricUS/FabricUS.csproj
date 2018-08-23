@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+  <PropertyGroup>
+    <Description>Fabric Upgrade Service</Description>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>FabricUS</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>FabricUS</PackageId>
+  </PropertyGroup>
+
+
+
+  <ItemGroup>
+    <Compile Include="..\..\exe\WRP\StreamChannel\ClusterStreamingId.cs;
+      ..\..\exe\WRP\StreamChannel\StreamChannelPutResponse.cs;
+      ..\..\exe\WRP\StreamChannel\StreamRequest.cs;
+      ..\..\exe\WRP\StreamChannel\StreamResponse.cs;
+      ..\..\exe\WRP\StreamChannel\WrpStreamChannel.cs;
+      ..\..\exe\WRP\StreamChannel\WrpStreamReader.cs;
+      ..\..\exe\WRP\StreamChannel\Error.cs;
+      ..\..\exe\WRP\StreamChannel\ErrorDetails.cs;
+      ..\..\exe\WRP\StreamChannel\StreamChannelException.cs;
+      ..\..\exe\WRP\WrpGatewayClient.cs;
+      ..\..\src\system\fabric\upgradeservice\ClusterUpgradeCommandParameter.cs;
+      ..\..\src\system\fabric\upgradeservice\ConfigStoreExtensionHelper.cs;
+      ..\..\src\system\fabric\upgradeservice\CommandProcessorClusterUpgradeDescription.cs;
+      ..\..\src\system\fabric\upgradeservice\CommandProcessorClusterUpgradeHealthPolicy.cs;
+      ..\..\src\system\fabric\upgradeservice\Constants.cs;
+      ..\..\src\system\fabric\upgradeservice\DummyCoordinator.cs;
+      ..\..\src\system\fabric\upgradeservice\FabricClientWrapper.cs;
+      ..\..\src\system\fabric\upgradeservice\JsonSerializationHelper.cs;
+      ..\..\src\system\fabric\upgradeservice\IFabricClientWrapper.cs;
+      ..\..\src\system\fabric\upgradeservice\IPackageRetriever.cs;
+      ..\..\src\system\fabric\upgradeservice\IUpgradeCoordinator.cs;
+      ..\..\src\system\fabric\upgradeservice\Program.cs;
+      ..\..\src\system\fabric\upgradeservice\TestPackageRetriever.cs;
+      ..\..\src\system\fabric\upgradeservice\TimeoutHelper.cs;
+      ..\..\src\system\fabric\upgradeservice\Trace.cs;
+      ..\..\src\system\fabric\upgradeservice\UpgradeSystemService.cs;
+      ..\..\src\system\fabric\upgradeservice\UpgradeSystemServiceFactory.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ApplicationClient.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ApplicationCommandProcessor.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ApplicationTypeClient.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ApplicationTypeCommandProcessor.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\CommandParameterGenerator.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\FabricClientApplicationWrapper.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\NodeStatusManager.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\PaasCoordinator.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\PaasModelExtension.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ResourceCommandProcessor.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\RestClientHelper.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ServiceClient.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ServiceCommandProcessor.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\UpgradeResponse.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\UpgradeServiceApplicationResponse.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\WRPPackageRetriever.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ClusterCommandProcessor.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ExceptionHandlingPolicy.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\StreamChannelCoordinator.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ResourceCoordinator.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ResourceOperations.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\OperationContext.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\DictionaryExtensions.cs;
+      ..\..\src\system\fabric\upgradeservice\WRP\ClusterOperation.cs
+      "
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <None Update="FabricUS.sh">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="FabricUS.bat">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Aliases>ServiceFabricInternal</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup Condition=" '$(TargetsLinux)' == 'true' ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.McgInterop.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+
+</Project>

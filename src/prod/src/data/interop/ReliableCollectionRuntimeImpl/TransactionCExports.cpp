@@ -14,14 +14,6 @@ extern "C" void Transaction_Release(
 {
     Transaction::SPtr txnSPtr;
     txnSPtr.Attach((Transaction*)txn);
-    ((Transaction*)txn)->Dispose();
-}
-
-extern "C" void Transaction_Release2(
-    __in TransactionHandle txn)
-{
-    Transaction::SPtr txnSPtr;
-    txnSPtr.Attach((Transaction*)txn);
 }
 
 extern "C" void Transaction_Dispose(

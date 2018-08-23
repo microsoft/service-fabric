@@ -22,6 +22,12 @@ namespace StateManagerTests
         Common::CommonConfig config;
 
     public:
+        enum LockType
+        {
+            Read,
+            Write
+        };
+
         void static VerifyMetadata(__in Metadata const * const metadata1, __in Metadata const * const metadata2)
         {
             VERIFY_IS_NOT_NULL(metadata1);
@@ -134,64 +140,105 @@ namespace StateManagerTests
         __in AwaitableCompletionSource<bool> & signalCompletion,
         __in ULONG32 taskNum,
         __in ULONG32 operationPerTask,
-        __in KUri const & expectedName,
-        __in LONG64 stateProviderId,
-        __in KAllocator& allocator,
-        __in KArray<StateManagerLockContext::SPtr> & lockContextArray,
-        __in MetadataManager & metadataManager)
+        __in Metadata const & metadata, 
+        __in KtlSystem* underlyingSystem,
+        __in ConcurrentDictionary<int, StateManagerLockContext::SPtr> & lockContextDict,
+        __in MetadataManager & metadataManager,
+        __in MetadataManagerTest::LockType lockType)
     {
+        NTSTATUS status = STATUS_UNSUCCESSFUL;
+        co_await ktl::CorHelper::ThreadPoolThread(underlyingSystem->DefaultThreadPool());
         AwaitableCompletionSource<bool>::SPtr tempCompletion(&signalCompletion);
         co_await tempCompletion->GetAwaitable();
 
         for (ULONG32 i = taskNum * operationPerTask; i < taskNum * operationPerTask + operationPerTask; i++)
         {
-            TestTransaction::SPtr txnSPtr = TestTransaction::Create(i, allocator);
+            TestTransaction::SPtr txnSPtr = TestTransaction::Create(i + 1, underlyingSystem->PagedAllocator());
             StateManagerLockContext::SPtr readLockSPtr = nullptr;
-            NTSTATUS status = co_await metadataManager.LockForReadAsync(
-                expectedName,
-                stateProviderId,
-                *txnSPtr,
-                TimeSpan::MaxValue,
-                CancellationToken::None,
-                readLockSPtr);
-            VERIFY_IS_TRUE(NT_SUCCESS(status));
-            status = lockContextArray.Append(readLockSPtr);
-            VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+            if (lockType == MetadataManagerTest::LockType::Read)
+            {
+                status = co_await metadataManager.LockForReadAsync(
+                    *metadata.Name,
+                    metadata.StateProviderId,
+                    *txnSPtr,
+                    TimeSpan::MaxValue,
+                    CancellationToken::None,
+                    readLockSPtr);
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+            }
+            else
+            {
+                status = co_await metadataManager.LockForWriteAsync(
+                    *metadata.Name,
+                    metadata.StateProviderId,
+                    *txnSPtr,
+                    TimeSpan::FromSeconds(1),
+                    CancellationToken::None,
+                    readLockSPtr);
+                VERIFY_IS_TRUE(NT_SUCCESS(status) || status == SF_STATUS_TIMEOUT);
+            }
+
+            if (NT_SUCCESS(status))
+            {
+                lockContextDict.Add(i + 1, readLockSPtr);
+            }
         }
 
         co_return;
     }
 
-    // TODO: Only used for AcquireReadLock for now, waiting for write lock timeout throw implement 
     static void ConcurrentAcquireReadOrWriteLock(
         __in ULONG32 taskNum,
-        __in ULONG32 operationPerTask)
+        __in ULONG32 operationPerTask,
+        __in MetadataManagerTest::LockType lockType)
     {
         KtlSystem* underlyingSystem = TestHelper::CreateKtlSystem();
         KFinally([&]() { KtlSystem::Shutdown(); });
         {
-            KAllocator& allocator = underlyingSystem->NonPagedAllocator();
+            KAllocator& allocator = underlyingSystem->PagedAllocator();
 
             // Expected
             KUri::CSPtr expectedName;
-            auto status = KUri::Create(KUriView(L"fabric:/sps/sp"), allocator, expectedName);
-            VERIFY_IS_TRUE(NT_SUCCESS(status));
-            auto metadata = TestHelper::CreateMetadata(*expectedName, false, allocator);
+            NTSTATUS status = KUri::Create(KUriView(L"fabric:/sps/sp"), allocator, expectedName);
+            ASSERT_IFNOT(
+                NT_SUCCESS(status),
+                "ConcurrentAcquireReadOrWriteLock:Create KUri failed. Status: {0}", 
+                status);
+            Metadata::SPtr metadata = TestHelper::CreateMetadata(*expectedName, false, allocator);
 
             // Setup
-            auto metadataManagerSPtr = TestHelper::CreateMetadataManager(allocator);
+            MetadataManager::SPtr metadataManagerSPtr = TestHelper::CreateMetadataManager(allocator);
 
             // Prepopulate
             bool isAdded = metadataManagerSPtr->TryAdd(*expectedName, *metadata);
-            VERIFY_IS_TRUE(isAdded);
+            ASSERT_IFNOT(isAdded, "ConcurrentAcquireReadOrWriteLock: TryAdd failed");
 
             KArray<Awaitable<void>> taskArray(allocator);
-            KArray<StateManagerLockContext::SPtr> lockContextArray(allocator);
+            ASSERT_IFNOT(
+                NT_SUCCESS(taskArray.Status()), 
+                "ConcurrentAcquireReadOrWriteLock:Create taskArray failed. Status: {0}",
+                taskArray.Status());
+            ConcurrentDictionary<int, StateManagerLockContext::SPtr>::SPtr lockContextDict;
+            status = ConcurrentDictionary<int, StateManagerLockContext::SPtr>::Create(
+                allocator,
+                lockContextDict);
+            ASSERT_IFNOT(NT_SUCCESS(
+                status),
+                "ConcurrentAcquireReadOrWriteLock:Create lockContextArray failed. Status: {0}",
+                status);
             KArray<StateManagerTransactionContext::SPtr> txnContextSPtrArray(allocator);
+            ASSERT_IFNOT(
+                NT_SUCCESS(txnContextSPtrArray.Status()), 
+                "ConcurrentAcquireReadOrWriteLock:Create txnContextSPtrArray failed. Status: {0}",
+                txnContextSPtrArray.Status());
 
             AwaitableCompletionSource<bool>::SPtr signalCompletion = nullptr;
             status = AwaitableCompletionSource<bool>::Create(allocator, 0, signalCompletion);
-            VERIFY_IS_TRUE(NT_SUCCESS(status));
+            ASSERT_IFNOT(
+                NT_SUCCESS(status), 
+                "ConcurrentAcquireReadOrWriteLock:Create AwaitableCompletionSource failed. Status: {0}",
+                status);
 
             for (ULONG32 i = 0; i < taskNum; i++)
             {
@@ -199,44 +246,65 @@ namespace StateManagerTests
                     *signalCompletion,
                     i, 
                     operationPerTask, 
-                    *expectedName, 
-                    metadata->StateProviderId, 
-                    allocator, lockContextArray, 
-                    *metadataManagerSPtr));
-                VERIFY_IS_TRUE(NT_SUCCESS(status));
+                    *metadata,
+                    underlyingSystem,
+                    *lockContextDict,
+                    *metadataManagerSPtr,
+                    lockType));
+                ASSERT_IFNOT(
+                    NT_SUCCESS(status), 
+                    "ConcurrentAcquireReadOrWriteLock:: Add task fail. Status: {0}",
+                    status);
             }
 
             signalCompletion->SetResult(true);
-
             SyncAwait(TaskUtilities<void>::WhenAll(taskArray));
 
             // Verify
-            VERIFY_IS_TRUE(lockContextArray.Count() == taskNum * operationPerTask);
+            ASSERT_IFNOT(
+                lockContextDict->Count == (lockType == MetadataManagerTest::LockType::Read ? taskNum * operationPerTask : 1),
+                "ConcurrentAcquireReadOrWriteLock: Count does not match: Cout: {0}",
+                lockContextDict->Count);
 
-            for (ULONG32 i = 0; i < taskNum * operationPerTask; i++)
+            auto enumerator = lockContextDict->GetEnumerator();
+            while (enumerator->MoveNext())
             {
                 StateManagerTransactionContext::SPtr txnContextSPtr = nullptr;
-                status = StateManagerTransactionContext::Create(i, *(lockContextArray[i]), OperationType::Enum::Read, allocator, txnContextSPtr);
-                VERIFY_IS_TRUE(NT_SUCCESS(status));
-
+                status = StateManagerTransactionContext::Create(enumerator->Current().Key, *enumerator->Current().Value, OperationType::Enum::Read, allocator, txnContextSPtr);
+                ASSERT_IFNOT(
+                    NT_SUCCESS(status),
+                    "ConcurrentAcquireReadOrWriteLock: Create StateManagerTransactionContext failed. Status: {0}",
+                    status);
                 status = txnContextSPtrArray.Append(txnContextSPtr);
-                VERIFY_IS_TRUE(NT_SUCCESS(status));
+                ASSERT_IFNOT(
+                    NT_SUCCESS(status),
+                    "ConcurrentAcquireReadOrWriteLock: txnContextSPtrArray append failed. Status: {0}",
+                    status);
             }
 
-            VERIFY_ARE_EQUAL(taskNum * operationPerTask, metadataManagerSPtr->GetInflightTransactionCount());
+            ASSERT_IFNOT(
+                metadataManagerSPtr->GetInflightTransactionCount() == (lockType == MetadataManagerTest::LockType::Read ? taskNum * operationPerTask : 1),
+                "ConcurrentAcquireReadOrWriteLock: Count does not match: Cout: {0}",
+                metadataManagerSPtr->GetInflightTransactionCount());
 
             // Unlock all the txns
-            for (ULONG32 i = 0; i < taskNum * operationPerTask; i++)
+            for (StateManagerTransactionContext::SPtr txnContextSPtr : txnContextSPtrArray)
             {
-                txnContextSPtrArray[i]->Unlock();
+                txnContextSPtr->Unlock();
             }
 
             // Verification
             StateManagerLockContext::SPtr testLockContextSPtr = nullptr;
             bool lockContextExists = metadataManagerSPtr->TryGetLockContext(*metadata->Name, testLockContextSPtr);
-            VERIFY_IS_TRUE(lockContextExists);
-            VERIFY_ARE_EQUAL(0, testLockContextSPtr->GrantorCount);
-            VERIFY_ARE_EQUAL(0, metadataManagerSPtr->GetInflightTransactionCount());
+            ASSERT_IFNOT(lockContextExists, "ConcurrentAcquireReadOrWriteLock: Lock check failed.");
+            ASSERT_IFNOT(
+                0 == testLockContextSPtr->GrantorCount, 
+                "ConcurrentAcquireReadOrWriteLock: Count is not expected. Count: {0}", 
+                testLockContextSPtr->GrantorCount);
+            ASSERT_IFNOT(
+                0 == metadataManagerSPtr->GetInflightTransactionCount(),
+                "ConcurrentAcquireReadOrWriteLock: Count is not expected. Count: {0}",
+                metadataManagerSPtr->GetInflightTransactionCount());
         }
     };
 
@@ -1142,67 +1210,17 @@ namespace StateManagerTests
 
     BOOST_AUTO_TEST_CASE(Concurrent_ReadLock_Success)
     {
-        ULONG32 const taskNum = 10;
-        ULONG32 const operationPerTask = 1;
-        ConcurrentAcquireReadOrWriteLock(taskNum, operationPerTask);
+        ULONG32 const taskNum = 8;
+        ULONG32 const operationPerTask = 4;
+        ConcurrentAcquireReadOrWriteLock(taskNum, operationPerTask, MetadataManagerTest::LockType::Read);
     }
 
-    /*
-    // ReaderWriterAsyncLock does not support timeout yet, so the second write lock keeps waiting.
-    // TODO: Disable the test for now, wait for preetha implement the timeout throw part.
-    BOOST_AUTO_TEST_CASE(Multi_WriteLock_Success)
+    BOOST_AUTO_TEST_CASE(Concurrent_WriteLock_Timeout)
     {
-        NTSTATUS status;
-        KtlSystem* underlyingSystem = TestHelper::CreateKtlSystem();
-        KFinally([&]() { KtlSystem::Shutdown(); });
-        {
-            KAllocator& allocator = underlyingSystem->NonPagedAllocator();
-
-            // Expected
-            KUri::CSPtr expectedName;
-            status = KUri::Create(KUriView(L"fabric:/sps/sp"), allocator, expectedName);
-            VERIFY_IS_TRUE(NT_SUCCESS(status));
-            auto metadata = TestHelper::CreateMetadata(*expectedName, false, allocator);
-
-            // Setup
-            auto metadataManagerSPtr = TestHelper::CreateMetadataManager(allocator);
-
-            // Create the text transaction
-            TestTransaction::SPtr txnSPtr1 = TestTransaction::Create(1, allocator);
-            TestTransaction::SPtr txnSPtr2 = TestTransaction::Create(2, allocator);
-
-            // Prepopulate
-            bool isAdded = metadataManagerSPtr->Add(*expectedName, *metadata);
-            VERIFY_IS_TRUE(isAdded);
-
-            // Take the read lock and release it.
-            StateManagerLockContext::SPtr readLockSPtr = SyncAwait(metadataManagerSPtr->LockForWriteAsync(*expectedName, metadata->StateProviderId, *txnSPtr1, TimeSpan::MaxValue, CancellationToken::None));
-
-            StateManagerTransactionContext::SPtr txnContextSPtr1 = nullptr;
-            status = StateManagerTransactionContext::Create(1, *readLockSPtr, OperationType::Enum::Add, allocator, txnContextSPtr1);
-            VERIFY_IS_TRUE(NT_SUCCESS(status));
-
-            readLockSPtr = SyncAwait(metadataManagerSPtr->LockForWriteAsync(*expectedName, metadata->StateProviderId, *txnSPtr2, TimeSpan::FromSeconds(10), CancellationToken::None));
-
-            StateManagerTransactionContext::SPtr txnContextSPtr2 = nullptr;
-            status = StateManagerTransactionContext::Create(2, *readLockSPtr, OperationType::Enum::Add, allocator, txnContextSPtr2);
-            VERIFY_IS_TRUE(NT_SUCCESS(status));
-
-            VERIFY_ARE_EQUAL(0, readLockSPtr->GrantorCount);
-            VERIFY_ARE_EQUAL(2, metadataManagerSPtr->GetInflightTransactionCount());
-
-            txnContextSPtr1->Unlock();
-            txnContextSPtr2->Unlock();
-
-            // Verification
-            StateManagerLockContext::SPtr testLockContextSPtr = nullptr;
-            bool lockContextExists = metadataManagerSPtr->TryGetLockContext(*metadata->Name, testLockContextSPtr);
-            VERIFY_IS_TRUE(lockContextExists);
-            VERIFY_ARE_EQUAL(0, testLockContextSPtr->GrantorCount);
-            VERIFY_ARE_EQUAL(0, metadataManagerSPtr->GetInflightTransactionCount());
-        }
+        ULONG32 const taskNum = 8;
+        ULONG32 const operationPerTask = 4;
+        ConcurrentAcquireReadOrWriteLock(taskNum, operationPerTask, MetadataManagerTest::LockType::Write);
     }
-    */
 
     BOOST_AUTO_TEST_CASE(LockForReadAsync_WithExistingWriteLock_Success)
     {

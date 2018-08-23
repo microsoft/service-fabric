@@ -14,11 +14,11 @@ namespace ServiceModel
     public:
         ContainerHealthConfigDescription();
 
-        ContainerHealthConfigDescription(ContainerHealthConfigDescription const & other);
-        ContainerHealthConfigDescription(ContainerHealthConfigDescription && other);
+        ContainerHealthConfigDescription(ContainerHealthConfigDescription const & other) = default;
+        ContainerHealthConfigDescription(ContainerHealthConfigDescription && other) = default;
 
-        ContainerHealthConfigDescription const & operator = (ContainerHealthConfigDescription const & other);
-        ContainerHealthConfigDescription const & operator = (ContainerHealthConfigDescription && other);
+        ContainerHealthConfigDescription & operator = (ContainerHealthConfigDescription const & other) = default;
+        ContainerHealthConfigDescription & operator = (ContainerHealthConfigDescription && other) = default;
 
         bool operator == (ContainerHealthConfigDescription const & other) const;
         bool operator != (ContainerHealthConfigDescription const & other) const;

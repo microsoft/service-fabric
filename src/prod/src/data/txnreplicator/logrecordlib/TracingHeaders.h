@@ -14,4 +14,3 @@
 #include "LogRecordType.h"
 #include "LogReaderType.h"
 #include "TruncationState.h"
-

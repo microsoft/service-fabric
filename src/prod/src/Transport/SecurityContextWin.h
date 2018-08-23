@@ -35,7 +35,7 @@ namespace Transport
         SECURITY_STATUS AuthorizeRemoteEnd() override;
 
         void CompleteClaimsRetrieval(Common::ErrorCode const &, std::wstring const &) override { };
-        void CompleteClientAuth(Common::ErrorCode error, SecuritySettings::RoleClaims const & clientClaims, Common::TimeSpan expiration) override;
+        void CompleteClientAuth(Common::ErrorCode const &, SecuritySettings::RoleClaims const & clientClaims, Common::TimeSpan expiration) override;
 
         virtual bool AccessCheck(AccessControl::FabricAcl const & acl, DWORD desiredAccess) const override;
 

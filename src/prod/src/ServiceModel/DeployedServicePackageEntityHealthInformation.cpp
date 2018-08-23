@@ -41,34 +41,6 @@ DeployedServicePackageEntityHealthInformation::DeployedServicePackageEntityHealt
 {
 }
 
-DeployedServicePackageEntityHealthInformation::DeployedServicePackageEntityHealthInformation(DeployedServicePackageEntityHealthInformation && other)
-    : EntityHealthInformation(move(other))
-    , applicationName_(move(other.applicationName_))
-    , serviceManifestName_(move(other.serviceManifestName_))
-    , servicePackageActivationId_(move(other.servicePackageActivationId_))
-    , nodeId_(move(other.nodeId_))
-    , nodeName_(move(other.nodeName_))
-    , servicePackageInstanceId_(move(other.servicePackageInstanceId_))
-{
-}
-
-DeployedServicePackageEntityHealthInformation & DeployedServicePackageEntityHealthInformation::operator = (DeployedServicePackageEntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        serviceManifestName_ = move(other.serviceManifestName_);
-        servicePackageActivationId_ = move(other.servicePackageActivationId_);
-        nodeId_ = move(other.nodeId_);
-        nodeName_ = move(other.nodeName_);
-        servicePackageInstanceId_ = move(other.servicePackageInstanceId_);
-    }
-
-    EntityHealthInformation::operator=(move(other));
-
-    return *this;
-}
-
 std::wstring const & DeployedServicePackageEntityHealthInformation::get_EntityId() const
 {
     if (entityId_.empty())

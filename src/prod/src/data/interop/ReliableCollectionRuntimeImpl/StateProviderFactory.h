@@ -28,17 +28,12 @@ namespace Data
 
         private:
 
-            StateProviderFactory(Data::StateManager::IStateProvider2Factory* factory);
-
-            NTSTATUS CreateStringUTF16KeyBufferValueStore(
-                __in Data::StateManager::FactoryArguments const & factoryArguments,
-                __out TxnReplicator::IStateProvider2::SPtr & stateProvider);
-
-            NTSTATUS CreateBufferItemRCQ(
-                __in Data::StateManager::FactoryArguments const & factoryArguments,
-                __out TxnReplicator::IStateProvider2::SPtr & stateProvider);
+            StateProviderFactory(
+                __in Data::StateManager::IStateProvider2Factory* storeFactory,
+                __in Data::StateManager::IStateProvider2Factory* rcqFactory);
 
             Data::StateManager::IStateProvider2Factory::SPtr storeFactory_;
+            Data::StateManager::IStateProvider2Factory::SPtr rcqFactory_;
         };
     }
 }

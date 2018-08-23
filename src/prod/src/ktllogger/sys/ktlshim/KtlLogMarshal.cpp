@@ -3,10 +3,14 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define KDRIVER 1
+#endif
 
 #include <ktl.h>
 #include <ktrace.h>
-#include "ktllogger.h"
+
+#include "../inc/ktllogger.h"
 
 #if KTL_USER_MODE
 extern "C"

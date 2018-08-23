@@ -343,8 +343,6 @@ void NativeImageStoreProgressState::ProgressUploadTimerCallback()
                     type,
                     it->second->CompletedItems,
                     it->second->TotalItems);
-
-                lastUpdateUploadTime_ = DateTime::get_Now();
             }
             else
             {
@@ -358,6 +356,8 @@ void NativeImageStoreProgressState::ProgressUploadTimerCallback()
                     error);
             }
         }
-    } 
+    }
+
+    lastUpdateUploadTime_ = DateTime::get_Now();
 }
 

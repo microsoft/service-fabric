@@ -275,13 +275,16 @@ namespace Common
         // X509 issuer certificate stores for client certificates, Name = clientIssuerCN, Value = comma separated list of stores
         PUBLIC_CONFIG_GROUP(IssuerStoreKeyValueMap, L"Security/ClientCertificateIssuerStores", ClientCertificateIssuerStores, Common::ConfigEntryUpgradePolicy::Dynamic);
 
-        // Default certificate chain validation flag, may be overridden by component specific flag, e.g. Federation/X509CertChainFlags
-        // 0x10000000 CERT_CHAIN_REVOCATION_CHECK_END_CERT
-        // 0x20000000 CERT_CHAIN_REVOCATION_CHECK_CHAIN
-        // 0x40000000 CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT
-        // 0x80000000 CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY
-        // 0x00000004 CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL : disables downloading of CRL and disallowed CTL, in case they are unavailable 
-        // Setting to 0 disables CRL checking, but this does not disable downloading of disallowed CTL.
+        // Whether to use cluster certificate to secure IPC Server TLS transport unit
+        PUBLIC_CONFIG_ENTRY(bool, L"Security", UseClusterCertForIpcServerTlsSecurity, false, ConfigEntryUpgradePolicy::Static);
+        
+        // Bitmask for default certificate chain validation, may be overridden by component specific flag, e.g. Federation/X509CertChainFlags
+        // Values often used:
+        // 0x80000000 CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY: disable certificate revocation list (CRL) downloading when unavailable
+        // 0x00000004 CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL : disable certificate trust list (CTL) downloading on Windows machines
+        // lacking Internet access. Details about CTL can be found at:
+        // https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn265983(v=ws.11)
+        // Setting to 0 disables CRL checking, but it does not disable CTL downloading.
         // Full list of supported values is documented by dwFlags of CertGetCertificateChain:
         // http://msdn.microsoft.com/en-us/library/windows/desktop/aa376078(v=vs.85).aspx
 #ifdef PLATFORM_UNIX

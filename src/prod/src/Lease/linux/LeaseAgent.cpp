@@ -3438,7 +3438,22 @@ Return Value:
             if (TRUE == IsStaleMessage)
             {
                 // stale message trace
-                if (IsReceivedRequest(LeaseMessageHeader->MessageType))
+                if (LeaseMessageHeader->MessageType == PING_REQUEST || LeaseMessageHeader->MessageType == PING_RESPONSE)
+                {
+                    EventWriteProcessStalePing(
+                        NULL,
+                        RemoteLeaseAgentContextIter->RemoteLeaseAgentIdentifier,
+                        RemoteLeaseAgentContextIter->Instance.QuadPart,
+                        RemoteLeaseAgentContextIter->LeaseRelationshipContext->SubjectIdentifier.QuadPart,
+                        RemoteLeaseAgentContextIter->LeaseRelationshipContext->MonitorIdentifier.QuadPart,
+                        GetLeaseState(RemoteLeaseAgentContextIter->LeaseRelationshipContext->SubjectState),
+                        GetLeaseState(RemoteLeaseAgentContextIter->LeaseRelationshipContext->MonitorState),
+                        GetMessageType(LeaseMessageHeader->MessageType),
+                        LeaseMessageHeader->MessageIdentifier.QuadPart,
+                        LeaseMessageHeader->LeaseInstance.QuadPart
+                        );
+                }
+                else if (IsReceivedRequest(LeaseMessageHeader->MessageType))
                 {
                     EventWriteProcessStaleRequest(
                         NULL,

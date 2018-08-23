@@ -27,251 +27,284 @@ namespace TStoreTests
       }
 
       //CommonConfig config; // load the config object as its needed for the tracing to work
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> Add_ConsolidateRead_ShouldSucceed_Test()
+       {
+          {
+             WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
+             for (int i = 0; i < 10; i++)
+             {
+                co_await Store->AddAsync(*tx1->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None);
+             }
+
+             co_await tx1->CommitAsync();
+          }
+
+          // Checkpoint
+          co_await CheckpointAsync();
+
+          {
+             for (ULONG m = 0; m < Stores->Count(); m++)
+             {
+                WriteTransaction<int, int>::SPtr tx2 = CreateWriteTransaction(*(*Stores)[m]);
+                for (int i = 0; i < 10; i++)
+                {
+                   co_await VerifyKeyExistsAsync(*(*Stores)[m], *tx2->StoreTransactionSPtr, i, -1, i);
+                }
+
+                co_await tx2->AbortAsync();
+             }
+          }
+
+          co_await CloseAndReOpenStoreAsync();
+
+          for (int i = 0; i < 10; i++)
+          {
+             co_await VerifyKeyExistsInStoresAsync(i, -1, i);
+          }
+           co_return;
+       }
+
+        ktl::Awaitable<void> AddConsolidateRead_UpdateRead_ShouldSucceed_Test()
+       {
+          // 1. Add.
+          {
+             WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
+
+             for (int i = 0; i < 10; i++)
+             {
+                co_await Store->AddAsync(*tx1->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None);
+             }
+
+             co_await tx1->CommitAsync();
+          }
+
+          // 2. Checkpoint.
+          co_await CheckpointAsync();
+
+          {
+             for (ULONG m = 0; m < Stores->Count(); m++)
+             {
+                WriteTransaction<int, int>::SPtr tx2 = CreateWriteTransaction(*(*Stores)[m]);
+                for (int i = 0; i < 10; i++)
+                {
+                   co_await VerifyKeyExistsAsync(*(*Stores)[m], *tx2->StoreTransactionSPtr, i, -1, i);
+                }
+
+                co_await tx2->AbortAsync();
+             }
+          }
+
+          // 3. Update.
+          {
+             WriteTransaction<int, int>::SPtr tx3 = CreateWriteTransaction();
+             for (int i = 0; i < 10; i++)
+             {
+                co_await Store->ConditionalUpdateAsync(*tx3->StoreTransactionSPtr, i, i + 10, DefaultTimeout, CancellationToken::None);
+             }
+
+             co_await tx3->CommitAsync();
+          }
+
+          {
+             for (ULONG m = 0; m < Stores->Count(); m++)
+             {
+                WriteTransaction<int, int>::SPtr tx4 = CreateWriteTransaction(*(*Stores)[m]);
+                for (int i = 0; i < 10; i++)
+                {
+                   co_await VerifyKeyExistsAsync(*(*Stores)[m], *tx4->StoreTransactionSPtr, i, -1, i + 10);
+                }
+
+                co_await tx4->AbortAsync();
+             }
+          }
+
+          // 4. Checkpoint again.
+
+          co_await CheckpointAsync();
+
+          // 5. Reopen and verify.
+          co_await CloseAndReOpenStoreAsync();
+
+          for (int i = 0; i < 10; i++)
+          {
+             co_await VerifyKeyExistsInStoresAsync(i, -1, i + 10);
+          }
+           co_return;
+       }
+
+        ktl::Awaitable<void> AddConsolidateRead_UpdateConsolidateRead_ShouldSucceed_Test()
+       {
+          // 1. Add.
+          {
+             WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
+
+             for (int i = 0; i < 10; i++)
+             {
+                co_await Store->AddAsync(*tx1->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None);
+             }
+
+             co_await tx1->CommitAsync();
+          }
+
+          // 2. Checkpoint.
+          co_await CheckpointAsync();
+
+          {
+             for (ULONG m = 0; m < Stores->Count(); m++)
+             {
+                WriteTransaction<int, int>::SPtr tx2 = CreateWriteTransaction(*(*Stores)[m]);
+                for (int i = 0; i < 10; i++)
+                {
+                   co_await VerifyKeyExistsAsync(*(*Stores)[m], *tx2->StoreTransactionSPtr, i, -1, i);
+                }
+
+                co_await tx2->AbortAsync();
+             }
+          }
+
+          // 3. Update.
+          {
+             WriteTransaction<int, int>::SPtr tx3 = CreateWriteTransaction();
+             for (int i = 0; i < 10; i++)
+             {
+                co_await Store->ConditionalUpdateAsync(*tx3->StoreTransactionSPtr, i, i + 10, DefaultTimeout, CancellationToken::None);
+             }
+
+             co_await tx3->CommitAsync();
+          }
+
+          // 5. Checkpoint.
+          co_await CheckpointAsync();
+
+          {
+             for (ULONG m = 0; m < Stores->Count(); m++)
+             {
+                WriteTransaction<int, int>::SPtr tx4 = CreateWriteTransaction(*(*Stores)[m]);
+                for (int i = 0; i < 10; i++)
+                {
+                   co_await VerifyKeyExistsAsync(*(*Stores)[m], *tx4->StoreTransactionSPtr, i, -1, i + 10);
+                }
+
+                co_await tx4->AbortAsync();
+             }
+          }
+
+          // 6. Reopen and verify.
+          co_await CloseAndReOpenStoreAsync();
+
+          for (int i = 0; i < 10; i++)
+          {
+             co_await VerifyKeyExistsInStoresAsync(i, -1, i + 10);
+          }
+           co_return;
+       }
+
+        ktl::Awaitable<void> AddCheckpoint_ReOpenUpdate_ShouldSucceed_Test()
+       {
+          // 1. Add.
+          {
+             WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
+             for (int i = 0; i < 10; i++)
+             {
+                co_await Store->AddAsync(*tx1->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None);
+             }
+
+             co_await tx1->CommitAsync();
+          }
+
+          // 2. Checkpoint.
+          co_await CheckpointAsync();
+
+          {
+             for (ULONG m = 0; m < Stores->Count(); m++)
+             {
+                WriteTransaction<int, int>::SPtr tx2 = CreateWriteTransaction(*(*Stores)[m]);
+                for (int i = 0; i < 10; i++)
+                {
+                   co_await VerifyKeyExistsAsync(*(*Stores)[m], *tx2->StoreTransactionSPtr, i, -1, i);
+                }
+
+                co_await tx2->AbortAsync();
+             }
+          }
+
+          // 3. ReOpen.
+          co_await CloseAndReOpenStoreAsync();
+
+          // 4. Update.
+          {
+             WriteTransaction<int, int>::SPtr tx3 = CreateWriteTransaction();
+             for (int i = 0; i < 10; i++)
+             {
+                co_await Store->ConditionalUpdateAsync(*tx3->StoreTransactionSPtr, i, i + 10, DefaultTimeout, CancellationToken::None);
+             }
+
+             co_await tx3->CommitAsync();
+          }
+
+          for (int i = 0; i < 10; i++)
+          {
+             co_await VerifyKeyExistsInStoresAsync(i, -1, i + 10);
+          }
+           co_return;
+       }
+
+        ktl::Awaitable<void> Add_Checkpoint_Commit_Test()
+       {
+          int key1 = 5;
+          int key2 = 7;
+          int value = 10;
+
+          // 1. Add.
+          WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
+          co_await Store->AddAsync(*tx1->StoreTransactionSPtr, key1, value, DefaultTimeout, CancellationToken::None);
+          co_await Store->AddAsync(*tx1->StoreTransactionSPtr, key2, value, DefaultTimeout, CancellationToken::None);
+
+          // 2. Checkpoint.
+          co_await CheckpointAsync();
+
+          // 3. Apply
+          co_await tx1->CommitAsync();
+
+          // 4. Dispose
+          tx1 = nullptr;
+
+          co_await VerifyKeyExistsInStoresAsync(key1, -1, value); 
+          co_await VerifyKeyExistsInStoresAsync(key2, -1, value);
+           co_return;
+       }
+    #pragma endregion
    };
 
    BOOST_FIXTURE_TEST_SUITE(ConsolidationTestSuite, ConsolidationTest)
 
       BOOST_AUTO_TEST_CASE(Add_ConsolidateRead_ShouldSucceed)
    {
-      {
-         WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
-         for (int i = 0; i < 10; i++)
-         {
-            SyncAwait(Store->AddAsync(*tx1->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None));
-         }
-
-         SyncAwait(tx1->CommitAsync());
-      }
-
-      // Checkpoint
-      Checkpoint();
-
-      {
-         for (ULONG m = 0; m < Stores->Count(); m++)
-         {
-            WriteTransaction<int, int>::SPtr tx2 = CreateWriteTransaction(*(*Stores)[m]);
-            for (int i = 0; i < 10; i++)
-            {
-               SyncAwait(VerifyKeyExistsAsync(*(*Stores)[m], *tx2->StoreTransactionSPtr, i, -1, i));
-            }
-
-            SyncAwait(tx2->AbortAsync());
-         }
-      }
-
-      CloseAndReOpenStore();
-
-      for (int i = 0; i < 10; i++)
-      {
-         SyncAwait(VerifyKeyExistsInStoresAsync(i, -1, i));
-      }
+       SyncAwait(Add_ConsolidateRead_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(AddConsolidateRead_UpdateRead_ShouldSucceed)
    {
-      // 1. Add.
-      {
-         WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
-
-         for (int i = 0; i < 10; i++)
-         {
-            SyncAwait(Store->AddAsync(*tx1->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None));
-         }
-
-         SyncAwait(tx1->CommitAsync());
-      }
-
-      // 2. Checkpoint.
-      Checkpoint();
-
-      {
-         for (ULONG m = 0; m < Stores->Count(); m++)
-         {
-            WriteTransaction<int, int>::SPtr tx2 = CreateWriteTransaction(*(*Stores)[m]);
-            for (int i = 0; i < 10; i++)
-            {
-               SyncAwait(VerifyKeyExistsAsync(*(*Stores)[m], *tx2->StoreTransactionSPtr, i, -1, i));
-            }
-
-            SyncAwait(tx2->AbortAsync());
-         }
-      }
-
-      // 3. Update.
-      {
-         WriteTransaction<int, int>::SPtr tx3 = CreateWriteTransaction();
-         for (int i = 0; i < 10; i++)
-         {
-            SyncAwait(Store->ConditionalUpdateAsync(*tx3->StoreTransactionSPtr, i, i + 10, DefaultTimeout, CancellationToken::None));
-         }
-
-         SyncAwait(tx3->CommitAsync());
-      }
-
-      {
-         for (ULONG m = 0; m < Stores->Count(); m++)
-         {
-            WriteTransaction<int, int>::SPtr tx4 = CreateWriteTransaction(*(*Stores)[m]);
-            for (int i = 0; i < 10; i++)
-            {
-               SyncAwait(VerifyKeyExistsAsync(*(*Stores)[m], *tx4->StoreTransactionSPtr, i, -1, i + 10));
-            }
-
-            SyncAwait(tx4->AbortAsync());
-         }
-      }
-
-      // 4. Checkpoint again.
-
-      Checkpoint();
-
-      // 5. Reopen and verify.
-      CloseAndReOpenStore();
-
-      for (int i = 0; i < 10; i++)
-      {
-         SyncAwait(VerifyKeyExistsInStoresAsync(i, -1, i + 10));
-      }
+       SyncAwait(AddConsolidateRead_UpdateRead_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(AddConsolidateRead_UpdateConsolidateRead_ShouldSucceed)
    {
-      // 1. Add.
-      {
-         WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
-
-         for (int i = 0; i < 10; i++)
-         {
-            SyncAwait(Store->AddAsync(*tx1->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None));
-         }
-
-         SyncAwait(tx1->CommitAsync());
-      }
-
-      // 2. Checkpoint.
-      Checkpoint();
-
-      {
-         for (ULONG m = 0; m < Stores->Count(); m++)
-         {
-            WriteTransaction<int, int>::SPtr tx2 = CreateWriteTransaction(*(*Stores)[m]);
-            for (int i = 0; i < 10; i++)
-            {
-               SyncAwait(VerifyKeyExistsAsync(*(*Stores)[m], *tx2->StoreTransactionSPtr, i, -1, i));
-            }
-
-            SyncAwait(tx2->AbortAsync());
-         }
-      }
-
-      // 3. Update.
-      {
-         WriteTransaction<int, int>::SPtr tx3 = CreateWriteTransaction();
-         for (int i = 0; i < 10; i++)
-         {
-            SyncAwait(Store->ConditionalUpdateAsync(*tx3->StoreTransactionSPtr, i, i + 10, DefaultTimeout, CancellationToken::None));
-         }
-
-         SyncAwait(tx3->CommitAsync());
-      }
-
-      // 5. Checkpoint.
-      Checkpoint();
-
-      {
-         for (ULONG m = 0; m < Stores->Count(); m++)
-         {
-            WriteTransaction<int, int>::SPtr tx4 = CreateWriteTransaction(*(*Stores)[m]);
-            for (int i = 0; i < 10; i++)
-            {
-               SyncAwait(VerifyKeyExistsAsync(*(*Stores)[m], *tx4->StoreTransactionSPtr, i, -1, i + 10));
-            }
-
-            SyncAwait(tx4->AbortAsync());
-         }
-      }
-
-      // 6. Reopen and verify.
-      CloseAndReOpenStore();
-
-      for (int i = 0; i < 10; i++)
-      {
-         SyncAwait(VerifyKeyExistsInStoresAsync(i, -1, i + 10));
-      }
+       SyncAwait(AddConsolidateRead_UpdateConsolidateRead_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(AddCheckpoint_ReOpenUpdate_ShouldSucceed)
    {
-      // 1. Add.
-      {
-         WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
-         for (int i = 0; i < 10; i++)
-         {
-            SyncAwait(Store->AddAsync(*tx1->StoreTransactionSPtr, i, i, DefaultTimeout, CancellationToken::None));
-         }
-
-         SyncAwait(tx1->CommitAsync());
-      }
-
-      // 2. Checkpoint.
-      Checkpoint();
-
-      {
-         for (ULONG m = 0; m < Stores->Count(); m++)
-         {
-            WriteTransaction<int, int>::SPtr tx2 = CreateWriteTransaction(*(*Stores)[m]);
-            for (int i = 0; i < 10; i++)
-            {
-               SyncAwait(VerifyKeyExistsAsync(*(*Stores)[m], *tx2->StoreTransactionSPtr, i, -1, i));
-            }
-
-            SyncAwait(tx2->AbortAsync());
-         }
-      }
-
-      // 3. ReOpen.
-      CloseAndReOpenStore();
-
-      // 4. Update.
-      {
-         WriteTransaction<int, int>::SPtr tx3 = CreateWriteTransaction();
-         for (int i = 0; i < 10; i++)
-         {
-            SyncAwait(Store->ConditionalUpdateAsync(*tx3->StoreTransactionSPtr, i, i + 10, DefaultTimeout, CancellationToken::None));
-         }
-
-         SyncAwait(tx3->CommitAsync());
-      }
-
-      for (int i = 0; i < 10; i++)
-      {
-         SyncAwait(VerifyKeyExistsInStoresAsync(i, -1, i + 10));
-      }
+       SyncAwait(AddCheckpoint_ReOpenUpdate_ShouldSucceed_Test());
    }
 
 
    BOOST_AUTO_TEST_CASE(Add_Checkpoint_Commit)
    {
-      int key1 = 5;
-      int key2 = 7;
-      int value = 10;
-
-      // 1. Add.
-      WriteTransaction<int, int>::SPtr tx1 = CreateWriteTransaction();
-      SyncAwait(Store->AddAsync(*tx1->StoreTransactionSPtr, key1, value, DefaultTimeout, CancellationToken::None));
-      SyncAwait(Store->AddAsync(*tx1->StoreTransactionSPtr, key2, value, DefaultTimeout, CancellationToken::None));
-
-      // 2. Checkpoint.
-      Checkpoint();
-
-      // 3. Apply
-      SyncAwait(tx1->CommitAsync());
-
-      // 4. Dispose
-      tx1 = nullptr;
-
-      SyncAwait(VerifyKeyExistsInStoresAsync(key1, -1, value)); 
-      SyncAwait(VerifyKeyExistsInStoresAsync(key2, -1, value));
+       SyncAwait(Add_Checkpoint_Commit_Test());
    }
 
    BOOST_AUTO_TEST_SUITE_END()

@@ -291,6 +291,6 @@ void ReplicatedStoreWrapper::CommitTxAsyncOperation::ProcessResult(
         HMEvents::Trace->CommitFailed(replicaActivityId_.TraceId, error, error.Message);
     }
 
-    this->TryComplete(thisSPtr,move(error));
+    this->TryComplete(thisSPtr, move(error));
 }
 

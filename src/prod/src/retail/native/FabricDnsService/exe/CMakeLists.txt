@@ -1,10 +1,4 @@
-IF(CMAKE_BUILD_TYPE MATCHES Debug)
-  message("Debug build, linking against WinFab.Ktl.Linux")
-  include_directories(BEFORE "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.debug/inc")
-ELSE()
-  message("Optimized build, linking against WinFab.Ktl.Linux.retail")
-  include_directories(BEFORE "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.retail/inc")
-ENDIF()
+
 include_directories(BEFORE "${PROJECT_SOURCE_DIR}/src/Management/DnsService/linux_include")
 include_directories("${PROJECT_SOURCE_DIR}/src/Management/DnsService/include")
 include_directories("${PROJECT_SOURCE_DIR}/src/Management/DnsService/config")
@@ -38,9 +32,6 @@ add_custom_target(CopyFabricDnsService ALL
     DEPENDS ${exe_FabricDnsService}
 )
 
-find_library(KtlfullDbg NAMES ktlfull PATHS "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.debug" NO_DEFAULT_PATH)
-find_library(KtlfullOpt NAMES ktlfull PATHS "${EXTERNAL_DEPS_DIR}/WinFab.Ktl.Linux.retail" NO_DEFAULT_PATH)
-    
 target_link_libraries(${exe_FabricDnsService}
   ${lib_DnsService}
   ${lib_DnsServiceConfig}
@@ -51,7 +42,7 @@ target_link_libraries(${exe_FabricDnsService}
   ${lib_FabricClient}
   ${lib_FabricResources}
   ${lib_FabricRuntime}
-  debug ${KtlfullDbg} optimized ${KtlfullOpt}
+  ${Ktlfull}
   ${Cxx}
   ${CxxABI}
   ssh2
@@ -64,7 +55,5 @@ target_link_libraries(${exe_FabricDnsService}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
   icuuc
 )

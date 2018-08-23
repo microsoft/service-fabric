@@ -72,8 +72,8 @@ namespace Store
         static Common::ErrorCode CreateForPublicStack_V2(
             Common::Guid const &, 
             FABRIC_REPLICA_ID,
-            TSReplicatedStoreSettingsUPtr &&,
             Reliability::ReplicationComponent::ReplicatorSettingsUPtr &&,
+            TSReplicatedStoreSettingsUPtr &&,
             Api::IStoreEventHandlerPtr const &,
             Api::ISecondaryEventHandlerPtr const &,
             __out Api::IKeyValueStoreReplicaPtr &);
@@ -94,6 +94,7 @@ namespace Store
             EseLocalStoreSettings const & eseSettings,
             Api::IClientFactoryPtr const & clientFactory,
             Common::NamingUri const & serviceName,
+            std::vector<byte> const & initData,
             bool allowRepairUpToQuorum = false);
 
         Common::ErrorCode InitializeForTestServices(
@@ -189,6 +190,8 @@ namespace Store
             Common::AsyncOperationSPtr const & asyncOperation);
 
         void Abort();
+
+        Common::ErrorCode UpdateInitializationData(std::vector<byte> &&) override;
         
     public:
 
@@ -335,10 +338,18 @@ namespace Store
             bool allowRepairUpToQuorum);
 
         Common::ErrorCode InitializeReplicatedStore_V2(
-            TSReplicatedStoreSettingsUPtr &&,
             Reliability::ReplicationComponent::ReplicatorSettingsUPtr &&,
+            TSReplicatedStoreSettingsUPtr &&,
             Api::IStoreEventHandlerPtr const &,
             Api::ISecondaryEventHandlerPtr const &);
+
+        void TryStartMigration();
+        void TryStartMigration_Unlocked(KeyValueStoreMigratorSPtr const &);
+        void TryCancelMigration();
+        void OnMigrationComplete(Common::AsyncOperationSPtr const &, bool expectedCompletedSynchronously);
+        std::unique_ptr<MigrationInitData> TryDeserializeMigrationInitData(std::vector<byte> const & initData);
+        Common::ErrorCode TryInitializeMigrator(std::unique_ptr<MigrationInitData> && migrationData);
+        Common::ErrorCode TryInitializeMigrator_Unlocked(std::unique_ptr<MigrationInitData> && migrationData);
 
     private:
 
@@ -355,5 +366,11 @@ namespace Store
         IReplicatedStoreUPtr iReplicatedStore_;
         Common::ComPointer<IFabricStatefulServicePartition> partition_;
         DeadlockDetectorSPtr deadlockDetector_;
+
+        // Migration support
+        //
+        std::unique_ptr<TSReplicatedStoreSettings> replicatedStoreSettings_V2_;
+        KeyValueStoreMigratorSPtr migrator_;
+        Common::ExclusiveLock migratorLock_;
     };
 }

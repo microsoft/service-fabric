@@ -19,7 +19,8 @@ namespace Management
                 RollingForwardPending = 3,
                 RollingForwardInProgress = 4,
                 RollingForwardCompleted = 5,
-                Failed = 6
+                Failed = 6,
+                RollingBackPending = 7,
             };
 
             void WriteToTextWriter(Common::TextWriter & w, Enum const & val);

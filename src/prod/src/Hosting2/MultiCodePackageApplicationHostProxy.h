@@ -18,7 +18,8 @@ namespace Hosting2
             std::wstring const & hostId,
             ApplicationHostIsolationContext const & isolationContext,
             std::wstring const & runAsId,
-            ServicePackageInstanceIdentifier const & servicePackageInstanceId);
+            ServicePackageInstanceIdentifier const & servicePackageInstanceId,
+            bool removeServiceFabricRuntimeAccess);
         
         virtual ~MultiCodePackageApplicationHostProxy();
 

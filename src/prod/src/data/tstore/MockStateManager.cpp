@@ -44,8 +44,8 @@ TxnReplicator::Transaction::SPtr MockStateManager::CreateTransaction()
 
 ktl::Awaitable<void> MockStateManager::CommitRemoveAsync(__in TxnReplicator::Transaction& txn)
 {
-	co_await suspend_never();
-	txn.Dispose();
+    co_await suspend_never();
+    txn.Dispose();
 }
 
 ktl::Awaitable<void> MockStateManager::CommitAddAsync(__in TxnReplicator::Transaction& txn)
@@ -79,7 +79,7 @@ ktl::Awaitable<void> MockStateManager::CommitAddAsync(__in TxnReplicator::Transa
     co_await stateProviderSPtr_->OpenAsync(CancellationToken::None);
     co_await stateProviderSPtr_->RecoverCheckpointAsync(CancellationToken::None);
     co_await stateProviderSPtr_->ChangeRoleAsync(FABRIC_REPLICA_ROLE::FABRIC_REPLICA_ROLE_PRIMARY, CancellationToken::None);
-	txn.Dispose();
+    txn.Dispose();
 }
 
 ktl::Awaitable<void> MockStateManager::AddAsync(
@@ -118,16 +118,16 @@ ktl::Awaitable<void> MockStateManager::AddAsync(
 }
 
 ktl::Awaitable<void> MockStateManager::RemoveAsync(
-	__in Transaction & transaction,
-	__in KUriView const & stateProviderName,
-	__in Common::TimeSpan const & timeout,
-	__in CancellationToken const & cancellationToken)
+    __in Transaction & transaction,
+    __in KUriView const & stateProviderName,
+    __in Common::TimeSpan const & timeout,
+    __in CancellationToken const & cancellationToken)
 {
-	UNREFERENCED_PARAMETER(timeout);
-	UNREFERENCED_PARAMETER(stateProviderName);
+    UNREFERENCED_PARAMETER(timeout);
+    UNREFERENCED_PARAMETER(stateProviderName);
 
-	co_await stateProviderSPtr_->PrepareForRemoveAsync(transaction, cancellationToken);
-	co_return;
+    co_await stateProviderSPtr_->PrepareForRemoveAsync(transaction, cancellationToken);
+    co_return;
 }
 
 ktl::Awaitable<void> TStoreTests::MockStateManager::CloseAsync()

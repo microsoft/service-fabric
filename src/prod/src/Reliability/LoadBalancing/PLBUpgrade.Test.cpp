@@ -879,7 +879,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // it is expected that it should not initiate movements of other replicas
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(4), wstring(testHelper.services_[4]), 1, CreateReplicas(L""), 1, replicaFlags));
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(1u, actionList.size());
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"4 add primary 1", value)));
@@ -903,7 +903,7 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->Clear();
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(6u, actionList.size());
         VERIFY_ARE_EQUAL(3u, CountIf(actionList, ActionMatch(L"* add secondary 0", value)));
@@ -993,7 +993,7 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->Clear();
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(4u, actionList.size());
         VERIFY_ARE_EQUAL(2u, CountIf(actionList, ActionMatch(L"0|2 add secondary 0", value)));
@@ -1011,7 +1011,7 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->Clear();
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(0u, actionList.size());
 
@@ -1025,7 +1025,7 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->Clear();
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(0u, actionList.size());
 
@@ -1038,7 +1038,7 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->Clear();
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(1u, actionList.size());
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"3 add secondary 0", value)));
@@ -1198,7 +1198,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Expectation is that no replicas will be moved as only 1 is movable
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(0u, actionList.size());
 
@@ -1214,7 +1214,7 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->Clear();
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(0u, actionList.size());
     }
@@ -1268,7 +1268,7 @@ namespace PlacementAndLoadBalancingUnitTest
         //   +1    P/LI
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(0u, actionList.size());
     }
@@ -1340,7 +1340,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Persisted(+1)  SB/LJ      P
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(5u, actionList.size());
         VERIFY_ARE_EQUAL(2u, CountIf(actionList, ActionMatch(L"0|4 add primary 0", value)));
@@ -1415,7 +1415,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // Persisted(+1)  SB/LJ      P
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(5u, actionList.size());
         VERIFY_ARE_EQUAL(4u, CountIf(actionList, ActionMatch(L"0|2|3|4 add primary 0", value)));
@@ -1562,7 +1562,7 @@ namespace PlacementAndLoadBalancingUnitTest
         // App2:                          3xP(M1:10)
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         // Expecting all partitions to be moved to the node1 in already upgraded domain UD1
         VERIFY_ARE_EQUAL(6u, actionList.size());
@@ -1583,7 +1583,7 @@ namespace PlacementAndLoadBalancingUnitTest
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(5), wstring(testHelper.services_[5]), 2, CreateReplicas(L"P/2/LI"), 1, updateFlags));
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(0u, actionList.size());
 
@@ -1598,7 +1598,7 @@ namespace PlacementAndLoadBalancingUnitTest
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(5), wstring(testHelper.services_[5]), 3, CreateReplicas(L"P/2/LI"), 1, updateFlags));
 
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(1u, actionList.size());
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"5 add secondary 1", value)));
@@ -1646,7 +1646,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Expecting than all replicas are moved
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(3u, actionList.size());
         VERIFY_ARE_EQUAL(2u, CountIf(actionList, ActionMatch(L"1|2 add primary 0", value)));
@@ -1705,14 +1705,14 @@ namespace PlacementAndLoadBalancingUnitTest
         // Expecting that non of the persisted replicas is moved
         // until stateless is build
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(0u, actionList.size());
 
         // Stateless replica has finished building
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(3), wstring(testHelper.services_[3]), 3, CreateReplicas(L"I/1"), 0));
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(3u, actionList.size());
         VERIFY_ARE_EQUAL(3u, CountIf(actionList, ActionMatch(L"* add secondary 1", value)));
@@ -1763,7 +1763,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Expecting that non of the all replicas are moved
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(4u, actionList.size());
         VERIFY_ARE_EQUAL(2u, CountIf(actionList, ActionMatch(L"0|1 move instance 1=>0", value)));
@@ -1807,7 +1807,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Expecting that non of the all replicas are moved
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(1u, actionList.size());
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"3 add secondary 0", value)));
@@ -1858,7 +1858,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Expecting that volatile primary will be swapped out
         fm_->RefreshPLB(Stopwatch::Now());
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(1u, actionList.size());
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"0 swap primary 1<=>0", value)));
@@ -2010,6 +2010,42 @@ namespace PlacementAndLoadBalancingUnitTest
         VERIFY_ARE_EQUAL(2u, actionList.size());
         VERIFY_ARE_EQUAL(1, CountIf(actionList, ActionMatch(L"0 void movement on 1", value)));
         VERIFY_ARE_EQUAL(1, CountIf(actionList, ActionMatch(L"1 swap primary 0<=>1", value)));
+    }
+
+    BOOST_AUTO_TEST_CASE(UpgradePrimaryToBeSwappedOutBalancingTest1)
+    {
+        wstring testName = L"UpgradePrimaryToBeSwappedOutBalancingTest1";
+        Trace.WriteInfo("PLBUpgradeTestSource", "{0}", testName);
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        for (int i = 0; i < 5; i++)
+        {
+            plb.UpdateNode(CreateNodeDescription(i));
+        }
+
+        wstring serviceType = wformatString("{0}Type", testName);
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(serviceType), set<NodeId>()));
+
+        wstring serviceName = wformatString("{0}Service", testName);
+        plb.UpdateService(CreateServiceDescription(serviceName, serviceType, true, CreateMetrics(L""), FABRIC_MOVE_COST_LOW));
+
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(serviceName), 0, CreateReplicas(L"P/0, S/1, S/2, S/3, S/4"), 0, upgradingFlag_));
+        for (int ftId = 1; ftId < 5; ++ftId)
+        {
+            plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(ftId), wstring(serviceName), 0, CreateReplicas(L"P/0/I, S/1, S/2, S/3, S/4"), 0, upgradingFlag_));
+        }
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        VERIFY_ARE_EQUAL(4u, actionList.size());
+
+        // Secondary on node 0 should be dropped and primary should be swapped with some of the others secondaries
+        VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"* swap primary 0<=>1", value)));
+        VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"* swap primary 0<=>2", value)));
+        VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"* swap primary 0<=>3", value)));
+        VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"* swap primary 0<=>4", value)));
+
     }
 
     BOOST_AUTO_TEST_SUITE_END()

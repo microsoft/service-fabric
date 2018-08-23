@@ -39,7 +39,8 @@ namespace DNS
         virtual void CloseAsync() override;
 
         virtual void CreateUdpListener(
-            __out IUdpListener::SPtr& spListener
+            __out IUdpListener::SPtr& spListener,
+            __in bool fEnableSocketAddressReuse
         ) override;
 
 #if defined(PLATFORM_UNIX)

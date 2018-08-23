@@ -117,6 +117,21 @@ namespace FabricTest
             UNREFERENCED_PARAMETER(counter);
             return Common::ErrorCodeValue::NotImplemented;
         }
+
+        virtual Common::ErrorCode GetReplicatorQueryResult(__out ServiceModel::ReplicatorStatusQueryResultSPtr & result)
+        {
+            UNREFERENCED_PARAMETER(result);
+            return Common::ErrorCodeValue::NotImplemented;
+        }
+
+        virtual NTSTATUS GetPeriodicCheckpointAndTruncationTimestamps(
+            __out LONG64 & lastPeriodicCheckpoint,
+            __out LONG64 & lastPeriodicTruncation)
+        {
+            lastPeriodicCheckpoint = 0;
+            lastPeriodicTruncation = 0;
+            return STATUS_NOT_IMPLEMENTED;
+        }
     };
 
     typedef std::shared_ptr<ITestStoreService> ITestStoreServiceSPtr;

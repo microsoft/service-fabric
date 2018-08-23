@@ -349,7 +349,7 @@ namespace Common
             case (int)FABRIC_E_CANNOT_CONNECT: w << "FABRIC_E_CANNOT_CONNECT"; return;
 
             case(int)FABRIC_E_MESSAGE_TOO_LARGE: w << "FABRIC_E_MESSAGE_TOO_LARGE"; return;
-          
+
             case(int)FABRIC_E_ENDPOINT_NOT_FOUND: w << "FABRIC_E_ENDPOINT_NOT_FOUND"; return;
 
             case(int)FABRIC_E_DELETE_BACKUP_FILE_FAILED: w << "FABRIC_E_DELETE_BACKUP_FILE_FAILED"; return;
@@ -357,7 +357,7 @@ namespace Common
             case(int)FABRIC_E_INVALID_TEST_COMMAND_STATE: w << "FABRIC_E_INVALID_TEST_COMMAND_STATE"; return;
 
             case(int)FABRIC_E_TEST_COMMAND_OPERATION_ID_ALREADY_EXISTS: w << "FABRIC_E_TEST_COMMAND_OPERATION_ID_ALREADY_EXISTS"; return;
- 
+
             case(int)FABRIC_E_CM_OPERATION_FAILED: w << "FABRIC_E_CM_OPERATION_FAILED"; return;
 
             case (int)FABRIC_E_IMAGEBUILDER_RESERVED_DIRECTORY_ERROR: w << "FABRIC_E_IMAGEBUILDER_RESERVED_DIRECTORY_ERROR"; return;
@@ -409,20 +409,26 @@ namespace Common
             case (int)FABRIC_E_INVALID_UPLOAD_SESSION_ID: w << "FABRIC_E_INVALID_UPLOAD_SESSION_ID"; return;
 
             case (int)FABRIC_E_BACKUP_NOT_ENABLED: w << "FABRIC_E_BACKUP_NOT_ENABLED"; return;
-            
-            case (int)FABRIC_E_BACKUP_IS_ENABLED : w << "FABRIC_E_BACKUP_IS_ENABLED"; return; 
-            
+
+            case (int)FABRIC_E_BACKUP_IS_ENABLED : w << "FABRIC_E_BACKUP_IS_ENABLED"; return;
+
             case (int)FABRIC_E_BACKUP_POLICY_DOES_NOT_EXIST : w << "FABRIC_E_BACKUP_POLICY_DOES_NOT_EXIST"; return;
-            
+
             case (int)FABRIC_E_BACKUP_POLICY_ALREADY_EXISTS : w << "FABRIC_E_BACKUP_POLICY_ALREADY_EXISTS"; return;
-            
+
             case (int)FABRIC_E_RESTORE_IN_PROGRESS : w << "FABRIC_E_RESTORE_IN_PROGRESS"; return;
-            
+
             case (int)FABRIC_E_RESTORE_SOURCE_TARGET_PARTITION_MISMATCH : w << "FABRIC_E_RESTORE_SOURCE_TARGET_PARTITION_MISMATCH"; return;
-            
+
             case (int)FABRIC_E_FAULT_ANALYSIS_SERVICE_NOT_ENABLED : w << "FABRIC_E_FAULT_ANALYSIS_SERVICE_NOT_ENABLED"; return;
             
             case (int)FABRIC_E_CONTAINER_NOT_FOUND: w << "FABRIC_E_CONTAINER_NOT_FOUND"; return;
+
+            case (int)FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC: w << "FABRIC_E_CENTRAL_SECRET_SERVICE_GENERIC"; return;
+
+            case (int)FABRIC_E_SECRET_INVALID: w << "FABRIC_E_SECRET_INVALID"; return;
+
+            case (int)FABRIC_E_SECRET_VERSION_ALREADY_EXISTS: w << "FABRIC_E_SECRET_VERSION_ALREADY_EXISTS"; return;
 
             case (int)FABRIC_E_BACKUPCOPIER_UNEXPECTED_ERROR: w << "FABRIC_E_BACKUPCOPIER_UNEXPECTED_ERROR"; return;
 
@@ -430,7 +436,24 @@ namespace Common
 
             case (int)FABRIC_E_BACKUPCOPIER_ACCESS_DENIED: w << "FABRIC_E_BACKUPCOPIER_ACCESS_DENIED"; return;
 
+            case (int)FABRIC_E_SINGLE_INSTANCE_APPLICATION_ALREADY_EXISTS: w << "FABRIC_E_SINGLE_INSTANCE_APPLICATION_ALREADY_EXISTS"; return;
+
+            case (int)FABRIC_E_SINGLE_INSTANCE_APPLICATION_NOT_FOUND: w << "FABRIC_E_SINGLE_INSTANCE_APPLICATION_NOT_FOUND"; return;
+
+            case (int)FABRIC_E_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS: w << "FABRIC_E_SINGLE_INSTANCE_APPLICATION_UPGRADE_IN_PROGRESS"; return;
+
+            case (int)FABRIC_E_VOLUME_ALREADY_EXISTS: w << "FABRIC_E_VOLUME_ALREADY_EXISTS"; return;
+
+            case (int)FABRIC_E_VOLUME_NOT_FOUND: w << "FABRIC_E_VOLUME_NOT_FOUND"; return;
+
+            case (int)FABRIC_E_INVALID_SERVICE_SCALING_POLICY: w << "FABRIC_E_INVALID_SERVICE_SCALING_POLICY"; return;
+
+            case (int)FABRIC_E_DATABASE_MIGRATION_IN_PROGRESS: w << "FABRIC_E_DATABASE_MIGRATION_IN_PROGRESS"; return;
+
+            case (int)FABRIC_E_OPERATION_NOT_SUPPORTED: w << "FABRIC_E_OPERATION_NOT_SUPPORTED"; return;
+
             // *** internal error codes
+            case FSSPrimaryInDatalossRecovery: w << "FSSPrimaryInDatalossRecovery"; return;
             case BackupCopierAborted: w << "BackupCopierAborted"; return;
             case BackupCopierDisabled: w << "BackupCopierDisabled"; return;
             case BackupCopierRetryableError: w << "BackupCopierRetryableError"; return;
@@ -608,6 +631,8 @@ namespace Common
             case ContainerFailedToCreateDnsChain: w << "ContainerFailedToCreateDnsChain"; return;
             case ApplicationPrincipalAbortableError: w << "ApplicationPrincipalAbortableError"; return;
             case ApplicationHostCrash: w << "ApplicationHostCrash"; return;
+            case ApplicationDeploymentInProgress: w << "ApplicationDeploymentInProgress"; return;
+            case UpdateContextFailed: w << "UpdateContextFailed"; return;
 
                 // FileStoreService
             case StagingFileNotFound: w << "StagingFileNotFound"; return;

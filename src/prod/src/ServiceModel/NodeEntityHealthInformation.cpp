@@ -32,28 +32,6 @@ NodeEntityHealthInformation::NodeEntityHealthInformation(
 {
 }
 
-NodeEntityHealthInformation::NodeEntityHealthInformation(NodeEntityHealthInformation && other)
-    : EntityHealthInformation(move(other))
-    , nodeId_(move(other.nodeId_))
-    , nodeName_(move(other.nodeName_))
-    , nodeInstanceId_(move(other.nodeInstanceId_))
-{
-}
-
-NodeEntityHealthInformation & NodeEntityHealthInformation::operator = (NodeEntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        nodeId_ = move(other.nodeId_);
-        nodeName_ = move(other.nodeName_);
-        nodeInstanceId_ = move(other.nodeInstanceId_);
-    }
-
-    EntityHealthInformation::operator=(move(other));
-
-    return *this;
-}
-
 ErrorCode NodeEntityHealthInformation::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __in FABRIC_HEALTH_INFORMATION * healthInformation,

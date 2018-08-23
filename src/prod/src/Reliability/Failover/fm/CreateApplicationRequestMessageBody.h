@@ -18,12 +18,14 @@ namespace Reliability
             ServiceModel::ApplicationIdentifier const & appId,
             uint64 instanceId,
             ApplicationCapacityDescription const & appCapacity,
-            ServiceModel::ServicePackageResourceGovernanceMap const& spRGDescription)
+            ServiceModel::ServicePackageResourceGovernanceMap const& spRGDescription,
+            ServiceModel::CodePackageContainersImagesMap const& cpContainersImages)
             : applicationName_(appName)
             , applicationId_(appId)
             , instanceId_(instanceId)
             , capacityDescription_(appCapacity)
             , resourceGovernanceDescription_(spRGDescription)
+            , codePackageContainersImages_(cpContainersImages)
         {}
 
         __declspec(property(get = get_ApplicationName, put = put_ApplicationName)) Common::NamingUri & ApplicationName;
@@ -42,9 +44,15 @@ namespace Reliability
         ApplicationCapacityDescription const & get_ApplicationCapacity() const { return capacityDescription_; }
         void put_ApplicationCapacity(ApplicationCapacityDescription const& appCapacity) { capacityDescription_ = appCapacity; }
 
-        __declspec(property (get = get_ResourceGovernanceDescription, put = put_ResourceGovernanceDescription)) ServiceModel::ServicePackageResourceGovernanceMap ResourceGovernanceDescription;
+        __declspec(property (get = get_ResourceGovernanceDescription, put = put_ResourceGovernanceDescription))
+            ServiceModel::ServicePackageResourceGovernanceMap ResourceGovernanceDescription;
         ServiceModel::ServicePackageResourceGovernanceMap const& get_ResourceGovernanceDescription() const { return  resourceGovernanceDescription_; }
         void put_ResourceGovernanceDescription(ServiceModel::ServicePackageResourceGovernanceMap const& desc) { resourceGovernanceDescription_ = desc; }
+
+        __declspec(property (get = get_CodePackageContainersImages, put = put_CodePackageContainersImages))
+            ServiceModel::CodePackageContainersImagesMap CodePackageContainersImages;
+        ServiceModel::CodePackageContainersImagesMap const& get_CodePackageContainersImages() const { return  codePackageContainersImages_; }
+        void put_CodePackageContainersImages(ServiceModel::CodePackageContainersImagesMap const& desc) { codePackageContainersImages_ = desc; }
 
         void WriteTo(Common::TextWriter& w, Common::FormatOptions const&) const
         {
@@ -54,7 +62,13 @@ namespace Reliability
                 capacityDescription_);
         }
 
-        FABRIC_FIELDS_05(applicationName_, applicationId_, instanceId_, capacityDescription_, resourceGovernanceDescription_);
+        FABRIC_FIELDS_06(
+            applicationName_,
+            applicationId_,
+            instanceId_,
+            capacityDescription_,
+            resourceGovernanceDescription_,
+            codePackageContainersImages_);
 
     private:
         Common::NamingUri applicationName_;
@@ -62,5 +76,6 @@ namespace Reliability
         uint64 instanceId_;
         ApplicationCapacityDescription capacityDescription_;
         ServiceModel::ServicePackageResourceGovernanceMap resourceGovernanceDescription_;
+        ServiceModel::CodePackageContainersImagesMap codePackageContainersImages_;
     };
 }

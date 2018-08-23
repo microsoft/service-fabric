@@ -23,24 +23,6 @@ PartitionEntityHealthInformation::PartitionEntityHealthInformation(Guid const& p
 {
 }
 
-PartitionEntityHealthInformation::PartitionEntityHealthInformation(PartitionEntityHealthInformation && other)
-    : EntityHealthInformation(move(other))
-    , partitionId_(move(other.partitionId_))
-{
-}
-
-PartitionEntityHealthInformation & PartitionEntityHealthInformation::operator = (PartitionEntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        partitionId_ = move(other.partitionId_);
-    }
-
-    EntityHealthInformation::operator=(move(other));
-
-    return *this;
-}
-
 ErrorCode PartitionEntityHealthInformation::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __in FABRIC_HEALTH_INFORMATION * commonHealthInformation,

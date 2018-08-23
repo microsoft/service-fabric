@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(Phase4_ReplicaMessageStateRAReplyPendingHealthReportTest)
 {
     Test.AddFT(L"SP1", L"O Phase4_Activate 411/422/422 1:1 CM [S/P/P RD U N F 1:1] [S/S/S RD U N F 2:1] [P/S/S RD U RA F 3:1]");
 
-    ExecuteReconfigurationCheckAndVerifyTraceEvents(FailoverUnitReconfigurationStage::Phase4_Activate, L"Waiting for response from 3 replicas");
+    ExecuteReconfigurationCheckAndVerifyTraceEvents(FailoverUnitReconfigurationStage::Phase4_Activate, L"Waiting for response from 1 replicas");
 }
 
 BOOST_AUTO_TEST_CASE(Phase4_ReplicaMessageStateRAReplyPendingInBuildHealthReportTest)
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(Phase4_ClearReconfigurationStuckWarningHealthReportTest)
 {
     Test.AddFT(L"SP1", L"O Phase4_Activate 411/422/422 1:1 CM [S/P/P RD U N F 1:1] [S/S/S RD U N F 2:1] [P/S/S RD U RA F 3:1]");
 
-    ExecuteReconfigurationCheckAndVerifyTraceEvents(FailoverUnitReconfigurationStage::Phase4_Activate, L"Waiting for response from 3 replicas");
+    ExecuteReconfigurationCheckAndVerifyTraceEvents(FailoverUnitReconfigurationStage::Phase4_Activate, L"Waiting for response from 1 replicas");
 
     Test.ProcessRemoteRAMessageAndDrain<MessageType::ActivateReply>(3, L"SP1", L"411/422 [P/S RD U 3:1] Success");
 
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(Phase3_PcBelowReadQuorumHealthReportTest)
 {
     Test.AddFT(L"SP1", L"O Phase3_Deactivate 411/422/422 1:1 CM [S/P/P RD U N F 1:1] [S/S/S RD U RA F 2:1] [P/S/S RD U RA F 3:1]");
 
-    ExecuteReconfigurationCheckAndVerifyTraceEvents(FailoverUnitReconfigurationStage::Phase3_Deactivate, L"Waiting for response from 3 replicas");
+    ExecuteReconfigurationCheckAndVerifyTraceEvents(FailoverUnitReconfigurationStage::Phase3_Deactivate, L"Waiting for response from 2 replicas");
 }
 
 

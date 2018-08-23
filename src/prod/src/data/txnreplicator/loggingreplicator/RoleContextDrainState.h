@@ -21,7 +21,7 @@ namespace Data
         public:
 
             static RoleContextDrainState::SPtr Create(
-                __in KWfStatefulServicePartition & partition,
+                __in Data::Utilities::IStatefulPartition & partition,
                 __in KAllocator & allocator);
 
             __declspec(property(get = get_ApplyRedoContext)) TxnReplicator::ApplyContext::Enum ApplyRedoContext;
@@ -92,14 +92,14 @@ namespace Data
 
         private:
 
-            RoleContextDrainState(__in KWfStatefulServicePartition & partition);
+            RoleContextDrainState(__in Data::Utilities::IStatefulPartition & partition);
 
             void BecomePrimaryCallerholdsLock();
 
             void BecomeActiveSecondaryCallerholdsLock();
 
             mutable KReaderWriterSpinLock lock_;
-            KWfStatefulServicePartition::SPtr partition_;
+            Data::Utilities::IStatefulPartition::SPtr partition_;
             FABRIC_REPLICA_ROLE role_;
             DrainingStream::Enum drainingStream_;
             TxnReplicator::ApplyContext::Enum applyRedoContext_;

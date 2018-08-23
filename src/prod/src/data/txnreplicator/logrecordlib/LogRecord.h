@@ -58,7 +58,8 @@ namespace Data
                 __in Utilities::BinaryWriter & binaryWriter,
                 __in KAllocator & allocator,
                 __in bool isPhysicalWrite = true,
-                __in bool setRecordLength = true);
+                __in bool setRecordLength = true,
+                __in bool forceRecomputeOffsets = false);
             
             //
             // Invoked by the idle/secondary to deserialize the log record data from the operation data object
@@ -341,7 +342,8 @@ namespace Data
             virtual void Write(
                 __in Utilities::BinaryWriter & binaryWriter,
                 __inout Utilities::OperationData & operationData,
-                __in bool isPhysicalWrite);
+                __in bool isPhysicalWrite,
+                __in bool forceRecomputeOffsets);
 
             void set_ApproximateSizeOnDisk(ULONG value)
             {

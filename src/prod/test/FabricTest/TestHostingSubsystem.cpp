@@ -405,6 +405,17 @@ bool TestHostingSubsystem::UnregisterApplicationHostClosedEventHandler(Applicati
     return hosting_->UnregisterApplicationHostClosedEventHandler(hHandler);
 }
 
+AvailableContainerImagesEventHHandler TestHostingSubsystem::RegisterSendAvailableContainerImagesEventHandler(
+    AvailableContainerImagesEventHandler const & handler)
+{
+    return hosting_->RegisterSendAvailableContainerImagesEventHandler(handler);
+}
+
+bool TestHostingSubsystem::UnregisterSendAvailableContainerImagesEventHandler(AvailableContainerImagesEventHHandler const & hHandler)
+{
+    return hosting_->UnregisterSendAvailableContainerImagesEventHandler(hHandler);
+}
+
 namespace
 {
     AsyncOperationSPtr CreateAndStartFaultInjectedAsyncOperation(

@@ -11,6 +11,8 @@ using namespace ServiceModel;
 
 ContainerPoliciesDescription::ContainerPoliciesDescription()
 : CodePackageRef(),
+UseDefaultRepositoryCredentials(false),
+UseTokenAuthenticationCredentials(false),
 RepositoryCredentials(),
 PortBindings(),
 LogConfig(),
@@ -23,6 +25,8 @@ SecurityOptions(),
 HealthConfig(),
 RunInteractive(false),
 ContainersRetentionCount(0),
+AutoRemove(),
+Labels(),
 ImageOverrides()
 {
 }
@@ -55,6 +59,19 @@ bool ContainerPoliciesDescription::operator== (ContainerPoliciesDescription cons
     {
         return equals;
     }
+
+    equals = UseDefaultRepositoryCredentials == other.UseDefaultRepositoryCredentials;
+    if (!equals)
+    {
+        return equals;
+    }
+
+    equals = UseTokenAuthenticationCredentials == other.UseTokenAuthenticationCredentials;
+    if (!equals)
+    {
+        return equals;
+    }
+
     equals = LogConfig == other.LogConfig;
     if (!equals)
     {
@@ -106,8 +123,22 @@ bool ContainerPoliciesDescription::operator== (ContainerPoliciesDescription cons
         return equals;
     }
 
+    equals = StringUtility::AreEqualCaseInsensitive(this->AutoRemove, other.AutoRemove);
+    if (!equals)
+    {
+        return equals;
+    }
+
     equals = this->ImageOverrides == other.ImageOverrides;
 
+    for (auto i = 0; i != Labels.size(); i++)
+    {
+        equals = this->Labels[i] == other.Labels[i];
+        if (!equals)
+        {
+            return equals;
+        }
+    }
     return equals;
 }
 
@@ -121,12 +152,20 @@ void ContainerPoliciesDescription::WriteTo(TextWriter & w, FormatOptions const &
     w.Write("ContainerPoliciesDescription { ");
     w.Write("CodePackageRef = {0}", CodePackageRef);
     w.Write("Isolation = {0}", Isolation);
+    w.Write("UseDefaultRepositoryCredentials = {0}", UseDefaultRepositoryCredentials);
+    w.Write("UseTokenAuthenticationCredentials = {0}", UseTokenAuthenticationCredentials);
     w.Write("RepositoryCredentials = {0}, ", RepositoryCredentials);
     w.Write("HealthConfig = {0}, ", HealthConfig);
     w.Write("PortBindings {");
     for (auto i = 0; i != PortBindings.size(); i++)
     {
         w.Write("PortBinding {0}", PortBindings[i]);
+    }
+    w.Write("}");
+    w.Write("Labels {");
+    for (auto i = 0; i != Labels.size(); i++)
+    {
+        w.Write("Labels {0}", Labels[i]);
     }
     w.Write("}");
     w.Write("Volumes {");
@@ -150,6 +189,7 @@ void ContainerPoliciesDescription::WriteTo(TextWriter & w, FormatOptions const &
     w.Write("RunInteractive = {0}", RunInteractive);
     w.Write("ContainersRetentionCount = {0}", ContainersRetentionCount);
     w.Write("ImageOverrides = {0}", ImageOverrides);
+    w.Write("AutoRemove = {0}", AutoRemove);
     w.Write("}");
 }
 
@@ -164,6 +204,17 @@ void ContainerPoliciesDescription::ReadFromXml(
     {
         this->CodePackageRef = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_CodePackageRef);
     }
+
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_UseDefaultRepositoryCredentials))
+    {
+        StringUtility::TryFromWString<bool>(xmlReader->ReadAttributeValue(*SchemaNames::Attribute_UseDefaultRepositoryCredentials), this->UseDefaultRepositoryCredentials);
+    }
+
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_UseTokenAuthenticationCredentials))
+    {
+        StringUtility::TryFromWString<bool>(xmlReader->ReadAttributeValue(*SchemaNames::Attribute_UseTokenAuthenticationCredentials), this->UseTokenAuthenticationCredentials);
+    }
+
     if (xmlReader->HasAttribute(*SchemaNames::Attribute_IsolationMode))
     {
         ContainerIsolationMode::FromString(xmlReader->ReadAttributeValue(*SchemaNames::Attribute_IsolationMode), Isolation);
@@ -179,6 +230,10 @@ void ContainerPoliciesDescription::ReadFromXml(
     if (xmlReader->HasAttribute(*SchemaNames::Attribute_ContainersRetentionCount))
     {
         StringUtility::TryFromWString<LONG>(xmlReader->ReadAttributeValue(*SchemaNames::Attribute_ContainersRetentionCount), ContainersRetentionCount);
+    }
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_AutoRemove))
+    {
+        this->AutoRemove = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_AutoRemove);
     }
     if (xmlReader->HasAttribute(*SchemaNames::Attribute_Hostname))
     {
@@ -214,6 +269,14 @@ void ContainerPoliciesDescription::ReadFromXml(
             PortBindingDescription description;
             description.ReadFromXml(xmlReader);
             this->PortBindings.push_back(description);
+        }
+        else if (xmlReader->IsStartElement(
+            *SchemaNames::Element_Label,
+            *SchemaNames::Namespace))
+        {
+            ContainerLabelDescription description;
+            description.ReadFromXml(xmlReader);
+            this->Labels.push_back(description);
         }
         else if (xmlReader->IsStartElement(
             *SchemaNames::Element_LogConfig,
@@ -268,7 +331,8 @@ void ContainerPoliciesDescription::ReadFromXml(
 }
 
 Common::ErrorCode ContainerPoliciesDescription::WriteToXml(XmlWriterUPtr const & xmlWriter)
-{	//<ContaierHostPolicies>
+{
+    //<ContaierHostPolicies>
     ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_ContainerHostPolicies, L"", *SchemaNames::Namespace);
     if (!er.IsSuccess())
     {
@@ -287,6 +351,11 @@ Common::ErrorCode ContainerPoliciesDescription::WriteToXml(XmlWriterUPtr const &
         PortBindings[i].WriteToXml(xmlWriter);
     }
 
+    for (auto i = 0; i < Labels.size(); i++)
+    {
+        Labels[i].WriteToXml(xmlWriter);
+    }
+
     for (auto i = 0; i < CertificateRef.size(); i++)
     {
         CertificateRef[i].WriteToXml(xmlWriter);
@@ -302,13 +371,15 @@ Common::ErrorCode ContainerPoliciesDescription::WriteToXml(XmlWriterUPtr const &
 
 void ContainerPoliciesDescription::clear()
 {
-    this->RepositoryCredentials.clear();
-    this->PortBindings.clear();
+    this->AutoRemove.clear();
+    this->CertificateRef.clear();
     this->CodePackageRef.clear();
+    this->HealthConfig.clear();
+    this->Hostname.clear();
+    this->ImageOverrides.clear();
     this->LogConfig.clear();
     this->NetworkConfig.clear();
-    this->CertificateRef.clear();
-    this->Hostname.clear();
-    this->HealthConfig.clear();
-    this->ImageOverrides.clear();
+    this->PortBindings.clear();
+    this->RepositoryCredentials.clear();
+    this->Labels.clear();
 }

@@ -105,6 +105,12 @@ namespace Data
                 return transactionMap_;
             }
 
+            __declspec(property(get = get_LastPeriodicTruncationTime)) LONG64 LastPeriodicTruncationTimeTicks;
+            LONG64 get_LastPeriodicTruncationTime() const
+            {
+                return lastPeriodicTruncationTimeTicks_;
+            }
+
             void ProcessLogRecord(__in LogRecordLib::LogRecord & logRecord);
 
             void ProcessLogRecord(
@@ -202,6 +208,8 @@ namespace Data
             TxnReplicator::Epoch currentLogTailEpoch_;
             LogRecordLib::ProgressVector::SPtr progressVector_;
             TransactionMap::SPtr transactionMap_;
+
+            LONG64 lastPeriodicTruncationTimeTicks_;
         };
     }
 }

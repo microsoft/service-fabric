@@ -20,13 +20,13 @@ namespace ServiceModel
             std::wstring const & applicationName,
             FABRIC_HEALTH_STATE aggregatedHealthState);
 
-        ApplicationAggregatedHealthState(ApplicationAggregatedHealthState const & other);
-        ApplicationAggregatedHealthState & operator = (ApplicationAggregatedHealthState const & other);
+        ApplicationAggregatedHealthState(ApplicationAggregatedHealthState const & other) = default;
+        ApplicationAggregatedHealthState & operator = (ApplicationAggregatedHealthState const & other) = default;
 
-        ApplicationAggregatedHealthState(ApplicationAggregatedHealthState && other);
-        ApplicationAggregatedHealthState & operator = (ApplicationAggregatedHealthState && other);
+        ApplicationAggregatedHealthState(ApplicationAggregatedHealthState && other) = default;
+        ApplicationAggregatedHealthState & operator = (ApplicationAggregatedHealthState && other) = default;
 
-        ~ApplicationAggregatedHealthState();
+        virtual ~ApplicationAggregatedHealthState();
 
         __declspec(property(get=get_ApplicationName)) std::wstring const& ApplicationName;
         std::wstring const& get_ApplicationName() const { return applicationName_; }

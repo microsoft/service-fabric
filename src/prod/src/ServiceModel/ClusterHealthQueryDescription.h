@@ -14,8 +14,8 @@ namespace ServiceModel
     public:
         ClusterHealthQueryDescription();
         
-        ClusterHealthQueryDescription(ClusterHealthQueryDescription && other);
-        ClusterHealthQueryDescription & operator = (ClusterHealthQueryDescription && other);
+        ClusterHealthQueryDescription(ClusterHealthQueryDescription && other) = default;
+        ClusterHealthQueryDescription & operator = (ClusterHealthQueryDescription && other) = default;
 
         ~ClusterHealthQueryDescription();
 

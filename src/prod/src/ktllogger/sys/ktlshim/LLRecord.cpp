@@ -3,13 +3,18 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include <ktl.h>
 #include <ktrace.h>
 #include <minmax.h>
-#include <KtlPhysicalLog.h>
-#include "ktllogger.h"
-#include <KLogicalLog.h>
-#include <KtlLogMarshal.h>
+
+#include "KtlPhysicalLog.h"
+#include "../inc/ktllogger.h"
+#include "../inc/KLogicalLog.h"
+#include "KtlLogMarshal.h"
 
 //
 // LLRecordObject

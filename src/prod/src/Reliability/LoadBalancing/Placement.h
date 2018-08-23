@@ -64,7 +64,8 @@ namespace Reliability
                 std::set<Common::Guid> const& partialClosureFTs,
                 ServicePackagePlacement && servicePackagePlacement,
                 size_t quorumBasedServicesCount,
-                size_t quorumBasedPartitionsCount);
+                size_t quorumBasedPartitionsCount,
+                std::set<uint64> && quorumBasedServicesTempCache);
 
             __declspec (property(get=get_BalanceChecker)) BalanceCheckerUPtr const& BalanceCheckerObj;
             BalanceCheckerUPtr const& get_BalanceChecker() const { return balanceChecker_; }
@@ -205,6 +206,9 @@ namespace Reliability
             __declspec (property(get = get_QuorumBasedPartitionsCount)) size_t QuorumBasedPartitionsCount;
             size_t get_QuorumBasedPartitionsCount() const { return quorumBasedPartitionsCount_; }
 
+            __declspec (property(get = getQuorumBasedServicesTempCache)) std::set<uint64> const& QuorumBasedServicesTempCache;
+            std::set<uint64> const& getQuorumBasedServicesTempCache() const { return quorumBasedServicesTempCache_; }
+
         private:
             void PrepareServices();
             void PreparePartitions();
@@ -239,7 +243,7 @@ namespace Reliability
             // All standBy replicas
             std::vector<std::unique_ptr<PlacementReplica>> standByReplicas_;
 
-            // partialClosureReplicas used in CreationWithMove phase with partial closure
+            // partialClosureReplicas used in NewReplicaPlacementWithMove phase with partial closure
             // includes new replicas expanded with affinity (parent and all its child replicas) and appGroup relations
             std::vector<PlacementReplica const*> partialClosureReplicas_;
 
@@ -338,6 +342,10 @@ namespace Reliability
 
             size_t quorumBasedServicesCount_;
             size_t quorumBasedPartitionsCount_;
+
+            // Makes temporary cache of services that use quorum based logic.
+            // Takes into account only services that have a partition in closure.
+            std::set<uint64> quorumBasedServicesTempCache_;
         };
     }
 }

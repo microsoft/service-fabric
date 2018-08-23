@@ -44,6 +44,7 @@ namespace Management
 
         protected:
 
+            void OnCompleted() override;
             virtual Reliability::RSMessage const & GetUpgradeMessageTemplate();
             virtual Common::TimeSpan GetUpgradeStatusPollInterval();
             virtual Common::TimeSpan GetHealthCheckInterval();
@@ -96,7 +97,6 @@ namespace Management
                 ServiceModel::ApplicationHealthPolicy const &, 
                 Common::AsyncCallback const & callback,
                 Common::AsyncOperationSPtr const & parent);
-            void OnCompleted() override;
 
         private:
 
@@ -178,9 +178,52 @@ namespace Management
             bool TryAcceptGoalStateUpgrade(Common::AsyncOperationSPtr const &, __in Store::StoreTransaction &);
             void OnFinishAcceptGoalStateUpgrade(Common::AsyncOperationSPtr const &, bool expectedCompletedSynchronously);
 
+        protected:
+            class InitializeUpgradeAsyncOperation : public AsyncOperation
+            {
+            public:
+                InitializeUpgradeAsyncOperation(
+                    __in ProcessApplicationUpgradeContextAsyncOperation & owner,
+                    Common::AsyncCallback const & callback,
+                    Common::AsyncOperationSPtr const & parent);
+
+                void OnStart(Common::AsyncOperationSPtr const & thisSPtr);
+                static Common::ErrorCode End(Common::AsyncOperationSPtr const & operation);
+
+            protected:
+                void ValidateServices(AsyncOperationSPtr const & thisSPtr);
+                ProcessApplicationUpgradeContextAsyncOperation & owner_;
+
+            private:
+                void InitializeUpgrade(Common::AsyncOperationSPtr const & thisSPtr);
+                virtual void OnLoadApplicationDescriptionsComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
+                void OnValidateServicesComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
+                void LoadActiveDefaultServiceUpdates(Common::AsyncOperationSPtr const & thisSPtr);
+                ErrorCode ScheduleLoadActiveDefaultService(
+                    Common::AsyncOperationSPtr const & parallelAsyncOperation,
+                    size_t operationIndex,
+                    ParallelOperationsCompletedCallback const & callback);
+                Common::AsyncOperationSPtr BeginLoadActiveDefaultService(
+                    Common::AsyncOperationSPtr const & parallelAsyncOperation,
+                    size_t operationIndex,
+                    Common::AsyncCallback const & jobQueueCallback);
+                void EndLoadActiveDefaultService(
+                    Common::AsyncOperationSPtr const & operation,
+                    size_t operationIndex,
+                    ParallelOperationsCompletedCallback const & callback);
+                void OnLoadActiveDefaultServiceUpdatesComplete(
+                    Common::AsyncOperationSPtr const & operation,
+                    bool expectedCompletedSynchronously);
+                void InitializeHealthPolicies(Common::AsyncOperationSPtr const & thisSPtr);
+                void OnUpdateHealthPolicyComplete(
+                    Common::AsyncOperationSPtr const & operation,
+                    bool expectedCompletedSynchronously);
+
+                RwLock upgradeContextLock_;
+            };
+
         private:
             class ApplicationUpgradeParallelRetryableAsyncOperation;
-            class InitializeUpgradeAsyncOperation;
             class ImageBuilderRollbackAsyncOperation;
 
             //
@@ -190,10 +233,10 @@ namespace Management
             Common::ErrorCode CompleteApplicationContext(Store::StoreTransaction const &);
 
             Common::ErrorCode LoadApplicationContext();
-            Common::AsyncOperationSPtr BeginLoadApplicationDescriptions(
+            virtual Common::AsyncOperationSPtr BeginLoadApplicationDescriptions(
                 Common::AsyncCallback const &,
                 Common::AsyncOperationSPtr const &);
-            Common::ErrorCode EndLoadApplicationDescriptions(
+            virtual Common::ErrorCode EndLoadApplicationDescriptions(
                 Common::AsyncOperationSPtr const &);
             Common::ErrorCode LoadUpgradePolicies();
             Common::ErrorCode LoadHealthPolicy(ServiceModelVersion const &, __out ServiceModel::ApplicationHealthPolicy &);
@@ -216,6 +259,7 @@ namespace Management
                 Common::TimeSpan const replicaSetCheckTimeout,
                 uint64 instanceId,
                 std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> &&,
+                std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> &&,
                 __out Reliability::UpgradeApplicationRequestMessageBody &);
 
             void AppendDynamicUpgradeStatusDetails(std::wstring const &);
@@ -223,7 +267,7 @@ namespace Management
 
             static Common::NamingUri StringToNamingUri(std::wstring const & name);
 
-        private:
+        protected:
             std::unique_ptr<ApplicationContext> appContextUPtr_;
             DigestedApplicationDescription currentApplication_;
             DigestedApplicationDescription targetApplication_;

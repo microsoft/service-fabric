@@ -133,7 +133,6 @@ NTSTATUS MessageHeaders::Add(
     BiqueWriteStream& bws,
     Serialization::IFabricSerializableStream const& serializedHeaders)
 {
-    unique_ptr<Serialization::FabricIOBuffer> bufferListInHeap;
     Serialization::FabricIOBuffer bufferListOnStack[16];
     Serialization::FabricIOBuffer* bufferList = bufferListOnStack;
 
@@ -142,7 +141,7 @@ NTSTATUS MessageHeaders::Add(
     if (!NT_SUCCESS(status))
     {
         Invariant(status == K_STATUS_BUFFER_TOO_SMALL);
-        bufferListInHeap = unique_ptr<Serialization::FabricIOBuffer>(new Serialization::FabricIOBuffer[count]);
+        auto bufferListInHeap = std::make_unique<Serialization::FabricIOBuffer[]>(count);
         bufferList = bufferListInHeap.get();
 
         status = serializedHeaders.GetAllBuffers(bufferList, count);

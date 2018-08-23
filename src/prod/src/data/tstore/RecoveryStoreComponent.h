@@ -54,7 +54,19 @@ namespace Data
             {
                 return fileId_;
             }
-            
+
+            __declspec(property(get = get_TotalKeyCount)) LONG64 TotalKeyCount;
+            LONG64 get_TotalKeyCount() const
+            {
+                return totalKeyCount_;
+            }
+
+            __declspec(property(get = get_TotalKeySize)) LONG64 TotalKeySize;
+            LONG64 get_TotalKeySize() const
+            {
+                return totalKeySize_;
+            }
+
             __declspec(property(get = get_LogicalCheckpointFileTimeStamp)) LONG64 LogicalCheckpointFileTimeStamp;
             LONG64 get_LogicalCheckpointFileTimeStamp() const
             {
@@ -180,6 +192,10 @@ namespace Data
                     KSharedPtr<KeyData<TKey, TValue>> row = currentEnumeratorSPtr->GetCurrent();
 
                     count++;
+
+                    totalKeyCount_++;
+                    totalKeySize_ += row->KeySize;
+
                     AddOrUpdate(row->Key, row->Value);
 
                     result = co_await currentEnumeratorSPtr->MoveNextAsync(cancellationToken);
@@ -188,8 +204,6 @@ namespace Data
                         priorityQueue.Push(currentEnumeratorSPtr);
                     }
                 }
-
-                STORE_ASSERT(priorityQueue.IsEmpty(), "priority queue must be empty");
 
                 for (ULONG i = 0; i < keyCheckpointFileListSPtr->Count(); i++)
                 {
@@ -202,6 +216,7 @@ namespace Data
 #ifdef DBG
                 VerifyStoreComponent();
 #endif
+                co_return;
             }
 
 
@@ -263,6 +278,9 @@ namespace Data
             KSharedPtr<Data::StateManager::IStateSerializer<TKey>> keySerializerSPtr_;
             KSharedPtr<KSharedArray<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>> componentSPtr_;
             KSharedPtr<IComparer<TKey>> comparerSPtr_;
+
+            LONG64 totalKeyCount_;
+            LONG64 totalKeySize_;
             
             StoreTraceComponent::SPtr traceComponent_;
         };
@@ -280,6 +298,8 @@ namespace Data
             keySerializerSPtr_(&keySerializer),
             isValueReferenceType_(isValueReferenceType),
             comparerSPtr_(&keyComparer),
+            totalKeyCount_(0),
+            totalKeySize_(0),
             traceComponent_(&traceComponent)
         {
             auto status = KString::Create(workDirectorySPtr_, this->GetThisAllocator(), workDirectory);

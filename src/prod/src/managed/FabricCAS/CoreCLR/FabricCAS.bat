@@ -1,0 +1,1 @@
+dotnet.exe "%~dp0\FabricCAS.dll" %*

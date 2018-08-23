@@ -13,10 +13,17 @@ namespace Transport
         TcpFrameHeader();
         TcpFrameHeader(MessageUPtr const & message, byte securityProviderMask);
 
+        bool Validate(bool firstFrame, byte expectedSecurityProviderMask, std::wstring const & traceId) const;
+
         uint32 FrameLength() const;
         uint16 HeaderLength() const;
         byte SecurityProviderMask() const;
-        bool IsValid() const;
+
+        byte FrameHeaderCRC() const { return frameHeaderCRC_; }
+        byte SetFrameHeaderCRC();
+
+        uint32 FrameBodyCRC() const { return frameBodyCRC_; }
+        void SetFrameBodyCRC(uint32 crc) { frameBodyCRC_ = crc; }
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
         static std::string AddField(Common::TraceEvent & traceEvent, std::string const & name);
@@ -27,8 +34,8 @@ namespace Transport
     private:
         uint32 frameLength_;
         byte securityProviderMask_;
-        byte reserved2_;
+        byte frameHeaderCRC_= 0;
         uint16 headerLength_;
-        uint32 reserved3_;
+        uint32 frameBodyCRC_ = 0;
     };
 }

@@ -19,8 +19,8 @@ namespace ServiceModel
 
         explicit HealthStateChunkList(ULONG totalCount);
         
-        HealthStateChunkList(HealthStateChunkList && other);
-        HealthStateChunkList & operator = (HealthStateChunkList && other);
+        HealthStateChunkList(HealthStateChunkList && other) = default;
+        HealthStateChunkList & operator = (HealthStateChunkList && other) = default;
 
         virtual ~HealthStateChunkList();
 

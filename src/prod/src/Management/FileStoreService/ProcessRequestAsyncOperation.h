@@ -16,7 +16,7 @@ namespace Management
             DENY_COPY(ProcessRequestAsyncOperation)
 
         protected:
-            enum OperationKind
+            typedef enum 
             {
                 Upload,
                 Delete,
@@ -28,8 +28,9 @@ namespace Management
                 UploadChunk,
                 CommitUploadSession,
                 CreateUploadSession,
-                CheckExistence
-            };
+                CheckExistence,
+                UploadChunkContent
+            }OperationKind;
 
         public:
             ProcessRequestAsyncOperation(
@@ -49,7 +50,17 @@ namespace Management
                 __out Transport::MessageUPtr & reply,
                 __out Common::ActivityId & activityId);
 
-        protected:            
+            virtual void WriteTrace(__in Common::ErrorCode const &) { };
+
+            bool IsCommitUploadSessionOperation() const { return operationKind_ == OperationKind::CommitUploadSession; }
+
+            bool IsUploadChunkOperation() const { return operationKind_ == OperationKind::UploadChunk; }
+
+            bool IsUploadChunkContentOperation() const { return operationKind_ == OperationKind::UploadChunkContent; }
+
+            bool IsCreateUploadSessionOperation() const { return operationKind_ == OperationKind::CreateUploadSession; }
+
+        protected:
             __declspec(property(get=get_RequestManager)) RequestManager & RequestManagerObj;
             RequestManager & get_RequestManager() const { return this->requestManager_; }
 
@@ -82,13 +93,13 @@ namespace Management
 
             virtual Common::ErrorCode ValidateRequest() { return Common::ErrorCodeValue::Success; }
 
-            virtual Common::AsyncOperationSPtr BeginOperation(                                
+            virtual Common::AsyncOperationSPtr BeginOperation(
                 Common::AsyncCallback const & callback, 
                 Common::AsyncOperationSPtr const & parent) = 0;
 
             virtual Common::ErrorCode EndOperation(
                 __out Transport::MessageUPtr & reply,
-                Common::AsyncOperationSPtr const & asyncOperation) = 0;    
+                Common::AsyncOperationSPtr const & asyncOperation) = 0;
 
             virtual void OnRequestCompleted(__inout  Common::ErrorCode & error);
 
@@ -98,19 +109,25 @@ namespace Management
 
             Common::TimeoutHelper timeoutHelper_;
 
+        protected:
+            virtual bool DeleteIfMetadataNotInStableState(Common::AsyncOperationSPtr const & thisSPtr);
+
         private:
             void OnOperationCompleted(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
             void CompleteOperation(Common::AsyncOperationSPtr const & thisSPtr, Common::ErrorCode & errorCode);
             void NormalizeStoreRelativePath();
 
             static bool IsWriteOperation(OperationKind operationKind);
+            virtual Common::ErrorCode DeleteMetadata(Store::StoreTransaction const & storeTx, FileStoreService::FileMetadata const & metadata);
+            virtual void OnDeleteMetadataCompleted(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously, FileStoreService::FileMetadata const & metadata);
 
         private:
             RequestManager & requestManager_;
             std::wstring storeRelativePath_;
-            OperationKind const operationKind_;                        
+            OperationKind const operationKind_;
             Transport::IpcReceiverContextUPtr receiverContext_;
-            Transport::MessageUPtr reply_;            
+            Transport::MessageUPtr reply_;
+            Common::ManualResetEvent metadataDeletionCompleted_;
         };
     }
 }

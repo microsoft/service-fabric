@@ -21,21 +21,6 @@ ReplicaHealthStatesFilter::ReplicaHealthStatesFilter(DWORD healthStateFilter)
 {
 }
 
-ReplicaHealthStatesFilter::ReplicaHealthStatesFilter(ReplicaHealthStatesFilter && other)
-    : healthStateFilter_(move(other.healthStateFilter_))
-{
-}
-
-ReplicaHealthStatesFilter & ReplicaHealthStatesFilter::operator =(ReplicaHealthStatesFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-    }
-
-    return *this;
-}
-
 ReplicaHealthStatesFilter::~ReplicaHealthStatesFilter()
 {
 }

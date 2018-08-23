@@ -684,7 +684,7 @@ HRESULT COperationStream::Drain(void)
     if (!lastOperationDispatched)
     {
         waitLastOperationDispatched_.WaitOne();
-        waitLastOperationDispatched_.Close();
+        waitLastOperationDispatched_.Reset();
         {
             Common::AcquireExclusiveLock lockOperationQueue(operationLock_);
 

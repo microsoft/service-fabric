@@ -37,7 +37,7 @@ namespace Reliability
             Common::TraceEventWriter<Common::ActivityId, std::wstring, uint64, uint64> UpdateServiceRequest;
             Common::TraceEventWriter<Common::ActivityId, std::wstring> UpdateSystemServiceRequest;
             Common::TraceEventWriter<Common::ActivityId, Common::ErrorCode> UpdateServiceReply;
-            Common::TraceEventWriter<Common::ActivityId, std::wstring, uint64> DeleteServiceRequest;
+            Common::TraceEventWriter<Common::ActivityId, std::wstring, uint64, bool> DeleteServiceRequest;
             Common::TraceEventWriter<Common::ActivityId, Common::ErrorCode> DeleteServiceReply;
             Common::TraceEventWriter<Common::ActivityId, std::wstring> ServiceDescriptionRequest;
             Common::TraceEventWriter<Common::ActivityId, Common::ErrorCode> ServiceDescriptionReply;
@@ -100,7 +100,7 @@ namespace Reliability
                 UpdateServiceRequest(id, 67, "Request_UpdateService", Common::LogLevel::Info, "[{0}] Processing UpdateService: Name={1}, Instance={2}, UpdateVersion={3}", "activityId", "serviceName", "serviceInstance", "updateVersion"),
                 UpdateSystemServiceRequest(id, 68, "Request_System_UpdateService", Common::LogLevel::Info, "[{0}] Processing UpdateService: Name={1}", "activityId", "serviceName"),
                 UpdateServiceReply(id, 69, "Reply_UpdateService", Common::LogLevel::Info, "[{0}] UpdateService completed with error {1}", "activityId", "error"),
-                DeleteServiceRequest(id, 70, "Request_DeleteService", Common::LogLevel::Info, "[{0}] Processing DeleteService: Name={1}, Instance={2}", "activityId", "serviceName", "serviceInstance"),
+                DeleteServiceRequest(id, 70, "Request_DeleteService", Common::LogLevel::Info, "[{0}] Processing DeleteService: Name={1}, Instance={2}, IsForce={3}", "activityId", "serviceName", "serviceInstance", "isForce"),
                 DeleteServiceReply(id, 71, "Reply_DeleteService", Common::LogLevel::Info, "[{0}] DeleteService completed with error {1}", "activityId", "error"),
                 ServiceDescriptionRequest(id, 72, "Request_GetServiceDescription", Common::LogLevel::Info, "[{0}] Processing GetServiceDescription for {1}", "activityId", "serviceName"),
                 ServiceDescriptionReply(id, 73, "Reply_GetServiceDescription", Common::LogLevel::Info, "[{0}] GetServiceDescription completed with {1}", "activityId", "error"),

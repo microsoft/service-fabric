@@ -33,7 +33,9 @@ namespace Data
 }
 
 #include "IReliableConcurrentQueue.h"
+#include "ConcurrentQueue.h"
 #include "ReliableConcurrentQueue.h"
+#include "RCQStateProviderFactory.h"
 
 namespace ReliableConcurrentQueueTests
 {

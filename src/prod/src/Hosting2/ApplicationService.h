@@ -63,6 +63,9 @@ namespace Hosting2
         __declspec(property(get = get_IsContainerHost)) BOOL IsContainerHost;
         BOOL get_IsContainerHost() const { return isContainerHost_; }
 
+        __declspec(property(get = get_IsContainerRoot)) BOOL IsContainerRoot;
+        BOOL get_IsContainerRoot() const { return (isContainerHost_ && containerDescription_.IsContainerRoot); }
+
         __declspec(property(get=get_ProcessActivationManager)) ProcessActivationManager & ActivationManager;
         ProcessActivationManager & get_ProcessActivationManager() { return this->activatorHolder_.RootedObject; }
 

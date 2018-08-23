@@ -487,6 +487,13 @@ void ReliabilitySubsystem::RegisterHostingSubsystemEvents()
         {
             this->ApplicationHostClosedHandler(eventArgs);
         });
+
+    // Register for sending available container images on node
+    hostingSubsystem_.RegisterSendAvailableContainerImagesEventHandler(
+        [this, root](SendAvailableContainerImagesEventArgs const & eventArgs)
+        {
+            this->SendAvailableContainerImagesHandler(eventArgs);
+        });
 }
 
 void ReliabilitySubsystem::ServiceTypeDisabledHandler(Hosting2::ServiceTypeStatusEventArgs const& eventArgs)
@@ -517,7 +524,21 @@ void ReliabilitySubsystem::RuntimeClosedHandler(Hosting2::RuntimeClosedEventArgs
 
 void ReliabilitySubsystem::ApplicationHostClosedHandler(Hosting2::ApplicationHostClosedEventArgs const& eventArgs)
 {
-    ra_->ProcessAppHostClosed(eventArgs.HostId);
+    ra_->ProcessAppHostClosed(eventArgs.HostId, eventArgs.ActivityDescription);
+}
+
+void ReliabilitySubsystem::SendAvailableContainerImagesHandler(SendAvailableContainerImagesEventArgs const& eventArgs)
+{
+    WriteInfo(TraceLifeCycle, "Available container images on node {0}: {1}",
+        eventArgs.NodeId,
+        eventArgs.AvailableImages);
+
+    AvailableContainerImagesMessageBody msgBody(
+        eventArgs.NodeId,
+        eventArgs.AvailableImages);
+
+    Transport::MessageUPtr msg = RSMessage::GetAvailableContainerImages().CreateMessage<AvailableContainerImagesMessageBody>(move(msgBody));
+    this->federationWrapper_.SendToFM(move(msg));
 }
 
 void ReliabilitySubsystem::ProcessRGMetrics(std::wstring const& resourceName, uint64 resourceCapacity)
@@ -608,7 +629,8 @@ void ReliabilitySubsystem::UploadLFUMHelper(
         NodeConfig->InstanceName,
         NodeConfig->NodeType,
         TcpTransportUtility::ParseHostString(NodeConfig->NodeAddress),
-        TcpTransportUtility::ParsePortString(NodeConfig->NodeAddress));
+        TcpTransportUtility::ParsePortString(NodeConfig->NodeAddress),
+        NodeConfig->HttpGatewayPort());
 
     LFUMUploadOperationSPtr operation = make_shared<LFUMUploadOperation>(
         *this,
@@ -733,15 +755,16 @@ NodeDescription ReliabilitySubsystem::GetNodeDescription() const
 
     return NodeDescription(
         nodeConfig_->NodeVersion,
-        NodeUpgradeDomainId, 
-        NodeFaultDomainIds, 
-        NodePropertyMap, 
+        NodeUpgradeDomainId,
+        NodeFaultDomainIds,
+        NodePropertyMap,
         NodeCapacityRatioMap,
         NodeCapacityMap,
         nodeConfig_->InstanceName,
         nodeConfig_->NodeType,
         TcpTransportUtility::ParseHostString(nodeConfig_->NodeAddress),
-        clusterConnectionPort);
+        clusterConnectionPort,
+        nodeConfig_->HttpGatewayPort());
 }
 
 void ReliabilitySubsystem::ProcessNodeUpAck(Transport::MessageUPtr && nodeUpReply, bool isFromFMM)

@@ -20,6 +20,14 @@ namespace Management
                 Common::AsyncCallback const &,
                 Common::AsyncOperationSPtr const &);
 
+            DeleteApplicationContextAsyncOperation(
+                __in RolloutManager &,
+                __in ApplicationContext &,
+                __in bool keepContextAlive,
+                Common::TimeSpan const,
+                Common::AsyncCallback const &,
+                Common::AsyncOperationSPtr const &);
+
             void OnStart(Common::AsyncOperationSPtr const &);
 
             static Common::ErrorCode End(Common::AsyncOperationSPtr const &);
@@ -67,6 +75,9 @@ namespace Management
             //
             std::vector<ServiceContext> serviceContexts_;
             std::vector<ServiceModelServiceNameEx> serviceNames_;
+
+            // Optimization for replacing scenario. ApplicationContext will not be deleted if set to true.
+            bool keepContextAlive_;
         };
     }
 }

@@ -54,18 +54,12 @@ LeaseMonitor::LeaseMonitor(
     }
     else
     {
-        auto pollInterval = GetPollInterval();
-        auto pollStartDelay = GetPollStartDelay(pollInterval);
-        WriteInfo(
-            TraceType, traceId_,
-            "LeaseDuration={0}, pollInterval={1}, pollStartDelay={2}",
-            FederationConfig::GetConfig().LeaseDuration, pollInterval, pollStartDelay);
-
         pollTimer_ = Timer::Create(
             "LeaseMonitor",
             [root = Root.CreateComponentRoot(), this](TimerSPtr const &) { PollLeaseExpiration(); });
 
-        pollTimer_->Change(pollStartDelay, pollInterval); //LINUXTODO consider updating interval according to config change
+        auto expiration = StopwatchTime(expirationInTicks_);
+        SetPollTimer(expiration - Stopwatch::Now(), true);
     }
 }
 
@@ -80,16 +74,51 @@ TimeSpan LeaseMonitor::GetPollInterval() const
     return pollInterval;
 }
 
-TimeSpan LeaseMonitor::GetPollStartDelay(TimeSpan pollInterval) const
+TimeSpan LeaseMonitor::GetPollDelay(TimeSpan leaseTtl) const
 {
-    //delay polling to give node lease renewal a headstart
-    auto expiration = StopwatchTime(expirationInTicks_);
-    if ((expiration - Stopwatch::Now()) < (pollInterval + pollInterval))
+    double leaseRenewMs = 0;
+    if (leaseTtl.TotalSeconds() > FederationConfig::GetConfig().LeaseMonitorRenewLevelThreshold.TotalSeconds())
     {
-        return TimeSpan::Zero;
+        // ttl > 10, timer = leaseDuration / leaseRenewBeginRatio + 1
+        leaseRenewMs = FederationConfig::GetConfig().LeaseDuration.TotalMilliseconds() / FederationConfig::GetConfig().LeaseRenewBeginRatio + 1000.0;
+    }
+    else
+    {
+        // ttl <= 10, timer = max(ttl / 2, 1)
+        leaseRenewMs = leaseTtl.TotalMilliseconds() / 2 > minLeaseRenewInterval ? leaseTtl.TotalMilliseconds() / 2 : minLeaseRenewInterval;
+    }
+    
+    TimeSpan leaseRenewInterval = TimeSpan::FromMilliseconds(leaseRenewMs);
+    WriteInfo(TraceType, traceId_, "GetPollDelay, leaseTTL = {0}, LeaseDuration = {1}, leaseRenewInterval = {2}",
+        leaseTtl,
+        FederationConfig::GetConfig().LeaseDuration,
+        leaseRenewInterval);
+    Invariant(leaseRenewInterval > TimeSpan::Zero);
+
+    return leaseRenewInterval;
+}
+
+void LeaseMonitor::SetPollTimer(Common::TimeSpan leaseTtl, bool isForceSet)
+{
+    if (leaseTtl.TotalSeconds() > FederationConfig::GetConfig().LeaseMonitorRenewLevelThreshold.TotalSeconds() && !isForceSet)
+    {
+        // If the lease ttl is greater than LeaseMonitorRenewLevelThreshold, we don't need to set again, let the timer interval to do the work.
+        WriteNoise(
+            TraceType, traceId_,
+            "SetPollTimer skips timer change, LeaseTtl = {0}, LeaseMonitorRenewLevelThreshold = {1}, isForceSet = {2}",
+            leaseTtl, FederationConfig::GetConfig().LeaseMonitorRenewLevelThreshold, isForceSet);
+        
+        return;
     }
 
-    return pollInterval;
+    auto pollInterval = GetPollInterval();
+    auto pollDelay = GetPollDelay(leaseTtl);
+    WriteInfo(
+        TraceType, traceId_,
+        "SetPollTimer timer change, pollDelay = {0}, pollInterval = {1}, isForceSet = {2}",
+        pollDelay, pollInterval, isForceSet);
+
+    pollTimer_->Change(pollDelay, pollInterval);
 }
 
 void LeaseMonitor::Close()
@@ -166,7 +195,7 @@ void LeaseMonitor::OnLeaseRequestComplete(AsyncOperationSPtr const & operation, 
     }
 
     StopwatchTime newExpiration = requestTime + leaseReply.TTL(); //MAXLONG TTL is handled on node host side due to dependency on config
-    WriteNoise(
+    WriteInfo(
         TraceType, traceId_,
         "OnLeaseRequestComplete: requestTime = {0}, ttl = {1}, new newExpiration = {2}",
         requestTime, leaseReply.TTL(), newExpiration);
@@ -181,14 +210,23 @@ void LeaseMonitor::OnLeaseRequestComplete(AsyncOperationSPtr const & operation, 
     if (newExpiration.Ticks <= storedExpiration)
     {
         WriteInfo(TraceType, traceId_, "stored expiration {0} is newer, ignoring {1}", StopwatchTime(storedExpiration), newExpiration);
+
+        auto expiration = StopwatchTime(expirationInTicks_);
+        SetPollTimer(expiration - Stopwatch::Now(), false);
+
         return;
     }
 
     for (;;)
     {
-
         auto initialValue = InterlockedCompareExchange64(&expirationInTicks_, newExpiration.Ticks, storedExpiration);
-        if (initialValue == storedExpiration) return;
+        
+        if (initialValue == storedExpiration)// Successfully exchanged
+        {
+            SetPollTimer(leaseReply.TTL(), false);
+
+            return;
+        }
 
         storedExpiration = initialValue;
         WriteInfo(TraceType, traceId_, "InterlockedCompareExchange64 needs to be retried");
@@ -201,7 +239,10 @@ void LeaseMonitor::OnLeaseRequestComplete(AsyncOperationSPtr const & operation, 
 
         if (newExpiration.Ticks <= storedExpiration)
         {
-            WriteNoise(TraceType, traceId_, "stored expiration {0} is newer, ignoring {1}", StopwatchTime(storedExpiration), newExpiration);
+            WriteInfo(TraceType, traceId_, "stored expiration {0} is newer, ignoring {1}", StopwatchTime(storedExpiration), newExpiration);
+            auto expiration = StopwatchTime(storedExpiration);
+            SetPollTimer(expiration - Stopwatch::Now(), false);
+
             return;
         }
     }
@@ -209,7 +250,7 @@ void LeaseMonitor::OnLeaseRequestComplete(AsyncOperationSPtr const & operation, 
 
 void LeaseMonitor::PollLeaseExpiration()
 {
-    WriteNoise(TraceType, traceId_, "polling...");
+    WriteInfo(TraceType, traceId_, "polling...");
     auto request = make_unique<Message>();
     request->Headers.Add(ActorHeader(Actor::Hosting));
     ipcClient_.BeginRequest(

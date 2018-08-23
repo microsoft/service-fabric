@@ -12,6 +12,7 @@ using namespace Client;
 using namespace Reliability;
 using namespace Federation;
 using namespace std;
+using namespace Store;
 using namespace ServiceModel;
 
 namespace Naming
@@ -45,7 +46,7 @@ namespace Naming
             , serviceFactoryLock_()
         {
             IGatewayManagerSPtr gatewayMgr;
-            if (FabricGateway::FabricGatewayConfig::GetConfig().ActivateGatewayInproc)
+            if (ServiceModelConfig::GetConfig().ActivateGatewayInproc)
             {
                 gatewayMgr = TestGatewayManager::CreateGatewayManager(nodeConfig, root);
             }

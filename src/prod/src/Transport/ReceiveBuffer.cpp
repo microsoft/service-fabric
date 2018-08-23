@@ -19,11 +19,6 @@ ReceiveBuffer::ReceiveBuffer(TcpConnection* connectionPtr)
 {
 }
 
-void ReceiveBuffer::DisableSecurityProviderCheck()
-{
-    shouldVerifySecurityProvider_ = false;
-}
-
 ReceiveBuffer::Buffers const & ReceiveBuffer::GetBuffers(size_t count)
 {
     if (count < currentFrameMissing_)
@@ -53,5 +48,6 @@ ReceiveBuffer::Buffers const & ReceiveBuffer::GetBuffers(size_t count)
 void ReceiveBuffer::Commit(size_t count)
 {
     receiveQueue_.no_fill_advance_back(count);
+    receivedByteTotal_ += count;
 }
 

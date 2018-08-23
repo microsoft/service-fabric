@@ -1,0 +1,46 @@
+[FabricRandomTest]
+    MaxNodes = 8
+    MinNodes = 6
+    AbortRatio = 0.2
+    KillRuntimeRatio = 0.25
+    MaxDynamism = 3
+    VerifyTimeout = 1800
+    OpenTimeout = 240
+    CalculatorServiceCount = 0
+    TestStoreServiceCount = 0
+    TestPersistedStoreServiceCount = 0
+    TXRServiceCount = 2
+    TestPersistedStoreServiceWithSmallReplicationQueueCount = 0
+    MaxPartitions = 3
+    MaxReplicas = 5
+    ClientThreadCount = 5
+    ClientPutRatio = 0.7
+    ClientOperationInterval = 1
+    RandomVoteCount = 3
+    UpdateServiceInterval = 25
+    ActivateDeactivateNodeInterval = 0
+    MaxRatioOfFabricNodesToDeactivate = 0.2
+    DeleteServiceInterval = 200
+    NamingThreadCount = 0
+    NamingOperationTimeout = 25
+    UnreliableTransportBehaviors =
+    MaxAllowedMemoryInMB = 6000
+
+[RandomFaults]
+    Service.Fail = 0.0
+    Provider.Fail = 0.0
+    Replicator.Fail = 0.00
+    sp2.Fail = 0.0
+    sp2highfrequencyapi.Fail = 0.0
+    Service.ReportFault = 0.0
+    Provider.ReportFault = 0.0
+    Replicator.ReportFault = 0.0
+    Pump.ReportFault = 0.0
+    Service.Delay = 0.0
+    Provider.Delay = 0.0
+    Pump.Delay = 0.0
+    Replicator.Delay = 0.0
+    AsyncCompleted.Delay = 0.0
+    sp2.Delay = 0.0
+    sp2highfrequencyapi.Delay = 0.0
+

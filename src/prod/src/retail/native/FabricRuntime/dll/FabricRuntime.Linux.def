@@ -8,6 +8,9 @@ EXPORTS
     FabricEndCreateRuntime
     FabricBeginGetActivationContext
     FabricEndGetActivationContext
+    FabricBeginGetCodePackageActivator
+    FabricEndGetCodePackageActivator
+    FabricGetCodePackageActivator
     FabricCreateKeyValueStoreReplica
     FabricCreateKeyValueStoreReplica2
     FabricCreateKeyValueStoreReplica3
@@ -15,7 +18,7 @@ EXPORTS
     FabricCreateKeyValueStoreReplica5
     FabricBeginGetNodeContext
     FabricEndGetNodeContext
-;   FabricGetRuntimeDllVersion
+    FabricGetRuntimeDllVersion
     FabricLoadReplicatorSettings
     FabricLoadSecurityCredentials
     FabricLoadEseLocalStoreSettings

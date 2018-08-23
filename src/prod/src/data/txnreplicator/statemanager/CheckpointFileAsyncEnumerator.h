@@ -15,41 +15,43 @@ namespace Data
         class CheckpointFileAsyncEnumerator final
             : public KObject<CheckpointFileAsyncEnumerator>
             , public KShared<CheckpointFileAsyncEnumerator>
-            , public Utilities::IAsyncEnumerator<SerializableMetadata::CSPtr>
+            , public Utilities::IAsyncEnumeratorNoExcept<SerializableMetadata::CSPtr>
             , public Utilities::PartitionedReplicaTraceComponent<Common::TraceTaskCodes::SM>
         {
             K_FORCE_SHARED(CheckpointFileAsyncEnumerator);
             K_SHARED_INTERFACE_IMP(IDisposable);
-            K_SHARED_INTERFACE_IMP(IAsyncEnumerator);
+            K_SHARED_INTERFACE_IMP(IAsyncEnumeratorNoExcept);
 
             // Use friend class to test the private function ReadMetadata and WriteMetadata
             friend class TestCheckpointFileReadWrite;
             friend class SerializableMetadataEnumerator;
 
         public: // Statics
-            static SPtr Create(
+            static NTSTATUS Create(
                 __in Data::Utilities::PartitionedReplicaId const & traceId,
                 __in KWString const & fileName,
                 __in KSharedArray<ULONG32> const & blockSize,
                 __in CheckpointFileProperties const & properties,
-                __in KAllocator & allocator);
+                __in KAllocator & allocator,
+                __out SPtr & result) noexcept;
 
-            static SerializableMetadata::CSPtr ReadMetadata(
+            static NTSTATUS ReadMetadata(
                 __in Data::Utilities::PartitionedReplicaId const & traceId,
                 __in Utilities::BinaryReader & reader,
-                __in KAllocator & allocator);
+                __in KAllocator & allocator,
+                __out SerializableMetadata::CSPtr & result) noexcept;
 
-            static Data::Utilities::OperationData::CSPtr DeSerialize(
+            static NTSTATUS CheckpointFileAsyncEnumerator::DeSerialize(
                 __in Data::Utilities::BinaryReader & binaryReader,
-                __in KAllocator & allocator);
+                __in KAllocator & allocator,
+                __out Data::Utilities::OperationData::CSPtr & result) noexcept;
 
         public: // IAsyncEnumerator
-            SerializableMetadata::CSPtr GetCurrent();
+            ktl::Awaitable<NTSTATUS> GetNextAsync(
+                __in ktl::CancellationToken const & cancellationToken,
+                __out SerializableMetadata::CSPtr & result) noexcept;
 
-            ktl::Awaitable<bool> MoveNextAsync(
-                __in ktl::CancellationToken const & cancellationToken);
-
-            void Reset();
+            NTSTATUS Reset() noexcept;
 
         public: // IDisposable
             void Dispose();
@@ -58,7 +60,7 @@ namespace Data
             ktl::Awaitable<void> CloseAsync();
 
         private:
-            ktl::Awaitable<bool> ReadBlockAsync();
+            ktl::Awaitable<NTSTATUS> ReadBlockAsync() noexcept;
 
         private: // Constructor
             CheckpointFileAsyncEnumerator(
@@ -68,9 +70,9 @@ namespace Data
                 __in CheckpointFileProperties const & properties) noexcept;
 
         private: // Static constants
-            static const LONGLONG BlockSizeSectionSize = sizeof(LONG32);
-            static const LONGLONG CheckSumSectionSize = sizeof(ULONG64);
-            static const ULONG32 DesiredBlockSize = 32 * 1024;
+            static const LONGLONG BlockSizeSectionSize;
+            static const LONGLONG CheckSumSectionSize;
+            static const ULONG32 DesiredBlockSize;
 
         private: // Initializer list initialized constants.
             const KWString fileName_;

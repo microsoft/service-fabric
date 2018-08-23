@@ -114,8 +114,6 @@ namespace Client
             Naming::ResolvedServicePartitionSPtr const &,
             Common::AsyncOperationSPtr const &);
 
-        Common::NamingUri const & GetCacheEntryName(LruClientCacheEntrySPtr const &);
-
         Naming::ServiceResolutionRequestData request_;
         Naming::ResolvedServicePartitionMetadataSPtr previousRspMetadata_;
         Naming::ResolvedServicePartitionSPtr currentRsp_;
