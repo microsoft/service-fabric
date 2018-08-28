@@ -133,6 +133,8 @@ For more details please refer [Deploying local cluster from build](docs/install_
 Service Fabric conceptual and reference documentation is available at [docs.microsoft.com/azure/service-fabric](https://docs.microsoft.com/azure/service-fabric/). Documentation is also open to your contribution on GitHub at [github.com/Microsoft/azure-docs](https://github.com/Microsoft/azure-docs).
 ## Samples 
 For Service Fabric sample code, check out the [Azure Code Sample gallery](https://azure.microsoft.com/resources/samples/?service=service-fabric) or go straight to [Azure-Samples on GitHub](https://github.com/Azure-Samples?q=service-fabric).
+## Channel 9: Inside Azure Service Fabric  
+<a href="https://www.youtube.com/playlist?list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&disable_polymer=true"><strong>Take a virtual tour with us</strong></a> and meet some of the folks who design and implement service fabric. This Channel 9 YouTube playlist will continue to grow over time with content describing the inner workings of Service Fabric. We have covered most of the [subsystems](docs/architecture/README.md) already.  
 ## License 
 All Service Fabric open source projects are licensed under the [MIT License](LICENSE).
 ## Code of Conduct 
