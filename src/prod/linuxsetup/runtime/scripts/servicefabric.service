@@ -4,6 +4,7 @@ Description=ServiceFabric Daemon
 [Service]
 Type=simple
 ExecStart=/opt/microsoft/servicefabric/bin/starthost.sh
+ExecStartPost=/bin/sh -c 'umask 022; pgrep starthost.sh > /var/run/servicefabric.pid'
 WorkingDirectory=/opt/microsoft/servicefabric/bin
 Restart=always
 RestartSec=5s
