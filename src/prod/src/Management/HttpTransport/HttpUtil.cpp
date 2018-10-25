@@ -353,6 +353,7 @@ void HttpUtil::ErrorCodeToHttpStatus(
     case (int)FABRIC_E_BACKUP_NOT_ENABLED:
     case (int)FABRIC_E_BACKUP_POLICY_DOES_NOT_EXIST:
     case (int)FABRIC_E_FAULT_ANALYSIS_SERVICE_NOT_ENABLED:
+    case (int)FABRIC_E_INVALID_SERVICE_SCALING_POLICY:
     {
         httpStatus = HttpStatusCode::BadRequest;
         httpStatusLine = error.ErrorCodeValueToString();

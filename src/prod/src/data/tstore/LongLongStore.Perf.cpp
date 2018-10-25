@@ -50,7 +50,7 @@ namespace TStoreTests
             __in ktl::CancellationToken const cancellationToken)
         {
             co_await CorHelper::ThreadPoolThread(this->GetAllocator().GetKtlSystem().DefaultThreadPool());
-            co_await startSignal.GetAwaitable();
+            //co_await startSignal.GetAwaitable();
 
             LONG64 localOpCount = 0;
 
@@ -133,15 +133,11 @@ namespace TStoreTests
             // Each thread gets a unique key
             LONG64 key = InterlockedIncrement64(&globalIndex);
 
-            {
-                auto txn = CreateWriteTransaction();
-                co_await Store->AddAsync(*txn->StoreTransactionSPtr, key, key, DefaultTimeout, ktl::CancellationToken::None);
-                co_await txn->CommitAsync();
-            }
-
             co_await CorHelper::ThreadPoolThread(this->GetAllocator().GetKtlSystem().DefaultThreadPool());
 
             co_await startSignal.GetAwaitable();
+
+            LONG64 numThreads = globalIndex; // Since each thread increments it once
 
             LONG64 localOpCount = 0;
 
@@ -152,16 +148,27 @@ namespace TStoreTests
                     auto txn = CreateWriteTransaction();
                     co_await Store->ConditionalGetAsync(*txn->StoreTransactionSPtr, key, DefaultTimeout, value, ktl::CancellationToken::None);
                     co_await txn->AbortAsync();
-                    localOpCount++;
                 }
+
+                localOpCount++;
+                key = (key + numThreads) % Store->Count;
             }
 
             // Doing this outside of main loop to decrease contention in critical path
             InterlockedAdd64(&globalOpCount, localOpCount);
         }
 
-        void UniqueKeyReadThroughputTest(__in Common::TimeSpan duration, __in ULONG numTasks)
+        void UniqueKeyReadThroughputTest(__in Common::TimeSpan duration, __in ULONG numKeys, __in ULONG numTasks)
         {
+            for (LONG64 key = 0; key < numKeys; key++)
+            {
+                {
+                    auto txn = CreateWriteTransaction();
+                    SyncAwait(Store->AddAsync(*txn->StoreTransactionSPtr, key, key, DefaultTimeout, CancellationToken::None));
+                    SyncAwait(txn->CommitAsync());
+                }
+            }
+
             ThroughputTestFunctionAsync readThrougputFunction;
             readThrougputFunction.Bind(this, &LongLongStorePerfTest::UniqueKeyThroughputFunctionAsync);
             SyncAwait(ThroughputTestRunnerAsync(readThrougputFunction, duration, numTasks));
@@ -181,6 +188,8 @@ namespace TStoreTests
 
             co_await startSignal.GetAwaitable();
 
+            LONG64 numThreads = globalIndex; // Since each thread increments it once
+
             LONG64 localOpCount = 0;
 
             while (!cancellationToken.IsCancellationRequested)
@@ -189,16 +198,27 @@ namespace TStoreTests
                     auto txn = CreateWriteTransaction();
                     co_await this->Store->ConditionalUpdateAsync(*txn->StoreTransactionSPtr, key, key, DefaultTimeout, ktl::CancellationToken::None);
                     co_await txn->CommitAsync();
-                    localOpCount++;
                 }
+
+                localOpCount++;
+                key = (key + numThreads) % Store->Count;
             }
 
             // Doing this outside of main loop to decrease contention in critical path
             InterlockedAdd64(&globalOpCount, localOpCount);
         }
 
-        void UpdateThroughputTest(__in Common::TimeSpan duration, __in ULONG numTasks)
+        void UpdateThroughputTest(__in Common::TimeSpan duration, __in ULONG numKeys, __in ULONG numTasks)
         {
+            for (LONG64 key = 0; key < numKeys; key++)
+            {
+                {
+                    auto txn = CreateWriteTransaction();
+                    SyncAwait(Store->AddAsync(*txn->StoreTransactionSPtr, key, key, DefaultTimeout, CancellationToken::None));
+                    SyncAwait(txn->CommitAsync());
+                }
+            }
+
             ThroughputTestFunctionAsync updateThrougputFunction;
             updateThrougputFunction.Bind(this, &LongLongStorePerfTest::UpdateThroughputFunctionAsync);
             SyncAwait(ThroughputTestRunnerAsync(updateThrougputFunction, duration, numTasks));
@@ -273,6 +293,8 @@ namespace TStoreTests
             ktl::CancellationTokenSource::SPtr tokenSource = nullptr;
             ktl::CancellationTokenSource::Create(this->GetAllocator(), ALLOC_TAG, tokenSource);
 
+            Awaitable<void> memoryTask = TraceMemoryUsagePeriodically(Common::TimeSpan::FromSeconds(15), false, tokenSource->Token);
+
             LONG64 globalIndex = 0;
             LONG64 globalOpCount = 0;
 
@@ -292,7 +314,11 @@ namespace TStoreTests
                 tokenSource->Cancel();
             }, duration);
 
-            co_await StoreUtilities::WhenAll(*tasks, this->GetAllocator());
+            //co_await StoreUtilities::WhenAll(*tasks, this->GetAllocator());
+            for (ULONG i = 0; i < numTasks; i++)
+            {
+                co_await (*tasks)[i];
+            }
             
             Trace.WriteInfo(
                 "Perf",
@@ -300,6 +326,8 @@ namespace TStoreTests
                 globalOpCount,
                 duration.TotalSeconds(),
                 globalOpCount / duration.TotalSeconds());
+
+            co_await memoryTask;
         }
     };
 
@@ -322,77 +350,82 @@ namespace TStoreTests
 
     BOOST_AUTO_TEST_CASE(Add_Throughput_10Seconds)
     {
-        AddThroughputTest(Common::TimeSpan::FromSeconds(10), 1000);
+        AddThroughputTest(Common::TimeSpan::FromSeconds(10), 6);
     }
 
     BOOST_AUTO_TEST_CASE(Add_Throughput_1Minute)
     {
-        AddThroughputTest(Common::TimeSpan::FromMinutes(1), 1000);
+        AddThroughputTest(Common::TimeSpan::FromMinutes(1), 6);
+    }
+
+    BOOST_AUTO_TEST_CASE(Add_Throughput_3Minute)
+    {
+        AddThroughputTest(Common::TimeSpan::FromMinutes(3), 1000);
     }
 
     BOOST_AUTO_TEST_CASE(Add_Throughput_10Minute)
     {
-        AddThroughputTest(Common::TimeSpan::FromMinutes(10), 1000);
+        AddThroughputTest(Common::TimeSpan::FromMinutes(10), 6);
     }
 
     BOOST_AUTO_TEST_CASE(SingleKeyRead_Throughput_10Seconds)
     {
-        SingleKeyReadThroughputTest(Common::TimeSpan::FromSeconds(10), 1000);
+        SingleKeyReadThroughputTest(Common::TimeSpan::FromSeconds(10), 6);
     }
 
     BOOST_AUTO_TEST_CASE(SingleKeyRead_Throughput_1Minute)
     {
-        SingleKeyReadThroughputTest(Common::TimeSpan::FromMinutes(1), 1000);
+        SingleKeyReadThroughputTest(Common::TimeSpan::FromMinutes(1), 6);
     }
 
     BOOST_AUTO_TEST_CASE(SingleKeyRead_Throughput_10Minute)
     {
-        SingleKeyReadThroughputTest(Common::TimeSpan::FromMinutes(10), 1000);
+        SingleKeyReadThroughputTest(Common::TimeSpan::FromMinutes(10), 6);
     }
 
     BOOST_AUTO_TEST_CASE(UniqueKeyRead_Throughput_10Seconds)
     {
-        UniqueKeyReadThroughputTest(Common::TimeSpan::FromSeconds(10), 1000);
+        UniqueKeyReadThroughputTest(Common::TimeSpan::FromSeconds(10), 1000, 6);
     }
 
     BOOST_AUTO_TEST_CASE(UniqueKeyRead_Throughput_1Minute)
     {
-        UniqueKeyReadThroughputTest(Common::TimeSpan::FromMinutes(1), 1000);
+        UniqueKeyReadThroughputTest(Common::TimeSpan::FromMinutes(1), 1000, 6);
     }
 
     BOOST_AUTO_TEST_CASE(UniqueKeyRead_Throughput_10Minute)
     {
-        UniqueKeyReadThroughputTest(Common::TimeSpan::FromMinutes(10), 1000);
+        UniqueKeyReadThroughputTest(Common::TimeSpan::FromMinutes(10), 1000, 6);
     }
 
     BOOST_AUTO_TEST_CASE(Update_Throughput_10Seconds)
     {
-        UpdateThroughputTest(Common::TimeSpan::FromSeconds(10), 1000);
+        UpdateThroughputTest(Common::TimeSpan::FromSeconds(10), 1000, 6);
     }
 
     BOOST_AUTO_TEST_CASE(Update_Throughput_1Minute)
     {
-        UpdateThroughputTest(Common::TimeSpan::FromMinutes(1), 1000);
+        UpdateThroughputTest(Common::TimeSpan::FromMinutes(1), 1000, 6);
     }
 
     BOOST_AUTO_TEST_CASE(Update_Throughput_10Minute)
     {
-        UpdateThroughputTest(Common::TimeSpan::FromMinutes(10), 1000);
+        UpdateThroughputTest(Common::TimeSpan::FromMinutes(10), 1000, 6);
     }
 
     BOOST_AUTO_TEST_CASE(AddReadRemoveRead_Throughput_10Seconds)
     {
-        AddReadRemoveReadThroughputTest(Common::TimeSpan::FromSeconds(10), 1000);
+        AddReadRemoveReadThroughputTest(Common::TimeSpan::FromSeconds(10), 6);
     }
 
     BOOST_AUTO_TEST_CASE(AddReadRemoveRead_Throughput_1Minute)
     {
-        AddReadRemoveReadThroughputTest(Common::TimeSpan::FromMinutes(1), 1000);
+        AddReadRemoveReadThroughputTest(Common::TimeSpan::FromMinutes(1), 6);
     }
 
     BOOST_AUTO_TEST_CASE(AddReadRemoveRead_Throughput_10Minute)
     {
-        AddReadRemoveReadThroughputTest(Common::TimeSpan::FromMinutes(10), 1000);
+        AddReadRemoveReadThroughputTest(Common::TimeSpan::FromMinutes(10), 6);
     }
 
     BOOST_AUTO_TEST_SUITE_END()

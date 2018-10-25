@@ -35,6 +35,7 @@ LogRecordsMap::LogRecordsMap(
     , currentLogTailEpoch_(indexingLogRecord.CurrentEpoch)
     , progressVector_(ProgressVector::CreateZeroProgressVector(GetThisAllocator()))
     , transactionMap_(TransactionMap::Create(traceId, GetThisAllocator()))
+    , lastPeriodicTruncationTimeTicks_(0)
 {
     EventSource::Events->Ctor(
         TracePartitionId,
@@ -71,6 +72,7 @@ LogRecordsMap::LogRecordsMap(
     , currentLogTailEpoch_(currentLogTailEpoch)
     , progressVector_(&progressVector)
     , transactionMap_(&transactionMap)
+    , lastPeriodicTruncationTimeTicks_(0)
 {
     EventSource::Events->Ctor(
         TracePartitionId,
@@ -395,7 +397,8 @@ void LogRecordsMap::ProcessLogRecord(
     __in BackupLogRecord & backupLogRecord,
     __out bool & isRecoverableRecord)
 {
-    isRecoverableRecord = false;
+    // For incremental backup chaining, we need to recover the backup log records.
+    isRecoverableRecord = true;
     
     lastLogicalSequenceNumber_++;
 
@@ -435,7 +438,14 @@ void LogRecordsMap::ProcessLogRecord(
     bool failedBarrierCheck = true;
     beginCheckpointLogRecord.EarliestPendingTransaction = transactionMap_->GetEarliestPendingTransaction(beginCheckpointLogRecord.Lsn, failedBarrierCheck).RawPtr();
 
-    ASSERT_IFNOT(!failedBarrierCheck, "{0}: Failed barrier check must be false", TraceId);
+    ASSERT_IFNOT(
+        !failedBarrierCheck, 
+        "{0}: Failed barrier check must be false. LSN: {1} LastStableLsn: {2} EarliestPendingTransactionLsn: {3} HighestBackedUpLsn: {4}", 
+        TraceId, 
+        beginCheckpointLogRecord.Lsn, 
+        beginCheckpointLogRecord.LastStableLsn,
+        beginCheckpointLogRecord.EarliestPendingTransactionLsn,
+        beginCheckpointLogRecord.HighestBackedUpLsn);
 
     if (mode_ == Mode::Recovery)
     {
@@ -522,6 +532,7 @@ void LogRecordsMap::ProcessLogRecord(
     }
 
     lastLinkedPhysicalRecord_ = &truncateHeadLogRecord;
+    lastPeriodicTruncationTimeTicks_ = truncateHeadLogRecord.PeriodicTruncationTimeStampTicks;
 }
 
 void LogRecordsMap::ProcessLogRecord(

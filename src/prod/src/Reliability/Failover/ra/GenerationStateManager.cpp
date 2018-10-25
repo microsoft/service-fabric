@@ -215,7 +215,7 @@ bool GenerationStateManager::GenerationUpdateProcessor(HandlerParameters & handl
                 // if the ra force deletes it then the fmm will have a replica which does not exist on the node
                 // this must be abort so that replica dropped is sent to the fm which 
                 // will eventually clean up the state
-                ra_.CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceAbort);
+                ra_.CloseLocalReplica(handlerParameters, ReplicaCloseMode::ForceAbort, ActivityDescription::Empty);
             }
 
             RAEventSource::Events->GenerationUpdate(ra_.NodeInstanceIdStr, context.FMServiceEpoch, handlerParameters.ActivityId);

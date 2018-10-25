@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ComServicePartitionResult.h"
+#include "ComFabricServiceDescriptionResult.h"
 
 namespace DNS { namespace Test
 {
@@ -13,13 +14,15 @@ namespace DNS { namespace Test
 
     class ComServiceManager :
         public KShared<ComServiceManager>,
-        public IFabricServiceManagementClient
+        public IFabricServiceManagementClient,
+        public IInternalFabricServiceManagementClient2
     {
         K_FORCE_SHARED(ComServiceManager);
 
         K_BEGIN_COM_INTERFACE_LIST(ComServiceManager)
             K_COM_INTERFACE_ITEM(__uuidof(IUnknown), IFabricServiceManagementClient)
             K_COM_INTERFACE_ITEM(IID_IFabricServiceManagementClient, IFabricServiceManagementClient)
+            K_COM_INTERFACE_ITEM(IID_IInternalFabricServiceManagementClient2, IInternalFabricServiceManagementClient2)
         K_END_COM_INTERFACE_LIST()
 
     public:
@@ -29,6 +32,7 @@ namespace DNS { namespace Test
             );
 
     public:
+        /* IFabricServiceManagementClient */
         virtual HRESULT BeginCreateService(
             /* [in] */ const FABRIC_SERVICE_DESCRIPTION *description,
             /* [in] */ DWORD timeoutMilliseconds,
@@ -93,13 +97,49 @@ namespace DNS { namespace Test
             /* [in] */ IFabricAsyncOperationContext *context,
             /* [retval][out] */ IFabricResolvedServicePartitionResult **result);
 
+        /* IInternalFabricServiceManagementClient2 */
+        virtual HRESULT BeginMovePrimary(
+            /* [in] */ const FABRIC_MOVE_PRIMARY_REPLICA_DESCRIPTION *movePrimaryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+
+        virtual HRESULT EndMovePrimary(
+            /* [in] */ IFabricAsyncOperationContext *context);
+
+        virtual HRESULT BeginMoveSecondary(
+            /* [in] */ const FABRIC_MOVE_SECONDARY_REPLICA_DESCRIPTION *moveSecondaryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+
+        virtual HRESULT EndMoveSecondary(
+            /* [in] */ IFabricAsyncOperationContext *context);
+
+        virtual HRESULT BeginGetCachedServiceDescription(
+            /* [in] */ FABRIC_URI name,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+
+        virtual HRESULT EndGetCachedServiceDescription(
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricServiceDescriptionResult **result);
+
     public:
         void AddResult(
             __in LPCWSTR wsz,
-            __in IFabricResolvedServicePartitionResult& result
+            __in IFabricResolvedServicePartitionResult& result,
+            __in IFabricServiceDescriptionResult& sdResult
         );
 
     private:
-        KHashTable<KWString, ComPointer<IFabricResolvedServicePartitionResult>> _htResults;
+        struct ServiceResult
+        {
+            ComPointer<IFabricResolvedServicePartitionResult> ServicePartitionResult;
+            ComPointer<IFabricServiceDescriptionResult> ServiceDescriptionResult;
+        };
+
+        KHashTable<KWString, ServiceResult> _htResults;
     };
 }}

@@ -220,7 +220,7 @@ void ProcessApplicationTypeContextAsyncOperation::FinishBuildApplicationType(Asy
             this->TraceId,
             error);
 
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 

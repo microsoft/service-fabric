@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project ="$(ExtendedTargetsPath)\NoTarget.targets"/>
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>System.Fabric.Strings Class Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>system.fabric.strings</AssemblyName>
+    <PackageId>system.fabric.strings</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+	  ..\..\Dlls\System.Fabric.Strings\_friends.cs;
+      StringResources.cs"
+	  Exclude="obj\*;objd\*" />
+    <EmbeddedResource Include="..\..\Dlls\System.Fabric.Strings\StringResources.resx" Exclude="bin\**;obj\**;**\*.xproj;packages\**;@(EmbeddedResource)" />
+  </ItemGroup>
+  
+  <PropertyGroup>
+    <ResourcesClassName>StringResources</ResourcesClassName>
+    <ResourcesFileDir>..\..\Dlls\System.Fabric.Strings\</ResourcesFileDir>
+    <ResourcesFileName>StringResources</ResourcesFileName>
+    <RootNamespace>System.Fabric.Strings</RootNamespace>
+	<StringResourcesCsFileName>$(ResourcesClassName).cs</StringResourcesCsFileName>
+    <StringResourcesCsFilePath>$(IntermediateOutputPath)$(StringResourcesCsFileName)</StringResourcesCsFilePath>
+	<StringResourcesResxFilePath>..\..\Dlls\System.Fabric.Strings\StringResources.resx</StringResourcesResxFilePath>
+  </PropertyGroup>
+  <Target Name="EnableCoreCLRResGen"
+    BeforeTargets="BeforeBuild"
+    DependsOnTargets="CoreClrResGen" />
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

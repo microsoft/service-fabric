@@ -18,8 +18,8 @@ namespace ServiceModel
             Common::NamingUri && serviceName,
             std::unique_ptr<ApplicationHealthPolicy> && healthPolicy);
 
-        ServiceHealthQueryDescription(ServiceHealthQueryDescription && other);
-        ServiceHealthQueryDescription & operator = (ServiceHealthQueryDescription && other);
+        ServiceHealthQueryDescription(ServiceHealthQueryDescription && other) = default;
+        ServiceHealthQueryDescription & operator = (ServiceHealthQueryDescription && other) = default;
 
         ~ServiceHealthQueryDescription();
 

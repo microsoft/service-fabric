@@ -234,7 +234,8 @@ LoadBalancingComponent::ServiceDescription ServiceInfo::GetPLBServiceDescription
         ServiceDescription.HasPersistedState,
         ServiceModel::ServicePackageIdentifier(ServiceDescription.Type.ServicePackageId),
         ServiceDescription.PackageActivationMode,
-        ServiceDescription.Instance);
+        ServiceDescription.Instance,
+        vector<Reliability::ServiceScalingPolicyDescription>(ServiceDescription.ScalingPolicies));
 }
 
 std::string ServiceInfo::MakeFlags() const

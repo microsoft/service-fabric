@@ -35,7 +35,7 @@ namespace Naming
     protected:
         void OnStart(Common::AsyncOperationSPtr const &);
         virtual void OnCompleted();
-
+                
         // wrappers for communicating with other store services
         Common::AsyncOperationSPtr BeginRequestReplyToPeer(
             Transport::MessageUPtr &&,
@@ -64,8 +64,12 @@ namespace Naming
 
         virtual Common::ErrorCode HarvestRequestMessage(Transport::MessageUPtr &&) = 0;
         virtual void PerformRequest(Common::AsyncOperationSPtr const &) = 0;
-        virtual Common::ErrorCode ValidateNameFragment();
 
+        // Determines whether service group reserved characters are allowed in the URI.
+        // By default, names should not contain service group related characters.
+        // Derived classes that allow them should override the method.
+        virtual bool AllowNameFragment() { return true; }
+        
         bool TryAcceptRequestAtAuthorityOwner(Common::AsyncOperationSPtr const &);
         bool TryAcceptRequestAtNameOwner(Common::AsyncOperationSPtr const &);
 
@@ -114,7 +118,6 @@ namespace Naming
         virtual void CompleteHealthMonitoredOperation();
 
     private:
-        Common::ErrorCode ValidateName();
         void ScheduleRetry(Common::AsyncOperationSPtr const &, Common::TimeSpan const delay, RetryCallback const &);
         virtual bool ShouldTerminateProcessing() const { return false; }
 

@@ -22,8 +22,8 @@ OperationProcessor::OperationProcessor(
     __in IStateProviderManager & stateManager,
     __in IBackupManager & backupManager,
     __in InvalidLogRecords & invalidLogRecords,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
-	__in ITransactionalReplicator & transactionalReplicator)
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in ITransactionalReplicator & transactionalReplicator)
     : IOperationProcessor()
     , KObject()
     , KShared()
@@ -45,8 +45,8 @@ OperationProcessor::OperationProcessor(
     , numberOfPhysicalRecordsBeingProcessed_(1)
     , physicalRecordsProcessingTcs_()
     , logicalRecordsProcessingTcs_()
-	, changeHandlerCache_(nullptr)
-	, transactionalReplicator_(&transactionalReplicator)
+    , changeHandlerCache_(nullptr)
+    , transactionalReplicator_(&transactionalReplicator)
 {
     EventSource::Events->Ctor(
         TracePartitionId,
@@ -101,8 +101,8 @@ OperationProcessor::SPtr OperationProcessor::Create(
     __in IStateProviderManager & stateManager,
     __in IBackupManager & backupManager,
     __in InvalidLogRecords & invalidLogRecords,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
-	__in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in ITransactionalReplicator & transactionalReplicator,
     __in KAllocator & allocator)
 {
     OperationProcessor * pointer = _new(OPERATIONPROCESSOR_TAG, allocator)OperationProcessor(
@@ -115,7 +115,7 @@ OperationProcessor::SPtr OperationProcessor::Create(
         backupManager,
         invalidLogRecords,
         transactionalReplicatorConfig,
-		transactionalReplicator);
+        transactionalReplicator);
 
     THROW_ON_ALLOCATION_FAILURE(pointer);
 
@@ -617,22 +617,22 @@ void OperationProcessor::Unlock(__in LogicalLogRecord & record)
 
 void OperationProcessor::FireCommitNotification(__in TransactionBase const & transaction)
 {
-	ITransactionChangeHandler::SPtr eventHandler = changeHandlerCache_.Get();
+    ITransactionChangeHandler::SPtr eventHandler = changeHandlerCache_.Get();
 
-	// If there is no registered handler, return
-	if (eventHandler == nullptr)
-	{
-		return;
-	}
+    // If there is no registered handler, return
+    if (eventHandler == nullptr)
+    {
+        return;
+    }
 
-	ITransaction const * txnPtr = dynamic_cast<ITransaction const *>(&transaction);
+    ITransaction const * txnPtr = dynamic_cast<ITransaction const *>(&transaction);
 
-	ASSERT_IFNOT(txnPtr != nullptr, "{0}: TxnBase must be an ITransaction.", TraceId);
+    ASSERT_IFNOT(txnPtr != nullptr, "{0}: TxnBase must be an ITransaction.", TraceId);
 
-	if (transactionalReplicator_ != nullptr)
-	{
-		eventHandler->OnTransactionCommitted(*transactionalReplicator_, *txnPtr);
-	}
+    if (transactionalReplicator_ != nullptr)
+    {
+        eventHandler->OnTransactionCommitted(*transactionalReplicator_, *txnPtr);
+    }
 }
 
 Awaitable<void> OperationProcessor::ApplyCallback(__in LogRecord & record) noexcept
@@ -664,7 +664,7 @@ Awaitable<void> OperationProcessor::ApplyCallback(__in LogRecord & record) noexc
 
     OperationLogRecord::SPtr operationRecord = nullptr;
     NTSTATUS status = STATUS_SUCCESS;
-    TxnReplicator::ApplyContext::Enum applyRedoContext = roleContextDrainState_->ApplyRedoContext;
+    ApplyContext::Enum applyRedoContext = roleContextDrainState_->ApplyRedoContext;
 
     switch (record.RecordType)
     {
@@ -1193,14 +1193,14 @@ Awaitable<void> OperationProcessor::WaitForAllRecordsProcessingAsync()
 
 
 NTSTATUS OperationProcessor::RegisterTransactionChangeHandler(
-	__in ITransactionChangeHandler & transactionChangeHandler) noexcept
+    __in ITransactionChangeHandler & transactionChangeHandler) noexcept
 {
-	changeHandlerCache_.Put(&transactionChangeHandler);
+    changeHandlerCache_.Put(&transactionChangeHandler);
     return STATUS_SUCCESS;
 }
 
 NTSTATUS OperationProcessor::UnRegisterTransactionChangeHandler() noexcept
 {
     changeHandlerCache_.Put(nullptr);
-	return STATUS_SUCCESS;
+    return STATUS_SUCCESS;
 }

@@ -134,7 +134,9 @@ namespace Management
                 Common::AsyncOperationSPtr const &,
                 bool expectedCompletedSynchronously);
 
-            void FinishStartUpgrade(Common::AsyncOperationSPtr const &);
+        protected:
+            virtual void FinishStartUpgrade(Common::AsyncOperationSPtr const &);
+        private:
             void OnFinishStartUpgradeCommitComplete(
                 Common::AsyncOperationSPtr const &,
                 bool expectedCompletedSynchronously);

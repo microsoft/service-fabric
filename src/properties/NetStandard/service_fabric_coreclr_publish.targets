@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ ***********************************************************************************************
+ This file enables the CoreCLR Publish targets.
+
+ Copyright (C) Microsoft Corporation. All rights reserved.
+ ***********************************************************************************************
+ -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Need to do this in separate process as there is a circular dependency in Build and Publish -->
+  <PropertyGroup>
+    <!-- This path is used to generate WinFab.CoreClr.Libs nuget package.
+	     In case you update this path, please update
+		 src\BuildSteps\GenerateNuget\MSInternal\WinFab.CoreCLR.Libs\WinFab.CoreCLR.Libs.nuproj too. -->
+    <CoreClrPublishDirName>p\$(CurrentRuntimeIdentifier)\$(AssemblyName)</CoreClrPublishDirName>
+    <PublishDirName>$(CoreClrPublishDirName)</PublishDirName>
+    <PublishDir Condition="'$(OSSBUILD)' == '1'">$(OutDirCopy)\$(TargetFramework)\p\$(CurrentRuntimeIdentifier)\$(AssemblyName)\</PublishDir>
+    <PublishDir Condition="'$(BuildLinux)' == 'true'">$(PublishDir)\$(AssemblyName)</PublishDir>
+  </PropertyGroup>
+
+  <Target Name="CoreClrPublish" AfterTargets="AfterBuild" Condition=" '$(CoreClrPublishRunning)' == '' And '$(CurrentRuntimeIdentifier)' != '' " >
+    <SetEnvironment Condition="'$(BuildLinux)' != 'true'" Name="CoreClrPublishRunning" Value="true" />
+    <SetEnvironment Condition="'$(BuildLinux)' != 'true'" Name="PublishDirName" Value="$(CoreClrPublishDirName)" />
+    <MSBuild Projects="$(MSBuildProjectFile)"
+             Targets="Publish"
+             Properties="Configuration=$(Configuration);CurrentRuntimeIdentifier=$(CurrentRuntimeIdentifier);" />
+  </Target>
+ </Project>

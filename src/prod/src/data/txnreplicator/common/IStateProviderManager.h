@@ -46,7 +46,7 @@ namespace TxnReplicator
             __in FABRIC_REPLICA_ID replicaId,
             __out OperationDataStream::SPtr & result) noexcept = 0;
 
-        virtual NTSTATUS BeginSettingCurrentState() noexcept = 0;
+        virtual ktl::Awaitable<NTSTATUS> BeginSettingCurrentStateAsync() noexcept = 0;
         
         /// This API will not get called if copy process gets aborted in the middle.
         virtual ktl::Awaitable<NTSTATUS> EndSettingCurrentState() noexcept = 0;

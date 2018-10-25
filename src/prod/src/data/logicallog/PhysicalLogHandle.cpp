@@ -260,18 +260,31 @@ Awaitable<NTSTATUS> PhysicalLogHandle::DeleteLogicalLogAsync(
     
     NTSTATUS status;
     
-#if !defined(PLATFORM_UNIX)
-    status = co_await DeleteLogicalLogOnlyAsync(logicalLogId, cancellationToken);
-#else
-    status = co_await owner_->manager_->DeleteLogicalLogAndMaybeDeletePhysicalLog(
-        *PartitionedReplicaIdentifier,
-        *this,
-        *(owner_->underlyingContainer_),
-        *(owner_->path_),
-        owner_->Id,
-        logicalLogId,
-        cancellationToken);
-#endif
+    switch (manager_->ktlLoggerMode_)
+    {
+        case KtlLoggerMode::OutOfProc:
+        {
+            status = co_await DeleteLogicalLogOnlyAsync(logicalLogId, cancellationToken);
+            break;
+        }
+
+        case KtlLoggerMode::InProc:
+        {
+            status = co_await owner_->manager_->DeleteLogicalLogAndMaybeDeletePhysicalLog(
+                *PartitionedReplicaIdentifier,
+                *this,
+                *(owner_->underlyingContainer_),
+                *(owner_->path_),
+                owner_->Id,
+                logicalLogId,
+                cancellationToken);
+            break;
+        }
+
+        default:
+            KInvariant(FALSE);
+            co_return STATUS_UNSUCCESSFUL;
+    }
 
     co_return status;
 }

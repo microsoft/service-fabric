@@ -217,6 +217,18 @@ HealthReport HealthReport::CreateSystemHealthReport(
         removeWhenExpired = true;
         break;
 
+    case SystemHealthReportCode::RA_StoreProviderHealthy:
+        sourceId = *Constants::HealthReportRASource;
+        property = *Constants::HealthRAStoreProvider;
+        healthState = FABRIC_HEALTH_STATE_OK;
+        break;
+
+    case SystemHealthReportCode::RA_StoreProviderUnhealthy:
+        sourceId = *Constants::HealthReportRASource;
+        property = *Constants::HealthRAStoreProvider;
+        healthState = FABRIC_HEALTH_STATE_WARNING;
+        break;
+
     case SystemHealthReportCode::RA_ReplicaChangeRoleStatusError:
         sourceId = *Constants::HealthReportRASource;
         property = *Constants::HealthReplicaChangeRoleStatusProperty;
@@ -623,6 +635,12 @@ HealthReport HealthReport::CreateSystemHealthReport(
     case SystemHealthReportCode::Hosting_DockerHealthCheckStatusUnhealthy:
         sourceId = *Constants::HealthReportHostingSource;
         healthState = FABRIC_HEALTH_STATE_WARNING;
+        break;
+
+    case SystemHealthReportCode::Hosting_DockerDaemonUnhealthy:
+        sourceId = *Constants::HealthReportHostingSource;
+        healthState = FABRIC_HEALTH_STATE_WARNING;
+        removeWhenExpired = true;
         break;
 
     case SystemHealthReportCode::PLB_NodeCapacityViolation:
@@ -1149,29 +1167,6 @@ HealthReport HealthReport::CreateHealthInformationForDelete(
         sequenceNumber,
         false /*removeWhenExpired*/,
         AttributeList());
-}
-
-HealthReport::HealthReport(HealthReport && other)
-    : HealthInformation(move(other))
-    , entityInformation_(move(other.entityInformation_))
-    , attributeList_(move(other.attributeList_))
-    , entityPropertyId_(move(other.entityPropertyId_))
-    , priority_(move(other.priority_))
-{
-}
-
-HealthReport & HealthReport::operator = (HealthReport && other)
-{
-    if (this != &other)
-    {
-        entityInformation_ = move(other.entityInformation_);
-        attributeList_ = move(other.attributeList_);
-        entityPropertyId_ = move(other.entityPropertyId_);
-        priority_ = move(other.priority_);
-    }
-
-    HealthInformation::operator=(move(other));
-    return *this;
 }
 
 ErrorCode HealthReport::ToPublicApi(

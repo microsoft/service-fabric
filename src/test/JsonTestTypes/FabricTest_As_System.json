@@ -11,7 +11,8 @@
 		"EseStoreEnabled": "",
         "SetupTimeout": "1200",
         "ExecutionTimeout": "2100",
-        "CleanupTimeout": "2100"
+        "CleanupTimeout": "2100",
+        "Params": ""
     },
 
     "TestSetup": {
@@ -24,7 +25,7 @@
     "TestExecution": [
         {
             "ExeName": "[BINS]\\FabricUnitTests\\PsExec64.exe",
-            "Arguments": "-accepteula -s [BINS]\\FabricUnitTests\\FabricTest.exe -auto -load:[TASKNAME] %-security:[CREDENTIALTYPE]% [NATIVEIMAGESTOREENABLED] %-nativestore:[NATIVESTOREENABLED]% %-ese:[ESESTOREENABLED]% -togglestore -notestdir",
+            "Arguments": "-accepteula -w [BINS]\\FabricUnitTests -s [BINS]\\FabricUnitTests\\FabricTest.exe -auto -load:[TASKNAME] %-security:[CREDENTIALTYPE]% [NATIVEIMAGESTOREENABLED] %-nativestore:[NATIVESTOREENABLED]% %-ese:[ESESTOREENABLED]% -togglestore -notestdir [PARAMS]",
             "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
         }
     ],

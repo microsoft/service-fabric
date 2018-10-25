@@ -9,6 +9,11 @@ namespace Hosting2
 {
     class ContainerDescription : public Serialization::FabricSerializable
     {
+        DEFAULT_COPY_ASSIGNMENT(ContainerDescription)
+        DEFAULT_COPY_CONSTRUCTOR(ContainerDescription)
+
+        DEFAULT_MOVE_ASSIGNMENT(ContainerDescription)
+        DEFAULT_MOVE_CONSTRUCTOR(ContainerDescription)
 
     public:
         ContainerDescription();
@@ -26,25 +31,28 @@ namespace Hosting2
             std::map<std::wstring, std::wstring> const & portBindings,
             ServiceModel::LogConfigDescription const & logConfig,
             std::vector<ServiceModel::ContainerVolumeDescription> const & volumes,
+            std::vector<ServiceModel::ContainerLabelDescription> const & labels,
             std::vector<std::wstring> const & dnsServers,
             ServiceModel::RepositoryCredentialsDescription const & repositoryCredentials,
             ServiceModel::ContainerHealthConfigDescription const & healthConfig,
             std::vector<std::wstring> const & securityOptions,
+#if defined(PLATFORM_UNIX)
+            ContainerPodDescription const & podDesc,
+#endif
+            bool removeServiceFabricRuntimeAccess = true,
             std::wstring const & groupContainerName = std::wstring(),
+            bool useDefaultRepositoryCredentials = false,
+            bool useTokenAuthenticationCredentials = false,
             bool autoRemove = true,
             bool runInteractive = false,
             bool isContainerRoot = false,
             std::wstring const & codePackageName = std::wstring(),
             std::wstring const & servicePackageActivationId = std::wstring(),
-            std::wstring const & partitionId = std::wstring());
+            std::wstring const & partitionId = std::wstring(),
+            std::map<std::wstring, std::wstring> const& bindMounts = std::map<std::wstring, std::wstring>());
 
-        ContainerDescription(ContainerDescription const & other);
+        virtual ~ContainerDescription() {};
 
-        ContainerDescription(ContainerDescription && other);
-        virtual ~ContainerDescription();
-        ContainerDescription const & operator = (ContainerDescription const & other);
-        ContainerDescription const & operator = (ContainerDescription && other);
-        
         __declspec(property(get = get_ApplicationName)) std::wstring const & ApplicationName;
         inline std::wstring const & get_ApplicationName() const { return applicationName_; };
 
@@ -56,12 +64,17 @@ namespace Hosting2
 
         __declspec(property(get=get_ContainerName)) std::wstring const & ContainerName;
         inline std::wstring const & get_ContainerName() const { return containerName_; };
-
+        
         __declspec(property(get = get_GroupContainerName)) std::wstring const & GroupContainerName;
         inline std::wstring const & get_GroupContainerName() const { return groupContainerName_; };
 
         __declspec(property(get = get_AssignedIP)) std::wstring const & AssignedIP;
         inline std::wstring const & get_AssignedIP() const { return assignedIp_; };
+
+#if defined(PLATFORM_UNIX)
+        __declspec(property(get = get_PodDescription)) ContainerPodDescription const & PodDescription;
+        inline ContainerPodDescription const & get_PodDescription() const { return podDescription_; };
+#endif
 
         __declspec(property(get=get_DeploymentFolder)) std::wstring const & DeploymentFolder;
         inline std::wstring const & get_DeploymentFolder() const { return deploymentFolder_; };
@@ -96,6 +109,9 @@ namespace Hosting2
         __declspec(property(get = get_ContainerVolumes))  std::vector<ServiceModel::ContainerVolumeDescription> const & ContainerVolumes;
         inline std::vector<ServiceModel::ContainerVolumeDescription> const & get_ContainerVolumes() const { return volumes_; };
 
+        __declspec(property(get = get_ContainerLabels))  std::vector<ServiceModel::ContainerLabelDescription> const & ContainerLabels;
+        inline std::vector<ServiceModel::ContainerLabelDescription> const & get_ContainerLabels() const { return labels_; };
+
         __declspec(property(get = get_DnsServers))  std::vector<std::wstring> const & DnsServers;
         inline std::vector<std::wstring> const & get_DnsServers() const { return dnsServers_; };
 
@@ -104,6 +120,9 @@ namespace Hosting2
 
         __declspec(property(get = get_RepositoryCredentials))  ServiceModel::RepositoryCredentialsDescription const & RepositoryCredentials;
         inline ServiceModel::RepositoryCredentialsDescription const & get_RepositoryCredentials() const { return repositoryCredentials_; };
+
+        __declspec(property(get = get_removeServiceFabricRuntimeAccess))  bool RemoveServiceFabricRuntimeAccess;
+        inline bool get_removeServiceFabricRuntimeAccess() const { return removeServiceFabricRuntimeAccess_; };
 
         __declspec(property(get = get_HealthConfig))  ServiceModel::ContainerHealthConfigDescription const & HealthConfig;
         inline ServiceModel::ContainerHealthConfigDescription const & get_HealthConfig() const { return healthConfig_; }
@@ -119,20 +138,40 @@ namespace Hosting2
         __declspec(property(get = get_PartitionId)) std::wstring const & PartitionId;
         inline std::wstring const & get_PartitionId() const { return partitionId_; };
 
+        __declspec(property(get = get_BindMounts))  std::map<std::wstring, std::wstring> const & BindMounts;
+        inline std::map<std::wstring, std::wstring> const & get_BindMounts() const { return bindMounts_; };
+
+        __declspec(property(get = get_UseDefaultRepositoryCredentials)) bool UseDefaultRepositoryCredentials;
+        inline bool get_UseDefaultRepositoryCredentials() const { return useDefaultRepositoryCredentials_; };
+
+        __declspec(property(get = get_UseTokenAuthenticationCredentials)) bool UseTokenAuthenticationCredentials;
+        inline bool get_UseTokenAuthenticationCredentials() const { return useTokenAuthenticationCredentials_; };
+
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
         Common::ErrorCode ToPublicApi(
             __in Common::ScopedHeap & heap,
             __out FABRIC_CONTAINER_DESCRIPTION & fabricContainerDescription) const;
 
-        FABRIC_FIELDS_24(applicationName_, containerName_, deploymentFolder_,
-            isolationMode_, nodeWorkFolder_, portBindings_,
-            logConfig_, volumes_, dnsServers_,
-            assignedIp_, repositoryCredentials_, securityOptions_,
-            applicationId_, entryPoint_, hostName_,
-            groupContainerName_, autoRemove_, runInteractive_,
-           isContainerRoot_, healthConfig_, serviceName_,
-            codePackageName_, servicePackageActivationId_, partitionId_);
+
+#if !defined(PLATFORM_UNIX)
+	FABRIC_FIELDS_29(applicationName_, containerName_, deploymentFolder_, isolationMode_, 
+                nodeWorkFolder_, portBindings_, logConfig_, volumes_, labels_, 
+                dnsServers_, assignedIp_, repositoryCredentials_, 
+                securityOptions_, applicationId_, entryPoint_, hostName_, groupContainerName_, 
+                autoRemove_, runInteractive_, isContainerRoot_, healthConfig_, serviceName_, 
+                codePackageName_, servicePackageActivationId_, partitionId_, useDefaultRepositoryCredentials_, removeServiceFabricRuntimeAccess_, bindMounts_,
+                useTokenAuthenticationCredentials_);
+#else
+    FABRIC_FIELDS_30(applicationName_, containerName_, deploymentFolder_, isolationMode_,
+                nodeWorkFolder_, portBindings_, logConfig_, volumes_, labels_,
+                dnsServers_, assignedIp_, repositoryCredentials_,
+                securityOptions_, applicationId_, entryPoint_, hostName_, groupContainerName_, podDescription_,
+                autoRemove_, runInteractive_, isContainerRoot_, healthConfig_, serviceName_,
+                codePackageName_, servicePackageActivationId_, partitionId_, useDefaultRepositoryCredentials_, removeServiceFabricRuntimeAccess_, bindMounts_,
+                useTokenAuthenticationCredentials_);
+
+#endif
 
     private:
         std::wstring applicationName_;
@@ -145,13 +184,18 @@ namespace Hosting2
         std::wstring entryPoint_;
         std::wstring hostName_;
         std::wstring groupContainerName_;
+#if defined(PLATFORM_UNIX)
+        ContainerPodDescription podDescription_;
+#endif
         ServiceModel::ContainerIsolationMode::Enum isolationMode_;
         std::map<std::wstring, std::wstring> portBindings_;
         ServiceModel::LogConfigDescription logConfig_;
         std::vector<ServiceModel::ContainerVolumeDescription> volumes_;
+        std::vector<ServiceModel::ContainerLabelDescription> labels_;
         std::vector<std::wstring> dnsServers_;
         std::vector<std::wstring> securityOptions_;
         ServiceModel::RepositoryCredentialsDescription repositoryCredentials_;
+        bool removeServiceFabricRuntimeAccess_;
         ServiceModel::ContainerHealthConfigDescription healthConfig_;
         bool autoRemove_;
         bool runInteractive_;
@@ -159,5 +203,8 @@ namespace Hosting2
         std::wstring codePackageName_;
         std::wstring servicePackageActivationId_;
         std::wstring partitionId_;
+        bool useDefaultRepositoryCredentials_;
+        std::map<std::wstring, std::wstring> bindMounts_;
+        bool useTokenAuthenticationCredentials_;
     };
 }

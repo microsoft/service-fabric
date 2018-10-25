@@ -728,6 +728,7 @@ public:
         , flags_(move(flags))
         , progressState_(progressState)
         , pendingCount_(0)
+        , errorCount_(0)
     {
     }
 
@@ -746,6 +747,7 @@ public:
         , flags_(flags)
         , progressState_()
         , pendingCount_(0)
+        , errorCount_(0)
     {
     }
 
@@ -762,6 +764,7 @@ public:
         , flags_()
         , progressState_()
         , pendingCount_(0)
+        , errorCount_(0)
     {
     }
 
@@ -778,6 +781,7 @@ public:
         , flags_()
         , progressState_()
         , pendingCount_(0)
+        , errorCount_(0)
     {
     }
 
@@ -907,7 +911,8 @@ private:
 
         if (!error.IsSuccess())
         {
-            WriteInfo(
+            ++errorCount_;
+            WriteWarning(
                 TraceComponent,
                 "{0} failed: src = '{1}' dest = '{2}' error = {3} P-remaining: {4}",
                 this->GetOperationName(),
@@ -926,8 +931,9 @@ private:
             this->TryComplete(operation->Parent, this->GetFirstError());
             WriteInfo(
                 TraceComponent,
-                "{0} P-complete: First Error: {1}", this->GetOperationName(),
-                this->GetFirstError()
+                "{0} P-complete: First Error: {1}, error count:{2}", this->GetOperationName(),
+                this->GetFirstError(),
+                errorCount_.load()
             );
             return;
         }
@@ -948,6 +954,7 @@ private:
     vector<CopyFlag::Enum> flags_;
     NativeImageStoreProgressStateSPtr progressState_;
     Common::atomic_long pendingCount_;
+    Common::atomic_long errorCount_;
 };
 
 class NativeImageStore::ParallelUploadObjectsAsyncOperation : public NativeImageStore::ParallelOperationsBaseAsyncOperation

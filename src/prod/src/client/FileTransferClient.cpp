@@ -15,6 +15,10 @@ using namespace Management::FileStoreService;
 
 StringLiteral const TraceComponent("FileTransferClient");
 StringLiteral const RetryTimerTag("FileTransferClient.RetryTimer");
+StringLiteral const CommitSendTimerTag("FileTransferClient.CommitSendTimer");
+StringLiteral const SingleFileUploadTimerTag("FileTransferClient.SingleFileUploadTimer");
+
+Common::atomic_uint64 FileTransferClient::totalChunkBasedUploads_;
 
 class FileTransferClient::BaseAsyncOperation
     : public AsyncOperation,
@@ -69,7 +73,7 @@ protected:
         TimerSPtr snap;
         {
             AcquireExclusiveLock lock(lock_);
-            completedOrCanceled_.store(true);
+            completedOrCanceled_ = true;
             snap = move(retryTimer_);
         }
 
@@ -85,17 +89,21 @@ protected:
 
     ErrorCode TryScheduleRetry(AsyncOperationSPtr const & thisSPtr, RetryCallback const & callback)
     {
-        TimeSpan delay = ClientConfig::GetConfig().RetryBackoffInterval;
+        return TryScheduleRetry(thisSPtr, callback, ClientConfig::GetConfig().RetryBackoffInterval);
+    }
+
+    ErrorCode TryScheduleRetry(AsyncOperationSPtr const & thisSPtr, RetryCallback const & callback, TimeSpan delay)
+    {
         if (delay > timeoutHelper_.GetRemainingTime())
         {
             // Not enough timeout left - just fail early
-            return ErrorCodeValue::OperationCanceled;
+            return ErrorCodeValue::Timeout;
         }
 
         {
             AcquireExclusiveLock lock(lock_);
 
-            if (completedOrCanceled_.load())
+            if (!completedOrCanceled_)
             {
                 retryTimer_ = Timer::Create(
                     RetryTimerTag,
@@ -111,6 +119,18 @@ protected:
         return ErrorCodeValue::Success;
     }
 
+    virtual bool IsRetryable(ErrorCode const & error)
+    {
+        switch (error.ReadValue())
+        {
+        case ErrorCodeValue::TransportSendQueueFull:
+        case ErrorCodeValue::NotReady:
+            return true;
+        }
+
+        return false;
+    }
+
 private:
     void StartOperation(AsyncOperationSPtr const & thisSPtr)
     {
@@ -118,7 +138,7 @@ private:
         {
             AcquireExclusiveLock lock(lock_);
 
-            if (completedOrCanceled_.load()) { return; }
+            if (completedOrCanceled_) { return; }
 
             error = owner_.pendingOperations_.TryAdd(
                 operationId_,
@@ -143,7 +163,7 @@ protected:
 
     ExclusiveLock lock_;
     TimerSPtr retryTimer_;
-    Common::atomic_bool completedOrCanceled_;
+    bool completedOrCanceled_;
 };
 
 class FileTransferClient::UploadAsyncOperation
@@ -168,7 +188,12 @@ public:
         sourceFullPath_(sourceFullPath),
         storeRelativePath_(storeRelativePath),
         shouldOverwrite_(shouldOverwrite),
-        progressHandler_(move(progressHandler))
+        progressHandler_(move(progressHandler)),
+        timer_(),
+        commitResponseSendCount_(0),
+        gotFileUploadCommitResponse_(false),
+        retryResendFileCount_(0),
+        useChunkBasedUpload_(owner_.UseChunkBasedUpload)
     {
     }
 
@@ -182,25 +207,112 @@ public:
         return thisPtr->Error;
     }
 
+    virtual void ProcessReply(AsyncOperationSPtr const & thisSPtr, ErrorCode const & error) override
+    {
+        if (!useChunkBasedUpload_.load())
+        {
+            BaseAsyncOperation::ProcessReply(thisSPtr, error);
+            return;
+        }
+
+        // For chunk based upload
+        if (error.IsError(ErrorCodeValue::OperationsPending))
+        {
+            if (commitResponseSendCount_.load() >= ClientConfig::GetConfig().FileUploadCommitRetryAttempt)
+            {
+                owner_.WriteError(
+                    TraceComponent,
+                    owner_.Root.TraceId,
+                    "Didn't receive FileUploadCommit response for operationId:{0} StorePath:{1} Errorcode:{2} RetryAttempt:{3}",
+                    operationId_,
+                    this->storeRelativePath_,
+                    error,
+                    commitResponseSendCount_.load());
+
+                ConvertErrorAndTryComplete(thisSPtr, ErrorCodeValue::OperationFailed);
+            }
+
+            // Ignore this error. Request is under processing in FSS
+            return;
+        }
+
+        bool expected = false;
+        if (gotFileUploadCommitResponse_.compare_exchange_strong(expected, true))
+        {
+            owner_.WriteInfo(
+                TraceComponent,
+                owner_.Root.TraceId,
+                "Got FileUploadCommit response for operationId:{0} storeRelativePath:{1} error:{2} sendCommitCount:{3} TotalChunkBasedUploads:{4}",
+                operationId_,
+                this->storeRelativePath_,
+                error,
+                commitResponseSendCount_.load(),
+                owner_.TotalChunkBasedUploads);
+
+            if (error.IsSuccess())
+            {
+                // Update progress handler for replicated files
+                IFileStoreServiceClientProgressEventHandlerPtr progressHandler;
+                {
+                    AcquireExclusiveLock lock(lock_);
+                    progressHandler = progressHandler_;
+                }
+
+                if (progressHandler.get() != nullptr)
+                {
+                    progressHandler->IncrementReplicatedFiles(1);
+                }
+
+                SendFileUploadActionMessage(thisSPtr, FileTransferTcpMessage::FileUploadCommitAckAction);
+                ConvertErrorAndTryComplete(thisSPtr, move(error));
+            }
+            else if (IsRetryableErrorOnCommitOperation(error) && retryResendFileCount_.load() < ClientConfig::GetConfig().FileUploadResendRetryAttempt)
+            {
+                RetrySendingFile(thisSPtr, move(error));
+            }
+            else if (commitResponseSendCount_.load() >= ClientConfig::GetConfig().FileUploadCommitRetryAttempt)
+            {
+                SendFileUploadActionMessage(thisSPtr, FileTransferTcpMessage::FileUploadDeleteSessionAction);
+                ConvertErrorAndTryComplete(thisSPtr, ErrorCodeValue::OperationFailed);
+            }
+            else
+            {
+                SendFileUploadActionMessage(thisSPtr, FileTransferTcpMessage::FileUploadDeleteSessionAction);
+                ConvertErrorAndTryComplete(thisSPtr, move(error));
+            }
+
+            return;
+        }
+    }
+
 protected:
 
     void OnStartOperation(AsyncOperationSPtr const & thisSPtr)
-    {    
+    {
+
+        IFileStoreServiceClientProgressEventHandlerPtr progressHandler;
+        {
+            AcquireExclusiveLock lock(lock_);
+            progressHandler = progressHandler_;
+        }
+
         auto operation = owner_.fileSender_->BeginSendFileToGateway(
             operationId_,
             serviceName_,
             sourceFullPath_,
             storeRelativePath_,
             shouldOverwrite_,
-            move(progressHandler_),
+            useChunkBasedUpload_.load(),
+            retryResendFileCount_.load() > 0,
+            move(progressHandler),
             timeoutHelper_.GetRemainingTime(),
-            [this](AsyncOperationSPtr const & operation){ this->OnFileSendCompleted(operation); },
+            [this](AsyncOperationSPtr const & operation){ this->OnFileSendCompleted(operation, this->operationId_); },
             thisSPtr);
 
         bool cancelOperation = true;
         {
             AcquireExclusiveLock lock(this->lock_);
-            if (!completedOrCanceled_.load())
+            if (!completedOrCanceled_)
             {
                 senderAsyncOperation_ = operation;
                 cancelOperation = false;
@@ -224,6 +336,7 @@ protected:
             AcquireExclusiveLock lock(lock_);
             timer = move(timer_);
             senderAsyncOperation = move(senderAsyncOperation_);
+            progressHandler_ = IFileStoreServiceClientProgressEventHandlerPtr();
         }
 
         if (timer)
@@ -238,47 +351,405 @@ protected:
     }
 
 private:
-    void OnFileSendCompleted(AsyncOperationSPtr const & operation)
+    void OnFileSendCompleted(AsyncOperationSPtr const & operation, Guid const &operationId)
     {
         {
             AcquireExclusiveLock lock(this->lock_);
             senderAsyncOperation_.reset();
         }
 
-        auto error = owner_.fileSender_->EndSendFileToGateway(operation);
-        if(!error.IsSuccess())
+        bool isUsingChunkBasedUpload;
+        auto error = owner_.fileSender_->EndSendFileToGateway(operation, operationId, isUsingChunkBasedUpload);
+
+        if (!isUsingChunkBasedUpload)
         {
-            TryComplete(operation->Parent, error);
+            HandleSingleFileUploadCompletion(operation->Parent, error);
+        }
+        else
+        {
+            HandleChunkBasedUploadCompletion(operation->Parent, error);
+        }
+    }
+
+    bool IsRetryableErrorOnFileChunkSendOperation(ErrorCode const &error)
+    {
+        switch (error.ReadValue())
+        {
+            case ErrorCodeValue::SendFailed:
+            case ErrorCodeValue::ConnectionConfirmWaitExpired:
+            case ErrorCodeValue::NotFound:
+            case ErrorCodeValue::HostingServiceTypeNotRegistered:
+            case ErrorCodeValue::OperationCanceled:
+            case ErrorCodeValue::GatewayUnreachable:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    bool IsRetryableErrorOnCommitOperation(ErrorCode const &error)
+    {
+        // This could happen when FSS primary fails over (NotFound) or if there is a missing chunk(InvalidArgument)
+        // If gateway crashes (GatewayNotReachable) or fails over, it would send NotFound error for the non-existent request
+        switch (error.ReadValue())
+        {
+            case ErrorCodeValue::InvalidArgument:
+            case ErrorCodeValue::NotFound:
+            case ErrorCodeValue::HostingServiceTypeNotRegistered:
+            case ErrorCodeValue::OperationCanceled:
+            case ErrorCodeValue::GatewayUnreachable:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    void RetrySendingFile(AsyncOperationSPtr const & thisSPtr, ErrorCode const &error)
+    {
+        owner_.WriteInfo(
+            TraceComponent,
+            owner_.Root.TraceId,
+            "Retrying file send for the operationId:{0} storeRelativePath:{1} error:{2} retryAttempt:{3}",
+            operationId_,
+            storeRelativePath_,
+            error,
+            retryResendFileCount_.load());
+
+        CancelFileCommitUploadTimer();
+        ++retryResendFileCount_;
+        OnStartOperation(thisSPtr);
+        return;
+    }
+
+    void HandleSingleFileUploadCompletion(AsyncOperationSPtr const & thisSPtr, ErrorCode const &error)
+    {
+        if (!error.IsSuccess())
+        {
+            ConvertErrorAndTryComplete(thisSPtr, move(error));
             return;
         }
 
-        auto thisSPtr = operation->Parent;
-        TimerSPtr timer = Timer::Create(
-            "FileUploadTimeout",
-            [this, thisSPtr](TimerSPtr const & timer)
-            {
-                timer->Cancel();
-                TryComplete(thisSPtr, ErrorCodeValue::Timeout);
-            },
-            false);
+        AcquireExclusiveLock lock(lock_);
+        if (completedOrCanceled_) { return; }
+        if (timer_) { return; }
 
-        bool cancelTimer = false;
+        timer_ = Timer::Create(
+            SingleFileUploadTimerTag,
+            [this, thisSPtr](TimerSPtr const & timer)
         {
-            AcquireExclusiveLock lock(lock_);
-            if (completedOrCanceled_.load())
+            timer->Cancel();
+            ConvertErrorAndTryComplete(thisSPtr, ErrorCodeValue::Timeout);
+        },
+            false);
+    }
+
+    void HandleChunkBasedUploadCompletion(AsyncOperationSPtr const & thisSPtr, ErrorCode & error)
+    {
+        // Retry for cases where unable to send the file or FSS returns NotFound because of failover happened while transferring chunks
+        if (IsRetryableErrorOnFileChunkSendOperation(error) &&
+            retryResendFileCount_.load() < ClientConfig::GetConfig().FileUploadResendRetryAttempt)
+        {
+            // This is to make sure we don't aggressively switch to old protocol 
+            // if there is already successful completion using new protocol
+            if (error.IsError(ErrorCodeValue::ConnectionConfirmWaitExpired) && 
+                (owner_.TotalChunkBasedUploads == 0 || 
+                (owner_.TotalChunkBasedUploads > 0 && retryResendFileCount_.load() == ClientConfig::GetConfig().SwitchUploadProtocolResendRetryAttempt)))
             {
-                cancelTimer = true;
+                owner_.WriteInfo(
+                    TraceComponent,
+                    owner_.Root.TraceId,
+                    "Switching to old protocol and resending as we might be targeting older version of the cluster or FSS not accepting chunk based requests for operationId:{0} storeRelativePath:{1} after retryAttempt:{2} totalChunkUpload:{3}",
+                    operationId_,
+                    storeRelativePath_,
+                    retryResendFileCount_.load(),
+                    owner_.TotalChunkBasedUploads);
+
+                // Update protocol to use single file upload only for this file
+                useChunkBasedUpload_.store(false);
+
+                // This changes protocol in the file sender for the remaining files if a certain condition is met
+                if (owner_.fileSender_->SwitchToSingleFileUploadProtocol(true))
+                {
+                    owner_.UseChunkBasedUpload = false;
+                }
             }
             else
             {
-                timer_ = move(timer);
+                owner_.fileSender_->SwitchToSingleFileUploadProtocol(false);
+            }
+
+            owner_.WriteWarning(
+                TraceComponent,
+                owner_.Root.TraceId,
+                "Resending the file again for operationId:{0} storeRelativePath:{1} after a delay of {2} seconds, retryAttempt:{3}",
+                operationId_,
+                storeRelativePath_,
+                ClientConfig::GetConfig().FileUploadResendRetryBackoffInterval,
+                retryResendFileCount_.load());
+
+            ++retryResendFileCount_;
+            error = TryScheduleRetry(
+                thisSPtr,
+                [this](AsyncOperationSPtr const & thisSPtr) { this->OnStartOperation(thisSPtr); },
+                ClientConfig::GetConfig().FileUploadResendRetryBackoffInterval);
+
+            if (!error.IsSuccess())
+            {
+                ConvertErrorAndTryComplete(thisSPtr, move(error));
+            }
+
+            return;
+        }
+        else if (!error.IsSuccess())
+        {
+            if (error.IsError(ErrorCodeValue::SendFailed))
+            {
+                owner_.WriteWarning(
+                    TraceComponent,
+                    owner_.Root.TraceId,
+                    "Tried sending the file multiple times but didn't succeed. operationId:{0} storeRelativePath:{1} after a delay of {2} second, retryAttempt:{3}, chunkUpload:{4} error:{5}",
+                    operationId_,
+                    storeRelativePath_,
+                    ClientConfig::GetConfig().RetryBackoffInterval,
+                    retryResendFileCount_.load(),
+                    useChunkBasedUpload_.load(),
+                    error);
+            }
+            else
+            {
+                owner_.WriteWarning(
+                    TraceComponent,
+                    owner_.Root.TraceId,
+                    "Sending file failed for OperationId:{0} storeRelativePath:{1} chunkUpload:{2} error:{3}",
+                    operationId_,
+                    storeRelativePath_,
+                    useChunkBasedUpload_.load(),
+                    error);
+            }
+
+            owner_.fileSender_->SwitchToSingleFileUploadProtocol(false);
+            SendFileUploadActionMessage(thisSPtr, FileTransferTcpMessage::FileUploadDeleteSessionAction);
+            ConvertErrorAndTryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        // Success case
+        {
+            AcquireExclusiveLock lock(lock_);
+            if (completedOrCanceled_) { return; }
+            owner_.fileSender_->SwitchToSingleFileUploadProtocol(false);
+            gotFileUploadCommitResponse_.store(false);
+            if (timer_) { return; }
+
+            commitResponseSendCount_.store(0);
+            timer_ = Timer::Create(
+                CommitSendTimerTag,
+                [this, thisSPtr](TimerSPtr const &)
+            {
+                if (!gotFileUploadCommitResponse_.load())
+                {
+                    SendFileUploadActionMessage(thisSPtr, FileTransferTcpMessage::FileUploadCommitAction);
+                }
+            },
+                false);
+
+            auto interval = min<int64>(
+                (int64)(commitResponseSendCount_.load() + 1) * ClientConfig::GetConfig().FileUploadCommitRetryInterval.TotalMilliseconds(), 
+                timeoutHelper_.GetRemainingTime().TotalMilliseconds());
+            timer_->Change(TimeSpan::Zero, TimeSpan::FromMilliseconds(static_cast<double>(interval)));
+        }
+    }
+
+    void AddRequiredHeaders(ClientServerRequestMessage & message)
+    {
+        message.Headers.Replace(TimeoutHeader(timeoutHelper_.GetRemainingTime()));
+        message.Headers.Replace(*ClientProtocolVersionHeader::CurrentVersionHeader);
+        message.Headers.Add(MessageIdHeader());
+    }
+
+    void SendFileUploadActionMessage(AsyncOperationSPtr const & thisSPtr, Common::GlobalWString const &fileUploadActionString)
+    {
+        ErrorCode error;
+        bool done = false, sendFailure = false;
+        int retryAttempt = 0;
+        do
+        {
+            {
+                AcquireExclusiveLock lock(lock_);
+                if (completedOrCanceled_) { return; }
+            }
+
+            ClientServerRequestMessageUPtr message;
+            if (fileUploadActionString == FileTransferTcpMessage::FileUploadDeleteSessionAction)
+            {
+                message = FileTransferTcpMessage::GetFileUploadDeleteSessionMessage(
+                    operationId_,
+                    Actor::FileReceiver);
+            }
+            else if (fileUploadActionString == FileTransferTcpMessage::FileUploadCommitAction)
+            {
+                message = FileTransferTcpMessage::GetFileUploadCommitMessage(
+                    operationId_,
+                    Actor::FileReceiver);
+            }
+            else if (fileUploadActionString == FileTransferTcpMessage::FileUploadCommitAckAction)
+            {
+                message = FileTransferTcpMessage::GetFileUploadCommitAckMessage(
+                    operationId_,
+                    Actor::FileReceiver);
+            }
+            else
+            {
+                owner_.WriteWarning(
+                    TraceComponent,
+                    owner_.Root.TraceId,
+                    "Unexpected action to send for operationId:{0} storeRelativePath:{1}",
+                    operationId_,
+                    storeRelativePath_);
+                TESTASSERT_IF(true, "Unknown upload action {0} in FileTransferClient::SendFileUploadActionMessage", fileUploadActionString);
+                return;
+            }
+
+            AddRequiredHeaders(*message);
+            if (owner_.connection_)
+            {
+                unique_ptr<GatewayDescription> unused;
+                error = owner_.connection_->SendOneWayToGateway(move(message), unused, timeoutHelper_.GetRemainingTime());
+            }
+            else
+            {
+                error = ErrorCodeValue::CannotConnect;
+            }
+
+            if (error.IsSuccess())
+            {
+                if (fileUploadActionString == FileTransferTcpMessage::FileUploadCommitAction)
+                {
+                    owner_.WriteNoise(
+                        TraceComponent,
+                        owner_.Root.TraceId,
+                        "Sending message action:{0} for the {1} time for operationId:{2} storeRelativePath:{3}",
+                        fileUploadActionString,
+                        commitResponseSendCount_.load(),
+                        operationId_,
+                        storeRelativePath_);
+
+                    ++commitResponseSendCount_;
+                }
+
+                done = true;
+            }
+            else if (IsRetryable(error))
+            {
+                if (retryAttempt < ClientConfig::GetConfig().SendMessageActionRetryAttempt)
+                {
+                    Sleep(static_cast<DWORD>(ClientConfig::GetConfig().SendMessageActionRetryBackoffInterval.TotalMilliseconds()));
+                    ++retryAttempt;
+                    done = false;
+                }
+                else
+                {
+                    done = true;
+                }
+
+            }
+            else
+            {
+                sendFailure = true;
+                done = true;
+            }
+        } while (!done);
+
+        if (sendFailure)
+        {
+            owner_.WriteWarning(
+                TraceComponent,
+                owner_.Root.TraceId,
+                "Could not send {0} due to SendOneWayToGateway failed with error:{1}. OperationId:{2} storeRelativePath:{3}",
+                fileUploadActionString,
+                error,
+                operationId_,
+                storeRelativePath_);
+
+            // Could not send message and hence cancel the operation on FileSender
+            AsyncOperationSPtr operation;
+            {
+                AcquireExclusiveLock lock(this->lock_);
+                operation = move(senderAsyncOperation_);
+            }
+
+            if (operation) { operation->Cancel(); }
+
+            ConvertErrorAndTryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        return;
+    }
+
+    void CancelFileCommitUploadTimer()
+    {
+        TimerSPtr timer;
+        {
+            AcquireExclusiveLock lock(lock_);
+            if (timer_)
+            {
+                timer = move(timer_);
             }
         }
 
-        if (cancelTimer)
+        if (timer)
         {
             timer->Cancel();
         }
+    }
+
+    void ConvertErrorAndTryComplete(AsyncOperationSPtr const & thisSPtr, ErrorCode const &error)
+    {
+        wstring msg;
+
+        if (error.IsSuccess())
+        {
+            owner_.IncrementChunkUpload();
+        }
+
+        switch (error.ReadValue())
+        {
+            case ErrorCodeValue::SendFailed:
+            {
+                msg = StringResource::Get(IDS_FSS_CLIENT_SendChunkFailure);
+                break;
+            }
+            case ErrorCodeValue::TransportSendQueueFull:
+            {
+                msg = wformatString(StringResource::Get(IDS_FSS_CLIENT_UnableToUploadFile), this->storeRelativePath_);
+                break;
+            }
+            case ErrorCodeValue::OperationCanceled:
+            {
+                msg = StringResource::Get(IDS_FSS_CLIENT_OperationCanceled);
+                break;
+            }
+            case ErrorCodeValue::ConnectionConfirmWaitExpired:
+            {
+                msg = StringResource::Get(IDS_FSS_CLIENT_ConnectionConfirmWaitExpired);
+                break;
+            }
+            case ErrorCodeValue::OperationFailed:
+            {
+                msg = wformatString(StringResource::Get(IDS_FSS_CLIENT_OperationFailed), this->storeRelativePath_);
+                break;
+            }
+            default:
+            {
+                TryComplete(thisSPtr, move(error));
+                return;
+            }
+        }
+
+        ErrorCode convertedError(ErrorCodeValue::OperationFailed, move(msg));
+        TryComplete(thisSPtr, move(convertedError));
+        return;
     }
 
 private:
@@ -287,9 +758,12 @@ private:
     wstring const storeRelativePath_;
     bool const shouldOverwrite_;
     IFileStoreServiceClientProgressEventHandlerPtr progressHandler_;
-
     TimerSPtr timer_;
     AsyncOperationSPtr senderAsyncOperation_;
+    Common::atomic_bool gotFileUploadCommitResponse_;
+    Common::atomic_long commitResponseSendCount_;
+    Common::atomic_long retryResendFileCount_;
+    Common::atomic_bool useChunkBasedUpload_;
 };
 
 class FileTransferClient::DownloadAsyncOperation
@@ -341,7 +815,7 @@ protected:
         bool cancelOperation = true;
         {
             AcquireExclusiveLock lock(this->lock_);
-            if (!completedOrCanceled_.load())
+            if (!completedOrCanceled_)
             {
                 receiverAsyncOperation_ = operation;
                 cancelOperation = false;
@@ -399,7 +873,7 @@ private:
         {
             error = TryScheduleRetry(
                 thisSPtr,
-                [this](AsyncOperationSPtr const & thisSPtr) { this->SendDownloadMessage(thisSPtr); });               
+                [this](AsyncOperationSPtr const & thisSPtr) { this->SendDownloadMessage(thisSPtr); });
         }
 
         if (!error.IsSuccess())
@@ -459,6 +933,7 @@ private:
 
 FileTransferClient::FileTransferClient(
     ClientConnectionManagerSPtr const & connection,
+    bool useChunkBasedUpload,
     ComponentRoot const & root)
     : RootedObject(root)
     , connection_(connection)
@@ -467,22 +942,25 @@ FileTransferClient::FileTransferClient(
     , fileReceiver_()
     , pendingOperations_()
 {
+    useChunkBasedUpload_ = useChunkBasedUpload;
     fileSender_ = FileSender::CreateOnClient(
         connection_,
         true,
         this->Root.TraceId,
-        this->Root);
+        this->Root,
+        useChunkBasedUpload_);
 
     fileReceiver_ = make_unique<FileReceiver>(
         transport_,
         true,
         L"" /*working dir*/,
-        this->Root.TraceId,        
+        this->Root.TraceId,
         this->Root);
 }
 
 ErrorCode FileTransferClient::OnOpen()
-{  
+{
+    totalChunkBasedUploads_.store(0);
     auto error = fileSender_->Open();
     if (!error.IsSuccess())
     {

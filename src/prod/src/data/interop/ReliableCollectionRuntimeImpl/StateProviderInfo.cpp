@@ -79,30 +79,37 @@ NTSTATUS StateProviderInfo::ToPublicApi(
 NTSTATUS StateProviderInfo::Encode(
     __out KString::SPtr& encodedString)
 {
-    KString::SPtr result;
-    NTSTATUS status = KString::Create(result, GetThisAllocator());
-    if (!NT_SUCCESS(status))
-        return status;
+    if (Kind == StateProviderKind::ReliableDictionary_Compat)
+    { 
+        encodedString = LangMetadata;
+    }
+    else
+    {
+        KString::SPtr result;
+        NTSTATUS status = KString::Create(result, GetThisAllocator());
+        if (!NT_SUCCESS(status))
+            return status;
 
-    if (!result->AppendChar(STATE_PROVIDER_ENCODED_INFO_MARKER))
-        return STATUS_INSUFFICIENT_RESOURCES;
+        if (!result->AppendChar(STATE_PROVIDER_ENCODED_INFO_MARKER))
+            return STATUS_INSUFFICIENT_RESOURCES;
 
-    if (!result->AppendChar(version_))
-        return STATUS_INSUFFICIENT_RESOURCES;
+        if (!result->AppendChar(version_))
+            return STATUS_INSUFFICIENT_RESOURCES;
 
-    if (!result->AppendChar((WCHAR)kind_))
-        return STATUS_INSUFFICIENT_RESOURCES;
+        if (!result->AppendChar((WCHAR)kind_))
+            return STATUS_INSUFFICIENT_RESOURCES;
 
-    if (lang_ != nullptr && !result->Concat(const_cast<KString &>(*lang_)))
-        return STATUS_INSUFFICIENT_RESOURCES;
+        if (lang_ != nullptr && !result->Concat(const_cast<KString &>(*lang_)))
+            return STATUS_INSUFFICIENT_RESOURCES;
 
-    if (!result->AppendChar(L'\n'))
-        return STATUS_INSUFFICIENT_RESOURCES;
+        if (!result->AppendChar(L'\n'))
+            return STATUS_INSUFFICIENT_RESOURCES;
 
-    if (langMetadata_ != nullptr && !result->Concat(const_cast<KString &>(*langMetadata_)))
-        return STATUS_INSUFFICIENT_RESOURCES;
+        if (langMetadata_ != nullptr && !result->Concat(const_cast<KString &>(*langMetadata_)))
+            return STATUS_INSUFFICIENT_RESOURCES;
 
-    encodedString = result;
+        encodedString = result;
+    }
 
     return STATUS_SUCCESS;
 }
@@ -180,7 +187,7 @@ NTSTATUS StateProviderInfo::Decode(
         created->version_ = L'\1';
 
         if (wcsncmp(ptr, L"Microsoft.ServiceFabric.Data.Collections.DistributedDictionary", 62) == 0)
-            created->kind_ = StateProviderKind::Store;
+            created->kind_ = StateProviderKind::ReliableDictionary_Compat;
         else if (wcsncmp(ptr, L"Microsoft.ServiceFabric.Data.Collections.ReliableConcurrentQueue.ReliableConcurrentQueue", 88) == 0)
             created->kind_ = StateProviderKind::ConcurrentQueue;
         else if (wcsncmp(ptr, L"Microsoft.ServiceFabric.Data.Collections.DistributedQueue", 57) == 0)

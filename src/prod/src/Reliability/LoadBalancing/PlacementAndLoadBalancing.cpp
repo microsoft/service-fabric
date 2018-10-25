@@ -23,6 +23,7 @@
 #include "client/FabricClientInternalSettingsHolder.h"
 #include "client/HealthReportingComponent.h"
 #include "client/HealthReportingTransport.h"
+#include "client/client.h"
 
 using namespace std;
 using namespace Common;
@@ -86,6 +87,7 @@ PlacementAndLoadBalancing::PlacementAndLoadBalancing(
     vector<FailoverUnitDescription> && failoverUnits,
     vector<LoadOrMoveCostDescription> && loadOrMoveCosts,
     Client::HealthReportingComponentSPtr const & healthClient,
+    Api::IServiceManagementClientPtr const& serviceManagementClient,
     Common::ConfigEntry<bool> const & isSingletonReplicaMoveAllowedDuringUpgradeEntry)
     : RootedObject(root),
     failoverManager_(failoverManager),
@@ -101,6 +103,7 @@ PlacementAndLoadBalancing::PlacementAndLoadBalancing(
     nextNodeToBeTraced_(UINT64_MAX),
     nextApplicationToBeTraced_(0),
     healthClient_(healthClient),
+    serviceManagementClient_(serviceManagementClient),
     droppedMovementQueue_(),
     nodePropertyConstraintKeyParams_(),
     expressionCache_(nullptr),
@@ -120,12 +123,14 @@ PlacementAndLoadBalancing::PlacementAndLoadBalancing(
     domainToSplit_(L""),
     settings_(),
     rgDomainId_(),
+    defaultDomainId_(Guid::NewGuid().ToString()),
     tracingMovementsJobQueueUPtr_(nullptr),
     tracingJobQueueFinished_(false),
     testTracingLock_(),
     testTracingBarrier_(testTracingLock_),
     lastStatisticsTrace_(StopwatchTime::Zero),
-    rgStatistics_()
+    plbStatistics_(),
+    WriteWarning(isMaster ? Common::TraceTaskCodes::PLBM : Common::TraceTaskCodes::PLB, LogLevel::Warning)
 {
     Trace.PLBConstruct(static_cast<int64>(nodes.size()), static_cast<int64>(serviceTypes.size()), static_cast<int64>(services.size()), static_cast<int64>(failoverUnits.size()), static_cast<int64>(loadOrMoveCosts.size()));
 
@@ -141,7 +146,7 @@ PlacementAndLoadBalancing::PlacementAndLoadBalancing(
         {
             upNodeCount_++;
         }
-        rgStatistics_.AddNode(*itNode);
+        plbStatistics_.AddNode(*itNode);
         nodes_.push_back(Node(move(*itNode)));
         if (nodes_.size() == 1) { nextNodeToBeTraced_ = 0; }
     }
@@ -271,7 +276,7 @@ void PlacementAndLoadBalancing::ProcessUpdateNode(NodeDescription && nodeDescrip
     if (nodeDescription.NodeIndex == UINT64_MAX)
     {
         // New node added to PLB
-        rgStatistics_.AddNode(nodeDescription);
+        plbStatistics_.AddNode(nodeDescription);
         UpdateTotalClusterCapacity(nodeDescription, nodeDescription, true);
 
         if (nodeDescription.IsUp)
@@ -294,15 +299,14 @@ void PlacementAndLoadBalancing::ProcessUpdateNode(NodeDescription && nodeDescrip
 
         if (nodes_[nodeIndex].NodeDescriptionObj.IsUp)
         {
-            ForEachDomain([=](ServiceDomain & d) {d.OnNodeUp(nodeIndex, timeStamp);});
+            ForEachDomain([=](ServiceDomain & d) {d.OnNodeUp(nodeIndex, timeStamp); });
         }
     }
     else
     {
         ASSERT_IF((nodeDescription.NodeInstance < nodes_[nodeIndex].NodeDescriptionObj.NodeInstance) && (!settings_.DummyPLBEnabled), "Invalid node instance {0}", nodeDescription);
 
-        rgStatistics_.RemoveNode(nodes_[nodeIndex].NodeDescriptionObj);
-        rgStatistics_.AddNode(nodeDescription);
+        plbStatistics_.UpdateNode(nodes_[nodeIndex].NodeDescriptionObj, nodeDescription);
         UpdateTotalClusterCapacity(nodes_[nodeIndex].NodeDescriptionObj, nodeDescription, false);
 
         if (nodeDescription.IsUp && !nodes_[nodeIndex].NodeDescriptionObj.IsUp)
@@ -320,11 +324,11 @@ void PlacementAndLoadBalancing::ProcessUpdateNode(NodeDescription && nodeDescrip
         {
             if (!nodeDescription.IsUp)
             {
-                ForEachDomain([=](ServiceDomain & d) {d.OnNodeDown(nodeIndex, timeStamp);});
+                ForEachDomain([=](ServiceDomain & d) {d.OnNodeDown(nodeIndex, timeStamp); });
             }
             else if (nodeDescription.IsDeactivated != nodes_[nodeIndex].NodeDescriptionObj.IsDeactivated)
             {
-                ForEachDomain([=](ServiceDomain & d) {d.OnNodeChanged(nodeIndex, timeStamp);});
+                ForEachDomain([=](ServiceDomain & d) {d.OnNodeChanged(nodeIndex, timeStamp); });
             }
 
         }
@@ -332,13 +336,13 @@ void PlacementAndLoadBalancing::ProcessUpdateNode(NodeDescription && nodeDescrip
         {
             if (nodes_[nodeIndex].NodeDescriptionObj.IsUp)
             {
-                ForEachDomain([=](ServiceDomain & d) {d.OnNodeDown(nodeIndex, timeStamp);});
+                ForEachDomain([=](ServiceDomain & d) {d.OnNodeDown(nodeIndex, timeStamp); });
             }
 
-            ForEachDomain([=](ServiceDomain & d) {d.OnNodeUp(nodeIndex, timeStamp);});
+            ForEachDomain([=](ServiceDomain & d) {d.OnNodeUp(nodeIndex, timeStamp); });
             if (!nodeDescription.IsUp)
             {
-                ForEachDomain([=](ServiceDomain & d) {d.OnNodeDown(nodeIndex, timeStamp);});
+                ForEachDomain([=](ServiceDomain & d) {d.OnNodeDown(nodeIndex, timeStamp); });
             }
         }
 
@@ -353,6 +357,19 @@ void PlacementAndLoadBalancing::ProcessUpdateNode(NodeDescription && nodeDescrip
     StopSearcher();
 }
 
+void PlacementAndLoadBalancing::ProcessUpdateNodeImages(Federation::NodeId const& nodeId, vector<wstring>&& nodeImages)
+{
+    auto itNodeId = nodeToIndexMap_.find(nodeId);
+    if (itNodeId != nodeToIndexMap_.end())
+    {
+        // node should always exist in PLB
+        auto nodeIndex = itNodeId->second;
+        nodes_[nodeIndex].UpdateNodeImages(move(nodeImages));
+        Trace.UpdateNodeImages(wformatString(
+            "Updating node {0} with images {1}", nodeId, nodes_[nodeIndex].NodeImages));
+    }
+}
+
 Common::ErrorCode PlacementAndLoadBalancing::InternalUpdateServicePackageCallerHoldsLock(ServicePackageDescription && description, bool & changed)
 {
     auto itServicePackageId = servicePackageToIdMap_.find(description.ServicePackageIdentifier);
@@ -361,7 +378,7 @@ Common::ErrorCode PlacementAndLoadBalancing::InternalUpdateServicePackageCallerH
     if (itServicePackageId == servicePackageToIdMap_.end())
     {
         // Bookkeeping for statistics
-        rgStatistics_.AddServicePackage(description);
+        plbStatistics_.AddServicePackage(description);
         auto servicePackageId = nextServicePackageIndex_;
         servicePackageToIdMap_.insert(make_pair(description.ServicePackageIdentifier, nextServicePackageIndex_++));
         itServicePackage = servicePackageTable_.insert(make_pair(servicePackageId, ServicePackage(move(description)))).first;
@@ -381,7 +398,7 @@ Common::ErrorCode PlacementAndLoadBalancing::InternalUpdateServicePackageCallerH
                 bool isNewSPGoverned = description.RequiredResources.size() > 0;
                 auto resources = description.CorrectedRequiredResources;
 
-                rgStatistics_.UpdateServicePackage(itServicePackage->second.Description, description);
+                plbStatistics_.UpdateServicePackage(itServicePackage->second.Description, description);
 
                 auto UpdateServices = [&]()
                 {
@@ -466,7 +483,7 @@ void PlacementAndLoadBalancing::InternalDeleteServicePackageCallerHoldsLock(Serv
         auto itServicePackage = servicePackageTable_.find(itServicePackageId->second);
         if (itServicePackage != servicePackageTable_.end())
         {
-            rgStatistics_.RemoveServicePackage(itServicePackage->second.Description);
+            plbStatistics_.RemoveServicePackage(itServicePackage->second.Description);
             servicePackageTable_.erase(itServicePackage);
         }
         servicePackageToIdMap_.erase(itServicePackageId);
@@ -889,7 +906,7 @@ Common::ErrorCode PlacementAndLoadBalancing::UpdateApplication(ApplicationDescri
 
             auto const& services = itApplication->second.Services;
             Uint64UnorderedMap<Service>::const_iterator itAdjacentService;
-            for (auto itServiceName = services.begin(); itServiceName != services.end();itServiceName++)
+            for (auto itServiceName = services.begin(); itServiceName != services.end(); itServiceName++)
             {
                 auto const& serviceId = GetServiceId(*itServiceName);
                 if (serviceId != 0)
@@ -1160,7 +1177,7 @@ void PlacementAndLoadBalancing::ChangeServiceMetricsForApplication(uint64 applic
                         metricConnections_.AddOrRemoveMetricAffinity(itService->second.ServiceDesc.Metrics, applicationMetrics, metrics.empty());
                     }
                     else
-                    //otherwise we disconnect/connect the surounding services...
+                        //otherwise we disconnect/connect the surounding services...
                     {
                         if (it == relatedServices.begin())
                         {
@@ -1328,7 +1345,7 @@ Common::ErrorCode PlacementAndLoadBalancing::ResetPartitionLoad(Reliability::Fai
                 primaryLoadList.push_back(LoadMetric(wstring(iter->Name), iter->PrimaryDefaultLoad));
                 secondaryLoadList.push_back(LoadMetric(wstring(iter->Name), iter->SecondaryDefaultLoad));
             }
-            else{
+            else {
                 secondaryLoadList.push_back(LoadMetric(wstring(iter->Name), iter->PrimaryDefaultLoad));
             }
         }
@@ -1492,6 +1509,7 @@ void PlacementAndLoadBalancing::Refresh(StopwatchTime now)
     Stopwatch snapshotStopwatch;
     Stopwatch engineStopwatch;
     Stopwatch endRefreshStopwatch;
+    Stopwatch autoScalingStopwatch;
 
     refreshStopwatch.Start();
     durationStopwatch.Start();
@@ -1521,8 +1539,25 @@ void PlacementAndLoadBalancing::Refresh(StopwatchTime now)
         ProcessPendingUpdatesCallerHoldsLock(now);
         pendingUpdatesStopwatch.Stop();
     }
+
+    autoScalingStopwatch.Start();
+    {
+        AcquireReadLock grab(autoScalingFailedOperationsVectorsLock_);
+        if (!pendingAutoScalingFailedRepartitionsForRefresh_.empty())
+        {
+            TRACE_WARNING_AND_TESTASSERT("AutoScaling", "pendingAutoScalingFailedRepartitionsForRefresh_ is not empty in Refresh().");
+            pendingAutoScalingFailedRepartitionsForRefresh_.clear();
+        }
+        pendingAutoScalingFailedRepartitionsForRefresh_.swap(pendingAutoScalingFailedRepartitions_);
+    }
+    autoScalingStopwatch.Stop();
+
     {
         AcquireReadLock grab(lock_);
+
+        autoScalingStopwatch.Start();
+        ProcessFailedAutoScalingRepartitionsCallerHoldsLock();
+        autoScalingStopwatch.Stop();
 
         beginRefreshStopwatch.Start();
         BeginRefresh(searcherDataList, stats, now);
@@ -1534,6 +1569,10 @@ void PlacementAndLoadBalancing::Refresh(StopwatchTime now)
 
         TracePeriodical(stats, now);
     }
+
+    autoScalingStopwatch.Start();
+    ProcessAutoScalingRepartitioning();
+    autoScalingStopwatch.Stop();
 
     engineStopwatch.Start();
     StopwatchTime engineStartTime = Stopwatch::Now();
@@ -1610,8 +1649,8 @@ void PlacementAndLoadBalancing::Refresh(StopwatchTime now)
             size_t numBatch = 1;
             if (config.UseBatchPlacement && pl != nullptr &&
                 pl->NewReplicaCount > config.PlacementReplicaCountPerBatch &&
-                (itData->action_.Action == PLBSchedulerActionType::Creation || itData->action_.Action == PLBSchedulerActionType::CreationWithMove)
-                )
+                (itData->action_.Action == PLBSchedulerActionType::NewReplicaPlacement ||
+                    itData->action_.Action == PLBSchedulerActionType::NewReplicaPlacementWithMove))
             {
                 // The batch index vector size doesn't include 0 as the starting index, so it is 1 less than the number of batches
                 // For example, if new replica count is less than the config, index vec is empty and batch count is 1.
@@ -1692,8 +1731,8 @@ void PlacementAndLoadBalancing::Refresh(StopwatchTime now)
     {
         lastStatisticsTrace_ = now;
         // Populate the loads and capacities.
-        rgStatistics_.Update(*snapshotAfterRefresh);
-        PublicTrace.ResourceGovernanceStatistics(rgStatistics_);
+        plbStatistics_.Update(*snapshotAfterRefresh);
+        plbStatistics_.TraceStatistics(PublicTrace);
     }
 
     {
@@ -1725,25 +1764,13 @@ void PlacementAndLoadBalancing::Refresh(StopwatchTime now)
     refreshStopwatch.Stop();
 
     plbRefreshTimers_.msPendingUpdatesTime = pendingUpdatesStopwatch.ElapsedMilliseconds;
-    plbRefreshTimers_.msBeginRefreshTime   = beginRefreshStopwatch.ElapsedMilliseconds;
-    plbRefreshTimers_.msSnapshotTime       = snapshotStopwatch.ElapsedMilliseconds;
-    plbRefreshTimers_.msEndRefreshTime     = endRefreshStopwatch.ElapsedMilliseconds;
-    plbRefreshTimers_.msRefreshTime        = refreshStopwatch.ElapsedMilliseconds;
-    
-    plbRefreshTimers_.CalculateRemainderTime();
+    plbRefreshTimers_.msBeginRefreshTime = beginRefreshStopwatch.ElapsedMilliseconds;
+    plbRefreshTimers_.msSnapshotTime = snapshotStopwatch.ElapsedMilliseconds;
+    plbRefreshTimers_.msEndRefreshTime = endRefreshStopwatch.ElapsedMilliseconds;
+    plbRefreshTimers_.msRefreshTime = refreshStopwatch.ElapsedMilliseconds;
+    plbRefreshTimers_.msAutoScalingTime = autoScalingStopwatch.ElapsedMilliseconds;
 
-    // Used for testing and debugging purposes
-    if (PLBConfig::GetConfig().PrintRefreshTimers)
-    {
-        wcout << L"Pending updates time = " << plbRefreshTimers_.msPendingUpdatesTime << "ms" << endl;
-        wcout << L"Begin refresh time = " << plbRefreshTimers_.msBeginRefreshTime << "ms" << endl;
-        wcout << L"End refresh time = " << plbRefreshTimers_.msEndRefreshTime << "ms" << endl;
-        wcout << L"Snapshot time = " << plbRefreshTimers_.msSnapshotTime << "ms" << endl;
-        wcout << L"Engine time = " << plbRefreshTimers_.msTimeCountForEngine << "ms" << endl;
-        wcout << L"Remainder = " << plbRefreshTimers_.msRemainderTime << "ms" << endl;
-        wcout << L"Total time = " << plbRefreshTimers_.msRefreshTime << "ms" << endl;
-        wcout << endl;
-    }
+    plbRefreshTimers_.CalculateRemainderTime();
 
     Trace.PLBRefreshTiming(
         plbRefreshTimers_.msRefreshTime,
@@ -1752,6 +1779,7 @@ void PlacementAndLoadBalancing::Refresh(StopwatchTime now)
         plbRefreshTimers_.msEndRefreshTime,
         plbRefreshTimers_.msSnapshotTime,
         plbRefreshTimers_.msTimeCountForEngine,
+        plbRefreshTimers_.msAutoScalingTime,
         plbRefreshTimers_.msRemainderTime);
 }
 
@@ -1819,12 +1847,13 @@ void PlacementAndLoadBalancing::UpdateNextActionPeriod(Common::TimeSpan nextActi
 
 void PlacementAndLoadBalancing::PLBRefreshTimers::CalculateRemainderTime()
 {
-    uint64 msNonRefreshTime = 
+    uint64 msNonRefreshTime =
         msPendingUpdatesTime +
         msBeginRefreshTime +
         msEndRefreshTime +
         msSnapshotTime +
-        msTimeCountForEngine;
+        msTimeCountForEngine +
+        msAutoScalingTime;
 
     // Due to an imprecise nature of timers, we need to guard against a possible uint underflow here
     msRemainderTime = msRefreshTime > msNonRefreshTime ? msRefreshTime - msNonRefreshTime : 0;
@@ -1836,6 +1865,7 @@ void PlacementAndLoadBalancing::PLBRefreshTimers::Reset()
     msBeginRefreshTime = 0;
     msEndRefreshTime = 0;
     msSnapshotTime = 0;
+    msAutoScalingTime = 0;
     msTimeCountForEngine = 0;
     msRemainderTime = 0;
     msRefreshTime = 0;
@@ -1955,7 +1985,7 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
         // This is a new service, we need to assign next service ID to it.
         serviceDescription.ServiceId = nextServiceId_++;
         serviceToIdMap_.insert(make_pair(serviceDescription.Name, serviceDescription.ServiceId));
-        rgStatistics_.AddService(serviceDescription);
+        plbStatistics_.AddService(serviceDescription);
     }
     else
     {
@@ -2021,7 +2051,9 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
             {
                 PLBConfig const& config = PLBConfig::GetConfig();
                 bool isSingleReplicaPerHost = serviceDescription.ServicePackageActivationMode == ServiceModel::ServicePackageActivationMode::Enum::ExclusiveProcess;
-                //we add the rg metric
+                // Always add default metrics.
+                serviceDescription.AddDefaultMetrics();
+                // Resources should be added as metrics in case that SP is governed.
                 for (auto & rgResource : itServicePackage->second.Description.CorrectedRequiredResources)
                 {
                     double rgMetricWeight = (rgResource.first == ServiceModel::Constants::SystemMetricNameCpuCores) ?
@@ -2046,17 +2078,23 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
     {
         if (appIt != applicationTable_.end())
         {
-            ServicePackageDescription description(ServiceModel::ServicePackageIdentifier(serviceDescription.ServicePackageIdentifier), std::map<std::wstring, double>());
+            ServicePackageDescription description(
+                ServiceModel::ServicePackageIdentifier(serviceDescription.ServicePackageIdentifier),
+                std::map<std::wstring, double>(),
+                std::vector<std::wstring>());
+
             auto servicePackageId = nextServicePackageIndex_;
             serviceDescription.ServicePackageId = servicePackageId;
             servicePackageToIdMap_.insert(make_pair(description.ServicePackageIdentifier, nextServicePackageIndex_++));
             itServicePackage = servicePackageTable_.insert(make_pair(servicePackageId, ServicePackage(move(description)))).first;
             appIt->second.AddServicePackage(itServicePackage->second.Description);
+            plbStatistics_.AddServicePackage(itServicePackage->second.Description);
             Trace.UpdateServicePackage(itServicePackage->second.Description.Name, itServicePackage->second.Description);
         }
     }
 
-    //this will add default metrics in case we did not add any RG metrics and the service does not report anything
+    // This will add default metrics in case that service does not report any other metric.
+    // In case that service uses RG, default metrics were added above.
     serviceDescription.AddDefaultMetrics();
 
     // If service is stateful singleton replica, align primary and secondary default loads
@@ -2123,7 +2161,7 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
 
     PLBConfig & config = PLBConfig::GetConfig();
     // we take a copy of the metrics instead of reference since
-    // we can use it later for reattaching FU's in case the service is being redefined.
+    // we can use it later for reattaching FT's in case the service is being redefined.
     vector<ServiceMetric> metrics = serviceDescription.Metrics;
     ASSERT_IF(metrics.empty(), "Service metrics should not be empty");
     //store a copy of existing failoverUnits and original metrics
@@ -2134,6 +2172,11 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
     bool areRelatedFailoverUnitsStateful = false;
     //freshly affinitized as child, but parent hasn't been created yet.
     bool isParentAbsent = false;
+
+    bool isScalingPolicyChanged = false;
+    // This is used for scaling based on number of partitions
+    Common::StopwatchTime serviceScalingExpiry = Common::StopwatchTime::Zero;
+    int partitionCountChange = 0;
 
     //In case of redefinition, we will execute a deleteService() to clear all info. This deleteservice won't split any domains though.
     if (!isNewService)
@@ -2149,8 +2192,22 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
             auto itService = itServiceDomain->second.Services.find(serviceDescription.ServiceId);
             if (itService != itServiceDomain->second.Services.end())
             {
+                serviceScalingExpiry = itService->second.NextAutoScaleCheck;
                 ServiceDescription const& originalServiceDescription = itService->second.ServiceDesc;
+                partitionCountChange = serviceDescription.PartitionCount - originalServiceDescription.PartitionCount;
                 originalMetrics = originalServiceDescription.Metrics;
+
+                plbStatistics_.UpdateService(originalServiceDescription, serviceDescription);
+
+                // Check if FTs will have to be checked and updated for AS
+                if (serviceDescription.IsAutoScalingDefined != originalServiceDescription.IsAutoScalingDefined)
+                {
+                    isScalingPolicyChanged = true;
+                }
+                else if (serviceDescription.IsAutoScalingDefined)
+                {
+                    isScalingPolicyChanged = serviceDescription.AutoScalingPolicy != originalServiceDescription.AutoScalingPolicy;
+                }
 
                 //inquires whether the affinity relationship was changed
 
@@ -2357,7 +2414,7 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
 
         if (!itMetric->IsBuiltIn && !itMetric->IsMetricOfDefaultServices() &&
             (config.MetricBalancingThresholds.find(itMetric->Name) == config.MetricBalancingThresholds.end() ||
-            config.MetricActivityThresholds.find(itMetric->Name) == config.MetricActivityThresholds.end()))
+                config.MetricActivityThresholds.find(itMetric->Name) == config.MetricActivityThresholds.end()))
         {
             // Trace warning that metric does not have activity or balancing threshold
             if (traceDetail)
@@ -2397,7 +2454,39 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
         AddDependedServiceToDomain(serviceDescription.AffinitizedService, itNewDomain);
     }
     auto serviceId = serviceDescription.ServiceId;
+
+    if (isScalingPolicyChanged || isNewService)
+    {
+        if (serviceDescription.IsAutoScalingDefined)
+        {
+            if (serviceDescription.AutoScalingPolicy.IsServiceScaled())
+            {
+                serviceScalingExpiry = Stopwatch::Now() + serviceDescription.AutoScalingPolicy.GetScalingInterval();
+            }
+            else
+            {
+                serviceScalingExpiry = Common::StopwatchTime::Zero;
+            }
+        }
+        else
+        {
+            serviceScalingExpiry = Common::StopwatchTime::Zero;
+        }
+    }
+
     AddServiceToDomain(move(serviceDescription), itNewDomain);
+
+    AutoScaler & autoScaler = itNewDomain->second.AutoScalerComponent;
+    autoScaler.AddService(serviceId, serviceScalingExpiry);
+    autoScaler.UpdateServicePartitionCount(serviceId, partitionCountChange);
+
+    auto serviceIt = itNewDomain->second.Services.find(serviceId);
+    // Keep this updated
+    if (serviceIt != itNewDomain->second.Services.end())
+    {
+        serviceIt->second.NextAutoScaleCheck = serviceScalingExpiry;
+    }
+
     DBGASSERT_IF(itNewDomain->second.CheckMetrics() && PLBConfig::GetConfig().SplitDomainEnabled, "Found metrics with No services and No Applications in {0}", itNewDomain->second.Id);
 
     //reattach the failover units...
@@ -2412,70 +2501,103 @@ pair<ErrorCode, bool> PlacementAndLoadBalancing::InternalUpdateService(ServiceDe
             {
                 FailoverUnit ft = *iter;
 
-               ASSERT_IFNOT(originalMetrics.size() == ft.PrimaryEntries.size() &&
-                   originalMetrics.size() == ft.SecondaryEntries.size(),
-                   "original metrics size does not match with load entry size in failover unit. MetricsSize:{0}, PrimaryEntry:{1}, SecondaryEntry:{2}",
-                   originalMetrics.size(), ft.PrimaryEntries.size(), ft.SecondaryEntries.size());
+                ASSERT_IFNOT(originalMetrics.size() == ft.PrimaryEntries.size() &&
+                    originalMetrics.size() == ft.SecondaryEntries.size(),
+                    "original metrics size does not match with load entry size in failover unit. MetricsSize:{0}, PrimaryEntry:{1}, SecondaryEntry:{2}",
+                    originalMetrics.size(), ft.PrimaryEntries.size(), ft.SecondaryEntries.size());
 
-               vector<uint> primaryEntries;
-               vector<uint> secondaryEntries;
-               map<Federation::NodeId, std::vector<uint>> newSecondaryEntriesMap;
+                vector<uint> primaryEntries;
+                vector<uint> secondaryEntries;
+                map<Federation::NodeId, std::vector<uint>> newSecondaryEntriesMap;
 
-               for (int j = 0; j < metrics.size(); ++j)
-               {
-                   primaryEntries.push_back(service.GetDefaultMetricLoad(j, ReplicaRole::Primary));
-                   secondaryEntries.push_back(service.GetDefaultMetricLoad(j, ReplicaRole::Secondary));
-               }
-               for (auto it = ft.SecondaryEntriesMap.begin(); it != ft.SecondaryEntriesMap.end(); ++it)
-               {
-                   newSecondaryEntriesMap.insert(std::make_pair(it->first, secondaryEntries));
-               }
-               //We create FailoverUnit with all default values for Move and Load costs
-               FailoverUnit newFt(FailoverUnitDescription(ft.FuDescription), move(primaryEntries), move(secondaryEntries),
-                   move(newSecondaryEntriesMap), service.GetDefaultMoveCost(ReplicaRole::Primary), service.GetDefaultMoveCost(ReplicaRole::Secondary),
-                   serviceDescription.OnEveryNode);
+                for (int j = 0; j < metrics.size(); ++j)
+                {
+                    primaryEntries.push_back(service.GetDefaultMetricLoad(j, ReplicaRole::Primary));
+                    secondaryEntries.push_back(service.GetDefaultMetricLoad(j, ReplicaRole::Secondary));
+                }
+                for (auto it = ft.SecondaryEntriesMap.begin(); it != ft.SecondaryEntriesMap.end(); ++it)
+                {
+                    newSecondaryEntriesMap.insert(std::make_pair(it->first, secondaryEntries));
+                }
 
-               //Recostructing FailoverUnit by updating with original primary and secondary load costs
-               for (int j = 0; j < metrics.size(); ++j)
-               {
-                   wstring const & metricName = metrics[j].Name;
-                   for (size_t k = 0; k < originalMetrics.size(); ++k)
-                   {
-                       // If the metric also defined before and it is not default value (updated by service report load),
-                       // we should keep the reported load
-                       // otherwise we will still use the new default load.
-                       if (originalMetrics[k].Name == metricName)
-                       {
-                           if (areRelatedFailoverUnitsStateful && ft.IsPrimaryLoadReported[k])
-                           {
-                               newFt.UpdateLoad(ReplicaRole::Primary, static_cast<size_t>(j), ft.PrimaryEntries[k], this->Settings);
-                           }
-                           if (!this->Settings.UseSeparateSecondaryLoad)
-                           {
-                               if (ft.IsSecondaryLoadReported[k])
-                               {
-                                   newFt.UpdateLoad(ReplicaRole::Secondary, static_cast<size_t>(j), ft.SecondaryEntries[k], this->Settings);
-                               }
-                           }
-                           else
-                           {
-                               for (auto it = ft.IsSecondaryLoadMapReported.begin(); it != ft.IsSecondaryLoadMapReported.end(); ++it)
-                               {
-                                   if (it->second[k])
-                                   {
-                                       auto itMap = ft.SecondaryEntriesMap.find(it->first);
-                                       if (itMap != ft.SecondaryEntriesMap.end())
-                                       {
-                                           newFt.UpdateLoad(ReplicaRole::Secondary, static_cast<size_t>(j), itMap->second[k], this->Settings, true, it->first);
-                                       }
-                                   }
-                               }
-                           }
-                           break;
-                       }
-                   }
-               }
-               // Recostructing FailoverUnit by updating with original primary and secondary move costs
+                StopwatchTime scalingExpiry = ft.NextScalingCheck;
+
+                //if the scaling policy has changed we need to recompute the next interval to look at it
+                //if we have removed the policy now we should just set the interval to zero
+                //else we calculate it from this point + scale interval
+                if (isScalingPolicyChanged)
+                {
+                    if (service.ServiceDesc.IsAutoScalingDefined)
+                    {
+                        if (service.ServiceDesc.AutoScalingPolicy.IsPartitionScaled())
+                        {
+                            scalingExpiry = Stopwatch::Now() + service.ServiceDesc.AutoScalingPolicy.GetScalingInterval();
+                        }
+                        else
+                        {
+                            scalingExpiry = StopwatchTime::Zero;
+                        }
+                    }
+                    else
+                    {
+                        scalingExpiry = StopwatchTime::Zero;
+                    }
+                }
+
+                FailoverUnitDescription newFTDescription(ft.FuDescription);
+
+                //if no scaling policy, or if scaling is not per partition, target is always equal to the one from service description
+                if (!service.ServiceDesc.IsAutoScalingDefined || !service.ServiceDesc.AutoScalingPolicy.IsPartitionScaled())
+                {
+                    newFTDescription.TargetReplicaSetSize = service.ServiceDesc.TargetReplicaSetSize;
+                }
+
+                //We create FailoverUnit with all default values for Move and Load costs
+                FailoverUnit newFt(move(newFTDescription), move(primaryEntries), move(secondaryEntries),
+                    move(newSecondaryEntriesMap), service.GetDefaultMoveCost(ReplicaRole::Primary), service.GetDefaultMoveCost(ReplicaRole::Secondary),
+                    serviceDescription.OnEveryNode, move(ft.ResourceLoadMap), scalingExpiry);
+
+                //Recostructing FailoverUnit by updating with original primary and secondary load costs
+                for (int j = 0; j < metrics.size(); ++j)
+                {
+                    wstring const & metricName = metrics[j].Name;
+                    for (size_t k = 0; k < originalMetrics.size(); ++k)
+                    {
+                        // If the metric also defined before and it is not default value (updated by service report load),
+                        // we should keep the reported load
+                        // otherwise we will still use the new default load.
+                        if (originalMetrics[k].Name == metricName)
+                        {
+                            if (areRelatedFailoverUnitsStateful && ft.IsPrimaryLoadReported[k])
+                            {
+                                newFt.UpdateLoad(ReplicaRole::Primary, static_cast<size_t>(j), ft.PrimaryEntries[k], this->Settings);
+                            }
+                            if (!this->Settings.UseSeparateSecondaryLoad)
+                            {
+                                if (ft.IsSecondaryLoadReported[k])
+                                {
+                                    newFt.UpdateLoad(ReplicaRole::Secondary, static_cast<size_t>(j), ft.SecondaryEntries[k], this->Settings);
+                                }
+                            }
+                            else
+                            {
+                                for (auto it = ft.IsSecondaryLoadMapReported.begin(); it != ft.IsSecondaryLoadMapReported.end(); ++it)
+                                {
+                                    if (it->second[k])
+                                    {
+                                        auto itMap = ft.SecondaryEntriesMap.find(it->first);
+                                        if (itMap != ft.SecondaryEntriesMap.end())
+                                        {
+                                            newFt.UpdateLoad(ReplicaRole::Secondary, static_cast<size_t>(j), itMap->second[k], this->Settings, true, it->first);
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                // Recostructing FailoverUnit by updating with original primary and secondary move costs
                 if (ft.IsMoveCostReported(ReplicaRole::Primary))
                 {
                     newFt.UpdateMoveCost(ReplicaRole::Primary, ft.PrimaryMoveCost);
@@ -2604,8 +2726,8 @@ bool PlacementAndLoadBalancing::CheckClusterResource(ServiceDescription & servic
                 {
                     if (existingMetricIter->Name == itMetric->Name)
                     {
-                         metricRequiredLoad -= (primaryCount * existingMetricIter->PrimaryDefaultLoad + secondaryCount * existingMetricIter->SecondaryDefaultLoad);
-                         break;
+                        metricRequiredLoad -= (primaryCount * existingMetricIter->PrimaryDefaultLoad + secondaryCount * existingMetricIter->SecondaryDefaultLoad);
+                        break;
                     }
                 }
             }
@@ -3020,7 +3142,7 @@ void PlacementAndLoadBalancing::UpdateTotalClusterCapacity(const NodeDescription
                 // Only if both new and old node capacity are defined, we update cluster capacity
                 if (clusterMetricCapacity_[itNodeMetricCapacity->first] != INT64_MAX)
                 {
-                    newClusterCapacity =  clusterMetricCapacity_[itNodeMetricCapacity->first] + newNodeCapacity - oldNodeCapacity;
+                    newClusterCapacity = clusterMetricCapacity_[itNodeMetricCapacity->first] + newNodeCapacity - oldNodeCapacity;
                 }
             }
         }
@@ -3051,6 +3173,25 @@ ServiceDomain::DomainId PlacementAndLoadBalancing::GenerateUniqueDomainId(Servic
     return GenerateUniqueDomainId(suffix);
 }
 
+ServiceDomain::DomainId PlacementAndLoadBalancing::GenerateDefaultDomainId(std::wstring const& metricName)
+{
+    std::wstring prefix;
+
+    if (deletedDomainId_ == L"")
+    {
+        prefix = defaultDomainId_;
+    }
+    else
+    {
+        prefix = ServiceDomain::GetDomainIdPrefix(deletedDomainId_);
+        deletedDomainId_ = L"";
+    }
+
+    ServiceDomain::DomainId newDomainId(prefix + L"_" + metricName);
+
+    return newDomainId;
+}
+
 ServiceDomain::DomainId PlacementAndLoadBalancing::GenerateUniqueDomainId(std::wstring const& metricName)
 {
     std::wstring prefix;
@@ -3066,11 +3207,6 @@ ServiceDomain::DomainId PlacementAndLoadBalancing::GenerateUniqueDomainId(std::w
     }
 
     ServiceDomain::DomainId newDomainId(prefix + L"_" + metricName);
-
-    while (serviceDomainTable_.find(prefix) != serviceDomainTable_.end())
-    {
-        newDomainId.append(L"_");
-    }
 
     return newDomainId;
 }
@@ -3173,7 +3309,7 @@ bool PlacementAndLoadBalancing::AddApplicationToDomain(
             }
 
             bool isNewMetric = false;
-            if(changedAppMetrics)
+            if (changedAppMetrics)
             {
                 isNewMetric = std::find(oldMetrics.begin(), oldMetrics.end(), itMetric->first) == oldMetrics.end();
             }
@@ -3379,7 +3515,7 @@ void PlacementAndLoadBalancing::SplitDomain(ServiceDomainTable::iterator domainI
         ServiceDescription serviceDescription(*it);
         InternalUpdateService(move(ServiceDescription(*it)), false, false, false);
     }
-    //re-add every FU...
+    //re-add every FT...
     for (auto iter = failoverUnits.begin(); iter != failoverUnits.end(); ++iter)
     {
         FailoverUnit failoverUnit(*iter);
@@ -3412,7 +3548,7 @@ bool PlacementAndLoadBalancing::InternalDeleteService(wstring const& serviceName
 
     uint64 serviceId = GetServiceId(serviceName);
     //service was never really added?
-    if (serviceId==0)
+    if (serviceId == 0)
     {
         return deleted;
     }
@@ -3435,7 +3571,15 @@ bool PlacementAndLoadBalancing::InternalDeleteService(wstring const& serviceName
         }
 
         auto serviceDesc = itService->second.ServiceDesc;
-        rgStatistics_.DeleteService(serviceDesc);
+
+        if (permanentDelete)
+        {
+            plbStatistics_.DeleteService(serviceDesc);
+        }
+
+        auto nextAutoScalingCheck = itService->second.NextAutoScaleCheck;
+        itCurrentDomain->second.AutoScalerComponent.RemoveService(serviceId, nextAutoScalingCheck);
+
         //just removing metric connections for now. the domainchange will be executed later..
         {
             metricConnections_.AddOrRemoveMetricConnectionsForService(serviceDesc.Metrics, false);
@@ -3566,6 +3710,9 @@ bool PlacementAndLoadBalancing::InternalDeleteService(wstring const& serviceName
             {
                 DBGASSERT_IF(!metricConnections_.AreMetricsConnected(itDomain->second.Metrics) && PLBConfig::GetConfig().SplitDomainEnabled, "Metrics aren't connected after deleting service: {0}", serviceName);
             }
+
+            // If service used quorum based logic, remove it from cache set.
+            quorumBasedServicesCache_.erase(serviceId);
         }
 
         // Removes the Service from the diagnostic table's tracking
@@ -3684,6 +3831,11 @@ void PlacementAndLoadBalancing::ProcessUpdateLoadOrMoveCost(LoadOrMoveCostDescri
     }
 }
 
+void PlacementAndLoadBalancing::TriggerUpdateTargetReplicaCount(Common::Guid const& failoverUnitId, int targetReplicaSetSize) const
+{
+    failoverManager_.UpdateFailoverUnitTargetReplicaCount(failoverUnitId, targetReplicaSetSize);
+}
+
 size_t PlacementAndLoadBalancing::GetMovementThreshold(size_t existingReplicaCount, size_t absoluteThreshold, double percentageThreshold)
 {
     size_t maxReplicasToMove = SIZE_T_MAX;
@@ -3751,25 +3903,25 @@ size_t PlacementAndLoadBalancing::GetAllowedMovements(
     }
 
     if (action.IsCreationWithMove())
-    //using threshold for placement movements only...
+        //using threshold for placement movements only...
     {
         if (placementThreshold > (globalPlacementMoveCount + currentPlacementMovementCount) && placementThreshold != 0)
         {
             allowedMovements = min(
                 allowedMovements,
                 placementThreshold - (globalPlacementMoveCount + currentPlacementMovementCount)
-                );
+            );
         }
     }
     else if (action.IsBalancing())
-    //using threshold for balancing movements only...
+        //using threshold for balancing movements only...
     {
         if (balancingThreshold  >(globalBalancingMoveCount + currentBalancingMovementCount) && balancingThreshold != 0)
         {
             allowedMovements = min(
                 allowedMovements,
                 balancingThreshold - (globalBalancingMoveCount + currentBalancingMovementCount)
-                );
+            );
         }
     }
 
@@ -3796,11 +3948,11 @@ void PlacementAndLoadBalancing::BeginRefresh(vector<ServiceDomain::DomainData> &
     auto PopulateNodeLoadInfo =
         [&](Federation::NodeId nodeId, ServiceModel::NodeLoadInformationQueryResult & nodeViolationData)
         -> Common::ErrorCode
-        {
-            return (!IsMaster) ?
-                GetNodeLoadInformationQueryResult(nodeId, nodeViolationData, true)
-                : ErrorCodeValue::PLBNotReady;
-        };
+    {
+        return (!IsMaster) ?
+            GetNodeLoadInformationQueryResult(nodeId, nodeViolationData, true)
+            : ErrorCodeValue::PLBNotReady;
+    };
 
     plbDiagnosticsSPtr_->TrackNodeCapacityViolation(PopulateNodeLoadInfo);
 
@@ -3811,6 +3963,7 @@ void PlacementAndLoadBalancing::BeginRefresh(vector<ServiceDomain::DomainData> &
     for (auto it = serviceDomainTable_.begin(); it != serviceDomainTable_.end(); ++it)
     {
         ServiceDomain & sd = it->second;
+        sd.AutoScalerComponent.Refresh(refreshTime, sd);
         ServiceDomain::DomainData domainData = sd.RefreshStates(refreshTime, plbDiagnosticsSPtr_);
         UpdateNextActionPeriod(sd.GetNextActionInterval(refreshTime));
         stats.Update(domainData.state_);
@@ -4056,7 +4209,8 @@ void PlacementAndLoadBalancing::RunSearcher(ServiceDomain::DomainData * searcher
                     {
                         PLBSchedulerActionType::Enum schedulerAction = searcherDomainData->action_.Action;
 
-                        if (m.Partition->IsInUpgrade && m.IsSwap && searcherDomainData->action_.Action == PLBSchedulerActionType::Creation)
+                        if (m.Partition->IsInUpgrade && m.IsSwap &&
+                            searcherDomainData->action_.Action == PLBSchedulerActionType::NewReplicaPlacement)
                         {
                             schedulerAction = PLBSchedulerActionType::Upgrade;
                         }
@@ -4104,6 +4258,8 @@ void PlacementAndLoadBalancing::RunSearcher(ServiceDomain::DomainData * searcher
 
 void PlacementAndLoadBalancing::EndRefresh(ServiceDomain::DomainData* searcherDomainData, StopwatchTime refreshTime)
 {
+    UpdateQuorumBasedServicesCache(searcherDomainData);
+
     auto itServiceDomain = serviceDomainTable_.find(ServiceDomain::GetDomainIdPrefix(searcherDomainData->domainId_));
     if (itServiceDomain != serviceDomainTable_.end())
     {
@@ -4151,12 +4307,33 @@ void PlacementAndLoadBalancing::TracePeriodical(ServiceDomainStats& stats, Commo
     if (nodeCount > 0 && !serviceDomainTable_.empty() &&
         refreshTime - lastPeriodicTrace_ >= PLBConfig::GetConfig().PLBPeriodicalTraceInterval)
     {
+        // "1" indicates quorum based logic in replicas domain distribution.
+        // "0" indicates "+1" logic in replicas domain distribution.
+        vector<int> serviceReplicaDistributionLogic;
+        size_t numberOfServices = serviceToIdMap_.size();
+        serviceReplicaDistributionLogic.reserve(numberOfServices);
+
+        bool quorumBasedLogicAllServices =
+            settings_.QuorumBasedReplicaDistributionPerFaultDomains ||
+            settings_.QuorumBasedReplicaDistributionPerUpgradeDomains;
+
         map<int, const Service*> serviceTable;
         for (auto it = serviceDomainTable_.begin(); it != serviceDomainTable_.end(); ++it)
         {
             for (auto itS = it->second.Services.begin(); itS != it->second.Services.end(); ++itS)
             {
                 serviceTable.insert(pair<int, const Service*>(static_cast<int>(serviceTable.size()), &(itS->second)));
+
+                if (quorumBasedLogicAllServices)
+                {
+                    serviceReplicaDistributionLogic.push_back(1);
+                }
+                else
+                {
+                    serviceReplicaDistributionLogic.push_back(
+                        quorumBasedServicesCache_.find(itS->second.ServiceDesc.ServiceId) != 
+                        quorumBasedServicesCache_.end() ? 1 : 0);
+                }
             }
         }
 
@@ -4178,7 +4355,8 @@ void PlacementAndLoadBalancing::TracePeriodical(ServiceDomainStats& stats, Commo
                 UINT_MAX),
             TraceDescriptions<int, const Service*, ServiceDescription>(
                 serviceTable, &nextServiceToBeTraced_,
-                PLBConfig::GetConfig().PLBPeriodicalTraceServiceCount
+                PLBConfig::GetConfig().PLBPeriodicalTraceServiceCount,
+                serviceReplicaDistributionLogic
                 )
         );
 
@@ -4205,6 +4383,7 @@ bool PlacementAndLoadBalancing::ProcessPendingUpdatesCallerHoldsLock(StopwatchTi
     vector<pair<FailoverUnitDescription, StopwatchTime>> fuUpdates;
     vector<pair<LoadOrMoveCostDescription, StopwatchTime>> loadOrMoveCostUpdates;
     vector<pair<NodeDescription, StopwatchTime>> nodeUpdates;
+    map<Federation::NodeId, vector<wstring>> nodeImages;
     {
         // Lock and set value to false!
         LockAndSetBooleanLock grab(bufferUpdateLock_, false);
@@ -4212,13 +4391,19 @@ bool PlacementAndLoadBalancing::ProcessPendingUpdatesCallerHoldsLock(StopwatchTi
         fuUpdates.swap(pendingFailoverUnitUpdates_);
         loadOrMoveCostUpdates.swap(pendingLoadsOrMoveCosts_);
         nodeUpdates.swap(pendingNodeUpdates_);
+        nodeImages.swap(pendingNodeImagesUpdate_);
     }
 
-    size_t numUpdates = fuUpdates.size() + loadOrMoveCostUpdates.size() + nodeUpdates.size();
+    size_t numUpdates = fuUpdates.size() + loadOrMoveCostUpdates.size() + nodeUpdates.size() + nodeImages.size();
 
     for (auto it = nodeUpdates.begin(); it != nodeUpdates.end(); ++it)
     {
         ProcessUpdateNode(move(it->first), now);
+    }
+
+    for (auto it = nodeImages.begin(); it != nodeImages.end(); ++it)
+    {
+        ProcessUpdateNodeImages(it->first, move(it->second));
     }
 
     bool fuChangeShouldInterrupt = false;
@@ -4349,14 +4534,38 @@ void PlacementAndLoadBalancing::AddFailoverUnitMovement(
     }
     else if (movement.IsMove)
     {
-        moveType = (movement.SourceRole == ReplicaRole::Primary) ? FailoverUnitMovementType::MovePrimary : FailoverUnitMovementType::MoveSecondary;
+        if (movement.SourceRole == ReplicaRole::Primary)
+        {
+            moveType = FailoverUnitMovementType::MovePrimary;
+        }
+        else if (movement.Service->IsStateful)
+        {
+            moveType = FailoverUnitMovementType::MoveSecondary;
+        }
+        else
+        {
+            moveType = FailoverUnitMovementType::MoveInstance;
+        }
+
         ASSERT_IFNOT(movement.SourceNode != nullptr && movement.TargetNode != nullptr, "Source node or target node should not be null");
         sourceNode = movement.SourceNode->NodeId;
         targetNode = movement.TargetNode->NodeId;
     }
     else if (movement.IsAdd)
     {
-        moveType = (movement.TargetToBeAddedReplica->IsPrimary) ? FailoverUnitMovementType::AddPrimary : FailoverUnitMovementType::AddSecondary;
+        if (movement.TargetToBeAddedReplica->IsPrimary)
+        {
+            moveType = FailoverUnitMovementType::AddPrimary;
+        }
+        else if (movement.Service->IsStateful)
+        {
+            moveType = FailoverUnitMovementType::AddSecondary;
+        }
+        else
+        {
+            moveType = FailoverUnitMovementType::AddInstance;
+        }
+
         ASSERT_IFNOT(movement.SourceNode == nullptr && movement.TargetNode != nullptr, "Source node should be null and target node should not be null");
         targetNode = movement.TargetNode->NodeId;
     }
@@ -4368,13 +4577,23 @@ void PlacementAndLoadBalancing::AddFailoverUnitMovement(
     }
     else if (movement.IsVoid)
     {
-        moveType = FailoverUnitMovementType::Void;
+        moveType = FailoverUnitMovementType::RequestedPlacementNotPossible;
         ASSERT_IFNOT(movement.SourceNode != nullptr && movement.TargetNode == nullptr, "Target node should be null for void move type");
         sourceNode = movement.SourceNode->NodeId;
     }
     else if (movement.IsDrop)
     {
-        moveType = FailoverUnitMovementType::Drop;
+        if (movement.Service->IsStateful)
+        {
+            moveType = movement.SourceRole == ReplicaRole::Primary ?
+                FailoverUnitMovementType::DropPrimary :
+                FailoverUnitMovementType::DropSecondary;
+        }
+        else
+        {
+            moveType = FailoverUnitMovementType::DropInstance;
+        }
+
         ASSERT_IFNOT(movement.SourceNode != nullptr && movement.TargetNode == nullptr, "Target node should be null for drop move type");
         sourceNode = movement.SourceNode->NodeId;
     }
@@ -4395,12 +4614,12 @@ bool PlacementAndLoadBalancing::DoAllReplicasMatch(vector<ReplicaDescription> co
         if (nodeIndex == UINT64_MAX)
         {
             TESTASSERT_IF(nodeIndex == UINT64_MAX, "Replica's node doesn't exist");
-            // Treat this FU as unstable if we can't find the node. We will fail the move or swap that user initiated.
+            // Treat this FT as unstable if we can't find the node. We will fail the move or swap that user initiated.
             return false;
         }
         if (!replica.IsInTransition &&
             (nodes_[nodeIndex].NodeDescriptionObj.NodeInstance != replica.NodeInstance ||
-            !nodes_[nodeIndex].NodeDescriptionObj.IsUp))
+                !nodes_[nodeIndex].NodeDescriptionObj.IsUp))
         {
             return false;
         }
@@ -4546,7 +4765,13 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerPromoteToPrimary(std::wstrin
     }
 
     vector<FailoverUnitMovement::PLBAction> actions;
-    Common::ErrorCode candidateErrorRetVal = TriggerPromoteToPrimaryHelper(serviceName, failoverUnit, newPrimary, actions, force, PLBSchedulerActionType::Enum::ClientPromoteToPrimaryApiCall);
+    Common::ErrorCode candidateErrorRetVal = TriggerPromoteToPrimaryHelper(
+        serviceName,
+        failoverUnit,
+        newPrimary,
+        actions,
+        force,
+        PLBSchedulerActionType::Enum::ClientApiPromoteToPrimary);
 
     if (!candidateErrorRetVal.IsSuccess())
     {
@@ -4557,7 +4782,7 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerPromoteToPrimary(std::wstrin
 
     for (FailoverUnitMovement::PLBAction const& actionIt : actions)
     {
-        PublicTrace.Operation(
+        EmitCRMOperationTrace(
             failoverUnit.FUId,
             guid,
             actionIt.SchedulerActionType,
@@ -4734,9 +4959,9 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerSwapPrimary(
 
     auto & failoverUnit = *failoverUnitPtr;
 
-    if  ((  failoverUnit.FuDescription.HasPlacement && !force)
-        ||  failoverUnit.FuDescription.IsInTransition
-        ||  !DoAllReplicasMatch(failoverUnit.FuDescription.Replicas))
+    if ((failoverUnit.FuDescription.HasPlacement && !force)
+        || failoverUnit.FuDescription.IsInTransition
+        || !DoAllReplicasMatch(failoverUnit.FuDescription.Replicas))
     {
         if (failoverUnit.FuDescription.IsInTransition)
         {
@@ -4763,7 +4988,8 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerSwapPrimary(
             actions,
             ReplicaRole::Primary,
             force,
-            PLBSchedulerActionType::Enum::ClientMovePrimaryApiCall)
+            PLBSchedulerActionType::Enum::ClientApiMovePrimary,
+            isStateful)
         : TriggerSwapPrimaryHelper(
             serviceName,
             failoverUnit,
@@ -4771,7 +4997,7 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerSwapPrimary(
             newPrimary,
             actions,
             force,
-            PLBSchedulerActionType::Enum::ClientMovePrimaryApiCall);
+            PLBSchedulerActionType::Enum::ClientApiMovePrimary);
 
     if (!candidateErrorRetVal.IsSuccess())
     {
@@ -4782,7 +5008,7 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerSwapPrimary(
 
     for (FailoverUnitMovement::PLBAction const& actionIt : actions)
     {
-        PublicTrace.Operation(
+        EmitCRMOperationTrace(
             failoverUnit.FUId,
             guid,
             actionIt.SchedulerActionType,
@@ -5030,7 +5256,8 @@ Common::ErrorCode PlacementAndLoadBalancing::FindRandomReplicaHelper(
     std::vector<FailoverUnitMovement::PLBAction>& actions,
     ReplicaRole::Enum role,
     bool force,
-    PLBSchedulerActionType::Enum schedulerAction)
+    PLBSchedulerActionType::Enum schedulerAction,
+    bool isStatefull)
 {
     Common::Random randomEng(static_cast<unsigned long>(time(0)));
     auto randomResult = FindRandomNodes(serviceName, failoverUnit, currentNode, role, randomEng, force);
@@ -5045,7 +5272,7 @@ Common::ErrorCode PlacementAndLoadBalancing::FindRandomReplicaHelper(
 
     std::vector<FailoverUnitMovement::PLBAction> actionCache;
 
-    while(nodes.size() != 0)
+    while (nodes.size() != 0)
     {
         size_t indexToRemove = 0;
         auto nodeId = [&nodes, &randomEng, &indexToRemove]() -> Federation::NodeId
@@ -5055,11 +5282,11 @@ Common::ErrorCode PlacementAndLoadBalancing::FindRandomReplicaHelper(
 
         auto errVal = (role == ReplicaRole::Primary) ?
             TriggerSwapPrimaryHelper(serviceName, failoverUnit, currentNode, nodeId, actionCache, true, schedulerAction) :
-            TriggerMoveSecondaryHelper(serviceName, failoverUnit, currentNode, nodeId, actionCache, true, schedulerAction);
+            TriggerMoveSecondaryHelper(serviceName, failoverUnit, currentNode, nodeId, actionCache, true, schedulerAction, isStatefull);
 
         if (errVal.IsSuccess())
         {
-            newNode =  nodeId;
+            newNode = nodeId;
             std::swap(actions, actionCache);
             return ErrorCode().Success();
         }
@@ -5140,11 +5367,11 @@ std::pair<Common::ErrorCode, std::vector<Federation::NodeId>> PlacementAndLoadBa
                 Trace.MoveReplicaOrInstance(L"Partition Found");
                 partition.ForEachExistingReplica([&](PlacementReplica const* r)
                 {
-                    Trace.MoveReplicaOrInstance(wformatString("LambdaRole {0}, Parameter Role {1}, LambdaNode {2}, Parameter Node {3} " , r->Role, replicaRole, r->Node->NodeId, currentNodeId));
+                    Trace.MoveReplicaOrInstance(wformatString("LambdaRole {0}, Parameter Role {1}, LambdaNode {2}, Parameter Node {3} ", r->Role, replicaRole, r->Node->NodeId, currentNodeId));
                     if (r->Role == replicaRole && r->Node->NodeId == currentNodeId)
                     {
                         replicaPtr = r;
-                        Trace.MoveReplicaOrInstance(wformatString("MATCHED! LambdaRole {0}, Parameter Role {1}, LambdaNode {2}, Parameter Node {3} " , r->Role, replicaRole, r->Node->NodeId, currentNodeId));
+                        Trace.MoveReplicaOrInstance(wformatString("MATCHED! LambdaRole {0}, Parameter Role {1}, LambdaNode {2}, Parameter Node {3} ", r->Role, replicaRole, r->Node->NodeId, currentNodeId));
                     }
                 }, false, true);
 
@@ -5194,7 +5421,8 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerMoveSecondaryHelper(
     Federation::NodeId newSecondary,
     vector<FailoverUnitMovement::PLBAction>& actions,
     bool force,
-    PLBSchedulerActionType::Enum schedulerAction)
+    PLBSchedulerActionType::Enum schedulerAction,
+    bool isStatefull)
 {
     vector<FailoverUnitMovement::PLBAction> tempActions;
     for (ReplicaDescription const& replica : failoverUnit.FuDescription.Replicas)
@@ -5233,7 +5461,7 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerMoveSecondaryHelper(
             tempActions.push_back(FailoverUnitMovement::PLBAction(
                 currentSecondary,
                 newSecondary,
-                FailoverUnitMovementType::MoveSecondary,
+                isStatefull ? FailoverUnitMovementType::MoveSecondary : FailoverUnitMovementType::MoveInstance,
                 schedulerAction));
         }
     }
@@ -5244,7 +5472,7 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerMoveSecondaryHelper(
         return ErrorCodeValue::REReplicaDoesNotExist;
     }
 
-    auto retVal = force ? ErrorCode().Success(): SnapshotConstraintChecker(serviceName, failoverUnit.FUId, currentSecondary, newSecondary, ReplicaRole::Secondary);
+    auto retVal = force ? ErrorCode().Success() : SnapshotConstraintChecker(serviceName, failoverUnit.FUId, currentSecondary, newSecondary, ReplicaRole::Secondary);
 
     if (retVal.IsSuccess())
     {
@@ -5259,7 +5487,7 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerMoveSecondary(
     Guid const& fuId, Federation::NodeId currentSecondary,
     Federation::NodeId & newSecondary,
     bool force /* = false */,
-    bool chooseRandom /*= false*/ )
+    bool chooseRandom /*= false*/)
 {
     if (!settings_.DummyPLBEnabled && (!force && !this->IsPLBStable(fuId)))
     {
@@ -5318,9 +5546,9 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerMoveSecondary(
 
     auto & failoverUnit = *failoverUnitPtr;
 
-    if  ((  failoverUnit.FuDescription.HasPlacement && !force)
-        ||  failoverUnit.FuDescription.IsInTransition
-        ||  !DoAllReplicasMatch(failoverUnit.FuDescription.Replicas))
+    if ((failoverUnit.FuDescription.HasPlacement && !force)
+        || failoverUnit.FuDescription.IsInTransition
+        || !DoAllReplicasMatch(failoverUnit.FuDescription.Replicas))
     {
         if (failoverUnit.FuDescription.IsInTransition)
         {
@@ -5348,7 +5576,8 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerMoveSecondary(
             actions,
             ReplicaRole::Secondary,
             force,
-            PLBSchedulerActionType::Enum::ClientMoveSecondaryApiCall) :
+            PLBSchedulerActionType::Enum::ClientApiMoveSecondary,
+            isStateful) :
         TriggerMoveSecondaryHelper(
             serviceName,
             failoverUnit,
@@ -5356,7 +5585,8 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerMoveSecondary(
             newSecondary,
             actions,
             force,
-            PLBSchedulerActionType::Enum::ClientMoveSecondaryApiCall);
+            PLBSchedulerActionType::Enum::ClientApiMoveSecondary,
+            isStateful);
 
     if (!candidateErrorRetVal.IsSuccess())
     {
@@ -5367,7 +5597,7 @@ Common::ErrorCode PlacementAndLoadBalancing::TriggerMoveSecondary(
 
     for (FailoverUnitMovement::PLBAction const& actionIt : actions)
     {
-        PublicTrace.Operation(
+        EmitCRMOperationTrace(
             failoverUnit.FUId,
             guid,
             actionIt.SchedulerActionType,
@@ -5423,7 +5653,7 @@ Snapshot PlacementAndLoadBalancing::TakeSnapShot()
             // If a metric does have capacity, and it is not in any domain add it to snaphot
             if (prefix == L"")
             {
-                auto domainId = GenerateUniqueDomainId(metricCapacity.first);
+                auto domainId = GenerateDefaultDomainId(metricCapacity.first);
                 prefix = ServiceDomain::GetDomainIdPrefix(domainId);
                 tempDomainUPtr = make_unique<ServiceDomain>(move(domainId), *this);
             }
@@ -5475,17 +5705,61 @@ void PlacementAndLoadBalancing::TrackDroppedPLBMovements()
             while (!droppedMovementQueue_.empty())
             {
                 auto droppedMovementTuple = move(droppedMovementQueue_.front());
-                PublicTrace.OperationIgnored(get<0>(droppedMovementTuple), get<1>(droppedMovementTuple), get<2>(droppedMovementTuple));
+                EmitCRMOperationIgnoredTrace(get<0>(droppedMovementTuple), get<1>(droppedMovementTuple), get<2>(droppedMovementTuple));
                 plbDiagnosticsSPtr_->TrackDroppedPLBMovement(get<0>(droppedMovementTuple));
                 droppedMovementQueue_.pop();
             }
 
-            while(!executedMovementQueue_.empty())
+            while (!executedMovementQueue_.empty())
             {
                 plbDiagnosticsSPtr_->TrackExecutedPLBMovement(executedMovementQueue_.front());
                 executedMovementQueue_.pop();
             }
         }
+    }
+}
+
+void PlacementAndLoadBalancing::UpdateQuorumBasedServicesCache(ServiceDomain::DomainData* searcherDomainData)
+{
+    if (searcherDomainData == nullptr)
+    {
+        return;
+    }
+
+    PlacementUPtr const& pl = searcherDomainData->state_.PlacementObj;
+
+    if (pl == nullptr)
+    {
+        return;
+    }
+
+    if (settings_.QuorumBasedLogicAutoSwitch &&
+        !settings_.QuorumBasedReplicaDistributionPerFaultDomains &&
+        !settings_.QuorumBasedReplicaDistributionPerUpgradeDomains)
+    {
+        std::vector<ServiceEntry> const& services = pl->Services;
+
+        for (auto it = services.begin(); it != services.end(); ++it)
+        {
+            auto currentService = serviceToIdMap_.find(it->Name);
+            if (currentService == serviceToIdMap_.end())
+            {
+                continue;
+            }
+
+            if (pl->QuorumBasedServicesTempCache.find(currentService->second) != pl->QuorumBasedServicesTempCache.end())
+            {
+                quorumBasedServicesCache_.insert(currentService->second);
+            }
+            else
+            {
+                quorumBasedServicesCache_.erase(currentService->second);
+            }
+        }
+    }
+    else
+    {
+        quorumBasedServicesCache_.clear();
     }
 }
 
@@ -5954,7 +6228,7 @@ Common::ErrorCode PlacementAndLoadBalancing::GetApplicationLoadInformationResult
 /// </summary>
 /// <param name="serviceName">Name of the service.</param>
 /// <returns>the service identifier</returns>
-inline uint64 PlacementAndLoadBalancing::GetServiceId(wstring const& serviceName) const
+uint64 PlacementAndLoadBalancing::GetServiceId(wstring const& serviceName) const
 {
     auto const& itId = serviceToIdMap_.find(serviceName);
     if (itId != serviceToIdMap_.end())
@@ -5967,7 +6241,7 @@ inline uint64 PlacementAndLoadBalancing::GetServiceId(wstring const& serviceName
 void PlacementAndLoadBalancing::AddMetricToDomain(wstring const& metricName, ServiceDomainTable::iterator const& itDomain, bool incrementAppCount)
 {
     metricToDomainTable_.insert(make_pair(metricName, itDomain));
-    itDomain->second.AddMetric(metricName,incrementAppCount);
+    itDomain->second.AddMetric(metricName, incrementAppCount);
 }
 
 /// <summary>
@@ -6022,7 +6296,7 @@ void PlacementAndLoadBalancing::ExecuteDomainChange(bool mergeOnly)
 
 void PlacementAndLoadBalancing::UpdateUseSeparateSecondaryLoadConfig(bool newUseSeparateSecondaryLoad)
 {
-    //if there was a change we remove all FUs and readd them with new config
+    //if there was a change we remove all FTs and readd them with new config
     for (auto itDomains = serviceDomainTable_.begin(); itDomains != serviceDomainTable_.end(); ++itDomains)
     {
         auto& serviceDomain = itDomains->second;
@@ -6054,6 +6328,107 @@ void PlacementAndLoadBalancing::UpdateUseSeparateSecondaryLoadConfig(bool newUse
     }
 }
 
+void PlacementAndLoadBalancing::ProcessAutoScalingRepartitioning()
+{
+    // This method is executed during refresh outside of the lock.
+    // pendingAutoScalingRepartitions_ is filled during BeginRefresh.
+    if (pendingAutoScalingRepartitions_.empty())
+    {
+        return;
+    }
+    if (serviceManagementClient_.get() == nullptr)
+    {
+        return;
+    }
+
+    auto timeout = PLBConfig::GetConfig().ServiceRepartitionForAutoScalingTimeout;
+
+    for (auto repartitionInfo : pendingAutoScalingRepartitions_)
+    {
+        // Calculate the names to add or to remove.
+        vector<wstring> namesToAdd;
+        vector<wstring> namesToRemove;
+        auto startIndex = repartitionInfo.CurrentPartitionCount;
+        if (repartitionInfo.Change > 0)
+        {
+            for (auto index = 0; index < repartitionInfo.Change; ++index)
+            {
+                namesToAdd.push_back(wformatString("{0}", startIndex + index));
+            }
+        }
+        else
+        {
+            auto toRemoveCount = -repartitionInfo.Change;
+            for (auto index = 0; index < toRemoveCount; ++index)
+            {
+                namesToRemove.push_back(wformatString("{0}", startIndex - index - 1));
+            }
+        }
+
+        Common::NamingUri serviceNameUri;
+
+        bool success = NamingUri::TryParse(repartitionInfo.ServiceName, serviceNameUri);
+        if (!success)
+        {
+            continue;
+        }
+
+        Trace.AutoScaler(wformatString(
+            "Repartitioning service {0} (id={1}) namesToAdd={2} namesToRemove={3}",
+            serviceNameUri,
+            repartitionInfo.ServiceId,
+            namesToAdd,
+            namesToRemove));
+
+        Naming::ServiceUpdateDescription updateDescription(repartitionInfo.IsStateful, move(namesToAdd), move(namesToRemove));
+
+        // Perform the actual call.
+        serviceManagementClient_->BeginUpdateService(
+            serviceNameUri,
+            updateDescription,
+            timeout,
+            [this, repartitionInfo](AsyncOperationSPtr const& operation)
+            {
+                this->OnAutoScalingRepartitioningComplete(operation, repartitionInfo.ServiceId);
+            },
+            AsyncOperationRoot<ComponentRootSPtr>::Create(this->Root.CreateComponentRoot()));
+    }
+
+    pendingAutoScalingRepartitions_.clear();
+}
+
+void PlacementAndLoadBalancing::OnAutoScalingRepartitioningComplete(Common::AsyncOperationSPtr const & operation, uint64_t serviceId)
+{
+    auto error = serviceManagementClient_->EndUpdateService(operation);
+    if (!error.IsSuccess())
+    {
+        // Success is handled with UpdateService call from FM.
+        Trace.AutoScalingRepartitionFailed(serviceId, error);
+        AcquireExclusiveLock grab(autoScalingFailedOperationsVectorsLock_);
+        pendingAutoScalingFailedRepartitions_.push_back(make_pair(serviceId, error));
+    }
+}
+
+void PlacementAndLoadBalancing::ProcessFailedAutoScalingRepartitionsCallerHoldsLock()
+{
+    for (auto failedScaling : pendingAutoScalingFailedRepartitionsForRefresh_)
+    {
+        auto sdIterator = serviceToDomainTable_.find(failedScaling.first);
+        if (sdIterator != serviceToDomainTable_.end())
+        {
+            sdIterator->second->second.AutoScalerComponent.UpdateServiceAutoScalingOperationFailed(failedScaling.first);
+        }
+        else
+        {
+            TRACE_WARNING_AND_TESTASSERT(
+                "AutoScaling",
+                "Service with id {0} does not belong to any domain when processing failed repartitions.",
+                failedScaling.first);
+        }
+    }
+    pendingAutoScalingFailedRepartitionsForRefresh_.clear();
+}
+
 void PlacementAndLoadBalancing::OnSafetyCheckAcknowledged(ServiceModel::ApplicationIdentifier const & appId)
 {
     AcquireWriteLock grab(lock_);
@@ -6066,4 +6441,73 @@ void PlacementAndLoadBalancing::OnSafetyCheckAcknowledged(ServiceModel::Applicat
             break;
         }
     }
+}
+
+void PlacementAndLoadBalancing::EmitCRMOperationTrace(
+    Common::Guid const & failoverUnitId,
+    Common::Guid const & decisionId,
+    PLBSchedulerActionType::Enum schedulerActionType,
+    FailoverUnitMovementType::Enum failoverUnitMovementType,
+    std::wstring const & serviceName,
+    Federation::NodeId const & sourceNode,
+    Federation::NodeId const & destinationNode) const
+{
+    PublicTrace.Operation(
+        failoverUnitId,
+        decisionId,
+        schedulerActionType,
+        failoverUnitMovementType,
+        serviceName,
+        sourceNode,
+        destinationNode);
+
+    // PublicTrace.Operation and PublicTrace.OperationQuery are duplicates.
+    // RDBug 11870228 tracks the task of writing a test to keep them in sync
+    // until we deprecate PublicTrace.Operation
+    PublicTrace.OperationQuery(
+        failoverUnitId,
+        decisionId,
+        schedulerActionType,
+        failoverUnitMovementType,
+        serviceName,
+        sourceNode.ToString(),
+        destinationNode.ToString());
+}
+
+void PlacementAndLoadBalancing::EmitCRMOperationIgnoredTrace(
+    Common::Guid const & failoverUnitId,
+    Reliability::PlbMovementIgnoredReasons::Enum movementIgnoredReason,
+    Common::Guid const & decisionId) const
+{
+    PublicTrace.OperationIgnored(failoverUnitId, movementIgnoredReason, decisionId);
+
+    // PublicTrace.OperationIgnored and PublicTrace.OperationIgnoredQuery are duplicates.
+    // RDBug 11870228 tracks the task of writing a test to keep them in sync
+    // until we deprecate PublicTrace.OperationIgnored
+    PublicTrace.OperationIgnoredQuery(failoverUnitId, movementIgnoredReason, decisionId);
+}
+
+void PlacementAndLoadBalancing::UpdateAvailableImagesPerNode(std::wstring const& nodeId, std::vector<std::wstring> const& images)
+{
+    LockAndSetBooleanLock grab(bufferUpdateLock_);
+
+    LargeInteger nodeLargeInteger;
+    if (!LargeInteger::TryParse(nodeId, nodeLargeInteger))
+    {
+        Trace.InternalError(wformatString("Error while parsing nodeId"));
+        return;
+    }
+
+    Trace.AvailableImagesFromNode(wformatString("UpdateAvailableImagesPerNode on node {0} - images {1}", nodeId, images));
+
+    Federation::NodeId fNodeId(nodeLargeInteger);
+
+    auto itNode = pendingNodeImagesUpdate_.find(fNodeId);
+    if (itNode != pendingNodeImagesUpdate_.end())
+    {
+        // For this node we already had images, so we need to overwrite stale state
+        pendingNodeImagesUpdate_.erase(fNodeId);
+    }
+
+    pendingNodeImagesUpdate_.insert(make_pair(fNodeId, images));
 }

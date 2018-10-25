@@ -15,6 +15,7 @@ using namespace Transport;
 using namespace Management::ClusterManager;
 
 StringLiteral const ApplicationUpgradeParallelRetryableAsyncOperationTraceComponent("ApplicationUpgradeParallelRetryableAsyncOperationTraceComponent");
+
 //
 // *** class used to execute parallel operations with retries
 //
@@ -69,6 +70,13 @@ protected:
         RetryCallback const & callback,
         Common::ErrorCode && error) override
     {
+        ErrorCode innerError = owner_.RefreshUpgradeContext();
+
+        if (!innerError.IsSuccess())
+        {
+            this->TryComplete(thisSPtr, move(innerError));
+            return;
+        }
         owner_.TryScheduleRetry(error, thisSPtr, [callback, thisSPtr](AsyncOperationSPtr const &) { callback(thisSPtr); });
     }
 
@@ -80,254 +88,294 @@ private:
 // *** class InitializeUpgradeAsyncOperation;
 //
 
-class ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation : public AsyncOperation
+ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::InitializeUpgradeAsyncOperation(
+    __in ProcessApplicationUpgradeContextAsyncOperation & owner,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+    : AsyncOperation(callback, parent)
+    , upgradeContextLock_()
+    , owner_(owner)
 {
-public:
-    InitializeUpgradeAsyncOperation(
-        __in ProcessApplicationUpgradeContextAsyncOperation & owner,
-        AsyncCallback const & callback,
-        AsyncOperationSPtr const & parent)
-        : AsyncOperation(callback, parent)
-        , upgradeContextLock_()
-        , owner_(owner)
+}
+
+ErrorCode ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::End(AsyncOperationSPtr const & operation)
+{
+    return AsyncOperation::End<InitializeUpgradeAsyncOperation>(operation)->Error;
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::OnStart(AsyncOperationSPtr const & thisSPtr)
+{
+    this->InitializeUpgrade(thisSPtr);
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::InitializeUpgrade(AsyncOperationSPtr const & thisSPtr)
+{
+    // The sequence of loading matters because fields are populated for use in subsequent load calls
+    //
+    auto error = owner_.LoadApplicationContext();
+    if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+
+    error = owner_.RefreshUpgradeContext();
+    if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+
+    auto operation = owner_.BeginLoadApplicationDescriptions(
+        [&](AsyncOperationSPtr const & operation) { this->OnLoadApplicationDescriptionsComplete(operation, false); },
+        thisSPtr);
+    this->OnLoadApplicationDescriptionsComplete(operation, true);
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::OnLoadApplicationDescriptionsComplete(
+    AsyncOperationSPtr const & operation,
+    bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto const & thisSPtr = operation->Parent;
+
+    auto error = owner_.EndLoadApplicationDescriptions(operation);
+    if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+
+    this->ValidateServices(thisSPtr);
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::ValidateServices(AsyncOperationSPtr const & thisSPtr)
+{
+    auto error = owner_.LoadUpgradePolicies();
+    if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+
+    // Only need to perform active service validation
+    // while initially preparing the upgrade (not on failover)
+    //
+    if (!owner_.UpgradeContext.IsPreparingUpgrade)
     {
+        this->TryComplete(thisSPtr, error);
     }
-
-    static ErrorCode End(AsyncOperationSPtr const & operation)
+    else
     {
-        return AsyncOperation::End<InitializeUpgradeAsyncOperation>(operation)->Error;
-    }
-
-    void OnStart(AsyncOperationSPtr const & thisSPtr)
-    {
-        this->InitializeUpgrade(thisSPtr);
-    }
-
-private:
-
-    void InitializeUpgrade(AsyncOperationSPtr const & thisSPtr)
-    {
-        // The sequence of loading matters because fields are populated for use in subsequent load calls
-        //
-        auto error = owner_.LoadApplicationContext();
+        error = owner_.LoadActiveServices();
         if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
 
-        error = owner_.RefreshUpgradeContext();
+        error = owner_.LoadDefaultServices();
         if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
 
-        auto operation = owner_.BeginLoadApplicationDescriptions(
-            [&](AsyncOperationSPtr const & operation) { this->OnLoadApplicationDescriptionsComplete(operation, false); },
-            thisSPtr);
-        this->OnLoadApplicationDescriptionsComplete(operation, true);
-    }
-
-    void OnLoadApplicationDescriptionsComplete(
-        AsyncOperationSPtr const & operation,
-        bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
-
-        auto const & thisSPtr = operation->Parent;
-
-        auto error = owner_.EndLoadApplicationDescriptions(operation);
+        error = owner_.ValidateRemovedServiceTypes();
         if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
 
-        error = owner_.LoadUpgradePolicies();
-        if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+        // Commit upgrade context before invoking retryable async operation which would potentially refresh store data.
+        auto storeTx = owner_.CreateTransaction();
+        error = storeTx.Update(owner_.UpgradeContext);
 
-        // Only need to perform active service validation
-        // while initially preparing the upgrade (not on failover)
-        //
-        if (!owner_.UpgradeContext.IsPreparingUpgrade)
+        if (error.IsSuccess())
         {
-            this->TryComplete(thisSPtr, error);
+            auto operation = owner_.BeginCommitUpgradeContext(
+                move(storeTx),
+                [this](AsyncOperationSPtr const & operation) { this->OnValidateServicesComplete(operation, false); },
+                thisSPtr);
+            this->OnValidateServicesComplete(operation, true);
         }
         else
         {
-            error = owner_.LoadActiveServices();
-            if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
-
-            error = owner_.LoadDefaultServices();
-            if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
-
-            error = owner_.ValidateRemovedServiceTypes();
-            if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
-
-            this->LoadActiveDefaultServiceUpdates(thisSPtr);
+            WriteWarning(
+                owner_.TraceComponent,
+                "{0} could not update validated upgrade context due to {1}",
+                owner_.TraceId,
+                error);
+            this->TryComplete(thisSPtr, move(error));
         }
     }
+}
 
-    void LoadActiveDefaultServiceUpdates(AsyncOperationSPtr const & thisSPtr)
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::OnValidateServicesComplete(
+    AsyncOperationSPtr const & operation,
+    bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) return;
+
+    ErrorCode error = owner_.EndCommitUpgradeContext(operation);
+    auto const & thisSPtr = operation->Parent;
+
+    if (!error.IsSuccess())
     {
-        WriteNoise(
+        WriteWarning(
             owner_.TraceComponent,
-            "{0} loading active default service descriptions",
-            owner_.TraceId);
-
-        owner_.UpgradeContext.ClearDefaultServiceUpdateDescriptions();
-        owner_.UpgradeContext.ClearRollbackDefaultServiceUpdateDescriptions();
-
-        auto operation = AsyncOperation::CreateAndStart<ApplicationUpgradeParallelRetryableAsyncOperation>(
-            owner_,
-            owner_.UpgradeContext,
-            static_cast<long>(owner_.activeDefaultServiceDescriptions_.size()),
-            [this](AsyncOperationSPtr const & parallelAsyncOperation, size_t operationIndex, ParallelOperationsCompletedCallback const & callback)->ErrorCode
-            {
-                return this->ScheduleLoadActiveDefaultService(parallelAsyncOperation, operationIndex, callback);
-            },
-            [this](AsyncOperationSPtr const & operation) { this->OnLoadActiveDefaultServiceUpdatesComplete(operation, false); },
-            thisSPtr);
-        this->OnLoadActiveDefaultServiceUpdatesComplete(operation, true);
+            "{0} could not commit validated upgrade context due to {1}",
+            owner_.TraceId,
+            error);
+        this->TryComplete(thisSPtr, move(error));
     }
-
-    ErrorCode ScheduleLoadActiveDefaultService(
-        AsyncOperationSPtr const & parallelAsyncOperation,
-        size_t operationIndex,
-        ParallelOperationsCompletedCallback const & callback)
+    else
     {
-        return owner_.Replica.ScheduleNamingAsyncWork(
-            [parallelAsyncOperation, this, operationIndex](AsyncCallback const & jobQueueCallback)
-            {
-                return this->BeginLoadActiveDefaultService(parallelAsyncOperation, operationIndex, jobQueueCallback);
-            },
-            [this, operationIndex, callback](AsyncOperationSPtr const & operation) { this->EndLoadActiveDefaultService(operation, operationIndex, callback); });
+        this->LoadActiveDefaultServiceUpdates(thisSPtr);
     }
+}
 
-    AsyncOperationSPtr BeginLoadActiveDefaultService(
-        AsyncOperationSPtr const & parallelAsyncOperation,
-        size_t operationIndex,
-        AsyncCallback const & jobQueueCallback)
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::LoadActiveDefaultServiceUpdates(AsyncOperationSPtr const & thisSPtr)
+{
+    WriteNoise(
+        owner_.TraceComponent,
+        "{0} loading active default service descriptions",
+        owner_.TraceId);
+
+    owner_.UpgradeContext.ClearDefaultServiceUpdateDescriptions();
+    owner_.UpgradeContext.ClearRollbackDefaultServiceUpdateDescriptions();
+
+    auto operation = AsyncOperation::CreateAndStart<ApplicationUpgradeParallelRetryableAsyncOperation>(
+        owner_,
+        owner_.UpgradeContext,
+        static_cast<long>(owner_.activeDefaultServiceDescriptions_.size()),
+        [this](AsyncOperationSPtr const & parallelAsyncOperation, size_t operationIndex, ParallelOperationsCompletedCallback const & callback)->ErrorCode
+        {
+            return this->ScheduleLoadActiveDefaultService(parallelAsyncOperation, operationIndex, callback);
+        },
+        [this](AsyncOperationSPtr const & operation) { this->OnLoadActiveDefaultServiceUpdatesComplete(operation, false); },
+        thisSPtr);
+    this->OnLoadActiveDefaultServiceUpdatesComplete(operation, true);
+}
+
+ErrorCode ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::ScheduleLoadActiveDefaultService(
+    AsyncOperationSPtr const & parallelAsyncOperation,
+    size_t operationIndex,
+    ParallelOperationsCompletedCallback const & callback)
+{
+    return owner_.Replica.ScheduleNamingAsyncWork(
+        [parallelAsyncOperation, this, operationIndex](AsyncCallback const & jobQueueCallback)
+        {
+        return this->BeginLoadActiveDefaultService(parallelAsyncOperation, operationIndex, jobQueueCallback);
+        },
+        [this, operationIndex, callback](AsyncOperationSPtr const & operation) { this->EndLoadActiveDefaultService(operation, operationIndex, callback); });
+}
+
+AsyncOperationSPtr ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::BeginLoadActiveDefaultService(
+    AsyncOperationSPtr const & parallelAsyncOperation,
+    size_t operationIndex,
+    AsyncCallback const & jobQueueCallback)
+{
+    ASSERT_IF(
+        operationIndex >= owner_.activeDefaultServiceDescriptions_.size(),
+        "LoadActiveDefaultService {0}: operationIndex {1} is out of bounds, {2} active default services",
+        owner_.UpgradeContext.ActivityId,
+        operationIndex,
+        owner_.activeDefaultServiceDescriptions_.size());
+
+    NamingUri serviceName = StringToNamingUri(owner_.activeDefaultServiceDescriptions_[operationIndex].Service.Name);
+
+    Common::ActivityId innerActivityId(owner_.UpgradeContext.ActivityId, static_cast<uint64>(operationIndex));
+    return owner_.Client.BeginGetServiceDescription(
+        serviceName,
+        innerActivityId,
+        owner_.GetCommunicationTimeout(),
+        jobQueueCallback,
+        parallelAsyncOperation);
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::EndLoadActiveDefaultService(
+    AsyncOperationSPtr const & operation,
+    size_t operationIndex,
+    ParallelOperationsCompletedCallback const & callback)
+{
+    PartitionedServiceDescriptor activePSD;
+    ErrorCode error = owner_.Client.EndGetServiceDescription(operation, activePSD);
+    if (error.IsSuccess())
     {
-        ASSERT_IF(
-            operationIndex >= owner_.activeDefaultServiceDescriptions_.size(),
-            "LoadActiveDefaultService {0}: operationIndex {1} is out of bounds, {2} active default services",
-            owner_.UpgradeContext.ActivityId,
-            operationIndex,
-            owner_.activeDefaultServiceDescriptions_.size());
+        // Service description is updated based on active
+        //
+        auto & targetDescription = owner_.activeDefaultServiceDescriptions_[operationIndex];
 
-        auto serviceName = StringToNamingUri(owner_.activeDefaultServiceDescriptions_[operationIndex].Service.Name);
-        
-        Common::ActivityId innerActivityId(owner_.UpgradeContext.ActivityId, static_cast<uint64>(operationIndex));
-        return owner_.Client.BeginGetServiceDescription(
-            serviceName,
-            innerActivityId,
-            owner_.GetCommunicationTimeout(),
-            jobQueueCallback,
-            parallelAsyncOperation);
-    }
+        shared_ptr<ServiceUpdateDescription> serviceUpdateDescription;
+        shared_ptr<ServiceUpdateDescription> rollbackServiceUpdateDescription;
 
-    void EndLoadActiveDefaultService(
-        Common::AsyncOperationSPtr const & operation,
-        size_t operationIndex,
-        ParallelOperationsCompletedCallback const & callback)
-    {
-        PartitionedServiceDescriptor activePSD;
-        ErrorCode error = owner_.Client.EndGetServiceDescription(operation, activePSD);
-        if (error.IsSuccess())
+        error = ServiceUpdateDescription::TryDiffForUpgrade(
+            targetDescription, 
+            activePSD, 
+            serviceUpdateDescription,  // out 
+            rollbackServiceUpdateDescription); // out
+
+        if (!error.IsSuccess())
         {
-            // Service description is updated based on active
-            //
-            auto & targetDescription = owner_.activeDefaultServiceDescriptions_[operationIndex];
-
-            shared_ptr<ServiceUpdateDescription> serviceUpdateDescription;
-            shared_ptr<ServiceUpdateDescription> rollbackServiceUpdateDescription;
-
-            error = ServiceUpdateDescription::TryDiffForUpgrade(
-                targetDescription, 
-                activePSD, 
-                serviceUpdateDescription,  // out 
-                rollbackServiceUpdateDescription); // out
-
-            if (!error.IsSuccess())
-            {
-                WriteWarning(
-                    owner_.TraceComponent, 
-                    "{0} default service update failed ({1}): error={2} {3}",
-                    owner_.TraceId,
-                    activePSD.Service.Name,
-                    error,
-                    error.Message);
-            }
-            else if (serviceUpdateDescription.get() != nullptr && rollbackServiceUpdateDescription.get() != nullptr)
-            {
-                WriteInfo(
-                    owner_.TraceComponent,
-                    "{0} modified default service: {1} -> {2}",
-                    owner_.TraceId,
-                    activePSD,
-                    targetDescription);
-
-                AcquireWriteLock lock(upgradeContextLock_);
-
-                owner_.UpgradeContext.InsertDefaultServiceUpdateDescriptions(StringToNamingUri(activePSD.Service.Name), move(*serviceUpdateDescription));
-                owner_.UpgradeContext.InsertRollbackDefaultServiceUpdateDescriptions(StringToNamingUri(activePSD.Service.Name), move(*rollbackServiceUpdateDescription));
-            }
+            WriteWarning(
+                owner_.TraceComponent, 
+                "{0} default service update failed ({1}): error={2} {3}",
+                owner_.TraceId,
+                activePSD.Service.Name,
+                error,
+                error.Message);
         }
-        else if (error.IsError(ErrorCodeValue::UserServiceNotFound) || error.IsError(ErrorCodeValue::NameNotFound))
-        {
-            error = owner_.TraceAndGetErrorDetails(ErrorCodeValue::ApplicationUpgradeValidationError, wformatString(GET_RC(Upgrade_Load_Service_Description), error));
-        }
-        
-        callback(operation->Parent, error);
-    }
-    
-    void OnLoadActiveDefaultServiceUpdatesComplete(
-        AsyncOperationSPtr const & operation,
-        bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
-
-        auto error = AsyncOperation::End<ApplicationUpgradeParallelRetryableAsyncOperation>(operation)->Error;
-
-        auto const & thisSPtr = operation->Parent;
-
-        if (error.IsSuccess())
-        {
-            this->InitializeHealthPolicies(thisSPtr);
-        }
-        else if (error.IsError(ErrorCodeValue::ApplicationUpgradeValidationError))
-        {
-            this->TryComplete(thisSPtr, error);
-        }
-        else
+        else if (serviceUpdateDescription.get() != nullptr && rollbackServiceUpdateDescription.get() != nullptr)
         {
             WriteInfo(
                 owner_.TraceComponent,
-                "{0} retrying to load active default service descriptions due to {1}",
+                "{0} modified default service: {1} -> {2}",
                 owner_.TraceId,
-                error);
+                activePSD,
+                targetDescription);
 
-            owner_.StartTimer(
-                thisSPtr,
-                [this, thisSPtr](AsyncOperationSPtr const &) { this->LoadActiveDefaultServiceUpdates(thisSPtr); },
-                owner_.Replica.GetRandomizedOperationRetryDelay(error));
+            AcquireWriteLock lock(upgradeContextLock_);
+
+            owner_.UpgradeContext.InsertDefaultServiceUpdateDescriptions(StringToNamingUri(activePSD.Service.Name), move(*serviceUpdateDescription));
+            owner_.UpgradeContext.InsertRollbackDefaultServiceUpdateDescriptions(StringToNamingUri(activePSD.Service.Name), move(*rollbackServiceUpdateDescription));
         }
     }
-
-    void InitializeHealthPolicies(AsyncOperationSPtr const & thisSPtr)
+    else if (error.IsError(ErrorCodeValue::UserServiceNotFound) || error.IsError(ErrorCodeValue::NameNotFound))
     {
-        auto operation = owner_.BeginUpdateHealthPolicyForHealthCheck(
-            [this](AsyncOperationSPtr const & operation) { this->OnUpdateHealthPolicyComplete(operation, false); },
-            thisSPtr);
-        this->OnUpdateHealthPolicyComplete(operation, true);
+        error = owner_.TraceAndGetErrorDetails(ErrorCodeValue::ApplicationUpgradeValidationError, wformatString(GET_RC(Upgrade_Load_Service_Description), error));
     }
 
-    void OnUpdateHealthPolicyComplete(
-        AsyncOperationSPtr const & operation,
-        bool expectedCompletedSynchronously)
+    callback(operation->Parent, error);
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::OnLoadActiveDefaultServiceUpdatesComplete(
+    AsyncOperationSPtr const & operation,
+    bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto error = AsyncOperation::End<ApplicationUpgradeParallelRetryableAsyncOperation>(operation)->Error;
+
+    auto const & thisSPtr = operation->Parent;
+
+    if (error.IsSuccess())
     {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
-
-        auto error = owner_.EndUpdateHealthPolicy(operation);
-
-        owner_.SetCommonContextDataForUpgrade();
-
-        this->TryComplete(operation->Parent, error);
+        this->InitializeHealthPolicies(thisSPtr);
     }
+    else if (error.IsError(ErrorCodeValue::ApplicationUpgradeValidationError))
+    {
+        this->TryComplete(thisSPtr, error);
+    }
+    else
+    {
+        WriteInfo(
+            owner_.TraceComponent,
+            "{0} retrying to load active default service descriptions due to {1}",
+            owner_.TraceId,
+            error);
 
-    ProcessApplicationUpgradeContextAsyncOperation & owner_;
-    RwLock upgradeContextLock_;
-};
+        owner_.StartTimer(
+            thisSPtr,
+            [this, thisSPtr](AsyncOperationSPtr const &) { this->LoadActiveDefaultServiceUpdates(thisSPtr); },
+            owner_.Replica.GetRandomizedOperationRetryDelay(error));
+    }
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::InitializeHealthPolicies(AsyncOperationSPtr const & thisSPtr)
+{
+    auto operation = owner_.BeginUpdateHealthPolicyForHealthCheck(
+        [this](AsyncOperationSPtr const & operation) { this->OnUpdateHealthPolicyComplete(operation, false); },
+        thisSPtr);
+    this->OnUpdateHealthPolicyComplete(operation, true);
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::OnUpdateHealthPolicyComplete(
+    AsyncOperationSPtr const & operation,
+    bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto error = owner_.EndUpdateHealthPolicy(operation);
+
+    owner_.SetCommonContextDataForUpgrade();
+
+    this->TryComplete(operation->Parent, error);
+}
 
 //
 // *** class ImageBuilderRollbackAsyncOperation;
@@ -581,9 +629,10 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadRollforwardMessage
     this->IsConfigOnly = !shouldRestartPackages;
 
     ServiceModel::ServicePackageResourceGovernanceMap spRGSettings = targetApplication_.ResourceGovernanceDescriptions;
+    ServiceModel::CodePackageContainersImagesMap cpContainersImages = targetApplication_.CodePackageContainersImages;
 
     return LoadMessageBody(
-        targetApplication_.Application,         
+        targetApplication_.Application,
         this->UpgradeContext.UpgradeDescription.IsInternalMonitored,
         this->UpgradeContext.UpgradeDescription.IsUnmonitoredManual,
         false, // IsRollback
@@ -593,6 +642,7 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadRollforwardMessage
         this->GetRollforwardReplicaSetCheckTimeout(),
         this->UpgradeContext.RollforwardInstance,
         move(spRGSettings),
+        move(cpContainersImages),
         requestBody);
 }
 
@@ -629,6 +679,7 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadRollbackMessageBod
     }
 
     ServiceModel::ServicePackageResourceGovernanceMap spRGSettings = currentApplication_.ResourceGovernanceDescriptions;
+    ServiceModel::CodePackageContainersImagesMap cpContainersImages = currentApplication_.CodePackageContainersImages;
 
     return LoadMessageBody(
         currentApplication_.Application, 
@@ -641,6 +692,7 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadRollbackMessageBod
         this->GetRollbackReplicaSetCheckTimeout(),
         this->UpgradeContext.RollbackInstance,
         move(spRGSettings),
+        move(cpContainersImages),
         requestBody);
 }
 
@@ -656,8 +708,10 @@ void ProcessApplicationUpgradeContextAsyncOperation::TraceQueryableUpgradeStart(
         this->UpgradeContext.TargetApplicationManifestId);
 
     CMEvents::Trace->ApplicationUpgradeStartOperational(
+        this->ReplicaActivityId.ActivityId.Guid,
         appContextUPtr_->ApplicationName.ToString(),
         appContextUPtr_->TypeName.Value,
+        appContextUPtr_->TypeVersion.Value,
         this->UpgradeContext.UpgradeDescription.TargetApplicationTypeVersion,
         this->UpgradeContext.UpgradeDescription.UpgradeType,
         this->UpgradeContext.UpgradeDescription.RollingUpgradeMode,
@@ -677,14 +731,16 @@ void ProcessApplicationUpgradeContextAsyncOperation::TraceQueryableUpgradeDomain
         wformatString(recentlyCompletedUDs));
 
     CMEvents::Trace->ApplicationUpgradeDomainCompleteOperational(
+        this->ReplicaActivityId.ActivityId.Guid,
         appContextUPtr_->ApplicationName.ToString(),
         appContextUPtr_->TypeName.Value,
+        appContextUPtr_->TypeVersion.Value,
         (this->UpgradeContext.UpgradeState == ApplicationUpgradeState::RollingBack ?
             this->UpgradeContext.RollbackApplicationTypeVersion.Value :
             this->UpgradeContext.UpgradeDescription.TargetApplicationTypeVersion),
         this->UpgradeContext.UpgradeState,
         wformatString(recentlyCompletedUDs),
-        this->UpgradeContext.UpgradeDomainElapsedTime);
+        this->UpgradeContext.UpgradeDomainElapsedTime.TotalMillisecondsAsDouble());
 }
 
 std::wstring ProcessApplicationUpgradeContextAsyncOperation::GetTraceAnalysisContext()
@@ -1250,10 +1306,10 @@ AsyncOperationSPtr ProcessApplicationUpgradeContextAsyncOperation::BeginCreateSe
         operationIndex,
         this->UpgradeContext.AddedDefaultServices.size());
     Common::ActivityId innerActivityId(this->UpgradeContext.ActivityId, static_cast<uint64>(operationIndex));
-    return this->Client.BeginCreateService(
-        this->UpgradeContext.AddedDefaultServices[operationIndex].ServiceDescriptor,
-        this->UpgradeContext.AddedDefaultServices[operationIndex].PackageVersion,
-        this->UpgradeContext.AddedDefaultServices[operationIndex].PackageInstance,
+    auto &defaultServiceContext = this->UpgradeContext.AddedDefaultServices[operationIndex];
+    return AsyncOperation::CreateAndStart<CreateDefaultServiceWithDnsNameIfNeededAsyncOperation>(
+        defaultServiceContext,
+        *this,
         innerActivityId,
         this->GetCommunicationTimeout(),
         jobQueueCallback,
@@ -1264,12 +1320,8 @@ void ProcessApplicationUpgradeContextAsyncOperation::EndCreateService(
     Common::AsyncOperationSPtr const & operation,
     ParallelOperationsCompletedCallback const & callback)
 {
-    auto error = this->Client.EndCreateService(operation);
-    if (error.IsError(ErrorCodeValue::UserServiceAlreadyExists))
-    {
-        error = ErrorCode::Success();
-    }
-    
+    auto error = CreateDefaultServiceWithDnsNameIfNeededAsyncOperation::End(operation);
+
     callback(operation->Parent, error);
 }
 
@@ -1681,7 +1733,7 @@ void ProcessApplicationUpgradeContextAsyncOperation::FinishUpgrade(AsyncOperatio
         return;
     }
 
-    error = this->ClearVerifiedUpgradeDomains(storeTx, *make_shared<StoreDataVerifiedUpgradeDomains>(appContextUPtr_->ApplicationId));
+    error = this->ClearVerifiedUpgradeDomains(storeTx, *make_unique<StoreDataVerifiedUpgradeDomains>(appContextUPtr_->ApplicationId));
     if (!error.IsSuccess())
     {
         this->TrySchedulePrepareFinishUpgrade(error, thisSPtr);
@@ -1722,10 +1774,11 @@ void ProcessApplicationUpgradeContextAsyncOperation::OnFinishUpgradeCommitComple
             this->UpgradeContext.TargetApplicationManifestId);
 
         CMEvents::Trace->ApplicationUpgradeCompleteOperational(
+            this->ReplicaActivityId.ActivityId.Guid,
             appContextUPtr_->ApplicationName.ToString(),
             appContextUPtr_->TypeName.Value,
             this->UpgradeContext.UpgradeDescription.TargetApplicationTypeVersion,
-            this->UpgradeContext.OverallUpgradeElapsedTime);
+            this->UpgradeContext.OverallUpgradeElapsedTime.TotalMillisecondsAsDouble());
 
         this->TryComplete(thisSPtr, error);
     }
@@ -2263,7 +2316,7 @@ void ProcessApplicationUpgradeContextAsyncOperation::FinishRollback(AsyncOperati
         return;
     }
 
-    error = this->ClearVerifiedUpgradeDomains(storeTx, *make_shared<StoreDataVerifiedUpgradeDomains>(appContextUPtr_->ApplicationId));
+    error = this->ClearVerifiedUpgradeDomains(storeTx, *make_unique<StoreDataVerifiedUpgradeDomains>(appContextUPtr_->ApplicationId));
     if (!error.IsSuccess())
     {
         this->TryScheduleFinishRollback(error, thisSPtr);
@@ -2436,10 +2489,11 @@ void ProcessApplicationUpgradeContextAsyncOperation::OnFinishAcceptGoalStateUpgr
                 this->UpgradeContext.TargetApplicationManifestId);
 
             CMEvents::Trace->ApplicationUpgradeCompleteOperational(
+                this->ReplicaActivityId.ActivityId.Guid,
                 appContextUPtr_->ApplicationName.ToString(),
                 appContextUPtr_->TypeName.Value,
                 this->UpgradeContext.UpgradeDescription.TargetApplicationTypeVersion,
-                this->UpgradeContext.OverallUpgradeElapsedTime);
+                this->UpgradeContext.OverallUpgradeElapsedTime.TotalMillisecondsAsDouble());
 
             this->TryComplete(thisSPtr, error);
         }
@@ -2483,11 +2537,12 @@ void ProcessApplicationUpgradeContextAsyncOperation::OnFinishRollbackCommitCompl
             this->appContextUPtr_->ManifestId);
 
         CMEvents::Trace->ApplicationUpgradeRollbackCompleteOperational(
+            this->ReplicaActivityId.ActivityId.Guid,
             appContextUPtr_->ApplicationName.ToString(),
             appContextUPtr_->TypeName.Value,
             appContextUPtr_->TypeVersion.Value,
             this->UpgradeContext.CommonUpgradeContextData.FailureReason,
-            this->UpgradeContext.OverallUpgradeElapsedTime);
+            this->UpgradeContext.OverallUpgradeElapsedTime.TotalMillisecondsAsDouble());
 
         this->TryComplete(thisSPtr, error);
     }
@@ -2614,6 +2669,8 @@ void ProcessApplicationUpgradeContextAsyncOperation::StartRollback(AsyncOperatio
                 {
                     this->AppendDynamicUpgradeStatusDetails(GET_RC(Delete_Default_Service));
                 }
+
+                error = this->ClearVerifiedUpgradeDomains(storeTx, *make_unique<StoreDataVerifiedUpgradeDomains>(appContextUPtr_->ApplicationId));
             }
         }
 
@@ -2713,12 +2770,14 @@ void ProcessApplicationUpgradeContextAsyncOperation::OnImageBuilderRollbackCompl
             this->UpgradeContext.TargetApplicationManifestId,
             this->appContextUPtr_->ManifestId);
 
-        CMEvents::Trace->ApplicationUpgradeRollbackOperational(
+        CMEvents::Trace->ApplicationUpgradeRollbackStartOperational(
+            this->ReplicaActivityId.ActivityId.Guid,
             appContextUPtr_->ApplicationName.ToString(),
             appContextUPtr_->TypeName.Value,
             appContextUPtr_->TypeVersion.Value,
+            this->UpgradeContext.RollbackApplicationTypeVersion.Value,
             this->UpgradeContext.CommonUpgradeContextData.FailureReason,
-            this->UpgradeContext.OverallUpgradeElapsedTime);
+            this->UpgradeContext.OverallUpgradeElapsedTime.TotalMillisecondsAsDouble());
 
         if (!this->UpgradeContext.AddedDefaultServices.empty() && !this->UpgradeContext.CommonUpgradeContextData.IsSkipRollbackUD)
         {
@@ -3034,7 +3093,7 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::ValidateMovedServiceTy
 }
 
 ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadMessageBody(
-    ApplicationInstanceDescription const & appDescription,    
+    ApplicationInstanceDescription const & appDescription,
     bool isMonitored,
     bool isManual,
     bool isRollback,
@@ -3044,9 +3103,23 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadMessageBody(
     TimeSpan const replicaSetCheckTimeout,
     uint64 instanceId,
     ServiceModel::ServicePackageResourceGovernanceMap && spRGSettings,
+    ServiceModel::CodePackageContainersImagesMap && cpContainersImages,
     __out UpgradeApplicationRequestMessageBody & requestMessage)
 {
     auto sequenceNumber = this->UpgradeContext.SequenceNumber;
+
+    if (sequenceNumber < 0)
+    {
+        TRACE_ERROR_AND_TESTASSERT(TraceComponent, "{0} invalid upgrade context sequence number: {1}", this->TraceId, sequenceNumber);
+
+        auto error = this->RefreshUpgradeContext();
+        if (!error.IsSuccess())
+        {
+            WriteWarning(TraceComponent, "{0} refresh upgrade context failed: {1}", this->TraceId, error);
+        }
+
+        return ErrorCodeValue::OperationFailed;
+    }
 
     WriteInfo(
         TraceComponent, 
@@ -3192,7 +3265,8 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadMessageBody(
         isManual,
         move(packageUpgradeSpecifications),
         move(typeRemovalSpecifications),
-        move(spRGSettings));
+        move(spRGSettings),
+        move(cpContainersImages));
 
     requestMessage = UpgradeApplicationRequestMessageBody(
         move(upgradeSpecification),

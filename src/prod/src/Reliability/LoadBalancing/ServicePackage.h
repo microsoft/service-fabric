@@ -29,6 +29,9 @@ namespace Reliability
             __declspec(property(get = get_HasRGMetric)) bool HasRGMetrics;
             bool get_HasRGMetric() const { return (description_.RequiredResources.size() > 0); }
 
+            __declspec(property(get = get_HasContainerImages)) bool HasContainerImages;
+            bool get_HasContainerImages() const { return (description_.ContainersImages.size() > 0); }
+
             __declspec(property(get = get_Services)) std::unordered_set<uint64> & Services;
             std::unordered_set<uint64> & get_Services() { return services_; }
 

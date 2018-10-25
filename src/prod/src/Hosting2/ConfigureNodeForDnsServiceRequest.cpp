@@ -19,18 +19,16 @@ ConfigureNodeForDnsServiceRequest::ConfigureNodeForDnsServiceRequest()
 
 ConfigureNodeForDnsServiceRequest::ConfigureNodeForDnsServiceRequest(
     bool isDnsServiceEnabled,
-    bool setAsPreferredDns,
-    std::wstring const & sid)
+    bool setAsPreferredDns)
     : isDnsServiceEnabled_(isDnsServiceEnabled),
-    setAsPreferredDns_(setAsPreferredDns),
-    sid_(sid)
+    setAsPreferredDns_(setAsPreferredDns)
 {
 }
 
 void ConfigureNodeForDnsServiceRequest::WriteTo(TextWriter & w, FormatOptions const &) const
 {
     w.Write("ConfigureNodeForDnsServiceRequest { ");
-    w.Write("IsDnsServiceEnabled = {0} setAsPreferredDns = {1} Sid = {2}",
-        isDnsServiceEnabled_, setAsPreferredDns_, sid_);
+    w.Write("IsDnsServiceEnabled = {0} setAsPreferredDns = {1}",
+        isDnsServiceEnabled_, setAsPreferredDns_);
     w.Write("}");
 }

@@ -132,6 +132,7 @@ namespace TestCommon
                 testErrorCodeMap.insert( Type_Pair(L"ComposeDeploymentAlreadyExists",           ErrorCodeValue::ComposeDeploymentAlreadyExists));
                 testErrorCodeMap.insert( Type_Pair(L"ComposeDeploymentNotFound",                ErrorCodeValue::ComposeDeploymentNotFound));
                 testErrorCodeMap.insert( Type_Pair(L"InvalidAddress",                           ErrorCodeValue::InvalidAddress));
+                testErrorCodeMap.insert( Type_Pair(L"InvalidServiceScalingPolicy",              ErrorCodeValue::InvalidServiceScalingPolicy));
             }
         }
 

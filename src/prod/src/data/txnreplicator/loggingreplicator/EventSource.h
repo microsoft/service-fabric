@@ -37,6 +37,7 @@ namespace Data
             DECLARE_LR_STRUCTURED_TRACE(PrimaryCopy, Common::Guid, LONG64, LONG64, ULONGLONG, ULONGLONG);
             DECLARE_LR_STRUCTURED_TRACE(TruncateHead, Common::Guid, LONG64, Common::WStringLiteral, LogRecordLib::TruncationState::Trace, LONG64, LONG64, ULONGLONG, LONG64, LONG64, ULONGLONG);
             DECLARE_LR_STRUCTURED_TRACE(ProcessBarrierRecord, Common::Guid, LONG64, DrainingStream::Trace, LONG64, LONG64, LONG64);
+            DECLARE_LR_STRUCTURED_TRACE(PeriodicCheckpointAndTruncation, Common::Guid, LONG64, PeriodicCheckpointTruncationState::Trace, Common::DateTime, Common::DateTime);
 
             // CopyStream
             DECLARE_LR_STRUCTURED_TRACE(CopyStream, Common::Guid, LONG64, std::wstring, std::wstring);
@@ -71,6 +72,7 @@ namespace Data
             DECLARE_LR_STRUCTURED_TRACE(BecomePrimaryAbortTransactionStop, Common::Guid, LONG64, LogRecordLib::LogRecordType::Trace, LONG64, LONG64, ULONGLONG, LONG64);
             DECLARE_LR_STRUCTURED_TRACE(DeleteLog, Common::Guid, LONG64);
             DECLARE_LR_STRUCTURED_TRACE(FlushedRecordsCallback, Common::Guid, LONG64, LONG64, std::vector<FlushedRecordInfo>);
+            DECLARE_LR_STRUCTURED_TRACE(CreateAllManagers, Common::Guid, LONG64);
 
             DECLARE_LR_STRUCTURED_TRACE(UpdateEpoch, Common::Guid, LONG64, LONG64, LONG64, LONG64, int, DrainingStream::Trace);
             DECLARE_LR_STRUCTURED_TRACE(GetCopyContext, Common::Guid, LONG64);
@@ -143,6 +145,7 @@ namespace Data
             DECLARE_LR_STRUCTURED_TRACE(RMOpenAsyncRecoveredLastECRecord, Common::Guid, LONG64, LONG64, LONG64, ULONGLONG, LONG64, ULONGLONG);
             DECLARE_LR_STRUCTURED_TRACE(RMPerformRecoveryAsync, Common::Guid, LONG64, LONG64, LONG64, ULONGLONG, ULONGLONG, LONG64, LONG64, bool, std::wstring);
             DECLARE_LR_STRUCTURED_TRACE(RMPerformRecoveryAsyncTailRecordType, Common::Guid, LONG64, LogRecordLib::LogRecordType::Trace, LONG64, LONG64, ULONGLONG);
+            DECLARE_LR_STRUCTURED_TRACE(RMRecoveryFailed, Common::Guid, LONG64, int, int, LogRecordLib::LogRecordType::Trace, LONG64, LONG64);
 
             // TransactionManager
             DECLARE_LR_STRUCTURED_TRACE(AcceptSingleOperationTransaction, Common::Guid, LONG64, LONG64, LONG64);
@@ -174,22 +177,23 @@ namespace Data
             DECLARE_LR_STRUCTURED_TRACE(TruncateTail, Common::Guid, LONG64, LONG64);
 
             // BackupManager : Backup
-            DECLARE_LR_STRUCTURED_TRACE(AcceptBackup, Common::Guid, LONG64, Common::Guid);
-            DECLARE_LR_STRUCTURED_TRACE(BackupAsyncCompleted, Common::Guid, LONG64, LONG64, LONG64, LONG64);
-            DECLARE_LR_STRUCTURED_TRACE(BackupException, Common::Guid, LONG64, Common::Guid, std::wstring, int, std::wstring);
-            DECLARE_LR_STRUCTURED_TRACE(IncrementalBackupException, Common::Guid, LONG64, int, std::wstring);
+            DECLARE_LR_STRUCTURED_TRACE(IBM_BackupAsyncStart, Common::Guid, LONG64, Common::Guid, Common::Guid, int, bool, LONG64, LONG64, LONG64, Common::WStringLiteral);
+            DECLARE_LR_STRUCTURED_TRACE(IBM_BackupAsync, Common::Guid, LONG64, Common::Guid, Common::Guid, LONG64, LONG64, LONG64, int64, int64, int64, int64, int64, int64, int64);
+            DECLARE_LR_STRUCTURED_TRACE(IBM_BackupAsyncFinish, Common::Guid, LONG64, Common::Guid, Common::Guid, LONG64, LONG64, LONG64, int64, int64, int64, int64, int64, int64, int64);
+            DECLARE_LR_STRUCTURED_TRACE(IBM_BackupAsyncFinishError, Common::Guid, LONG64, Common::Guid, std::wstring, int, std::wstring);
 
             // Backup Manager : Restore
-            DECLARE_LR_STRUCTURED_TRACE(AcceptRestore, Common::Guid, LONG64, Common::Guid, Common::WStringLiteral, LONG64, LONG64, LONG64);
-            DECLARE_LR_STRUCTURED_TRACE(CompletedRestore, Common::Guid, LONG64, Common::Guid, Common::WStringLiteral, LONG64, LONG64, LONG64);
-            DECLARE_LR_STRUCTURED_TRACE(RestoreException, Common::Guid, LONG64, Common::Guid, std::wstring);
-            DECLARE_LR_STRUCTURED_TRACE(RestoreExceptionWarning, Common::Guid, LONG64, Common::Guid, std::wstring);
+            DECLARE_LR_STRUCTURED_TRACE(IBM_RestoreAsyncStart, Common::Guid, LONG64, Common::Guid, LONG64, LONG64, LONG64, ULONGLONG, Common::WStringLiteral);
+            DECLARE_LR_STRUCTURED_TRACE(IBM_RestoreAsync, Common::Guid, LONG64, Common::Guid, int64, int64, int64, int64);
+            DECLARE_LR_STRUCTURED_TRACE(IBM_RestoreAsyncFinish, Common::Guid, LONG64, Common::Guid, int64, int64, int64, int64);
+            DECLARE_LR_STRUCTURED_TRACE(IBM_RestoreAsyncFinishError, Common::Guid, LONG64, Common::Guid, int, std::wstring);
             DECLARE_LR_STRUCTURED_TRACE(RestoreTokenCreated, Common::Guid, LONG64, Common::Guid, Common::WStringLiteral);
             DECLARE_LR_STRUCTURED_TRACE(RestoreTokenDeleted, Common::Guid, LONG64, Common::Guid, Common::WStringLiteral);
             DECLARE_LR_STRUCTURED_TRACE(RestoreRecord, Common::Guid, LONG64, LONG64, FABRIC_SEQUENCE_NUMBER, LONG64, LONG64);
 
             // BackupManager : Other
-            DECLARE_LR_STRUCTURED_TRACE(BackupManager_Error, Common::Guid, LONG64, Common::Guid, LONG64, std::wstring);
+            DECLARE_LR_STRUCTURED_TRACE(BackupRestoreWarning, Common::Guid, LONG64, bool, Common::Guid, std::wstring);
+            DECLARE_LR_STRUCTURED_TRACE(UndoBackupLogRecord, Common::Guid, LONG64, LONG64, LONG64, ULONG64, LONG64, LONG64, LONG64);
 
             // BackupFolderInfo
             DECLARE_LR_STRUCTURED_TRACE(BackupFolderWarning, Common::Guid, LONG64, Common::WStringLiteral, std::wstring, int);
@@ -241,6 +245,7 @@ namespace Data
                 LR_STRUCTURED_TRACE(PrimaryCopy, 17, Info, "{1}: GetLogRecordsToCopy for target replica {2} from {3}->{4}", "id", "ReplicaId", "target", "start", "end"),
                 LR_STRUCTURED_TRACE(TruncateHead, 18, Info, "{1}: Action: {2} State: {3} LSN: {4} PSN: {5} Position: {6} LogHeadLSN: {7} LogHeadPSN: {8} LogHeadPos: {9}", "id", "ReplicaId", "reason", "checkpointState", "lsn", "psn", "position", "logheadlsn", "logheadpsn", "logheadpos"),
                 LR_STRUCTURED_TRACE(ProcessBarrierRecord, 19, Info, "{1}: Draining Stream: {2} PSN: {3} RecordStableLSN: {4} CurrentStableLSN: {5}", "id", "ReplicaId", "drainingstream", "psn", "recordstablelsn", "currentstablelsn"),
+                LR_STRUCTURED_TRACE(PeriodicCheckpointAndTruncation, 20, Info, "{1}: State: {2}. Last Periodic Checkpoint : {3}. Last Periodic Truncation : {4}", "id", "ReplicaId", "periodicCheckpointTruncationState", "lastPeriodicCheckpointTime", "lastPeriodicTruncationTime"),
 
                 // CopyStream
                 LR_STRUCTURED_TRACE(CopyStream, 21, Info, "{1}: \r\n {2} \r\n {3}", "id", "ReplicaId", "source", "target"),
@@ -271,7 +276,6 @@ namespace Data
                 LR_STRUCTURED_TRACE(BecomePrimaryAbortTransaction, 44, Info, "{1}: Attempting to abort transaction RecordType: {2} Lsn: {3} Psn: {4} Position: {5} TxId: {6}", "id", "ReplicaId", "recordtype", "lsn", "psn", "position", "txid"),
                 LR_STRUCTURED_TRACE(BecomePrimaryAbortTransactionStop, 45, Info, "{1}: Stop aborting transaction RecordType: {2} Lsn: {3} Psn: {4} Position: {5} TxId: {6}", "id", "ReplicaId", "recordtype", "lsn", "psn", "position", "txid"),
                 LR_STRUCTURED_TRACE(DeleteLog, 46, Info, "{1}", "id", "ReplicaId"),
-                LR_STRUCTURED_TRACE(FlushedRecordsCallback, 58, Info, "{1}: Status: {2} \r\nFlushed Records:{3}", "id", "ReplicaId","status", "flushedRecordsInfoVector"),
                 LR_STRUCTURED_TRACE(UpdateEpoch, 48, Info, "{1}: {2},{3:x} Lsn: {4} Role: {5} DrainingStream: {6}", "id", "ReplicaId", "dl", "con", "lsn", "role", "stream"),
                 LR_STRUCTURED_TRACE(GetCopyContext, 49, Info, "{1}", "id", "ReplicaId"),
                 LR_STRUCTURED_TRACE(GetCopyState, 50, Info, "{1}: UptoLsn: {2}", "id", "ReplicaId", "lsn"),
@@ -282,6 +286,8 @@ namespace Data
                 LR_STRUCTURED_TRACE(Recover, 55, Info, "{1}", "id", "ReplicaId"),
                 LR_STRUCTURED_TRACE(Close, 56, Info, "{1}: IsRemovingStateAfterOpen: {2}", "id", "ReplicaId", "IsRemovingStateAfterOpen"),
                 LR_STRUCTURED_TRACE(ProgressVectorValidationTelemetry, 57, Warning, "{1}: Starting full copy, ProgressVector validation failed. \r\nError Message: {2}\r\nSourceProgressVector: {3}\r\nSourceIndex: {4}.\r\nSourceProgressVectorEntry: {5} \r\nTargetProgressVector: {6}\r\nTargetIndex: {7}.\r\nTargetProgressVectorEntry: {8}", "id", "ReplicaId", "errorMessage", "sourceVector", "sourceIndex", "sourceVectorEntry", "targetVector", "targetIndex", "targetVectorEntry"),
+                LR_STRUCTURED_TRACE(FlushedRecordsCallback, 58, Info, "{1}: Status: {2} \r\nFlushed Records:{3}", "id", "ReplicaId", "status", "flushedRecordsInfoVector"),
+                LR_STRUCTURED_TRACE(CreateAllManagers, 59, Info, "{1}", "id", "ReplicaId"),
 
                 // LogManager
                 LR_STRUCTURED_TRACE(ProcessLogHeadTruncationWaiting, 66, Info, "{1}: Waiting for reader: {2} to complete", "id", "ReplicaId", "reader"),
@@ -335,6 +341,7 @@ namespace Data
                 LR_STRUCTURED_TRACE(FileLogManagerRenameCopyLogAtomicallyException, 125, Error, "{1}: Status: {2:x} \r\n {3}", "id", "replicaid", "errorcode", "stacktrace"),
 
                 // RecoveryManager
+                LR_STRUCTURED_TRACE(RMRecoveryFailed, 129, Info, "{1}: ApplyError: {2:x} LogError: {3:x} Awaiting LastRecoverableRecord Type: {4} Lsn:{5} Psn:{6}", "id", "replicaid", "applyerror", "logerror", "recordType", "lsn", "psn"),
                 LR_STRUCTURED_TRACE(RMOpenAsyncLogUsage, 130, Info, "{1}: LogUsage: {2} tail record type: {3} lsn: {4} psn: {5} position: {6}", "id", "replicaid", "logusage", "recordtype", "lsn", "psn", "pos"),
                 LR_STRUCTURED_TRACE(RMOpenAsyncLastPhysicalRecord, 131, Info, "{1}: Recovered Last Physical Record type: {2} lsn: {3} psn: {4} position: {5}", "id", "replicaid", "recordtype", "lsn", "psn", "pos"),
                 LR_STRUCTURED_TRACE(RMOpenAsyncSkippingRecovery, 132, Info, "{1}: Skipping recovery due to pending remove state", "id", "replicaid"),
@@ -377,24 +384,58 @@ namespace Data
                 LR_STRUCTURED_TRACE(TruncateTail, 177, Warning, "{1}: Tail is being truncated to {2}", "id", "replicaid", "taillsn"),
 
                 // BackupManager
-                LR_STRUCTURED_TRACE(AcceptBackup, 186, Info, "{1}: Api.AcceptBackup. BackupId: {2}", "id", "replicaid", "backupid"),
-                LR_STRUCTURED_TRACE(BackupAsyncCompleted, 187, Info, "{1}: BackupAsync: Completed. Local: {2} ms, Callback: {3} ms, Total: {4} ms.", "id", "replicaid", "localbackupms", "callbackdurationms", "totalms"),
-                LR_STRUCTURED_TRACE(BackupException, 188, Warning, "{1}: BackupId: {2}. Failed with {3} {4}. {5}", "id", "replicaid", "backupid", "errortype", "error", "message"),
-                LR_STRUCTURED_TRACE(IncrementalBackupException, 189, Warning, "{1}: Incremental backup with status: {2}. {3}", "id", "replicaid", "status", "message"),
-                
-                LR_STRUCTURED_TRACE(AcceptRestore, 190, Info, "{1}: RestoreId: {2} Directory: {3} Epoch: ({4},{5:x}) LSN: {6}", "id", "replicaid", "restoreid", "directory", "configurationversion", "datalossversion", "highestbackeduplsn"),
-                LR_STRUCTURED_TRACE(CompletedRestore, 191, Info, "{1}: RestoreId: {2} Directory: {3} Epoch: ({4},{5:x}) LSN: {6}", "id", "replicaid", "restoreid", "directory", "configurationversion", "datalossversion", "highestbackeduplsn"),
-                LR_STRUCTURED_TRACE(RestoreException, 192, Error, "{1}: RestoreId: {2}. {3}", "id", "replicaid", "restoreid", "message"),
-                LR_STRUCTURED_TRACE(RestoreExceptionWarning, 193, Warning, "{1}: RestoreId: {2}. {3}", "id", "replicaid", "restoreid", "message"),
-                LR_STRUCTURED_TRACE(RestoreTokenCreated, 194, Info, "{1}: RestoreId: {2}. Restore Token created {3}", "id", "replicaid", "restoreid", "restoretokenpath"), 
-                LR_STRUCTURED_TRACE(RestoreTokenDeleted, 195, Info, "{1}: RestoreId: {2}. Restore Token deleted {3}", "id", "replicaid", "restoreid", "restoretokenpath"),
-                LR_STRUCTURED_TRACE(RestoreRecord, 196, Noise,
+                LR_STRUCTURED_TRACE(
+                    IBM_BackupAsyncStart, 186, Info,
+                    "{1}: IBM.BackupAsync: BackupId: {2} ParentBackupId: {3} Option: {4} EnableIBAR: {5} Epoch: ({6},{7}) LSN: {8} \r\n Folder: {9} \r\n Backup Steps: \r\n 1. Argument validation and prepare backup \r\n 2. StateManager backup \r\n 3. Get log records and backup \r\n 4. Write backup metadata \r\n 5. Ensure backed up data is stabilized \r\n 6. Call the user callback \r\n 7. Replicate backup log record",
+                    "id", "replicaid", "backupid", "parentbackupid", "option", "ibar", "configurationversion", "datalossversion", "highestbackeduplsn", "folder"),
+                LR_STRUCTURED_TRACE(
+                    IBM_BackupAsync, 187, Info, 
+                    "{1}: IBM.BackupAsync: BackupId: {2} ParentBackupId: {3} Epoch: ({4},{5}) LSN: {6} \r\n Step Duration: {7}ms, {8}ms, {9}ms, {10}ms, {11}ms, {12}ms, {13}ms", 
+                    "id", "replicaid", "backupid", "parentbackupid", "configurationversion", "datalossversion", "highestbackeduplsn", "t1", "t2", "t3", "t4", "t5", "t6", "t7"),
+                LR_STRUCTURED_TRACE(
+                    IBM_BackupAsyncFinish, 188, Info, 
+                    "{1}: IBM.BackupAsync: BackupId: {2} ParentBackupId: {3} Epoch: ({4},{5}) LSN: {6} \r\n Step Duration: {7}ms, {8}ms, {9}ms, {10}ms, {11}ms, {12}ms, {13}ms",
+                    "id", "replicaid", "backupid", "parentbackupid", "configurationversion", "datalossversion", "highestbackeduplsn", "t1", "t2", "t3", "t4", "t5", "t6", "t7"),
+                LR_STRUCTURED_TRACE(
+                    IBM_BackupAsyncFinishError, 189, Warning, 
+                    "{1}: BackupId: {2}. Failed with {3} {4}. {5}", 
+                    "id", "replicaid", "backupid", "errortype", "error", "message"),
+                LR_STRUCTURED_TRACE(
+                    IBM_RestoreAsyncStart, 190, Info, 
+                    "{1}: RestoreId: {2} Epoch: ({3},{4}) LSN: {5} Number of Backups: {6} \r\n Folder: {7} \r\n Restore Steps: \r\n 1. Argument validation and prepare for restore \r\n 2. StateManager restore \r\n 3. Replicator restore \r\n 4. Reset the replica role and primary state", 
+                    "id", "replicaid", "restoreid", "configurationversion", "datalossversion", "highestbackeduplsn", "numofbackups", "directory"),
+                LR_STRUCTURED_TRACE(
+                    IBM_RestoreAsync, 191, Info,
+                    "{1}: RestoreId: {2} \r\n Step Duration: {3}ms, {4}ms, {5}ms, {6}ms",
+                    "id", "replicaid", "restoreid", "t1", "t2", "t3", "t4"),
+                LR_STRUCTURED_TRACE(
+                    IBM_RestoreAsyncFinish, 192, Info, 
+                    "{1}: RestoreId: {2} \r\n Step Duration: {3}ms, {4}ms, {5}ms, {6}ms",
+                    "id", "replicaid", "restoreid", "t1", "t2", "t3", "t4"),
+                LR_STRUCTURED_TRACE(
+                    IBM_RestoreAsyncFinishError, 193, Warning, 
+                    "{1}: RestoreId: {2} Status: {3} Message: {4}", 
+                    "id", "replicaid", "restoreid", "status", "message"),
+                LR_STRUCTURED_TRACE(
+                    RestoreTokenCreated, 194, Info, 
+                    "{1}: RestoreId: {2}. Restore Token created {3}", 
+                    "id", "replicaid", "restoreid", "restoretokenpath"), 
+                LR_STRUCTURED_TRACE(
+                    RestoreTokenDeleted, 195, Info, 
+                    "{1}: RestoreId: {2}. Restore Token deleted {3}", 
+                    "id", "replicaid", "restoreid", "restoretokenpath"),
+                LR_STRUCTURED_TRACE(
+                    RestoreRecord, 196, Noise,
                     "{1}: Inserted record from backup. Type: {2} LSN: {3} PSN: {4} Previous PSN: {5}",
                     "id", "replicaId", "recordType", "lsn", "psn", "previousPSN"),
 
-                LR_STRUCTURED_TRACE(BackupManager_Error, 197, Error,
-                    "{1}: Backup Manager: Id: {2} NTSTATUS: {3}\n {4:x}",
-                    "id", "replicaid", "backupOrRestoreId", "ntstatus", "message"),
+                LR_STRUCTURED_TRACE(BackupRestoreWarning, 197, Warning,
+                    "{1}: Backup Manager: IsBackup: {2} Id: {3} Message: {4}",
+                    "id", "replicaid", "isBackup", "backupOrRestoreId", "message"),
+
+                LR_STRUCTURED_TRACE(UndoBackupLogRecord, 198, Info,
+                    "{1}: Backup Manager: UndoLastCompletedBackupLogRecord: LSN: {2} PSN: {3} RecordPosition: {4} HighestBackedupEpoch: ({6},{5}) HighestBackedupLsn: {7}.",
+                    "id", "replicaid", "lsn", "psn", "position", "datalossversion", "configurationversion", "highestbackeduplsn"),
 
                 // BackupFolderInfo
                 LR_STRUCTURED_TRACE(BackupFolderWarning, 206, Error, "{1}: {2} Folder: {3}. Status: {4:x}", "id", "replicaid", "message", "folder", "status"),

@@ -13,21 +13,24 @@ void UdpListener::Create(
     __out UdpListener::SPtr& spServer,
     __in KAllocator& allocator,
     __in const IDnsTracer::SPtr& spTracer,
-    __in const INetIoManager::SPtr& spManager
+    __in const INetIoManager::SPtr& spManager,
+    __in bool fEnableSocketAddressReuse
 )
 {
-    spServer = _new(TAG, allocator) UdpListener(spTracer, spManager);
+    spServer = _new(TAG, allocator) UdpListener(spTracer, spManager, fEnableSocketAddressReuse);
     KInvariant(spServer != nullptr);
 }
 
 UdpListener::UdpListener(
     __in const IDnsTracer::SPtr& spTracer,
-    __in const INetIoManager::SPtr& spManager
+    __in const INetIoManager::SPtr& spManager,
+    __in bool fEnableSocketAddressReuse
 ) : _spTracer(spTracer),
     _spManager(spManager),
     _port(0),
     _ioRegistrationContext(0),
-    _socket(INVALID_SOCKET)
+    _socket(INVALID_SOCKET),
+    _fEnableSocketAddressReuse(fEnableSocketAddressReuse)
 {
 }
 
@@ -91,6 +94,25 @@ bool UdpListener::StartListener(
 #endif
         Tracer().Trace(DnsTraceLevel_Warning, "DNS UdpListener, failed to create socket, error {0}", static_cast<LONG>(error));
         return false;
+    }
+
+    if (_fEnableSocketAddressReuse)
+    {
+        int enable = 1;
+        if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&enable, sizeof(enable)) == SOCKET_ERROR)
+        {
+            int error = 0;
+#if defined(PLATFORM_UNIX)
+            error = errno;
+#else
+            error = WSAGetLastError();
+#endif
+            Tracer().Trace(DnsTraceLevel_Warning,
+                "DNS UdpListener, failed to set socket option SO_REUSEADDR, error {0}",
+                static_cast<LONG>(error));
+
+            return false;
+        }
     }
 
     sockaddr_in sin;

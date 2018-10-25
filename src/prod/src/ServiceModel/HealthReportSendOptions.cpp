@@ -19,21 +19,6 @@ HealthReportSendOptions::HealthReportSendOptions(bool immediate)
 {
 }
 
-HealthReportSendOptions::HealthReportSendOptions(HealthReportSendOptions && other)
-    : immediate_(move(other.immediate_))
-{
-}
-
-HealthReportSendOptions & HealthReportSendOptions::operator = (HealthReportSendOptions && other)
-{
-    if (this != &other)
-    {
-        immediate_ = move(other.immediate_);
-    }
-
-    return *this;
-}
-
 HealthReportSendOptions::~HealthReportSendOptions()
 {
 }

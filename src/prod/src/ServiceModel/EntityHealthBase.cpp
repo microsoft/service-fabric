@@ -40,27 +40,6 @@ EntityHealthBase::~EntityHealthBase()
 {
 }
 
-EntityHealthBase::EntityHealthBase(EntityHealthBase && other)
-    : unhealthyEvaluations_(move(other.unhealthyEvaluations_))
-    , events_(move(other.events_))
-    , aggregatedHealthState_(move(other.aggregatedHealthState_))
-    , healthStats_(move(other.healthStats_))
-{
-}
-
-EntityHealthBase & EntityHealthBase::operator = (EntityHealthBase && other)
-{
-    if (this != &other)
-    {
-        unhealthyEvaluations_ = move(other.unhealthyEvaluations_);
-        events_ = move(other.events_);
-        aggregatedHealthState_ = move(other.aggregatedHealthState_);
-        healthStats_ = move(other.healthStats_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode EntityHealthBase::UpdateUnhealthyEvalautionsPerMaxAllowedSize(size_t maxAllowedSize)
 {
     // Take the unhealthy evaluations and check the size.
@@ -163,4 +142,17 @@ void EntityHealthBase::WriteToEtw(uint16 contextSequenceId) const
 std::wstring EntityHealthBase::ToString() const
 {
     return wformatString(*this);
+}
+
+wstring EntityHealthBase::GetUnhealthyEvaluationDescription() const
+{
+    wstring ret;
+    StringWriter writer(ret);
+    for (auto const & eval : unhealthyEvaluations_)
+    {
+        writer.Write(eval.Evaluation->GetUnhealthyEvaluationDescription());
+        writer.WriteLine();
+    }
+
+    return ret;
 }

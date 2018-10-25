@@ -11,8 +11,8 @@ using namespace TxnReplicator;
 using namespace Data::Utilities;
 
 ComOperationDataStream::ComOperationDataStream(
-    __in Data::Utilities::PartitionedReplicaId const & traceId,
-    __in TxnReplicator::IOperationDataStream & innerOperationDataStream)
+    __in PartitionedReplicaId const & traceId,
+    __in IOperationDataStream & innerOperationDataStream)
     : KObject()
     , KShared()
     , PartitionedReplicaTraceComponent(traceId)
@@ -37,8 +37,8 @@ ComOperationDataStream::~ComOperationDataStream()
 }
 
 NTSTATUS ComOperationDataStream::Create(
-    __in Data::Utilities::PartitionedReplicaId const & traceId,
-    __in TxnReplicator::IOperationDataStream & innerOperationDataStream,
+    __in PartitionedReplicaId const & traceId,
+    __in IOperationDataStream & innerOperationDataStream,
     __in KAllocator & allocator,
     __out Common::ComPointer<IFabricOperationDataStream> & object) noexcept
 {
@@ -67,7 +67,7 @@ HRESULT ComOperationDataStream::BeginGetNext(
         return E_POINTER;
     }
 
-    TxnReplicator::IOperationDataStream::AsyncGetNextContext::SPtr asyncOperation;
+    IOperationDataStream::AsyncGetNextContext::SPtr asyncOperation;
 
     HRESULT hr = innerOperationDataStream_->CreateAsyncGetNextContext(asyncOperation);
     if (!SUCCEEDED(hr))
@@ -81,7 +81,7 @@ HRESULT ComOperationDataStream::BeginGetNext(
         callback,
         context,
         [&](Ktl::Com::AsyncCallInAdapter&,
-            TxnReplicator::IOperationDataStream::AsyncGetNextContext& operation, 
+            IOperationDataStream::AsyncGetNextContext& operation, 
             KAsyncContextBase::CompletionCallback completionCallback) -> HRESULT
         {
             return operation.StartGetNext(
@@ -99,7 +99,7 @@ HRESULT ComOperationDataStream::EndGetNext(
         return E_POINTER;
     }
 
-    TxnReplicator::IOperationDataStream::AsyncGetNextContext::SPtr asyncOperation;
+    IOperationDataStream::AsyncGetNextContext::SPtr asyncOperation;
 
     HRESULT hr = Ktl::Com::AsyncCallInAdapter::End(context, asyncOperation);
 

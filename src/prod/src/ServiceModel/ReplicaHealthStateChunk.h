@@ -21,8 +21,8 @@ namespace ServiceModel
             FABRIC_REPLICA_ID replicaOrInstanceId,
             FABRIC_HEALTH_STATE healthState);
 
-        ReplicaHealthStateChunk(ReplicaHealthStateChunk && other);
-        ReplicaHealthStateChunk & operator = (ReplicaHealthStateChunk && other);
+        ReplicaHealthStateChunk(ReplicaHealthStateChunk && other) = default;
+        ReplicaHealthStateChunk & operator = (ReplicaHealthStateChunk && other) = default;
 
         virtual ~ReplicaHealthStateChunk();
 

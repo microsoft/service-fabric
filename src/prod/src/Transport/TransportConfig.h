@@ -50,6 +50,9 @@ namespace Transport
 
         // TCP send batch size limit in bytes
         INTERNAL_CONFIG_ENTRY(uint, L"Transport", SendBatchSizeLimit, 16 * 1024 * 1024, Common::ConfigEntryUpgradePolicy::Static, Common::UIntNoLessThan(64 * 1024));
+        // Send timeout for detecting stuck connection. TCP failure reports are not reliable in some environment.
+        // This may need to be adjusted according to available network bandwidth and size of outbound data (*MaxMessageSize/*SendQueueSizeLimit).
+        PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"Transport", SendTimeout, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // Specify threshold for MessageHeaders::CompactIfNeeded, which compacts if the byte count of all headers marked for deletion is beyond threshold
         INTERNAL_CONFIG_ENTRY(uint, L"Transport", MessageHeaderCompactThreshold, 512, Common::ConfigEntryUpgradePolicy::Static);
@@ -143,5 +146,11 @@ namespace Transport
         INTERNAL_CONFIG_ENTRY(bool, L"Transport", UseUnreliableForRequestReply, false, Common::ConfigEntryUpgradePolicy::Static);
         // For testing IPv6 usage.  If true, transport will fail open if the endpoint is not an IPv6 address
         TEST_CONFIG_ENTRY(bool, L"Transport", TestOnlyValidateIPv6Usage, false, Common::ConfigEntryUpgradePolicy::Static);
+
+        // Default setting for error checking on frame header in non-secure mode, component setting overrides this
+        PUBLIC_CONFIG_ENTRY(bool, L"Transport", FrameHeaderErrorCheckingEnabled, true, Common::ConfigEntryUpgradePolicy::Static);
+
+        // Default setting for error checking on message header and body in non-secure mode, component setting overrides this
+        PUBLIC_CONFIG_ENTRY(bool, L"Transport", MessageErrorCheckingEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
     };
 }

@@ -1,0 +1,1 @@
+#include "../kthread/KThreadTests.cpp"

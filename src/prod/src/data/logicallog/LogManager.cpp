@@ -11,11 +11,9 @@ using namespace ktl::kservice;
 using namespace Data::Log;
 using namespace Data::Utilities;
 
-#if defined(UDRIVER) || defined(UPASSTHROUGH)
-#include "KtlLogShimKernel.h"
-#endif
-
 Common::StringLiteral const TraceComponent("LogManager");
+
+std::wstring const FabricHostApplicationDirectory(L"Fabric_Folder_Application_OnHost");
 
 KGuid const EmptyGuid(TRUE);
 RvdLogId const & EmptyLogId = EmptyGuid;
@@ -31,11 +29,13 @@ public:
         __in AsyncCallback const & callback,
         __in AsyncOperationSPtr const & parent,
         __in CancellationToken const & cancellationToken,
-        __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings)
+        __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings,
+        __in_opt KtlLoggerMode ktlLoggerMode)
         : KtlAwaitableProxyAsyncOperation(callback, parent)
         , owner_(&owner)
         , cancellationToken_(cancellationToken)
         , sharedLogSettings_(sharedLogSettings)
+        , ktlLoggerMode_(ktlLoggerMode)
     {
     }
 
@@ -58,7 +58,7 @@ protected:
     {
         owner_->SetFabricOpenOperationExecuting();
 
-        NTSTATUS status = co_await owner_->OpenAsync(cancellationToken_, sharedLogSettings_);
+        NTSTATUS status = co_await owner_->OpenAsync(cancellationToken_, sharedLogSettings_, ktlLoggerMode_);
 
         owner_->SetFabricOpenOpenAsyncCompleted();
 
@@ -70,6 +70,7 @@ private:
     LogManager::SPtr owner_;
     CancellationToken cancellationToken_;
     KtlLogger::SharedLogSettingsSPtr sharedLogSettings_;
+    KtlLoggerMode ktlLoggerMode_;
 };
 
 AsyncOperationSPtr
@@ -77,7 +78,8 @@ LogManager::BeginOpen(
     __in AsyncCallback const & callback,
     __in AsyncOperationSPtr const & parent,
     __in CancellationToken const & cancellationToken,
-    __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings)
+    __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings,
+    __in_opt KtlLoggerMode ktlLoggerMode)
 {
     SetBeginOpenStarted();
     return AsyncOperation::CreateAndStart<OpenLogManagerFabricAsyncOperation>(
@@ -85,7 +87,8 @@ LogManager::BeginOpen(
         callback,
         parent,
         cancellationToken,
-        sharedLogSettings);
+        sharedLogSettings,
+        ktlLoggerMode);
 }
 
 ErrorCode
@@ -157,12 +160,12 @@ LogManager::EndClose(__in AsyncOperationSPtr const & asyncOperation)
 }
 
 // todo: move to someplace common
-inline ULONG LongHashnFn(const LONG &Key)
+inline ULONG LongHashnFn(__in LONG const & Key)
 {
     return K_DefaultHashFunction(static_cast<LONGLONG>(Key));
 }
 
-inline ULONG KGuidHashFn(const KGuid &Key)
+inline ULONG KGuidHashFn(__in KGuid const & Key)
 {
     return K_DefaultHashFunction(Key);
 }
@@ -246,9 +249,15 @@ NTSTATUS LogManager::Create(
 
 Awaitable<NTSTATUS> LogManager::OpenAsync(
     __in CancellationToken const& cancellationToken,
-    __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings)
+    __in_opt KtlLogger::SharedLogSettingsSPtr sharedLogSettings,
+    __in_opt KtlLoggerMode ktlLoggerMode)
 {
     NTSTATUS status;
+
+    if (!IsValidKtlLoggerMode(ktlLoggerMode))
+    {
+        co_return STATUS_INVALID_PARAMETER_3;
+    }
 
     OpenAwaiter::SPtr awaiter;
     status = OpenAwaiter::Create(
@@ -285,6 +294,17 @@ Awaitable<NTSTATUS> LogManager::OpenAsync(
 
         sharedLogSettings_ = sharedLogSettings;
     }
+
+    if (ktlLoggerMode == KtlLoggerMode::Default)
+    {
+#if !defined(PLATFORM_UNIX)
+        ktlLoggerMode = KtlLoggerMode::OutOfProc;
+#else
+        ktlLoggerMode = KtlLoggerMode::InProc;
+#endif
+    }
+
+    ktlLoggerMode_ = ktlLoggerMode;
 
     SetOpenAsyncStartAwaiting();
         
@@ -410,7 +430,7 @@ Awaitable<NTSTATUS> LogManager::GetHandle(
     {
         AsyncLockBlock(lock_)
 
-        NTSTATUS status;
+        NTSTATUS status = STATUS_SUCCESS;
         KtlLogManager::SPtr newManager = nullptr;
         LogManagerHandle::SPtr newHandle = nullptr;
         handle = nullptr;
@@ -419,7 +439,25 @@ Awaitable<NTSTATUS> LogManager::GetHandle(
 
         if (ktlLogManager_ == nullptr)
         {
-            status = KtlLogManager::Create(LOGMANAGER_TAG, GetThisAllocator(), newManager);
+            switch (ktlLoggerMode_)
+            {
+                case KtlLoggerMode::OutOfProc:
+                {
+                    status = KtlLogManager::CreateDriver(LOGMANAGER_TAG, GetThisAllocator(), newManager);
+                    break;
+                }
+
+                case KtlLoggerMode::InProc:
+                {
+                    status = KtlLogManager::CreateInproc(LOGMANAGER_TAG, GetThisAllocator(), newManager);
+                    break;
+                }
+
+                default:
+                    KInvariant(FALSE);
+                    co_return STATUS_UNSUCCESSFUL;
+            }
+
             if (!NT_SUCCESS(status))
             {
                 WriteError(
@@ -432,6 +470,33 @@ Awaitable<NTSTATUS> LogManager::GetHandle(
             }
 
             status = co_await newManager->OpenLogManagerAsync(nullptr, nullptr);
+
+            // If driver is not loaded, open an in-proc logger instead
+            if ((ktlLoggerMode_ == KtlLoggerMode::OutOfProc) && (status == STATUS_NO_SUCH_DEVICE))
+            {
+                WriteWarning(
+                    TraceComponent,
+                    "{0} - GetHandle - OutOfProc ktllogger mode requested however driver is not loaded. This may be normal for some environments (e.g. HyperV containers). Status: {1}",
+                    prId.TraceId,
+                    status);
+                
+                ktlLoggerMode_ = KtlLoggerMode::InProc;
+
+                status = KtlLogManager::CreateInproc(LOGMANAGER_TAG, GetThisAllocator(), newManager);
+                if (!NT_SUCCESS(status))
+                {
+                    WriteError(
+                        TraceComponent,
+                        "{0} - GetHandle - Failed to create KtlLogManager. Status: {1}",
+                        prId.TraceId,
+                        status);
+
+                    goto HandleError;
+                }
+
+                status = co_await newManager->OpenLogManagerAsync(nullptr, nullptr);
+            }
+
             if (!NT_SUCCESS(status))
             {
                 WriteError(
@@ -445,8 +510,16 @@ Awaitable<NTSTATUS> LogManager::GetHandle(
 
             ktlLogManager_ = newManager;
         }
-        
-        status = LogManagerHandle::Create(GetThisAllocator(), nextHandleId_, *this, prId, workDirectory, newHandle);
+
+        // No need to modify the work directory for the driver+container case, as a staging log will
+        // not be used so the work directory will not be used
+        status = LogManagerHandle::Create(
+            GetThisAllocator(),
+            nextHandleId_,
+            *this,
+            prId,
+            workDirectory,
+            newHandle);
         if (!NT_SUCCESS(status))
         {
             WriteError(
@@ -894,11 +967,7 @@ Awaitable<NTSTATUS> LogManager::OnOpenPhysicalLogAsync(
 
             status = co_await openAsync->OpenLogContainerAsync(
                 pathToCommonContainer,
-#if !defined(PLATFORM_UNIX)
-                physicalLogId, // workaround for Windows containers, since the default application guid needs to be passed when the mapping is being used
-#else
-                EmptyLogId,
-#endif
+                ktlLoggerMode_ == KtlLoggerMode::InProc ? EmptyLogId : physicalLogId, // when using an inproc log, pass the empty guid (lookup will be based on path). When out of proc, use the provided id as mapping may need to occur
                 nullptr,
                 underlyingContainer);
             if (!NT_SUCCESS(status))
@@ -1256,7 +1325,8 @@ Awaitable<NTSTATUS> LogManager::OnDeletePhysicalLogAsync(
 
             co_return status;
         }
-            
+        
+        // Always pass the empty guid, as the out-of-proc log is never deleted via these APIs.
         status = co_await deleteAsync->DeleteLogContainerAsync(pathToCommonPhysicalLog, EmptyLogId, nullptr);
 
         if (!NT_SUCCESS(status))

@@ -104,7 +104,7 @@ void TestStateMachine_UpdateServiceDescription::ReplicaCloseUpdateServiceDescrip
 		[](LockedFailoverUnitPtr & ft, StateMachineActionQueue & queue, ReconfigurationAgent & ra)
 	{
         HandlerParameters handlerParameters("a", ft, ra, queue, nullptr, DefaultActivityId);
-		ra.CloseLocalReplica(handlerParameters, ReplicaCloseMode::Close);
+		ra.CloseLocalReplica(handlerParameters, ReplicaCloseMode::Close, ActivityDescription::Empty);
 	});
 }
 
@@ -115,7 +115,7 @@ void TestStateMachine_UpdateServiceDescription::ReplicaDropUpdateServiceDescript
 		[this](LockedFailoverUnitPtr & ft, StateMachineActionQueue & queue, ReconfigurationAgent & ra)
 	{
         HandlerParameters handlerParameters("a", ft, ra, queue, nullptr, DefaultActivityId);
-        ra.CloseLocalReplica(handlerParameters, ReplicaCloseMode::Delete);
+        ra.CloseLocalReplica(handlerParameters, ReplicaCloseMode::Delete, ActivityDescription::Empty);
 	});
 }
 
@@ -126,7 +126,7 @@ void TestStateMachine_UpdateServiceDescription::ReplicaDownUpdateServiceDescript
 		[this](LockedFailoverUnitPtr & ft, StateMachineActionQueue & queue, ReconfigurationAgent & ra)
 	{
         HandlerParameters handlerParameters("a", ft, ra, queue, nullptr, DefaultActivityId);
-        ra.CloseLocalReplica(handlerParameters, ReplicaCloseMode::AppHostDown);
+        ra.CloseLocalReplica(handlerParameters, ReplicaCloseMode::AppHostDown, ActivityDescription::Empty);
 	});
 }
 

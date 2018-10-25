@@ -57,6 +57,10 @@ namespace Hosting2
         //if forSpOnly is true cgroupName should represent the sp cgroup path
         static int RemoveCgroup(std::string const & cgroupName, bool forSpOnly = false);
 
+        Common::ErrorCode UpdateRGPolicy(
+            IProcessActivationContextSPtr & activationContext,
+            ProcessDescriptionUPtr & processDescription);
+
         //Used for fetching info about cgroup limits - only for tests
         static int Test_QueryCgroupInfo(std::string const & cgroupName, uint64 & cpuLimit, uint64 & memoryLimit);
 

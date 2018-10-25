@@ -44,7 +44,7 @@ namespace
 
         ApiNameDescription nameDescription(InterfaceName::IReplicator, name, L"");
 
-        MonitoringData data(Guid::NewGuid(), Default::GetInstance().NodeInstance, 1, 1, nameDescription, StopwatchTime::Zero);
+        MonitoringData data(Guid::NewGuid(), 1, 1, nameDescription, StopwatchTime::Zero);
 
         MonitoringParameters parameters;
         

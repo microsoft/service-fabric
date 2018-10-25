@@ -13,6 +13,7 @@ namespace Store
     {
     public:
         OpenAsyncOperation(PartitionedReplicaTraceComponent const &, Common::AsyncCallback const &, Common::AsyncOperationSPtr const &);
+        OpenAsyncOperation(PartitionedReplicaTraceComponent const &, Common::ErrorCode const &, Common::AsyncCallback const &, Common::AsyncOperationSPtr const &);
 
         static Common::ErrorCode End(Common::AsyncOperationSPtr const & operation);
 
@@ -24,6 +25,7 @@ namespace Store
 
     private:
 
+        Common::ErrorCode openError_;
         Common::ManualResetEvent completionEvent_;
     };
 }

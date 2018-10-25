@@ -20,14 +20,6 @@ UploadSessionMetadata::UploadSessionMetadata(
 {
 }
 
-UploadSessionMetadata::UploadSessionMetadata(UploadSessionMetadata const & uploadSessionMetadata)
-{
-    this->storeRelativePath_ = uploadSessionMetadata.StoreRelativePath;
-    this->sessionId_ = uploadSessionMetadata.SessionId;
-    this->fileSize_ = uploadSessionMetadata.FileSize;
-    this->lastModifiedTime_ = uploadSessionMetadata.LastModifiedTime;
-}
-
 UploadSessionMetadata::~UploadSessionMetadata()
 {
 }
@@ -35,24 +27,30 @@ UploadSessionMetadata::~UploadSessionMetadata()
 void UploadSessionMetadata::GetNextExpectedRanges(__out std::vector<UploadSessionInfo::ChunkRangePair> & nextExpectedRanges)
 {
     uint64 startPosition = 0;
+    if (fileSize_ == 0)
+    {
+        nextExpectedRanges.push_back(UploadSessionInfo::ChunkRangePair(startPosition, startPosition));
+        return;
+    }
+
     if (this->edges_.empty())
     {
         nextExpectedRanges.push_back(UploadSessionInfo::ChunkRangePair(startPosition, this->fileSize_ - 1));
         return;
     }
 
-    for (std::list<std::pair<uint64, uint64>>::const_iterator it = this->edges_.begin(); it != this->edges_.end(); ++it)
+    for (auto const & edge : this->edges_)
     {
-        if (it->first > startPosition)
+        if (edge.first > startPosition)
         {
-            nextExpectedRanges.push_back(UploadSessionInfo::ChunkRangePair(startPosition, it->first - 1));
-            if (it->second == this->fileSize_ - 1)
+            nextExpectedRanges.push_back(UploadSessionInfo::ChunkRangePair(startPosition, edge.first - 1));
+            if (edge.second == this->fileSize_ - 1)
             {
                 return;;
             }
         }
          
-        startPosition = it->second + 1;
+        startPosition = edge.second + 1;
     }
 
     if (startPosition < this->fileSize_)
@@ -63,52 +61,50 @@ void UploadSessionMetadata::GetNextExpectedRanges(__out std::vector<UploadSessio
 
 ErrorCode UploadSessionMetadata::GetSortedStagingLocation(__out std::vector<std::wstring> & sortedStagingLocation)
 {
-    if (this->edges_.size() != 1 
+    if ((this->fileSize_ != 0) && (this->edges_.size() != 1 
         || this->edges_.begin()->first != 0
-        || this->edges_.begin()->second != this->fileSize_ - 1)
+        || this->edges_.begin()->second != this->fileSize_ - 1))
     {
         return ErrorCodeValue::InvalidArgument;
     }
 
     std::sort(this->receivedChunks_.begin(), this->receivedChunks_.end());
-    for (std::vector<UploadChunk>::const_iterator it = this->receivedChunks_.begin(); it != receivedChunks_.end(); ++it)
-    {
-        sortedStagingLocation.push_back(it->StagingLocation);
-    }
+    GetStagingLocation(sortedStagingLocation);
 
     return ErrorCodeValue::Success;
 }
 
 void UploadSessionMetadata::GetStagingLocation(__out std::vector<std::wstring> & stagingLocation)
 {
-    for (std::vector<UploadChunk>::const_iterator it = this->receivedChunks_.begin(); it != receivedChunks_.end(); ++it)
+    for (auto const & chunk : this->receivedChunks_)
     {
-        stagingLocation.push_back(it->StagingLocation);
+        stagingLocation.push_back(chunk.StagingLocation);
     }
 }
 
-ErrorCode UploadSessionMetadata::CheckRange(uint64 startPosition, uint64 endPosition, uint64 fileLength)
+
+ErrorCode UploadSessionMetadata::CheckRange(uint64 startPosition, uint64 endPosition)
 {
-    if (startPosition > endPosition || fileLength != this->fileSize_)
+    for (auto const &entry : this->edges_)
     {
-        return ErrorCodeValue::InvalidArgument;
+        // already present
+        if (entry.first <= startPosition && entry.second >= endPosition)
+            return ErrorCodeValue::Success;
     }
 
-    auto positions = std::pair<uint64, uint64>(startPosition, endPosition);
-    for (std::list<std::pair<uint64, uint64>>::iterator it = this->edges_.begin(); it != this->edges_.end(); ++it)
-    {
-        if (this->GetRangeRelativePosition(*it, positions) == RangeRelativePosition::Overlapped)
-        {
-            return ErrorCodeValue::UploadSessionRangeNotSatisfiable;
-        }
-    }
-
-    return ErrorCodeValue::Success;
+    return ErrorCodeValue::UploadSessionRangeNotSatisfiable;
 }
 
 ErrorCode UploadSessionMetadata::AddRange(uint64 startPosition, uint64 endPosition, std::wstring const & stagingLocation)
 {
-    if (startPosition > endPosition)
+    if (fileSize_ == 0)
+    {
+        if (startPosition != endPosition)
+        {
+            return ErrorCodeValue::InvalidArgument;
+        }
+    }
+    else if (startPosition > endPosition)
     {
         return ErrorCodeValue::InvalidArgument;
     }
@@ -120,6 +116,13 @@ ErrorCode UploadSessionMetadata::AddRange(uint64 startPosition, uint64 endPositi
     }
     else
     {
+        for (auto const &entry : this->edges_)
+        {
+            // already present
+            if (entry.first <= startPosition && entry.second >= endPosition)
+                return ErrorCodeValue::Success;
+        }
+
         bool updated = false;
         RangeRelativePosition previousRelateivePosition = RangeRelativePosition::Undefined;
         for (std::list<std::pair<uint64, uint64>>::iterator it = this->edges_.begin(); it != this->edges_.end(); ++it)
@@ -188,13 +191,13 @@ ErrorCode UploadSessionMetadata::AddRange(uint64 startPosition, uint64 endPositi
 void UploadSessionMetadata::WriteTo(TextWriter & w, FormatOptions const &) const
 {    
     std::string builder = "[ ";
-    for (std::vector<UploadChunk>::const_iterator it = this->receivedChunks_.begin(); it != this->receivedChunks_.end(); ++it)
+    for (auto const & chunk: this->receivedChunks_)
     {
-        builder.append(Common::formatString("{0}-{1} ", std::to_string(it->StartPosition), std::to_string(it->EndPosition)));
+        builder.append(Common::formatString("{0}-{1} ", chunk.StartPosition, chunk.EndPosition));
     }
 
     builder.append("]");
-    w.Write("UploadSessionMetadata[{0}, {1}, {2}, {3}]", storeRelativePath_, fileSize_, builder, lastModifiedTime_.ToString());
+    w.Write("UploadSessionMetadata[{0}, {1}, {2}, {3}, {4}, {5}]", storeRelativePath_, fileSize_, builder, lastModifiedTime_, edges_.size(), receivedChunks_.size());
 }
 
 UploadSessionMetadata::RangeRelativePosition UploadSessionMetadata::GetRangeRelativePosition(std::pair<uint64, uint64> const & existingRange, std::pair<uint64, uint64> const & newRange)

@@ -22,7 +22,7 @@ void QuerySpecificationStore::Initialize()
 {
     auto specificationsVector = move(QuerySpecification::CreateSpecifications());
 
-    for(int i = 0; i < specificationsVector.size(); ++i)
+    for(auto i = 0; i < specificationsVector.size(); ++i)
     {
         ASSERT_IF(
             specifications_.find(specificationsVector[i]->QuerySpecificationId) != specifications_.end(),

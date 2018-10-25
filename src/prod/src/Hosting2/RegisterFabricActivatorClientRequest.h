@@ -14,7 +14,8 @@ namespace Hosting2
         RegisterFabricActivatorClientRequest();
         RegisterFabricActivatorClientRequest(
             DWORD parentProcessId,
-            std::wstring const & nodeId);
+            std::wstring const & nodeId,
+            uint64 nodeInstanceId = 0);
             
         __declspec(property(get=get_ProcessId)) DWORD ParentProcessId;
         DWORD get_ProcessId() const { return parentProcessId_; }
@@ -22,12 +23,16 @@ namespace Hosting2
         __declspec(property(get=get_NodeId)) std::wstring const & NodeId;
         std::wstring const & get_NodeId() const { return nodeId_; }
 
+        __declspec(property(get=get_NodeInstanceId)) uint64 NodeInstanceId;
+        uint64 get_NodeInstanceId() const { return nodeInstanceId_; }
+
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_02(parentProcessId_, nodeId_);
+        FABRIC_FIELDS_03(parentProcessId_, nodeId_, nodeInstanceId_);
 
     private:
         DWORD parentProcessId_;
         std::wstring nodeId_;
+        uint64 nodeInstanceId_;
     };
 }

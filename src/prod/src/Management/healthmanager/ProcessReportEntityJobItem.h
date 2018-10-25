@@ -14,7 +14,7 @@ namespace Management
             : public EntityJobItem
         {
             DENY_COPY(ProcessReportEntityJobItem);
-            
+
         public:
             ProcessReportEntityJobItem(
                 std::shared_ptr<HealthEntity> const & entity,
@@ -33,6 +33,8 @@ namespace Management
             virtual void Append(IHealthJobItemSPtr && other) override;
 
             std::vector<ReportRequestContext> TakeContexts() { return std::move(contexts_); }
+
+            std::vector<ReportRequestContext> & GetContextsReference() { return contexts_; }
 
         protected:
             // Actual processing of the task, that starts work on the entity

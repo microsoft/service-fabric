@@ -16,22 +16,27 @@ StringLiteral const TraceType("SingleCodePackageApplicationHost");
 // SingleCodePackageApplicationHost Implementation
 //
 SingleCodePackageApplicationHost::SingleCodePackageApplicationHost(
-    wstring const & hostId, 
+    ApplicationHostContext const & hostContext,
     wstring const & runtimeServiceAddress,
-    bool isContainerHost,
     Common::PCCertContext certContext,
     wstring const & serverThumbprint,
     CodePackageContext const & codeContext)
     : ApplicationHost(
-        ApplicationHostContext(hostId, ApplicationHostType::Activated_SingleCodePackage, isContainerHost), 
+        hostContext,
         runtimeServiceAddress,
         certContext,
         serverThumbprint,
         SystemServiceApplicationNameHelper::IsSystemServiceApplicationName(codeContext.ApplicationName), // useSystemServiceSharedLogSettings
         nullptr), // KtlSystemBase
     codeContextLock_(),
-    codeContext_(codeContext)
+    codeContext_(codeContext),
+    codePackageActivator_()
 {
+    if (hostContext.IsCodePackageActivatorHost)
+    {
+        auto cpActivator = make_shared<SingleCodePackageApplicationHostCodePackageActivator>(*this, *this);
+        codePackageActivator_ = move(cpActivator);
+    }
 }
 
 SingleCodePackageApplicationHost::~SingleCodePackageApplicationHost()
@@ -39,24 +44,16 @@ SingleCodePackageApplicationHost::~SingleCodePackageApplicationHost()
 }
 
 ErrorCode SingleCodePackageApplicationHost::Create(
-    wstring const & hostId, 
+    ApplicationHostContext const & hostContext,
     wstring const & runtimeServiceAddress,
-    bool isContainerHost,
     PCCertContext certContext,
     wstring const & serverThumbprint,
     CodePackageContext const & codeContext,
     __out ApplicationHostSPtr & applicationHost)
 {
-    WriteNoise(
-        TraceType,
-        "Creating SingleCodePackageApplicationHost: HostId={0}, CodeContext={1}",
-        hostId,        
-        codeContext);
-
     applicationHost = make_shared<SingleCodePackageApplicationHost>(
-        hostId,
+        hostContext,
         runtimeServiceAddress,
-        isContainerHost,
         certContext,
         serverThumbprint,
         codeContext);
@@ -115,7 +112,7 @@ ErrorCode SingleCodePackageApplicationHost::OnCreateAndAddFabricRuntime(
     return error;
 }
 
-Common::ErrorCode SingleCodePackageApplicationHost::OnGetCodePackageActivationContext(
+ErrorCode SingleCodePackageApplicationHost::OnGetCodePackageActivationContext(
     CodePackageContext const & codeContext,
     __out CodePackageActivationContextSPtr & codePackageActivationContext)
 {
@@ -146,6 +143,39 @@ Common::ErrorCode SingleCodePackageApplicationHost::OnGetCodePackageActivationCo
         "FindCodePackage in OnGetCodePackageActivationContext should not return invalid codePackageActivationContext");
 
     return error;
+}
+
+ErrorCode SingleCodePackageApplicationHost::OnGetCodePackageActivator(
+    _Out_ ApplicationHostCodePackageActivatorSPtr & codePackageActivator)
+{
+    if (this->HostContext.IsCodePackageActivatorHost)
+    {
+        codePackageActivator = codePackageActivator_;
+        return ErrorCode::Success();
+    }
+
+    WriteWarning(
+        TraceType,
+        TraceId,
+        "OnGetCodePackageActivator() called with IsCodePackageActivatorHost={0}.",
+        this->HostContext.IsCodePackageActivatorHost);
+
+    return ErrorCode(ErrorCodeValue::InvalidOperation);
+}
+
+ErrorCode SingleCodePackageApplicationHost::OnCodePackageEvent(
+    CodePackageEventDescription const & eventDescription)
+{
+    ApplicationHostCodePackageActivatorSPtr codePackageActivator;
+    auto error = this->OnGetCodePackageActivator(codePackageActivator);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    codePackageActivator->NotifyEventHandlers(eventDescription);
+
+    return ErrorCode::Success();
 }
 
 AsyncOperationSPtr SingleCodePackageApplicationHost::OnBeginOpen(
@@ -235,5 +265,12 @@ ErrorCode SingleCodePackageApplicationHost::OnUpdateCodePackageContext(
     AcquireWriteLock grab(codeContextLock_);
     codeContext_ = codeContext;
     return ErrorCode::Success();
+}
+
+void SingleCodePackageApplicationHost::GetCodePackageContext(
+    CodePackageContext & codeContext)
+{
+    AcquireWriteLock grab(codeContextLock_);
+    codeContext = codeContext_;
 }
 

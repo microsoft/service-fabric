@@ -70,11 +70,11 @@ class TSLocalStore::ComMockPartition
 public:
 
     ComMockPartition(
-        __in TSLocalStore & localStore,
+        __in RootedObjectPointer<TSLocalStore> && localStore,
         __in KtlSystem & ktlSystem,
         Guid const & partitionId,
         FABRIC_REPLICA_ID replicaId)
-        : localStore_(localStore)
+        : localStore_(move(localStore))
         , ktlSystem_(ktlSystem)
         , replicaId_(replicaId)
         , singletonInfo_()
@@ -83,10 +83,10 @@ public:
         , txReplicatorFactory_()
         , readWriteStatus_(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED)
     {
-        localStore_.WriteNoise(
+        localStore_->WriteNoise(
             TraceComponent,
             "{0} ComMockPartition::ctor: {1}",
-            localStore_.TraceId,
+            localStore_->TraceId,
             TraceThis);
 
         singletonInfo_.Id = partitionId.AsGUID();
@@ -98,10 +98,10 @@ public:
 
     virtual ~ComMockPartition()
     {
-        localStore_.WriteNoise(
+        localStore_->WriteNoise(
             TraceComponent,
             "{0} ComMockPartition::dtor: {1}",
-            localStore_.TraceId,
+            localStore_->TraceId,
             TraceThis);
     }
 
@@ -194,7 +194,7 @@ public:
         /*[out]*/ IFabricPrimaryReplicator ** primaryReplicator,
         /*[out, retval]*/ void ** transactionalReplicator)
     {
-        auto error = this->TryCreateLogManager();
+        auto error = this->TryCreateLogManager(ktlloggerSharedSettings);
         if (!error.IsSuccess()) { return error.ToHResult(); }
 
         error = this->TryCreateReplicatorFactory();
@@ -229,47 +229,76 @@ public:
 
 private:
 
-    ErrorCode TryCreateLogManager()
+    ErrorCode TryCreateLogManager(KTLLOGGER_SHARED_LOG_SETTINGS const * publicSettings)
     {
         if (logManager_.RawPtr() != nullptr) { return ErrorCodeValue::Success; }
 
         auto status = Data::Log::LogManager::Create(ktlSystem_.PagedAllocator(), logManager_);
         if (NT_ERROR(status))
         {
-            return localStore_.FromNtStatus("LogManager->Create", status); 
+            return localStore_->FromNtStatus("LogManager->Create", status); 
         }
 
         shared_ptr<KtlLogger::SharedLogSettings> sharedLogSettings;
 
-        if (localStore_.ktlLogger_.get() != nullptr)
+        if (localStore_->ktlLogger_.get() != nullptr)
         {
             // Shared log settings are created when KtlLoggerNode is opened
             //
-            sharedLogSettings = localStore_.ktlLogger_->SystemServicesSharedLogSettings;
+            sharedLogSettings = localStore_->ktlLogger_->SystemServicesSharedLogSettings;
+        }
+
+        if (sharedLogSettings.get() == nullptr && publicSettings != nullptr)
+        {
+            unique_ptr<KtlLoggerSharedLogSettings> internalSettingsUPtr;
+            auto error = KtlLoggerSharedLogSettings::FromPublicApi(*publicSettings, internalSettingsUPtr);
+            if (!error.IsSuccess())
+            {
+                localStore_->WriteWarning(
+                    TraceComponent,
+                    "{0} KtlLoggerSharedLogSettings::FromPublicApi failed: {1}",
+                    localStore_->TraceId,
+                    error);
+
+                return error;
+            }
+
+            sharedLogSettings = make_shared<KtlLogger::SharedLogSettings>();
+            error = sharedLogSettings->FromServiceModel(*internalSettingsUPtr);
+            if (!error.IsSuccess())
+            {
+                localStore_->WriteWarning(
+                    TraceComponent,
+                    "{0} KtlLogger::SharedLogSettings::FromServiceModel failed: {1}",
+                    localStore_->TraceId,
+                    error);
+
+                return error;
+            }
         }
 
         if (sharedLogSettings.get() == nullptr)
         {
-            localStore_.WriteWarning(
+            localStore_->WriteWarning(
                 TraceComponent,
                 "{0} shared log settings from RA is null - generating default settings",
-                localStore_.TraceId);
+                localStore_->TraceId);
 
             auto error = CreateDefaultSharedLogSettings(sharedLogSettings);
 
             if (!error.IsSuccess()) { return error; }
         }
 
-        localStore_.WriteInfo(
+        localStore_->WriteInfo(
             TraceComponent,
             "{0} opening log manager: {1}",
-            localStore_.TraceId,
+            localStore_->TraceId,
             *sharedLogSettings);
 
         status = SyncAwait(logManager_->OpenAsync(CancellationToken::None, sharedLogSettings));
         if (NT_ERROR(status))
         {
-            return localStore_.FromNtStatus("LogManager->Open", status); 
+            return localStore_->FromNtStatus("LogManager->Open", status); 
         }
 
         return ErrorCodeValue::Success;
@@ -280,16 +309,16 @@ private:
         if (replicatorFactory_.get() != nullptr) { return ErrorCodeValue::Success; }
 
         ReplicatorFactoryConstructorParameters replicatorFactoryConstructorParameters; 
-        replicatorFactoryConstructorParameters.Root = &localStore_;
+        replicatorFactoryConstructorParameters.Root = localStore_.get();
         replicatorFactory_ = ReplicatorFactoryFactory(replicatorFactoryConstructorParameters);
 
         auto error = replicatorFactory_->Open(TraceNodeId);
         if (!error.IsSuccess()) 
         { 
-            localStore_.WriteWarning(
+            localStore_->WriteWarning(
                 TraceComponent,
                 "{0} ReplicatorFactoryFactory->Open failed: {1}",
-                localStore_.TraceId,
+                localStore_->TraceId,
                 error);
         }
 
@@ -301,16 +330,16 @@ private:
         if (txReplicatorFactory_.get() != nullptr) { return ErrorCodeValue::Success; }
 
         TransactionalReplicatorFactoryConstructorParameters params; 
-        params.Root = &localStore_;
+        params.Root = localStore_.get();
         txReplicatorFactory_ = TransactionalReplicatorFactoryFactory(params);
 
         auto error = txReplicatorFactory_->Open(ktlSystem_, *logManager_);
         if (!error.IsSuccess()) 
         { 
-            localStore_.WriteWarning(
+            localStore_->WriteWarning(
                 TraceComponent,
                 "{0} TransactionalReplicatorFactoryFactory->Open failed: {1}",
-                localStore_.TraceId,
+                localStore_->TraceId,
                 error);
         }
 
@@ -335,28 +364,28 @@ private:
     {
         if (logManager_.RawPtr() != nullptr)
         {
-            localStore_.WriteInfo(
+            localStore_->WriteInfo(
                 TraceComponent,
                 "{0} closing log manager",
-                localStore_.TraceId);
+                localStore_->TraceId);
 
             auto status = SyncAwait(logManager_->CloseAsync(CancellationToken::None));
             if (NT_ERROR(status))
             {
-                localStore_.WriteWarning(
+                localStore_->WriteWarning(
                     TraceComponent,
                     "{0} LogManager->Close failed: {1}",
-                    localStore_.TraceId,
+                    localStore_->TraceId,
                     status);
 
                 logManager_->Abort();
             }
             else
             {
-                localStore_.WriteInfo(
+                localStore_->WriteInfo(
                     TraceComponent,
                     "{0} log manager closed",
-                    localStore_.TraceId);
+                    localStore_->TraceId);
             }
         }
     }
@@ -365,18 +394,18 @@ private:
     {
         if (replicatorFactory_.get() != nullptr)
         {
-            localStore_.WriteInfo(
+            localStore_->WriteInfo(
                 TraceComponent,
                 "{0} closing replicator factory",
-                localStore_.TraceId);
+                localStore_->TraceId);
 
             auto error = replicatorFactory_->Close();
             if (!error.IsSuccess())
             {
-                localStore_.WriteWarning(
+                localStore_->WriteWarning(
                     TraceComponent,
                     "{0} ReplicatorFactoryFactory->Close failed: {1}",
-                    localStore_.TraceId,
+                    localStore_->TraceId,
                     error);
 
                 replicatorFactory_->Abort();
@@ -388,18 +417,18 @@ private:
     {
         if (txReplicatorFactory_.get() != NULL)
         {
-            localStore_.WriteInfo(
+            localStore_->WriteInfo(
                 TraceComponent,
                 "{0} closing transactional replicator factory",
-                localStore_.TraceId);
+                localStore_->TraceId);
 
             auto error = txReplicatorFactory_->Close();
             if (!error.IsSuccess())
             {
-                localStore_.WriteWarning(
+                localStore_->WriteWarning(
                     TraceComponent,
                     "{0} TransactionalReplicatorFactoryFactory->Close failed: {1}",
-                    localStore_.TraceId,
+                    localStore_->TraceId,
                     error);
 
                 txReplicatorFactory_->Abort();
@@ -417,10 +446,10 @@ private:
         {
             dataRoot = Directory::GetCurrentDirectory();
 
-            localStore_.WriteWarning(
+            localStore_->WriteWarning(
                 TraceComponent,
                 "{0} FabricEnvironment::GetFabricDataRoot failed: {1} - using {2}",
-                localStore_.TraceId,
+                localStore_->TraceId,
                 error,
                 dataRoot);
 
@@ -441,10 +470,10 @@ private:
         auto hr = StringCchCopyW(settings->Path, sizeof(settings->Path) / 2, logFilePath.c_str());
         if (FAILED(hr))
         {
-            localStore_.WriteWarning(
+            localStore_->WriteWarning(
                 TraceComponent,
                 "{0} StringCchCopyW({1}) failed: {2}",
-                localStore_.TraceId,
+                localStore_->TraceId,
                 dataRoot,
                 hr);
 
@@ -463,7 +492,7 @@ private:
         return ErrorCodeValue::Success;
     }
 
-    TSLocalStore & localStore_;
+    RootedObjectPointer<TSLocalStore> localStore_;
     KtlSystem & ktlSystem_;
     FABRIC_REPLICA_ID replicaId_;
 
@@ -484,14 +513,14 @@ public:
     InnerStoreRoot(
         Common::Guid const & partitionId,
         ::FABRIC_REPLICA_ID replicaId,
-        TSReplicatedStoreSettingsUPtr && storeSettings,
-        Reliability::ReplicationComponent::ReplicatorSettingsUPtr && replicatorSettings)
+        Reliability::ReplicationComponent::ReplicatorSettingsUPtr && replicatorSettings,
+        TSReplicatedStoreSettingsUPtr && storeSettings)
     {
         replicatedStore_ = make_unique<TSReplicatedStore>(
             partitionId,
             replicaId,
-            move(storeSettings),
             move(replicatorSettings),
+            move(storeSettings),
             IStoreEventHandlerPtr(),
             ISecondaryEventHandlerPtr(),
             *this);
@@ -500,14 +529,14 @@ public:
     static shared_ptr<InnerStoreRoot> Create(
         Common::Guid const & partitionId,
         ::FABRIC_REPLICA_ID replicaId,
-        TSReplicatedStoreSettingsUPtr && storeSettings,
-        Reliability::ReplicationComponent::ReplicatorSettingsUPtr && replicatorSettings)
+        Reliability::ReplicationComponent::ReplicatorSettingsUPtr && replicatorSettings,
+        TSReplicatedStoreSettingsUPtr && storeSettings)
     {
         return shared_ptr<InnerStoreRoot>(new InnerStoreRoot(
             partitionId, 
             replicaId, 
-            move(storeSettings),
-            move(replicatorSettings)));
+            move(replicatorSettings),
+            move(storeSettings)));
     }
 
     TSReplicatedStore * GetReplicatedStore() const { return replicatedStore_.get(); }
@@ -528,8 +557,9 @@ TSLocalStore::TSLocalStore(
     , innerStore_()
     , innerStoreLock_()
     , isActive_(false)
-    , test_ShouldCleanup_(false)
+    , shouldCleanup_(false)
 {
+    ASSERT_IF(storeSettings_.get() == nullptr, "Null TSReplicatedStoreSettings");
 }
 
 TSLocalStore::~TSLocalStore()
@@ -606,21 +636,46 @@ ErrorCode TSLocalStore::Initialize(wstring const &)
     return ErrorCodeValue::NotImplemented;
 }
 
-ErrorCode TSLocalStore::Initialize(std::wstring const & instanceName, Federation::NodeId const & nodeId)
+// Used by RA
+//
+ErrorCode TSLocalStore::Initialize(wstring const & instanceName, Federation::NodeId const & nodeId)
 {
-    mockPartitionId_ = ToGuid(nodeId);
-    mockReplicaId_ = 0;
+    return this->InnerInitialize(instanceName, ToGuid(nodeId), 0, nullptr);
+}
+
+// Used by KeyValueStoreMigrator
+//
+ErrorCode TSLocalStore::Initialize(
+    wstring const & instanceName, 
+    Guid const & partitionId, 
+    FABRIC_REPLICA_ID replicaId,
+    FABRIC_EPOCH const & epoch)
+{
+    auto epochPtr = make_unique<FABRIC_EPOCH>();
+    epochPtr->DataLossNumber = epoch.DataLossNumber;
+    epochPtr->ConfigurationNumber = epoch.ConfigurationNumber;
+
+    return this->InnerInitialize(instanceName, partitionId, replicaId, epochPtr);
+}
+
+ErrorCode TSLocalStore::InnerInitialize(
+    wstring const & instanceName, 
+    Guid const & partitionId, 
+    FABRIC_REPLICA_ID replicaId,
+    unique_ptr<FABRIC_EPOCH> const & epoch)
+{
+    mockPartitionId_ = partitionId;
+    mockReplicaId_ = replicaId;
 
     this->UpdateTraceId(mockPartitionId_, mockReplicaId_);
 
     WriteInfo(
         TraceComponent,
-        "{0} ctor initializing: this={1} instance={2} dir={3} node={4} partition={5} replica={6}",
+        "{0} ctor initializing: this={1} instance={2} dir={3} partition={4} replica={5}",
         this->TraceId,
         TraceThis,
         instanceName,
         storeSettings_->WorkingDirectory,
-        nodeId,
         mockPartitionId_,
         mockReplicaId_);
 
@@ -634,8 +689,8 @@ ErrorCode TSLocalStore::Initialize(std::wstring const & instanceName, Federation
         innerStore_ = InnerStoreRoot::Create(
             mockPartitionId_,
             mockReplicaId_,
-            make_unique<TSReplicatedStoreSettings>(*storeSettings_),
-            move(replicatorSettings));
+            move(replicatorSettings),
+            make_unique<TSReplicatedStoreSettings>(*storeSettings_));
     }
 
     auto error = this->InnerOpen();
@@ -643,7 +698,7 @@ ErrorCode TSLocalStore::Initialize(std::wstring const & instanceName, Federation
 
     isActive_.store(true);
 
-    error = this->InnerChangeRolePrimary();
+    error = this->InnerChangeRolePrimary(epoch);
     if (!error.IsSuccess()) { return error; }
 
     TRY_GET_STORE_ROOT()
@@ -720,6 +775,13 @@ ErrorCode TSLocalStore::Cleanup()
     return ErrorCodeValue::Success;
 }
 
+ErrorCode TSLocalStore::MarkCleanupInTerminate()
+{
+    shouldCleanup_ = true;
+
+    return ErrorCodeValue::Success;
+}
+
 ErrorCode TSLocalStore::Terminate()
 {
     if (!isActive_.exchange(false))
@@ -732,7 +794,7 @@ ErrorCode TSLocalStore::Terminate()
         static_cast<ComMockPartition*>(partition_.GetRawPointer())->RevokeReadWriteAccess();
     }
 
-    if (test_ShouldCleanup_)
+    if (shouldCleanup_)
     {
         // Since this local store is built on top of a single replica,
         // cleanup of underlying database resources actually happens
@@ -863,6 +925,11 @@ ErrorCode TSLocalStore::GetLastChangeOperationLSN(
     return ErrorCodeValue::NotImplemented;
 }
 
+ErrorCode TSLocalStore::DeleteDatabaseFiles(wstring const & sharedLogFilePath)
+{
+    return storeSettings_->DeleteDatabaseFiles(mockPartitionId_, mockReplicaId_, sharedLogFilePath);
+}
+
 #if defined(PLATFORM_UNIX)
 
 ErrorCode TSLocalStore::Lock(
@@ -907,7 +974,7 @@ ErrorCode TSLocalStore::InnerOpen()
     TRY_GET_STORE_ROOT()
 
     partition_ = make_com<ComMockPartition, IFabricStatefulServicePartition>(
-        *this, 
+        RootedObjectPointer<TSLocalStore>(this, this->CreateComponentRoot()),
         ktlLogger_.get() == nullptr ? Common::GetSFDefaultKtlSystem() : ktlLogger_->KtlSystemObject,
         mockPartitionId_,
         mockReplicaId_);
@@ -971,33 +1038,42 @@ ErrorCode TSLocalStore::InnerOpen()
     return ErrorCode::FromHResult(hr);
 }
 
-ErrorCode TSLocalStore::InnerChangeRolePrimary()
+ErrorCode TSLocalStore::InnerChangeRolePrimary(unique_ptr<FABRIC_EPOCH> const & epochPtr)
 {
     AutoResetEvent event(false);
 
     TRY_GET_STORE_ROOT()
 
     FABRIC_EPOCH epoch = {0};
-    auto error = storeRoot->GetReplicatedStore()->GetCurrentEpoch(epoch);
-    if (!error.IsSuccess())
-    {
-        WriteWarning(
-            TraceComponent,
-            "{0} TSReplicatedStore->GetCurrentEpoch failed: {1}",
-            this->TraceId,
-            error);
 
-        return error;
-    }
-
-    if (epoch.DataLossNumber > 0 && epoch.ConfigurationNumber > 0)
+    if (epochPtr)
     {
-        epoch.ConfigurationNumber = epoch.ConfigurationNumber + 1;
+        epoch.DataLossNumber = epochPtr->DataLossNumber;
+        epoch.ConfigurationNumber = epochPtr->ConfigurationNumber;
     }
     else
     {
-        epoch.ConfigurationNumber = DateTime::Now().Ticks;
-        epoch.DataLossNumber = epoch.ConfigurationNumber;
+        auto error = storeRoot->GetReplicatedStore()->GetCurrentEpoch(epoch);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(
+                TraceComponent,
+                "{0} TSReplicatedStore->GetCurrentEpoch failed: {1}",
+                this->TraceId,
+                error);
+
+            return error;
+        }
+
+        if (epoch.DataLossNumber > 0 && epoch.ConfigurationNumber > 0)
+        {
+            epoch.ConfigurationNumber = epoch.ConfigurationNumber + 1;
+        }
+        else
+        {
+            epoch.DataLossNumber = DateTime::Now().Ticks;
+            epoch.ConfigurationNumber = epoch.DataLossNumber;
+        }
     }
 
     WriteInfo(
@@ -1049,7 +1125,7 @@ ErrorCode TSLocalStore::InnerChangeRolePrimary()
     event.WaitOne();
 
     wstring unused;
-    error = storeRoot->GetReplicatedStore()->EndChangeRole(operation, unused);
+    auto error = storeRoot->GetReplicatedStore()->EndChangeRole(operation, unused);
 
     if (!error.IsSuccess())
     {
@@ -1175,9 +1251,4 @@ Guid TSLocalStore::ToGuid(Federation::NodeId const & nodeId)
     }
 
     return Guid(data1, data2, data3, data4[0], data4[1], data4[2], data4[3], data4[4], data4[5], data4[6], data4[7]);
-}
-
-void TSLocalStore::Test_PrepareForCleanup()
-{
-    test_ShouldCleanup_ = true;
 }

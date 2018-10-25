@@ -41,7 +41,7 @@ namespace Common
             __declspec(property(get = get_Test_GetTimer)) Common::TimerSPtr Test_GetTimer;
             Common::TimerSPtr get_Test_GetTimer() const { return timer_; }
 
-            void Open();
+            void Open(MonitoringComponentMetadata const & metaData);
 
             void Close();
 
@@ -94,7 +94,8 @@ namespace Common
 
             static void InvokeHealthReportCallback(
                 std::vector<MonitoringHealthEvent> const & items,
-                HealthReportCallback const & callback);
+                HealthReportCallback const & callback,
+				MonitoringComponentMetadata const & metaData);
 
             void OnTimer();
 
@@ -115,6 +116,7 @@ namespace Common
             HealthReportCallback clearSlowHealthReportCallback_;
             Common::TimeSpan scanInterval_;
             Common::ComponentRoot const & root_;
+            MonitoringComponentMetadata metaData_;
         };
     }
 }

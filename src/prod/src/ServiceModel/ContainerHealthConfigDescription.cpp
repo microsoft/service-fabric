@@ -15,38 +15,6 @@ ContainerHealthConfigDescription::ContainerHealthConfigDescription()
 {
 }
 
-ContainerHealthConfigDescription::ContainerHealthConfigDescription(ContainerHealthConfigDescription const & other)
-    : IncludeDockerHealthStatusInSystemHealthReport(other.IncludeDockerHealthStatusInSystemHealthReport)
-    , RestartContainerOnUnhealthyDockerHealthStatus(other.RestartContainerOnUnhealthyDockerHealthStatus)
-{
-}
-
-ContainerHealthConfigDescription::ContainerHealthConfigDescription(ContainerHealthConfigDescription && other)
-    : IncludeDockerHealthStatusInSystemHealthReport(move(other.IncludeDockerHealthStatusInSystemHealthReport))
-    , RestartContainerOnUnhealthyDockerHealthStatus(move(other.RestartContainerOnUnhealthyDockerHealthStatus))
-{
-}
-
-ContainerHealthConfigDescription const & ContainerHealthConfigDescription::operator=(ContainerHealthConfigDescription const & other)
-{
-    if (this != &other)
-    {
-        this->IncludeDockerHealthStatusInSystemHealthReport = other.IncludeDockerHealthStatusInSystemHealthReport;
-        this->RestartContainerOnUnhealthyDockerHealthStatus = other.RestartContainerOnUnhealthyDockerHealthStatus;
-    }
-    return *this;
-}
-
-ContainerHealthConfigDescription const & ContainerHealthConfigDescription::operator=(ContainerHealthConfigDescription && other)
-{
-    if (this != &other)
-    {
-        this->IncludeDockerHealthStatusInSystemHealthReport = move(other.IncludeDockerHealthStatusInSystemHealthReport);
-        this->RestartContainerOnUnhealthyDockerHealthStatus = move(other.RestartContainerOnUnhealthyDockerHealthStatus);
-    }
-    return *this;
-}
-
 bool ContainerHealthConfigDescription::operator== (ContainerHealthConfigDescription const & other) const
 {
     return (

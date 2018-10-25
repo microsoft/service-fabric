@@ -18,17 +18,21 @@ namespace DNS
         K_SHARED_INTERFACE_IMP(IFabricResolveOp);
 
         BEGIN_STATEMACHINE_DEFINITION
-            DECLARE_STATES_11(CacheResolve, IsUnknownDnsName, \
-                IsFabricName, MapDnsNameToFabricName, MapDnsNameToFabricNameSucceeded, \
-                MapDnsNameToFabricNameFailed, ResolveFabricName, ResolveFabricNameSucceeded, \
-                ResolveFabricNameFailed, FabricResolveSucceeded, FabricResolveFailed)
+            DECLARE_STATES_14(CacheResolve, IsUnknownDnsName, IsFabricName, \
+                GetServiceDescription, GetServiceDescriptionSucceeded, GetServiceDescriptionFailed, \
+                MapDnsNameToFabricName, MapDnsNameToFabricNameSucceeded, MapDnsNameToFabricNameFailed, \
+                ResolveFabricName, ResolveFabricNameSucceeded, ResolveFabricNameFailed, \
+                FabricResolveSucceeded, FabricResolveFailed)
             BEGIN_TRANSITIONS
                 TRANSITION(Start, IsFabricName)
-                TRANSITION_BOOL(IsFabricName, ResolveFabricName, CacheResolve)
-                TRANSITION_BOOL(CacheResolve, ResolveFabricName, IsUnknownDnsName)
+                TRANSITION_BOOL(IsFabricName, GetServiceDescription, CacheResolve)
+                TRANSITION_BOOL(CacheResolve, GetServiceDescription, IsUnknownDnsName)
                 TRANSITION_BOOL(IsUnknownDnsName, MapDnsNameToFabricName, FabricResolveFailed)
                 TRANSITION_BOOL(MapDnsNameToFabricName, MapDnsNameToFabricNameSucceeded, MapDnsNameToFabricNameFailed)
-                TRANSITION(MapDnsNameToFabricNameSucceeded, ResolveFabricName)
+                TRANSITION(MapDnsNameToFabricNameSucceeded, GetServiceDescription)
+                TRANSITION_BOOL(GetServiceDescription, GetServiceDescriptionSucceeded, GetServiceDescriptionFailed)
+                TRANSITION(GetServiceDescriptionSucceeded, ResolveFabricName)
+                TRANSITION(GetServiceDescriptionFailed, FabricResolveFailed)
                 TRANSITION(MapDnsNameToFabricNameFailed, FabricResolveFailed)
                 TRANSITION_BOOL(ResolveFabricName, ResolveFabricNameSucceeded, ResolveFabricNameFailed)
                 TRANSITION(ResolveFabricNameSucceeded, FabricResolveSucceeded)
@@ -53,7 +57,10 @@ namespace DNS
             __in IDnsCache& cache,
             __in IFabricServiceManagementClient& fabricServiceClient,
             __in IFabricPropertyManagementClient& fabricPropertyClient,
-            __in ULONG fabricQueryTimeoutInSeconds
+            __in ULONG fabricQueryTimeoutInSeconds,
+            __in const KString::SPtr& spStrPartitionPrefix,
+            __in const KString::SPtr& spStrPartitionSuffix,
+            __in bool fIsPartitionedQueryEnabled
         );
 
     private:
@@ -64,7 +71,10 @@ namespace DNS
             __in IDnsCache& cache,
             __in IFabricServiceManagementClient& fabricServiceClient,
             __in IFabricPropertyManagementClient& fabricPropertyClient,
-            __in ULONG fabricQueryTimeoutInSeconds
+            __in ULONG fabricQueryTimeoutInSeconds,
+            __in const KString::SPtr& spStrPartitionPrefix,
+            __in const KString::SPtr& spStrPartitionSuffix,
+            __in bool fIsPartitionedQueryEnabled
         );
 
     public:
@@ -88,12 +98,25 @@ namespace DNS
         virtual void OnCancel() override;
 
     private:
+        void OnFabricGetServiceDescriptionCompleted(
+            __in IFabricAsyncOperationContext* pResolveContext
+        );
+
         void OnFabricResolveCompleted(
             __in IFabricAsyncOperationContext* pResolveContext
         );
 
         void OnFabricGetPropertyCompleted(
             __in IFabricAsyncOperationContext* pResolveContext
+        );
+
+        static void ExtractPartition(
+            __in KString& strQuestion,
+            __in KAllocator& allocator,
+            __in const KString::SPtr& spStrPartitionPrefix,
+            __in const KString::SPtr& spStrPartitionSuffix,
+            __out KString::SPtr& spStrPartition,
+            __out KString::SPtr& spStrDnsName
         );
 
     private:
@@ -109,10 +132,26 @@ namespace DNS
         IDnsRecord::SPtr _spQuestion;
         FabricResolveCompletedCallback _callback;
 
+        KString::SPtr _spStrPartitionName;
+        KString::SPtr _spStrDnsName;
+
         KString::SPtr _spFabricName;
         DnsNameType _nameType;
         OperationCallback::SPtr _spSync;
         ComPointer<IFabricAsyncOperationContext> _spResolveContext;
+        ComPointer<IFabricAsyncOperationContext> _spServiceDescriptionContext;
+        ComPointer<IInternalFabricServiceManagementClient2> _spInternalFabricServiceManagementClient2;
         KArray<KString::SPtr> _arrResults;
+
+        KDateTime _timeGetServiceDescription;
+        KDateTime _timeResolveServicePartition;
+        KDateTime _timeGetProperty;
+
+        FABRIC_SERVICE_DESCRIPTION_KIND _serviceKind;
+        FABRIC_PARTITION_SCHEME _partitionKind;
+        KString::SPtr _spStrPartitionPrefix;
+        KString::SPtr _spStrPartitionSuffix;
+
+        bool _fIsPartitionedQueryEnabled;
     };
 }

@@ -135,7 +135,7 @@
     {
       "Name": "ReliabilityPerformance",
       "Type": "ReliabilityPerformance_PLB",
-      "Owners": "miradic,nipuzovi",
+      "Owners": "miradic,sfplbtestfailures",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=ReplicatorPerf",
       "TestExecutionParameters": {

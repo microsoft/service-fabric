@@ -316,6 +316,266 @@ namespace TStoreTests
         bool shouldRemoveState_ = true;
 
         Common::CommonConfig config; // load the config object as it's needed for the tracing to work
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> ManagedCheckpoint_SingleAdd_ShouldSucceed_Test()
+        {
+            KString::SPtr directoryPath = KPath::Combine(L"managed_checkpoint", L"add", GetAllocator());
+            KString::CSPtr workDirectory = CreateUpgradeFilepath(*directoryPath);
+            Setup(1, DefaultHash, workDirectory);
+
+            CODING_ERROR_ASSERT(Store->Count == 1);
+
+            LONG64 key = 17;
+            KString::SPtr expectedValue = GenerateStringValue(L"value");
+
+            co_await VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, UpgradeTest::EqualityFunction);
+
+            // Don't delete the working directory
+            this->ShouldRemoveStateOnCleanup = false;
+            co_return;
+        }
+
+        ktl::Awaitable<void> ManagedCheckpoint_1000Adds_10Checkpoints_ShouldSucceed_Test()
+        {
+            KString::CSPtr workDirectory = CreateUpgradeFilepath(L"managed_multi_checkpoint");
+            Setup(1, DefaultHash, workDirectory);
+
+            CODING_ERROR_ASSERT(Store->Count == 1000);
+
+            for (LONG64 key = 0; key < 1000; key++)
+            {
+                KString::SPtr expectedValue = GenerateStringValue(key);
+                co_await VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, UpgradeTest::EqualityFunction);
+            }
+
+            this->ShouldRemoveStateOnCleanup = false;
+            co_return;
+        }
+
+        ktl::Awaitable<void> ManagedCheckpoint_1000AddsThen1000Updates_2Checkpoints_ShouldSucceed_Test()
+        {
+            KString::SPtr directoryPath = KPath::Combine(L"managed_checkpoint", L"addUpdate", GetAllocator());
+            KString::CSPtr workDirectory = CreateUpgradeFilepath(*directoryPath);
+            Setup(1, DefaultHash, workDirectory);
+
+            CODING_ERROR_ASSERT(Store->Count == 1000);
+
+            for (LONG64 key = 0; key < 1000; key++)
+            {
+                KString::SPtr expectedValue = NumberToString(key + 1);
+                co_await VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, UpgradeTest::EqualityFunction);
+            }
+
+            this->ShouldRemoveStateOnCleanup = false;
+            co_return;
+        }
+
+        ktl::Awaitable<void> ManagedCheckpoint_1000AddsThen1000UpdatesThen1000Removes_3Checkpoints_ShouldSucceed_Test()
+        {
+            KString::SPtr directoryPath = KPath::Combine(L"managed_checkpoint", L"addUpdateRemove", GetAllocator());
+            KString::CSPtr workDirectory = CreateUpgradeFilepath(*directoryPath);
+            Setup(1, DefaultHash, workDirectory);
+
+            CODING_ERROR_ASSERT(Store->Count == 0);
+            this->ShouldRemoveStateOnCleanup = false;
+            co_return;
+        }
+
+        ktl::Awaitable<void> ManagedAddThenUpdateThenRemoveOperation_ShouldSucceed_Test()
+        {
+            Setup(1);
+
+            KString::SPtr addDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"add", GetAllocator());
+            KString::SPtr updateDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"update", GetAllocator());
+            KString::SPtr removeDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"remove", GetAllocator());
+
+            // Add phase
+            OperationData::SPtr addMetadata = co_await OpenMetadata(*addDirectoryPath);
+            OperationData::SPtr addData = co_await OpenData(*addDirectoryPath);
+
+            {
+                auto replicatorTransaction1 = CreateReplicatorTransaction();
+                replicatorTransaction1->CommitSequenceNumber = 1;
+
+                co_await Store->ApplyAsync(1, *replicatorTransaction1, TxnReplicator::ApplyContext::SecondaryRedo, addMetadata.RawPtr(), addData.RawPtr());
+                replicatorTransaction1->Dispose();
+            }
+
+            auto key = 17;
+            auto expectedValue1 = GenerateStringValue(L"add");
+            co_await VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue1, EqualityFunction);
+
+            // Update phase
+            OperationData::SPtr updateMetadata = co_await OpenMetadata(*updateDirectoryPath);
+            OperationData::SPtr updateData = co_await OpenData(*updateDirectoryPath);
+
+            {
+                auto replicatorTransaction2 = CreateReplicatorTransaction();
+                replicatorTransaction2->CommitSequenceNumber = 2;
+
+                co_await Store->ApplyAsync(2, *replicatorTransaction2, TxnReplicator::ApplyContext::SecondaryRedo, updateMetadata.RawPtr(), updateData.RawPtr());
+                replicatorTransaction2->Dispose();
+            }
+
+            auto expectedValue2 = GenerateStringValue(L"update");
+            co_await VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue2, EqualityFunction);
+
+            // Remove Phase
+            OperationData::SPtr removeMetadata = co_await OpenMetadata(*removeDirectoryPath);
+            RedoUndoOperationData::SPtr removeData = nullptr;
+            RedoUndoOperationData::Create(GetAllocator(), nullptr, nullptr, removeData);
+
+            {
+                auto replicatorTransaction3 = CreateReplicatorTransaction();
+                replicatorTransaction3->CommitSequenceNumber = 3;
+
+                co_await Store->ApplyAsync(3, *replicatorTransaction3, TxnReplicator::ApplyContext::SecondaryRedo, removeMetadata.RawPtr(), removeData.RawPtr());
+                replicatorTransaction3->Dispose();
+            }
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ManagedAdd_FalseProgress_ShouldSucceed_Test()
+        {
+            Setup(1);
+
+            KString::SPtr addDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"add", GetAllocator());
+            KString::SPtr undoDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"undo_add", GetAllocator());
+
+            // Add phase
+            OperationData::SPtr addMetadata = co_await OpenMetadata(*addDirectoryPath);
+            OperationData::SPtr addData = co_await OpenData(*addDirectoryPath);
+
+            // Add phase
+            {
+                auto replicatorTransaction1 = CreateReplicatorTransaction();
+                replicatorTransaction1->CommitSequenceNumber = 1;
+
+                co_await Store->ApplyAsync(1, *replicatorTransaction1, TxnReplicator::ApplyContext::SecondaryRedo, addMetadata.RawPtr(), addData.RawPtr());
+                replicatorTransaction1->Dispose();
+            }
+
+            auto key = 17;
+            auto expectedValue1 = GenerateStringValue(L"add");
+            co_await VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue1, EqualityFunction);
+
+            // Undo phase
+            // Create metadata operation data
+            OperationData::SPtr undoMetadata = co_await OpenMetadata(*undoDirectoryPath);
+
+            auto replicatorTransaction2 = CreateReplicatorTransaction();
+            replicatorTransaction2->CommitSequenceNumber = 1;
+
+            co_await Store->ApplyAsync(1, *replicatorTransaction2, TxnReplicator::ApplyContext::SecondaryFalseProgress, undoMetadata.RawPtr(), nullptr);
+            replicatorTransaction2->Dispose();
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ManagedCopy_100Adds_ShouldSucceed_Test()
+        {
+            Setup(1);
+
+            wstring copyDataDirectory = Common::Path::Combine(L"managed_copy", L"add"); 
+
+            co_await Store->BeginSettingCurrentStateAsync();
+
+            const LONG64 numCopyOperations = 7;
+
+            for (LONG64 stateRecordNumber = 0; stateRecordNumber < numCopyOperations; stateRecordNumber++)
+            {
+                KString::SPtr filename;
+                wstring str = Common::Path::Combine(copyDataDirectory, to_wstring(stateRecordNumber));
+                KString::Create(filename, GetAllocator(), str.c_str());
+
+                KBuffer::SPtr fileDataBuffer = co_await GetFileBytesAsync(*filename);
+
+                OperationData::SPtr operationDataSPtr = OperationData::Create(GetAllocator());
+                operationDataSPtr->Append(*fileDataBuffer);
+
+                co_await Store->SetCurrentStateAsync(stateRecordNumber, *operationDataSPtr, ktl::CancellationToken::None);
+            }
+
+            co_await Store->EndSettingCurrentStateAsync(ktl::CancellationToken::None);
+            CODING_ERROR_ASSERT(Store->Count == 100);
+
+            for (LONG64 key = 0; key < 100; key++)
+            {
+                auto expectedValue = NumberToString(key);
+                co_await VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, EqualityFunction);
+            }
+            co_return;
+        }
+
+        ktl::Awaitable<void> ManagedCopy_100AddsThen100Updates_ShouldSucceed_Test()
+        {
+            Setup(1);
+
+            wstring copyDataDirectory = Common::Path::Combine(L"managed_copy", L"addUpdate");
+
+            co_await Store->BeginSettingCurrentStateAsync();
+
+            const LONG64 numCopyOperations = 11;
+
+            for (LONG64 stateRecordNumber = 0; stateRecordNumber < numCopyOperations; stateRecordNumber++)
+            {
+                KString::SPtr filename;
+                wstring str = Common::Path::Combine(copyDataDirectory, to_wstring(stateRecordNumber));
+                KString::Create(filename, GetAllocator(), str.c_str());
+
+                KBuffer::SPtr fileDataBuffer = co_await GetFileBytesAsync(*filename);
+
+                OperationData::SPtr operationDataSPtr = OperationData::Create(GetAllocator());
+                operationDataSPtr->Append(*fileDataBuffer);
+
+                co_await Store->SetCurrentStateAsync(stateRecordNumber, *operationDataSPtr, ktl::CancellationToken::None);
+            }
+
+            co_await Store->EndSettingCurrentStateAsync(ktl::CancellationToken::None);
+            CODING_ERROR_ASSERT(Store->Count == 100);
+
+            for (LONG64 key = 0; key < 100; key++)
+            {
+                auto expectedValue = NumberToString(key + 1);
+                co_await VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, EqualityFunction);
+            }
+            co_return;
+        }
+
+        ktl::Awaitable<void> ManagedCopy_100AddsThen100UpdatesThen100Removes_ShouldSucceed_Test()
+        {
+            Setup(1);
+
+            wstring copyDataDirectory = Common::Path::Combine(L"managed_copy", L"addUpdateRemove");
+
+            co_await Store->BeginSettingCurrentStateAsync();
+
+            const LONG64 numCopyOperations = 15;
+
+            for (LONG64 stateRecordNumber = 0; stateRecordNumber < numCopyOperations; stateRecordNumber++)
+            {
+                KString::SPtr filename;
+                wstring str = Common::Path::Combine(copyDataDirectory, to_wstring(stateRecordNumber));
+                KString::Create(filename, GetAllocator(), str.c_str());
+
+                KBuffer::SPtr fileDataBuffer = co_await GetFileBytesAsync(*filename);
+
+                OperationData::SPtr operationDataSPtr = OperationData::Create(GetAllocator());
+                operationDataSPtr->Append(*fileDataBuffer);
+
+                co_await Store->SetCurrentStateAsync(stateRecordNumber, *operationDataSPtr, ktl::CancellationToken::None);
+            }
+
+            co_await Store->EndSettingCurrentStateAsync(ktl::CancellationToken::None);
+            CODING_ERROR_ASSERT(Store->Count == 0);
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(UpgradeTestSuite, UpgradeTest)
@@ -347,251 +607,48 @@ namespace TStoreTests
 
     BOOST_AUTO_TEST_CASE(ManagedCheckpoint_SingleAdd_ShouldSucceed)
     {
-        KString::SPtr directoryPath = KPath::Combine(L"managed_checkpoint", L"add", GetAllocator());
-        KString::CSPtr workDirectory = CreateUpgradeFilepath(*directoryPath);
-        Setup(1, DefaultHash, workDirectory);
-
-        CODING_ERROR_ASSERT(Store->Count == 1);
-
-        LONG64 key = 17;
-        KString::SPtr expectedValue = GenerateStringValue(L"value");
-
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, UpgradeTest::EqualityFunction));
-
-        // Don't delete the working directory
-        this->ShouldRemoveStateOnCleanup = false;
+        SyncAwait(ManagedCheckpoint_SingleAdd_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ManagedCheckpoint_1000Adds_10Checkpoints_ShouldSucceed)
     {
-        KString::CSPtr workDirectory = CreateUpgradeFilepath(L"managed_multi_checkpoint");
-        Setup(1, DefaultHash, workDirectory);
-
-        CODING_ERROR_ASSERT(Store->Count == 1000);
-
-        for (LONG64 key = 0; key < 1000; key++)
-        {
-            KString::SPtr expectedValue = GenerateStringValue(key);
-            SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, UpgradeTest::EqualityFunction));
-        }
-
-        this->ShouldRemoveStateOnCleanup = false;
+        SyncAwait(ManagedCheckpoint_1000Adds_10Checkpoints_ShouldSucceed_Test());
     }
 
 
     BOOST_AUTO_TEST_CASE(ManagedCheckpoint_1000AddsThen1000Updates_2Checkpoints_ShouldSucceed)
     {
-        KString::SPtr directoryPath = KPath::Combine(L"managed_checkpoint", L"addUpdate", GetAllocator());
-        KString::CSPtr workDirectory = CreateUpgradeFilepath(*directoryPath);
-        Setup(1, DefaultHash, workDirectory);
-
-        CODING_ERROR_ASSERT(Store->Count == 1000);
-
-        for (LONG64 key = 0; key < 1000; key++)
-        {
-            KString::SPtr expectedValue = NumberToString(key + 1);
-            SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, UpgradeTest::EqualityFunction));
-        }
-
-        this->ShouldRemoveStateOnCleanup = false;
+        SyncAwait(ManagedCheckpoint_1000AddsThen1000Updates_2Checkpoints_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ManagedCheckpoint_1000AddsThen1000UpdatesThen1000Removes_3Checkpoints_ShouldSucceed)
     {
-        KString::SPtr directoryPath = KPath::Combine(L"managed_checkpoint", L"addUpdateRemove", GetAllocator());
-        KString::CSPtr workDirectory = CreateUpgradeFilepath(*directoryPath);
-        Setup(1, DefaultHash, workDirectory);
-
-        CODING_ERROR_ASSERT(Store->Count == 0);
-        this->ShouldRemoveStateOnCleanup = false;
+        SyncAwait(ManagedCheckpoint_1000AddsThen1000UpdatesThen1000Removes_3Checkpoints_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ManagedAddThenUpdateThenRemoveOperation_ShouldSucceed)
     {
-        Setup(1);
-
-        KString::SPtr addDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"add", GetAllocator());
-        KString::SPtr updateDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"update", GetAllocator());
-        KString::SPtr removeDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"remove", GetAllocator());
-
-        // Add phase
-        OperationData::SPtr addMetadata = SyncAwait(OpenMetadata(*addDirectoryPath));
-        OperationData::SPtr addData = SyncAwait(OpenData(*addDirectoryPath));
-
-        {
-            auto replicatorTransaction1 = CreateReplicatorTransaction();
-            replicatorTransaction1->CommitSequenceNumber = 1;
-
-            SyncAwait(Store->ApplyAsync(1, *replicatorTransaction1, TxnReplicator::ApplyContext::SecondaryRedo, addMetadata.RawPtr(), addData.RawPtr()));
-            replicatorTransaction1->Dispose();
-        }
-
-        auto key = 17;
-        auto expectedValue1 = GenerateStringValue(L"add");
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue1, EqualityFunction));
-
-        // Update phase
-        OperationData::SPtr updateMetadata = SyncAwait(OpenMetadata(*updateDirectoryPath));
-        OperationData::SPtr updateData = SyncAwait(OpenData(*updateDirectoryPath));
-
-        {
-            auto replicatorTransaction2 = CreateReplicatorTransaction();
-            replicatorTransaction2->CommitSequenceNumber = 2;
-
-            SyncAwait(Store->ApplyAsync(2, *replicatorTransaction2, TxnReplicator::ApplyContext::SecondaryRedo, updateMetadata.RawPtr(), updateData.RawPtr()));
-            replicatorTransaction2->Dispose();
-        }
-
-        auto expectedValue2 = GenerateStringValue(L"update");
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue2, EqualityFunction));
-
-        // Remove Phase
-        OperationData::SPtr removeMetadata = SyncAwait(OpenMetadata(*removeDirectoryPath));
-        RedoUndoOperationData::SPtr removeData = nullptr;
-        RedoUndoOperationData::Create(GetAllocator(), nullptr, nullptr, removeData);
-
-        {
-            auto replicatorTransaction3 = CreateReplicatorTransaction();
-            replicatorTransaction3->CommitSequenceNumber = 3;
-
-            SyncAwait(Store->ApplyAsync(3, *replicatorTransaction3, TxnReplicator::ApplyContext::SecondaryRedo, removeMetadata.RawPtr(), removeData.RawPtr()));
-            replicatorTransaction3->Dispose();
-        }
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(ManagedAddThenUpdateThenRemoveOperation_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ManagedAdd_FalseProgress_ShouldSucceed)
     {
-        Setup(1);
-
-        KString::SPtr addDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"add", GetAllocator());
-        KString::SPtr undoDirectoryPath = KPath::Combine(L"managed_replicated_ops", L"undo_add", GetAllocator());
-
-        // Add phase
-        OperationData::SPtr addMetadata = SyncAwait(OpenMetadata(*addDirectoryPath));
-        OperationData::SPtr addData = SyncAwait(OpenData(*addDirectoryPath));
-
-        // Add phase
-        {
-            auto replicatorTransaction1 = CreateReplicatorTransaction();
-            replicatorTransaction1->CommitSequenceNumber = 1;
-
-            SyncAwait(Store->ApplyAsync(1, *replicatorTransaction1, TxnReplicator::ApplyContext::SecondaryRedo, addMetadata.RawPtr(), addData.RawPtr()));
-            replicatorTransaction1->Dispose();
-        }
-
-        auto key = 17;
-        auto expectedValue1 = GenerateStringValue(L"add");
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue1, EqualityFunction));
-
-        // Undo phase
-        // Create metadata operation data
-        OperationData::SPtr undoMetadata = SyncAwait(OpenMetadata(*undoDirectoryPath));
-
-        auto replicatorTransaction2 = CreateReplicatorTransaction();
-        replicatorTransaction2->CommitSequenceNumber = 1;
-
-        SyncAwait(Store->ApplyAsync(1, *replicatorTransaction2, TxnReplicator::ApplyContext::SecondaryFalseProgress, undoMetadata.RawPtr(), nullptr));
-        replicatorTransaction2->Dispose();
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(ManagedAdd_FalseProgress_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ManagedCopy_100Adds_ShouldSucceed)
     {
-        Setup(1);
-
-        wstring copyDataDirectory = Common::Path::Combine(L"managed_copy", L"add"); 
-
-        Store->BeginSettingCurrentState();
-
-        const LONG64 numCopyOperations = 7;
-
-        for (LONG64 stateRecordNumber = 0; stateRecordNumber < numCopyOperations; stateRecordNumber++)
-        {
-            KString::SPtr filename;
-            wstring str = Common::Path::Combine(copyDataDirectory, to_wstring(stateRecordNumber));
-            KString::Create(filename, GetAllocator(), str.c_str());
-
-            KBuffer::SPtr fileDataBuffer = SyncAwait(GetFileBytesAsync(*filename));
-
-            OperationData::SPtr operationDataSPtr = OperationData::Create(GetAllocator());
-            operationDataSPtr->Append(*fileDataBuffer);
-
-            SyncAwait(Store->SetCurrentStateAsync(stateRecordNumber, *operationDataSPtr, ktl::CancellationToken::None));
-        }
-
-        SyncAwait(Store->EndSettingCurrentStateAsync(ktl::CancellationToken::None));
-        CODING_ERROR_ASSERT(Store->Count == 100);
-
-        for (LONG64 key = 0; key < 100; key++)
-        {
-            auto expectedValue = NumberToString(key);
-            SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, EqualityFunction));
-        }
+        SyncAwait(ManagedCopy_100Adds_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ManagedCopy_100AddsThen100Updates_ShouldSucceed)
     {
-        Setup(1);
-
-        wstring copyDataDirectory = Common::Path::Combine(L"managed_copy", L"addUpdate");
-
-        Store->BeginSettingCurrentState();
-
-        const LONG64 numCopyOperations = 11;
-
-        for (LONG64 stateRecordNumber = 0; stateRecordNumber < numCopyOperations; stateRecordNumber++)
-        {
-            KString::SPtr filename;
-            wstring str = Common::Path::Combine(copyDataDirectory, to_wstring(stateRecordNumber));
-            KString::Create(filename, GetAllocator(), str.c_str());
-
-            KBuffer::SPtr fileDataBuffer = SyncAwait(GetFileBytesAsync(*filename));
-
-            OperationData::SPtr operationDataSPtr = OperationData::Create(GetAllocator());
-            operationDataSPtr->Append(*fileDataBuffer);
-
-            SyncAwait(Store->SetCurrentStateAsync(stateRecordNumber, *operationDataSPtr, ktl::CancellationToken::None));
-        }
-
-        SyncAwait(Store->EndSettingCurrentStateAsync(ktl::CancellationToken::None));
-        CODING_ERROR_ASSERT(Store->Count == 100);
-
-        for (LONG64 key = 0; key < 100; key++)
-        {
-            auto expectedValue = NumberToString(key + 1);
-            SyncAwait(VerifyKeyExistsAsync(*Store, key, nullptr, expectedValue, EqualityFunction));
-        }
+        SyncAwait(ManagedCopy_100AddsThen100Updates_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ManagedCopy_100AddsThen100UpdatesThen100Removes_ShouldSucceed)
     {
-        Setup(1);
-
-        wstring copyDataDirectory = Common::Path::Combine(L"managed_copy", L"addUpdateRemove");
-
-        Store->BeginSettingCurrentState();
-
-        const LONG64 numCopyOperations = 15;
-
-        for (LONG64 stateRecordNumber = 0; stateRecordNumber < numCopyOperations; stateRecordNumber++)
-        {
-            KString::SPtr filename;
-            wstring str = Common::Path::Combine(copyDataDirectory, to_wstring(stateRecordNumber));
-            KString::Create(filename, GetAllocator(), str.c_str());
-
-            KBuffer::SPtr fileDataBuffer = SyncAwait(GetFileBytesAsync(*filename));
-
-            OperationData::SPtr operationDataSPtr = OperationData::Create(GetAllocator());
-            operationDataSPtr->Append(*fileDataBuffer);
-
-            SyncAwait(Store->SetCurrentStateAsync(stateRecordNumber, *operationDataSPtr, ktl::CancellationToken::None));
-        }
-
-        SyncAwait(Store->EndSettingCurrentStateAsync(ktl::CancellationToken::None));
-        CODING_ERROR_ASSERT(Store->Count == 0);
+        SyncAwait(ManagedCopy_100AddsThen100UpdatesThen100Removes_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_SUITE_END();

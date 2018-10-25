@@ -731,6 +731,7 @@ void Checker::CheckSwapPrimaryUpgradePartition(
     }
 
     Placement const* placement = tempSolution.OriginalPlacement;
+    CandidateSolution baseSolution = tempSolution.BaseSolution;
     NodeSet candidateNodes(placement, false);
 
     std::set<ServiceEntry const*> checkedAffinityParentServices;
@@ -746,7 +747,7 @@ void Checker::CheckSwapPrimaryUpgradePartition(
         // it is not primary swap out of singleton replica in upgrade,
         // and relaxed affinity is required singleton upgrade scenario
         if (settings_.CheckAlignedAffinityForUpgrade &&
-            !(p->Service->IsTargetOne && settings_.RelaxAlignAffinityConstraintDuringSingletonUpgrade))
+            !(p->IsTargetOne && settings_.RelaxAlignAffinityConstraintDuringSingletonUpgrade))
         {
             size_t movementUpgradeIndex = p->UpgradeIndex + tempSolution.BaseSolution.MaxNumberOfCreation;
             Movement const& m = tempSolution.GetMove(movementUpgradeIndex);
@@ -813,15 +814,42 @@ void Checker::CheckSwapPrimaryUpgradePartition(
                 sendVoid = sendVoid || (*it)->PromoteSecondary(tempSolution, p, candidateNodes);
             }
 
-            NodeEntry const* node =
-                settings_.DummyPLBEnabled ? candidateNodes.SelectHighestNodeID() : candidateNodes.SelectRandom(random);
-
-            if (node != nullptr)
+            NodeEntry const* promoteNode = nullptr;
+            if (settings_.DummyPLBEnabled)
             {
-                tempSolution.PromoteSecondary(p, random, node);
+                promoteNode = candidateNodes.SelectHighestNodeID();
+            }
+            else
+            {
+                Score bestScore = baseSolution.TryChange(tempSolution);
+                // Choose the best candiate based on score
+                p->ForEachExistingReplica([&](PlacementReplica const* r)
+                {
+                    NodeEntry const* replicaNode = tempSolution.GetReplicaLocation(r);
+                    if (nullptr == replicaNode || !candidateNodes.Check(replicaNode) || r->IsPrimary)
+                    {
+                        return;
+                    }
+
+                    size_t upgradeIndex = tempSolution.PromoteSecondary(p, random, replicaNode);
+                    Score newScore = baseSolution.TryChange(tempSolution);
+                    if (nullptr == promoteNode || newScore.AvgStdDev < bestScore.AvgStdDev)
+                    {
+                        promoteNode = replicaNode;
+                        bestScore = move(newScore);
+                    }
+                    
+                    baseSolution.UndoChange(tempSolution);
+                    tempSolution.CancelMovement(upgradeIndex);
+                }, false, true);
+            }
+
+            if (promoteNode != nullptr)
+            {
+                tempSolution.PromoteSecondary(p, random, promoteNode);
                 foundSolution = true;
             }
-            else if (sendVoid && p->Service->IsTargetOne && placement->IsSingletonReplicaMoveAllowedDuringUpgrade)
+            else if (sendVoid && p->IsTargetOne && placement->IsSingletonReplicaMoveAllowedDuringUpgrade)
             {
                 // Swap is not possible to replacement replica due to some of the constraints - cancel the FM flags for primary replica
                 tempSolution.AddVoidMovement(p, random, p->PrimarySwapOutLocation);
@@ -830,7 +858,7 @@ void Checker::CheckSwapPrimaryUpgradePartition(
         // Allow singleton primary replica to be swapped out to "MoveInProgress" secondary
         // If it is not dropped by FM, an upgrade could be blocked, hence clear the V flag by sending void movement 
         // Scenario: (P/LI S/V), repDiff = 0
-        else if (p->Service->IsTargetOne &&
+        else if (p->IsTargetOne &&
             p->ExistingReplicaCount == 2 &&
             p->SecondaryReplicaCount == 0 &&
             p->NewReplicaCount == 0)
@@ -1205,7 +1233,7 @@ void Checker::InnerPlaceNewReplicas(TempSolution & solution, Random & random, in
             {
                 if (maxPriorityToUse_ >= 0 && solution.GetReplicaLocation(r) != nullptr)
                 {
-                    // Creation run with relaxed after regular run
+                    // NewReplicaPlacement run with relaxed after regular run
                     return;
                 }
 
@@ -1227,7 +1255,6 @@ void Checker::InnerPlaceNewReplicas(TempSolution & solution, Random & random, in
             CorrectNonPartiallyPlacement(solution, partition);
         }
     }
-
 }
 
 void Checker::TraceInnerPlaceNewReplicas(
@@ -1725,6 +1752,7 @@ bool Checker::InnerMoveSolutionRandomly(
 
         vector<ISubspaceUPtr> subspaces = GenerateStaticSubspacesForRandomMove(solution, random, maxConstraintPriority);
         GetTargetNodesForPlacedReplica(solution, replica, subspaces, candidateNodes, false, false);
+
         NodeEntry const* targetNode = candidateNodes.SelectRandom(random);
 
         if (targetNode == nullptr || !solution.MoveReplica(replica, targetNode, random))
@@ -1978,12 +2006,15 @@ void Checker::CorrectNonPartiallyPlacement(
 
             trace_.UnplacedPartition(partition.PartitionId, service->Name, traceMessage);
         }
-
     }
-
 }
 
-const NodeEntry* Checker::ChooseNodeForPlacement(Placement const* placement, PlacementReplica const* replica, NodeSet& candidateNodes, Random& random, bool isDummyPLB) const
+const NodeEntry* Checker::ChooseNodeForPlacement(
+    Placement const* placement,
+    PlacementReplica const* replica,
+    NodeSet& candidateNodes,
+    Random& random,
+    bool isDummyPLB) const
 {
     vector<PlacementReplica const*> replicas;
     replicas.push_back(replica);
@@ -1991,7 +2022,12 @@ const NodeEntry* Checker::ChooseNodeForPlacement(Placement const* placement, Pla
     return ChooseNodeForPlacement(placement, replicas, candidateNodes, random, isDummyPLB);
 }
 
-const NodeEntry* Checker::ChooseNodeForPlacement(Placement const* placement, vector<PlacementReplica const*> const& replicas, NodeSet& candidateNodes, Random& random, bool isDummyPLB) const
+const NodeEntry* Checker::ChooseNodeForPlacement(
+    Placement const* placement,
+    vector<PlacementReplica const*> const& replicas,
+    NodeSet& candidateNodes,
+    Random& random,
+    bool isDummyPLB) const
 {
     NodeEntry const* node = nullptr;
 
@@ -2032,7 +2068,6 @@ const NodeEntry* Checker::ChooseNodeForPlacement(Placement const* placement, vec
 
     return node;
 }
-
 
 void Checker::SetMaxPriorityToUse(int maxPriorityToUse)
 {

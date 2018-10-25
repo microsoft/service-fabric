@@ -2080,6 +2080,11 @@ namespace Transport
 
     BOOST_AUTO_TEST_CASE(SharedHeaderRemoveSaftyTest)
     {
+        //Need to disable message CRC for this tset, as shared message headers are removed while sending
+        auto saved = TransportConfig::GetConfig().MessageErrorCheckingEnabled;
+        TransportConfig::GetConfig().MessageErrorCheckingEnabled = false;
+        KFinally([=] { TransportConfig::GetConfig().MessageErrorCheckingEnabled = saved; }); 
+
         auto sender = TcpDatagramTransport::CreateClient();
         auto receiver = TcpDatagramTransport::Create(L"127.0.0.1:0");
 
@@ -2175,6 +2180,11 @@ namespace Transport
 
     BOOST_AUTO_TEST_CASE(SharedHeaderConcurrentRemove)
     {
+        //Need to disable message CRC for this tset, as shared message headers are removed while sending
+        auto saved = TransportConfig::GetConfig().MessageErrorCheckingEnabled;
+        TransportConfig::GetConfig().MessageErrorCheckingEnabled = false;
+        KFinally([=] { TransportConfig::GetConfig().MessageErrorCheckingEnabled = saved; }); 
+
         auto sender = TcpDatagramTransport::CreateClient();
         auto receiver = TcpDatagramTransport::Create(L"127.0.0.1:0");
 

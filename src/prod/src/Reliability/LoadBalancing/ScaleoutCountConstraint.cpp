@@ -111,7 +111,7 @@ IViolationUPtr ScaleoutCountConstraint::GetViolations(
     if (invalidReplicas.size() == 0 && appNodes.size() > 0)
     {
         //for placement this can happen because we do not add all the replicas into the closure
-        ASSERT_IF(tempSolution.OriginalPlacement->BalanceCheckerObj->ClosureType != PartitionClosureType::Enum::Creation &&
+        ASSERT_IF(tempSolution.OriginalPlacement->BalanceCheckerObj->ClosureType != PartitionClosureType::Enum::NewReplicaPlacement &&
             tempSolution.OriginalPlacement->Settings.IsTestMode, "Violation without invalid replicas should not exist.");
         appNodes.clear();
     }

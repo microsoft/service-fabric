@@ -20,7 +20,10 @@ namespace Reliability
         public:
             static Common::GlobalWString const TraceDescription;
 
-            ServicePackageEntry(std::wstring const& name, LoadEntry && loads);
+            ServicePackageEntry(
+                std::wstring const& name,
+                LoadEntry && loads,
+                std::vector<std::wstring> && images);
 
             ServicePackageEntry(ServicePackageEntry && other);
 
@@ -32,12 +35,16 @@ namespace Reliability
             __declspec(property(get = get_Load)) LoadEntry const& Loads;
             LoadEntry const& get_Load() const { return loads_; }
 
+            __declspec(property(get = get_ContainerImages)) std::vector<std::wstring> const& ContainerImages;
+            std::vector<std::wstring> const& get_ContainerImages() const { return containerImages_; }
+
             void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
             void WriteToEtw(uint16 contextSequenceId) const;
 
         private:
             std::wstring name_;
             LoadEntry loads_;
+            std::vector<std::wstring> containerImages_;
         };
     }
 }

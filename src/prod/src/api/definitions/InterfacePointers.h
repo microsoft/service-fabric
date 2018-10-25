@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 namespace Api
 {
@@ -74,6 +74,8 @@ namespace Api
     class IRestartPartitionProgressResult;
     class INodeTransitionProgressResult;
     class IChaosReportResult;
+    class IChaosEventsSegmentResult;
+    class ISystemServiceApiResult;
     class IMovePrimaryResult;
     class IMoveSecondaryResult;
     class IRestartDeployedCodePackageResult;
@@ -136,9 +138,14 @@ namespace Api
     class IServiceCommunicationTransport;
     class ICommunicationMessageSender;
     class IComposeManagementClient;
+    class IResourceManagementClient;
     class IDataLossHandler;
     class IContainerActivatorServiceAgent;
     class IContainerActivatorService;
+    class IChaosDescriptionResult;
+    class IChaosScheduleDescriptionResult;
+    class ISecretStoreClient;
+    class IResourceManagerClient;
 
     typedef Common::RootedObjectPointer<IRuntime> IRuntimePtr;
     typedef Common::RootedObjectPointer<IRuntime2> IRuntime2Ptr;
@@ -207,14 +214,18 @@ namespace Api
     typedef Common::RootedObjectPointer<IMoveSecondaryResult> IMoveSecondaryResultPtr;
     typedef Common::RootedObjectPointer<IInvokeDataLossProgressResult> IInvokeDataLossProgressResultPtr;
     typedef Common::RootedObjectPointer<IInvokeQuorumLossProgressResult> IInvokeQuorumLossProgressResultPtr;
-    typedef Common::RootedObjectPointer<IRestartPartitionProgressResult> IRestartPartitionProgressResultPtr;     
+    typedef Common::RootedObjectPointer<IRestartPartitionProgressResult> IRestartPartitionProgressResultPtr;
     typedef Common::RootedObjectPointer<IOrchestrationUpgradeStatusResult> IFabricOrchestrationUpgradeStatusResultPtr;
     typedef Common::RootedObjectPointer<IUpgradeOrchestrationServiceStateResult> IFabricUpgradeOrchestrationServiceStateResultPtr;
     typedef Common::RootedObjectPointer<IChaosReportResult> IChaosReportResultPtr;
+    typedef Common::RootedObjectPointer<IChaosEventsSegmentResult> IChaosEventsSegmentResultPtr;
     typedef Common::RootedObjectPointer<IUpgradeOrchestrationService> IUpgradeOrchestrationServicePtr;
     typedef Common::RootedObjectPointer<IUpgradeOrchestrationServiceAgent> IUpgradeOrchestrationServiceAgentPtr;
     typedef Common::RootedObjectPointer<IUpgradeOrchestrationServiceAgentFactory> IUpgradeOrchestrationServiceAgentFactoryPtr;
     typedef Common::RootedObjectPointer<INodeTransitionProgressResult> INodeTransitionProgressResultPtr;
+    typedef Common::RootedObjectPointer<ISystemServiceApiResult> ISystemServiceApiResultPtr;
+    typedef Common::RootedObjectPointer<IChaosDescriptionResult> IChaosDescriptionResultPtr;
+    typedef Common::RootedObjectPointer<IChaosScheduleDescriptionResult> IChaosScheduleDescriptionResultPtr;
 
     typedef Common::RootedObjectPointer<IApplicationManagementClient> IApplicationManagementClientPtr;
     typedef Common::RootedObjectPointer<IApplicationUpgradeProgressResult> IApplicationUpgradeProgressResultPtr;
@@ -265,9 +276,12 @@ namespace Api
     typedef Common::RootedObjectPointer<IServiceCommunicationClientFactory> IServiceCommunicationClientFactoryPtr;
     typedef Common::RootedObjectPointer<ICommunicationMessageSender> ICommunicationMessageSenderPtr;
     typedef Common::RootedObjectPointer<IComposeManagementClient> IComposeManagementClientPtr;
+    typedef Common::RootedObjectPointer<IResourceManagementClient> IResourceManagementClientPtr;
     typedef Common::RootedObjectPointer<IDataLossHandler> IDataLossHandlerPtr;
     typedef Common::RootedObjectPointer<IContainerActivatorServiceAgent> IContainerActivatorServiceAgentPtr;
     typedef Common::RootedObjectPointer<IContainerActivatorService> IContainerActivatorServicePtr;
+    typedef Common::RootedObjectPointer<ISecretStoreClient> ISecretStoreClientPtr;
+    typedef Common::RootedObjectPointer<IResourceManagerClient> IResourceManagerClientPtr;
 
     typedef std::shared_ptr<IPrimaryReplicator> IPrimaryReplicatorSPtr;
     typedef std::shared_ptr<IStatefulServicePartition> IStatefulServicePartitionSPtr;

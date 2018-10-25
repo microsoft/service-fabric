@@ -27,6 +27,7 @@ namespace Common
             case RA_ReplicaServiceTypeRegistrationStatusHealthy: w << "RA_ReplicaServiceTypeRegistrationStatusHealthy"; return;
             case RA_ReconfigurationStuckWarning: w << "RA_ReconfigurationStuckWarning"; return;
             case RA_ReconfigurationHealthy: w << "RA_ReconfigurationHealthy"; return;
+            case RA_StoreProviderHealthy: w << "RA_StoreProviderHealthy"; return;
             case RA_DeleteReplica: w << "RA_DeleteReplica"; return;
             case RAP_ApiOk: w << "RAP_ApiOk"; return;
             case RAP_ApiSlow: w << "RAP_ApiSlow"; return;
@@ -89,6 +90,7 @@ namespace Common
             case Hosting_FabricUpgradeFailed: w << "Hosting_FabricUpgradeFailed"; return;
             case Hosting_DockerHealthCheckStatusHealthy: w << "Hosting_DockerHealthCheckStatusHealthy"; return;
             case Hosting_DockerHealthCheckStatusUnhealthy: w << "Hosting_DockerHealthCheckStatusUnhealthy"; return;
+            case Hosting_DockerDaemonUnhealthy: w << "Hosting_DockerDaemonUnhealthy"; return;
             case PLB_NodeCapacityViolation: w << "PLB_NodeCapacityViolation"; return;
             case PLB_NodeCapacityOK: w << "PLB_NodeCapacityOK"; return;
             case PLB_UnplacedReplicaViolation: w << "PLB_UnplacedReplicaViolation"; return;

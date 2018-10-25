@@ -10,7 +10,7 @@ namespace Data
     namespace LoggingReplicator
     {
         //
-        // Used by the LogRecordsDispatcher to dispatch records that get logged
+        // Used by the ILogRecordsDispatcher to dispatch records that get logged
         //
         class PhysicalLogWriterCallbackManager final
             : public Utilities::IDisposable

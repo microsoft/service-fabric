@@ -3,7 +3,13 @@ namingservice 1 3 1
 cmservice 3 1
 cleantest
 
+set TestComposeDeploymentTestMode true
+set DummyPLBEnabled true
 set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+set UpgradeStatusPollInterval 5
+set ExclusiveModeDeactivationGraceInterval 10
+!setcfg Management.CleanupApplicationPackageOnProvisionSuccess=false
 
 +10
 +20
@@ -104,11 +110,39 @@ rollbackapp fabric:/app2
 
 # wait UpgradeStatusPollInterval
 
-!pause 7
+!pause 15
 
 deleteapp fabric:/app2
 
 verify
+
+#
+# Testcase 3: Delete compose upgrade pre-empts pending upgrade
+#
+
+# AppType
+app.add type1 type1 v1
+app.clear type1
+app.servicepack type1 ServicePackageA version=v1
+app.servicetypes type1 ServicePackageA StatelessServiceType stateless
+app.codepack type1 ServicePackageA CodeA types=StatelessServiceType version=v1
+app.reqservices type1 ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type1
+
+app.add type2 type1 v2
+app.clear type2
+app.servicepack type2 ServicePackageA version=v2
+app.servicetypes type2 ServicePackageA StatelessServiceType stateless
+app.codepack type2 ServicePackageA CodeA1 types=StatelessServiceType version=v2
+app.reqservices type2 ServiceA StatelessServiceType stateless partition=1 instance=1
+app.upload type2
+
+createcompose app3 type1 type1 v1 verify
+
+addbehavior b1 * * UpdateServiceRequest
+upgradecompose app3 type2 type1 v2 upgradecheckerror=ApplicationNotFound
+deletecompose app3 verify
+query getcomposedeploymentupgradeprogress DeploymentName=app3 error=ComposeDeploymentNotFound
 
 -*
 

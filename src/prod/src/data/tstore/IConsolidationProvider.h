@@ -30,8 +30,8 @@ namespace Data
             __declspec(property(get = get_TransactionalReplicator)) TxnReplicator::ITransactionalReplicator::SPtr TransactionalReplicatorSPtr;
             virtual TxnReplicator::ITransactionalReplicator::SPtr get_TransactionalReplicator() const = 0;
 
-            __declspec(property(get = get_LockManager)) KSharedPtr<LockManager> LockManagerSPtr;
-            virtual KSharedPtr<LockManager> get_LockManager() const = 0;
+            __declspec(property(get = get_LockManager)) KSharedPtr<Data::Utilities::LockManager> LockManagerSPtr;
+            virtual KSharedPtr<Data::Utilities::LockManager> get_LockManager() const = 0;
 
             __declspec(property(get = get_MergeMetadataTable, put = set_MergeMetadataTable)) KSharedPtr<MetadataTable> MergeMetadataTableSPtr;
             virtual KSharedPtr<MetadataTable> get_MergeMetadataTable() const = 0;
@@ -66,8 +66,6 @@ namespace Data
 
             __declspec(property(get = get_TestDelayOnConsolidation)) ktl::AwaitableCompletionSource<bool>::SPtr TestDelayOnConsolidationSPtr;
             virtual ktl::AwaitableCompletionSource<bool>::SPtr get_TestDelayOnConsolidation() const = 0;
-
-            virtual ktl::Task TryStartSweepAsync() = 0;
             
             virtual ULONG32 IncrementFileId() = 0;
             virtual ULONG64 IncrementFileStamp() = 0;

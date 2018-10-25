@@ -34,7 +34,7 @@ target_link_libraries(${exe_KtlLogStressUPassthroughTest}
   ${KtlLoggerUser}
   ${lib_Common}
   ${lib_FabricCommon}
-  ${lib_KtlLoggerShimUPassthrough}
+  ${lib_KtlLoggerShimUnify}
   ${Ktlfull}
   ktllttng
   KmUnitUser
@@ -51,6 +51,4 @@ target_link_libraries(${exe_KtlLogStressUPassthroughTest}
    dl
    xml2
    uuid
-   unwind
-   unwind-x86_64
 )

@@ -5,7 +5,7 @@
     {
       "Name": "PLB_GeoReplication",
       "Type": "V2_DllTest",
-      "Owners": "chanli",
+      "Owners": "v-ivned,sfplbtestfailures",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -24,7 +24,7 @@
     {
       "Name": "PLB_PlacementConstraint",
       "Type": "V2_DllTest",
-      "Owners": "chanli",
+      "Owners": "v-bogmar,sfplbtestfailures",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -41,7 +41,7 @@
     {
       "Name": "PLB_LoadQuery",
       "Type": "V2_DllTest",
-      "Owners": "nipuzovi",
+      "Owners": "mocolic,sfplbtestfailures",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -60,7 +60,7 @@
     {
       "Name": "PLB_ServiceAffinity",
       "Type": "V2_DllTest",
-      "Owners": "Nikola.Puzovic",
+      "Owners": "miradic,sfplbtestfailures",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {
@@ -170,7 +170,7 @@
     {
       "Name": "PLB_PlacementOnEveryNode",
       "Type": "V2_DllTest",
-      "Owners": "mmicic",
+      "Owners": "mmicic,sfplbtestfailures",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:5;Group=TestOnPrem",
       "TestExecutionParameters": {

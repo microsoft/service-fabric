@@ -22,8 +22,8 @@ namespace ServiceModel
             NodeHealthStateChunkList && nodeHealthStateChunks,
             ApplicationHealthStateChunkList && applicationHealthStateChunks);
 
-        ClusterHealthChunk(ClusterHealthChunk && other);
-        ClusterHealthChunk & operator = (ClusterHealthChunk && other);
+        ClusterHealthChunk(ClusterHealthChunk && other) = default;
+        ClusterHealthChunk & operator = (ClusterHealthChunk && other) = default;
 
         virtual ~ClusterHealthChunk();
 

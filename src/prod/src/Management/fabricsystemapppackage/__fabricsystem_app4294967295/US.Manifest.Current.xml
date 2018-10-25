@@ -12,7 +12,7 @@
     <CodePackage Name="Code" Version="Current">
         <EntryPoint>
             <ExeHost>
-                <Program>FabricUS.exe</Program>
+                <Program>FabricUS.bat</Program>
             </ExeHost>
         </EntryPoint>
     </CodePackage>

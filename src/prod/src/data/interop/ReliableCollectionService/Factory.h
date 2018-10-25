@@ -8,14 +8,14 @@
 
 namespace TXRStatefulServiceBase
 {
-    typedef std::function<StatefulServiceBaseCPtr(ULONG, FABRIC_PARTITION_ID, FABRIC_REPLICA_ID, Common::ComponentRootSPtr const &)> CreateReplicaCallback;
+    typedef std::function<StatefulServiceBaseCPtr(FABRIC_PARTITION_ID, FABRIC_REPLICA_ID, Common::ComponentRootSPtr const &)> CreateReplicaCallback;
 
     class Factory 
         : public Common::ComponentRoot
     {
     public:
 
-        static std::shared_ptr<Factory> Create(__in CreateReplicaCallback createReplicaCallback, __in ULONG port);
+        static std::shared_ptr<Factory> Create(__in CreateReplicaCallback createReplicaCallback);
 
         virtual ~Factory();
          
@@ -25,9 +25,8 @@ namespace TXRStatefulServiceBase
             Common::ComponentRootSPtr const & root);
 
     private:
-        Factory(__in CreateReplicaCallback createReplicaCallback, __in ULONG port);
+        Factory(__in CreateReplicaCallback createReplicaCallback);
 
         CreateReplicaCallback createReplicaCallBack_;
-		ULONG port_;
     };
 }

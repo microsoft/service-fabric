@@ -190,6 +190,18 @@ void ServiceTypeDescription::ReadFromXml(Common::XmlReaderUPtr const & xmlReader
                 Parser::ThrowInvalidContent(xmlReader, L"true/false", attrValue);
             }
         }
+
+        if (xmlReader->HasAttribute(*SchemaNames::Attribute_UseImplicitHost))
+        {
+            wstring attrValue = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_UseImplicitHost);
+            if (!StringUtility::TryFromWString<bool>(
+                attrValue,
+                this->UseImplicitHost))
+            {
+                Parser::ThrowInvalidContent(xmlReader, L"true/false", attrValue);
+            }
+        }
+
     }
     else
     {

@@ -140,7 +140,7 @@ void NamesHandler::OnCreateNameComplete(
     }
 
     ByteBufferUPtr emptyBody;
-    handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusCreated, *Constants::StatusDecsriptionCreated);
+    handlerOperation->OnSuccess(operation->Parent, move(emptyBody), Constants::StatusCreated, *Constants::StatusDescriptionCreated);
 }
 
 void NamesHandler::DeleteName(AsyncOperationSPtr const & thisSPtr)

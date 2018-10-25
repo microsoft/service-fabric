@@ -17,7 +17,7 @@ namespace Data
         // - Primary: LockContext is explicitly added through AddLockContext.
         // - Recovery && Secondary: Return from ApplyAsync.
         //
-        // TODO: Rename to TransactionLockContext. Port Note: In managed they shared the namespace causing SM prefix. 
+        // Note: Rename to TransactionLockContext. In managed they shared the namespace causing SM prefix. 
         class StateManagerTransactionContext final : public TxnReplicator::LockContext
         {
             K_FORCE_SHARED(StateManagerTransactionContext)
@@ -78,7 +78,7 @@ namespace Data
             //
             // NOFAIL Constructor for StateManagerTransactionContext class.
             //
-            // Params:
+            // Parameters:
             // transactionId            Id of the parent transaction.
             // stateManagerLockContext  Information on the lock that was taken for the operation.
             // operationType            Type of the operation for which the lock was taken.

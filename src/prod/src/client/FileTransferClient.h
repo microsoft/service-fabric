@@ -15,6 +15,7 @@ namespace Client
     public:
         FileTransferClient(
             ClientConnectionManagerSPtr const &,
+            bool useChunkBasedUpload,
             Common::ComponentRoot const & root);
 
         Common::AsyncOperationSPtr BeginUploadFile(
@@ -30,8 +31,8 @@ namespace Client
         Common::ErrorCode EndUploadFile(
             Common::AsyncOperationSPtr const &operation);
 
-        Common::AsyncOperationSPtr BeginDownloadFile(            
-            std::wstring const & serviceName,            
+        Common::AsyncOperationSPtr BeginDownloadFile(
+            std::wstring const & serviceName,
             std::wstring const & storeRelativePath,
             std::wstring const & destinationFullPath,
             Management::FileStoreService::StoreFileVersion const & version,
@@ -42,6 +43,15 @@ namespace Client
             Common::ErrorCode const & passThroughError);
         Common::ErrorCode EndDownloadFile(
             Common::AsyncOperationSPtr const &operation);
+
+        __declspec(property(get = get_UseChunkBasedUpload, put = set_UseChunkBasedUpload)) bool UseChunkBasedUpload;
+        bool get_UseChunkBasedUpload() const { return useChunkBasedUpload_; }
+        void set_UseChunkBasedUpload(bool value) { useChunkBasedUpload_ = value; }
+
+        void IncrementChunkUpload() { ++totalChunkBasedUploads_; }
+
+        __declspec(property(get = get_TotalChunkBasedUploads)) uint64 TotalChunkBasedUploads;
+        uint64 get_TotalChunkBasedUploads() const { return totalChunkBasedUploads_.load(); }
 
     protected:
         Common::ErrorCode OnOpen();
@@ -70,5 +80,7 @@ namespace Client
         std::unique_ptr<FileReceiver> fileReceiver_;
 
         Common::SynchronizedMap<Common::Guid, Common::AsyncOperationSPtr> pendingOperations_;
+        bool useChunkBasedUpload_;
+        static Common::atomic_uint64 totalChunkBasedUploads_;
     };
 }

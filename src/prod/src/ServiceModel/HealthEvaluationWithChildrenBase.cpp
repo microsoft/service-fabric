@@ -67,6 +67,25 @@ void HealthEvaluationWithChildrenBase::GenerateDescription()
     HealthEvaluation::GenerateDescription(unhealthyEvaluations_);
 }
 
+wstring HealthEvaluationWithChildrenBase::GetUnhealthyEvaluationDescription(wstring const & indent) const
+{
+    wstring ret;
+    StringWriter writer(ret);
+    writer.Write("{0}{1}", indent, description_);
+    if (!unhealthyEvaluations_.empty())
+    {
+        wstring newIndent = indent + L"  ";
+        for (auto const & eval : unhealthyEvaluations_)
+        {
+            // Write each child on a new line
+            writer.WriteLine();
+            writer.Write(eval.Evaluation->GetUnhealthyEvaluationDescription(newIndent));
+        }
+    }
+
+    return ret;
+}
+
 void HealthEvaluationWithChildrenBase::WriteTo(__in TextWriter& writer, FormatOptions const &) const
 {
     if (unhealthyEvaluations_.empty())

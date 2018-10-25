@@ -40,8 +40,8 @@ namespace ServiceModel
             HealthInformation && healthInfo,
             AttributeList && attributes);
 
-        HealthReport(HealthReport && other);
-        HealthReport & operator = (HealthReport && other);
+        HealthReport(HealthReport && other) = default;
+        HealthReport & operator = (HealthReport && other) = default;
 
         __declspec(property(get=get_Kind)) FABRIC_HEALTH_REPORT_KIND Kind;
         FABRIC_HEALTH_REPORT_KIND get_Kind() const { CheckEntityExists(); return entityInformation_->Kind; }

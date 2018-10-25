@@ -158,14 +158,14 @@ namespace Common
 
                     Sleep(rand.Next(minSleep, maxSleep));
 
-                    wstring outData1 = ErrorCode::GetThreadErrorMessage();
+                    wstring outData1 = FabricGlobals::Get().GetThreadErrorMessages().GetMessage();
 
                     VERIFY_IS_TRUE(outData1 == inData, wformatString("[{0}] read '{1}'", index, outData1).c_str());
                 }
 
                 Sleep(rand.Next(minSleep, maxSleep));
 
-                wstring outData2 = ErrorCode::GetThreadErrorMessage();
+                wstring outData2 = FabricGlobals::Get().GetThreadErrorMessages().GetMessage();
 
                 VERIFY_IS_TRUE(outData2.empty(), wformatString("[{0}] read '{1}'", index, outData2).c_str());
 

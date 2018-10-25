@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 #pragma once
+
 #include "Common/macro.h"
 #include "Common/Formatter.h"
 
@@ -30,46 +31,36 @@ namespace Common
         virtual void Flush() = 0;
 
         void WriteNumber(uint64 val, const FormatOptions& format, bool negative);
-
-        void WriteListBegin(int & itemCount)    { WriteChar('('); itemCount = 0; }
+    	void WriteListBegin(int & itemCount)    { WriteChar('('); itemCount = 0; }
         void WriteListEnd(int &)                { WriteChar(')'); }
         void WriteElementBegin(int & itemCount) { if ( itemCount++ > 0 ) WriteChar(' '); }
         void WriteElementEnd(int &)             {}
-
         void WriteString(std::string const & value);
+		void Write(VariableArgument const & arg);
+		template <class ...Args>
+		typename std::enable_if<sizeof...(Args) != 0, void>::type
+		Write(StringLiteral format, Args&& ...args)
+		{
+			const int n = sizeof...(Args);
 
-        void Write(VariableArgument const & arg);
-        void Write(StringLiteral format, VariableArgument const & arg0);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11, VariableArgument const & arg12);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11, VariableArgument const & arg12, VariableArgument const & arg13);
-        void Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11, VariableArgument const & arg12, VariableArgument const & arg13, VariableArgument const & arg14);
-
-        void WriteLine();
-        void WriteLine(VariableArgument const & arg);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10);
-        void WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11);
-
+			std::vector<VariableArgument> vec{ std::forward<Args>(args)... };
+			VariableArgument const * _args[n];
+			for (auto i = 0; i < n; ++i)
+			{
+				_args[i] = &vec[i];
+			}
+			TextWriter::InternalWrite(format, n, _args);
+		}
+		void WriteLine(VariableArgument const & arg);
+		void WriteLine();
+    	template <class ...Args>
+		typename std::enable_if<sizeof...(Args) != 0, void>::type
+		WriteLine(StringLiteral format, Args&& ...args)
+		{
+			Write(format, std::forward<Args>(args)...);
+			WriteLine();
+		}
+        
     protected:
         virtual ~TextWriter() {}
         virtual void WriteAsciiBuffer(char const * buf, size_t ccLen) = 0;

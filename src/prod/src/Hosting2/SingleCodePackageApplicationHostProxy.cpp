@@ -10,6 +10,7 @@ using namespace Common;
 using namespace ServiceModel;
 using namespace Management::ImageModel;
 using namespace Hosting2;
+using namespace Transport;
 
 StringLiteral const TraceType("SingleCodePackageApplicationHostProxy");
 
@@ -65,18 +66,18 @@ private:
     {
         ProcessDescriptionUPtr processDescription;
         auto error = owner_.GetProcessDescription(processDescription);
-
-        processPath_ = processDescription->ExePath;
         if (!error.IsSuccess())
         {
             WriteWarning(
                 TraceType,
                 owner_.TraceId,
-                "GetProcessDescriotion: ErrorCode={0}",
+                "GetProcessDescription: ErrorCode={0}",
                 error);
             TryComplete(thisSPtr, error);
             return;
         }
+
+        processPath_ = processDescription->ExePath;
 
         wstring assignedIP;
         error = owner_.GetAssignedIPAddress(assignedIP);
@@ -96,7 +97,7 @@ private:
             return;
         }
 
-        // DNS chain section for containers. 
+        // DNS chain section for containers.
         vector<wstring> dnsServers;
         if (error.IsSuccess() && isContainerHost_ && DNS::DnsServiceConfig::GetConfig().IsEnabled)
         {
@@ -123,55 +124,43 @@ private:
                 DNS::DnsServiceConfig::GetConfig().SetContainerDnsWhenPortBindingsAreEmpty ||
                 !owner_.PortBindings.empty())
             {
-                std::wstring dnsServerIP;
-                auto err = FabricEnvironment::GetFabricDnsServerIPAddress(dnsServerIP);
-                if (err.IsSuccess())
+#if defined(PLATFORM_UNIX)
+                // On Linux, if no port bindings are specified in non-mip scenario, "host" networking mode is used as 
+                // default networking mode, unless overriden. Hence, we need to add DNS servers on the host network. 
+                // Otherwise, public connectivity will be broken for the container connected to host network. 
+                if (owner_.PortBindings.empty() &&
+                    StringUtility::AreEqualCaseInsensitive(HostingConfig::GetConfig().DefaultContainerNetwork, L"host"))
                 {
-                    dnsServers.push_back(dnsServerIP);
+                    std::wstring localhost = L"127.0.0.1";
+                    dnsServers.push_back(localhost);
                 }
                 else
                 {
-                    WriteWarning(TraceType, owner_.TraceId,
-                        "Failed to get DNS IP address for the container from the environment : ErrorCode={0}",
-                        err);
-                }
-            }
-
-            std::vector<std::wstring> list;
-            error = Common::IpUtility::GetDnsServers(list);
-            if (error.IsSuccess() && !list.empty())
-            {
-                if (dnsServers.empty())
-                {
-                    dnsServers.insert(dnsServers.end(), list.begin(), list.end());
-                }
-                else
-                {
-                    // Avoid duplicates
-                    for (int i = 0; i < list.size(); i++)
+#endif
+                    std::wstring dnsServerIP;
+                    auto err = FabricEnvironment::GetFabricDnsServerIPAddress(dnsServerIP);
+                    if (err.IsSuccess())
                     {
-                        if (std::find(dnsServers.begin(), dnsServers.end(), list[i]) == dnsServers.end())
-                        {
-                            dnsServers.push_back(list[i]);
-                        }
+                        dnsServers.push_back(dnsServerIP);
                     }
-                }
+                    else
+                    {
+                        WriteWarning(TraceType, owner_.TraceId,
+                            "Failed to get DNS IP address for the container from the environment : ErrorCode={0}",
+                            err);
+                    }
+#if defined(PLATFORM_UNIX)
+                } 
+#endif
             }
 
             WriteNoise(TraceType, owner_.TraceId,
-                "Container DNS setup: assignedIP={0}, SetContainerDnsWhenPortBindingsAreEmpty={1}, IsPortBindingEmpty={2}, HostDnsChain={3}, ContainerDnsChain={4}",
-                assignedIP, DNS::DnsServiceConfig::GetConfig().SetContainerDnsWhenPortBindingsAreEmpty, owner_.PortBindings.empty(), list, dnsServers);
-
-            if (!error.IsSuccess())
-            {
-                WriteWarning(TraceType, owner_.TraceId,
-                    "Failed to create DNS chain for the container : ErrorCode={0}",
-                    error);
-
-                error = ErrorCodeValue::ContainerFailedToCreateDnsChain;
-                TryComplete(thisSPtr, error);
-                return;
-            }
+                "Container DNS setup: assignedIP={0}, SetContainerDnsWhenPortBindingsAreEmpty={1}, IsPortBindingEmpty={2}, DefaultContainerNetwork={3}, ContainerDnsChain={4}",
+                assignedIP,
+                DNS::DnsServiceConfig::GetConfig().SetContainerDnsWhenPortBindingsAreEmpty,
+                owner_.PortBindings.empty(),
+                HostingConfig::GetConfig().DefaultContainerNetwork,
+                dnsServers);
         }
 
         TimeSpan timeout = timeoutHelper_.GetRemainingTime();
@@ -195,25 +184,54 @@ private:
                     securityOptions.push_back(it->Value);
                 }
             }
-            auto autoRemove = (containerPolicies.ContainersRetentionCount == 0);
-            WriteInfo(
-                TraceType,
-                owner_.TraceId,
-                "AutoRemove defaults to {0} containerretentioncount {1} failure count {2}",
-                autoRemove,
-                containerPolicies.ContainersRetentionCount,
-                owner_.codePackageInstance_->ContinuousFailureCount);
-            if (autoRemove == false)
+
+            bool autoRemove = false;
+            if (containerPolicies.AutoRemove.empty())
             {
-                //If retentioncount is negative, we keep retaining all failed containers
-                if (containerPolicies.ContainersRetentionCount > 0)
+                if (containerPolicies.ContainersRetentionCount != 0)
                 {
-                    if (owner_.codePackageInstance_->ContinuousFailureCount >= (ULONG)containerPolicies.ContainersRetentionCount)
+                    WriteInfo(
+                        TraceType,
+                        owner_.TraceId,
+                        "Containerretentioncount {1} failure count {2}",
+                        containerPolicies.ContainersRetentionCount,
+                        owner_.codePackageInstance_->ContinuousFailureCount);
+
+                    //If retentioncount is negative, we keep retaining all failed containers
+                    if (containerPolicies.ContainersRetentionCount > 0)
                     {
-                        autoRemove = true;
+                        if (owner_.codePackageInstance_->ContinuousFailureCount >= (ULONG)containerPolicies.ContainersRetentionCount)
+                        {
+                            autoRemove = true;
+                        }
                     }
                 }
+                else
+                {
+                    autoRemove = true;
+                }
             }
+
+            std::vector<ContainerLabelDescription> newLabels(containerPolicies.Labels.size());
+            if (containerPolicies.Labels.size() > 0)
+            {
+                std::copy(containerPolicies.Labels.begin(), containerPolicies.Labels.end(), newLabels.begin());
+            }
+
+            auto logConfig = containerPolicies.LogConfig;
+
+            if (isContainerHost_)
+            {
+                GetLogConfigAndLogLabel(logConfig, newLabels);
+            }
+
+#if defined(PLATFORM_UNIX)
+            ContainerPodDescription podDesc(L"",
+                                   owner_.codePackageInstance_->EnvContext->ContainerGroupIsolated ?
+                                       ContainerIsolationMode::hyperv: ContainerIsolationMode::process,
+                                   vector<PodPortMapping>());
+#endif
+
             auto containerDescription = make_unique<ContainerDescription>(
                 owner_.ApplicationName,
                 owner_.GetServiceName(),
@@ -226,19 +244,27 @@ private:
                 owner_.Hosting.NodeWorkFolder,
                 assignedIP,
                 owner_.PortBindings,
-                containerPolicies.LogConfig,
-                containerPolicies.Volumes, 
+                logConfig,
+                containerPolicies.Volumes,
+                newLabels,
                 dnsServers,
                 containerPolicies.RepositoryCredentials,
                 containerPolicies.HealthConfig,
                 securityOptions,
+#if defined(PLATFORM_UNIX)
+                podDesc,
+#endif
+                owner_.removeServiceFabricRuntimeAccess_,
                 owner_.codePackageInstance_->EnvContext->GroupContainerName,
+                containerPolicies.UseDefaultRepositoryCredentials,
+                containerPolicies.UseTokenAuthenticationCredentials,
                 autoRemove,
                 containerPolicies.RunInteractive,
-                false,
+                false /*isContainerRoot*/,
                 owner_.codePackageInstance_->Context.CodePackageInstanceId.CodePackageName,
                 owner_.ServicePackageInstanceId.PublicActivationId,
-                owner_.ServicePackageInstanceId.ActivationContext.ToString());
+                owner_.ServicePackageInstanceId.ActivationContext.ToString(),
+                owner_.codePackageInstance_->CodePackageObj.BindMounts);
 
             auto operation = owner_.Hosting.ApplicationHostManagerObj->FabricActivator->BeginActivateProcess(
                 owner_.ApplicationId.ToString(),
@@ -280,68 +306,104 @@ private:
         if (error.IsSuccess())
         {
             owner_.codePackageRuntimeInformation_ = make_shared<CodePackageRuntimeInformation>(processPath_, processId);
-#if !defined(PLATFORM_UNIX)
-            error = SetupAppHostMonitor(processId);
-#endif
         }
 
-        TryComplete(operation->Parent, error);
-        if (owner_.terminatedExternally_.load())
-        {
-            WriteInfo(
-                TraceType,
-                owner_.TraceId,
-                "ApplicationHost {0} terminated externally during open with exit code {1}, aborting",
-                owner_.HostId,
-                owner_.exitCode_.load());
-            //process terminated while applicationhost was being opened
-            owner_.Abort();
-        }
-    }
+        owner_.activationFailed_.store(!error.IsSuccess());
+        owner_.activationFailedError_ = error;
 
-    ErrorCode SetupAppHostMonitor(DWORD processId)
-    {
-        if (!isContainerHost_)
-        {
-            HandleUPtr appHostProcessHandle;
-            DWORD desiredAccess = SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION;
-
-            auto err = ProcessUtility::OpenProcess(
-                desiredAccess,
-                FALSE,
-                processId,
-                appHostProcessHandle);
-            if (!err.IsSuccess())
-            {
-                WriteError(
-                    TraceType,
-                    "ApplicationHostProxy: OpenProcess: ErrorCode={0}, ParentId={1}. Fabric will not monitor AppHost {2}",
-                    err,
-                    processId,
-                    owner_.HostId);
-            }
-            else
-            {
-
-                HostingSubsystem & hosting = owner_.Hosting;
-                wstring hostId = owner_.HostId;
-                owner_.procHandle_ = move(appHostProcessHandle);
-
-                auto hostMonitor = ProcessWait::CreateAndStart(
-                    Handle(owner_.procHandle_->Value, Handle::DUPLICATE()),
-                    processId,
-                    [&hosting, hostId](pid_t, ErrorCode const &, DWORD exitCode)
-                {
-                    //LINUXTODO, what happens waitResult indicates wait failed?
-                    hosting.ApplicationHostManagerObj->OnApplicationHostTerminated(hostId, exitCode);
-                });
-                owner_.apphostMonitor_ = move(hostMonitor);
-            }
-        }
-        return ErrorCodeValue::Success;
+        this->TryComplete(operation->Parent, error);
     }
 
 private:
+    ErrorCode GetLogConfigAndLogLabel(
+        _Out_ LogConfigDescription & logConfig,
+        _Out_ std::vector<ContainerLabelDescription> & newLabels)
+    {
+        auto containerPolicies = owner_.ContainerPolicies;
+        LogConfigDescription tempLogConfig;
+
+        auto error = GetLogConfigDescription(containerPolicies.LogConfig, tempLogConfig);
+
+        if (error.IsSuccess())
+        {
+            // If the log driver is the sblogdriver then we want to add a label to the container containing the value.
+            logConfig = move(tempLogConfig);
+            for(auto& it : logConfig.DriverOpts)
+            {
+                if (it.Name == Constants::ContainerLogDriverOptionLogBasePathKey)
+                {
+                    ContainerLabelDescription logRootPathLabel;
+                    logRootPathLabel.Name = Constants::ContainerLabels::LogBasePathKeyName;
+                    logRootPathLabel.Value = it.Value;
+                    newLabels.push_back(logRootPathLabel);
+                }
+            }
+        }
+        else
+        {
+            WriteWarning(
+                TraceType,
+                owner_.TraceId,
+                "Failed to parse log driver config. Proceeding without making changes to the logConfig.");
+        }
+        return ErrorCode::Success();
+    }
+
+    ErrorCode GetLogConfigDescription(
+        LogConfigDescription const & appLogConfig,
+        _Out_ LogConfigDescription & logConfig)
+    {
+        // logConfig will be populated with appLogConfig if log driver is specified in appLogConfig, otherwise it will be populated from ContainerLogDriverConfig
+        if (!appLogConfig.Driver.empty())
+        {
+            // populate from appLogConfig because it is not empty or the cluster manifest has no default
+            logConfig = appLogConfig;
+        }
+        else if (!Hosting2::ContainerLogDriverConfig::GetConfig().Type.empty())
+        {
+            // populate from ContainerLogDriverConfig
+            logConfig.Driver = Hosting2::ContainerLogDriverConfig::GetConfig().Type;
+
+            ServiceModel::ContainerLogDriverConfigDescription logDriverOpts;
+
+            auto error = JsonHelper::Deserialize(logDriverOpts, Hosting2::ContainerLogDriverConfig::GetConfig().Config);
+
+            if (!error.IsSuccess())
+            {
+                WriteWarning(
+                    TraceType,
+                    owner_.TraceId,
+                    "GetLogConfigDescription failed to deserialize log driver options from ContainerLogDriver.Config {0}. Returning with error {1}.",
+                    Hosting2::ContainerLogDriverConfig::GetConfig().Config,
+                    error);
+
+                return error;
+            }
+
+            WriteInfo(
+                TraceType,
+                owner_.TraceId,
+                "GetlogConfigDescription successfully deserialized ContainerLogDriver.Config. Will proceed to use log driver configs from this value {0}.",
+                Hosting2::ContainerLogDriverConfig::GetConfig().Config);
+
+            for (auto& it: logDriverOpts.Config)
+            {
+                DriverOptionDescription driverOption;
+                driverOption.Name = it.first;   // key
+                driverOption.Value = it.second; // value
+                driverOption.IsEncrypted = L"false";
+
+                logConfig.DriverOpts.push_back(move(driverOption));
+            }
+        }
+        else
+        {
+            logConfig = owner_.ContainerPolicies.LogConfig;
+        }
+
+        return ErrorCode::Success();
+    }
+
     SingleCodePackageApplicationHostProxy & owner_;
     TimeoutHelper const timeoutHelper_;
     std::wstring processPath_;
@@ -392,11 +454,6 @@ protected:
             owner_.HostType,
             timeout);
 
-        if (owner_.apphostMonitor_ != nullptr)
-        {
-            owner_.apphostMonitor_->Cancel();
-        }
-
         if (!owner_.terminatedExternally_.load())
         {
             owner_.exitCode_.store(ProcessActivator::ProcessDeactivateExitCode);
@@ -422,7 +479,7 @@ protected:
 
             owner_.NotifyTermination();
 
-            auto error = ErrorCode(ErrorCodeValue::Success);            
+            auto error = ErrorCode(ErrorCodeValue::Success);
             TryComplete(thisSPtr, error);
         }
     }
@@ -459,6 +516,228 @@ private:
     TimeoutHelper const timeoutHelper_;
 };
 
+// ********************************************************************************************************************
+// SingleCodePackageApplicationHostProxy::ApplicationHostCodePackageOperation Implementation
+//
+class SingleCodePackageApplicationHostProxy::ApplicationHostCodePackageOperation :
+    public AsyncOperation,
+    TextTraceComponent<TraceTaskCodes::Hosting>
+{
+public:
+    ApplicationHostCodePackageOperation(
+        __in SingleCodePackageApplicationHostProxy & owner,
+        ApplicationHostCodePackageOperationRequest const & request,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(callback, parent)
+        , owner_(owner)
+        , request_(request)
+    {
+    }
+
+    static ErrorCode ApplicationHostCodePackageOperation::End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<ApplicationHostCodePackageOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (owner_.Hosting.State.Value > FabricComponentState::Opened ||
+            owner_.State.Value > FabricComponentState::Opened ||
+            owner_.ShouldNotify() == false)
+        {
+            //
+            // No need to proceed if Hosting or ApplicationHostProxy
+            // is closing or ApplicationHost has terminated.
+            //
+            this->TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::ObjectClosed));
+            return;
+        }
+
+        auto operation = owner_.codePackageInstance_->BeginApplicationHostCodePackageOperation(
+            request_,
+            [this](AsyncOperationSPtr const & operation)
+            {
+            this->OnApplicationHostCodePackageOperationCompleted(operation, false);
+            },
+            thisSPtr);
+
+        this->OnApplicationHostCodePackageOperationCompleted(operation, true);
+    }
+
+private:
+
+    void OnApplicationHostCodePackageOperationCompleted(
+        AsyncOperationSPtr operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.codePackageInstance_->EndApplicationHostCodePackageOperation(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.TraceId,
+            "OnApplicationHostCodePackageOperationCompleted: ErrorCode={0}",
+            error);
+
+        this->TryComplete(operation->Parent, error);
+    }
+
+private:
+    SingleCodePackageApplicationHostProxy & owner_;
+    ApplicationHostCodePackageOperationRequest request_;
+};
+
+// ********************************************************************************************************************
+// SingleCodePackageApplicationHostProxy::CodePackageEventNotificationAsyncOperation Implementation
+//
+class SingleCodePackageApplicationHostProxy::SendDependentCodePackageEventAsyncOperation :
+    public AsyncOperation,
+    TextTraceComponent<TraceTaskCodes::Hosting>
+{
+    DENY_COPY(SendDependentCodePackageEventAsyncOperation)
+
+public:
+    SendDependentCodePackageEventAsyncOperation(
+        __in SingleCodePackageApplicationHostProxy & owner,
+        CodePackageEventDescription const & eventDescription,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(callback, parent)
+        , owner_(owner)
+        , eventDescription_(eventDescription)
+        , timeoutHelper_(HostingConfig::GetConfig().RequestTimeout)
+    {
+    }
+
+    virtual ~SendDependentCodePackageEventAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<SendDependentCodePackageEventAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        this->SendEvent(thisSPtr);
+    }
+
+private:
+    void SendEvent(AsyncOperationSPtr const & thisSPtr)
+    {
+        WriteNoise(
+            TraceType,
+            owner_.TraceId,
+            "Begin(SendDependentCodePackageEvent): AppHostContext={0}, CodePackageInstanceId={1}, InstanceId={2}, Event={3}, Timeout={4}",
+            owner_.Context,
+            owner_.CodePackageInstanceId,
+            owner_.codePackageInstance_->InstanceId,
+            eventDescription_,
+            timeoutHelper_.GetRemainingTime());
+
+        auto request = this->CreateNotificationRequestMessage();
+
+        auto operation = owner_.Hosting.IpcServerObj.BeginRequest(
+            move(request),
+            owner_.HostId,
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation)
+            { 
+                this->FinishSendEvent(operation, false);
+            },
+            thisSPtr);
+        
+        this->FinishSendEvent(operation, true);
+    }
+
+    void FinishSendEvent(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        MessageUPtr reply;
+        auto error = owner_.Hosting.IpcServerObj.EndRequest(operation, reply);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(
+                TraceType,
+                owner_.TraceId,
+                "End(SendDependentCodePackageEvent): AppHostContext={0}, CodePackageInstanceId={1}, InstanceId={2}, Event={3}, ErrorCode={4}",
+                owner_.Context,
+                owner_.CodePackageInstanceId,
+                owner_.codePackageInstance_->InstanceId,
+                eventDescription_,
+                error);
+
+            this->TryComplete(operation->Parent, error);
+
+            if (!error.IsError(ErrorCodeValue::NotFound))
+            {
+                owner_.Abort();
+            }
+
+            return;
+        }
+
+        CodePackageEventNotificationReply replyBody;
+        if (!reply->GetBody<CodePackageEventNotificationReply>(replyBody))
+        {
+            error = ErrorCode::FromNtStatus(reply->Status);
+
+            WriteWarning(
+                TraceType,
+                owner_.TraceId,
+                "GetBody<CodePackageEventNotificationReply> failed: Message={0}, ErrorCode={1}",
+                *reply,
+                error);
+
+            this->TryComplete(operation->Parent, error);
+            return;
+        }
+
+        error = replyBody.Error;
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.TraceId,
+            "CodePackageEventNotificationReply: AppHostContext={0}, CodePackageInstanceId={1}, ReplyBody={2}.",
+            owner_.Context,
+            owner_.CodePackageInstanceId,
+            replyBody);
+
+        this->TryComplete(operation->Parent, error);
+    }
+
+    MessageUPtr CreateNotificationRequestMessage()
+    {
+        CodePackageEventNotificationRequest requestBody(eventDescription_);
+
+        auto request = make_unique<Message>(requestBody);
+        request->Headers.Add(Transport::ActorHeader(Actor::ApplicationHost));
+        request->Headers.Add(Transport::ActionHeader(Hosting2::Protocol::Actions::CodePackageEventNotification));
+
+        return move(request);
+    }
+
+private:
+    SingleCodePackageApplicationHostProxy & owner_;
+    CodePackageEventDescription eventDescription_;
+    TimeoutHelper timeoutHelper_;
+};
+
 SingleCodePackageApplicationHostProxy::SingleCodePackageApplicationHostProxy(
     HostingSubsystemHolder const & hostingHolder,
     wstring const & hostId,
@@ -469,28 +748,25 @@ SingleCodePackageApplicationHostProxy::SingleCodePackageApplicationHostProxy(
         ApplicationHostContext(
             hostId,
             ApplicationHostType::Activated_SingleCodePackage,
-            codePackageInstance->EntryPoint.EntryPointType == EntryPointType::ContainerHost),
+            codePackageInstance->IsContainerHost,
+            codePackageInstance->IsActivator),
         isolationContext,
         codePackageInstance->RunAsId,
         codePackageInstance->CodePackageInstanceId.ServicePackageInstanceId,
-        codePackageInstance->EntryPoint.EntryPointType)
+        codePackageInstance->EntryPoint.EntryPointType,
+        codePackageInstance->CodePackageObj.RemoveServiceFabricRuntimeAccess)
     , codePackageActivationId_(hostId)
     , codePackageInstance_(codePackageInstance)
     , codePackageRuntimeInformation_()
+    , shouldNotify_(true)
     , notificationLock_()
     , terminatedExternally_(false)
+    , activationFailed_(false)
+    , activationFailedError_()
     , isCodePackageActive_(false)
     , exitCode_(1)
-    , apphostMonitor_()
     , procHandle_()
 {
-    WriteNoise(
-        TraceType,
-        TraceId,
-        "SingleCodePackageApplicationHostProxy.constructor: HostType={0}, HostId={1}, ServicePackageInstanceId={2}.",
-        this->HostType,
-        this->HostId,
-        this->ServicePackageInstanceId);
 }
 
 // ********************************************************************************************************************
@@ -532,6 +808,7 @@ protected:
 
         auto operation = owner_.Hosting.ApplicationHostManagerObj->FabricActivator->BeginGetContainerInfo(
             owner_.HostId,
+            owner_.ServicePackageInstanceId.ActivationContext.IsExclusive,
             containerInfoType_,
             containerInfoArgs_,
             timeoutHelper_.GetRemainingTime(),
@@ -662,6 +939,37 @@ ErrorCode SingleCodePackageApplicationHostProxy::EndGetContainerInfo(
     return GetContainerInfoAsyncOperation::End(operation, containerInfo);
 }
 
+AsyncOperationSPtr SingleCodePackageApplicationHostProxy::BeginApplicationHostCodePackageOperation(
+    ApplicationHostCodePackageOperationRequest const & requestBody,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<ApplicationHostCodePackageOperation>(
+        *this,
+        requestBody,
+        callback,
+        parent);
+}
+
+ErrorCode SingleCodePackageApplicationHostProxy::EndApplicationHostCodePackageOperation(
+    AsyncOperationSPtr const & operation)
+{
+    return ApplicationHostCodePackageOperation::End(operation);
+}
+
+void SingleCodePackageApplicationHostProxy::SendDependentCodePackageEvent(
+    CodePackageEventDescription const & eventDescription)
+{
+    AsyncOperation::CreateAndStart<SendDependentCodePackageEventAsyncOperation>(
+        *this,
+        eventDescription,
+        [this](AsyncOperationSPtr const & operation)
+        {
+            SendDependentCodePackageEventAsyncOperation::End(operation).ReadValue();
+        },
+        this->CreateAsyncOperationRoot());
+}
+
 bool SingleCodePackageApplicationHostProxy::HasHostedCodePackages()
 {
     return isCodePackageActive_.load();
@@ -675,10 +983,16 @@ void SingleCodePackageApplicationHostProxy::OnApplicationHostRegistered()
 void SingleCodePackageApplicationHostProxy::OnApplicationHostTerminated(DWORD exitCode)
 {
     this->exitCode_.store(exitCode);
-    this->terminatedExternally_.store(true);
 
-    if (this->State.Value != FabricComponentState::Closing &&
-        this->State.Value != FabricComponentState::Opening)
+    if (this->State.Value < FabricComponentState::Closing)
+    {
+        this->terminatedExternally_.store(true);
+    }
+
+    //
+    // Abort if we are not already closing.
+    //
+    if (this->State.Value != FabricComponentState::Closing)
     {
         this->Abort();
     }
@@ -691,6 +1005,67 @@ void SingleCodePackageApplicationHostProxy::OnApplicationHostTerminated(DWORD ex
         this->ServicePackageInstanceId,
         exitCode,
         this->State);
+}
+
+void SingleCodePackageApplicationHostProxy::EmitDiagnosticTrace()
+{
+    //
+    // IMPORTANT
+    // Trace emitted here is consumed by Fault Analysis Service (FAS). If you are making a change
+    // make sure FAS owners are aware of changes to avoid breaking the diagnostics tools.
+    //
+
+    if (activationFailed_.load())
+    {
+        // TODO: Trace here for failed start.
+        return;
+    }
+
+    auto exitCode = (DWORD)exitCode_.load();
+    auto unexpectedTermination = terminatedExternally_.load();
+
+    if (this->Context.IsContainerHost)
+    {
+        hostingTrace.ContainerExitedOperational(
+            Guid::NewGuid(),
+            this->codePackageInstance_->Context.ApplicationName,
+            this->GetServiceName(),
+            this->ServicePackageInstanceId.ServicePackageName,
+            this->ServicePackageInstanceId.PublicActivationId,
+            this->ServicePackageInstanceId.ActivationContext.IsExclusive,
+            this->codePackageInstance_->CodePackageInstanceId.CodePackageName,
+            this->EntryPointType,
+            this->codePackageInstance_->EntryPoint.ContainerEntryPoint.ImageName,
+            this->GetUniqueContainerName(),
+            this->HostId,
+            exitCode,
+            unexpectedTermination,
+            this->codePackageInstance_->GetLastActivationTime());
+    }
+    else
+    {
+        DWORD processId = 0;
+        if (codePackageRuntimeInformation_ != nullptr)
+        {
+            processId = codePackageRuntimeInformation_->ProcessId;
+        }
+
+        hostingTrace.ProcessExitedOperational(
+            Guid::NewGuid(),
+            this->codePackageInstance_->Context.ApplicationName,
+            this->GetServiceName(),
+            this->ServicePackageInstanceId.ServicePackageName,
+            this->ServicePackageInstanceId.PublicActivationId,
+            this->ServicePackageInstanceId.ActivationContext.IsExclusive,
+            this->codePackageInstance_->CodePackageInstanceId.CodePackageName,
+            this->EntryPointType,
+            this->codePackageInstance_->EntryPoint.ExeEntryPoint.Program,
+            processId,
+            this->HostId,
+            exitCode,
+            unexpectedTermination,
+            this->codePackageInstance_->GetLastActivationTime());
+    }
 }
 
 void SingleCodePackageApplicationHostProxy::OnContainerHealthCheckStatusChanged(ContainerHealthStatusInfo const & healthStatusInfo)
@@ -710,13 +1085,9 @@ void SingleCodePackageApplicationHostProxy::OnContainerHealthCheckStatusChanged(
         healthStatusInfo,
         this->State);
 
+    if (this->ShouldNotify())
     {
-        AcquireReadLock readLock(notificationLock_);
-
-        if (codePackageInstance_ != nullptr)
-        {
-            codePackageInstance_->OnHealthCheckStatusChanged(codePackageActivationId_, healthStatusInfo);
-        }
+        codePackageInstance_->OnHealthCheckStatusChanged(codePackageActivationId_, healthStatusInfo);
     }
 }
 
@@ -766,17 +1137,31 @@ ErrorCode SingleCodePackageApplicationHostProxy::OnEndClose(AsyncOperationSPtr c
 
 void SingleCodePackageApplicationHostProxy::OnAbort()
 {
-    if (apphostMonitor_ != nullptr)
-    {
-        apphostMonitor_->Cancel();
-    }
+    //
+    // Abort can happen in three cases:
+    // 1) Open of proxy failed.
+    // 2) CodePackage itself is shutting down.
+    // 3) UpdateContext to ApplicationHost fails.
+    // 4) Proxy received termination notification on AppHostManager notification.
+    //
+    // If proxy open failed CodePackageInstance open will also fail.
+    //
+
     if (!terminatedExternally_.load())
     {
         this->exitCode_.store(ProcessActivator::ProcessAbortExitCode);
         Hosting.ApplicationHostManagerObj->FabricActivator->AbortProcess(this->HostId);
     }
-    
-    this->NotifyTermination();
+
+    // We will notify only when CodePackage has activated meaning the process has started.
+    // If the process failed to start then open will fail, it will cause CodePackageInstance Start to fail
+    // which will trigger reschedule of CodePackageInstance.
+    if (!activationFailed_.load())
+    {
+        this->NotifyTermination();
+    }
+
+    this->EmitDiagnosticTrace();
 }
 
 ErrorCode SingleCodePackageApplicationHostProxy::GetProcessDescription(
@@ -853,48 +1238,109 @@ ErrorCode SingleCodePackageApplicationHostProxy::GetProcessDescription(
     }
 
     EnvironmentMap envVars;
-    if (codePackageInstance_->EntryPoint.EntryPointType != EntryPointType::ContainerHost)
+    if (!this->removeServiceFabricRuntimeAccess_) // This if check is just an optimization for not doing this work if runtime access is not allowed for this host.
     {
-        this->GetCurrentProcessEnvironmentVariables(envVars, tempDirectory, this->Hosting.FabricBinFolder);
+        if (codePackageInstance_->EntryPoint.EntryPointType != EntryPointType::ContainerHost)
+        {
+            this->GetCurrentProcessEnvironmentVariables(envVars, tempDirectory, this->Hosting.FabricBinFolder);
+        }
+        //Add folders created for application.
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}App_Work", Constants::EnvironmentVariable::FoldersPrefix), workDirectory);
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}App_Log", Constants::EnvironmentVariable::FoldersPrefix), logDirectory);
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}App_Temp", Constants::EnvironmentVariable::FoldersPrefix), tempDirectory);
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}Application", Constants::EnvironmentVariable::FoldersPrefix), appDirectory);
+
+        auto error = AddHostContextAndRuntimeConnection(envVars);
+        if (!error.IsSuccess())
+        {
+            WriteError(
+                TraceType,
+                TraceId,
+                "AddHostContextAndRuntimeConnection: ErrorCode={0}",
+                error);
+            return error;
+        }
+
+        codePackageInstance_->Context.ToEnvironmentMap(envVars);
+
+        //Add all the ActivationContext, NodeContext environment variables
+        for (auto it = codePackageInstance_->EnvContext->Endpoints.begin(); it != codePackageInstance_->EnvContext->Endpoints.end(); it++)
+        {
+            AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}{1}", Constants::EnvironmentVariable::EndpointPrefix, (*it)->Name), StringUtility::ToWString((*it)->Port));
+            AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}{1}", Constants::EnvironmentVariable::EndpointIPAddressOrFQDNPrefix, (*it)->Name), (*it)->IpAddressOrFqdn);
+        }
+
+        AddSFRuntimeEnvironmentVariable(envVars, Constants::EnvironmentVariable::NodeIPAddressOrFQDN, Hosting.FabricNodeConfigObj.IPAddressOrFQDN);
+
+        // Add partition id even when no runtime is being shared when host is SFBlockstore service.
+        // if (StringUtility::AreEqualCaseInsensitive(codePackageInstance_->Name, Constants::BlockStoreServiceCodePackageName))
+        {
+            // ActivationContext is only available for Exclusive Hosting mode.
+            if (ServicePackageInstanceId.ActivationContext.IsExclusive)
+            {
+                AddSFRuntimeEnvironmentVariable(envVars, Constants::EnvironmentVariable::PartitionId, ServicePackageInstanceId.ActivationContext.ToString());
+            }
+        }
+
+        for (auto const & kvPair : codePackageInstance_->CodePackageObj.OnDemandActivationEnvironment)
+        {
+            this->AddSFRuntimeEnvironmentVariable(envVars, kvPair.first, kvPair.second);
+        }
     }
-    //Add folders created for application.
-    envVars[wformatString("{0}App_Work", Constants::EnvironmentVariable::FoldersPrefix)] = workDirectory;
-    envVars[wformatString("{0}App_Log", Constants::EnvironmentVariable::FoldersPrefix)] = logDirectory;
-    envVars[wformatString("{0}App_Temp", Constants::EnvironmentVariable::FoldersPrefix)] = tempDirectory;
-    envVars[wformatString("{0}Application", Constants::EnvironmentVariable::FoldersPrefix)] = appDirectory;
 
-    auto error = AddHostContextAndRuntimeConnection(envVars);
-    if (!error.IsSuccess()) { return error; }
-
-    codePackageInstance_->Context.ToEnvironmentMap(envVars);
-    for (auto it = codePackageInstance_->EnvVariablesDescription.EnvironmentVariables.begin(); it != codePackageInstance_->EnvVariablesDescription.EnvironmentVariables.end(); ++it)
+    map<wstring, wstring> encryptedSettings;
+    for (auto const& it : codePackageInstance_->EnvVariablesDescription.EnvironmentVariables)
     {
-        envVars[it->Name] = it->Value;
+        wstring value = L"";
+        if (StringUtility::AreEqualCaseInsensitive(it.Type, Constants::Encrypted))
+        {
+            //Decrypt while passing it to docker or while creating process
+            encryptedSettings.insert(
+                make_pair(
+                    it.Name,
+                    it.Value));
+            continue;
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(it.Type, Constants::SecretsStoreRef))
+        {
+            //Todo: 11905876: Integrate querying SecretStoreService in Hosting
+            continue;
+        }
+        else
+        {
+            //Defaults to PlainText
+            AddEnvironmentVariable(envVars, it.Name, it.Value);
+        }
     }
+
+    //Add the env vars for ConfigPackagePolicies
+    for (auto const& it : this->codePackageInstance_->CodePackageObj.EnvironmentVariableForMounts)
+    {
+        AddEnvironmentVariable(envVars, it.first, it.second);
+    }
+
 
     auto serviceName = this->GetServiceName();
     if (!serviceName.empty())
     {
-        envVars[Constants::EnvironmentVariable::ServiceName] = serviceName;
+        AddSFRuntimeEnvironmentVariable(envVars, Constants::EnvironmentVariable::ServiceName, serviceName);
     }
-
-    //Add all the ActivationContext, NodeContext environment variables
-    for (auto it = codePackageInstance_->EnvContext->Endpoints.begin(); it != codePackageInstance_->EnvContext->Endpoints.end(); it++)
-    {
-        envVars[wformatString("{0}{1}", Constants::EnvironmentVariable::EndpointPrefix, (*it)->Name)] = StringUtility::ToWString((*it)->Port);
-        envVars[wformatString("{0}{1}", Constants::EnvironmentVariable::EndpointIPAddressOrFQDNPrefix, (*it)->Name)] = (*it)->IpAddressOrFqdn;
-    }
-
-    envVars[Constants::EnvironmentVariable::NodeIPAddressOrFQDN] = Hosting.FabricNodeConfigObj.IPAddressOrFQDN;
 
     if (codePackageInstance_->EntryPoint.EntryPointType == EntryPointType::ContainerHost)
     {
         //Get the container image name based on Os build version
         wstring imageName = codePackageInstance_->EntryPoint.ContainerEntryPoint.ImageName;
 
-        error = ContainerHelper::GetContainerHelper().GetContainerImageName(codePackageInstance_->ContainerPolicies.ImageOverrides, imageName);
+        auto error = ContainerHelper::GetContainerHelper().GetContainerImageName(codePackageInstance_->ContainerPolicies.ImageOverrides, imageName);
         if (!error.IsSuccess())
         {
+            WriteError(
+                TraceType,
+                TraceId,
+                "GetContainerImageName({0}, {1}): ErrorCode={2}",
+                codePackageInstance_->ContainerPolicies.ImageOverrides,
+                imageName,
+                error);
             return error;
         }
 
@@ -906,55 +1352,56 @@ ErrorCode SingleCodePackageApplicationHostProxy::GetProcessDescription(
         //so we need to fix up path for each directory;
         auto appDirectoryOnContainer = HostingConfig::GetConfig().GetContainerApplicationFolder(applicationIdString);
 
-        envVars[wformatString("{0}App_Work", Constants::EnvironmentVariable::FoldersPrefix)] = Path::Combine(appDirectoryOnContainer, L"work");
-        envVars[wformatString("{0}App_Log", Constants::EnvironmentVariable::FoldersPrefix)] = Path::Combine(appDirectoryOnContainer, L"log");
-        envVars[wformatString("{0}App_Temp", Constants::EnvironmentVariable::FoldersPrefix)] = Path::Combine(appDirectoryOnContainer, L"temp");
-        envVars[wformatString("{0}Application", Constants::EnvironmentVariable::FoldersPrefix)] = appDirectoryOnContainer;
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}App_Work", Constants::EnvironmentVariable::FoldersPrefix), Path::Combine(appDirectoryOnContainer, L"work"));
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}App_Log", Constants::EnvironmentVariable::FoldersPrefix), Path::Combine(appDirectoryOnContainer, L"log"));
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}App_Temp", Constants::EnvironmentVariable::FoldersPrefix), Path::Combine(appDirectoryOnContainer, L"temp"));
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}Application", Constants::EnvironmentVariable::FoldersPrefix), appDirectoryOnContainer);
+        AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}Application_OnHost", Constants::EnvironmentVariable::FoldersPrefix), appDirectory);
 
-        envVars[wformatString("{0}Application_OnHost", Constants::EnvironmentVariable::FoldersPrefix)] = appDirectory;
-
-        wstring certificateFolderPath;
-        wstring certificateFolderName;
-        auto passwordMap = codePackageInstance_->EnvContext->CertificatePasswordPaths;
-        for (auto const & iter : codePackageInstance_->EnvContext->CertificatePaths)
-        {
-            if (certificateFolderPath.empty())
-            {
-                certificateFolderName = Path::GetFileName(Path::GetDirectoryName(iter.second));
-                certificateFolderPath = Path::Combine(Path::Combine(appDirectoryOnContainer, L"work"), certificateFolderName);
-            }
-            envVars[wformatString("{0}_{1}_PFX", certificateFolderName, iter.first)] = Path::Combine(certificateFolderPath, Path::GetFileName(iter.second));
-            envVars[wformatString("{0}_{1}_Password", certificateFolderName, iter.first)] = Path::Combine(certificateFolderPath, Path::GetFileName(passwordMap[iter.first]));
-        }
-#else
-        wstring certificateFolderPath;
-        wstring certificateFolderName;
-        auto passwordMap = codePackageInstance_->EnvContext->CertificatePasswordPaths;
-        for (auto const & iter : codePackageInstance_->EnvContext->CertificatePaths)
-        {
-            if (certificateFolderPath.empty())
-            {
-                certificateFolderName = Path::GetFileName(Path::GetDirectoryName(iter.second));
-                certificateFolderPath = Path::Combine(workDirectory, certificateFolderName);
-            }
-            envVars[wformatString("{0}_{1}_PEM", certificateFolderName, iter.first)] = Path::Combine(certificateFolderPath, Path::GetFileName(iter.second));
-            envVars[wformatString("{0}_{1}_PrivateKey", certificateFolderName, iter.first)] = Path::Combine(certificateFolderPath, Path::GetFileName(passwordMap[iter.first]));
-        }
 #endif
 
-        wstring configStoreEnvVarName;
-        wstring configStoreEnvVarValue;
-        error = ComProxyConfigStore::FabricGetConfigStoreEnvironmentVariable(configStoreEnvVarName, configStoreEnvVarValue);
-        if (error.IsSuccess())
+        if (!this->removeServiceFabricRuntimeAccess_)
         {
-            if (!configStoreEnvVarName.empty())
+#if !defined(PLATFORM_UNIX)
+
+            wstring certificateFolderPath;
+            wstring certificateFolderName;
+            auto passwordMap = codePackageInstance_->EnvContext->CertificatePasswordPaths;
+            for (auto const & iter : codePackageInstance_->EnvContext->CertificatePaths)
             {
-                envVars[configStoreEnvVarName] = configStoreEnvVarValue;
+                if (certificateFolderPath.empty())
+                {
+                    certificateFolderName = Path::GetFileName(Path::GetDirectoryName(iter.second));
+                    certificateFolderPath = Path::Combine(Path::Combine(appDirectoryOnContainer, L"work"), certificateFolderName);
+                }
+                AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}_{1}_PFX", certificateFolderName, iter.first), Path::Combine(certificateFolderPath, Path::GetFileName(iter.second)));
+                AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}_{1}_Password", certificateFolderName, iter.first), Path::Combine(certificateFolderPath, Path::GetFileName(passwordMap[iter.first])));
+            }
+#else
+            wstring certificateFolderPath;
+            wstring certificateFolderName;
+            auto passwordMap = codePackageInstance_->EnvContext->CertificatePasswordPaths;
+            for (auto const & iter : codePackageInstance_->EnvContext->CertificatePaths)
+            {
+                if (certificateFolderPath.empty())
+                {
+                    certificateFolderName = Path::GetFileName(Path::GetDirectoryName(iter.second));
+                    certificateFolderPath = Path::Combine(workDirectory, certificateFolderName);
+                }
+                AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}_{1}_PEM", certificateFolderName, iter.first), Path::Combine(certificateFolderPath, Path::GetFileName(iter.second)));
+                AddSFRuntimeEnvironmentVariable(envVars, wformatString("{0}_{1}_PrivateKey", certificateFolderName, iter.first), Path::Combine(certificateFolderPath, Path::GetFileName(passwordMap[iter.first])));
+            }
+#endif
+
+            auto const & configStoreDesc = FabricGlobals::Get().GetConfigStore();
+            if (!configStoreDesc.StoreEnvironmentVariableName.empty())
+            {
+                AddSFRuntimeEnvironmentVariable(envVars, configStoreDesc.StoreEnvironmentVariableName, configStoreDesc.StoreEnvironmentVariableValue);
             }
         }
     }
 
-    ProcessDebugParameters debugParameters(codePackageInstance_->DebugParameters);
+    ProcessDebugParameters debugParameters(this->codePackageInstance_->DebugParameters);
     if (HostingConfig::GetConfig().EnableProcessDebugging)
     {
         if (!codePackageInstance_->DebugParameters.WorkingFolder.empty())
@@ -965,7 +1412,7 @@ ErrorCode SingleCodePackageApplicationHostProxy::GetProcessDescription(
         if (!codePackageInstance_->DebugParameters.DebugParametersFile.empty())
         {
             File debugParametersFile;
-            error = debugParametersFile.TryOpen(codePackageInstance_->DebugParameters.DebugParametersFile);
+            auto error = debugParametersFile.TryOpen(codePackageInstance_->DebugParameters.DebugParametersFile);
             if (error.IsSuccess())
             {
                 int fileSize = static_cast<int>(debugParametersFile.size());
@@ -1018,7 +1465,11 @@ ErrorCode SingleCodePackageApplicationHostProxy::GetProcessDescription(
 #endif
 
     }
-
+    //For blockstore service set workdir same as exe location
+    if (StringUtility::AreEqualCaseInsensitive(codePackageInstance_->Name, Constants::BlockStoreServiceCodePackageName))
+    {
+        startInDirectory = Path::GetDirectoryName(exePath);
+    }
     processDescription = make_unique<ProcessDescription>(
         exePath,
         arguments,
@@ -1038,7 +1489,9 @@ ErrorCode SingleCodePackageApplicationHostProxy::GetProcessDescription(
         debugParameters,
         resourceGovernancePolicy,
         spResourceGovernanceDescription,
-        cgroupName);
+        cgroupName,
+        false,
+        encryptedSettings);
 
     return ErrorCode(ErrorCodeValue::Success);
 }
@@ -1055,7 +1508,7 @@ wstring SingleCodePackageApplicationHostProxy::GetUniqueContainerName()
     auto name = wformatString("SF-{0}-{1}",
         StringUtility::ToWString(this->ApplicationId.ApplicationNumber),
         this->HostId);
-    auto activationId = this->ServicePackageInstanceId.ActivationContext.ToString();
+    auto activationId = this->ServicePackageInstanceId.PublicActivationId;
     if (!activationId.empty())
     {
         name = wformatString("{0}_{1}", name, activationId);
@@ -1084,6 +1537,18 @@ wstring SingleCodePackageApplicationHostProxy::GetServiceName()
     return serviceName;
 }
 
+bool SingleCodePackageApplicationHostProxy::ShouldNotify()
+{
+    bool shouldNotify;
+
+    {
+        AcquireWriteLock readLock(notificationLock_);
+        shouldNotify = shouldNotify_;
+    }
+
+    return shouldNotify;
+}
+
 void SingleCodePackageApplicationHostProxy::NotifyTermination()
 {
     if (this->Hosting.State.Value > FabricComponentState::Opened)
@@ -1094,12 +1559,18 @@ void SingleCodePackageApplicationHostProxy::NotifyTermination()
 
     {
         AcquireWriteLock writeLock(notificationLock_);
-
-        auto tempCodePackageInstance = move(codePackageInstance_);
-
-        auto exitCode = (DWORD)exitCode_.load();
-        auto terminatedExternally = terminatedExternally_.load();
-
-        tempCodePackageInstance->OnEntryPointTerminated(codePackageActivationId_, exitCode, !terminatedExternally);
+        if (!shouldNotify_)
+        {
+            return;
+        }
+        
+        shouldNotify_ = false;
     }
+
+    auto exitCode = (DWORD)exitCode_.load();
+
+    codePackageInstance_->OnEntryPointTerminated(
+        codePackageActivationId_, 
+        exitCode, 
+        false /* Ignore reporting */);
 }

@@ -129,7 +129,7 @@ NTSTATUS CopyNamedOperationData::DeserializeNativeContext(
         "(Native) CopyNamedOperationData header buffer size: {0} not equal to context header size: {1}",
         headerBufferSPtr->QuerySize(), NativeContextHeaderSize);
 
-    // TODO: #10156411: BinaryReader is not noexcept.
+    // #10156411: BinaryReader is not noexcept.
     // For now this is OK to assume binary reader only fails in OOM scenarios where we except the process to go down.
     BinaryReader binaryReader(*headerBufferSPtr, allocator);
     if (NT_SUCCESS(binaryReader.Status()) == false)
@@ -138,7 +138,7 @@ NTSTATUS CopyNamedOperationData::DeserializeNativeContext(
         return binaryReader.Status();
     }
 
-    // TODO: #10156411: BinaryReader is not noexcept.
+    // #10156411: BinaryReader is not noexcept.
     // For now this is OK to assume binary reader only fails in OOM scenarios where we except the process to go down.
     binaryReader.Read(metadataOperationDataCount);
     binaryReader.Read(stateProviderId);
@@ -151,7 +151,7 @@ NTSTATUS CopyNamedOperationData::DeserializeNativeContext(
 
     ULONG32 userOperationDataCount = operationData.BufferCount - metadataOperationDataCount;
 
-    // TODO: #10155818: This operation can throw in OOM cases. 
+    // #10155818: This operation can throw in OOM cases. 
     // Since this is a fatal case, it is OK to bring down the process.
     userOperationData = OperationData::Create(operationData, metadataOperationDataCount, userOperationDataCount, allocator);
     return STATUS_SUCCESS;
@@ -214,7 +214,7 @@ NTSTATUS CopyNamedOperationData::DeserializeManagedContext(
         return STATUS_SUCCESS;
     }
 
-    // TODO: #10155818: This operation can throw in OOM cases. 
+    // #10155818: This operation can throw in OOM cases. 
     // Since this is a fatal case, it is OK to bring down the process.
     userOperationData = OperationData::Create(operationData, metadataOperationDataCount, operationData.BufferCount - metadataOperationDataCount, allocator);
     return STATUS_SUCCESS;
@@ -254,7 +254,7 @@ NTSTATUS CopyNamedOperationData::Serialize(
     {
         KBuffer::CSPtr bufferSPtr = (*userOperationDataCSPtr_)[i];
 
-        // TODO: #10155818: This operation can throw in OOM cases. 
+        // #10155818: This operation can throw in OOM cases. 
         // Since this is a fatal case, it is OK to bring down the process.
         Append(*bufferSPtr);
     }
@@ -266,14 +266,14 @@ NTSTATUS CopyNamedOperationData::CreateNativeContext() noexcept
 {
     OperationData::SPtr headerOperationDataSPtr = OperationData::Create(GetThisAllocator());
 
-    // TODO: #10156411: BinaryWriter is not noexcept.
+    // #10156411: BinaryWriter is not noexcept.
     Utilities::BinaryWriter binaryWriter(GetThisAllocator());
     if (NT_SUCCESS(binaryWriter.Status()) == false)
     {
         return binaryWriter.Status();
     }
 
-    // TODO: #10156411: BinaryWriter is not noexcept.
+    // #10156411: BinaryWriter is not noexcept.
     // For now, we depend on
     // - Write operation will only fail in OOM scenarios where we excepted the process to go down anyways.
     // MCOSKUN: Order is important for packing.
@@ -286,7 +286,7 @@ NTSTATUS CopyNamedOperationData::CreateNativeContext() noexcept
         NativeContextHeaderSize,
         binaryWriter.Position);
 
-    // TODO: #10155818: This operation can throw in OOM cases. 
+    // #10155818: This operation can throw in OOM cases. 
     // Since this is a fatal case, it is OK to bring down the process.
     Append(*binaryWriter.GetBuffer(0));
 
@@ -297,7 +297,7 @@ NTSTATUS CopyNamedOperationData::CreateManagedContext() noexcept
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
-    // TODO: #10156411: BinaryWriter is not noexcept.
+    // #10156411: BinaryWriter is not noexcept.
     Utilities::BinaryWriter binaryWriter(GetThisAllocator());
     if (NT_SUCCESS(binaryWriter.Status()) == false)
     {
@@ -308,7 +308,7 @@ NTSTATUS CopyNamedOperationData::CreateManagedContext() noexcept
     status = binaryWriter.WriteInBytes(ManagedVersion);
     RETURN_ON_FAILURE(status);
 
-    // TODO: #10155818: This operation can throw in OOM cases. 
+    // #10155818: This operation can throw in OOM cases. 
     // Since this is a fatal case, it is OK to bring down the process.
     Append(*binaryWriter.GetBuffer(0));
     binaryWriter.Position = 0;
@@ -317,7 +317,7 @@ NTSTATUS CopyNamedOperationData::CreateManagedContext() noexcept
     status = binaryWriter.WriteInBytes(stateProviderId_);
     RETURN_ON_FAILURE(status);
 
-    // TODO: #10155818: This operation can throw in OOM cases. 
+    // #10155818: This operation can throw in OOM cases. 
     // Since this is a fatal case, it is OK to bring down the process.
     Append(*binaryWriter.GetBuffer(0));
     binaryWriter.Position = 0;

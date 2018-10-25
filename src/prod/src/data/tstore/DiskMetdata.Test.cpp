@@ -87,22 +87,28 @@ namespace TStoreTests
          return result;
       }
 
-      void CreateFileStream(__in KWString& name)
+      ktl::Awaitable<void> CreateFileStreamAsync(__in KWString& name)
       {
          KWString fileName(GetAllocator(), *CreateFileName(name, currentFilePath_));
-         NTSTATUS status = SyncAwait(FileFormatTestHelper::CreateBlockFile(fileName, GetAllocator(), CancellationToken::None, fakeFileSPtr, fakeStreamSPtr_));
+         NTSTATUS status = co_await FileFormatTestHelper::CreateBlockFile(
+             fileName,
+             GetAllocator(),
+             CancellationToken::None,
+             fakeFileSPtr,
+             fakeStreamSPtr_);
          VERIFY_IS_TRUE(NT_SUCCESS(status));
 
-         status = SyncAwait(fakeStreamSPtr_->OpenAsync(*fakeFileSPtr));
+         status = co_await fakeStreamSPtr_->OpenAsync(*fakeFileSPtr);
          VERIFY_IS_TRUE(NT_SUCCESS(status));
 
+         co_return;
       }
 
-      void CloseFileStream(bool removeFile = true)
+      ktl::Awaitable<void> CloseFileStreamAsync(bool removeFile = true)
       {
           if (fakeStreamSPtr_ != nullptr && fakeStreamSPtr_->IsOpen())
           {
-              SyncAwait(fakeStreamSPtr_->CloseAsync());
+              co_await fakeStreamSPtr_->CloseAsync();
               fakeStreamSPtr_ = nullptr;
           }
 
@@ -118,6 +124,7 @@ namespace TStoreTests
               Common::File::Delete(pathToRemove);
               currentFilePath_ = nullptr;
           }
+          co_return;
       }
 
       void Validate(MetadataTable& expectedMetadataTable, MetadataTable& actualMetadataTable)
@@ -126,7 +133,7 @@ namespace TStoreTests
          Validate(*expectedMetadataTable.Table, *actualMetadataTable.Table);
       }
 
-      void FlipBitAndVerifyCorruptionAsync(__in ULONG64 byteIndex, ktl::io::KFileStream& filestream)
+      ktl::Awaitable<void> FlipBitAndVerifyCorruptionAsync(__in ULONG64 byteIndex, ktl::io::KFileStream& filestream)
       {
           bool hasEx = false;
           // Flip a random bit.
@@ -141,7 +148,7 @@ namespace TStoreTests
           CODING_ERROR_ASSERT(NT_SUCCESS(status));
           ULONG byteLen = 1;
           ULONG byteRead = 0;
-          status = SyncAwait(filestream.ReadAsync(*originalDataSPtr, byteRead, 0, byteLen));
+          status = co_await filestream.ReadAsync(*originalDataSPtr, byteRead, 0, byteLen);
           CODING_ERROR_ASSERT(NT_SUCCESS(status));
           CODING_ERROR_ASSERT(byteRead == byteLen);
           BinaryReader br(*originalDataSPtr, GetAllocator());
@@ -153,7 +160,7 @@ namespace TStoreTests
           bw.Write(newByte);
 
           filestream.Position = byteIndex;
-          SyncAwait(filestream.WriteAsync(*bw.GetBuffer(0, 1)));
+          co_await filestream.WriteAsync(*bw.GetBuffer(0, 1));
 
           // Verify we catch the corruption when reading the file.
           MetadataTable::SPtr metadataTableSPtr = nullptr;
@@ -163,7 +170,7 @@ namespace TStoreTests
           filestream.Position = 0;
           try
           {
-              SyncAwait(MetadataManager::OpenAsync(*metadataTableSPtr, filestream, filestream.Length, GetAllocator(), *CreateTraceComponent()));
+              co_await MetadataManager::OpenAsync(*metadataTableSPtr, filestream, filestream.Length, GetAllocator(), *CreateTraceComponent());
           }
           catch (...)
           {
@@ -172,7 +179,8 @@ namespace TStoreTests
           }
 
           CODING_ERROR_ASSERT(hasEx);
-          SyncAwait(metadataTableSPtr->CloseAsync());
+          co_await metadataTableSPtr->CloseAsync();
+          co_return;
       }
 
    private:
@@ -206,268 +214,368 @@ namespace TStoreTests
             CODING_ERROR_ASSERT(fileMetadata1SPtr->CanBeDeleted == fileMetadata2SPtr->CanBeDeleted);
          }
       }
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> WriteRead_MultipleEntries_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = GetAllocator();
+          KWString fileStreamName(allocator, L"WriteRead_MultipleEntries_ShouldSucceed.txt");
+          co_await CreateFileStreamAsync(fileStreamName);
+
+          FileMetadata::SPtr fileMetadata1 = nullptr;
+          KString::SPtr fileName1SPtr = nullptr;
+          NTSTATUS status = KString::Create(fileName1SPtr, allocator, L"test1");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(2, *fileName1SPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          FileMetadata::SPtr fileMetadata2 = nullptr;
+          KString::SPtr fileName2SPtr = nullptr;
+          status = KString::Create(fileName2SPtr, allocator, L"test2");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(3, *fileName2SPtr, 3, 3, 3, 3, false, allocator, *CreateTraceComponent(), fileMetadata2);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          FileMetadata::SPtr fileMetadata3 = nullptr;
+          KString::SPtr fileName3SPtr = nullptr;
+          status = KString::Create(fileName3SPtr, allocator, L"test3");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(4, *fileName3SPtr, 4, 4, 4, 4, false, allocator, *CreateTraceComponent(), fileMetadata3);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          FileMetadata::SPtr fileMetadata4 = nullptr;
+          KString::SPtr fileName4SPtr = nullptr;
+          status = KString::Create(fileName4SPtr, allocator, L"test4");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(5, *fileName4SPtr, 5, 5, 5, 5, false, allocator, *CreateTraceComponent(), fileMetadata4);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          MetadataTable::SPtr metadataTable1SPtr = nullptr;
+          status = MetadataTable::Create(allocator, metadataTable1SPtr, 10);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata2->FileId, *fileMetadata2);
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata3->FileId, *fileMetadata3);
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata4->FileId, *fileMetadata4);
+
+          ktl::io::KFileStream::SPtr fileStreamSPtr = GetFileStream();
+          co_await MetadataManager::WriteAsync(*metadataTable1SPtr, *fileStreamSPtr, allocator);
+
+          // Re-open the metadata.
+          MetadataTable::SPtr metadataTable2SPtr = nullptr;
+          MetadataTable::Create(allocator, metadataTable2SPtr);
+
+          // Reset position.
+          ULONG64 length = fileStreamSPtr->GetPosition();
+          fileStreamSPtr->SetPosition(0);
+          co_await MetadataManager::OpenAsync(*metadataTable2SPtr, *fileStreamSPtr, length, allocator, *CreateTraceComponent());
+
+          Validate(*metadataTable1SPtr, *metadataTable2SPtr);
+          co_await metadataTable1SPtr->CloseAsync();
+          co_await metadataTable2SPtr->CloseAsync();
+
+          co_await CloseFileStreamAsync();
+           co_return;
+       }
+
+        ktl::Awaitable<void> WriteRead_ToMemoryBuffer_MultipleEntries_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = GetAllocator();
+
+          FileMetadata::SPtr fileMetadata1 = nullptr;
+          KString::SPtr fileName1SPtr = nullptr;
+          NTSTATUS status = KString::Create(fileName1SPtr, allocator, L"test1");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(2, *fileName1SPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          FileMetadata::SPtr fileMetadata2 = nullptr;
+          KString::SPtr fileName2SPtr = nullptr;
+          status = KString::Create(fileName2SPtr, allocator, L"test2");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(3, *fileName2SPtr, 3, 3, 3, 3, false, allocator, *CreateTraceComponent(), fileMetadata2);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          FileMetadata::SPtr fileMetadata3 = nullptr;
+          KString::SPtr fileName3SPtr = nullptr;
+          status = KString::Create(fileName3SPtr, allocator, L"test3");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(4, *fileName3SPtr, 4, 4, 4, 4, false, allocator, *CreateTraceComponent(), fileMetadata3);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          FileMetadata::SPtr fileMetadata4 = nullptr;
+          KString::SPtr fileName4SPtr = nullptr;
+          status = KString::Create(fileName4SPtr, allocator, L"test4");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(5, *fileName4SPtr, 5, 5, 5, 5, false, allocator, *CreateTraceComponent(), fileMetadata4);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          MetadataTable::SPtr metadataTable1SPtr = nullptr;
+          status = MetadataTable::Create(allocator, metadataTable1SPtr, 10);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata2->FileId, *fileMetadata2);
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata3->FileId, *fileMetadata3);
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata4->FileId, *fileMetadata4);
+
+          MemoryBuffer::SPtr writeMemoryStream;
+          MemoryBuffer::Create(GetAllocator(), writeMemoryStream);
+          co_await MetadataManager::WriteAsync(*metadataTable1SPtr, *writeMemoryStream, allocator);
+
+          // Expandable memory stream currently doesn't support Read. Dump the contents into another memory stream and then validate
+          MemoryBuffer::SPtr readMemoryStream;
+          MemoryBuffer::Create(*writeMemoryStream->GetBuffer(), GetAllocator(), readMemoryStream);
+
+          // Re-open the metadata.
+          MetadataTable::SPtr metadataTable2SPtr = nullptr;
+          MetadataTable::Create(allocator, metadataTable2SPtr);
+
+          // Reset position.
+          ULONG64 length = writeMemoryStream->GetPosition();
+          co_await MetadataManager::OpenAsync(*metadataTable2SPtr, *readMemoryStream, length, allocator, *CreateTraceComponent());
+
+          Validate(*metadataTable1SPtr, *metadataTable2SPtr);
+          co_await metadataTable1SPtr->CloseAsync();
+          co_await metadataTable2SPtr->CloseAsync();
+           co_return;
+       }
+
+        ktl::Awaitable<void> WriteRead_OneEntry_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = GetAllocator();
+          KWString fileStreamName(allocator, L"WriteRead_OneEntry_ShouldSucceed.txt");
+          co_await CreateFileStreamAsync(fileStreamName);
+
+          FileMetadata::SPtr fileMetadata1 = nullptr;
+          KString::SPtr fileNameSPtr = nullptr;
+          NTSTATUS status = KString::Create(fileNameSPtr, allocator, L"test");
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+          status = FileMetadata::Create(2, *fileNameSPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          MetadataTable::SPtr metadataTable1SPtr = nullptr;
+          status = MetadataTable::Create(allocator, metadataTable1SPtr);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
+
+          ktl::io::KFileStream::SPtr fileStreamSPtr = GetFileStream();
+          co_await MetadataManager::WriteAsync(*metadataTable1SPtr, *fileStreamSPtr, allocator);
+
+          // Re-open the metadata.
+          MetadataTable::SPtr metadataTable2SPtr = nullptr;
+          MetadataTable::Create(allocator, metadataTable2SPtr);
+
+          // Reset position.
+          ULONG64 length = fileStreamSPtr->GetPosition();
+          fileStreamSPtr->SetPosition(0);
+          co_await MetadataManager::OpenAsync(*metadataTable2SPtr, *fileStreamSPtr, length, allocator, *CreateTraceComponent());
+
+          Validate(*metadataTable1SPtr, *metadataTable2SPtr);
+
+          co_await metadataTable1SPtr->CloseAsync();
+          co_await metadataTable2SPtr->CloseAsync();
+          co_await CloseFileStreamAsync();
+           co_return;
+       }
+
+        ktl::Awaitable<void> WriteRead_EmptyMetadataTable_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = GetAllocator();
+          KWString fileStreamName(allocator, L"WriteRead_EmptyMetadataTable_ShouldSucceed.txt");
+          co_await CreateFileStreamAsync(fileStreamName);
+          MetadataTable::SPtr metadataTable1SPtr = nullptr;
+          NTSTATUS status = MetadataTable::Create(allocator, metadataTable1SPtr);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          ktl::io::KFileStream::SPtr fileStreamSPtr = GetFileStream();
+          co_await MetadataManager::WriteAsync(*metadataTable1SPtr, *fileStreamSPtr, allocator);
+
+          // Re-open the metadata.
+          MetadataTable::SPtr metadataTable2SPtr = nullptr;
+          MetadataTable::Create(allocator, metadataTable2SPtr);
+
+          // Reset position.
+          ULONG64 length = fileStreamSPtr->GetPosition();
+          fileStreamSPtr->SetPosition(0);
+          co_await MetadataManager::OpenAsync(*metadataTable2SPtr, *fileStreamSPtr, length, allocator, *CreateTraceComponent());
+
+          Validate(*metadataTable1SPtr, *metadataTable2SPtr);
+
+          co_await metadataTable1SPtr->CloseAsync();
+          co_await metadataTable2SPtr->CloseAsync();
+          co_await CloseFileStreamAsync();
+           co_return;
+       }
+
+        ktl::Awaitable<void> WriteReadByFilename_OneEntry_ShouldSucceed_Test()
+       {
+           KAllocator& allocator = GetAllocator();
+           KString::SPtr filenameSPtr;
+           auto status = KString::Create(filenameSPtr, GetAllocator(), L"WriteReadByFilename_OneEntry_ShouldSucceed.txt");
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+           KString::SPtr filepathSPtr = CreateFileName(*filenameSPtr);
+
+           FileMetadata::SPtr fileMetadata1 = nullptr;
+           KString::SPtr fileNameSPtr = nullptr;
+           status = KString::Create(fileNameSPtr, allocator, L"test");
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+           status = FileMetadata::Create(2, *fileNameSPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+           MetadataTable::SPtr metadataTable1SPtr = nullptr;
+           status = MetadataTable::Create(allocator, metadataTable1SPtr);
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+           MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
+
+           co_await MetadataManager::WriteAsync(*metadataTable1SPtr, *filepathSPtr, allocator);
+           
+           // Re-open the metadata.
+           MetadataTable::SPtr metadataTable2SPtr = nullptr;
+           MetadataTable::Create(allocator, metadataTable2SPtr);
+
+           // Open filestream
+           co_await MetadataManager::OpenAsync(*metadataTable2SPtr, *filepathSPtr, allocator, *CreateTraceComponent());
+
+           Validate(*metadataTable1SPtr, *metadataTable2SPtr);
+
+           co_await metadataTable1SPtr->CloseAsync();
+           co_await metadataTable2SPtr->CloseAsync();
+
+           Common::File::Delete(filepathSPtr->operator LPCWSTR());
+           co_return;
+       }
+
+        ktl::Awaitable<void> MetadataFile_WriteAndValid_ShouldSucceed_Test()
+       {
+           KAllocator& allocator = GetAllocator();
+           KString::SPtr filenameSPtr;
+           auto status = KString::Create(filenameSPtr, GetAllocator(), L"MetadataFile_WriteAndValid_ShouldSucceed.txt");
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+           KString::SPtr filepathSPtr = CreateFileName(*filenameSPtr);
+
+           FileMetadata::SPtr fileMetadata1 = nullptr;
+           KString::SPtr fileNameSPtr = nullptr;
+           status = KString::Create(fileNameSPtr, allocator, L"test");
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+           status = FileMetadata::Create(2, *fileNameSPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+           MetadataTable::SPtr metadataTable1SPtr = nullptr;
+           status = MetadataTable::Create(allocator, metadataTable1SPtr);
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+           MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
+
+           co_await MetadataManager::WriteAsync(*metadataTable1SPtr, *filepathSPtr, allocator);
+
+           co_await MetadataManager::ValidateAsync(*filepathSPtr, allocator);
+
+           co_await metadataTable1SPtr->CloseAsync();
+
+           Common::File::Delete(filepathSPtr->operator LPCWSTR());
+           co_return;
+       }
+
+        ktl::Awaitable<void> Open_CorruptFile_ThrowsDataCorruptException_Test()
+       {
+           KAllocator& allocator = GetAllocator();
+           KWString fileStreamName(allocator, L"Open_CorruptFile_ThrowsDataCorruptException.txt");
+           co_await CreateFileStreamAsync(fileStreamName);
+
+           FileMetadata::SPtr fileMetadata1 = nullptr;
+           KString::SPtr fileNameSPtr = nullptr;
+           NTSTATUS status = KString::Create(fileNameSPtr, allocator, L"test");
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+           status = FileMetadata::Create(2, *fileNameSPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+           MetadataTable::SPtr metadataTable1SPtr = nullptr;
+           status = MetadataTable::Create(allocator, metadataTable1SPtr);
+           CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+           MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
+
+           ktl::io::KFileStream::SPtr fileStreamSPtr = GetFileStream();
+           co_await MetadataManager::WriteAsync(*metadataTable1SPtr, *fileStreamSPtr, allocator);
+
+           // Re-open the metadata.
+           MetadataTable::SPtr metadataTable2SPtr = nullptr;
+           MetadataTable::Create(allocator, metadataTable2SPtr);
+
+           // Reset position.
+           ULONG64 length = fileStreamSPtr->GetPosition();
+           fileStreamSPtr->SetPosition(0);
+           co_await MetadataManager::OpenAsync(*metadataTable2SPtr, *fileStreamSPtr, length, allocator, *CreateTraceComponent());
+
+           Validate(*metadataTable1SPtr, *metadataTable2SPtr);
+           //flipt first bit
+           co_await FlipBitAndVerifyCorruptionAsync(0, *fileStreamSPtr);
+           //restore the filestream.
+           co_await CloseFileStreamAsync(false);
+           co_await CreateFileStreamAsync(fileStreamName);
+
+           //flip last bit.
+           co_await FlipBitAndVerifyCorruptionAsync(length-1, *GetFileStream());
+           //restore the filestream.
+           co_await CloseFileStreamAsync(false);
+           co_await CreateFileStreamAsync(fileStreamName);
+
+           //flip random bytes
+           Common::Random random = Common::Random();
+           for (int i = 0; i < 100; i++)
+           {
+               ULONG64 byteIndex = static_cast<ULONG64>(random.Next(static_cast<int>(length)));
+               co_await FlipBitAndVerifyCorruptionAsync(byteIndex, *GetFileStream());
+               //restore the filestream.
+               co_await CloseFileStreamAsync(false);
+               co_await CreateFileStreamAsync(fileStreamName);
+           }
+
+           co_await metadataTable1SPtr->CloseAsync();
+           co_await metadataTable2SPtr->CloseAsync();
+           co_await CloseFileStreamAsync();
+           co_return;
+       }
+    #pragma endregion
    };
 
    BOOST_FIXTURE_TEST_SUITE(DiskMetadatTestSuite, DiskMetadatTest)
        
    BOOST_AUTO_TEST_CASE(WriteRead_MultipleEntries_ShouldSucceed)
    {
-      KAllocator& allocator = GetAllocator();
-      KWString fileStreamName(allocator, L"WriteRead_MultipleEntries_ShouldSucceed.txt");
-      CreateFileStream(fileStreamName);
-
-      FileMetadata::SPtr fileMetadata1 = nullptr;
-      KString::SPtr fileName1SPtr = nullptr;
-      NTSTATUS status = KString::Create(fileName1SPtr, allocator, L"test1");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(2, *fileName1SPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      FileMetadata::SPtr fileMetadata2 = nullptr;
-      KString::SPtr fileName2SPtr = nullptr;
-      status = KString::Create(fileName2SPtr, allocator, L"test2");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(3, *fileName2SPtr, 3, 3, 3, 3, false, allocator, *CreateTraceComponent(), fileMetadata2);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      FileMetadata::SPtr fileMetadata3 = nullptr;
-      KString::SPtr fileName3SPtr = nullptr;
-      status = KString::Create(fileName3SPtr, allocator, L"test3");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(4, *fileName3SPtr, 4, 4, 4, 4, false, allocator, *CreateTraceComponent(), fileMetadata3);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      FileMetadata::SPtr fileMetadata4 = nullptr;
-      KString::SPtr fileName4SPtr = nullptr;
-      status = KString::Create(fileName4SPtr, allocator, L"test4");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(5, *fileName4SPtr, 5, 5, 5, 5, false, allocator, *CreateTraceComponent(), fileMetadata4);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      MetadataTable::SPtr metadataTable1SPtr = nullptr;
-      status = MetadataTable::Create(allocator, metadataTable1SPtr, 10);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata2->FileId, *fileMetadata2);
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata3->FileId, *fileMetadata3);
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata4->FileId, *fileMetadata4);
-
-      ktl::io::KFileStream::SPtr fileStreamSPtr = GetFileStream();
-      SyncAwait(MetadataManager::WriteAsync(*metadataTable1SPtr, *fileStreamSPtr, allocator));
-
-      // Re-open the metadata.
-      MetadataTable::SPtr metadataTable2SPtr = nullptr;
-      MetadataTable::Create(allocator, metadataTable2SPtr);
-
-      // Reset position.
-      ULONG64 length = fileStreamSPtr->GetPosition();
-      fileStreamSPtr->SetPosition(0);
-      SyncAwait(MetadataManager::OpenAsync(*metadataTable2SPtr, *fileStreamSPtr, length, allocator, *CreateTraceComponent()));
-
-      Validate(*metadataTable1SPtr, *metadataTable2SPtr);
-      SyncAwait(metadataTable1SPtr->CloseAsync());
-      SyncAwait(metadataTable2SPtr->CloseAsync());
-
-      CloseFileStream();
+       SyncAwait(WriteRead_MultipleEntries_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(WriteRead_ToMemoryBuffer_MultipleEntries_ShouldSucceed)
    {
-      KAllocator& allocator = GetAllocator();
-
-      FileMetadata::SPtr fileMetadata1 = nullptr;
-      KString::SPtr fileName1SPtr = nullptr;
-      NTSTATUS status = KString::Create(fileName1SPtr, allocator, L"test1");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(2, *fileName1SPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      FileMetadata::SPtr fileMetadata2 = nullptr;
-      KString::SPtr fileName2SPtr = nullptr;
-      status = KString::Create(fileName2SPtr, allocator, L"test2");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(3, *fileName2SPtr, 3, 3, 3, 3, false, allocator, *CreateTraceComponent(), fileMetadata2);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      FileMetadata::SPtr fileMetadata3 = nullptr;
-      KString::SPtr fileName3SPtr = nullptr;
-      status = KString::Create(fileName3SPtr, allocator, L"test3");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(4, *fileName3SPtr, 4, 4, 4, 4, false, allocator, *CreateTraceComponent(), fileMetadata3);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      FileMetadata::SPtr fileMetadata4 = nullptr;
-      KString::SPtr fileName4SPtr = nullptr;
-      status = KString::Create(fileName4SPtr, allocator, L"test4");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(5, *fileName4SPtr, 5, 5, 5, 5, false, allocator, *CreateTraceComponent(), fileMetadata4);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      MetadataTable::SPtr metadataTable1SPtr = nullptr;
-      status = MetadataTable::Create(allocator, metadataTable1SPtr, 10);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata2->FileId, *fileMetadata2);
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata3->FileId, *fileMetadata3);
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata4->FileId, *fileMetadata4);
-
-      MemoryBuffer::SPtr writeMemoryStream;
-      MemoryBuffer::Create(GetAllocator(), writeMemoryStream);
-      SyncAwait(MetadataManager::WriteAsync(*metadataTable1SPtr, *writeMemoryStream, allocator));
-
-      // Expandable memory stream currently doesn't support Read. Dump the contents into another memory stream and then validate
-      MemoryBuffer::SPtr readMemoryStream;
-      MemoryBuffer::Create(*writeMemoryStream->GetBuffer(), GetAllocator(), readMemoryStream);
-
-      // Re-open the metadata.
-      MetadataTable::SPtr metadataTable2SPtr = nullptr;
-      MetadataTable::Create(allocator, metadataTable2SPtr);
-
-      // Reset position.
-      ULONG64 length = writeMemoryStream->GetPosition();
-      SyncAwait(MetadataManager::OpenAsync(*metadataTable2SPtr, *readMemoryStream, length, allocator, *CreateTraceComponent()));
-
-      Validate(*metadataTable1SPtr, *metadataTable2SPtr);
-      SyncAwait(metadataTable1SPtr->CloseAsync());
-      SyncAwait(metadataTable2SPtr->CloseAsync());
+       SyncAwait(WriteRead_ToMemoryBuffer_MultipleEntries_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(WriteRead_OneEntry_ShouldSucceed)
    {
-      KAllocator& allocator = GetAllocator();
-      KWString fileStreamName(allocator, L"WriteRead_OneEntry_ShouldSucceed.txt");
-      CreateFileStream(fileStreamName);
-
-      FileMetadata::SPtr fileMetadata1 = nullptr;
-      KString::SPtr fileNameSPtr = nullptr;
-      NTSTATUS status = KString::Create(fileNameSPtr, allocator, L"test");
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-      status = FileMetadata::Create(2, *fileNameSPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      MetadataTable::SPtr metadataTable1SPtr = nullptr;
-      status = MetadataTable::Create(allocator, metadataTable1SPtr);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
-
-      ktl::io::KFileStream::SPtr fileStreamSPtr = GetFileStream();
-      SyncAwait(MetadataManager::WriteAsync(*metadataTable1SPtr, *fileStreamSPtr, allocator));
-
-      // Re-open the metadata.
-      MetadataTable::SPtr metadataTable2SPtr = nullptr;
-      MetadataTable::Create(allocator, metadataTable2SPtr);
-
-      // Reset position.
-      ULONG64 length = fileStreamSPtr->GetPosition();
-      fileStreamSPtr->SetPosition(0);
-      SyncAwait(MetadataManager::OpenAsync(*metadataTable2SPtr, *fileStreamSPtr, length, allocator, *CreateTraceComponent()));
-
-      Validate(*metadataTable1SPtr, *metadataTable2SPtr);
-
-      SyncAwait(metadataTable1SPtr->CloseAsync());
-      SyncAwait(metadataTable2SPtr->CloseAsync());
-      CloseFileStream();
+       SyncAwait(WriteRead_OneEntry_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(WriteRead_EmptyMetadataTable_ShouldSucceed)
    {
-      KAllocator& allocator = GetAllocator();
-      KWString fileStreamName(allocator, L"WriteRead_EmptyMetadataTable_ShouldSucceed.txt");
-      CreateFileStream(fileStreamName);
-      MetadataTable::SPtr metadataTable1SPtr = nullptr;
-      NTSTATUS status = MetadataTable::Create(allocator, metadataTable1SPtr);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      ktl::io::KFileStream::SPtr fileStreamSPtr = GetFileStream();
-      SyncAwait(MetadataManager::WriteAsync(*metadataTable1SPtr, *fileStreamSPtr, allocator));
-
-      // Re-open the metadata.
-      MetadataTable::SPtr metadataTable2SPtr = nullptr;
-      MetadataTable::Create(allocator, metadataTable2SPtr);
-
-      // Reset position.
-      ULONG64 length = fileStreamSPtr->GetPosition();
-      fileStreamSPtr->SetPosition(0);
-      SyncAwait(MetadataManager::OpenAsync(*metadataTable2SPtr, *fileStreamSPtr, length, allocator, *CreateTraceComponent()));
-
-      Validate(*metadataTable1SPtr, *metadataTable2SPtr);
-
-      SyncAwait(metadataTable1SPtr->CloseAsync());
-      SyncAwait(metadataTable2SPtr->CloseAsync());
-      CloseFileStream();
+       SyncAwait(WriteRead_EmptyMetadataTable_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(WriteReadByFilename_OneEntry_ShouldSucceed)
    {
-       KAllocator& allocator = GetAllocator();
-       KString::SPtr filenameSPtr;
-       auto status = KString::Create(filenameSPtr, GetAllocator(), L"WriteReadByFilename_OneEntry_ShouldSucceed.txt");
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-       KString::SPtr filepathSPtr = CreateFileName(*filenameSPtr);
-
-       FileMetadata::SPtr fileMetadata1 = nullptr;
-       KString::SPtr fileNameSPtr = nullptr;
-       status = KString::Create(fileNameSPtr, allocator, L"test");
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-       status = FileMetadata::Create(2, *fileNameSPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-       MetadataTable::SPtr metadataTable1SPtr = nullptr;
-       status = MetadataTable::Create(allocator, metadataTable1SPtr);
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-       MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
-
-       SyncAwait(MetadataManager::WriteAsync(*metadataTable1SPtr, *filepathSPtr, allocator));
-           
-       // Re-open the metadata.
-       MetadataTable::SPtr metadataTable2SPtr = nullptr;
-       MetadataTable::Create(allocator, metadataTable2SPtr);
-
-       // Open filestream
-       SyncAwait(MetadataManager::OpenAsync(*metadataTable2SPtr, *filepathSPtr, allocator, *CreateTraceComponent()));
-
-       Validate(*metadataTable1SPtr, *metadataTable2SPtr);
-
-       SyncAwait(metadataTable1SPtr->CloseAsync());
-       SyncAwait(metadataTable2SPtr->CloseAsync());
-
-       Common::File::Delete(filepathSPtr->operator LPCWSTR());
+       SyncAwait(WriteReadByFilename_OneEntry_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(MetadataFile_WriteAndValid_ShouldSucceed)
    {
-       KAllocator& allocator = GetAllocator();
-       KString::SPtr filenameSPtr;
-       auto status = KString::Create(filenameSPtr, GetAllocator(), L"MetadataFile_WriteAndValid_ShouldSucceed.txt");
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-       KString::SPtr filepathSPtr = CreateFileName(*filenameSPtr);
-
-       FileMetadata::SPtr fileMetadata1 = nullptr;
-       KString::SPtr fileNameSPtr = nullptr;
-       status = KString::Create(fileNameSPtr, allocator, L"test");
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-       status = FileMetadata::Create(2, *fileNameSPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-       MetadataTable::SPtr metadataTable1SPtr = nullptr;
-       status = MetadataTable::Create(allocator, metadataTable1SPtr);
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-       MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
-
-       SyncAwait(MetadataManager::WriteAsync(*metadataTable1SPtr, *filepathSPtr, allocator));
-
-       SyncAwait(MetadataManager::ValidateAsync(*filepathSPtr, allocator));
-
-       SyncAwait(metadataTable1SPtr->CloseAsync());
-
-       Common::File::Delete(filepathSPtr->operator LPCWSTR());
+       SyncAwait(MetadataFile_WriteAndValid_ShouldSucceed_Test());
    }
 
    //todo:test disable since takes too long and file is very big. move to stress test and verify this test.
@@ -515,62 +623,7 @@ namespace TStoreTests
 
    BOOST_AUTO_TEST_CASE(Open_CorruptFile_ThrowsDataCorruptException)
    {
-       KAllocator& allocator = GetAllocator();
-       KWString fileStreamName(allocator, L"Open_CorruptFile_ThrowsDataCorruptException.txt");
-       CreateFileStream(fileStreamName);
-
-       FileMetadata::SPtr fileMetadata1 = nullptr;
-       KString::SPtr fileNameSPtr = nullptr;
-       NTSTATUS status = KString::Create(fileNameSPtr, allocator, L"test");
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-       status = FileMetadata::Create(2, *fileNameSPtr, 2, 2, 2, 2, false, allocator, *CreateTraceComponent(), fileMetadata1);
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-       MetadataTable::SPtr metadataTable1SPtr = nullptr;
-       status = MetadataTable::Create(allocator, metadataTable1SPtr);
-       CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-       MetadataManager::AddFile(*(metadataTable1SPtr->Table), fileMetadata1->FileId, *fileMetadata1);
-
-       ktl::io::KFileStream::SPtr fileStreamSPtr = GetFileStream();
-       SyncAwait(MetadataManager::WriteAsync(*metadataTable1SPtr, *fileStreamSPtr, allocator));
-
-       // Re-open the metadata.
-       MetadataTable::SPtr metadataTable2SPtr = nullptr;
-       MetadataTable::Create(allocator, metadataTable2SPtr);
-
-       // Reset position.
-       ULONG64 length = fileStreamSPtr->GetPosition();
-       fileStreamSPtr->SetPosition(0);
-       SyncAwait(MetadataManager::OpenAsync(*metadataTable2SPtr, *fileStreamSPtr, length, allocator, *CreateTraceComponent()));
-
-       Validate(*metadataTable1SPtr, *metadataTable2SPtr);
-       //flipt first bit
-       FlipBitAndVerifyCorruptionAsync(0, *fileStreamSPtr);
-       //restore the filestream.
-       CloseFileStream(false);
-       CreateFileStream(fileStreamName);
-
-       //flip last bit.
-       FlipBitAndVerifyCorruptionAsync(length-1, *GetFileStream());
-       //restore the filestream.
-       CloseFileStream(false);
-       CreateFileStream(fileStreamName);
-
-       //flip random bytes
-       Common::Random random = Common::Random();
-       for (int i = 0; i < 100; i++)
-       {
-           ULONG64 byteIndex = static_cast<ULONG64>(random.Next(static_cast<int>(length)));
-           FlipBitAndVerifyCorruptionAsync(byteIndex, *GetFileStream());
-           //restore the filestream.
-           CloseFileStream(false);
-           CreateFileStream(fileStreamName);
-       }
-
-       SyncAwait(metadataTable1SPtr->CloseAsync());
-       SyncAwait(metadataTable2SPtr->CloseAsync());
-       CloseFileStream();
+       SyncAwait(Open_CorruptFile_ThrowsDataCorruptException_Test());
    }
    
    //Open_PartialFile_ThrowsInvalidDataException()  not testable till FileStream support resize the stream.

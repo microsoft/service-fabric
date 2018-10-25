@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
@@ -49,6 +44,13 @@
 typedef interface IInternalFabricServiceManagementClient IInternalFabricServiceManagementClient;
 
 #endif 	/* __IInternalFabricServiceManagementClient_FWD_DEFINED__ */
+
+
+#ifndef __IInternalFabricServiceManagementClient2_FWD_DEFINED__
+#define __IInternalFabricServiceManagementClient2_FWD_DEFINED__
+typedef interface IInternalFabricServiceManagementClient2 IInternalFabricServiceManagementClient2;
+
+#endif 	/* __IInternalFabricServiceManagementClient2_FWD_DEFINED__ */
 
 
 #ifndef __IInternalFabricApplicationManagementClient_FWD_DEFINED__
@@ -133,6 +135,13 @@ typedef interface IInternalFabricQueryResult2 IInternalFabricQueryResult2;
 typedef interface IInternalFabricServiceManagementClient IInternalFabricServiceManagementClient;
 
 #endif 	/* __IInternalFabricServiceManagementClient_FWD_DEFINED__ */
+
+
+#ifndef __IInternalFabricServiceManagementClient2_FWD_DEFINED__
+#define __IInternalFabricServiceManagementClient2_FWD_DEFINED__
+typedef interface IInternalFabricServiceManagementClient2 IInternalFabricServiceManagementClient2;
+
+#endif 	/* __IInternalFabricServiceManagementClient2_FWD_DEFINED__ */
 
 
 #ifndef __IInternalFabricApplicationManagementClient_FWD_DEFINED__
@@ -261,10 +270,13 @@ extern "C"{
 /* interface __MIDL_itf_fabricclient__0000_0000 */
 /* [local] */ 
 
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 #if ( _MSC_VER >= 1020 )
 #pragma once
 #endif
-
 
 
 
@@ -292,6 +304,7 @@ extern RPC_IF_HANDLE __MIDL_itf_fabricclient__0000_0000_v0_0_s_ifspec;
 
 
 #pragma pack(push, 8)
+
 
 
 
@@ -429,6 +442,139 @@ EXTERN_C const IID IID_IInternalFabricServiceManagementClient;
 
 
 #endif 	/* __IInternalFabricServiceManagementClient_INTERFACE_DEFINED__ */
+
+
+#ifndef __IInternalFabricServiceManagementClient2_INTERFACE_DEFINED__
+#define __IInternalFabricServiceManagementClient2_INTERFACE_DEFINED__
+
+/* interface IInternalFabricServiceManagementClient2 */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IInternalFabricServiceManagementClient2;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("ee2bc5c7-235c-4dd1-b0a9-2ed4b45ebec9")
+    IInternalFabricServiceManagementClient2 : public IInternalFabricServiceManagementClient
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE BeginGetCachedServiceDescription( 
+            /* [in] */ FABRIC_URI name,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetCachedServiceDescription( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricServiceDescriptionResult **result) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IInternalFabricServiceManagementClient2Vtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IInternalFabricServiceManagementClient2 * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IInternalFabricServiceManagementClient2 * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IInternalFabricServiceManagementClient2 * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginMovePrimary )( 
+            IInternalFabricServiceManagementClient2 * This,
+            /* [in] */ const FABRIC_MOVE_PRIMARY_REPLICA_DESCRIPTION *movePrimaryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndMovePrimary )( 
+            IInternalFabricServiceManagementClient2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginMoveSecondary )( 
+            IInternalFabricServiceManagementClient2 * This,
+            /* [in] */ const FABRIC_MOVE_SECONDARY_REPLICA_DESCRIPTION *moveSecondaryDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndMoveSecondary )( 
+            IInternalFabricServiceManagementClient2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetCachedServiceDescription )( 
+            IInternalFabricServiceManagementClient2 * This,
+            /* [in] */ FABRIC_URI name,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetCachedServiceDescription )( 
+            IInternalFabricServiceManagementClient2 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricServiceDescriptionResult **result);
+        
+        END_INTERFACE
+    } IInternalFabricServiceManagementClient2Vtbl;
+
+    interface IInternalFabricServiceManagementClient2
+    {
+        CONST_VTBL struct IInternalFabricServiceManagementClient2Vtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IInternalFabricServiceManagementClient2_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IInternalFabricServiceManagementClient2_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IInternalFabricServiceManagementClient2_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IInternalFabricServiceManagementClient2_BeginMovePrimary(This,movePrimaryDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginMovePrimary(This,movePrimaryDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IInternalFabricServiceManagementClient2_EndMovePrimary(This,context)	\
+    ( (This)->lpVtbl -> EndMovePrimary(This,context) ) 
+
+#define IInternalFabricServiceManagementClient2_BeginMoveSecondary(This,moveSecondaryDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginMoveSecondary(This,moveSecondaryDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IInternalFabricServiceManagementClient2_EndMoveSecondary(This,context)	\
+    ( (This)->lpVtbl -> EndMoveSecondary(This,context) ) 
+
+
+#define IInternalFabricServiceManagementClient2_BeginGetCachedServiceDescription(This,name,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetCachedServiceDescription(This,name,timeoutMilliseconds,callback,context) ) 
+
+#define IInternalFabricServiceManagementClient2_EndGetCachedServiceDescription(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetCachedServiceDescription(This,context,result) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IInternalFabricServiceManagementClient2_INTERFACE_DEFINED__ */
 
 
 #ifndef __IInternalFabricApplicationManagementClient_INTERFACE_DEFINED__

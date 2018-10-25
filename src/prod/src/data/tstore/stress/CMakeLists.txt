@@ -13,6 +13,7 @@ add_executable(${exe_TStore_Stress}
   ../Close.Stress.cpp
   ../Enumeration.Stress.cpp
   ../KBufferComparer.cpp
+  ../Merge.Stress.cpp
   ../MockStateManager.cpp
   ../MockTransactionalReplicator.cpp
   ../TestTransactionContext.cpp
@@ -47,8 +48,6 @@ target_link_libraries(${exe_TStore_Stress}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

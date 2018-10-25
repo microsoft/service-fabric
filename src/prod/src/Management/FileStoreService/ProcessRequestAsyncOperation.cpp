@@ -31,7 +31,8 @@ ProcessRequestAsyncOperation::ProcessRequestAsyncOperation(
     operationKind_(operationKind),
     receiverContext_(move(receiverContext)),
     timeoutHelper_(timeout),
-    reply_()
+    reply_(),
+    metadataDeletionCompleted_(false)
 {
 }
 
@@ -90,6 +91,13 @@ void ProcessRequestAsyncOperation::OnStart(AsyncOperationSPtr const & thisSPtr)
                 error = ErrorCodeValue::NotPrimary;
             }
 
+            if (error.IsError(ErrorCodeValue::FileUpdateInProgress) && 
+                (operationKind_ == OperationKind::CommitUploadSession))
+            {
+                // No need to retry at the gateway
+                error = ErrorCodeValue::OperationsPending;
+            }
+
             WriteWarning(
                 TraceComponent,
                 TraceId,
@@ -101,7 +109,7 @@ void ProcessRequestAsyncOperation::OnStart(AsyncOperationSPtr const & thisSPtr)
         }
     }
 
-    auto operation = this->BeginOperation(                
+    auto operation = this->BeginOperation(
         [this](AsyncOperationSPtr const & operation) { this->OnOperationCompleted(operation, false); },
         thisSPtr);
     this->OnOperationCompleted(operation, true);
@@ -129,7 +137,7 @@ void ProcessRequestAsyncOperation::OnOperationCompleted(AsyncOperationSPtr const
             TraceId,
             "The request failed due to {0}. StoreRelativePath:{1}",
             error,
-            storeRelativePath_);        
+            storeRelativePath_);
     }
 
     CompleteOperation(operation->Parent, error);
@@ -206,3 +214,75 @@ bool ProcessRequestAsyncOperation::IsWriteOperation(OperationKind operationKind)
         operationKind == OperationKind::Copy ||
         operationKind == OperationKind::CommitUploadSession);
 }
+
+ErrorCode ProcessRequestAsyncOperation::DeleteMetadata(Store::StoreTransaction const & storeTx, FileMetadata const & metadata)
+{
+    auto error = storeTx.Delete(metadata);
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "Unable to delete metadata. metadata:{0}, Error:{1}",
+            metadata,
+            error);
+        return error;
+    }
+
+    return ErrorCodeValue::Success;
+}
+
+bool ProcessRequestAsyncOperation::DeleteIfMetadataNotInStableState(Common::AsyncOperationSPtr const & thisSPtr)
+{
+    bool toBeDeleted = false;
+    FileMetadata metadata(this->StoreRelativePath);
+    auto error = this->ReplicatedStoreWrapperObj.ReadExact(this->ActivityId, metadata);
+    if (error.IsSuccess())
+    {
+        if (!FileState::IsStable(metadata.State))
+        {
+            auto operation = AsyncOperation::CreateAndStart<StoreTransactionAsyncOperation>(
+                RequestManagerObj,
+                false, // useSimpleTx
+                [this, &metadata](Store::StoreTransaction const & storeTx) { return DeleteMetadata(storeTx, metadata); },
+                ActivityId,
+                TimeSpan::MaxValue,
+                [this, &metadata](AsyncOperationSPtr const & operation) { this->OnDeleteMetadataCompleted(operation, false, metadata); },
+                thisSPtr);
+            toBeDeleted = true;
+            this->OnDeleteMetadataCompleted(operation, true, metadata);
+        }
+    }
+
+    if (toBeDeleted)
+    {
+        // In case if you remove the wait in the future, make sure to not pass metadata by ref.
+        metadataDeletionCompleted_.Wait();
+    }
+
+    return toBeDeleted;
+}
+
+void ProcessRequestAsyncOperation::OnDeleteMetadataCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously, FileMetadata const & metadata)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+    {
+        return;
+    }
+
+    auto error = StoreTransactionAsyncOperation::End(operation);
+    AsyncOperationSPtr thisSPtr = operation->Parent;
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "Unable to delete metadata which is left in intermediate state. Id:{0} storePath:{1}: error:{2} Metadata:{3}.",
+            metadata.UploadRequestId,
+            this->StoreRelativePath,
+            error,
+            metadata);
+    }
+
+    metadataDeletionCompleted_.Set();
+    return;
+}
+

@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#include "TestHeaders.h"
 
 using namespace Data::Log;
 

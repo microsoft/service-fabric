@@ -91,6 +91,8 @@ namespace TxnReplicator
 
         static bool IsMultipleOf4(__in int64 value);
 
+        static bool IsTRSettingsEx1FlagsUsed(__in DWORD64 const & flags);
+
         DWORD64 flags_;
 
         DEFINE_TR_PRIVATE_CONFIG_MEMBERS();

@@ -30,29 +30,6 @@ ServiceHealthStateFilter::ServiceHealthStateFilter(
 {
 }
 
-ServiceHealthStateFilter::ServiceHealthStateFilter(ServiceHealthStateFilter && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , healthStateFilter_(move(other.healthStateFilter_))
-    , serviceNameFilter_(move(other.serviceNameFilter_))
-    , partitionFilters_(move(other.partitionFilters_))
-{
-}
-
-ServiceHealthStateFilter & ServiceHealthStateFilter::operator =(ServiceHealthStateFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-        serviceNameFilter_ = move(other.serviceNameFilter_);
-        partitionFilters_ = move(other.partitionFilters_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    return *this;
-}
-
 ServiceHealthStateFilter::~ServiceHealthStateFilter()
 {
 }

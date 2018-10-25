@@ -18,8 +18,8 @@ namespace ServiceModel
 
         explicit PartitionHealthStatesFilter(DWORD healthStateFilter);
 
-        PartitionHealthStatesFilter(PartitionHealthStatesFilter && other);
-        PartitionHealthStatesFilter & operator = (PartitionHealthStatesFilter && other);
+        PartitionHealthStatesFilter(PartitionHealthStatesFilter && other) = default;
+        PartitionHealthStatesFilter & operator = (PartitionHealthStatesFilter && other) = default;
 
         ~PartitionHealthStatesFilter();
 

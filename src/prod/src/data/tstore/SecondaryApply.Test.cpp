@@ -41,7 +41,7 @@ namespace TStoreTests
             return operationDataSPtr;
         }
 
-        void SecondaryApply(
+        ktl::Awaitable<void> SecondaryApplyAsync(
             __in StoreModificationType::Enum operationType, 
             __in int key, 
             __in OperationData & keyBytes, 
@@ -91,38 +91,43 @@ namespace TStoreTests
           RedoUndoOperationData::SPtr redoDataSPtr = nullptr;
           RedoUndoOperationData::Create(GetAllocator(), valueBytes, nullptr, redoDataSPtr);
 
-          auto operationContext = SyncAwait(Store->ApplyAsync(
+          auto operationContext = co_await Store->ApplyAsync(
              commitLSN,
              *txnCSPtr,
              ApplyContext::SecondaryRedo,
              metadataCSPtr.RawPtr(),
-             redoDataSPtr.RawPtr()));
+             redoDataSPtr.RawPtr());
 
           if (operationContext != nullptr)
           {
               Store->Unlock(*operationContext);
           }
+
+          co_return;
         }
 
-        void SecondaryAdd(int key, int value)
+        Awaitable<void> SecondaryAddAsync(int key, int value)
         {
-	    auto keyBytesSPtr = GetBytes(key);
-	    auto valueBytesSPtr = GetBytes(value);
-            SecondaryApply(StoreModificationType::Enum::Add, key, *keyBytesSPtr, value, valueBytesSPtr);
+            auto keyBytesSPtr = GetBytes(key);
+            auto valueBytesSPtr = GetBytes(value);
+            co_await SecondaryApplyAsync(StoreModificationType::Enum::Add, key, *keyBytesSPtr, value, valueBytesSPtr);
+            co_return;
         }
 
-        void SecondaryUpdate(int key, int value)
+        Awaitable<void> SecondaryUpdateAsync(int key, int value)
         {
-	    auto bytesSPtr = GetBytes(key);
-	    auto valueBytesSPtr = GetBytes(value);
-            SecondaryApply(StoreModificationType::Enum::Update, key, *bytesSPtr, value, valueBytesSPtr);
+            auto bytesSPtr = GetBytes(key);
+            auto valueBytesSPtr = GetBytes(value);
+            co_await SecondaryApplyAsync(StoreModificationType::Enum::Update, key, *bytesSPtr, value, valueBytesSPtr);
+            co_return;
         }
 
-        void SecondaryRemove(int key)
+        Awaitable<void> SecondaryRemoveAsync(int key)
         {
             OperationData::SPtr valueBytesSPtr = nullptr;
-	    auto bytesSPtr = GetBytes(key);
-            SecondaryApply(StoreModificationType::Enum::Remove, key, *bytesSPtr, -1, valueBytesSPtr);
+            auto bytesSPtr = GetBytes(key);
+            co_await SecondaryApplyAsync(StoreModificationType::Enum::Remove, key, *bytesSPtr, -1, valueBytesSPtr);
+            co_return;
         }
 
         Common::CommonConfig config; // load the config object as its needed for the tracing to work
@@ -130,41 +135,62 @@ namespace TStoreTests
     private:
         KtlSystem* ktlSystem_;
         KSharedPtr<TestStateSerializer<int>> serializerSPtr_;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> Secondary_AddOperation_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+            co_await SecondaryAddAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Secondary_UpdateOperation_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+            int updatedValue = 9;
+
+            co_await SecondaryAddAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+
+            co_await SecondaryUpdateAsync(key, updatedValue);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, updatedValue);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Secondary_RemoveOperation_ShouldSucceed_Test()
+        {
+            int key = 7;
+            int value = 6;
+
+            co_await SecondaryAddAsync(key, value);
+            co_await VerifyKeyExistsAsync(*Store, key, -1, value);
+
+            co_await SecondaryRemoveAsync(key);
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(SecondaryApplyTestSuite, SecondaryApplyTest)
 
     BOOST_AUTO_TEST_CASE(Secondary_AddOperation_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-        SecondaryAdd(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
+        SyncAwait(Secondary_AddOperation_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Secondary_UpdateOperation_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-        int updatedValue = 9;
-
-        SecondaryAdd(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-
-        SecondaryUpdate(key, updatedValue);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, updatedValue));
+        SyncAwait(Secondary_UpdateOperation_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Secondary_RemoveOperation_ShouldSucceed)
     {
-        int key = 7;
-        int value = 6;
-
-        SecondaryAdd(key, value);
-        SyncAwait(VerifyKeyExistsAsync(*Store, key, -1, value));
-
-        SecondaryRemove(key);
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(Secondary_RemoveOperation_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_SUITE_END()

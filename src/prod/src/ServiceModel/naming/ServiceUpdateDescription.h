@@ -9,12 +9,16 @@ namespace Naming
 {
     class ServiceUpdateDescription : public Common::IFabricJsonSerializable, public Serialization::FabricSerializable
     {
-        DEFAULT_COPY_CONSTRUCTOR(ServiceUpdateDescription)
-        DEFAULT_COPY_ASSIGNMENT(ServiceUpdateDescription)
+        DEFAULT_MOVE_AND_COPY( ServiceUpdateDescription )
         
     public:
         ServiceUpdateDescription();
-        ServiceUpdateDescription(ServiceUpdateDescription &&);
+
+        // Used only from PLB/FM for auto-scaling
+        ServiceUpdateDescription(
+            bool isStateful,
+            std::vector<std::wstring> && namesToAdd,
+            std::vector<std::wstring> && namesToRemove);
 
         __declspec(property(get = get_ServiceKind)) FABRIC_SERVICE_KIND ServiceKind;
         FABRIC_SERVICE_KIND get_ServiceKind() const { return serviceKind_; }
@@ -106,6 +110,18 @@ namespace Naming
         std::shared_ptr<RepartitionDescription> const & get_RepartitionDescription() const { return repartitionDescription_; }
         void put_RepartitionDescription(std::shared_ptr<RepartitionDescription> const & value) { repartitionDescription_ = value; }
 
+        __declspec(property(get = get_UpdateScalingPolicy, put = put_UpdateScalingPolicy)) bool UpdateScalingPolicy;
+        bool get_UpdateScalingPolicy() const { return (updateFlags_ & Flags::ScalingPolicy) != 0; }
+        void put_UpdateScalingPolicy(bool const value) { updateFlags_ = value ? (updateFlags_ | Flags::ScalingPolicy) : (updateFlags_ & ~Flags::ScalingPolicy); }
+
+        __declspec(property(get = get_ScalingPolicyWrapper, put = put_ScalingPolicyWrapper)) std::vector<Reliability::ServiceScalingPolicyDescription> const & ScalingPolicies;
+        std::vector<Reliability::ServiceScalingPolicyDescription> const & get_ScalingPolicyWrapper() const { return scalingPolicies_; }
+        void put_ScalingPolicyWrapper(std::vector<Reliability::ServiceScalingPolicyDescription> const & value) { scalingPolicies_ = value; }
+
+        __declspec(property(get=get_InitializationData, put=put_InitializationData)) std::shared_ptr<std::vector<byte>> const & InitializationData;
+        std::shared_ptr<std::vector<byte>> const & get_InitializationData() const { return initializationData_; }
+        void put_InitializationData(std::shared_ptr<std::vector<byte>> && value) { initializationData_ = std::move(value); }
+
         Common::ErrorCode FromPublicApi(FABRIC_SERVICE_UPDATE_DESCRIPTION const & updateDescription);
         Common::ErrorCode FromRepartitionDescription(FABRIC_SERVICE_PARTITION_KIND const publicKind, void * publicDescription);
 
@@ -130,7 +146,7 @@ namespace Naming
         void WriteToEtw(uint16 contextSequenceId) const;
         void WriteTo(__in Common::TextWriter& writer, Common::FormatOptions const&) const;
 
-        FABRIC_FIELDS_13(
+        FABRIC_FIELDS_15(
             updateFlags_, 
             targetReplicaSetSize_, 
             replicaRestartWaitDuration_, 
@@ -143,7 +159,9 @@ namespace Naming
             placementPolicies_, 
             serviceKind_, 
             defaultMoveCost_,
-            repartitionDescription_);
+            repartitionDescription_,
+            scalingPolicies_,
+            initializationData_);
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
             SERIALIZABLE_PROPERTY_ENUM(ServiceModel::Constants::ServiceKind, serviceKind_)
@@ -161,6 +179,10 @@ namespace Naming
             SERIALIZABLE_PROPERTY_IF(ServiceModel::Constants::StandByReplicaKeepDurationInMilliseconds, standByReplicaKeepDuration_, serviceKind_ == FABRIC_SERVICE_KIND_STATEFUL)
 
             SERIALIZABLE_PROPERTY(ServiceModel::Constants::RepartitionDescription, repartitionDescription_)
+            SERIALIZABLE_PROPERTY(ServiceModel::Constants::ScalingPolicies, scalingPolicies_)
+            //
+            // Updating initialization data is currently not exposed via the public API
+            //
         END_JSON_SERIALIZABLE_PROPERTIES()
 
     private:
@@ -177,6 +199,7 @@ namespace Naming
             static const LONG Correlations = 0x80;
             static const LONG Metrics = 0x100;
             static const LONG DefaultMoveCost = 0x200;
+            static const LONG ScalingPolicy = 0x400;
 
             static const LONG ValidServiceUpdateFlags = TargetReplicaSetSize | 
                                                         MinReplicaSetSize |
@@ -187,7 +210,8 @@ namespace Naming
                                                         PlacementPolicyList |
                                                         Correlations |
                                                         Metrics |
-                                                        DefaultMoveCost;
+                                                        DefaultMoveCost |
+                                                        ScalingPolicy;
         };
 
         Common::ErrorCode TryUpdateServiceDescription(
@@ -195,6 +219,7 @@ namespace Naming
             bool allowRepartition,
             __out bool & isUpdated) const;
 
+        Common::ErrorCode TraceAndGetInvalidArgumentError(std::wstring && msg) const;
 
         FABRIC_SERVICE_KIND serviceKind_;
 
@@ -212,5 +237,7 @@ namespace Naming
         FABRIC_MOVE_COST defaultMoveCost_;
 
         std::shared_ptr<RepartitionDescription> repartitionDescription_;
+        std::vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies_;
+        std::shared_ptr<std::vector<byte>> initializationData_;
     };
 }

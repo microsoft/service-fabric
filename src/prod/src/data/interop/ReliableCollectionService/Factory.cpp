@@ -9,9 +9,8 @@ using namespace std;
 using namespace Common;
 using namespace TXRStatefulServiceBase;
 
-Factory::Factory(__in CreateReplicaCallback createReplicaCallback, __in ULONG port)
-    : createReplicaCallBack_(createReplicaCallback),
-	port_(port)
+Factory::Factory(__in CreateReplicaCallback createReplicaCallback)
+    : createReplicaCallBack_(createReplicaCallback)
 {
 }
         
@@ -19,9 +18,9 @@ Factory::~Factory()
 {
 }
 
-shared_ptr<Factory> Factory::Create(__in CreateReplicaCallback createReplicaCallback, __in ULONG port)
+shared_ptr<Factory> Factory::Create(__in CreateReplicaCallback createReplicaCallback)
 {
-    return shared_ptr<Factory>(new Factory(createReplicaCallback, port));
+    return shared_ptr<Factory>(new Factory(createReplicaCallback));
 }
 
 StatefulServiceBaseCPtr Factory::CreateReplica(
@@ -29,6 +28,6 @@ StatefulServiceBaseCPtr Factory::CreateReplica(
     FABRIC_REPLICA_ID replicaId,
     ComponentRootSPtr const & root)
 {
-    StatefulServiceBaseCPtr service = createReplicaCallBack_(port_, partitionId, replicaId, root);
+    StatefulServiceBaseCPtr service = createReplicaCallBack_(partitionId, replicaId, root);
     return service;
 }

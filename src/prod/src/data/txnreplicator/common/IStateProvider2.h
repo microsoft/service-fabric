@@ -115,7 +115,7 @@ namespace TxnReplicator
         /// <summary>
         /// Called at the start of set current state.
         /// </summary>
-        virtual void BeginSettingCurrentState() = 0;
+        virtual ktl::Awaitable<void> BeginSettingCurrentStateAsync() = 0;
 
         /// <summary>
         /// Sets the state on secondary.

@@ -34,6 +34,7 @@ add_executable(${exe_statemanager_test}
   ../StateManagerLockContext.Test.cpp
   ../StateManagerTestBase.cpp
   ../StateManagerTransactionContext.Test.cpp
+  ../TestCheckpointFileReadWrite.cpp
   ../TestHelper.cpp
   ../TestOperation.cpp
   ../TestLockContext.cpp
@@ -81,8 +82,6 @@ target_link_libraries(${exe_statemanager_test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

@@ -16,7 +16,7 @@ IOMonitor::IOMonitor(
     __in PartitionedReplicaId const & traceId,
     __in std::wstring const & operationName,
     __in Common::SystemHealthReportCode::Enum healthReportCode,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient)
     : KShared()
     , KObject()
@@ -60,7 +60,7 @@ IOMonitor::SPtr IOMonitor::Create(
     __in PartitionedReplicaId const & traceId,
     __in std::wstring const & operationName,
     __in Common::SystemHealthReportCode::Enum healthReportCode,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
     __in KAllocator & allocator)
 {

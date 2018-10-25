@@ -72,9 +72,10 @@ NTSTATUS FileMetadata::Create(
    return STATUS_SUCCESS;
 }
 
-ktl::Awaitable<ULONG64> FileMetadata::GetFileSize()
+ktl::Awaitable<ULONG64> FileMetadata::GetFileSizeAsync()
 {
     //todo: replace checkpointfile internal getfilesize method with common file utility method.
+    STORE_ASSERT(checkpointFileSPtr_ != nullptr, "FileMetadata::checkpointFileSPtr_ is null");
     return checkpointFileSPtr_->GetTotalFileSizeAsync(GetThisAllocator());
 }
 

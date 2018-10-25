@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project ="$(ExtendedTargetsPath)\NoTarget.targets"/>
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>System.Fabric.Management.ServiceModel Class Library</Description>
+    <AssemblyName>System.Fabric.Management.ServiceModel</AssemblyName>
+    <PackageId>System.Fabric.Management.ServiceModel</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile
+	  Include="
+        ..\..\Dlls\System.Fabric.Management.ServiceModel\_friends.cs;
+        ..\..\src\System\Fabric\Management\ServiceModel\RolloutVersion.cs;
+        ..\..\src\System\Fabric\Management\ServiceModel\FabricVersion.cs;
+        ..\..\src\System\Fabric\Management\ServiceModel\ServiceFabricModelValidator.cs;
+        ..\..\src\System\Fabric\Management\ServiceModel\IXmlValidator.cs;
+		ServiceFabricServiceModel.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+
+  <Target Name="CoreClrXSD"
+    Outputs="$(OutputPath)WindowsFabricServiceModel\ServiceFabricServiceModel.cs"
+	Inputs="$(SrcRoot)\prod\src\ServiceModel\xsd\ServiceFabricServiceModel.xsd">
+    <ItemGroup>
+      <TargetFile Include="$(OutputPath)WindowsFabricServiceModel\ServiceFabricServiceModel.cs" />
+    </ItemGroup>
+    <Message Text="Building ServiceFabricServiceModel.cs using XSD.exe" />
+    <Message Text="Output Path: $(OutputPath)WindowsFabricServiceModel" />
+    <MakeDir Directories="$(OutputPath)WindowsFabricServiceModel" />
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\xsd.exe /c /o:$(OutputPath)WindowsFabricServiceModel /n:System.Fabric.Management.ServiceModel $(SrcRoot)\prod\src\ServiceModel\xsd\ServiceFabricServiceModel.xsd" />
+    <StringDeleteInFile Filename="@(TargetFile)"
+      Expression="\[System.ComponentModel.DesignerCategoryAttribute\(&quot;code&quot;\)\]" />
+    <StringDeleteInFile Filename="@(TargetFile)"
+      Expression="\[System.SerializableAttribute\(\)\]" />
+  </Target>
+
+  <Target Name="CoreClrXSDCopy" Outputs="ServiceFabricServiceModel.cs" Inputs="$(OutputPath)WindowsFabricServiceModel\ServiceFabricServiceModel.cs"
+    DependsOnTargets="CoreClrXSD" BeforeTargets="CoreCompile" Condition="'$(BuildLinux)' != 'true'">
+    <Copy SourceFiles="$(OutputPath)WindowsFabricServiceModel\ServiceFabricServiceModel.cs" DestinationFolder="." SkipUnchangedFiles="true" />
+  </Target>
+</Project>

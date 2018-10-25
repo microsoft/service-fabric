@@ -28,8 +28,8 @@ namespace ServiceModel
             std::wstring const & upgradeTypeVersion,
             std::map<std::wstring, std::wstring> const & upgradeParameters);
 
-        ApplicationQueryResult(ApplicationQueryResult && other);
-        ApplicationQueryResult & operator = (ApplicationQueryResult && other);
+        ApplicationQueryResult(ApplicationQueryResult && other) = default;
+        ApplicationQueryResult & operator = (ApplicationQueryResult && other) = default;
 
         void ToPublicApi(
             __in Common::ScopedHeap & heap, 

@@ -11,6 +11,12 @@
 #define DEFAULT_MOVE_ASSIGNMENT( class_name ) public: class_name& operator = ( class_name && ) = default;
 #define DEFAULT_MOVE_CONSTRUCTOR( class_name ) public: class_name( class_name && ) = default;
 
+#define DEFAULT_MOVE_AND_COPY( class_name ) \
+    DEFAULT_COPY_ASSIGNMENT( class_name ) \
+    DEFAULT_COPY_CONSTRUCTOR( class_name ) \
+    DEFAULT_MOVE_ASSIGNMENT( class_name ) \
+    DEFAULT_MOVE_CONSTRUCTOR( class_name ) \
+
 #define DENY_COPY_ASSIGNMENT( class_name ) public: class_name& operator = ( class_name const& ) = delete;
 #define DENY_COPY_CONSTRUCTOR( class_name ) public: class_name( class_name const& ) = delete;
 

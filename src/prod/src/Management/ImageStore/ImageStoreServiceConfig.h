@@ -27,17 +27,17 @@ namespace Management
             PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreService", StandByReplicaKeepDuration, Common::TimeSpan::FromSeconds(3600.0 * 24 * 7), Common::ConfigEntryUpgradePolicy::Static);
             // The PlacementConstraints for ImageStoreService
             PUBLIC_CONFIG_ENTRY(std::wstring, L"ImageStoreService", PlacementConstraints, L"", Common::ConfigEntryUpgradePolicy::Static);
-            
+
             // Timeout value for top-level upload request to Image Store Service
-            PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientUploadTimeout, Common::TimeSpan::FromSeconds(1800), Common::ConfigEntryUpgradePolicy::Dynamic);
+            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientUploadTimeout, Common::TimeSpan::FromSeconds(1800), Common::ConfigEntryUpgradePolicy::Dynamic);
             // Timeout value for top-level copy request to Image Store Service
-            PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientCopyTimeout, Common::TimeSpan::FromSeconds(1800), Common::ConfigEntryUpgradePolicy::Dynamic);
+            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientCopyTimeout, Common::TimeSpan::FromSeconds(1800), Common::ConfigEntryUpgradePolicy::Dynamic);
             // Timeout value for top-level download request to Image Store Service
-            PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientDownloadTimeout, Common::TimeSpan::FromSeconds(1800), Common::ConfigEntryUpgradePolicy::Dynamic);
+            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientDownloadTimeout, Common::TimeSpan::FromSeconds(1800), Common::ConfigEntryUpgradePolicy::Dynamic);
             // Timeout value for top-level list request to Image Store Service
-            PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientListTimeout, Common::TimeSpan::FromSeconds(600), Common::ConfigEntryUpgradePolicy::Dynamic);
+            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientListTimeout, Common::TimeSpan::FromSeconds(600), Common::ConfigEntryUpgradePolicy::Dynamic);
             // Timeout value for all non-upload/non-download requests (e.g. exists, delete) to Image Store Service
-            PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientDefaultTimeout, Common::TimeSpan::FromSeconds(180), Common::ConfigEntryUpgradePolicy::Dynamic);
+            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientDefaultTimeout, Common::TimeSpan::FromSeconds(180), Common::ConfigEntryUpgradePolicy::Dynamic);
             // Default interval used to report progress information (<= 0 to disable)
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ImageStoreClient", ClientDefaultProgressReportingInterval, Common::TimeSpan::FromSeconds(2), Common::ConfigEntryUpgradePolicy::Dynamic);
             // Delay between starting concurrent operations such as parallel downloading (used for testing)

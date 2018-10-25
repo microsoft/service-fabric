@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#include "Common/FabricGlobals.h"
 
 using namespace std;
 using namespace Common;
@@ -261,7 +262,7 @@ protected:
             wstring value = tokens[index++];
             bool isEncrypted = StringUtility::AreEqualCaseInsensitive(tokens[index++], L"true");
 
-            auto configStore = ComProxyConfigStore::Create();
+            auto configStore = FabricGlobals::Get().GetConfigStore().Store;
             bool canUpgradeWithoutRestart = configStore->CheckUpdate(
                 section,
                 key,

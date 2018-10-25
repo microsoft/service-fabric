@@ -16,6 +16,9 @@ namespace Data
 
         public:
 
+            __declspec(property(get = get_Mode)) KtlLoggerMode Mode;
+            virtual KtlLoggerMode get_Mode() const = 0;
+
             /// <summary>
             /// Close the log manager asynchronously
             /// 

@@ -39,8 +39,6 @@ target_link_libraries(${exe_ImageModel.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

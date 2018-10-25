@@ -16,3 +16,22 @@ void TraceWrapper(
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void TraceWrapperBinaryStructured(
+    unsigned char *ProviderIdArg,
+    unsigned short IdArg,
+    unsigned char  VersionArg,
+    unsigned char  ChannelArg,
+    unsigned char  LevelArg,
+    unsigned char  OpcodeArg,
+    unsigned short TaskArg,
+    unsigned long long KeywordArg,
+    unsigned char *dataArg,
+    unsigned long  dataNumBytesArg);
+
+#ifdef __cplusplus
+}
+#endif

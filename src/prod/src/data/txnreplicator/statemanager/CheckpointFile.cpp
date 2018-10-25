@@ -10,6 +10,12 @@ using namespace Data;
 using namespace Data::StateManager;
 using namespace Data::Utilities;
 
+const ULONG32 CheckpointFile::CopyProtocolVersion = 1;
+const ULONG32 CheckpointFile::DesiredBlockSize = 32 * 1024;
+const ULONG32 CheckpointFile::Version = 1;
+const LONGLONG CheckpointFile::BlockSizeSectionSize = sizeof(LONG32);
+const LONGLONG CheckpointFile::CheckSumSectionSize = sizeof(ULONG64);
+
 NTSTATUS CheckpointFile::Create(
     __in Utilities::PartitionedReplicaId const & traceId,
     __in KWString const & filePath,
@@ -205,7 +211,7 @@ OperationDataEnumerator::SPtr CheckpointFile::GetCopyData(
             traceId.ReplicaId,
             targetReplicaId,
             serailizationMode,
-            1, // TODO: Fixing the build break. Make CopyProtocolVersion again.
+            CheckpointFile::CopyProtocolVersion,
             itemWriter.Position);
     }
 
@@ -343,6 +349,12 @@ KSharedPtr<SerializableMetadataEnumerator> CheckpointFile::ReadCopyData(
     if (operationType == StateManagerCopyOperation::Version)
     {
         BinaryReader itemReader(*(itemData), allocator);
+        Helper::ThrowIfNecessary(
+            itemReader.Status(),
+            traceId.TracePartitionId,
+            traceId.ReplicaId,
+            L"ReadCopyData: Create BinaryReader failed.",
+            Helper::CheckpointFile);
 
         // Verify the copy protocol version is known.
         ULONG32 copyProtocolVersion;
@@ -386,6 +398,7 @@ KSharedPtr<SerializableMetadataEnumerator> CheckpointFile::ReadCopyData(
 Awaitable<void> CheckpointFile::WriteAsync(
     __in KSharedArray<SerializableMetadata::CSPtr> const & metadataArray,
     __in SerializationMode::Enum serailizationMode,
+    __in bool allowPrepareCheckpointLSNToBeInvalid,
     __in FABRIC_SEQUENCE_NUMBER prepareCheckpointLSN,
     __in CancellationToken const & cancellationToken)
 {
@@ -393,9 +406,11 @@ Awaitable<void> CheckpointFile::WriteAsync(
 
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
+    // #12249219: Without the "allowPrepareCheckpointLSNToBeInvalid" being set to true in the backup code path, 
+    // It is possible for all backups before the first checkpoint after the upgrade to fail.
     // If the code has the PrepareCheckpointLSN property, it must be larger than or equal to FABRIC_AUTO_SEQUENCE_NUMBER(0).
     ASSERT_IFNOT(
-        prepareCheckpointLSN >= FABRIC_AUTO_SEQUENCE_NUMBER,
+        allowPrepareCheckpointLSNToBeInvalid || (prepareCheckpointLSN >= FABRIC_AUTO_SEQUENCE_NUMBER),
         "{0}: WriteAsync: In the write path, prepareCheckpointLSN must be larger or equal to 0. PrepareCheckpointLSN: {1}.",
         TraceId,
         prepareCheckpointLSN);
@@ -442,12 +457,17 @@ Awaitable<void> CheckpointFile::WriteAsync(
     SharedException::CSPtr exceptionSPtr = nullptr;
     try
     {
-        // TODO: #9165663: KTL SetSystemIoPriorityHintAsync is requried.
+        // #9165663: KTL SetSystemIoPriorityHintAsync is required.
         // fileSPtr->SetSystemIoPriorityHint(IO_PRIORITY_HINT::IoPriorityLow);
 
         // Step 2: Write the state provider metadata.
         stateProviderMetadata_ = &metadataArray;
-        co_await this->WriteMetadataAsync(serailizationMode, prepareCheckpointLSN, cancellationToken, *fileStreamSPtr);
+        co_await this->WriteMetadataAsync(
+            serailizationMode, 
+            allowPrepareCheckpointLSNToBeInvalid,
+            prepareCheckpointLSN, 
+            cancellationToken, 
+            *fileStreamSPtr);
 
         // Step 3: Write properties.
         BlockHandle::SPtr propertiesHandleSPtr = co_await this->WritePropertiesAsync(cancellationToken, *fileStreamSPtr);
@@ -483,7 +503,11 @@ Awaitable<void> CheckpointFile::WriteAsync(
     // Note: CloseAsync may fail in two situation, 1. OOM 2. Flush-on-close.
     // We always explicitly FlushAsync before close, so we can use assert (OOM) instead here instead of throwing
     status = co_await fileStreamSPtr->CloseAsync();
-    ASSERT_IFNOT(NT_SUCCESS(status), "{0}: CreateAsync: FileStream CloseAsync failed.", TraceId);
+    ASSERT_IFNOT(
+        NT_SUCCESS(status), 
+        "{0}: CreateAsync: FileStream CloseAsync failed. Status: {1}", 
+        TraceId,
+        status);
 
     if (exceptionSPtr != nullptr)
     {
@@ -557,7 +581,7 @@ ktl::Awaitable<void> CheckpointFile::ReadAsync(
     SharedException::CSPtr exceptionSPtr = nullptr;
     try
     {
-        // TODO: KTL SetSystemIoPriorityHintAsync is requried.
+        // #9165663: KTL SetSystemIoPriorityHintAsync is required.
         // fileSPtr->SetSystemIoPriorityHint(IO_PRIORITY_HINT::IoPriorityLow);
 
         // Step 2: Read and validate the Footer section.  The footer is always at the end of the stream, minus space for the checksum.
@@ -582,7 +606,11 @@ ktl::Awaitable<void> CheckpointFile::ReadAsync(
     // Note: CloseAsync may fail in two situation, 1. OOM 2. Flush-on-close.
     // We always explicitly FlushAsync before close, so we can use assert (OOM) instead here instead of throwing
     status = co_await fileStreamSPtr->CloseAsync();
-    ASSERT_IFNOT(NT_SUCCESS(status), "{0}: CreateAsync: FileStream CloseAsync failed.", TraceId);
+    ASSERT_IFNOT(
+        NT_SUCCESS(status), 
+        "{0}: CreateAsync: FileStream CloseAsync failed. Status: {1}", 
+        TraceId,
+        status);
 
     if (exceptionSPtr != nullptr)
     {
@@ -601,12 +629,17 @@ ktl::Awaitable<void> CheckpointFile::ReadAsync(
 // Create CheckpointFileAsyncEnumerator and return 
 CheckpointFileAsyncEnumerator::SPtr CheckpointFile::GetAsyncEnumerator() const
 {
-    return CheckpointFileAsyncEnumerator::Create(
+    CheckpointFileAsyncEnumerator::SPtr enumerator = nullptr;
+    NTSTATUS status = CheckpointFileAsyncEnumerator::Create(
         *PartitionedReplicaIdentifier,
         filePath_,
         *blockSize_,
         *propertiesSPtr_,
-        GetThisAllocator());
+        GetThisAllocator(),
+        enumerator);
+    THROW_ON_FAILURE(status);
+
+    return enumerator;
 }
 
 ULONG32 CheckpointFile::WriteMetadata(
@@ -677,7 +710,7 @@ void CheckpointFile::WriteManagedInitializationParameter(
     // #10376233: Document initialization parameter change for native, and the cases for different upgrade phase.
     ASSERT_IFNOT(
         initializationParameter->BufferCount < 2,
-        "{0}: Managed should only have 0 or 1 buffer for initialization parameters and 0 indicats the byte array is empty. BufferSize: {1}.",
+        "{0}: Managed should only have 0 or 1 buffer for initialization parameters and 0 indicates the byte array is empty. BufferSize: {1}.",
         traceId,
         initializationParameter->BufferCount);
 
@@ -735,9 +768,10 @@ void CheckpointFile::WriteNativeInitializationParameter(
 // Write the metadata to the checkpoint file 
 // Algorithm:
 // 1. Write metadata block by block
-// 2. Write the block section, which recoards all block's size
+// 2. Write the block section, which records all block's size
 Awaitable<void> CheckpointFile::WriteMetadataAsync(
     __in SerializationMode::Enum serailizationMode,
+    __in bool allowPrepareCheckpointLSNToBeInvalid,
     __in FABRIC_SEQUENCE_NUMBER prepareCheckpointLSN,
     __in CancellationToken const & cancellationToken,
     __inout ktl::io::KStream & fileStream)
@@ -848,6 +882,8 @@ Awaitable<void> CheckpointFile::WriteMetadataAsync(
         L"WriteMetadataAsync: Write the blocks.",
         Helper::CheckpointFile);
 
+    bool shouldNotWritePrepareCheckpointLSN = prepareCheckpointLSN == FABRIC_INVALID_SEQUENCE_NUMBER ? true : false;
+
     // #10348967: Update properties information.
     status = CheckpointFileProperties::Create(
         propertiesBlockHandle.RawPtr(),
@@ -856,6 +892,7 @@ Awaitable<void> CheckpointFile::WriteMetadataAsync(
         ReplicaId,
         rootStateProviderCount_,
         stateProviderCount_,
+        shouldNotWritePrepareCheckpointLSN,
         prepareCheckpointLSN,
         GetThisAllocator(),
         propertiesSPtr_);
@@ -940,7 +977,6 @@ ktl::Awaitable<void> CheckpointFile::ReadPropertiesAsync(
     BlockHandle::SPtr propertiesHandle = footerSPtr_->PropertiesHandle;
     FileBlock<CheckpointFileProperties::SPtr>::DeserializerFunc propertiesDeserializerFunction(&CheckpointFileProperties::Read);
 
-    // TODO: #9166098: Take in cancellation token.
     propertiesSPtr_ = co_await FileBlock<CheckpointFileProperties::SPtr>::ReadBlockAsync(
         *fileStreamSPtr,
         *propertiesHandle,

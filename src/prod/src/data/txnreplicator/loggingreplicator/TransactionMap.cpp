@@ -17,8 +17,7 @@ TransactionMap::TransactionMap(__in Data::Utilities::PartitionedReplicaId const 
     , lock_()
     , completedTransactions_(GetThisAllocator())
     , latestRecords_()
-    , lsnCompareFunction_(&TransactionMap::LsnCompareFunction)
-    , lsnPendingTransactions_(lsnCompareFunction_, GetThisAllocator(), TXMAP_TAG)
+    , lsnPendingTransactions_()
     , transactionIdPendingTransactionsPair_()
     , unstableTransactions_(GetThisAllocator())
 {
@@ -29,7 +28,6 @@ TransactionMap::TransactionMap(__in Data::Utilities::PartitionedReplicaId const 
         reinterpret_cast<uintptr_t>(this));
 
     THROW_ON_CONSTRUCTOR_FAILURE(completedTransactions_);
-    THROW_ON_CONSTRUCTOR_FAILURE(lsnPendingTransactions_);
     THROW_ON_CONSTRUCTOR_FAILURE(unstableTransactions_);
 }
 
@@ -51,26 +49,13 @@ TransactionMap::SPtr TransactionMap::Create(
     return TransactionMap::SPtr(pointer);
 }
 
-LONG TransactionMap::LsnCompareFunction(
-    __in LsnKeyType const & left,
-    __in LsnKeyType const & right)
-{
-    if (left.value < right.value)
-        return -1;
-
-    if (right.value < left.value)
-        return 1;
-
-    return 0;
-}
-
 void TransactionMap::Reuse()
 {
     latestRecords_.clear();
     transactionIdPendingTransactionsPair_.clear();
     completedTransactions_.Clear();
     unstableTransactions_.Clear();
-    lsnPendingTransactions_.RemoveAll();
+    lsnPendingTransactions_.clear();
 }
 
 void TransactionMap::AddOperation(__in OperationLogRecord & record)
@@ -148,9 +133,8 @@ void TransactionMap::CompleteTransaction(__in EndTransactionLogRecord & record)
             beginTransactionRecord = txIdFoundIter->second;
             ASSERT_IFNOT(beginTransactionRecord != nullptr, "Could not find begin xact log record: {0}", txId);
 
-            bool success = lsnPendingTransactions_.Remove(LsnKeyType(beginTransactionRecord->Lsn));
-            ASSERT_IFNOT(success, "Cound not remove lsn from pending list: {0}. Returned {1}", beginTransactionRecord->Lsn, success);
-
+            auto elementsErased = lsnPendingTransactions_.erase(LsnKeyType(beginTransactionRecord->Lsn));
+            ASSERT_IFNOT(elementsErased == 1, "Could not remove lsn from pending list: {0} {1}", beginTransactionRecord->Lsn, elementsErased);
             transactionIdPendingTransactionsPair_.erase(txId);
         }
 
@@ -187,8 +171,7 @@ void TransactionMap::CreateTransaction(__in BeginTransactionOperationLogRecord &
 
             transactionIdPendingTransactionsPair_[txId] = recordSPtr;
             
-            NTSTATUS status = lsnPendingTransactions_.Insert(recordSPtr, LsnKeyType(record.Lsn));
-            ASSERT_IFNOT(status == STATUS_SUCCESS, "Error inserting lsn in pending xacts: {0}", record.Lsn);
+            lsnPendingTransactions_[LsnKeyType(record.Lsn)] = recordSPtr;
         }
     }
 }
@@ -309,10 +292,8 @@ BeginTransactionOperationLogRecord::SPtr TransactionMap::DeleteTransaction(__in 
 
         recordSPtr->IsEnlistedTransaction = true;
 
-        LONG64 lsn = recordSPtr->Lsn;
-
-        bool success = lsnPendingTransactions_.Remove(lsn);
-        ASSERT_IFNOT(success, "Cound not remove lsn from pending list: {0}. Returned {1}", lsn, success);
+        auto elementsErased = lsnPendingTransactions_.erase(LsnKeyType(recordSPtr->Lsn));
+        ASSERT_IFNOT(elementsErased == 1, "Could not remove lsn from pending list: {0} {1}", recordSPtr->Lsn, elementsErased)
 
         transactionIdPendingTransactionsPair_.erase(txId);
     }
@@ -419,15 +400,13 @@ BeginTransactionOperationLogRecord::SPtr TransactionMap::GetEarliestPendingTrans
         {
             failedBarrierCheck = false;
 
-            if (lsnPendingTransactions_.Count() > 0)
+            auto lowestLsnIterator = lsnPendingTransactions_.begin();
+            if (lowestLsnIterator != lsnPendingTransactions_.end())
             {
-                LsnPendingTransactionsMap::Iterator it = lsnPendingTransactions_.GetIterator();
-
-                ASSERT_IFNOT(it.IsValid() == TRUE, "Invalid lsn pending xact iterator");
-
-                if (it.GetKey().value < barrierLsn)
+                LsnKeyType lsn = lowestLsnIterator->first;
+                if (lsn.value < barrierLsn)
                 {
-                    BeginTransactionOperationLogRecord::SPtr result = it.Get();
+                    BeginTransactionOperationLogRecord::SPtr result = lowestLsnIterator->second;
                     return result;
                 }
             }
@@ -475,22 +454,15 @@ void TransactionMap::GetPendingTransactionsOlderThanPosition(
 {
     K_LOCK_BLOCK(lock_)
     {
-        if (lsnPendingTransactions_.Count() > 0)
-        {
-            LsnPendingTransactionsMap::Iterator it = lsnPendingTransactions_.GetIterator();
-            
-            ASSERT_IFNOT(it.IsValid() == TRUE, "Invalid lsn pending xact map iterator");
+        NTSTATUS status;
 
-            NTSTATUS status;
-            
-            do
+        for (auto lsnIterator = lsnPendingTransactions_.begin(); lsnIterator != lsnPendingTransactions_.end(); lsnIterator++)
+        {
+            if (lsnIterator->second->RecordPosition <= recordPosition)
             {
-                if (it.Get()->RecordPosition <= recordPosition)
-                {
-                    status = pendingTransactions.Append(it.Get());
-                    THROW_ON_FAILURE(status);
-                }
-            } while (it.Next() == TRUE);
+                status = pendingTransactions.Append(lsnIterator->second);
+                THROW_ON_FAILURE(status);
+            }
         }
     }
 }
@@ -587,8 +559,7 @@ EndTransactionLogRecord::SPtr TransactionMap::ReifyTransaction(
         ASSERT_IFNOT(reifiedBeginTransactionRecord->IsEnlistedTransaction, "Non enlisted xact in reified xact record");
 
         transactionIdPendingTransactionsPair_[txId] = reifiedBeginTransactionRecord;
-        NTSTATUS status = lsnPendingTransactions_.Insert(reifiedBeginTransactionRecord, LsnKeyType(reifiedBeginTransactionRecord->Lsn));
-        ASSERT_IFNOT(status == STATUS_SUCCESS, "Error inserting reified log record in lsn pending xacts: {0}", status);
+        lsnPendingTransactions_[LsnKeyType(reifiedBeginTransactionRecord->Lsn)] = reifiedBeginTransactionRecord;
     }
 
     return reifiedEndTransactionRecord;

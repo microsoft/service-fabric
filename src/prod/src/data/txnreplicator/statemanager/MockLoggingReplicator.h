@@ -42,8 +42,6 @@ namespace StateManagerTests
         NTSTATUS GetCurrentEpoch(
             __out FABRIC_EPOCH & epoch) noexcept override;
 
-        NTSTATUS RequestCheckpointAfterNextTransaction() noexcept override;
-
         __declspec(property(get = get_Role, put = put_Role)) FABRIC_REPLICA_ROLE Role;
         FABRIC_REPLICA_ROLE get_Role() const
         {
@@ -190,10 +188,10 @@ namespace StateManagerTests
         void SetSafeLSN(__in FABRIC_SEQUENCE_NUMBER safeLSN);
     
     public: // Notification APIs
-		NTSTATUS RegisterTransactionChangeHandler(
-			__in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept override;
+        NTSTATUS RegisterTransactionChangeHandler(
+            __in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept override;
 
-		NTSTATUS UnRegisterTransactionChangeHandler() noexcept override;
+        NTSTATUS UnRegisterTransactionChangeHandler() noexcept override;
 
 
     private:

@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the IIDs and CLSIDs */
@@ -83,5 +78,6 @@ MIDL_DEFINE_GUID(CLSID, CLSID_FabricTokenValidationServiceAgent,0x44cbab57,0x79c
 #ifdef __cplusplus
 }
 #endif
+
 
 

@@ -45,7 +45,7 @@ void ConcurrentDictionaryTest::RunDictionaryTest_Add1(
             {
                 dict->TryAdd(j + ii * addsPerThread, -(j + ii * addsPerThread));
             }
-            if (InterlockedDecrement(&count) == 0)
+            if (InterlockedDecrement((volatile LONG*)&count) == 0)
             {
                 event.SetEvent();
             }
@@ -106,7 +106,7 @@ void ConcurrentDictionaryTest::RunDictionaryTest_Update1(
             {
                 dict->TryUpdate(j, (ii + 2) * j, j);
             }
-            if (InterlockedDecrement(&running) == 0)
+            if (InterlockedDecrement((volatile LONG*)&running) == 0)
             {
                 event.SetEvent();
             }
@@ -175,7 +175,7 @@ void ConcurrentDictionaryTest::RunDictionaryTest_Read1(
                     KInvariant(j % 2 != 0);
                 }
             }
-            if (InterlockedDecrement(&count) == 0)
+            if (InterlockedDecrement((volatile LONG*)&count) == 0)
             {
                 event.SetEvent();
             }
@@ -230,7 +230,7 @@ void ConcurrentDictionaryTest::RunDictionaryTest_Remove1(
                 KInvariant(dict->TryRemove(key, value));
                 KInvariant(value == -key);
             }
-            if (InterlockedDecrement(&running) == 0)
+            if (InterlockedDecrement((volatile LONG*)&running) == 0)
             {
                 event.SetEvent();
             }
@@ -298,7 +298,7 @@ void ConcurrentDictionaryTest::RunDictionaryTest_GetOrAdd(
                     dict->GetOrAdd(j, func);
                 }
             }
-            if (InterlockedDecrement(&count) == 0)
+            if (InterlockedDecrement((volatile LONG*)&count) == 0)
             {
                 event.SetEvent();
             }

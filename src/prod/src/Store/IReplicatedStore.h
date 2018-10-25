@@ -15,15 +15,31 @@ namespace Store
     {
     public:
 
-        virtual bool GetIsActivePrimary() const = 0;
+        //
+        // IStatefulServiceReplica
+        //
+        // Open, ChangeRole, Close, Abort are implemented 
+        // by concrete classes: ReplicatedStore, TSReplicatedStore
+        //
 
-        virtual Common::ErrorCode GetLastCommittedSequenceNumber(__out FABRIC_SEQUENCE_NUMBER &) = 0;
+        virtual Common::ErrorCode GetQueryStatus(__out Api::IStatefulServiceReplicaStatusResultPtr &) override
+        {
+            Common::Assert::TestAssert("GetQueryStatus not implemented");
+            return Common::ErrorCodeValue::NotImplemented;
+        }
+
+        Common::ErrorCode UpdateInitializationData(std::vector<byte> &&)
+        {
+            Common::Assert::TestAssert("UpdateInitializationData not implemented");
+            return Common::ErrorCodeValue::NotImplemented;
+        }
 
     public:
 
         //
-        // Create a transaction with a trace id
+        // IReplicatedStore
         //
+
         virtual Common::ErrorCode CreateTransaction(
             __in Common::ActivityId const & activityId,
             __out TransactionSPtr & transactionSPtr)
@@ -40,15 +56,8 @@ namespace Store
             return this->CreateTransaction(activityId, transactionSPtr);
         }
 
-        //
-        // Create a simple transaction with the default isolation level of the IReplicatedStore instance
-        //
-        virtual Common::ErrorCode CreateSimpleTransaction(
-            __out TransactionSPtr & transactionSPtr) = 0;
+        virtual Common::ErrorCode CreateSimpleTransaction(__out TransactionSPtr & transactionSPtr) = 0;
 
-        //
-        // Create a simple transaction with the default isolation level of the IReplicatedStore instance
-        //
         virtual Common::ErrorCode CreateSimpleTransaction(
             __in Common::ActivityId const & activityId,
             __out TransactionSPtr & transactionSPtr)
@@ -68,6 +77,21 @@ namespace Store
             __out TransactionSPtr & transactionSPtr)
         {
             return GetDefaultIsolationLevel() == isolationLevel ? CreateSimpleTransaction(transactionSPtr) : Common::ErrorCodeValue::InvalidOperation;
+        }
+
+        // Used for KVS/ESE logical rebuild and KeyValueStoreMigrator database migration
+        //
+        virtual Common::ErrorCode CreateEnumerationByPrimaryIndex(
+            ILocalStoreUPtr const &, 
+            std::wstring const & typeStart,
+            std::wstring const & keyStart,
+            __out TransactionSPtr &,
+            __out EnumerationSPtr &)
+        {
+            UNREFERENCED_PARAMETER(typeStart);
+            UNREFERENCED_PARAMETER(keyStart);
+
+            return Common::ErrorCodeValue::NotImplemented;
         }
 
         // Inserts a new item.
@@ -172,16 +196,9 @@ namespace Store
             return Common::ErrorCodeValue::NotImplemented;
         }
 
-        virtual Common::ErrorCode GetQueryStatus(
-            __out Api::IStatefulServiceReplicaStatusResultPtr &)
-        {
-            return Common::ErrorCodeValue::NotImplemented;
-        }
+        virtual bool GetIsActivePrimary() const = 0;
 
-        virtual bool IsThrottleNeeded() const
-        {
-            return false;
-        }
+        virtual Common::ErrorCode GetLastCommittedSequenceNumber(__out FABRIC_SEQUENCE_NUMBER &) = 0;
 
         virtual Common::ErrorCode GetCurrentEpoch(__out FABRIC_EPOCH & epoch) const
         {
@@ -190,9 +207,6 @@ namespace Store
             return Common::ErrorCodeValue::NotImplemented;
         }
 
-        //
-        // Services using the replicated store can use this method to update the replicator settings
-        //
         virtual Common::ErrorCode UpdateReplicatorSettings(FABRIC_REPLICATOR_SETTINGS const &)
         {
             return Common::ErrorCodeValue::NotImplemented;
@@ -204,7 +218,7 @@ namespace Store
         }
 
         //
-        // Services using the replicated store can use this method to enable/disable throttle
+        // Commit throttling is a feature currently only used by HM
         //
         virtual Common::ErrorCode SetThrottleCallback(ThrottleCallback const & throttleCallback)
         {
@@ -212,9 +226,13 @@ namespace Store
             
             return Common::ErrorCodeValue::NotImplemented;
         }
+
+        virtual bool IsThrottleNeeded() const { return false; }
                 
         // 
-        // Get current logical time
+        // Replicated logical time is currently not being used by any components.
+        // However, the same concept and design of logical time is used
+        // by the KVS and volatile actor state providers (see VolatileLogicalTimeManager.cs).
         //  
         virtual Common::ErrorCode GetCurrentStoreTime(__out int64 &)
         {
@@ -236,9 +254,43 @@ namespace Store
             return Common::ErrorCodeValue::NotImplemented;
         };
 
+        virtual bool IsMigrationSourceSupported() { return false; }
+
+        virtual bool ShouldMigrateKey(std::wstring const & type, std::wstring const & key)
+        {
+            UNREFERENCED_PARAMETER(type);
+            UNREFERENCED_PARAMETER(key);
+            Common::Assert::CodingError("ShouldMigrateKey not implemented");
+        }
+
+        virtual void SetQueryStatusDetails(std::wstring const &)
+        {
+            Common::Assert::CodingError("SetQueryStatusDetails not implemented");
+        }
+
+        virtual void SetMigrationQueryResult(std::unique_ptr<MigrationQueryResult> &&)
+        {
+            Common::Assert::CodingError("SetMigrationQueryResult not implemented");
+        }
+
+        virtual void SetTxEventHandler(IReplicatedStoreTxEventHandlerWPtr const &)
+        {
+            Common::Assert::CodingError("SetTxEventHandler not overridden");
+        }
+
+        virtual void AbortOutstandingTransactions()
+        {
+            Common::Assert::CodingError("AbortOutstandingTransactions not overridden");
+        }
+
+        virtual void ClearTxEventHandlerAndBlockWrites()
+        {
+            Common::Assert::CodingError("ClearTxEventHandlerAndBlockWrites not overridden");
+        }
+
         virtual void Test_SetTestHookContext(TestHooks::TestHookContext const &)
         {
-            CODING_ASSERT("Test_SetTestHookContext not implemented");
+            Common::Assert::TestAssert("Test_SetTestHookContext not implemented");
         }
     };
 }

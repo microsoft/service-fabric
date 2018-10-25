@@ -28,6 +28,8 @@
 #include "Hosting2/Hosting.Protocol.h"
 #include "Hosting2/Hosting.Protocol.Internal.h"
 
+#include "Hosting.GuestApplicationRuntime.Internal.h"
+
 #include "Transport/UnreliableTransportSpecification.h"
 #include "Transport/UnreliableTransportConfig.h" 
 

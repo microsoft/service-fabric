@@ -473,7 +473,7 @@ VariableArgument::VariableArgument(FABRIC_PARTITION_SELECTOR_TYPE value)
 {
     value_.valueInt64_ = value;
 }
-    
+
 VariableArgument::VariableArgument(FABRIC_DATA_LOSS_MODE value)
     : type_(Type_FABRIC_DATA_LOSS_MODE)
 {
@@ -528,6 +528,11 @@ VariableArgument::VariableArgument(FABRIC_PROVISION_APPLICATION_TYPE_KIND value)
     value_.valueInt64_ = value;
 }
 
+VariableArgument::VariableArgument(FABRIC_DIAGNOSTICS_SINKS_KIND value)
+    : type_(Type_FABRIC_DIAGNOSTICS_SINKS_KIND)
+{
+    value_.valueInt64_ = value;
+}
 
 VariableArgument::VariableArgument(XmlNodeType value)
     : type_(Type_XmlNodeType)
@@ -644,29 +649,29 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
     case Type_FABRIC_OPERATION_TYPE:
         switch (value_.valueInt64_)
         {
-            case FABRIC_OPERATION_TYPE_NORMAL: 
+            case FABRIC_OPERATION_TYPE_NORMAL:
                 w << "FABRIC_OPERATION_TYPE_NORMAL";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_OPERATION_TYPE=" << value_.valueInt64_;
         }
         break;
     case Type_FABRIC_SERVICE_PARTITION_ACCESS_STATUS:
         switch (value_.valueInt64_)
         {
-            case FABRIC_SERVICE_PARTITION_ACCESS_STATUS_RECONFIGURATION_PENDING: 
+            case FABRIC_SERVICE_PARTITION_ACCESS_STATUS_RECONFIGURATION_PENDING:
                 w << "FABRIC_SERVICE_PARTITION_ACCESS_STATUS_RECONFIGURATION_PENDING";
                 break;
-            case FABRIC_SERVICE_PARTITION_ACCESS_STATUS_NOT_PRIMARY: 
+            case FABRIC_SERVICE_PARTITION_ACCESS_STATUS_NOT_PRIMARY:
                 w << "FABRIC_SERVICE_PARTITION_ACCESS_STATUS_NOT_PRIMARY";
                 break;
-            case FABRIC_SERVICE_PARTITION_ACCESS_STATUS_NO_WRITE_QUORUM: 
+            case FABRIC_SERVICE_PARTITION_ACCESS_STATUS_NO_WRITE_QUORUM:
                 w << "FABRIC_SERVICE_PARTITION_ACCESS_STATUS_NO_WRITE_QUORUM";
                 break;
-            case FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED: 
+            case FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED:
                 w << "FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_SERVICE_PARTITION_ACCESS_STATUS=" << value_.valueInt64_;
         }
         break;
@@ -692,16 +697,16 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_REPLICA_ROLE_NONE:
                 w << "None";
                 break;
-            case FABRIC_REPLICA_ROLE_PRIMARY: 
+            case FABRIC_REPLICA_ROLE_PRIMARY:
                 w << "Primary";
                 break;
-            case FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY: 
+            case FABRIC_REPLICA_ROLE_ACTIVE_SECONDARY:
                 w << "ActiveSecondary";
                 break;
-            case FABRIC_REPLICA_ROLE_IDLE_SECONDARY: 
+            case FABRIC_REPLICA_ROLE_IDLE_SECONDARY:
                 w << "IdleSecondary";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_REPLICA_ROLE=" << value_.valueInt64_;
         }
         break;
@@ -717,13 +722,13 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_HEALTH_STATE_WARNING:
                 w << "Warning";
                 break;
-            case FABRIC_HEALTH_STATE_ERROR: 
+            case FABRIC_HEALTH_STATE_ERROR:
                 w << "Error";
                 break;
             case FABRIC_HEALTH_STATE_UNKNOWN:
                 w << "Unknown";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_HEALTH_STATE=" << value_.valueInt64_;
         }
         break;
@@ -739,25 +744,25 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_HEALTH_REPORT_KIND_PARTITION:
                 w << "Partition";
                 break;
-            case FABRIC_HEALTH_REPORT_KIND_NODE: 
+            case FABRIC_HEALTH_REPORT_KIND_NODE:
                 w << "Node";
                 break;
-            case FABRIC_HEALTH_REPORT_KIND_SERVICE: 
+            case FABRIC_HEALTH_REPORT_KIND_SERVICE:
                 w << "Service";
                 break;
-            case FABRIC_HEALTH_REPORT_KIND_APPLICATION: 
+            case FABRIC_HEALTH_REPORT_KIND_APPLICATION:
                 w << "Application";
                 break;
-            case FABRIC_HEALTH_REPORT_KIND_DEPLOYED_APPLICATION: 
+            case FABRIC_HEALTH_REPORT_KIND_DEPLOYED_APPLICATION:
                 w << "DeployedApplication";
                 break;
-            case FABRIC_HEALTH_REPORT_KIND_DEPLOYED_SERVICE_PACKAGE: 
+            case FABRIC_HEALTH_REPORT_KIND_DEPLOYED_SERVICE_PACKAGE:
                 w << "DeployedServicePackage";
                 break;
-            case FABRIC_HEALTH_REPORT_KIND_CLUSTER: 
+            case FABRIC_HEALTH_REPORT_KIND_CLUSTER:
                 w << "Cluster";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_HEALTH_REPORT_KIND=" << value_.valueInt64_;
         }
         break;
@@ -779,28 +784,28 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_HEALTH_EVALUATION_KIND_PARTITIONS:
                 w << "PartitionsHealthEvaluation";
                 break;
-            case FABRIC_HEALTH_EVALUATION_KIND_DEPLOYED_SERVICE_PACKAGES: 
+            case FABRIC_HEALTH_EVALUATION_KIND_DEPLOYED_SERVICE_PACKAGES:
                 w << "DeployedServicePackagesHealthEvaluation";
                 break;
-            case FABRIC_HEALTH_EVALUATION_KIND_DEPLOYED_APPLICATIONS: 
+            case FABRIC_HEALTH_EVALUATION_KIND_DEPLOYED_APPLICATIONS:
                 w << "DeployedApplicationsHealthEvaluation";
                 break;
-            case FABRIC_HEALTH_EVALUATION_KIND_SERVICES: 
+            case FABRIC_HEALTH_EVALUATION_KIND_SERVICES:
                 w << "ServicesHealthEvaluation";
                 break;
-            case FABRIC_HEALTH_EVALUATION_KIND_NODES: 
+            case FABRIC_HEALTH_EVALUATION_KIND_NODES:
                 w << "NodesHealthEvaluation";
                 break;
-            case FABRIC_HEALTH_EVALUATION_KIND_APPLICATIONS: 
+            case FABRIC_HEALTH_EVALUATION_KIND_APPLICATIONS:
                 w << "ApplicationsHealthEvaluation";
                 break;
-            case FABRIC_HEALTH_EVALUATION_KIND_SYSTEM_APPLICATION: 
+            case FABRIC_HEALTH_EVALUATION_KIND_SYSTEM_APPLICATION:
                 w << "SystemApplicationHealthEvaluation";
                 break;
-            case FABRIC_HEALTH_EVALUATION_KIND_UPGRADE_DOMAIN_DEPLOYED_APPLICATIONS: 
+            case FABRIC_HEALTH_EVALUATION_KIND_UPGRADE_DOMAIN_DEPLOYED_APPLICATIONS:
                 w << "UDDeployedApplicationsHealthEvaluation";
                 break;
-            case FABRIC_HEALTH_EVALUATION_KIND_UPGRADE_DOMAIN_NODES: 
+            case FABRIC_HEALTH_EVALUATION_KIND_UPGRADE_DOMAIN_NODES:
                 w << "UDNodesHealthEvaluation";
                 break;
             case FABRIC_HEALTH_EVALUATION_KIND_REPLICA:
@@ -884,19 +889,19 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
     case Type_FABRIC_PARTITION_KEY_TYPE:
         switch (value_.valueInt64_)
         {
-            case FABRIC_PARTITION_KEY_TYPE_INVALID: 
+            case FABRIC_PARTITION_KEY_TYPE_INVALID:
                 w << "FABRIC_PARTITION_KEY_TYPE_INVALID";
                 break;
             case FABRIC_PARTITION_KEY_TYPE_NONE:
                 w << "FABRIC_PARTITION_KEY_TYPE_NONE";
                 break;
-            case FABRIC_PARTITION_KEY_TYPE_INT64: 
+            case FABRIC_PARTITION_KEY_TYPE_INT64:
                 w << "FABRIC_PARTITION_KEY_TYPE_INT64";
                 break;
-            case FABRIC_PARTITION_KEY_TYPE_STRING: 
+            case FABRIC_PARTITION_KEY_TYPE_STRING:
                 w << "FABRIC_PARTITION_KEY_TYPE_STRING";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_PARTITION_KEY_TYPE=" << value_.valueInt64_;
         }
         break;
@@ -906,16 +911,16 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_SERVICE_PARTITION_KIND_INVALID:
                 w << "FABRIC_SERVICE_PARTITION_KIND_INVALID";
                 break;
-            case FABRIC_SERVICE_PARTITION_KIND_SINGLETON: 
+            case FABRIC_SERVICE_PARTITION_KIND_SINGLETON:
                 w << "FABRIC_SERVICE_PARTITION_KIND_SINGLETON";
                 break;
-            case FABRIC_SERVICE_PARTITION_KIND_INT64_RANGE: 
+            case FABRIC_SERVICE_PARTITION_KIND_INT64_RANGE:
                 w << "FABRIC_SERVICE_PARTITION_KIND_INT64_RANGE";
                 break;
-            case FABRIC_SERVICE_PARTITION_KIND_NAMED: 
+            case FABRIC_SERVICE_PARTITION_KIND_NAMED:
                 w << "FABRIC_SERVICE_PARTITION_KIND_NAMED";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_SERVICE_PARTITION_KIND=" << value_.valueInt64_;
         }
         break;
@@ -925,23 +930,23 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_SERVICE_LOAD_METRIC_WEIGHT_ZERO:
                 w << "FABRIC_SERVICE_LOAD_METRIC_WEIGHT_ZERO";
                 break;
-            case FABRIC_SERVICE_LOAD_METRIC_WEIGHT_LOW: 
+            case FABRIC_SERVICE_LOAD_METRIC_WEIGHT_LOW:
                 w << "FABRIC_SERVICE_LOAD_METRIC_WEIGHT_LOW";
                 break;
-            case FABRIC_SERVICE_LOAD_METRIC_WEIGHT_MEDIUM: 
+            case FABRIC_SERVICE_LOAD_METRIC_WEIGHT_MEDIUM:
                 w << "FABRIC_SERVICE_LOAD_METRIC_WEIGHT_MEDIUM";
                 break;
-            case FABRIC_SERVICE_LOAD_METRIC_WEIGHT_HIGH: 
+            case FABRIC_SERVICE_LOAD_METRIC_WEIGHT_HIGH:
                 w << "FABRIC_SERVICE_LOAD_METRIC_WEIGHT_HIGH";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_SERVICE_LOAD_METRIC_WEIGHT=" << value_.valueInt64_;
         }
         break;
     case Type_FABRIC_SERVICE_CORRELATION_SCHEME:
         switch (value_.valueInt64_)
         {
-            case FABRIC_SERVICE_CORRELATION_SCHEME_INVALID: 
+            case FABRIC_SERVICE_CORRELATION_SCHEME_INVALID:
                 w << "FABRIC_SERVICE_CORRELATION_SCHEME_INVALID";
                 break;
             case FABRIC_SERVICE_CORRELATION_SCHEME_AFFINITY:
@@ -953,7 +958,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_SERVICE_CORRELATION_SCHEME_NONALIGNED_AFFINITY:
                 w << "FABRIC_SERVICE_CORRELATION_SCHEME_NONALIGNED_AFFINITY";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_SERVICE_CORRELATION_SCHEME=" << value_.valueInt64_;
         }
         break;
@@ -966,10 +971,10 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_FAULT_TYPE_PERMANENT:
                 w << "FABRIC_FAULT_TYPE_PERMANENT";
                 break;
-            case FABRIC_FAULT_TYPE_TRANSIENT: 
+            case FABRIC_FAULT_TYPE_TRANSIENT:
                 w << "FABRIC_FAULT_TYPE_TRANSIENT";
                 break;
-            default: 
+            default:
                 w << "UNDEFINED FABRIC_FAULT_TYPE=" << value_.valueInt64_;
         }
         break;
@@ -1020,7 +1025,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_PARTITION_SCHEME_UNIFORM_INT64_RANGE:
                 w << "FABRIC_PARTITION_SCHEME_UNIFORM_INT64_RANGE";
                 break;
-            case FABRIC_PARTITION_SCHEME_NAMED: 
+            case FABRIC_PARTITION_SCHEME_NAMED:
                 w << "FABRIC_PARTITION_SCHEME_NAMED";
                 break;
             default:
@@ -1246,7 +1251,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
         case FABRIC_SERVICE_KIND_STATEFUL:
             w << "FABRIC_SERVICE_KIND_STATEFUL";
             break;
-        
+
         default:
             w << "Undefined FABRIC_SERVICE_KIND_STATEFUL=" << value_.valueInt64_;
         }
@@ -1371,11 +1376,14 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             case FABRIC_APPLICATION_UPGRADE_STATE_FAILED:
                 w << "FABRIC_APPLICATION_UPGRADE_STATE_FAILED";
                 break;
+            case FABRIC_APPLICATION_UPGRADE_STATE_ROLLING_BACK_PENDING:
+                w << "FABRIC_APPLICATION_UPGRADE_STATE_ROLLING_BACK_PENDING";
+                break;
             default:
                 w << "Undefined FABRIC_APPLICATION_UPGRADE_STATE = " << value_.valueInt64_;
         }
         break;
-    
+
     case Type_FABRIC_ROLLING_UPGRADE_MODE:
         switch (value_.valueInt64_)
         {
@@ -1395,7 +1403,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             w << "Undefined FABRIC_ROLLING_UPGRADE_MODE = " << value_.valueInt64_;
         }
         break;
-    
+
     case Type_FABRIC_UPGRADE_DOMAIN_STATE:
         switch (value_.valueInt64_)
         {
@@ -1439,6 +1447,9 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             break;
         case FABRIC_UPGRADE_STATE_FAILED:
             w << "FABRIC_UPGRADE_STATE_FAILED";
+            break;
+        case FABRIC_UPGRADE_STATE_ROLLING_BACK_PENDING:
+            w << "FABRIC_UPGRADE_STATE_ROLLING_BACK_PENDING";
             break;
         default:
             w << "Undefined FABRIC_UPGRADE_STATE = " << value_.valueInt64_;
@@ -1580,7 +1591,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             w << "Undefined FABRIC_MOVE_COST = " << value_.valueInt64_;
         }
         break;
-        
+
     case Type_FABRIC_NODE_DEACTIVATION_STATUS:
         switch (value_.valueInt64_)
         {
@@ -1626,7 +1637,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             w << "Undefined FABRIC_PLACEMENT_POLICY_TYPE = " << value_.valueInt64_;
         }
         break;
-    
+
     case Type_FABRIC_SERVICE_REPLICA_KIND:
         switch (value_.valueInt64_)
         {
@@ -1640,7 +1651,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             w << "Undefined FABRIC_SERVICE_REPLICA_KIND = " << value_.valueInt64_;
         }
         break;
-        
+
     case Type_FABRIC_PARTITION_SELECTOR_TYPE:
         switch (value_.valueInt64_)
         {
@@ -1678,11 +1689,11 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
                 break;
             case FABRIC_DATA_LOSS_MODE_FULL:
                 w << "FABRIC_DATA_LOSS_MODE_FULL";
-                break;         
+                break;
             default:
                 w << "Undefined FABRIC_DATA_LOSS_MODE = " << value_.valueInt64_;
         }
-        break;      
+        break;
     case Type_FABRIC_QUORUM_LOSS_MODE:
         switch (value_.valueInt64_)
         {
@@ -1694,11 +1705,11 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
                 break;
             case FABRIC_QUORUM_LOSS_MODE_ALL_REPLICAS:
                 w << "FABRIC_QUORUM_LOSS_MODE_ALL_REPLICAS";
-                break;         
+                break;
             default:
                 w << "Undefined FABRIC_QUORUM_LOSS_MODE = " << value_.valueInt64_;
         }
-        break;  
+        break;
     case Type_FABRIC_RESTART_PARTITION_MODE:
         switch (value_.valueInt64_)
         {
@@ -1710,11 +1721,11 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
                 break;
             case FABRIC_RESTART_PARTITION_MODE_ONLY_ACTIVE_SECONDARIES:
                 w << "FABRIC_RESTART_PARTITION_MODE_ONLY_ACTIVE_SECONDARIES";
-                break;         
+                break;
             default:
                 w << "Undefined FABRIC_RESTART_PARTITION_MODE = " << value_.valueInt64_;
         }
-        break; 
+        break;
     case Type_FABRIC_NODE_TRANSITION_TYPE:
         switch (value_.valueInt64_)
         {
@@ -1846,6 +1857,20 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
         }
         break;
 
+    case Type_FABRIC_DIAGNOSTICS_SINKS_KIND:
+        switch (value_.valueInt64_)
+        {
+        case FABRIC_DIAGNOSTICS_SINKS_KIND_INVALID:
+            w << "FABRIC_DIAGNOSTICS_SINKS_KIND_INVALID";
+            break;
+        case FABRIC_DIAGNOSTICS_SINKS_KIND_AZUREINTERNAL:
+            w << "FABRIC_DIAGNOSTICS_SINKS_KIND_AZUREINTERNAL";
+            break;
+        default:
+            w << "Undefined Type_FABRIC_DIAGNOSTICS_SINKS_KIND = " << value_.valueInt64_;
+        }
+        break;
+
     case Type_XmlNodeType:
         switch (value_.valueInt64_)
         {
@@ -1886,7 +1911,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             w << "Unknown XmlNodeType value=" << value_.valueInt64_;
         }
         break;
-        
+
     case TypeErrorCode:
         w << static_cast<ErrorCodeValue::Enum>(value_.valueInt64_);
         break;
@@ -1913,7 +1938,7 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             casted->WriteTo(w, format);
         }
         break;
-        
+
     default:
         throw "Unknown type";
         break;

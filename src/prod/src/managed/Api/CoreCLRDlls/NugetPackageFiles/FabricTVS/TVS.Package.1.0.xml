@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="TVS" 
+    ManifestVersion="Current" 
+    RolloutVersion="1.0" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>A Microsoft Azure Service Fabric .NET core system service that validates security tokens.</Description>
+    <DigestedServiceTypes RolloutVersion="1.0">
+        <ServiceTypes>
+            <StatelessServiceType ServiceTypeName="TokenValidationServiceType" />
+        </ServiceTypes>
+    </DigestedServiceTypes>
+    <DigestedCodePackage RolloutVersion="1.0">
+        <CodePackage Name="Code" Version="Current">
+            <EntryPoint>
+                <ExeHost>
+                    <Program>FabricTVS.sh</Program>
+                    <WorkingFolder>CodePackage</WorkingFolder>
+                </ExeHost>
+            </EntryPoint>
+        </CodePackage>
+    </DigestedCodePackage>
+    <DigestedResources RolloutVersion="1.0">
+    </DigestedResources>
+    <Diagnostics />
+</ServicePackage>

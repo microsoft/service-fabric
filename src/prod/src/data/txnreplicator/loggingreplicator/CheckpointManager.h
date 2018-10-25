@@ -41,6 +41,11 @@ namespace Data
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
                 __in KAllocator & allocator);
 
+            static ULONG CalculateTruncationTimerDurationMs(
+                __in Common::DateTime lastPeriodicCheckpointTime,
+                __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+                __in PeriodicCheckpointTruncationState::Enum const & state);
+
             __declspec(property(get = get_LastStableLsn)) LONG64 LastStableLsn;
             LONG64 get_LastStableLsn() const override
             {
@@ -64,6 +69,18 @@ namespace Data
             {
                 NTSTATUS status = processor.GetWeakIfRef(completedRecordsProcessor_);
                 ASSERT_IFNOT(NT_SUCCESS(status), "Failed to get weak ref to completed records processor in CheckpointManager");
+            }
+
+            __declspec(property(get = get_LastPeriodicCheckpointTime, put = set_LastPeriodicCheckpointTime)) Common::DateTime LastPeriodicCheckpointTime;
+            Common::DateTime get_LastPeriodicCheckpointTime() const
+            {
+                return lastPeriodicCheckpointTime_;
+            }
+
+            __declspec(property(get = get_LastPeriodicTruncationTime, put = set_LastPeriodicTruncationTime)) Common::DateTime LastPeriodicTruncationTime;
+            Common::DateTime get_LastPeriodicTruncationTime() const
+            {
+                return lastPeriodicTruncationTime_;
             }
 
             //
@@ -187,6 +204,13 @@ namespace Data
             void Reuse();
 
             NTSTATUS ErrorIfThrottled(__in LogRecordLib::LogicalLogRecord const & record) noexcept;
+
+            // Resume the periodic checkpoint/truncation lifecycle as necessary
+            void Recover(
+                __in Data::LogRecordLib::BeginCheckpointLogRecord::SPtr & lastCompletedBeginCheckpointRecord,
+                __in LONG64 recoveredTruncationTime);
+
+            void CancelPeriodicCheckpointTimer();
 
         private:
 
@@ -314,6 +338,16 @@ namespace Data
 
             void InvokePhysicalRecordProcessedCallback(__in LogRecordLib::PhysicalLogRecord & physicalRecord);
 
+            void OnCompletePendingLogHeadTruncation(__in Data::LogRecordLib::TruncationState::Enum truncationState);
+ 
+            void OnCompletePendingCheckpoint(
+                __in NTSTATUS status,
+                __in Data::LogRecordLib::CheckpointState::Enum checkpointState);
+
+            void TimerCallback();
+
+            void StartPeriodicCheckpointTimer();
+
             TransactionMap::SPtr const transactionMap_;
             ILogTruncationManager::SPtr const logTruncationManager_;
             ReplicatedLogManager::SPtr const replicatedLogManager_;
@@ -343,6 +377,13 @@ namespace Data
             bool groupCommitNeeded_;
             ktl::AwaitableCompletionSource<void>::SPtr groupCommitTask_;
             LONG64 lastStableLsn_;
+
+            // Timer to fire at configured interval and initiate checkpoint/truncation
+            Common::TimerSPtr checkpointTimerSPtr_;
+
+            // Fields used to maintain periodic checkpoint + truncation state machine
+            Common::DateTime lastPeriodicCheckpointTime_;
+            Common::DateTime lastPeriodicTruncationTime_;
         };
     }
 }

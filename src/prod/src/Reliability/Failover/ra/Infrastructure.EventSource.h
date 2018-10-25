@@ -25,6 +25,16 @@
                 TRACE_KEYWORDS2(Default, ForQuery), \
                 __VA_ARGS__)
 
+#define RA_STRUCTURED_TRACE_OPERATIONAL(trace_name, public_name, category, trace_id, trace_type, trace_level, ...) \
+            trace_name( \
+                Common::ExtendedEventMetadata::Create(public_name, category), \
+                Common::TraceTaskCodes::RA, \
+                trace_id, \
+                trace_type, \
+                Common::LogLevel::trace_level, \
+                Common::TraceChannelType::Operational, \
+                __VA_ARGS__)
+
 namespace Reliability
 {
     namespace ReconfigurationAgentComponent
@@ -342,9 +352,13 @@ namespace Reliability
                     );
 
                 DECLARE_RA_STRUCTURED_TRACE(ReportFaultProcessingBegin,
-                    Common::Guid,
-                    Federation::NodeInstance,
-                    ReconfigurationAgentComponent::FailoverUnit
+                    Common::Guid, // local activity id
+                    std::wstring, // node instance id
+                    Common::Guid, // partition id
+                    int64, // replica id
+                    Reliability::FaultType::Trace,
+                    bool, // is force 
+                    Common::ActivityDescription
                     );
 
                 DECLARE_RA_STRUCTURED_TRACE(HostingSendingReplicaDownMessage,
@@ -660,6 +674,7 @@ namespace Reliability
                     std::wstring // result
                     );
 
+                // Eventually we shall deprecate this Query channel one in favor of Operational channel.
                 DECLARE_RA_STRUCTURED_TRACE(ReconfigurationCompleted,
                     Common::Guid,
                     std::wstring,
@@ -668,6 +683,18 @@ namespace Reliability
                     Reliability::Epoch, 
                     ReconfigurationType::Trace, 
                     ReconfigurationResult::Trace, 
+                    Diagnostics::ReconfigurationPerformanceData
+                    );
+
+                DECLARE_RA_STRUCTURED_TRACE(ReconfigurationCompletedOperational,
+                    Common::Guid, // eventInstanceId
+                    Common::Guid, // partitionId
+                    std::wstring, // nodeName
+                    std::wstring, // node id
+                    std::wstring, // ServiceType
+                    Reliability::Epoch,
+                    ReconfigurationType::Trace,
+                    ReconfigurationResult::Trace,
                     Diagnostics::ReconfigurationPerformanceData
                     );
 
@@ -681,12 +708,22 @@ namespace Reliability
                 DECLARE_RA_STRUCTURED_TRACE(ResourceUsageReportExclusiveHost,
                     Common::Guid, // partition id
                     int64, // replica id
-                    ReplicaRole::Trace, // replica role
+                    ReplicaRole::Trace, // replica rolerep
                     std::wstring, // node instance
                     double, // cpu usage weighted average
                     int64,  // memory usage weighted average
                     double, // cpu usage raw
                     int64 // memory usage raw
+                    );
+
+                DECLARE_RA_STRUCTURED_TRACE(ReplicaStateChange,
+                    std::wstring, // node instance id
+                    Common::Guid, // partition id
+                    int64, // replica id
+                    Reliability::Epoch,
+                    ReplicaLifeCycleState::Trace,
+                    ReplicaRole::Trace,
+                    Common::ActivityDescription
                     );
 
                 RAEventSource() :
@@ -763,7 +800,7 @@ namespace Reliability
                     RA_STRUCTURED_TRACE(UpgradeMessageProcessorAction,                              153,    "Upgrade",                  Info,       "RA on node {0} Request Type: {1}. Action: {2} \r\n[Incoming]\r\nCancel Instance Id: {3}\r\nContext: {4}\r\n[Previous]\r\nInstance Id: {5}\r\nState: {7}\r\nContext: {6}", "id", "source", "tag", "incomingCancel", "incomingUpgrade", "currentCancel", "currentUpgrade", "currentState"),
 
                     RA_STRUCTURED_TRACE(ReportFaultCannotProcessDueToNotReady,                      158,    "ReportFault",              Noise,      "RA on node {1} cannot process ReportFault as FT not ready: {2}", "id", "nodeInstance", "rafu"),
-                    RA_STRUCTURED_TRACE(ReportFaultProcessingBegin,                                 159,    "ReportFault",              Noise,      "RA on node {1} processing FT during ReportFault: {2}", "id", "nodeInstance", "rafu"),
+                    RA_STRUCTURED_TRACE_QUERY(ReportFaultProcessingBegin,                           159,    "_Api_ReportFault",         Info,       "RA on node {1} processing ReportFault: PartitionId = {2}. ReplicaId = {3}. FaultType = {4}. IsForce = {5}. ReasonActivityDescription = {6}.", "id", "nodeInstance", "partitionId", "replicaId", "faultType", "isForce", "reasonActivityDescription"),
 
                     RA_STRUCTURED_TRACE(RetryTimerCreate,                                           160,    "RetryTimer",               Info,       "Created with interval {1}", "id", "timespan"),
                     RA_STRUCTURED_TRACE(RetryTimerTryCancel,                                        161,    "RetryTimer",               Noise,       "TryCancel. Passed in SeqNum {1}. Timer SeqNum {2}", "id", "inSeqNum", "curSeqNum"),
@@ -804,9 +841,10 @@ namespace Reliability
                     RA_STRUCTURED_TRACE(QueryResponse,                                              247,    "Query",                    Info,       "RA on node {0} sent query response. EC: {2}. Result Count: {3}\r\n[Activity: {1}] ", "id", "activityId", "ec", "count"),
                     RA_STRUCTURED_TRACE(DeployedReplicaDetailQueryResponse,                         248,    "Query",                    Info,       "RA on node {0} sent query response {2}\r\n[Activity: {1}]", "id",  "activityId", "result"),
                     RA_STRUCTURED_TRACE(ReconfigurationSlow,                                        249,    "ReconfigurationSlow",      Warning,    "RA on node {1} detected slow reconfiguration. Phase = {2}. Description = {3}", "id", "nodeInstance", "reconfigurationPhase", "healthReportDescription"),
-                    RA_STRUCTURED_TRACE_QUERY(ReconfigurationCompleted,                             250,    "_Reconfig_ReconfigurationCompleted", Info,       "RA on node {1}({2}) completed reconfiguration. PartitionId = {0}. ServiceType = {3}. Epoch = {4}. ReconfigurationType = {5}. Result = {6}. {7}", "id", "nodeName", "nodeInstance_id", "serviceType", "ccEpoch", "reconfigType", "result", "stats"),
-
-                    RA_STRUCTURED_TRACE(ResourceUsageReportExclusiveHost,                           251,    "ResourceMonitor",          Info,        "Resource usage for replicaId = {1} with role = {2} on node = {3} weighted average cpu usage = {4} cores weighted average memory usage = {5} MB raw cpu usage {6} cores raw memory usage {7} MB", "id", "replicaId", "replicaRole", "nodeInstance", "cpuUsageWeightedAverage", "memoryUsageWeightedAverage", "cpuUsageRaw", "memoryUsageRaw")
+                    RA_STRUCTURED_TRACE_QUERY(ReconfigurationCompleted,                             250, "_Reconfig_ReconfigurationCompleted", Info, "RA on node {1}({2}) completed reconfiguration. PartitionId = {0}. ServiceType = {3}. Epoch = {4}. ReconfigurationType = {5}. Result = {6}. {7}", "id", "nodeName", "nodeInstance_id", "serviceType", "ccEpoch", "reconfigType", "result", "stats"),
+                    RA_STRUCTURED_TRACE(ResourceUsageReportExclusiveHost,                           251,    "ResourceMonitor",          Info,        "Resource usage for replicaId = {1} with role = {2} on node = {3} weighted average cpu usage = {4} cores weighted average memory usage = {5} MB raw cpu usage {6} cores raw memory usage {7} MB", "id", "replicaId", "replicaRole", "nodeInstance", "cpuUsageWeightedAverage", "memoryUsageWeightedAverage", "cpuUsageRaw", "memoryUsageRaw"),
+                    RA_STRUCTURED_TRACE_OPERATIONAL(ReconfigurationCompletedOperational,            L"PartitionReconfigured", OperationalStateTransitionCategory, 252, "_PartitionsOps_ReconfigurationCompleted", Info, "EventInstanceId: {0}. RA on node {2}({3}) completed reconfiguration. PartitionId = {1}. ServiceType = {4}. Epoch = {5}. ReconfigurationType = {6}. Result = {7}. {8}", "eventInstanceId", "partitionId", "nodeName", "nodeInstance_id", "serviceType", "ccEpoch", "reconfigType", "result", "stats"),
+                    RA_STRUCTURED_TRACE_QUERY(ReplicaStateChange,                                   253, "_Api_ReplicaStateChange",       Info,       "RA on node {0} closing. PartitionId = {1}. ReplicaId = {2}. Epoch = {3}. Status = {4}. Role = {5}. ReasonActivityDescription = {6}.", "nodeInstance_id", "partitionId", "replicaId", "epoch", "status", "role", "reasonActivityDescription")
                 {
                 }
 

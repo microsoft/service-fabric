@@ -36,9 +36,7 @@ namespace Common
             Common::StringCollection & keyNames, 
             std::wstring const & partialName = L"") const;
 
-        static ConfigStoreSPtr Create();
         static ConfigStoreSPtr Create(GetConfigStoreImpl const & getConfigStore);
-        static ErrorCode FabricGetConfigStoreEnvironmentVariable(__out std::wstring & envVarName, __out std::wstring & envVarValue);
 
     private:
         bool DispatchUpdate(std::wstring const & section, std::wstring const & key);

@@ -80,6 +80,12 @@ namespace ServiceModel
             ApplicationName = 51,
             ComposeDeploymentStatus = 52,
             ComposeDeploymentUpgradeProgress = 53,
+            ReplicasByService = 54,
+            ApplicationResourceList = 55,
+            ServiceResourceList = 56,
+            ReplicaResource = 57,
+            ApplicationUnhealthyEvaluation = 58,
+            VolumeResourceList = 59
         };
 
         Serialization::FabricSerializable* CreateNew(QueryResultHelpers::Enum resultKind);

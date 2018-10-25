@@ -27,23 +27,6 @@ PartitionHealthStateChunkList::PartitionHealthStateChunkList(
 {
 }
 
-PartitionHealthStateChunkList::PartitionHealthStateChunkList(PartitionHealthStateChunkList && other)
-    : HealthStateChunkList(move(other))
-    , items_(move(other.items_))
-{
-}
-
-PartitionHealthStateChunkList & PartitionHealthStateChunkList::operator =(PartitionHealthStateChunkList && other)
-{
-    if (this != &other)
-    {
-        items_ = move(other.items_);
-    }
-
-    HealthStateChunkList::operator=(move(other));
-    return *this;
-}
-
 PartitionHealthStateChunkList::~PartitionHealthStateChunkList()
 {
 }

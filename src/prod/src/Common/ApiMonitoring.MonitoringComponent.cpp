@@ -12,24 +12,28 @@ using namespace ApiMonitoring;
 
 namespace
 {
-    void TraceApiStart(MonitoringData const & monitoringData)
+    void TraceApiStart(MonitoringData const & monitoringData, ApiMonitoring::MonitoringComponentMetadata const & metaData)
     {
         ApiEventSource::Events->Start(
             monitoringData.PartitionId,
             monitoringData.Api,
-            monitoringData.ReplicaId);
+            monitoringData.ReplicaId,
+            metaData.NodeInstance,
+            metaData.NodeName);
     }
 
-    void TraceApiSlow(MonitoringData const & monitoringData)
+    void TraceApiSlow(MonitoringData const & monitoringData, ApiMonitoring::MonitoringComponentMetadata const & metaData)
     {
         ApiEventSource::Events->Slow(
             monitoringData.PartitionId,
             monitoringData.Api,
             monitoringData.ReplicaId,
-			monitoringData.StartTime.ToDateTime());
+			monitoringData.StartTime.ToDateTime(),
+            metaData.NodeInstance,
+            metaData.NodeName);
     }
 
-    void TraceApiFinish(MonitoringData const & monitoringData, TimeSpan elapsed, ErrorCode const & error)
+    void TraceApiFinish(MonitoringData const & monitoringData, TimeSpan elapsed, ErrorCode const & error, ApiMonitoring::MonitoringComponentMetadata const & metaData)
     {
         if (monitoringData.ServiceType.empty())
         {
@@ -39,7 +43,9 @@ namespace
                 monitoringData.ReplicaId,
                 elapsed.TotalMillisecondsAsDouble(),
                 error,
-                error.Message);
+                error.Message,
+                metaData.NodeInstance,
+                metaData.NodeName);
         }
         else
         {
@@ -50,7 +56,9 @@ namespace
                 monitoringData.ServiceType,
                 elapsed.TotalMillisecondsAsDouble(),
                 error,
-                error.Message);
+                error.Message,
+                metaData.NodeInstance,
+                metaData.NodeName);
         }
     }
 }
@@ -80,10 +88,12 @@ MonitoringComponent::MonitoringComponent(
 {
 }
 
-void MonitoringComponent::Open()
+void MonitoringComponent::Open(MonitoringComponentMetadata const & metaData)
 {
     AcquireWriteLock grab(lock_);
     ASSERT_IF(isOpen_, "Cannot be open");
+
+	metaData_ = metaData;
 
     auto root = root_.CreateComponentRoot();
 
@@ -166,7 +176,7 @@ void MonitoringComponent::StopMonitoring(
 
     auto callbackItems = GenerateClearHealthCallbackList(*description, sequenceNumber);
 
-    InvokeHealthReportCallback(callbackItems, clearSlowHealthReportCallback_);
+    InvokeHealthReportCallback(callbackItems, clearSlowHealthReportCallback_, metaData_);
 }
 
 void MonitoringComponent::Test_OnTimer(StopwatchTime now)
@@ -188,7 +198,7 @@ void MonitoringComponent::Test_OnTimer(StopwatchTime now)
     
     auto callbackItems = GenerateSlowHealthCallbackList(move(actions.second));
     
-    InvokeHealthReportCallback(callbackItems, slowHealthReportCallback_);
+    InvokeHealthReportCallback(callbackItems, slowHealthReportCallback_, metaData_);
 }
 
 void MonitoringComponent::DisableTimerCallerHoldsLock()
@@ -251,7 +261,7 @@ void MonitoringComponent::TraceBeginIfEnabled(
 {
     if (description.Parameters.IsApiLifeCycleTraceEnabled)
     {
-        apiStartTraceCallback_(description.Data);
+        apiStartTraceCallback_(description.Data, metaData_);
     }
 }
 
@@ -261,7 +271,7 @@ void MonitoringComponent::TraceEndIfEnabled(
 {
     if (description.Parameters.IsApiLifeCycleTraceEnabled)
     {
-        apiEndTraceCallback_(description.Data, Stopwatch::Now() - description.Data.StartTime, error);
+        apiEndTraceCallback_(description.Data, Stopwatch::Now() - description.Data.StartTime, error, metaData_);
     }
 }
 
@@ -270,7 +280,7 @@ void MonitoringComponent::TraceSlowIfEnabled(
 {
     for (auto const & i : expiredApis)
     {
-		apiSlowTraceCallback_(i.ApiDescription->Data);
+        apiSlowTraceCallback_(i.ApiDescription->Data, metaData_);
     }
 }
 
@@ -308,7 +318,8 @@ vector<MonitoringHealthEvent> MonitoringComponent::GenerateClearHealthCallbackLi
 
 void MonitoringComponent::InvokeHealthReportCallback(
     std::vector<MonitoringHealthEvent> const & items,
-    HealthReportCallback const & callback)
+    HealthReportCallback const & callback,
+	MonitoringComponentMetadata const & metaData)
 {
     if (items.empty())
     {
@@ -316,5 +327,5 @@ void MonitoringComponent::InvokeHealthReportCallback(
     }
 
     ASSERT_IF(callback == nullptr, "Health callback cant be null");
-    callback(items);
+    callback(items, metaData);
 }

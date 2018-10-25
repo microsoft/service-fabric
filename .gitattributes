@@ -1,4 +1,19 @@
-# Enforce LF endings on Windows.  This is necessary
-# in order for the Linux docker container on Windows to work.
-* text eol=lf
+# Set OS-specific encodings for some extensions
+
+# Project files
+*.*proj eol=crlf
+*.sln eol=crlf
+
+# Script files
+*.cmd eol=crlf
+*.ps1 eol=crlf
+*.bat eol=crlf
+*.sh eol=lf
+
+# Denote all files that are truly binary and should not be modified.
+*.exe binary
+*.dll binary
+*.pdb binary
+*.ico binary
 *.png binary
+*.jpg binary

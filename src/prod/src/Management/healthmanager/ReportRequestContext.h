@@ -11,7 +11,7 @@ namespace Management
     {
         // Context that keeps track of the incoming reports that are pending completion.
         // When a report is processed, it must notify the requestor.
-        class ReportRequestContext 
+        class ReportRequestContext
             : public RequestContext
         {
             DENY_COPY(ReportRequestContext);
@@ -34,19 +34,23 @@ namespace Management
             __declspec(property(get = get_RequestId)) uint64 RequestId;
             uint64 get_RequestId() const { return requestId_; }
 
-            __declspec(property(get=get_Report)) ServiceModel::HealthReport const & Report;
+            __declspec(property(get = get_Report)) ServiceModel::HealthReport const & Report;
             ServiceModel::HealthReport const & get_Report() const { return report_; }
-       
-            __declspec(property(get=get_ReportKind)) FABRIC_HEALTH_REPORT_KIND ReportKind;
+
+            __declspec(property(get = get_PreviousState, put = set_PreviousState)) FABRIC_HEALTH_STATE const & PreviousState;
+            FABRIC_HEALTH_STATE const & get_PreviousState() const { return previousState_; }
+            void set_PreviousState(FABRIC_HEALTH_STATE const &  value) { previousState_ = value; }
+
+            __declspec(property(get = get_ReportKind)) FABRIC_HEALTH_REPORT_KIND ReportKind;
             FABRIC_HEALTH_REPORT_KIND get_ReportKind() const { return report_.Kind; }
 
-            __declspec(property(get=get_Kind)) HealthEntityKind::Enum Kind;
+            __declspec(property(get = get_Kind)) HealthEntityKind::Enum Kind;
             HealthEntityKind::Enum get_Kind() const { return HealthEntityKind::FromHealthInformationKind(report_.Kind); }
 
-            __declspec(property(get=get_SequenceStreamFromLsn)) FABRIC_SEQUENCE_NUMBER SequenceStreamFromLsn;
+            __declspec(property(get = get_SequenceStreamFromLsn)) FABRIC_SEQUENCE_NUMBER SequenceStreamFromLsn;
             FABRIC_SEQUENCE_NUMBER get_SequenceStreamFromLsn() const { return sequenceStreamFromLsn_; }
-            
-            __declspec(property(get=get_SequenceStreamUpToLsn)) FABRIC_SEQUENCE_NUMBER SequenceStreamUpToLsn;
+
+            __declspec(property(get = get_SequenceStreamUpToLsn)) FABRIC_SEQUENCE_NUMBER SequenceStreamUpToLsn;
             FABRIC_SEQUENCE_NUMBER get_SequenceStreamUpToLsn() const { return sequenceStreamUpToLsn_; }
 
             virtual ServiceModel::Priority::Enum get_Priority() const override { return report_.ReportPriority; }
@@ -56,7 +60,7 @@ namespace Management
 
             void OnRequestCompleted() override;
 
-            // Methods that get information specific to a report kind. 
+            // Methods that get information specific to a report kind.
             // Note that they must be called when the KIND matches.
             template<class TEntityId>
             TEntityId GetEntityId() const;
@@ -83,6 +87,10 @@ namespace Management
             // If invalid, no sequence stream is defined
             FABRIC_SEQUENCE_NUMBER sequenceStreamFromLsn_;
             FABRIC_SEQUENCE_NUMBER sequenceStreamUpToLsn_;
+
+            // Tracks what the previous state of the health report with the same property, source, and description
+            // was. For example, we can write some traces out only when the health report coming in changes the state.
+            FABRIC_HEALTH_STATE previousState_;
         };
     }
 }

@@ -14,8 +14,13 @@ namespace ResourceMonitor
         //needs to be at least 2 as we need at least 2 measures to figure out the cpu rate
         static const int MinTimeMeasuredValid = 2;
 
+#if !defined (PLATFORM_UNIX)
         //per online documentation the total cpu time is expressed in 100 nanosecond ticks
         static const int64 CpuRateTicksPerSecond = 10000000;
+#else
+        //per online documentation the total cpu time is expressed in nanosecond ticks on Linux
+        static const int64 CpuRateTicksPerSecond = 1000000000;
+#endif 
 
         ResourceUsage();
         ~ResourceUsage();

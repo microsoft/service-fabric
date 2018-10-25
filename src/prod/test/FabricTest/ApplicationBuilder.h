@@ -84,11 +84,13 @@ namespace FabricTest
             std::wstring LowKey;
             std::wstring HighKey;
             std::vector<std::wstring> PartitionNames;
+            std::wstring ServiceDnsName;
 
             std::wstring PlacementConstraints;
             std::vector<Reliability::ServiceLoadMetricDescription> Metrics;
             std::vector<ServiceModel::ServicePlacementPolicyDescription> PlacementPolicies;
             std::vector<Reliability::ServiceCorrelationDescription> ServiceCorrelations;
+            std::vector<Reliability::ServiceScalingPolicyDescription> ScalingPolicies;
             std::wstring DefaultMoveCost;
         };
         

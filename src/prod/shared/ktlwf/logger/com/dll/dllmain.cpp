@@ -202,6 +202,25 @@ KCreatePhysicalLogManager(__out IKPhysicalLogManager **const Result)
 }
 
 HRESULT 
+KCreatePhysicalLogManagerInproc(__out IKPhysicalLogManager **const Result)
+{
+    ComIKPhysicalLogManager::SPtr   sptr;
+
+    HRESULT hr = ComIKPhysicalLogManager::CreateInproc(
+        GetSFDefaultKtlSystem().NonPagedAllocator(),
+        sptr);
+
+    if (FAILED(hr))
+    {
+        *Result = nullptr;
+        return Common::ComUtility::OnPublicApiReturn(hr);
+    }
+
+    *Result = sptr.Detach();
+    return Common::ComUtility::OnPublicApiReturn(S_OK);
+}
+
+HRESULT 
 KCopyMemory(
     __in ULONGLONG SourcePtr,
     __in ULONGLONG DestPtr,

@@ -17,33 +17,34 @@ ErrorCode DockerComposeAppTypeNameVersionGenerator::GetTypeNameAndVersion(
     __out ServiceModelTypeName &typeName,
     __out ServiceModelVersion &typeVersion)
 {
-    StoreDataComposeDeploymentInstanceCounter deploymentInstanceCounter;
+    StoreDataSingleInstanceDeploymentCounter deploymentInstanceCounter;
 
-    return deploymentInstanceCounter.GetTypeNameAndVersion(storeTx, typeName, typeVersion);
+    return deploymentInstanceCounter.GetComposeDeploymentTypeNameAndVersion(storeTx, typeName, typeVersion);
 }
 
 ErrorCode DockerComposeAppTypeNameVersionGenerator::GetNextVersion(
     Store::StoreTransaction const &storeTx,
-    ComposeDeploymentContext const &composeDeploymentContext,
+    wstring const & deploymentName,
+    ServiceModelVersion const & currentTypeVersion,
     __out ServiceModelVersion &typeVersion)
 {
     uint64 currentVersion = 0, previousTargetVersion = 0;
 
-    auto error = StoreDataComposeDeploymentInstanceCounter::GetVersionNumber(composeDeploymentContext.TypeVersion, &currentVersion);
+    auto error = StoreDataSingleInstanceDeploymentCounter::GetVersionNumber(currentTypeVersion, &currentVersion);
     if (!error.IsSuccess())
     {
         return error;
     }
 
     ServiceModelVersion previousVersion;
-    error = GetPreviousTargetVersion(storeTx, composeDeploymentContext.DeploymentName, previousVersion);
+    error = GetPreviousTargetVersion(storeTx, deploymentName, previousVersion);
     if (error.IsSuccess())
     {
         //
         // If the upgrade failed without rollback, the current version and the target version of that upgrade could
         // be active, so pick a version > both the versions as the next version.
         //
-        error = StoreDataComposeDeploymentInstanceCounter::GetVersionNumber(previousVersion, &previousTargetVersion);
+        error = StoreDataSingleInstanceDeploymentCounter::GetVersionNumber(previousVersion, &previousTargetVersion);
         if (!error.IsSuccess())
         {
             error = ErrorCodeValue::Success;
@@ -51,7 +52,7 @@ ErrorCode DockerComposeAppTypeNameVersionGenerator::GetNextVersion(
     }
 
     auto nextVersion = currentVersion > previousTargetVersion ? (currentVersion + 1) : (previousTargetVersion + 1);
-    typeVersion = StoreDataComposeDeploymentInstanceCounter::GenerateServiceModelVersion(nextVersion);
+    typeVersion = StoreDataSingleInstanceDeploymentCounter::GenerateServiceModelVersion(nextVersion);
 
     return ErrorCodeValue::Success;
 }

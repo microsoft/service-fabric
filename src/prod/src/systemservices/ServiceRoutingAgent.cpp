@@ -470,7 +470,6 @@ AsyncOperationSPtr ServiceRoutingAgent::Impl::BeginRouteGatewayMessage(
     AsyncCallback const & callback, 
     AsyncOperationSPtr const & parent)
 {
-    RequestReceiverContextUPtr receiverContext;
     AsyncOperationSPtr operation;
 
     if (message->Action == ServiceRoutingAgentMessage::ServiceRouteRequestAction)
@@ -478,7 +477,7 @@ AsyncOperationSPtr ServiceRoutingAgent::Impl::BeginRouteGatewayMessage(
        operation = AsyncOperation::CreateAndStart<NodeToServiceAsyncOperation>(
             *this,
             move(message),
-            move(receiverContext),
+            nullptr, // RequestReceiverContextUPtr
             timeout,
             callback,
             parent);
@@ -490,7 +489,7 @@ AsyncOperationSPtr ServiceRoutingAgent::Impl::BeginRouteGatewayMessage(
         operation = AsyncOperation::CreateAndStart<NodeToServiceAsyncOperation>(
             *this,
             ErrorCodeValue::InvalidMessage,
-            move(receiverContext),
+            nullptr, // RequestReceiverContextUPtr
             timeout,
             callback,
             parent);

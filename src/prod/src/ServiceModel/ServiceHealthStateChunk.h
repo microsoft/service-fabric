@@ -22,8 +22,8 @@ namespace ServiceModel
             FABRIC_HEALTH_STATE healthState,
             PartitionHealthStateChunkList && partitionHealthStateChunks);
 
-        ServiceHealthStateChunk(ServiceHealthStateChunk && other);
-        ServiceHealthStateChunk & operator = (ServiceHealthStateChunk && other);
+        ServiceHealthStateChunk(ServiceHealthStateChunk && other) = default;
+        ServiceHealthStateChunk & operator = (ServiceHealthStateChunk && other) = default;
 
         virtual ~ServiceHealthStateChunk();
 

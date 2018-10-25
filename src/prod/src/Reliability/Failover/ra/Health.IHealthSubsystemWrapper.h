@@ -16,6 +16,8 @@ namespace Reliability
             public:
                 virtual ~IHealthSubsystemWrapper() {}
 
+                virtual Common::ErrorCode ReportStoreProviderEvent(ServiceModel::HealthReport &&) = 0;
+
                 virtual Common::ErrorCode ReportReplicaEvent(
                     ReplicaHealthEvent::Enum type,
                     FailoverUnitId const & ftId,

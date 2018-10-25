@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE(Phase1_ClearReportCloseReplicaTest)
         [&](EntityExecutionContext & base)
     {
         auto & context = base.As<FailoverUnitEntityExecutionContext>();
-        Test.GetFT(L"SP1").StartCloseLocalReplica(ReplicaCloseMode::Close, ReconfigurationAgent::InvalidNode, context);
+        Test.GetFT(L"SP1").StartCloseLocalReplica(ReplicaCloseMode::Close, ReconfigurationAgent::InvalidNode, context, ActivityDescription::Empty);
     });
 
     ValidateClearHealthEvent();

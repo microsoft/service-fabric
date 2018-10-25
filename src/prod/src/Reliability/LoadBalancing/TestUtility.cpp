@@ -66,6 +66,12 @@ vector<wstring> PlacementAndLoadBalancingUnitTest::GetActionListString(map<Guid,
 
             switch (currentAction.Action)
             {
+            case FailoverUnitMovementType::MoveInstance:
+
+                w.Write("move instance {0}=>{1}", GetNodeId(currentAction.SourceNode), GetNodeId(currentAction.TargetNode));
+
+                break;
+
             case FailoverUnitMovementType::MoveSecondary:
                 if (itMovePrimary != allActions.end() && 
                     currentAction.SourceNode == itMovePrimary->TargetNode && 
@@ -76,16 +82,7 @@ vector<wstring> PlacementAndLoadBalancingUnitTest::GetActionListString(map<Guid,
                 }
                 else
                 {
-                    w.Write("move ");
-                    if (actionPair.second.IsStateful)
-                    {
-                        w.Write("secondary");
-                    }
-                    else
-                    {
-                        w.Write("instance");
-                    }
-                    w.Write(" {0}=>{1}", GetNodeId(currentAction.SourceNode), GetNodeId(currentAction.TargetNode));
+                    w.Write("move secondary {0}=>{1}", GetNodeId(currentAction.SourceNode), GetNodeId(currentAction.TargetNode));
                 }
 
                 break;
@@ -103,33 +100,27 @@ vector<wstring> PlacementAndLoadBalancingUnitTest::GetActionListString(map<Guid,
                 break;
 
             case FailoverUnitMovementType::AddSecondary:
-                w.Write("add ");
-                if (actionPair.second.IsStateful)
-                {
-                    w.Write("secondary");
-                }
-                else
-                {
-                    w.Write("instance");
-                }
-                w.Write(" {0}", GetNodeId(currentAction.TargetNode));
+                w.Write("add secondary {0}", GetNodeId(currentAction.TargetNode));
                 break;
 
-            case FailoverUnitMovementType::Void:
+            case FailoverUnitMovementType::AddInstance:
+                w.Write("add instance {0}", GetNodeId(currentAction.TargetNode));
+                break;
+
+            case FailoverUnitMovementType::RequestedPlacementNotPossible:
                 w.Write("void movement on {0}", GetNodeId(currentAction.SourceNode));
                 break;
 
-            case FailoverUnitMovementType::Drop:
-                w.Write("drop ");
-                if (actionPair.second.IsStateful)
-                {
-                    w.Write("secondary");
-                }
-                else
-                {
-                    w.Write("instance");
-                }
-                w.Write(" {0}", GetNodeId(currentAction.SourceNode));
+            case FailoverUnitMovementType::DropPrimary:
+                w.Write("drop primary {0}", GetNodeId(currentAction.SourceNode));
+                break;
+
+            case FailoverUnitMovementType::DropSecondary:
+                w.Write("drop secondary {0}", GetNodeId(currentAction.SourceNode));
+                break;
+
+            case FailoverUnitMovementType::DropInstance:
+                w.Write("drop instance {0}", GetNodeId(currentAction.SourceNode));
                 break;
 
             case FailoverUnitMovementType::PromoteSecondary:
@@ -627,7 +618,8 @@ NodeDescription PlacementAndLoadBalancingUnitTest::CreateNodeDescriptionWithDoma
 ServicePackageDescription PlacementAndLoadBalancingUnitTest::CreateServicePackageDescription(
     ServiceModel::ServicePackageIdentifier servicePackageIdentifier,
     double cpuCores,
-    uint memoryInBytes)
+    uint memoryInBytes,
+    std::vector<std::wstring>&& codePackages)
 {
     map<std::wstring, double> requiredResources;
 
@@ -637,7 +629,7 @@ ServicePackageDescription PlacementAndLoadBalancingUnitTest::CreateServicePackag
         requiredResources.insert(make_pair(ServiceModel::Constants::SystemMetricNameMemoryInMB, memoryInBytes));
     }
 
-    return ServicePackageDescription(ServiceModel::ServicePackageIdentifier(servicePackageIdentifier), move(requiredResources));
+    return ServicePackageDescription(ServiceModel::ServicePackageIdentifier(servicePackageIdentifier), move(requiredResources), move(codePackages));
 }
 
 ServicePackageDescription PlacementAndLoadBalancingUnitTest::CreateServicePackageDescription(
@@ -646,11 +638,12 @@ ServicePackageDescription PlacementAndLoadBalancingUnitTest::CreateServicePackag
     std::wstring applicationName,
     double cpuCores,
     uint memoryInBytes,
-    ServiceModel::ServicePackageIdentifier & spId)
+    ServiceModel::ServicePackageIdentifier & spId,
+    std::vector<std::wstring>&& codePackages)
 {
     spId = ServiceModel::ServicePackageIdentifier(ServiceModel::ApplicationIdentifier(appTypeName, 0), servicePackageName);
 
-    return CreateServicePackageDescription(ServiceModel::ServicePackageIdentifier(spId), cpuCores, memoryInBytes);
+    return CreateServicePackageDescription(ServiceModel::ServicePackageIdentifier(spId), cpuCores, memoryInBytes, move(codePackages));
 }
 
 ServiceDescription PlacementAndLoadBalancingUnitTest::CreateServiceDescriptionWithServicePackage(
@@ -983,6 +976,92 @@ bool isStateful,
 vector<ServiceMetric> && metrics)
 {
     return ServiceDescription(move(serviceName), move(serviceTypeName), wstring(L""), isStateful, wstring(L""), wstring(L""), true, move(metrics), FABRIC_MOVE_COST_LOW, false);
+}
+
+vector<Reliability::ServiceScalingPolicyDescription> PlacementAndLoadBalancingUnitTest::CreateAutoScalingPolicyForPartition(
+    wstring metricName,
+    double lowerLoadThreshold,
+    double upperLoadThreshold,
+    uint scaleIntervalInSeconds,
+    long minInstanceCount,
+    long maxInstanceCount,
+    long scaleIncrement)
+{
+    vector<Reliability::ServiceScalingPolicyDescription> result;
+    Reliability::ScalingMechanismSPtr mechanism = make_shared<Reliability::InstanceCountScalingMechanism>(minInstanceCount, maxInstanceCount, scaleIncrement);
+    Reliability::ScalingTriggerSPtr trigger = make_shared<Reliability::AveragePartitionLoadScalingTrigger>(metricName, lowerLoadThreshold, upperLoadThreshold, scaleIntervalInSeconds);
+    result.push_back(Reliability::ServiceScalingPolicyDescription(trigger, mechanism));
+    return result;
+}
+
+vector<Reliability::ServiceScalingPolicyDescription> PlacementAndLoadBalancingUnitTest::CreateAutoScalingPolicyForService(
+    wstring metricName,
+    double lowerLoadThreshold,
+    double upperLoadThreshold,
+    uint scaleIntervalInSeconds,
+    long minPartitionCount,
+    long maxPartitionCount,
+    long scaleIncrement,
+    bool useOnlyPrimaryLoad)
+{
+    vector<Reliability::ServiceScalingPolicyDescription> result;
+    Reliability::ScalingMechanismSPtr mechanism = make_shared<Reliability::AddRemoveIncrementalNamedPartitionScalingMechanism>(minPartitionCount, maxPartitionCount, scaleIncrement);
+    Reliability::ScalingTriggerSPtr trigger = make_shared<Reliability::AverageServiceLoadScalingTrigger>(metricName, lowerLoadThreshold, upperLoadThreshold, scaleIntervalInSeconds, useOnlyPrimaryLoad);
+    result.push_back(Reliability::ServiceScalingPolicyDescription(trigger, mechanism));
+    return result;
+}
+
+ServiceDescription PlacementAndLoadBalancingUnitTest::CreateServiceDescriptionWithAutoscalingPolicy(
+    wstring serviceName,
+    wstring serviceTypeName,
+    bool isStateful,
+    int targetReplicaSetSize,
+    vector<Reliability::ServiceScalingPolicyDescription> && scalingPolicies,
+    vector<ServiceMetric> && metrics,
+    int partitionCount)
+{
+    if (PLBConfig::GetConfig().UseAppGroupsInBoost)
+    {
+        return ServiceDescription(
+            move(serviceName),
+            move(serviceTypeName),
+            wstring(L"fabric:/NastyApplication314"),
+            isStateful,
+            wstring(L""),
+            wstring(L""),
+            true,
+            move(metrics),
+            FABRIC_MOVE_COST_LOW,
+            false,
+            partitionCount,
+            targetReplicaSetSize,
+            true,
+            ServiceModel::ServicePackageIdentifier(),
+            ServiceModel::ServicePackageActivationMode::ExclusiveProcess,
+            0,
+            move(scalingPolicies));
+    }
+    else
+    {
+        return ServiceDescription(
+            move(serviceName),
+            move(serviceTypeName),
+            wstring(L""),
+            isStateful,
+            wstring(L""),
+            wstring(L""),
+            true,
+            move(metrics),
+            FABRIC_MOVE_COST_LOW,
+            false,
+            partitionCount,
+            targetReplicaSetSize,
+            true,
+            ServiceModel::ServicePackageIdentifier(),
+            ServiceModel::ServicePackageActivationMode::ExclusiveProcess,
+            0,
+            move(scalingPolicies));
+    }
 }
 
 ApplicationDescription PlacementAndLoadBalancingUnitTest::CreateApplicationDescriptionWithCapacities(

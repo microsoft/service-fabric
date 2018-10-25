@@ -279,7 +279,7 @@ Common::ErrorCode ClusterEntity::GetClusterAndApplicationHealthPoliciesIfNotSet(
 
 
 Common::ErrorCode ClusterEntity::UpdateContextHealthPoliciesCallerHoldsLock(
-    __in QueryRequestContext & context)
+    __inout QueryRequestContext & context)
 {
     if (!context.ClusterPolicy || !context.ApplicationHealthPolicies)
     {
@@ -487,7 +487,7 @@ Common::ErrorCode ClusterEntity::EvaluateHealth(
 }
 
 ErrorCode ClusterEntity::GetNodesAggregatedHealthStates(
-    __in QueryRequestContext & context)
+    __inout QueryRequestContext & context)
 {
     ASSERT_IFNOT(context.ClusterPolicy, "{0}: health policy not set", context);
 
@@ -528,7 +528,10 @@ ErrorCode ClusterEntity::GetNodesAggregatedHealthStates(
         return error;
     }
 
+    // If performance becomes an issue, consider creating an overload for GetEntities that takes a maxResults parameter,
+    // so that we don't add things to "nodes" list that we can't add to the pager.
     ListPager<NodeAggregatedHealthState> pager;
+    pager.SetMaxResults(context.MaxResults);
     for (auto it = nodes.begin(); it != nodes.end(); ++it)
     {
         auto node = NodesCache::GetCastedEntityPtr(*it);
@@ -552,17 +555,27 @@ ErrorCode ClusterEntity::GetNodesAggregatedHealthStates(
                         castedAttributes.NodeName,
                         castedAttributes.EntityId,
                         nodeHealthState));
-                if (error.IsError(ErrorCodeValue::EntryTooLarge))
+                bool benignError;
+                bool hasError;
+                CheckListPagerErrorAndTrace(error, this->EntityIdString, context.ActivityId, castedAttributes.NodeName, hasError, benignError);
+                if (hasError && benignError)
                 {
-                    HMEvents::Trace->Query_MaxMessageSizeReached(
-                        this->EntityIdString,
-                        context.ActivityId,
-                        castedAttributes.NodeName,
-                        error,
-                        error.Message);
                     break;
                 }
+                else if (hasError && !benignError)
+                {
+                    return error;
+                }
             }
+        }
+        else
+        {
+            HMEvents::Trace->InternalMethodFailed(
+                this->EntityIdString,
+                context.ActivityId,
+                L"EvaluateHealth",
+                error,
+                error.Message);
         }
     }
 
@@ -1570,7 +1583,7 @@ Common::ErrorCode ClusterEntity::ComputeApplicationsHealth(
 }
 
 ErrorCode ClusterEntity::GetApplicationsAggregatedHealthStates(
-    __in QueryRequestContext & context)
+    __inout QueryRequestContext & context)
 {
     vector<HealthEntitySPtr> applications;
     ErrorCode error(ErrorCodeValue::Success);
@@ -1642,8 +1655,96 @@ ErrorCode ClusterEntity::GetApplicationsAggregatedHealthStates(
     return ErrorCode::Success();
 }
 
+ErrorCode ClusterEntity::GetApplicationUnhealthyEvaluations(
+    QueryRequestContext & context)
+{
+    vector<HealthEntitySPtr> applications;
+    ErrorCode error;
+    if (!context.ContinuationToken.empty())
+    {
+        error = HealthManagerReplicaObj.EntityManager->Applications.GetEntities(context.ActivityId, ApplicationHealthId(context.ContinuationToken), applications);
+    }
+    else
+    {
+        error = HealthManagerReplicaObj.EntityManager->Applications.GetEntities(context.ActivityId, applications);
+    }
+
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    ListPager<ApplicationUnhealthyEvaluation> pager;
+    pager.SetMaxResults(context.MaxResults);
+
+    vector<wstring> upgradeDomains;
+    for (HealthEntitySPtr const & obj : applications)
+    {
+        auto application = ApplicationsCache::GetCastedEntityPtr(obj);
+        if (!application->Match(context.Filters))
+        {
+            continue;
+        }
+
+        if (application->IsSystemApp || application->IsAdHocApp())
+        {
+            continue;
+        }
+
+        FABRIC_HEALTH_STATE healthState = FABRIC_HEALTH_STATE_UNKNOWN;
+        vector<HealthEvaluation> unhealthyEvaluations;
+        error = application->EvaluateHealth(
+            context.ActivityId,
+            context.ApplicationPolicy,
+            upgradeDomains,
+            nullptr,
+            /*out*/healthState,
+            /*out*/unhealthyEvaluations,
+            true); // isDeployedChildrenPrecedent
+
+        if (error.IsSuccess())
+        {
+            vector<HealthEvent> tempEvent;
+            EntityHealthBase healthTemp(
+                move(tempEvent),
+                healthState,
+                move(unhealthyEvaluations));
+
+            error = healthTemp.UpdateUnhealthyEvalautionsPerMaxAllowedSize(QueryRequestContext::GetMaxAllowedSize());
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+
+            error = pager.TryAdd(ApplicationUnhealthyEvaluation(application->EntityId.ApplicationName, healthState, healthTemp.TakeUnhealthyEvaluations()));
+            bool benignError, hasError;
+            CheckListPagerErrorAndTrace(error, this->EntityIdString, context.ActivityId, application->EntityId.ApplicationName, hasError, benignError);
+            if (hasError && benignError)
+            {
+                break;
+            }
+            else if (hasError && !benignError)
+            {
+                return error;
+            }
+        }
+        else
+        {
+            HMEvents::Trace->InternalMethodFailed(
+                this->EntityIdString,
+                context.ActivityId,
+                L"EvaluateHealth",
+                error,
+                error.Message);
+        }
+    }
+
+    context.AddQueryListResults<ApplicationUnhealthyEvaluation>(move(pager));
+    return ErrorCode::Success();
+}
+
 ErrorCode ClusterEntity::GetDeployedApplicationsOnNodeAggregatedHealthStates(
-    __in QueryRequestContext & context)
+    __inout QueryRequestContext & context)
 {
     // In ProcessInnerQueryRequestAsyncOperation, we've already checked that nodeName is provided for context.Filters.
 
@@ -1691,7 +1792,6 @@ ErrorCode ClusterEntity::GetDeployedApplicationsOnNodeAggregatedHealthStates(
 
     ListPager<DeployedApplicationAggregatedHealthState> pager;
     pager.SetMaxResults(context.MaxResults);
-    QueryResult queryResult;
     vector<DeployedApplicationAggregatedHealthState> unpagedList;
     // Go through each application and call application entity to retrieve deployed application
     for (auto & app : applications)
@@ -1703,7 +1803,11 @@ ErrorCode ClusterEntity::GetDeployedApplicationsOnNodeAggregatedHealthStates(
 
         // In ProcessQuery, context.QueryResult will be updated with the returned result of only what it finds.
         // Take that data and try to add it to our own ListPager
-        queryResult = move(context.MoveQueryResult());
+        // We create a new object here every time to ensure that we are not overriding an error code object.
+        // Otherwise, if there is no list, then we never read the error code value (MoveList reads the error message),
+        // and in such a case, if we define queryResult before the for loop starts, on the for loop iteration after the iteration with
+        // no list, we will trigger an assert from overriding the ErrorCode object stored inside the query result.
+        QueryResult queryResult = context.MoveQueryResult();
 
         // If there is no returned result, then we don't need to do anything
         if (queryResult.HasList())
@@ -1889,7 +1993,7 @@ Common::ErrorCode ClusterEntity::ComputeClusterHealthWithoutEvents(
 }
 
 Common::ErrorCode ClusterEntity::ComputeDetailQueryResult(
-    __in QueryRequestContext & context,
+    __inout QueryRequestContext & context,
     FABRIC_HEALTH_STATE entityEventsState,
     std::vector<ServiceModel::HealthEvent> && queryEvents,
     ServiceModel::HealthEvaluationList && eventsUnhealthyEvaluations)
@@ -2027,7 +2131,7 @@ Common::ErrorCode ClusterEntity::ComputeDetailQueryResult(
 }
 
 Common::ErrorCode ClusterEntity::ComputeQueryEntityHealthStateChunkResult(
-    __in QueryRequestContext & context,
+    __inout QueryRequestContext & context,
     FABRIC_HEALTH_STATE entityEventsState)
 {
     ErrorCode error(ErrorCodeValue::Success);
@@ -2096,7 +2200,7 @@ Common::ErrorCode ClusterEntity::ComputeQueryEntityHealthStateChunkResult(
 }
 
 Common::ErrorCode ClusterEntity::SetDetailQueryResult(
-    __in QueryRequestContext & context,
+    __inout QueryRequestContext & context,
     FABRIC_HEALTH_STATE entityEventsState,
     std::vector<ServiceModel::HealthEvent> && queryEvents,
     ServiceModel::HealthEvaluationList && unhealthyEvaluations)
@@ -2116,14 +2220,21 @@ Common::ErrorCode ClusterEntity::SetDetailQueryResult(
 }
 
 Common::ErrorCode ClusterEntity::SetChildrenAggregatedHealthQueryResult(
-    __in QueryRequestContext & context)
+    __inout QueryRequestContext & context)
 {
     switch (context.ChildrenKind)
     {
         case HealthEntityKind::Node:
             return GetNodesAggregatedHealthStates(context);
         case HealthEntityKind::Application:
-            return GetApplicationsAggregatedHealthStates(context);
+            if (context.ContextKind == RequestContextKind::QueryEntityUnhealthyChildren)
+            {
+                return GetApplicationUnhealthyEvaluations(context);
+            }
+            else
+            {
+                return GetApplicationsAggregatedHealthStates(context);
+            }
         case HealthEntityKind::DeployedApplication:
             // Only this particular query (GetDeployedApplicationsOnNode) should reach here.
             // This is because getting DeployedApplication by node name doesn't follow the hierarchy.

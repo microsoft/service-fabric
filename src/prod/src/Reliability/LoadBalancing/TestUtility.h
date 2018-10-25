@@ -179,7 +179,8 @@ namespace PlacementAndLoadBalancingUnitTest
     Reliability::LoadBalancingComponent::ServicePackageDescription CreateServicePackageDescription(
         ServiceModel::ServicePackageIdentifier servicePackageIdentifier,
         double cpuCores,
-        uint memoryInBytes);
+        uint memoryInBytes,
+        std::vector<std::wstring>&& codePackages = std::vector<std::wstring>());
 
     Reliability::LoadBalancingComponent::ServicePackageDescription CreateServicePackageDescription(
         std::wstring servicePackageName,
@@ -187,7 +188,8 @@ namespace PlacementAndLoadBalancingUnitTest
         std::wstring applicationName,
         double cpuCores,
         uint memoryInBytes,
-        ServiceModel::ServicePackageIdentifier & spId);
+        ServiceModel::ServicePackageIdentifier & spId,
+        std::vector<std::wstring>&& codePackages = std::vector<std::wstring>());
 
     Reliability::LoadBalancingComponent::ServiceDescription CreateServiceDescriptionWithServicePackage(
         std::wstring serviceName,
@@ -278,6 +280,34 @@ namespace PlacementAndLoadBalancingUnitTest
         std::wstring serviceTypeName,
         bool isStateful,
         std::vector<Reliability::LoadBalancingComponent::ServiceMetric> && metrics = std::vector<Reliability::LoadBalancingComponent::ServiceMetric>());
+
+    vector<Reliability::ServiceScalingPolicyDescription> CreateAutoScalingPolicyForPartition(
+        wstring metricName,
+        double lowerLoadThreshold,
+        double upperLoadThreshold,
+        uint scaleIntervalInSeconds,
+        long minInstanceCount,
+        long maxInstanceCount,
+        long scaleIncrement);
+
+    vector<Reliability::ServiceScalingPolicyDescription> CreateAutoScalingPolicyForService(
+        wstring metricName,
+        double lowerLoadThreshold,
+        double upperLoadThreshold,
+        uint scaleIntervalInSeconds,
+        long minPartitionCount,
+        long maxPartitionCount,
+        long scaleIncrement,
+        bool useOnlyPrimaryLoad = false);
+
+    Reliability::LoadBalancingComponent::ServiceDescription CreateServiceDescriptionWithAutoscalingPolicy(
+        std::wstring serviceName,
+        std::wstring serviceTypeName,
+        bool isStateful,
+        int targetReplicaSetSize,
+        vector<Reliability::ServiceScalingPolicyDescription> && scalingPolicies,
+        std::vector<Reliability::LoadBalancingComponent::ServiceMetric> && metrics = std::vector<Reliability::LoadBalancingComponent::ServiceMetric>(),
+        int partitionCount = 1);
 
     Reliability::LoadBalancingComponent::ApplicationDescription CreateApplicationDescriptionWithCapacities(
         std::wstring applicationName,

@@ -56,8 +56,8 @@ namespace DNS
     private:
         IDnsCache& _cache;
         KString::SPtr _spServiceName;
-        IFabricServiceManagementClient& _fabricServiceClient;
         ComPointer<IFabricAsyncOperationContext> _spContext;
         OperationCallback::SPtr _spSync;
+        ComPointer<IInternalFabricServiceManagementClient2> _spInternalFabricServiceManagementClient2;
     };
 }

@@ -183,16 +183,6 @@ BOOST_AUTO_TEST_CASE(StaleActivateRequestSendsReply_Fmm)
     StalenessCheckHelper<MessageType::NodeActivateRequest, MessageType::NodeActivateReply>(L"3 true", true);
 }
 
-BOOST_AUTO_TEST_CASE(StaleDeactivateRequestSendsReply_FM)
-{
-    StalenessCheckHelper<MessageType::NodeDeactivateRequest, MessageType::NodeDeactivateReply>(L"3 false", false);
-}
-
-BOOST_AUTO_TEST_CASE(StaleDeactivateRequestSendsReply_Fmm)
-{
-    StalenessCheckHelper<MessageType::NodeDeactivateRequest, MessageType::NodeDeactivateReply>(L"3 true", true);
-}
-
 BOOST_AUTO_TEST_CASE(ActivateIsIgnoredUntilNodeIsReady1)
 {
     // Node is initially deactivated and node up ack from fmm has not arrived

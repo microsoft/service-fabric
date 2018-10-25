@@ -5,6 +5,7 @@
 
 #pragma once
 #include "AccumulatorWithMinMax.h"
+#include "DynamicNodeLoadSet.h"
 #include "Metric.h"
 
 namespace Reliability
@@ -25,12 +26,8 @@ namespace Reliability
             {
             public:
                 DomainMetricAccsWithMinMax(size_t metricCount)
+                    : AccMinMaxEntries(metricCount, AccumulatorWithMinMax(false))
                 {
-                    AccMinMaxEntries.reserve(metricCount);
-                    for (int i = 0; i < metricCount; i++)
-                    {
-                        AccMinMaxEntries.push_back(AccumulatorWithMinMax());
-                    }
                 }
 
                 DomainMetricAccsWithMinMax(DomainMetricAccsWithMinMax const & other)
@@ -65,25 +62,25 @@ namespace Reliability
             LoadBalancingDomainEntry & operator = (LoadBalancingDomainEntry && other);
 
             // properties
-            __declspec (property(get=get_Metrics)) std::vector<Metric> const& Metrics;
+            __declspec (property(get = get_Metrics)) std::vector<Metric> const& Metrics;
             std::vector<Metric> const& get_Metrics() const { return metrics_; }
 
-            __declspec (property(get=get_IsGlobal)) bool IsGlobal;
+            __declspec (property(get = get_IsGlobal)) bool IsGlobal;
             bool get_IsGlobal() const { return serviceIndex_ == -1; }
 
-            __declspec (property(get=get_ServiceIndex)) int ServiceIndex;
+            __declspec (property(get = get_ServiceIndex)) int ServiceIndex;
             int get_ServiceIndex() const { return serviceIndex_; }
 
-            __declspec (property(get=get_MetricStartIndex)) size_t MetricStartIndex;
+            __declspec (property(get = get_MetricStartIndex)) size_t MetricStartIndex;
             size_t get_MetricStartIndex() const { return metricStartIndex_; }
 
-            __declspec (property(get=get_MetricCount)) size_t MetricCount;
+            __declspec (property(get = get_MetricCount)) size_t MetricCount;
             size_t get_MetricCount() const { return Metrics.size(); }
 
-            __declspec (property(get=get_MetricWeightSum)) double MetricWeightSum;
+            __declspec (property(get = get_MetricWeightSum)) double MetricWeightSum;
             double get_MetricWeightSum() const { return metricWeightSum_; }
 
-            __declspec (property(get=get_IsBalanced)) bool IsBalanced;
+            __declspec (property(get = get_IsBalanced)) bool IsBalanced;
             bool get_IsBalanced() const { return isBalanced_; }
 
             AccumulatorWithMinMax & GetLoadStat(size_t metricIndex) { return loadStats_[metricIndex]; }
@@ -100,6 +97,7 @@ namespace Reliability
                 LoadBalancingDomainEntry const& globalLBDomain,
                 DomainAccMinMaxTree const& fdsTotalLoads,
                 DomainAccMinMaxTree const& udsTotalLoads,
+                DynamicNodeLoadSet& dynamicLoads,
                 BalancingDiagnosticsDataSPtr balancingDiagnosticsDataSPtr = nullptr);
 
             void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;

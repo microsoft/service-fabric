@@ -13,13 +13,18 @@ namespace Management
             : public Serialization::FabricSerializable
             , public Common::IFabricJsonSerializable
         {
-            DENY_COPY(ChaosParameters)
-
         public:
 
             ChaosParameters();
-            ChaosParameters(ChaosParameters &&);
-            ChaosParameters & operator = (ChaosParameters && other);
+
+            // The copy constructor here is required for
+            // JSON serialization of a map that has
+            // ChaosParameters as a value of a map entry
+            // Such a map exists in ChaosSchedule
+            ChaosParameters(ChaosParameters const &) = default;
+            ChaosParameters(ChaosParameters &&) = default;
+            ChaosParameters & operator = (ChaosParameters const & other) = default;
+            ChaosParameters & operator = (ChaosParameters && other) = default;
 
             __declspec(property(get = get_MaxClusterStabilizationTimeoutInSeconds)) ULONG const & MaxClusterStabilizationTimeoutInSeconds;
             __declspec(property(get = get_MaxConcurrentFaults)) ULONG const & MaxConcurrentFaults;
@@ -27,9 +32,9 @@ namespace Management
             __declspec(property(get = get_WaitTimeBetweenFaultsInSeconds)) ULONG const & WaitTimeBetweenFaultsInSeconds;
             __declspec(property(get = get_TimeToRunInSeconds)) ULONGLONG const & TimeToRunInSeconds;
             __declspec(property(get = get_EnableMoveReplicaFaults)) bool const & EnableMoveReplicaFaults;
-            __declspec(property(get = get_HealthPolicy)) std::unique_ptr<ServiceModel::ClusterHealthPolicy> const & HealthPolicy;
+            __declspec(property(get = get_HealthPolicy)) std::shared_ptr<ServiceModel::ClusterHealthPolicy> const & HealthPolicy;
             __declspec(property(get = get_EventContextMap)) EventContextMap const & Context;
-            __declspec(property(get = get_ChaosTargetFilter)) std::unique_ptr<ChaosTargetFilter> const & TargetFilter;
+            __declspec(property(get = get_ChaosTargetFilter)) std::shared_ptr<ChaosTargetFilter> const & TargetFilter;
 
             ULONG const & get_MaxClusterStabilizationTimeoutInSeconds() const { return maxClusterStabilizationTimeoutInSeconds_; }
             ULONG const & get_MaxConcurrentFaults() const { return maxConcurrentFaults_; }
@@ -37,9 +42,9 @@ namespace Management
             ULONG const & get_WaitTimeBetweenFaultsInSeconds() const { return waitTimeBetweenFaultsInSeconds_; }
             ULONGLONG const & get_TimeToRunInSeconds() const { return timeToRunInSeconds_; }
             bool const & get_EnableMoveReplicaFaults() const { return enableMoveReplicaFaults_; }
-            std::unique_ptr<ServiceModel::ClusterHealthPolicy> const & get_HealthPolicy() const { return healthPolicy_; }
+            std::shared_ptr<ServiceModel::ClusterHealthPolicy> const & get_HealthPolicy() const { return healthPolicy_; }
             EventContextMap const & get_EventContextMap() const { return eventContextMap_; }
-            std::unique_ptr<ChaosTargetFilter> const & get_ChaosTargetFilter() const { return chaosTargetFilter_; }
+            std::shared_ptr<ChaosTargetFilter> const & get_ChaosTargetFilter() const { return chaosTargetFilter_; }
 
             Common::ErrorCode FromPublicApi(FABRIC_CHAOS_PARAMETERS const &);
             void ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_CHAOS_PARAMETERS &) const;
@@ -77,9 +82,12 @@ namespace Management
             ULONG waitTimeBetweenFaultsInSeconds_;
             ULONGLONG timeToRunInSeconds_;
             bool enableMoveReplicaFaults_;
-            std::unique_ptr<ServiceModel::ClusterHealthPolicy> healthPolicy_;
+            std::shared_ptr<ServiceModel::ClusterHealthPolicy> healthPolicy_;
             EventContextMap eventContextMap_;
-            std::unique_ptr<ChaosTargetFilter> chaosTargetFilter_;
+            std::shared_ptr<ChaosTargetFilter> chaosTargetFilter_;
         };
     }
 }
+
+DEFINE_USER_ARRAY_UTILITY(Management::FaultAnalysisService::ChaosParameters);
+DEFINE_USER_MAP_UTILITY(std::wstring, Management::FaultAnalysisService::ChaosParameters);

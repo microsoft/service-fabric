@@ -22,6 +22,7 @@ GlobalWString FileStoreServiceTcpMessage::ListUploadSessionAction = make_global<
 GlobalWString FileStoreServiceTcpMessage::CreateUploadSessionAction = make_global<wstring>(L"CreateUploadSessionAction");
 GlobalWString FileStoreServiceTcpMessage::DeleteUploadSessionAction = make_global<wstring>(L"DeleteUploadSessionAction");
 GlobalWString FileStoreServiceTcpMessage::UploadChunkAction = make_global<wstring>(L"UploadChunkAction");
+GlobalWString FileStoreServiceTcpMessage::UploadChunkContentAction = make_global<wstring>(L"UploadChunkContentAction");
 GlobalWString FileStoreServiceTcpMessage::CommitUploadSessionAction = make_global<wstring>(L"CommitUploadSessionAction");
 
 const Transport::Actor::Enum FileStoreServiceTcpMessage::actor_ = Transport::Actor::FileStoreService;

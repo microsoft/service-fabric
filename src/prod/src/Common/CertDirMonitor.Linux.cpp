@@ -29,8 +29,8 @@ CertDirMonitor & CertDirMonitor::GetSingleton()
     return *singleton_;
 }
 
-const wchar_t  *CertDirMonitor::CertFileExtsW[] = { L"pem", L"PEM", L"crt", L"prv" };
-const char     *CertDirMonitor::CertFileExtsA[] = {  "pem",  "PEM",  "crt",  "prv" };
+const wchar_t  *CertDirMonitor::CertFileExtsW[] = { L"pem", L"PEM", L"crt", L"prv", L"pfx" };
+const char     *CertDirMonitor::CertFileExtsA[] = {  "pem",  "PEM",  "crt",  "prv", "pfx" };
 
 const int CertDirMonitor::NrCertFileExts = (sizeof(CertDirMonitor::CertFileExtsW) / sizeof((CertDirMonitor::CertFileExtsW)[0]));
 
@@ -243,6 +243,12 @@ void CertDirMonitor::ProcessNotifications()
             {
                 wstring srcFilePathW = Path::Combine(srcPath_, StringUtility::Utf8ToUtf16(event->name));
                 wstring dstFilePathW = Path::Combine(destPath_, StringUtility::Utf8ToUtf16(event->name));
+                if (CompareFileContent(StringUtility::Utf16ToUtf8(srcFilePathW), StringUtility::Utf16ToUtf8(dstFilePathW)))
+                {
+                    WriteInfo(CertDirMonitorTrace, "ProcessNotifications: Skip copying {0} to {1} since content is same.",
+			      srcFilePathW, dstFilePathW);
+                    continue;
+                }
                 error = File::Copy(srcFilePathW, dstFilePathW);
                 if (!error.IsSuccess())
                 {

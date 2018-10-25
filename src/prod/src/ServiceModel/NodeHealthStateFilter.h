@@ -19,8 +19,8 @@ namespace ServiceModel
         explicit NodeHealthStateFilter(
             DWORD healthStateFilter);
 
-        NodeHealthStateFilter(NodeHealthStateFilter && other);
-        NodeHealthStateFilter & operator = (NodeHealthStateFilter && other);
+        NodeHealthStateFilter(NodeHealthStateFilter && other) = default;
+        NodeHealthStateFilter & operator = (NodeHealthStateFilter && other) = default;
 
         virtual ~NodeHealthStateFilter();
 

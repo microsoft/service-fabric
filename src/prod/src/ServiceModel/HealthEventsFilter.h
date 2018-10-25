@@ -24,8 +24,8 @@ namespace ServiceModel
 
         explicit HealthEventsFilter(DWORD healthStateFilter);
 
-        HealthEventsFilter(HealthEventsFilter && other);
-        HealthEventsFilter & operator = (HealthEventsFilter && other);
+        HealthEventsFilter(HealthEventsFilter && other) = default;
+        HealthEventsFilter & operator = (HealthEventsFilter && other) = default;
 
         ~HealthEventsFilter();
 

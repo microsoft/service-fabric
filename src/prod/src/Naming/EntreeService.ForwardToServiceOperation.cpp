@@ -40,7 +40,6 @@ namespace Naming
 
     void EntreeService::ForwardToServiceOperation::OnStartRequest(AsyncOperationSPtr const & thisSPtr)
     {
-
         TimedAsyncOperation::OnStart(thisSPtr);                
 
         Transport::ForwardMessageHeader forwardMessageHeader;
@@ -133,8 +132,8 @@ namespace Naming
         QueryAddressHeader queryAddressHeader;
         bool hasQueryAddressHeader = ReceivedMessage->Headers.TryReadFirst(queryAddressHeader);
 
-        CreateContainerApplicationRequestHeader createContainerApplicationRequestHeader;
-        auto hasCreateContainerApplicationRequestHeader = ReceivedMessage->Headers.TryReadFirst(createContainerApplicationRequestHeader);
+        CreateComposeDeploymentRequestHeader createComposeDeploymentRequestHeader;
+        auto hasCreateContainerApplicationRequestHeader = ReceivedMessage->Headers.TryReadFirst(createComposeDeploymentRequestHeader);
 
         UpgradeComposeDeploymentRequestHeader upgradeComposeDeploymentRequestHeader;
         auto hasUpgradeComposeDeploymentRequestHeader = ReceivedMessage->Headers.TryReadFirst(upgradeComposeDeploymentRequestHeader);
@@ -161,7 +160,7 @@ namespace Naming
 
         if (hasCreateContainerApplicationRequestHeader)
         {
-            ReceivedMessage->Headers.Add(createContainerApplicationRequestHeader);
+            ReceivedMessage->Headers.Add(createComposeDeploymentRequestHeader);
         }
 
         if (hasUpgradeComposeDeploymentRequestHeader)
@@ -336,6 +335,21 @@ namespace Naming
             return (expectedUriPrefix == targetUri) || expectedUriPrefix.IsPrefixOf(targetUri);
         }
 
+        case Actor::CSS:
+        {
+            NamingUri expectedUriPrefix;
+            if (!NamingUri::TryParse(
+                *SystemServiceApplicationNameHelper::PublicCentralSecretServiceName,
+                expectedUriPrefix))
+            {
+                Assert::CodingError(
+                    "SystemServiceApplicationNameHelper::PublicCentralSecretServiceName is not a valid NamingUri: {0}",
+                    SystemServiceApplicationNameHelper::PublicCentralSecretServiceName);
+            }
+
+            return (expectedUriPrefix == targetUri) || expectedUriPrefix.IsPrefixOf(targetUri);
+        }
+
         default:
             WriteWarning(
                 TraceComponent,
@@ -369,6 +383,10 @@ namespace Naming
 
         case Actor::UOS:
             targetCuid_ = ConsistencyUnitId::CreateFirstReservedId(*ConsistencyUnitId::UpgradeOrchestrationServiceIdRange);
+            break;
+
+        case Actor::CSS:
+            targetCuid_ = ConsistencyUnitId::CreateFirstReservedId(*ConsistencyUnitId::CentralSecretServiceIdRange);
             break;
 
         default:

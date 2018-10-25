@@ -12,7 +12,7 @@ namespace Management
         // This class is used by fabrictest to mock a generated application package from a compose deployment. 
         // The test preprovisions some app types and registers them based on the app name.
         // This class stores that mapping, so it can be used when performing an operation on a compose deployment.
-        class TestAppTypeNameVersionGenerator : public IDockerComposeAppTypeNameVersionGenerator
+        class TestAppTypeNameVersionGenerator : public IApplicationDeploymentTypeNameVersionGenerator
         {
             DENY_COPY(TestAppTypeNameVersionGenerator)
 
@@ -31,7 +31,7 @@ namespace Management
                 ASSERT_IF(typeNameIter == mockTypeNames_.end(), "Mock type name does not contain entry {0}", appName);
 
                 auto typeVersionIter = mockTypeVersions_.find(appNameStr);
-                ASSERT_IF(typeVersionIter == mockTypeVersions_.end(), "Mock type version does not container entry {0}", appName);
+                ASSERT_IF(typeVersionIter == mockTypeVersions_.end(), "Mock type version does not contain entry {0}", appName);
 
                 typeName = typeNameIter->second;
                 typeVersion = typeVersionIter->second;
@@ -41,10 +41,10 @@ namespace Management
 
             virtual Common::ErrorCode GetNextVersion(
                 Store::StoreTransaction const &,
-                ComposeDeploymentContext const &composeDeploymentContext,
+                std::wstring const &appName,
+                ServiceModelVersion const &,
                 __out ServiceModelVersion &typeVersion)
             {
-                wstring appName = composeDeploymentContext.ApplicationName.ToString();
                 auto typeVersionIter = mockTypeVersions_.find(appName);
                 ASSERT_IF(typeVersionIter == mockTypeVersions_.end(), "Mock type version does not container entry {0}", appName);
 

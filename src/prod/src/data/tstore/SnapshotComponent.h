@@ -55,17 +55,28 @@ namespace Data
                 return size_;
             }
 
+            __declspec(property(get = get_Count)) ULONG32 Count;
+            ULONG32 get_Count() const
+            {
+                return static_cast<ULONG32>(componentSPtr_->Count);
+            }
+
             void Add(__in TKey & key, __in VersionedItem<TValue> & value)
             {
                 KSharedPtr<VersionedItem<TValue>> valueSPtr(&value);
-                auto updateFunc = [&] (__in TKey currentKey, __in KSharedPtr<VersionedItem<TValue>> currentValue)
+
+                // TODO: Determine whether this is actually needed
+                auto updateFunc = [&](__in TKey, __in KSharedPtr<VersionedItem<TValue>> currentValue)
                 {
-                    UNREFERENCED_PARAMETER(currentKey);
                     bool shouldUpdate = currentValue->GetVersionSequenceNumber() <= valueSPtr->GetVersionSequenceNumber();
                     if (shouldUpdate)
                     {
-                        InterlockedAdd64(&size_, -currentValue->GetValueSize());
-                        STORE_ASSERT(size_ >= 0, "Size {1} should not be negative", size_);
+                        if (currentValue->IsInMemory())
+                        {
+                            InterlockedAdd64(&size_, -currentValue->GetValueSize());
+                            STORE_ASSERT(size_ >= 0, "Size {1} should not be negative", size_);
+                        }
+
                         return valueSPtr;
                     }
 
@@ -73,7 +84,11 @@ namespace Data
                 };
 
                 componentSPtr_->AddOrUpdate(key, valueSPtr, updateFunc);
-                InterlockedAdd64(&size_, valueSPtr->GetValueSize());
+
+                if (valueSPtr->IsInMemory())
+                {
+                    InterlockedAdd64(&size_, valueSPtr->GetValueSize());
+                }
             }
 
             KSharedPtr<VersionedItem<TValue>> Read(__in TKey& key, __in LONG64 visibilityLSN) const
@@ -91,7 +106,7 @@ namespace Data
                 return nullptr;
             }
 
-            ktl::Awaitable<KSharedPtr<StoreComponentReadResult<TValue>>> ReadAsync(__in TKey & key, __in LONG64 visibilityLSN)
+            ktl::Awaitable<KSharedPtr<StoreComponentReadResult<TValue>>> ReadAsync(__in TKey & key, __in LONG64 visibilityLSN, __in ReadMode readMode)
             {
                 KSharedPtr<VersionedItem<TValue>> versionedItemSPtr = nullptr;
                 bool result = componentSPtr_->TryGetValue(key, versionedItemSPtr);
@@ -132,14 +147,16 @@ namespace Data
                         bool foundMetadata = fileMetadataTableSPtr->TryGetValue(versionedItemSPtr->GetFileId(), fileMetadataSPtr);
                         STORE_ASSERT(foundMetadata, "Failed to find file id");
 
-                        if (versionedItemSPtr->GetRecordKind() != RecordKind::DeletedVersion) // TODO: Check ReadMode is CacheResult
+                        if (versionedItemSPtr->GetRecordKind() != RecordKind::DeletedVersion && readMode == ReadMode::CacheResult)
                         {
-                            // If the TValue is a reference type, TrySet the inUse flag to 1.
                             versionedItemSPtr->SetInUse(true);
+
+                            // Increment size - concurrent loads may cause overcounting
+                            InterlockedAdd64(&size_, versionedItemSPtr->GetValueSize());
                         }
 
                         // Load the value into memory.
-                        value = co_await versionedItemSPtr->GetValueAsync(*fileMetadataSPtr, *containerSPtr_->ValueSerializer, *traceComponent_, ktl::CancellationToken::None);
+                        value = co_await versionedItemSPtr->GetValueAsync(*fileMetadataSPtr, *containerSPtr_->ValueSerializer, readMode, *traceComponent_, ktl::CancellationToken::None);
                     }
 
                     if (versionedItemSPtr->GetVersionSequenceNumber() <= visibilityLSN)

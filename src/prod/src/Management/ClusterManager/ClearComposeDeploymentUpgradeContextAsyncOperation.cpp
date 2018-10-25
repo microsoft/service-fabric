@@ -44,9 +44,8 @@ void ClearComposeDeploymentUpgradeContextAsyncOperation::OnStart(AsyncOperationS
 
         WriteInfo(
             TraceComponent,
-            "{0} Compose deployment context already deleted",
-            context_.TraceId,
-            error);
+            "{0} ComposeDeploymentContext was already deleted",
+            context_.TraceId);
 
         this->TryComplete(thisSPtr, move(error));
         return;
@@ -55,7 +54,7 @@ void ClearComposeDeploymentUpgradeContextAsyncOperation::OnStart(AsyncOperationS
     {
         WriteInfo(
             TraceComponent,
-            "{0} failed to read compose deployment context - error : {1}",
+            "{0} failed to read ComposeDeploymentContext - error : {1}",
             context_.TraceId,
             error);
 
@@ -103,6 +102,7 @@ void ClearComposeDeploymentUpgradeContextAsyncOperation::OnStart(AsyncOperationS
                 error);
 
             this->TryComplete(thisSPtr, move(error));
+            return;
         }
     }
 

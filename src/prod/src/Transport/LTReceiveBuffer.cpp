@@ -15,12 +15,6 @@ LTReceiveBuffer::LTReceiveBuffer(TcpConnection* connectionPtr) : ReceiveBuffer(c
 {
 }
 
-bool LTReceiveBuffer::VerifySecurityProvider()
-{
-    // not used in lease transport
-    return true;
-}
-
 void LTReceiveBuffer::AssembleMessage(MessageUPtr & message, StopwatchTime recvTime, bool hasFrameHeader)
 {
     // have a message; construct a message around the buffers

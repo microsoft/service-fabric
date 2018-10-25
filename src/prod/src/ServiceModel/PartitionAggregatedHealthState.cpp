@@ -31,40 +31,6 @@ PartitionAggregatedHealthState::~PartitionAggregatedHealthState()
 {
 }
 
-PartitionAggregatedHealthState::PartitionAggregatedHealthState(PartitionAggregatedHealthState const & other)
-    : partitionId_(other.partitionId_)
-    , aggregatedHealthState_(other.aggregatedHealthState_)
-{
-}
-
-PartitionAggregatedHealthState & PartitionAggregatedHealthState::operator = (PartitionAggregatedHealthState const & other)
-{
-    if (this != &other)
-    {
-        partitionId_ = other.partitionId_;
-        aggregatedHealthState_ = other.aggregatedHealthState_;
-    }
-
-    return *this;
-}
-
-PartitionAggregatedHealthState::PartitionAggregatedHealthState(PartitionAggregatedHealthState && other)
-    : partitionId_(move(other.partitionId_))
-    , aggregatedHealthState_(move(other.aggregatedHealthState_))
-{
-}
-
-PartitionAggregatedHealthState & PartitionAggregatedHealthState::operator = (PartitionAggregatedHealthState && other)
-{
-    if (this != &other)
-    {
-        partitionId_ = move(other.partitionId_);
-        aggregatedHealthState_ = move(other.aggregatedHealthState_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode PartitionAggregatedHealthState::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_PARTITION_HEALTH_STATE & publicPartitionAggregatedHealthState) const 

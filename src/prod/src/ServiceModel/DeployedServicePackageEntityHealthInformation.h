@@ -23,8 +23,8 @@ namespace ServiceModel
             std::wstring const & nodeName,
             FABRIC_INSTANCE_ID applicationInstanceId);
 
-        DeployedServicePackageEntityHealthInformation(DeployedServicePackageEntityHealthInformation && other);
-        DeployedServicePackageEntityHealthInformation & operator = (DeployedServicePackageEntityHealthInformation && other);
+        DeployedServicePackageEntityHealthInformation(DeployedServicePackageEntityHealthInformation && other) = default;
+        DeployedServicePackageEntityHealthInformation & operator = (DeployedServicePackageEntityHealthInformation && other) = default;
         
         __declspec(property(get=get_ApplicationName)) std::wstring const & ApplicationName;
         std::wstring const & get_ApplicationName() const { return applicationName_; }

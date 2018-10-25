@@ -67,8 +67,9 @@ namespace Reliability
             __declspec (property(get=get_FailoverUnitDescription)) Reliability::FailoverUnitDescription const& FailoverUnitDescription;
             Reliability::FailoverUnitDescription const& get_FailoverUnitDescription() const { return failoverUnitDesc_; }
 
-            __declspec (property(get=get_TargetReplicaSetSize)) int TargetReplicaSetSize;
-            int get_TargetReplicaSetSize() const { return serviceInfo_->ServiceDescription.TargetReplicaSetSize; }
+            __declspec (property(get=get_TargetReplicaSetSize, put=set_TargetReplicaSetSize)) int TargetReplicaSetSize;
+            int get_TargetReplicaSetSize() const;
+            void set_TargetReplicaSetSize(int value);
 
             __declspec (property(get=get_MinReplicaSetSize)) int MinReplicaSetSize;
             int get_MinReplicaSetSize() const { return serviceInfo_->ServiceDescription.MinReplicaSetSize; }

@@ -139,11 +139,12 @@ void NetIoManager::CloseAsync()
 }
 
 void NetIoManager::CreateUdpListener(
-    __out IUdpListener::SPtr& spListener
+    __out IUdpListener::SPtr& spListener,
+    __in bool fEnableSocketAddressReuse
 )
 {
     UdpListener::SPtr spInternal;
-    UdpListener::Create(/*out*/spInternal, GetThisAllocator(), _spTracer, this);
+    UdpListener::Create(/*out*/spInternal, GetThisAllocator(), _spTracer, this, fEnableSocketAddressReuse);
 
     spListener = spInternal.RawPtr();
 }

@@ -42,7 +42,8 @@ namespace Management
 
             Common::ErrorCode Refresh(__in RolloutContext &) const;
 
-            void ExternallyFailUpgrade(ApplicationUpgradeContext const &);
+            // Forcefully failing upgrade. It is used by application and compose now.
+            void ExternallyFailUpgrade(RolloutContext const &);
 
         private:
             void SchedulePendingContextCheck(Common::TimeSpan const delay);
@@ -80,6 +81,9 @@ namespace Management
             void ProcessPendingComposeDeployment(__in ComposeDeploymentContext &);
             void ProcessPendingComposeDeploymentUpgrade(__in ComposeDeploymentUpgradeContext &);
 
+            void ProcessPendingSingleInstanceDeployment(__in SingleInstanceDeploymentContext &);
+            void ProcessPendingSingleInstanceDeploymentUpgrade(__in SingleInstanceDeploymentUpgradeContext &);
+
             void ProcessPendingService(__in ServiceContext &);
             void ProcessPendingApplicationUpgrade(__in ApplicationUpgradeContext &);
             void ProcessPendingFabricProvision(__in FabricProvisionContext &);
@@ -90,11 +94,18 @@ namespace Management
             void DeletePendingApplication(__in ApplicationContext &);
             void DeletePendingService(__in ServiceContext &);
             void DeletePendingComposeDeployment(__in ComposeDeploymentContext &);
+            void DeletePendingSingleInstanceDeployment(__in SingleInstanceDeploymentContext &);
             void ClearPendingApplicationUpgrade(__in ApplicationUpgradeContext &);
             void ClearPendingComposeDeploymentUpgrade(__in ComposeDeploymentUpgradeContext &);
+            void ClearPendingSingleInstanceDeploymentUpgrade(__in SingleInstanceDeploymentUpgradeContext &);
 
             void ProcessFailedComposeDeployment(__in ComposeDeploymentContext &);
             void OnProcessFailedComposeDeploymentComplete(__in RolloutContext &, Common::AsyncOperationSPtr const &, bool);
+
+            void ProcessFailedSingleInstanceDeployment(__in SingleInstanceDeploymentContext & context);
+            void OnProcessFailedSingleInstanceDeploymentComplete(__in RolloutContext &, Common::AsyncOperationSPtr const &, bool);
+            
+            void ProcessReplacingSingleInstanceDeployment(__in SingleInstanceDeploymentContext &);
 
             void ProcessUnknown(__in RolloutContext &);
             void ProcessCompleted(__in RolloutContext &);

@@ -5,7 +5,7 @@
       {
             "Name": "DevClusterSetupSecure",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -19,7 +19,7 @@
        {
             "Name": "DevClusterSetupNonSecure",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -33,7 +33,7 @@
         {
             "Name": "SetLocalClusterReadyOneNode",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -47,7 +47,7 @@
         {
             "Name": "SetLocalClusterReadyFiveNode",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -61,7 +61,7 @@
         {
             "Name": "DevClusterSetupRuntimeBlockSDK",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -75,7 +75,7 @@
         {
             "Name": "DevClusterSetupSDKBlockRuntime",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -89,7 +89,7 @@
         {
             "Name": "DevClusterSetupSDKNoJsonFile",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -103,7 +103,7 @@
         {
             "Name": "DevClusterSetupRuntimeNoJsonFile",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -117,7 +117,7 @@
         {
             "Name": "DevClusterSetupRuntimeNoVersion",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -131,7 +131,7 @@
         {
             "Name": "DevClusterSetupSDKNoVersion",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -145,7 +145,7 @@
         {
             "Name": "DevClusterSetupRuntimeHighSDKLow",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",
@@ -159,7 +159,7 @@
         {
             "Name": "DevClusterSetupSDKRuntimeDowngrade",
             "Type": "PowershellTest",
-            "Owners": "amanbha,harahma,taxi,liphigao",
+            "Owners": "amanbha,harahma",
             "ResourcesRequired": "Server:1",
             "TestExecutionParameters": {
                 "SetupTimeout": "600",

@@ -19,7 +19,8 @@ namespace Management
                 std::wstring const & stagingFullPath,
                 std::wstring const & storeRelativePath,
                 bool shouldOverwrite,
-                StoreFileVersion const & fileVersion,                
+                Guid const & uploadRequestId,
+                StoreFileVersion const & fileVersion,
                 Common::ActivityId const & activityId,
                 Common::TimeSpan const & timeout,
                 Common::AsyncCallback const & callback,
@@ -44,8 +45,9 @@ namespace Management
 
             std::wstring const stagingFullPath_;
             std::wstring const storeFullPath_;
-            StoreFileVersion const fileVersion_;            
+            StoreFileVersion const fileVersion_;
             bool const shouldOverwrite_;
+            Guid const uploadRequestId_;
         };
     }
 }

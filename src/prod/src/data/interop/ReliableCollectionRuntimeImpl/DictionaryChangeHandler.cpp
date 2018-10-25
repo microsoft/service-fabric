@@ -83,8 +83,11 @@ ktl::Awaitable<void> DictionaryChangeHandler::OnAddedAsync(
     __in TxnReplicator::TransactionBase const& replicatorTransaction,
     __in KeyType key,
     __in ValueType value,
-    __in LONG64 sequenceNumber) noexcept
+    __in LONG64 sequenceNumber,
+    __in bool isPrimary) noexcept
 {
+    UNREFERENCED_PARAMETER(isPrimary);
+
     auto txn = const_cast<TxnReplicator::Transaction *>(dynamic_cast<TxnReplicator::Transaction const *>(&replicatorTransaction));
     auto txnHandle = reinterpret_cast<TransactionHandle>(txn);
 
@@ -116,8 +119,11 @@ ktl::Awaitable<void> DictionaryChangeHandler::OnUpdatedAsync(
     __in TxnReplicator::TransactionBase const& replicatorTransaction,
     __in KeyType key,
     __in ValueType value,
-    __in LONG64 sequenceNumber) noexcept
+    __in LONG64 sequenceNumber,
+    __in bool isPrimary) noexcept
 {
+    UNREFERENCED_PARAMETER(isPrimary);
+
     auto txn = const_cast<TxnReplicator::Transaction *>(dynamic_cast<TxnReplicator::Transaction const *>(&replicatorTransaction));
     auto txnHandle = reinterpret_cast<TransactionHandle>(txn);
 
@@ -131,8 +137,11 @@ ktl::Awaitable<void> DictionaryChangeHandler::OnUpdatedAsync(
 ktl::Awaitable<void> DictionaryChangeHandler::OnRemovedAsync(
     __in TxnReplicator::TransactionBase const& replicatorTransaction,
     __in KeyType key,
-    __in LONG64 sequenceNumber) noexcept
+    __in LONG64 sequenceNumber,
+    __in bool isPrimary) noexcept
 {
+    UNREFERENCED_PARAMETER(isPrimary);
+
     auto txn = const_cast<TxnReplicator::Transaction *>(dynamic_cast<TxnReplicator::Transaction const *>(&replicatorTransaction));
     auto txnHandle = reinterpret_cast<TransactionHandle>(txn);
 

@@ -26,6 +26,8 @@ namespace Management
                     case ApplicationUpdate: w << "ApplicationUpdate"; return;
                     case ComposeDeployment: w << "ComposeDeployment"; return;
                     case ComposeDeploymentUpgrade: w << "ComposeDeploymentUpgrade"; return;
+                    case SingleInstanceDeployment: w << "SingleInstanceDeployment"; return;
+                    case SingleInstanceDeploymentUpgrade: w << "SingleInstanceDeploymentUpgrade"; return;
                 };
 
                 w << "RolloutContextType(" << static_cast<int>(e) << ')';

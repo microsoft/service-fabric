@@ -39,5 +39,10 @@ namespace Api
             Common::AsyncOperationSPtr const & asyncOperation) = 0;
 
         virtual void Abort() = 0;
+
+        virtual Common::ErrorCode GetQueryStatus(
+            __out IStatefulServiceReplicaStatusResultPtr &) = 0;
+
+        virtual Common::ErrorCode UpdateInitializationData(std::vector<byte> &&) = 0;
     };
 }

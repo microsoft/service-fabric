@@ -7,7 +7,7 @@
 
 namespace HttpGateway
 {
-    class HttpGatewayImpl::AccessCheckAsyncOperation : public Common::TimedAsyncOperation
+    class HttpGatewayImpl::AccessCheckAsyncOperation : public Common::AsyncOperation
     {
     public:
         AccessCheckAsyncOperation(
@@ -16,9 +16,10 @@ namespace HttpGateway
             Common::TimeSpan const timeout,
             Common::AsyncCallback const& callback,
             Common::AsyncOperationSPtr const& parent)
-            : owner_(owner)
+            : AsyncOperation(callback, parent)
+            , owner_(owner)
             , request_(request)
-            , TimedAsyncOperation(timeout, callback, parent)
+            , timeoutHelper_(timeout)
             , handlerItr_(owner.httpAuthHandlers_.cbegin())
             , authOperationError_(Common::ErrorCodeValue::NotFound)
             , role_(Transport::RoleMask::Enum::None)
@@ -41,6 +42,7 @@ namespace HttpGateway
 
         HttpGatewayImpl &owner_;
         HttpServer::IRequestMessageContext & request_;
+        Common::TimeoutHelper timeoutHelper_;
         USHORT httpStatusOnError_;
         std::wstring authHeaderValue_;
         std::wstring authHeaderName_;

@@ -696,10 +696,15 @@ ErrorCode TestPersistedStoreService::Delete(
 
 Store::ReplicatedStore * TestPersistedStoreService::get_ReplicatedStorePrivate() const
 {
-    auto casted = dynamic_cast<Store::ReplicatedStore*>(this->ReplicatedStore);
+    auto casted = this->TryGetReplicatedStorePrivate();
     TestSession::FailTestIf(casted == nullptr, "ReplicatedStore cast failed");
 
     return casted;
+}
+
+Store::ReplicatedStore * TestPersistedStoreService::TryGetReplicatedStorePrivate() const
+{
+    return dynamic_cast<Store::ReplicatedStore*>(this->ReplicatedStore);
 }
 
 void TestPersistedStoreService::SetSecondaryPumpEnabled(bool value) 
@@ -711,7 +716,19 @@ void TestPersistedStoreService::SetSecondaryPumpEnabled(bool value)
 
 void TestPersistedStoreService::ReportStreamFault(FABRIC_FAULT_TYPE faultType)
 {
-    ReplicatedStorePrivate->Test_TryFaultStreamAndStopSecondaryPump(faultType);
+    auto casted = this->TryGetReplicatedStorePrivate();
+
+    if (casted == nullptr)
+    {
+        TestSession::WriteError(
+            TraceSource, 
+            this->PartitionId.ToString(), 
+            "failed to cast Store::ReplicatedStore");
+    }
+    else
+    {
+        casted->Test_TryFaultStreamAndStopSecondaryPump(faultType);
+    }
 }
 
 ErrorCode TestPersistedStoreService::Backup(std::wstring const & dir)

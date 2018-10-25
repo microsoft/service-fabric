@@ -22,6 +22,8 @@ namespace Data
 
             KDeclareDefaultCreate(FakeLogManager, fakeLogManager, KTL_TAG_TEST);
 
+            KtlLoggerMode get_Mode() const override { return KtlLoggerMode::InProc; }
+
             ktl::Awaitable<NTSTATUS> CloseAsync(__in ktl::CancellationToken const & cancellationToken) override
             {
                 co_return STATUS_SUCCESS;
@@ -29,7 +31,6 @@ namespace Data
 
             VOID Abort() override
             {
-
             }
 
             VOID Dispose() override

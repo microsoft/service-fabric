@@ -20,9 +20,9 @@ namespace Management
                 switch (e)
                 {
                 case Enum::Invalid: w << "Invalid"; return;
-                case Enum::ClusterDefault: w << "ClusterDefault"; return;
-                case Enum::CleanupApplicationPackageOnSuccessfulProvision: w << "CleanupApplicationPackageOnSuccessfulProvision"; return;
-                case Enum::NoCleanupApplicationPackageOnProvision: w << "NoCleanupApplicationPackageOnProvision"; return;
+                case Enum::Default: w << "Default"; return;
+                case Enum::Automatic: w << "Automatic"; return;
+                case Enum::Manual: w << "Manual"; return;
                 };
 
                 w << "ApplicationPackageCleanupPolicy(" << static_cast<int>(e) << ')';
@@ -32,14 +32,14 @@ namespace Management
             {
                 switch (toConvert)
                 {
-                case Enum::ClusterDefault:
-                    return FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_CLUSTER_DEFAULT;
+                case Enum::Default:
+                    return FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_DEFAULT;
 
-                case Enum::CleanupApplicationPackageOnSuccessfulProvision:
-                    return FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_CLEANUP_ON_SUCCESSFUL_PROVISION;
+                case Enum::Automatic:
+                    return FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_AUTOMATIC;
 
-                case Enum::NoCleanupApplicationPackageOnProvision:
-                    return FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_NO_CLEANUP_ON_PROVISION;
+                case Enum::Manual:
+                    return FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_MANUAL;
 
                 default:
                     return FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_INVALID;
@@ -52,12 +52,12 @@ namespace Management
                 {
                 case FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_INVALID:
                     return Enum::Invalid;
-                case FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_CLUSTER_DEFAULT:
-                    return Enum::ClusterDefault;
-                case FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_CLEANUP_ON_SUCCESSFUL_PROVISION:
-                    return Enum::CleanupApplicationPackageOnSuccessfulProvision;
-                case FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_NO_CLEANUP_ON_PROVISION:
-                    return Enum::NoCleanupApplicationPackageOnProvision;
+                case FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_DEFAULT:
+                    return Enum::Default;
+                case FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_AUTOMATIC:
+                    return Enum::Automatic;
+                case FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY_MANUAL:
+                    return Enum::Manual;
                 default:
                     Assert::CodingError("Unknown FABRIC_APPLICATION_PACKAGE_CLEANUP_POLICY value {0}", (int)toConvert);
                 }
@@ -65,7 +65,7 @@ namespace Management
 
             BEGIN_ENUM_STRUCTURED_TRACE(ApplicationPackageCleanupPolicy)
 
-            ADD_CASTED_ENUM_MAP_VALUE_RANGE(ApplicationPackageCleanupPolicy, Invalid, NoCleanupApplicationPackageOnProvision)
+            ADD_CASTED_ENUM_MAP_VALUE_RANGE(ApplicationPackageCleanupPolicy, Invalid, Manual)
 
             END_ENUM_STRUCTURED_TRACE(ApplicationPackageCleanupPolicy)
         }

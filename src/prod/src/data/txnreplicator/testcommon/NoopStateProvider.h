@@ -92,7 +92,7 @@ namespace TxnReplicator
 
             OperationDataStream::SPtr GetCurrentState() override;
 
-            void BeginSettingCurrentState() override;
+            ktl::Awaitable<void> BeginSettingCurrentStateAsync() override;
 
             ktl::Awaitable<void> SetCurrentStateAsync(
                 __in LONG64 stateRecordNumber,

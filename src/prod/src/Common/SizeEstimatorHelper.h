@@ -120,6 +120,7 @@ namespace Common
         VALUE_TYPE_EVALUATE_SIZE(bool)
         VALUE_TYPE_EVALUATE_SIZE(byte)
             
+        COMPRESSED_TYPE_EVALUATE_SIZE(double)
         COMPRESSED_TYPE_EVALUATE_SIZE(__int64)
         COMPRESSED_TYPE_EVALUATE_SIZE(unsigned __int64)
 
@@ -194,7 +195,8 @@ namespace Common
             return (value.size() + 1) * sizeof(wchar_t) - 1;
         }
 
-        static size_t EvaluateSize(std::wstring const & value)
+        template<class TEntry>
+        static size_t EvaluateSize(TEntry const & value)
         {
             return EvaluateDynamicSize(value) + 1;
         }

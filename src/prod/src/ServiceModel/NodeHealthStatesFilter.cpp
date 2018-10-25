@@ -21,21 +21,6 @@ NodeHealthStatesFilter::NodeHealthStatesFilter(DWORD healthStateFilter)
 {
 }
 
-NodeHealthStatesFilter::NodeHealthStatesFilter(NodeHealthStatesFilter && other)
-    : healthStateFilter_(move(other.healthStateFilter_))
-{
-}
-
-NodeHealthStatesFilter & NodeHealthStatesFilter::operator =(NodeHealthStatesFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-    }
-
-    return *this;
-}
-
 NodeHealthStatesFilter::~NodeHealthStatesFilter()
 {
 }

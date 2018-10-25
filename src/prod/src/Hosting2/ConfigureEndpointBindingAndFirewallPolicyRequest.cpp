@@ -17,7 +17,8 @@ ConfigureEndpointBindingAndFirewallPolicyRequest::ConfigureEndpointBindingAndFir
   endpointCertBindings_(),
   cleanup_(false),
   cleanupFirewallPolicy_(false),
-  firewallPorts_()
+  firewallPorts_(),
+  nodeInstanceId_(0)
 {
 }
 
@@ -27,13 +28,15 @@ ConfigureEndpointBindingAndFirewallPolicyRequest::ConfigureEndpointBindingAndFir
     vector<EndpointCertificateBinding> const & certBindings,
     bool cleanup,
     bool cleanupFirewallPolicy,
-    vector<LONG> const & firewallPorts)
+    vector<LONG> const & firewallPorts,
+    uint64 nodeInstanceId)
     : nodeId_(nodeId),
     servicePackageId_(servicePackageId),
     endpointCertBindings_(certBindings),
     cleanup_(cleanup),
     cleanupFirewallPolicy_(cleanupFirewallPolicy),
-    firewallPorts_(firewallPorts)
+    firewallPorts_(firewallPorts),
+    nodeInstanceId_(nodeInstanceId)
 {
 }
 
@@ -56,5 +59,6 @@ void ConfigureEndpointBindingAndFirewallPolicyRequest::WriteTo(TextWriter & w, F
         w.Write("Port = {0}", *iter);
     }
     w.Write("}");
+    w.Write("NodeInstanceId = {0}", nodeInstanceId_);
     w.Write("}");
 }

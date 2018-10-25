@@ -14,7 +14,6 @@
 #include <ktrace.h>
 #include <ktllogger.h>
 
-#include "RvdLoggerTests.h"
 #include "KtlLoggerTests.h"
 
 #include "RWTStress.h"

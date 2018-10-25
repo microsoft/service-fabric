@@ -36,31 +36,6 @@ PartitionHealthStateChunk::PartitionHealthStateChunk(
 {
 }
 
-PartitionHealthStateChunk::PartitionHealthStateChunk(PartitionHealthStateChunk && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , Common::ISizeEstimator(move(other))
-    , partitionId_(move(other.partitionId_))
-    , healthState_(move(other.healthState_))
-    , replicaHealthStateChunks_(move(other.replicaHealthStateChunks_))
-{
-}
-
-PartitionHealthStateChunk & PartitionHealthStateChunk::operator =(PartitionHealthStateChunk && other)
-{
-    if (this != &other)
-    {
-        partitionId_ = move(other.partitionId_);
-        healthState_ = move(other.healthState_);
-        replicaHealthStateChunks_ = move(other.replicaHealthStateChunks_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    Common::ISizeEstimator::operator=(move(other));
-    return *this;
-}
-
 PartitionHealthStateChunk::~PartitionHealthStateChunk()
 {
 }

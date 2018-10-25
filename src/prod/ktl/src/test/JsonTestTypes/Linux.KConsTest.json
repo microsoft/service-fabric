@@ -1,0 +1,28 @@
+{
+    "RequiredParameters": [ "TaskName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "Params": "",
+        "CleanupType": "",
+        "CredentialType": "",
+        "WorkingDirectory" : "",
+        "SetupTimeout": "1200",
+        "ExecutionTimeout": "2100",
+        "CleanupTimeout": "2100"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]/test/[TASKNAME].exe",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
+            "WorkingDirectory" : "[WORKINGDIRECTORY]"
+        }
+    ],
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.out$,.-*\\.trace$,.*\\.pdb$,.*\\.dmp$,.*\\.etl$,.*\\.xml$,.*\\.json$,.*\\.man$"
+    }
+}

@@ -84,6 +84,7 @@ namespace Management
                 ServiceModelApplicationId const &, 
                 __out std::vector<ServiceContext> &);
 
+            static ServiceModelServiceName GetRelativeServiceName(std::wstring const & appName, std::wstring const & absoluteServiceName);
             // Performance optimization:
             // If the service was successfully created or deleted at the Naming Service,
             // then do not send another Naming request if processing of this context is
@@ -102,6 +103,7 @@ namespace Management
             void OnFailRolloutContext() override { this->ResetCommitPending(); }
 
             ServiceModel::ServiceQueryResult ToQueryResult(std::wstring const &) const;
+            FABRIC_QUERY_SERVICE_STATUS GetQueryStatus() const;
 
             virtual std::wstring const & get_Type() const;
             virtual void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
@@ -124,7 +126,6 @@ namespace Management
             
         private:
             static Common::NamingUri StringToNamingUri(std::wstring const & appName);
-            static ServiceModelServiceName GetRelativeServiceName(std::wstring const & appName, std::wstring const & absoluteServiceName);
 
             ServiceModelApplicationId applicationId_;
             Common::NamingUri applicationName_;

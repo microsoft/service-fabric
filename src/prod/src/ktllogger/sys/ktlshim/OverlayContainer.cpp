@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include "KtlLogShimKernel.h"
 
 OverlayLogFreeService::~OverlayLogFreeService()
@@ -891,25 +895,24 @@ OverlayLogFreeService::AsyncDeleteContainerContext::FSMContinue(
                 _State = CloseBaseContainer;                
                 Status = _BaseSharedLog->SetShutdownEvent(&_BaseSharedLogShutdownEvent);
                 KInvariant(NT_SUCCESS(Status));
-                
-                BOOLEAN freed;
-#if !defined(PLATFORM_UNIX)
+
+#if DBG
+                BOOLEAN freed;              
                 {
                     //
                     // This assert seems to be hitting sometimes on Linux
                     // which is a timing issue
                     //
-                    RvdLog* baseSharedLog = _BaseSharedLog.RawPtr();
+                    RvdLog* _BaseSharedLogRaw = _BaseSharedLog.RawPtr();
                     
                     freed = _BaseSharedLog.Reset();
                     if (! freed)
                     {
-                        KTraceFailedAsyncRequest(Status, this, _State, (ULONGLONG)baseSharedLog);
-                        KInvariant(freed);
+                        KTraceFailedAsyncRequest(Status, this, _State, (ULONGLONG)_BaseSharedLogRaw);
                     }
                 }
 #else
-                freed = _BaseSharedLog.Reset();             
+                _BaseSharedLog.Reset();
 #endif
                 _BaseSharedLogShutdownWait->StartWaitUntilSet(this,
                                                               completion);

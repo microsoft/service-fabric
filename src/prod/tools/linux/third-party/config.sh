@@ -37,6 +37,9 @@ DEPS_ROOT=${ROOT}/deps
 # Directory for the source code
 SRC_DIR=${DEPS_ROOT}/third-party/src/${NAME}
 
+# Root directory for go project
+GO_PATH=${DEPS_ROOT}/third-party/src/go
+
 # Directory for the binary output
 BIN_DIR=${DEPS_ROOT}/third-party/build/${NAME}
 

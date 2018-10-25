@@ -14,11 +14,11 @@ namespace ServiceModel
     {
     public:
         ApplicationServiceDescription();
-        ApplicationServiceDescription(ApplicationServiceDescription const & other);
-        ApplicationServiceDescription(ApplicationServiceDescription && other);
+        ApplicationServiceDescription(ApplicationServiceDescription const & other) = default;
+        ApplicationServiceDescription(ApplicationServiceDescription && other) = default;
 
-        ApplicationServiceDescription const & operator = (ApplicationServiceDescription const & other);
-        ApplicationServiceDescription const & operator = (ApplicationServiceDescription && other);
+        ApplicationServiceDescription & operator = (ApplicationServiceDescription const & other) = default;
+        ApplicationServiceDescription & operator = (ApplicationServiceDescription && other) = default;
 
         bool operator == (ApplicationServiceDescription const & other) const;
         bool operator != (ApplicationServiceDescription const & other) const;
@@ -56,6 +56,8 @@ namespace ServiceModel
         Common::TimeSpan QuorumLossWaitDuration;
         Common::TimeSpan StandByReplicaKeepDuration;
 
+        std::vector<Reliability::ServiceScalingPolicyDescription> ScalingPolicies;
+
     private:
         friend struct ApplicationPackageReference;
         friend struct ApplicationInstanceDescription;
@@ -71,7 +73,7 @@ namespace ServiceModel
         void ParseServiceCorrelations(Common::XmlReaderUPtr const & xmlReader);
         void ParseServicePlacementPolicies(Common::XmlReaderUPtr const & xmlReader);
         void ParseServiceGroupMembers(Common::XmlReaderUPtr const & xmlReader);
-
+        void ParseScalingPolicy(Common::XmlReaderUPtr const & xmlReader);
 
 		std::wstring DefaultMoveCostToString();
 		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const & xmlWriter);
@@ -79,6 +81,7 @@ namespace ServiceModel
 		Common::ErrorCode WritePlacementConstraints(Common::XmlWriterUPtr const &);
 		Common::ErrorCode WriteServiceCorrelations(Common::XmlWriterUPtr const &);
 		Common::ErrorCode WriteServicePlacementPolicies(Common::XmlWriterUPtr const &);
+        Common::ErrorCode WriteScalingPolicy(Common::XmlWriterUPtr const &);
 		Common::ErrorCode WriteMembers(Common::XmlWriterUPtr const &);
 
 

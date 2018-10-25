@@ -36,8 +36,6 @@ target_link_libraries(${exe_ReliabilityCommonTest}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
   ${BoostTest2}
 )
 

@@ -15,6 +15,7 @@ using namespace Query;
 using namespace ServiceModel;
 using namespace Hosting2;
 using namespace Management;
+using namespace Management::CentralSecretService;
 
 StringLiteral const TraceType("HostingSubsystem");
 
@@ -281,6 +282,21 @@ protected:
                     TraceType,
                     owner_.Root.TraceId,
                     "Failed to create RepairManagementClient: ErrorCode={0}",
+                    error);
+                TryComplete(thisSPtr, error);
+                return;
+            }
+        }
+
+        if (CentralSecretServiceConfig::IsCentralSecretServiceConfigured())
+        {
+            error = owner_.passThroughClientFactoryPtr_->CreateSecretStoreClient(owner_.secretStoreClient_);
+            if (!error.IsSuccess())
+            {
+                WriteWarning(
+                    TraceType,
+                    owner_.Root.TraceId,
+                    "Failed to create SecretStoreClient: ErrorCode={0}",
                     error);
                 TryComplete(thisSPtr, error);
                 return;
@@ -654,7 +670,31 @@ private:
             "OpenDeletionManager: Error {0}",
             error);        
 
-        TryComplete(thisSPtr, error);
+        if (!error.IsSuccess())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        OpenLocalSecretServiceManager(thisSPtr);
+    }
+
+    void OpenLocalSecretServiceManager(AsyncOperationSPtr const & thisSPtr)
+    {
+        // Perform LSS open operations only if SecretStoreService is enabled in the cluster manifest
+        ErrorCode error(ErrorCodeValue::Success);
+        if (CentralSecretServiceConfig::IsCentralSecretServiceConfigured())
+        {
+          error = owner_.LocalSecretServiceManagerObj->Open();
+          WriteTrace(
+              error.ToLogLevel(),
+              TraceType,
+              owner_.Root.TraceId,
+              "OpenLocalSecretServiceManager: Error {0}",
+              error);
+        }
+
+        TryComplete(thisSPtr, error);       
     }
 
 private:
@@ -1034,7 +1074,26 @@ private:
             return;
         }
 
-        TryComplete(thisSPtr, ErrorCodeValue::Success);
+        CloseLocalSecretServiceManager(thisSPtr);
+    }
+
+    void CloseLocalSecretServiceManager(AsyncOperationSPtr const & thisSPtr)
+    {
+        ErrorCode error(ErrorCodeValue::Success);
+        if (CentralSecretServiceConfig::IsCentralSecretServiceConfigured())
+        {
+            error = owner_.LocalSecretServiceManagerObj->Close();
+
+            WriteTrace(
+                error.ToLogLevel(),
+                TraceType,
+                owner_.Root.TraceId,
+                "CloseLocalSecretServiceManager: Error={0}",
+                error
+            );
+        }
+
+        TryComplete(thisSPtr, error);
     }
 
 private:
@@ -1074,6 +1133,7 @@ HostingSubsystem::HostingSubsystem(
     downloadManager_(),
     deletionManager_(),
     localResourceManager_(),
+    localSecretServiceManager_(),
     fabricActivatorClient_(),
     nodeRestartManagerClient_(),
     hostManager_(),
@@ -1118,10 +1178,11 @@ HostingSubsystem::HostingSubsystem(
     auto eventDispatcher = make_unique<EventDispatcher>(root, *this);
     auto hostingQueryManager = make_unique<HostingQueryManager>(root, *this);
     auto healthManager = make_unique<HostingHealthManager>(root, *this);
-    auto activatorClient = make_shared<FabricActivatorClient>(root, nodeId_, fabricBinFolder_);
+    auto activatorClient = make_shared<FabricActivatorClient>(root, *this, nodeId_, fabricBinFolder_, federation_.Instance.getInstanceId());
     auto restartManagerClient = make_shared<NodeRestartManagerClient>(root, *this, nodeId_);
     auto svcPkgInstanceInfoMap = make_shared<ServicePackageInstanceInfoMap>(*this);
     auto localResourceManager = make_unique<LocalResourceManager>(root, fabricNodeConfig_, *this);
+    auto localSecretServiceManager = make_unique<LocalSecretServiceManager>(root, *this);
     auto dnsEnvManager = make_unique<DnsServiceEnvironmentManager>(root, *this);
 
     runtimeManager_ = move(runtimeManager);
@@ -1131,6 +1192,7 @@ HostingSubsystem::HostingSubsystem(
     hostManager_ = move(hostManager);
     typeHostManager_ = move(typeHostManager);
     localResourceManager_ = move(localResourceManager);
+    localSecretServiceManager_ = move(localSecretServiceManager);
 
     fabricUpgradeManager_ = move(fabricUpgradeManager);
     eventDispatcher_ = move(eventDispatcher);
@@ -1245,6 +1307,7 @@ void HostingSubsystem::OnAbort()
     hostingQueryManager_->Abort();
     deletionManager_->Abort();
     localResourceManager_->Abort();
+    localSecretServiceManager_->Abort();
     dnsEnvManager_->StopMonitor();
 
     WriteNoise(
@@ -1537,6 +1600,18 @@ bool HostingSubsystem::UnregisterApplicationHostClosedEventHandler(
     ApplicationHostClosedEventHHandler const & hHandler)
 {
     return this->EventDispatcherObj->UnregisterApplicationHostClosedEventHandler(hHandler);
+}
+
+AvailableContainerImagesEventHHandler HostingSubsystem::RegisterSendAvailableContainerImagesEventHandler(
+    AvailableContainerImagesEventHandler const & handler)
+{
+    return this->EventDispatcherObj->RegisterSendAvailableContainerImagesEventHandler(handler);
+}
+
+bool HostingSubsystem::UnregisterSendAvailableContainerImagesEventHandler(
+    AvailableContainerImagesEventHHandler const & hHandler)
+{
+    return this->EventDispatcherObj->UnregisterSendAvailableContainerImagesEventHandler(hHandler);
 }
 
 ErrorCode HostingSubsystem::GetDeploymentFolder(
@@ -1885,7 +1960,7 @@ ErrorCode HostingSubsystem::GetDllHostPathAndArguments(wstring & dllHostPath, ws
     }
 }
 
-ErrorCode HostingSubsystem::GetTypeHostPath(wstring & typeHostPath)
+ErrorCode HostingSubsystem::GetTypeHostPath(wstring & typeHostPath, bool useReplicatedStore)
 {
     {
         AcquireReadLock readLock(this->hostPathInitializationLock_);
@@ -1906,7 +1981,15 @@ ErrorCode HostingSubsystem::GetTypeHostPath(wstring & typeHostPath)
         else
         {
             // initialize
-            wstring configuredPath = HostingConfig::GetConfig().FabricTypeHostPath;
+            wstring configuredPath;
+            if (useReplicatedStore)
+            {
+                configuredPath = HostingConfig::GetConfig().SFBlockStoreSvcPath;
+            }
+            else
+            {
+                configuredPath = HostingConfig::GetConfig().FabricTypeHostPath;
+            }
             wstring fabricTypeHostExePath;
             if (!Environment::ExpandEnvironmentStringsW(configuredPath, fabricTypeHostExePath))
             {
@@ -1959,6 +2042,15 @@ void HostingSubsystem::Test_SetFabricActivatorClient(
     }
 }
 
+void HostingSubsystem::Test_SetSecretStoreClient(Api::ISecretStoreClientPtr testSecretStoreClient)
+{
+    WriteInfo(
+            TraceType,
+            Root.TraceId,
+            "Moving testSecretStoreClient to secretStoreClient");
+    secretStoreClient_ = testSecretStoreClient;
+}
+
 bool HostingSubsystem::TryGetServicePackagePublicActivationId(
     ServicePackageIdentifier const & servicePackageId,
     ServicePackageActivationContext const & activationContext,
@@ -1970,7 +2062,7 @@ bool HostingSubsystem::TryGetServicePackagePublicActivationId(
 bool HostingSubsystem::TryGetExclusiveServicePackageServiceName(
     ServicePackageIdentifier const & servicePackageId,
     ServicePackageActivationContext const & activationContext,
-    wstring & serviceName)
+    wstring & serviceName) const
 {
     return svcPkgInstanceInfoMap_->TryGetServiceName(servicePackageId, activationContext, serviceName);
 }

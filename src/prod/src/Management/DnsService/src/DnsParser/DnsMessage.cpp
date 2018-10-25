@@ -30,6 +30,7 @@ _flags(flags),
 _arrQuestions(GetThisAllocator()),
 _arrAnswers(GetThisAllocator())
 {
+    _time = KDateTime::Now();
 }
 
 DnsMessage::~DnsMessage()
@@ -84,11 +85,12 @@ KString::SPtr DnsMessage::ToString() const
 
     KString& strOut = *spOutStr;
 
+    KDuration duration = KDateTime::Now() - _time;
     WCHAR temp[256];
 #if !defined(PLATFORM_UNIX)    
-    _snwprintf_s(temp, ARRAYSIZE(temp), L"ID( 0x%x ) RC( %d ) Flags ( %x ) ", _id, DnsFlags::GetResponseCode(_flags), _flags);
+    _snwprintf_s(temp, ARRAYSIZE(temp), L"ID( 0x%x ) RC( %d ) Flags ( %x ) Duration ( %d ms ) ", _id, DnsFlags::GetResponseCode(_flags), _flags, (LONG)duration.Milliseconds());
 #else
-    swprintf(temp, ARRAYSIZE(temp), L"ID( 0x%x ) RC( %d ) Flags ( %x ) ", _id, DnsFlags::GetResponseCode(_flags), _flags);
+    swprintf(temp, ARRAYSIZE(temp), L"ID( 0x%x ) RC( %d ) Flags ( %x ) Duration ( %d ms ) ", _id, DnsFlags::GetResponseCode(_flags), _flags, (LONG)duration.Milliseconds());
 #endif    
     strOut.Concat(temp);
 

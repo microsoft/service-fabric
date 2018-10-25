@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include "KtlLogShimKernel.h"
 
 OverlayStreamFreeService::OverlayStreamFreeService(
@@ -164,12 +168,12 @@ OverlayStreamFreeService::AsyncInitializeStreamContext::FSMContinue(
 {
     KAsyncContextBase::CompletionCallback completion(this, &OverlayStreamFreeService::AsyncInitializeStreamContext::OperationCompletion);
 
-    KDbgCheckpointWData(0, "AsyncInitializeStreamContext", Status,
+    KDbgCheckpointWData(GetActivityId(), "AsyncInitializeStreamContext", Status,
                         (ULONGLONG)_State,
                         (ULONGLONG)this,
                         (ULONGLONG)0,
-                        (ULONGLONG)0);                                
-        
+                        (ULONGLONG)0);
+
     if (! NT_SUCCESS(Status))
     {
         KTraceFailedAsyncRequest(Status, this, _State, 0);

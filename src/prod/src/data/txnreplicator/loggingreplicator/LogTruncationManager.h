@@ -47,6 +47,25 @@ namespace Data
 
             void ForceCheckpoint();
 
+            void OnCheckpointCompleted(
+                __in NTSTATUS status,
+                __in Data::LogRecordLib::CheckpointState::Enum checkpointState,
+                __in bool isRecoveredCheckpoint) override;
+
+            void OnTruncationCompleted() override;
+
+            void InitiatePeriodicCheckpoint() override;
+
+            __declspec(property(get = get_PeriodicTruncationState)) PeriodicCheckpointTruncationState::Enum PeriodicCheckpointTruncationState;
+            PeriodicCheckpointTruncationState::Enum get_PeriodicTruncationState() const override
+            {
+                return periodicCheckpointTruncationState_;
+            }
+
+            void Recover(
+                __in LONG64 recoveredCheckpointTime,
+                __in LONG64 recoveredTruncationTime) override;
+
         private:
             
             static const ULONG ThrottleAfterPendingCheckpointCount;
@@ -93,6 +112,12 @@ namespace Data
             // Updates the configuration values if the set duration has passed
             void RefreshConfigurationValues(bool forceRefresh = false);
 
+            // Initiates periodic checkpoint if the configured interval has passed
+            bool ShouldInitiatePeriodicCheckpoint();
+
+            // Initiates periodic truncation if a periodic checkpoint has completed
+            bool ShouldInitiatePeriodicTruncation();
+
             // Pointer to a config object shared throughout this replicator instance
             TxnReplicator::TRInternalSettingsSPtr const transactionalReplicatorConfig_;
 
@@ -123,6 +148,8 @@ namespace Data
             ReplicatedLogManager::CSPtr replicatedLogManager_;
 
             Common::atomic_bool forceCheckpoint_;
+
+            PeriodicCheckpointTruncationState::Enum periodicCheckpointTruncationState_;
         };
     }
 }

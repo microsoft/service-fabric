@@ -45,6 +45,7 @@ bool EnableNativeImageStore = false;
 bool EnableTStoreSystemServices = false;
 bool EnableEseSystemServices = false;
 bool ToggleNativeStoreOnDate = false;
+bool EnableContainers = false;
 
 wstring LoadArg = L"-load";
 wstring AutoArg = L"-auto";
@@ -63,6 +64,7 @@ wstring EnableTStoreSystemServicesArg = L"-tstore";
 wstring EnableNativeStoreSystemServicesArg = L"-nativestore";
 wstring EnableEseSystemServicesArg = L"-ese";
 wstring ToggleNativeStoreOnDateArg = L"-togglestore";
+wstring EnableContainersArg = L"-enableContainers";
 
 #define ISARGKEYWORD(X,Y) (Common::StringUtility::AreEqualCaseInsensitive(X, Y) || Common::StringUtility::StartsWith(X, Y+L":"))
 
@@ -186,6 +188,10 @@ bool ParseArguments(Common::StringCollection const& args)
         {
             EnableEseSystemServices = true;
         }
+        else if (ISARGKEYWORD(arg, EnableContainersArg))
+        {
+            EnableContainers = true;
+        }
         else if (ISARGKEYWORD(arg, ToggleNativeStoreOnDateArg))
         {
             ToggleNativeStoreOnDate = true;
@@ -257,6 +263,7 @@ void PrintHelp()
     TestSession::WriteInfo("FabricTest", "\t-notestdir                      Used when running these test in ETCM so that the directory path is small (i.e. < 256 chars)\n");
 
     TestSession::WriteInfo("FabricTest", "\t-enableNativeImageStore        Use NativeImageStore\n");
+    TestSession::WriteInfo("FabricTest", "\t-enableContainers              Enables testing containers. This is disabled by default. A test using containers should pass this argument. Note that container based tests should run sequentially.\n");
     TestSession::WriteInfo("FabricTest", "\t-nativestore                   Use TStore for system services. Cannot be set with -ese\n");
     TestSession::WriteInfo("FabricTest", "\t-ese                           Use Ese for system services. Cannot be set with -tstore\n");
     TestSession::WriteInfo("FabricTest", "\t-togglestore                   Switches the cluster deployed by the test to use native store stack or ese based on date. If even it is Native Store and if odd it uses Ese. If -ses or -tstore set those will take preference\n");
@@ -264,6 +271,10 @@ void PrintHelp()
 
 int main(int argc, __in_ecount( argc ) char** argv) 
 {
+#ifndef PLATFORM_UNIX 
+    CRTAbortBehavior::DisableAbortPopup();    
+#endif
+
     ConfigStoreSPtr configStore = make_shared<TestConfigStore>(Config::InitConfigStore());
     Config::SetConfigStore(configStore);
 
@@ -457,7 +468,32 @@ int main(int argc, __in_ecount( argc ) char** argv)
         healthClientConfig.HealthOperationTimeout = TimeSpan::FromSeconds(15);
         healthClientConfig.HealthReportSendInterval = TimeSpan::FromSeconds(10);
     }
+    if (EnableContainers)
+    {
+        auto & hostingConfig = Hosting2::HostingConfig::GetConfig();
+        hostingConfig.DisableContainers = false;
+    }
 
+    //
+    // Set FabricCodePath and FabricLogRoot environment variable. This is needed by
+    // FabricCAS to set binds while launching containers. These do not really get used
+    // and value could be any non-empty paths. Settings it to current directory as these
+    // paths do not really apply to FabricTest.
+    // 
+    auto currentDir = Directory::GetCurrentDirectoryW();
+    auto codePathEnvVar = *(FabricEnvironment::FabricCodePathEnvironmentVariable);
+    auto logRootEnvVar = *(FabricEnvironment::FabricLogRootEnvironmentVariable);
+
+    if (!Environment::SetEnvironmentVariable(codePathEnvVar, currentDir))
+    {
+        TestSession::WriteError("FabricTest", "Failed to set FabricCodePath environment variable.");
+    }
+
+    if (!Environment::SetEnvironmentVariable(logRootEnvVar, currentDir))
+    {
+        TestSession::WriteError("FabricTest", "Failed to set FabricLogRoot environment variable.");
+    }
+    
     //
     // Enable KTL tracing into the SF file log
     //

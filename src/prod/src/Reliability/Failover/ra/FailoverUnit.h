@@ -306,7 +306,8 @@ namespace Reliability
             void StartCloseLocalReplica(
                 ReplicaCloseMode closeMode,
                 Federation::NodeInstance const & senderNode,
-                FailoverUnitEntityExecutionContext & executionContext);
+                FailoverUnitEntityExecutionContext & executionContext,
+                Common::ActivityDescription const & activityDescription);
 
             void Test_ReadWriteStatusRevokedNotification(
                 FailoverUnitEntityExecutionContext & executionContext)

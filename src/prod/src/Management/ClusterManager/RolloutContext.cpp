@@ -24,6 +24,7 @@ RolloutContext::RolloutContext(RolloutContextType::Enum type)
     , error_(ErrorCodeValue::Success)
     , cachedMapKey_(L"")
     , isExternallyFailed_(false)
+    , shouldKeepInQueue_(false)
     , operationRetryStopwatch_()
     , timeoutCount_(0)
 {
@@ -40,6 +41,7 @@ RolloutContext::RolloutContext(RolloutContext const & other)
     , error_(other.error_)
     , cachedMapKey_(other.cachedMapKey_)
     , isExternallyFailed_(false)
+    , shouldKeepInQueue_(false)
     , operationRetryStopwatch_()
     , timeoutCount_(0)
 {
@@ -56,6 +58,7 @@ RolloutContext::RolloutContext(RolloutContext && other)
     , error_(move(other.error_))
     , cachedMapKey_(move(other.cachedMapKey_))
     , isExternallyFailed_(false)
+    , shouldKeepInQueue_(false)
     , operationRetryStopwatch_()
     , timeoutCount_(0)
 {
@@ -75,6 +78,7 @@ RolloutContext & RolloutContext::operator =(RolloutContext && other)
         error_.Overwrite(move(other.error_));
         cachedMapKey_ = move(other.cachedMapKey_);
         isExternallyFailed_ = false;
+        shouldKeepInQueue_ = false;
     }
 
     return *this;
@@ -96,6 +100,7 @@ RolloutContext::RolloutContext(
     , error_(ErrorCodeValue::Success)
     , cachedMapKey_(L"")
     , isExternallyFailed_(false)
+    , shouldKeepInQueue_(false)
     , operationRetryStopwatch_()
     , timeoutCount_(0)
 {
@@ -119,6 +124,7 @@ RolloutContext::RolloutContext(
     , error_(ErrorCodeValue::Success)
     , cachedMapKey_(L"")
     , isExternallyFailed_(false)
+    , shouldKeepInQueue_(false)
     , operationRetryStopwatch_()
     , timeoutCount_(0)
 {
@@ -243,6 +249,7 @@ ErrorCode RolloutContext::Refresh(StoreTransaction const & storeTx)
 
 ErrorCode RolloutContext::Complete(StoreTransaction const & storeTx)
 {
+    shouldKeepInQueue_ = false;
     return this->UpdateStatus(storeTx, RolloutStatus::Completed);
 }
 
@@ -290,4 +297,11 @@ void RolloutContext::SetRetryTimer(ThreadpoolCallback const & callback, TimeSpan
 void RolloutContext::SetCompletionError(ErrorCode const & error)
 {
     error_ = ErrorCode::FirstError(error_, error);
+}
+
+ErrorCode RolloutContext::SwitchReplaceToCreate(StoreTransaction const & storeTx)
+{
+    shouldKeepInQueue_ = true;
+    this->Status = RolloutStatus::Enum::Pending;
+    return storeTx.Update(*this);
 }

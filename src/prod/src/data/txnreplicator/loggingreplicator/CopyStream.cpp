@@ -21,7 +21,7 @@ CopyStream::CopyStream(
     __in LONG64 uptoLsn,
     __in OperationDataStream & copyContext,
     __in CopyStageBuffers & copyStageBuffers,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in KAllocator & allocator)
     : OperationDataStream()
     , PartitionedReplicaTraceComponent(traceId)
@@ -85,7 +85,7 @@ CopyStream::SPtr CopyStream::Create(
     __in LONG64 uptoLsn,
     __in OperationDataStream & copyContext,
     __in CopyStageBuffers & copyStageBuffers,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in KAllocator & allocator)
 {
     CopyStream * pointer = _new(COPYSTREAM_TAG, allocator) CopyStream(

@@ -38,7 +38,12 @@ namespace Reliability
             //
             // 2. Processes the seed nodes to ensure that fabric upgrade does not
             //    cause global lease loss.
-            void Initialize(FailoverManager & fm);
+            //
+            // 3. Try to lock all the nodes that the in the current UD. This is to
+            //    ensure that there is no node which was locked when the upgrade was
+            //    in the previous UD and that could have incorrectly passed the
+            //    gatekeeping.
+            bool Initialize(FailoverManager & fm);
 
             virtual void Process(FailoverManager const& fm, FailoverUnit const& failoverUnit);
 

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Data>
+    <Table Id="Test">
+        <ParameterTypes>
+            <ParameterType Name="Parameters" Array="true">String</ParameterType>
+        </ParameterTypes>
+        <Row Name="Test">
+            <Parameter Name="Parameters">
+                <Value>KtlCommonTest:</Value>
+                <Value>KtlTextTest:</Value>
+                <Value>KtlMemoryMapTest:</Value>
+            </Parameter>
+        </Row>
+    </Table>
+</Data>

@@ -73,6 +73,12 @@ bool ProcessReportEntityJobItem::CanCombine(IHealthJobItemSPtr const & other) co
         return false;
     }
 
+    if (contexts_.size() >= ManagementConfig::GetConfig().MaxEntityHealthReportsAllowedPerTransaction)
+    {
+        // Prevent one transaction from becoming too big.
+        return false;
+    }
+
     if (other->Type != this->Type)
     {
         // Only report job items can be batched

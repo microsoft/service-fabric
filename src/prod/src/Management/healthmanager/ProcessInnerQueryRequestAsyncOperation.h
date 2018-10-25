@@ -90,6 +90,8 @@ namespace Management
                 __in QueryRequestContext & context);
             Common::ErrorCode CreateApplicationQueryListContext(
                 __in QueryRequestContext & context);
+            Common::ErrorCode CreateApplicationUnhealthyEvaluationContext(
+                __in QueryRequestContext & context);
             Common::ErrorCode CreateDeployedApplicationQueryListContext(
                 __in QueryRequestContext & context);
             Common::ErrorCode CreateDeployedApplicationsOnNodeQueryListContext(

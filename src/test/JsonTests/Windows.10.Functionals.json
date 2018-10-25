@@ -5,7 +5,7 @@
     {
       "Name": "EndToEndSmokeTestBvtWin10",
       "Type": "V2_ScriptTest",
-      "Owners": "anmola,rsinha",
+      "Owners": "lemai",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win10Test",
       "TestExecutionParameters": {        
@@ -20,7 +20,7 @@
     {
       "Name": "EndToEndSmokeTestStandalone",
       "Type": "V2_ScriptTest",
-      "Owners": "liphigao,ratando,anmola,rsinha",
+      "Owners": "alsantam,jkochhar",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:3;Group=Win10Test",
       "TestExecutionParameters": {
@@ -34,7 +34,7 @@
     {
       "Name": "DistributedCollections",
       "Type": "V2_ScriptTest",
-      "Owners": "tyadam, richhas",
+      "Owners": "tyadam,yzha,rajak",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win10Test",
       "TestExecutionParameters": {
@@ -46,9 +46,9 @@
       }
     },
     {
-      "Name": "Backup-CIT",
+      "Name": "Backup-CIT_Win10",
       "Type": "V2_ScriptTest",
-      "Owners": "mcoskun, richhas",
+      "Owners": "zhol,rajak",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win10Test",
       "TestExecutionParameters": {
@@ -63,7 +63,7 @@
     {
       "Name": "Func_Unreliable_Random",
       "Type": "RandomTest",
-      "Owners": "aprameyr,anuragg",
+      "Owners": "manojsi,chuxin",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win10Test",
       "TestExecutionParameters": {
@@ -80,7 +80,7 @@
     {
       "Name": "AzureChaosTest",
       "Type": "Azure_Chaos",
-      "Owners": "motanv,anmola",
+      "Owners": "motanv,likevi",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win10Test&Azure:1",
       "TestExecutionParameters": {

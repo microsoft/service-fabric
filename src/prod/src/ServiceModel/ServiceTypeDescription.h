@@ -38,13 +38,13 @@ namespace ServiceModel
         std::wstring ToString() const;
 
          BEGIN_JSON_SERIALIZABLE_PROPERTIES()
+            SERIALIZE_CONSTANT_IF(Constants::Kind, L"Stateful", IsStateful)
+            SERIALIZE_CONSTANT_IF(Constants::Kind, L"Stateless", !IsStateful)
             SERIALIZABLE_PROPERTY(Constants::IsStateful, IsStateful)
             SERIALIZABLE_PROPERTY(Constants::ServiceTypeName, ServiceTypeName)
             SERIALIZABLE_PROPERTY(Constants::PlacementConstraints, PlacementConstraints)
             SERIALIZABLE_PROPERTY_IF(Constants::HasPersistedState, HasPersistedState, IsStateful)
             SERIALIZABLE_PROPERTY_IF(Constants::UseImplicitHost, UseImplicitHost, !IsStateful)
-            SERIALIZE_CONSTANT_IF(Constants::Kind, L"Stateful", IsStateful)
-            SERIALIZE_CONSTANT_IF(Constants::Kind, L"Stateless", !IsStateful)
             SERIALIZABLE_PROPERTY(Constants::Extensions, Extensions)
             SERIALIZABLE_PROPERTY(Constants::LoadMetrics, LoadMetrics)
             SERIALIZABLE_PROPERTY(Constants::ServicePlacementPolicies, ServicePlacementPolicies)

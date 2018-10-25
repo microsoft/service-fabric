@@ -113,7 +113,7 @@ Common::ErrorCode TcpSendTarget::SendOneWay(MessageUPtr && message, TimeSpan exp
     if (!error.IsSuccess())
     {
         trace.CannotSend(traceId_, localAddress_, address_, error, messageLocal->TraceId(), messageLocal->Actor, messageLocal->Action);
-        messageLocal->OnSendStatus(error.ReadValue(), move(messageLocal));
+        messageLocal->OnSendStatus(error, move(messageLocal));
         return  error;
     }
 
@@ -349,7 +349,7 @@ void TcpSendTarget::ConnectionRefreshCompleted(IConnection* connection)
         trace.SecureSessionExpired(expiringConnection->TraceId());
 
         // Reporting fault here will not cause send failure as the connection is already removed
-        expiringConnection->ReportFault(ErrorCodeValue::SecuritySessionExpired);
+        expiringConnection->ReportFault(SESSION_EXPIRATION_FAULT);
         SendScheduleCloseMessage(*expiringConnection, SecurityConfig::GetConfig().SessionExpirationCloseDelay);
     }
 }
@@ -358,7 +358,7 @@ void TcpSendTarget::RetireExpiredConnection(IConnection & connection)
 {
     trace.SecureSessionExpired(connection.TraceId());
     connection.StopSendAndScheduleClose(
-        ErrorCodeValue::SecuritySessionExpired,
+        SESSION_EXPIRATION_FAULT,
         true,
         //todo, leikong, consider using shorter delay on server side, as server side has already waited after sending Reconnect message in TcpConnection::OnSessionExpired
         SecurityConfig::GetConfig().SessionExpirationCloseDelay);
@@ -632,7 +632,7 @@ void TcpSendTarget::OnMessageReceived(
                 delayBeforeStopSend);
 
             IConnectionWPtr connectionWPtr = connection.GetWPtr();
-            if (fault == ErrorCodeValue::SecuritySessionExpired)
+            if (fault == SESSION_EXPIRATION_FAULT)
             {
                 fault = ErrorCodeValue::SecuritySessionExpiredByRemoteEnd;
             }
@@ -656,7 +656,16 @@ void TcpSendTarget::OnMessageReceived(
 
         if (message->Action == *Constants::ClaimsTokenError)
         {
-            connection.Abort(ErrorCodeValue::InvalidCredentials);
+            ConnectionAuthMessage connectionAuthMessage;
+            if (message->GetBody<ConnectionAuthMessage>(connectionAuthMessage))
+            {
+                connection.Abort(ErrorCode(ErrorCodeValue::InvalidCredentials, connectionAuthMessage.TakeMessage()));
+            }
+            else
+            {
+                connection.Abort(ErrorCodeValue::InvalidCredentials);
+            }
+
             return;
         }
 

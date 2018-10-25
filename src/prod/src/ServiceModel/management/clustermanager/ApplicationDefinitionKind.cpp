@@ -21,6 +21,7 @@ namespace Management
                 {
                     case Enum::ServiceFabricApplicationDescription: w << "ServiceFabricApplicationDescription"; return;
                     case Enum::Compose: w << "Compose"; return;
+                    case Enum::MeshApplicationDescription: w << "MeshApplicationDescription"; return;
                 };
 
                 w << "ApplicationDefinitionKind(" << static_cast<int>(e) << ')';
@@ -43,6 +44,11 @@ namespace Management
                     return true;
                 }
 
+                if (publicFilter & FABRIC_APPLICATION_DEFINITION_KIND_FILTER_MESH_APPLICATION_DESCRIPTION && value == Enum::MeshApplicationDescription)
+                {
+                    return true;
+                }
+
                 return false;
             }
 
@@ -55,6 +61,9 @@ namespace Management
 
                     case Enum::Compose:
                         return FABRIC_APPLICATION_DEFINITION_KIND_COMPOSE;
+
+                    case Enum::MeshApplicationDescription:
+                        return FABRIC_APPLICATION_DEFINITION_KIND_MESH_APPLICATION_DESCRIPTION;
 
                     default:
                         return FABRIC_APPLICATION_DEFINITION_KIND_INVALID;
@@ -70,11 +79,26 @@ namespace Management
 
                     case FABRIC_APPLICATION_DEFINITION_KIND_COMPOSE:
                         return Enum::Compose;
+                    
+                    case FABRIC_APPLICATION_DEFINITION_KIND_MESH_APPLICATION_DESCRIPTION:
+                        return Enum::MeshApplicationDescription;
 
                     default:
                         return Enum::Invalid;
                 }
             }
+
+            // we can't use the ENUM_STRUCTURED_TRACE macro for tracing this enum since this macro only works if the values in the 
+            // enum are in increasing order, which is not the case here. So, we need to add
+            // each enum value individually.
+            BEGIN_ENUM_STRUCTURED_TRACE( ApplicationDefinitionKind )
+
+            ADD_ENUM_MAP_VALUE(ApplicationDefinitionKind, Enum::Invalid)
+            ADD_ENUM_MAP_VALUE(ApplicationDefinitionKind, Enum::ServiceFabricApplicationDescription)
+            ADD_ENUM_MAP_VALUE(ApplicationDefinitionKind, Enum::Compose)
+            ADD_ENUM_MAP_VALUE(ApplicationDefinitionKind, Enum::MeshApplicationDescription)
+
+            END_ENUM_STRUCTURED_TRACE(ApplicationDefinitionKind)
         }
     }
 }

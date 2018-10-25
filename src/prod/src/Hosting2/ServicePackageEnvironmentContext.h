@@ -24,6 +24,9 @@ namespace Hosting2
         void AddCertificatePaths(std::map<std::wstring, std::wstring> const & certificatePaths, std::map<std::wstring, std::wstring> const & certificatePasswordPaths);
         void AddGroupContainerName(std::wstring const & containerName);
         std::wstring GetGroupAssignedIp();
+#if defined(PLATFORM_UNIX)
+        void SetContainerGroupIsolatedFlag(bool isIsolated);
+#endif
         void SetContainerGroupSetupFlag(bool isEnabled);
         void Reset();
 
@@ -44,12 +47,21 @@ namespace Hosting2
 
         __declspec(property(get = get_SetupContainerGroup)) bool SetupContainerGroup;
         bool get_SetupContainerGroup() { return this->setupContainerGroup_; }
-        
+
+#if defined(PLATFORM_UNIX)
+        __declspec(property(get = get_ContainerGroupIsolated)) bool ContainerGroupIsolated;
+        bool get_ContainerGroupIsolated() { return this->containerGroupIsolated_; }
+#endif
+
         __declspec(property(get = get_CertificatePaths)) std::map<std::wstring, std::wstring> const & CertificatePaths;
         std::map<std::wstring, std::wstring> const & get_CertificatePaths() { return this->certificatePaths_; }
 
         __declspec(property(get = get_CertificatePasswordPaths)) std::map<std::wstring, std::wstring> const & CertificatePasswordPaths;
         std::map<std::wstring, std::wstring> const & get_CertificatePasswordPaths() { return this->certificatePasswordPaths_; }
+
+        __declspec(property(get = get_FirewallPorts, put = set_FirewallPorts)) std::vector<LONG> FirewallPorts;
+        std::vector<LONG> get_FirewallPorts() const { return this->firewallPorts_; }
+        void set_FirewallPorts(std::vector<LONG> const& firewallPorts) { this->firewallPorts_ = firewallPorts; }
 
         Common::ErrorCode GetIpAddressAssignedToCodePackage(std::wstring const & codePackageName, __out std::wstring & ipAddress);
 
@@ -61,6 +73,11 @@ namespace Hosting2
         std::map<std::wstring, std::wstring> certificatePaths_;
         std::map<std::wstring, std::wstring> certificatePasswordPaths_;
         std::wstring groupContainerName_;
+#if defined(PLATFORM_UNIX)
+        bool containerGroupIsolated_;
+#endif
         bool setupContainerGroup_;
+        // On succesful cleanup the ports are set to empty. Firewall cleanup during abort will be a no op.
+        std::vector<LONG> firewallPorts_;
     };
 }

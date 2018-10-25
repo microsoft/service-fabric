@@ -1,3 +1,6 @@
+###############################################
+# Test various CM errors.
+###############################################
 votes 10 20
 namingservice 1 3 1
 cmservice 3 1
@@ -26,6 +29,24 @@ app.codepack OkApp1 ServicePackageA CodeA types=ServiceTypeA version=v1
 app.upload OkApp1
 
 provisionapp OkApp1
+
+#
+# Create application with invalid names
+#
+
+# Invalid name: app name is longer than NamingMaxNamingUriLength
+set NamingMaxNamingUriLength 5
+createapp fabric:/myapplonger/thenfive/chars OkType OkVersion error=InvalidNameUri
+set NamingMaxNamingUriLength 512
+
+# Invalid name: app name is root
+createapp fabric: OkType OkVersion error=AccessDenied
+
+# Invalid name: app name contains character reserved for service groups
+createapp fabric:/appwithinvalidchar#servicegroupdelimiter OkType OkVersion error=InvalidNameUri
+
+# Invalid name: app name contains invalid character ?
+createapp fabric:/appwithinvalidchar?queryparam OkType OkVersion error=InvalidNameUri
 
 # Invalid version
 app.add OkApp2 OkType BadVersion
@@ -160,7 +181,7 @@ app.servicetemplate versionV1 ServiceTypeA1 stateful partition=2 replica=2
 app.upload versionV1
 
 # Duplicate provision should fail
-provisionapp versionV1 Success applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+provisionapp versionV1 Success applicationPackageCleanupPolicy=Manual
 provisionapp versionV1 ApplicationTypeAlreadyExists
 
 app.add versionV1b testApp V1

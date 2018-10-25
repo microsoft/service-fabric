@@ -10,157 +10,230 @@ using namespace Common;
 using namespace ServiceModel;
 using namespace Hosting2;
 
-StringLiteral const TraceType("GuestServiceInstance");
-
-class ComGuestServiceInstance::EndpointsJsonWrapper : public IFabricJsonSerializable
-{
-public:
-    EndpointsJsonWrapper() : endpoints_()
-    {
-    }
-
-    void Insert(wstring const & endpointName, wstring const & listenerAddress)
-    {
-        endpoints_.insert(make_pair(endpointName, listenerAddress));
-    }
-
-    BEGIN_JSON_SERIALIZABLE_PROPERTIES()
-        SERIALIZABLE_PROPERTY_SIMPLE_MAP(EndpointsJsonWrapper::EndpointsParameter, endpoints_)
-    END_JSON_SERIALIZABLE_PROPERTIES()
-    
-private:
-    map<wstring, wstring> endpoints_;
-    static WStringLiteral const EndpointsParameter;
-};
-
-WStringLiteral const ComGuestServiceInstance::EndpointsJsonWrapper::EndpointsParameter(L"Endpoints");
+StringLiteral const TraceType("ComGuestServiceInstance");
 
 ComGuestServiceInstance::ComGuestServiceInstance(
+    IGuestServiceTypeHost & typeHost,
     wstring const & serviceName,
     wstring const & serviceTypeName,
     Guid const & partitionId,
-    ::FABRIC_INSTANCE_ID instanceId,
-    vector<EndpointDescription> const & endpointdescriptions)
-    : IFabricStatelessServiceInstance()
+    FABRIC_INSTANCE_ID instanceId)
+    : IGuestServiceInstance()
     , ComUnknownBase()
+    , typeHost_(typeHost)
     , serviceName_(serviceName)
     , serviceTypeName_(serviceTypeName)
     , partitionId_(partitionId)
     , instanceId_(instanceId)
     , endpointsAsJsonStr_()
-    , endpointDescriptions_(endpointdescriptions)
-    , traceId_(wformatString("{0}:{1}:{2}",serviceTypeName, partitionId, instanceId))
+    , partition_()
+    , hasReportedFault_(false)
+    , eventRegistrationHandle_(0)
+    , serviceTraceInfo_(BuildTraceInfo(serviceTypeName, serviceName, partitionId, instanceId))
 {
-    WriteNoise(TraceType, traceId_, "ctor: {0}", serviceName_);
 }
 
 ComGuestServiceInstance::~ComGuestServiceInstance()
 {
-    WriteNoise(TraceType, traceId_, "dtor: {0}", serviceName_);
 }
 
-HRESULT ComGuestServiceInstance::BeginOpen( 
+HRESULT ComGuestServiceInstance::BeginOpen(
     /* [in] */ IFabricStatelessServicePartition *partition,
     /* [in] */ IFabricAsyncOperationCallback *callback,
     /* [retval][out] */ IFabricAsyncOperationContext **context)
 {
-    UNREFERENCED_PARAMETER(partition);
+    WriteNoise(TraceType, "BeginOpen {0}", serviceTraceInfo_);
+    
+    IFabricStatelessServicePartition2 * partition2;
+    auto hr = partition->QueryInterface(&partition2);
 
-    WriteNoise(TraceType, traceId_, "Opening {0}", serviceName_);
+    ASSERT_IF(FAILED(hr), "Partition must implement IFabricStatelessServicePartition2");
 
-    auto operation = make_com<ComCompletedAsyncOperationContext>();
-    auto hr = operation->Initialize(S_OK, ComponentRootSPtr(), callback);
+    partition_.SetAndAddRef(partition2);
 
-    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
-    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+    if (typeHost_.HostContext.IsCodePackageActivatorHost == true)
+    {
+        return typeHost_.ActivationManager->BeginActivateCodePackagesAndWaitForEvent(
+            nullptr /* custom environment */,
+            HostingConfig::GetConfig().ActivationTimeout.Milliseconds,
+            callback,
+            context);
+    }
+    
+    return ComCompletedOperationHelper::BeginCompletedComOperation(callback, context);
 }
         
 HRESULT ComGuestServiceInstance::EndOpen( 
     /* [in] */ IFabricAsyncOperationContext *context,
     /* [retval][out] */ IFabricStringResult **serviceAddress)
 {
-    WriteNoise(TraceType, traceId_, "Opened {0}", serviceName_);
+    *serviceAddress = nullptr;
 
-    HRESULT hr = ComCompletedAsyncOperationContext::End(context);
-    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
-    
-    hr = this->SetupEndpointAddresses();
-    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
-    
-    if (!endpointsAsJsonStr_.empty())
+    HRESULT hr;
+    if (typeHost_.HostContext.IsCodePackageActivatorHost == true)
     {
-        return ComStringResult::ReturnStringResult(endpointsAsJsonStr_, serviceAddress);
+        hr = typeHost_.ActivationManager->EndActivateCodePackagesAndWaitForEvent(context);
+        if (hr == S_OK)
+        {
+            this->RegisterForEvents();
+        }
     }
-    return ComStringResult::ReturnStringResult(traceId_, serviceAddress);
+    else
+    {
+        hr = ComCompletedOperationHelper::EndCompletedComOperation(context);
+    }
+
+    auto error = ErrorCode::FromHResult(hr);
+    WriteTrace(
+        error.ToLogLevel(),
+        TraceType,
+        "EndOpen {0}. Error={1}",
+        serviceTraceInfo_,
+        error);
+
+    if (FAILED(hr)) 
+    {
+        return ComUtility::OnPublicApiReturn(hr); 
+    }
+
+    error = EndpointsHelper::ConvertToJsonString(serviceTraceInfo_, typeHost_.Endpoints, endpointsAsJsonStr_);
+    if (!error.IsSuccess())
+    {
+        return ComUtility::OnPublicApiReturn(error.ToHResult());
+    }
+
+    return ComStringResult::ReturnStringResult(endpointsAsJsonStr_, serviceAddress);
 }
-        
+
 HRESULT ComGuestServiceInstance::BeginClose( 
     /* [in] */ IFabricAsyncOperationCallback *callback,
     /* [retval][out] */ IFabricAsyncOperationContext **context)
 {
-    WriteNoise(TraceType, traceId_, "Closing {0}", serviceName_);
+    WriteNoise(TraceType, "BeginClose: {0}", serviceTraceInfo_);
 
-    ComPointer<ComCompletedAsyncOperationContext> operation = make_com<ComCompletedAsyncOperationContext>();
-    HRESULT hr = operation->Initialize(S_OK, ComponentRootSPtr(), callback);
+    if (typeHost_.HostContext.IsCodePackageActivatorHost == false)
+    {
+        return ComCompletedOperationHelper::BeginCompletedComOperation(callback, context);
+    }
 
-    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
-    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+    this->UnregisterForEvents();
+
+    if (hasReportedFault_.load() == true)
+    {
+        //
+        // If replica has reported fault, it means one of CPs
+        // continuous failure has exceeded failure threshold
+        // and we want to trigger failover. Skip deativating
+        // other CPs. If replica gets placed on other node
+        // then these CPs will get deactivated as part of 
+        // SP deactivation.
+        //
+        return ComCompletedOperationHelper::BeginCompletedComOperation(callback, context);
+    }
+
+    return typeHost_.ActivationManager->BeginDeactivateCodePackages(
+        HostingConfig::GetConfig().ActivationTimeout.Milliseconds,
+        callback,
+        context);
 }
-        
+
 HRESULT ComGuestServiceInstance::EndClose( 
     /* [in] */ IFabricAsyncOperationContext *context)
 {
-    WriteNoise(TraceType, traceId_, "Closed {0}", serviceName_);
+    HRESULT hr;
+    if (typeHost_.HostContext.IsCodePackageActivatorHost == true &&
+        hasReportedFault_.load() == false)
+    {
+        hr = typeHost_.ActivationManager->EndDeactivateCodePackages(context);
+    }
+    else
+    {
+        hr = ComCompletedOperationHelper::EndCompletedComOperation(context);
+    }
 
-    HRESULT hr = ComCompletedAsyncOperationContext::End(context);
+    auto error = ErrorCode::FromHResult(hr);
+    WriteTrace(
+        error.ToLogLevel(),
+        TraceType,
+        "EndClose {0}. Error={1}",
+        serviceTraceInfo_,
+        error);
+
     return ComUtility::OnPublicApiReturn(hr);
 }
-        
+
 void ComGuestServiceInstance::Abort(void)
 {
-    WriteNoise(TraceType, traceId_, "Aborted {0}", serviceName_);
+    WriteNoise(TraceType, "Aborted {0}", serviceTraceInfo_);
+
+    if (typeHost_.HostContext.IsCodePackageActivatorHost == true)
+    {
+        this->UnregisterForEvents();
+
+        //
+        // If replica has reported fault, it means one of CPs
+        // continuous failure has exceeded failure threshold
+        // and we want to trigger failover. Skip deativating
+        // other CPs. If replica gets placed or other node
+        // then these CPs will get deactivated as part of 
+        // SP deactivation.
+        //
+        if (hasReportedFault_.load() == false)
+        {
+            typeHost_.ActivationManager->AbortCodePackages();
+        }
+    }
 }
 
-HRESULT ComGuestServiceInstance::SetupEndpointAddresses()
+void ComGuestServiceInstance::OnActivatedCodePackageTerminated(
+    CodePackageEventDescription && eventDesc)
 {
-    if (endpointDescriptions_.size() == 0)
-    {
-        return S_OK;
-    }
-	
-    EndpointsJsonWrapper endpointsJsonWrapper;
-    
-    for (auto const & endpoint : endpointDescriptions_)
-    {
-        if (endpoint.IpAddressOrFqdn.empty())
-        {
-            WriteError(TraceType, traceId_, "IpAddressOrFqdn is empty for endpoint resource={0}", endpoint.Name);
-            ASSERT_IF(true, "IpAddressOrFqdn is empty for endpoint resource={0}", endpoint.Name);
-        }
+    WriteWarning(
+        TraceType,
+        "OnActivatedCodePackageTerminated: {0}. {1}",
+        serviceTraceInfo_,
+        eventDesc);
 
-        wstring listenerAddress;
-        
-        if (endpoint.UriScheme.empty())
-        {
-            listenerAddress = wformatString("{0}:{1}", endpoint.IpAddressOrFqdn, endpoint.Port);
-        }
-        else
-        {
-            listenerAddress = wformatString(
-                "{0}://{1}:{2}/{3}", endpoint.UriScheme, endpoint.IpAddressOrFqdn, endpoint.Port, endpoint.PathSuffix);
-        }
+    // TODO: Report Health.
+    hasReportedFault_.store(true);
+    partition_->ReportFault(FABRIC_FAULT_TYPE_TRANSIENT);
+}
 
-        WriteInfo(
-            TraceType,
-            traceId_,
-            "SetupEndpointAddresses(): EndpointName={0}, ListenerAddress={1}.",
-            endpoint.Name,
-            listenerAddress);
+wstring ComGuestServiceInstance::BuildTraceInfo(
+    wstring const & serviceName,
+    wstring const & serviceTypeName,
+    Guid const & partitionId,
+    FABRIC_INSTANCE_ID instanceId)
+{
+    auto traceInfo = wformatString(
+        "ServiceTypeName={0}, ServiceName={1}, PartitionId={2}, ReplicaId={3}",
+        serviceTypeName,
+        serviceName,
+        partitionId,
+        instanceId);
 
-        endpointsJsonWrapper.Insert(endpoint.Name, listenerAddress);
-    }
+    return move(traceInfo);
+}
 
-    auto error = JsonHelper::Serialize(endpointsJsonWrapper, endpointsAsJsonStr_);
-    
-    return error.ToHResult();
+void ComGuestServiceInstance::RegisterForEvents()
+{
+    ComPointer<IGuestServiceInstance> eventHandler;
+    eventHandler.SetAndAddRef(this);
+
+    typeHost_.ActivationManager->RegisterServiceInstance(eventHandler, eventRegistrationHandle_);
+}
+
+void ComGuestServiceInstance::UnregisterForEvents()
+{
+    typeHost_.ActivationManager->UnregisterServiceReplicaOrInstance(eventRegistrationHandle_);
+}
+
+bool ComGuestServiceInstance::Test_IsInstanceFaulted()
+{
+    return (hasReportedFault_.load() == true);
+}
+
+void ComGuestServiceInstance::Test_SetReplicaFaulted(bool value)
+{
+    hasReportedFault_.store(value);
 }

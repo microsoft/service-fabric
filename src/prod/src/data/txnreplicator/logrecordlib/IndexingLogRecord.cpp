@@ -127,9 +127,10 @@ void IndexingLogRecord::Read(
 void IndexingLogRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
 
     ULONG32 startingPosition = binaryWriter.Position;
     binaryWriter.Position += sizeof(ULONG32);
@@ -149,8 +150,8 @@ void IndexingLogRecord::Write(
 
 void IndexingLogRecord::OnTruncateHead(
     __in InvalidLogRecords & invalidLogRecords,
-    __out ULONG32 freeLinkCallCount,
-    __out ULONG32 freeLinkCallTrueCount)
+    __out ULONG32 & freeLinkCallCount,
+    __out ULONG32 & freeLinkCallTrueCount)
 {
     freeLinkCallCount = 0;
     freeLinkCallTrueCount = 0;

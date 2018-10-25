@@ -631,3 +631,18 @@ void InstrumentedPLB::OnSafetyCheckAcknowledged(ServiceModel::ApplicationIdentif
         fm_.Events.PlbFunctionCallSlow(PlbApiCallName::OnSafetyCheckAcknowledged, sw.ElapsedMilliseconds);
     }
 }
+
+void InstrumentedPLB::UpdateAvailableImagesPerNode(std::wstring const& nodeId, std::vector<std::wstring>const& images)
+{
+    Stopwatch sw;
+    sw.Start();
+
+    plb_->UpdateAvailableImagesPerNode(nodeId, images);
+
+    sw.Stop();
+
+    if (sw.Elapsed > FailoverConfig::GetConfig().PlbUpdateTimeLimit)
+    {
+        fm_.Events.PlbFunctionCallSlow(PlbApiCallName::UpdateAvailableImagesPerNode, sw.ElapsedMilliseconds);
+    }
+}

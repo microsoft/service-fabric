@@ -38,34 +38,34 @@ BalanceChecker::BalanceChecker(
     std::set<std::wstring> && metricsWithNodeCapacity,
     std::map<Common::TreeNodeIndex, NodeSet> && faultDomainNodeSet,
     std::map<Common::TreeNodeIndex, NodeSet> && upgradeDomainNodeSet
-    )
+)
     :
-    faultDomainStructure_(move(faultDomainStructure)),
-    upgradeDomainStructure_(move(upgradeDomainStructure)),
-    lbDomainEntries_(move(lbDomainEntries)),
-    nodeEntries_(move(nodeEntries)),
-    deactivatedNodes_(move(deactivatedNodes)),
-    deactivatingNodesAllowPlacement_(move(deactivatingNodesAllowPlacement)),
-    deactivatingNodesAllowServiceOnEveryNode_(move(deactivatingNodesAllowServiceOnEveryNode)),
-    downNodes_(downNodes),
-    totalMetricCount_(0),
-    isBalanced_(true),
-    globalMetricIndicesList_(),
-    faultDomainLoads_(),
-    upgradeDomainLoads_(),
-    dynamicNodeLoads_(nodeEntries_, lbDomainEntries_),
-    existDefragMetric_(existDefragMetric),
-    existScopedDefragMetric_(existScopedDefragMetric),
-    balancingDiagnosticsDataSPtr_(balancingDiagnosticsDataSPtr),
-    upgradeCompletedUDsIndex_(move(UDsIndex)),
-    applicationUpgradedUDs_(move(appUDs)),
-    faultDomainMappings_(move(faultDomainMappings)),
-    upgradeDomainMappings_(move(upgradeDomainMappings)),
-    settings_(settings),
-    closureType_(closureType),
-    metricsWithNodeCapacity_(move(metricsWithNodeCapacity)),
-    faultDomainNodeSet_(move(faultDomainNodeSet)),
-    upgradeDomainNodeSet_(move(upgradeDomainNodeSet))
+faultDomainStructure_(move(faultDomainStructure)),
+upgradeDomainStructure_(move(upgradeDomainStructure)),
+lbDomainEntries_(move(lbDomainEntries)),
+nodeEntries_(move(nodeEntries)),
+deactivatedNodes_(move(deactivatedNodes)),
+deactivatingNodesAllowPlacement_(move(deactivatingNodesAllowPlacement)),
+deactivatingNodesAllowServiceOnEveryNode_(move(deactivatingNodesAllowServiceOnEveryNode)),
+downNodes_(downNodes),
+totalMetricCount_(0),
+isBalanced_(true),
+globalMetricIndicesList_(),
+faultDomainLoads_(),
+upgradeDomainLoads_(),
+dynamicNodeLoads_(nodeEntries_, lbDomainEntries_, settings.NodesWithReservedLoadOverlap),
+existDefragMetric_(existDefragMetric),
+existScopedDefragMetric_(existScopedDefragMetric),
+balancingDiagnosticsDataSPtr_(balancingDiagnosticsDataSPtr),
+upgradeCompletedUDsIndex_(move(UDsIndex)),
+applicationUpgradedUDs_(move(appUDs)),
+faultDomainMappings_(move(faultDomainMappings)),
+upgradeDomainMappings_(move(upgradeDomainMappings)),
+settings_(settings),
+closureType_(closureType),
+metricsWithNodeCapacity_(move(metricsWithNodeCapacity)),
+faultDomainNodeSet_(move(faultDomainNodeSet)),
+upgradeDomainNodeSet_(move(upgradeDomainNodeSet))
 {
 
     //all the nodes that are filtered here should NOT be filtered in PlacementCreator::GetFilteredDomainTree
@@ -106,7 +106,7 @@ void BalanceChecker::CreateGlobalMetricIndicesList()
     {
         metricNameToGlobalIndex.insert(
             make_pair(globalLBDomainEntry.Metrics[i].Name,
-            i + globalLBDomainEntry.MetricStartIndex));
+                i + globalLBDomainEntry.MetricStartIndex));
     }
 
     globalMetricIndicesList_.resize(lbDomainEntries_.size() - 1);
@@ -141,9 +141,9 @@ void BalanceChecker::InitializeEmptyDomainAccMinMaxTree(
             LoadBalancingDomainEntry::DomainAccMinMaxTree::Node::CreateEmpty<DomainData>(
                 sourceTree.Root,
                 [totalMetricCount]() -> LoadBalancingDomainEntry::DomainMetricAccsWithMinMax
-                {
-                    return LoadBalancingDomainEntry::DomainMetricAccsWithMinMax(totalMetricCount);
-                })));
+        {
+            return LoadBalancingDomainEntry::DomainMetricAccsWithMinMax(totalMetricCount);
+        })));
     }
 }
 
@@ -171,7 +171,7 @@ void BalanceChecker::RefreshIsBalanced()
                     dynamicNodeLoads_.PrepareBeneficialNodes(totalMetricIndex,
                         itMetric->DefragNodeCount,
                         itMetric->DefragDistribution,
-                        itMetric->DefragEmptyNodeLoadThreshold);
+                        itMetric->ReservationLoad);
                 }
             }
         }
@@ -187,20 +187,51 @@ void BalanceChecker::RefreshIsBalanced()
                 }
 
                 size_t totalMetricIndex = 0;
-                for (auto itDomain = lbDomainEntries_.begin(); itDomain != lbDomainEntries_.end(); ++itDomain)
+                size_t domainId = 0;
+                for (auto itDomain = lbDomainEntries_.begin(); itDomain != lbDomainEntries_.end(); ++itDomain, ++domainId)
                 {
-                    for (auto itMetric = itDomain->Metrics.begin(); itMetric != itDomain->Metrics.end(); ++itMetric)
+                    size_t metricId = 0;
+                    for (auto itMetric = itDomain->Metrics.begin(); itMetric != itDomain->Metrics.end(); ++itMetric, ++metricId)
                     {
                         if (itMetric->IsValidNode(nodeEntries_[k].NodeIndex))
                         {
+                            auto globalMetricIndexStart = lbDomainEntries_.back().MetricStartIndex;
+                            size_t globalMetricIndex = 0;
+                            if (itDomain->IsGlobal)
+                            {
+                                globalMetricIndex = metricId;
+                            }
+                            else
+                            {
+                                // globalMetricIndices are saved for each local domain
+                                globalMetricIndex = globalMetricIndicesList_[domainId][metricId] - globalMetricIndexStart;
+                            }
                             size_t loadLevel = nodeEntries_[k].GetLoadLevel(totalMetricIndex);
+                            int64 nodeCapacity = nodeEntries_[k].GetNodeCapacity(globalMetricIndex);
+
+                            // Max load to be able to store reservation load
+                            size_t loadThreshold = 0;
+                            bool nodeWithEnoughCapacity = true;
+                            if (itMetric->DefragmentationScopedAlgorithmEnabled)
+                            {
+                                if (nodeCapacity < itMetric->ReservationLoad)
+                                {
+                                    nodeWithEnoughCapacity = false;
+                                }
+                                loadThreshold = nodeCapacity - itMetric->ReservationLoad;
+                            }
+                            else
+                            {
+                                loadThreshold = itMetric->DefragEmptyNodeLoadThreshold;
+                            }
+
                             if (!faultDomainLoads_.IsEmpty)
                             {
                                 AccumulatorWithMinMax&  faultDomainLoadsAcc = faultDomainLoads_.GetNodeByIndex(
                                     nodeEntries_[k].FaultDomainIndex).DataRef.AccMinMaxEntries[totalMetricIndex];
-                                faultDomainLoadsAcc.AddOneValue(loadLevel, nodeEntries_[k].NodeId);
+                                faultDomainLoadsAcc.AddOneValue(loadLevel, nodeCapacity, nodeEntries_[k].NodeId);
 
-                                if (loadLevel <= itMetric->DefragEmptyNodeLoadThreshold)
+                                if (nodeWithEnoughCapacity && loadLevel <= loadThreshold)
                                 {
                                     faultDomainLoadsAcc.AddEmptyNodes(1);
                                 }
@@ -210,9 +241,9 @@ void BalanceChecker::RefreshIsBalanced()
                             {
                                 AccumulatorWithMinMax&  upgradeDomainLoadsAcc = upgradeDomainLoads_.GetNodeByIndex(
                                     nodeEntries_[k].UpgradeDomainIndex).DataRef.AccMinMaxEntries[totalMetricIndex];
-                                upgradeDomainLoadsAcc.AddOneValue(loadLevel, nodeEntries_[k].NodeId);
-
-                                if (loadLevel <= itMetric->DefragEmptyNodeLoadThreshold)
+                                upgradeDomainLoadsAcc.AddOneValue(loadLevel, nodeCapacity, nodeEntries_[k].NodeId);
+                                
+                                if (nodeWithEnoughCapacity && loadLevel <= loadThreshold)
                                 {
                                     upgradeDomainLoadsAcc.AddEmptyNodes(1);
                                 }
@@ -238,7 +269,7 @@ void BalanceChecker::RefreshIsBalanced()
                         {
                             if (node.Children.size() == 0)
                             {
-                                fdLoadStatAccumulator.AddOneValue((int64)node.Data.AccMinMaxEntries[lbDomain.MetricStartIndex + j].Sum, Federation::NodeId::MinNodeId);
+                                fdLoadStatAccumulator.AddOneValue((int64)node.Data.AccMinMaxEntries[lbDomain.MetricStartIndex + j].Sum, 1, Federation::NodeId::MinNodeId);
                             }
                         });
                     }
@@ -250,7 +281,7 @@ void BalanceChecker::RefreshIsBalanced()
                         {
                             if (node.Children.size() == 0)
                             {
-                                udLoadStatAccumulator.AddOneValue((int64)node.Data.AccMinMaxEntries[lbDomain.MetricStartIndex + j].Sum, Federation::NodeId::MinNodeId);
+                                udLoadStatAccumulator.AddOneValue((int64)node.Data.AccMinMaxEntries[lbDomain.MetricStartIndex + j].Sum, 1, Federation::NodeId::MinNodeId);
                             }
                         });
                     }
@@ -274,7 +305,8 @@ void BalanceChecker::RefreshIsBalanced()
                 {
                     size_t totalMetricIndex = lbDomain.MetricStartIndex + j;
                     int64 load = nodeEntries_[k].GetLoadLevel(totalMetricIndex);
-                    loadStat.AddOneValue(load, nodeEntries_[k].NodeId);
+                    int64 capacity = nodeEntries_[k].GetNodeCapacity(j);
+                    loadStat.AddOneValue(load, capacity, nodeEntries_[k].NodeId);
 
                     if (ExistScopedDefragMetric &&
                         metric.IsDefrag && metric.DefragmentationScopedAlgorithmEnabled)
@@ -290,11 +322,23 @@ void BalanceChecker::RefreshIsBalanced()
 
         if (lbDomain.IsGlobal)
         {
-            lbDomain.RefreshIsBalanced(nullptr, globalLBDomainEntry, faultDomainLoads_, upgradeDomainLoads_, balancingDiagnosticsDataSPtr_);
+            lbDomain.RefreshIsBalanced(
+                nullptr,
+                globalLBDomainEntry,
+                faultDomainLoads_,
+                upgradeDomainLoads_,
+                dynamicNodeLoads_,
+                balancingDiagnosticsDataSPtr_);
         }
         else
         {
-            lbDomain.RefreshIsBalanced(&globalMetricIndicesList_[i], globalLBDomainEntry, faultDomainLoads_, upgradeDomainLoads_, balancingDiagnosticsDataSPtr_);
+            lbDomain.RefreshIsBalanced(
+                &globalMetricIndicesList_[i],
+                globalLBDomainEntry,
+                faultDomainLoads_,
+                upgradeDomainLoads_,
+                dynamicNodeLoads_,
+                balancingDiagnosticsDataSPtr_);
         }
 
         balancingDiagnosticsDataSPtr_->changed_ = true;
@@ -344,8 +388,25 @@ void BalanceChecker::CalculateMetricStatisticsForTracing(bool isBegin, const Sco
                     {
                         loadLevel = nodeEntries_[k].GetLoadLevel(totalMetricIndex) + nodeChanges[&nodeEntries_[k]].Values[totalMetricIndex];
                     }
+                    int64 nodeCapacity = nodeEntries_[k].GetNodeCapacity(totalMetricIndex - globalDomain.MetricStartIndex);
+                    
+                    // Max load to be able to store reservation load
+                    size_t loadThreshold = 0;
+                    bool nodeWithEnoughCapacity = true;
+                    if (itMetric->DefragmentationScopedAlgorithmEnabled)
+                    {
+                        if (nodeCapacity < itMetric->ReservationLoad)
+                        {
+                            nodeWithEnoughCapacity = false;
+                        }
+                        loadThreshold = nodeCapacity - itMetric->ReservationLoad;
+                    }
+                    else
+                    {
+                        loadThreshold = itMetric->DefragEmptyNodeLoadThreshold;
+                    }
 
-                    if (loadLevel <= itMetric->DefragEmptyNodeLoadThreshold)
+                    if (nodeWithEnoughCapacity && loadLevel <= loadThreshold)
                     {
                         ++totalEmptyNodeCnt;
                     }
@@ -359,7 +420,7 @@ void BalanceChecker::CalculateMetricStatisticsForTracing(bool isBegin, const Sco
                     {
                         AccumulatorWithMinMax&  faultDomainLoadsAcc = faultDomainLoads.GetNodeByIndex(nodeEntries_[k].FaultDomainIndex).DataRef.AccMinMaxEntries[totalMetricIndex];
 
-                        if (loadLevel <= itMetric->DefragEmptyNodeLoadThreshold)
+                        if (nodeWithEnoughCapacity && loadLevel <= loadThreshold)
                         {
                             faultDomainLoadsAcc.AddEmptyNodes(1);
                         }
@@ -373,7 +434,7 @@ void BalanceChecker::CalculateMetricStatisticsForTracing(bool isBegin, const Sco
                     {
                         AccumulatorWithMinMax&  upgradeDomainLoadsAcc = upgradeDomainLoads.GetNodeByIndex(nodeEntries_[k].UpgradeDomainIndex).DataRef.AccMinMaxEntries[totalMetricIndex];
 
-                        if (loadLevel <= itMetric->DefragEmptyNodeLoadThreshold)
+                        if (nodeWithEnoughCapacity && loadLevel <= loadThreshold)
                         {
                             upgradeDomainLoadsAcc.AddEmptyNodes(1);
                         }
@@ -444,8 +505,10 @@ void BalanceChecker::CalculateMetricStatisticsForTracing(bool isBegin, const Sco
             defragMetricInfo.targetEmptyNodeCount_ = itMetric->DefragNodeCount;
             defragMetricInfo.emptyNodesDistribution_ = itMetric->DefragDistribution;
             defragMetricInfo.emptyNodeLoadThreshold_ = itMetric->DefragEmptyNodeLoadThreshold;
+            defragMetricInfo.reservationLoad_ = itMetric->ReservationLoad;
 
             defragMetricInfo.emptyNodesWeight_ = itMetric->DefragmentationEmptyNodeWeight;
+            defragMetricInfo.nonEmptyNodesWeight_ = itMetric->DefragmentationNonEmptyNodeWeight;
             defragMetricInfo.activityThreshold_ = itMetric->ActivityThreshold;
             defragMetricInfo.balancingThreshold_ = itMetric->BalancingThreshold;
 

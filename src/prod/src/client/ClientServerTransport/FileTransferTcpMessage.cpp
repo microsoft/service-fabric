@@ -16,4 +16,8 @@ GlobalWString FileTransferTcpMessage::FileContentAction = make_global<wstring>(L
 GlobalWString FileTransferTcpMessage::FileDownloadAction = make_global<wstring>(L"FileDownload");
 GlobalWString FileTransferTcpMessage::ClientOperationSuccessAction = make_global<wstring>(L"ClientOperationSuccess");
 GlobalWString FileTransferTcpMessage::ClientOperationFailureAction = make_global<wstring>(L"ClientOperationFailure");
+GlobalWString FileTransferTcpMessage::FileCreateAction = make_global<wstring>(L"FileCreate");
+GlobalWString FileTransferTcpMessage::FileUploadCommitAction = make_global<wstring>(L"FileUploadCommit");
+GlobalWString FileTransferTcpMessage::FileUploadCommitAckAction = make_global<wstring>(L"FileUploadCommitAck");
+GlobalWString FileTransferTcpMessage::FileUploadDeleteSessionAction = make_global<wstring>(L"FileUploadDeleteSession");
 

@@ -203,8 +203,8 @@ namespace Data
             {
                 return containerSPtr_->Count;
             }
-
-            LONG64 GetMemorySize()
+            
+            LONG64 GetMemorySize(__in LONG64 keySize)
             {
                 LONG64 size = 0;
                 auto enumeratorSPtr = containerSPtr_->GetEnumerator();
@@ -213,6 +213,7 @@ namespace Data
                     auto current = enumeratorSPtr->Current();
                     auto component = current.Value;
                     size += component->Size;
+                    size += component->Count * (keySize + Constants::ValueMetadataSizeBytes);
                 }
                 return size;
             }

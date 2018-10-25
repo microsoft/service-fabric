@@ -10,7 +10,6 @@ add_definitions(-DUPASSTHROUGH=1)
 
 add_executable(${exe_logicallog_test}
   ${PROJECT_SOURCE_DIR}/test/BoostUnitTest/btest.cpp
-  ../FakeLogicalLog.Test.cpp
   ../LogTestBase.cpp
   ../FileLogicalLog.Test.cpp
   ../LogicalLog.Test.cpp
@@ -29,7 +28,7 @@ set_target_properties(${exe_logicallog_test} PROPERTIES
 target_link_libraries(${exe_logicallog_test}
   ${lib_LoggingReplicator}
   ${lib_LogicalLog}
-  ${lib_KtlLoggerShimUPassthrough}
+  ${lib_KtlLoggerShimUnify}
   ${lib_data_testcommon}
   ${lib_data_utilities}
   ${lib_ServiceModel}
@@ -38,7 +37,7 @@ target_link_libraries(${exe_logicallog_test}
   ${lib_TestCommon}
   ${BoostTest2}
   KtlLoggerUser
-  ktlfull
+  ${Ktlfull}
   ${Cxx}
   ${CxxABI}
   ${lib_FabricCommon}
@@ -53,8 +52,6 @@ target_link_libraries(${exe_logicallog_test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

@@ -32,6 +32,29 @@ LruClientCacheManager::~LruClientCacheManager()
 {
 }
 
+AsyncOperationSPtr LruClientCacheManager::BeginGetPsd(
+    NamingUri const & name,
+    FabricActivityHeader const & activityHeader,
+    TimeSpan const timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<LruClientCacheManager::GetPsdAsyncOperation>(
+        *this,
+        name,
+        activityHeader,
+        timeout,
+        callback,
+        parent);
+}
+
+ErrorCode LruClientCacheManager::EndGetPsd(
+    AsyncOperationSPtr const & operation, 
+    __out  PartitionedServiceDescriptor & psd)
+{
+    return LruClientCacheManager::GetPsdAsyncOperation::End(operation, psd);
+}
+
 AsyncOperationSPtr LruClientCacheManager::BeginResolveService(
     NamingUri const & name,
     ServiceResolutionRequestData const & request, 

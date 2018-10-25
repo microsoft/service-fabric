@@ -67,9 +67,10 @@ SECURITY_STATUS SecurityContextSsl::CheckClientAuthHeader(MessageUPtr const & in
     return SEC_E_OK;
 }
 
-MessageUPtr SecurityContextSsl::CreateClaimsTokenErrorMessage()
+MessageUPtr SecurityContextSsl::CreateClaimsTokenErrorMessage(ErrorCode const & error)
 {
-    MessageUPtr message = make_unique<Message>();
+    ConnectionAuthMessage mb(error.Message);
+    MessageUPtr message = make_unique<Message>(mb);
     message->Headers.Add(MessageIdHeader());
     message->Headers.Add(ActorHeader(Actor::TransportSendTarget));
     message->Headers.Add(ActionHeader(*Constants::ClaimsTokenError));
@@ -104,7 +105,7 @@ void SecurityContextSsl::CompleteClaimsRetrieval(ErrorCode const & error, std::w
     owner->CompleteClaimsRetrieval(error, claimsToken);
 }
 
-void SecurityContextSsl::CompleteClientAuth(ErrorCode error, SecuritySettings::RoleClaims const & clientClaims, Common::TimeSpan expiration)
+void SecurityContextSsl::CompleteClientAuth(ErrorCode const & error, SecuritySettings::RoleClaims const & clientClaims, Common::TimeSpan expiration)
 {
     auto owner = connection_.lock();
     if (!owner)
@@ -121,7 +122,7 @@ void SecurityContextSsl::CompleteClientAuth(ErrorCode error, SecuritySettings::R
         // todo, leikong, replace token-error message with connection-denied message after all customers upgrade client 
         // side to 3.1 or above, and all token-error message related code including receiving side should be removed.
         // token-error message is sent here to be backward compatible with 2.2 clients.
-        owner->SendOneWay_Dedicated(CreateClaimsTokenErrorMessage(), TimeSpan::MaxValue);
+        owner->SendOneWay_Dedicated(CreateClaimsTokenErrorMessage(error), TimeSpan::MaxValue);
         owner->ResumeReceive(false);
         owner->ReportFault(error);
         owner->Close();
@@ -229,7 +230,6 @@ SECURITY_STATUS SecurityContextSsl::OnNegotiateSecurityContext(
     char* data = nullptr;
     SecBuffer& output = pOutput->pBuffers[0];
     output.cbBuffer = BIO_ctrl_pending(outBio_);
-    Invariant(output.cbBuffer >= 0);
     if (output.cbBuffer > 0)
     {
         output.pvBuffer = new BYTE[output.cbBuffer];
@@ -1328,12 +1328,20 @@ _Use_decl_annotations_ SECURITY_STATUS SecurityContextSsl::VerifyAsServerAuthCer
 
     CERT_CHAIN_POLICY_PARA policyInput = { 0 };
     policyInput.cbSize = sizeof(policyInput);
+    policyInput.dwFlags = 0;
     policyInput.pvExtraPolicyPara = &extraPolicyPara;
 
     for (auto matchTarget = x509NamesToMatch.CBegin(); matchTarget != x509NamesToMatch.CEnd(); ++matchTarget)
     {
         if (!SecurityConfig::X509NameMap::MatchIssuer(issuerPubKey, issuerCertThumbprint, matchTarget))
             continue;
+
+        // here we're verifying the chain policy again, this time to match a name. In this case,
+        // we are explicitly allowing untrusted CAs for name-based validation with pinned issuers.
+        if (!matchTarget->second.IsEmpty())
+        {
+            policyInput.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
+        }
 
         extraPolicyPara.pwszServerName = const_cast<wchar_t*>(matchTarget->first.c_str());
         BOOL retval = FALSE;
@@ -1451,10 +1459,12 @@ SECURITY_STATUS SecurityContextSsl::VerifyCertificate(
     }
 
     auto certChainFlags = CrlOfflineErrCache::GetDefault().MaskX509CertChainFlags(certThumbprint, inputCertChainFlags, shouldIgnoreCrlOffline);
+
     WriteInfo(
         TraceType, id,
-        "VerifyCertificate: remoteAuthenticatedAsPeer = {0}, certThumbprintsToMatch='{1}', x509NamesToMatch='{2}', certChainFlags=0x{3:x}, maskedFlags=0x{4:x} shouldIgnoreCrlOffline={5}",
+        "VerifyCertificate: remoteAuthenticatedAsPeer = {0}, incoming: tp='{1}', against: certThumbprintsToMatch='{2}', x509NamesToMatch='{3}', certChainFlags=0x{4:x}, maskedFlags=0x{5:x} shouldIgnoreCrlOffline={6}",
         remoteAuthenticatedAsPeer,
+        certThumbprint,
         (certThumbprintsToMatch.Value().size() < 100) ? certThumbprintsToMatch.ToString() : L"...",
         (x509NamesToMatch.Size() < 100) ? wformatString(x509NamesToMatch) : L"...",
         inputCertChainFlags,
@@ -1514,7 +1524,13 @@ SECURITY_STATUS SecurityContextSsl::VerifyCertificate(
 
         thumbprintChecked = true;
 
-        if (!onlyCrlOfflineEncountered && FAILED(certChainStatus)) return certChainStatus;
+        // accept untrusted roots for certificates declared by subject and issuer; proceed with validation if that is the case
+        if (!onlyCrlOfflineEncountered
+            && FAILED(certChainStatus)
+            && !SecurityContextSsl::IsExpectedCertChainTrustError(clientAuthCertChain.get(), certChainStatus, CERT_E_UNTRUSTEDROOT, CERT_TRUST_IS_UNTRUSTED_ROOT))
+        {
+            return certChainStatus;
+        }
 
         wstring clientAuthCertCN;
         error = CryptoUtility::GetCertificateCommonName(certContext, clientAuthCertCN);
@@ -1544,7 +1560,15 @@ SECURITY_STATUS SecurityContextSsl::VerifyCertificate(
                 CrlOfflineErrCache::GetDefault().AddError(certThumbprint, certContext, certChainFlags);
             }
 
-            if (FAILED(certChainStatus)) return certChainStatus;
+            if (FAILED(certChainStatus))
+            {
+                // accept untrusted roots with subject + (non-empty) issuer match
+                if (!IsExpectedCertChainTrustError(clientAuthCertChain.get(), certChainStatus, CERT_E_UNTRUSTEDROOT, CERT_TRUST_IS_UNTRUSTED_ROOT)
+                    || matched->second.IsEmpty())
+                    return certChainStatus;
+
+                WriteWarning(TraceType, id, "ignoring error 0x{0:x}: untrusted root accepted for client cert with pinned issuer", certChainStatus);
+            }
 
             return SEC_E_OK;
         }
@@ -1592,7 +1616,14 @@ SECURITY_STATUS SecurityContextSsl::VerifyCertificate(
         }
     }
 
-    if (!onlyCrlOfflineEncountered && FAILED(certChainStatus)) return certChainStatus;
+    if (!onlyCrlOfflineEncountered
+        && FAILED(certChainStatus))
+    {
+        if (!IsExpectedCertChainTrustError(serverAuthCertChain.get(), certChainStatus, CERT_E_UNTRUSTEDROOT, CERT_TRUST_IS_UNTRUSTED_ROOT))
+            return certChainStatus;
+
+        WriteWarning(TraceType, id, "ignoring error 0x{0:x}: untrusted root accepted for server cert with pinned issuer; proceeding with verification", certChainStatus);
+    }
 
     return VerifyAsServerAuthCert(
         id,
@@ -1625,6 +1656,8 @@ SECURITY_STATUS SecurityContextSsl::VerifySslCertChain(
     extraPolicyPara.dwAuthType = authType;
     extraPolicyPara.pwszServerName = NULL;
 
+    // this chain verification is solely for the purpose of validating the authentication type,
+    // and not any name match. Therefore the policy does not allow untrusted roots.
     CERT_CHAIN_POLICY_PARA policyInput = { 0 };
     policyInput.cbSize = sizeof(policyInput);
     policyInput.pvExtraPolicyPara = &extraPolicyPara;

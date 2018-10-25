@@ -4,4 +4,5 @@
 # If you need to include something else be careful not to start sending large files
 # such as the output directory or the source tree to the daemon.
 *
-!DOCKER_VERSION
+!tools/build/
+!tools/ci/

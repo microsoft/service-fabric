@@ -395,6 +395,46 @@ Awaitable<NTSTATUS> PhysicalLog::OnCreateAndOpenLogicalLogAsync(
         NTSTATUS status;
         LogicalLogInfo llInfo;
 
+        KString::CSPtr actualPath;
+
+#if !defined(PLATFORM_UNIX)
+        KStringView windowsPrefix(L"\\??\\");
+
+        if (path.Length() < windowsPrefix.Length()
+            || path.SubString(0, windowsPrefix.Length()) != windowsPrefix)
+        {
+            KString::SPtr prefixedPath;
+            status = KString::Create(
+                prefixedPath,
+                GetThisAllocator(),
+                windowsPrefix.Length() + path.Length() + 12);
+            if (!NT_SUCCESS(status))
+            {
+                co_return status;
+            }
+
+            BOOL res = prefixedPath->Concat(windowsPrefix);
+            if (!res)
+            {
+                co_return STATUS_INSUFFICIENT_RESOURCES;
+            }
+
+            res = prefixedPath->Concat(path);
+            if (!res)
+            {
+                co_return STATUS_INSUFFICIENT_RESOURCES;
+            }
+
+            actualPath = prefixedPath.RawPtr();
+        }
+        else
+        {
+            actualPath = KString::CSPtr(&path);
+        }
+#else
+        actualPath = KString::CSPtr(&path);
+#endif
+
         // if the logical log info is not in the list (meaning there is no weakref),
         // or if it is in the list and the weakref is not alive (meaning the logical log has gone away)
         if (((status = logicalLogs_.Get(logicalLogId, llInfo)) == STATUS_NOT_FOUND)
@@ -422,7 +462,7 @@ Awaitable<NTSTATUS> PhysicalLog::OnCreateAndOpenLogicalLogAsync(
                 logicalLogId,
                 KLogicalLogInformation::GetLogicalLogStreamType(),
                 optionalLogStreamAlias,
-                KString::CSPtr(&path),
+                actualPath,
                 securityDescriptor,
                 0,
                 maximumSize,
@@ -447,7 +487,7 @@ Awaitable<NTSTATUS> PhysicalLog::OnCreateAndOpenLogicalLogAsync(
                     Common::Guid(logicalLogId),
                     Common::Guid(asGuid),
                     optionalLogStreamAlias != nullptr ? ToStringLiteral(*optionalLogStreamAlias) : L"nullptr",
-                    ToStringLiteral(path),
+                    ToStringLiteral(*actualPath),
                     maximumSize,
                     maximumBlockSize,
                     creationFlags);

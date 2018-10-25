@@ -15,31 +15,6 @@ TcpReceiveBuffer::TcpReceiveBuffer(TcpConnection* connectionPtr) : ReceiveBuffer
 {
 }
 
-bool TcpReceiveBuffer::VerifySecurityProvider()
-{
-    DisableSecurityProviderCheck();
-
-    if (currentFrame_.SecurityProviderMask() == firstFrameHeader_.SecurityProviderMask())
-    {
-        TcpConnection::WriteInfo(
-            TraceType,
-            connectionPtr_->TraceId(),
-            "SecurityProviderMask({0}) matched",
-            firstFrameHeader_.SecurityProviderMask());
-
-        return true;
-    }
-
-    TcpConnection::WriteError(
-            TraceType,
-            connectionPtr_->TraceId(),
-            "SecurityProviderMask mismatch: before session is secured: {0:x}, after sesession is secured: {1:x}",
-            firstFrameHeader_.SecurityProviderMask(),
-            currentFrame_.SecurityProviderMask());
-
-    return false; 
-}
-
 _Use_decl_annotations_
 NTSTATUS TcpReceiveBuffer::GetNextMessage(MessageUPtr & message, StopwatchTime recvTime)
 {
@@ -99,7 +74,10 @@ NTSTATUS TcpReceiveBuffer::GetNextMessage(MessageUPtr & message, StopwatchTime r
             "currentFrame_ = {0}",
             currentFrame_);
 
-        if (!currentFrame_.IsValid())
+        if (!currentFrame_.Validate(
+            receiveCount_==0,
+            firstFrameHeader_.SecurityProviderMask(),
+            connectionPtr_->TraceId()))
         {
             trace.InvalidFrame(
                 connectionPtr_->TraceId(),
@@ -119,12 +97,6 @@ NTSTATUS TcpReceiveBuffer::GetNextMessage(MessageUPtr & message, StopwatchTime r
                     TraceType, connectionPtr_->TraceId(),
                     "SecurityProviderMask in first frame header: {0:x}",
                     firstFrameHeader_.SecurityProviderMask());
-        }
-        else if (shouldVerifySecurityProvider_ /* implies connectionPtr_->securityContext_ != nullptr */ &&
-            connectionPtr_->securityContext_->NegotiationSucceeded() &&
-            !VerifySecurityProvider())
-        {
-            return E_FAIL;
         }
 
         if (connectionPtr_->securityContext_)
@@ -196,6 +168,34 @@ NTSTATUS TcpReceiveBuffer::GetNextMessage(MessageUPtr & message, StopwatchTime r
 
     // construct the message with refs to the headers and body
     message = Common::make_unique<Message>(std::move(headerRange), std::move(bodyRange), recvTime, bodyBufferToReserve);
+
+    if (currentFrame_.FrameBodyCRC())
+    {
+        Common::crc32 msgCRC; 
+        for (auto chunk = message->BeginHeaderChunks(); chunk != message->EndHeaderChunks(); ++chunk)
+        {
+            msgCRC.AddData(chunk->cbegin(), chunk->size());
+        }
+
+        for (auto chunk = message->BeginBodyChunks(); chunk != message->EndBodyChunks(); ++chunk)
+        {
+            msgCRC.AddData(chunk->cbegin(), chunk->size());
+        }
+
+        if (msgCRC.Value() != currentFrame_.FrameBodyCRC())
+        {
+            TcpConnection::WriteError(
+                TraceType, connectionPtr_->TraceId(),
+                "message CRC verification failure: message CRC = 0x{0:x}, frame header = {1}",
+                msgCRC.Value(), currentFrame_);
+
+            return E_FAIL;
+        }
+
+#if DBG
+        TcpConnection::WriteNoise(TraceType, connectionPtr_->TraceId(), "message CRC verified");
+#endif
+    }
 
     if (securityContext && connectionPtr_->inbound_)
     {

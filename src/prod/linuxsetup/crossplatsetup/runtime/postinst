@@ -44,12 +44,6 @@ if [ $? != 0 ]; then
     fi
 fi
 
-echo Configuring block devices for system services
-for i in `lsblk -l | cut -d' ' -f1 |grep -v NAME`
-do 
-    setfacl -m "u:sfuser:rw-" /dev/${i}
-done
-
 sfgrp_exists=false
 getent group ServiceFabricAllowedUsers >/dev/null 2>&1 && sfgrp_exists=true
 if $sfgrp_exists; then
@@ -97,6 +91,61 @@ if [ $? != 0 ]; then
     echo Error: Failed to set sfuser as owner of fabric bin root
     exit 1
 fi
+
+
+echo "Validate and fix any system service log files"
+
+# First determine if the node has the acl or not
+aclSet=-f:
+for i in `lsblk -l | cut -d' ' -f1 |grep -v NAME`
+do 
+    getfacl  /dev/${i} | grep sfuser
+    if [ $? -eq 0 ]
+    then
+        aclSet=-b:
+    fi    
+done
+
+# List of logs that need to be validated
+for list in sysshared.log cmshared.log nsshared.log fsshared.log fmshared.log rmshared.log UpgradeServiceStore
+do    
+    for i in `sudo find /mnt -name ${list}`
+    do
+        echo ${i} ${aclSet}
+        sudo LD_LIBRARY_PATH=/opt/microsoft/servicefabric/bin/Fabric/Fabric.Code/ /opt/microsoft/servicefabric/bin/Fabric/Fabric.Code/CheckLinuxLog.exe -l:${i} ${aclSet} -r:
+        if [ $? -eq 0 ]
+        then
+            chown sfuser:sfuser ${i}
+            if [ $? != 0 ]; then
+                echo Error: Failed to set sfuser as owner of log file
+                exit 1
+            fi
+	else	    
+	    echo "Error: Validate and fix system log failed, returning error"
+	    exit 1
+	fi
+    done
+done
+
+# Other system service staging logs
+for i in `sudo find /mnt -name *.stlog | grep __FabricSystem_App4294967295`
+do
+    echo ${i} ${aclSet}
+    sudo LD_LIBRARY_PATH=/opt/microsoft/servicefabric/bin/Fabric/Fabric.Code/ /opt/microsoft/servicefabric/bin/Fabric/Fabric.Code/CheckLinuxLog.exe -l:${i} ${aclSet} -r:
+    if [ $? -eq 0 ]
+    then
+        chown sfuser:sfuser ${i}
+        if [ $? != 0 ]; then
+            echo Error: Failed to set sfuser as owner of log file
+            exit 1
+        fi
+    else	    
+        echo "Error: Validate and fix system log failed, returning error. Are you out of disk space ???"
+        exit 1
+    fi
+done
+
+
 
 # set up and start atop
 if [ -f /usr/bin/atop ]; then

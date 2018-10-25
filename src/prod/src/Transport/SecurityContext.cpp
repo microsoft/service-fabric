@@ -703,6 +703,11 @@ wstring const & ConnectionAuthMessage::ErrorMessage() const
     return errorMessage_;
 }
 
+wstring && ConnectionAuthMessage::TakeMessage()
+{
+    return move(errorMessage_);
+}
+
 void ConnectionAuthMessage::WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const
 {
     w << errorMessage_ << L", role granted: " << roleGranted_;

@@ -70,7 +70,6 @@ namespace Api
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const &) = 0;
-
         virtual Common::ErrorCode EndDeleteComposeDeployment(
             Common::AsyncOperationSPtr const &) = 0;
     };

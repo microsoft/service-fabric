@@ -8,9 +8,11 @@
 #include <boost/test/unit_test.hpp>
 #include "Common/boost-taef.h"
 
+#define AsyncWaitHandleTestTraceType "AsyncWaitHandleTest"
+
 namespace Common
 {
-    BOOST_AUTO_TEST_SUITE2(AsyncWaitHandleTest)
+    BOOST_AUTO_TEST_SUITE(AsyncWaitHandleTest)
 
     BOOST_AUTO_TEST_CASE(TestManualResetEvent)
     {
@@ -126,14 +128,14 @@ namespace Common
             TimeSpan::MaxValue,
             [wh, &callbackCanStart, &resultEvent] (AsyncOperationSPtr const & op) mutable
             {
-                Trace.WriteInfo(TraceType, "callback waiting for action");
+                Trace.WriteInfo(AsyncWaitHandleTestTraceType, "callback waiting for action");
                 callbackCanStart.WaitOne(); 
-                Trace.WriteInfo(TraceType, "callback starting action");
+                Trace.WriteInfo(AsyncWaitHandleTestTraceType, "callback starting action");
                 ErrorCode result = wh->EndWaitOne(op);
                 VERIFY_IS_TRUE(result.IsSuccess());
                 wh.reset();
                 resultEvent.Set();
-                Trace.WriteInfo(TraceType, "leaving callback");
+                Trace.WriteInfo(AsyncWaitHandleTestTraceType, "leaving callback");
             },
             AsyncOperationSPtr());
 
@@ -170,13 +172,13 @@ namespace Common
             TimeSpan::MaxValue,
             [&resultEvent, &callbackCanStart] (AsyncOperationSPtr const & op) mutable
             {
-                Trace.WriteInfo(TraceType, "callback waiting for action");
+                Trace.WriteInfo(AsyncWaitHandleTestTraceType, "callback waiting for action");
                 callbackCanStart.WaitOne(); 
-                Trace.WriteInfo(TraceType, "callback starting action");
+                Trace.WriteInfo(AsyncWaitHandleTestTraceType, "callback starting action");
                 ErrorCode result = op->End(op);
                 VERIFY_IS_TRUE(result.IsSuccess());
                 resultEvent.Set();
-                Trace.WriteInfo(TraceType, "leaving callback");
+                Trace.WriteInfo(AsyncWaitHandleTestTraceType, "leaving callback");
             },
             AsyncOperationSPtr());
 

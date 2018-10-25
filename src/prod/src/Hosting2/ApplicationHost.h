@@ -101,10 +101,12 @@ namespace Hosting2
 #if !defined (PLATFORM_UNIX)
         Common::ErrorCode CreateBackupRestoreAgent(__out Common::ComPointer<ComFabricBackupRestoreAgent> & comBackupRestoreAgent);
 #endif
-
         Common::ErrorCode GetCodePackageActivationContext(
             CodePackageContext const & codeContext,
             __out CodePackageActivationContextSPtr & codePackageActivationContext);
+
+        Common::ErrorCode GetCodePackageActivator(
+            _Out_ ApplicationHostCodePackageActivatorSPtr & codePackageActivator);
 
         Common::ErrorCode GetKtlSystem(
             __out KtlSystem ** ktlSystem) override;
@@ -149,6 +151,9 @@ namespace Hosting2
             __in std::wstring const & runtimeId,
             __out Common::ComPointer<IFabricCodePackageActivationContext> & codePackageActivationContext) override;
 
+        Common::ErrorCode GetCodePackageActivator(
+            _Out_ Common::ComPointer<IFabricCodePackageActivator> & codePackageActivator) override;
+
     protected:
          ApplicationHost(
             ApplicationHostContext const & hostContext,
@@ -175,7 +180,7 @@ namespace Hosting2
         virtual void ProcessIpcMessage(Transport::Message & message, Transport::IpcReceiverContextUPtr & context);
 
         virtual Common::ErrorCode OnCreateAndAddFabricRuntime(
-            FabricRuntimeContextUPtr const & fabricRuntimeContextUPtr,            
+            FabricRuntimeContextUPtr const & fabricRuntimeContextUPtr,
             Common::ComPointer<IFabricProcessExitHandler> const & fabricExitHandler,
             __out FabricRuntimeImplSPtr & fabricRuntime) = 0;
 
@@ -183,8 +188,14 @@ namespace Hosting2
             CodePackageContext const & codeContext,
             __out CodePackageActivationContextSPtr & codePackageActivationContext) = 0;
 
+        virtual Common::ErrorCode OnGetCodePackageActivator(
+            _Out_ ApplicationHostCodePackageActivatorSPtr & codePackageActivator);
+
         virtual Common::ErrorCode OnUpdateCodePackageContext(
             CodePackageContext const & codeContext) = 0;
+
+        virtual Common::ErrorCode OnCodePackageEvent(
+            CodePackageEventDescription const & eventDescription);
 
         Common::ErrorCode AddFabricRuntime(FabricRuntimeImplSPtr const & runtime);
 
@@ -227,6 +238,7 @@ namespace Hosting2
         void IpcMessageHandler(Transport::Message & message, Transport::IpcReceiverContextUPtr & context);
         void ProcessInvalidateLeaseRequest(Transport::Message &, Transport::IpcReceiverContextUPtr & context);
         void ProcessUpdateCodePackageContextRequest(Transport::Message &, Transport::IpcReceiverContextUPtr & context);
+        void ProcessCodePackageEventRequest(Transport::Message &, Transport::IpcReceiverContextUPtr & context);
         void OnNodeHostProcessDown(Common::ErrorCode const & waitResult);
         void OnUnregisterRuntimeAsyncCompleted(Common::AsyncOperationSPtr const & operation);
         void FinishUnregisterRuntimeAsync(Common::AsyncOperationSPtr const & operation);
@@ -238,7 +250,7 @@ namespace Hosting2
         class CloseAsyncOperation;
         class CreateComFabricRuntimeAsyncOperation;
         class RegisterFabricRuntimeAsyncOperation;
-        class UnregisterFabricRuntimeAsyncOperation;    
+        class UnregisterFabricRuntimeAsyncOperation;
         class RuntimeTable;
         class CodePackageTable;
         class GetFactoryAndCreateInstanceAsyncOperation;
@@ -252,10 +264,10 @@ namespace Hosting2
         ApplicationHostContext hostContext_;
         std::unique_ptr<Transport::IpcClient> ipcClient_;
         Common::atomic_bool ipcUseSsl_;
-        Common::PCCertContext certContext_;
+        Common::CertContextUPtr certContext_;
         std::wstring serverThumbprint_;
-        Reliability::ReplicationComponent::IReplicatorFactoryUPtr comReplicatorFactory_;        
-        TxnReplicator::ITransactionalReplicatorFactoryUPtr comTransactionalReplicatorFactory_;        
+        Reliability::ReplicationComponent::IReplicatorFactoryUPtr comReplicatorFactory_;
+        TxnReplicator::ITransactionalReplicatorFactoryUPtr comTransactionalReplicatorFactory_;
         Reliability::ReconfigurationAgentComponent::IReconfigurationAgentProxyUPtr  raProxy_;
 #if !defined (PLATFORM_UNIX)
         Management::BackupRestoreAgentComponent::IBackupRestoreAgentProxyUPtr baProxy_;

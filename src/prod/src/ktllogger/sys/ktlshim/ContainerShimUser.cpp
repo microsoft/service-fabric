@@ -3,8 +3,11 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define KDRIVER 1
+#endif
+
 #include "KtlLogShimUser.h"
-#include "KLogicalLog.h"
 
 //************************************************************************************
 //
@@ -106,14 +109,6 @@ KtlLogContainerUser::~KtlLogContainerUser()
                                         nullptr);
 #endif
     }
-}
-
-KtlLogContainer::KtlLogContainer()
-{
-}
-
-KtlLogContainer::~KtlLogContainer()
-{
 }
 
 //
@@ -523,14 +518,6 @@ KtlLogContainerUser::AsyncCreateLogStreamContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-KtlLogContainer::AsyncCreateLogStreamContext::AsyncCreateLogStreamContext()
-{
-}
-
-KtlLogContainer::AsyncCreateLogStreamContext::~AsyncCreateLogStreamContext()
-{
-}
-
 KtlLogContainerUser::AsyncCreateLogStreamContextUser::AsyncCreateLogStreamContextUser()
 {
 }
@@ -694,14 +681,6 @@ KtlLogContainerUser::AsyncDeleteLogStreamContextUser::OnReuse(
 {
     _DevIoCtl->Reuse();
     _Marshaller->Reset();
-}
-
-KtlLogContainer::AsyncDeleteLogStreamContext::AsyncDeleteLogStreamContext()
-{
-}
-
-KtlLogContainer::AsyncDeleteLogStreamContext::~AsyncDeleteLogStreamContext()
-{
 }
 
 KtlLogContainerUser::AsyncDeleteLogStreamContextUser::AsyncDeleteLogStreamContextUser()
@@ -958,14 +937,6 @@ KtlLogContainerUser::AsyncOpenLogStreamContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-KtlLogContainer::AsyncOpenLogStreamContext::AsyncOpenLogStreamContext()
-{
-}
-
-KtlLogContainer::AsyncOpenLogStreamContext::~AsyncOpenLogStreamContext()
-{
-}
-
 KtlLogContainerUser::AsyncOpenLogStreamContextUser::AsyncOpenLogStreamContextUser()
 {
 }
@@ -1144,14 +1115,6 @@ KtlLogContainerUser::AsyncAssignAliasContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-KtlLogContainer::AsyncAssignAliasContext::AsyncAssignAliasContext()
-{
-}
-
-KtlLogContainer::AsyncAssignAliasContext::~AsyncAssignAliasContext()
-{
-}
-
 KtlLogContainerUser::AsyncAssignAliasContextUser::AsyncAssignAliasContextUser()
 {
 }
@@ -1315,14 +1278,6 @@ KtlLogContainerUser::AsyncRemoveAliasContextUser::OnReuse(
 {
     _DevIoCtl->Reuse();
     _Marshaller->Reset();
-}
-
-KtlLogContainer::AsyncRemoveAliasContext::AsyncRemoveAliasContext()
-{
-}
-
-KtlLogContainer::AsyncRemoveAliasContext::~AsyncRemoveAliasContext()
-{
 }
 
 KtlLogContainerUser::AsyncRemoveAliasContextUser::AsyncRemoveAliasContextUser()
@@ -1518,14 +1473,6 @@ KtlLogContainerUser::AsyncResolveAliasContextUser::OnReuse(
     _Marshaller->Reset();
 }
 
-KtlLogContainer::AsyncResolveAliasContext::AsyncResolveAliasContext()
-{
-}
-
-KtlLogContainer::AsyncResolveAliasContext::~AsyncResolveAliasContext()
-{
-}
-
 KtlLogContainerUser::AsyncResolveAliasContextUser::AsyncResolveAliasContextUser()
 {
 }
@@ -1700,14 +1647,6 @@ KtlLogContainerUser::AsyncEnumerateStreamsContextUser::OnReuse(
 {
     _DevIoCtl->Reuse();
     _Marshaller->Reset();
-}
-
-KtlLogContainer::AsyncEnumerateStreamsContext::AsyncEnumerateStreamsContext()
-{
-}
-
-KtlLogContainer::AsyncEnumerateStreamsContext::~AsyncEnumerateStreamsContext()
-{
 }
 
 KtlLogContainerUser::AsyncEnumerateStreamsContextUser::AsyncEnumerateStreamsContextUser()

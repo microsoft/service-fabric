@@ -33,12 +33,12 @@ namespace StateManagerTests
         TestTransactionManager::SPtr CreateReplica(
             __in Data::Utilities::PartitionedReplicaId const & traceId,
             __in TxnReplicator::IRuntimeFolders & runtimeFolders, 
-            __in KWfStatefulServicePartition & partition);
+            __in Data::Utilities::IStatefulPartition & partition);
 
         TestTransactionManager::SPtr CreateReplica(
             __in Data::Utilities::PartitionedReplicaId const & traceId,
             __in TxnReplicator::IRuntimeFolders & runtimeFolders,
-            __in KWfStatefulServicePartition & partition,
+            __in Data::Utilities::IStatefulPartition & partition,
             __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig);
 
         KUri::CSPtr GetStateProviderName(
@@ -131,7 +131,7 @@ namespace StateManagerTests
         Data::StateManager::StateManager::SPtr CreateStateManager(
             __in Data::Utilities::PartitionedReplicaId const & traceId,
             __in TxnReplicator::IRuntimeFolders & runtimeFolders, 
-            __in KWfStatefulServicePartition & partition,
+            __in Data::Utilities::IStatefulPartition & partition,
             __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig);
 
     protected:
@@ -144,6 +144,6 @@ namespace StateManagerTests
 
         Data::Utilities::PartitionedReplicaId::SPtr partitionedReplicaIdCSPtr_;
         TxnReplicator::IRuntimeFolders::SPtr runtimeFolders_;
-        KWfStatefulServicePartition::SPtr partitionSPtr_;
+        Data::Utilities::IStatefulPartition::SPtr partitionSPtr_;
     };
 }

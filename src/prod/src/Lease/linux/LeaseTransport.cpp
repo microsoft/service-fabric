@@ -97,8 +97,8 @@ NTSTATUS TransportListen(PLEASE_TRANSPORT const & transport, __in TRANSPORT_MESS
             totalBytes += buffer.size();
         }
 
-        auto buf = new BYTE[totalBytes];
-        KFinally([buf] { delete buf; });
+        auto bufUPtr = std::make_unique<BYTE[]>(totalBytes);
+        auto buf = bufUPtr.get(); 
 
         auto ptr = buf;
         for(auto const & buffer : buffers)

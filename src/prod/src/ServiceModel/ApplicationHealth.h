@@ -67,5 +67,5 @@ namespace ServiceModel
         std::wstring applicationName_;
         std::vector<ServiceAggregatedHealthState> servicesAggregatedHealthStates_;
         std::vector<DeployedApplicationAggregatedHealthState> deployedApplicationsAggregatedHealthStates_;
-    };    
+    };
 }

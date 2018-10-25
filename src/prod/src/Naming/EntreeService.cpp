@@ -63,7 +63,7 @@ namespace Naming
             fmClient.Cache,
             Events,
             root);
-        auto tempProperties = make_unique<GatewayProperties>(
+        auto tempProperties = make_shared<GatewayProperties>(
             instance,
             innerRingCommunication,
             adminClient,
@@ -84,7 +84,7 @@ namespace Naming
         queryGateway_.swap(tempQueryGateway);
         systemServiceResolver_.swap(tempSystemServiceResolver);
         serviceNotificationManager_.swap(tempServiceNotificationManager);
-        properties_.swap(tempProperties);
+        properties_ = move(tempProperties);
     }
 
     EntreeService::~EntreeService()
@@ -439,8 +439,6 @@ namespace Naming
             this->AddHandler(t, NamingTcpMessage::CreateSystemServiceRequestAction, CreateHandler<CreateSystemServiceAsyncOperation>);
             this->AddHandler(t, NamingTcpMessage::DeleteSystemServiceRequestAction, CreateHandler<DeleteSystemServiceAsyncOperation>);
             this->AddHandler(t, NamingTcpMessage::ResolveSystemServiceRequestAction, CreateHandler<ResolveSystemServiceAsyncOperation>);
-
-            //this->AddHandler(t, Communication::NamespaceManager::NamespaceManagerMessage::TestRequestAction, CreateHandler<Test_TestNamespaceManagerAsyncOperation>);
 
             this->AddHandler(t, NamingTcpMessage::RegisterServiceNotificationFilterRequestAction, CreateHandler<ProcessServiceNotificationRequestAsyncOperation>);
             this->AddHandler(t, NamingTcpMessage::UnregisterServiceNotificationFilterRequestAction, CreateHandler<ProcessServiceNotificationRequestAsyncOperation>);
@@ -986,18 +984,21 @@ namespace Naming
     {
         auto selfRoot = this->Root.CreateComponentRoot();
 
+        // Debugging aid for scale scenario in Linux
+        auto propertiesCopy = properties_;
+
         if (!Properties.IsInZombieMode)
         {
             this->Properties.ReceivingChannel->RegisterMessageHandler(
                 Actor::NamingGateway,
-                [this, selfRoot](MessageUPtr &message, TimeSpan const timeout, AsyncCallback const &callback, AsyncOperationSPtr const &parent)
-            {
-                return this->BeginProcessRequest(move(message), timeout, callback, parent);
-            },
-                [this, selfRoot](AsyncOperationSPtr const &operation, __out MessageUPtr &reply)
-            {
-                return this->EndProcessRequest(operation, reply);
-            });
+                [this, selfRoot, propertiesCopy](MessageUPtr &message, TimeSpan const timeout, AsyncCallback const &callback, AsyncOperationSPtr const &parent)
+                {
+                    return this->BeginProcessRequest(move(message), timeout, callback, parent);
+                },
+                [this, selfRoot, propertiesCopy](AsyncOperationSPtr const &operation, __out MessageUPtr &reply)
+                {
+                    return this->EndProcessRequest(operation, reply);
+                });
         }
         else
         {

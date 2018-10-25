@@ -72,7 +72,8 @@ namespace Hosting2
             SecurityUserSPtr const & runAs = SecurityUserSPtr(),
             std::wstring const& sslCertificateFindValue = std::wstring(),
             std::wstring const& sslCertStoreLocation = std::wstring(),
-            Common::X509FindType::Enum sslCertificateFindType = Common::X509FindType::FindByThumbprint);
+            Common::X509FindType::Enum sslCertificateFindType = Common::X509FindType::FindByThumbprint,
+            ServiceModel::ResourceGovernancePolicyDescription const & rgPolicyDescription = ServiceModel::ResourceGovernancePolicyDescription());
         virtual ~HostedService();        
 
        static void Create(
@@ -90,6 +91,7 @@ namespace Hosting2
             std::wstring const & sslCertificateFindValue,
             std::wstring const & sslCertStoreLocation,
             Common::X509FindType::Enum sslCertificateFindType,
+            ServiceModel::ResourceGovernancePolicyDescription const & rgPolicyDescription,
             __out HostedServiceSPtr & hostedService
             );
 
@@ -143,10 +145,24 @@ namespace Hosting2
 
         bool RescheduleServiceActivation(DWORD exitCode);
 
+        bool IsRGPolicyUpdateNeeded(Common::StringMap const & entries);
+        bool IsRGPolicyUpdateNeeded(HostedServiceParameters const & params);
+
+        void UpdateRGPolicy();
+
         bool IsUpdateNeeded(SecurityUserSPtr const & secUser, std::wstring const & certificateThumbprint, std::wstring const & arguments);
 
        __declspec(property(get=get_HostedServiceActivationManager)) HostedServiceActivationManager & ActivationManager;
         HostedServiceActivationManager & get_HostedServiceActivationManager() { return this->activatorHolder_.RootedObject; }
+
+        __declspec(property(get = get_RgPolicyDescription)) ServiceModel::ResourceGovernancePolicyDescription & RgPolicyDescription;
+        ServiceModel::ResourceGovernancePolicyDescription & get_RgPolicyDescription() { return rgPolicyDescription_; }
+
+        __declspec(property(get = get_RgPolicyUpdateDescription)) ServiceModel::ResourceGovernancePolicyDescription & RgPolicyUpdateDescription;
+        ServiceModel::ResourceGovernancePolicyDescription & get_RgPolicyUpdateDescription() { return rgPolicyUpdateDescription_; }
+
+        __declspec(property(get = get_IsInRgPolicyUpdate)) bool IsInRgPolicyUpdate;
+        bool get_IsInRgPolicyUpdate() { return isInRgPolicyUpdate_; }
         
         Common::ErrorCode AddChildService(std::wstring const & childServiceName);
         void ClearChildServices(std::vector<std::wstring> & childServiceNames);
@@ -157,7 +173,9 @@ namespace Hosting2
 
     private:
 
-        Common::TimeSpan GetDueTime(RunStats stats, Common::TimeSpan runInterval);                
+        Common::TimeSpan GetDueTime(RunStats stats, Common::TimeSpan runInterval);
+
+        std::wstring GetServiceNameForCGroupOrJobObject();
 
         Common::ErrorCode InitializeHostedServiceInstance(); 
         Common::ErrorCode CreateAndStartHostedServiceInstance();;
@@ -198,6 +216,9 @@ namespace Hosting2
         Common::RwLock timerLock_;
 
         HostedServiceInstanceSPtr hostedServiceInstance_;
+        ServiceModel::ResourceGovernancePolicyDescription rgPolicyDescription_;
+        ServiceModel::ResourceGovernancePolicyDescription rgPolicyUpdateDescription_;
+        bool isInRgPolicyUpdate_;
 
         class ActivateAsyncOperation;
         class DeactivateAsyncOperation;        

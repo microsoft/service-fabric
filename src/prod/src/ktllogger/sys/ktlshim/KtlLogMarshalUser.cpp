@@ -3,9 +3,13 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define KDRIVER 1
+#endif
+
 #include <ktl.h>
 #include <ktrace.h>
-#include "ktllogger.h"
+
 #include "KtlLogShimUser.h"
 
 RequestMarshallerUser::RequestMarshallerUser()
@@ -167,6 +171,10 @@ RequestMarshallerUser::InitializeForObjectMethod(
     if (ObjectMethod == MultiRecordRead)
     {
         requestVersion = REQUEST_VERSION_2;
+    }
+    else if (ObjectMethod == WriteAndReturnLogUsage)
+    {
+        requestVersion = REQUEST_VERSION_5;
     }
     
     status = InitializeRequest(ObjectMethodRequest,

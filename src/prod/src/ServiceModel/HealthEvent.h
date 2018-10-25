@@ -28,11 +28,11 @@ namespace ServiceModel
             Common::DateTime const & lastWarningTransitionAt,
             Common::DateTime const & lastErrorTransitionAt);
 
-        HealthEvent(HealthEvent const & other);
-        HealthEvent & operator = (HealthEvent const & other);
+        HealthEvent(HealthEvent const & other) = default;
+        HealthEvent & operator = (HealthEvent const & other) = default;
 
-        HealthEvent(HealthEvent && other);
-        HealthEvent & operator = (HealthEvent && other);
+        HealthEvent(HealthEvent && other) = default;
+        HealthEvent & operator = (HealthEvent && other) = default;
 
         __declspec(property(get=get_LastModifiedUtcTimestamp)) Common::DateTime const & LastModifiedUtcTimestamp;
         Common::DateTime const & get_LastModifiedUtcTimestamp() const { return lastModifiedUtcTimestamp_; }

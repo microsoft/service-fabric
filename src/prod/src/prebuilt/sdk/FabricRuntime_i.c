@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the IIDs and CLSIDs */
@@ -238,6 +233,12 @@ MIDL_DEFINE_GUID(IID, IID_IFabricEseLocalStoreSettingsResult,0xAACE77AE,0xD8E1,0
 MIDL_DEFINE_GUID(IID, IID_IFabricSecurityCredentialsResult,0x049A111D,0x6A30,0x48E9,0x8F,0x69,0x47,0x07,0x60,0xD3,0xEF,0xB9);
 
 
+MIDL_DEFINE_GUID(IID, IID_IFabricCodePackageActivator,0x70BE1B10,0xB259,0x46FC,0xB8,0x13,0x0B,0x75,0x72,0x0E,0x71,0x83);
+
+
+MIDL_DEFINE_GUID(IID, IID_IFabricCodePackageEventHandler,0x899E0CA8,0x16DF,0x458E,0x89,0x15,0xD0,0x30,0x7B,0x4A,0xB1,0x01);
+
+
 MIDL_DEFINE_GUID(CLSID, CLSID_FabricRuntime,0xcc53af8c,0x74cd,0x11df,0xac,0x3e,0x00,0x24,0x81,0x1e,0x38,0x92);
 
 
@@ -287,5 +288,6 @@ MIDL_DEFINE_GUID(IID, IID_IFabricSecondaryEventHandler,0x7d124a7d,0x258e,0x49f2,
 #ifdef __cplusplus
 }
 #endif
+
 
 

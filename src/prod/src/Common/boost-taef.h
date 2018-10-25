@@ -101,18 +101,12 @@ inline static bool boost_taef_IsDebug()
 #define TEST_CLASS(testClass)
 #define TEST_METHOD(testMethod)
 
-#define TRIGGER_CONFIG_LOADING \
-namespace { struct TriggerConfigLoading { TriggerConfigLoading() { Config config; } }; } \
-BOOST_GLOBAL_FIXTURE(TriggerConfigLoading)
-
 #define BOOST_AUTO_TEST_SUITE2(testSuite) \
     Common::StringLiteral const TraceType(#testSuite); \
-    TRIGGER_CONFIG_LOADING; \
     BOOST_AUTO_TEST_SUITE(testSuite)
 
 #define BOOST_FIXTURE_TEST_SUITE2(testSuite, testCaseBaseClass) \
     Common::StringLiteral const TraceType(#testSuite); \
-    TRIGGER_CONFIG_LOADING; \
     BOOST_FIXTURE_TEST_SUITE(testSuite, testCaseBaseClass)
 
 #define BoostTestTrace "Test"

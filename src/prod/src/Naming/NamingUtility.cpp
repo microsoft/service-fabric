@@ -166,8 +166,6 @@ namespace Naming
     bool NamingUtility::ValidateClientMessage(MessageUPtr const &message, StringLiteral const &traceComponent, wstring const &instanceString)
     {
         bool success = true;
-
-        if (success)
         {
             FabricActivityHeader header;
             success = message->Headers.TryReadFirst(header);

@@ -431,7 +431,7 @@ Awaitable<void> TestTransactionManager::CopyAsync(
 
     OperationDataStream::SPtr copyStream(&operationDataStream);
 
-    status = stateManagerSPtr_->BeginSettingCurrentState();
+    status = co_await stateManagerSPtr_->BeginSettingCurrentStateAsync();
     THROW_ON_FAILURE(status);
 
     LONG64 stateRecordNumber = 0;
@@ -459,7 +459,7 @@ ktl::Awaitable<void> TestTransactionManager::CopyAsync(
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
-    status = stateManagerSPtr_->BeginSettingCurrentState();
+    status = co_await stateManagerSPtr_->BeginSettingCurrentStateAsync();
     THROW_ON_FAILURE(status);
 
     LONG64 stateRecordNumber = 0;

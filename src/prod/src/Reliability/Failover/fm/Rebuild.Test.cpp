@@ -61,7 +61,9 @@ namespace FailoverManagerUnitTest
         // Generate the first report.
         unique_ptr<FailoverUnitInfo> failoverUnitInfo;
         NodeInstance orign = TestHelper::FailoverUnitInfoFromString(reports[0], failoverUnitInfo);
-        nodeCache.NodeUp(TestHelper::CreateNodeInfo(orign));
+
+        FabricVersionInstance versionInstance;
+        nodeCache.NodeUp(TestHelper::CreateNodeInfo(orign), false /* IsVersionGatekeepingNeeded */, versionInstance);
 
         InBuildFailoverUnitUPtr inBuildFailoverUnit;
         if (failoverUnitInfo)
@@ -81,7 +83,7 @@ namespace FailoverManagerUnitTest
         {
             failoverUnitInfo = nullptr;
             orign = TestHelper::FailoverUnitInfoFromString(reports[i], failoverUnitInfo);
-            nodeCache.NodeUp(TestHelper::CreateNodeInfo(orign));
+            nodeCache.NodeUp(TestHelper::CreateNodeInfo(orign), false /* IsVersionGatekeepingNeeded */, versionInstance);
 
             if (failoverUnitInfo)
             {

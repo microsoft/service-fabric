@@ -55,15 +55,27 @@ void ReplicatedStore::TransactionTracker::Remove(TransactionBase const & tx)
 
 void ReplicatedStore::TransactionTracker::StartDrainTimer()
 {
+    this->ScheduleAbortOutstanding(true);
+}
+
+void ReplicatedStore::TransactionTracker::AbortOutstandingTransactions()
+{
+    this->ScheduleAbortOutstanding(false);
+}
+
+void ReplicatedStore::TransactionTracker::ScheduleAbortOutstanding(bool enableDrainTimer)
+{
     if (drainTimeout_ <= TimeSpan::Zero) { return; }
 
     AcquireExclusiveLock lock(lock_);
+
+    if (isDraining_) { return; }
 
     if (drainTimer_) { drainTimer_->Cancel(); }
 
     if (!outstandingTxs_.empty())
     {
-        isDraining_ = true;
+        isDraining_ = enableDrainTimer;
         auto root = replicatedStore_.Root.CreateComponentRoot();
         auto toRelease = make_shared<TransactionMap>(move(outstandingTxs_));
         
@@ -71,11 +83,12 @@ void ReplicatedStore::TransactionTracker::StartDrainTimer()
 
         WriteInfo(
             TraceComponent,
-            "{0} schedule abort outstanding: count={1}",
+            "{0} schedule abort outstanding: count={1} timer={2}",
             this->TraceId,
-            toRelease->size());
+            toRelease->size(),
+            enableDrainTimer);
 
-        Threadpool::Post([this, root, toRelease]{ this->AbortOutstanding(root, toRelease); });
+        Threadpool::Post([this, root, toRelease, enableDrainTimer]{ this->AbortOutstanding(root, toRelease, enableDrainTimer); });
     }
     else
     {
@@ -109,13 +122,15 @@ void ReplicatedStore::TransactionTracker::CancelDrainTimer()
 
 void ReplicatedStore::TransactionTracker::AbortOutstanding(
     ComponentRootSPtr const & root,
-    shared_ptr<TransactionMap> const & toRelease)
+    shared_ptr<TransactionMap> const & toRelease,
+    bool enableDrainTimer)
 {
     WriteInfo(
         TraceComponent,
-        "{0} abort outstanding: count={1}",
+        "{0} abort outstanding: count={1} timer={2}",
         this->TraceId,
-        toRelease->size());
+        toRelease->size(),
+        enableDrainTimer);
 
     for (auto pair : *toRelease)
     {
@@ -140,7 +155,7 @@ void ReplicatedStore::TransactionTracker::AbortOutstanding(
 
     AcquireExclusiveLock lock(lock_);
 
-    if (isDraining_)
+    if (isDraining_ && enableDrainTimer)
     {
         WriteInfo(
             TraceComponent,

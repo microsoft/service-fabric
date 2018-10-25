@@ -24,7 +24,7 @@ namespace Management
         {
         public:
         HealthManagerEventSource() :
-            // Replica Lifecycle
+            // Replica Life-cycle
             //
             HM_TRACE( ReplicaCtor, 10, Info, "{0}: node={1}, refAddr={2}", "prId", "node", "refAddr")
             HM_TRACE( ReplicaDtor, 11, Info, "{0}: refAddr={1}", "prId", "refAddr")
@@ -88,7 +88,7 @@ namespace Management
             HM_TRACE( DropQuery, 67, Info, "{0}: Drop query {1}: {2} {3}", "traceId", "queryName", "error", "errorMessage" )
             HM_TRACE( Cluster_QueryCompletedCached, 68, Info, "{1} completed with cached value: {2} Filters: [{3}]", "id", "context", "health", "filters" )
             HM_TRACE( Query_MaxResultsReached, 69, Info, "{1}: reached max results limit with {2}: {3} {4}", "id", "activityId", "entityId", "error", "errorMessage" )
-            
+
             // Sequence stream processing traces
             //
             HM_TRACE( CachePersistSS, 71, Info, "{0}: Persist {1}", "raId", "ss" )
@@ -143,11 +143,341 @@ namespace Management
             HM_TRACE( UpgradeClusterUnhealthy, 140, Warning, "{0}:{1} cluster is not healthy for upgrade: {2}: {3}", "rId", "activityId", "healthState", "unhealthyEvals" )
             HM_TRACE( UpgradeAppUnhealthy, 141, Warning, "{1}: app {0} is in Error during upgrade: {2}", "id", "activityId", "unhealthyEvals" )
 
+            // Process Report For Event Store
+            //
+
+            PARTITIONS_OPERATIONAL_TRACE(
+                ProcessPartitionReportOperational,
+                L"PartitionNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                150,
+                Info,
+                "Partition={1} SourceId={2} Property={3} HealthState={4} TTL={5} SequenceNumber={6} Description='{7}' RemoveWhenExpired={8} SourceUTCTimestamp={9}",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            NODES_OPERATIONAL_TRACE(
+                ProcessNodeReportOperational,
+                L"NodeNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                151,
+                Info,
+                "Node={1} NodeInstanceId={2} SourceId={3} Property={4} HealthState={5} TTL={6} SequenceNumber={7} Description='{8}' RemoveWhenExpired={9} SourceUTCTimestamp={10}",
+                "nodeInstanceId",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            SERVICES_OPERATIONAL_TRACE(
+                ProcessServiceReportOperational,
+                L"ServiceNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                152,
+                Info,
+                "Service={1} InstanceId={2} SourceId={3} Property={4} HealthState={5} TTL={6} SequenceNumber={7} Description='{8}' RemoveWhenExpired={9} SourceUTCTimestamp={10}",
+                "instanceId",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            APPLICATIONS_OPERATIONAL_TRACE(
+                ProcessApplicationReportOperational,
+                L"ApplicationNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                153,
+                Info,
+                "Application={1} InstanceId={2} SourceId={3} Property={4} HealthState={5} TTL={6} SequenceNumber={7} Description='{8}' RemoveWhenExpired={9} SourceUTCTimestamp={10}",
+                "applicationInstanceId",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            APPLICATIONS_OPERATIONAL_TRACE(
+                ProcessDeployedApplicationReportOperational,
+                L"DeployedApplicationNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                154,
+                Info,
+                "DeployedApplication={1} InstanceId={2} NodeName={3} SourceId={4} Property={5} HealthState={6} TTL={7} SequenceNumber={8} Description='{9}' RemoveWhenExpired={10} SourceUTCTimestamp={11}",
+                "applicationInstanceId",
+                "nodeName",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            APPLICATIONS_OPERATIONAL_TRACE(
+                ProcessDeployedServicePackageReportOperational,
+                L"DeployedServicePackageNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                155,
+                Info,
+                "ApplicationName={1} ServiceManifest={2} InstanceId={3} ServicePackageActivationId={4} NodeName={5} SourceId={6} Property={7} HealthState={8} TTL={9} SequenceNumber={10} Description='{11}' RemoveWhenExpired={12} SourceUTCTimestamp={13}",
+                "serviceManifestName",
+                "servicePackageInstanceId",
+                "servicePackageActivationId",
+                "nodeName",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            CLUSTER_OPERATIONAL_TRACE(
+                ProcessClusterReportOperational,
+                L"ClusterNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                156,
+                Info,
+                "SourceId={1} Property={2} HealthState={3} TTL={4} SequenceNumber={5} Description='{6}' RemoveWhenExpired={7} SourceUTCTimestamp={8}",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            REPLICAS_OPERATIONAL_TRACE(
+                ProcessStatefulReplicaReportOperational,
+                L"StatefulReplicaNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                157,
+                Info,
+                "Partition={1} StatefulReplica={2} InstanceId={3} SourceId={4} Property={5} HealthState={6} TTL={7} SequenceNumber={8} Description='{9}' RemoveWhenExpired={10} SourceUTCTimestamp={11}",
+                "replicaInstanceId",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            REPLICAS_OPERATIONAL_TRACE(
+                ProcessStatelessInstanceReportOperational,
+                L"StatelessReplicaNewHealthReport",
+                OperationalHealthCategory,
+                HealthManager,
+                158,
+                Info,
+                "Partition={1} StatelessInstance={2} SourceId={3} Property={4} HealthState={5} TTL={6} SequenceNumber={7} Description='{8}' RemoveWhenExpired={9} SourceUTCTimestamp={10}",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            // Message string cannot be exact same as others, so adding "Expired: " to differentiate.
+            PARTITIONS_OPERATIONAL_TRACE(
+                ExpiredPartitionEventOperational,
+                L"PartitionHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                159,
+                Info,
+                "Expired: Partition={1} SourceId={2} Property={3} HealthState={4} TTL={5} SequenceNumber={6} Description='{7}' RemoveWhenExpired={8} SourceUTCTimestamp={9}",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            NODES_OPERATIONAL_TRACE(
+                ExpiredNodeEventOperational,
+                L"NodeHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                160,
+                Info,
+                "Expired: Node={1} NodeInstanceId={2} SourceId={3} Property={4} HealthState={5} TTL={6} SequenceNumber={7} Description='{8}' RemoveWhenExpired={9} SourceUTCTimestamp={10}",
+                "nodeInstanceId",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            SERVICES_OPERATIONAL_TRACE(
+                ExpiredServiceEventOperational,
+                L"ServiceHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                161,
+                Info,
+                "Expired: Service={1} InstanceId={2} SourceId={3} Property={4} HealthState={5} TTL={6} SequenceNumber={7} Description='{8}' RemoveWhenExpired={9} SourceUTCTimestamp={10}",
+                "instanceId",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            APPLICATIONS_OPERATIONAL_TRACE(
+                ExpiredApplicationEventOperational,
+                L"ApplicationHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                162,
+                Info,
+                "Expired: Application={1} InstanceId={2} SourceId={3} Property={4} HealthState={5} TTL={6} SequenceNumber={7} Description='{8}' RemoveWhenExpired={9} SourceUTCTimestamp={10}",
+                "applicationInstanceId",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            APPLICATIONS_OPERATIONAL_TRACE(
+                ExpiredDeployedApplicationEventOperational,
+                L"DeployedApplicationHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                163,
+                Info,
+                "Expired: DeployedApplication={1} InstanceId={2} NodeName={3} SourceId={4} Property={5} HealthState={6} TTL={7} SequenceNumber={8} Description='{9}' RemoveWhenExpired={10} SourceUTCTimestamp={11}",
+                "applicationInstanceId",
+                "nodeName",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            APPLICATIONS_OPERATIONAL_TRACE(
+                ExpiredDeployedServicePackageEventOperational,
+                L"DeployedServicePackageHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                164,
+                Info,
+                "Expired: ApplicationName={1} ServiceManifest={2} InstanceId={3} ServicePackageActivationId={4} NodeName={5} SourceId={6} Property={7} HealthState={8} TTL={9} SequenceNumber={10} Description='{11}' RemoveWhenExpired={12} SourceUTCTimestamp={13}",
+                "serviceManifest",
+                "servicePackageInstanceId",
+                "servicePackageActivationId",
+                "nodeName",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            CLUSTER_OPERATIONAL_TRACE(
+                ExpiredClusterEventOperational,
+                L"ClusterHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                165,
+                Info,
+                "Expired: SourceId={1} Property={2} HealthState={3} TTL={4} SequenceNumber={5} Description='{6}' RemoveWhenExpired={7} SourceUTCTimestamp={8}",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            REPLICAS_OPERATIONAL_TRACE(
+                ExpiredStatefulReplicaEventOperational,
+                L"StatefulReplicaHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                166,
+                Info,
+                "Expired: Partition={1} StatefulReplica={2} InstanceId={3} SourceId={4} Property={5} HealthState={6} TTL={7} SequenceNumber={8} Description='{9}' RemoveWhenExpired={10} SourceUTCTimestamp={11}",
+                "replicaInstanceId",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
+            REPLICAS_OPERATIONAL_TRACE(
+                ExpiredStatelessInstanceEventOperational,
+                L"StatelessReplicaHealthReportExpired",
+                OperationalHealthCategory,
+                HealthManager,
+                167,
+                Info,
+                "Expired: Partition={1} StatelessInstance={2} SourceId={3} Property={4} HealthState={5} TTL={6} SequenceNumber={7} Description='{8}' RemoveWhenExpired={9} SourceUTCTimestamp={10}",
+                "sourceId",
+                "property",
+                "healthState",
+                "TTL",
+                "sequenceNumber",
+                "description",
+                "removeWhenExpired",
+                "sourceUtcTimestamp"),
+
         END_HM_STRUCTURED_TRACES
 
             // Declarations
 
-            // Replica Lifecycle
+            // Replica Life-cycle
             //
             DECLARE_HM_TRACE( ReplicaCtor, std::wstring, Federation::NodeInstance, __int64 )
             DECLARE_HM_TRACE( ReplicaDtor, std::wstring, __int64 )
@@ -250,7 +580,7 @@ namespace Management
             DECLARE_HM_TRACE( DisableCacheStatsOnError, std::wstring, Common::ActivityId, Common::ErrorCode )
             DECLARE_HM_TRACE( CreateNonPersistedForLeakedEvents, Common::ActivityId, std::wstring, uint64, std::wstring )
             DECLARE_HM_TRACE( CleanupLeakedEvents, std::wstring, std::wstring, uint64, AttributesStoreData )
-            
+
             // Upgrade related traces
             //
             DECLARE_HM_TRACE( AppHealthy, std::wstring, Common::ActivityId, std::wstring, std::wstring )
@@ -266,9 +596,243 @@ namespace Management
             DECLARE_HM_TRACE( UpgradeClusterUnhealthy, std::wstring, Common::ActivityId, std::wstring, ServiceModel::HealthEvaluationBase )
             DECLARE_HM_TRACE( UpgradeAppUnhealthy, std::wstring, Common::ActivityId, ServiceModel::HealthEvaluationBase )
 
+            // Trace process health report for reports which may affect health evaluation
+
+            DECLARE_PARTITIONS_OPERATIONAL_TRACE(
+                ProcessPartitionReportOperational,
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_NODES_OPERATIONAL_TRACE(
+                ProcessNodeReportOperational,
+                FABRIC_NODE_INSTANCE_ID, // NodeInstanceId
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_SERVICES_OPERATIONAL_TRACE(
+                ProcessServiceReportOperational,
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_APPLICATIONS_OPERATIONAL_TRACE(
+                ProcessApplicationReportOperational,
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_APPLICATIONS_OPERATIONAL_TRACE(
+                ProcessDeployedApplicationReportOperational,
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // NodeName
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_APPLICATIONS_OPERATIONAL_TRACE(
+                ProcessDeployedServicePackageReportOperational,
+                std::wstring, // ServiceManifestName
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // ServicePackageActivationId
+                std::wstring, // NodeName
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_CLUSTER_OPERATIONAL_TRACE(
+                ProcessClusterReportOperational,
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_REPLICAS_OPERATIONAL_TRACE(
+                ProcessStatefulReplicaReportOperational,
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_REPLICAS_OPERATIONAL_TRACE(
+                ProcessStatelessInstanceReportOperational,
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            // Trace expired events which potentially affect health evaluation
+
+            DECLARE_PARTITIONS_OPERATIONAL_TRACE(
+                ExpiredPartitionEventOperational,
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_NODES_OPERATIONAL_TRACE(
+                ExpiredNodeEventOperational,
+                FABRIC_NODE_INSTANCE_ID, // NodeInstanceId
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_SERVICES_OPERATIONAL_TRACE(
+                ExpiredServiceEventOperational,
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_APPLICATIONS_OPERATIONAL_TRACE(
+                ExpiredApplicationEventOperational,
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_APPLICATIONS_OPERATIONAL_TRACE(
+                ExpiredDeployedApplicationEventOperational,
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // NodeName
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_APPLICATIONS_OPERATIONAL_TRACE(
+                ExpiredDeployedServicePackageEventOperational,
+                std::wstring, // ServiceManifestName
+                FABRIC_INSTANCE_ID, // InstanceId
+                std::wstring, // ServicePackageActivationId
+                std::wstring, // NodeName
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_CLUSTER_OPERATIONAL_TRACE(
+                ExpiredClusterEventOperational,
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_REPLICAS_OPERATIONAL_TRACE(
+                ExpiredStatefulReplicaEventOperational,
+                FABRIC_INSTANCE_ID, // ReplicaInstanceId
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
+            DECLARE_REPLICAS_OPERATIONAL_TRACE(
+                ExpiredStatelessInstanceEventOperational,
+                std::wstring, // SourceId - user input
+                std::wstring, // Property - user input
+                ServiceModel::HealthState::Trace, // HealthState
+                Common::TimeSpan, // TTL
+                FABRIC_SEQUENCE_NUMBER, // Sequence Number
+                std::wstring, // Description
+                bool, // RemoveWhenExpired
+                Common::DateTime) // SourceUtcTime
+
             Common::TraceEventWriter<std::wstring, Common::ActivityId, ServiceModel::HealthReport, std::wstring, std::wstring> Complete_ProcessReport;
 
+            // Trace Process Report for each entity
+            void TraceProcessReportOperational(
+                ServiceModel::HealthReport const & healthReport);
+
+            void TraceEventExpiredOperational(
+                HealthEntityKind::Enum entityKind,
+                HealthEventStoreDataUPtr const & eventEntry,
+                AttributesStoreDataSPtr const & attributes);
+
             static Common::Global<HealthManagerEventSource> Trace;
+
+            // Determines if you should trace to the operational channel, based on current and previous health states.
+            static bool ShouldTraceToOperationalChannel(FABRIC_HEALTH_STATE previousState, FABRIC_HEALTH_STATE currentState);
         };
 
         typedef HealthManagerEventSource HMEvents;

@@ -24,3 +24,4 @@
 #include "Transport/UnreliableTransportSpecification.h"
 #include "Transport/UnreliableTransportConfig.h"
 #include "Transport/Throttle.h"
+#include "httpgateway/HttpGateway.h"

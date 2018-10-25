@@ -29,7 +29,9 @@ ProcessDescription::ProcessDescription()
     debugParameters_(),
     resourceGovernancePolicy_(),
     spResourceGovernance_(),
-    cgroupName_()
+    cgroupOrJobObjectName_(),
+    isHostedServiceProcess_(false),
+    encryptedEnvironmentVariables_()
 {
 }
 
@@ -52,7 +54,9 @@ ProcessDescription::ProcessDescription(
     ProcessDebugParameters const & debugParameters,
     ResourceGovernancePolicyDescription const & resourceGovernancePolicy,
     ServicePackageResourceGovernanceDescription const & spResourceGovernance,
-    std::wstring const & cgroupName)
+    std::wstring const & cgroupOrJobObjectName,
+    bool isHostedServiceProcess,
+    map<wstring, wstring> const& encryptedEnvironmentVariables)
     : exePath_(exePath),
     arguments_(arguments),
     startInDirectory_(startInDirectory),
@@ -72,7 +76,9 @@ ProcessDescription::ProcessDescription(
     debugParameters_(debugParameters),
     resourceGovernancePolicy_(resourceGovernancePolicy),
     spResourceGovernance_(spResourceGovernance),
-    cgroupName_(cgroupName)
+    cgroupOrJobObjectName_(cgroupOrJobObjectName),
+    isHostedServiceProcess_(isHostedServiceProcess),
+    encryptedEnvironmentVariables_(encryptedEnvironmentVariables)
 {
     ASSERT_IF(
         redirectConsole && (redirectedConsoleFileNamePrefix == L"" || consoleRedirectionFileRetentionCount <=0 || consoleRedirectionFileMaxSizeInKb <=0),
@@ -99,7 +105,9 @@ ProcessDescription::ProcessDescription(ProcessDescription const & other)
     debugParameters_(other.debugParameters_),
     resourceGovernancePolicy_(other.resourceGovernancePolicy_),
     spResourceGovernance_(other.spResourceGovernance_),
-    cgroupName_(other.cgroupName_)
+    cgroupOrJobObjectName_(other.cgroupOrJobObjectName_),
+    isHostedServiceProcess_(other.isHostedServiceProcess_),
+    encryptedEnvironmentVariables_(other.encryptedEnvironmentVariables_)
 {
 }
 
@@ -122,62 +130,10 @@ ProcessDescription::ProcessDescription(ProcessDescription && other)
     debugParameters_(move(other.debugParameters_)),
     resourceGovernancePolicy_(move(other.resourceGovernancePolicy_)),
     spResourceGovernance_(move(other.spResourceGovernance_)),
-    cgroupName_(move(other.cgroupName_))
+    cgroupOrJobObjectName_(move(other.cgroupOrJobObjectName_)),
+    isHostedServiceProcess_(other.isHostedServiceProcess_),
+    encryptedEnvironmentVariables_(move(other.encryptedEnvironmentVariables_))
 {
-}
-
-ProcessDescription const & ProcessDescription::operator=(ProcessDescription const & other)
-{
-    if(this != &other)
-    {
-        this->exePath_ = other.exePath_;
-        this->arguments_ = other.arguments_;
-        this->startInDirectory_ = other.startInDirectory_;
-        this->environmentBlock_ = other.environmentBlock_;
-        this->appDirectory_ = other.appDirectory_;
-        this->tempDirectory_ = other.tempDirectory_;
-        this->workDirectory_ = other.workDirectory_;
-        this->logDirectory_ = other.logDirectory_;
-        this->redirectConsole_ = other.redirectConsole_;
-        this->allowChildProcessDetach_ = other.allowChildProcessDetach_;
-        this->notAttachedToJob_ = other.notAttachedToJob_;
-        this->redirectedConsoleFileNamePrefix_ = other.redirectedConsoleFileNamePrefix_;
-        this->consoleRedirectionFileRetentionCount_ = other.consoleRedirectionFileRetentionCount_;
-        this->consoleRedirectionFileMaxSizeInKb_ = other.consoleRedirectionFileMaxSizeInKb_;
-        this->showNoWindow_ = other.showNoWindow_;
-        this->debugParameters_ = other.debugParameters_;
-        this->resourceGovernancePolicy_ = other.resourceGovernancePolicy_;
-        this->spResourceGovernance_ = other.spResourceGovernance_;
-        this->cgroupName_ = other.cgroupName_;
-    }
-    return *this;
-}
-
-ProcessDescription const & ProcessDescription::operator=(ProcessDescription && other)
-{
-    if(this != &other)
-    {
-        this->exePath_ = move(other.exePath_);
-        this->arguments_ = move(other.arguments_);
-        this->startInDirectory_ = move(other.startInDirectory_);
-        this->environmentBlock_ = move(other.environmentBlock_);
-        this->appDirectory_ = move(other.appDirectory_);
-        this->tempDirectory_ = move(other.tempDirectory_);
-        this->workDirectory_ = move(other.workDirectory_);
-        this->logDirectory_ = move(other.logDirectory_);
-        this->redirectConsole_ = other.redirectConsole_;
-        this->allowChildProcessDetach_ = other.allowChildProcessDetach_;
-        this->notAttachedToJob_ = other.notAttachedToJob_;
-        this->redirectedConsoleFileNamePrefix_ = move(other.redirectedConsoleFileNamePrefix_);
-        this->consoleRedirectionFileRetentionCount_ = other.consoleRedirectionFileRetentionCount_;
-        this->consoleRedirectionFileMaxSizeInKb_ = other.consoleRedirectionFileMaxSizeInKb_;
-        this->showNoWindow_ = other.showNoWindow_;
-        this->debugParameters_ = move(other.debugParameters_);
-        this->resourceGovernancePolicy_ = move(other.resourceGovernancePolicy_);
-        this->spResourceGovernance_ = move(other.spResourceGovernance_);
-        this->cgroupName_ = move(other.cgroupName_);
-    }
-    return *this;
 }
 
 void ProcessDescription::WriteTo(TextWriter & w, FormatOptions const &) const
@@ -185,13 +141,14 @@ void ProcessDescription::WriteTo(TextWriter & w, FormatOptions const &) const
     w.Write("ProcessDescription { ");
     w.Write("ExePath = {0}, ", ExePath);
     w.Write("Arguments = {0}, ", Arguments);
-    w.Write("EnvironmentBlock = {");
-    for(auto iter = EnvironmentBlock.cbegin(); iter != EnvironmentBlock.cend(); ++ iter)
+
+    w.Write("Environment = [");
+    for(auto kvPair : envVars_)
     {
-        w.Write("{0}", *iter);
+        w.Write("{0}={1};", kvPair.first, kvPair.second);
     }
-    
-    w.Write("}");
+    w.Write("]");
+
     w.Write("StartInDirectory = {0}, ", StartInDirectory);
     w.Write("AppDirectory = {0}, ", AppDirectory);
     w.Write("TempDirectory = {0}, ", TempDirectory);
@@ -207,7 +164,8 @@ void ProcessDescription::WriteTo(TextWriter & w, FormatOptions const &) const
     w.Write("Debug Parameters = {0}", debugParameters_);
     w.Write("ResourceGovernancePolicy = {0}", resourceGovernancePolicy_);
     w.Write("ServicePackageResourceGovernance = {0}", spResourceGovernance_);
-    w.Write("Cgroup name = {0}", cgroupName_);
+    w.Write("Cgroup or job object name = {0}", cgroupOrJobObjectName_);
+    w.Write("IsHostedServiceProcess = {0}", isHostedServiceProcess_);
     w.Write("}");
 }
 
@@ -271,7 +229,19 @@ ErrorCode ProcessDescription::ToPublicApi(
     fabricProcessDesc.ServicePackageResourceGovernance = spResGov.GetRawPointer();
 
     fabricProcessDesc.CgroupName = heap.AddString(this->CgroupName);
-    fabricProcessDesc.Reserved = nullptr;
+    fabricProcessDesc.IsHostedServiceProcess = this->IsHostedServiceProcess;
+
+	auto encryptedEnvironmentVairables = heap.AddItem<FABRIC_STRING_PAIR_LIST>();
+	error = PublicApiHelper::ToPublicApiStringPairList(heap, this->encryptedEnvironmentVariables_, *encryptedEnvironmentVairables);
+	if (!error.IsSuccess())
+	{
+		return error;
+	}
+
+	auto ex1 = heap.AddItem<FABRIC_PROCESS_DESCRIPTION_EX1>();
+	ex1->EncryptedEnvironmentVariables = encryptedEnvironmentVairables.GetRawPointer();
+
+	fabricProcessDesc.Reserved = ex1.GetRawPointer();
 
     return ErrorCode(ErrorCodeValue::Success);
 }

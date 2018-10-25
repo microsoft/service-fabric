@@ -4,54 +4,29 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#include "Common/FabricGlobals.h"
 
 using namespace Common;
 using namespace Federation;
 
-HMODULE dllModule;
+HMODULE dllModule = nullptr;
 
-volatile LONG threadCount = -1;
-LONG threadTestLimit = 0;
-
-void InitializeThreadCount()
+ConfigStoreDescriptionUPtr CreateConfigStore()
 {
-#if !defined(PLATFORM_UNIX)
-    DWORD processId = GetCurrentProcessId();
+    /*
+        The dllModule global needs to be captured in DllMain and passed to ConfigLoader
+        
+        FabricGlobals config loading mechanism does not allow for using a std::function
+        because it is being used in dllmain where using std new is not allowed and std::function
+        may allocate.
 
-    Handle snapshotHandle(CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 ));
-    if( snapshotHandle.Value == INVALID_HANDLE_VALUE )
-    {
-        threadCount = 1;
-        return;
-    }
-
-    PROCESSENTRY32 processEntry = {};
-    processEntry.dwSize = sizeof(processEntry);
-    if(!Process32First(snapshotHandle.Value, &(processEntry)))
-    {
-        threadCount = 1;
-        return;
-    }
-
-    do
-    {
-        if (processEntry.th32ProcessID == processId)
-        {
-            threadCount = processEntry.cntThreads;
-            return;
-        }
-    }
-    while(Process32Next(snapshotHandle.Value, &(processEntry)));
+        The assert below is only valid on windows because on linux there is no concept of dllModule
+    */
+#ifndef PLATFORM_UNIX
+    ASSERT_IF(dllModule == nullptr, "dllModule not set before config store load");
 #endif
-}
 
-void FailFastIfThreadLimitHit()
-{
-	if ((0 < threadTestLimit) && (threadTestLimit < Threadpool::ActiveCallbackCount()))
-	{
-		// Crash as quickly as possible to preserve threadpool stacks, TestAssert may be too slow due to stack walking
-		::RaiseFailFastException(nullptr, nullptr, 0);
-	}
+    return ConfigLoader::CreateConfigStore(dllModule);
 }
 
 BOOL APIENTRY DllMain(
@@ -61,6 +36,8 @@ BOOL APIENTRY DllMain(
 {
     UNREFERENCED_PARAMETER(reserved);
 
+    FabricGlobals::InitializeAsMaster(&CreateConfigStore);
+
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
@@ -68,19 +45,11 @@ BOOL APIENTRY DllMain(
         break;
 
     case DLL_THREAD_ATTACH:
-        if (threadCount < 0)
-        {
-            InitializeThreadCount();
-        }
-
-        ::InterlockedIncrement(&threadCount);
-		
-		FailFastIfThreadLimitHit();
-		
+        FabricGlobals::Get().GetThreadCounter().OnThreadEnter();
         break;
 
     case DLL_THREAD_DETACH:
-        ::InterlockedDecrement(&threadCount);
+        FabricGlobals::Get().GetThreadCounter().OnThreadExit();
         break;
 
     case DLL_PROCESS_DETACH:
@@ -176,18 +145,8 @@ BOOL APIENTRY DllMain(
     /* [retval][out] */ __RPC__deref_out_opt void **configStore)
 {
     // DO NOT CALL DLLCONFIG IN THE CONFIG LOAD PATH
-    return ConfigLoader::FabricGetConfigStore(dllModule, riid, updateHandler, configStore);
+    return ConfigLoader::FabricGetConfigStore(riid, updateHandler, configStore);
 }
-
-/* [entry] */ HRESULT FabricGetConfigStoreEnvironmentVariable( 
-    /* [out] */ __RPC__deref_out_opt IFabricStringResult **envVariableName,
-    /* [out] */ __RPC__deref_out_opt IFabricStringResult **envVariableValue)
-{
-    // DO NOT CALL DLLCONFIG IN THE CONFIG LOAD PATH
-    return ConfigLoader::FabricGetConfigStoreEnvironmentVariable(envVariableName, envVariableValue);
-}
-
-extern ThreadErrorMessages GlobalThreadErrorMessages;
 
 /* [entry] */ HRESULT FabricSetLastErrorMessage( 
     /* [in] */ __RPC__in LPCWSTR message,
@@ -199,7 +158,7 @@ extern ThreadErrorMessages GlobalThreadErrorMessages;
 
     TRY_COM_PARSE_PUBLIC_STRING(message)
 
-    *threadId = GlobalThreadErrorMessages.SetMessage(parsed_message);
+    *threadId = FabricGlobals::Get().GetThreadErrorMessages().SetMessage(parsed_message);
 
     return S_OK;
 }
@@ -211,7 +170,7 @@ extern ThreadErrorMessages GlobalThreadErrorMessages;
 
     Common::DllConfig::GetConfig();
 
-    auto msg = GlobalThreadErrorMessages.GetMessage();
+    auto msg = FabricGlobals::Get().GetThreadErrorMessages().GetMessage();
 
     auto comPtr = Common::make_com<Common::ComStringResult>(msg);
 
@@ -225,19 +184,9 @@ extern ThreadErrorMessages GlobalThreadErrorMessages;
 {
     Common::DllConfig::GetConfig();
 
-    GlobalThreadErrorMessages.ClearMessage(threadId);
+    FabricGlobals::Get().GetThreadErrorMessages().ClearMessage(threadId);
 
     return S_OK;
-}
-
-/* [entry] */ void FabricSetThreadTestLimit(LONG limit)
-{
-    threadTestLimit = limit;
-}
-
-/* [entry] */ LONG FabricGetThreadCount()
-{
-    return threadCount;
 }
 
 /* [entry] */ HRESULT FabricEncryptText(
@@ -262,7 +211,7 @@ extern ThreadErrorMessages GlobalThreadErrorMessages;
         return ComUtility::OnPublicApiReturn(error.ToHResult());
     }
 
-    TRY_COM_PARSE_PUBLIC_STRING(text)
+	TRY_COM_PARSE_PUBLIC_LONG_STRING(text)
     TRY_COM_PARSE_PUBLIC_STRING(certThumbPrint)
     TRY_COM_PARSE_PUBLIC_STRING_ALLOW_NULL(certStoreName)
 
@@ -298,7 +247,7 @@ extern ThreadErrorMessages GlobalThreadErrorMessages;
         return ComUtility::OnPublicApiReturn(E_POINTER);
     }
 
-    TRY_COM_PARSE_PUBLIC_STRING(text)
+	TRY_COM_PARSE_PUBLIC_LONG_STRING(text)
     TRY_COM_PARSE_PUBLIC_FILEPATH(certFilePath)
 
     std::wstring result;
@@ -390,7 +339,7 @@ extern ThreadErrorMessages GlobalThreadErrorMessages;
         return ComUtility::OnPublicApiReturn(E_POINTER);
     }
 
-    TRY_COM_PARSE_PUBLIC_STRING(text)
+	TRY_COM_PARSE_PUBLIC_LONG_STRING(text)
     TRY_COM_PARSE_PUBLIC_STRING(certThumbPrint)
     TRY_COM_PARSE_PUBLIC_STRING_ALLOW_NULL(certStoreName)
 
@@ -1263,6 +1212,49 @@ extern ThreadErrorMessages GlobalThreadErrorMessages;
     return ComUtility::OnPublicApiReturn(S_OK);
 }
 
+/* [entry] */ HRESULT WriteManagedStructuredTrace( 
+    /* [in] */ __RPC__in const FABRIC_ETW_TRACE_EVENT_PAYLOAD * eventPayload)
+{
+    EventWrite(
+        0,
+        (PCEVENT_DESCRIPTOR)eventPayload->EventDescriptor,
+        eventPayload->EventDataDescriptorList.Count,
+        (PEVENT_DATA_DESCRIPTOR) eventPayload->EventDataDescriptorList.UserDataDescriptor);
+    return ComUtility::OnPublicApiReturn(S_OK);
+}
+
+/* [entry] */ HRESULT FabricSetEnableUnsupportedPreviewFeatures2(
+    /* [in] */ BOOLEAN enableUnsupportedPreviewFeatures, 
+    /* [in] */ __RPC__in LPCWSTR machineName)
+{
+    Common::DllConfig::GetConfig();
+
+    ErrorCode error = FabricEnvironment::SetEnableUnsupportedPreviewFeatures(enableUnsupportedPreviewFeatures, machineName);
+    return ComUtility::OnPublicApiReturn(error.ToHResult());
+}
+
+/* [entry] */ HRESULT FabricSetEnableUnsupportedPreviewFeatures(
+    /* [in] */ BOOLEAN enableUnsupportedPreviewFeatures)
+{
+    return FabricSetEnableUnsupportedPreviewFeatures2(enableUnsupportedPreviewFeatures, NULL);
+}
+
+/* [entry] */ HRESULT FabricSetIsSFVolumeDiskServiceEnabled2(
+    /* [in] */ BOOLEAN isSFVolumeDiskServiceEnabled, 
+    /* [in] */ __RPC__in LPCWSTR machineName)
+{
+    Common::DllConfig::GetConfig();
+
+    ErrorCode error = FabricEnvironment::SetIsSFVolumeDiskServiceEnabled(isSFVolumeDiskServiceEnabled, machineName);
+    return ComUtility::OnPublicApiReturn(error.ToHResult());
+}
+
+/* [entry] */ HRESULT FabricSetIsSFVolumeDiskServiceEnabled(
+    /* [in] */ BOOLEAN isSFVolumeDiskServiceEnabled)
+{
+    return FabricSetIsSFVolumeDiskServiceEnabled2(isSFVolumeDiskServiceEnabled, NULL);
+}
+
 /* [entry] */ HRESULT FabricSetEnableCircularTraceSession2(
     /* [in] */ BOOLEAN enableCircularTraceSession, 
     /* [in] */ __RPC__in LPCWSTR machineName)
@@ -1295,55 +1287,30 @@ extern ThreadErrorMessages GlobalThreadErrorMessages;
     return FabricGetEnableCircularTraceSession2(NULL, enableCircularTraceSession);
 }
 
-#ifndef PLATFORM_UNIX
-namespace
+/* [entry] */ void FabricGetGlobals(
+    void **globals)
 {
-    INIT_ONCE InitOnce = INIT_ONCE_STATIC_INIT;
-    DWORD SymInitializeError = 0;
-    auto SymPaths = make_global<string>();
+    /*
+        On linux there is no concept of DllMain hence making the copy
+        of FabricCommon's FabricGlobals as master is done on the first
+        call to FabricGetGlobals.
 
-    BOOL CALLBACK InitOnceFunction(PINIT_ONCE, PVOID, PVOID *)
-    {
-        wstring symPath;
-        Environment::GetEnvironmentVariable(L"_NT_SYMBOL_PATH", symPath, NOTHROW());
-        wstring symPathAlt;
-        Environment::GetEnvironmentVariable(L"_NT_ALTERNATE_SYMBOL_PATH", symPathAlt, NOTHROW());
-        auto symPathsW = wformatString("{0};{1};{2};{3}", Environment::GetExecutablePath(), Directory::GetCurrentDirectory(), symPath, symPathAlt);
-        StringUtility::Utf16ToUtf8(symPathsW, *SymPaths);
+        This cannot be done on windows because there is code in FabricCommon
+        DllMain which accesses FabricGlobals and if the FabricGlobals has not
+        been initialized it will cause the load of an external function from
+        DllMain (while the LoaderLock is held) which is bad
+    */
 
-        SymInitialize(GetCurrentProcess(), SymPaths->c_str(), TRUE);
+#ifdef PLATFORM_UNIX
+    static std::once_flag fabricGlobalsInitFlag;
 
-        return TRUE;
-    }
-}
-
-/* [entry] */ LPCSTR FabricSymInitializeOnce()
-{
-    auto initStatus = ::InitOnceExecuteOnce(
-        &InitOnce,
-        InitOnceFunction,
-        nullptr,
-        nullptr);
-
-    Invariant(initStatus);
-    return SymPaths->c_str();
-}
-
+    std::call_once(
+        fabricGlobalsInitFlag,
+        []()
+        {
+            FabricGlobals::InitializeAsMaster(&CreateConfigStore);
+        });
 #endif
 
-namespace
-{
-    void(*CrashLeasingApplicationCallback) (void) = nullptr;
-}
-
-/* [entry] */ void FabricSetCrashLeasingApplicationCallback(
-    __RPC__in void (*callback))
-{
-    CrashLeasingApplicationCallback = (void (*) (void)) callback;
-}
-
-/* [entry] */ void FabricGetCrashLeasingApplicationCallback(
-    __RPC__out void *(*callback))
-{
-    *callback = (void *(*)) InterlockedExchangePointer(((void *(*))&CrashLeasingApplicationCallback), nullptr);
+    *globals = reinterpret_cast<void*>(&FabricGlobals::Get());
 }

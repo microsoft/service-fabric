@@ -20,6 +20,7 @@ namespace ServiceModel
         static Common::Global<ServiceTypeIdentifier> FaultAnalysisServiceTypeId;
         static Common::Global<ServiceTypeIdentifier> BackupRestoreServiceTypeId;
         static Common::Global<ServiceTypeIdentifier> UpgradeOrchestrationServiceTypeId;
+        static Common::Global<ServiceTypeIdentifier> CentralSecretServiceTypeId;
 
         ServiceTypeIdentifier();
         ServiceTypeIdentifier(ServicePackageIdentifier const & packageIdentifier, std::wstring const & serviceTypeName);

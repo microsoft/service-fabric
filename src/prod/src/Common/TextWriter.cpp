@@ -55,7 +55,7 @@ namespace Common
         bool prefix = false;
         int pad = formatOpt.width;
 
-        if(formatOpt.formatString.size())
+        if(!formatOpt.formatString.empty())
         {
             switch (formatOpt.formatString[0])
             {
@@ -139,402 +139,21 @@ namespace Common
         }
     }
 
-    void TextWriter::Write(VariableArgument const & arg)
-    {
-        arg.WriteTo(*this, null_format);
-    }
+	void TextWriter::Write(VariableArgument const & arg)
+	{
+		arg.WriteTo(*this, null_format);
+	}
 
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0)
-    {
-        VariableArgument const* args[1];
-        args[0] = &arg0;
-
-        InternalWrite(format, 1, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1)
-    {
-        VariableArgument const* args[2];
-        args[0] = &arg0;
-        args[1] = &arg1;
-
-        InternalWrite(format, 2, args);
-    }
-    
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2)
-    {
-        VariableArgument const* args[3];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-
-        InternalWrite(format, 3, args);
-    }
-    
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3)
-    {
-        VariableArgument const* args[4];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-
-        InternalWrite(format, 4, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4)
-    {
-        VariableArgument const* args[5];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-
-        InternalWrite(format, 5, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5)
-    {
-        VariableArgument const* args[6];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-
-        InternalWrite(format, 6, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6)
-    {
-        VariableArgument const* args[7];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-
-        InternalWrite(format, 7, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7)
-    {
-        VariableArgument const* args[8];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-
-        InternalWrite(format, 8, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8)
-    {
-        VariableArgument const* args[9];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-
-        InternalWrite(format, 9, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9)
-    {
-        VariableArgument const* args[10];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-        args[9] = &arg9;
-
-        InternalWrite(format, 10, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10)
-    {
-        VariableArgument const* args[11];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-        args[9] = &arg9;
-        args[10] = &arg10;
-
-        InternalWrite(format, 11, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11)
-    {
-        VariableArgument const* args[12];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-        args[9] = &arg9;
-        args[10] = &arg10;
-        args[11] = &arg11;
-
-        InternalWrite(format, 12, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11, VariableArgument const & arg12)
-    {
-        VariableArgument const* args[13];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-        args[9] = &arg9;
-        args[10] = &arg10;
-        args[11] = &arg11;
-        args[12] = &arg12;
-
-        InternalWrite(format, 13, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11, VariableArgument const & arg12, VariableArgument const & arg13)
-    {
-        VariableArgument const* args[14];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-        args[9] = &arg9;
-        args[10] = &arg10;
-        args[11] = &arg11;
-        args[12] = &arg12;
-        args[13] = &arg13;
-
-        InternalWrite(format, 14, args);
-    }
-
-    void TextWriter::Write(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11, VariableArgument const & arg12, VariableArgument const & arg13, VariableArgument const & arg14)
-    {
-        VariableArgument const* args[15];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-        args[9] = &arg9;
-        args[10] = &arg10;
-        args[11] = &arg11;
-        args[12] = &arg12;
-        args[13] = &arg13;
-        args[14] = &arg14;
-
-        InternalWrite(format, 15, args);
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0)
-    {
-        VariableArgument const* args[1];
-        args[0] = &arg0;
-
-        InternalWrite(format, 1, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1)
-    {
-        VariableArgument const* args[2];
-        args[0] = &arg0;
-        args[1] = &arg1;
-
-        InternalWrite(format, 2, args);
-        WriteLine();
-    }
-    
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2)
-    {
-        VariableArgument const* args[3];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-
-        InternalWrite(format, 3, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3)
-    {
-        VariableArgument const* args[4];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-
-        InternalWrite(format, 4, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4)
-    {
-        VariableArgument const* args[5];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-
-        InternalWrite(format, 5, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5)
-    {
-        VariableArgument const* args[6];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-
-        InternalWrite(format, 6, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6)
-    {
-        VariableArgument const* args[7];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-
-        InternalWrite(format, 7, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7)
-    {
-        VariableArgument const* args[8];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-
-        InternalWrite(format, 8, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8)
-    {
-        VariableArgument const* args[9];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-
-        InternalWrite(format, 9, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10)
-    {
-        VariableArgument const* args[11];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-        args[9] = &arg9;
-        args[10] = &arg10;
-
-        InternalWrite(format, 11, args);
-        WriteLine();
-    }
-
-    void TextWriter::WriteLine(StringLiteral format, VariableArgument const & arg0, VariableArgument const & arg1, VariableArgument const & arg2, VariableArgument const & arg3, VariableArgument const & arg4, VariableArgument const & arg5, VariableArgument const & arg6, VariableArgument const & arg7, VariableArgument const & arg8, VariableArgument const & arg9, VariableArgument const & arg10, VariableArgument const & arg11)
-    {
-        VariableArgument const* args[12];
-        args[0] = &arg0;
-        args[1] = &arg1;
-        args[2] = &arg2;
-        args[3] = &arg3;
-        args[4] = &arg4;
-        args[5] = &arg5;
-        args[6] = &arg6;
-        args[7] = &arg7;
-        args[8] = &arg8;
-        args[9] = &arg9;
-        args[10] = &arg10;
-        args[11] = &arg11;
-
-        InternalWrite(format, 12, args);
-        WriteLine();
-    }
+	void TextWriter::WriteLine(VariableArgument const & arg)
+	{
+		Write(arg);
+		WriteLine();
+	}
 
     void TextWriter::WriteLine()
     {
         WriteBuffer("\r\n", 2);
         Flush();
-    }
-
-    void TextWriter::WriteLine(VariableArgument const & arg)
-    {
-        Write(arg);
-        WriteLine();
     }
 
     void TextWriter::WriteString(std::string const & value)
@@ -669,80 +288,79 @@ namespace Common
         return w;
     }
 
-    namespace detail
-    {
-        std::string format_handler::operator () (
-            StringLiteral format,
-            VariableArgument const & arg0,
-            VariableArgument const & arg1,
-            VariableArgument const & arg2,
-            VariableArgument const & arg3,
-            VariableArgument const & arg4,
-            VariableArgument const & arg5,
-            VariableArgument const & arg6,
-            VariableArgument const & arg7,
-            VariableArgument const & arg8,
-            VariableArgument const & arg9,
-            VariableArgument const & arg10,
-            VariableArgument const & arg11,
-            VariableArgument const & arg12,
-            VariableArgument const & arg13) const
-        {
-            std::string result;
-            result.reserve(64);
-            StringWriterA(result).Write(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
-            return result;
-        }
+	namespace detail
+	{
+		std::string format_handler::operator () (
+			StringLiteral format,
+			VariableArgument const & arg0,
+			VariableArgument const & arg1,
+			VariableArgument const & arg2,
+			VariableArgument const & arg3,
+			VariableArgument const & arg4,
+			VariableArgument const & arg5,
+			VariableArgument const & arg6,
+			VariableArgument const & arg7,
+			VariableArgument const & arg8,
+			VariableArgument const & arg9,
+			VariableArgument const & arg10,
+			VariableArgument const & arg11,
+			VariableArgument const & arg12,
+			VariableArgument const & arg13) const
+		{
+			std::string result;
+			result.reserve(64);
+			StringWriterA(result).Write(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+			return result;
+		}
 
-        std::wstring wformat_handler::operator () (
-            StringLiteral format,
-            VariableArgument const & arg0,
-            VariableArgument const & arg1,
-            VariableArgument const & arg2,
-            VariableArgument const & arg3,
-            VariableArgument const & arg4,
-            VariableArgument const & arg5,
-            VariableArgument const & arg6,
-            VariableArgument const & arg7,
-            VariableArgument const & arg8,
-            VariableArgument const & arg9,
-            VariableArgument const & arg10,
-            VariableArgument const & arg11,
-            VariableArgument const & arg12,
-            VariableArgument const & arg13) const
-        {
-            std::wstring result;
-            result.reserve(64);
-            StringWriter(result).Write(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
-            return result;
-        }
+		std::wstring wformat_handler::operator () (
+			StringLiteral format,
+			VariableArgument const & arg0,
+			VariableArgument const & arg1,
+			VariableArgument const & arg2,
+			VariableArgument const & arg3,
+			VariableArgument const & arg4,
+			VariableArgument const & arg5,
+			VariableArgument const & arg6,
+			VariableArgument const & arg7,
+			VariableArgument const & arg8,
+			VariableArgument const & arg9,
+			VariableArgument const & arg10,
+			VariableArgument const & arg11,
+			VariableArgument const & arg12,
+			VariableArgument const & arg13) const
+		{
+			std::wstring result;
+			result.reserve(64);
+			StringWriter(result).Write(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+			return result;
+		}
 
-        std::wstring wformat_handler::operator () (
-            std::wstring const & wformat,
-            VariableArgument const & arg0,
-            VariableArgument const & arg1,
-            VariableArgument const & arg2,
-            VariableArgument const & arg3,
-            VariableArgument const & arg4,
-            VariableArgument const & arg5,
-            VariableArgument const & arg6,
-            VariableArgument const & arg7,
-            VariableArgument const & arg8,
-            VariableArgument const & arg9,
-            VariableArgument const & arg10,
-            VariableArgument const & arg11,
-            VariableArgument const & arg12,
-            VariableArgument const & arg13) const
-        {
-            std::string format;
-            StringUtility::Utf16ToUtf8(wformat, format);
-            StringLiteral lformat(format.c_str(), format.c_str()+format.size());
+		std::wstring wformat_handler::operator () (
+			std::wstring const & wformat,
+			VariableArgument const & arg0,
+			VariableArgument const & arg1,
+			VariableArgument const & arg2,
+			VariableArgument const & arg3,
+			VariableArgument const & arg4,
+			VariableArgument const & arg5,
+			VariableArgument const & arg6,
+			VariableArgument const & arg7,
+			VariableArgument const & arg8,
+			VariableArgument const & arg9,
+			VariableArgument const & arg10,
+			VariableArgument const & arg11,
+			VariableArgument const & arg12,
+			VariableArgument const & arg13) const
+		{
+			std::string format;
+			StringUtility::Utf16ToUtf8(wformat, format);
+			StringLiteral lformat(format.c_str(), format.c_str() + format.size());
 
-            std::wstring result;
-            result.reserve(64);
-            StringWriter(result).Write(lformat, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
-            return result;
-        }
-    }
+			std::wstring result;
+			result.reserve(64);
+			StringWriter(result).Write(lformat, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+			return result;
+		}
+	}
 }
-

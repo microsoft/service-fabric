@@ -5,7 +5,7 @@
     {
       "Name": "Backup-Nano",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol, mcoskun, sumukhs",
+      "Owners": "zhol",
       "Tags": "MData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -20,7 +20,7 @@
     {
       "Name": "Backup-Chained-CIT",
       "Type": "V2_ScriptTest",
-      "Owners": "mcoskun, zhol, sumukhs",
+      "Owners": "zhol",
       "Tags": "MData,Backup,IBAR",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -35,7 +35,7 @@
     {
       "Name": "Backup-CIT",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol, mcoskun, sumukhs",
+      "Owners": "zhol",
       "Tags": "MData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -50,7 +50,7 @@
     {
       "Name": "Backup-Quick",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol, mcoskun, sumukhs",
+      "Owners": "zhol",
       "Tags": "MData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -63,39 +63,9 @@
       }
     },
     {
-      "Name": "Replicator",
-      "Type": "V2_ScriptTest",
-      "Owners": "hanagar, anuragg",
-      "Tags": "MData",
-      "ResourcesRequired": "Server:5",
-      "TestExecutionParameters": {
-        "SetupType": "XCopy",
-        "SetupTimeout": "600",
-        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
-        "TaskName": "Replicator.test",
-        "ExecutionTimeout": "14400",
-        "CleanupTimeout": "7200"
-      }
-    },
-    {
-      "Name": "RollingUpgrade",
-      "Type": "V2_ScriptTest",
-      "Owners": "hanagar, anuragg",
-      "Tags": "MData",
-      "ResourcesRequired": "Server:4",
-      "TestExecutionParameters": {
-        "SetupType": "XCopy",
-        "SetupTimeout": "600",
-        "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator_CITs.txt",
-        "TaskName": "RollingUpgrade.test",
-        "ExecutionTimeout": "1200",
-        "CleanupTimeout": "7200"
-      }
-    },
-    {
       "Name": "SMFunctional",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol,mcoskun,preethas",
+      "Owners": "zhol,preethas",
       "Tags": "MData,RCQ",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -110,7 +80,7 @@
     {
       "Name": "BadTransactions_Pending (Lab)",
       "Type": "V2_ScriptTest",
-      "Owners": "sumukhs, hanagar",
+      "Owners": "imang",
       "Tags": "MData,Robustness",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
@@ -126,7 +96,7 @@
     {
       "Name": "BadTransactions_Large (Lab)",
       "Type": "V2_ScriptTest",
-      "Owners": "sumukhs, hanagar",
+      "Owners": "imang",
       "Tags": "MData,Robustness",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
@@ -142,7 +112,7 @@
     {
       "Name": "SlowCheckpoints",
       "Type": "V2_ScriptTest",
-      "Owners": "sumukhs, hanagar",
+      "Owners": "imang",
       "Tags": "MData,Robustness",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {

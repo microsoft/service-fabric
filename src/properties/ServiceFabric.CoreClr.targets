@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ ***********************************************************************************************
+ This file wraps the NetStandard/CoreCLR compilation targets.
+
+ Copyright (C) Microsoft Corporation. All rights reserved.
+ ***********************************************************************************************
+ -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- This is added here to create the .deps.json file correctly. -->
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_project_specific.props" />
+
+  <PropertyGroup>
+	<!-- Overwrite the output paths -->
+    <DotnetPackagesDir>$(BinariesBuildTypeArchDirectory)\CorePackages</DotnetPackagesDir>
+    <IntermediateOutputPath Condition="$(TargetsWindows)=='true'">$(IntermediateOutputPath)w</IntermediateOutputPath>
+    <IntermediateOutputPath Condition="$(TargetsLinux)=='true'">$(IntermediateOutputPath)l</IntermediateOutputPath>
+    <OutDir Condition="'$(OSSBUILD)' != '1'">$(OutDirCopy)\$(TargetFramework)\$(CurrentRuntimeIdentifier)\$(AssemblyName)</OutDir>
+    <OutDir Condition="'$(OSSBUILD)' == '1'">$(OutDirCopy)\$(TargetFramework)\$(CurrentRuntimeIdentifier)\</OutDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" $(TargetsLinux) == true ">
+    <DefineConstants>$(DefineConstants);DotNetCoreClrLinux</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Import the .Net SDK targets -->
+  <Import Project="$(NetStandardCliLocation)\sdk\$(NetStandardSdkVersion)\Sdks\Microsoft.NET.Sdk\Sdk\Sdk.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_project_specific.targets" />
+
+  <!-- Do not compile if the Runtime is not specified -->
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_disable_build.targets" Condition=" $(CurrentRuntimeIdentifier) == '' " />
+
+  <PropertyGroup Condition=" '$(TargetsWindows)' == 'true' And '$(BuildLinux)' != 'true'" >
+    <BuildDependsOn>$(BuildDependsOn);AddFilesToManifest</BuildDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- This file is used to keep track of out folder cleanup -->
+    <CoreClrPrjLockFile>$(DotnetPackagesDir)\$(MSBuildProjectFile).complete</CoreClrPrjLockFile>
+  </PropertyGroup>
+  <!-- Dotnet restore -->
+  <Target Name="CoreClrRestore"
+          BeforeTargets="BeforeBuild"
+		  Inputs="$(MSBuildProjectFullPath)"
+		  Outputs="$(CoreClrPrjLockFile);$(ProjectAssetsFile)">
+    <Exec Command="$(DotnetCliExe) restore $(MSBuildProjectFullPath) /p:SRCROOT=$(SRCROOT) /p:NuGetPackageRoot=$(NuGetPackageRoot) /p:EnvironmentConfig=$(EnvironmentConfig) /p:BUILD_VERSION=$(BUILD_VERSION) --no-dependencies --packages $(DotnetPackagesDir) --configfile $(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\NuGet.Config" />
+
+	<MakeDir Directories="$(DotnetPackagesDir)" />
+    <Touch Files="$(CoreClrPrjLockFile)"
+	       AlwaysCreate="true" />
+  </Target>
+
+  <!-- CoreCLR Resgen Target -->
+  <Target Name="CoreClrResGen"
+          Inputs="$(StringResourcesResxFilePath)"
+          Outputs="$(StringResourcesCsFileName)">
+    <PropertyGroup Condition=" '$(OverrideResGenAssembly)' != '' " >
+      <ResGenAssemblyName>$(OverrideResGenAssembly)</ResGenAssemblyName>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(OverrideResGenAssembly)' == '' " >
+      <ResGenAssemblyName>$(AssemblyName)</ResGenAssemblyName>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(BuildLinux)'=='true'" >
+      <ResgenExe>$(DotnetCliExe) $(SRCROOT)/../external/ServiceFabric.ResGen.NetStandard/resgen/resgen.dll </ResgenExe>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(BuildLinux)'!='true'" >
+      <ResgenExe>$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe</ResgenExe>
+    </PropertyGroup>
+    <ItemGroup>
+      <TargetFile Include="$(StringResourcesCsFilePath)" />
+    </ItemGroup>
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <Exec Condition="'$(BuildLinux)'=='true'" Command="$(ResgenExe) $(ResourcesFileDir)\$(ResourcesFileName).resx $(ResGenAssemblyName).$(ResourcesFileName) $(RootNamespace).$(ResourcesClassName) $(StringResourcesCsFilePath)" />
+    <Exec Condition="'$(BuildLinux)'!='true'" Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe $(ResourcesFileDir)\$(ResourcesFileName).resx $(IntermediateOutputPath)$(ResGenAssemblyName).$(ResourcesFileName).resources /str:csharp,$(RootNamespace),$(ResourcesClassName),$(StringResourcesCsFilePath)" />
+
+    <Copy SourceFiles="$(StringResourcesCsFilePath)" DestinationFolder=".\" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- Compile this project for all the runtimes we support -->
+  <Target Name="BuildAllRuntimes"
+          AfterTargets="AfterBuild"
+          Condition=" $(CurrentRuntimeIdentifier) == '' ">
+    <MSBuild Targets="$(MSBuildProjectDefaultTargets)"
+      Projects="$(MSBuildProjectFullPath)"
+      Properties="Configuration=$(Configuration);CurrentRuntimeIdentifier=%(SFSupportedRuntimes.Identity)" />
+  </Target>
+
+  <!-- Hook into the corext helper targets till we get coreclr build support from corext -->
+  <Target Condition="'$(BuildLinux)' != 'true'" Name="SetNetStandardAssemblyProperties"
+          DependsOnTargets="_GetVersionInfo"
+          BeforeTargets="BeforeBuild" >
+    <CreateProperty Value="$(BuildVersion)">
+      <Output TaskParameter="Value" PropertyName="Version"/>
+    </CreateProperty>
+  </Target>
+</Project>

@@ -252,11 +252,11 @@ OperationDataStream::SPtr TestStateProvider2::GetCurrentState()
     return innerStateProvider_->GetCurrentState();
 }
 
-void TestStateProvider2::BeginSettingCurrentState()
+Awaitable<void> TestStateProvider2::BeginSettingCurrentStateAsync()
 {
     WAIT_FOR_SIGNAL_RESET(StateProviderBeginSettingCurrentStateBlock);
-    CheckForFailuresAndDelays(L"beginsettingcurrentstate", false);
-    innerStateProvider_->BeginSettingCurrentState();
+    co_await CheckForFailuresAndDelaysAsync(L"beginsettingcurrentstateasync", false);
+    co_await innerStateProvider_->BeginSettingCurrentStateAsync();
 }
 
 Awaitable<void> TestStateProvider2::SetCurrentStateAsync(

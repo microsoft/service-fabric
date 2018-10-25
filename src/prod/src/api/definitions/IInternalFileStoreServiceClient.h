@@ -147,6 +147,16 @@ namespace Api
         virtual Common::ErrorCode EndUploadChunk(
             Common::AsyncOperationSPtr const & operation) = 0;
 
+        virtual Common::AsyncOperationSPtr BeginUploadChunkContent(
+            Common::Guid const & targetPartitionId,
+            __inout Transport::MessageUPtr &chunkContentMessage,
+            __inout Management::FileStoreService::UploadChunkContentDescription & uploadChunkContentDescription,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent) = 0;
+        virtual Common::ErrorCode EndUploadChunkContent(
+            Common::AsyncOperationSPtr const & operation) = 0;
+
         virtual Common::AsyncOperationSPtr BeginDeleteUploadSession(
             Common::Guid const & targetPartitionId,
             Common::Guid const & sessionId,

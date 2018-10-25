@@ -26,6 +26,7 @@ namespace Reliability
             static FailoverManagerSPtr CreateFM(
                 Federation::FederationSubsystemSPtr && federation,
                 Client::HealthReportingComponentSPtr const & healthClient,
+                Api::IServiceManagementClientPtr serviceManagementClient,
                 Common::FabricNodeConfigSPtr const& nodeConfig,
                 FailoverManagerStoreUPtr && fmStore,
                 ComPointer<IFabricStatefulServicePartition> const& servicePartition,
@@ -35,6 +36,7 @@ namespace Reliability
             FailoverManager(
                 Federation::FederationSubsystemSPtr && federation,
                 Client::HealthReportingComponentSPtr const & healthClient,
+                Api::IServiceManagementClientPtr serviceManagementClient,
                 Common::FabricNodeConfigSPtr const& nodeConfig,
                 bool isMaster,
                 FailoverManagerStoreUPtr && fmStore,
@@ -148,7 +150,6 @@ namespace Reliability
 
             __declspec (property(get = get_QueueFullThrottle)) FailoverThrottle & QueueFullThrottle;
             FailoverThrottle& get_QueueFullThrottle() { return queueFullThrottle_; }
-            
 
             static Common::Global<FailoverManagerComponent::EventSource> FMEventSource;
             static Common::Global<FailoverManagerComponent::MessageEventSource> FMMessageEventSource;
@@ -197,6 +198,8 @@ namespace Reliability
             void UpdateAppUpgradePLBSafetyCheckStatus(ServiceModel::ApplicationIdentifier const& appId);
 
             void OnPLBSafetyCheckProcessingDone(Common::AsyncOperationSPtr const& operation, ServiceModel::ApplicationIdentifier const& appId);
+
+            void UpdateFailoverUnitTargetReplicaCount(Common::Guid const &, int targetCount);
 
             void OnNodeSequenceNumberUpdated(
                 ServiceTypeUpdateKind::Enum serviceTypeUpdateEvent,
@@ -269,6 +272,7 @@ namespace Reliability
             void NodeUpdateServiceReplyHandler(Transport::Message & request, Federation::NodeInstance const& from);
             void NodeDeactivateReplyAsyncMessageHandler(Transport::Message & request, Federation::NodeInstance const& from);
             void NodeActivateReplyAsyncMessageHandler(Transport::Message & request, Federation::NodeInstance const& from);
+            void AvailableContainerImagesMessageHandler(Transport::Message & request);
 
             Transport::MessageUPtr NodeUpMessageHandler(Transport::Message & request, Federation::NodeInstance const & from); 
             Transport::MessageUPtr ChangeNotificationMessageHandler(Transport::Message & request, Federation::NodeInstance const & from);
@@ -318,13 +322,6 @@ namespace Reliability
                 Transport::MessageId const& messageId,
                 std::vector<ServiceTypeInfo> && processedInfos,
                 Federation::NodeInstance const& from);
-
-            void PartitionNotificationAsyncMessageHandler(Transport::Message & request, Federation::NodeInstance const& from);
-            void FailoverManager::OnPartitionNotificationCompleted(
-                Transport::MessageId const& messageId,
-                uint64 sequenceNum,
-                Federation::NodeInstance const& from,
-                Common::ErrorCode error);
 
             void UpdateServiceAsyncMessageHandler(Transport::Message & request, TimedRequestReceiverContextUPtr && context);
             void UpdateSystemServiceAsyncMessageHandler(Transport::Message & request, TimedRequestReceiverContextUPtr && context);
@@ -382,7 +379,11 @@ namespace Reliability
                 std::wstring const & upgradeDomain,
                 std::vector<UpgradeDescription> & upgrades);
 
-            Common::ErrorCode NodeUp(Federation::NodeInstance const & from, NodeUpMessageBody const & body, std::vector<UpgradeDescription> & upgrades);
+            Common::ErrorCode NodeUp(
+                Federation::NodeInstance const& from,
+                NodeUpMessageBody const& body,
+                _Out_ Common::FabricVersionInstance & targetVersionInstance,
+                _Out_ std::vector<UpgradeDescription> & upgrades);
             bool NodeDown(Federation::NodeInstance const & nodeInstance);
 
             void RegisterEvents(Common::EventHandler const & readyEvent, Common::EventHandler const & failureEvent);
@@ -447,6 +448,8 @@ namespace Reliability
 
             FailoverUnitCountersSPtr failoverUnitCountersSPtr_;
             FailoverThrottle queueFullThrottle_;
+            
+            Api::IServiceManagementClientPtr serviceManagementClient_;
         };
     }
 }

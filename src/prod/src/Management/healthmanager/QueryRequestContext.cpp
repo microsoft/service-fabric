@@ -618,6 +618,7 @@ size_t QueryRequestContext::GetMaxAllowedSize()
 //
 template void QueryRequestContext::AddQueryListResults<NodeAggregatedHealthState>(ListPager<NodeAggregatedHealthState> && pager);
 template void QueryRequestContext::AddQueryListResults<ApplicationAggregatedHealthState>(ListPager<ApplicationAggregatedHealthState> && pager);
+template void QueryRequestContext::AddQueryListResults<ApplicationUnhealthyEvaluation>(ListPager<ApplicationUnhealthyEvaluation> && pager);
 template void QueryRequestContext::AddQueryListResults<ServiceAggregatedHealthState>(ListPager<ServiceAggregatedHealthState> && pager);
 template void QueryRequestContext::AddQueryListResults<PartitionAggregatedHealthState>(ListPager<PartitionAggregatedHealthState> && pager);
 template void QueryRequestContext::AddQueryListResults<ReplicaAggregatedHealthState>(ListPager<ReplicaAggregatedHealthState> && pager);

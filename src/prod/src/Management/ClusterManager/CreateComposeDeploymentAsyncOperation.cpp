@@ -21,7 +21,7 @@ AsyncOperationSPtr CreateComposeDeploymentAsyncOperation::BeginAcceptRequest(
     AsyncCallback const & callback, 
     AsyncOperationSPtr const & root)
 {
-    CreateContainerApplicationRequestHeader requestHeader;
+    CreateComposeDeploymentRequestHeader requestHeader;
     vector<const_buffer> body;
     if (!this->Request.Headers.TryGetAndRemoveHeader(requestHeader) ||
         !this->Request.GetBody(body))

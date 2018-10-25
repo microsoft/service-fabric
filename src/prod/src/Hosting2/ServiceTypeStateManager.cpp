@@ -863,7 +863,7 @@ void ServiceTypeStateManager::OnServicePackageDeactivated(vector<ServiceTypeInst
     }
 }
 
-void ServiceTypeStateManager::OnServiceTypeNotRegistrationNotFoundAfterTimeout(ServiceTypeInstanceIdentifier const & serviceTypeInstanceId, uint64 const sequenceNumber)
+void ServiceTypeStateManager::OnServiceTypeRegistrationNotFoundAfterTimeout(ServiceTypeInstanceIdentifier const & serviceTypeInstanceId, uint64 const sequenceNumber)
 {
     FABRIC_SEQUENCE_NUMBER healthSequence = 0;
     {
@@ -891,6 +891,70 @@ void ServiceTypeStateManager::OnServiceTypeNotRegistrationNotFoundAfterTimeout(S
         healthSequence);
 }
 
+void ServiceTypeStateManager::ReportHealth(
+    vector<ServiceTypeInstanceIdentifier> && serviceTypeInstanceIds,
+    FABRIC_SEQUENCE_NUMBER healthSequence)
+{
+    for (auto const& svcTypeInstanceId : serviceTypeInstanceIds)
+    {
+        auto const& servicePackageInstanceId = svcTypeInstanceId.ServicePackageInstanceId;
+
+        auto shouldReportHealth = hosting_.ApplicationManagerObj->ShouldReportHealth(servicePackageInstanceId);
+
+        if (shouldReportHealth)
+        {
+            this->ReportServiceTypeHealth(
+                svcTypeInstanceId,
+                SystemHealthReportCode::Hosting_ServiceTypeUnregistered,
+                L"" /*healthDescription*/,
+                healthSequence);
+        }
+    }
+}
+
+void ServiceTypeStateManager::DisableAdhocTypes(vector<ServiceTypeInstanceIdentifier> && adhocDisableList)
+{
+    for (auto const & adhocType : adhocDisableList)
+    {
+        this->Disable(adhocType);
+    }
+}
+
+void ServiceTypeStateManager::ProcessServiceTypeUnregistered_CallerHoldsLock(
+    bool isRuntimeClosed,
+    wstring const & runtimeOrHostId,
+    uint64 sequenceNumber,
+    _Out_ vector<ServiceTypeInstanceIdentifier> & adhocDisableList,
+    _Out_ vector<ServiceTypeInstanceIdentifier> & serviceTypeInstanceIds,
+    _Out_ vector<ServiceTypeIdentifier> & serviceTypeIds,
+    _Out_ ServicePackageInstanceIdentifier & servicePackageInstanceId,
+    _Out_ ServicePackageActivationContext & activationContext,
+    _Out_ wstring & servicePackageActivationId)
+{
+    for (auto const & kvPair : map_)
+    {
+        auto const & entry = kvPair.second;
+        auto const & filterProperty = isRuntimeClosed ? entry->State.RuntimeId : entry->State.HostId;
+
+        if (StringUtility::AreEqualCaseInsensitive(filterProperty, runtimeOrHostId))
+        {
+            ProcessApplicationHostOrRuntimeClosed(entry, sequenceNumber, adhocDisableList);
+
+            serviceTypeInstanceIds.push_back(entry->ServiceTypeInstanceId);
+            serviceTypeIds.push_back(entry->ServiceTypeInstanceId.ServiceTypeId);
+        }
+    }
+
+    if (serviceTypeInstanceIds.size() > 0)
+    {
+        auto const & serviceTypeInstanceId = serviceTypeInstanceIds.front();
+
+        servicePackageInstanceId = serviceTypeInstanceId.ServicePackageInstanceId;
+        activationContext = serviceTypeInstanceId.ActivationContext;
+        servicePackageActivationId = serviceTypeInstanceId.PublicActivationId;
+    }
+}
+
 void ServiceTypeStateManager::OnRuntimeClosed(wstring const & runtimeId, wstring const & hostId)
 {
     WriteNoise(
@@ -901,130 +965,106 @@ void ServiceTypeStateManager::OnRuntimeClosed(wstring const & runtimeId, wstring
         hostId);
 
      vector<ServiceTypeInstanceIdentifier> adhocDisableList;
-     
-     vector<ServiceTypeInstanceIdentifier> serviceTypeInstances;
-     vector<ServiceTypeIdentifier> serviceTypes;
+     vector<ServiceTypeInstanceIdentifier> serviceTypeInstanceIds;
+     vector<ServiceTypeIdentifier> serviceTypeIds;
      FABRIC_SEQUENCE_NUMBER healthSequence;
      uint64 sequenceNumber = 0;
-     ServicePackageActivationContext isolatioContext;
+     ApplicationIdentifier applicationId;
+     ServicePackageInstanceIdentifier servicePackageInstanceId;
+     ServicePackageActivationContext activationContext;
      wstring servicePackageActivationId;
 
     {
         AcquireWriteLock lock(lock_);
         if (isClosed_) return;
 
-        sequenceNumber = GetNextSequenceNumber_CallerHoldsLock();        
+        sequenceNumber = GetNextSequenceNumber_CallerHoldsLock();
 
-        // find all entries that are related to this runtime id
-        for(auto iter = map_.begin(); iter != map_.end(); ++iter)
-        {
-            if (StringUtility::AreEqualCaseInsensitive(iter->second->State.RuntimeId, runtimeId))
-            {
-                ProcessApplicationHostOrRuntimeClosed(iter->second, sequenceNumber, adhocDisableList);
-                
-                serviceTypeInstances.push_back(iter->second->ServiceTypeInstanceId);
-                serviceTypes.push_back(iter->second->ServiceTypeInstanceId.ServiceTypeId);
-                
-                isolatioContext = iter->second->ServiceTypeInstanceId.ActivationContext;
-                servicePackageActivationId = iter->second->ServiceTypeInstanceId.PublicActivationId;
-            }
-        }
+        this->ProcessServiceTypeUnregistered_CallerHoldsLock(
+            true /* isRuntimeClosed */,
+            runtimeId,
+            sequenceNumber,
+            adhocDisableList,
+            serviceTypeInstanceIds,
+            serviceTypeIds,
+            servicePackageInstanceId,
+            activationContext,
+            servicePackageActivationId);
 
-        this->RaiseRuntimeClosedEvent_CallerHoldsLock(runtimeId, hostId, serviceTypes, sequenceNumber, isolatioContext, servicePackageActivationId);
+        //
+        // Notify service package corresponding to these service types
+        // to update ServiceType registration timeout tracking information.
+        //
+        hosting_.ApplicationManagerObj->OnServiceTypesUnregistered(
+            servicePackageInstanceId, serviceTypeInstanceIds);
+
+        //
+        // Raise event for RA and other interested components. 
+        //
+        this->RaiseRuntimeClosedEvent_CallerHoldsLock(
+            runtimeId, hostId, serviceTypeIds, sequenceNumber, activationContext, servicePackageActivationId);
 
         healthSequence = SequenceNumber::GetNext();
     }
-    
-     for (auto iter = serviceTypeInstances.begin(); iter != serviceTypeInstances.end(); ++iter)
-    {
-        ServicePackageInstanceIdentifier const& servicePackageInstanceId = iter->ServicePackageInstanceId;
 
-        bool shouldReportHealth = hosting_.ApplicationManagerObj->ShouldReportHealth(servicePackageInstanceId);
+    this->ReportHealth(move(serviceTypeInstanceIds), healthSequence);
 
-        if (shouldReportHealth)
-        {
-            this->ReportServiceTypeHealth(
-                *iter,
-                SystemHealthReportCode::Hosting_ServiceTypeUnregistered,
-                L"" /*extraDescription*/,
-                healthSequence);
-        }
-    }
-
-    if (adhocDisableList.size() != 0)
-    {
-        for(auto iter = adhocDisableList.begin(); iter != adhocDisableList.end(); ++iter)
-        {
-            this->Disable(*iter);
-        }
-    }
+    this->DisableAdhocTypes(move(adhocDisableList));
 }
 
-void ServiceTypeStateManager::OnApplicationHostClosed(wstring const & hostId)
+void ServiceTypeStateManager::OnApplicationHostClosed(
+    ActivityDescription const & activityDescription, 
+    wstring const & hostId)
 {
-    WriteNoise(
+    WriteInfo(
         TraceType,
         Root.TraceId,
-        "OnApplicationHostClosed: HostId={0}",
-        hostId);
+        "OnApplicationHostClosed: HostId={0} activityDescription={1}",
+        hostId,
+        activityDescription);
 
     vector<ServiceTypeInstanceIdentifier> adhocDisableList;
-
-    vector<ServiceTypeInstanceIdentifier> serviceTypeInstances;
-    vector<ServiceTypeIdentifier> serviceTypes;
+    vector<ServiceTypeInstanceIdentifier> serviceTypeInstanceIds;
+    vector<ServiceTypeIdentifier> serviceTypeIds;
     FABRIC_SEQUENCE_NUMBER healthSequence;
     uint64 sequenceNumber = 0;
-    ServicePackageActivationContext isolatioContext;
+    ApplicationIdentifier applicationId;
+    ServicePackageInstanceIdentifier servicePackageInstanceId;
+    ServicePackageActivationContext activationContext;
     wstring servicePackageActivationId;
 
     {
         AcquireWriteLock lock(lock_);
         if (isClosed_) return;
 
-        sequenceNumber = GetNextSequenceNumber_CallerHoldsLock();        
+        sequenceNumber = GetNextSequenceNumber_CallerHoldsLock();
 
-        // find all entries that are related to this host id
-        for(auto iter = map_.begin(); iter != map_.end(); ++iter)
-        {
-            if (StringUtility::AreEqualCaseInsensitive(iter->second->State.HostId, hostId))
-            {
-                ProcessApplicationHostOrRuntimeClosed(iter->second, sequenceNumber, adhocDisableList);                
-                serviceTypes.push_back(iter->second->ServiceTypeInstanceId.ServiceTypeId);
-                serviceTypeInstances.push_back(iter->second->ServiceTypeInstanceId);
+        this->ProcessServiceTypeUnregistered_CallerHoldsLock(
+            false /* isRuntimeClosed */,
+            hostId,
+            sequenceNumber,
+            adhocDisableList,
+            serviceTypeInstanceIds,
+            serviceTypeIds,
+            servicePackageInstanceId,
+            activationContext,
+            servicePackageActivationId);
 
-                isolatioContext = iter->second->ServiceTypeInstanceId.ActivationContext;
-                servicePackageActivationId = iter->second->ServiceTypeInstanceId.PublicActivationId;
-            }
-        }
+        hosting_.ApplicationManagerObj->OnServiceTypesUnregistered(
+            servicePackageInstanceId, serviceTypeInstanceIds);
 
-        this->RaiseApplicationHostClosedEvent_CallerHoldsLock(hostId, serviceTypes, sequenceNumber, isolatioContext, servicePackageActivationId);
+        //
+        // Raise event for RA and other interested components. 
+        //
+        this->RaiseApplicationHostClosedEvent_CallerHoldsLock(
+            activityDescription, hostId, serviceTypeIds, sequenceNumber, activationContext, servicePackageActivationId);
 
         healthSequence = SequenceNumber::GetNext();
     }
 
-    for (auto iter = serviceTypeInstances.begin(); iter != serviceTypeInstances.end(); ++iter)
-    {        
-        ServicePackageInstanceIdentifier const& servicePackageInstanceId = iter->ServicePackageInstanceId;
+    this->ReportHealth(move(serviceTypeInstanceIds), healthSequence);
 
-        bool shouldReportHealth = hosting_.ApplicationManagerObj->ShouldReportHealth(servicePackageInstanceId);
-
-        if (shouldReportHealth)
-        {
-            this->ReportServiceTypeHealth(
-                *iter,
-                SystemHealthReportCode::Hosting_ServiceTypeUnregistered,
-                L"" /*extraDescription*/,
-                healthSequence);
-        }
-    }
-
-    if (adhocDisableList.size() != 0)
-    {
-        for(auto iter = adhocDisableList.begin(); iter != adhocDisableList.end(); ++iter)
-        {
-            this->Disable(*iter);
-        }
-    }
+    this->DisableAdhocTypes(move(adhocDisableList));
 }
 
 void ServiceTypeStateManager::ProcessApplicationHostOrRuntimeClosed(
@@ -1567,13 +1607,14 @@ void ServiceTypeStateManager::RaiseServiceTypeDisabledEvent_CallerHoldsLock(Entr
 }
 
 void ServiceTypeStateManager::RaiseApplicationHostClosedEvent_CallerHoldsLock(
+    Common::ActivityDescription const & activityDescription,
     std::wstring const & hostId, 
     vector<ServiceTypeIdentifier> const & serviceTypes, 
     uint64 sequenceNumber,
     ServicePackageActivationContext const & activationContext,
     wstring const & servicePackageActivationId)
 {
-    ApplicationHostClosedEventArgs eventArgs(sequenceNumber, hostId, serviceTypes, activationContext, servicePackageActivationId);
+    ApplicationHostClosedEventArgs eventArgs(sequenceNumber, hostId, serviceTypes, activationContext, servicePackageActivationId, activityDescription);
     hosting_.EventDispatcherObj->EnqueueApplicationHostClosedEvent(move(eventArgs));
 }
 

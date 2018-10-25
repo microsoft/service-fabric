@@ -11,17 +11,27 @@ namespace Hosting2
     {
     public:
         InProcessApplicationHost(
-            std::wstring const & hostId, 
+            GuestServiceTypeHost & guestServiceTypeHost,
             std::wstring const & runtimeServiceAddress,
+            ApplicationHostContext const & hostContext,
             CodePackageContext const & codePackageContext);
 
         virtual ~InProcessApplicationHost();
 
         static Common::ErrorCode Create(
-            std::wstring const & hostId, 
+            GuestServiceTypeHost & guestServiceTypeHost,
             std::wstring const & runtimeServiceAddress,
+            ApplicationHostContext const & hostContext,
             CodePackageContext const & codePackageContext,
-            __out ApplicationHostSPtr & applicationHost);
+            __out InProcessApplicationHostSPtr & applicationHost);
+
+        void GetCodePackageContext(CodePackageContext & codeContext);
+
+        void ProcessCodePackageEvent(CodePackageEventDescription eventDescription);
+
+    public:
+        __declspec(property(get = get_Hosting)) HostingSubsystem & Hosting;
+        inline HostingSubsystem & get_Hosting() const { return guestServiceTypeHost_.Hosting; }
 
     protected:
         virtual Common::ErrorCode OnCreateAndAddFabricRuntime(
@@ -36,8 +46,16 @@ namespace Hosting2
         virtual Common::ErrorCode OnUpdateCodePackageContext(
             CodePackageContext const & codeContext);
 
+        virtual Common::ErrorCode OnGetCodePackageActivator(
+            _Out_ ApplicationHostCodePackageActivatorSPtr & codePackageActivator) override;
+
+        virtual Common::ErrorCode OnCodePackageEvent(
+            CodePackageEventDescription const & eventDescription) override;
+
     private:
         Common::RwLock codeContextLock_;
         CodePackageContext codePackageContext_;
+        GuestServiceTypeHost & guestServiceTypeHost_;
+        ApplicationHostCodePackageActivatorSPtr codePackageActivator_;
     };
 }

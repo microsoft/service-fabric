@@ -19,36 +19,6 @@ ApplicationNameQueryResult::ApplicationNameQueryResult(Uri const & applicationNa
 {
 }
 
-ApplicationNameQueryResult::ApplicationNameQueryResult(ApplicationNameQueryResult const & other)
-    : applicationName_(other.applicationName_)
-{
-}
-
-ApplicationNameQueryResult::ApplicationNameQueryResult(ApplicationNameQueryResult && other)
-    : applicationName_(move(other.applicationName_))
-{
-}
-
-ApplicationNameQueryResult const & ApplicationNameQueryResult::operator = (ApplicationNameQueryResult const & other)
-{
-    if (this != &other)
-    {
-        this->applicationName_ = other.applicationName_;
-    }
-
-    return *this;
-}
-
-ApplicationNameQueryResult const & ApplicationNameQueryResult::operator = (ApplicationNameQueryResult && other)
-{
-    if (this != &other)
-    {
-        this->applicationName_ = move(other.applicationName_);
-    }
-
-    return *this;
-}
-
 void ApplicationNameQueryResult::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_APPLICATION_NAME_QUERY_RESULT & publicQueryResult) const 
@@ -56,7 +26,7 @@ void ApplicationNameQueryResult::ToPublicApi(
     publicQueryResult.ApplicationName = heap.AddString(applicationName_.ToString());
 }
 
-ErrorCode ApplicationNameQueryResult::FromPublicApi(__in FABRIC_APPLICATION_NAME_QUERY_RESULT const& publicQueryResult)
+ErrorCode ApplicationNameQueryResult::FromPublicApi(FABRIC_APPLICATION_NAME_QUERY_RESULT const& publicQueryResult)
 {
     if (!Uri::TryParse(publicQueryResult.ApplicationName, applicationName_))
     {

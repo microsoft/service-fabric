@@ -105,6 +105,8 @@ namespace Client
             Common::AsyncOperationSPtr const &,
             bool expectedCompletedSynchronously);
 
+        Common::NamingUri const & GetCacheEntryName(LruClientCacheEntrySPtr const &);
+
     private:
 
         void OnGetPsdComplete(

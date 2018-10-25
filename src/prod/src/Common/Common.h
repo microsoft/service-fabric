@@ -43,16 +43,11 @@ namespace Common
 #include <pwd.h>
 #include <grp.h>
 #include <sys/epoll.h>
-#include "PAL.h"
+#include "PAL.h" // from prod/src/inc/clr
 
 #undef __in    // is used in stdlib
 #undef __out   // is used in stdlib
 #undef __null  // is used in stdlib
-
-#define CreateEvent PalApiShouldBeAvoided
-#define CreateEventW PalApiShouldBeAvoided
-#define WaitForSingleObject PalApiShouldBeAvoided
-#define WaitForMultipleObjects PalApiShouldBeAvoided
 
 #else
 
@@ -89,7 +84,7 @@ typedef int pid_t;
 #if defined(PLATFORM_UNIX)
 #define __in
 #define __out
-#define __null
+#define __null 0
 #endif
 
 #include <strsafe.h>
@@ -182,6 +177,8 @@ typedef int pid_t;
 #include "Common/FabricConfigVersion.h"    // For Config.h
 #include "Common/FabricVersion.h"          // For Config.h
 #include "Common/FabricVersionInstance.h"  // For Config.h
+#include "Common/TraceEventContext.h"      // For ExtendedEventMetadata
+#include "Common/ExtendedEventMetadata.h"  // For TraceEventWriter
 #include "Common/TraceEventWriter.h"       // For ErrorCodeValue.h (DECLARE_ENUM_STRUCTURED_TRACE)
 #include "Common/ThreadErrorMessages.h"
 #include "Common/ErrorCodeValue.h"         // For ErrorCode.h
@@ -189,6 +186,12 @@ typedef int pid_t;
 #include "Common/X509StoreLocation.h"      // For Config.h
 #include "Common/Config.h"
 #include "Common/AssertWF.h"
+
+#include "Common/FabricGlobals.h"
+
+#if !defined(PLATFORM_UNIX)
+#include "Common/CRTAbortBehavior.h"
+#endif
 
 #include "Common/ByteBuffer.h"
 
@@ -254,7 +257,6 @@ typedef int pid_t;
 #include "FabricCommon_.h"
 
 #include "Common/TraceConsoleSink.h"
-#include "Common/TraceEventContext.h"
 #include "Common/TraceCorrelatedEvent.h"
 #include "Common/flags.h"
 
@@ -281,6 +283,8 @@ typedef int pid_t;
 
 // convienence/windows utility type headers
 #include "Common/ActivityId.h"
+#include "Common/ActivityType.h"
+#include "Common/ActivityDescription.h"
 #include "Common/FabricSerializer.h"
 #include "Common/EventArgs.h"
 #include "Common/Event.h"
@@ -335,7 +339,6 @@ typedef int pid_t;
 #include "Common/ConfigParameterOverride.h"
 #include "Common/ConfigSectionOverride.h"
 #include "Common/ConfigSettingsOverride.h"
-#include "Common/ConfigOverrideDescription.h"
 #include "Common/ConfigParameter.h"
 #include "Common/ConfigSection.h"
 #include "Common/ConfigSettings.h"
@@ -561,9 +564,13 @@ typedef int pid_t;
 #include "Common/ApiMonitoring.ApiNameDescription.h"
 #include "Common/ApiMonitoring.MonitoringParameters.h"
 #include "Common/ApiMonitoring.MonitoringData.h"
+#include "Common/ApiMonitoring.MonitoringComponentMetadata.h"
 #include "Common/ApiMonitoring.ApiCallDescription.h"
 #include "Common/ApiMonitoring.MonitoringComponent.h"
+
 
 #include "Common/ApiEventSource.h"
 
 #include "Common/Math.h"
+
+#include "Common/crc.h"

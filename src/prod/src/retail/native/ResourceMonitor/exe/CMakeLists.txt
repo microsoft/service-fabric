@@ -37,7 +37,7 @@ target_link_libraries(${exe_ResourceMonitor}
   ${lib_FileStoreService}
   ${lib_Store}
   ${lib_TestHooks}
-  ${lib_KtlLogger}
+  ${lib_KtlLoggerNode}
   ${lib_TStore}
   ${lib_ApiWrappers}
   ${lib_StoreRepairPolicy}
@@ -72,6 +72,4 @@ target_link_libraries(${exe_ResourceMonitor}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )

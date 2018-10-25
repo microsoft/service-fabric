@@ -21,7 +21,7 @@ namespace ResourceMonitor
         DENY_COPY(ResourceMonitoringAgent)
     public:
 
-        ResourceMonitoringAgent(IFabricRuntime * & pRuntime);
+        ResourceMonitoringAgent(Hosting2::ComFabricRuntime * pRuntime, Transport::IpcClient & ipcClient);
         virtual ~ResourceMonitoringAgent();
 
     public:
@@ -81,7 +81,7 @@ namespace ResourceMonitor
         class OpenAsyncOperation;
         class CloseAsyncOperation;
 
-        IFabricRuntime * pRuntime_;
+        Hosting2::ComFabricRuntime * pRuntime_;
 
         Common::RwLock lock_;
 

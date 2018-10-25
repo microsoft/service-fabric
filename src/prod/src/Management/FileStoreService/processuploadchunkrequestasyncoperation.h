@@ -27,6 +27,20 @@ namespace Management
 
             virtual ~ProcessUploadChunkRequestAsyncOperation();
 
+            virtual void WriteTrace(__in Common::ErrorCode const &error) override;
+
+            __declspec(property(get = get_StagingFullPath)) std::wstring const & StagingFullPath;
+            std::wstring const & get_StagingFullPath() const { return stagingFullPath_; }
+
+            __declspec(property(get = get_StartPosition)) uint64 StartPosition;
+            uint64 const get_StartPosition() const { return startPosition_; }
+
+            __declspec(property(get = get_EndPosition)) uint64 EndPosition;
+            uint64 const get_EndPosition() const { return endPosition_; }
+
+            __declspec(property(get = get_SessionId)) Common::Guid const & SessionId;
+            Common::Guid const & get_SessionId() const { return sessionId_; }
+
         protected:
 
             Common::AsyncOperationSPtr BeginOperation(
@@ -39,16 +53,14 @@ namespace Management
 
             Common::ErrorCode ValidateRequest();
 
+            void OnRequestCompleted(__inout Common::ErrorCode & error) override;
         private:
 
             class UploadChunkAsyncOperation;
-            friend class UploadChunkAsyncOperation;
-
             Common::Guid sessionId_;
             std::wstring stagingFullPath_;
             uint64 startPosition_;
             uint64 endPosition_;
-          
         };
     }
 }

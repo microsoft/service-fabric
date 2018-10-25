@@ -1,0 +1,813 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Error_NullArgument_Formatted" xml:space="preserve">
+    <value>Argument {0} must not be null.</value>
+  </data>
+  <data name="Error_InvalidOperation" xml:space="preserve">
+    <value>The operation is invalid.</value>
+  </data>
+  <data name="Error_ReplicatorTransactionNotActive" xml:space="preserve">
+    <value>Transaction {0} is committing or rolling back or has already committed or rolled back</value>
+  </data>
+  <data name="Error_ReplicatorTransactionCommitTimeout" xml:space="preserve">
+    <value>Transaction {0} was internally aborted as the commit could not succeed within an internal timeout duration</value>
+  </data>
+  <data name="Error_ReplicatorTransactionReadInProgress" xml:space="preserve">
+    <value>Transaction {0} is currently reading data. Cannot issue another read/write until the read completes</value>
+  </data>
+  <data name="Error_ReplicatorTransactionInternallyAborted" xml:space="preserve">
+    <value>Transaction {0} was internally aborted by the replicator as it was active for too long and blocked a checkpoint</value>
+  </data>
+  <data name="Error_ArgumentInvalid_Formatted" xml:space="preserve">
+    <value>Invalid argument {0} processed at {1}.</value>
+  </data>
+  <data name="Error_ArgumentInvalid" xml:space="preserve">
+    <value>Invalid argument</value>
+  </data>
+  <data name="Error_ArgumentInvalid_Formatted_arg1" xml:space="preserve">
+    <value>The argument {0} is invalid.</value>
+  </data>
+  <data name="Error_ArgumentUnexpected_Formatted" xml:space="preserve">
+    <value>The argument {0} is not expected.</value>
+  </data>
+  <data name="Error_InvalidArgument_Value" xml:space="preserve">
+    <value>Argument {0} has invalid value '{1}'.</value>
+  </data>
+  <data name="Warning_V2ReplThrottle" xml:space="preserve">
+    <value>Throttling transaction writes due to slow disk throughput</value>
+  </data>
+  <data name="Error_InvalidV2ReplSetting_1Arg" xml:space="preserve">
+    <value>The value for Transactional Replicator Setting {0} is invalid</value>
+  </data>
+  <data name="Error_V2ReplInvalidAPIOnAtomicOperation" xml:space="preserve">
+    <value>Throttling transaction writes due to slow disk throughput</value>
+  </data>
+  <data name="Error_V2ReplNotPrimartTransaction" xml:space="preserve">
+    <value>Not a primary transaction</value>
+  </data>
+  <data name="Error_V2ReplIncompleteChangeRoleToNone" xml:space="preserve">
+    <value>Replicator Log cannot be restored as it was in the process of removing state on the state providers.</value>
+  </data>
+  <data name="Error_AccumulatedBackupLogTooLarge" xml:space="preserve">
+    <value>Incremental backup ({0}) has accumulated backup logs ({1}) larger than or equal to {2} ({3})</value>
+  </data>
+  <data name="Error_FullBackupRequiredInThisEpoch" xml:space="preserve">
+    <value>Full backup ({0}) has not been taken in this Epoch {1}</value>
+  </data>
+  <data name="Error_LocalBackupNotSupported" xml:space="preserve">
+    <value>BackupOption.FullAndNotReplicate</value>
+  </data>
+  <data name="Error_RestoreInProgress" xml:space="preserve">
+    <value>Restore in progress</value>
+  </data>
+  <data name="Error_BackupCallbackFailed" xml:space="preserve">
+    <value>Backup callback returned false.</value>
+  </data>
+  <data name="Error_BackupInProgress" xml:space="preserve">
+    <value>Backup in progress</value>
+  </data>
+  <data name="Error_FullBackupRequired" xml:space="preserve">
+    <value>Full backup missing.</value>
+  </data>
+  <data name="Error_Lock" xml:space="preserve">
+    <value>lock</value>
+  </data>
+  <data name="Error_RestoreMustBeCalledDuringDataLoss" xml:space="preserve">
+    <value>Restore can only be called during OnDataLossAsync.</value>
+  </data>
+  <data name="Error_RestoreUnSafe" xml:space="preserve">
+    <value>State contained in backupDirectory is older than current state in the replica.</value>
+  </data>
+  <data name="Error_Timeout" xml:space="preserve">
+    <value>timeout</value>
+  </data>
+  <data name="Error_BackupTimeoutExceeded" xml:space="preserve">
+    <value>Backup not completed within timeout</value>
+  </data>
+  <data name="Error_InvalidData_PaddingExpected" xml:space="preserve">
+    <value>Data corrupted. Padding is expected.</value>
+  </data>
+  <data name="Error_InvalidData_AlignmentExpected" xml:space="preserve">
+    <value>Data corrupted. Alignment expected. Position: {0}</value>
+  </data>
+  <data name="Error_TStore_InvalidEnumerable" xml:space="preserve">
+    <value>Enumerable has been invalidated. It cannot be used anymore.</value>
+  </data>
+  <data name="Error_DD_RebuildNotificationCallbackAlreadySet" xml:space="preserve">
+    <value>RebuildNotificationAsyncCallback is already set</value>
+  </data>
+  <data name="Error_AcquiredLock" xml:space="preserve">
+    <value>acquiredLock</value>
+  </data>
+  <data name="Error_AddValueFactory" xml:space="preserve">
+    <value>addValueFactory</value>
+  </data>
+  <data name="Error_AtomicOperation" xml:space="preserve">
+    <value>atomicOperation</value>
+  </data>
+  <data name="Error_AtomicRedoOperation" xml:space="preserve">
+    <value>atomicRedoOperation</value>
+  </data>
+  <data name="Error_BackupFolderInfo_BackupLSNMismatch" xml:space="preserve">
+    <value>Backups corrupted. Backup lsn order does not match: {0} &gt; {1}</value>
+  </data>
+  <data name="Error_BackupFolderInfo_FullBackupCorrupted" xml:space="preserve">
+    <value>Full backup corrupted. Parent id {0} must match backup id {1}.</value>
+  </data>
+  <data name="Error_BackupFolderInfo_IncrementalChainBroken" xml:space="preserve">
+    <value>Incremental backup chain broken. Parent id {0} must match backup id {1}. {2} {3}</value>
+  </data>
+  <data name="Error_BackupFolderInfo_MissingFullBackup" xml:space="preserve">
+    <value>One full backup folder must exist</value>
+  </data>
+  <data name="Error_BackupFolderInfo_NullFolder" xml:space="preserve">
+    <value>Backup folder does not exist</value>
+  </data>
+  <data name="Error_BackupLogFileAsyncEnumerator_Corrupt" xml:space="preserve">
+    <value>BackupLogFile is corrupt ({0})</value>
+  </data>
+  <data name="Error_BackupLogFile_Deserialized" xml:space="preserve">
+    <value>Backup log file cannot be deserialized (unknown version number: {0}, expected version number: {1})</value>
+  </data>
+  <data name="Error_BackupMetadata_Deserialized" xml:space="preserve">
+    <value>Backup metadata file cannot be deserialized (unknown version number: {0}, expected version number: {1})</value>
+  </data>
+  <data name="Error_Block_Beyond_Stream" xml:space="preserve">
+    <value>block extends beyond end of the stream</value>
+  </data>
+  <data name="Error_BuiltInType_Expected" xml:space="preserve">
+    <value>{0} is not a supported built-in type.</value>
+  </data>
+  <data name="Error_BytesNull" xml:space="preserve">
+    <value>bytes</value>
+  </data>
+  <data name="Error_Checksum_Mismatch" xml:space="preserve">
+    <value>checksum mismatch</value>
+  </data>
+  <data name="Error_CopyManager_CopyFailed" xml:space="preserve">
+    <value>copy failed: received {0} files but expected to receive {1} files.</value>
+  </data>
+  <data name="Error_CopyManager_UnknownProtocol" xml:space="preserve">
+    <value>Unknown copy protocol version number: {0}</value>
+  </data>
+  <data name="Error_DD_ICloneable_Expected" xml:space="preserve">
+    <value>Either TKey or TValue must be ICloneable and not a ValueType.</value>
+  </data>
+  <data name="Error_DD_InitializationContext_Deserialized" xml:space="preserve">
+    <value>DictionaryInitializationContext cannot be deserialized (unknown version number: {0}, expected version number: {1})</value>
+  </data>
+  <data name="Error_DD_LockMode_Invalid" xml:space="preserve">
+    <value>Only LockMode.Default and LockMode.Update is supported.</value>
+  </data>
+  <data name="Error_DD_Registration" xml:space="preserve">
+    <value>Distributed Dictionary is not registered</value>
+  </data>
+  <data name="Error_DQ_NotRegistered" xml:space="preserve">
+    <value>Distributed Queue is not registered</value>
+  </data>
+  <data name="Error_DuplicateFileId_Found_OneArgs" xml:space="preserve">
+    <value>Duplicate file id found: '{0}'</value>
+  </data>
+  <data name="Error_EqualityComparer" xml:space="preserve">
+    <value>equality comparer</value>
+  </data>
+  <data name="Error_FailedReadValue_ChecksumMismatch_TwoArgs" xml:space="preserve">
+    <value>Failed to read value due to checksum mismatch. Checksum: {0} ExpectedChecksum: {1}.</value>
+  </data>
+  <data name="Error_FileBlock_Corrupt" xml:space="preserve">
+    <value>A block of the file is corrupt ({0}).</value>
+  </data>
+  <data name="Error_FilePath_Null" xml:space="preserve">
+    <value>File path does not exist: {0}</value>
+  </data>
+  <data name="Error_FilePath_Null_NoArgs" xml:space="preserve">
+    <value>File path is null or empty.</value>
+  </data>
+  <data name="Error_FileProperties_Corrupt" xml:space="preserve">
+    <value>File properties section is corrupt ({0}).</value>
+  </data>
+  <data name="Error_FileProperties_LargeSize" xml:space="preserve">
+    <value>property size extends beyond the section</value>
+  </data>
+  <data name="Error_FileProperties_NegativeSize" xml:space="preserve">
+    <value>property size is negative</value>
+  </data>
+  <data name="Error_FileProperties_SectionSize" xml:space="preserve">
+    <value>incorrect section size</value>
+  </data>
+  <data name="Error_FilePropertySection_Corrupt" xml:space="preserve">
+    <value>File properties section is corrupt ({0})</value>
+  </data>
+  <data name="Error_FilePropertySection_CorruptSizeExtend" xml:space="preserve">
+    <value>File properties section is corrupt (property size extends beyond the section).</value>
+  </data>
+  <data name="Error_FilePropertySection_CorruptSizeIncorrect" xml:space="preserve">
+    <value>File properties section is corrupt (incorrect section size).</value>
+  </data>
+  <data name="Error_FilePropertySection_CorruptSizeNegative_OneArgs" xml:space="preserve">
+    <value>File properties section is corrupt (property size is negative) {0}.</value>
+  </data>
+  <data name="Error_FilePropertySection_Missing" xml:space="preserve">
+    <value>File properties section is missing</value>
+  </data>
+  <data name="Error_Filter" xml:space="preserve">
+    <value>filter</value>
+  </data>
+  <data name="Error_FirstKey" xml:space="preserve">
+    <value>firstKey</value>
+  </data>
+  <data name="Error_GenericType_Expected" xml:space="preserve">
+    <value>Passed type is not a generic type</value>
+  </data>
+  <data name="Error_ICloneableOrValueType_Expected" xml:space="preserve">
+    <value>T must be ICloneable or value type.</value>
+  </data>
+  <data name="Error_InboundCallbacks_PrefixUri" xml:space="preserve">
+    <value>Prefix - {0} must be an absolute Uri</value>
+  </data>
+  <data name="Error_InboundCallbacks_Prefix_AlreadyExists" xml:space="preserve">
+    <value>Callback by Prefix - {0} already exists.</value>
+  </data>
+  <data name="Error_InitialOffset" xml:space="preserve">
+    <value>InitialOffset</value>
+  </data>
+  <data name="Error_InvalidBackup" xml:space="preserve">
+    <value>Invalid backup. An expected file does not exist in the backup: {0}</value>
+  </data>
+  <data name="Error_Item" xml:space="preserve">
+    <value>Error_Item</value>
+  </data>
+  <data name="Error_Key" xml:space="preserve">
+    <value>key</value>
+  </data>
+  <data name="Error_KeyCheckpointFile_Deserialized" xml:space="preserve">
+    <value>Key checkpoint file cannot be deserialized (unknown version number).</value>
+  </data>
+  <data name="Error_KeyCheckpointFile_RecordKind" xml:space="preserve">
+    <value>Unknown record kind: {0}</value>
+  </data>
+  <data name="Error_KeyCheckpoint_FailedToRead_Checksum" xml:space="preserve">
+    <value>Failed to read block of keys due to checksum mismatch. Checksum: {0} ExpectedChecksum: {1}.</value>
+  </data>
+  <data name="Error_KeyConverter" xml:space="preserve">
+    <value>keyConverter</value>
+  </data>
+  <data name="Error_LastKey" xml:space="preserve">
+    <value>lastKey</value>
+  </data>
+  <data name="Error_LockMode" xml:space="preserve">
+    <value>lockMode</value>
+  </data>
+  <data name="Error_LockTimeout" xml:space="preserve">
+    <value>lockTimeout</value>
+  </data>
+  <data name="Error_MessageAwaiter_SetResult_Parameter" xml:space="preserve">
+    <value>MessageWaiter.SetResult must be called with InboundBaseStreamWireMessage parameter</value>
+  </data>
+  <data name="Error_Metadata" xml:space="preserve">
+    <value>metadata</value>
+  </data>
+  <data name="Error_MetadataManager_Deserialized" xml:space="preserve">
+    <value>Metadata file cannot be deserialized (unknown version number).</value>
+  </data>
+  <data name="Error_MetadataManager_FileDoesNotExist" xml:space="preserve">
+    <value>File with id '{0}' does not exist."</value>
+  </data>
+  <data name="Error_MetadataManager_FileExists" xml:space="preserve">
+    <value>File with id '{0}' already exists.</value>
+  </data>
+  <data name="Error_MetadataOperationData_ExpectedSegments" xml:space="preserve">
+    <value>OperationData contained {0} array segments, but expected to find {1} array segments</value>
+  </data>
+  <data name="Error_Metadata_Corrupt_ChecksumMismatch_TwoArgs" xml:space="preserve">
+    <value>Metadata file is corrupt (checksum mismatch) Checksum: {0} ExpectedChecksum: {1}</value>
+  </data>
+  <data name="Error_Metadata_Corrupt_FileCountMismatch_TwoArgs" xml:space="preserve">
+    <value>Metadata file is corrupt (file count mismatch) MetadataCount: {0} FileCount: {1}.</value>
+  </data>
+  <data name="Error_Metadata_Corrupt_IncorrectSize" xml:space="preserve">
+    <value>Metadata file is corrupt (incorrect chunk sizes).</value>
+  </data>
+  <data name="Error_Metadata_Corrupt_NegativeSize_OneArgs" xml:space="preserve">
+    <value>Metadata file is corrupt (negative chunk size) {0}.</value>
+  </data>
+  <data name="Error_Metadata_DuplicateFileId" xml:space="preserve">
+    <value>Duplicate file id found :'{0}'</value>
+  </data>
+  <data name="Error_Metadata_FileCorrupt" xml:space="preserve">
+    <value>Metadata file is corrupt ({0}).</value>
+  </data>
+  <data name="Error_Metadata_FileCountMismatch" xml:space="preserve">
+    <value>file count mismatch</value>
+  </data>
+  <data name="Error_Metadata_IncorrectChunk" xml:space="preserve">
+    <value>incorrect chunk size</value>
+  </data>
+  <data name="Error_Metadata_NegativeChunk" xml:space="preserve">
+    <value>negative chunk size</value>
+  </data>
+  <data name="Error_Mode" xml:space="preserve">
+    <value>mode</value>
+  </data>
+  <data name="Error_Name_PrefixReserved" xml:space="preserve">
+    <value>Name starts with reserved prefix.</value>
+  </data>
+  <data name="Error_Negative_BlockSize" xml:space="preserve">
+    <value>negative block size</value>
+  </data>
+  <data name="Error_Negative_StreamOffset" xml:space="preserve">
+    <value>negative stream offset</value>
+  </data>
+  <data name="Error_No_Records" xml:space="preserve">
+    <value>no records</value>
+  </data>
+  <data name="Error_NullCopyContext" xml:space="preserve">
+    <value>{0} : GetCopyState The parameter copyContext is null. This might be caused by deployment bug that 'hasPersistedState' attribute is false</value>
+  </data>
+  <data name="Error_OffsetPositiveLongValue" xml:space="preserve">
+    <value>Offset only supports positive long values</value>
+  </data>
+  <data name="Error_OperationData" xml:space="preserve">
+    <value>operationData</value>
+  </data>
+  <data name="Error_PartitionKey_Format_Unsupported" xml:space="preserve">
+    <value>partitionKey format unsupported</value>
+  </data>
+  <data name="Error_PartitionKey_ServiceInstanceName" xml:space="preserve">
+    <value>ServiceInstanceName must be an absolute Uri</value>
+  </data>
+  <data name="Error_PhysicalLog_Exists" xml:space="preserve">
+    <value>Physical log already exists</value>
+  </data>
+  <data name="Error_QueueInitializationContext_Deserialized" xml:space="preserve">
+    <value>QueueInitializationContext cannot be deserialized (unknown version number: {0}, expected version number: {1})</value>
+  </data>
+  <data name="Error_RecordBlock_ExtendsPastFileEnd" xml:space="preserve">
+    <value>record block extends past the end of file</value>
+  </data>
+  <data name="Error_RecordBlock_MissingBlockSize" xml:space="preserve">
+    <value>missing record block size</value>
+  </data>
+  <data name="Error_RecordBlock_MissingChecksum" xml:space="preserve">
+    <value>missing checksum</value>
+  </data>
+  <data name="Error_RecordBlock_NegativeBlockSize" xml:space="preserve">
+    <value>record block size is negative</value>
+  </data>
+  <data name="Error_Records_Truncated" xml:space="preserve">
+    <value>records have been truncated</value>
+  </data>
+  <data name="Error_ReliableObject_CannotCast" xml:space="preserve">
+    <value>Returned reliable object of type {0} cannot be casted to requested type {1}</value>
+  </data>
+  <data name="Error_ReliableSession_EmptyMessage" xml:space="preserve">
+    <value>Empty message sent via reliable session</value>
+  </data>
+  <data name="Error_ReliableSession_NullArgument_SendAsync" xml:space="preserve">
+    <value>Null argument invalid for IReliableMessagingSession.SendAsync</value>
+  </data>
+  <data name="Error_ReliableSMReplica_InvalidEndpointProtocol" xml:space="preserve">
+    <value>Invalid Replicator Endpoint protocol: {0} Tcp is the only supported replicator endpoint protocol</value>
+  </data>
+  <data name="Error_ReliableSMSettings_BackupLogSizeGreaterThanMax" xml:space="preserve">
+    <value>MaxAccumulatedBackupLogSizeInMB = {0} It should be less than MaxStreamSizeInMB {1}</value>
+  </data>
+  <data name="Error_ReliableSMSettings_InvalidLoggingEngine" xml:space="preserve">
+    <value>Test_LoggingEngine = {0} is not recognized. Needs to be one of {1}</value>
+  </data>
+  <data name="Error_ReliableSMSettings_BackupLogSizeNegative" xml:space="preserve">
+    <value>MaxAccumulatedBackupLogSizeInMB = {0}.  It should be greater than 0</value>
+  </data>
+  <data name="Error_ReliableSMSettings_CheckpointNegative" xml:space="preserve">
+    <value>CheckpointThresholdInMB = {0}. It should be greater than 0 </value>
+  </data>
+  <data name="Error_ReliableSMSettings_MaxMetadataSize_Condition" xml:space="preserve">
+    <value>MaxMetadataSizeInKB must be a multiple of 4</value>
+  </data>
+  <data name="Error_ReliableSMSettings_MaxMetadataSize_Positive" xml:space="preserve">
+    <value>MaxMetadataSizeInKB must not be negative</value>
+  </data>
+  <data name="Error_ReliableSMSettings_MaxRecordSize_Condition_Multiple" xml:space="preserve">
+    <value>MaxRecordSizeInKB must be a multiple of 4</value>
+  </data>
+  <data name="Error_ReliableSMSettings_MaxRecordSize_GreaterThan_128" xml:space="preserve">
+    <value>MaxRecordSizeInKB must be greater than or equal to 128</value>
+  </data>
+  <data name="Error_ReliableSMSettings_MaxRecordSize_GreaterThan_CheckpointThreshold" xml:space="preserve">
+    <value>MaxStreamSizeInMB must be greater than CheckpointThresholdInMB when the log is not optimized for low disk usage</value>
+  </data>
+  <data name="Error_ReliableSMSettings_MaxStreamSize_GreaterThan_MaxRecordSize" xml:space="preserve">
+    <value>MaxStreamSizeInMB * 1024 must be larger or equal to MaxRecordSizeInKB * 16</value>
+  </data>
+  <data name="Error_ReliableSMSettings_MaxWriteQueueDepth_Conditions" xml:space="preserve">
+    <value>MaxWriteQueueDepthInKB must be zero or a multiple of 4</value>
+  </data>
+  <data name="Error_ReliableSMSettings_MaxWriteQueueDepth_Positive" xml:space="preserve">
+    <value>MaxWriteQueueDepthInKB must not be negative</value>
+  </data>
+  <data name="Error_ReliableSMSettings_SharedLogId_Empy" xml:space="preserve">
+    <value>If shared log id is empty then shared log path should be empty</value>
+  </data>
+  <data name="Error_ReliableSMSettings_SharedLogId_Format" xml:space="preserve">
+    <value>SharedLogId should be a well-formed guid such as {F67D29E7-DFAB-437e-9F9F-5AC901D3F0BC}</value>
+  </data>
+  <data name="Error_ReliableSMSettings_SharedLogPath_Empty" xml:space="preserve">
+    <value>If shared log id is not empty then shared log path should be set</value>
+  </data>
+  <data name="Error_ReliableSMSettings_SharedLogPath_Format" xml:space="preserve">
+    <value>SharedLogPath should be a well-formed absolute pathname</value>
+  </data>
+  <data name="Error_ReplicatorTransaction" xml:space="preserve">
+    <value>replicatorTransaction</value>
+  </data>
+  <data name="Error_SMBlocksCorrupt" xml:space="preserve">
+    <value>State manager blocks section is corrupt (incorrect section size)</value>
+  </data>
+  <data name="Error_SMFile_Corrupt" xml:space="preserve">
+    <value>StateManagerFile is corrupt ({0})</value>
+  </data>
+  <data name="Error_SMLockContext_Disposed" xml:space="preserve">
+    <value>lock has been disposed {0}</value>
+  </data>
+  <data name="Error_SMLockContext_TimedOut" xml:space="preserve">
+    <value>Lock timed out for key {0}</value>
+  </data>
+  <data name="Error_SP_Already_Exists" xml:space="preserve">
+    <value>State provider {0} already exists</value>
+  </data>
+  <data name="Error_SP_CreatedDestroyed_Tx" xml:space="preserve">
+    <value>State provider {0} cannot be created and deleted in the same transaction</value>
+  </data>
+  <data name="Error_SP_Name_Required" xml:space="preserve">
+    <value>State provider must have a name</value>
+  </data>
+  <data name="Error_SP_Name_Reserved" xml:space="preserve">
+    <value>Registration failed as the given state provider name {0} is reserved</value>
+  </data>
+  <data name="Error_SP_Null" xml:space="preserve">
+    <value>State provider {0} does not exist</value>
+  </data>
+  <data name="Error_SP_ParameterlessConstructor" xml:space="preserve">
+    <value>State provider must have a parameterless constructor</value>
+  </data>
+  <data name="Error_StateProvider" xml:space="preserve">
+    <value>stateProvider</value>
+  </data>
+  <data name="Error_StateProviderFactory" xml:space="preserve">
+    <value>stateProviderFactory</value>
+  </data>
+  <data name="Error_StateProviderName" xml:space="preserve">
+    <value>stateProviderName</value>
+  </data>
+  <data name="Error_StoreInitParameters_Deserialized" xml:space="preserve">
+    <value>StoreInitializationParameters cannot be deserialized (unknown version number: {0}, expected version number: {1})</value>
+  </data>
+  <data name="Error_Stream_Close_Inbound" xml:space="preserve">
+    <value>Attempt to close an inbound stream</value>
+  </data>
+  <data name="Error_Stream_Close_Unopened" xml:space="preserve">
+    <value>Attempt to close a stream(with state={0}) that has not opened</value>
+  </data>
+  <data name="Error_Stream_Delete_Inbound" xml:space="preserve">
+    <value>Attempt to delete an inbound stream</value>
+  </data>
+  <data name="Error_Stream_Delete_UnopenedStream" xml:space="preserve">
+    <value>Attempt to delete a stream(with state={0}) that has not been closed</value>
+  </data>
+  <data name="Error_Stream_GetDeleted_Invoked_Inbound" xml:space="preserve">
+    <value>GetDeleteSequenceNumberAsync invoked on inbound stream</value>
+  </data>
+  <data name="Error_Stream_GetLSNReceived_Invoked_Outbound" xml:space="preserve">
+    <value>GetLastSequenceNumberReceived invoked on outbound stream</value>
+  </data>
+  <data name="Error_Stream_GetLSNSent_Invoked_Inbound" xml:space="preserve">
+    <value>GetLastSequenceNumberSent invoked on inbound stream</value>
+  </data>
+  <data name="Error_Stream_GetLSN_Invoked_UnopenedStream" xml:space="preserve">
+    <value>GetLastSequenceNumberSent invoked on stream(with state={0}) that has not been opened</value>
+  </data>
+  <data name="Error_Stream_Open_Inbound" xml:space="preserve">
+    <value>Attempt to open an inbound stream</value>
+  </data>
+  <data name="Error_Stream_Open_Outbound_Closing" xml:space="preserve">
+    <value>Attempt to open an outbound stream that is in Closing or Closed state</value>
+  </data>
+  <data name="Error_Stream_Open_UncommittedTx" xml:space="preserve">
+    <value>Attempt to open stream with uncommitted or aborted create transaction</value>
+  </data>
+  <data name="Error_Stream_Receive_Outbound" xml:space="preserve">
+    <value>Attempt to receive in an outbound stream</value>
+  </data>
+  <data name="Error_Stream_Send_Inbound" xml:space="preserve">
+    <value>Attempt to send in an inbound stream</value>
+  </data>
+  <data name="Error_Stream_Send_Unopened" xml:space="preserve">
+    <value>Attempt to Send in a stream(with state={0}) that is not in Open state</value>
+  </data>
+  <data name="Error_Stream_Timeout" xml:space="preserve">
+    <value>timeout is less than -1 or greater than Int32.MaxValue in Ticks</value>
+  </data>
+  <data name="Error_TDeletedItem_NoValue" xml:space="preserve">
+    <value>TDeletedItem has no value.</value>
+  </data>
+  <data name="Error_TInsertedItem_Offset_Positive" xml:space="preserve">
+    <value>Offset only supports positive long values</value>
+  </data>
+  <data name="Error_Transaction" xml:space="preserve">
+    <value>transaction</value>
+  </data>
+  <data name="Error_TStore_BackupDirectory" xml:space="preserve">
+    <value>backupDirectory must exist and be empty.</value>
+  </data>
+  <data name="Error_TStore_InvalidBackup" xml:space="preserve">
+    <value>Invalid backup. An expected file does not exist in the backup: {0}</value>
+  </data>
+  <data name="Error_TStore_OperationType" xml:space="preserve">
+    <value>unexpected operation type {0}</value>
+  </data>
+  <data name="Error_UnreliableType" xml:space="preserve">
+    <value>Passed type is not one of the reliable data structure interfaces or default implementations</value>
+  </data>
+  <data name="Error_Unsupported_Version_Deserialization" xml:space="preserve">
+    <value>Unsupported version {0} on deserialization, current version is {1}</value>
+  </data>
+  <data name="Error_UpdateValueFactory" xml:space="preserve">
+    <value>updateValueFactory</value>
+  </data>
+  <data name="Error_Value" xml:space="preserve">
+    <value>value</value>
+  </data>
+  <data name="Error_ValueCheckpointFile_FailedRead_Checksum" xml:space="preserve">
+    <value>Failed to read value due to checksum mismatch</value>
+  </data>
+  <data name="Error_ValueCheckpoint_DeletedItemValue" xml:space="preserve">
+    <value>Deleted items don't have values.</value>
+  </data>
+  <data name="Error_ValueCheckpoint_Deserialized" xml:space="preserve">
+    <value>Value checkpoint file cannot be deserialized (unknown version number)</value>
+  </data>
+  <data name="Error_ValueCheckpoint_StreamRangeExceeded" xml:space="preserve">
+    <value>TVersionedItem.Offset + TVersionedItem.ValueSize extends beyond the valid stream range</value>
+  </data>
+  <data name="Error_ValueCheckpoint_TVersionedItem_Offset_Negative" xml:space="preserve">
+    <value>TVersionedItem.Offset is negative.</value>
+  </data>
+  <data name="Error_ValueCheckpoint_TVersionedItem_ValueSize_Negative" xml:space="preserve">
+    <value>TVersionedItem.ValueSize is negative. {0}</value>
+  </data>
+  <data name="Error_ValueConverter" xml:space="preserve">
+    <value>valueConverter</value>
+  </data>
+  <data name="Error_ValueFactory" xml:space="preserve">
+    <value>valueFactory</value>
+  </data>
+  <data name="Error_ValueFactoryOrEqualityComparer" xml:space="preserve">
+    <value>value factory or equality comparer</value>
+  </data>
+  <data name="Error_VersionMismatch" xml:space="preserve">
+    <value>Version mismatch.  Expected version {0}, but read version {1}</value>
+  </data>
+  <data name="StreamFactory" xml:space="preserve">
+    <value>streamFactory</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_BlockExtendPastFile" xml:space="preserve">
+    <value>StateManagerFile is corrupt (record block extends past the end of file).</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_BlockSizesMissing" xml:space="preserve">
+    <value>StateManagerFile is corrupt (block sizes are missing).</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_MetadataCountMismatch" xml:space="preserve">
+    <value>StateManagerFile is corrupt (metadata count mismatch).</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_MismatchedChecksum" xml:space="preserve">
+    <value>StateManagerFile is corrupt (checksum mismatch).</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_MissingChecksum" xml:space="preserve">
+    <value>StateManagerFile is corrupt (missing checksum).</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_MissingRecordSize" xml:space="preserve">
+    <value>StateManagerFile is corrupt (missing record size).</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_NegativeRecordSize" xml:space="preserve">
+    <value>StateManagerFile is corrupt (record size is negative)</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_RecordExtendsPastFile" xml:space="preserve">
+    <value>StateManagerFile is corrupt (record extends past the end of file).</value>
+  </data>
+  <data name="Error_SMFile_Corrupt_RecordSize" xml:space="preserve">
+    <value>StateManagerFile is corrupt (incorrect record size).</value>
+  </data>
+  <data name="Error_SMFile_UnknownCopyProtocol_OneArg" xml:space="preserve">
+    <value>Unknown copy protocol version number: {0}</value>
+  </data>
+  <data name="Error_SMFile_UnknownSMCopyOperation_OneArg" xml:space="preserve">
+    <value>Unknown state manager copy operation: {0}</value>
+  </data>
+  <data name="HealthProperty_BackupCallbackSlow" xml:space="preserve">
+    <value>ReplicatorHealthBackupCallbackSlow</value>
+  </data>
+  <data name="ReplicatorApiMonitor_BackupApiName" xml:space="preserve">
+    <value>BackupManager.CallBackupCallbackAsync</value>
+  </data>
+  <data name="ReplicatorApiMonitor_InvalidMonitoringInterval" xml:space="preserve">
+    <value>BackupCallback Monitoring Interval not set</value>
+  </data>
+  <data name="ReplicatorApiMonitor_InvalidProperty" xml:space="preserve">
+    <value>{0} not found in ReplicatorHealthProperties</value>
+  </data>
+  <data name="ReplicatorApiMonitor_NullSettings" xml:space="preserve">
+    <value>ReplicatorApiMonitor.replicatorSettings not set</value>
+  </data>
+  <data name="ReplicatorApiMonitor_TraceTypeBase" xml:space="preserve">
+    <value>ReplicatorApiMonitor</value>
+  </data>
+  <data name="Error_ReliableSMSettings_MinLogSizeInMB_LessThanOne" xml:space="preserve">
+    <value>MinLogSizeInMB {0} must be greater than 0</value>
+  </data>
+  <data name="Error_Invalid_SlowApiMonitoringDuration" xml:space="preserve">
+    <value>SlowApiMonitoringDuration = {0}. SlowApiMonitoring must be greater than zero and less than TimeSpan.MaxValue, default = {1}. A value of zero disables api monitoring.</value>
+  </data>
+  <data name="ReliableConcurrentQueue_Closing" xml:space="preserve">
+    <value>ReliableConcurrentQueue has closed or is closing.</value>
+  </data>
+  <data name="ReliableConcurrentQueue_DequeueQueueEmpty" xml:space="preserve">
+    <value>Dequeue rejected as the queue is empty.</value>
+  </data>
+  <data name="ReliableConcurrentQueue_EnqueueQueueFull" xml:space="preserve">
+    <value>Enqueue rejected as the queue is full.  Max size: {0}</value>
+  </data>
+  <data name="ReliableConcurrentQueue_InvalidTransaction" xml:space="preserve">
+    <value>Invalid transaction (transaction has already been committed or aborted).  Id: {0}</value>
+  </data>
+  <data name="ReliableConcurrentQueue_NotInitialized" xml:space="preserve">
+    <value>ReliableConcurrentQueue has not been initialized.</value>
+  </data>
+  <data name="ReliableConcurrentQueue_NotOpened" xml:space="preserve">
+    <value>ReliableConcurrentQueue has not been opened.</value>
+  </data>
+  <data name="ReliableConcurrentQueue_NullTransaction" xml:space="preserve">
+    <value>Null transaction.</value>
+  </data>
+  <data name="ReliableConcurrentQueue_NotRecovered" xml:space="preserve">
+    <value>ReliableConcurrentQueue has not been recovered from disk.</value>
+  </data>
+  <data name="Error_Test_LoggingEngine_Null" xml:space="preserve">
+    <value>Test_LoggingEngine must non-null</value>
+  </data>
+  <data name="PrimeLockThrows_LockTimeout" xml:space="preserve">
+    <value>Failed to acquire lock within timeout.</value>
+  </data>
+  <data name="ReplicationHelper_ReplicationTimeout" xml:space="preserve">
+    <value>Replication did not complete within the timeout.</value>
+  </data>
+  <data name="MultirecordTooManyRetries" xml:space="preserve">
+    <value>MultiRecordRead too many retries</value>
+  </data>
+  <data name="Assert_SM_TypeNotFound" xml:space="preserve">
+    <value>{0}: Below type used in Reliable Collection {2} could not be loaded. This commonly indicates that the user application is not backwards/forwards compatible. Common compatibility bugs that lead to this error are adding a new type or changing an assembly name without two phase upgrade, or removing a type. If this was caused by user's backwards/forwards compatibility bug, one way to mitigate the issue is to force the upgrade through without safety checks.\r\n\r\n{1}</value>
+  </data>
+  <data name="Error_BackupFolderInfo_DifferentDataLossNumber" xml:space="preserve">
+    <value>{0} Folder: {1} A backup chain cannot contain backups from different data loss numbers. BackupId: {2} ParentId: {3} DL: {4} CN: {5} LSN: {6}</value>
+  </data>
+  <data name="Error_BackupFolderInfo_MustStartWithFullBackup" xml:space="preserve">
+    <value>{0} Folder: {1} Beginning of the backup chain must be full backup. BackupId: {2} ParentId: {3} DL: {4} CN: {5} LSN: {6}</value>
+  </data>
+  <data name="Error_Invalid_LogTruncationInterval" xml:space="preserve">
+    <value>LogTruncationInterval must be positive</value>
+  </data>
+  <data name="Error_BackupTimeout_ReplicateFailed" xml:space="preserve">
+    <value>{0}: Backup not completed within timeout. This is due to replicate backup log record failed with transient exception. BackupId: {1} DL: {2} CN: {3} LSN: {4}</value>
+  </data>
+  <data name="ReplicationTimeout_StateManager" xml:space="preserve">
+    <value>Timed out waiting for replication; id={0}, timeout={1}ms</value>
+  </data>
+  <data name="ReplicationTimeout_TStore" xml:space="preserve">
+    <value>Timed out waiting for replication; id={0}, timeout={1}ms, txn={2}</value>
+  </data>
+  <data name="LockTimeout_LockManager_TableLock" xml:space="preserve">
+    <value>Timed out waiting for {0} lock on table; id={1}, timeout={2}ms</value>
+  </data>
+  <data name="LockTimeout_TStore_KeyLock" xml:space="preserve">
+    <value>Timed out waiting for {0} lock on key; id={1}, timeout={2}ms, txn={3}, lockResourceNameHash={4}</value>
+  </data>
+  <data name="LockTimeout_TStore_TableLock" xml:space="preserve">
+    <value>Timed out waiting for {0} lock on table; id={1}, timeout={2}ms, txn={3}</value>
+  </data>
+</root>

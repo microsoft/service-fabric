@@ -29,10 +29,11 @@ namespace ServiceModel
         }
 
         virtual void ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_QUERY_RESULT_LIST & list)
-        {                                                                                       
+        {
+            UNREFERENCED_PARAMETER(heap);
             list.Count = 0;
             list.Items = NULL;
-            list.Kind = FABRIC_QUERY_RESULT_ITEM_INVALID;                                    
+            list.Kind = FABRIC_QUERY_RESULT_ITEM_KIND_INVALID;                                    
         }                                                                               
                                                                                         
         static std::shared_ptr<QueryResultListWrapperBase> CreateSPtr()                 

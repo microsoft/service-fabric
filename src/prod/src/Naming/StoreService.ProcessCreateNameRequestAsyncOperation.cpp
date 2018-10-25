@@ -36,6 +36,7 @@ namespace Naming
         , nameOwnerLocation_()
         , lockedNames_()
         , tentativeNames_()
+        , authorityNameAlreadyCompleted_(false)
     {
     }
 
@@ -58,6 +59,7 @@ namespace Naming
         , nameOwnerLocation_()
         , lockedNames_()
         , tentativeNames_()
+        , authorityNameAlreadyCompleted_(false)
     {
     }
 
@@ -206,6 +208,10 @@ namespace Naming
                 {
                     error = ErrorCode(ErrorCodeValue::Success);
                 }
+                else
+                {
+                    authorityNameAlreadyCompleted_ = true;
+                }
             }
 
             txSPtr.reset();
@@ -235,7 +241,11 @@ namespace Naming
         this->Store.ReleaseNamedLock(tentativeNames_.CurrentParentName, this->TraceId, thisSPtr);
         lockedNames_.pop_back();
 
-        if (error.IsSuccess())
+        // Do not expect the NO name to missing if the authority name is completed,
+        // but avoid create service getting stuck if this ever happens - ensure that the NO name
+        // also exists.
+        //
+        if (error.IsSuccess() || error.IsError(ErrorCodeValue::NameAlreadyExists))
         {
              WriteNoise(
                 TraceComponent,
@@ -359,22 +369,31 @@ namespace Naming
         // and Name Owner consistent if possible.
         //
 
-        if (!error.IsSuccess() && !error.IsError(ErrorCodeValue::NameAlreadyExists))
+        if (error.IsSuccess() || error.IsError(ErrorCodeValue::NameAlreadyExists))
         {
-            this->CompleteOrScheduleRetry(thisSPtr, move(error), 
-                [this](AsyncOperationSPtr const & thisSPtr) { this->StartResolveNameOwner(thisSPtr); });
+            if (authorityNameAlreadyCompleted_)
+            {
+                this->TryComplete(thisSPtr, ErrorCodeValue::NameAlreadyExists);
+            }
+            else
+            {
+                this->Properties.Trace.AOInnerCreateNameReplyReceiveComplete(
+                    this->TraceId, 
+                    this->Node.Id.ToString(), 
+                    this->Node.InstanceId, 
+                    tentativeNames_.CurrentNameString);
+
+                // Write "complete" name
+                tentativeNames_.SetCurrentNameCompletePending();
+
+                this->StartCreateName(thisSPtr);
+            }
         }
         else
         {
-            this->Properties.Trace.AOInnerCreateNameReplyReceiveComplete(
-                this->TraceId, 
-                this->Node.Id.ToString(), 
-                this->Node.InstanceId, 
-                tentativeNames_.CurrentNameString);
-
-            // Write "complete" name
-            tentativeNames_.SetCurrentNameCompletePending();
-            this->StartCreateName(thisSPtr);
+            this->CompleteOrScheduleRetry(thisSPtr, 
+                move(error), 
+                [this](AsyncOperationSPtr const & thisSPtr) { this->StartResolveNameOwner(thisSPtr); });
         }
     }
 

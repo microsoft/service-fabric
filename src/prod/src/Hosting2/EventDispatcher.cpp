@@ -26,7 +26,9 @@ EventDispatcher::EventDispatcher(
     serviceTypeDisabledEvent_(),
     serviceTypeEnabledEvent_(),
     runtimeClosedEvent_(),
-    applicationHostClosedEvent_()
+    applicationHostClosedEvent_(),
+    availableContainerImagesQueue_(),
+    sendAvailableContainerImagesEvent_()
 {
 }
 
@@ -38,6 +40,7 @@ ErrorCode EventDispatcher::OnOpen()
 {
     closedRegisteredQueue_ = make_unique<HostingJobQueue>(L"HostingClosedRebisteredEventQueue", hosting_, false, 1, nullptr, UINT64_MAX, DequePolicy::FifoLifo);
     enableDisableQueue_ = make_unique<HostingJobQueue>(L"HostingEnableDisableEventQueue", hosting_, false, 1, nullptr, UINT64_MAX, DequePolicy::FifoLifo);
+    availableContainerImagesQueue_ = make_unique<HostingJobQueue>(L"AvailableContainerImagesEventQueue", hosting_, false, 1, nullptr, UINT64_MAX, DequePolicy::FifoLifo);
 
     return ErrorCode(ErrorCodeValue::Success);
 }
@@ -58,6 +61,10 @@ void EventDispatcher::OnAbort()
     if (enableDisableQueue_)
     {
         enableDisableQueue_->Close();
+    }
+    if (availableContainerImagesQueue_)
+    {
+        availableContainerImagesQueue_->Close();
     }
     CloseEvents();
 }
@@ -190,6 +197,29 @@ void EventDispatcher::EnqueueApplicationHostClosedEvent(ApplicationHostClosedEve
         }));
 }
 
+void EventDispatcher::EnqueueAvaialableImagesEvent(SendAvailableContainerImagesEventArgs && eventArgs)
+{
+    SendAvailableContainerImagesEventArgs args(move(eventArgs));
+
+    WriteNoise(
+        TraceType,
+        Root.TraceId,
+        "Enqueuing SendAvailableContainerImagesEventArgs: EventArgs={0}",
+        args);
+
+    this->availableContainerImagesQueue_->Enqueue(
+        make_unique<EventContainerT<SendAvailableContainerImagesEventArgs>>(
+        this->sendAvailableContainerImagesEvent_,
+        args,
+        [this, args]()
+    {
+        hostingTrace.AvailableContainerImages(
+            Root.TraceId,
+            args.NodeId,
+            args.AvailableImages.size());
+    }));
+}
+
 void EventDispatcher::CloseEvents()
 {
     this->serviceTypeRegisteredEvent_.Close();
@@ -197,6 +227,7 @@ void EventDispatcher::CloseEvents()
     this->serviceTypeEnabledEvent_.Close();
     this->runtimeClosedEvent_.Close();
     this->applicationHostClosedEvent_.Close();
+    this->sendAvailableContainerImagesEvent_.Close();
 }
 
 ServiceTypeRegisteredEventHHandler EventDispatcher::RegisterServiceTypeRegisteredEventHandler(
@@ -257,4 +288,16 @@ bool EventDispatcher::UnregisterApplicationHostClosedEventHandler(
     ApplicationHostClosedEventHHandler const & hHandler)
 {
     return this->applicationHostClosedEvent_.Remove(hHandler);
+}
+
+AvailableContainerImagesEventHHandler EventDispatcher::RegisterSendAvailableContainerImagesEventHandler(
+    AvailableContainerImagesEventHandler const & handler)
+{
+    return this->sendAvailableContainerImagesEvent_.Add(handler);
+}
+
+bool EventDispatcher::UnregisterSendAvailableContainerImagesEventHandler(
+    AvailableContainerImagesEventHHandler const & hHandler)
+{
+    return this->sendAvailableContainerImagesEvent_.Remove(hHandler);
 }

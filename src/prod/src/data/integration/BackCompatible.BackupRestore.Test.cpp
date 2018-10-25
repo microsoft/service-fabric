@@ -59,6 +59,14 @@ namespace Data
                 __in KGuid const & partitionId,
                 __in FABRIC_REPLICA_ID replicaId);
 
+            Awaitable<void> Test_Backup_WithoutPrepareCheckpointLSNProperty(
+                __in wstring const & testFolder,
+                __in wstring const & backupFolder,
+                __in Data::Log::LogManager & logManager,
+                __in FABRIC_RESTORE_POLICY policy,
+                __in KGuid const & partitionId,
+                __in FABRIC_REPLICA_ID replicaId);
+
         protected:
             enum TestCase
             {
@@ -68,6 +76,7 @@ namespace Data
                 FourDict_Full_Checkpointed = 3,
                 FourDict_FullAndIncremental = 4,
                 FoutDict_FullAndIncremental_Checkpointed = 5,
+                WithoutCheckpointLSN = 6,
             };
 
         protected:
@@ -362,6 +371,81 @@ namespace Data
             co_return;
         }
 
+        Awaitable<void> BackCompatibleBackupRestoreTests::Test_Backup_WithoutPrepareCheckpointLSNProperty(
+            __in wstring const & testFolder,
+            __in wstring const & backupFolder,
+            __in Data::Log::LogManager & logManager,
+            __in FABRIC_RESTORE_POLICY policy,
+            __in KGuid const & partitionId,
+            __in FABRIC_REPLICA_ID replicaId)
+        {
+            NTSTATUS status = STATUS_UNSUCCESSFUL;
+            KAllocator & allocator = underlyingSystem_->PagedAllocator();
+
+            UpgradeStateProviderFactory::SPtr stateProviderFactory = UpgradeStateProviderFactory::Create(underlyingSystem_->PagedAllocator(), true);
+            KString::SPtr backupFolderPath = KPath::CreatePath(backupFolder.c_str(), allocator);
+
+            {
+                TestDataLossHandler::SPtr dataLossHandler = TestDataLossHandler::Create(
+                    allocator,
+                    backupFolderPath.RawPtr(),
+                    policy);
+
+                Replica::SPtr replica = Replica::Create(
+                    partitionId,
+                    replicaId,
+                    testFolder,
+                    logManager,
+                    allocator,
+                    stateProviderFactory.RawPtr(),
+                    nullptr,
+                    dataLossHandler.RawPtr()); // Default FABRIC_TRANSACTIONAL_REPLICATOR_SERIALIZATION_VERSION is managed (0).
+
+                status = dataLossHandler->Initialize(*replica->TxnReplicator);
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                co_await replica->OpenAsync();
+
+                // Become Primary after open (For OnDataLossAsync):  
+                // 1. Update Status: Pending
+                // 2. New Epoch with new data loss number.
+                // 3. Change Role to Primary
+                replica->SetReadStatus(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_RECONFIGURATION_PENDING);
+                replica->SetWriteStatus(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_RECONFIGURATION_PENDING);
+
+                FABRIC_EPOCH epoch1; epoch1.DataLossNumber = 1; epoch1.ConfigurationNumber = 1; epoch1.Reserved = nullptr;
+                co_await replica->ChangeRoleAsync(epoch1, FABRIC_REPLICA_ROLE_PRIMARY);
+
+                // Get OnDataLossAsync and become fully Primary
+                // 1. OnDataLossAsync
+                // 2. Update Status: Granted
+                // TODO: UpdateCatchupConfig & WaitForQuorumCatchup for 1 replica?
+                BOOLEAN isStateChanged = false;
+                status = co_await replica->OnDataLossAsync(isStateChanged);
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+                VERIFY_IS_TRUE(isStateChanged == TRUE);
+
+                replica->SetReadStatus(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED);
+                replica->SetWriteStatus(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_GRANTED);
+
+                TestBackupCallbackHandler::SPtr backupCallbackHandler = TestBackupCallbackHandler::Create(
+                    *backupFolderPath,
+                    allocator);
+
+                BackupInfo result;
+                status = co_await replica->TxnReplicator->BackupAsync(*backupCallbackHandler, result);
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                replica->SetReadStatus(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_NOT_PRIMARY);
+                replica->SetWriteStatus(FABRIC_SERVICE_PARTITION_ACCESS_STATUS_NOT_PRIMARY);
+                FABRIC_EPOCH epoch2; epoch2.DataLossNumber = 1; epoch2.ConfigurationNumber = 2; epoch2.Reserved = nullptr;
+                co_await replica->ChangeRoleAsync(epoch2, FABRIC_REPLICA_ROLE_NONE);
+                co_await replica->CloseAsync();
+            }
+
+            co_return;
+        }
+
         Awaitable<void> BackCompatibleBackupRestoreTests::VerifyDictionaryAsync(
             __in wstring dictName, 
             __in int dictIndex, 
@@ -523,6 +607,9 @@ namespace Data
                 break;
             case FoutDict_FullAndIncremental_Checkpointed:
                 Path::CombineInPlace(restorePath, L"FoutDict_FullAndIncremental_Checkpointed");
+                break;
+            case WithoutCheckpointLSN:
+                Path::CombineInPlace(restorePath, L"BackupWithoutPrepareCheckpointLSN");
                 break;
             default:
                 ASSERT_IF(true, "BackCompatibleBackupRestoreTests test case is invalid.")
@@ -1046,6 +1133,53 @@ namespace Data
                     4,
                     *logManager,
                     FABRIC_RESTORE_POLICY_SAFE,
+                    partitionId,
+                    replicaId));
+
+                status = SyncAwait(logManager->CloseAsync(CancellationToken::None));
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+                logManager = nullptr;
+            }
+
+            // Post-clean up
+            if (Directory::Exists(testFolderPath))
+            {
+                Directory::Delete_WithRetry(testFolderPath, true, true);
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(Backup_WithoutPrepareCheckpointLSNProperty_Success)
+        {
+            // Setup
+            wstring testName(L"Backup_WithoutPrepareCheckpointLSNProperty_Success");
+            wstring testFolderPath = CreateFileName(testName);
+
+            wstring workFolder = Path::Combine(testFolderPath, L"work");
+            wstring backupFolder = SetupBackupFolder(TestCase::WithoutCheckpointLSN);
+
+            KGuid partitionId;
+            partitionId.CreateNew();
+            FABRIC_REPLICA_ID const replicaId = 17;
+
+            TEST_TRACE_BEGIN(testName)
+            {
+                // Test Setup
+                KtlLogger::SharedLogSettingsSPtr sharedLogSettings;
+                InitializeKtlConfig(testFolderPath, TestLogFileName, underlyingSystem_->NonPagedAllocator(), sharedLogSettings);
+
+                Data::Log::LogManager::SPtr logManager;
+                status = Data::Log::LogManager::Create(underlyingSystem_->NonPagedAllocator(), logManager);
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                status = SyncAwait(logManager->OpenAsync(CancellationToken::None, sharedLogSettings));
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                // Test call
+                SyncAwait(Test_Backup_WithoutPrepareCheckpointLSNProperty(
+                    workFolder,
+                    backupFolder,
+                    *logManager,
+                    FABRIC_RESTORE_POLICY_FORCE,
                     partitionId,
                     replicaId));
 

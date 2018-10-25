@@ -56,7 +56,7 @@ void TRInternalSettings::LoadSettings()
 
     int staticOverridableSettingsCount = LoadDefaultsForStaticOverridableSettingsCallerHoldsLock();
 
-    // Load all the settings overriden by the user
+    // Load all the settings overridden by the user
     if (userSettings_ != nullptr)
     {
         LoadUserSettingsCallerHoldsLock();
@@ -165,6 +165,14 @@ void TRInternalSettings::LoadUserSettingsCallerHoldsLock()
     {
         this->serializationVersion_ = userSettings_->SerializationVersion;
     }
+    if ((flags & FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS) != 0)
+    {
+        this->truncationInterval_ = userSettings_->TruncationInterval;
+    }
+    if ((flags & FABRIC_TRANSACTIONAL_REPLICATOR_ENABLE_INCREMENTAL_BACKUPS_ACROSS_REPLICAS) != 0)
+    {
+        this->enableIncrementalBackupsAcrossReplicas_ = userSettings_->EnableIncrementalBackupsAcrossReplicas;
+    }
 }
 
 int TRInternalSettings::LoadGlobalSettingsCallerHoldsLock()
@@ -216,9 +224,28 @@ int TRInternalSettings::LoadGlobalSettingsCallerHoldsLock()
     {
         AcquireExclusiveLock grab(lock_);
 
-        TraceConfigUpdate(L"Test_LoggingEngine", this->test_LoggingEngine_, globalConfig_->Test_LoggingEngine);
+        TraceConfigUpdate(
+            L"Test_LoggingEngine", 
+            this->test_LoggingEngine_, 
+            globalConfig_->Test_LoggingEngine);
 
         this->test_LoggingEngine_ = globalConfig_->Test_LoggingEngine;
+    });
+
+    i += 1;
+
+    this->dispatchingMode_ = globalConfig_->DispatchingMode;
+    globalConfig_->DispatchingModeEntry.AddHandler(
+        [&](EventArgs const &)
+    {
+        AcquireExclusiveLock grab(lock_);
+
+        TraceConfigUpdate(
+            L"DispatchingMode", 
+            this->dispatchingMode_, 
+            globalConfig_->DispatchingMode);
+
+        this->dispatchingMode_ = globalConfig_->DispatchingMode;
     });
 
     i += 1;
@@ -533,10 +560,33 @@ int TRInternalSettings::LoadDefaultsForDynamicOverridableSettingsCallerHoldsLock
     });
     i += 1;
 
+    this->truncationInterval_ = globalConfig_->TruncationInterval;
+    globalConfig_->TruncationIntervalEntry.AddHandler(
+        [&](EventArgs const &) {
+
+        // Only update if no user value is provided
+        bool updatePeriodicCheckpointTruncationInterval =
+            (userSettings_ == nullptr) ||
+            (userSettings_->Flags & FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS) == 0;
+
+        if (updatePeriodicCheckpointTruncationInterval)
+        {
+            AcquireExclusiveLock grab(lock_);
+
+            TraceConfigUpdate<int64>(
+                L"PeriodicCheckpointTruncationInterval",
+                this->TruncationInterval.TotalSeconds(),
+                globalConfig_->TruncationInterval.TotalSeconds());
+
+            this->truncationInterval_ = globalConfig_->TruncationInterval;
+        }
+    });
+    i += 1;
+
     return i;
 }
 
-int TxnReplicator::TRInternalSettings::LoadDefaultsForStaticOverridableSettingsCallerHoldsLock()
+int TRInternalSettings::LoadDefaultsForStaticOverridableSettingsCallerHoldsLock()
 {
     int i = 0;
 
@@ -563,6 +613,9 @@ int TxnReplicator::TRInternalSettings::LoadDefaultsForStaticOverridableSettingsC
     i += 1;
 
     this->serializationVersion_ = globalConfig_->SerializationVersion;
+    i += 1;
+
+    this->enableIncrementalBackupsAcrossReplicas_ = globalConfig_->EnableIncrementalBackupsAcrossReplicas;
     i += 1;
 
     return i;
@@ -640,6 +693,12 @@ std::wstring TRInternalSettings::get_TestLoggingEngine() const
     return test_LoggingEngine_;
 }
 
+std::wstring TRInternalSettings::get_DispatchingMode() const
+{
+    AcquireReadLock grab(lock_);
+    return dispatchingMode_;
+}
+
 int64 TRInternalSettings::get_TestLogMinDelayIntervalInMilliseconds() const
 {
     AcquireReadLock grab(lock_);
@@ -700,6 +759,12 @@ bool TRInternalSettings::get_EnableSecondaryCommitApplyAcknowledgement() const
     return enableSecondaryCommitApplyAcknowledgement_;
 }
 
+bool TRInternalSettings::get_EnableIncrementalBackupsAcrossReplicas() const
+{
+    AcquireReadLock grab(lock_);
+    return enableIncrementalBackupsAcrossReplicas_;
+}
+
 Common::TimeSpan TRInternalSettings::get_SlowLogIODuration() const
 {
     AcquireReadLock grab(lock_);
@@ -728,6 +793,12 @@ int64 TRInternalSettings::get_FlushedRecordsTraceVectorSize() const
 {
     AcquireReadLock grab(lock_);
     return flushedRecordsTraceVectorSize_;
+}
+
+Common::TimeSpan TRInternalSettings::get_TruncationInterval() const
+{
+    AcquireReadLock grab(lock_);
+    return truncationInterval_;
 }
 
 std::wstring TRInternalSettings::ToString() const
@@ -789,6 +860,9 @@ int TRInternalSettings::WriteTo(__in Common::TextWriter & w, Common::FormatOptio
     w.WriteLine("EnableSecondaryCommitApplyAcknowledgement = {0}, ", this->EnableSecondaryCommitApplyAcknowledgement);
     i += 1;
 
+    w.WriteLine("EnableIncrementalBackupsAcrossReplicas = {0}, ", this->EnableIncrementalBackupsAcrossReplicas);
+    i += 1;
+
     w.WriteLine("SlowLogIODuration = {0}, ", this->SlowLogIODuration);
     i += 1;
 
@@ -826,6 +900,12 @@ int TRInternalSettings::WriteTo(__in Common::TextWriter & w, Common::FormatOptio
     i += 1;
 
     w.WriteLine("FlushedRecordsTraceVectorSize = {0}, ", this->FlushedRecordsTraceVectorSize);
+    i += 1;
+
+    w.WriteLine("TruncationInterval = {0}, ", this->TruncationInterval);
+    i += 1;
+
+    w.WriteLine("DispatchingMode = {0}, ", this->DispatchingMode);
     i += 1;
 
     return i;

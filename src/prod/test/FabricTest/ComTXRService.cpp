@@ -135,7 +135,6 @@ HRESULT ComTXRService::BeginOpen(
 
         HANDLE txReplicator = nullptr;
         TxnReplicator::ITransactionalReplicator::SPtr txReplicatorSPtr;
-       
 
         // Get the KtlSystem from the system.
         void * ktlSystemRaw;
@@ -174,7 +173,12 @@ HRESULT ComTXRService::BeginOpen(
 
         txReplicatorSPtr.Attach((TxnReplicator::ITransactionalReplicator *)txReplicator);
 
-        ErrorCode error = innerService_.OnOpen(tempPartition, *txReplicatorSPtr, allocator);
+        ErrorCode error = innerService_.OnOpen(
+            tempPartition,
+            *txReplicatorSPtr,
+            primaryReplicator_,
+            allocator);
+
         TestSession::FailTestIfNot(error.IsSuccess(), "innerService_.OnOpen failed with error {0}", error);
 
         dataLossHandler->Initialize(*txReplicatorSPtr);

@@ -68,7 +68,7 @@ namespace Management
         // The PlacementConstraints for ClusterManager
         PUBLIC_CONFIG_ENTRY(std::wstring, L"ClusterManager", PlacementConstraints, L"", Common::ConfigEntryUpgradePolicy::NotAllowed);
         // Uses TStore for persisted stateful storage when set to true
-        INTERNAL_CONFIG_ENTRY(bool, L"ClusterManager", EnableTStore, false, Common::ConfigEntryUpgradePolicy::NotAllowed);
+        INTERNAL_CONFIG_ENTRY(bool, L"ClusterManager", EnableTStore, false, Common::ConfigEntryUpgradePolicy::Static);
 
         // The frequency of polling for application upgrade status. This value determines the rate of update for any GetApplicationUpgradeProgress call
         PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"ClusterManager", UpgradeStatusPollInterval, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -149,6 +149,34 @@ namespace Management
         // Indicates that we should use a mock versions of imagebuilder and apptype name/version generator to test docker compose scenarios via fabrictest.
         TEST_CONFIG_ENTRY(bool, L"ClusterManager", TestComposeDeploymentTestMode, false, Common::ConfigEntryUpgradePolicy::Static);
 
+        // These configs are used by Image Builder when generating the package for ContainerGroup app model. 
+        // It determines if service fabric runtime information should be propagated to the apps or not.
+        INTERNAL_CONFIG_ENTRY(bool, L"ClusterManager/ContainerGroup", RemoveServiceFabricRuntimeAccess, true, Common::ConfigEntryUpgradePolicy::Static);
+        //
+        // This config controls the replica restart wait duration for the services created with the container group app model.
+        INTERNAL_CONFIG_ENTRY(int, L"ClusterManager/ContainerGroup", CG_ReplicaRestartWaitDurationSeconds, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
+        //
+        // This config controls the quorum loss wait duration for the services created with the container group app model.
+        INTERNAL_CONFIG_ENTRY(int, L"ClusterManager/ContainerGroup", CG_QuorumLossWaitDurationSeconds, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
+        //
+        // This specifies the azure file volume plugin name to use with the container group app model.
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"ClusterManager/ContainerGroup", AzureFileVolumePluginName, L"sfazurefile", Common::ConfigEntryUpgradePolicy::Static);
+        //
+        // The number of containers to retain incase of crashes in container group.
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"ClusterManager/ContainerGroup", CG_ContainersRetentionCount, L"1", Common::ConfigEntryUpgradePolicy::Dynamic);
+        //
+        // The isolation level for containers created in the container group.
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"ClusterManager/ContainerGroup", CG_IsolationLevel, L"default", Common::ConfigEntryUpgradePolicy::Dynamic);
+        // The default health check stable duration for single instance application upgrade.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ClusterManager/ContainerGroup", SBZ_HealthCheckStableDuration, Common::TimeSpan::FromMinutes(2), Common::ConfigEntryUpgradePolicy::Dynamic);
+        // The default health check retry duration for single instance application upgrade.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ClusterManager/ContainerGroup", SBZ_HealthCheckRetryDuration, Common::TimeSpan::FromSeconds(600), Common::ConfigEntryUpgradePolicy::Dynamic);
+        // The default upgrade timeout for single instance application upgrade.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ClusterManager/ContainerGroup", SBZ_UpgradeTimeout, Common::TimeSpan::FromMinutes(90), Common::ConfigEntryUpgradePolicy::Dynamic);
+        // The default upgrade domain timeout for single instance application upgrade.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ClusterManager/ContainerGroup", SBZ_UpgradeDomainTimeout, Common::TimeSpan::FromMinutes(30), Common::ConfigEntryUpgradePolicy::Dynamic);
+        // The default replica set check timeout for single instance application upgrade.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"ClusterManager/ContainerGroup", SBZ_ReplicaSetCheckTimeout, Common::TimeSpan::MaxValue, Common::ConfigEntryUpgradePolicy::Dynamic);
         // Azure Only: The Azure blob storage account (connection string) for uploading application log collection
         DEPRECATED_CONFIG_ENTRY(Common::SecureString, L"Management", MonitoringAgentStorageAccount, Common::SecureString(L""), Common::ConfigEntryUpgradePolicy::Static);
         // Azure Only: The maximum quota for local directory used for buffering the logs.
@@ -212,7 +240,12 @@ namespace Management
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"HealthManager", MaxCacheStatisticsTimerInterval, Common::TimeSpan::FromSeconds(15), Common::ConfigEntryUpgradePolicy::Dynamic);
         // The maximum size for the unhealthy evaluations. If the evaluations have many children, they are automatically trimmed.
         INTERNAL_CONFIG_ENTRY(int, L"HealthManager", MaxUnhealthyEvaluationsSizeBytes, 64 * 1024, Common::ConfigEntryUpgradePolicy::Dynamic, Common::GreaterThan(0));
-
+        // The maximum number of health reports that an entity can have before raising concerns about the watchdog's health reporting logic.
+        // Each health entity is supposed to have a relatively small number of health reports. If the report count goes above this number, there may be issues with the watchdog's implementation.
+        // An entity with too many reports is flagged through a Warning health report when the entity is evaluated.
+        INTERNAL_CONFIG_ENTRY(int, L"HealthManager", MaxSuggestedNumberOfEntityHealthReports, 100, Common::ConfigEntryUpgradePolicy::Dynamic, Common::GreaterThan(0));
+        // The maximum number of health reports that can be batched in a transaction. If an entity has more reports, delete entity could get stuck because the max replication message size is reached.
+        INTERNAL_CONFIG_ENTRY(int, L"HealthManager", MaxEntityHealthReportsAllowedPerTransaction, 32000, Common::ConfigEntryUpgradePolicy::Static, Common::GreaterThan(0));
 
         // Artificial delay added to the cluster health evaluation to test cluster health caching.
         TEST_CONFIG_ENTRY(Common::TimeSpan, L"HealthManager", StatisticsDurationOffset, Common::TimeSpan::FromSeconds(0), Common::ConfigEntryUpgradePolicy::Dynamic);

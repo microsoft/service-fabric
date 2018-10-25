@@ -17,9 +17,11 @@ using namespace Common;
         wstring tmp; \
         StringWriter writer(tmp); \
         writer.Write(fmt, __VA_ARGS__); \
-        Trace.WriteError(TraceType, "{0}", tmp); \
+        Trace.WriteError(FileChangeMonitorTestTraceType, "{0}", tmp); \
         VERIFY_IS_TRUE( false, tmp.c_str() ); \
     } \
+
+#define FileChangeMonitorTestTraceType "FileChangeMonitorTest"
 
 class FileChangeMonitorTest
 {
@@ -76,7 +78,7 @@ wstring FileChangeMonitorTest::TestDirectoryName = L"FileChangeMonitorTest.Data"
 wstring FileChangeMonitorTest::TestFileName = L"MonitoredFile.txt";
 wstring FileChangeMonitorTest::TestFileContents = L".";
 
-BOOST_FIXTURE_TEST_SUITE2(FileChangeMonitor,FileChangeMonitorTest)
+BOOST_FIXTURE_TEST_SUITE(FileChangeMonitor,FileChangeMonitorTest)
 
 BOOST_AUTO_TEST_CASE(FileChangeMonitorTest1)
 {
@@ -129,7 +131,7 @@ bool FileChangeMonitorTest::SetupTestCase(int count)
     CommonConfig::GetConfig();
 
     testCaseFolder_ = Path::Combine(TestDirectoryName, Guid::NewGuid().ToString());
-    Trace.WriteInfo(TraceType, "creating test folder {0}", testCaseFolder_);
+    Trace.WriteInfo(FileChangeMonitorTestTraceType, "creating test folder {0}", testCaseFolder_);
     auto error = Directory::Create2(testCaseFolder_);
     if (!error.IsSuccess()) 
     {
@@ -247,7 +249,7 @@ void FileChangeMonitorTest::TouchFile(wstring const & filePath, int round)
 
         FileChangeMonitorTest::WriteToFile(filePath, fileContents);
         Trace.WriteInfo(
-            TraceType, 
+            FileChangeMonitorTestTraceType, 
             "Touched file '{0}', round = {1}, change notification received = {2}", 
             filePath, 
             round, 
@@ -265,7 +267,7 @@ void FileChangeMonitorTest::VerifyNotificationCount(LONG expectedNotificationCou
         {
             LONG currentNotificationCount = context->changeNotificationCount_.load();
 			Trace.WriteInfo(
-				TraceType,
+				FileChangeMonitorTestTraceType,
 				"currentNotificationCount = {0}, expected = {1}",
 				currentNotificationCount,
 				expectedNotificationCount);
@@ -286,7 +288,7 @@ void FileChangeMonitorTest::VerifyNotificationCount(LONG expectedNotificationCou
             else
             {
                 Trace.WriteInfo(
-                    TraceType,
+                    FileChangeMonitorTestTraceType,
                     "Sleep to wait for more change notifications: current = {0}, expected = {1}",
                     currentNotificationCount, expectedNotificationCount);
 

@@ -61,12 +61,12 @@ namespace Naming
         }
     }
 
-    ErrorCode StoreService::ProcessPropertyBatchRequestAsyncOperation::ValidateNameFragment()
+    bool StoreService::ProcessPropertyBatchRequestAsyncOperation::AllowNameFragment()
     {
         this->NameWithoutFragment = NamingUri(this->Name.Path);
 
         // Allow property operations on service group members
-        return ErrorCodeValue::Success;
+        return false;
     }
 
     void StoreService::ProcessPropertyBatchRequestAsyncOperation::PerformRequest(AsyncOperationSPtr const & thisSPtr)

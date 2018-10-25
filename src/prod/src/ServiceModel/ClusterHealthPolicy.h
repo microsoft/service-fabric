@@ -21,8 +21,11 @@ namespace ServiceModel
             BYTE maxPercentUnhealthyNodes,
             BYTE maxPercentUnhealthyApplications);
 
-        ClusterHealthPolicy(ClusterHealthPolicy const & other);
-        ClusterHealthPolicy(ClusterHealthPolicy && other);
+        ClusterHealthPolicy(ClusterHealthPolicy const & other) = default;
+        ClusterHealthPolicy & operator = (ClusterHealthPolicy const & other) = default;
+        
+        ClusterHealthPolicy(ClusterHealthPolicy && other) = default;
+        ClusterHealthPolicy & operator = (ClusterHealthPolicy && other) = default;
 
         ~ClusterHealthPolicy();
 
@@ -37,9 +40,6 @@ namespace ServiceModel
 
         __declspec(property(get=get_MaxPercentUnhealthyApplications)) BYTE MaxPercentUnhealthyApplications;
         inline BYTE get_MaxPercentUnhealthyApplications() const { return maxPercentUnhealthyApplications_; }
-    
-        ClusterHealthPolicy & operator = (ClusterHealthPolicy const & other);
-        ClusterHealthPolicy & operator = (ClusterHealthPolicy && other);
 
         Common::ErrorCode AddApplicationTypeHealthPolicy(std::wstring && applicationTypeName, BYTE maxPercentUnhealthyApplications);
 

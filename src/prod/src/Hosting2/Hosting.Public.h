@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 //
 // External Header Files required by public Hosting header files

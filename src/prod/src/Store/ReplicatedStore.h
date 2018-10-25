@@ -247,15 +247,6 @@ namespace Store
         virtual Common::ErrorCode PreCopyNotification(std::vector<std::wstring> const &) = 0;
         virtual Common::ErrorCode PostCopyNotification() = 0;
 
-#ifndef PLATFORM_UNIX
-        virtual Common::ErrorCode CreateEnumerationByPrimaryIndex(
-            ILocalStoreUPtr const &, 
-            std::wstring const & typeStart,
-            std::wstring const & keyStart,
-            __out TransactionSPtr &,
-            __out EnumerationSPtr &) = 0;
-#endif
-
         virtual bool ShouldRestartOnWriteError(Common::ErrorCode const &) = 0;
 
         virtual Common::ErrorCode CheckPreOpenLocalStoreHealth(__out bool & reportedHealth) 
@@ -388,6 +379,9 @@ namespace Store
         virtual bool IsThrottleNeeded() const;
         virtual Common::ErrorCode SetThrottleCallback(ThrottleCallback const & throttleCallback);
 
+        bool IsMigrationSourceSupported() override { return true; }
+        bool ShouldMigrateKey(std::wstring const & type, std::wstring const & key) override;
+
         //
         // IStatefulServiceReplica
         //
@@ -475,12 +469,20 @@ namespace Store
         // Query
         //
 
-        Common::ErrorCode GetQueryStatus(
-            __out Api::IStatefulServiceReplicaStatusResultPtr &) override;
+        Common::ErrorCode GetQueryStatus(__out Api::IStatefulServiceReplicaStatusResultPtr &) override;
+        void SetQueryStatusDetails(std::wstring const &) override;
+        void SetMigrationQueryResult(std::unique_ptr<MigrationQueryResult> &&) override;
 
-        void SetQueryStatusDetails(std::wstring const &);
         void AppendQueryStatusDetails(std::wstring const &);
         void ClearQueryStatusDetails();
+
+        //
+        // Database migration
+        //
+
+        void SetTxEventHandler(IReplicatedStoreTxEventHandlerWPtr const &) override;
+        void AbortOutstandingTransactions() override;
+        void ClearTxEventHandlerAndBlockWrites() override;
 
         //
         // Health Reporting
@@ -857,7 +859,10 @@ namespace Store
 
         Common::RwLock queryStatusDetailsLock_;
         std::wstring queryStatusDetails_;
+        MigrationQueryResultSPtr migrationDetails_;
 
         ReplicatedStorePerformanceCountersSPtr perfCounters_;
+        IReplicatedStoreTxEventHandlerWPtr txEventHandler_;
+        volatile bool isReadOnlyForMigration_;
     };
 }

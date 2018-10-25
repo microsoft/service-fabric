@@ -22,6 +22,19 @@ ErrorCode ThumbprintSet::Add(wstring const & thumbprintString)
     return error;
 }
 
+ErrorCode ThumbprintSet::Add(LPCWSTR thumbprintptr)
+{
+    wstring thumbprintString;
+    auto hr = StringUtility::LpcwstrToWstring(thumbprintptr, false, thumbprintString);
+    if (FAILED(hr)) 
+    {
+        return ErrorCode::FromHResult(hr); 
+    }
+
+    auto error = Add(thumbprintString);
+    return error;
+}
+
 void ThumbprintSet::Add(Thumbprint const& thumbprint)
 {
     value_.emplace(move(thumbprint));

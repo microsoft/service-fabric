@@ -71,6 +71,13 @@ namespace Common
 
         bool TryCombine(std::wstring const & path, __out NamingUri &) const;
 
+        // Validates that the name can be created or deleted in naming for user operations.
+        // Names can't be root URI, or have reserved characters (?).
+        // If validateNameFragment is true, the name should not have characters reserved for service groups (#).
+        // The API takes the URI as well as the string representation of the URI, to optimize
+        // the cases when the string is cached and should not be re-evaluated (see Naming StoreService operations).
+        static ErrorCode ValidateName(NamingUri const & uri, std::wstring const & uriString, bool allowFragment);
+
         static NamingUri Combine(NamingUri const &, std::wstring const & path);
 
         bool IsPrefixOf(NamingUri const &) const;

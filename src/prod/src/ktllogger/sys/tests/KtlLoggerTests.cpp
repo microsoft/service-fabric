@@ -11601,6 +11601,43 @@ ThrottledLockedMemoryTest(
     status = closeContainerSync.WaitForCompletion();
     VERIFY_IS_TRUE(NT_SUCCESS(status));
 
+
+
+    //
+    // Restore defaults
+    //
+    {
+        KtlLogManager::MemoryThrottleLimits* memoryThrottleLimits;
+        KtlLogManager::AsyncConfigureContext::SPtr configureContext2;
+        KBuffer::SPtr inBuffer;
+
+        status = logManager->CreateAsyncConfigureContext(configureContext2);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        status = KBuffer::Create(sizeof(KtlLogManager::MemoryThrottleLimits),
+                                 inBuffer,
+                                 *g_Allocator);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        
+        memoryThrottleLimits = (KtlLogManager::MemoryThrottleLimits*)inBuffer->GetBuffer();
+        memoryThrottleLimits->WriteBufferMemoryPoolMax = KtlLogManager::MemoryThrottleLimits::_DefaultWriteBufferMemoryPoolMax;
+        memoryThrottleLimits->WriteBufferMemoryPoolMin = KtlLogManager::MemoryThrottleLimits::_DefaultWriteBufferMemoryPoolMin;
+        memoryThrottleLimits->WriteBufferMemoryPoolPerStream = KtlLogManager::MemoryThrottleLimits::_DefaultWriteBufferMemoryPoolPerStream;
+        memoryThrottleLimits->PinnedMemoryLimit = KtlLogManager::MemoryThrottleLimits::_DefaultPinnedMemoryLimit;
+        memoryThrottleLimits->PeriodicFlushTimeInSec = KtlLogManager::MemoryThrottleLimits::_DefaultPeriodicFlushTimeInSec;
+        memoryThrottleLimits->PeriodicTimerIntervalInSec = KtlLogManager::MemoryThrottleLimits::_DefaultPeriodicTimerIntervalInSec;
+        memoryThrottleLimits->AllocationTimeoutInMs = KtlLogManager::MemoryThrottleLimits::_DefaultAllocationTimeoutInMs;        
+
+        configureContext2->StartConfigure(KtlLogManager::ConfigureMemoryThrottleLimits,
+                                         inBuffer.RawPtr(),
+                                         result,
+                                         outBuffer,
+                                         NULL,
+                                         sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+    }
+    
     KtlLogManager::AsyncDeleteLogContainer::SPtr deleteContainerAsync;
 
     status = logManager->CreateAsyncDeleteLogContainerContext(deleteContainerAsync);
@@ -12947,7 +12984,7 @@ CloseTest(
                     {
                         break;
                     }
-                    KNt::YieldExecution();
+                    KNt::Sleep(0);
                 }
                 VERIFY_IS_TRUE(completionCounter.GetCount() == numberOperations*2);
 #endif
@@ -13257,7 +13294,7 @@ Close2Test(
             {
                 break;
             }
-            KNt::YieldExecution();
+            KNt::Sleep(0);
         }
         VERIFY_IS_TRUE(completionCounter.GetCount() == numberOperations*3);
 #endif
@@ -19520,7 +19557,11 @@ VOID DeleteAllContainersOnDisk(
     KServiceSynchronizer        sync;
     KtlLogManager::SPtr logManager;
 
-    status = KtlLogManager::Create(ALLOCATION_TAG, *g_Allocator, logManager);
+#ifdef UPASSTHROUGH
+    status = KtlLogManager::CreateInproc(ALLOCATION_TAG, *g_Allocator, logManager);
+#else
+    status = KtlLogManager::CreateDriver(ALLOCATION_TAG, *g_Allocator, logManager);
+#endif
     VERIFY_IS_TRUE(NT_SUCCESS(status));
 
     status = logManager->StartOpenLogManager(NULL, // ParentAsync
@@ -19959,6 +20000,7 @@ DeletedDedicatedLogTest(
         VERIFY_IS_TRUE(status == STATUS_NOT_FOUND);
     }
 
+
     //
     // 6. Verify that after deleting the bad log can be recreated
     //
@@ -20051,6 +20093,50 @@ DeletedDedicatedLogTest(
         status = closeStreamSync.WaitForCompletion();
         VERIFY_IS_TRUE(NT_SUCCESS(status));
     }
+
+    //
+    // 9. Delete the dedicated log again and then reopen just the
+    //    stream and verify it is cleaned up correctly.
+    //
+    status = KVolumeNamespace::DeleteFileOrDirectory(rootPath, *g_Allocator, sync);
+    VERIFY_IS_TRUE((K_ASYNC_SUCCESS(status)));
+    status = sync.WaitForCompletion();
+    VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+    {
+        KtlLogContainer::AsyncOpenLogStreamContext::SPtr openStreamAsync;
+        ULONG metadataLengthA;
+
+        status = logContainer->CreateAsyncOpenLogStreamContext(openStreamAsync);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        openStreamAsync->StartOpenLogStream(logStreamId2,
+                                                &metadataLengthA,
+                                                logStream2,
+                                                NULL,    // ParentAsync
+                                                sync);
+
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(status == STATUS_OBJECT_NAME_NOT_FOUND);
+    }
+
+    //
+    // 10. Verify that the bad log stream fails open with correct error code
+    //
+    {
+        KtlLogContainer::AsyncOpenLogStreamContext::SPtr openStreamAsync;
+        ULONG metadataLengthA;
+
+        status = logContainer->CreateAsyncOpenLogStreamContext(openStreamAsync);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        openStreamAsync->StartOpenLogStream(logStreamId2,
+                                                &metadataLengthA,
+                                                logStream2,
+                                                NULL,    // ParentAsync
+                                                sync);
+
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(status == STATUS_OBJECT_NAME_NOT_FOUND);
+    }   
 
     //
     // Delete the log container
@@ -20739,7 +20825,12 @@ VOID SetupTests(
         //
         // Access the log manager
         //
-        status = KtlLogManager::Create(ALLOCATION_TAG, *g_Allocator, LogManagers[i]);
+#ifdef UPASSTHROUGH
+        status = KtlLogManager::CreateInproc(ALLOCATION_TAG, *g_Allocator, LogManagers[i]);
+#else
+        status = KtlLogManager::CreateDriver(ALLOCATION_TAG, *g_Allocator, LogManagers[i]);
+#endif
+        
         VERIFY_IS_TRUE(NT_SUCCESS(status));
 
         status = LogManagers[i]->StartOpenLogManager(NULL, // ParentAsync
@@ -20896,9 +20987,11 @@ protected:
             case Initial:
             {
 Initial:
-                Status = KtlLogManager::Create(KTL_TAG_TEST,
-                                               *g_Allocator,
-                                               _LogManager);
+#ifdef UPASSTHROUGH
+                Status = KtlLogManager::CreateInproc(ALLOCATION_TAG, *g_Allocator, _LogManager);
+#else
+                Status = KtlLogManager::CreateDriver(ALLOCATION_TAG, *g_Allocator, _LogManager);
+#endif
                 VERIFY_IS_TRUE(NT_SUCCESS(Status));
                 
                 _State = OpenLogManager;
@@ -21021,7 +21114,12 @@ VOID ReuseLogManagerTest(
     // Test 1: Start a new log manager, create a container, stop log
     //         manager, restart log manager then open container
     //
-    status = KtlLogManager::Create(ALLOCATION_TAG, *g_Allocator, logManager);
+#ifdef UPASSTHROUGH
+    status = KtlLogManager::CreateInproc(ALLOCATION_TAG, *g_Allocator, logManager);
+#else
+    status = KtlLogManager::CreateDriver(ALLOCATION_TAG, *g_Allocator, logManager);
+#endif
+    
     VERIFY_IS_TRUE(NT_SUCCESS(status));
 
     status = logManager->StartOpenLogManager(NULL, // ParentAsync
@@ -21073,7 +21171,11 @@ VOID ReuseLogManagerTest(
     //
     // Reopen container on a new log manager
     //
-    status = KtlLogManager::Create(ALLOCATION_TAG, *g_Allocator, logManager);
+#ifdef UPASSTHROUGH
+    status = KtlLogManager::CreateInproc(ALLOCATION_TAG, *g_Allocator, logManager);
+#else
+    status = KtlLogManager::CreateDriver(ALLOCATION_TAG, *g_Allocator, logManager);
+#endif
     VERIFY_IS_TRUE(NT_SUCCESS(status));
 
     status = logManager->StartOpenLogManager(NULL, // ParentAsync
@@ -21122,7 +21224,11 @@ VOID ReuseLogManagerTest(
 
         for (ULONG i = 0; i < LogManagerCount; i++)
         {
-            status = KtlLogManager::Create(ALLOCATION_TAG, *g_Allocator, logManagers[i]);
+#ifdef UPASSTHROUGH
+            status = KtlLogManager::CreateInproc(ALLOCATION_TAG, *g_Allocator, logManagers[i]);
+#else
+            status = KtlLogManager::CreateDriver(ALLOCATION_TAG, *g_Allocator, logManagers[i]);
+#endif
             VERIFY_IS_TRUE(NT_SUCCESS(status));
 
             status = logManagers[i]->StartOpenLogManager(NULL, // ParentAsync
@@ -21279,7 +21385,11 @@ VOID CreateLogContainerWithBadPathTest(
     // Create a log manager and then try to create a container with a
     // bad pathname. Verify that the log manager will close properly.
     //
-    status = KtlLogManager::Create(ALLOCATION_TAG, *g_Allocator, logManager);
+#ifdef UPASSTHROUGH
+    status = KtlLogManager::CreateInproc(ALLOCATION_TAG, *g_Allocator, logManager);
+#else
+    status = KtlLogManager::CreateDriver(ALLOCATION_TAG, *g_Allocator, logManager);
+#endif
     VERIFY_IS_TRUE(NT_SUCCESS(status));
 
     status = logManager->StartOpenLogManager(NULL, // ParentAsync

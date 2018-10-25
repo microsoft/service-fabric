@@ -117,7 +117,7 @@
     {
       "Name": "FabActRemindersKvsWinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -133,7 +133,7 @@
     {
       "Name": "FabActRemindersRDWinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -149,7 +149,7 @@
     {
       "Name": "FabActRemindersRD2WinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -165,7 +165,7 @@
     {
       "Name": "FabActRemindersVolatileWinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -181,7 +181,7 @@
     {
       "Name": "ActorDirtyStateKVSWinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -197,7 +197,7 @@
     {
       "Name": "ActorDirtyStateRDWinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -213,7 +213,7 @@
     {
       "Name": "ActorDirtyStateRD2WinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",
@@ -229,7 +229,7 @@
     {
       "Name": "ActorDirtyStateVolatileWinCore",
       "Type": "V2_ScriptTest",
-      "Owners": "asnegi,rajeetn",
+      "Owners": "asnegi",
       "ResourcesRequired": "Server:3",
       "TestExecutionParameters": {
         "SetupInstall": "/servicefabric",

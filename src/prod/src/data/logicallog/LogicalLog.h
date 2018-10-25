@@ -96,6 +96,16 @@ namespace Data
                 return blockMetadataSize_;
             }
 
+            ULONGLONG GetSize() const override
+            {
+                return logSize_;
+            }
+
+            ULONGLONG GetSpaceRemaining() const override
+            {
+                return logSpaceRemaining_;
+            }
+
             NTSTATUS CreateReadStream(
                 __out ILogicalLogReadStream::SPtr& stream,
                 __in LONG sequentialAccessReadSize) override;
@@ -209,7 +219,7 @@ namespace Data
             QueryUserBuildInformation(__out ULONG& buildNumber, __out BYTE& isFreeBuild);
 
             ktl::Awaitable<NTSTATUS>
-            QueryLogStreamUsageInfo(
+            QueryLogStreamUsageInternalAsync(
                 __in ktl::CancellationToken const & cancellationToken,
                 __out KLogicalLogInformation::CurrentLogUsageInformation& streamUsageInformation);
 
@@ -217,6 +227,12 @@ namespace Data
             QueryLogUsageAsync(
                 __in ktl::CancellationToken const & cancellationToken,
                 __out ULONG& percentageLogUsage);
+
+            ktl::Awaitable<NTSTATUS>
+            QueryLogSizeAndSpaceRemainingInternalAsync(
+                __in ktl::CancellationToken const & cancellationToken,
+                __out ULONGLONG& logSize,
+                __out ULONGLONG& spaceRemaining);
 
             ktl::Awaitable<NTSTATUS>
             VerifyUserAndDriverBuildMatch();
@@ -273,24 +289,23 @@ namespace Data
             KArray<KWeakRef<LogicalLogStream>::SPtr> streams_;
             KSpinLock streamsLock_;
 
-            volatile LONG internalFlushInProgress_ = 0;
+            volatile LONG internalFlushInProgress_;
 
             // Recoverable stream state
             LONGLONG nextWritePosition_;
             LONGLONG nextOperationNumber_;
             ULONG maxBlockSize_;
             LONGLONG headTruncationPoint_;
-
             ULONG maximumReadRecordSize_;
-
             LONGLONG recordOverhead_;
-
             USHORT interfaceVersion_;
+            ULONGLONG logSize_;
+            ULONGLONG logSpaceRemaining_;
 
             Common::Random randomGenerator_;
             // todo LogWriteFaultInjectionParameters logWriteFaultInjectionParameters
 
-            OpenReason openReason_ = OpenReason::Invalid;
+            OpenReason openReason_;
         };
     }
 }

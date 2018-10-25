@@ -49,19 +49,21 @@ void GetReliableCollectionImplApiTable(ReliableCollectionApis* reliableCollectio
         Store_AddRef,
         StoreKeyEnumerator_AddRef,
         StateProviderEnumerator_AddRef,
-        GetTransactionalReplicator,
         Store_SetNotifyStoreChangeCallbackMask,
-        TxnReplicator_AddStateProviderAsync2,
-        TxnReplicator_GetOrAddStateProviderAsync2,
         StateProvider_GetInfo,
         StateProvider_AddRef,
         StateProvider_Release,
         Transaction_GetInfo,
         Transaction_GetVisibilitySequenceNumberAsync,
         Transaction_Dispose,
-        Transaction_Release2,
         Store_CreateRangedEnumeratorAsync,
-        Store_ContainsKeyAsync
+        Store_ContainsKeyAsync,
+        TxnReplicator_GetInfo,
+        PrimaryReplicator_UpdateReplicatorSettings,
+        ConcurrentQueue_EnqueueAsync,
+        ConcurrentQueue_TryDequeueAsync,
+        ConcurrentQueue_GetCount,
+        TxnReplicator_BackupAsync2
     };
 }
 

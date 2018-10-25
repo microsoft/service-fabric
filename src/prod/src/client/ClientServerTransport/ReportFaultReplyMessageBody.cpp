@@ -14,17 +14,19 @@ ReportFaultReplyMessageBody::ReportFaultReplyMessageBody()
 {
 }
 
-ReportFaultReplyMessageBody::ReportFaultReplyMessageBody(ErrorCode error)
-: error_(error)
+ReportFaultReplyMessageBody::ReportFaultReplyMessageBody(ErrorCode error, std::wstring const & message)
+    : error_(error),
+      message_(message)
 {
 }
 
 string ReportFaultReplyMessageBody::AddField(Common::TraceEvent & traceEvent, string const & name)
 {
-    string format = "Error = {0}";
+    string format = "Error = {0}, Message = {1}";
     size_t index = 0;
 
     traceEvent.AddEventField<ErrorCode>(format, name + ".error", index);
+    traceEvent.AddEventField<std::wstring>(format, name + ".message", index);
 
     return format;
 }
@@ -32,9 +34,10 @@ string ReportFaultReplyMessageBody::AddField(Common::TraceEvent & traceEvent, st
 void ReportFaultReplyMessageBody::FillEventData(TraceEventContext & context) const
 {
     context.Write(error_);
+    context.Write(message_);
 }
 
 void ReportFaultReplyMessageBody::WriteTo(TextWriter& w, FormatOptions const &) const
 {
-    w.Write("Error = {0}", error_);
+    w.Write("Error = {0}, Message = {1}", error_, message_);
 }

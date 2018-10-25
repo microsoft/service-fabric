@@ -14,11 +14,12 @@ namespace Client
     public:
         GetServiceDescriptionAsyncOperation(
             __in FabricClientImpl &client,
-            __in Common::NamingUri const &associatedName,
+            Common::NamingUri const &associatedName,
+            bool fetchCached,
             __in Transport::FabricActivityHeader && activityId,
-            __in Common::TimeSpan const timeout,
-            __in Common::AsyncCallback const& callback,
-            __in Common::AsyncOperationSPtr const& parent,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const& callback,
+            Common::AsyncOperationSPtr const& parent,
             __in_opt Common::ErrorCode && passThroughError = Common::ErrorCode::Success());
 
         static Common::ErrorCode EndGetServiceGroupDescription(
@@ -34,9 +35,14 @@ namespace Client
 
     private:
 
-        void OnGetServiceDescriptionComplete(Common::AsyncOperationSPtr const& thisSPtr, bool);
+        void FetchFromCache(Common::AsyncOperationSPtr const & thisSPtr);
+        void OnFetchFromCacheComplete(Common::AsyncOperationSPtr const& thisSPtr, bool expectedCompletedSynchronously);
+
+        void FetchFromNamingService(Common::AsyncOperationSPtr const & thisSPtr);
+        void OnFetchFromNamingServiceComplete(Common::AsyncOperationSPtr const& thisSPtr, bool expectedCompletedSynchronously);
 
         Common::NamingUri associatedName_;
+        bool fetchCached_;
         Naming::PartitionedServiceDescriptor description_;
     };
 }

@@ -21,7 +21,8 @@ ActivatorRequestor::ActivatorRequestor(
     std::wstring const & requestorId,
     std::wstring const & callbackAddress,
     DWORD processId,
-    BOOL obtainToken)
+    BOOL obtainToken,
+    uint64 nodeInstanceId)
     : activatorHolder_(activatorHolder)
     , terminationCallback_(terminationCallback)
     , requestorType_(requestorType)
@@ -32,6 +33,7 @@ ActivatorRequestor::ActivatorRequestor(
     , processMonitor_()
     , accessTokenRestricted_()
     , accessTokenUnrestricted_()
+    , nodeInstanceId_(nodeInstanceId)
 {
 }
 
@@ -152,13 +154,14 @@ ErrorCode ActivatorRequestor::OnOpen()
     auto root = controller.Root.CreateComponentRoot();
     DWORD processId = this->processId_;
     wstring requestorId = this->requestorId_;
+    uint64 nodeInstanceId = this->nodeInstanceId_;
 
     auto hostMonitor = ProcessWait::CreateAndStart(
         move(*appHostProcessHandle),
         processId,
-        [root, this, requestorId](pid_t processId, ErrorCode const & waitResult, DWORD)
+        [root, this, requestorId, nodeInstanceId](pid_t processId, ErrorCode const & waitResult, DWORD)
         {
-            terminationCallback_(processId, requestorId, waitResult);
+            terminationCallback_(processId, requestorId, waitResult, nodeInstanceId);
         });
 
     this->accessTokenRestricted_ = move(requestorTokenRestricted);

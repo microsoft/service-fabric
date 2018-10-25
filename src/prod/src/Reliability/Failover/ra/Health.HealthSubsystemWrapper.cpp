@@ -125,6 +125,16 @@ HealthSubsystemWrapper::HealthSubsystemWrapper(
 {
 }
 
+ErrorCode HealthSubsystemWrapper::ReportStoreProviderEvent(HealthReport && healthReport)
+{
+    if (!isHealthReportingEnabled_)
+    {
+        return ErrorCodeValue::Success;
+    }
+
+    return reliability_->AddHealthReport(move(healthReport));
+}
+
 ErrorCode HealthSubsystemWrapper::ReportReplicaEvent(
     ReplicaHealthEvent::Enum type,
     FailoverUnitId const & ftId,

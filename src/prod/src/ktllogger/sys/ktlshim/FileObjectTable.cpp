@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #pragma prefast(push)
 #pragma prefast(disable: 28167, "DevDiv:422165: Prefast not recognizing c++ dtor being called")
 
@@ -819,7 +823,7 @@ VOID FileObjectTable::LookupOverlayManager(
     )
 {
     KSharedBase::SPtr overlayManager;   
-    WCHAR overlayManagerText[sizeof(OVERLAY_MANAGER) / 2];
+    WCHAR overlayManagerText[sizeof(OVERLAY_MANAGER) / sizeof(WCHAR)];
 
     KMemCpySafe(overlayManagerText, sizeof(overlayManagerText), OVERLAY_MANAGER, sizeof(OVERLAY_MANAGER));
     

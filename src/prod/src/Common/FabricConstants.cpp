@@ -22,6 +22,8 @@ GlobalWString FabricConstants::FabricCodePathRegKeyName = make_global<wstring>(L
 GlobalWString FabricConstants::FabricDataRootRegKeyName = make_global<wstring>(L"FabricDataRoot");
 GlobalWString FabricConstants::FabricLogRootRegKeyName = make_global<wstring>(L"FabricLogRoot");
 GlobalWString FabricConstants::EnableCircularTraceSessionRegKeyName = make_global<wstring>(L"EnableCircularTraceSession");
+GlobalWString FabricConstants::EnableUnsupportedPreviewFeaturesRegKeyName = make_global<wstring>(L"EnableUnsupportedPreviewFeatures");
+GlobalWString FabricConstants::IsSFVolumeDiskServiceEnabledRegKeyName = make_global<wstring>(L"IsSFVolumeDiskServiceEnabled");
 GlobalWString FabricConstants::UseFabricInstallerSvcKeyName = make_global<wstring>(L"UseFabricInstallerSvc");
 
 GlobalWString FabricConstants::AppsFolderName = make_global<wstring>(L"_App");

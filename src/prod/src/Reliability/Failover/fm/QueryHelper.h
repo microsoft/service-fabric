@@ -40,8 +40,6 @@ namespace Reliability
             ServiceModel::ServicePartitionInformation FMQueryHelper::CheckPartitionInformation(Reliability::ConsistencyUnitDescription const & consistencyUnitDescription);
             void FMQueryHelper::InsertPartitionIntoQueryResultList(LockedFailoverUnitPtr const & failoverUnitPtr, ServiceModel::ServicePartitionInformation const & servicePartitionInformation, std::vector<ServiceModel::ServicePartitionQueryResult> & partitionQueryResultList);
 
-            Common::ErrorCode ProcessQuery(Query::QueryNames::Enum queryName, ServiceModel::QueryArgumentMap const & queryArgs, Common::ActivityId const & activityId, __out Transport::MessageUPtr & reply);
-
             Common::ErrorCode GetNodesList(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
             Common::ErrorCode GetSystemServicesList(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
             Common::ErrorCode GetServicesList(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
@@ -55,10 +53,13 @@ namespace Reliability
             Common::ErrorCode GetUnplacedReplicaInformation(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
             Common::ErrorCode GetApplicationLoadInformation(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
             Common::ErrorCode GetServiceName(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
+            Common::ErrorCode GetReplicaListByServiceNames(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
             void ConvertToLoadMetricReport(std::vector<LoadBalancingComponent::LoadMetricStats> const &, __out std::vector<ServiceModel::LoadMetricReport> &);
 
             bool IsMatch(FABRIC_QUERY_SERVICE_REPLICA_STATUS replicaStatus, DWORD replicaStatusFilter);
 			bool IsMatch(FABRIC_QUERY_NODE_STATUS nodeStatus, DWORD nodeStatusFilter);
+
+            void InsertReplicaInfoForPartition(LockedFailoverUnitPtr const & failoverUnitPtr, bool isFilterByPartitionName, std::wstring const & partitionNameFilter, ServiceModel::ReplicasByServiceQueryResult &replicaList);
 
             Common::ErrorCode FMQueryHelper::GetServiceNameAndCurrentPrimaryNode(Reliability::FailoverUnitId const & failoverUnitId, Common::ActivityId const &, std::wstring & serviceName, Federation::NodeId & currentPrimaryNodeId);
 

@@ -1,0 +1,19 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "PrimaryMoveAnalysisBasic",
+      "Type": "V2_ScriptTest",
+      "Owners": "motanv,vipind",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "PrimaryMoveAnalysisBasic.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

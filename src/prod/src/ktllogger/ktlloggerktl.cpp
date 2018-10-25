@@ -43,7 +43,13 @@ KtlLoggerInitializationContext::FSMContinue(
             _LogManager = nullptr;
             _LogContainer = nullptr;
 
-            Status = KtlLogManager::Create(GetThisAllocationTag(), GetThisAllocator(), _LogManager);
+            if (_UseInprocLogger)
+            {
+                Status = KtlLogManager::CreateInproc(GetThisAllocationTag(), GetThisAllocator(), _LogManager);
+            } else {
+                Status = KtlLogManager::CreateDriver(GetThisAllocationTag(), GetThisAllocator(), _LogManager);
+            }
+            
             if (! NT_SUCCESS(Status))
             {               
                 KTraceFailedAsyncRequest(Status, this, _State, 0);
@@ -462,6 +468,7 @@ KtlLoggerInitializationContext::OnStart(
 
 VOID
 KtlLoggerInitializationContext::StartInitializeKtlLogger(
+    __in BOOLEAN UseInprocLogger,
     __in KtlLogManager::MemoryThrottleLimits& MemoryLimits,
     __in KtlLogManager::SharedLogContainerSettings& SharedLogSettings,
     __in LPCWSTR NodeWorkDirectory,
@@ -470,6 +477,7 @@ KtlLoggerInitializationContext::StartInitializeKtlLogger(
 {
     HRESULT hr;
 
+    _UseInprocLogger = UseInprocLogger;
     _MemoryLimits = MemoryLimits;
     _SharedLogSettings = SharedLogSettings;
 

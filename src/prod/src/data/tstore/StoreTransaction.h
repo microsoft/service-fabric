@@ -7,16 +7,16 @@
 
 #define STORETRANSACTION_TAG 'nxTS'
 
-namespace Data 
+namespace Data
 {
     namespace TStore
     {
         template <typename TKey, typename TValue>
-        class StoreTransaction 
+        class StoreTransaction
             : public TxnReplicator::LockContext
             , public IStoreTransaction<TKey, TValue>
         {
-            K_FORCE_SHARED(StoreTransaction)
+            K_FORCE_SHARED_WITH_INHERITANCE(StoreTransaction)
             K_SHARED_INTERFACE_IMP(IStoreTransaction)
 
         public:
@@ -26,13 +26,14 @@ namespace Data
                     __in LONG64 id,
                     __in TxnReplicator::TransactionBase& replicatorTransaction,
                     __in LONG64 owner,
-                    __in ConcurrentDictionary2<LONG64,  KSharedPtr<StoreTransaction<TKey, TValue>>>& container,
+                    __in ConcurrentDictionary2<LONG64, KSharedPtr<StoreTransaction<TKey, TValue>>>& container,
                     __in IComparer<TKey> & keyComparer,
+                    __in StoreTraceComponent & traceComponent,
                     __in KAllocator& allocator,
                     __out SPtr& result)
             {
                 NTSTATUS status;
-                SPtr output = _new(STORETRANSACTION_TAG, allocator) StoreTransaction(id, replicatorTransaction, owner, container, keyComparer);
+                SPtr output = _new(STORETRANSACTION_TAG, allocator) StoreTransaction(id, replicatorTransaction, owner, container, keyComparer, traceComponent);
 
                 if (!output)
                 {
@@ -51,30 +52,31 @@ namespace Data
             }
 
             static NTSTATUS
-               Create(
-                  __in LONG64 id,
-                  __in LONG64 owner,
-                  __in IComparer<TKey> & keyComparer,
-                  __in KAllocator& allocator,
-                  __out SPtr& result)
+                Create(
+                    __in LONG64 id,
+                    __in LONG64 owner,
+                    __in IComparer<TKey> & keyComparer,
+                    __in StoreTraceComponent & traceComponent,
+                    __in KAllocator& allocator,
+                    __out SPtr& result)
             {
-               NTSTATUS status;
-               SPtr output = _new(STORETRANSACTION_TAG, allocator) StoreTransaction(id, owner, keyComparer);
+                NTSTATUS status;
+                SPtr output = _new(STORETRANSACTION_TAG, allocator) StoreTransaction(id, owner, keyComparer, traceComponent);
 
-               if (!output)
-               {
-                  status = STATUS_INSUFFICIENT_RESOURCES;
-                  return status;
-               }
+                if (!output)
+                {
+                    status = STATUS_INSUFFICIENT_RESOURCES;
+                    return status;
+                }
 
-               status = output->Status();
-               if (!NT_SUCCESS(status))
-               {
-                  return status;
-               }
+                status = output->Status();
+                if (!NT_SUCCESS(status))
+                {
+                    return status;
+                }
 
-               result = Ktl::Move(output);
-               return STATUS_SUCCESS;
+                result = Ktl::Move(output);
+                return STATUS_SUCCESS;
             }
 
             __declspec(property(get = get_ReplicatorTransaction)) TxnReplicator::TransactionBase::SPtr ReplicatorTransaction;
@@ -86,7 +88,7 @@ namespace Data
             __declspec(property(get = get_Id)) LONG64 Id;
             LONG64 get_Id() const
             {
-               return id_;
+                return id_;
             }
 
             __declspec(property(get = get_IsCompleted)) bool IsCompleted;
@@ -104,34 +106,34 @@ namespace Data
             __declspec(property(get = get_IsWriteSetEmpty)) bool IsWriteSetEmpty;
             bool get_IsWriteSetEmpty() const
             {
-               if (writeSetStoreComponentSPtr_ == nullptr)
-               {
-                  return true;
-               }
+                if (writeSetStoreComponentSPtr_ == nullptr)
+                {
+                    return true;
+                }
 
-               return false;
+                return false;
             }
 
             __declspec(property(get = get_ReadIsolationLevel, put = set_ReadIsolationLevel)) StoreTransactionReadIsolationLevel::Enum ReadIsolationLevel;
             StoreTransactionReadIsolationLevel::Enum get_ReadIsolationLevel() const override
             {
-               return readIsolationLevel_;
+                return readIsolationLevel_;
             }
 
             void set_ReadIsolationLevel(__in StoreTransactionReadIsolationLevel::Enum value) override
             {
-               readIsolationLevel_ = value;
+                readIsolationLevel_ = value;
             }
 
             __declspec(property(get = get_LockingHints, put = set_LockingHints)) LockingHints::Enum LockingHints;
             LockingHints::Enum get_LockingHints() const override
             {
-               return lockingHints_;
+                return lockingHints_;
             }
 
             void set_LockingHints(__in LockingHints::Enum value) override
             {
-               lockingHints_ = value;
+                lockingHints_ = value;
             }
 
             //
@@ -160,7 +162,9 @@ namespace Data
                 __in Common::TimeSpan lockTimeout,
                 __in bool reacquirePrimeLock)
             {
-                KInvariant(lockMode == LockMode::Enum::Shared || lockMode == LockMode::Enum::Exclusive);
+                ASSERT_IFNOT(lockMode == LockMode::Enum::Shared || lockMode == LockMode::Enum::Exclusive, "Invalid lock mode={0}", static_cast<int>(lockMode));
+                ASSERT_IFNOT(lockTimeout >= Common::TimeSpan::Zero, "Invalid timeout {0}", lockTimeout.TotalMilliseconds());
+
                 LockManager::SPtr lockManagerSPtr(&lockManager);
 
                 if (reacquirePrimeLock)
@@ -201,36 +205,36 @@ namespace Data
                         primeLockRequestsSPtr_->Append(primeLockRequestSPtr);
                     }
                 }
-                
+
                 if (release)
                 {
                     lockManagerSPtr->ReleasePrimeLock(lockMode);
                     throw ktl::Exception(SF_STATUS_TRANSACTION_ABORTED);
                 }
 
-				// Reset initializer.
-				isPrimeLockAcquired_ = true;
+                // Reset initializer.
+                isPrimeLockAcquired_ = true;
 
                 // Compute left-over timeout, if needed.
                 if (lockTimeout != Common::TimeSpan::Zero && lockTimeout != Common::TimeSpan::MaxValue)
                 {
-                   KDateTime end = KDateTime::Now();
-                   KDuration duration = end - start;
+                    KDateTime end = KDateTime::Now();
+                    KDuration duration = end - start;
 
-                   if (duration.Milliseconds() <= 0)
-                   {
-                      timeoutLeftOver = lockTimeout.TotalMilliseconds();
-                   }
-                   else if (lockTimeout.TotalMilliseconds() < duration.Milliseconds())
-                   {
-                      // Inform the caller that locks could not be acquired in the given timeout.
-                      timeoutLeftOver = 0;
-                   }
-                   else
-                   {
-                      // Next use left-over timeout.
-                      timeoutLeftOver = lockTimeout.TotalMilliseconds() - duration.Milliseconds();
-                   }
+                    if (duration.Milliseconds() <= 0)
+                    {
+                        timeoutLeftOver = lockTimeout.TotalMilliseconds();
+                    }
+                    else if (lockTimeout.TotalMilliseconds() < duration.Milliseconds())
+                    {
+                        // Inform the caller that locks could not be acquired in the given timeout.
+                        timeoutLeftOver = 0;
+                    }
+                    else
+                    {
+                        // Next use left-over timeout.
+                        timeoutLeftOver = lockTimeout.TotalMilliseconds() - duration.Milliseconds();
+                    }
                 }
 
                 // todo: calculate 
@@ -238,20 +242,18 @@ namespace Data
             }
 
             ktl::Awaitable<void> AcquireKeyLockAsync(
-               __in LockManager& lockManager,
-               __in ULONG64 lockResourceNameHash,
-               __in LockMode::Enum lockMode,
-               __in Common::TimeSpan timeout)
+                __in LockManager& lockManager,
+                __in ULONG64 lockResourceNameHash,
+                __in LockMode::Enum lockMode,
+                __in Common::TimeSpan timeout)
             {
+               ASSERT_IFNOT(timeout >= Common::TimeSpan::Zero, "Invalid timeout {0}", timeout.TotalMilliseconds());
+               ASSERT_IFNOT(lockMode == LockMode::Enum::Shared || lockMode == LockMode::Enum::Exclusive || lockMode == LockMode::Enum::Update, "Invalid lock mode={0}", static_cast<int>(lockMode));
+
                LockManager::SPtr lockManagerSPtr = &lockManager;
                if (lockMode == LockMode::Enum::Free)
                {
                   throw ktl::Exception(STATUS_INVALID_PARAMETER_3);
-               }
-
-               if (timeout < Common::TimeSpan::Zero && timeout != Common::TimeSpan::MaxValue)
-               {
-                  throw ktl::Exception(STATUS_INVALID_PARAMETER_4);
                }
 
                if (isReadOnly_)
@@ -307,30 +309,33 @@ namespace Data
 
             void Unlock() override
             {
-               // Release all locks.
-               Close();
+                // Release all locks.
+                Close();
             }
 
             void Close() override
             {
-				if (InterlockedIncrement64(&clearLocks_) == 1)
-				{
-					ClearLocks();
-					if (containerSPtr_ != nullptr)
-					{
-						bool success = containerSPtr_->Remove(id_);
-						KInvariant(success);
-					}
+                if (InterlockedIncrement64(&clearLocks_) == 1)
+                {
+                    ClearLocks();
+                    if (containerSPtr_ != nullptr)
+                    {
+                        bool success = containerSPtr_->Remove(id_);
+                        KInvariant(success);
+                    }
 
-					// Set replicator transaction since there is a circular dependency with replicator transaction 
-					// holding onto store transaction for lock context.
-					replicatorTransactionSPtr_ = nullptr;
-				}
+                    // Set replicator transaction since there is a circular dependency with replicator transaction 
+                    // holding onto store transaction for lock context.
+                    replicatorTransactionSPtr_ = nullptr;
+                }
             }
 
+        protected:
+            virtual void OnClearLocks() {}
+
         private:
-			void ClearLocks()
-			{
+            void ClearLocks()
+            {
                 K_LOCK_BLOCK(lock_)
                 {
                     if (isClosed_ == true)
@@ -342,49 +347,83 @@ namespace Data
                     isClosed_ = true;
                 }
 
-				for (ULONG32 index = 0; index < primeLockRequestsSPtr_->Count(); index++)
-				{
-					PrimeLockRequest::SPtr primeLockSPtr = (*primeLockRequestsSPtr_)[index];
-                    if (primeLockSPtr->LockManagerSPtr->IsOpen)
+                KFinally([&] {
+                    // Reset prime locks.
+                    primeLockRequestsSPtr_->Clear();
+                    primeLockRequestsSPtr_ = nullptr;
+
+                    // Reset key locks
+                    keyLockRequestsSPtr_->Clear();
+                    keyLockRequestsSPtr_ = nullptr;
+                });
+
+                // For subclasses such as Queue
+                OnClearLocks();
+
+                for (ULONG32 index = 0; index < primeLockRequestsSPtr_->Count(); index++)
+                {
+                    PrimeLockRequest::SPtr primeLockSPtr = (*primeLockRequestsSPtr_)[index];
+
+                    try
                     {
                         primeLockSPtr->LockManagerSPtr->ReleasePrimeLock(primeLockSPtr->Mode);
                     }
-				}
-
-				// Reset prime locks.
-				primeLockRequestsSPtr_->Clear();
-				primeLockRequestsSPtr_ = nullptr;
-
-				for (ULONG32 index = 0; index < keyLockRequestsSPtr_->Count(); index++)
-				{
-					LockControlBlock::SPtr keyLockSPtr = (*keyLockRequestsSPtr_)[index];
-
-                    // This introduces a race where the lock manager closes between the check and the release lock
-                    // Making lock manager an AsyncService and catching K_STATUS_API_CLOSED will remove the race.
-                    while (keyLockSPtr->GetLockManager()->IsOpen && keyLockSPtr->GetCount() > 0)
+                    catch (ktl::Exception const & e)
                     {
-                        keyLockSPtr->GetLockManager()->ReleaseLock(*keyLockSPtr);
+                        // Swallow exception since throwing here will interfere with replicator txn cleanup
+                        TraceException(L"StoreTransaction::ClearLocks.ReleasePrimeLock", e);
+                    }
+                }
+
+                for (ULONG32 index = 0; index < keyLockRequestsSPtr_->Count(); index++)
+                {
+                    LockControlBlock::SPtr keyLockSPtr = (*keyLockRequestsSPtr_)[index];
+                    while (keyLockSPtr->GetCount() > 0)
+                    {
+                        try
+                        {
+                            keyLockSPtr->GetLockManager()->ReleaseLock(*keyLockSPtr);
+                        }
+                        catch (ktl::Exception const & e)
+                        {
+                            // Swallow exception since throwing here will interfere with replicator txn cleanup
+                            TraceException(L"StoreTransaction::ClearLocks.ReleaseKeyLock", e);
+                            break;
+                        }
                     }
 
                     keyLockSPtr->Close();
-				}
+                }
+            }
 
-				keyLockRequestsSPtr_->Clear();
-                keyLockRequestsSPtr_ = nullptr;
-			}
+            void TraceException(__in KStringView const & methodName, __in ktl::Exception const & exception)
+            {
+                KDynStringA stackString(this->GetThisAllocator());
+                Diagnostics::GetExceptionStackTrace(exception, stackString);
+                StoreEventSource::Events->StoreException(
+                    traceComponent_->PartitionId, traceComponent_->TraceTag,
+                    Data::Utilities::ToStringLiteral(methodName),
+                    id_, 0,
+                    exception.GetStatus(),
+                    Data::Utilities::ToStringLiteral(stackString));
+            }
 
-           StoreTransaction(
-              __in LONG64 id,
-              __in TxnReplicator::TransactionBase & transaction,
-              __in LONG64 owner,
-              __in ConcurrentDictionary2<LONG64, KSharedPtr<StoreTransaction<TKey, TValue>>>& container,
-              __in IComparer<TKey> & keyComparer);
+        protected:
+            StoreTransaction(
+                __in LONG64 id,
+                __in TxnReplicator::TransactionBase & transaction,
+                __in LONG64 owner,
+                __in ConcurrentDictionary2<LONG64, KSharedPtr<StoreTransaction<TKey, TValue>>>& container,
+                __in IComparer<TKey> & keyComparer,
+                __in StoreTraceComponent & traceComponent);
 
-           StoreTransaction(
-              __in LONG64 id,
-              __in LONG64 owner,
-              __in IComparer<TKey> & keyComparer);
+            StoreTransaction(
+                __in LONG64 id,
+                __in LONG64 owner,
+                __in IComparer<TKey> & keyComparer,
+                __in StoreTraceComponent & traceComponent);
 
+        private:
             KSharedPtr<WriteSetStoreComponent<TKey, TValue>> writeSetStoreComponentSPtr_;
             long primaryOperationCount_;
             bool isPrimeLockAcquired_;
@@ -403,60 +442,66 @@ namespace Data
             KSharedPtr<ConcurrentDictionary2<LONG64, KSharedPtr<StoreTransaction<TKey, TValue>>>> containerSPtr_;
             TxnReplicator::TransactionBase::SPtr replicatorTransactionSPtr_;
             KSharedPtr<IComparer<TKey>> keyComparerSPtr_;
+
+            StoreTraceComponent::SPtr traceComponent_;
         };
 
         template <typename TKey, typename TValue>
         StoreTransaction<TKey, TValue>::StoreTransaction(
-           __in LONG64 id,
-           __in TxnReplicator::TransactionBase& transaction,
-           __in LONG64 owner,
-           __in ConcurrentDictionary2<LONG64, KSharedPtr<StoreTransaction<TKey, TValue>>>& container,
-           __in IComparer<TKey> & keyComparer)
+            __in LONG64 id,
+            __in TxnReplicator::TransactionBase& transaction,
+            __in LONG64 owner,
+            __in ConcurrentDictionary2<LONG64, KSharedPtr<StoreTransaction<TKey, TValue>>>& container,
+            __in IComparer<TKey> & keyComparer,
+            __in StoreTraceComponent & traceComponent)
             : primaryOperationCount_(0),
             isPrimeLockAcquired_(false),
             isCompleted_(false),
             isClosed_(false),
-           isReadOnly_(false),
-           id_(id),
-           owner_(owner),
-           keyLockRequestsSPtr_(nullptr),
-           primeLockRequestsSPtr_(nullptr),
-           status_(true),
-           clearLocks_(0),
-           containerSPtr_(&container),
-           replicatorTransactionSPtr_(&transaction),
-           keyComparerSPtr_(&keyComparer)
+            isReadOnly_(false),
+            id_(id),
+            owner_(owner),
+            keyLockRequestsSPtr_(nullptr),
+            primeLockRequestsSPtr_(nullptr),
+            status_(true),
+            clearLocks_(0),
+            containerSPtr_(&container),
+            replicatorTransactionSPtr_(&transaction),
+            keyComparerSPtr_(&keyComparer),
+            traceComponent_(&traceComponent)
         {
-           keyLockRequestsSPtr_ = _new(STORETRANSACTION_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<LockControlBlock>>();
-           primeLockRequestsSPtr_ = _new(STORETRANSACTION_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<PrimeLockRequest>>();
+            keyLockRequestsSPtr_ = _new(STORETRANSACTION_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<LockControlBlock>>();
+            primeLockRequestsSPtr_ = _new(STORETRANSACTION_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<PrimeLockRequest>>();
 
-           readIsolationLevel_ = StoreTransactionReadIsolationLevel::Enum::Snapshot;
-           lockingHints_ = LockingHints::Enum::None;
+            readIsolationLevel_ = StoreTransactionReadIsolationLevel::Enum::Snapshot;
+            lockingHints_ = LockingHints::Enum::None;
         }
 
         template <typename TKey, typename TValue>
         StoreTransaction<TKey, TValue>::StoreTransaction(
-           __in LONG64 id,
-           __in LONG64 owner,
-           __in IComparer<TKey> & keyComparer)
-           : primaryOperationCount_(0),
-           isPrimeLockAcquired_(false),
-           isCompleted_(false),
-           isReadOnly_(false),
-           isClosed_(false),
-           id_(id),
-           owner_(owner),
-           keyLockRequestsSPtr_(nullptr),
-           primeLockRequestsSPtr_(nullptr),
-           status_(true),
-           clearLocks_(0),
-           keyComparerSPtr_(&keyComparer)
+            __in LONG64 id,
+            __in LONG64 owner,
+            __in IComparer<TKey> & keyComparer,
+            __in StoreTraceComponent & traceComponent)
+            : primaryOperationCount_(0),
+            isPrimeLockAcquired_(false),
+            isCompleted_(false),
+            isReadOnly_(false),
+            isClosed_(false),
+            id_(id),
+            owner_(owner),
+            keyLockRequestsSPtr_(nullptr),
+            primeLockRequestsSPtr_(nullptr),
+            status_(true),
+            clearLocks_(0),
+            keyComparerSPtr_(&keyComparer),
+            traceComponent_(&traceComponent)
         {
-           keyLockRequestsSPtr_ = _new(STORETRANSACTION_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<LockControlBlock>>();
-           primeLockRequestsSPtr_ = _new(STORETRANSACTION_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<PrimeLockRequest>>();
+            keyLockRequestsSPtr_ = _new(STORETRANSACTION_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<LockControlBlock>>();
+            primeLockRequestsSPtr_ = _new(STORETRANSACTION_TAG, this->GetThisAllocator()) KSharedArray<KSharedPtr<PrimeLockRequest>>();
 
-           readIsolationLevel_ = StoreTransactionReadIsolationLevel::Enum::Snapshot;
-           lockingHints_ = LockingHints::Enum::None;
+            readIsolationLevel_ = StoreTransactionReadIsolationLevel::Enum::Snapshot;
+            lockingHints_ = LockingHints::Enum::None;
         }
 
         template <typename TKey, typename TValue>

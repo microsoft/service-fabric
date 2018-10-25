@@ -11,7 +11,7 @@ namespace Common
 {
     StringLiteral TraceType_AsyncOperation = "AsyncOperation";
 
-    const std::wstring AsyncOperationLifetimeSource = L"AsyncOperation.Lifetime";
+    const wstring AsyncOperationLifetimeSource = L"AsyncOperation.Lifetime";
 
     AsyncOperation::AsyncOperation()
         : enable_shared_from_this<AsyncOperation>(),
@@ -93,7 +93,7 @@ namespace Common
 
     void AsyncOperation::FinishComplete(AsyncOperationSPtr const & thisSPtr, ErrorCode && error)
     {
-        error_ = std::move(error);
+        error_ = move(error);
         FinishCompleteInternal(thisSPtr);
     }
 
@@ -123,7 +123,7 @@ namespace Common
     {
         if (TryStartComplete())
         {
-            FinishComplete(thisSPtr, std::move(error));
+            FinishComplete(thisSPtr, move(error));
             return true;
         }
         else
@@ -159,7 +159,7 @@ namespace Common
                 skipCompleteOnCancel_);
 
             // First attempt to Cancel the child, if any.
-            std::vector<AsyncOperationSPtr> children;
+            vector<AsyncOperationSPtr> children;
             {
                 AcquireExclusiveLock acquire(childLock_);
                 for(auto & child : children_)
@@ -170,6 +170,8 @@ namespace Common
                         children.push_back(move(objectToMove));
                     }                        
                 }
+
+                children_.clear();
             }
 
             for(auto & child : children)
@@ -236,7 +238,7 @@ namespace Common
             if ((state_.InternalIsCompletingOrCompleted == false) && 
                 (state_.InternalIsCancelRequested == false))
             {
-                children_.push_back(std::move(child));
+                children_.push_back(move(child));
                 return true;
             }
         }
@@ -253,7 +255,7 @@ namespace Common
     bool AsyncOperation::AttachChild(AsyncOperationSPtr const & child)
     {
         AsyncOperationSPtr local = child;
-        return AttachChild(std::move(local));
+        return AttachChild(move(local));
     }
 
     void AsyncOperation::DetachChild(AsyncOperationSPtr const & child)
@@ -267,12 +269,11 @@ namespace Common
         {
             AcquireExclusiveLock acquire(childLock_);
 
-            // Owner based comparison of weak pointers.
-            children_.remove_if(
-                [child](weak_ptr<AsyncOperation> const &value) 
-                {
-                    return !child.owner_before(value) && !value.owner_before(child);
-                });
+            children_.remove_if([child](weak_ptr<AsyncOperation> const &value) 
+            {
+                auto toCheck = value.lock();
+                return toCheck.get() == nullptr ? true : (child.get() == toCheck.get());
+            });
         }
 
     }

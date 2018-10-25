@@ -26,6 +26,7 @@ namespace Management
             static Common::GlobalWString AppTypeOutputDirectory;
             static Common::GlobalWString AppOutputDirectory;
             static Common::GlobalWString ImageBuilderExeName;
+            static Common::GlobalWString CoreImageBuilderExeName;
             static Common::GlobalWString ApplicationTypeInfoOutputFilename;
             static Common::GlobalWString FabricUpgradeOutputDirectory;
             static Common::GlobalWString ClusterManifestOutputDirectory;
@@ -40,6 +41,7 @@ namespace Management
             static Common::GlobalWString GenerateDnsNames;
             static Common::GlobalWString CurrentTypeVersion;
             static Common::GlobalWString TargetTypeVersion;
+            static Common::GlobalWString SFVolumeDiskServiceEnabled;
 
             // ImageBuilder.exe command line arguments
             static Common::GlobalWString SchemaPath;
@@ -75,6 +77,10 @@ namespace Management
             static Common::GlobalWString OverrideFilePath;
             static Common::GlobalWString OutputComposeFilePath;
             static Common::GlobalWString CleanupComposeFiles;
+            static Common::GlobalWString SingleInstanceApplicationDescriptionString;
+            static Common::GlobalWString UseOpenNetworkConfig;
+            static Common::GlobalWString DisableApplicationPackageCleanup;
+            static Common::GlobalWString GenerationConfig;
 
             // ImageBuilder.exe operation values
             static Common::GlobalWString OperationBuildApplicationTypeInfo;
@@ -92,6 +98,8 @@ namespace Management
             static Common::GlobalWString OperationBuildComposeDeploymentType;
             static Common::GlobalWString OperationBuildComposeApplicationTypeForUpgrade;
             static Common::GlobalWString OperationCleanupApplicationPackage;
+            static Common::GlobalWString OperationBuildSingleInstanceApplication;
+            static Common::GlobalWString OperationBuildSingleInstanceApplicationForUpgrade;
 
         protected:
 
@@ -220,6 +228,47 @@ namespace Management
                 __out ServiceModel::ApplicationHealthPolicy &,
                 __out std::map<std::wstring, std::wstring> &) override;
 
+            virtual Common::AsyncOperationSPtr BeginBuildSingleInstanceApplicationForUpgrade(
+                Common::ActivityId const &,
+                ServiceModelTypeName const &,
+                ServiceModelVersion const & currentTypeVersion,
+                ServiceModelVersion const & targetTypeVersion,
+                ServiceModel::ModelV2::ApplicationDescription const &,
+                Common::NamingUri const & appName,
+                ServiceModelApplicationId const & appId,
+                uint64 currentApplicationVersion,
+                Common::TimeSpan const,
+                Common::AsyncCallback const &,
+                Common::AsyncOperationSPtr const &);
+
+            virtual Common::ErrorCode EndBuildSingleInstanceApplicationForUpgrade(
+                Common::AsyncOperationSPtr const &,
+                __out std::vector<ServiceModelServiceManifestDescription> &,
+                __out std::wstring & applicationManifestContent,
+                __out ServiceModel::ApplicationHealthPolicy &,
+                __out std::map<std::wstring, std::wstring> &,
+                __out DigestedApplicationDescription &,
+                __out DigestedApplicationDescription &);
+            
+            virtual Common::AsyncOperationSPtr BeginBuildSingleInstanceApplication(
+                Common::ActivityId const &,
+                ServiceModelTypeName const &,
+                ServiceModelVersion const &,
+                ServiceModel::ModelV2::ApplicationDescription const &,
+                Common::NamingUri const & appName,
+                ServiceModelApplicationId const & appId,
+                Common::TimeSpan const,
+                Common::AsyncCallback const &,
+                Common::AsyncOperationSPtr const &) override;
+
+            virtual Common::ErrorCode EndBuildSingleInstanceApplication(
+                Common::AsyncOperationSPtr const &,
+                __out std::vector<ServiceModelServiceManifestDescription> &,
+                __out std::wstring & applicationManifestContent,
+                __out ServiceModel::ApplicationHealthPolicy &,
+                __out std::map<std::wstring, std::wstring> &,
+                __out DigestedApplicationDescription &) override;
+
             virtual Common::ErrorCode Test_BuildApplication(
                 Common::NamingUri const &,
                 ServiceModelApplicationId const &,
@@ -342,10 +391,12 @@ namespace Management
             class ImageBuilderAsyncOperationBase;
             class RunImageBuilderExeAsyncOperation;
             class DeleteFilesAsyncOperation;
+            class BuildApplicationAsyncOperation;
             class BuildApplicationTypeAsyncOperation;
             class BuildComposeDeploymentAppTypeAsyncOperation;
             class BuildComposeApplicationTypeForUpgradeAsyncOperation;
-            class BuildApplicationAsyncOperation;
+            class BuildSingleInstanceApplicationForUpgradeAsyncOperation; // TODO: Make this common code between CGS
+            class BuildSingleInstanceApplicationAsyncOperation;
             class UpgradeApplicationAsyncOperation;
             class CleanupApplicationAsyncOperation;
             class CleanupApplicationInstanceAsyncOperation;
@@ -555,6 +606,7 @@ namespace Management
             Common::ErrorCode CreateOutputDirectory(std::wstring const &);
             void DeleteDirectory(std::wstring const &);
             void DeleteOrArchiveDirectory(std::wstring const &, Common::ErrorCode const &);
+            std::wstring GetEscapedString(std::wstring &);
 
             static int64 HandleToInt(HANDLE);
 

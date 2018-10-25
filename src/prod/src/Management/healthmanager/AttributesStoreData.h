@@ -30,6 +30,9 @@ namespace Management
             __declspec (property(get = get_UseInstance)) bool UseInstance;
             bool get_UseInstance() const { return InstanceId != Constants::UnusedInstanceValue; }
 
+            __declspec (property(get = get_HasInvalidInstance)) bool HasInvalidInstance;
+            virtual bool get_HasInvalidInstance() const { return InstanceId == FABRIC_INVALID_INSTANCE_ID; }
+
             __declspec (property(get = get_StateFlags)) EntityStateFlags const & StateFlags;
             EntityStateFlags const & get_StateFlags() const { return stateFlags_; }
 

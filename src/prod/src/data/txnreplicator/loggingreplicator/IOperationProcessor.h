@@ -33,11 +33,11 @@ namespace Data
 
             virtual void Unlock(__in LogRecordLib::LogicalLogRecord & record) = 0;
 
-			// Notification APIs
-			virtual NTSTATUS RegisterTransactionChangeHandler(
-				__in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept = 0;
+            // Notification APIs
+            virtual NTSTATUS RegisterTransactionChangeHandler(
+                __in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept = 0;
 
-			virtual NTSTATUS UnRegisterTransactionChangeHandler() noexcept = 0;
+            virtual NTSTATUS UnRegisterTransactionChangeHandler() noexcept = 0;
         };
     }
 }

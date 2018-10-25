@@ -217,6 +217,7 @@ template <typename T, typename Description>
 struct TraceDescriptionsDescriptor
 {
     static Description const & Get(T const & item);
+    static bool IsServiceDescription();
 };
 
 template <>
@@ -225,6 +226,10 @@ struct TraceDescriptionsDescriptor<Node, NodeDescription>
     static NodeDescription const & Get(Node const & node)
     {
         return node.NodeDescriptionObj;
+    }
+    static bool IsServiceDescription()
+    {
+        return false;
     }
 };
 
@@ -235,6 +240,10 @@ struct TraceDescriptionsDescriptor<Application, ApplicationDescription>
     {
         return app.ApplicationDesc;
     }
+    static bool IsServiceDescription()
+    {
+        return false;
+    }
 };
 
 template <>
@@ -243,6 +252,10 @@ struct TraceDescriptionsDescriptor<ServiceType, ServiceTypeDescription>
     static ServiceTypeDescription const & Get(ServiceType const & serviceType)
     {
         return serviceType.ServiceTypeDesc;
+    }
+    static bool IsServiceDescription()
+    {
+        return false;
     }
 };
 
@@ -253,10 +266,32 @@ struct TraceDescriptionsDescriptor<const Service*, ServiceDescription>
     {
         return service->ServiceDesc;
     }
+    static bool IsServiceDescription()
+    {
+        return true;
+    }
 };
 
-template <typename Identifier, typename Item, typename Description, typename ItemMap>
-void TraceDescriptions<Identifier, Item, Description, ItemMap>::WriteTo(Common::TextWriter& writer, Common::FormatOptions const&) const
+template<typename T>
+struct TraceDistributionLogicIndex
+{
+    static int Get(T const & )
+    {
+        return 0;
+    }
+};
+
+template<>
+struct TraceDistributionLogicIndex<int>
+{
+    static int Get(int const & index)
+    {
+        return index;
+    }
+};
+
+template <typename Identifier, typename Item, typename Description, typename ItemMap, typename ItemVector>
+void TraceDescriptions<Identifier, Item, Description, ItemMap, ItemVector>::WriteTo(Common::TextWriter& writer, Common::FormatOptions const&) const
 {
     if (itemMap_.empty()) { return; }
 
@@ -276,7 +311,16 @@ void TraceDescriptions<Identifier, Item, Description, ItemMap>::WriteTo(Common::
 
         if (TraceDescriptionsFilter<Item>::Enabled(item))
         {
-            writer.WriteLine("{0}",desc);
+            if (TraceDescriptionsDescriptor<Item, Description>::IsServiceDescription())
+            {
+                int itemDistributionLogicIndex = TraceDistributionLogicIndex<Identifier>::Get(itItem->first);
+                writer.WriteLine("{0} QuorumBasedLogic:{1}",
+                    desc, itemQuorumDomainLogic_[itemDistributionLogicIndex] ? true : false);
+            }
+            else
+            {
+                writer.WriteLine("{0}", desc);
+            }
             ++noOfItemsTraced;
         }
 
@@ -300,8 +344,8 @@ void TraceDescriptions<Identifier, Item, Description, ItemMap>::WriteTo(Common::
     }
 }
 
-template <typename Identifier, typename Item, typename Description, typename ItemMap>
-void TraceDescriptions<Identifier, Item, Description, ItemMap>::WriteToEtw(uint16 contextSequenceId) const
+template <typename Identifier, typename Item, typename Description, typename ItemMap, typename ItemVector>
+void TraceDescriptions<Identifier, Item, Description, ItemMap, ItemVector>::WriteToEtw(uint16 contextSequenceId) const
 {
     PlacementAndLoadBalancing::PLBTrace->PLBDump(contextSequenceId, wformatString(*this));
 }
@@ -383,14 +427,16 @@ void TraceDefragMetricInfo::WriteTo(Common::TextWriter& writer, Common::FormatOp
     writer.WriteLine(metricName);
 
     writer.WriteLine(
-        "DefragInfo: Type:{0}, TargetEmptyNodeCount:{1}, EmptyNodesDistribution:{2}, EmptyNodeLoadThreshold:{3}, EmptyNodesWeight:{4}, ActivityThreshold:{5}, BalancingThreshold:{6}",
+        "DefragInfo: Type:{0}, TargetEmptyNodeCount:{1}, EmptyNodesDistribution:{2}, EmptyNodeLoadThreshold:{3}, EmptyNodesWeight:{4}, ActivityThreshold:{5}, BalancingThreshold:{6}, ReservationLoad:{7}, NonEmptyNodesWeight:{8}",
         type_,
         targetEmptyNodeCount_,
         emptyNodesDistribution_,
         emptyNodeLoadThreshold_,
         emptyNodesWeight_,
         activityThreshold_,
-        balancingThreshold_);
+        balancingThreshold_,
+        reservationLoad_,
+        nonEmptyNodesWeight_);
 
     writer.WriteLine(
         "ClusterMetricInfo: StdDev:{0}, FdStdDev:{1}, UdStdDev:{2}, EmptyNodes:{3}, NonEmptyAverageLoad:{4}, Average:{5}, FdAverage:{6}, UdAverage:{7}, TotalLoad:{8}",

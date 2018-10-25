@@ -11,17 +11,21 @@ namespace Hosting2
     {
     public:
         ApplicationHostClosedEventArgs(
-            uint64 const sequenceNumber, 
+            uint64 const sequenceNumber,
             std::wstring const & hostId, 
             std::vector<ServiceModel::ServiceTypeIdentifier> const & serviceTypes,
             ServiceModel::ServicePackageActivationContext isolationContext,
-            std::wstring const & servicePackagePublicActivationId);
+            std::wstring const & servicePackagePublicActivationId,
+            Common::ActivityDescription const & activityDescription);
         
         ApplicationHostClosedEventArgs(ApplicationHostClosedEventArgs const & other);
         ApplicationHostClosedEventArgs(ApplicationHostClosedEventArgs && other);
 
         __declspec(property(get=get_SequenceNumber)) uint64 const SequenceNumber;
         inline uint64 const get_SequenceNumber() const { return sequenceNumber_; };
+
+        __declspec(property(get = get_ActivityDescription)) Common::ActivityDescription const & ActivityDescription;
+        Common::ActivityDescription  const & get_ActivityDescription() const { return activityDescription_; }
 
         __declspec(property(get=get_HostId)) std::wstring const & HostId;
         std::wstring const & get_HostId() const { return hostId_; }
@@ -41,6 +45,7 @@ namespace Hosting2
         void WriteTo(Common::TextWriter& w, Common::FormatOptions const&) const;
 
     private:
+        Common::ActivityDescription activityDescription_;
         std::wstring hostId_;
         std::vector<ServiceModel::ServiceTypeIdentifier> serviceTypes_;
         uint64 sequenceNumber_;

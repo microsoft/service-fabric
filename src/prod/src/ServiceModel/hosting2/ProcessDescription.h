@@ -31,14 +31,16 @@ namespace Hosting2
             ProcessDebugParameters const & debugParameters = ProcessDebugParameters(),
             ServiceModel::ResourceGovernancePolicyDescription const & resourceGovernance = ServiceModel::ResourceGovernancePolicyDescription(),
             ServiceModel::ServicePackageResourceGovernanceDescription const & spResourceGovernance = ServiceModel::ServicePackageResourceGovernanceDescription(),
-            std::wstring const & cgroupName = L"");
+            std::wstring const & cgroupOrJobObjectName = L"",
+            bool isHostedServiceProcess = false,
+            std::map<std::wstring, std::wstring> const& encryptedSettings = std::map<std::wstring, std::wstring>());
 
         ProcessDescription(ProcessDescription const & other);
 
         ProcessDescription(ProcessDescription && other);
 
-        ProcessDescription const & operator = (ProcessDescription const & other);
-        ProcessDescription const & operator = (ProcessDescription && other);
+        ProcessDescription & operator = (ProcessDescription const & other) = default;
+        ProcessDescription & operator = (ProcessDescription && other) = default;
         
         __declspec(property(get=get_ExePath)) std::wstring const & ExePath;
         inline std::wstring const & get_ExePath() const { return exePath_; };
@@ -91,14 +93,24 @@ namespace Hosting2
         __declspec(property(get = get_ProcessDebugParameters)) ProcessDebugParameters const & DebugParameters;
         inline ProcessDebugParameters const & get_ProcessDebugParameters() const { return debugParameters_; };
 
-        __declspec(property(get = get_ResourceGovernancePolicy)) ServiceModel::ResourceGovernancePolicyDescription const & ResourceGovernancePolicy;
+        __declspec(property(get = get_ResourceGovernancePolicy, put = put_ResourceGovernancePolicy)) ServiceModel::ResourceGovernancePolicyDescription const & ResourceGovernancePolicy;
         inline ServiceModel::ResourceGovernancePolicyDescription const & get_ResourceGovernancePolicy() const { return resourceGovernancePolicy_; };
+        void put_ResourceGovernancePolicy(ServiceModel::ResourceGovernancePolicyDescription const & value) {resourceGovernancePolicy_ = value; };
 
         __declspec(property(get = get_SPResourceGovernancePolicy)) ServiceModel::ServicePackageResourceGovernanceDescription const & ServicePackageResourceGovernance;
         inline ServiceModel::ServicePackageResourceGovernanceDescription const & get_SPResourceGovernancePolicy() const { return spResourceGovernance_; };
 
         __declspec(property(get=get_CgroupName)) std::wstring const & CgroupName;
-        inline std::wstring const & get_CgroupName() const { return cgroupName_; };
+        inline std::wstring const & get_CgroupName() const { return cgroupOrJobObjectName_; };
+
+        __declspec(property(get = get_JobObjectName)) std::wstring const & JobObjectName;
+        inline std::wstring const & get_JobObjectName() const { return cgroupOrJobObjectName_; };
+
+        __declspec(property(get = get_IsHostedServiceProcess)) bool IsHostedServiceProcess;
+        inline bool get_IsHostedServiceProcess() const { return isHostedServiceProcess_; };
+
+        __declspec(property(get = get_EncryptedEnvironmentVariables)) std::map<std::wstring, std::wstring> const & EncryptedEnvironmentVariables;
+        inline std::map<std::wstring, std::wstring> const & get_EncryptedEnvironmentVariables() const { return encryptedEnvironmentVariables_; };
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
@@ -106,9 +118,10 @@ namespace Hosting2
             __in Common::ScopedHeap & heap,
             __out FABRIC_PROCESS_DESCRIPTION & fabricProcessDesc) const;
 
-        FABRIC_FIELDS_19(exePath_, arguments_, startInDirectory_, appDirectory_, tempDirectory_, workDirectory_, logDirectory_,
+        FABRIC_FIELDS_21(exePath_, arguments_, startInDirectory_, appDirectory_, tempDirectory_, workDirectory_, logDirectory_,
             redirectConsole_, redirectedConsoleFileNamePrefix_,    consoleRedirectionFileRetentionCount_, consoleRedirectionFileMaxSizeInKb_,
-            showNoWindow_, allowChildProcessDetach_,  notAttachedToJob_, environmentBlock_, debugParameters_, resourceGovernancePolicy_, spResourceGovernance_, cgroupName_);
+            showNoWindow_, allowChildProcessDetach_,  notAttachedToJob_, environmentBlock_, debugParameters_, resourceGovernancePolicy_,
+            spResourceGovernance_, cgroupOrJobObjectName_, isHostedServiceProcess_, encryptedEnvironmentVariables_);
 
     private:
         std::wstring exePath_;
@@ -130,10 +143,11 @@ namespace Hosting2
         ProcessDebugParameters debugParameters_;
         ServiceModel::ResourceGovernancePolicyDescription resourceGovernancePolicy_;
         ServiceModel::ServicePackageResourceGovernanceDescription spResourceGovernance_;
-        //this is used only on Linux 
-        //for processes this is the cgroup name for the CP
-        //for container groups this is the name of parent cgroup docker should use
-        std::wstring cgroupName_;
+        // CGroup/JobObject name of the process
+        // (for Linux container groups this is the name of parent CGroup docker should use)
+        std::wstring cgroupOrJobObjectName_;
+        bool isHostedServiceProcess_;
+        std::map<std::wstring, std::wstring> encryptedEnvironmentVariables_;
     };
 }
 DEFINE_AS_BLITTABLE(wchar_t);

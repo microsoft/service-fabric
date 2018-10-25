@@ -10,23 +10,29 @@ using namespace TxnReplicator;
 
 BackupInfo::BackupInfo() noexcept
     : KObject()
-    , backupId_()
     , directoryPath_()
     , option_(FABRIC_BACKUP_OPTION_INVALID)
     , version_(BackupVersion::Invalid()) 
+    , startVersion_(BackupVersion::Invalid())
+    , backupId_()
+    , parentBackupId_()
 {
 }
 
 BackupInfo::BackupInfo(
-    __in Common::Guid const & backupId,
     __in KString const & directoryPath,
     __in FABRIC_BACKUP_OPTION option,
     __in BackupVersion version,
+    __in BackupVersion startVersion,
+    __in Common::Guid const & backupId,
+    __in Common::Guid const & parentBackupId,
     __in KAllocator & allocator) noexcept
     : KObject()
     , backupId_(backupId)
+    , parentBackupId_(parentBackupId)
     , option_(option)
     , version_(version)
+    , startVersion_(startVersion)
 {
 #if !defined(PLATFORM_UNIX)
     NTSTATUS status = KPath::RemoveGlobalDosDevicesNamespaceIfExist(directoryPath, allocator, directoryPath_);
@@ -41,10 +47,12 @@ BackupInfo::BackupInfo(
 {
     if (this != &other)
     {
-        backupId_ = other.backupId_;
         directoryPath_ = other.directoryPath_;
         option_ = other.option_;
         version_ = other.version_;
+        startVersion_ = other.startVersion_;
+        backupId_ = other.backupId_;
+        parentBackupId_ = other.parentBackupId_;
     }
 }
 
@@ -56,17 +64,14 @@ BackupInfo & BackupInfo::operator=(
         return *this;
     }
 
-    backupId_ = other.backupId_;
     directoryPath_ = other.directoryPath_;
     option_ = other.option_;
     version_ = other.version_;
+    startVersion_ = other.startVersion_;
+    backupId_ = other.backupId_;
+    parentBackupId_ = other.parentBackupId_;
 
     return *this;
-}
-
-Common::Guid BackupInfo::get_BackupId() const
-{
-    return backupId_;
 }
 
 KString::CSPtr BackupInfo::get_Directory() const
@@ -82,4 +87,19 @@ FABRIC_BACKUP_OPTION BackupInfo::get_BackupOption() const
 BackupVersion BackupInfo::get_BackupVersion() const
 {
     return version_;
+}
+
+BackupVersion BackupInfo::get_BackupStartVersion() const
+{
+    return startVersion_;
+}
+
+Common::Guid BackupInfo::get_BackupId() const
+{
+    return backupId_;
+}
+
+Common::Guid BackupInfo::get_ParentBackupId() const
+{
+    return parentBackupId_;
 }

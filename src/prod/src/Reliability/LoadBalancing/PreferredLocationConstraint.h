@@ -46,6 +46,11 @@ namespace Reliability
             static bool CheckUpgradedUDs(std::set<Common::TreeNodeIndex> const& upgradedUDsToUse, NodeEntry const* target);
 
             virtual ~PreferredLocationConstraint() {}
+
+            void FilterPreferredNodesWithImages(
+                NodeSet & nodesPreferredContainerPlacement,
+                PlacementReplica const* replica) const;
+
         };
 
         class PreferredLocationSubspace : public StaticSubspace

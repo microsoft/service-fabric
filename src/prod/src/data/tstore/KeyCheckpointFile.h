@@ -251,7 +251,7 @@ namespace Data
                 value->SetVersionSequenceNumber(lsn);
 
                 KSharedPtr<KeyData<TKey, TValue>> keydata = nullptr;
-                NTSTATUS keystatus = KeyData<TKey, TValue>::Create(key, *value, logicalTimeStamp, GetThisAllocator(), keydata);
+                NTSTATUS keystatus = KeyData<TKey, TValue>::Create(key, *value, logicalTimeStamp, keySize, GetThisAllocator(), keydata);
                 Diagnostics::Validate(keystatus);
                 return keydata;
             }

@@ -460,6 +460,17 @@ namespace Reliability
                     Common::Assert::CodingError("unsupported");
                 }
 
+                Hosting2::AvailableContainerImagesEventHHandler RegisterSendAvailableContainerImagesEventHandler(
+                    Hosting2::AvailableContainerImagesEventHandler const &)
+                {
+                    Common::Assert::CodingError("unsupported");
+                }
+
+                bool UnregisterSendAvailableContainerImagesEventHandler(Hosting2::AvailableContainerImagesEventHHandler const &)
+                {
+                    Common::Assert::CodingError("unsupported");
+                }
+
                 Common::AsyncOperationSPtr OnBeginOpen(
                     Common::TimeSpan,
                     Common::AsyncCallback const &,
@@ -751,6 +762,17 @@ namespace Reliability
                 }
 
                 bool UnregisterApplicationHostClosedEventHandler(Hosting2::ApplicationHostClosedEventHHandler const &)
+                {
+                    Common::Assert::CodingError("unsupported");
+                }
+
+                Hosting2::AvailableContainerImagesEventHHandler RegisterSendAvailableContainerImagesEventHandler(
+                    Hosting2::AvailableContainerImagesEventHandler const &)
+                {
+                    Common::Assert::CodingError("unsupported");
+                }
+
+                bool UnregisterSendAvailableContainerImagesEventHandler(Hosting2::AvailableContainerImagesEventHHandler const &)
                 {
                     Common::Assert::CodingError("unsupported");
                 }

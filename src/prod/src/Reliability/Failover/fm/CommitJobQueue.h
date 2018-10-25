@@ -192,6 +192,23 @@ namespace Reliability
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        class MarkServiceAsDeletedCommitJobItem : public CommitJobItem
+        {
+            DENY_COPY(MarkServiceAsDeletedCommitJobItem);
+
+        public:
+            MarkServiceAsDeletedCommitJobItem(const ServiceInfoSPtr & serviceInfo);
+
+            bool ProcessJob(FailoverManager & fm) override;
+
+        private:
+            ServiceInfoSPtr serviceInfo_;
+        };
+
+        typedef std::unique_ptr<MarkServiceAsDeletedCommitJobItem> MarkServiceAsDeletedCommitJobItemUPtr;
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         class CommitJobQueue : public Common::JobQueue<CommitJobItemUPtr, FailoverManager>
         {
             DENY_COPY(CommitJobQueue);

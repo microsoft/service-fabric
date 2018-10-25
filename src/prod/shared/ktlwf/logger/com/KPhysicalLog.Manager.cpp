@@ -12,9 +12,18 @@ namespace Ktl
     namespace Com
     {
         //*** IKPhysicalLogManager COM Implementation
-        ComIKPhysicalLogManager::ComIKPhysicalLogManager()
+        ComIKPhysicalLogManager::ComIKPhysicalLogManager(__in BOOLEAN Inproc)
         {
-            SetConstructorStatus(KtlLogManager::Create(GetThisAllocationTag(), GetThisAllocator(), _BackingManager));
+            NTSTATUS status;
+
+            if (Inproc)
+            {
+                status = KtlLogManager::CreateInproc(GetThisAllocationTag(), GetThisAllocator(), _BackingManager);
+            } else {
+                status = KtlLogManager::CreateDriver(GetThisAllocationTag(), GetThisAllocator(), _BackingManager);
+            }
+            
+            SetConstructorStatus(status);
         }
 
         ComIKPhysicalLogManager::~ComIKPhysicalLogManager()
@@ -24,7 +33,7 @@ namespace Ktl
         HRESULT 
         ComIKPhysicalLogManager::Create(__in KAllocator& Allocator, __out ComIKPhysicalLogManager::SPtr& Result)
         {
-            Result = _new(KTL_TAG_LOGGER, Allocator) ComIKPhysicalLogManager();
+            Result = _new(KTL_TAG_LOGGER, Allocator) ComIKPhysicalLogManager(FALSE);
             if (Result == nullptr)
             {
                 return E_OUTOFMEMORY;
@@ -41,6 +50,26 @@ namespace Ktl
             return S_OK;
         }
 
+        HRESULT 
+        ComIKPhysicalLogManager::CreateInproc(__in KAllocator& Allocator, __out ComIKPhysicalLogManager::SPtr& Result)
+        {
+            Result = _new(KTL_TAG_LOGGER, Allocator) ComIKPhysicalLogManager(TRUE);
+            if (Result == nullptr)
+            {
+                return E_OUTOFMEMORY;
+            }
+
+            NTSTATUS    status = Result->Status();
+            if (!NT_SUCCESS(status))
+            {
+                Result = nullptr;
+
+                return Ktl::Com::KComUtility::ToHRESULT(status);
+            }
+
+            return S_OK;
+        }
+        
         //** OpenLogManager
         HRESULT 
         ComIKPhysicalLogManager::BeginOpen( 

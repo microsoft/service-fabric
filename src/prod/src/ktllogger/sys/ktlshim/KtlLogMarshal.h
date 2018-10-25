@@ -55,12 +55,16 @@ class RequestMarshaller : public KObject<RequestMarshaller>, public KShared<Requ
         static const ULONG REQUEST_VERSION_2 = 2;
         static const ULONG REQUEST_VERSION_3 = 3;
         static const ULONG REQUEST_VERSION_4 = 4;
+        static const ULONG REQUEST_VERSION_5 = 5;
 
         inline BOOLEAN IsValidRequestVersion(
             __in ULONG RequestVersion
             )
         {
-            return(((RequestVersion >= REQUEST_VERSION_1) && (RequestVersion <= REQUEST_VERSION_3)) ? TRUE : FALSE );
+            return ((RequestVersion == REQUEST_VERSION_1)
+                || (RequestVersion == REQUEST_VERSION_2)
+                || (RequestVersion == REQUEST_VERSION_3)
+                || (RequestVersion == REQUEST_VERSION_5)) ? TRUE : FALSE;
         }
 
     public:
@@ -101,7 +105,10 @@ class RequestMarshaller : public KObject<RequestMarshaller>, public KShared<Requ
             ConfigureLogManager,
 
 			// Introduced in REQUEST_VERSION_4
-			EnumerateStreams
+			EnumerateStreams,
+
+            // Introduced in REQUEST_VERSION_5
+            WriteAndReturnLogUsage
                     
         } OBJECT_METHOD;
 
@@ -453,8 +460,9 @@ class RequestMarshaller : public KObject<RequestMarshaller>, public KShared<Requ
         ULONG _WriteIndex;
         ULONG _ReadIndex;
         BOOLEAN _ExtendBuffer;
+        ULONGLONG _LogSize;
+        ULONGLONG _LogSpaceRemaining;
 
         KBuffer::SPtr _KBuffer;
-        ULONG _AllocationTag;       
+        ULONG _AllocationTag;     
 };
-

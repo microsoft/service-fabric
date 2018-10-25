@@ -98,9 +98,11 @@ ErrorCode RequestMessageContext::GetClientToken(__out HANDLE &hToken) const
 }
 
 AsyncOperationSPtr RequestMessageContext::BeginGetClientCertificate(
+    __in Common::TimeSpan const& timeout,
     __in Common::AsyncCallback const& callback,
     __in Common::AsyncOperationSPtr const& parent) const
 {
+    UNREFERENCED_PARAMETER(timeout);
     return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(callback, parent);
 }
 

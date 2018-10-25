@@ -30,27 +30,6 @@ ReplicaHealthQueryDescription::ReplicaHealthQueryDescription(
 {
 }
 
-ReplicaHealthQueryDescription::ReplicaHealthQueryDescription(ReplicaHealthQueryDescription && other)
-    : partitionId_(move(other.partitionId_))
-    , replicaOrInstanceId_(move(other.replicaOrInstanceId_))
-    , healthPolicy_(move(other.healthPolicy_))
-    , eventsFilter_(move(other.eventsFilter_))
-{
-}
-
-ReplicaHealthQueryDescription & ReplicaHealthQueryDescription::operator =(ReplicaHealthQueryDescription && other)
-{
-    if (this != &other)
-    {
-        partitionId_ = move(other.partitionId_);
-        replicaOrInstanceId_ = move(other.replicaOrInstanceId_);
-        healthPolicy_ = move(other.healthPolicy_);
-        eventsFilter_ = move(other.eventsFilter_);
-    }
-
-    return *this;
-}
-
 ReplicaHealthQueryDescription::~ReplicaHealthQueryDescription()
 {
 }

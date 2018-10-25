@@ -582,7 +582,14 @@ void FabricNodeWrapper::Close(bool removeData)
         // to cleanly delete the dedicated log and all associated resources
         // from the shared log.
         //
-        fabricNode_->Test_Reliability.Test_GetLocalStore().Test_PrepareForCleanup();
+        auto error = fabricNode_->Test_Reliability.Test_GetLocalStore().MarkCleanupInTerminate();
+
+        if (!error.IsSuccess())
+        {
+            // Expected to fail for KVS/ESE
+            //
+            TestSession::WriteInfo(TraceSource, "MarkCleanupInTerminate() failed: {0}", error);
+        }
     }
 
     if (FabricTestSessionConfig::GetConfig().StartNodeCloseOnSeparateThread)

@@ -76,6 +76,11 @@ namespace Transport
         TransportSecuritySPtr Security() const override;
         Common::ErrorCode SetSecurity(SecuritySettings const & securitySettings);
 
+        void SetFrameHeaderErrorChecking(bool enabled) override;
+        void SetMessageErrorChecking(bool enabled) override;
+        bool FrameHeaderErrorCheckingEnabled() const { return frameHeaderErrorCheckingEnabled_; }
+        bool MessageErrorCheckingEnabled() const { return messageErrorCheckingEnabled_; }
+
         std::wstring const & get_IdString() const override;
 
         void DisableSecureSessionExpiration() override;
@@ -180,7 +185,7 @@ namespace Transport
         void StartSendQueueCheckTimer_CallerHoldingWLock();
         void SendQueueCheckCallback();
 
-        void OnConnectionFault(ISendTarget const & target, Common::ErrorCode fault);
+        void OnConnectionFault(ISendTarget const & target, Common::ErrorCode const & fault);
 
         TcpSendTargetSPtr InnerResolveTarget(
             std::wstring const & address,
@@ -267,6 +272,8 @@ namespace Transport
         bool shouldSendListenInstance_ = true;
         bool test_acceptDisabled_ = false;
         bool shouldTracePerMessage_ = true;
+        bool frameHeaderErrorCheckingEnabled_ = TransportConfig::GetConfig().FrameHeaderErrorCheckingEnabled;
+        bool messageErrorCheckingEnabled_ = TransportConfig::GetConfig().MessageErrorCheckingEnabled;
 
 #ifdef PLATFORM_UNIX
         bool eventLoopDispatchReadAsync_ = true; 

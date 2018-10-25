@@ -40,6 +40,7 @@ namespace ServiceModel
     public:
         std::wstring Name;
         std::wstring Version;
+        bool IsActivator;
         bool IsShared;
         EntryPointDescription EntryPoint;
         ExeEntryPointDescription SetupEntryPoint;
@@ -52,9 +53,9 @@ namespace ServiceModel
         friend struct ServiceManifestDescription;
 
         void ReadFromXml(Common::XmlReaderUPtr const &);
-		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
-		Common::ErrorCode WriteSetupEntryPoint(Common::XmlWriterUPtr const &);
-		Common::ErrorCode WriteEntryPoint(Common::XmlWriterUPtr const &);
+        Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
+        Common::ErrorCode WriteSetupEntryPoint(Common::XmlWriterUPtr const &);
+        Common::ErrorCode WriteEntryPoint(Common::XmlWriterUPtr const &);
     };
 }
 

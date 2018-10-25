@@ -265,7 +265,7 @@ bool DnsParser::Serialize(
 
     DnsAnswerRecordOpt::SPtr spRecordOpt;
     DnsAnswerRecordOpt::Create(/*out*/spRecordOpt, GetThisAllocator(), *spEmptyQuestion, (USHORT)buffer.QuerySize());
-    if (!spRecordOpt->Serialize(writer, ttl))
+    if (!spRecordOpt->Serialize(writer))
     {
         return false;
     }

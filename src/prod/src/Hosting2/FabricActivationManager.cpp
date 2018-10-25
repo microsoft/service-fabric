@@ -53,16 +53,16 @@ protected:
             return;
         }
 
-		wstring fabricDataRoot;
-		error = FabricEnvironment::GetFabricDataRoot(fabricDataRoot);
-		if (!error.IsSuccess())
-		{
-			Trace.WriteInfo(TraceType_ActivationManager,
-				this->activationManager_.TraceId,
-				"Completing FabricSetup with error as registry is not written. This will cause a retry.");
-			TryComplete(thisSPtr, error);
-			return;
-		}
+        wstring fabricDataRoot;
+        error = FabricEnvironment::GetFabricDataRoot(fabricDataRoot);
+        if (!error.IsSuccess())
+        {
+            Trace.WriteInfo(TraceType_ActivationManager,
+                this->activationManager_.TraceId,
+                "Completing FabricSetup with error as registry is not written. This will cause a retry.");
+            TryComplete(thisSPtr, error);
+            return;
+        }
 
         wstring currentDir = Directory::GetCurrentDirectoryW();
         wstring binPath;
@@ -337,12 +337,47 @@ private:
         }
 
         WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "TraceSessionManager open succeeded");
+
+        CleanupFirewallRules(thisSPtr);
+    }
+
+    void CleanupFirewallRules(AsyncOperationSPtr const & thisSPtr)
+    {
+#if !defined(PLATFORM_UNIX)
+        if (HostingConfig::GetConfig().EnableFirewallSecurityCleanup && HostingConfig::GetConfig().FirewallPolicyEnabled)
+        {
+            std::vector<BSTR> rules;
+            auto error = FirewallSecurityProviderHelper::GetOrRemoveFirewallRules(rules, FirewallSecurityProviderHelper::firewallGroup_);
+
+            if (!error.IsSuccess())
+            {
+                WriteError(TraceType_ActivationManager, activationManager_.TraceId, "GetFirewallRules for cleanup failed with {0}", error);
+                TryComplete(thisSPtr, error);
+                return;
+            }
+
+            if (!rules.empty())
+            {
+                wstring traceId = activationManager_.TraceId;
+
+                //Cleanup firewall on a thread
+                Threadpool::Post([rules, traceId]() {
+
+                    auto error = FirewallSecurityProviderHelper::RemoveRules(rules);
+                    if (!error.IsSuccess())
+                    {
+                        WriteError(TraceType_ActivationManager, traceId, "RemoveFirewallRules failed with {0}", error);
+                    }
+                });
+            }
+        }
+#endif 
+
         RunFabricSetup(thisSPtr);
     }
 
     void RunFabricSetup(AsyncOperationSPtr const & thisSPtr)
     {
-
             auto operation = AsyncOperation::CreateAndStart<FabricSetupAsyncOperation>(
                 this->activationManager_,
                 this->timeoutHelper_.GetRemainingTime(),

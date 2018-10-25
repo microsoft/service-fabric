@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <RestoreSuccess Condition=" '$(RestoreSuccess)' == '' ">True</RestoreSuccess>
+    <RestoreTool Condition=" '$(RestoreTool)' == '' ">NuGet</RestoreTool>
+    <ProjectAssetsFile Condition=" '$(ProjectAssetsFile)' == '' ">$(ProjectAssetsFile)</ProjectAssetsFile>
+    <NuGetPackageRoot Condition=" '$(NuGetPackageRoot)' == '' ">$(BinariesBuildTypeArchDirectory)\CorePackages</NuGetPackageRoot>
+    <NuGetPackageFolders Condition=" '$(NuGetPackageFolders)' == '' ">$(BinariesBuildTypeArchDirectory)\CorePackages</NuGetPackageFolders>
+    <NuGetProjectStyle Condition=" '$(NuGetProjectStyle)' == '' ">PackageReference</NuGetProjectStyle>
+    <NuGetToolVersion Condition=" '$(NuGetToolVersion)' == '' ">4.3.0</NuGetToolVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(BuildLinux)' == 'true' ">
+    <MicrosoftNETCoreApptargets>$(NuGetPackageRoot)/microsoft.netcore.app/$(RuntimeFrameworkVersion)/build/netcoreapp2.0/Microsoft.NETCore.App.targets</MicrosoftNETCoreApptargets>
+    <MicrosoftNETCoreAppProps>$(NuGetPackageRoot)/microsoft.netcore.app/$(RuntimeFrameworkVersion)/build/netcoreapp2.0/Microsoft.NETCore.App.props</MicrosoftNETCoreAppProps>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(BuildLinux)' != 'true' ">
+    <MicrosoftNETCoreApptargets>$(NuGetPackageRoot)\microsoft.netcore.app\$(RuntimeFrameworkVersion)\build\netcoreapp2.0\Microsoft.NETCore.App.targets</MicrosoftNETCoreApptargets>
+    <MicrosoftNETCoreAppProps>$(NuGetPackageRoot)\microsoft.netcore.app\$(RuntimeFrameworkVersion)\build\netcoreapp2.0\Microsoft.NETCore.App.props</MicrosoftNETCoreAppProps>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <ImportGroup>
+    <Import Project="$(MicrosoftNETCoreAppProps)"
+	        Condition="'$(TargetFramework)' == 'netcoreapp2.0' And '$(CurrentRuntimeIdentifier)' != '' " />
+  </ImportGroup>
+</Project>

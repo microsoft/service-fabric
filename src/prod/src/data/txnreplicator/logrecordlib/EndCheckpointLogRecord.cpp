@@ -158,32 +158,38 @@ void EndCheckpointLogRecord::Read(
 void EndCheckpointLogRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
     ULONG32 startingPosition = binaryWriter.Position;
     binaryWriter.Position += sizeof(ULONG32);
     binaryWriter.Write(lastStableLsn_);
     
     if(isPhysicalWrite)
     {
-        if(lastCompletedBeginCheckpointRecordOffset_ == Constants::InvalidPhysicalRecordOffset)
+        if(lastCompletedBeginCheckpointRecordOffset_ == Constants::InvalidPhysicalRecordOffset || forceRecomputeOffsets == true)
         {
             ASSERT_IFNOT(
+                lastCompletedBeginCheckpointRecord_ != nullptr || forceRecomputeOffsets == true,
+                "EndCheckpointLogRecord::Write : lastCompletedBeginCheckpointRecord_ must not be null. (lastCompletedBeginCheckpointRecord_ != nullptr)={0}, forceRecomputeOffsets={1}",
                 lastCompletedBeginCheckpointRecord_ != nullptr,
-                "EndCheckpointLogRecord::Write : lastCompletedBeginCheckpointRecord_ must not be null");
+                forceRecomputeOffsets);
 
-            if(lastCompletedBeginCheckpointRecord_->RecordPosition != Constants::InvalidRecordPosition)
+            if (lastCompletedBeginCheckpointRecord_ != nullptr)
             {
-                ASSERT_IFNOT(
-                    RecordPosition != Constants::InvalidRecordPosition,
-                    "EndCheckpointLogRecord::Write : RecordPosition must be valid");
+                if (lastCompletedBeginCheckpointRecord_->RecordPosition != Constants::InvalidRecordPosition)
+                {
+                    ASSERT_IFNOT(
+                        RecordPosition != Constants::InvalidRecordPosition,
+                        "EndCheckpointLogRecord::Write : RecordPosition must be valid");
 
-                lastCompletedBeginCheckpointRecordOffset_ = RecordPosition - lastCompletedBeginCheckpointRecord_->RecordPosition;
-            }
-            else
-            {
-                lastCompletedBeginCheckpointRecordOffset_ = Constants::InvalidPhysicalRecordOffset;
+                    lastCompletedBeginCheckpointRecordOffset_ = RecordPosition - lastCompletedBeginCheckpointRecord_->RecordPosition;
+                }
+                else
+                {
+                    lastCompletedBeginCheckpointRecordOffset_ = Constants::InvalidPhysicalRecordOffset;
+                }
             }
         }
 

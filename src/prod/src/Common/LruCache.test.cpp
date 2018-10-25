@@ -718,11 +718,11 @@ namespace Common
     // ref-counts of cached entries
     //
 
+    const bool IsPerfTestEnabled = true;
+
     BOOST_AUTO_TEST_CASE(PerfTest)
     {
-        bool isPerfTestEnabled = true;
-
-        if (!isPerfTestEnabled)
+        if (!IsPerfTestEnabled)
         {
             Trace.WriteWarning(
                 TraceComponent, 

@@ -86,6 +86,16 @@ namespace ClientTest
             Common::AsyncOperationSPtr const &operation,
             __inout Naming::PartitionedServiceDescriptor &description);
 
+        Common::AsyncOperationSPtr BeginGetCachedServiceDescription(
+            Common::NamingUri const &name,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent);
+
+        Common::ErrorCode EndGetCachedServiceDescription(
+            Common::AsyncOperationSPtr const &operation,
+            __inout Naming::PartitionedServiceDescriptor &description);
+
         Common::AsyncOperationSPtr BeginInternalGetServiceDescription(
             Common::NamingUri  const &name,
             Common::ActivityId const& activityId,

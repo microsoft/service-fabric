@@ -19,8 +19,8 @@ namespace ServiceModel
             std::wstring const & serviceName,
             FABRIC_INSTANCE_ID instanceId);
 
-        ServiceEntityHealthInformation(ServiceEntityHealthInformation && other);
-        ServiceEntityHealthInformation & operator = (ServiceEntityHealthInformation && other);
+        ServiceEntityHealthInformation(ServiceEntityHealthInformation && other) = default;
+        ServiceEntityHealthInformation & operator = (ServiceEntityHealthInformation && other) = default;
         
         __declspec(property(get=get_ServiceName)) std::wstring const& ServiceName;
         std::wstring const& get_ServiceName() const { return serviceName_; }

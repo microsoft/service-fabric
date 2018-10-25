@@ -88,6 +88,19 @@ namespace Data
             __declspec(property(get = GetMetadataBlockHeaderSize)) ULONG MetadataBlockHeaderSize;
             virtual ULONG GetMetadataBlockHeaderSize() const = 0;
 
+            ///
+            /// The current size of the occupied region of the log (bytes). Total disk-usage might exceed this if disk 
+            /// space is pre-reserved (e.g. dedicated direct + nonsparse dedicated)>
+            ///
+            __declspec(property(get = GetSize)) ULONGLONG Size;
+            virtual ULONGLONG GetSize() const = 0;
+
+            ///
+            /// The space remaining in the log (bytes). If exhausted, writes will fail.
+            ///
+            __declspec(property(get = GetSpaceRemaining)) ULONGLONG SpaceRemaining;
+            virtual ULONGLONG GetSpaceRemaining() const = 0;
+
             /// <summary>
             /// Return an abstract Stream reference for this ILogicalLog optimized for sequential or random reads
             /// </summary>

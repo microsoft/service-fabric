@@ -78,8 +78,8 @@ namespace Data
             {
                 // this.ThrowIfKeyIsNull(key);
 
-#if DEBUG             // todo: run in debug mode only
-                if (Count() != 0)
+#if DBG            // todo: run in debug mode only
+                if (this->Count() != 0)
                 {
                     TKey lastKey = PartitionedList<TKey, TValue>::GetLastKey();
                     int comparison = keyComparerSPtr_->Compare(lastKey, key);

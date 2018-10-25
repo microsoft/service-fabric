@@ -515,7 +515,7 @@ bool FaultDomainSubspace::IsValidQuorumDomain(
     // Examples:
     //    - targetReplicaCount = 4, allowedDomainsCount = 3 -> it is OK if one domain has 2 replicas
     //    - targetReplicaCount = X, allowedDomainsCount = 2 -> it is OK if one domain has X - (Floor(X/2) + 1) + 1 = Ceil(X/2) replicas
-    if (childDomainsCount * replicaLimit < partition->Service->TargetReplicaSetSize)
+    if (childDomainsCount * replicaLimit < partition->TargetReplicaSetSize)
     {
         ++replicaLimit;
     }
@@ -1051,7 +1051,7 @@ bool FaultDomainConstraint::HasQuorumDomainViolation(
         // Examples:
         //    - targetReplicaCount = 4, allowedDomainsCount = 3 -> it is OK if one domain has 2 replicas
         //    - targetReplicaCount = X, allowedDomainsCount = 2 -> it is OK if one domain has X - (Floor(X/2) + 1) + 1 = Ceil(X/2) replicas
-        if (childDomainsCount * replicaLimit < partition->Service->TargetReplicaSetSize)
+        if (childDomainsCount * replicaLimit < partition->TargetReplicaSetSize)
         {
             ++replicaLimit;
         }

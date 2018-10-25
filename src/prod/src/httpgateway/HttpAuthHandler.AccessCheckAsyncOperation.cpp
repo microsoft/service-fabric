@@ -9,13 +9,20 @@ using namespace Common;
 using namespace HttpGateway;
 
 void HttpAuthHandler::AccessCheckAsyncOperation::OnStart(__in AsyncOperationSPtr const& thisSPtr)
-{   
-    TimedAsyncOperation::OnStart(thisSPtr);
+{
+
+    // Start the timed async for non SSL based security providers. 
+    // For SSL/cert based access check, read certificate operation will manage its time.
+    if (owner_.handlerType_ != Transport::SecurityProvider::Enum::Ssl)
+    {
+        TimedAsyncOperation::OnStart(thisSPtr);
+    }
+
     AcquireReadLock(owner_.lock_);
     owner_.OnCheckAccess(thisSPtr);
 }
 
-ErrorCode HttpAuthHandler::AccessCheckAsyncOperation::End(            
+ErrorCode HttpAuthHandler::AccessCheckAsyncOperation::End(
     Common::AsyncOperationSPtr const& operation,
     __out USHORT & httpStatusOnError,
     __out std::wstring & headerName,

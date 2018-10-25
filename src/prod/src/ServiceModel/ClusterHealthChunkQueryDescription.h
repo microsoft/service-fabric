@@ -16,8 +16,8 @@ namespace ServiceModel
     public:
         ClusterHealthChunkQueryDescription();
 
-        ClusterHealthChunkQueryDescription(ClusterHealthChunkQueryDescription && other);
-        ClusterHealthChunkQueryDescription & operator = (ClusterHealthChunkQueryDescription && other);
+        ClusterHealthChunkQueryDescription(ClusterHealthChunkQueryDescription && other) = default;
+        ClusterHealthChunkQueryDescription & operator = (ClusterHealthChunkQueryDescription && other) = default;
 
         virtual ~ClusterHealthChunkQueryDescription();
 

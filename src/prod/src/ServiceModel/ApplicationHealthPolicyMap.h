@@ -14,11 +14,11 @@ namespace ServiceModel
     public:
         ApplicationHealthPolicyMap();
 
-        ApplicationHealthPolicyMap(ApplicationHealthPolicyMap const & other);
-        ApplicationHealthPolicyMap const & operator = (ApplicationHealthPolicyMap const & other);
+        ApplicationHealthPolicyMap(ApplicationHealthPolicyMap const & other) = default;
+        ApplicationHealthPolicyMap & operator = (ApplicationHealthPolicyMap const & other) = default;
 
-        ApplicationHealthPolicyMap(ApplicationHealthPolicyMap && other);
-        ApplicationHealthPolicyMap const & operator = (ApplicationHealthPolicyMap && other);
+        ApplicationHealthPolicyMap(ApplicationHealthPolicyMap && other) = default;
+        ApplicationHealthPolicyMap & operator = (ApplicationHealthPolicyMap && other) = default;
 
         std::shared_ptr<ApplicationHealthPolicy> GetApplicationHealthPolicy(std::wstring const & applicationName) const;
         

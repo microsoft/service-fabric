@@ -80,6 +80,11 @@ namespace TStoreTests
          co_return 0;
       }
 
+      void Dispose()
+      {
+          transactionSPtr_->Dispose();
+      }
+
    private:
       WriteTransaction(
          __in Data::TStore::Store<TKey, TValue>& stateProvider,

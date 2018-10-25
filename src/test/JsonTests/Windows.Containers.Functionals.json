@@ -1,11 +1,10 @@
 {
-  "Default": {
-  },
+  "Default": {},
   "Tests": [
     {
       "Name": "E2EContainerCert",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "ratando",      
+      "Owners": "jkochhar,alsantam",
       "ResourcesRequired": "Server:1;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -19,7 +18,7 @@
     {
       "Name": "ComposeDeploymentCommunication",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "linggeng,bharatn",      
+      "Owners": "linggeng,bharatn",
       "ResourcesRequired": "Server:6;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -33,7 +32,7 @@
     {
       "Name": "DockerHealthCheckIntegration",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "harahma,rajeetn",      
+      "Owners": "harahma",
       "ResourcesRequired": "Server:2;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -45,9 +44,23 @@
       }
     },
     {
+      "Name": "VotingContainerAppTest",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "mrgarg,yzha,kailasl",
+      "ResourcesRequired": "Server:1;Group=WS2016CT1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "VotingContainerAppTest.test",
+        "ExecutionTimeout": "10800",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
       "Name": "EnlightenedContainerAppTest",
       "Type": "V2_ScriptTest_Container",
-      "Owners": "roroutra,anmola",      
+      "Owners": "roroutra",
       "ResourcesRequired": "Server:1;Group=WS2016CT1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -55,6 +68,132 @@
         "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
         "TaskName": "EnlightenedContainerAppTest.test",
         "ExecutionTimeout": "10800",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "SfrpWindows.EnlightenedContainerAppTest.HyperV",
+      "Type": "Windows_SFRP_ScriptTest",
+      "Owners": "roroutra",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "SfrpWindows.EnlightenedContainerAppTest.HyperV.test",
+        "ExecutionTimeout": "10800",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "V2Application_windows",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "linggeng,bharatn",      
+      "ResourcesRequired": "Server:2;Group=WS2016SBZ",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "V2Application_windows.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "ContianerLogsApiTest",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "roroutra",
+      "ResourcesRequired": "Server:1;Group=WS2016CT1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "ContianerLogsApiTest.test",
+        "ExecutionTimeout": "10800",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "DNSFirewallRuleContainerSetupTest",
+      "Type": "TAEFTest_Isolated",
+      "Owners": "vivekagg,dariopb",
+      "ResourcesRequired": "Server:1;Group=WS2016Temp",
+      "Tags": "Admin,Security,Management",
+      "TestExecutionParameters": {
+        "TaskName": "System.Fabric.Management.Test.dll",
+        "Params": "/select:\"(@ContainerFeatureRequired='true')\"",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "SetupType": "XCopy"
+      }
+    },
+    {
+      "Name": "DNSTestAppNano2016OnWS2016",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "vivekagg,dariopb",
+      "ResourcesRequired": "Server:2;Group=WS2016SBZ",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "PartitionedDNSQueryNano2016_WS2016.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "DNSTestAppNano2016OnWS2016WithDefaultPrefix",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "vivekagg,dariopb",
+      "ResourcesRequired": "Server:2;Group=WS2016SBZ",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "DNSQueryNano2016_WS2016_DefaultPrefix.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "DNSTestAppWSCore2016OnWS2016",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "vivekagg,dariopb",
+      "ResourcesRequired": "Server:2;Group=WS2016SBZ",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "PartitionedDNSQueryWSC2016_WS2016.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "VotingAppWS2016OnWS1709",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "caiwang,gkhanna",
+      "ResourcesRequired": "Server:2;Group=WS2016RS3-D2V3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "VotingAppRS1.test",
+        "ExecutionTimeout": "3600",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "VotingAppWS2016OnWS1804",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "caiwang,gkhanna",
+      "ResourcesRequired": "Server:2;Group=WS2016RS4-D2V3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\ComposeDeploymentTestConfig.txt",
+        "TaskName": "VotingAppRS1.test",
+        "ExecutionTimeout": "3600",
         "CleanupTimeout": "5400"
       }
     }

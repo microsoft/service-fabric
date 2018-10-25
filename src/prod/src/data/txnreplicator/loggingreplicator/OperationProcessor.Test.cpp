@@ -113,7 +113,7 @@ namespace LoggingReplicatorTests
         KString::SPtr mockWorkFolder = Data::Utilities::KPath::Combine(currentDirectory.c_str(), L"OperationProcessorTests", allocator);
         TRInternalSettingsSPtr settings = TRInternalSettings::Create(nullptr, make_shared<TransactionalReplicatorConfig>());
         TestHealthClientSPtr healthClient = TestHealthClient::Create();
-		TestTransactionReplicator::SPtr txnReplicator = TestTransactionReplicator::Create(allocator);
+        TestTransactionReplicator::SPtr txnReplicator = TestTransactionReplicator::Create(allocator);
 
         BackupManager::SPtr backupManager = BackupManager::Create(
             *prId_,
@@ -136,10 +136,17 @@ namespace LoggingReplicatorTests
             *backupManager,
             *invalidLogRecords_,
             settings,
-			*txnReplicator,
-			allocator);
-		
-        recordsDispatcher_ = LogRecordsDispatcher::Create(*prId_, *operationProcessor_, settings, allocator);
+            *txnReplicator,
+            allocator);
+       
+        if (Common::DateTime::Now().Ticks % 2 == 0)
+        {
+            recordsDispatcher_ = SerialLogRecordsDispatcher::Create(*prId_, *operationProcessor_, settings, allocator);
+        }
+        else 
+        {
+            recordsDispatcher_ = ParallelLogRecordsDispatcher::Create(*prId_, *operationProcessor_, settings, allocator);
+        }
 
         roleContextDrainState_->Reuse();
         roleContextDrainState_->OnRecovery();
@@ -548,5 +555,5 @@ namespace LoggingReplicatorTests
         }
     }
 
-	BOOST_AUTO_TEST_SUITE_END()
+    BOOST_AUTO_TEST_SUITE_END()
 }

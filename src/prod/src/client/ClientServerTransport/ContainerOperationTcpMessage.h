@@ -13,6 +13,7 @@ namespace ClientServerTransport
         static Common::GlobalWString CreateComposeDeploymentAction;
         static Common::GlobalWString DeleteComposeDeploymentAction;
         static Common::GlobalWString UpgradeComposeDeploymentAction;
+        static Common::GlobalWString DeleteSingleInstanceDeploymentAction;
 
         ContainerOperationTcpMessage(
             std::wstring const &action,
@@ -66,7 +67,7 @@ namespace ClientServerTransport
             GetFileSizes(composeFiles, sfSettingsFiles, composeFileSizes, sfSettingsFileSizes);
 
             auto message = Common::make_unique<ContainerOperationTcpMessage>(CreateComposeDeploymentAction, move(composeFiles), move(sfSettingsFiles), activityId);
-            message->Headers.Add(CreateContainerApplicationRequestHeader(deploymentName, applicationName, move(composeFileSizes), move(sfSettingsFileSizes), repositoryUserName, repositoryPassword, isPasswordEncrypted));
+            message->Headers.Add(CreateComposeDeploymentRequestHeader(deploymentName, applicationName, move(composeFileSizes), move(sfSettingsFileSizes), repositoryUserName, repositoryPassword, isPasswordEncrypted));
             return std::move(message);
         }
 
@@ -91,9 +92,21 @@ namespace ClientServerTransport
             Common::ActivityId const &activityId)
         {
             auto message = Common::make_unique<ContainerOperationTcpMessage>(
-                    DeleteComposeDeploymentAction,
-                    Common::make_unique<Management::ClusterManager::DeleteComposeDeploymentMessageBody>(deploymentName, applicationName),
-                    activityId);
+                DeleteComposeDeploymentAction,
+                Common::make_unique<Management::ClusterManager::DeleteComposeDeploymentMessageBody>(deploymentName, applicationName),
+                activityId);
+
+            return std::move(message);
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetDeleteSingleInstanceDeploymentMessage(
+            ServiceModel::DeleteSingleInstanceDeploymentDescription const & description,
+            Common::ActivityId const & activityId)
+        {
+            auto message = Common::make_unique<ContainerOperationTcpMessage>(
+                DeleteSingleInstanceDeploymentAction,
+                Common::make_unique<Management::ClusterManager::DeleteSingleInstanceDeploymentMessageBody>(description),
+                activityId);
 
             return std::move(message);
         }

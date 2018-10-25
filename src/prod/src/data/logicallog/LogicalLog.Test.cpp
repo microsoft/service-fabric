@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#include "TestHeaders.h"
 
 #include <boost/test/unit_test.hpp>
 #include "Common/boost-taef.h"
@@ -52,11 +53,12 @@ namespace LogTests
         static NTSTATUS Create(
             __in KAllocator& allocator,
             __in Data::Utilities::PartitionedReplicaId & prId,
+            __in KtlLoggerMode ktlLoggerMode,
             __out LogicalLogTest::SPtr& logicalLogTest)
         {
             NTSTATUS status;
 
-            logicalLogTest = _new(TESTLOGICALLOG_TAG, allocator) LogicalLogTest(prId);
+            logicalLogTest = _new(TESTLOGICALLOG_TAG, allocator) LogicalLogTest(prId, ktlLoggerMode);
 
             if (!logicalLogTest)
             {
@@ -79,7 +81,7 @@ namespace LogTests
             NTSTATUS status;
             ILogManagerHandle::SPtr manager;
 
-            status = SyncAwait(logManager_->GetHandle(prId, TestDirectoryPath, CancellationToken::None, manager));
+            status = SyncAwait(logManager_->GetHandle(prId, GetTestDirectoryPath(), CancellationToken::None, manager));
             if (!NT_SUCCESS(status))
             {
                 return status;
@@ -299,6 +301,113 @@ namespace LogTests
             }
         }
 
+        VOID LogSizeSpaceRemainingTest()
+        {
+            NTSTATUS status;
+
+            KString::CSPtr alias;
+
+            ILogManagerHandle::SPtr logManager;
+            status = CreateAndOpenLogManager(logManager);
+            VERIFY_STATUS_SUCCESS("CreateAndOpenLogManager", status);
+
+            KString::SPtr physicalLogName;
+            GenerateUniqueFilename(physicalLogName);
+            KWString physicalLogNameWString(GetThisAllocator());
+            physicalLogNameWString = *physicalLogName;
+            VERIFY_STATUS_SUCCESS("KWString assignment", status);
+
+            KGuid physicalLogId;
+            physicalLogId.CreateNew();
+
+            // Don't care if this fails
+            SyncAwait(logManager->DeletePhysicalLogAsync(*physicalLogName, physicalLogId, CancellationToken::None));
+
+            IPhysicalLogHandle::SPtr physicalLog;
+            status = CreatePhysicalLog(*logManager, physicalLogId, *physicalLogName, physicalLog);
+            VERIFY_STATUS_SUCCESS("CreatePhysicalLog", status);
+
+            KString::SPtr logicalLogName;
+            GenerateUniqueFilename(logicalLogName);
+            KGuid logicalLogId;
+            logicalLogId.CreateNew();
+            ILogicalLog::SPtr logicalLog;
+            status = CreateLogicalLog(*physicalLog, logicalLogId, *logicalLogName, logicalLog);
+            VERIFY_STATUS_SUCCESS("CreateLogicalLog", status);
+
+            ULONGLONG size0 = logicalLog->Size;
+            ULONGLONG spaceRemaining0 = logicalLog->SpaceRemaining;
+            VERIFY_ARE_NOT_EQUAL(0, spaceRemaining0);
+
+            KBuffer::SPtr buf;
+            PUCHAR bufferPtr;
+            AllocBuffer(10, buf, bufferPtr);
+            status = SyncAwait(logicalLog->AppendAsync(*buf, 0, 10, CancellationToken::None));
+            VERIFY_STATUS_SUCCESS("AppendAsync", status);
+
+            status = SyncAwait(logicalLog->FlushWithMarkerAsync(CancellationToken::None));
+            VERIFY_STATUS_SUCCESS("FlushAsync", status);
+
+            ULONGLONG size1 = logicalLog->Size;
+            ULONGLONG spaceRemaining1 = logicalLog->SpaceRemaining;
+            VERIFY_ARE_NOT_EQUAL(0, size1);
+            VERIFY_ARE_NOT_EQUAL(0, spaceRemaining1);
+            VERIFY_IS_TRUE(size0 < size1);
+            VERIFY_IS_TRUE(spaceRemaining0 > spaceRemaining1);
+
+
+            // close, reopen, recheck
+            status = SyncAwait(logicalLog->CloseAsync(CancellationToken::None));
+            VERIFY_STATUS_SUCCESS("LogicalLog::CloseAsync", status);
+
+            status = OpenLogicalLog(*physicalLog, logicalLogId, *logicalLogName, logicalLog);
+            VERIFY_STATUS_SUCCESS("OpenLogicalLog", status);
+
+            ULONGLONG size2 = logicalLog->Size;
+            ULONGLONG spaceRemaining2 = logicalLog->SpaceRemaining;
+            VERIFY_ARE_NOT_EQUAL(0, size2);
+            VERIFY_ARE_NOT_EQUAL(0, spaceRemaining2);
+            VERIFY_IS_TRUE(size2 <= size1);
+            VERIFY_IS_TRUE(spaceRemaining2 >= spaceRemaining1);
+
+
+            // truncate and confirm that size goes down and spaceRemaining goes up
+            // Disabled pending a reliable way to test truncatehead
+            /*status = SyncAwait(logicalLog->TruncateHead(logicalLog->WritePosition));
+            VERIFY_STATUS_SUCCESS("TruncateHead", status);
+
+            status = SyncAwait(logicalLog->FlushWithMarkerAsync(CancellationToken::None));
+            VERIFY_STATUS_SUCCESS("FlushAsync", status);
+
+            ULONGLONG start = KNt::GetTickCount64();
+            while (KNt::GetTickCount64() - start <= 15000 && logicalLog->Size == size2)
+            {
+                KNt::Sleep(250);
+            }
+            ULONGLONG size3 = logicalLog->Size;
+            ULONGLONG spaceRemaining3 = logicalLog->SpaceRemaining;
+            VERIFY_IS_TRUE(size3 < size2);
+            VERIFY_IS_TRUE(spaceRemaining3 > spaceRemaining2);*/
+
+
+            // truncatetail does not reduce the size of the log so is not suitable to test
+
+            // Cleanup
+            status = SyncAwait(logicalLog->CloseAsync(CancellationToken::None));
+            VERIFY_STATUS_SUCCESS("LogicalLog::CloseAsync", status);
+            logicalLog = nullptr;
+
+            status = SyncAwait(physicalLog->CloseAsync(CancellationToken::None));
+            VERIFY_STATUS_SUCCESS("PhysicalLogHandle::CloseAsync", status);
+            physicalLog = nullptr;
+
+            status = SyncAwait(logManager->DeletePhysicalLogAsync(*physicalLogName, physicalLogId, CancellationToken::None));
+            VERIFY_STATUS_SUCCESS("LogManagerHandle::DeletePhysicalLogAsync", status);
+
+            status = SyncAwait(logManager->CloseAsync(CancellationToken::None));
+            VERIFY_STATUS_SUCCESS("LogManagerHandle::CloseAsync", status);
+        }
+
         VOID BasicTest()
         {
             NTSTATUS status;
@@ -486,8 +595,8 @@ namespace LogTests
             }
 
             // prove with a staging log
-            // "default" application guid has a special meaning on Windows (mapping in the driver) and so this test isn't appropriate
-#if defined(PLATFORM_UNIX)
+            // "default" application guid has a special meaning when using the driver (mapping) and so this test isn't appropriate
+            if (ktlLoggerMode_ == KtlLoggerMode::InProc)
             {
                 IPhysicalLogHandle::SPtr stagingLog;
                 KString::SPtr stagingLogPath;
@@ -517,7 +626,7 @@ namespace LogTests
                 // Prove that opening on a different log manager handle fails (unique path from user, which is ignored).  Using the same logmanager handle is NOT SUPPORTED and buggy
                 {
                     Data::Utilities::PartitionedReplicaId::SPtr secondReplicaId;
-                    ILogManagerHandle::SPtr logManager1;
+                    ILogManagerHandle::SPtr logManager2;
                     IPhysicalLogHandle::SPtr stagingLog1;
                     KString::SPtr stagingLogPath1;
 
@@ -526,35 +635,35 @@ namespace LogTests
 
                     // It is required to use a separate logmanager handle, as in the product a logmanager handle will only be used by one replica, so the 
                     // replicaid/partitionid/path are picked up when the logmanager handle is created
-                    status = CreateAndOpenLogManager(*secondReplicaId, logManager1);
+                    status = CreateAndOpenLogManager(*secondReplicaId, logManager2);
                     VERIFY_STATUS_SUCCESS("LogManager::GetHandle", status);
                     
                     // It actually doesn't matter what path is passed here for the staging log, since the path is chosen under the covers based on the prid
-                    status = OpenPhysicalLog(*logManager1, KGuid(KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID()), *stagingLogPath1, stagingLog1);
+                    status = OpenPhysicalLog(*logManager2, KGuid(KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID()), *stagingLogPath1, stagingLog1);
                     VERIFY_IS_TRUE(status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_OBJECT_NAME_NOT_FOUND);
 
-                    status = SyncAwait(logManager1->CloseAsync(CancellationToken::None));
+                    status = SyncAwait(logManager2->CloseAsync(CancellationToken::None));
                     VERIFY_STATUS_SUCCESS("LogManagerHandle::Close", status);
                 }
 
                 // Prove that opening on a different log manager handle fails (same path from user, which is ignored).  Using the same logmanager handle is NOT SUPPORTED and buggy
                 {
                     Data::Utilities::PartitionedReplicaId::SPtr secondReplicaId;
-                    ILogManagerHandle::SPtr logManager1;
+                    ILogManagerHandle::SPtr logManager2;
                     IPhysicalLogHandle::SPtr stagingLog1;
 
                     secondReplicaId = Data::Utilities::PartitionedReplicaId::Create(prId_->PartitionId, prId_->ReplicaId + 1, GetThisAllocator());
 
                     // It is required to use a separate logmanager handle, as in the product a logmanager handle will only be used by one replica, so the 
                     // replicaid/partitionid/path are picked up when the logmanager handle is created
-                    status = CreateAndOpenLogManager(*secondReplicaId, logManager1);
+                    status = CreateAndOpenLogManager(*secondReplicaId, logManager2);
                     VERIFY_STATUS_SUCCESS("LogManager::GetHandle", status);
 
                     // It actually doesn't matter what path is passed here for the staging log, since the path is chosen under the covers based on the prid
-                    status = OpenPhysicalLog(*logManager1, KGuid(KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID()), *stagingLogPath, stagingLog1);
+                    status = OpenPhysicalLog(*logManager2, KGuid(KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID()), *stagingLogPath, stagingLog1);
                     VERIFY_IS_TRUE(status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_OBJECT_NAME_NOT_FOUND);
 
-                    status = SyncAwait(logManager1->CloseAsync(CancellationToken::None));
+                    status = SyncAwait(logManager2->CloseAsync(CancellationToken::None));
                     VERIFY_STATUS_SUCCESS("LogManagerHandle::Close", status);
                 }
 
@@ -594,7 +703,7 @@ namespace LogTests
                     0,                                  // LogManager.LogsCount
                     TRUE);
             }
-#endif
+
 
             // Prove we can re-create; open on a different handle; close the original - and all is well
             status = CreatePhysicalLog(*logManager, physicalLogId, *physicalLogName, physicalLog);
@@ -1314,14 +1423,16 @@ namespace LogTests
 
     private:
 
-        LogicalLogTest(__in Data::Utilities::PartitionedReplicaId & prId);
+        LogicalLogTest(__in Data::Utilities::PartitionedReplicaId & prId, __in KtlLoggerMode ktlLoggerMode);
 
+        KtlLoggerMode ktlLoggerMode_;
         Data::Utilities::PartitionedReplicaId::SPtr prId_;
         LogManager::SPtr logManager_;
     };
 
-    LogicalLogTest::LogicalLogTest(__in Data::Utilities::PartitionedReplicaId & prId)
+    LogicalLogTest::LogicalLogTest(__in Data::Utilities::PartitionedReplicaId & prId, __in KtlLoggerMode ktlLoggerMode)
         : prId_(&prId)
+        , ktlLoggerMode_(ktlLoggerMode)
     {
         NTSTATUS status;
 
@@ -1343,7 +1454,7 @@ namespace LogTests
         status = LogManager::Create(GetThisAllocator(), logManager_);
         VERIFY_STATUS_SUCCESS("LogManager::Create", status);
 
-        status = SyncAwait(logManager_->OpenAsync(CancellationToken::None, sharedLogSettings));
+        status = SyncAwait(logManager_->OpenAsync(CancellationToken::None, sharedLogSettings, ktlLoggerMode));
         VERIFY_STATUS_SUCCESS("LogManager::OpenAsync", status);
     }
 
@@ -1365,8 +1476,16 @@ namespace LogTests
         {
             NTSTATUS status;
 
-            status = LogicalLogTest::Create(*allocator_, *prId_, testContext_);
+            status = LogicalLogTest::Create(*allocator_, *prId_, ktlLoggerMode_, testContext_);
             VERIFY_STATUS_SUCCESS("LogicalLogTest::Create", status);
+
+#if defined(UDRIVER)
+            //
+            // For UDRIVER, need to perform work done in PNP Device Add
+            //
+            status = SyncAwait(FileObjectTable::CreateAndRegisterOverlayManagerAsync(underlyingSystem_->NonPagedAllocator(), KTL_TAG_TEST));
+            VERIFY_STATUS_SUCCESS("FileObjectTable::CreateAndRegisterOverlayManagerAsync", NT_SUCCESS(status));
+#endif
 
             testContext_->CreateTestDirectory();
         }
@@ -1376,6 +1495,15 @@ namespace LogTests
             // todo: assert that the test cleaned up after itself (e.g. deletephysicallog etc. deleted all the files)
             testContext_->DeleteTestDirectory();
             testContext_ = nullptr;
+
+#if defined(UDRIVER)
+            NTSTATUS status;
+            //
+            // For UDRIVER need to perform work done in PNP RemoveDevice
+            //
+            status = SyncAwait(FileObjectTable::StopAndUnregisterOverlayManagerAsync(underlyingSystem_->NonPagedAllocator()));
+            VERIFY_STATUS_SUCCESS("FileObjectTable::StopAndUnregisterOverlayManagerAsync", NT_SUCCESS(status));
+#endif
         };
 
         LogicalLogTests() {}
@@ -1388,7 +1516,10 @@ namespace LogTests
         Data::Utilities::PartitionedReplicaId::SPtr prId_;
         KtlSystem * underlyingSystem_;
         KAllocator* allocator_;
+        KtlLoggerMode ktlLoggerMode_ = KtlLoggerMode::Default;
     };
+
+#pragma region FabricOpenClose
 
     void Test_Fabric_FinishLogManagerOpen(
         __in Common::AsyncOperationSPtr const & openOperation,
@@ -1595,66 +1726,47 @@ namespace LogTests
         LogManager::SPtr logManager_;
     };
 
-    BOOST_GLOBAL_FIXTURE(TracingInit);
-    
-    BOOST_FIXTURE_TEST_SUITE(LogicalLogTestsSuite, LogicalLogTests)
-
-#if defined(PLATFORM_UNIX)
-    // This test case is linux-only, as deleting the shared log when the last logical log within it is deleted
-    // is disabled for Windows
-    BOOST_AUTO_TEST_CASE(LogicalLog_DeleteLogicalLogAndPhysicalLogTest)
+    void FabricOpenCloseSanityTest(KtlSystem* underlyingSystem)
     {
-        TEST_TRACE_BEGIN("LogicalLog_DeleteLogicalLogAndPhysicalLogTest")
-        {
-            testContext_->DeleteLogicalLogAndPhysicalLogTest();
-        }
+        NTSTATUS tStatus;
+
+        LogManager::SPtr logManager;
+        tStatus = LogManager::Create(underlyingSystem->NonPagedAllocator(), logManager);
+        VERIFY_STATUS_SUCCESS("LogManager::Create", tStatus);
+
+        KAsyncEvent openedEvent;
+        KAsyncEvent::WaitContext::SPtr openWaitContext;
+        tStatus = openedEvent.CreateWaitContext(KTL_TAG_TEST, underlyingSystem->NonPagedAllocator(), openWaitContext);
+        VERIFY_STATUS_SUCCESS("KAsyncEvent::WaitContext::Create", tStatus);
+
+        KAsyncEvent closedEvent;
+        KAsyncEvent::WaitContext::SPtr closeWaitContext;
+        tStatus = closedEvent.CreateWaitContext(KTL_TAG_TEST, underlyingSystem->NonPagedAllocator(), closeWaitContext);
+        VERIFY_STATUS_SUCCESS("KAsyncEvent::WaitContext::Create", tStatus);
+
+        VERIFY_IS_FALSE(logManager->IsOpen());
+
+        bool openSuccess;
+        Test_Fabric_OpenLogManager(*logManager, openedEvent, openSuccess);
+        tStatus = SyncAwait(openWaitContext->StartWaitUntilSetAsync(nullptr));
+        VERIFY_STATUS_SUCCESS("openWaitContext->StartWaitUntilSetAsync", tStatus);
+        VERIFY_IS_TRUE(openSuccess);
+
+        VERIFY_IS_TRUE(logManager->IsOpen());
+
+        bool closeSuccess;
+        Test_Fabric_CloseLogManager(*logManager, closedEvent, closeSuccess);
+        tStatus = SyncAwait(closeWaitContext->StartWaitUntilSetAsync(nullptr));
+        VERIFY_STATUS_SUCCESS("closeWaitContext->StartWaitUntilSetAsync", tStatus);
+        VERIFY_IS_TRUE(closeSuccess);
+
+        VERIFY_IS_FALSE(logManager->IsOpen());
     }
-#endif
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_LogManager_FabricOpenCloseSanity)
-    {
-        TEST_TRACE_BEGIN("LogicalLog_LogManager_FabricOpenCloseSanity")
-        {
-            NTSTATUS tStatus;
-
-            LogManager::SPtr logManager;
-            tStatus = LogManager::Create(underlyingSystem_->NonPagedAllocator(), logManager);
-            VERIFY_STATUS_SUCCESS("LogManager::Create", tStatus);
-
-            KAsyncEvent openedEvent;
-            KAsyncEvent::WaitContext::SPtr openWaitContext;
-            tStatus = openedEvent.CreateWaitContext(KTL_TAG_TEST, underlyingSystem_->NonPagedAllocator(), openWaitContext);
-            VERIFY_STATUS_SUCCESS("KAsyncEvent::WaitContext::Create", tStatus);
-
-            KAsyncEvent closedEvent;
-            KAsyncEvent::WaitContext::SPtr closeWaitContext;
-            tStatus = closedEvent.CreateWaitContext(KTL_TAG_TEST, underlyingSystem_->NonPagedAllocator(), closeWaitContext);
-            VERIFY_STATUS_SUCCESS("KAsyncEvent::WaitContext::Create", tStatus);
-            
-            VERIFY_IS_FALSE(logManager->IsOpen());
-
-            bool openSuccess;
-            Test_Fabric_OpenLogManager(*logManager, openedEvent, openSuccess);
-            tStatus = SyncAwait(openWaitContext->StartWaitUntilSetAsync(nullptr));
-            VERIFY_STATUS_SUCCESS("openWaitContext->StartWaitUntilSetAsync", tStatus);
-            VERIFY_IS_TRUE(openSuccess);
-
-            VERIFY_IS_TRUE(logManager->IsOpen());
-
-            bool closeSuccess;
-            Test_Fabric_CloseLogManager(*logManager, closedEvent, closeSuccess);
-            tStatus = SyncAwait(closeWaitContext->StartWaitUntilSetAsync(nullptr));
-            VERIFY_STATUS_SUCCESS("closeWaitContext->StartWaitUntilSetAsync", tStatus);
-            VERIFY_IS_TRUE(closeSuccess);
-
-            VERIFY_IS_FALSE(logManager->IsOpen());
-        }
-    }
-    
-    BOOST_AUTO_TEST_CASE(LogicalLog_LogManager_ApphostTypeTest)
+    void LogManagerAppHostTypeTest()
     {
         TestFabricApphostAnalog testContext;
-        
+
         VERIFY_ARE_EQUAL(nullptr, testContext.logManager_.RawPtr());
         VERIFY_ARE_EQUAL(nullptr, testContext.ktlSystem_);
 
@@ -1664,7 +1776,7 @@ namespace LogTests
         VERIFY_ARE_NOT_EQUAL(nullptr, testContext.logManager_.RawPtr());
         VERIFY_ARE_NOT_EQUAL(nullptr, testContext.ktlSystem_);
         VERIFY_IS_TRUE(testContext.logManager_->IsOpen());
-        
+
         testContext.StartClose();
         testContext.closeEvent_.WaitUntilSet();
 
@@ -1672,84 +1784,335 @@ namespace LogTests
         VERIFY_STATUS_SUCCESS("ktlSystem", testContext.ktlSystem_->Status());
     }
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_OpenManyStreams)
+#pragma endregion FabricOpenClose
+
+    BOOST_GLOBAL_FIXTURE(TracingInit);
+    
+    BOOST_FIXTURE_TEST_SUITE(LogicalLogTestsSuite, LogicalLogTests)
+
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_LogSize_SpaceRemaining_InProc)
     {
-        TEST_TRACE_BEGIN("LogicalLog_OpenManyStreams")
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_LogSize_SpaceRemaining_InProc")
         {
-            testContext_->OpenManyStreamsTest();
+            testContext_->LogSizeSpaceRemainingTest();
         }
     }
+#endif
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_BasicTest)
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_LogSize_SpaceRemaining_OutOfProc)
     {
-        TEST_TRACE_BEGIN("LogicalLog_BasicTest")
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_LogSize_SpaceRemaining_OutOfProc")
+        {
+            testContext_->LogSizeSpaceRemainingTest();
+        }
+    }
+#endif
+
+#if !defined(UDRIVER)
+    // This test case is in-proc only, as deleting the shared log when the last logical log within it is deleted
+    // is disabled for out-of-proc (system shared) cases
+    BOOST_AUTO_TEST_CASE(LogicalLog_DeleteLogicalLogAndPhysicalLogTest_InProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_DeleteLogicalLogAndPhysicalLogTest_InProc")
+        {
+            testContext_->DeleteLogicalLogAndPhysicalLogTest();
+        }
+    }
+#endif
+
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_LogManager_FabricOpenCloseSanity_InProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_LogManager_FabricOpenCloseSanity_InProc")
+        {
+            FabricOpenCloseSanityTest(underlyingSystem_);
+        }
+    }
+#endif
+
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_LogManager_FabricOpenCloseSanity_OutOfProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_LogManager_FabricOpenCloseSanity_OutOfProc")
+        {
+            FabricOpenCloseSanityTest(underlyingSystem_);
+        }
+    }
+#endif
+    
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_LogManager_ApphostTypeTest)
+    {
+        // Will open the log in default mode
+        LogManagerAppHostTypeTest();
+    }
+#endif
+
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_OpenManyStreams_InProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_OpenManyStreams_InProc")
+        {
+            testContext_->OpenManyStreamsTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_OpenManyStreams_OutOfProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_OpenManyStreams_OutOfProc")
+        {
+            testContext_->OpenManyStreamsTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_BasicTest_Default)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::Default;
+        TEST_TRACE_BEGIN("LogicalLog_BasicTest_Default")
         {
             testContext_->BasicTest();
         }
     }
+#endif
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_BasicIOTest)
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_BasicTest_InProc)
     {
-        TEST_TRACE_BEGIN("LogicalLog_BasicIOTest")
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_BasicTest_InProc")
         {
-            testContext_->BasicIOTest();
+            testContext_->BasicTest();
+        }
+    }
+#endif
+
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_BasicTest_OutOfProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_BasicTest_OutOfProc")
+        {
+            testContext_->BasicTest();
+        }
+    }
+#endif
+
+#if !defined(UDRIVER)
+    //        KGuid id;
+    //        id.CreateNew();
+    BOOST_AUTO_TEST_CASE(LogicalLog_BasicIOTest_InProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_BasicIOTest_InProc")
+        {
+            KGuid id;
+            id.CreateNew();
+            testContext_->BasicIOTest(ktlLoggerMode_, id);
         }
     }
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_WriteAtTruncationPointsTest)
+    BOOST_AUTO_TEST_CASE(LogicalLog_BasicIOTest_InProc_StagingLog_KtlPrefix)
     {
-        TEST_TRACE_BEGIN("LogicalLog_WriteAtTruncationPointsTest")
+        KInvariant(LogTestBase::g_UseKtlFilePrefix);
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_BasicIOTest_InProc_StagingLog_KtlPrefix")
         {
-            testContext_->WriteAtTruncationPointsTest();
+            KGuid id = KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID();
+            testContext_->BasicIOTest(ktlLoggerMode_, id);
         }
+        KInvariant(LogTestBase::g_UseKtlFilePrefix);
     }
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_RemoveFalseProgressTest)
+    BOOST_AUTO_TEST_CASE(LogicalLog_BasicIOTest_InProc_StagingLog_NoKtlPrefix)
     {
-        TEST_TRACE_BEGIN("LogicalLog_RemoveFalseProgressTest")
+        KInvariant(LogTestBase::g_UseKtlFilePrefix);
+        LogTestBase::g_UseKtlFilePrefix = false;
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_BasicIOTest_InProc_StagingLog_NoKtlPrefix")
         {
-            testContext_->RemoveFalseProgressTest();
+            KGuid id = KtlLogger::Constants::DefaultApplicationSharedLogId.AsGUID();
+            testContext_->BasicIOTest(ktlLoggerMode_, id);
+        }
+        KInvariant(!LogTestBase::g_UseKtlFilePrefix);
+        LogTestBase::g_UseKtlFilePrefix = true;
+    }
+#endif
+
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_BasicIOTest_OutOfProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_BasicIOTest_OutOfProc")
+        {
+            KGuid id;
+            id.CreateNew();
+            testContext_->BasicIOTest(ktlLoggerMode_, id);
         }
     }
+#endif
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_ReadAheadCacheTest)
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_WriteAtTruncationPointsTest_InProc)
     {
-        TEST_TRACE_BEGIN("LogicalLog_ReadAheadCacheTest")
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_WriteAtTruncationPointsTest_InProc")
         {
-            testContext_->ReadAheadCacheTest();
+            testContext_->WriteAtTruncationPointsTest(ktlLoggerMode_);
         }
     }
+#endif
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_TruncateInDataBufferTest)
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_WriteAtTruncationPointsTest_OutOfProc)
     {
-        TEST_TRACE_BEGIN("LogicalLog_TruncateInDataBufferTest")
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_WriteAtTruncationPointsTest_OutOfProc")
         {
-            testContext_->TruncateInDataBufferTest();
+            testContext_->WriteAtTruncationPointsTest(ktlLoggerMode_);
         }
     }
+#endif
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_SequentialAndRandomStreamTest)
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_RemoveFalseProgressTest_InProc)
     {
-        TEST_TRACE_BEGIN("LogicalLog_SequentialAndRandomStreamTest")
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_RemoveFalseProgressTest_InProc")
         {
-            testContext_->SequentialAndRandomStreamTest();
+            testContext_->RemoveFalseProgressTest(ktlLoggerMode_);
         }
     }
+#endif
 
-    BOOST_AUTO_TEST_CASE(LogicalLog_ReadWriteCloseRaceTest)
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_RemoveFalseProgressTest_OutOfProc)
     {
-        TEST_TRACE_BEGIN("LogicalLog_ReadWriteCloseRaceTest")
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_RemoveFalseProgressTest_OutOfProc")
         {
-            testContext_->ReadWriteCloseRaceTest();
+            testContext_->RemoveFalseProgressTest(ktlLoggerMode_);
         }
     }
+#endif
 
-#ifdef UPASSTHROUGH
-    BOOST_AUTO_TEST_CASE(LogicalLog_UPassthroughErrors)
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_ReadAheadCacheTest_InProc)
     {
-        TEST_TRACE_BEGIN("LogicalLog_UPassthroughErrors")
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_ReadAheadCacheTest_InProc")
         {
-            testContext_->UPassthroughErrorsTest();
+            testContext_->ReadAheadCacheTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_ReadAheadCacheTest_OutOfProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_ReadAheadCacheTest_OutOfProc")
+        {
+            testContext_->ReadAheadCacheTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_TruncateInDataBufferTest_InProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_TruncateInDataBufferTest_InProc")
+        {
+            testContext_->TruncateInDataBufferTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_TruncateInDataBufferTest_OutOfProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_TruncateInDataBufferTest_OutOfProc")
+        {
+            testContext_->TruncateInDataBufferTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_SequentialAndRandomStreamTest_InProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_SequentialAndRandomStreamTest_InProc")
+        {
+            testContext_->SequentialAndRandomStreamTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_SequentialAndRandomStreamTest_OutOfProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_SequentialAndRandomStreamTest_OutOfProc")
+        {
+            testContext_->SequentialAndRandomStreamTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+#if !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_ReadWriteCloseRaceTest_InProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_ReadWriteCloseRaceTest_InProc")
+        {
+            testContext_->ReadWriteCloseRaceTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+// todo: when this failure is made graceful (it currently fails via KInvariant), add this as a negative test case on Linux
+#if !defined(PLATFORM_UNIX)
+    BOOST_AUTO_TEST_CASE(LogicalLog_ReadWriteCloseRaceTest_OutOfProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::OutOfProc;
+        TEST_TRACE_BEGIN("LogicalLog_ReadWriteCloseRaceTest_OutOfProc")
+        {
+            testContext_->ReadWriteCloseRaceTest(ktlLoggerMode_);
+        }
+    }
+#endif
+
+#if defined(UPASSTHROUGH) && !defined(UDRIVER)
+    BOOST_AUTO_TEST_CASE(LogicalLog_UPassthroughErrors_InProc)
+    {
+        ktlLoggerMode_ = KtlLoggerMode::InProc;
+        TEST_TRACE_BEGIN("LogicalLog_UPassthroughErrors_InProc")
+        {
+            testContext_->UPassthroughErrorsTest(ktlLoggerMode_);
         }
     }
 #endif

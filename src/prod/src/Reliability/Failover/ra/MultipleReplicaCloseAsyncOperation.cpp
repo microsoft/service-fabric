@@ -73,7 +73,7 @@ bool MultipleReplicaCloseAsyncOperation::Processor(
 {
     handlerParameters.AssertFTExists();
 
-    parameters_.RA->CloseLocalReplica(handlerParameters, parameters_.CloseMode);
+    parameters_.RA->CloseLocalReplica(handlerParameters, parameters_.CloseMode, ActivityDescription::Empty);
 
     return true;
 }

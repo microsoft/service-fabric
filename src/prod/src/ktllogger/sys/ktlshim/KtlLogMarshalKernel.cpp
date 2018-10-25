@@ -9,7 +9,7 @@
 #include "KtlLogShimKernel.h"
 
 #ifdef KDRIVER
-#include "public.h"
+#include "../driver/public.h"
 #endif
 
 RequestMarshallerKernel::RequestMarshallerKernel() :
@@ -2826,15 +2826,39 @@ RequestMarshallerKernel::WriteCompletion(
 
     status = Async.Status();
 
+    KFinally([&status, contextKernel, this] 
+    {
+        BOOLEAN b = _LogStream->RemoveActiveContext(contextKernel->_ActiveContext);
+        KInvariant(b);
+
+        CompleteRequest(status);
+    });
+
     if (! NT_SUCCESS(status))
     {
         KTraceFailedAsyncRequest(status, &Async, GetRequestId(), _ParentObject.GetObjectId());
+        return;
     }
-    
-    BOOLEAN b = _LogStream->RemoveActiveContext(contextKernel->_ActiveContext);
-    KInvariant(b);
-    
-    CompleteRequest(status);
+
+    //
+    // Marshall out the log usage info if it was requested
+    //
+    if (_ObjectMethod == WriteAndReturnLogUsage)
+    {
+        status = WriteData<ULONGLONG>(_CurrentLogSize);
+        if (!NT_SUCCESS(status))
+        {
+            KTraceFailedAsyncRequest(status, &Async, _ParentObject.GetObjectId(), reinterpret_cast<ULONGLONG>(this));
+            return;
+        }
+
+        status = WriteData<ULONGLONG>(_CurrentLogSpaceRemaining);
+        if (!NT_SUCCESS(status))
+        {
+            KTraceFailedAsyncRequest(status, &Async, _ParentObject.GetObjectId(), reinterpret_cast<ULONGLONG>(this));
+            return;
+        }
+    }
 }
 
 NTSTATUS
@@ -2895,6 +2919,8 @@ RequestMarshallerKernel::WriteMethod(
                         _MetaDataBuffer,
                         _IoBuffer,
                         _ReservationSpace,
+                        _CurrentLogSize,
+                        _CurrentLogSpaceRemaining,
                         nullptr,         // Parent
                         completion);
 
@@ -4147,12 +4173,13 @@ RequestMarshallerKernel::LogStreamObjectMethodRequest(
             break;            
         }
         
+        case WriteAndReturnLogUsage:
         case Write:
         {
             status = WriteMarshall();
             break;
         }
-        
+
         case Reservation:
         {
             status = ReservationMarshall();

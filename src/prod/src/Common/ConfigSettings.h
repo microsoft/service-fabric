@@ -5,18 +5,16 @@
 
 #pragma once 
 
-namespace ServiceModel
-{
-    struct Parser;
-}
-
 namespace Common
 {
     // <Settings>
     struct ConfigSettings
     {
     public:
+        typedef std::map<std::wstring, ConfigSection, IsLessCaseInsensitiveComparer<std::wstring>> SectionMapType;
+
         ConfigSettings();
+        ConfigSettings(SectionMapType && sections);
         ConfigSettings(ConfigSettings const & other);
         ConfigSettings(ConfigSettings && other);
 
@@ -38,14 +36,10 @@ namespace Common
         void Remove(std::wstring const & sectionName);
 
         void clear();
+
     public:
-        std::map<std::wstring, ConfigSection, IsLessCaseInsensitiveComparer<std::wstring>> Sections;
-
-    private:
-        friend struct ServiceModel::Parser;
-
-        void ReadFromXml(Common::XmlReaderUPtr const &);
-        bool TryAddSection(ConfigSection && section);
+        // TODO: HACK - this should not be public it is violating encapsulation
+        SectionMapType Sections;
     };
 }
 

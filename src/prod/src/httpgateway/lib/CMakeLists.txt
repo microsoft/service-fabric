@@ -1,10 +1,12 @@
 set( LINUX_SOURCES
     ../ApplicationsHandler.cpp             
+    ../ApplicationsResourceHandler.cpp
     ../ApplicationTypesHandler.cpp         
     ../ApplicationUpgradeProgress.cpp      
     ../ClusterManagementHandler.cpp        
     ../Constants.cpp                       
     ../ComposeDeploymentsHandler.cpp
+    ../VolumesHandler.cpp
     ../ErrorBody.cpp
     ../FabricClientWrapper.cpp             
     ../FabricUpgradeProgress.cpp         

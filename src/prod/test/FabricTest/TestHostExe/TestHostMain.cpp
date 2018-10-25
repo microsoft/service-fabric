@@ -19,6 +19,10 @@ wstring CodePackageName = L"";
 
 int main(int argc, __in_ecount( argc ) char** argv) 
 {
+#ifndef PLATFORM_UNIX 
+    CRTAbortBehavior::DisableAbortPopup();    
+#endif
+
     { Config config; } // trigger tracing config loading
     TraceTextFileSink::SetPath(L""); // Empty trace file path so that nothing is traced until the actual path is set
 
@@ -33,7 +37,19 @@ int main(int argc, __in_ecount( argc ) char** argv)
         args.push_back(wstring(argv[i], argv[i] + strlen(argv[i])));
     }
 
+    auto pid = GetCurrentProcessId();
+
     CommandLineParser parser(args);
+
+    auto isGuestExe = parser.GetBool(L"isGuestExe");
+    if (isGuestExe)
+    {
+        TestSession::WriteInfo(TraceSource, "Fabric test Host started as guest exe with process id {0}.", pid);
+
+        wchar_t singleChar;
+        wcin.getline(&singleChar, 1);
+        return 0;
+    }
 
     EnvironmentMap envMap;
     TestSession::FailTestIfNot(Environment::GetEnvironmentMap(envMap), "GetEnvironmentMap failed");
@@ -153,7 +169,6 @@ int main(int argc, __in_ecount( argc ) char** argv)
     }
 
     DateTime startTime = DateTime::Now();
-    DWORD pid = GetCurrentProcessId();
     TestSession::WriteInfo(TraceSource, "Fabric test Host started with process id {0} and NodeId {1}....", pid, nodeId);
     int result = FABRICHOSTSESSION.Execute();
     TestSession::WriteInfo(TraceSource,"Fabric host session exited with result {0}, time spent: {1} ", result, DateTime::Now() - startTime);

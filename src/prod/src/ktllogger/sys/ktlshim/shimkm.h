@@ -649,9 +649,20 @@ class KtlLogStreamKernel : public KtlLogStream
                     __in_opt KAsyncContextBase* const ParentAsyncContext,
                     __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) override;
 
+                VOID
+                StartWrite(
+                    __in KtlLogAsn RecordAsn,
+                    __in ULONGLONG Version,
+                    __in ULONG MetaDataLength,
+                    __in const KIoBuffer::SPtr& MetaDataBuffer,
+                    __in const KIoBuffer::SPtr& IoBuffer,
+                    __in ULONGLONG ReservationSpace,
+                    __out ULONGLONG& LogSize,
+                    __out ULONGLONG& LogSpaceRemaining,
+                    __in_opt KAsyncContextBase* const ParentAsyncContext,
+                    __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) override;
+
 #if defined(K_UseResumable)
-                // Only included here to satisfy the compiler when compiling UDRIVER project.  Should never be called today.
-                // TODO: when kernel supports coroutines, actually implement this
                 ktl::Awaitable<NTSTATUS>
                 WriteAsync(
                     __in KtlLogAsn RecordAsn,
@@ -660,6 +671,18 @@ class KtlLogStreamKernel : public KtlLogStream
                     __in const KIoBuffer::SPtr& MetaDataBuffer,
                     __in const KIoBuffer::SPtr& IoBuffer,
                     __in ULONGLONG ReservationSpace,
+                    __in_opt KAsyncContextBase* const ParentAsyncContext) override;
+
+                ktl::Awaitable<NTSTATUS>
+                WriteAsync(
+                    __in KtlLogAsn RecordAsn,
+                    __in ULONGLONG Version,
+                    __in ULONG MetaDataLength,
+                    __in const KIoBuffer::SPtr& MetaDataBuffer,
+                    __in const KIoBuffer::SPtr& IoBuffer,
+                    __in ULONGLONG ReservationSpace,
+                    __out ULONGLONG& LogSize,
+                    __out ULONGLONG& LogSpaceRemaining,
                     __in_opt KAsyncContextBase* const ParentAsyncContext) override;
 #endif
 
@@ -704,6 +727,8 @@ class KtlLogStreamKernel : public KtlLogStream
                 ULONGLONG _ReservationSpace;
                 KIoBuffer::SPtr _MetaDataBuffer;
                 KIoBuffer::SPtr _IoBuffer;
+                ULONGLONG* _LogSize;
+                ULONGLONG* _LogSpaceRemaining;
 
                 //
                 // Members needed for functionality
@@ -3762,6 +3787,8 @@ class RequestMarshallerKernel : public RequestMarshaller
         KIoBuffer::SPtr _IoBuffer;
         KIoBuffer::SPtr _PreAllocMetaDataBuffer;
         KIoBuffer::SPtr _PreAllocIoBuffer;
+        ULONGLONG _CurrentLogSize;
+        ULONGLONG _CurrentLogSpaceRemaining;
 
         //
         // LogStream::Reservation

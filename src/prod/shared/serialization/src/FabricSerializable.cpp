@@ -80,7 +80,7 @@ FabricSerializable & FabricSerializable::operator=(__in FabricSerializable && se
     return *this;
 }
 
-bool FabricSerializable::operator==(__in FabricSerializable const & serializable)
+bool FabricSerializable::operator==(__in FabricSerializable const & serializable) const
 {
     if (this->unknownScopeData_==nullptr)
     {

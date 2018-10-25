@@ -71,6 +71,12 @@ namespace Query
             Common::TimeSpan timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
+        Common::AsyncOperationSPtr BeginProcessQueryMessage(
+            Transport::Message & message, 
+            QuerySpecificationSPtr const & querySpecSPtr,
+            Common::TimeSpan timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
         Common::ErrorCode EndProcessQueryMessage(
             Common::AsyncOperationSPtr const & asyncOperation, 
             _Out_ Transport::MessageUPtr & reply);
@@ -97,6 +103,7 @@ namespace Query
         Common::AsyncOperationSPtr BeginProcessParallelQuery(
             Query::QueryNames::Enum queryName, 
             ServiceModel::QueryArgumentMap const & queryArgs, 
+            QuerySpecificationSPtr const & querySpecSPtr,
             Transport::MessageHeaders & headers,
             Common::TimeSpan timeout,
             Common::AsyncCallback const & callback,

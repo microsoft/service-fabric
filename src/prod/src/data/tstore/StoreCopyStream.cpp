@@ -15,11 +15,15 @@ NTSTATUS StoreCopyStream::Create(
     __in IStoreCopyProvider & copyProvider,
     __in StoreTraceComponent & traceComponent,
     __in KAllocator & allocator,
+    __in StorePerformanceCountersSPtr & perfCounters,
     __out SPtr & result)
 {
     NTSTATUS status;
 
-    SPtr output = _new(STORE_COPY_STREAM_TAG, allocator) StoreCopyStream(copyProvider, traceComponent);
+    SPtr output = _new(STORE_COPY_STREAM_TAG, allocator) StoreCopyStream(
+        copyProvider,
+        traceComponent,
+        perfCounters);
 
     if (!output)
     {
@@ -37,8 +41,9 @@ NTSTATUS StoreCopyStream::Create(
 }
 
 StoreCopyStream::StoreCopyStream(
-    __in IStoreCopyProvider & copyProvider, 
-    __in StoreTraceComponent & traceComponent) :
+    __in IStoreCopyProvider & copyProvider,
+    __in StoreTraceComponent & traceComponent,
+    __in StorePerformanceCountersSPtr & perfCounters) :
     copyProviderSPtr_(&copyProvider),
     copyStage_(CopyStage::Enum::Version),
     snapshotOfMetadataTableSPtr_(nullptr),
@@ -46,7 +51,8 @@ StoreCopyStream::StoreCopyStream(
     currentFileStreamSPtr_(nullptr),
     copyDataBufferSPtr_(nullptr),
     isClosed_(false),
-    traceComponent_(&traceComponent)
+    traceComponent_(&traceComponent),
+    perfCounterWriter_(perfCounters)
 {
     ULONG bufferSize = CopyChunkSize + sizeof(ULONG32) + 1;
     NTSTATUS status = KBuffer::Create(bufferSize, copyDataBufferSPtr_, this->GetThisAllocator());
@@ -370,6 +376,8 @@ ktl::Awaitable<OperationData::CSPtr> StoreCopyStream::OnCopyStageCompleteAsync()
 {
     SharedException::CSPtr exceptionCSPtr = nullptr;
 
+    perfCounterWriter_.UpdatePerformanceCounter();
+
     try
     {
         // Next copy stage.
@@ -387,7 +395,8 @@ ktl::Awaitable<OperationData::CSPtr> StoreCopyStream::OnCopyStageCompleteAsync()
         StoreEventSource::Events->StoreCopyStreamCopyStageCompleted(
             traceComponent_->PartitionId,
             traceComponent_->TraceTag,
-            ToStringLiteral(*copyProviderSPtr_->WorkingDirectoryCSPtr));
+            ToStringLiteral(*copyProviderSPtr_->WorkingDirectoryCSPtr),
+            perfCounterWriter_.AvgDiskTransferBytesPerSec);
 
         // Send the end of file operation data
         OperationData::SPtr resultSPtr = OperationData::Create(GetThisAllocator());
@@ -479,10 +488,10 @@ ktl::Awaitable<KBlockFile::SPtr> StoreCopyStream::OpenFileAsync(__in KStringView
 }
 
 ktl::Awaitable<OperationData::CSPtr> StoreCopyStream::CreateCheckpointFileChunkOperationData(
-    __in KStringView & filename, 
-    __in byte startMarker, 
-    __in byte writeMarker, 
-    __in byte endMarker, 
+    __in KStringView & filename,
+    __in byte startMarker,
+    __in byte writeMarker,
+    __in byte endMarker,
     __out bool & completed)
 {
     KString::SPtr filenameSPtr = nullptr;
@@ -505,7 +514,9 @@ ktl::Awaitable<OperationData::CSPtr> StoreCopyStream::CreateCheckpointFileChunkO
         STORE_ASSERT(NT_SUCCESS(status), "Unable to open file stream for file {1}", filename.operator LPCWSTR());
 
         // Send the start of file operation data.
+        perfCounterWriter_.StartMeasurement();
         status = co_await currentFileStreamSPtr_->ReadAsync(*copyDataBufferSPtr_, bytesRead, 0, CopyChunkSize);
+        perfCounterWriter_.StopMeasurement(bytesRead);
         STORE_ASSERT(NT_SUCCESS(status), "Unable to read start of file stream for file {1}", filenameSPtr->operator LPCWSTR());
 
         MemoryBuffer::SPtr streamSPtr = nullptr;
@@ -527,7 +538,7 @@ ktl::Awaitable<OperationData::CSPtr> StoreCopyStream::CreateCheckpointFileChunkO
             startMarker,
             bytesRead + sizeof(ULONG32) + 1,
             filemetaDataSPtr->FileId);
-        
+
         KBuffer::SPtr operationDataBufferSPtr;
         status = KBuffer::CreateOrCopyFrom(operationDataBufferSPtr, *copyDataBufferSPtr_, 0, bytesRead + sizeof(ULONG32) + 1, GetThisAllocator());
         Diagnostics::Validate(status);
@@ -540,7 +551,9 @@ ktl::Awaitable<OperationData::CSPtr> StoreCopyStream::CreateCheckpointFileChunkO
     }
 
     // The start of the current file has been sent. Check if there are more chunks to be sent (if the stream is at the end, this will return zero).
+    perfCounterWriter_.StartMeasurement();
     auto status = co_await currentFileStreamSPtr_->ReadAsync(*copyDataBufferSPtr_, bytesRead, 0, CopyChunkSize);
+    perfCounterWriter_.StopMeasurement(bytesRead);
     STORE_ASSERT(NT_SUCCESS(status), "Unable to read chunk of file stream for file {1}", filenameSPtr->operator LPCWSTR());
 
     if (bytesRead > 0)

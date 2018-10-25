@@ -476,7 +476,7 @@ bool ApplicationUpgrade::UpdateVersionAndCloseIfNeeded(HandlerParameters & handl
         auto const closeMode = ReplicaCloseMode::Close;
         if (!failoverUnit->IsLocalReplicaClosed(closeMode))
         {
-            ra_.CloseLocalReplica(handlerParameters, closeMode);
+            ra_.CloseLocalReplica(handlerParameters, closeMode, ActivityDescription::Empty);
             context.MarkAsClosedForUpgrade();
         }
     }

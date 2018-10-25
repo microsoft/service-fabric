@@ -313,7 +313,7 @@ void FabricTestNode::ProcessServicePlacementData(ServicePlacementData const& pla
     auto iter = activeCodePackages_.find(key);
     if (iter != activeCodePackages_.end())
     {
-        TestSession::FailTestIf(placementData.CodePackageContext.InstanceId > iter->second.Context.InstanceId, "ProcessServicePlacementData received for a newer instance than we know of: {0}", placementData.CodePackageContext);
+        TestSession::FailTestIf(placementData.CodePackageContext.InstanceId > iter->second.Context.InstanceId, "ProcessServicePlacementData received for a newer instance than we know of: Received: {0}; Current: {1}", placementData.CodePackageContext, iter->second.Context);
         if (placementData.CodePackageContext.InstanceId < iter->second.Context.InstanceId)
         {
             TestSession::WriteNoise(TraceSource, "ProcessServicePlacementData from stale context {0}", placementData.CodePackageContext);
@@ -359,7 +359,7 @@ void FabricTestNode::ProcessUpdateServiceManifest(TestCodePackageData const& cod
     auto iter = activeCodePackages_.find(key);
     if (iter != activeCodePackages_.end())
     {
-        TestSession::FailTestIf(codePackageData.CodePackageContext.InstanceId > iter->second.Context.InstanceId, "ProcessUpdateServiceManifest received for a newer instance than we know of: {0}", codePackageData.CodePackageContext);
+        TestSession::FailTestIf(codePackageData.CodePackageContext.InstanceId > iter->second.Context.InstanceId, "ProcessUpdateServiceManifest received for a newer instance than we know of: Received: {0}; Current: {1}", codePackageData.CodePackageContext, iter->second.Context);
         if (codePackageData.CodePackageContext.InstanceId < iter->second.Context.InstanceId)
         {
             TestSession::WriteNoise(TraceSource, "ProcessUpdateServiceManifest from stale context {0}", codePackageData.CodePackageContext);
@@ -385,7 +385,7 @@ void FabricTestNode::ProcessCodePackageHostInit(TestCodePackageContext const& co
     if (iter != activeCodePackages_.end())
     {
         TestSession::FailTestIf(iter->second.Context.InstanceId == context.InstanceId, "ProcessCodePackageHostInit for same context {0}", context);
-        TestSession::FailTestIf(context.InstanceId < iter->second.Context.InstanceId, "Stale ProcessCodePackageHostInit from {0} unexpected", context);
+        TestSession::FailTestIf(context.InstanceId < iter->second.Context.InstanceId, "Stale ProcessCodePackageHostInit from {0} unexpected. Current is: {1}", context, iter->second.Context);
         //This means previous code package has failed. Check whether it is expected 
         ProcessCodePackageHostFailureInternal(context);
 

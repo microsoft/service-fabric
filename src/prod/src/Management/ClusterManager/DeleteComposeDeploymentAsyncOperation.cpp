@@ -42,6 +42,6 @@ AsyncOperationSPtr DeleteComposeDeploymentAsyncOperation::BeginAcceptRequest(
 
 ErrorCode DeleteComposeDeploymentAsyncOperation::EndAcceptRequest(AsyncOperationSPtr const & operation)
 {
-    return this->Replica.EndAcceptDeleteApplication(operation);
+    return this->Replica.EndAcceptDeleteComposeDeployment(operation);
 }
 

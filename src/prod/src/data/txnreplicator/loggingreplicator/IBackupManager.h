@@ -14,10 +14,21 @@ namespace Data
             K_SHARED_INTERFACE(IBackupManager)
 
         public:
+            /// <summary>
+            /// Sets the last completed log record.
+            /// </summary>
             virtual void SetLastCompletedBackupLogRecord(
                 __in LogRecordLib::BackupLogRecord const & backupLogRecord) = 0;
 
+            /// <summary>
+            /// Gets the last completed log record.
+            /// </summary>
             virtual LogRecordLib::BackupLogRecord::CSPtr GetLastCompletedBackupLogRecord() const = 0;
+
+            /// <summary>
+            /// Notification that the last completed backup log record has been false progressed.
+            /// </summary>
+            virtual void UndoLastCompletedBackupLogRecord() = 0;
 
             /// <summary>
             /// Return boolean indicating whether LoggingReplicator should delete its persisted state.

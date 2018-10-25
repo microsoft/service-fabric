@@ -11,7 +11,8 @@ namespace ServiceModel
         : Common::TextTraceComponent<Common::TraceTaskCodes::ServiceModel>
     {
         DENY_COPY(FabricClientSettings);
-
+        DEFAULT_MOVE_CONSTRUCTOR(FabricClientSettings);
+        DEFAULT_MOVE_ASSIGNMENT(FabricClientSettings);
     public:
         static const size_t MaxClientFriendlyNameLength;
         static const ULONG DefaultPartitionLocationCacheBucketCount;
@@ -47,9 +48,6 @@ namespace ServiceModel
             ULONG connectionIdleTimeoutInSeconds);
 
         ~FabricClientSettings();
-
-        FabricClientSettings(FabricClientSettings && other);
-        FabricClientSettings & operator = (FabricClientSettings && other);
 
         __declspec(property(get=get_ClientFriendlyName)) std::wstring const & ClientFriendlyName;
         std::wstring const & get_ClientFriendlyName() const { return clientFriendlyName_; }
@@ -97,6 +95,7 @@ namespace ServiceModel
 
         __declspec(property(get=get_ConnectionIdleTimeoutInSeconds)) ULONG ConnectionIdleTimeoutInSeconds;
         ULONG get_ConnectionIdleTimeoutInSeconds() const { return connectionIdleTimeoutInSeconds_; }
+
 
         void ToPublicApi(
             __in Common::ScopedHeap & heap,

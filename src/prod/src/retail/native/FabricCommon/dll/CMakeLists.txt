@@ -36,6 +36,7 @@ target_link_libraries(${lib_FabricCommon}
   ${lib_InternalFabricUUID}
   ${lib_FabricUUID}
   ${lib_FabricResources}
+  ${Ktlfull}
   lttng-ust
   ${Cxx}
   ${CxxABI}
@@ -44,7 +45,6 @@ target_link_libraries(${lib_FabricCommon}
   crypto
   xml2
   uuid
-  unwind
   rt
   pthread
 )

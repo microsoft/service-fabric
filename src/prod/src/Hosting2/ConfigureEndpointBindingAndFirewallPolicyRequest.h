@@ -17,7 +17,8 @@ namespace Hosting2
             std::vector<EndpointCertificateBinding> const & endpointCertBindings,
             bool cleanup,
             bool cleanupFirewallPolicy,
-            std::vector<LONG> const & firewallPorts);
+            std::vector<LONG> const & firewallPorts,
+            uint64 nodeInstanceId);
 
         __declspec(property(get = get_NodeId)) std::wstring const & NodeId;
         std::wstring const & get_NodeId() const { return nodeId_; }
@@ -37,9 +38,12 @@ namespace Hosting2
         __declspec(property(get = get_FirewallPorts)) std::vector<LONG> FirewallPorts;
         std::vector<LONG> get_FirewallPorts() const { return firewallPorts_; }
 
+        __declspec(property(get = get_NodeInstanceId)) uint64 NodeInstanceId;
+        uint64 get_NodeInstanceId() const { return nodeInstanceId_; }
+
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_06(nodeId_, servicePackageId_, endpointCertBindings_, cleanup_, cleanupFirewallPolicy_, firewallPorts_);
+        FABRIC_FIELDS_07(nodeId_, servicePackageId_, endpointCertBindings_, cleanup_, cleanupFirewallPolicy_, firewallPorts_, nodeInstanceId_);
 
     private:
         std::wstring nodeId_;
@@ -48,5 +52,6 @@ namespace Hosting2
         bool cleanup_;
         bool cleanupFirewallPolicy_;
         std::vector<LONG> firewallPorts_;
+        uint64 nodeInstanceId_;
     };
 }

@@ -27,25 +27,6 @@ NodeHealthQueryDescription::NodeHealthQueryDescription(
 {
 }
 
-NodeHealthQueryDescription::NodeHealthQueryDescription(NodeHealthQueryDescription && other)
-    : nodeName_(move(other.nodeName_))
-    , healthPolicy_(move(other.healthPolicy_))
-    , eventsFilter_(move(other.eventsFilter_))
-{
-}
-
-NodeHealthQueryDescription & NodeHealthQueryDescription::operator =(NodeHealthQueryDescription && other)
-{
-    if (this != &other)
-    {
-        nodeName_ = move(other.nodeName_);
-        healthPolicy_ = move(other.healthPolicy_);
-        eventsFilter_ = move(other.eventsFilter_);
-    }
-
-    return *this;
-}
-
 NodeHealthQueryDescription::~NodeHealthQueryDescription()
 {
 }

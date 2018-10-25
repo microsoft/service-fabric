@@ -27,23 +27,6 @@ NodeHealthStateChunkList::NodeHealthStateChunkList(
 {
 }
 
-NodeHealthStateChunkList::NodeHealthStateChunkList(NodeHealthStateChunkList && other)
-    : HealthStateChunkList(move(other))
-    , items_(move(other.items_))
-{
-}
-
-NodeHealthStateChunkList & NodeHealthStateChunkList::operator =(NodeHealthStateChunkList && other)
-{
-    if (this != &other)
-    {
-        items_ = move(other.items_);
-    }
-
-    HealthStateChunkList::operator=(move(other));
-    return *this;
-}
-
 NodeHealthStateChunkList::~NodeHealthStateChunkList()
 {
 }

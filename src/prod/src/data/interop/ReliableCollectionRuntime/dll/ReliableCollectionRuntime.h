@@ -21,6 +21,7 @@ typedef void* StoreKeyValueAsyncEnumeratorHandle;
 typedef void* TxnReplicatorHandle;
 typedef void* StateProviderEnumeratorHandle;
 typedef void* BufferHandle;
+typedef void* PrimaryReplicatorHandle;
 
 #if !defined(WIN32) && !defined(UNDER_PAL) 
 typedef int32_t HRESULT;
@@ -70,21 +71,36 @@ struct Buffer
     BufferHandle Handle;
 };
 
+struct Epoch
+{
+    int64_t DataLossNumber;
+    int64_t ConfigurationNumber;
+    void *Reserved;
+};
+
+struct Backup_Version
+{
+    struct Epoch epoch;
+    int64_t lsn;
+};
+
 struct Backup_Info
 {
     GUID backupId;
     LPCWSTR directoryPath;
     Backup_Option option;
-    struct Backup_Version
-    {
-        struct FABRIC_EPOCH
-        {
-            int64_t DataLossNumber;
-            int64_t ConfigurationNumber;
-            void *Reserved;
-        } epoch;
-        int64_t lsn;
-    } version;
+    Backup_Version version;
+};
+
+struct Backup_Info2
+{
+    uint32_t Size;                  // For versioning
+    GUID backupId;
+    LPCWSTR directoryPath;
+    Backup_Option option;
+    Backup_Version version;
+    Backup_Version startVersion;
+    GUID parentbackupId;
 };
 
 struct TxnReplicator_Settings
@@ -160,8 +176,10 @@ enum TxnReplicator_Settings_Flags : uint64_t
 #define StateProvider_Info_V1_Size 16
 enum StateProvider_Kind : uint32_t
 {
+    StateProvider_Kind_Invalid = 0,
     StateProvider_Kind_Store = 1,
-    StateProvider_Kind_ConcurrentQueue
+    StateProvider_Kind_ConcurrentQueue,
+    StateProvider_Kind_ReliableDictionary_Compat
 };
 
 struct StateProvider_Info
@@ -176,16 +194,13 @@ extern "C"
 #endif
 {
     CLASS_DECLSPEC HRESULT ReliableCollectionRuntime_Initialize(uint16_t apiVersion);
+    CLASS_DECLSPEC HRESULT ReliableCollectionRuntime_Initialize2(uint16_t apiVersion, BOOL standAloneMode);
 
     /*************************************
     * Transaction APIs
     *************************************/
     // Release and Dispose (for back compat only)
     CLASS_DECLSPEC void Transaction_Release(
-        __in TransactionHandle txn) noexcept;
-
-    // Release without Dispose
-    CLASS_DECLSPEC void Transaction_Release2(
         __in TransactionHandle txn) noexcept;
 
     CLASS_DECLSPEC void Transaction_Dispose(
@@ -254,7 +269,7 @@ extern "C"
         __in TransactionHandle txn,
         __in LPCWSTR key,
         __in size_t objectHandle,               // handle of object to be stored  
-        __in void* bytes,                    // serailized byte array of object
+        __in void* bytes,                    // serialized byte array of object
         __in uint32_t bytesLength,             // byte array length
         __in int64_t timeout,
         __out CancellationTokenSourceHandle* cts,
@@ -269,7 +284,7 @@ extern "C"
         __in TransactionHandle txn,
         __in LPCWSTR key,
         __in size_t objectHandle,               // handle of object to be stored  
-        __in void* bytes,                    // serailized byte array of object
+        __in void* bytes,                    // serialized byte array of object
         __in uint32_t bytesLength,                // byte array length
         __in int64_t timeout,
         __out CancellationTokenSourceHandle* cts,
@@ -344,6 +359,39 @@ extern "C"
         __out BOOL* synchronousComplete);
 
     /*************************************
+    * ReliableConcurrentQueue APIs
+    *************************************/
+    typedef void(*fnNotifyTryDequeueAsyncCompletion)(void* ctx, HRESULT status, BOOL succeeded, size_t objectHandle, void* bytes, uint32_t bytesLength);
+
+    CLASS_DECLSPEC HRESULT ConcurrentQueue_EnqueueAsync(
+        __in StateProviderHandle concurrentQueue,
+        __in TransactionHandle txn,
+        __in size_t objectHandle,               // handle of object to be stored  
+        __in void* bytes,                       // serialized byte array of object
+        __in uint32_t bytesLength,              // byte array length
+        __in int64_t timeout,
+        __out CancellationTokenSourceHandle* cts,
+        __in fnNotifyAsyncCompletion callback,
+        __in void* ctx,
+        __out BOOL* synchronousComplete);
+
+    CLASS_DECLSPEC HRESULT ConcurrentQueue_TryDequeueAsync(
+        __in StateProviderHandle concurrentQueue,
+        __in TransactionHandle txn,
+        __in int64_t timeout,
+        __out size_t* objectHandle,
+        __out Buffer* value,
+        __out CancellationTokenSourceHandle* cts,
+        __out BOOL* succeeded,
+        __in fnNotifyTryDequeueAsyncCompletion callback,      // callback to be called when call does not complete synchronously
+        __in void* ctx,                      // Context to be passed in when making callback
+        __out BOOL* synchronousComplete);    // if call completed synchronously
+
+    CLASS_DECLSPEC HRESULT ConcurrentQueue_GetCount(
+        __in StateProviderHandle concurrentQueue,
+        __out int64_t* count);
+
+    /*************************************
     * StateProvider APIs
     *************************************/
     CLASS_DECLSPEC HRESULT StateProvider_GetInfo(
@@ -360,6 +408,19 @@ extern "C"
     /*************************************
      * TxnReplicator APIs
      *************************************/
+
+    struct TxnReplicator_Info
+    {
+        uint32_t Size;                  // For versioning
+        int64_t LastStableSequenceNumber;
+        int64_t LastCommittedSequenceNumber;
+        Epoch CurrentEpoch;
+    };
+
+    CLASS_DECLSPEC HRESULT TxnReplicator_GetInfo(
+        __in TxnReplicatorHandle txnReplicator,
+        __out TxnReplicator_Info* info) noexcept;
+
     CLASS_DECLSPEC HRESULT TxnReplicator_CreateTransaction(
         __in TxnReplicatorHandle txnReplicator,
         __out TransactionHandle* txn) noexcept;
@@ -370,18 +431,6 @@ extern "C"
     typedef void(*fnNotifyGetOrAddStateProviderAsyncCompletion)(void* ctx, HRESULT status, StateProviderHandle store, BOOL exist);
 
     CLASS_DECLSPEC HRESULT TxnReplicator_GetOrAddStateProviderAsync(
-        __in TxnReplicatorHandle txnReplicator,
-        __in TransactionHandle txn,
-        __in LPCWSTR name,
-        __in int64_t timeout,
-        __out CancellationTokenSourceHandle* cts,
-        __out StateProviderHandle* stateProvider,
-        __out BOOL* alreadyExist,
-        __in fnNotifyGetOrAddStateProviderAsyncCompletion callback,
-        __in void* ctx,
-        __out BOOL* synchronousComplete) noexcept;
-
-    CLASS_DECLSPEC HRESULT TxnReplicator_GetOrAddStateProviderAsync2(
         __in TxnReplicatorHandle txnReplicator,
         __in TransactionHandle txn,
         __in LPCWSTR name,
@@ -396,16 +445,6 @@ extern "C"
         __out BOOL* synchronousComplete) noexcept;
 
     CLASS_DECLSPEC HRESULT TxnReplicator_AddStateProviderAsync(
-        __in TxnReplicatorHandle txnReplicator,
-        __in TransactionHandle txn,
-        __in LPCWSTR name,
-        __in int64_t timeout,
-        __out CancellationTokenSourceHandle* cts,
-        __in fnNotifyAsyncCompletion callback,
-        __in void* ctx,
-        __out BOOL* synchronousComplete) noexcept;
-
-    CLASS_DECLSPEC HRESULT TxnReplicator_AddStateProviderAsync2(
         __in TxnReplicatorHandle txnReplicator,
         __in TransactionHandle txn,
         __in LPCWSTR name,
@@ -439,10 +478,21 @@ extern "C"
 
     typedef void(*fnNotifyUploadAsyncCompletion)(void* ctx, BOOL uploaded);
     typedef void(*fnUploadAsync)(void* ctx, Backup_Info backup_Info, fnNotifyUploadAsyncCompletion uploadCallbackEnd, void* uploadAsyncCompletionCtx);
+    typedef void(*fnUploadAsync2)(void* ctx, Backup_Info2* backup_Info, uint32_t size_backup_Info, fnNotifyUploadAsyncCompletion uploadCallbackEnd, void* uploadAsyncCompletionCtx);
 
     CLASS_DECLSPEC HRESULT TxnReplicator_BackupAsync(
         __in TxnReplicatorHandle txnReplicator,
         __in fnUploadAsync uploadAsyncCallback,
+        __in Backup_Option backupOption,
+        __in int64_t timeout,
+        __out CancellationTokenSourceHandle* cts,
+        __in fnNotifyAsyncCompletion callback,
+        __in void* ctx,
+        __out BOOL* synchronousComplete);
+
+    CLASS_DECLSPEC HRESULT TxnReplicator_BackupAsync2(
+        __in TxnReplicatorHandle txnReplicator,
+        __in fnUploadAsync2 uploadAsyncCallback,
         __in Backup_Option backupOption,
         __in int64_t timeout,
         __out CancellationTokenSourceHandle* cts,
@@ -462,23 +512,19 @@ extern "C"
 
 
     CLASS_DECLSPEC HRESULT GetTxnReplicator(
-        __in void* statefulServicePartition, 
-        __in void* dataLossHandler, 
-        __in void const* fabricReplicatorSettings, 
-        __in void const* txnReplicatorSettings, 
-        __in void const* ktlloggerSharedSettings, 
-        __out void** primaryReplicator,
-        __out TxnReplicatorHandle* txnReplicatorHandle);
-
-    CLASS_DECLSPEC HRESULT GetTransactionalReplicator(
+        __in int64_t replicaId,
         __in void* statefulServicePartition,
         __in void* dataLossHandler,
-        __in const TxnReplicator_Settings* txnReplicatorSettings,
+        __in TxnReplicator_Settings const* replicatorSettings,
         __in LPCWSTR configPackageName,
         __in LPCWSTR replicatorSettingsSectionName,
-        __out void** primaryReplicator,
+        __in LPCWSTR replicatorSecuritySectionName,
+        __out PrimaryReplicatorHandle* primaryReplicator,
         __out TxnReplicatorHandle* txnReplicatorHandle);
 
+    CLASS_DECLSPEC HRESULT PrimaryReplicator_UpdateReplicatorSettings(
+        __in PrimaryReplicatorHandle primaryReplicator,
+        __in TxnReplicator_Settings const* replicatorSettings);
 
     /*************************************
      * CancellationTokenSource APIs

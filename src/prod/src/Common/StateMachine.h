@@ -40,11 +40,11 @@ namespace Common
             Common::CompletionCallback const & completionCallback,
             Common::AsyncOperationSPtr const & parent);
        
-       Common::AsyncOperationSPtr BeginAbortAndWaitForTermination(
+        Common::AsyncOperationSPtr BeginAbortAndWaitForTermination(
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
             void EndAbortAndWaitForTermination(
-            Common::AsyncOperationSPtr const & operation);
+        Common::AsyncOperationSPtr const & operation);
 
     protected:
         StateMachine(uint64 initialState);
@@ -61,7 +61,6 @@ namespace Common
 
          __declspec(property(get=get_Lock)) Common::RwLock & Lock;
         Common::RwLock & get_Lock() const { return this->lock_; }
-
 
     private:
         void TransitionToAborted();

@@ -6,6 +6,7 @@
 #pragma once 
 
 #include "ServicePackageResourceGovernanceDescription.h"
+#include "ServicePackageContainerPolicyDescription.h"
 
 namespace ServiceModel
 {
@@ -43,12 +44,16 @@ namespace ServiceModel
         DigestedResourcesDescription DigestedResources;      
         ServiceDiagnosticsDescription Diagnostics;
         ServicePackageResourceGovernanceDescription ResourceGovernanceDescription;
+        ServicePackageContainerPolicyDescription ContainerPolicyDescription;
+        ServiceFabricRuntimeAccessDescription SFRuntimeAccessDescription;
 
     private:
         friend struct Parser;
 		friend struct Serializer;
         void ReadFromXml(Common::XmlReaderUPtr const &);
+        void ParseServiceFabricRuntimeAccessDescription(Common::XmlReaderUPtr const & xmlReader);
         void ParseResourceGovernanceDescription(Common::XmlReaderUPtr const & xmlReader);
+        void ParseContainerPolicyDescription(Common::XmlReaderUPtr const & xmlReader);
         void ParseDigestedServiceTypes(Common::XmlReaderUPtr const & xmlReader);
         void ParseDigestedCodePackages(Common::XmlReaderUPtr const & xmlReader);
         void ParseDigestedConfigPackages(Common::XmlReaderUPtr const & xmlReader);

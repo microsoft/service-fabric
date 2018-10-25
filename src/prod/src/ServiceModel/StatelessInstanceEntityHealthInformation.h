@@ -19,8 +19,8 @@ namespace ServiceModel
             Common::Guid const& partitionId,
             FABRIC_REPLICA_ID replicaId);
 
-        StatelessInstanceEntityHealthInformation(StatelessInstanceEntityHealthInformation && other);
-        StatelessInstanceEntityHealthInformation & operator = (StatelessInstanceEntityHealthInformation && other);
+        StatelessInstanceEntityHealthInformation(StatelessInstanceEntityHealthInformation && other) = default;
+        StatelessInstanceEntityHealthInformation & operator = (StatelessInstanceEntityHealthInformation && other) = default;
         
          __declspec(property(get=get_PartitionId)) Common::Guid const& PartitionId;
         Common::Guid const& get_PartitionId() const { return partitionId_; }

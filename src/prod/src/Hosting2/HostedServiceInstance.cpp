@@ -602,13 +602,13 @@ void HostedServiceInstance::OnAbort()
 
 void HostedServiceInstance::DisableServiceInstance()
 {
-    if(activationContext_)
+    if (activationContext_)
     {
         this->ActivationManager.ProcessActivatorObj->Terminate(activationContext_, ProcessActivator::ProcessAbortExitCode);
         activationContext_.reset();
     }
     auto error = ConfigurePortSecurity(true);
-    if(!error.IsSuccess())
+    if (!error.IsSuccess())
     {
         WriteWarning(
             TraceType_ActivationManager,
@@ -617,6 +617,11 @@ void HostedServiceInstance::DisableServiceInstance()
             serviceName_,
             error);
     }
+}
+
+void HostedServiceInstance::TerminateServiceInstance()
+{
+   AbortAndWaitForTermination();
 }
 
 Common::ErrorCode HostedServiceInstance::ConfigurePortSecurity(bool cleanup)

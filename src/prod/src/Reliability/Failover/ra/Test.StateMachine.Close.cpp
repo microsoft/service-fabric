@@ -100,7 +100,7 @@ protected:
             [&] (EntityExecutionContext & base)
             {
                 auto & context = base.As<FailoverUnitEntityExecutionContext>(); 
-                ft.StartCloseLocalReplica(ReplicaCloseMode::Obliterate, ReconfigurationAgent::InvalidNode, context);
+                ft.StartCloseLocalReplica(ReplicaCloseMode::Obliterate, ReconfigurationAgent::InvalidNode, context, ActivityDescription::Empty);
             });
     }
 

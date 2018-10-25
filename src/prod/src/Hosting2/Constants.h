@@ -12,21 +12,25 @@ namespace Hosting2
     public:
         static Common::GlobalWString AdhocApplicationId;
         static Common::GlobalWString AdhocApplicationTypeName;
+        static Common::GlobalWString DockerProcessFile;
+        static Common::GlobalWString DockerProcessIdFileDirectory;
+        static Common::GlobalWString DockerLogDirectory;
         static Common::GlobalWString SharedApplicationFolderName;
         static Common::GlobalWString SecurityPrincipalIdentifier;
         static Common::GlobalWString ImplicitTypeHostName;
         static Common::GlobalWString ImplicitTypeHostCodePackageName;
+        static Common::GlobalWString BlockStoreServiceCodePackageName;
         static Common::GlobalWString EndpointConfiguration_FilteringEngineProviderName;
         static Common::GlobalWString EndpointConfiguration_FilteringEngineBlockAllFilterName;
         static Common::GlobalWString EndpointConfiguration_FilteringEnginePortFilterName;
         static Common::GlobalWString CtrlCSenderExeName;
         static Common::GlobalWString SharedFolderName;
         static Common::GlobalWString WindowsFabricAdministratorsGroupAllowedUser;
-        
         static Common::GlobalWString DebugProcessIdParameter;
         static Common::GlobalWString DebugThreadIdParameter;
 
         static Common::GlobalWString ContainerNetworkName;
+        static Common::GlobalWString DockerTempDirName;
 
         static UINT64 const EndpointConfiguration_FilteringEngineBlockAllFilterWeight;
         static UINT const EndpointConfiguration_FilteringEngineEnumSize;
@@ -34,7 +38,14 @@ namespace Hosting2
 
         static int64 const DockerNanoCpuMultiplier;
 
-        static const Common::WStringLiteral ContainerApiResult; 
+        static const Common::WStringLiteral ContainerApiResult;
+        static Common::GlobalWString WellKnownValueDelimiter;
+        static Common::GlobalWString WellKnownPartitionIdFormat;
+
+        static Common::GlobalWString SecretsStoreRef;
+        static Common::GlobalWString Encrypted;
+
+        static Common::GlobalWString FileStoreServiceUserGroup;
 
         class EnvironmentVariable
         {
@@ -53,14 +64,20 @@ namespace Hosting2
             static Common::GlobalWString FoldersPrefix;
             static Common::GlobalWString ContainerName;
             static Common::GlobalWString ServiceName;
+            static Common::GlobalWString PartitionId;
+            static Common::GlobalWString TempDir;
+            static Common::GlobalWString DockerTempDir;
+            static Common::GlobalWString OnPrimaryEventName;
+            static Common::GlobalWString OnSecondaryEventName;
+            static Common::GlobalWString OnActivationCompletedEventName;
+            static Common::GlobalWString OnDeactivationCompletedEventName;
         };
 
         class FabricDeployer
         {
         public:
-            static Common::GlobalWString ExeName; 
-
-            static Common::StringLiteral ConfigUpgradeArguments;                             
+            static Common::GlobalWString ExeName;
+            static Common::StringLiteral ConfigUpgradeArguments;
             static Common::StringLiteral InstanceIdOnlyUpgradeArguments;
             static Common::StringLiteral ValidateAndAnalyzeArguments;
 
@@ -71,19 +88,18 @@ namespace Hosting2
         class FabricSetup
         {
         public:
-            static Common::GlobalWString ExeName; 
-
+            static Common::GlobalWString ExeName;
             static Common::GlobalWString InstallArguments;
             static Common::GlobalWString UpgradeArguments;
             static Common::GlobalWString UndoUpgradeArguments;
             static Common::GlobalWString RelativePathToFabricHost;
-            static Common::TimeSpan const TimeoutInterval;     
+            static Common::TimeSpan const TimeoutInterval;
         };
 
         class FabricUpgrade
         {
         public:
-            static Common::StringLiteral MSIExecCommand; 
+            static Common::StringLiteral MSIExecCommand;
             static Common::StringLiteral DISMExecCommand;
             static Common::StringLiteral DISMExecUnInstallCommand;
             static Common::GlobalWString StartFabricHostServiceCommand;
@@ -123,12 +139,18 @@ namespace Hosting2
         public:
             static std::wstring const ApplicationNameLabelKeyName;
             static std::wstring const ApplicationIdLabelKeyName;
+            static std::wstring const DigestedApplicationNameLabelKeyName; // used for container log paths
             static std::wstring const ServiceNameLabelKeyName;
+            static std::wstring const SimpleApplicationNameLabelKeyName;
             static std::wstring const CodePackageNameLabelKeyName;
+            static std::wstring const CodePackageInstanceLabelKeyName;
+            static std::wstring const PartitionIdLabelKeyName;
             static std::wstring const ServicePackageActivationIdLabelKeyName;
             static std::wstring const PlatformLabelKeyName;
             static std::wstring const PlatformLabelKeyValue;
-            static std::wstring const QueryFilterLabelKeyName;
+            static std::wstring const LogBasePathKeyName;
+            static std::wstring const SrppQueryFilterLabelKeyName;
+            static std::wstring const MrppQueryFilterLabelKeyName;
         };
 
         //FabricActivator constants
@@ -154,6 +176,12 @@ namespace Hosting2
         static std::wstring const HostedServiceSSLCertFindType;
         static std::wstring const HostedServiceSSLCertFindValue;
 
+        static std::wstring const HostedServiceRgPolicies;
+        static std::wstring const HostedServiceCpusetCpus;
+        static std::wstring const HostedServiceCpuShares;
+        static std::wstring const HostedServiceMemoryInMB;
+        static std::wstring const HostedServiceMemorySwapInMB;
+
         static std::wstring const RunasAccountName;
         static std::wstring const RunasAccountType;
         static std::wstring const RunasPassword;
@@ -171,32 +199,42 @@ namespace Hosting2
         public:
             static const ULONG AbortTimeoutMilliseconds;
         };
-                
 
-        static Common::GlobalStringT const ContentTypeJson;
+        static Common::GlobalWString HttpContentTypeJson;
+        static Common::GlobalWString HttpGetVerb;
+        static Common::GlobalWString HttpPostVerb;
+        static Common::GlobalWString HttpPutVerb;
+        static Common::GlobalWString HttpDeleteVerb;
+        static Common::GlobalWString HttpHeadVerb;
+        static Common::GlobalWString HttpOptionsVerb;
+        static Common::GlobalWString HttpTraceVerb;
+        static Common::GlobalWString HttpConnectVerb;
+
+        static std::wstring const ContainersLogsUriPath;
+        static std::string const ContentTypeJson;
+        static std::wstring const DefaultContainerLogsTail;
+
+        static std::wstring const ContainerLogDriverOptionLogBasePathKey;
 
 #if defined(PLATFORM_UNIX)
         static std::wstring const AppRunAsAccount;
         static std::wstring const AppRunAsAccountGroup;
         static std::wstring const CgroupPrefix;
         static int32 const CgroupsCpuPeriod;
-        
+
         // Docker REST URI format constants
         static std::string const Containers;
         static std::string const DockerInfo;
-        static Common::StringLiteral ContainersLogs;
         static std::string const ContainersCreate;
         static std::string const ContainersStart;
         static Common::StringLiteral ContainersStop;
         static Common::StringLiteral ContainersForceRemove;
         static std::string const VolumesCreate;
-        static std::string const DefaultContainerLogsTail;
 #else
         static int32 const JobObjectCpuCyclesNumber;
-        
+
         // Docker REST URI format constants
         static std::wstring const DockerInfo;
-        static std::wstring const ContainersLogsUriPath;
         static std::wstring const ContainersCreate;
         static std::wstring const ContainersStart;
         static std::wstring const ContainersStop;
@@ -210,7 +248,6 @@ namespace Hosting2
         static std::wstring const ContainersExec;
         static std::wstring const NetworkNatConnect;
         static std::wstring const ExecStart;
-        static std::wstring const DefaultContainerLogsTail;
 #endif
     };
 };

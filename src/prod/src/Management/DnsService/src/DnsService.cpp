@@ -84,6 +84,8 @@ void DnsService::OnStart()
         static_cast<ULONG>(_params.Port), _params.NumberOfConcurrentQueries, _params.MaxMessageSizeInKB, (BOOLEAN)_params.IsRecursiveQueryEnabled);
     Tracer().Trace(DnsTraceLevel_Info, "Parameters: MaxCacheSize = {0}, FabricQueryTimeoutInSeconds = {1}, RecursiveQueryTimeoutInSeconds = {2}, NDots = {3}",
         _params.MaxCacheSize, _params.FabricQueryTimeoutInSeconds, _params.RecursiveQueryTimeoutInSeconds, _params.NDots);
+    Tracer().Trace(DnsTraceLevel_Info, "Parameters: AllowMultipleListeners = {0}",
+        (BOOLEAN)_params.AllowMultipleListeners);
 
     _spNetIoManager->StartManager(this/*parent*/);
 
@@ -153,7 +155,7 @@ bool DnsService::Open(
 
     _completionCallback = callback;
 
-    _spNetIoManager->CreateUdpListener(/*out*/_spUdpListener);
+    _spNetIoManager->CreateUdpListener(/*out*/_spUdpListener, _params.AllowMultipleListeners);
 
     // UdpListener does not have a parent set because this async operation is not
     // started yet at this point. We want UdpListener to be started before Open returns.

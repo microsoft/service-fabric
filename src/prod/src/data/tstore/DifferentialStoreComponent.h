@@ -141,8 +141,7 @@ namespace Data
                   // Update the size with the difference with the existing current item
                   InterlockedAdd64(&size_, value.GetValueSize() - differentialStateVersionsSPtr->CurrentVersionSPtr->GetValueSize());
 
-                  // Disabling until #10584838 is resolved 
-                  //STORE_ASSERT(size_ >= 0, "Size {1} should not be negative", size_);
+                  STORE_ASSERT(size_ >= 0, "Size {1} should not be negative", size_);
 
                   // Set the latest value in case there are multiple updates in the same transaction(same lsn).
                   differentialStateVersionsSPtr->SetCurrentVersion(value);
@@ -221,9 +220,7 @@ namespace Data
                   // Increase by size of new current, decrease by size of old previous
                   InterlockedAdd64(&size_, value.GetValueSize() - differentialStateVersionsSPtr->PreviousVersionSPtr->GetValueSize());
 
-
-                  // Disabling until #10584838 is resolved 
-                  //STORE_ASSERT(size_ >= 0, "Size {1} should not be negative", size_);
+                  STORE_ASSERT(size_ >= 0, "Size {1} should not be negative", size_);
 
                   differentialStateVersionsSPtr->SetPreviousVersion(differentialStateVersionsSPtr->CurrentVersionSPtr);
                   differentialStateVersionsSPtr->SetCurrentVersion(value);
@@ -555,7 +552,7 @@ namespace Data
             return;
          }
 
-         KSharedPtr<IDictionary<TKey, KSharedPtr<DifferentialStateVersions<TValue>>>> componentSPtr = nullptr;
+         KSharedPtr<IDictionary<TKey, KSharedPtr<DifferentialStateVersions<TValue>>>> componentSPtr;
          componentSPtr = static_cast<IDictionary<TKey, KSharedPtr<DifferentialStateVersions<TValue>>> *>(fastSkipListSPtr.RawPtr());
          componentSPtr_.Put(Ktl::Move(componentSPtr));
 

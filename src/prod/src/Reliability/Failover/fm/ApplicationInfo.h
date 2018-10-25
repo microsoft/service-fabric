@@ -28,7 +28,8 @@ namespace Reliability
                 uint64 instanceId,
                 uint64 updateId,
                 ApplicationCapacityDescription const & capacityDescription,
-                ServiceModel::ServicePackageResourceGovernanceMap const& rgDescription);
+                ServiceModel::ServicePackageResourceGovernanceMap const& rgDescription,
+                ServiceModel::CodePackageContainersImagesMap const& cpContainersImages);
 
             ApplicationInfo(
                 ApplicationInfo const & other,
@@ -76,9 +77,15 @@ namespace Reliability
             ApplicationCapacityDescription const & get_ApplicationCapacity() const { return capacityDescription_; }
             void put_ApplicationCapacity(ApplicationCapacityDescription const& appCapacity) { capacityDescription_ = appCapacity; }
 
-            __declspec(property (get = get_ResourceGovernanceDescription, put = put_ResourceGovernanceDescription)) ServiceModel::ServicePackageResourceGovernanceMap ResourceGovernanceDescription;
+            __declspec(property (get = get_ResourceGovernanceDescription, put = put_ResourceGovernanceDescription))
+                ServiceModel::ServicePackageResourceGovernanceMap ResourceGovernanceDescription;
             ServiceModel::ServicePackageResourceGovernanceMap const& get_ResourceGovernanceDescription() const { return  resourceGovernanceDescription_; }
             void put_ResourceGovernanceDescription(ServiceModel::ServicePackageResourceGovernanceMap const& desc) { resourceGovernanceDescription_ = desc; }
+
+            __declspec(property (get = get_CodePackageContainersImages, put = put_CodePackageContainersImages))
+                ServiceModel::CodePackageContainersImagesMap CodePackageContainersImages;
+            ServiceModel::CodePackageContainersImagesMap const& get_CodePackageContainersImages() const { return  codePackageContainersImages_; }
+            void put_CodePackageContainersImages(ServiceModel::CodePackageContainersImagesMap const& desc) { codePackageContainersImages_ = desc; }
 
             bool GetUpgradeVersionForServiceType(ServiceModel::ServiceTypeIdentifier const & typeId, ServiceModel::ServicePackageVersionInstance & result) const;
             bool GetUpgradeVersionForServiceType(ServiceModel::ServiceTypeIdentifier const & typeId, ServiceModel::ServicePackageVersionInstance & result, std::wstring const & upgradeDomain) const;
@@ -96,9 +103,11 @@ namespace Reliability
 
             bool IsPLBSafetyCheckNeeded(ServiceModel::ServicePackageResourceGovernanceMap const & upgradingRG) const;
 
-            std::map<ServiceModel::ServicePackageIdentifier, LoadBalancingComponent::ServicePackageDescription> GetPLBServicePackageDescription(ServiceModel::ServicePackageResourceGovernanceMap const & rgSettings) const;
+            std::map<ServiceModel::ServicePackageIdentifier, LoadBalancingComponent::ServicePackageDescription> GetPLBServicePackageDescription(
+                    ServiceModel::ServicePackageResourceGovernanceMap const & rgSettings,
+                    ServiceModel::CodePackageContainersImagesMap const & containerImages) const;
 
-            FABRIC_FIELDS_10(
+            FABRIC_FIELDS_11(
                 applicationId_,
                 instanceId_,
                 upgrade_,
@@ -108,7 +117,8 @@ namespace Reliability
                 updateId_,
                 capacityDescription_,
                 resourceGovernanceDescription_,
-                rollback_);
+                rollback_,
+                codePackageContainersImages_);
 
         private:
 
@@ -125,6 +135,7 @@ namespace Reliability
             uint64 updateId_;
 
             ServiceModel::ServicePackageResourceGovernanceMap resourceGovernanceDescription_;
+            ServiceModel::CodePackageContainersImagesMap codePackageContainersImages_;
 
             std::wstring idString_;
         };

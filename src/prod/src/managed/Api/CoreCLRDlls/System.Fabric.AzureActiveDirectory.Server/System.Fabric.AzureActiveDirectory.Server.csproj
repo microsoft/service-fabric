@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Fabric Azure Active Directory Utility (.NET Core)</Description>
+    <AssemblyName>System.Fabric.AzureActiveDirectory.Server</AssemblyName>
+    <PackageId>System.Fabric.AzureActiveDirectory.Server</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\..\..\AzureActiveDirectory\managed.server\_friends.cs;
+	  ..\..\..\..\AzureActiveDirectory\managed.server\RwLock.cs;
+      ..\..\..\..\AzureActiveDirectory\managed.server\ServerUtility.cs;
+      ..\..\..\..\AzureActiveDirectory\managed.server\TokenSigningCertificateManager.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.1.4" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

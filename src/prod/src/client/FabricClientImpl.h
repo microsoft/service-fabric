@@ -34,8 +34,11 @@ namespace Client
         public Api::ITestManagementClient,
         public Api::ITestManagementClientInternal,
         public Api::IFaultManagementClient,
-        public Api::IComposeManagementClient
-    {
+        public Api::IComposeManagementClient,
+        public Api::ISecretStoreClient,
+        public Api::IResourceManagerClient,
+        public Api::IResourceManagementClient
+        {
         DENY_COPY(FabricClientImpl);
 
     public:
@@ -241,6 +244,16 @@ namespace Client
             Common::AsyncOperationSPtr const &parent);
 
         Common::ErrorCode EndGetServiceDescription(
+            Common::AsyncOperationSPtr const &operation,
+            __inout Naming::PartitionedServiceDescriptor &description);
+
+        Common::AsyncOperationSPtr BeginGetCachedServiceDescription(
+            Common::NamingUri const &name,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent);
+
+        Common::ErrorCode EndGetCachedServiceDescription(
             Common::AsyncOperationSPtr const &operation,
             __inout Naming::PartitionedServiceDescriptor &description);
 
@@ -524,7 +537,7 @@ namespace Client
 
         Common::ErrorCode EndDeployServicePackageToNode(
             Common::AsyncOperationSPtr const &);
-            
+
         Common::AsyncOperationSPtr BeginGetContainerInfo(
             std::wstring const & nodeName,
             Common::NamingUri const & applicationName,
@@ -544,6 +557,7 @@ namespace Client
             Common::NamingUri const & applicationName,
             std::wstring const & serviceManifestName,
             std::wstring const & codePackageName,
+            FABRIC_INSTANCE_ID codePackageInstance,
             ServiceModel::ContainerInfoArgMap & containerInfoArgMap,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
@@ -551,7 +565,6 @@ namespace Client
         Common::ErrorCode EndInvokeContainerApi(
             Common::AsyncOperationSPtr const &,
             __inout wstring & result) override;
-
 
         //
         // IComposeManagementClient methods
@@ -605,6 +618,18 @@ namespace Client
 
         Common::ErrorCode EndDeleteComposeDeployment(
             Common::AsyncOperationSPtr const &);
+        
+        Common::AsyncOperationSPtr BeginGetComposeDeploymentStatusList(
+            ServiceModel::ComposeDeploymentStatusQueryDescription const & description,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &);
+
+        Common::ErrorCode EndGetComposeDeploymentStatusList(
+            Common::AsyncOperationSPtr const &,
+            __inout std::vector<ServiceModel::ComposeDeploymentStatusQueryResult> & list,
+            __inout ServiceModel::PagingStatusUPtr & pagingStatus);
+
 
         Common::AsyncOperationSPtr BeginUpgradeComposeDeployment(
             ServiceModel::ComposeDeploymentUpgradeDescription const &description,
@@ -625,6 +650,103 @@ namespace Client
             Common::AsyncOperationSPtr const &,
             __inout ServiceModel::ComposeDeploymentUpgradeProgress &result);
 
+        Common::AsyncOperationSPtr BeginDeleteSingleInstanceDeployment(
+            ServiceModel::DeleteSingleInstanceDeploymentDescription const & description,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &) override;
+        Common::ErrorCode EndDeleteSingleInstanceDeployment(
+            Common::AsyncOperationSPtr const &) override;
+
+        //
+        // IResourceManagementClient methods
+        //
+
+        // Volume
+        Common::AsyncOperationSPtr BeginCreateVolume(
+            Management::ClusterManager::VolumeDescriptionSPtr const & description,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &) override;
+
+        Common::ErrorCode EndCreateVolume(
+            Common::AsyncOperationSPtr const &) override;
+
+        Common::AsyncOperationSPtr BeginGetVolumeResourceList(
+            ServiceModel::ModelV2::VolumeQueryDescription const & volumeQueryDescription,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent) override;
+
+        Common::ErrorCode EndGetVolumeResourceList(
+            Common::AsyncOperationSPtr const & operation,
+            std::vector<ServiceModel::ModelV2::VolumeQueryResult> & list,
+            ServiceModel::PagingStatusUPtr & pagingStatus) override;
+
+        Common::AsyncOperationSPtr BeginDeleteVolume(
+            std::wstring const & volumeName,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &) override;
+
+        Common::ErrorCode EndDeleteVolume(
+            Common::AsyncOperationSPtr const &) override;
+
+        // Application
+        Common::AsyncOperationSPtr BeginCreateOrUpdateApplicationResource(
+            ServiceModel::ModelV2::ApplicationDescription && description,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &) override;
+        Common::ErrorCode EndCreateOrUpdateApplicationResource(
+            Common::AsyncOperationSPtr const &,
+            __out ServiceModel::ModelV2::ApplicationDescription & description) override;
+
+        Common::AsyncOperationSPtr BeginGetApplicationResourceList(
+            ServiceModel::ApplicationQueryDescription && applicationQueryDescription,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &) override;
+        Common::ErrorCode EndGetApplicationResourceList(
+            Common::AsyncOperationSPtr const &,
+            std::vector<ServiceModel::ModelV2::ApplicationDescriptionQueryResult> & list,
+            ServiceModel::PagingStatusUPtr & pagingStatus) override;
+
+        // Service
+        Common::AsyncOperationSPtr BeginGetServiceResourceList(
+            ServiceModel::ServiceQueryDescription const & serviceQueryDescription,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &);
+        Common::ErrorCode EndGetServiceResourceList(
+            Common::AsyncOperationSPtr const &,
+            std::vector<ServiceModel::ModelV2::ContainerServiceQueryResult> & list,
+            ServiceModel::PagingStatusUPtr & pagingStatus);
+
+        // Replica
+        Common::AsyncOperationSPtr BeginGetReplicaResourceList(
+            ServiceModel::ReplicasResourceQueryDescription const &,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &) override;
+        Common::ErrorCode EndGetReplicaResourceList(
+            Common::AsyncOperationSPtr const & operation,
+            std::vector<ServiceModel::ReplicaResourceQueryResult> & list,
+            ServiceModel::PagingStatusUPtr & pagingStatus) override;
+
+        Common::AsyncOperationSPtr BeginGetContainerCodePackageLogs(
+            Common::NamingUri const & applicationName,
+            Common::NamingUri const & serviceName,
+            std::wstring replicaName,
+            std::wstring const & codePackageName,
+            ServiceModel::ContainerInfoArgMap & containerInfoArgMap,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &);
+        Common::ErrorCode EndGetContainerCodePackageLogs(
+            Common::AsyncOperationSPtr const & operation,
+            __inout wstring &containerInfo);
+        
         //
         // IQueryClient methods
         //
@@ -640,11 +762,18 @@ namespace Client
             __inout ServiceModel::QueryResult &queryResult);
 
         Common::AsyncOperationSPtr BeginGetNodeList(
+            ServiceModel::NodeQueryDescription const & queryDescription,
+            bool excludeStoppedNodeInfo,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const& callback,
+            Common::AsyncOperationSPtr const& parent) override;
+
+        Common::AsyncOperationSPtr BeginGetNodeList(
             std::wstring const &nodeNameFilter,
             std::wstring const &continuationToken,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const& callback,
-            Common::AsyncOperationSPtr const& parent);
+            Common::AsyncOperationSPtr const& parent) override;
 
         Common::AsyncOperationSPtr BeginGetNodeList(
             std::wstring const &nodeNameFilter,
@@ -653,7 +782,7 @@ namespace Client
             std::wstring const &continuationToken,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const& callback,
-            Common::AsyncOperationSPtr const& parent);
+            Common::AsyncOperationSPtr const& parent) override;
 
         Common::AsyncOperationSPtr BeginGetFMNodeList(
             std::wstring const &nodeNameFilter,
@@ -665,28 +794,28 @@ namespace Client
         Common::ErrorCode EndGetNodeList(
             Common::AsyncOperationSPtr const &operation,
             __inout std::vector<ServiceModel::NodeQueryResult> &nodeList,
-            __inout ServiceModel::PagingStatusUPtr &pagingStatus);
+            __inout ServiceModel::PagingStatusUPtr &pagingStatus) override;
 
         Common::AsyncOperationSPtr BeginGetApplicationTypeList(
             std::wstring const &applicationtypeNameFilter,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
-            Common::AsyncOperationSPtr const &parent);
+            Common::AsyncOperationSPtr const &parent) override;
 
         Common::ErrorCode EndGetApplicationTypeList(
             Common::AsyncOperationSPtr const &operation,
-            __inout std::vector<ServiceModel::ApplicationTypeQueryResult> &applicationtypeList);
+            __inout std::vector<ServiceModel::ApplicationTypeQueryResult> &applicationtypeList) override;
 
         Common::AsyncOperationSPtr BeginGetApplicationTypePagedList(
             ServiceModel::ApplicationTypeQueryDescription const &applicationTypeQueryDescription,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
-            Common::AsyncOperationSPtr const &parent);
+            Common::AsyncOperationSPtr const &parent) override;
 
         Common::ErrorCode EndGetApplicationTypePagedList(
             Common::AsyncOperationSPtr const &operation,
             __inout std::vector<ServiceModel::ApplicationTypeQueryResult> &applicationtypeList,
-            __inout ServiceModel::PagingStatusUPtr &pagingStatus);
+            __inout ServiceModel::PagingStatusUPtr &pagingStatus) override;
 
         Common::AsyncOperationSPtr BeginGetServiceTypeList(
             std::wstring const &applicationTypeName,
@@ -694,7 +823,7 @@ namespace Client
             std::wstring const &serviceTypeNameFilter,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
-            Common::AsyncOperationSPtr const &parent);
+            Common::AsyncOperationSPtr const &parent) override;
 
         Common::ErrorCode EndGetServiceTypeList(
             Common::AsyncOperationSPtr const &operation,
@@ -716,23 +845,12 @@ namespace Client
             ServiceModel::ApplicationQueryDescription const & applicationQueryDescription,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const &callback,
-            Common::AsyncOperationSPtr const &);
+            Common::AsyncOperationSPtr const &) override;
 
         Common::ErrorCode EndGetApplicationList(
             Common::AsyncOperationSPtr const &,
             __inout std::vector<ServiceModel::ApplicationQueryResult> &applicationList,
-            __inout ServiceModel::PagingStatusUPtr &pagingStatus);
-
-        Common::AsyncOperationSPtr BeginGetComposeDeploymentStatusList(
-            ServiceModel::ComposeDeploymentStatusQueryDescription const & description,
-            Common::TimeSpan const timeout,
-            Common::AsyncCallback const &callback,
-            Common::AsyncOperationSPtr const &);
-
-        Common::ErrorCode EndGetComposeDeploymentStatusList(
-            Common::AsyncOperationSPtr const &,
-            __inout std::vector<ServiceModel::ComposeDeploymentStatusQueryResult> & list,
-            __inout ServiceModel::PagingStatusUPtr & pagingStatus);
+            __inout ServiceModel::PagingStatusUPtr &pagingStatus)  override;
 
         Common::AsyncOperationSPtr BeginGetServiceList(
             ServiceModel::ServiceQueryDescription const & serviceQueryDescription,
@@ -1746,6 +1864,17 @@ namespace Client
         Common::ErrorCode EndStopChaos(
             Common::AsyncOperationSPtr const &);
 
+        Common::AsyncOperationSPtr FabricClientImpl::BeginGetChaos(
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &);
+        Common::ErrorCode FabricClientImpl::EndGetChaos(
+            Common::AsyncOperationSPtr const &,
+            __out Api::IChaosDescriptionResultPtr &result);
+        Common::ErrorCode FabricClientImpl::EndGetChaos(
+            Common::AsyncOperationSPtr const &,
+            __out Api::ISystemServiceApiResultPtr &result);
+
         Common::AsyncOperationSPtr FabricClientImpl::BeginGetChaosReport(
             Management::FaultAnalysisService::GetChaosReportDescription const &,
             Common::TimeSpan const timeout,
@@ -1754,6 +1883,42 @@ namespace Client
         Common::ErrorCode FabricClientImpl::EndGetChaosReport(
             Common::AsyncOperationSPtr const &operation,
             __inout Api::IChaosReportResultPtr &result);
+
+        Common::AsyncOperationSPtr FabricClientImpl::BeginGetChaosEvents(
+            Management::FaultAnalysisService::GetChaosEventsDescription const &,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent);
+        Common::ErrorCode FabricClientImpl::EndGetChaosEvents(
+            Common::AsyncOperationSPtr const &operation,
+            __inout Api::IChaosEventsSegmentResultPtr &result);
+        Common::ErrorCode FabricClientImpl::EndGetChaosEvents(
+            Common::AsyncOperationSPtr const &operation,
+            __inout Api::ISystemServiceApiResultPtr &result);
+
+        Common::AsyncOperationSPtr FabricClientImpl::BeginGetChaosSchedule(
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent);
+        Common::ErrorCode FabricClientImpl::EndGetChaosSchedule(
+            Common::AsyncOperationSPtr const &operation,
+            __inout Api::IChaosScheduleDescriptionResultPtr &result);
+        Common::ErrorCode FabricClientImpl::EndGetChaosSchedule(
+            Common::AsyncOperationSPtr const &operation,
+            __inout Api::ISystemServiceApiResultPtr &result);
+
+        Common::AsyncOperationSPtr FabricClientImpl::BeginSetChaosSchedule(
+            Management::FaultAnalysisService::SetChaosScheduleDescription const & setChaosScheduleDescription,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent);
+        Common::AsyncOperationSPtr FabricClientImpl::BeginSetChaosSchedule(
+            std::wstring const & state,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const &callback,
+            Common::AsyncOperationSPtr const &parent);
+        Common::ErrorCode FabricClientImpl::EndSetChaosSchedule(
+            Common::AsyncOperationSPtr const &operation);
 
         //
         // ITestManagementClientInternal methods
@@ -1998,6 +2163,16 @@ namespace Client
         Common::ErrorCode EndUploadChunk(
             Common::AsyncOperationSPtr const & operation);
 
+        Common::AsyncOperationSPtr BeginUploadChunkContent(
+            Common::Guid const & targetPartitionId,
+            __inout Transport::MessageUPtr & chunkContentMessage,
+            __inout Management::FileStoreService::UploadChunkContentDescription & uploadChunkContentDescription,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndUploadChunkContent(
+            Common::AsyncOperationSPtr const & operation);
+
         Common::AsyncOperationSPtr BeginDeleteUploadSession(
             Common::Guid const & targetPartitionId,
             Common::Guid const & sessionId,
@@ -2110,6 +2285,57 @@ namespace Client
             __inout std::unique_ptr<Naming::NameRangeTuple> & firstNonProcessedRequest,
             __inout Transport::FabricActivityHeader & activityHeader);
 
+        // ISecretStoreClient methods
+        Common::AsyncOperationSPtr BeginGetSecrets(
+			Management::CentralSecretService::GetSecretsDescription & getSecretsDescription,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const &parent) override;
+
+        Common::ErrorCode EndGetSecrets(
+            Common::AsyncOperationSPtr const & operation,
+            __out Management::CentralSecretService::SecretsDescription & result) override;
+
+		Common::AsyncOperationSPtr BeginSetSecrets(
+			Management::CentralSecretService::SecretsDescription & secretsDescription,
+			Common::TimeSpan const timeout,
+			Common::AsyncCallback const & callback,
+			Common::AsyncOperationSPtr const &parent) override;
+
+		Common::ErrorCode EndSetSecrets(
+			Common::AsyncOperationSPtr const & operation,
+			__out Management::CentralSecretService::SecretReferencesDescription & result) override;
+
+		Common::AsyncOperationSPtr BeginRemoveSecrets(
+			Management::CentralSecretService::SecretReferencesDescription & secretReferencesDescription,
+			Common::TimeSpan const timeout,
+			Common::AsyncCallback const & callback,
+			Common::AsyncOperationSPtr const &parent) override;
+
+		Common::ErrorCode EndRemoveSecrets(
+			Common::AsyncOperationSPtr const & operation,
+			__out Management::CentralSecretService::SecretReferencesDescription & result) override;
+
+        // IResourceManagerClient methods
+        Common::AsyncOperationSPtr BeginClaimResource(
+            Management::ResourceManager::Claim const & claim,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent) override;
+
+		Common::ErrorCode EndClaimResource(
+            Common::AsyncOperationSPtr const & operation,
+            __out Management::ResourceManager::ResourceMetadata & result) override;
+
+        Common::AsyncOperationSPtr BeginReleaseResource(
+			Management::ResourceManager::Claim const & claim,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent) override;
+
+        Common::ErrorCode EndReleaseResource(
+            Common::AsyncOperationSPtr const & operation) override;
+
         // Access control
         Common::AsyncOperationSPtr BeginSetAcl(
             AccessControl::ResourceIdentifier const &resource,
@@ -2211,7 +2437,6 @@ namespace Client
         class GetServiceDescriptionAsyncOperation;
         class LocationChangeNotificationAsyncOperation;
         class EnsureOpenedAsyncOperation;
-        class Test_TestNamespaceManagerAsyncOperation;
         class CreateContainerAppAsyncOperation;
 
         void InitializeConnectionManager(Naming::INamingMessageProcessorSPtr const & = Naming::INamingMessageProcessorSPtr());

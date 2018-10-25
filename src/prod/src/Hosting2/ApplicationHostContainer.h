@@ -43,6 +43,14 @@ namespace Hosting2
             Common::AsyncOperationSPtr const & operation,
             __out Common::ComPointer<ComCodePackageActivationContext> & comCodePackageActivationContextCPtr);
 
+        Common::AsyncOperationSPtr BeginGetComCodePackageActivator(
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndGetComCodePackageActivator(
+            Common::AsyncOperationSPtr const & operation,
+            _Out_ Common::ComPointer<ComApplicationHostCodePackageActivator> & comCodePackageActivatorCPtr);
+
         Common::AsyncOperationSPtr BeginGetFabricNodeContext(
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
@@ -104,6 +112,20 @@ namespace Hosting2
         /* [in] */ __RPC__in REFIID riid,
         /* [retval][out] */ __RPC__deref_out_opt void **backupRestoreAgent);
 
+        static /* [entry] */ HRESULT FabricBeginGetCodePackageActivator(
+            /* [in] */ __RPC__in REFIID riid,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ __RPC__in_opt IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ __RPC__deref_out_opt IFabricAsyncOperationContext **context);
+
+        static /* [entry] */ HRESULT FabricEndGetCodePackageActivator(
+            /* [in] */ __RPC__in_opt IFabricAsyncOperationContext *context,
+            /* [retval][out] */ __RPC__deref_out_opt void **activator);
+
+        static /* [entry] */ HRESULT FabricGetCodePackageActivator(
+            /* [in] */ __RPC__in REFIID riid,
+            /* [retval][out] */ __RPC__deref_out_opt void **activator);
+
         void Test_CloseApplicationHost();
 
     private:
@@ -143,7 +165,7 @@ namespace Hosting2
 
         static Common::ErrorCode GetApplicationHostContext(
             Common::EnvironmentMap const & envMap,
-            __out ApplicationHostContext & hostContext);        
+            __out ApplicationHostContext & hostContext);
 
         static Common::ErrorCode GetCodePackageContext(
             Common::EnvironmentMap const & envMap,
@@ -161,8 +183,14 @@ namespace Hosting2
         class GetActivationContextComAsyncOperationContext;
         friend class GetActivationContextComAsyncOperationContext;
 
+        class GetCodePackageActivatorComAsyncOperationContext;
+        friend class GetCodePackageActivatorComAsyncOperationContext;
+
         class GetComCodePackageActivationContextAsyncOperation;
         friend class GetComCodePackageActivationContextAsyncOperation;
+
+        class GetComCodePackageActivatorAsyncOperation;
+        friend class GetComCodePackageActivatorAsyncOperation;
 
         class RegisterCodePackageHostAsyncOperation;
         friend class RegisterCodePackageHostAsyncOperation;
@@ -183,7 +211,6 @@ namespace Hosting2
         Common::RwLock lock_;
         ApplicationHostSPtr host_;
         Common::AsyncOperationSPtr pendingHostCreateOperation_;
-        //Common::ReferencePointer<FABRIC_NODE_CONTEXT> nodeContext_;
 
         static ApplicationHostContainer * singleton_;
         static INIT_ONCE initOnceAppHostContainer_;

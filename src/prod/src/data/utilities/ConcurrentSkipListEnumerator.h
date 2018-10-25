@@ -41,18 +41,19 @@ namespace Data
         public:
             KeyValuePair<TKey, TValue> Current()
             {
-                if (current_ != nullptr)
-                {
-                    return KeyValuePair<TKey, TValue>(current_->Key, current_->Value);
-                }
-                else
-                {
-                    throw ktl::Exception(STATUS_NO_MORE_ENTRIES);
-                }
+                ASSERT_IF(current_ == nullptr, "current is null");
+                ASSERT_IF(current_->Type == Node::NodeType::Tail, "Invalid current node type encountered");
+
+                return KeyValuePair<TKey, TValue>(current_->Key, current_->Value);
             }
 
             bool MoveNext()
             {
+                if (current_->Type == Node::NodeType::Tail)
+                {
+                    return false;
+                }
+
                 while (true)
                 {
                     current_->Lock();

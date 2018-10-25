@@ -251,7 +251,7 @@ namespace Common
         ///
         /// Returns: Atomically, the value of object immediately before the effects. 
 
-        uint64 exchange( uint64 newValue ) volatile { return InterlockedExchange(&value_, newValue); }
+        uint64 exchange( uint64 newValue ) volatile { return InterlockedExchange64((volatile LONGLONG*)&value_, newValue); }
 
         void fence( memory_order ) const volatile ; // implement when needed
 
@@ -275,21 +275,21 @@ namespace Common
         /// Returns: The value of *this immediately prior to the store. 
         ///
         /// Throws: Nothing. 
-        uint64 fetch_and( uint64 r ) volatile { return InterlockedAnd(&value_, r); }
+        uint64 fetch_and( uint64 r ) volatile { return InterlockedAnd64((volatile LONGLONG*)&value_, r); }
 
         /// Effects: Atomically retrieves the existing value of *this and stores old-value | r in *this. 
         ///
         /// Returns: The value of *this immediately prior to the store. 
         ///
         /// Throws: Nothing. 
-        uint64 fetch_or( uint64 r ) volatile { return InterlockedOr(&value_, r); }
+        uint64 fetch_or( uint64 r ) volatile { return InterlockedOr64((volatile LONGLONG*)&value_, r); }
 
         /// Effects: Atomically retrieves the existing value of *this and stores old-value xor r in *this. 
         ///
         /// Returns: The value of *this immediately prior to the store. 
         ///
         /// Throws: Nothing. 
-        uint64 fetch_xor( uint64 r ) volatile { return InterlockedXor(&value_, r); }
+        uint64 fetch_xor( uint64 r ) volatile { return InterlockedXor64((volatile LONGLONG*)&value_, r); }
 
         atomic_uint64() : value_() {}
         /* constexpr */ explicit atomic_uint64( uint64 value ) : value_(value) {}
@@ -298,7 +298,7 @@ namespace Common
         // uint64 operator =( uint64 ) volatile; 
         uint64 operator +=( uint64 operand ) volatile
         {
-            return InterlockedExchangeAdd(&value_, operand);
+            return InterlockedExchangeAdd64((volatile LONGLONG*)&value_, operand);
         }
 
         uint64 operator -=( uint64 operand ) volatile
@@ -314,8 +314,8 @@ namespace Common
 
         uint64 operator ++( int ) volatile { return ++*this - 1; }
         uint64 operator --( int ) volatile { return --*this + 1; }
-        uint64 operator ++() volatile { return InterlockedIncrement(&value_); }
-        uint64 operator --() volatile { return InterlockedDecrement(&value_); }
+        uint64 operator ++() volatile { return InterlockedIncrement64((volatile LONGLONG*)&value_); }
+        uint64 operator --() volatile { return InterlockedDecrement64((volatile LONGLONG*)&value_); }
 
     private:
         uint64 volatile value_;

@@ -51,7 +51,10 @@ namespace Reliability
 
             UpgradeDomainsCSPtr GetUpgradeDomains(UpgradeDomainSortPolicy::Enum sortPolicy);
 
-            Common::ErrorCode NodeUp(NodeInfoSPtr && node);
+            Common::ErrorCode NodeUp(
+                NodeInfoSPtr && node,
+                bool isVersionGatekeepingNeeded,
+                _Out_ Common::FabricVersionInstance & targetVersionInstance);
 
             Common::ErrorCode NodeDown(Federation::NodeInstance const& nodeInstance);
 
@@ -121,20 +124,17 @@ namespace Reliability
                 Common::AsyncOperationSPtr const& state);
             Common::ErrorCode EndNodeStateRemoved(Common::AsyncOperationSPtr const& operation);
 
-            Common::AsyncOperationSPtr BeginPartitionNotification(
-                std::vector<PartitionId> && disabledPartitions,
-                uint64 sequenceNumber,
-                Federation::NodeInstance const& nodeInstance,
-                Common::AsyncCallback const& callback,
-                Common::AsyncOperationSPtr const& state);
-            Common::ErrorCode EndPartitionNotification(Common::AsyncOperationSPtr const& operation);
-
             Common::ErrorCode RemovePendingApplicationUpgrade(Federation::NodeInstance const& nodeInstance, ServiceModel::ApplicationIdentifier const& applicationId);
 
             void FinishRemoveNode(LockedNodeInfo & lockedNodeInfo, int64 commitDuration);
 
             static void SortUpgradeDomains(UpgradeDomainSortPolicy::Enum sortPolicy, __inout std::vector<std::wstring> & upgradeDomains);
             static bool CompareUpgradeDomains(UpgradeDomainSortPolicy::Enum sortPolicy, std::wstring const& upgradeDomain1, std::wstring const& upgradeDomain2);
+
+            Common::ErrorCode GetLockedNode(
+                Federation::NodeId const& nodeId,
+                LockedNodeInfo & lockedNodeInfo,
+                Common::TimeSpan timeout = FailoverConfig::GetConfig().LockAcquireTimeout);
 
             void WriteTo(Common::TextWriter& writer, Common::FormatOptions const &) const;
 
@@ -147,8 +147,12 @@ namespace Reliability
             void AddUpgradeDomain(NodeInfo const& nodeInfo);
             void RemoveUpgradeDomain(std::wstring const& upgradeDomain);
 
-            Common::ErrorCode GetLockedNode(Federation::NodeId const& nodeId, LockedNodeInfo & lockedNodeInfo);
-            Common::ErrorCode GetLockedNode(Federation::NodeId const& nodeId, LockedNodeInfo & lockedNodeInfo, bool createNewEntry, __out bool & isNewEntry);
+            Common::ErrorCode GetLockedNode(
+                Federation::NodeId const& nodeId,
+                LockedNodeInfo & lockedNodeInfo,
+                bool createNewEntry,
+                Common::TimeSpan timeout,
+                __out bool & isNewEntry);
 
             void ReportHealthAfterNodeUpdate(NodeInfoSPtr const & nodeInfo, Common::ErrorCode error, bool isUpgrade = false);
             void ReportHealthForNodeDeactivation(NodeInfoSPtr const & nodeInfo, Common::ErrorCode error, bool isDeactivationComplete);

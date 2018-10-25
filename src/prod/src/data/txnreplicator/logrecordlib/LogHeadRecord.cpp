@@ -94,9 +94,10 @@ void LogHeadRecord::Read(
 void LogHeadRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
     ULONG32 startingPosition = binaryWriter.Position;
 
     binaryWriter.Position += sizeof(int);
@@ -108,7 +109,7 @@ void LogHeadRecord::Write(
 
     if(isPhysicalWrite)
     {
-        if(logHeadRecordOffset_ == Constants::InvalidPhysicalRecordOffset)
+        if(logHeadRecordOffset_ == Constants::InvalidPhysicalRecordOffset || forceRecomputeOffsets == true)
         {
             ASSERT_IFNOT(
                 logHeadRecord_ != nullptr,

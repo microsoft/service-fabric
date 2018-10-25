@@ -53,7 +53,8 @@ namespace Reliability
 
             Common::TraceEventWriter<ServiceModel::ApplicationIdentifier> PLBSafetyCheckForApplicationReceived;
             Common::TraceEventWriter<ServiceModel::ApplicationIdentifier, Common::ErrorCode>PLBSafetyCheckForApplicationProcessed;
-            
+
+
             Common::TraceEventWriter<std::wstring, Common::TimeSpan, NodePeriodicTaskCounts> NodePeriodicTaskEnd;
             Common::TraceEventWriter<std::wstring, Common::TimeSpan, ServicePeriodicTaskCounts> ServicePeriodicTaskEnd;
             Common::TraceEventWriter<std::wstring, Common::TimeSpan, size_t, size_t> CreateContextsPeriodicTaskEnd;

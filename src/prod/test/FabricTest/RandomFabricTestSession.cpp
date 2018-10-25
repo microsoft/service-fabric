@@ -159,6 +159,14 @@ wstring RandomFabricTestSession::GetInput()
     ++iterations_;
     if(iterations_ >= maxIterations_ || timeout_.IsExpired)
     {
+        // Disable api faults so that the clients can stop gracefully in case they were waiting for any pending operation like put/get and the 
+        // faults continuously fail API's which can lead to puts to get stuck for long durations due to builds not completing etc.
+        // The bug that caught this issue was the below.
+
+        // RD: RDBug 12260446 : Unreliable Failure : Client.StopTest failed due to all clients not finishing - Due to builds failing in replicator caused by fault injection during open async
+
+        ApiFaultHelper::Get().SetRandomApiFaultsEnabled(false);
+
         AddInput(L"#End of test.  Exiting...");
         AddInput(FabricTestCommands::StopClientCommand);
         AddInput(TestSession::QuitCommand);
@@ -759,8 +767,20 @@ void RandomFabricTestSession::CreateServiceInner(wstring serviceName, wstring se
         AddInput(FabricTestCommands::StartClientCommand + FabricTestDispatcher::ParamDelimiter + serviceName);
     }
 
-    AddInput(FabricTestCommands::VerifyCommand);
+    if (StringUtility::StartsWith<wstring>(serviceName, TXRServicePrefix))
+    {
+        wstring startTimestampValidationCmd = wformatString(
+            "{0}{1}{2}{3}{4}",
+            FabricTestCommands::EnableLogTruncationTimestampValidation,
+            FabricTestDispatcher::ParamDelimiter,
+            serviceName,
+            FabricTestDispatcher::ParamDelimiter,
+            L"start");
 
+        AddInput(startTimestampValidationCmd);
+    }
+
+    AddInput(FabricTestCommands::VerifyCommand);
     createdServices_.push_back(serviceName);
 }
 
@@ -1303,6 +1323,16 @@ void RandomFabricTestSession::DeleteService(wstring serviceName)
             FabricTestCommands::StopClientCommand +
             FabricTestDispatcher::ParamDelimiter +
             serviceName);
+
+        wstring stopTimestampValidationCmd = wformatString(
+            "{0}{1}{2}{3}{4}",
+            FabricTestCommands::EnableLogTruncationTimestampValidation,
+            FabricTestDispatcher::ParamDelimiter,
+            serviceName,
+            FabricTestDispatcher::ParamDelimiter,
+            L"stop");
+
+        AddInput(stopTimestampValidationCmd);
     }
 
     wstring errors;

@@ -105,6 +105,64 @@ namespace Reliability
                 ReconfigurationResult::Enum result_;
                 ReconfigurationPerformanceData const perfData_;
             };
+
+            class ReplicaStateChangeEventData : public IEventData
+            {
+            public:
+                ReplicaStateChangeEventData(
+                    std::wstring const & nodeInstance,
+                    Common::Guid const & ftId,
+                    int64 replicaId,
+                    Epoch const & ccEpoch,
+                    ReplicaLifeCycleState::Enum replicaState,
+                    ReplicaRole::Enum replicaRole,
+                    ActivityDescription const & activityDescription)
+                    : ftId_(ftId),
+                    nodeInstance_(nodeInstance),
+                    replicaId_(replicaId),
+                    ccEpoch_(ccEpoch),
+                    replicaState_(replicaState),
+                    replicaRole_(replicaRole),
+                    reasonActivityDescription_(activityDescription),
+                    IEventData(TraceEventType::ReplicaStateChange)
+                {
+                }
+
+                __declspec (property(get = get_NodeInstance)) const std::wstring & NodeInstance;
+                const std::wstring & get_NodeInstance() const { return nodeInstance_; }
+
+                __declspec (property(get = get_FtId)) const Common::Guid & FtId;
+                const Common::Guid & get_FtId() const { return ftId_; }
+
+                __declspec (property(get = get_ReplicaId)) int64 ReplicaId;
+                int64 get_ReplicaId() const { return replicaId_; }
+
+                __declspec (property(get = get_CcEpoch)) const Reliability::Epoch & CurrentConfigurationEpoch;
+                const Reliability::Epoch & get_CcEpoch() const { return ccEpoch_; }
+
+                __declspec (property(get = get_ReplicaState)) const ReplicaLifeCycleState::Enum & ReplicaState;
+                const ReplicaLifeCycleState::Enum & get_ReplicaState() const { return replicaState_; }
+
+                __declspec (property(get = get_ReplicaRole)) const ReplicaRole::Enum & ReplicaRole;
+                const ReplicaRole::Enum & get_ReplicaRole() const { return replicaRole_; }
+
+                __declspec (property(get = get_Reason)) const Common::ActivityDescription & Reason;
+                const Common::ActivityDescription & get_Reason() const { return reasonActivityDescription_; }
+
+                std::shared_ptr<IEventData> Clone() const override
+                {
+                    return make_shared<ReplicaStateChangeEventData>(*this);
+                }
+
+            private:
+                std::wstring nodeInstance_;
+                Common::Guid ftId_;
+                int64 const replicaId_;
+                Reliability::Epoch ccEpoch_;
+                ReplicaLifeCycleState::Enum replicaState_;
+                ReplicaRole::Enum replicaRole_;
+                Common::ActivityDescription const reasonActivityDescription_;
+            };
         }
     }
 }

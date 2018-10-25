@@ -55,6 +55,8 @@ namespace PlacementAndLoadBalancingUnitTest
 
         virtual void UpdateAppUpgradePLBSafetyCheckStatus(ServiceModel::ApplicationIdentifier const&);
 
+        virtual void UpdateFailoverUnitTargetReplicaCount(Common::Guid const &, int targetCount);
+
         bool IsSafeToUpgradeApp(ServiceModel::ApplicationIdentifier const&);
 
         Client::HealthReportingComponentSPtr CreateDummyHealthReportingComponentSPtr();
@@ -74,6 +76,10 @@ namespace PlacementAndLoadBalancingUnitTest
         void AddReplica(Common::Guid fuId, int count);
 
         void RefreshPLB(Common::StopwatchTime now);
+
+        int GetTargetReplicaCountForPartition(Common::Guid const& partitionId);
+
+        int GetPartitionCountChangeForService(std::wstring const& serviceName);
 
     private:
 
@@ -107,5 +113,7 @@ namespace PlacementAndLoadBalancingUnitTest
         std::map<Common::Guid, Reliability::LoadBalancingComponent::FailoverUnitDescription> fuMap_;
         std::unique_ptr<Reliability::LoadBalancingComponent::PlacementAndLoadBalancing> plb_;
         std::unique_ptr<Reliability::LoadBalancingComponent::PlacementAndLoadBalancingTestHelper> plbTestHelper_;
+        std::map<Common::Guid, int> autoscalingTargetCount_;
+        std::map<std::wstring, int> autoscalingPartitionCountChange_;
     };
 }

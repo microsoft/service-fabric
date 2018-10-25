@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#include "Naming/ClientAccessConfig.h"
 
 using namespace Common;
 using namespace Api;
@@ -16,6 +17,7 @@ StringLiteral const TraceType("NodesHandler");
 
 NodesHandler::NodesHandler(HttpGatewayImpl & server)
     : RequestHandlerBase(server)
+    , localNodeName_(server.NodeConfig->InstanceName)
 {
 }
 
@@ -99,7 +101,31 @@ ErrorCode NodesHandler::Initialize()
     validHandlerUris.push_back(HandlerUriTemplate(
         MAKE_SUFFIX_PATH(Constants::CodePackagesOnNodeEntitySetPath, Constants::ContainerApi),
         Constants::HttpPostVerb,
-        MAKE_HANDLER_CALLBACK(CallContainerApi)));
+        MAKE_HANDLER_CALLBACK(ContainerApiWrapper)));
+
+    validHandlerUris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::NodesEntityKeyPath, Constants::ContainerApiPath),
+        Constants::HttpGetVerb,
+        MAKE_HANDLER_CALLBACK(ForwardContainerApi),
+        false));
+
+    validHandlerUris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::NodesEntityKeyPath, Constants::ContainerApiPath),
+        Constants::HttpPutVerb,
+        MAKE_HANDLER_CALLBACK(ForwardContainerApi),
+        false));
+
+    validHandlerUris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::NodesEntityKeyPath, Constants::ContainerApiPath),
+        Constants::HttpPostVerb,
+        MAKE_HANDLER_CALLBACK(ForwardContainerApi),
+        false));
+
+    validHandlerUris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::NodesEntityKeyPath, Constants::ContainerApiPath),
+        Constants::HttpDeleteVerb,
+        MAKE_HANDLER_CALLBACK(ForwardContainerApi),
+        false));
 
     validHandlerUris.push_back(HandlerUriTemplate(
         Constants::ApplicationsOnNodeEntitySetPath,
@@ -206,29 +232,12 @@ ErrorCode NodesHandler::Initialize()
     return server_.InnerServer->RegisterHandler(Constants::NodesHandlerPath, shared_from_this());
 }
 
-void NodesHandler::GetAllNodes(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::GetAllNodes(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
 
     UriArgumentParser argumentParser(handlerOperation->Uri);
-
-    // Starting with Constants::V2ApiVersion, input can specify continuation token
-    wstring continuationToken;
-    if (handlerOperation->Uri.ApiVersion != Constants::V1ApiVersion)
-    {
-        auto error = argumentParser.TryGetContinuationToken(continuationToken);
-        if (error.IsError(ErrorCodeValue::NameNotFound))
-        {
-            error = ErrorCode::Success();
-        }
-
-        if (!error.IsSuccess())
-        {
-            handlerOperation->OnError(thisSPtr, error);
-            return;
-        }
-    }
 
     DWORD nodeStatus = FABRIC_QUERY_NODE_STATUS_FILTER_DEFAULT;
     auto error = argumentParser.TryGetNodeStatusFilter(nodeStatus);
@@ -238,24 +247,72 @@ void NodesHandler::GetAllNodes(__in AsyncOperationSPtr const& thisSPtr)
         return;
     }
 
-    AsyncOperationSPtr operation = client.QueryClient->BeginGetNodeList(
-        EMPTY_STRING_QUERY_FILTER,
-        nodeStatus,
-        false,
-        continuationToken,
-        handlerOperation->Timeout,
-        [this] (AsyncOperationSPtr const& operation)
+    AsyncOperationSPtr operation;
+
+    if (handlerOperation->Uri.ApiVersion <= Constants::V62ApiVersion)
+    {
+        // Starting with Constants::V2ApiVersion, input can specify continuation token
+        wstring continuationToken;
+        if (handlerOperation->Uri.ApiVersion != Constants::V1ApiVersion)
+        {
+            error = argumentParser.TryGetContinuationToken(continuationToken);
+            if (error.IsError(ErrorCodeValue::NameNotFound))
+            {
+                error = ErrorCode::Success();
+            }
+
+            if (!error.IsSuccess())
+            {
+                handlerOperation->OnError(thisSPtr, error);
+                return;
+            }
+        }
+
+        operation = client.QueryClient->BeginGetNodeList(
+            EMPTY_STRING_QUERY_FILTER,
+            nodeStatus,
+            false,
+            continuationToken,
+            handlerOperation->Timeout,
+            [this](AsyncOperationSPtr const& operation)
         {
             this->OnGetAllNodesComplete(operation, false);
         },
-        thisSPtr);
+            thisSPtr);
+    }
+    // MaxResults parameter added for 6.3
+    else
+    {
+        // Call new BeginGetNodeList overload which takes query parameters and include max Results
+        NodeQueryDescription queryDescription;
+        ServiceModel::QueryPagingDescription pagingDescription;
+        error = argumentParser.TryGetPagingDescription(pagingDescription);
+        if (!error.IsSuccess())
+        {
+            handlerOperation->OnError(thisSPtr, error);
+            return;
+        }
+        queryDescription.QueryPagingDescriptionUPtr = make_unique<QueryPagingDescription>(move(pagingDescription));
+
+        queryDescription.NodeStatusFilter = nodeStatus;
+
+        operation = client.QueryClient->BeginGetNodeList(
+            queryDescription,
+            false,
+            handlerOperation->Timeout,
+            [this](AsyncOperationSPtr const& operation)
+        {
+            this->OnGetAllNodesComplete(operation, false);
+        },
+            thisSPtr);
+    }
 
     OnGetAllNodesComplete(operation, true);
 }
 
 void NodesHandler::OnGetAllNodesComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -298,7 +355,7 @@ void NodesHandler::OnGetAllNodesComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::GetNodeByName(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::GetNodeByName(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -326,8 +383,8 @@ void NodesHandler::GetNodeByName(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnGetNodeByNameComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -369,7 +426,7 @@ void NodesHandler::OnGetNodeByNameComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::StopNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::StopNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -407,8 +464,8 @@ void NodesHandler::StopNode(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnStopNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -426,7 +483,7 @@ void NodesHandler::OnStopNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void NodesHandler::RestartDeployedCodePackage(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::RestartDeployedCodePackage(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -484,9 +541,9 @@ void NodesHandler::RestartDeployedCodePackage(__in AsyncOperationSPtr const& thi
 }
 
 void NodesHandler::OnRestartDeployedCodePackageComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously,
-    __in RestartDeployedCodePackageDescriptionUsingNodeName const & description)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously,
+    RestartDeployedCodePackageDescriptionUsingNodeName const & description)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -505,7 +562,185 @@ void NodesHandler::OnRestartDeployedCodePackageComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void NodesHandler::CallContainerApi(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ForwardContainerApi(AsyncOperationSPtr const& thisSPtr)
+{
+#ifdef PLATFORM_UNIX
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    WriteWarning(TraceType, "ForwardContainerApi: not implemented");
+    handlerOperation->OnError(thisSPtr, ErrorCodeValue::NotImplemented);
+}
+
+#else
+
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    UriArgumentParser argumentParser(handlerOperation->Uri);
+
+    WriteNoise(TraceType, "ForwardContainerApi: {0}", handlerOperation->MessageContext.GetUrl());
+    if ((handlerOperation->FabricClient.ClientRole & Naming::ClientAccessConfig::GetConfig().InvokeContainerApiRoles) == 0)
+    {
+        WriteWarning(
+            TraceType,
+            "ForwardContainerApi: access denied, allowed roles: {0}, incoming role: {1}",
+            Naming::ClientAccessConfig::GetConfig().InvokeContainerApiRoles,
+            handlerOperation->FabricClient.ClientRole);
+
+        handlerOperation->OnError(thisSPtr, ErrorCodeValue::AccessDenied);
+        return;
+    }
+
+    wstring nodeName;
+    auto error = argumentParser.TryGetNodeName(nodeName);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(thisSPtr, error);
+        return;
+    }
+
+    WriteNoise(TraceType, "ForwardContainerApi: nodeName: {0}", nodeName);
+
+    wstring containerApiPath;
+    if (!handlerOperation->Uri.GetItem(Constants::ContainerApiPathString, containerApiPath))
+    {
+        WriteInfo(
+            TraceType,
+            "failed to get {0} from {1}",
+            Constants::ContainerApiPathString,
+            handlerOperation->MessageContext.GetUrl());
+
+        handlerOperation->OnError(thisSPtr, ErrorCodeValue::InvalidArgument);
+        return;
+    }
+
+    WriteNoise(TraceType, "ForwardContainerApi: containerApiPath: {0}", containerApiPath);
+
+    if (nodeName == localNodeName_)
+    {
+        auto forwardUri = wformatString(
+            "{0}/{1}{2}{3}",
+            Hosting2::HostingConfig::GetConfig().GetContainerHostAddress(),
+            containerApiPath,
+            Constants::QueryStringDelimiter,
+            handlerOperation->Uri.Query);
+
+        auto forwardTraceId = Guid::NewGuid().ToString();
+        WriteNoise(TraceType, forwardTraceId, "ForwardContainerApi: forwarding locally to {0}", forwardUri);
+
+        auto op = server_.AppGatewayHandler->BeginProcessReverseProxyRequest(
+            forwardTraceId,
+            handlerOperation->MessageContextUPtr,
+            handlerOperation->TakeBody(),
+            forwardUri,
+            [this](AsyncOperationSPtr const & operation) { ForwardContainerApi_OnContainerApiComplete(operation, false); },
+            thisSPtr);
+
+        ForwardContainerApi_OnContainerApiComplete(op, true);
+        return;
+    }
+
+    WriteNoise(
+        TraceType,
+        "ForwardContainerApi: forwarding from {0} to {1}",
+        localNodeName_, nodeName);
+
+    auto &client = handlerOperation->FabricClient;
+    AsyncOperationSPtr getNodeOp = client.QueryClient->BeginGetNodeList(
+        nodeName,
+        EMPTY_STRING_QUERY_FILTER, //continuation token
+        handlerOperation->Timeout,
+        [this, nodeName] (AsyncOperationSPtr const& op) { ForwardContainerApi_OnGetNodeComplete(op, false, nodeName); },
+        thisSPtr);
+
+    ForwardContainerApi_OnGetNodeComplete(
+        getNodeOp,
+        true,
+        nodeName);
+}
+
+void NodesHandler::ForwardContainerApi_OnGetNodeComplete(
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously,
+    wstring const & nodeName)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) return;
+
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation->Parent);
+    auto &client = handlerOperation->FabricClient;
+
+    vector<NodeQueryResult> nodesResult;
+    PagingStatusUPtr pagingStatus;
+    auto error = client.QueryClient->EndGetNodeList(operation, nodesResult, pagingStatus);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(operation->Parent, error);
+        return;
+    }
+
+    // We shouldn't receive paging status for just one node
+    TESTASSERT_IF(pagingStatus, "OnGetNodeByNameComplete: paging status shouldn't be set");
+
+    ByteBufferUPtr bufferUPtr;
+    if (nodesResult.size() == 0)
+    {
+        WriteWarning(TraceType, "ForwardContainerApi: query result of {0} is empty", nodeName);
+        handlerOperation->OnError(operation->Parent, ErrorCodeValue::InvalidArgument);
+        return;
+    }
+
+    auto& destinationNode = nodesResult[0];
+    if (!destinationNode.HttpGatewayPort)
+    {
+        WriteWarning(TraceType, "ForwardContainerApi: query result of {0} has no HttpGatewayPort", nodeName);
+        handlerOperation->OnError(operation->Parent, ErrorCodeValue::OperationFailed);
+        return;
+    }
+
+    Uri incomingUri;
+    if (!Uri::TryParseAndTraceOnFailure(handlerOperation->MessageContext.GetUrl(), incomingUri))
+    {
+        handlerOperation->OnError(operation->Parent, ErrorCodeValue::InvalidArgument);
+        return;
+    }
+
+    auto forwardUri = Uri(
+        incomingUri.Scheme,
+        wformatString("{0}:{1}", destinationNode.IPAddressOrFQDN, destinationNode.HttpGatewayPort),
+        handlerOperation->MessageContext.GetSuffix()).ToString();
+
+    auto forwardTraceId = Guid::NewGuid().ToString();
+    WriteNoise(TraceType, forwardTraceId, "ForwardContainerApi: {0} -> {1}: {2}", localNodeName_, nodeName, forwardUri);
+
+    auto op = server_.AppGatewayHandler->BeginProcessReverseProxyRequest(
+        forwardTraceId,
+        handlerOperation->MessageContextUPtr,
+        handlerOperation->TakeBody(),
+        forwardUri,
+        [this](AsyncOperationSPtr const & operation) { ForwardContainerApi_OnContainerApiComplete(operation, false); },
+        operation->Parent);
+
+    ForwardContainerApi_OnContainerApiComplete(op, true);
+}
+
+void NodesHandler::ForwardContainerApi_OnContainerApiComplete(
+    Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    ErrorCode error = ErrorCodeValue::Success;
+    error = server_.AppGatewayHandler->EndProcessReverseProxyRequest(operation);
+    if (!error.IsSuccess())
+    {
+        WriteWarning(TraceType, "ForwardContainerApi_OnContainerApiComplete EndForwardWebSocket failed with {0}", error);
+    }
+
+    // Complete the async.
+    // AppGatewayHandler ProcessReverseProxyRequest would have responded to the HTTP request.
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(operation->Parent);
+    handlerOperation->TryComplete(operation->Parent, error);
+}
+
+#endif
+
+void NodesHandler::ContainerApiWrapper(__in AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -527,9 +762,19 @@ void NodesHandler::CallContainerApi(__in AsyncOperationSPtr const& thisSPtr)
         return;
     }
 
-    wstring serviceManifestNameFilter, codePackageNameFilter;
+    wstring serviceManifestNameFilter, codePackageNameFilter, codePackageInstance;
     handlerOperation->Uri.GetItem(Constants::ServiceManifestNameString, serviceManifestNameFilter);
     handlerOperation->Uri.GetItem(Constants::CodePackageNameIdString, codePackageNameFilter);
+    handlerOperation->Uri.GetItem(Constants::CodePackageInstanceIdString, codePackageInstance);
+
+    FABRIC_INSTANCE_ID codePackageInstanceValue{};
+    if (!StringUtility::TryFromWString(codePackageInstance, codePackageInstanceValue))
+    {
+        handlerOperation->OnError(
+            thisSPtr,
+            ErrorCode(ErrorCodeValue::InvalidArgument, wformatString(GET_HTTP_GATEWAY_RC(Missing_Required_Parameter), L"CodePackageInstance")));
+        return;
+    }
 
     unique_ptr<ContainerApiCall> containerApiCall;
     if (handlerOperation->Uri.Verb == Constants::HttpPostVerb && !handlerOperation->Body->empty())
@@ -541,7 +786,7 @@ void NodesHandler::CallContainerApi(__in AsyncOperationSPtr const& thisSPtr)
         {
             handlerOperation->OnError(
                 thisSPtr,
-                ErrorCode(ErrorCodeValue::InvalidArgument, wformatString(GET_HTTP_GATEWAY_RC(Deserialization_Error), L"CallContainerApi")));
+                ErrorCode(ErrorCodeValue::InvalidArgument, wformatString(GET_HTTP_GATEWAY_RC(Deserialization_Error), L"ContainerApiCall")));
             return;
         }
     }
@@ -557,6 +802,7 @@ void NodesHandler::CallContainerApi(__in AsyncOperationSPtr const& thisSPtr)
         appNameUri,
         serviceManifestNameFilter,
         codePackageNameFilter,
+        codePackageInstanceValue,
         containerInfoArgMap,
         handlerOperation->Timeout,
         [this](AsyncOperationSPtr const& operation) { OnContainerApiComplete(operation, false); },
@@ -613,9 +859,16 @@ void NodesHandler::GetContainerLogs(__in AsyncOperationSPtr const& thisSPtr)
     handlerOperation->Uri.GetItem(Constants::ServiceManifestNameString, serviceManifestNameFilter);
     handlerOperation->Uri.GetItem(Constants::CodePackageNameIdString, codePackageNameFilter);
     handlerOperation->Uri.GetItem(ContainerInfoArgs::Tail, tailArgument);
-    
+
+    bool isPrevious = false;
+    handlerOperation->Uri.GetBool(ContainerInfoArgs::Previous, isPrevious);
+
     ContainerInfoArgMap containerInfoArgMap;
     containerInfoArgMap.Insert(ContainerInfoArgs::Tail, tailArgument);
+    if (isPrevious)
+    {
+        containerInfoArgMap.Insert(ContainerInfoArgs::Previous, L"1");
+    }
 
     AsyncOperationSPtr inner = client.AppMgmtClient->BeginGetContainerInfo(
         nodeNameString,
@@ -635,8 +888,8 @@ void NodesHandler::GetContainerLogs(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnGetContainerLogsComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -663,7 +916,7 @@ void NodesHandler::OnGetContainerLogsComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::RestartNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::RestartNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -702,8 +955,8 @@ void NodesHandler::RestartNode(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnRestartNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -721,7 +974,7 @@ void NodesHandler::OnRestartNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void NodesHandler::StartNode(__in AsyncOperationSPtr const & thisSPtr)
+void NodesHandler::StartNode(AsyncOperationSPtr const & thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -765,8 +1018,8 @@ void NodesHandler::StartNode(__in AsyncOperationSPtr const & thisSPtr)
 }
 
 void NodesHandler::OnStartNodeComplete(
-    __in AsyncOperationSPtr const & operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const & operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously)
     {
@@ -787,7 +1040,7 @@ void NodesHandler::OnStartNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void NodesHandler::ActivateNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ActivateNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -813,8 +1066,8 @@ void NodesHandler::ActivateNode(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnActivateNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -832,7 +1085,7 @@ void NodesHandler::OnActivateNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void NodesHandler::DeactivateNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::DeactivateNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -868,8 +1121,8 @@ void NodesHandler::DeactivateNode(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnDeactivateNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -887,7 +1140,7 @@ void NodesHandler::OnDeactivateNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void NodesHandler::NodeStateRemoved(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::NodeStateRemoved(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -913,8 +1166,8 @@ void NodesHandler::NodeStateRemoved(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnNodeStateRemovedComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -933,7 +1186,7 @@ void NodesHandler::OnNodeStateRemovedComplete(
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void NodesHandler::ApplicationsOnNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ApplicationsOnNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -972,8 +1225,8 @@ void NodesHandler::ApplicationsOnNode(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnApplicationsOnNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1076,7 +1329,7 @@ void NodesHandler::GetDeployedApplicationPagedList(
             handlerOperation->OnError(thisSPtr, error);
             return;
         }
-        queryDescription.QueryPagingDescriptionObject = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryDescription.QueryPagingDescriptionUPtr = make_unique<QueryPagingDescription>(move(pagingDescription));
 
         AsyncOperationSPtr inner = client.QueryClient->BeginGetDeployedApplicationPagedList(
             queryDescription,
@@ -1157,7 +1410,7 @@ void NodesHandler::OnApplicationsOnNodePagedComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::ApplicationsOnNodeByName(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ApplicationsOnNodeByName(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1202,8 +1455,8 @@ void NodesHandler::ApplicationsOnNodeByName(__in AsyncOperationSPtr const& thisS
 }
 
 void NodesHandler::OnApplicationsOnNodeByNameComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1236,7 +1489,7 @@ void NodesHandler::OnApplicationsOnNodeByNameComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::ServicePackagesOnNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ServicePackagesOnNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1273,8 +1526,8 @@ void NodesHandler::ServicePackagesOnNode(__in AsyncOperationSPtr const& thisSPtr
 }
 
 void NodesHandler::OnServicePackagesOnNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1300,7 +1553,7 @@ void NodesHandler::OnServicePackagesOnNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::ServicePackagesOnNodeByName(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ServicePackagesOnNodeByName(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1340,8 +1593,8 @@ void NodesHandler::ServicePackagesOnNodeByName(__in AsyncOperationSPtr const& th
 }
 
 void NodesHandler::OnServicePackagesOnNodeByNameComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1373,7 +1626,7 @@ void NodesHandler::OnServicePackagesOnNodeByNameComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::ServiceTypesOnNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ServiceTypesOnNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1418,8 +1671,8 @@ void NodesHandler::ServiceTypesOnNode(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnServiceTypesOnNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1445,7 +1698,7 @@ void NodesHandler::OnServiceTypesOnNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::ServiceTypesOnNodeByType(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ServiceTypesOnNodeByType(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1489,8 +1742,8 @@ void NodesHandler::ServiceTypesOnNodeByType(__in AsyncOperationSPtr const& thisS
 }
 
 void NodesHandler::OnServiceTypesOnNodeByTypeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1530,7 +1783,7 @@ void NodesHandler::OnServiceTypesOnNodeByTypeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::CodePackagesOnNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::CodePackagesOnNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1572,8 +1825,8 @@ void NodesHandler::CodePackagesOnNode(__in AsyncOperationSPtr const& thisSPtr)
 }
 
 void NodesHandler::OnCodePackagesOnNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1599,7 +1852,7 @@ void NodesHandler::OnCodePackagesOnNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::ServiceReplicasOnNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::ServiceReplicasOnNode(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1651,8 +1904,8 @@ void NodesHandler::ServiceReplicasOnNode(__in AsyncOperationSPtr const& thisSPtr
 }
 
 void NodesHandler::OnServiceReplicasOnNodeComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -1689,7 +1942,7 @@ void NodesHandler::OnServiceReplicasOnNodeComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::ServiceReplicasOnHost(__in Common::AsyncOperationSPtr const & thisSPtr)
+void NodesHandler::ServiceReplicasOnHost(Common::AsyncOperationSPtr const & thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -1737,7 +1990,7 @@ void NodesHandler::ServiceReplicasOnHost(__in Common::AsyncOperationSPtr const &
     OnServiceReplicasOnHostComplete(inner, true);
 }
 
-void NodesHandler::OnServiceReplicasOnHostComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously)
+void NodesHandler::OnServiceReplicasOnHostComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -2356,17 +2609,17 @@ void NodesHandler::ReportServicePackagesOnNodeHealth(AsyncOperationSPtr const& t
     handlerOperation->OnSuccess(thisSPtr, move(bufferUPtr));
 }
 
-void NodesHandler::RemoveReplica(__in Common::AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::RemoveReplica(Common::AsyncOperationSPtr const& thisSPtr)
 {
     ReportFault(thisSPtr, Reliability::FaultType::Permanent);
 }
 
-void NodesHandler::RestartReplica(__in Common::AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::RestartReplica(Common::AsyncOperationSPtr const& thisSPtr)
 {
     ReportFault(thisSPtr, Reliability::FaultType::Transient);
 }
 
-void NodesHandler::ReportFault(__in Common::AsyncOperationSPtr const &thisSPtr, Reliability::FaultType::Enum faultType)
+void NodesHandler::ReportFault(Common::AsyncOperationSPtr const &thisSPtr, Reliability::FaultType::Enum faultType)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -2420,7 +2673,7 @@ void NodesHandler::ReportFault(__in Common::AsyncOperationSPtr const &thisSPtr, 
     ReportFaultComplete(op, true);
 }
 
-void NodesHandler::ReportFaultComplete(__in Common::AsyncOperationSPtr const & operation, __in bool expectedCompletedSynchronously)
+void NodesHandler::ReportFaultComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -2438,7 +2691,7 @@ void NodesHandler::ReportFaultComplete(__in Common::AsyncOperationSPtr const & o
     handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }
 
-void NodesHandler::GetNodeLoadInformation(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::GetNodeLoadInformation(AsyncOperationSPtr const& thisSPtr)
 {
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
@@ -2465,8 +2718,8 @@ void NodesHandler::GetNodeLoadInformation(__in AsyncOperationSPtr const& thisSPt
 }
 
 void NodesHandler::OnGetNodeLoadInformationComplete(
-    __in AsyncOperationSPtr const& operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
@@ -2493,7 +2746,7 @@ void NodesHandler::OnGetNodeLoadInformationComplete(
     handlerOperation->OnSuccess(operation->Parent, move(bufferUPtr));
 }
 
-void NodesHandler::DeployServicePackageToNode(__in AsyncOperationSPtr const& thisSPtr)
+void NodesHandler::DeployServicePackageToNode(AsyncOperationSPtr const& thisSPtr)
 {
     DeployServicePackageToNodeMessage servicePackageMessage;
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
@@ -2541,8 +2794,8 @@ void NodesHandler::DeployServicePackageToNode(__in AsyncOperationSPtr const& thi
 }
 
 void NodesHandler::OnDeployServicePackageToNodeComplete(
-    __in AsyncOperationSPtr const &operation,
-    __in bool expectedCompletedSynchronously)
+    AsyncOperationSPtr const &operation,
+    bool expectedCompletedSynchronously)
 {
     if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 

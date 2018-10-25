@@ -20,11 +20,11 @@ namespace ServiceModel
             Common::Guid const & partitionId,
             FABRIC_HEALTH_STATE aggregatedHealthState);
 
-        PartitionAggregatedHealthState(PartitionAggregatedHealthState const & other);
-        PartitionAggregatedHealthState & operator = (PartitionAggregatedHealthState const & other);
+        PartitionAggregatedHealthState(PartitionAggregatedHealthState const & other) = default;
+        PartitionAggregatedHealthState & operator = (PartitionAggregatedHealthState const & other) = default;
 
-        PartitionAggregatedHealthState(PartitionAggregatedHealthState && other);
-        PartitionAggregatedHealthState & operator = (PartitionAggregatedHealthState && other);
+        PartitionAggregatedHealthState(PartitionAggregatedHealthState && other) = default;
+        PartitionAggregatedHealthState & operator = (PartitionAggregatedHealthState && other) = default;
 
         ~PartitionAggregatedHealthState();
 

@@ -20,13 +20,24 @@ namespace Common
 
 #define TRY_COM_PARSE_PUBLIC_STRING_ALLOW_NULL( InputPtr ) TRY_COM_PARSE_PUBLIC_STRING_OUT( InputPtr, parsed_##InputPtr, true )
 
+#define TRY_COM_PARSE_PUBLIC_STRING_ALLOW_NULL2( InputPtr ) TRY_COM_PARSE_PUBLIC_STRING_OUT2( InputPtr, parsed_##InputPtr, true )
+
 #define TRY_COM_PARSE_PUBLIC_STRING( InputPtr ) TRY_COM_PARSE_PUBLIC_STRING_OUT( InputPtr, parsed_##InputPtr, false )
+
+#define TRY_COM_PARSE_PUBLIC_STRING2( InputPtr ) TRY_COM_PARSE_PUBLIC_STRING_OUT2( InputPtr, parsed_##InputPtr, false )
 
 #define TRY_COM_PARSE_PUBLIC_STRING_OUT( InputPtr, OutputVar, AllowNull ) \
     std::wstring OutputVar; \
     { \
         auto parseHResult = StringUtility::LpcwstrToWstring( InputPtr, AllowNull, OutputVar ); \
         ON_PUBLIC_COM_PARSE_RESULT( InputPtr, OutputVar, parseHResult ) \
+    } \
+
+#define TRY_COM_PARSE_PUBLIC_STRING_OUT2( InputPtr, OutputVar, AllowNull ) \
+    std::wstring OutputVar; \
+    { \
+        auto parseError = StringUtility::LpcwstrToWstring2( InputPtr, AllowNull, OutputVar ); \
+        ON_PUBLIC_COM_PARSE_RESULT2( InputPtr, OutputVar, parseError ) \
     } \
 
 #define TRY_COM_PARSE_PUBLIC_LONG_STRING( InputPtr ) \
@@ -52,11 +63,11 @@ namespace Common
 
 #define TRY_PARSE_PUBLIC_STRING_ALLOW_NULL( InputPtr, OutputVar ) TRY_PARSE_PUBLIC_STRING_OUT( InputPtr, OutputVar, true )
 
-#define TRY_PARSE_PUBLIC_STRING( InputPtr, OutputVar ) TRY_PARSE_PUBLIC_STRING_OUT( InputPtr, OutputVar, false )
-
 #define TRY_PARSE_PUBLIC_STRING_ALLOW_NULL2( InputPtr, OutputVar ) \
     wstring OutputVar; \
     TRY_PARSE_PUBLIC_STRING_OUT( InputPtr, OutputVar, true ) \
+
+#define TRY_PARSE_PUBLIC_STRING( InputPtr, OutputVar ) TRY_PARSE_PUBLIC_STRING_OUT( InputPtr, OutputVar, false )
 
 #define TRY_PARSE_PUBLIC_STRING2( InputPtr, OutputVar ) \
     wstring OutputVar; \
@@ -86,6 +97,13 @@ namespace Common
     { \
         TRACE_PARSE_FAILURE( InputPtr, OutputVar, HResult ) \
         return Common::ComUtility::OnPublicApiReturn(HResult); \
+    } \
+
+#define ON_PUBLIC_COM_PARSE_RESULT2( InputPtr, OutputVar, Error ) \
+    if (!Error.IsSuccess()) \
+    { \
+        TRACE_PARSE_FAILURE( InputPtr, OutputVar, Error ) \
+        return Common::ComUtility::OnPublicApiReturn(std::move(Error)); \
     } \
 
 #define ON_PUBLIC_PARSE_RESULT( InputPtr, OutputVar, Error ) \
@@ -504,7 +522,7 @@ namespace Common
         static std::wstring LimitNumberOfCharacters(__in const std::wstring & s, wchar_t token, size_t maxSize);
         static bool TruncateStartIfNeeded(__in std::wstring & s, size_t maxSize);
         static void ReplaceStartWithTruncateMarker(__in std::wstring & s);
-        
+
         // -----------------------------------------------------
         // Convert from wstring to basic types
         // -----------------------------------------------------

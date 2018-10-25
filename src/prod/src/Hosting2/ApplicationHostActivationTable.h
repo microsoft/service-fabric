@@ -7,6 +7,8 @@
 
 namespace Hosting2
 {
+    typedef std::map<ApplicationHostIsolationContext, ApplicationHostProxySPtr> HostProxyMap;
+
     class ApplicationHostActivationTable :
         public Common::RootedObject,
         Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>
@@ -30,8 +32,9 @@ namespace Hosting2
             Transport::MessageUPtr CreateApplicationHostEventMessage(std::vector<Management::ResourceMonitor::ApplicationHostEvent> && updatesForRM);
             void Test_GetAllRMReports(std::vector<Management::ResourceMonitor::ApplicationHostEvent> & pending, std::vector<Management::ResourceMonitor::ApplicationHostEvent> & ongoing);
 
+            void Test_GetHostProxyMap(HostProxyMap & proxyMap);
+
         private:
-            typedef std::map<ApplicationHostIsolationContext, ApplicationHostProxySPtr> HostProxyMap;
             typedef std::map<std::wstring, ApplicationHostProxySPtr, Common::IsLessCaseInsensitiveComparer<std::wstring>> HostIdIndexMap;
         private:
             bool isClosed_;

@@ -11,22 +11,22 @@ namespace Hosting2
     {
     public:
         SingleCodePackageApplicationHost(
-            std::wstring const & hostId, 
+            ApplicationHostContext const & hostContext,
             std::wstring const & runtimeServiceAddress,
-            bool isContainerHost,
             Common::PCCertContext certContext,
-            wstring const & serverThumbprint,
+            std::wstring const & serverThumbprint,
             CodePackageContext const & codeContext);
         virtual ~SingleCodePackageApplicationHost();
 
         static Common::ErrorCode Create(
-            std::wstring const & hostId, 
+            ApplicationHostContext const & hostContext,
             std::wstring const & runtimeServiceAddress,
-            bool isContainerHost,
             Common::PCCertContext certContext,
-            wstring const & serverThumbprint,
+            std::wstring const & serverThumbprint,
             CodePackageContext const & codeContext,
             __out ApplicationHostSPtr & applicationHost);
+
+        void GetCodePackageContext(CodePackageContext & codeContext);
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -36,7 +36,7 @@ namespace Hosting2
         virtual Common::ErrorCode OnEndOpen(Common::AsyncOperationSPtr const & asyncOperation);
 
         virtual Common::ErrorCode OnCreateAndAddFabricRuntime(
-            FabricRuntimeContextUPtr const & fabricRuntimeContextUPtr,            
+            FabricRuntimeContextUPtr const & fabricRuntimeContextUPtr,
             Common::ComPointer<IFabricProcessExitHandler> const & fabricExitHandler,
             __out FabricRuntimeImplSPtr & fabricRuntime);
 
@@ -47,8 +47,15 @@ namespace Hosting2
         virtual Common::ErrorCode OnUpdateCodePackageContext(
             CodePackageContext const & codeContext);
 
+        virtual Common::ErrorCode OnGetCodePackageActivator(
+            _Out_ ApplicationHostCodePackageActivatorSPtr & codePackageActivator) override;
+
+        virtual Common::ErrorCode OnCodePackageEvent(
+            CodePackageEventDescription const & eventDescription) override;
+
     private:
         Common::RwLock codeContextLock_;
         CodePackageContext codeContext_;
+        ApplicationHostCodePackageActivatorSPtr codePackageActivator_;
     };
 }

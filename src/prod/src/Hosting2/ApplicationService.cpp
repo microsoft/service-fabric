@@ -52,7 +52,7 @@ protected:
         if (owner_.IsContainerHost)
         {
             auto operation = owner_.ActivationManager.containerActivator_->BeginInvokeContainerApi(
-                owner_.ContainerDescriptionObj.ContainerName,
+                owner_.ContainerDescriptionObj,
                 L"GET",
                 L"/containers/{id}/stats?stream=false",
                 L"application/json",
@@ -130,7 +130,7 @@ protected:
         PROCESS_MEMORY_COUNTERS memoryCounters = { 0 };
         if (GetProcessMemoryInfo(activationContext->ProcessHandle->Value, &memoryCounters, sizeof(memoryCounters)) != 0)
         {
-            resourceMeasurement_.MemoryUsage = memoryCounters.PagefileUsage;
+            resourceMeasurement_.MemoryUsage = memoryCounters.WorkingSetSize;
             return ErrorCodeValue::Success;
         }
         else
@@ -174,7 +174,7 @@ protected:
                     error = JsonHelper::Deserialize(containerStatsResponse, containerApiResult.Body());
                     if (error.IsSuccess())
                     {
-                        resourceMeasurement_.MemoryUsage = containerStatsResponse.MemoryStats_.CommitBytes_;
+                        resourceMeasurement_.MemoryUsage = containerStatsResponse.MemoryStats_.MemoryUsage_;
                         resourceMeasurement_.TotalCpuTime = containerStatsResponse.CpuStats_.CpuUsage_.TotalUsage_;
                         resourceMeasurement_.TimeRead = containerStatsResponse.Read_;
                     }
@@ -361,44 +361,31 @@ protected:
             owner_.appServiceId_,
             owner_.processDescription_.ExePath);
 
-        ErrorCode transitionResult = this->TransitionState(error);
-
+        auto transitionResult = this->TransitionState(error);
         if (!transitionResult.IsSuccess())
         {
             error = transitionResult;
         }
-        else
+
+        if (error.IsSuccess())
         {
-            if (error.IsSuccess())
-            {
-                WriteInfo(
-                    TraceType_ActivationManager,
-                    owner_.parentId_,
-                    "Container Service {0} was activated. ImageName={1}, ContainerName={2}.",
-                    owner_.appServiceId_,
-                    Path::GetFileName(owner_.processDescription_.ExePath),
-                    owner_.containerDescription_.ContainerName);
-                
-                if (error.IsSuccess())
-                {
+            hostingTrace.ContainerActivatedOperational(
+                owner_.TraceId,
+                owner_.ContainerDescriptionObj.ContainerName,
+                ServiceModel::ContainerIsolationMode::EnumToString(owner_.ContainerDescriptionObj.IsolationMode),
+                owner_.ContainerDescriptionObj.ApplicationName,
+                owner_.ContainerDescriptionObj.ServiceName,
+                owner_.ContainerDescriptionObj.CodePackageName);
 
-                    hostingTrace.ContainerActivatedOperational(
-                        owner_.TraceId,
-                        owner_.ContainerDescriptionObj.ContainerName,
-                        ServiceModel::ContainerIsolationMode::EnumToString(owner_.ContainerDescriptionObj.IsolationMode),
-                        owner_.ContainerDescriptionObj.ApplicationName,
-                        owner_.ContainerDescriptionObj.ServiceName);
-
-                    hostingTrace.ContainerActivated(
-                        owner_.TraceId,
-                        owner_.ContainerDescriptionObj.ContainerName,
-                        ServiceModel::ContainerIsolationMode::EnumToString(owner_.ContainerDescriptionObj.IsolationMode),
-                        owner_.ContainerDescriptionObj.ApplicationName,
-                        owner_.ContainerDescriptionObj.ServiceName);
-                }
-               
-            }
+            hostingTrace.ContainerActivated(
+                owner_.TraceId,
+                owner_.ContainerDescriptionObj.ContainerName,
+                ServiceModel::ContainerIsolationMode::EnumToString(owner_.ContainerDescriptionObj.IsolationMode),
+                owner_.ContainerDescriptionObj.ApplicationName,
+                owner_.ContainerDescriptionObj.ServiceName,
+                owner_.ContainerDescriptionObj.CodePackageName);
         }
+
         TryComplete(operation->Parent, error);
     }
 
@@ -523,9 +510,12 @@ private:
             }
             owner_.activationContext_.reset();
             auto operation = owner_.ActivationManager.ContainerActivatorObj->BeginDeactivate(
-                owner_.containerDescription_.ContainerName,
+                owner_.containerDescription_,
                 owner_.containerDescription_.AutoRemove,
                 owner_.containerDescription_.IsContainerRoot,
+#if defined(PLATFORM_UNIX)
+                owner_.containerDescription_.PodDescription.IsolationMode == ContainerIsolationMode::hyperv,
+#endif
                 owner_.processDescription_.CgroupName,
                 isGraceful_,
                 timeoutHelper_.GetRemainingTime(),
@@ -581,13 +571,15 @@ private:
                     owner_.TraceId,
                     owner_.ContainerDescriptionObj.ContainerName,
                     owner_.ContainerDescriptionObj.ApplicationName,
-                    owner_.ContainerDescriptionObj.ServiceName);
+                    owner_.ContainerDescriptionObj.ServiceName,
+                    owner_.ContainerDescriptionObj.CodePackageName);
                     
                 hostingTrace.ContainerDeactivated(
                     owner_.TraceId,
                     owner_.ContainerDescriptionObj.ContainerName,
                     owner_.ContainerDescriptionObj.ApplicationName,
-                    owner_.ContainerDescriptionObj.ServiceName);
+                    owner_.ContainerDescriptionObj.ServiceName,
+                    owner_.ContainerDescriptionObj.CodePackageName);
             }
         }
         else
@@ -766,7 +758,7 @@ void ApplicationService::OnAbort()
     if (isContainerHost_)
     {
         ActivationManager.ContainerActivatorObj->TerminateContainer(
-            containerDescription_.ContainerName,
+            containerDescription_,
             containerDescription_.IsContainerRoot,
             processDescription_.CgroupName);
     }

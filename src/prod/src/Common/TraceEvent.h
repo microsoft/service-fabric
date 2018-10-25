@@ -111,6 +111,13 @@ namespace Common
         {
             return filterStates_[TraceSinkType::Console];
         }
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        bool IsLinuxStructuredTracesEnabled() const
+        {
+            return enableLinuxStructuredTrace_;
+        }
+#endif
 
         void Write(PEVENT_DATA_DESCRIPTOR data);
 
@@ -162,9 +169,34 @@ namespace Common
             AddEventField<T>(etwFormat_, nameString, index);
         }
 
+        template<class T>
+        void AddEventMetadataFields(std::string & format, size_t & index)
+        {
+            ASSERT_IF(fields_.size() != 0, "Metadata fields should be added first");
+            std::string fieldsFormat = T::AddMetadataFields(*this, index);
+
+            size_t currentCount = CountArguments(format);
+            for (int i = static_cast<int>(currentCount) - 1; i >= 0; i--)
+            {
+                UpdateArgument(format, i, i + index);
+            }
+
+            format.insert(0, fieldsFormat);
+        }
+
+        template<class T>
+        void AddEventMetadataFields(size_t & index)
+        {
+            AddEventMetadataFields<T>(etwFormat_, index);
+        }
+
         void AddContextSequenceField(std::string const & name);
 
         void ConvertEtwFormatString();
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        void RefreshEnableLinuxStructuredTraces(bool enabled);
+#endif
 
         void RefreshFilterStates(TraceSinkType::Enum sinkType, TraceSinkFilter const & filter);
 
@@ -457,6 +489,8 @@ namespace Common
 
         static size_t CountArguments(std::string const & format);
 
+        static void UpdateArgument(std::string & format, size_t oldIndex, size_t newIndex);
+
         void ExpandArgument(std::string & format, std::string const & innerFormat, size_t & index);
 
         void AddFieldDescription(std::string const & name, StringLiteral inType, StringLiteral outType, StringLiteral mapName = "");
@@ -491,5 +525,10 @@ namespace Common
 
         ::REGHANDLE etwHandle_;
         TraceSinkFilter & consoleFilter_;
+
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        bool enableLinuxStructuredTrace_;
+#endif
     };
 }

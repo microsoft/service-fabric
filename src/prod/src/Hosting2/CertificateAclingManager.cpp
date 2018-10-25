@@ -67,6 +67,8 @@ ErrorCode CertificateAclingManager::OnOpen()
 #ifndef PLATFORM_UNIX
     RegisterConfigUpdateHandler(L"ReverseProxyPrimaryCertificate", L"ApplicationGateway/Http", L"GatewayX509CertificateStoreName", L"GatewayX509CertificateFindType", L"GatewayX509CertificateFindValue");
     RegisterConfigUpdateHandler(L"ReverseProxySecondaryCertificate", L"ApplicationGateway/Http", L"GatewayX509CertificateStoreName", L"GatewayX509CertificateFindType", L"GatewayX509CertificateFindValueSecondary");
+
+    RegisterConfigUpdateHandler(L"BackupRestoreServiceEncryptionCertificate", L"BackupRestoreService", L"SecretEncryptionCertX509StoreName", L"#FindByThumbprint", L"SecretEncryptionCertThumbprint");
 #endif
 
     vector<wstring> sectionsToTrack;

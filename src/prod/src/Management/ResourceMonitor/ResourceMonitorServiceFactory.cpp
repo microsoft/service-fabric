@@ -10,9 +10,9 @@ using namespace Transport;
 using namespace Hosting2;
 using namespace Federation;
 
-ResourceMonitorServiceFactory::ResourceMonitorServiceFactory(IFabricRuntime * & pRuntime)
+ResourceMonitorServiceFactory::ResourceMonitorServiceFactory(Common::ComPointer<IFabricRuntime> const & fabricRuntimeCPtr)
     : ComponentRoot(),
-    pRuntime_(pRuntime)
+    fabricRuntimeCPtr_(fabricRuntimeCPtr)
 {
 }
 
@@ -56,7 +56,7 @@ HRESULT ResourceMonitorServiceFactory::CreateInstance(
             serviceTypeStr,
             partitionIdGuid,
             instanceId,
-            pRuntime_);
+            fabricRuntimeCPtr_);
 
     *serviceInstance = comServiceInstance.DetachNoRelease();
 

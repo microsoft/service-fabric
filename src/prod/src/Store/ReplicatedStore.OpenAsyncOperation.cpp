@@ -18,6 +18,20 @@ ReplicatedStore::OpenAsyncOperation::OpenAsyncOperation(
     AsyncOperationSPtr const & parent)
     : AsyncOperation(callback, parent, true) // skipCompleteOnCancel_
     , PartitionedReplicaTraceComponent(trace)
+    , openError_(ErrorCodeValue::Success)
+    , completionEvent_(false)
+{
+}
+
+ReplicatedStore::OpenAsyncOperation::OpenAsyncOperation(
+    PartitionedReplicaTraceComponent const & trace,
+    ErrorCode const & error,
+    AsyncCallback const & callback, 
+    AsyncOperationSPtr const & parent)
+    : AsyncOperation(callback, parent, true) // skipCompleteOnCancel_
+    , PartitionedReplicaTraceComponent(trace)
+    , openError_(error)
+    , completionEvent_(false)
 {
 }
 
@@ -26,9 +40,14 @@ ErrorCode ReplicatedStore::OpenAsyncOperation::End(AsyncOperationSPtr const & op
     return AsyncOperation::End<OpenAsyncOperation>(operation)->Error;
 }
 
-void ReplicatedStore::OpenAsyncOperation::OnStart(AsyncOperationSPtr const &)
+void ReplicatedStore::OpenAsyncOperation::OnStart(AsyncOperationSPtr const & thisSPtr)
 {
-    // intentional no-op: externally completed by ReplicatedStore on state change
+    if (!openError_.IsSuccess())
+    {
+        this->TryComplete(thisSPtr, openError_);
+    }
+
+    // Otherwise, externally completed by ReplicatedStore on state change
 }
 
 void ReplicatedStore::OpenAsyncOperation::OnCancel()

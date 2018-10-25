@@ -240,7 +240,6 @@ private:
     bool ensureLatestVersion_;
 };
 
-
 // ********************************************************************************************************************
 // VersionedApplication::UpgradeAsyncOperation Implementation
 //
@@ -688,7 +687,6 @@ private:
     ApplicationVersion version_;
     VersionedApplicationSPtr versionedApplication_;
 };
-
 
 // ********************************************************************************************************************
 // Application2::ServicePackagesAsyncOperationBase Implementation
@@ -1266,23 +1264,16 @@ ErrorCode Application2::AnalyzeApplicationUpgrade(
     return error;
 }
 
-//ErrorCode Application2::HasServicePackage(wstring const & servicePackageName, bool & exists)
-//{
-//    VersionedApplicationSPtr versionedApplication;
-//    {
-//        AcquireReadLock lock(this->Lock);
-//        versionedApplication = this->versionedApplication__;
-//    }
-//
-//    if (versionedApplication)
-//    {
-//        return versionedApplication->HasServicePackage(servicePackageName, exists);
-//    }
-//    else
-//    {
-//        return ErrorCode(ErrorCodeValue::InvalidState);
-//    }
-//}
+void Application2::OnServiceTypesUnregistered(
+    ServicePackageInstanceIdentifier const servicePackageInstanceId,
+    vector<ServiceTypeInstanceIdentifier> const & serviceTypeInstanceIds)
+{
+    auto versionedApp = this->GetVersionedApplication();
+    if (versionedApp != nullptr)
+    {
+        versionedApp->OnServiceTypesUnregistered(servicePackageInstanceId, serviceTypeInstanceIds);
+    }
+}
 
 void Application2::OnServiceTypeRegistrationNotFound(
     uint64 const registrationTableVersion,

@@ -35,6 +35,7 @@ namespace ServiceModel
             Federation::NodeId const & nodeId,
             uint64 instanceId,
             NodeDeactivationQueryResult && nodeDeactivationInfo,
+            unsigned short httpGatewayPort,
             ULONG clusterConnectionPort = 0,
             bool isStopped = false);
 
@@ -56,8 +57,8 @@ namespace ServiceModel
             std::wstring const & faultDomain,
             Federation::NodeId const & nodeId);
 
-        NodeQueryResult(NodeQueryResult && other);
-        NodeQueryResult const & operator = (NodeQueryResult && other);
+        NodeQueryResult(NodeQueryResult && other) = default;
+        NodeQueryResult & operator = (NodeQueryResult && other) = default;
 
         virtual ~NodeQueryResult();
 
@@ -81,6 +82,9 @@ namespace ServiceModel
         __declspec(property(get=get_ClusterConnectionPort)) ULONG ClusterConnectionPort;
         ULONG get_ClusterConnectionPort() const { return clusterConnectionPort_; }
 
+        __declspec (property(get = get_httpGatewayPort)) unsigned short HttpGatewayPort;
+        unsigned short get_httpGatewayPort() const { return httpGatewayPort_; }
+
         __declspec(property(get=get_NodeStatus)) FABRIC_QUERY_NODE_STATUS NodeStatus;
         FABRIC_QUERY_NODE_STATUS get_NodeStatus() const { return nodeStatus_; }
 
@@ -102,7 +106,7 @@ namespace ServiceModel
         //
         std::wstring CreateContinuationToken() const override;
 
-        FABRIC_FIELDS_20(
+        FABRIC_FIELDS_21(
             nodeName_,
             nodeId_,
             ipAddressOrFQDN_,
@@ -122,7 +126,8 @@ namespace ServiceModel
             isStopped_,
             nodeDownTimeInSeconds_,
             nodeUpAt_,
-            nodeDownAt_)
+            nodeDownAt_,
+            httpGatewayPort_);
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
             SERIALIZABLE_PROPERTY(Constants::Name, nodeName_)
@@ -182,6 +187,7 @@ namespace ServiceModel
         bool isStopped_;
         Common::DateTime nodeUpAt_;
         Common::DateTime nodeDownAt_;
+        unsigned short httpGatewayPort_ = 0;
     };
 
     // Used to serialize results in REST

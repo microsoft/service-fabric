@@ -10,9 +10,9 @@ using namespace Common;
 using namespace ServiceModel;
 
 ServiceTypeHealthPolicy::ServiceTypeHealthPolicy()
-    : MaxPercentUnhealthyServices(0),
-    MaxPercentUnhealthyPartitionsPerService(0),
-    MaxPercentUnhealthyReplicasPerPartition(0)
+    : MaxPercentUnhealthyServices(0)
+    , MaxPercentUnhealthyPartitionsPerService(0)
+    , MaxPercentUnhealthyReplicasPerPartition(0)
 {
 }
 
@@ -20,48 +20,10 @@ ServiceTypeHealthPolicy::ServiceTypeHealthPolicy(
     BYTE maxPercentUnhealthyServices,
     BYTE maxPercentUnhealthyPartitionsPerService,
     BYTE maxPercentUnhealthyReplicasPerPartition)
-    : MaxPercentUnhealthyServices(maxPercentUnhealthyServices),
-    MaxPercentUnhealthyPartitionsPerService(maxPercentUnhealthyPartitionsPerService),
-    MaxPercentUnhealthyReplicasPerPartition(maxPercentUnhealthyReplicasPerPartition)
+    : MaxPercentUnhealthyServices(maxPercentUnhealthyServices)
+    , MaxPercentUnhealthyPartitionsPerService(maxPercentUnhealthyPartitionsPerService)
+    , MaxPercentUnhealthyReplicasPerPartition(maxPercentUnhealthyReplicasPerPartition)
 {
-}
-
-ServiceTypeHealthPolicy::ServiceTypeHealthPolicy(ServiceTypeHealthPolicy const & other)
-    : MaxPercentUnhealthyServices(other.MaxPercentUnhealthyServices),
-    MaxPercentUnhealthyPartitionsPerService(other.MaxPercentUnhealthyPartitionsPerService),
-    MaxPercentUnhealthyReplicasPerPartition(other.MaxPercentUnhealthyReplicasPerPartition)
-{
-}
-
-ServiceTypeHealthPolicy::ServiceTypeHealthPolicy(ServiceTypeHealthPolicy && other)
-    : MaxPercentUnhealthyServices(other.MaxPercentUnhealthyServices),
-    MaxPercentUnhealthyPartitionsPerService(other.MaxPercentUnhealthyPartitionsPerService),
-    MaxPercentUnhealthyReplicasPerPartition(other.MaxPercentUnhealthyReplicasPerPartition)
-{
-}
-
-ServiceTypeHealthPolicy const & ServiceTypeHealthPolicy::operator = (ServiceTypeHealthPolicy const & other)
-{
-    if (this != &other)
-    {
-        this->MaxPercentUnhealthyServices = other.MaxPercentUnhealthyServices;
-        this->MaxPercentUnhealthyPartitionsPerService = other.MaxPercentUnhealthyPartitionsPerService;
-        this->MaxPercentUnhealthyReplicasPerPartition = other.MaxPercentUnhealthyReplicasPerPartition;
-    }
-
-    return *this;
-}
-
-ServiceTypeHealthPolicy const & ServiceTypeHealthPolicy::operator = (ServiceTypeHealthPolicy && other)
-{
-    if (this != &other)
-    {
-        this->MaxPercentUnhealthyServices = other.MaxPercentUnhealthyServices;
-        this->MaxPercentUnhealthyPartitionsPerService = other.MaxPercentUnhealthyPartitionsPerService;
-        this->MaxPercentUnhealthyReplicasPerPartition = other.MaxPercentUnhealthyReplicasPerPartition;
-    }
-
-    return *this;
 }
 
 bool ServiceTypeHealthPolicy::operator == (ServiceTypeHealthPolicy const & other) const

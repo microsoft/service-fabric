@@ -40,7 +40,7 @@ target_link_libraries(${exe_FailoverFM.Test}
   ${lib_FailoverCommon}
   ${lib_Store}
   ${lib_TestHooks}
-  ${lib_KtlLogger}
+  ${lib_KtlLoggerNode}
   ${lib_Replication}
   ${lib_TStore}
   ${lib_StoreRepairPolicy}
@@ -69,8 +69,6 @@ target_link_libraries(${exe_FailoverFM.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

@@ -1,0 +1,287 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase4_Deactivate
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set FMPlacementConstraints system==true
+set StoreClientTimeout 3
+set StoreReplicationTimeout 3
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 6: Sanity test for remote replica going down during Phase4 Activate
+# 6a: Block activate and take the node down
+# 6b: Block activate reply and take the node down
+# 6c: Block activate and take the primary down
+#####################################################
+addbehavior b1 * * Activate
+createservice fabric:/test6a TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test6a.60 Phase4_Activate
+
+-50
+!waitforstate FM.Node.IsUp.50 false
+removebehavior b1
+
++50 nodeprops=system:false
+verify
+
+deleteservice fabric:/test6a
+verify
+
+############################ (6b) ########################
+addbehavior b1 * * ActivateReply
+createservice fabric:/test6b TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test6b.60 Phase4_Activate
+
+-50
+!waitforstate FM.Node.IsUp.50 false
+removebehavior b1
+
++50 nodeprops=system:false
+verify
+
+deleteservice fabric:/test6b
+verify
+
+############################ (6bc) ########################
+addbehavior b1 * * Activate
+createservice fabric:/test6b TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+!waitforstate RA.FT.ReconfigStage.fabric:/test6b.60 Phase4_Activate
+
+-60
+!waitforstate FM.Node.IsUp.60 false
+removebehavior b1
+
++60 nodeprops=system:false
+verify
+
+deleteservice fabric:/test6b
+verify
+
+#####################################################
+# Scenario 5: Validate phase4 activate message retries
+# Create a situation with 5 replicas and Phase4 Activate in progress
+# Verify manually that ER is sent only after all Up+Ready replicas are activated
+# Verify that replicator is told about down replicas prior to that
+#####################################################
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=5 constraint=(system!=true)
+verify
+
+addbehavior b0 * * UpdateConfiguration
+addbehavior b2 * * CreateReplica
+addbehavior b3 * * Activate
+reportfault 60 fabric:/test5 transient 
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.50 Phase2_Catchup
+
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.50 Phase4_Activate
+
+#At this time the replica set should be
+#[P/S 60 SB U] [S/P 50 RD U] [S/S 40 RD U] [S/S 30 RD U] [S/S 20 RD U]
+
+#since UC messages can't be checked do manual analysis below
+#there should be no UC messages at this time
+!pause 5
+verifyreadwritestatus 50 fabric:/test5 Granted TryAgain
+
+#take down a secondary
+#ER should not have been sent
+-40
+!waitforstate RA.Replica.IsUp.fabric:/test5.50.40 false
+verifyreadwritestatus 50 fabric:/test5 Granted TryAgain
+
+#take down 20
+#FM should build 60 now
+#[P/S 60 IB U] [S/P 50 RD U] [S/S 40 RD D] [S/S 30 RD U] [S/S 20 RD D]
+-20
+!waitforstate RA.Replica.IsUp.fabric:/test5.50.20 false
+!waitforstate RA.Replica.State.fabric:/test5.50.60 IC
+
+#unblock activate
+#uc with ER should be sent and RAP should grant status
+removebehavior b3
+!waitforstate RA.Replica.MessageStage.fabric:/test5.50.30 N
+!pause 4
+verifyreadwritestatus 50 fabric:/test5 Granted NoWriteQuorum
+
+#unblock create replica
+#block UC reply
+#wait for RA to build the replica and activate it
+removebehavior b2
+!waitforstate RA.Replica.MessageStage.fabric:/test5.50.60 N
+!pause 5
+verifyreadwritestatus 50 fabric:/test5 Granted Granted
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.50 None
+
++40 nodeprops=system:false
++20 nodeprops=system:false
+verify
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Scenario 4: Regression test for bug 3982647
+# Primary RA has N/S IB ToBeActivated
+# FM starts someother reconfiguration
+# Primary RA should go to S/S IB ToBeDeactivated
+#####################################################
+
+-40
+-30
+-20
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate FM.Node.IsUp.30 false
+!waitforstate FM.Node.IsUp.20 false
+
+#wait until we have two replicas up
+addbehavior b0 * * UpdateConfigurationReply
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=1 constraint=(system!=true)
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 Phase2_Catchup
+
+#remove the block above and let the reconfig complete
+#replica set will become [N/P 60] [N/S 50]
+
+removebehavior b0 
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 None
+
+#add a node and block activate so that a replica is built
+#and promoted as part of phase4 activate
+addbehavior b0 * 40 Activate
++40 nodeprops=system:false
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 Phase4_Activate
+
+#restart the replica and block replica up and do reconfig reply
+#on the ra the reconfig will complete, the FM will have the replica as down
+addbehavior b3 40 * StatefulServiceReopen
+addbehavior b2 * * DoReconfigurationReply
+
+reportfault 40 fabric:/test4 transient
+reportfault 50 fabric:/test4 transient
+
+!waitforstate RA.Replica.State.fabric:/test4.40.40 SB
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 None
+!waitforstate FM.Replica.IsUp.fabric:/test4.40 false
+
+#unblock replica up so FM will see it as up
+#FM will mark it as I/S IB and send the doreconfiguration in the same epoch
+removebehavior b3
+!waitforstate FM.Replica.IsUp.fabric:/test4.40 true
+!waitforstate FM.Replica.State.fabric:/test4.40 InBuild
+!waitforstate FM.Replica.State.fabric:/test4.50 InBuild
+
+#unblock DoReconfigurationReply and now FM will start add secondary
+removebehavior b2
+
+!waitforstate RA.Replica.State.fabric:/test4.60.40 IB
+!waitforstate RA.Replica.IsUp.fabric:/test4.60.40 true
+
+#Pause because there is no way to query the IsReplicatorConfigUpdated flag right now
+#And RAP may be out of date
+!pause 10
+
+#at this point the setup is complete
+#now perform another reconfiguration
+#RA has N/S IB ToBeActivated
+#FM will send DoReconfiguration
+#RA should transition this replica to S/S IB ToBeDeactivated
+
+addbehavior bx * * UpdateConfiguration
+reportfault 50 fabric:/test4 transient
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.60 Phase2_Catchup
+
+removebehavior b0
+removebehavior bx
+verify
+
++30 nodeprops=system:false
++20 nodeprops=system:false
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 3: Activate waits for all IB replicas
+#####################################################
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test3 10 10 
+!wait
+
+addbehavior b1 * * Activate
+addbehavior b2 * * ReplicatorBuildIdleReplicaReply
+reportfault 60 fabric:/test3 transient
+
+# doReconfig 60 P/S RD D, 50 S/P RD U, 40 S/S RD U
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.50 Phase4_Activate
+
+# FM: 60 P/S SB U, 50 S/P RD U, 40 S/S RD U
+!waitforstate FM.Replica.IsUp.fabric:/test3.60 true
+
+reportfault 40 fabric:/test3 transient
+
+# doReconfig 50 P/P RD, 60 S/S IB, 40 S/S IB
+!waitforstate RA.Replica.State.fabric:/test3.50.60 IB
+!waitforstate RA.Replica.State.fabric:/test3.50.40 IB
+
+removebehavior b1
+
+!pause 10
+
+# activate phase waits for IB replicas to finish building
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.50 Phase4_Activate
+
+removebehavior b2
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.50 None
+
+deleteservice fabric:/test3
+verify
+
+-50
+
+-60
+
+!waitforstate FM.Node.IsUp.60 false
+
+!waitforstate FM.Node.IsUp.50 false
+
+#####################################################
+# Scenario 1: Phase4_Activate sends LSN on swap primary failure
+# Regression test for #1982577
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+injectfailure 20 fabric:/test1 service.beginchangerole
+swapprimary fabric:/test1 40 20
+
+!pause 3
+removefailure 20 fabric:/test1 service.beginchangerole
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q
+

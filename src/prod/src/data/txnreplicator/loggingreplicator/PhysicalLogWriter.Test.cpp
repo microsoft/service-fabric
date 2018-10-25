@@ -66,7 +66,7 @@ namespace LoggingReplicatorTests
         bool assertInFlushCallback_;
         IndexingLogRecord::SPtr logHead_;
         InvalidLogRecords::SPtr invalidRecords_;
-        FaultyFileLogicalLog::SPtr fileLog_;
+        FaultyFileLog::SPtr fileLog_;
         PhysicalLogWriterCallbackManager::SPtr callbackManager_;
         LONG64 lastFlushedPsn_;
         PhysicalLogWriter::SPtr writer_;
@@ -119,6 +119,9 @@ namespace LoggingReplicatorTests
 
     void PhysicalLogWriterTests::EndTest()
     {
+        ErrorCode er = Common::Directory::Delete_WithRetry(GetWorkingDirectory(), true, true);
+        ASSERT_IFNOT(er.IsSuccess(), "Failed to delete working directory");
+
         prId_.Reset();
         writer_->Dispose();
         writer_.Reset();
@@ -263,19 +266,21 @@ namespace LoggingReplicatorTests
         flushCallbackExceptionArray_ = _new(PLW_TEST_TAG, allocator)KSharedArray<NTSTATUS>();
 
         auto cwd = GetWorkingDirectory();
-        auto filePath = cwd + Path::GetPathSeparatorWstr() + L"PLW_" + fileName + L".log";
 
+        if (!Common::Directory::Exists(cwd))
+        {
+            Common::Directory::Create(cwd);
+        }
+
+        auto filePath = cwd + Path::GetPathSeparatorWstr() + L"PLW_" + fileName + L".log";
         File::Delete(filePath, false);
 
-#if !defined(PLATFORM_UNIX)
-        filePath = L"\\??\\" + filePath;
-#else
-        filePath = filePath;
-#endif
-        status = FaultyFileLogicalLog::Create(fileLog_, allocator);
+        auto path = KPath::CreatePath(filePath.c_str(), allocator);
+        KWString kstring = KWString(allocator, static_cast<LPCWSTR>(*path));
+
+        status = FaultyFileLog::Create(traceId, allocator, fileLog_);
         CODING_ERROR_ASSERT(status == STATUS_SUCCESS);
 
-        KWString kstring(allocator, filePath.c_str());
         status = co_await fileLog_->OpenAsync(kstring);
         CODING_ERROR_ASSERT(status == STATUS_SUCCESS);
 
@@ -310,6 +315,7 @@ namespace LoggingReplicatorTests
             *fileLog_,
             *callbackManager_,
             300,
+            false,
             *invalidRecords_->Inv_LogRecord,
             counters,
             healthClient,
@@ -329,6 +335,7 @@ namespace LoggingReplicatorTests
     void PhysicalLogWriterTests::WaitForRecordFlush(__in bool waitForCompleteFlush, __in LONG64 targetPsn)
     {
         int count = 0;
+        int const sleepDuration = 10;
         bool targetPsnExists = targetPsn > 0;
 
         while(true)
@@ -359,9 +366,9 @@ namespace LoggingReplicatorTests
                     return;
                 }
             }
-
-            Sleep(10);
-            VERIFY_IS_TRUE(count * 10 < maxWaitDurationInMs_);
+                
+            Sleep(sleepDuration);
+            VERIFY_IS_TRUE(count * sleepDuration < maxWaitDurationInMs_);
         }
     }
 
@@ -494,7 +501,7 @@ namespace LoggingReplicatorTests
             // Confirm the last physical record is unchanged after the logical record insertion
             VERIFY_IS_TRUE(initialTailRecord->LogRecord::Test_Equals(*currentLastPhysicalRecord));
 
-            WaitForRecordFlush(true, writer_->CurrentLogTailRecord->Psn);
+            WaitForRecordFlushToPSN(currentLastPhysicalRecord->Psn);
             SyncAwait(fileLog_->CloseAsync());
         }
     }
@@ -534,7 +541,7 @@ namespace LoggingReplicatorTests
             // Confirm the new log tail record is equal to the inserted physical record
             VERIFY_IS_TRUE(newTailLogRecord->LogRecord::Test_Equals(*currentLastPhysicalRecord));
 
-            WaitForRecordFlush(true, writer_->CurrentLogTailRecord->Psn);
+            WaitForRecordFlushToPSN(currentLastPhysicalRecord->Psn);
             SyncAwait(fileLog_->CloseAsync());
         }
     }
@@ -576,7 +583,7 @@ namespace LoggingReplicatorTests
             // Verify the target is equal to the current tail record
             VERIFY_IS_TRUE(targetTailLogRecord->LogRecord::Test_Equals(*writer_->CurrentLogTailRecord));
 
-            WaitForRecordFlush(true, writer_->CurrentLogTailRecord->Psn);
+            WaitForRecordFlushToPSN(targetTailLogRecord->Psn);
             SyncAwait(fileLog_->CloseAsync());
         }
     }
@@ -621,7 +628,7 @@ namespace LoggingReplicatorTests
             // Verify the current log head is equal to the target
             VERIFY_IS_TRUE(currentHeadRecord->LogRecord::Test_Equals(*targetHeadLogRecord));
 
-            WaitForRecordFlush(true, writer_->CurrentLogTailRecord->Psn);
+            WaitForRecordFlush();
             SyncAwait(fileLog_->CloseAsync());
         }
     }
@@ -668,13 +675,14 @@ namespace LoggingReplicatorTests
             // Total buffer size returned by PhysicalLogWriter
             LONG64 currentBufferSize = 0;
 
-            InsertLogRecords(recordCount, expectedBufferSize, currentBufferSize);
+            LogRecord::SPtr lastFlushedRecord = InsertLogRecords(recordCount, expectedBufferSize, currentBufferSize);
 
             // Flush the buffer
             SyncAwait(writer_->FlushAsync(L"VerifyBufferedAndPendingRecordBytes"));
 
+            WaitForRecordFlushToPSN(lastFlushedRecord->Psn);
             // Wait for complete flush of PhysicalLogWriter
-            WaitForRecordFlush(true, writer_->CurrentLogTailRecord->Psn);
+            WaitForRecordFlush();
 
             // Verify the buffer has been flushed and no records are pending
             VERIFY_ARE_EQUAL(writer_->BufferedRecordsBytes, 0);
@@ -704,7 +712,7 @@ namespace LoggingReplicatorTests
             // Flush the buffer in the background
             Awaitable<void> flushTask = writer_->FlushAsync(L"VerifyBufferedAndPendingRecordBytes_MultipleFlushes");
 
-            WaitForRecordFlushToPSN(writer_->CurrentLogTailRecord->Psn);
+            WaitForRecordFlushToPSN(lastFlushedRecord->Psn);
 
             // Insert records after the flush has started, but before completion
             lastFlushedRecord = InsertLogRecords(recordCount, expectedBufferSize, currentBufferSize);
@@ -717,14 +725,12 @@ namespace LoggingReplicatorTests
             flushTask = writer_->FlushAsync(L"VerifyBufferedAndPendingRecordBytes_MultipleFlushes");
 
             // Wait for complete flush of PhysicalLogWriter
-            WaitForRecordFlush(true, lastFlushedRecord->Psn);
+            WaitForRecordFlushToPSN(lastFlushedRecord->Psn);
+            WaitForRecordFlush();
 
             // Verify the buffer has been flushed and no records are pending
             VERIFY_ARE_EQUAL(writer_->BufferedRecordsBytes, 0);
             VERIFY_ARE_EQUAL(writer_->PendingFlushRecordsBytes, 0);
-
-            // Verify all record callbacks were invoked 
-            VERIFY_IS_TRUE(lastFlushedPsn_ >= recordCount * 2);
 
             SyncAwait(flushTask);
             SyncAwait(fileLog_->CloseAsync());
@@ -749,14 +755,15 @@ namespace LoggingReplicatorTests
             LogRecord::SPtr lastFlushedRecord = InsertLogRecords(recordCount, expectedBufferSize, currentBufferSize);
 
             // Flush the buffer in the background
-            Awaitable<void> flushAwaitable = writer_->FlushAsync(L"VerifyBufferedAndPendingRecordBytes_MultipleFlushes");
+            Awaitable<void> flushAwaitable = writer_->FlushAsync(L"VerifyFlushCompletionTask");
 
             // Await on the flush completion task used to notify components issuing group commit
             AwaitableCompletionSource<void>::SPtr flushCompletionTask = writer_->GetFlushCompletionTask();
             Awaitable<void> flushTcsAwaitable = flushCompletionTask->GetAwaitable();
 
+            WaitForRecordFlushToPSN(lastFlushedRecord->Psn);
             // Wait for complete flush of PhysicalLogWriter
-            WaitForRecordFlush(true, writer_->CurrentLogTailRecord->Psn);
+            WaitForRecordFlush();
 
             // Verify the PhysicalLogWriter is completely flushed
             VERIFY_IS_TRUE(writer_->IsCompletelyFlushed);
@@ -985,6 +992,7 @@ namespace LoggingReplicatorTests
             // Confirm throttling is no longer needed
             VERIFY_IS_FALSE(writer_->ShouldThrottleWrites);
 
+            WaitForRecordFlushToPSN(lastFlushedRecord->Psn);
             // Wait for complete flush of PhysicalLogWriter
             WaitForRecordFlush();
             SyncAwait(fileLog_->CloseAsync());

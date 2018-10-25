@@ -76,8 +76,9 @@ namespace Hosting2
 
         HostedServiceSPtr CreateHostedService(std::wstring const & section, Common::StringMap const & entries);
         HostedServiceSPtr CreateHostedService(HostedServiceParameters const & request);
-        Common::ErrorCode CreateContainerActivatorService(__out HostedServiceSPtr & containerManagerSerivce);
+        Common::ErrorCode CreateContainerActivatorService(__out HostedServiceSPtr & containerActivatorSerivce);
 
+        void NotifyHostedServiceTermination(std::wstring const & hostedServiceName);
 
         void RegisterIpcRequestHandler();
         void UnregisterIpcRequestHandler();

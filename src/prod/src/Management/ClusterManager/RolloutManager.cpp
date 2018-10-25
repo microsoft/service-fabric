@@ -199,6 +199,8 @@ void RolloutManager::RecoveryCallback()
     size_t infraTaskCount = 0;
     size_t composeDeploymentCount = 0;
     size_t composeUpgradeCount = 0;
+    size_t singleInstanceDeploymentCount = 0;
+    size_t singleInstanceDeploymentUpgradeCount = 0;
 
     auto storeTx = StoreTransaction::Create(replica_.ReplicatedStore, replica_.PartitionedReplicaId);
 
@@ -291,9 +293,27 @@ void RolloutManager::RecoveryCallback()
 
     if (error.IsSuccess())
     {
+        error = this->RecoverRolloutContexts<SingleInstanceDeploymentContext>(
+            storeTx, 
+            Constants::StoreType_SingleInstanceDeploymentContext, 
+            activityId,
+            singleInstanceDeploymentCount);
+    }
+
+    if (error.IsSuccess())
+    {
+        error = this->RecoverRolloutContexts<SingleInstanceDeploymentUpgradeContext>(
+            storeTx, 
+            Constants::StoreType_SingleInstanceDeploymentUpgradeContext, 
+            activityId,
+            singleInstanceDeploymentUpgradeCount);
+    }
+
+    if (error.IsSuccess())
+    {
         WriteInfo(
             TraceComponent, 
-            "{0} recovered pending contexts [AppProv = {1}, Apps = {2}, Svcs = {3}, AppUpgrades = {4} FabProv = {5} FabUpgrades = {6} InfraTasks = {7} composeDeploymentCount = {8} composeUpgradeCount = {9}]", 
+            "{0} recovered pending contexts [AppProv = {1}, Apps = {2}, Svcs = {3}, AppUpgrades = {4} FabProv = {5} FabUpgrades = {6} InfraTasks = {7} composeDeployments = {8} composeUpgrades = {9} singleInstances = {10} singleInstanceUpgrades = {11}]", 
             storeTx.ReplicaActivityId, 
             appTypeCount,
             appCount,
@@ -303,7 +323,9 @@ void RolloutManager::RecoveryCallback()
             fabricUpgradeCount,
             infraTaskCount,
             composeDeploymentCount,
-            composeUpgradeCount);
+            composeUpgradeCount,
+            singleInstanceDeploymentCount,
+            singleInstanceDeploymentUpgradeCount);
 
         storeTx.CommitReadOnly();
 
@@ -463,17 +485,19 @@ ErrorCode RolloutManager::Enqueue(std::shared_ptr<RolloutContext> && context)
     //
     if (context->ContextType == RolloutContextType::ApplicationType && context->IsDeleting)
     {
-        this->Replica.AppTypeRequestTracker.TryCancel(dynamic_cast<ApplicationTypeContext*>(activeContext.get())->TypeName);
+        auto casted = dynamic_cast<ApplicationTypeContext*>(activeContext.get());
+        ASSERT_IF(casted == nullptr, "Failed to cast ApplicationTypeContext");
+        this->Replica.AppTypeRequestTracker.TryCancel(casted->TypeName);
     }
 
     return ErrorCodeValue::CMRequestAlreadyProcessing;
 }
 
-void RolloutManager::ExternallyFailUpgrade(ApplicationUpgradeContext const & upgradeContext)
+void RolloutManager::ExternallyFailUpgrade(RolloutContext const & context)
 {
     AcquireExclusiveLock lock(contextsLock_);
 
-    auto const & mapKey = upgradeContext.MapKey;
+    auto const & mapKey = context.MapKey;
 
     auto iter = activeContexts_.find(mapKey);
     if (iter != activeContexts_.end())
@@ -543,13 +567,21 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ApplicationType:
                 {
                     auto appTypeContext = dynamic_cast<ApplicationTypeContext*>(&context);
-                    ProcessPendingApplicationType(*appTypeContext);
+                    if (appTypeContext->ApplicationTypeDefinitionKind == ApplicationTypeDefinitionKind::Enum::ServiceFabricApplicationPackage)
+                    {
+                        ProcessPendingApplicationType(*appTypeContext);
+                    }
+                    else
+                    {
+                        ProcessCompleted(*appTypeContext);
+                    }
                     break;
                 }
 
                 case RolloutContextType::Application:
                 {
                     auto applicationContext = dynamic_cast<ApplicationContext*>(&context);
+                    ASSERT_IF(applicationContext == nullptr, "Failed to cast ApplicationContext");
 
                     if (applicationContext->IsUpgrading)
                     {
@@ -568,6 +600,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ComposeDeployment:
                 {
                     auto containerApplicationContext = dynamic_cast<ComposeDeploymentContext *>(&context);
+                    ASSERT_IF(containerApplicationContext == nullptr, "Failed to cast ComposeDeploymentContext");
                     
                     if (containerApplicationContext->IsUpgrading)
                     {
@@ -583,16 +616,32 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                     break;
                 }
 
+                case RolloutContextType::SingleInstanceDeployment:
+                {
+                    auto singleInstanceDeploymentContext = dynamic_cast<SingleInstanceDeploymentContext *>(&context);
+                    ProcessPendingSingleInstanceDeployment(*singleInstanceDeploymentContext);
+                    break;
+                }
+
                 case RolloutContextType::ComposeDeploymentUpgrade:
                 {
                     auto composeDeploymentUpgradeContext = dynamic_cast<ComposeDeploymentUpgradeContext *>(&context);
+                    ASSERT_IF(composeDeploymentUpgradeContext == nullptr, "Failed to cast ComposeDeploymentUpgradeContext");
                     ProcessPendingComposeDeploymentUpgrade(*composeDeploymentUpgradeContext);
+                    break;
+                }
+
+                case RolloutContextType::SingleInstanceDeploymentUpgrade:
+                {
+                    auto singleInstanceDeploymentUpgradeContext = dynamic_cast<SingleInstanceDeploymentUpgradeContext *>(&context);
+                    ProcessPendingSingleInstanceDeploymentUpgrade(*singleInstanceDeploymentUpgradeContext);
                     break;
                 }
 
                 case RolloutContextType::Service:
                 {
                     auto serviceContext = dynamic_cast<ServiceContext*>(&context);
+                    ASSERT_IF(serviceContext == nullptr, "Failed to cast ServiceContext");
                     ProcessPendingService(*serviceContext);
                     break;
                 }
@@ -600,6 +649,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ApplicationUpgrade:
                 {
                     auto upgradeContext = dynamic_cast<ApplicationUpgradeContext*>(&context);
+                    ASSERT_IF(upgradeContext == nullptr, "Failed to cast ApplicationUpgradeContext");
                     if (upgradeContext->ApplicationDefinitionKind == ApplicationDefinitionKind::Enum::ServiceFabricApplicationDescription)
                     {
                         //
@@ -617,6 +667,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ApplicationUpdate:
                 {
                     auto applicationUpdateContext = dynamic_cast<ApplicationUpdateContext*>(&context);
+                    ASSERT_IF(applicationUpdateContext == nullptr, "Failed to cast ApplicationUpdateContext");
                     ProcessPendingApplicationUpdate(*applicationUpdateContext, false);
                     break;
                 }
@@ -624,6 +675,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::FabricProvision:
                 {
                     auto provisionContext = dynamic_cast<FabricProvisionContext*>(&context);
+                    ASSERT_IF(provisionContext == nullptr, "Failed to cast FabricProvisionContext");
                     ProcessPendingFabricProvision(*provisionContext);
                     break;
                 }
@@ -631,6 +683,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::FabricUpgrade:
                 {
                     auto upgradeContext = dynamic_cast<FabricUpgradeContext*>(&context);
+                    ASSERT_IF(upgradeContext == nullptr, "Failed to cast FabricUpgradeContext");
                     ProcessPendingFabricUpgrade(*upgradeContext);
                     break;
                 }
@@ -638,6 +691,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::InfrastructureTask:
                 {
                     auto infraTaskContext = dynamic_cast<InfrastructureTaskContext*>(&context);
+                    ASSERT_IF(infraTaskContext == nullptr, "Failed to cast InfrastructureTaskContext");
                     ProcessPendingInfrastructureTask(*infraTaskContext);
                     break;
                 }
@@ -663,6 +717,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ApplicationType:
                 {
                     auto castedContext = dynamic_cast<ApplicationTypeContext*>(&context);
+                    ASSERT_IF(castedContext == nullptr, "Failed to cast ApplicationTypeContext");
                     if (castedContext->IsAsync)
                     {
                         // No-op: Leave the context in the failed state for 
@@ -684,6 +739,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ComposeDeployment:
                 {
                     auto dockerComposeDeploymentContext = dynamic_cast<ComposeDeploymentContext*>(&context);
+                    ASSERT_IF(dockerComposeDeploymentContext == nullptr, "Failed to cast ComposeDeploymentContext");
                     ProcessFailedComposeDeployment(*dockerComposeDeploymentContext);
                     break;
                 }
@@ -691,7 +747,23 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ComposeDeploymentUpgrade:
                 {
                     auto composeDeploymentUpgradeContext = dynamic_cast<ComposeDeploymentUpgradeContext *>(&context);
+                    ASSERT_IF(composeDeploymentUpgradeContext == nullptr, "Failed to cast ComposeDeploymentUpgradeContext");
                     ClearPendingComposeDeploymentUpgrade(*composeDeploymentUpgradeContext);
+                    break;
+                }
+
+                case RolloutContextType::SingleInstanceDeployment:
+                {
+                    auto singleInstanceDeploymentContext = dynamic_cast<SingleInstanceDeploymentContext*>(&context);
+                    ProcessFailedSingleInstanceDeployment(*singleInstanceDeploymentContext);
+                    break;
+                }
+
+                case RolloutContextType::SingleInstanceDeploymentUpgrade:
+                {
+                    auto singleInstanceDeploymentUpgradeContext = dynamic_cast<SingleInstanceDeploymentUpgradeContext*>(&context);
+                    ASSERT_IF(singleInstanceDeploymentUpgradeContext == nullptr, "Failed to cast SingleInstanceDeploymentUpgradeContext");
+                    ClearPendingSingleInstanceDeploymentUpgrade(*singleInstanceDeploymentUpgradeContext);
                     break;
                 }
 
@@ -699,6 +771,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ApplicationUpdate:
                 {
                     auto applicationUpdateContext = dynamic_cast<ApplicationUpdateContext*>(&context);
+                    ASSERT_IF(applicationUpdateContext == nullptr, "Failed to cast ApplicationUpdateContext");
                     ProcessPendingApplicationUpdate(*applicationUpdateContext, true);
                     break;
                 }
@@ -708,6 +781,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ApplicationUpgrade:
                 {
                     auto upgradeContext = dynamic_cast<ApplicationUpgradeContext*>(&context);
+                    ASSERT_IF(upgradeContext == nullptr, "Failed to cast ApplicationUpgradeContext");
                     if (upgradeContext->ApplicationDefinitionKind == ApplicationDefinitionKind::Enum::ServiceFabricApplicationDescription)
                     {
                         ClearPendingApplicationUpgrade(*upgradeContext);
@@ -716,7 +790,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                     else
                     {
                         //
-                        // Cleanup will happen via the deployment context.
+                        // Intentional fall-through: cleanup will happen via the deployment context.
                         //
                         this->RemoveActiveContext(context);
                     }
@@ -747,6 +821,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::ApplicationType:
                 {
                     auto appTypeContext = dynamic_cast<ApplicationTypeContext*>(&context);
+                    ASSERT_IF(appTypeContext == nullptr, "Failed to cast ApplicationTypeContext");
                     DeletePendingApplicationType(*appTypeContext);
                     break;
                 }
@@ -754,6 +829,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::Application:
                 {
                     auto applicationContext = dynamic_cast<ApplicationContext*>(&context);
+                    ASSERT_IF(applicationContext == nullptr, "Failed to cast ApplicationContext");
                     DeletePendingApplication(*applicationContext);
                     break;
                 }
@@ -761,14 +837,23 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::Service:
                 {
                     auto serviceContext = dynamic_cast<ServiceContext*>(&context);
+                    ASSERT_IF(serviceContext == nullptr, "Failed to cast ServiceContext");
                     DeletePendingService(*serviceContext);
                     break;
                 }
 
                 case RolloutContextType::ComposeDeployment:
                 {
-                    auto dockerComposeDeploymentContext = dynamic_cast<ComposeDeploymentContext*>(&context);
-                    DeletePendingComposeDeployment(*dockerComposeDeploymentContext);
+                    auto composeDeploymentContext = dynamic_cast<ComposeDeploymentContext*>(&context);
+                    ASSERT_IF(composeDeploymentContext == nullptr, "Failed to cast ComposeDeploymentContext");
+                    DeletePendingComposeDeployment(*composeDeploymentContext);
+                    break;
+                }
+
+                case RolloutContextType::SingleInstanceDeployment:
+                {
+                    auto singleInstanceDeploymentContext = dynamic_cast<SingleInstanceDeploymentContext*>(&context);
+                    DeletePendingSingleInstanceDeployment(*singleInstanceDeploymentContext);
                     break;
                 }
                 default:
@@ -777,6 +862,19 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
             } // switch context type
             break;
         } // case status deleting
+
+        case RolloutStatus::Replacing:
+        {
+            switch(context.ContextType)
+            {
+                case RolloutContextType::SingleInstanceDeployment:
+                {
+                    auto singleInstanceDeploymentContext = dynamic_cast<SingleInstanceDeploymentContext *>(&context);
+                    ProcessReplacingSingleInstanceDeployment(*singleInstanceDeploymentContext);
+                    break;
+                }
+            }
+        }
 
         default:
             Assert::TestAssert("{0}: Unknown context status {1}", context.Status);
@@ -829,6 +927,28 @@ void RolloutManager::ProcessPendingApplication(__in ApplicationContext & context
 void RolloutManager::ProcessPendingComposeDeployment(__in ComposeDeploymentContext & context)
 {
     auto operation = AsyncOperation::CreateAndStart<ProcessComposeDeploymentContextAsyncOperation>(
+        *this,
+        context,
+        [this, &context](AsyncOperationSPtr const & operation) { this->FinishProcessingRolloutContext(context, operation, false); },
+        replica_.CreateAsyncOperationRoot());
+
+    this->FinishProcessingRolloutContext(context, operation, true);
+}
+
+void RolloutManager::ProcessPendingSingleInstanceDeployment(__in SingleInstanceDeploymentContext & context)
+{
+    auto operation = AsyncOperation::CreateAndStart<ProcessSingleInstanceDeploymentContextAsyncOperation>(
+        *this,
+        context,
+        [this, &context](AsyncOperationSPtr const & operation) { this->FinishProcessingRolloutContext(context, operation, false); },
+        replica_.CreateAsyncOperationRoot());
+
+    this->FinishProcessingRolloutContext(context, operation, true);
+}
+
+void RolloutManager::ProcessPendingSingleInstanceDeploymentUpgrade(__in SingleInstanceDeploymentUpgradeContext &context)
+{
+    auto operation = AsyncOperation::CreateAndStart<ProcessSingleInstanceDeploymentUpgradeContextAsyncOperation>(
         *this,
         context,
         [this, &context](AsyncOperationSPtr const & operation) { this->FinishProcessingRolloutContext(context, operation, false); },
@@ -955,6 +1075,18 @@ void RolloutManager::DeletePendingComposeDeployment(__in ComposeDeploymentContex
     this->FinishProcessingRolloutContext(context, operation, true);
 }
 
+void RolloutManager::DeletePendingSingleInstanceDeployment(__in SingleInstanceDeploymentContext & context)
+{
+    auto operation = AsyncOperation::CreateAndStart<DeleteSingleInstanceDeploymentContextAsyncOperation>(
+        *this,
+        context,
+        GetOperationTimeout(context),
+        [this, &context](AsyncOperationSPtr const & operation) { this->FinishProcessingRolloutContext(context, operation, false); },
+        replica_.CreateAsyncOperationRoot());
+
+    this->FinishProcessingRolloutContext(context, operation, true);
+}
+
 void RolloutManager::DeletePendingService(__in ServiceContext & context)
 {
     auto operation = AsyncOperation::CreateAndStart<DeleteServiceContextAsyncOperation>(
@@ -988,6 +1120,17 @@ void RolloutManager::ClearPendingComposeDeploymentUpgrade(__in ComposeDeployment
         [this, &context](AsyncOperationSPtr const & operation) { this->FinishProcessingRolloutContext(context, operation, false); },
         replica_.CreateAsyncOperationRoot());
 
+    this->FinishProcessingRolloutContext(context, operation, true);
+}
+
+void RolloutManager::ClearPendingSingleInstanceDeploymentUpgrade(__in SingleInstanceDeploymentUpgradeContext & context)
+{
+    auto operation = AsyncOperation::CreateAndStart<ClearSingleInstanceDeploymentUpgradeContextAsyncOperation>(
+        *this,
+        context,
+        GetOperationTimeout(context),
+        [this, &context](AsyncOperationSPtr const & operation) { this->FinishProcessingRolloutContext(context, operation, false); },
+        replica_.CreateAsyncOperationRoot());
     this->FinishProcessingRolloutContext(context, operation, true);
 }
 
@@ -1029,6 +1172,57 @@ void RolloutManager::OnProcessFailedComposeDeploymentComplete(
     }
 }
 
+void RolloutManager::ProcessFailedSingleInstanceDeployment(__in SingleInstanceDeploymentContext &context)
+{
+    //
+    // The delete operation uses the context state - Failed vs DeletePending to distinguish cleanup(rollback) vs actual delete
+    //
+    auto operation = AsyncOperation::CreateAndStart<DeleteSingleInstanceDeploymentContextAsyncOperation>(
+        *this,
+        context,
+        GetOperationTimeout(context),
+        [this, &context](AsyncOperationSPtr const & operation) { this->OnProcessFailedSingleInstanceDeploymentComplete(context, operation, false); },
+        replica_.CreateAsyncOperationRoot());
+
+    this->OnProcessFailedSingleInstanceDeploymentComplete(context, operation, true);
+    context;
+}
+
+void RolloutManager::OnProcessFailedSingleInstanceDeploymentComplete(
+    RolloutContext & context, 
+    AsyncOperationSPtr const& operation,
+    bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    ErrorCode error = ProcessRolloutContextAsyncOperationBase::End(operation);
+
+    if (error.IsSuccess())
+    {
+        this->RemoveActiveContext(context);
+    }
+    else
+    {
+        //
+        // schedule retry.
+        //
+        TimeSpan retryDelay = replica_.GetRandomizedOperationRetryDelay(error);
+        ScheduleRolloutContextProcessing(context, retryDelay);
+    }
+}
+
+void RolloutManager::ProcessReplacingSingleInstanceDeployment(__in SingleInstanceDeploymentContext & context)
+{
+    auto operation = AsyncOperation::CreateAndStart<ReplaceSingleInstanceDeploymentContextAsyncOperation>(
+        *this,
+        context,
+        GetOperationTimeout(context),
+        [this, &context](AsyncOperationSPtr const & operation) { this->FinishProcessingRolloutContext(context, operation, false); },
+        replica_.CreateAsyncOperationRoot());
+
+    this->FinishProcessingRolloutContext(context, operation, true);
+}
+
 void RolloutManager::ProcessUnknown(__in RolloutContext & context)
 {
     ErrorCode error = Refresh(context);
@@ -1045,12 +1239,22 @@ void RolloutManager::ProcessUnknown(__in RolloutContext & context)
 
 void RolloutManager::ProcessCompleted(__in RolloutContext & context)
 {
-    // This is a no-op if the context has been recovered
-    // off persistent storage
-    //
-    context.CompleteClientRequest();
+    // Keep in queue for another round of rollout.
+    // This flag is saved for "replacement" context.
+    if (context.ShouldKeepInQueue())
+    {
+        Refresh(context);
+        ScheduleRolloutContextProcessing(context, TimeSpan::Zero);
+    }
+    else
+    {
+        // This is a no-op if the context has been recovered
+        // off persistent storage
+        //
+        context.CompleteClientRequest();
 
-    this->RemoveActiveContext(context);
+        this->RemoveActiveContext(context);
+    }
 }
 
 void RolloutManager::ProcessFailed(__in RolloutContext & context, RolloutStatus::Enum status)
@@ -1488,7 +1692,7 @@ ErrorCode RolloutManager::RecoverRolloutContexts(
     __out size_t & recoveryCount,
     __out vector<T> & allContexts)
 {
-    int count = 0;
+    size_t count = 0;
     vector<T> typedContexts;
     ErrorCode error = storeTx.ReadPrefix(type, L"", typedContexts);
 

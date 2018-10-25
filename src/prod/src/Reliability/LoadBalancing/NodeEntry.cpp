@@ -39,7 +39,8 @@ NodeEntry::NodeEntry(
     TreeNodeIndex && faultDomainIndex,
     TreeNodeIndex && upgradeDomainIndex,
     bool isDeactivated,
-    bool isUp)
+    bool isUp,
+    std::vector<std::wstring> && nodeImages)
     : nodeIndex_(nodeIndex),
     nodeId_(nodeId),
     loads_(move(loads)),
@@ -51,7 +52,8 @@ NodeEntry::NodeEntry(
     faultDomainIndex_(move(faultDomainIndex)),
     upgradeDomainIndex_(move(upgradeDomainIndex)),
     isDeactivated_(isDeactivated),
-    isUp_(isUp)
+    isUp_(isUp),
+    nodeImages_(move(nodeImages))
 {
     ASSERT_IFNOT(capacityRatios_.Values.size() == bufferedCapacities_.Values.size(),
         "Buffered capacities size {0} and CapacityRatios size {1} should be equal",
@@ -85,7 +87,8 @@ NodeEntry::NodeEntry(NodeEntry && other)
     faultDomainIndex_(move(other.faultDomainIndex_)),
     upgradeDomainIndex_(move(other.upgradeDomainIndex_)),
     isDeactivated_(other.isDeactivated_),
-    isUp_(other.isUp_)
+    isUp_(other.isUp_),
+    nodeImages_(move(other.nodeImages_))
 {
 }
 
@@ -105,6 +108,7 @@ NodeEntry & NodeEntry::operator = (NodeEntry && other)
         upgradeDomainIndex_ = move(other.upgradeDomainIndex_);
         isDeactivated_ = other.isDeactivated_;
         isUp_ = other.isUp_;
+        nodeImages_ = move(other.nodeImages_);
     }
 
     return *this;
@@ -128,12 +132,21 @@ int64 NodeEntry::GetLoadLevel(size_t metricIndex, int64 diff) const
     return load;
 }
 
+int64 NodeEntry::GetNodeCapacity(size_t metricIndex) const
+{
+    TESTASSERT_IFNOT(metricIndex < totalCapacities_.Values.size(), "Metric index {0} out of bound {1}", metricIndex, totalCapacities_.Values.size());
+
+    int64 capacity = totalCapacities_.Values[metricIndex];
+
+    return capacity;
+}
+
 GlobalWString const NodeEntry::TraceDescription = make_global<wstring>(
     L"[Nodes]\r\n#nodeId #nodeIndex faultDomainIndex upgradeDomainIndex loads disappearingLoads capacityRatios bufferedCapacities totalCapacities isDeactivated isUp");
 
 void NodeEntry::WriteTo(TextWriter& writer, FormatOptions const&) const
 {
-    writer.Write("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10}",
+    writer.Write("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11}",
         nodeId_,
         nodeIndex_,
         faultDomainIndex_,
@@ -144,7 +157,8 @@ void NodeEntry::WriteTo(TextWriter& writer, FormatOptions const&) const
         bufferedCapacities_,
         totalCapacities_,
         isDeactivated_,
-        isUp_);
+        isUp_,
+        nodeImages_);
 }
 
 void NodeEntry::WriteToEtw(uint16 contextSequenceId) const

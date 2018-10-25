@@ -13,8 +13,7 @@ namespace Hosting2
         ConfigureNodeForDnsServiceRequest();
         ConfigureNodeForDnsServiceRequest(
             bool isDnsServiceEnabled,
-            bool setAsPreferredDns,
-            std::wstring const & sid);
+            bool setAsPreferredDns);
 
         __declspec(property(get = get_IsDnsServiceEnabled)) bool const IsDnsServiceEnabled;
         bool const get_IsDnsServiceEnabled() const { return isDnsServiceEnabled_; }
@@ -22,16 +21,12 @@ namespace Hosting2
         __declspec(property(get = get_SetAsPreferredDns)) bool const SetAsPreferredDns;
         bool const get_SetAsPreferredDns() const { return setAsPreferredDns_; }
 
-        __declspec(property(get = get_Sid)) std::wstring const & Sid;
-        std::wstring const & get_Sid() const { return sid_; }
-
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_03(isDnsServiceEnabled_, setAsPreferredDns_, sid_);
+        FABRIC_FIELDS_02(isDnsServiceEnabled_, setAsPreferredDns_);
 
     private:
         bool isDnsServiceEnabled_;
         bool setAsPreferredDns_;
-        std::wstring sid_;
     };
 }

@@ -1,3 +1,8 @@
+#
+# Tests image builder job queue throttle.
+# Not run in automation, scale test that can be used for manual testing.
+#
+
 votes 10
 fmservice 1 1
 namingservice 1 1 1

@@ -57,6 +57,9 @@ namespace Hosting2
             __in std::wstring const & runtimeId,
             __out Common::ComPointer<IFabricCodePackageActivationContext> & codePackageActivationContext) = 0;
 
+        virtual Common::ErrorCode GetCodePackageActivator(
+            __out Common::ComPointer<IFabricCodePackageActivator> & codePackageActivator) = 0;
+
         virtual Common::ErrorCode GetKtlSystem(
             __out KtlSystem ** ktlSystem) = 0;
 

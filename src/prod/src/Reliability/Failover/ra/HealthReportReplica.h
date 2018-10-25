@@ -15,9 +15,10 @@ namespace Reliability
         public:
             explicit HealthReportReplica(const Replica &r);
 
-			bool operator == (HealthReportReplica const & rhs) const;
-			bool operator != (HealthReportReplica const & rhs) const;
+            bool operator == (HealthReportReplica const & rhs) const;
+            bool operator != (HealthReportReplica const & rhs) const;
             wstring GetStringRepresentation() const;
+            int64 Test_GetReplicaID() const { return replicaId_; }
 
         private:
             ReplicaRole::Enum currentRole_;

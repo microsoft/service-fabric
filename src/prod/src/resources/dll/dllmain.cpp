@@ -9,7 +9,6 @@
 #include <map>
 #include <string>
 #include <sal.h>
-#include "PAL.h"
 #endif
 
 #include "targetver.h"

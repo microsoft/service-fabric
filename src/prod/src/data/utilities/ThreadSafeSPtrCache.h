@@ -72,6 +72,46 @@ namespace Data
             }
 
             //
+            // Moves the SPtr into the the current value if matches
+            //
+            bool PutIf(__in KSharedPtr<T> && newCurrent, __in KSharedPtr<T> &current)
+            {
+                bool changed = false;
+
+                lock_.AcquireExclusive();
+
+                if (current_ == current)
+                {
+                    current_ = Ktl::Move(newCurrent);
+                    changed = true;
+                }
+
+                lock_.ReleaseExclusive();
+
+                return changed;
+            }
+
+            //
+            // Moves the SPtr into the the current value if matches
+            //
+            bool PutIf(__in KSharedPtr<T> && newCurrent, __in T *current)
+            {
+                bool changed = false;
+
+                lock_.AcquireExclusive();
+
+                if (current_ == current)
+                {
+                    current_ = Ktl::Move(newCurrent);
+                    changed = true;
+                }
+
+                lock_.ReleaseExclusive();
+
+                return changed;
+            }
+
+            //
             // Thread safe method to read the shared pointer
             //
             KSharedPtr<T> Get() const

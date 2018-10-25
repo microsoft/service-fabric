@@ -128,13 +128,21 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
     case CTRL_C_EVENT: 
         console.WriteLine(FabricGatewayResource::GetResources().CtrlC);
         CloseGateway();
+#if defined(PLATFORM_UNIX)
+        ExitProcess(ERROR_SUCCESS);
+#else
         ExitProcess(ERROR_CONTROL_C_EXIT);
+#endif
 
         // Pass other signals to the next handler.
     case CTRL_BREAK_EVENT: 
         console.WriteLine(FabricGatewayResource::GetResources().CtrlBreak);
         CloseGateway();
+#if defined(PLATFORM_UNIX)
+        ExitProcess(ERROR_SUCCESS);
+#else
         ExitProcess(ERROR_CONTROL_C_EXIT);
+#endif
 
     default: 
         return FALSE; 

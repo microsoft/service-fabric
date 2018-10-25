@@ -42,6 +42,11 @@ ktl::Awaitable<bool> TestBackupCallbackHandler::UploadBackupAsync(
     co_return true;
 }
 
+KArray<TxnReplicator::BackupInfo> TestBackupCallbackHandler::get_BackupInfoArray() const
+{
+    return backupInfoArray_;
+}
+
 TestBackupCallbackHandler::TestBackupCallbackHandler(
     __in KString const & externalBackupFolderPath)
     : externalBackupFolderPath_(&externalBackupFolderPath)

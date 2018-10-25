@@ -90,7 +90,11 @@ namespace Reliability
             bool statusHeader_;
         };
 
-        template <typename Identifier, typename Item, typename Description, typename ItemMapType = std::map<Identifier, Item>>
+        template <typename Identifier,
+            typename Item,
+            typename Description,
+            typename ItemMapType = std::map<Identifier, Item>,
+            typename ItemVectorType = std::vector<int>>
         class TraceDescriptions
         {
             DENY_COPY(TraceDescriptions);
@@ -99,10 +103,12 @@ namespace Reliability
             TraceDescriptions(
                 ItemMapType const& itemMap,
                 Identifier * itemPtr,
-                uint maxEntries)
+                uint maxEntries,
+                ItemVectorType const& itemQuorumDomainLogic = std::vector<int>())
                 : itemMap_(itemMap),
                 itemPtr_(itemPtr),
-                maxEntries_(maxEntries)
+                maxEntries_(maxEntries),
+                itemQuorumDomainLogic_(itemQuorumDomainLogic)
             {
             }
 
@@ -113,6 +119,7 @@ namespace Reliability
             ItemMapType const& itemMap_;
             Identifier * itemPtr_;
             uint maxEntries_;
+            ItemVectorType const& itemQuorumDomainLogic_;
         };
 
         template<typename Item, typename Description>
@@ -169,8 +176,10 @@ namespace Reliability
 
             Metric::DefragDistributionType emptyNodesDistribution_;
             size_t emptyNodeLoadThreshold_;
+            int64 reservationLoad_;
 
             double emptyNodesWeight_;
+            double nonEmptyNodesWeight_;
             uint activityThreshold_;
             double balancingThreshold_;
         };

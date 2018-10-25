@@ -15,6 +15,8 @@ using namespace std;
 using namespace Reliability::LoadBalancingComponent;
 using namespace Common;
 
+const size_t DynamicNodeLoadSet::OverlappingIndex = SIZE_MAX - 1;
+
 DynamicNodeLoadSet::DynamicNodeLoad::DynamicNodeLoad(
     LoadEntry const* load,
     LoadEntry const* capacity,
@@ -22,13 +24,15 @@ DynamicNodeLoadSet::DynamicNodeLoad::DynamicNodeLoad(
     Common::TreeNodeIndex const* udIndex,
     bool isUp,
     int nodeIndex,
-    int64 moveCost)
+    double& overlappingLoad,
+    int64& moveCost)
     : isUp_(isUp),
     nodeIndex_(nodeIndex),
     load_(load),
     capacity_(capacity),
     fdIndex_(fdIndex),
     udIndex_(udIndex),
+    overlappingLoad_(overlappingLoad),
     moveCost_(moveCost)
 {
 }
@@ -40,6 +44,7 @@ DynamicNodeLoadSet::DynamicNodeLoad::DynamicNodeLoad(DynamicNodeLoad const& othe
     capacity_(other.capacity_),
     fdIndex_(other.fdIndex_),
     udIndex_(other.udIndex_),
+    overlappingLoad_(other.overlappingLoad_),
     moveCost_(other.moveCost_)
 {
 }
@@ -51,6 +56,7 @@ DynamicNodeLoadSet::DynamicNodeLoad::DynamicNodeLoad(DynamicNodeLoad && other)
     capacity_(other.capacity_),
     fdIndex_(other.fdIndex_),
     udIndex_(other.udIndex_),
+    overlappingLoad_(other.overlappingLoad_),
     moveCost_(other.moveCost_)
 {
 }
@@ -62,68 +68,82 @@ double DynamicNodeLoadSet::DynamicNodeLoad::Load(size_t totalMetricIndex, size_t
     {
         return static_cast<double>(moveCost_);
     }
+    //Max load for overlapping is 2*(number of scoped defrag metrics)
+    if (totalMetricIndex == OverlappingIndex)
+    {
+        return overlappingLoad_;
+    }
 
-    if (capacity_->Values[globalMetricIndex] <= 0)
+    auto nodeCapacity = capacity_->Values[globalMetricIndex];
+
+    if (nodeCapacity <= 0)
     {
         return 1;
     }
 
-    return load_->Values[totalMetricIndex] * 1.0f / capacity_->Values[globalMetricIndex];
+    return load_->Values[totalMetricIndex] * 1.0f / nodeCapacity;
 }
 
-double DynamicNodeLoadSet::DynamicNodeLoad::Load(size_t totalMetricIndex, size_t globalMetricIndex, size_t maxLoadToBeConsideredEmpty) const
+double DynamicNodeLoadSet::DynamicNodeLoad::Load(size_t totalMetricIndex, size_t globalMetricIndex, size_t reservationLoad) const
 {
-    if (totalMetricIndex == MoveCostIndex) 
+    if (totalMetricIndex == MoveCostIndex)
     {
         return static_cast<double>(moveCost_);
     }
 
-    if (capacity_->Values[globalMetricIndex] <= 0)
+    if (totalMetricIndex == OverlappingIndex)
+    {
+        return overlappingLoad_;
+    }
+
+    auto nodeCapacity = capacity_->Values[globalMetricIndex];
+
+    // If node doesn't have capacity or there isn't enough capacity, consider it as full (non beneficial for emptying for this metric)
+    if (nodeCapacity <= 0 || (size_t)nodeCapacity < reservationLoad)
     {
         return 1;
     }
 
-    auto load = max((int64)(load_->Values[totalMetricIndex] - maxLoadToBeConsideredEmpty), (int64)0);
+    auto load = max((int64)(load_->Values[totalMetricIndex] + reservationLoad - nodeCapacity), (int64)0);
 
-    return load * 1.0f / capacity_->Values[globalMetricIndex];
+    return load * 1.0f / nodeCapacity;
 }
 
-DynamicNodeLoadSet::NodeLoadComparator::NodeLoadComparator(size_t totalMetricIndex, size_t globalMetricIndex)
+DynamicNodeLoadSet::NodeLoadComparator::NodeLoadComparator(size_t totalMetricIndex, size_t globalMetricIndex, size_t reservationLoad)
     : totalMetricIndex_(totalMetricIndex),
-    globalMetricIndex_(globalMetricIndex)
+    globalMetricIndex_(globalMetricIndex),
+    reservationAmount_(reservationLoad)
 {
 }
-
-bool DynamicNodeLoadSet::NodeLoadComparator::operator()(const DynamicNodeLoad& a, const DynamicNodeLoad& b) const
+bool DynamicNodeLoadSet::NodeLoadComparator::operator()(DynamicNodeLoad const* a, DynamicNodeLoad const* b) const
 {
-    if (a.IsUp && !b.IsUp)
+    if (a->IsUp && !b->IsUp)
     {
         return true;
     }
 
-    if (b.IsUp && !a.IsUp)
+    if (b->IsUp && !a->IsUp)
     {
         return false;
     }
 
-    if (a.Load(totalMetricIndex_, globalMetricIndex_) < b.Load(totalMetricIndex_, globalMetricIndex_))
+    if (a->Load(totalMetricIndex_, globalMetricIndex_, reservationAmount_) < b->Load(totalMetricIndex_, globalMetricIndex_, reservationAmount_))
     {
         return true;
     }
 
-    if (a.Load(totalMetricIndex_, globalMetricIndex_) > b.Load(totalMetricIndex_, globalMetricIndex_))
+    if (a->Load(totalMetricIndex_, globalMetricIndex_, reservationAmount_) > b->Load(totalMetricIndex_, globalMetricIndex_, reservationAmount_))
     {
         return false;
     }
 
-    return a.NodeIndex < b.NodeIndex;
+    return a->NodeIndex < b->NodeIndex;
 }
-
 DynamicNodeLoadSet::DynamicNodeLoadSet()
 {
 }
 
-DynamicNodeLoadSet::DynamicNodeLoadSet(vector<NodeEntry> const& nodeEntries, vector<LoadBalancingDomainEntry> const& lbDomainEntries)
+DynamicNodeLoadSet::DynamicNodeLoadSet(vector<NodeEntry> const& nodeEntries, vector<LoadBalancingDomainEntry> const& lbDomainEntries, bool overlapping)
     : nodeCount_(nodeEntries.size()),
     version_(0),
     nodeLoads_(),
@@ -133,29 +153,46 @@ DynamicNodeLoadSet::DynamicNodeLoadSet(vector<NodeEntry> const& nodeEntries, vec
     udIndexes_(),
     nodeUp_(),
     nodeLoadIndexes_(),
+    overlappingLoads_(),
     moveCosts_(),
     lastBeneficialVersions_(),
     fdDistributionHelper_(),
-    udDistributionHelper_()
+    udDistributionHelper_(),
+    reservedLoads_(),
+    allDynamicNodeLoads_(),
+    overlapping_(overlapping)
 {
+    allDynamicNodeLoads_.reserve(nodeCount_);
     nodeLoads_.reserve(nodeCount_);
     nodeLoadBackup_.reserve(nodeCount_);
     nodeCapacities_.reserve(nodeCount_);
     fdIndexes_.reserve(nodeCount_);
     udIndexes_.reserve(nodeCount_);
+    overlappingLoads_.reserve(nodeCount_);
     moveCosts_.reserve(nodeCount_);
     nodeUp_.reserve(nodeCount_);
 
-    for (auto it = nodeEntries.begin(); it != nodeEntries.end(); ++it)
+    for (int index = 0; index < nodeEntries.size(); ++index)
     {
-        nodeLoads_.push_back(move(LoadEntry(it->Loads)));
-        nodeLoadBackup_.push_back(move(LoadEntry(it->Loads)));
-        nodeCapacities_.push_back(move(LoadEntry(it->TotalCapacities)));
-        fdIndexes_.push_back(move(TreeNodeIndex(it->FaultDomainIndex)));
-        udIndexes_.push_back(move(TreeNodeIndex(it->UpgradeDomainIndex)));
+        nodeLoads_.push_back(move(LoadEntry(nodeEntries[index].Loads)));
+        nodeLoadBackup_.push_back(move(LoadEntry(nodeEntries[index].Loads)));
+        nodeCapacities_.push_back(move(LoadEntry(nodeEntries[index].TotalCapacities)));
+        fdIndexes_.push_back(move(TreeNodeIndex(nodeEntries[index].FaultDomainIndex)));
+        udIndexes_.push_back(move(TreeNodeIndex(nodeEntries[index].UpgradeDomainIndex)));
+        overlappingLoads_.push_back(0);
         moveCosts_.push_back(0);
-        
-        nodeUp_.push_back((it->IsUp && !it->IsDeactivated) ? true : false);
+        nodeUp_.push_back((nodeEntries[index].IsUp && !nodeEntries[index].IsDeactivated) ? true : false);
+
+        DynamicNodeLoad dynamicLoad = DynamicNodeLoad(&(nodeLoads_[index]),
+            &(nodeCapacities_[index]),
+            &(fdIndexes_[index]),
+            &(udIndexes_[index]),
+            nodeUp_[index],
+            index,
+            (overlappingLoads_[index]),
+            (moveCosts_[index]));
+
+        allDynamicNodeLoads_.push_back(dynamicLoad);
     }
 
     auto& globalLBDomainEntry = lbDomainEntries.back();
@@ -167,25 +204,22 @@ DynamicNodeLoadSet::DynamicNodeLoadSet(vector<NodeEntry> const& nodeEntries, vec
                 i + globalLBDomainEntry.MetricStartIndex));
     }
 
-    auto prepareSetForMetric = [&](size_t totalMetricIndex, size_t globalMetricIndex) 
+    auto prepareSetForMetric = [&](size_t totalMetricIndex, size_t globalMetricIndex, bool realMetric, size_t reservationLoad)
     {
-        NodeLoadComparator cmp(totalMetricIndex, globalMetricIndex);
-        std::set<DynamicNodeLoad, NodeLoadComparator> nodeLoadIndex(cmp);
+        NodeLoadComparator cmp(totalMetricIndex, globalMetricIndex, reservationLoad);
+        std::set<DynamicNodeLoad*, NodeLoadComparator> nodeLoadIndex(cmp);
         std::vector<int> lastBeneficialVersion;
         std::map<TreeNodeIndex, int> fdDistribution;
         std::map<TreeNodeIndex, int> udDistribution;
+        auto threshold = make_pair(globalMetricIndex, reservationLoad);
 
         for (int index = 0; index < nodeEntries.size(); ++index)
         {
-            DynamicNodeLoad dynamicLoad = DynamicNodeLoad(&(nodeLoads_[index]),
-                &(nodeCapacities_[index]),
-                &(fdIndexes_[index]),
-                &(udIndexes_[index]),
-                nodeUp_[index],
-                index,
-                moveCosts_[index]);
-
-            nodeLoadIndex.insert(dynamicLoad);
+            if (realMetric)
+            {
+                CalculateOverlappingLoadOnNode(index, allDynamicNodeLoads_[index].Load(totalMetricIndex, globalMetricIndex, reservationLoad), 0);
+            }
+            nodeLoadIndex.insert(&(allDynamicNodeLoads_[index]));
             lastBeneficialVersion.push_back(-1);
         }
 
@@ -193,6 +227,7 @@ DynamicNodeLoadSet::DynamicNodeLoadSet(vector<NodeEntry> const& nodeEntries, vec
         lastBeneficialVersions_.insert(make_pair(totalMetricIndex, lastBeneficialVersion));
         fdDistributionHelper_.insert(make_pair(totalMetricIndex, fdDistribution));
         udDistributionHelper_.insert(make_pair(totalMetricIndex, udDistribution));
+        reservedLoads_.insert(make_pair(totalMetricIndex, threshold));
     };
 
     size_t totalMetricIndex = 0;
@@ -212,20 +247,24 @@ DynamicNodeLoadSet::DynamicNodeLoadSet(vector<NodeEntry> const& nodeEntries, vec
 
                 size_t globalMetricIndex = it->IsGlobal ? i : mappingIt->second - globalLBDomainEntry.MetricStartIndex;
 
-                for (auto nodeIt = nodeEntries.begin(); nodeIt != nodeEntries.end(); ++nodeIt)
+                if (it->IsGlobal)
                 {
-                    if (!metric.IsValidNode(nodeIt->NodeIndex))
+                    //For global domain mark blocklisted nodes as invalid
+                    for (auto nodeIt = nodeEntries.begin(); nodeIt != nodeEntries.end(); ++nodeIt)
                     {
-                        nodeUp_[nodeIt->NodeIndex] = false;
+                        if (!metric.IsValidNode(nodeIt->NodeIndex))
+                        {
+                            nodeUp_[nodeIt->NodeIndex] = false;
+                        }
                     }
                 }
-
-                prepareSetForMetric(totalMetricIndex, globalMetricIndex);
+                prepareSetForMetric(totalMetricIndex, globalMetricIndex, true, metric.ReservationLoad);
             }
         }
     }
 
-    prepareSetForMetric(MoveCostIndex, MoveCostIndex);
+    prepareSetForMetric(MoveCostIndex, MoveCostIndex, false, 0);
+    prepareSetForMetric(OverlappingIndex, OverlappingIndex, false, 0);
 }
 
 DynamicNodeLoadSet::DynamicNodeLoadSet(DynamicNodeLoadSet && other)
@@ -240,9 +279,13 @@ DynamicNodeLoadSet::DynamicNodeLoadSet(DynamicNodeLoadSet && other)
     nodeUp_ = move(other.nodeUp_);
     nodeLoadIndexes_ = move(other.nodeLoadIndexes_);
     moveCosts_ = move(other.moveCosts_);
+    overlappingLoads_ = move(other.overlappingLoads_);
     lastBeneficialVersions_ = move(other.lastBeneficialVersions_);
     fdDistributionHelper_ = move(other.fdDistributionHelper_);
     udDistributionHelper_ = move(other.udDistributionHelper_);
+    reservedLoads_ = move(other.reservedLoads_);
+    allDynamicNodeLoads_ = move(other.allDynamicNodeLoads_);
+    overlapping_ = other.overlapping_;
 }
 
 DynamicNodeLoadSet& DynamicNodeLoadSet::operator=(DynamicNodeLoadSet& other)
@@ -259,9 +302,13 @@ DynamicNodeLoadSet& DynamicNodeLoadSet::operator=(DynamicNodeLoadSet& other)
         nodeUp_ = move(other.nodeUp_);
         nodeLoadIndexes_ = move(other.nodeLoadIndexes_);
         moveCosts_ = move(other.moveCosts_);
+        overlappingLoads_ = move(other.overlappingLoads_);
         lastBeneficialVersions_ = move(other.lastBeneficialVersions_);
         fdDistributionHelper_ = move(other.fdDistributionHelper_);
         udDistributionHelper_ = move(other.udDistributionHelper_);
+        reservedLoads_ = move(other.reservedLoads_);
+        allDynamicNodeLoads_ = move(other.allDynamicNodeLoads_);
+        overlapping_ = other.overlapping_;
     }
 
     return *this;
@@ -277,42 +324,52 @@ DynamicNodeLoadSet::DynamicNodeLoadSet(DynamicNodeLoadSet const& other)
     udIndexes_(other.udIndexes_),
     nodeUp_(other.nodeUp_),
     moveCosts_(other.moveCosts_),
+    overlappingLoads_(other.overlappingLoads_),
     nodeLoadIndexes_(),
     lastBeneficialVersions_(),
     fdDistributionHelper_(),
-    udDistributionHelper_()
+    udDistributionHelper_(),
+    reservedLoads_(),
+    allDynamicNodeLoads_(),
+    overlapping_(other.overlapping_)
 {
+    for (int index = 0; index < nodeLoads_.size(); ++index)
+    {
+        DynamicNodeLoad dynamicLoad = DynamicNodeLoad(&(nodeLoads_[index]),
+            &(nodeCapacities_[index]),
+            &(fdIndexes_[index]),
+            &(udIndexes_[index]),
+            nodeUp_[index],
+            index,
+            (overlappingLoads_[index]),
+            (moveCosts_[index]));
+        allDynamicNodeLoads_.push_back(dynamicLoad);
+    }
+
     for (auto it = other.nodeLoadIndexes_.begin(); it != other.nodeLoadIndexes_.end(); ++it)
     {
         auto oldComparator = (NodeLoadComparator)it->second.value_comp();
 
         size_t totalMetricIndex = oldComparator.TotalMetricIndex;
         size_t globalMetricIndex = oldComparator.GlobalMetricIndex;
+        size_t reservationAmount = oldComparator.ReservationAmount;
 
-        NodeLoadComparator cmp(totalMetricIndex, globalMetricIndex);
-        std::set<DynamicNodeLoad, NodeLoadComparator> nodeLoadIndex(cmp);
+        NodeLoadComparator cmp(totalMetricIndex, globalMetricIndex, reservationAmount);
+        std::set<DynamicNodeLoad*, NodeLoadComparator> nodeLoadIndex(cmp);
         std::vector<int> lastBeneficialVersion;
         std::map<TreeNodeIndex, int> fdDistribution;
         std::map<TreeNodeIndex, int> udDistribution;
 
         for (int index = 0; index < nodeLoads_.size(); ++index)
         {
-            DynamicNodeLoad dynamicLoad = DynamicNodeLoad(&(nodeLoads_[index]),
-                &(nodeCapacities_[index]),
-                &(fdIndexes_[index]),
-                &(udIndexes_[index]),
-                nodeUp_[index],
-                index,
-                moveCosts_[index]);
-            nodeLoadIndex.insert(dynamicLoad);
-
+            nodeLoadIndex.insert(&allDynamicNodeLoads_[index]);
             lastBeneficialVersion.push_back(-1);
         }
-
         nodeLoadIndexes_.insert(make_pair(totalMetricIndex, nodeLoadIndex));
         lastBeneficialVersions_.insert(make_pair(totalMetricIndex, lastBeneficialVersion));
         fdDistributionHelper_.insert(make_pair(totalMetricIndex, fdDistribution));
         udDistributionHelper_.insert(make_pair(totalMetricIndex, udDistribution));
+        reservedLoads_.insert(make_pair(totalMetricIndex, other.reservedLoads_.find(totalMetricIndex)->second));
     }
 }
 
@@ -336,14 +393,7 @@ void DynamicNodeLoadSet::ResetLoads()
         nodeLoadIndex.clear();
         for (int index = 0; index < nodeLoadBackup_.size(); ++index)
         {
-            DynamicNodeLoad dynamicLoad = DynamicNodeLoad(&(nodeLoads_[index]),
-                &(nodeCapacities_[index]),
-                &(fdIndexes_[index]),
-                &(udIndexes_[index]),
-                nodeUp_[index],
-                index,
-                moveCosts_[index]);
-            nodeLoadIndex.insert(dynamicLoad);
+            nodeLoadIndex.insert(&allDynamicNodeLoads_[index]);
         }
     }
 }
@@ -357,40 +407,55 @@ void DynamicNodeLoadSet::UpdateLoadOnNode(int nodeIndex, int64 newNodeLoad, size
 
     size_t startCount = nodeLoadIndex.size();
 
-    nodeLoadIndex.erase(DynamicNodeLoad(&(nodeLoads_[nodeIndex]),
-        &(nodeCapacities_[nodeIndex]),
-        &(fdIndexes_[nodeIndex]),
-        &(udIndexes_[nodeIndex]),
-        nodeUp_[nodeIndex], nodeIndex,
-        moveCosts_[nodeIndex]));
+    auto metricReservationLoad = reservedLoads_.find(metricIndex)->second;
+    auto oldLoadPercent = allDynamicNodeLoads_[nodeIndex].Load(metricIndex, metricReservationLoad.first, metricReservationLoad.second);
+    nodeLoadIndex.erase(&allDynamicNodeLoads_[nodeIndex]);
 
     size_t removedCount = nodeLoadIndex.size();
     TESTASSERT_IF(removedCount != startCount - 1, "Node not removed successfully");
- 
-    if (metricIndex == MoveCostIndex) 
+
+    if (metricIndex == MoveCostIndex)
     {
-        moveCosts_[nodeIndex] = static_cast<int>(newNodeLoad);
+        moveCosts_[nodeIndex] = newNodeLoad;
     }
-    else 
+    else
     {
         nodeLoads_[nodeIndex].Set(metricIndex, newNodeLoad);
+        if (overlapping_)
+        {
+            //When load for metric is updated, update overlapping load also
+            auto newLoadPercent = allDynamicNodeLoads_[nodeIndex].Load(metricIndex, metricReservationLoad.first, metricReservationLoad.second);
+            auto& overlappingNodes = nodeLoadIndexes_.find(OverlappingIndex)->second;
+            size_t startCount1 = overlappingNodes.size();
+            overlappingNodes.erase(&allDynamicNodeLoads_[nodeIndex]);
+            CalculateOverlappingLoadOnNode(nodeIndex, newLoadPercent, oldLoadPercent);
+            size_t removedCount1 = overlappingNodes.size();
+            TESTASSERT_IF(removedCount1 != startCount1 - 1, "Node not removed successfully");
+            overlappingNodes.insert(&allDynamicNodeLoads_[nodeIndex]);
+        }
     }
 
-    nodeLoadIndex.insert(DynamicNodeLoad(&(nodeLoads_[nodeIndex]),
-        &(nodeCapacities_[nodeIndex]),
-        &(fdIndexes_[nodeIndex]),
-        &(udIndexes_[nodeIndex]),
-        nodeUp_[nodeIndex],
-        nodeIndex, 
-        moveCosts_[nodeIndex]));
-    
+    nodeLoadIndex.insert(&allDynamicNodeLoads_[nodeIndex]);
+
     size_t endCount = nodeLoadIndex.size();
     TESTASSERT_IF(startCount != endCount, "Node count shouldn't change");
 }
 
+void DynamicNodeLoadSet::CalculateOverlappingLoadOnNode(int nodeIndex, double newLoadPercentage, double oldLoadPercentage)
+{
+    // Overlapping load is calculated as sum of squared emptiness percentage per node for all scoped defrag metrics
+    oldLoadPercentage = oldLoadPercentage < 1 ? oldLoadPercentage : 1;
+
+    overlappingLoads_[nodeIndex] += pow(1 - oldLoadPercentage, 2);
+
+    newLoadPercentage = newLoadPercentage < 1 ? newLoadPercentage : 1;
+
+    overlappingLoads_[nodeIndex] -= pow(1 - newLoadPercentage, 2);
+}
+
 void DynamicNodeLoadSet::UpdateNodeLoad(int nodeIndex, int64 newNodeLoad, size_t metricIndex)
 {
-    TESTASSERT_IF(metricIndex == MoveCostIndex, "Invalid metric index, this index is reserved for movecost.");
+    TESTASSERT_IF(metricIndex == MoveCostIndex || metricIndex == OverlappingIndex, "Invalid metric index, index:{0} is reserved for virtual metrics.", metricIndex);
 
     UpdateLoadOnNode(nodeIndex, newNodeLoad, metricIndex);
 }
@@ -404,17 +469,17 @@ void DynamicNodeLoadSet::ForEachCandidateNode(
     size_t metricIndex,
     int32 emptyNodesTarget,
     Metric::DefragDistributionType const& defragDistributionType,
-    size_t defragEmptyNodeLoadThreshold,
+    size_t reservationLoad,
     std::function<void(double nodeLoadPercentage)> processor)
 {
-    ForEachCandidateNode(metricIndex, emptyNodesTarget, defragDistributionType, defragEmptyNodeLoadThreshold, processor, false);
+    ForEachCandidateNode(metricIndex, emptyNodesTarget, defragDistributionType, reservationLoad, processor, false);
 }
 
 void DynamicNodeLoadSet::ForEachCandidateNode(
     size_t metricIndex,
     int32 emptyNodesTarget,
     Metric::DefragDistributionType const& defragDistributionType,
-    size_t defragEmptyNodeLoadThreshold,
+    size_t reservationLoad,
     std::function<void(double nodeLoadPercentage)> processor,
     bool markingBeneficialNodes = false)
 {
@@ -424,7 +489,23 @@ void DynamicNodeLoadSet::ForEachCandidateNode(
     {
         return;
     }
+    //Comparator has globalMetricIndex
+    size_t globalMetricIndex = ((NodeLoadComparator)it->second.value_comp()).GlobalMetricIndex;
 
+    if (overlapping_)
+    {
+        //In case of overlapping nodes, we should iterate through candidate nodes for overlapping (best nodes for all metrics)
+        //instead of candidate nodes just for specific metric
+        if (metricIndex != MoveCostIndex)
+        {
+            it = nodeLoadIndexes_.find(OverlappingIndex);
+
+            if (it == nodeLoadIndexes_.end())
+            {
+                return;
+            }
+        }
+    }
     auto fdDistributionIt = fdDistributionHelper_.find(metricIndex);
     TESTASSERT_IF(fdDistributionIt == fdDistributionHelper_.end(), "FD distribution for metric missing");
     auto& fdDistribution = fdDistributionIt->second;
@@ -442,13 +523,12 @@ void DynamicNodeLoadSet::ForEachCandidateNode(
     }
 
     int count = 0;
-    auto comparator = (NodeLoadComparator)it->second.value_comp();
-    size_t globalMetricIndex = comparator.GlobalMetricIndex;
 
     auto chooseNodes = [&](std::function<bool(bool fdUsed, bool udUsed)> predicate)
     {
-        for (auto it = nodeLoadIndex.begin(); it != nodeLoadIndex.end() && count < emptyNodesTarget; ++it)
+        for (auto i = nodeLoadIndex.begin(); i != nodeLoadIndex.end() && count < emptyNodesTarget; ++i)
         {
+            auto it = *i;
             if (!nodeUp_[it->NodeIndex] || lastBeneficialVersion[it->NodeIndex] == version_)
             {
                 continue;
@@ -476,7 +556,7 @@ void DynamicNodeLoadSet::ForEachCandidateNode(
 
             if (predicate(fdUsed, udUsed))
             {
-                processor(it->Load(metricIndex, globalMetricIndex, defragEmptyNodeLoadThreshold));
+                processor(it->Load(metricIndex, globalMetricIndex, reservationLoad));
 
                 fdDistribution.erase(fdIndexes_[it->NodeIndex]);
                 fdDistribution.insert(make_pair(fdIndexes_[it->NodeIndex], version_));
@@ -522,11 +602,10 @@ void DynamicNodeLoadSet::PrepareBeneficialNodes(
     size_t metricIndex,
     int32 emptyNodesTarget,
     Metric::DefragDistributionType const& defragDistributionType,
-    size_t defragEmptyNodeLoadThreshold)
+    size_t reservationLoad)
 {
     TESTASSERT_IF(metricIndex == MoveCostIndex, "Invalid metric index, this index is reserved for movecost.");
-    
-    ForEachCandidateNode(metricIndex, emptyNodesTarget, defragDistributionType, defragEmptyNodeLoadThreshold, [&](double percentage)
+    ForEachCandidateNode(metricIndex, emptyNodesTarget, defragDistributionType, reservationLoad, [&](double percentage)
     {
         UNREFERENCED_PARAMETER(percentage);
     }, true);
@@ -570,7 +649,7 @@ void DynamicNodeLoadSet::ForEachNodeOrdered(
     {
         for (auto nodeIt = nodeLoadIndex.begin(); nodeIt != nodeLoadIndex.end(); ++nodeIt)
         {
-            if (!processNode(*nodeIt))
+            if (!processNode(**nodeIt))
             {
                 break;
             }
@@ -580,7 +659,7 @@ void DynamicNodeLoadSet::ForEachNodeOrdered(
     {
         for (auto nodeIt = nodeLoadIndex.rbegin(); nodeIt != nodeLoadIndex.rend(); ++nodeIt)
         {
-            if (!processNode(*nodeIt))
+            if (!processNode(**nodeIt))
             {
                 break;
             }
@@ -609,6 +688,28 @@ bool DynamicNodeLoadSet::IsBeneficialNode(size_t nodeIndex, size_t metricIndex) 
 bool DynamicNodeLoadSet::IsBeneficialNodeByMoveCost(size_t nodeIndex) const
 {
     return IsNodeBeneficial(nodeIndex, MoveCostIndex);
+}
+
+bool DynamicNodeLoadSet::IsEnoughLoadReserved(
+    size_t totalMetricIndex, 
+    int32 numberOfNodesWithReservation,
+    Metric::DefragDistributionType const & defragDistributionType, 
+    size_t reservedLoad)
+{
+    //Check if node is empty is calculated this way to keep consistency with calculation in Score
+    //For empty nodes, percentage is 0, so we decrease emptyNodesTarget. If emptyNodesTarget=0, then least loaded nodes for all defrag metrics
+    //(candidate nodes for overlapping) are empty for given metric also, so enough load is reserved.
+    double emptyNodesTarget = numberOfNodesWithReservation;
+    ForEachCandidateNode(totalMetricIndex, numberOfNodesWithReservation, defragDistributionType, reservedLoad, [&](double percentage)
+    {
+        emptyNodesTarget -= pow(1 - percentage, 2);
+    }, false);
+
+    if (emptyNodesTarget > numeric_limits<float>::epsilon())
+    {
+        return false;
+    }
+    return true;
 }
 
 // lastBeneficialVersions_ contains a vectors of flags

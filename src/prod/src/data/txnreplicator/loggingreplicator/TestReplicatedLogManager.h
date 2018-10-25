@@ -34,6 +34,12 @@ namespace LoggingReplicatorTests
         __declspec(property(get = get_LastInformationRecord)) Data::LogRecordLib::InformationLogRecord::SPtr LastInformationRecord;
         Data::LogRecordLib::InformationLogRecord::SPtr get_LastInformationRecord() const override;
 
+        __declspec(property(get = get_LastCompletedEndCheckpointRecord)) Data::LogRecordLib::EndCheckpointLogRecord::SPtr LastCompletedEndCheckpointRecord;
+        Data::LogRecordLib::EndCheckpointLogRecord::SPtr get_LastCompletedEndCheckpointRecord() const override;
+
+        __declspec(property(get = get_ProgressVectorValue)) Data::LogRecordLib::ProgressVector::SPtr ProgressVectorValue;
+        Data::LogRecordLib::ProgressVector::SPtr get_ProgressVectorValue() const override;
+
         TxnReplicator::Epoch GetEpoch(
             __in FABRIC_SEQUENCE_NUMBER LSN) const override;
 

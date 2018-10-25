@@ -36,24 +36,33 @@ namespace TStoreTests
 
    private:
       KtlSystem* ktlSystem_;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> GetValue_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = KeyValueListTest::GetAllocator();
+          KeyValueList<int, int>::SPtr keyValueListSPtr = nullptr;
+          NTSTATUS status = KeyValueList<int, int>::Create(5, allocator, keyValueListSPtr);
+          CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+          int key = 5;
+          int value = 6;
+
+          keyValueListSPtr->Add(key, value);
+
+          int actualValue = keyValueListSPtr->GetValue(0);
+          CODING_ERROR_ASSERT(actualValue == value);
+           co_return;
+       }
+    #pragma endregion
    };
 
    BOOST_FIXTURE_TEST_SUITE(KeyValueListTestSuite, KeyValueListTest)
 
       BOOST_AUTO_TEST_CASE(GetValue_ShouldSucceed)
    {
-      KAllocator& allocator = KeyValueListTest::GetAllocator();
-      KeyValueList<int, int>::SPtr keyValueListSPtr = nullptr;
-      NTSTATUS status = KeyValueList<int, int>::Create(5, allocator, keyValueListSPtr);
-      CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-      int key = 5;
-      int value = 6;
-
-      keyValueListSPtr->Add(key, value);
-
-      int actualValue = keyValueListSPtr->GetValue(0);
-      CODING_ERROR_ASSERT(actualValue == value);
+       SyncAwait(GetValue_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_SUITE_END()

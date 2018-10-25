@@ -232,7 +232,10 @@ void PlacementAndLoadBalancingTestHelper::RefreshServicePackageForRG(
             requiredResources.insert(make_pair(ServiceModel::Constants::SystemMetricNameCpuCores, 1));
             requiredResources.insert(make_pair(ServiceModel::Constants::SystemMetricNameMemoryInMB, 1048));
 
-            packages.push_back(ServicePackageDescription(ServiceModel::ServicePackageIdentifier(sp), move(requiredResources)));
+            packages.push_back(ServicePackageDescription(
+                ServiceModel::ServicePackageIdentifier(sp),
+                move(requiredResources),
+                std::vector<std::wstring>()));
 
             map<ServiceModel::ServicePackageIdentifier, ServicePackageDescription> packageMap1;
 
@@ -293,7 +296,9 @@ void PlacementAndLoadBalancingTestHelper::RefreshServicePackageForRG(
                 description.TargetReplicaSetSize,                                  // Target replica set size
                 description.HasPersistedState,                               // Persisted?
                 ServiceModel::ServicePackageIdentifier(spId),
-                ServiceModel::ServicePackageActivationMode::SharedProcess
+                ServiceModel::ServicePackageActivationMode::SharedProcess,
+                0,
+                vector<ServiceScalingPolicyDescription>(description.ScalingPolicies)
             ));  // Service package
         }
 
@@ -636,9 +641,56 @@ void PlacementAndLoadBalancingTestHelper::GetApplicationSumLoadAndCapacity(
     }
 }
 
+bool PlacementAndLoadBalancingTestHelper::CheckAutoScalingStatistics(std::wstring const & metricName, int partitionCount) const
+{
+    auto const& autoScaleStats = plb_.plbStatistics_.StatisticsAutoScale;
+
+    if (metricName == *ServiceModel::Constants::SystemMetricNameCpuCores)
+    {
+        auto & cpuStats = autoScaleStats.CpuCoresStatistics;
+        if (cpuStats.PartitionCount != partitionCount)
+        {
+            Trace.WriteError("PlacementAndLoadBalancingTestHelper",
+                "CheckAutoScalingStatistics: Number of partitions does not match, metric={0} expected={1} actual={2}",
+                metricName,
+                partitionCount,
+                cpuStats.PartitionCount);
+            return false;
+        }
+    }
+    else if (metricName == *ServiceModel::Constants::SystemMetricNameMemoryInMB)
+    {
+        auto & memoryStats = autoScaleStats.MemoryInMBStatistics;
+        if (memoryStats.PartitionCount != partitionCount)
+        {
+            Trace.WriteError("PlacementAndLoadBalancingTestHelper",
+                "CheckAutoScalingStatistics: Number of partitions does not match, metric={0} expected={1} actual={2}",
+                metricName,
+                partitionCount,
+                memoryStats.PartitionCount);
+            return false;
+        }
+    }
+    else
+    {
+        auto & customStats = autoScaleStats.CustomMetricStatistics;
+        if (customStats.PartitionCount != partitionCount)
+        {
+            Trace.WriteError("PlacementAndLoadBalancingTestHelper",
+                "CheckAutoScalingStatistics: Number of partitions does not match, metric={0} expected={1} actual={2}",
+                metricName,
+                partitionCount,
+                customStats.PartitionCount);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool PlacementAndLoadBalancingTestHelper::CheckRGSPStatistics(uint64_t numSPs, uint64_t numGovernedSPs) const
 {
-    auto const& rgStats = plb_.rgStatistics_;
+    auto const& rgStats = plb_.plbStatistics_.StatisticsRG;
     if (numSPs != rgStats.ServicePackageCount)
     {
         Trace.WriteError("PlacementAndLoadBalancingTestHelper",
@@ -660,7 +712,7 @@ bool PlacementAndLoadBalancingTestHelper::CheckRGSPStatistics(uint64_t numSPs, u
 
 bool PlacementAndLoadBalancingTestHelper::CheckRGServiceStatistics(uint64_t numShared, uint64_t numExclusive) const
 {
-    auto const& rgStats = plb_.rgStatistics_;
+    auto const& rgStats = plb_.plbStatistics_.StatisticsRG;
     if (numShared != rgStats.SharedServicesCount)
     {
         Trace.WriteError("PlacementAndLoadBalancingTestHelper",
@@ -687,7 +739,7 @@ bool PlacementAndLoadBalancingTestHelper::CheckRGMetricStatistics(
     double maxUsage,
     int64 capacity) const
 {
-    auto const& rgStats = plb_.rgStatistics_;
+    auto const& rgStats = plb_.plbStatistics_.StatisticsRG;
     auto const& metricStats = name == *ServiceModel::Constants::SystemMetricNameCpuCores ? rgStats.CpuCoresStatistics : rgStats.MemoryInMBStatistics;
     if (usage > 0.0 && fabs(usage - metricStats.ResourceUsed) > 0.00001)
     {
@@ -728,8 +780,61 @@ bool PlacementAndLoadBalancingTestHelper::CheckRGMetricStatistics(
     return true;
 }
 
+bool PlacementAndLoadBalancingTestHelper::CheckDefragStatistics(
+    uint64 numberOfBalancingMetrics,
+    uint64 numberOfBalancingReservationMetrics,
+    uint64 numberOfReservationMetrics,
+    uint64 numberOfPackReservationMetrics,
+    uint64 numberOfDefragMetrics) const
+{
+    auto const & defragStats = plb_.plbStatistics_.StatisticsDefrag;
+    if (numberOfBalancingMetrics != defragStats.BalancingMetricsCount || numberOfBalancingReservationMetrics != defragStats.BalancingReservationMetricsCount ||
+        numberOfReservationMetrics != defragStats.ReservationMetricsCount || numberOfPackReservationMetrics != defragStats.PackReservationMetricsCount ||
+        numberOfDefragMetrics != defragStats.DefragMetricsCount)
+    {
+        return false;
+    }
+    return true;
+}
+
+int PlacementAndLoadBalancingTestHelper::GetPartitionCountChangeForService(std::wstring const & serviceName) const
+{
+    int count = 0;
+    int result = INT_MAX;
+    for (auto repartition : plb_.PendingAutoScalingRepartitions)
+    {
+        if (repartition.ServiceName == serviceName)
+        {
+            ++count;
+            result = repartition.Change;
+        }
+    }
+    if (count > 1)
+    {
+        return INT_MAX;
+    }
+    return result;
+}
+
+void PlacementAndLoadBalancingTestHelper::ClearPendingRepartitions()
+{
+    plb_.PendingAutoScalingRepartitions.clear();
+}
+
+void PlacementAndLoadBalancingTestHelper::InduceRepartitioningFailure(std::wstring const & serviceName, Common::ErrorCode error)
+{
+    auto serviceId = plb_.GetServiceId(serviceName);
+    ASSERT_IF(serviceId == 0, "Service not found in PlacementAndLoadBalancingTestHelper::InduceRepartitioningFailure");
+    AcquireExclusiveLock grab(plb_.autoScalingFailedOperationsVectorsLock_);
+    plb_.pendingAutoScalingFailedRepartitions_.push_back(make_pair(serviceId, error));
+}
+
 void PlacementAndLoadBalancingTestHelper::ResetTiming()
 {
     RefreshTime = 0;
 }
 
+void PlacementAndLoadBalancingTestHelper::UpdateAvailableImagesPerNode(std::wstring const& nodeId, std::vector<std::wstring> const& images)
+{
+    plb_.UpdateAvailableImagesPerNode(nodeId, images);
+}

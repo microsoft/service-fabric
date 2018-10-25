@@ -1,0 +1,66 @@
+#
+# [owner] YangLi, MMohsin, AnuragG
+#
+# This test case verifies the replica placement is allowed on a node when its node deactivation status is
+# DeactivationSafetyCheckInProgress.
+#
+
+votes 10 20 30
+
+fmservice 3 2
+cmservice 3 2
+namingservice 1 3 2
+cleantest
+
++10
++20
++30
+verify
+
++40
++50
+verify
+
+# Create services
+createservice fabric:/stateless CalculatorServiceType n 1 -1
+createservice fabric:/persisted TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=5
+verify
+
+# Bring down nodes 40 and 50 so that fabric:/persisted is at quorum
+-40
+-50
+!waitforstate FM.Node.IsUp.40 false
+!waitforstate FM.Node.IsUp.50 false
+
+# Deactivate node 30 with intent Restart
+DeactivateNode 30 Restart
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationSafetyCheckInProgress
+
+# Wait for some time, and check the node deactivation status again
+!pause 5
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationSafetyCheckInProgress
+
+# Bring down the stateless replica on node 30
+removeruntime 30 n
+!waitforstate FM.Replica.State.fabric:/stateless.30 Dropped
+
+# Add the runtime back so that a new stateless can be placed
+addruntime 30 n
+!waitforstate FM.Replica.IsUp.fabric:/stateless.30 true
+!waitforstate FM.Replica.State.fabric:/stateless.30 Ready
+
+# Bring up nodes 40 and 50 and allow the node deactivation to complete
++40
++50
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+
+# Activate node 30
+ActivateNode 30
+
+verify
+
+-*
+
+!q
+

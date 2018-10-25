@@ -37,3 +37,9 @@ wstring const FabricTest::FabricTestConstants::SharingScope(L"SharingScope");
 wstring const FabricTest::FabricTestConstants::SharedPackageNames(L"SharedPackageNames");
 wstring const FabricTest::FabricTestConstants::VerifyInCache(L"VerifyInCache");
 wstring const FabricTest::FabricTestConstants::VerifyShared(L"VerifyShared");
+
+wstring const FabricTest::FabricTestConstants::NodeIdList(L"NodeIdList");
+wstring const FabricTest::FabricTestConstants::ExpectedCount(L"ExpectedCount");
+wstring const FabricTest::FabricTestConstants::ApplicationName(L"ApplicationName");
+wstring const FabricTest::FabricTestConstants::ServicePackageActivationId(L"ServicePackageActivationId");
+

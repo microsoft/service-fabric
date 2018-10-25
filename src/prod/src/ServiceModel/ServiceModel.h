@@ -15,17 +15,20 @@
 #include <security.h>
 #include <wincrypt.h>
 #include <schannel.h>
+#include <regex>
 
 #include "FabricCommon.h"
 #include "FabricRuntime.h"
 #include "FabricRuntime_.h"
 #include "FabricTypes_.h"
+#include "FabricContainerActivatorService_.h"
 
 #include "ServiceModel/ServiceModelPointers.h"
 #include "ServiceModel/Constants.h"
 #include "ServiceModel/ClientServerMessageBody.h"
 #include "ServiceModel/SystemServiceMessageBody.h"
 #include "ServiceModel/SystemServiceReplyMessageBody.h"
+#include "ServiceModel/VolumeTypeMacros.h"
 
 //
 // Federation Types.
@@ -49,9 +52,18 @@
 #include "ServiceModel/reliability/failover/ServiceTypeUpdateKind.h"
 
 //
+// Store Types.
+//
+#include "ServiceModel/store/MigrationPhase.h"
+#include "ServiceModel/store/MigrationState.h"
+#include "ServiceModel/store/MigrationQueryResult.h"
+#include "ServiceModel/store/ProviderKind.h"
+
+//
 // ServiceModel public header files
 //
-
+#include "ServiceModel/ConfigOverrideDescription.h"
+#include "ServiceModel/ConfigSettingsDescription.h"
 #include "ServiceModel/Priority.h"
 #include "ServiceModel/ProgressUnitType.h"
 #include "ServiceModel/ProgressUnit.h"
@@ -86,13 +98,16 @@
 #include "ServiceModel/RepositoryCredentialsDescription.h"
 #include "ServiceModel/ResourceGovernancePolicyDescription.h"
 #include "ServicePackageResourceGovernanceDescription.h"
+#include "ServiceModel/CodePackageContainersImagesDescription.h"
 #include "ServiceModel/EnvironmentVariableDescription.h"
 #include "ServiceModel/EnvironmentVariablesDescription.h"
+#include "ServiceModel/EnvironmentVariableOverrideDescription.h"
 #include "ServiceModel/EnvironmentOverrideDescription.h"
 #include "ServiceModel/DriverOptionDescription.h"
 #include "ServiceModel/LogConfigDescription.h"
 #include "ServiceModel/SecurityOptionsDescription.h"
 #include "ServiceModel/ContainerVolumeDescription.h"
+#include "ServiceModel/ContainerLabelDescription.h"
 #include "ServiceModel/ContainerHealthConfigDescription.h"
 #include "ServiceModel/ContainerCertificateDescription.h"
 #include "ServiceModel/ImageTypeDescription.h"
@@ -103,6 +118,9 @@
 #include "ServiceModel/HostIsolationMode.h"
 #include "ServiceModel/NetworkType.h"
 #include "ServiceModel/NetworkConfigDescription.h"
+#include "ServiceModel/ConfigPackageDescription.h"
+#include "ServiceModel/ConfigPackageSettingDescription.h"
+#include "ServiceModel/ConfigPackagePoliciesDescription.h"
 #include "ServiceModel/ContainerPoliciesDescription.h"
 #include "ServiceModel/DllHostIsolationPolicyType.h"
 #include "ServiceModel/ExeEntryPointDescription.h"
@@ -112,7 +130,6 @@
 #include "ServiceModel/EntryPointDescription.h"
 #include "ServiceModel/CodePackageDescription.h"
 #include "ServiceModel/DigestedCodePackageDescription.h"
-#include "ServiceModel/ConfigPackageDescription.h"
 #include "ServiceModel/DigestedConfigPackageDescription.h"
 #include "ServiceModel/DataPackageDescription.h"
 #include "ServiceModel/DigestedDataPackageDescription.h"
@@ -152,7 +169,9 @@
 #include "ServiceModel/ApplicationParameter.h"
 #include "ServiceModel/DeleteApplicationDescription.h"
 #include "ServiceModel/DeleteServiceDescription.h"
+#include "ServiceModel/DeleteSingleInstanceDeploymentDescription.h"
 #include "ServiceModel/ServiceManifestDescription.h"
+#include "ServiceModel/ServiceFabricRuntimeAccessDescription.h"
 #include "ServiceModel/ServicePackageDescription.h"
 #include "ServiceModel/ResourceOverridesDescription.h"
 #include "ServiceModel/ServiceManifestImportDescription.h"
@@ -184,6 +203,15 @@
 #include "ServiceModel/ServicePartitionDescription.h"
 #include "ServiceModel/ServiceCorrelationScheme.h"
 #include "ServiceModel/ServiceCorrelationDescription.h"
+#include "ServiceModel/reliability/failover/ScalingMechanismKind.h"
+#include "ServiceModel/reliability/failover/ScalingMechanism.h"
+#include "ServiceModel/reliability/failover/AddRemoveIncrementalNamedPartitionScalingMechanism.h"
+#include "ServiceModel/reliability/failover/InstanceCountScalingMechanism.h"
+#include "ServiceModel/reliability/failover/ScalingTriggerKind.h"
+#include "ServiceModel/reliability/failover/ScalingTrigger.h"
+#include "ServiceModel/reliability/failover/AveragePartitionLoadScalingTrigger.h"
+#include "ServiceModel/reliability/failover/AverageServiceLoadScalingTrigger.h"
+#include "ServiceModel/reliability/failover/ServiceScalingPolicyDescription.h"
 #include "ServiceModel/ApplicationServiceDescription.h"
 #include "ServiceModel/ApplicationServiceTemplateDescription.h"
 #include "ServiceModel/DefaultServiceDescription.h"
@@ -201,6 +229,7 @@
 #include "ServiceModel/ApplicationStatus.h"
 #include "ServiceModel/ApplicationTypeStatus.h"
 #include "ServiceModel/ComposeDeploymentStatus.h"
+#include "ServiceModel/SingleInstanceDeploymentStatus.h"
 #include "ServiceModel/QueryResultMacroDefinitions.h"
 #include "ServiceModel/ApplicationQueryResult.h"
 #include "ServiceModel/ApplicationQueryResultWrapper.h"
@@ -295,9 +324,11 @@
 #include "ServiceModel/PartitionHealth.h"
 #include "ServiceModel/ServiceHealth.h"
 #include "ServiceModel/ApplicationHealth.h"
+#include "ServiceModel/ApplicationUnhealthyEvaluation.h"
 #include "ServiceModel/DeployedServicePackageHealth.h"
 #include "ServiceModel/DeployedApplicationHealth.h"
 #include "ServiceModel/ServiceReplicaQueryResult.h"
+#include "ServiceModel/ReplicasByServiceQueryResult.h"
 #include "ServiceModel/reliability/failover/Epoch.h"
 #include "ServiceModel/ServicePartitionQueryResult.h"
 #include "ServiceModel/HealthAttributeNames.h"
@@ -343,6 +374,8 @@
 #include "ServiceModel/DeployedCodePackageQueryResult.h"
 #include "ServiceModel/ApplicationUpgradeDescriptionWrapper.h"
 #include "ServiceModel/FabricUpgradeDescriptionWrapper.h"
+#include "ServiceModel/SingleInstanceDeploymentUpgradeState.h"
+#include "ServiceModel/SingleInstanceDeploymentUpgradeDescription.h"
 #include "ServiceModel/ComposeDeploymentUpgradeDescription.h"
 #include "ServiceModel/ComposeDeploymentUpgradeState.h"
 #include "ServiceModel/SystemServiceApplicationNameHelper.h"
@@ -381,6 +414,7 @@
 #include "ServiceModel/ApplicationNameQueryResultWrapper.h"
 #include "ServiceModel/ServiceGroupFromTemplateDescription.h"
 #include "ServiceModel/ServiceFromTemplateDescription.h"
+#include "ServiceModel/HealthState.h"
 
 //
 // Internal Query objects
@@ -449,6 +483,7 @@
 #include "ServiceModel/reliability/failover/UpgradeSafetyCheckKind.h"
 #include "ServiceModel/reliability/failover/UpgradeSafetyCheck.h"
 #include "ServiceModel/reliability/failover/UpgradeProgress.h"
+#include "ServiceModel/reliability/failover/ReplicaLifeCycleState.h"
 
 
 //
@@ -515,19 +550,60 @@
 #include "ServiceModel/management/clustermanager/DeleteServiceMessageBody.h"
 #include "ServiceModel/management/clustermanager/ReportUpgradeHealthMessageBody.h"
 #include "ServiceModel/management/clustermanager/ClusterManifestQueryDescription.h"
+#include "ServiceModel/management/clustermanager/VolumeProvider.h"
+#include "ServiceModel/management/clustermanager/VolumeDescription.h"
 
 #include "ServiceModel/management/ImageStore/Constants.h"
 #include "ServiceModel/management/ImageStore/CopyFlag.h"
 #include "ServiceModel/management/ImageStore/ImageStoreCopyDescription.h"
 #include "ServiceModel/management/ImageStore/ImageStoreListDescription.h"
 
+//
+// Application model V2
+//
+#include "modelV2/ModelType.h"
+#include "modelV2/ResourceDescription.h"
+#include "modelV2/DiagnosticsSinkKind.h"
+#include "modelV2/DiagnosticsSinkBase.h"
+#include "modelV2/DiagnosticsDescription2.h"
+#include "modelV2/DiagnosticsRef.h"
+#include "modelV2/AzureInternalMonitoringPipelineSinkDescription.h"
+#include "modelV2/ContainerEndpointDescription.h"
+#include "modelV2/ContainerLabel.h"
+#include "modelV2/ContainerVolumeRef.h"
+#include "modelV2/ApplicationScopedVolumeProvider.h"
+#include "modelV2/ApplicationScopedVolumeCreationParameters.h"
+#include "modelV2/ApplicationScopedVolume.h"
+#include "modelV2/IndependentVolumeRef.h"
+#include "modelV2/NetworkRef.h"
+#include "modelV2/SettingDescription.h"
+#include "modelV2/CodePackageInstanceView.h"
+#include "modelV2/ImageRegistryCredential.h"
+#include "modelV2/CodePackageResourceDescription.h"
+#include "modelV2/ReliableCollectionsRefs.h"
+#include "modelV2/ContainerCodePackageDescription.h"
+#include "modelV2/ServicePropertiesBase.h"
+#include "modelV2/ContainerServiceDescription.h"
+#include "modelV2/ApplicationDescription.h"
+#include "modelV2/ServiceReplicaDescription.h"
+
 #include "ServiceModel/ComposeDeploymentUpgradeProgress.h"
+#include "ServiceModel/ContainerGroupDeploymentUtility.h"
+#include "ServiceModel/SingleInstanceApplicationUpgradeDescription.h"
 
 //
 // Query
 //
 
+#include "ServiceModel/QueryArgumentMap.h"
+#include "ServiceModel/QueryPagingDescription.h"
 #include "ServiceModel/InfrastructureTaskQueryResult.h"
+#include "ServiceModel/SingleInstanceDeploymentQueryResult.h"
+#include "ServiceModel/modelV2/ApplicationDescriptionQueryResult.h"
+#include "ServiceModel/modelV2/ContainerServiceQueryResult.h"
+#include "ServiceModel/modelV2/VolumeQueryDescription.h"
+#include "ServiceModel/modelV2/VolumeQueryResult.h"
+#include "ServiceModel/ReplicaResourceQueryResult.h"
 #include "ServiceModel/ContainerInfoData.h"
 #include "ServiceModel/ContainerInfoArgs.h"
 #include "ServiceModel/ContainerInfoType.h"
@@ -540,26 +616,29 @@
 #include "ServiceModel/QueryResultHelpers.h"
 #include "ServiceModel/QueryResultWrapperString.h"
 #include "ServiceModel/QueryResult.h"
-#include "ServiceModel/QueryArgumentMap.h"
 #include "ServiceModel/Query/QueryType.h"
 #include "ServiceModel/Query/QueryNames.h"
 #include "ServiceModel/Query/QueryRequestMessageBody.h"
 #include "ServiceModel/Query/QueryResourceProperties.h"
+#include "ServiceModel/Query/NamesArgument.h"
 #include "ServiceModel/ClusterHealthQueryDescription.h"
 #include "ServiceModel/NodeHealthQueryDescription.h"
 #include "ServiceModel/ApplicationHealthQueryDescription.h"
 #include "ServiceModel/ApplicationTypeQueryDescription.h"
 #include "ServiceModel/ComposeDeploymentStatusQueryDescription.h"
+#include "ServiceModel/SingleInstanceDeploymentQueryDescription.h"
 #include "ServiceModel/ServiceHealthQueryDescription.h"
 #include "ServiceModel/ServiceQueryDescription.h"
 #include "ServiceModel/PartitionHealthQueryDescription.h"
 #include "ServiceModel/ReplicaHealthQueryDescription.h"
+#include "ServiceModel/ReplicasResourceQueryDescription.h"
 #include "ServiceModel/DeployedApplicationHealthQueryDescription.h"
 #include "ServiceModel/DeployedServicePackageHealthQueryDescription.h"
 #include "ServiceModel/ClusterHealthChunkQueryDescription.h"
-#include "ServiceModel/QueryPagingDescription.h"
 #include "ServiceModel/DeployedApplicationQueryDescription.h"
 #include "ServiceModel/ApplicationQueryDescription.h"
+#include "ServiceModel/NodeQueryDescription.h"
+
 
 //
 // FileStoreService Types.
@@ -572,6 +651,7 @@
 #include "ServiceModel/management/FileStoreService/uploadsessioninfo.h"
 #include "ServiceModel/management/FileStoreService/uploadsession.h"
 #include "ServiceModel/management/FileStoreService/StorePagedContentInfo.h"
+#include "ServiceModel/management/FileStoreService/UploadChunkContentDescription.h"
 
 //
 // Naming Types.
@@ -721,6 +801,25 @@
 #include "ServiceModel/management/UpgradeOrchestrationService/GetClusterConfigurationReplyMessageBody.h"
 #include "ServiceModel/management/UpgradeOrchestrationService/UpgradeOrchestrationServiceState.h"
 #include "ServiceModel/management/UpgradeOrchestrationService/GetClusterConfigurationMessageBody.h"
+
+//
+// Resource Manager Types
+//
+#include "ServiceModel/management/ResourceManager/ResourceIdentifier.h"
+#include "ServiceModel/management/ResourceManager/Claim.h"
+#include "ServiceModel/management/ResourceManager/ResourceMetadata.h"
+#include "ServiceModel/management/ResourceManager/ResourceTypes.h"
+
+// CentralSecretService Types
+
+#include "ServiceModel/management/CentralSecretService/ServiceModelConstants.h"
+#include "ServiceModel/management/CentralSecretService/Secret.h"
+#include "ServiceModel/management/CentralSecretService/SecretReference.h"
+#include "ServiceModel/management/CentralSecretService/SecretsDescription.h"
+#include "ServiceModel/management/CentralSecretService/SecretReferencesDescription.h"
+#include "ServiceModel/management/CentralSecretService/GetSecretsDescription.h"
+#include "ServiceModel/management/CentralSecretService/SecretResourceMetadata.h"
+
 //
 //  Chaos types
 //
@@ -729,7 +828,9 @@
 #include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosParameters.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/StartChaosDescription.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosReportFilter.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosEventsFilter.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/GetChaosReportDescription.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/GetChaosEventsDescription.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/StartChaosMessageBody.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/StopChaosMessageBody.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosEventBase.h"
@@ -742,8 +843,19 @@
 #include "ServiceModel/management/FaultAnalysisService/Chaos/WaitingEvent.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosStatus.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosReport.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosEventsSegment.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/GetChaosReportMessageBody.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/GetChaosEventsMessageBody.h"
 #include "ServiceModel/management/FaultAnalysisService/Chaos/GetChaosReportReplyMessageBody.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosScheduleStatus.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosDescription.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosScheduleTimeUtc.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosScheduleTimeRangeUtc.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosScheduleJobActiveDays.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosScheduleJob.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosSchedule.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/ChaosScheduleDescription.h"
+#include "ServiceModel/management/FaultAnalysisService/Chaos/SetChaosScheduleDescription.h"
 
 //
 // HealthManager Types.
@@ -771,6 +883,9 @@
 #include "ServiceModel/hosting2/ServicePackageInstanceIdentifier.h"
 #include "ServiceModel/hosting2/ServiceTypeInstanceIdentifier.h"
 #include "ServiceModel/hosting2/CodePackageInstanceIdentifier.h"
+#if defined(PLATFORM_UNIX)
+#include "ServiceModel/hosting2/ContainerPodDescription.h"
+#endif
 #include "ServiceModel/hosting2/ContainerDescription.h"
 #include "ServiceModel/hosting2/ProcessDebugParameters.h"
 #include "ServiceModel/hosting2/ProcessDescription.h"
@@ -781,3 +896,7 @@
 #include "ServiceModel/hosting2/ContainerEventNotification.h"
 #include "ServiceModel/hosting2/ContainerApiExecutionArgs.h"
 #include "ServiceModel/hosting2/ContainerApiExecutionResponse.h"
+#include "ServiceModel/hosting2/ContainerLogDriverConfigDescription.h"
+#include "ServiceModel/hosting2/SendAvailableContainerImagesEventArgs.h"
+
+#include "ServiceModel/hosting2/CodePackageEventDescription.h"

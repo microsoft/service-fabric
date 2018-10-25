@@ -30,48 +30,6 @@ ClusterHealthPolicy::ClusterHealthPolicy(
 {
 }
 
-ClusterHealthPolicy::ClusterHealthPolicy(ClusterHealthPolicy const & other)
-    : considerWarningAsError_(other.considerWarningAsError_)
-    , maxPercentUnhealthyNodes_(other.maxPercentUnhealthyNodes_)
-    , maxPercentUnhealthyApplications_(other.maxPercentUnhealthyApplications_)
-    , applicationTypeMap_(other.applicationTypeMap_)
-{
-}
-
-ClusterHealthPolicy::ClusterHealthPolicy(ClusterHealthPolicy && other)
-    : considerWarningAsError_(move(other.considerWarningAsError_))
-    , maxPercentUnhealthyNodes_(move(other.maxPercentUnhealthyNodes_))
-    , maxPercentUnhealthyApplications_(move(other.maxPercentUnhealthyApplications_))
-    , applicationTypeMap_(move(other.applicationTypeMap_))
-{
-}
-
-ClusterHealthPolicy & ClusterHealthPolicy::operator = (ClusterHealthPolicy const & other)
-{
-    if (this != &other)
-    {
-        this->considerWarningAsError_ = other.considerWarningAsError_;
-        this->maxPercentUnhealthyNodes_ = other.maxPercentUnhealthyNodes_;
-        this->maxPercentUnhealthyApplications_ = other.maxPercentUnhealthyApplications_;
-        this->applicationTypeMap_ = other.applicationTypeMap_;
-    }
-
-    return *this;
-}
-
-ClusterHealthPolicy & ClusterHealthPolicy::operator = (ClusterHealthPolicy && other)
-{
-    if (this != &other)
-    {
-        this->considerWarningAsError_ = move(other.considerWarningAsError_);
-        this->maxPercentUnhealthyNodes_ = move(other.maxPercentUnhealthyNodes_);
-        this->maxPercentUnhealthyApplications_ = move(other.maxPercentUnhealthyApplications_);
-        this->applicationTypeMap_ = move(other.applicationTypeMap_);
-    }
-
-    return *this;
-}
-
 ClusterHealthPolicy::~ClusterHealthPolicy()
 {
 }

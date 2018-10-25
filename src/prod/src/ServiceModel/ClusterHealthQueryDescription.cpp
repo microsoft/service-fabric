@@ -21,31 +21,6 @@ ClusterHealthQueryDescription::ClusterHealthQueryDescription()
 {
 }
 
-ClusterHealthQueryDescription::ClusterHealthQueryDescription(ClusterHealthQueryDescription && other)
-    : healthPolicy_(move(other.healthPolicy_))
-    , eventsFilter_(move(other.eventsFilter_))
-    , nodesFilter_(move(other.nodesFilter_))
-    , applicationsFilter_(move(other.applicationsFilter_))
-    , applicationHealthPolicies_(move(other.applicationHealthPolicies_))
-    , healthStatsFilter_(move(other.healthStatsFilter_))
-{
-}
-
-ClusterHealthQueryDescription & ClusterHealthQueryDescription::operator =(ClusterHealthQueryDescription && other)
-{
-    if (this != &other)
-    {
-        healthPolicy_ = move(other.healthPolicy_);
-        eventsFilter_ = move(other.eventsFilter_);
-        nodesFilter_ = move(other.nodesFilter_);
-        applicationsFilter_ = move(other.applicationsFilter_);
-        applicationHealthPolicies_ = move(other.applicationHealthPolicies_);
-        healthStatsFilter_ = move(other.healthStatsFilter_);
-    }
-
-    return *this;
-}
-
 ClusterHealthQueryDescription::~ClusterHealthQueryDescription()
 {
 }

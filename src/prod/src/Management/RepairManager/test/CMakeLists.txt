@@ -19,6 +19,16 @@ set_target_properties(${exe_ManagementRepairManager.Test} PROPERTIES
 
 target_link_libraries(${exe_ManagementRepairManager.Test}
   ${lib_ManagementRepairManager}
+  ${lib_ImageStore}
+  ${lib_SystemServices}
+  ${lib_Federation}
+  ${lib_LeaseAgent}
+  ${lib_Lease}
+  ${lib_Transport}
+  ${lib_Client}
+  ${lib_ClientServerTransport}
+  ${lib_Common}
+  ${lib_ServiceModel}
   ${lib_FabricCommon}
   ${BoostTest2}
   ${Cxx}
@@ -36,7 +46,5 @@ target_link_libraries(${exe_ManagementRepairManager.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 

@@ -370,6 +370,18 @@ ULONG FileLogicalLog::GetMetadataBlockHeaderSize() const
     return static_cast<ULONG>(-1);
 }
 
+ULONGLONG FileLogicalLog::GetSize() const
+{
+    LONGLONG length = GetLength();
+    KInvariant(length >= 0);
+    return static_cast<ULONGLONG>(length);
+}
+
+ULONGLONG FileLogicalLog::GetSpaceRemaining() const
+{
+    return ULONGLONG_MAX - GetSize();
+}
+
 NTSTATUS FileLogicalLog::CreateReadStream(
     __out ILogicalLogReadStream::SPtr& Stream,
     __in LONG SequentialAccessReadSize

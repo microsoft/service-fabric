@@ -35,6 +35,8 @@ namespace Common
         static Common::GlobalWString FabricDataRootRegKeyName;
         static Common::GlobalWString FabricLogRootRegKeyName;
         static Common::GlobalWString EnableCircularTraceSessionRegKeyName;
+        static Common::GlobalWString EnableUnsupportedPreviewFeaturesRegKeyName;
+        static Common::GlobalWString IsSFVolumeDiskServiceEnabledRegKeyName;
         static Common::GlobalWString UseFabricInstallerSvcKeyName;
 
         static Common::GlobalWString FabricDnsServerIPAddressRegKeyName;

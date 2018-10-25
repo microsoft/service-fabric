@@ -5,6 +5,7 @@
 
 #pragma once
 #include "FailoverUnitDescription.h"
+#include "Common/Common.h"
 
 namespace Reliability
 {
@@ -17,6 +18,15 @@ namespace Reliability
         {
             DENY_COPY_ASSIGNMENT(FailoverUnit);
         public:
+            struct ResourceLoad
+            {
+                ResourceLoad() {}
+                ResourceLoad(int CPUCores, int MemoryInMb) : CPUCores_(CPUCores), MemoryInMb_(MemoryInMb) {}
+
+                int CPUCores_;
+                int MemoryInMb_;
+
+            };
 
             FailoverUnit(
                 FailoverUnitDescription && fuDescription,
@@ -25,22 +35,14 @@ namespace Reliability
                 std::map<Federation::NodeId, std::vector<uint>> && secondaryEntriesMap,
                 uint primaryMoveCost,
                 uint secondaryMoveCost,
-                bool isServiceOnEveryNode);
+                bool isServiceOnEveryNode,
+                std::map<Federation::NodeId, ResourceLoad> && resourceMap,
+                Common::StopwatchTime nextScalingCheck = Common::StopwatchTime::Zero);
 
 
             FailoverUnit(FailoverUnit && other);
 
             FailoverUnit(FailoverUnit const & other);
-
-			struct ResourceLoad
-			{
-				ResourceLoad() {}
-				ResourceLoad(int CPUCores, int MemoryInMb) : CPUCores_(CPUCores), MemoryInMb_(MemoryInMb) {}
-
-				int CPUCores_;
-				int MemoryInMb_;
-
-			};
 
             __declspec (property(get=get_FailoverUnitDescription)) FailoverUnitDescription const& FuDescription;
             FailoverUnitDescription const& get_FailoverUnitDescription() const { return fuDescription_; }
@@ -75,12 +77,19 @@ namespace Reliability
             __declspec (property(get=get_ActualReplicaDifference)) int ActualReplicaDifference;
             int get_ActualReplicaDifference() const { return actualReplicaDifference_; }
 
-			__declspec (property(get = get_ResourceLoadMap)) std::map<Federation::NodeId, ResourceLoad> const& ResourceLoadMap;
-			std::map<Federation::NodeId, ResourceLoad> get_ResourceLoadMap() const { return resourceLoadMap_; }
+            __declspec (property(get = get_ResourceLoadMap)) std::map<Federation::NodeId, ResourceLoad> const& ResourceLoadMap;
+            std::map<Federation::NodeId, ResourceLoad> get_ResourceLoadMap() const { return resourceLoadMap_; }
 
             __declspec (property(get = get_IsServiceOnEveryNode, put = put_IsServiceOnEveryNode)) bool IsServiceOnEveryNode;
             bool get_IsServiceOnEveryNode() const { return isServiceOnEveryNode_; }
             void put_IsServiceOnEveryNode(bool val) { isServiceOnEveryNode_ = val; }
+
+            __declspec (property(get = get_NextScalingCheck, put = put_NextScalingCheck)) Common::StopwatchTime NextScalingCheck;
+            Common::StopwatchTime get_NextScalingCheck() const { return nextScalingCheck_; }
+            void put_NextScalingCheck(Common::StopwatchTime val) { nextScalingCheck_ = val; }
+
+            __declspec (property(get = get_TargetReplicaSetSize)) int TargetReplicaSetSize;
+            int get_TargetReplicaSetSize() const { return fuDescription_.TargetReplicaSetSize; }
 
             __declspec (property(get=get_UpdateCount,put=put_UpdateCount)) int UpdateCount;
             int get_UpdateCount() const { return updateCount_; }
@@ -100,7 +109,7 @@ namespace Reliability
                 Federation::NodeId const& nodeId = Federation::NodeId(),
                 bool isReset = false,
                 bool isSingletonReplicaService = false);
-			bool UpdateResourceLoad(wstring const& metricName, int value, Federation::NodeId const& nodeId);
+            bool UpdateResourceLoad(wstring const& metricName, int value, Federation::NodeId const& nodeId);
             bool UpdateMoveCost(ReplicaRole::Enum role, uint value, bool isMoveCostReported = true);
             bool IsMoveCostValid(uint moveCost) const;
             bool IsMoveCostReported(ReplicaRole::Enum role) const;
@@ -123,6 +132,17 @@ namespace Reliability
 
             //we use this to cleanup resource usage entries in case there is no replica on the node preent in the new FT description
             void CleanupResourceUsage(FailoverUnitDescription const & newFailoverUnitDescription);
+
+            // Primary load for resources (CPU or memory)
+            uint GetResourcePrimaryLoad(std::wstring const & name) const;
+            // Average load for resources (CPU or memory)
+            uint GetResourceAverageLoad(std::wstring const & name) const;
+            // Id reported - average, it not - default
+            uint GetSecondaryLoadForAutoScaling(uint metricIndex) const;
+            // Average load of all replicas for metric
+            uint GetAverageLoadForAutoScaling(uint metricIndex) const;
+
+            bool IsLoadAvailable(std::wstring const & name) const;
 
         private:
 
@@ -154,8 +174,10 @@ namespace Reliability
             int actualReplicaDifference_;
             int updateCount_;
             bool isServiceOnEveryNode_;
-			
-			std::map<Federation::NodeId, ResourceLoad> resourceLoadMap_;
+            
+            std::map<Federation::NodeId, ResourceLoad> resourceLoadMap_;
+
+            Common::StopwatchTime nextScalingCheck_;
         };
     }
 }

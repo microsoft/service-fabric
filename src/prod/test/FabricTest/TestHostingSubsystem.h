@@ -122,6 +122,10 @@ namespace FabricTest
         Hosting2::ApplicationHostClosedEventHHandler RegisterApplicationHostClosedEventHandler(Hosting2::ApplicationHostClosedEventHandler const & handler);
         bool UnregisterApplicationHostClosedEventHandler(Hosting2::ApplicationHostClosedEventHHandler const & hHandler);
 
+        Hosting2::AvailableContainerImagesEventHHandler RegisterSendAvailableContainerImagesEventHandler(
+            Hosting2::AvailableContainerImagesEventHandler const & handler);
+        bool UnregisterSendAvailableContainerImagesEventHandler(Hosting2::AvailableContainerImagesEventHHandler const & hHandler);
+
         Common::AsyncOperationSPtr OnBeginOpen(
             Common::TimeSpan,
             Common::AsyncCallback const &,

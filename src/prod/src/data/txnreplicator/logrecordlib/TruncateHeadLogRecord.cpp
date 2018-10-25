@@ -21,6 +21,7 @@ TruncateHeadLogRecord::TruncateHeadLogRecord(
     : LogHeadRecord(recordType, recordPosition, lsn, invalidPhysicalLogRecord, invalidIndexingLogRecord)
     , isStable_(false)
     , truncationState_(TruncationState::Invalid)
+    , periodicTruncationTimeTicks_(0)
 {
     ASSERT_IFNOT(
         recordType == LogRecordType::Enum::TruncateHead, 
@@ -32,10 +33,12 @@ TruncateHeadLogRecord::TruncateHeadLogRecord(
     __in LONG64 lsn,
     __in_opt PhysicalLogRecord * const lastLinkedPhysicalRecord,
     __in PhysicalLogRecord & invalidPhysicalLogRecord,
-    __in bool isStable)
+    __in bool isStable,
+    __in LONG64 periodicTruncationTimeStamp)
     : LogHeadRecord(LogRecordType::Enum::TruncateHead, logHeadRecord, lsn, lastLinkedPhysicalRecord, invalidPhysicalLogRecord)
     , isStable_(isStable)
     , truncationState_(TruncationState::Invalid)
+    , periodicTruncationTimeTicks_(periodicTruncationTimeStamp)
 {
     UpdateApproximateDiskSize();
 }
@@ -50,6 +53,7 @@ TruncateHeadLogRecord::SPtr TruncateHeadLogRecord::Create(
     __in_opt PhysicalLogRecord * const lastLinkedPhysicalRecord,
     __in PhysicalLogRecord & invalidPhysicalLogRecord,
     __in bool isStable,
+    __in LONG64 periodicTruncationTimeStamp,
     __in KAllocator & allocator)
 {
     TruncateHeadLogRecord* pointer = _new(TRUNCATEHEADLOGRECORD_TAG, allocator) TruncateHeadLogRecord(
@@ -57,7 +61,8 @@ TruncateHeadLogRecord::SPtr TruncateHeadLogRecord::Create(
         lsn, 
         lastLinkedPhysicalRecord, 
         invalidPhysicalLogRecord, 
-        isStable);
+        isStable,
+        periodicTruncationTimeStamp);
 
     THROW_ON_ALLOCATION_FAILURE(pointer);
     return TruncateHeadLogRecord::SPtr(pointer);
@@ -100,6 +105,13 @@ void TruncateHeadLogRecord::Read(
 
     binaryReader.Read(isStable_);
 
+    // Conditionally read periodicTruncationTimestamp_
+    // Ensures compatibility with versions prior to addition of timestamp field
+    if (binaryReader.Position < endPosition)
+    {
+        binaryReader.Read(periodicTruncationTimeTicks_);
+    }
+
     ASSERT_IFNOT(
         endPosition >= binaryReader.Position, 
         "Could not have read more than section size: {0} {1}", endPosition, binaryReader.Position);
@@ -112,13 +124,15 @@ void TruncateHeadLogRecord::Read(
 void TruncateHeadLogRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
     ULONG32 startingPosition = binaryWriter.Position;
     
     binaryWriter.Position += sizeof(ULONG32);
     binaryWriter.Write(isStable_);
+    binaryWriter.Write(periodicTruncationTimeTicks_);
 
     ULONG32 endPosition = binaryWriter.Position;
     ULONG32 sizeOfSection = endPosition - startingPosition;

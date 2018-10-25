@@ -8,7 +8,7 @@
 namespace ServiceModel
 {
     struct ApplicationHealthPolicy;
-    typedef std::shared_ptr<ApplicationHealthPolicy> ApplicationHealthPolicySPtr;
+    using ApplicationHealthPolicySPtr = std::shared_ptr<ApplicationHealthPolicy>;
 
     struct ApplicationManifestDescription;
     struct ApplicationPoliciesDescription;
@@ -23,13 +23,14 @@ namespace ServiceModel
             BYTE maxPercentUnhealthyDeployedApplications,
             ServiceTypeHealthPolicy const & defaultServiceTypeHealthPolicy,
             ServiceTypeHealthPolicyMap const & serviceTypeHealthPolicyMap);
-        ApplicationHealthPolicy(ApplicationHealthPolicy const & other);
-        ApplicationHealthPolicy(ApplicationHealthPolicy && other);
-        
-        static Common::Global<ApplicationHealthPolicy> Default;
 
-        ApplicationHealthPolicy const & operator = (ApplicationHealthPolicy const & other);
-        ApplicationHealthPolicy const & operator = (ApplicationHealthPolicy && other);
+        ApplicationHealthPolicy(ApplicationHealthPolicy const & other) = default;
+        ApplicationHealthPolicy & operator = (ApplicationHealthPolicy const & other) = default;
+        
+        ApplicationHealthPolicy(ApplicationHealthPolicy && other) = default;
+        ApplicationHealthPolicy & operator = (ApplicationHealthPolicy && other) = default;
+
+        static Common::Global<ApplicationHealthPolicy> Default;
 
         bool operator == (ApplicationHealthPolicy const & other) const;
         bool operator != (ApplicationHealthPolicy const & other) const;

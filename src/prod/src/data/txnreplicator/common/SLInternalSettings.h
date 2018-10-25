@@ -39,7 +39,7 @@ namespace TxnReplicator
 
         // Loads global defaults from global config and also over rides any user provided values for settings
         void LoadSettings();
-		
+        
         template<class T>
         void TraceConfigUpdate(
             __in std::wstring configName,

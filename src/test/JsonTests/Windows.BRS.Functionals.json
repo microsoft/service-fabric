@@ -6,7 +6,7 @@
         {
             "Name": "BackupCreation_None",
             "Type": "V2_ScriptTest",
-            "Owners": "aagup",
+            "Owners": "aagup,sfbrs",
             "ResourcesRequired": "Server:5",
             "TestExecutionParameters": {
               "SetupInstall": "/servicefabric",
@@ -22,7 +22,7 @@
         {
             "Name": "BackupCreation_X509",
             "Type": "V2_ScriptTest",
-            "Owners": "aagup",
+            "Owners": "aagup,sfbrs",
             "ResourcesRequired": "Server:5",
             "TestExecutionParameters": {
               "SetupInstall": "/servicefabric",
@@ -36,9 +36,41 @@
             }
         },
         {
+            "Name": "VerifyBackupRestore",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup,sfbrs",
+            "ResourcesRequired": "Server:5",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "Restore.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "VerifyEnableDisableBackup",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup,sfbrs",
+            "ResourcesRequired": "Server:5",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "EnableDisableBackup.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
             "Name": "BackupCreation_WinCore",
             "Type": "V2_ScriptTest",
-            "Owners": "aagup",
+            "Owners": "aagup,sfbrs",
             "ResourcesRequired": "Server:5",
             "TestExecutionParameters": {
               "SetupInstall": "/servicefabric",
@@ -46,6 +78,149 @@
               "SetupTimeout": "600",
               "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
               "TaskName": "BackupCreationWinCore.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "BackupEncryptionCertConfigUpgrade",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup,sfbrs",
+            "ResourcesRequired": "Server:3",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "UpgradeEncryptionCert.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "BackupNow",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup,sfbrs",
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "BackupNow.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "BackupPolicyDelete",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup,sfbrs",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "BackupPolicyDelete.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "BackupCreation_SA",
+            "Type": "V2_ScriptTest",
+            "Owners": "raunakp,sfbrs",      
+            "ResourcesRequired": "Server:4;Group=adtestvm2",
+            "IsEnabled": "false",
+            "TestExecutionParameters": {
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\Config\\BRS_SA.txt",
+              "TaskName": "BackupCreationSA.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "GetAllBackupPolicy",
+            "Type": "V2_ScriptTest",
+            "Owners": "brkhande,sfbrs",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "GetAllBackupPolicy.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "GetAllEntitiesBackupEnabledByPolicy",
+            "Type": "V2_ScriptTest",
+            "Owners": "brkhande,sfbrs",
+            "ResourcesRequired": "Server:1",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "GetAllEntitiesBackupEnabledByPolicy.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "BackupSuspendAndResume",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup,sfbrs",      
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "SuspendAndResume.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "UpdateBackupPolicy",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup,sfbrs",      
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "BackupPolicyUpdate.test",
+              "ExecutionTimeout": "10000",
+              "CleanupType": "XCopy",
+              "CleanupTimeout": "7000"
+            }
+        },
+        {
+            "Name": "BackupFrequency",
+            "Type": "V2_ScriptTest",
+            "Owners": "aagup,sfbrs",      
+            "ResourcesRequired": "Server:4",
+            "TestExecutionParameters": {
+              "SetupInstall": "/servicefabric",
+              "SetupType": "XCopy",
+              "SetupTimeout": "600",
+              "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+              "TaskName": "BackupFrequency.test",
               "ExecutionTimeout": "10000",
               "CleanupType": "XCopy",
               "CleanupTimeout": "7000"

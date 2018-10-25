@@ -77,7 +77,7 @@ namespace Common
 					bool lifeCycleTraceEnabled = traceFlags == EnabledTraceFlags::LifeCycle || traceFlags == EnabledTraceFlags::All;
 
 					ApiNameDescription nameDesc(InterfaceName::LastValidEnum, ApiName::LastValidEnum, L"");
-					auto data = MonitoringData(Guid(), Federation::NodeInstance(), replicaId, 0, std::move(nameDesc), startTime);
+					auto data = MonitoringData(Guid(), replicaId, 0, std::move(nameDesc), startTime);
 					MonitoringParameters parameters(enableHealth, slowTraceEnabled, lifeCycleTraceEnabled, slowDuration, periodicTraceDuration);
 					return std::make_shared<ApiCallDescription>(std::move(data), parameters);
 				}

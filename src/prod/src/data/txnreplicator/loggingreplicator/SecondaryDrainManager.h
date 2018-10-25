@@ -24,6 +24,7 @@ namespace Data
                 __in RoleContextDrainState & roleContextDrainState,
                 __in OperationProcessor & recordsProcessor,
                 __in IStateReplicator & fabricReplicator,
+                __in IBackupManager & backupManager,
                 __in CheckpointManager & checkpointManager,
                 __in TransactionManager & transactionManager,
                 __in ReplicatedLogManager & replicatedLogManager,
@@ -80,6 +81,7 @@ namespace Data
                 __in RoleContextDrainState & roleContextDrainState,
                 __in OperationProcessor & recordsProcessor,
                 __in IStateReplicator & fabricReplicator,
+                __in IBackupManager & backupManager,
                 __in CheckpointManager & checkpointManager,
                 __in TransactionManager & transactionManager,
                 __in ReplicatedLogManager & replicatedLogManager,
@@ -145,6 +147,7 @@ namespace Data
             CheckpointManager::SPtr const checkpointManager_;
             TransactionManager::SPtr const transactionManager_;
             IStateReplicator::SPtr const fabricReplicator_;
+            IBackupManager::SPtr const backupManager_;
             TxnReplicator::IStateProviderManager::SPtr const stateManager_;
             RecoveryManager::SPtr const recoveryManager_;
 

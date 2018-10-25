@@ -46,6 +46,8 @@ typedef struct
     LONG MaintenanceInterval;
     // Process assert exit timeout
     LONG ProcessAssertExitTimeout;
+    // Delay lease agent close interval
+    LONG DelayLeaseAgentCloseInterval;
 
 } LEASE_GLOBAL_CONFIG, *PLEASE_GLOBAL_CONFIG;
 

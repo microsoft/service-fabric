@@ -10,15 +10,15 @@ using namespace Data::LoggingReplicator;
 using namespace Data::LogRecordLib;
 using namespace TxnReplicator;
 using namespace Data::Utilities;
-using namespace Data::Log;
+using namespace Data;
 
 KLogManager::KLogManager(
     __in PartitionedReplicaId const & traceId,
-    __in TxnReplicator::IRuntimeFolders const & runtimeFolders,
-    __in Data::Log::LogManager & dataLogManager,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
-    __in TxnReplicator::SLInternalSettingsSPtr const & ktlLoggerSharedLogConfig,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
+    __in IRuntimeFolders const & runtimeFolders,
+    __in Log::LogManager & dataLogManager,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in SLInternalSettingsSPtr const & ktlLoggerSharedLogConfig,
+    __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient)
     : LogManager(traceId, perfCounters, healthClient, transactionalReplicatorConfig)
     , runtimeFolders_(&runtimeFolders)
@@ -39,11 +39,11 @@ KLogManager::~KLogManager()
 
 KLogManager::SPtr KLogManager::Create(
     __in PartitionedReplicaId const & traceId,
-    __in TxnReplicator::IRuntimeFolders const & runtimeFolders,
-    __in Data::Log::LogManager & appHostLogManager,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
-    __in TxnReplicator::SLInternalSettingsSPtr const & ktlLoggerSharedLogConfig,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
+    __in IRuntimeFolders const & runtimeFolders,
+    __in Log::LogManager & appHostLogManager,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in SLInternalSettingsSPtr const & ktlLoggerSharedLogConfig,
+    __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
     __in KAllocator & allocator)
 {
@@ -61,7 +61,7 @@ KLogManager::SPtr KLogManager::Create(
 }
 
 Awaitable<NTSTATUS> KLogManager::CreateCopyLogAsync(
-    __in TxnReplicator::Epoch const startingEpoch,
+    __in Epoch const startingEpoch,
     __in LONG64 startingLsn,
     __out IndexingLogRecord::SPtr & newHead)
 {
@@ -80,7 +80,7 @@ Awaitable<NTSTATUS> KLogManager::CreateCopyLogAsync(
         aliasGuid);
 
     // Delete if alias resolved successfully
-    if(NT_SUCCESS(status))
+    if (NT_SUCCESS(status))
     {
         status = co_await physicalLogHandle_->DeleteLogicalLogAsync(
             aliasGuid,
@@ -114,6 +114,7 @@ Awaitable<NTSTATUS> KLogManager::CreateCopyLogAsync(
         *logicalLog_,
         *callbackManager,
         LogManager::DefaultWriteCacheSizeMB * 1024 * 1024,
+        false,
         *invalidLogRecords_->Inv_LogRecord,
         perfCounters_,
         healthClient_,
@@ -154,7 +155,22 @@ Awaitable<NTSTATUS> KLogManager::DeleteLogAsync()
         CO_RETURN_ON_FAILURE(status);
     }
 
-    co_await DeleteLogFileAsync(*baseLogFileAlias_, CancellationToken::None);
+    //
+    // The order that logs are deleted is important. The backup log should be deleted first, then the
+    // copy log and finally the current log. The reason for this is that when a ChangeRole(None) occurs
+    // the replicator will write a record in the current log which will indicate that the ChangeRole(None)
+    // has occured so that if the process crashes and restarts, the ChangeRole(None) process can continue.
+    // Otherwise, if the current log is deleted before the backup log, the backup log will become the 
+    // current log and the information about ChangeRole(None) and other data is lost.
+    //
+    
+    // Delete base backup log file
+    KString::SPtr baseBackupLogFileAlias = LogManager::Concat(
+        *baseLogFileAlias_,
+        BackupSuffix,
+        GetThisAllocator());
+
+    co_await DeleteLogFileAsync(*baseBackupLogFileAlias, CancellationToken::None);
 
     // Delete base copy log file
     KString::SPtr baseCopyLogFileAlias = LogManager::Concat(
@@ -164,13 +180,7 @@ Awaitable<NTSTATUS> KLogManager::DeleteLogAsync()
 
     co_await DeleteLogFileAsync(*baseCopyLogFileAlias, CancellationToken::None);
 
-    // Delete base backup log file
-    KString::SPtr baseBackupLogFileAlias = LogManager::Concat(
-        *baseLogFileAlias_,
-        BackupSuffix,
-        GetThisAllocator());
-
-    co_await DeleteLogFileAsync(*baseBackupLogFileAlias, CancellationToken::None);
+    co_await DeleteLogFileAsync(*baseLogFileAlias_, CancellationToken::None);
 
     // MCoskun: After deleting the log we clean the handles.
     // This is required to avoid leaking handles in cases where we delete the log and open a new one in the same Log Manager.
@@ -224,21 +234,36 @@ Awaitable<void> KLogManager::DeleteLogFileAsync(
 Awaitable<NTSTATUS> KLogManager::InitializeAsync(KString const & dedicatedLogPath)
 {
     NTSTATUS status;
+   
+    if (dataLogManagerHandle_ == nullptr)
+    {
+        // Retrieve ILogManagerHandle
+        status = co_await dataLogManager_->GetHandle(
+            *PartitionedReplicaIdentifier,
+            runtimeFolders_->get_WorkDirectory(),
+            CancellationToken::None,
+            dataLogManagerHandle_);
+
+        CO_RETURN_ON_FAILURE(status);
+    }
+
     KString::CSPtr dedicatedLogPathSPtr = &dedicatedLogPath;
 
-    //
-    // Map the dedicated log path if we are in a container.
-    //
-    // When running in a container, the container will have a different file system namespace as the
-    // host. The filenames are generated from within the container, however the KTLLogger driver will 
-    // create them while running in the host namespace. In order for the files to be created in the 
-    // correct location, the filename needs to be mapped from the container namespace to the host
-    // namespace. This mapping is done here.
-    //
-    // Fabric provides the mapping into the host namespace in the environment variable named
-    // "Fabric_HostApplicationDirectory"
-    //
+    if (dataLogManagerHandle_->Mode == Data::Log::KtlLoggerMode::OutOfProc)
     {
+        //
+        // Map the dedicated log path if we are in a container and currently using the driver.
+        //
+        // When running in a container, the container will have a different file system namespace as the
+        // host. The filenames are generated from within the container, however the KTLLogger driver will 
+        // create them while running in the host namespace. In order for the files to be created in the 
+        // correct location, the filename needs to be mapped from the container namespace to the host
+        // namespace. This mapping is done here.
+        //
+        // Fabric provides the mapping into the host namespace in the environment variable named
+        // "Fabric_HostApplicationDirectory"
+        //
+        
         std::wstring fabricHostApplicationDirectory;
         bool res = Common::Environment::GetEnvironmentVariableW(Constants::FabricHostApplicationDirectory, fabricHostApplicationDirectory, Common::NOTHROW());
         if (res)
@@ -264,21 +289,14 @@ Awaitable<NTSTATUS> KLogManager::InitializeAsync(KString const & dedicatedLogPat
 
                 co_return status;
             }
-            
+
             dedicatedLogPathSPtr = copyToKString.RawPtr();
         }
     }
+
     status = co_await __super::InitializeAsync(*dedicatedLogPathSPtr);
 
     CO_RETURN_ON_FAILURE(status);
-
-    if (dataLogManagerHandle_ == nullptr)
-    {
-        // Retrieve ILogManagerHandle
-        status = co_await dataLogManager_->GetHandle(*PartitionedReplicaIdentifier, runtimeFolders_->get_WorkDirectory(), CancellationToken::None, dataLogManagerHandle_);
-
-        CO_RETURN_ON_FAILURE(status);
-    }
 
     // Loads const values as KString for use in concatenation
     InitializeLogSuffix();
@@ -427,7 +445,7 @@ Awaitable<NTSTATUS> KLogManager::OpenPhysicalLogHandleAsync()
                 ktlLoggerSharedLogConfig_->LogSize,
                 ktlLoggerSharedLogConfig_->MaximumNumberStreams,
                 ktlLoggerSharedLogConfig_->MaximumRecordSize,
-                (Data::Log::LogCreationFlags)ktlLoggerSharedLogConfig_->CreateFlags,
+                (Log::LogCreationFlags)ktlLoggerSharedLogConfig_->CreateFlags,
                 CancellationToken::None,
                 physicalLogHandle_);            
         }
@@ -498,7 +516,7 @@ Awaitable<NTSTATUS> KLogManager::OpenPhysicalLogHandleAsync()
 Awaitable<NTSTATUS> KLogManager::CreateLogFileAsync(
     __in bool createNew,
     __in CancellationToken const & cancellationToken,
-    __out ILogicalLog::SPtr & result)
+    __out Log::ILogicalLog::SPtr & result)
 {
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -530,7 +548,7 @@ Awaitable<NTSTATUS> KLogManager::CreateLogFileAsync(
         cancellationToken,
         currentLogId);
 
-    ILogicalLog::SPtr log = nullptr;
+    Log::ILogicalLog::SPtr log = nullptr;
 
     // If recover log succeeded, open the log
     if (NT_SUCCESS(status))
@@ -621,8 +639,8 @@ Awaitable<NTSTATUS> KLogManager::CreateLogFileAsync(
             maximumStreamSizeInBytes,
             (ULONG)transactionalReplicatorConfig_->MaxRecordSizeInKB * 1024,
             transactionalReplicatorConfig_->OptimizeLogForLowerDiskUsage ? 
-                Data::Log::LogCreationFlags::UseSparseFile : 
-                Data::Log::LogCreationFlags::UseNonSparseFile,
+                Log::LogCreationFlags::UseSparseFile : 
+                Log::LogCreationFlags::UseNonSparseFile,
             cancellationToken,
             log);
 
@@ -719,6 +737,7 @@ Awaitable<NTSTATUS> KLogManager::RenameCopyLogAtomicallyAsync()
         *logicalLog_,
         *callbackManager,
         DefaultWriteCacheSizeMB * 1024 * 1024,
+        false,
         *tailRecord,
         perfCounters_,
         healthClient_,

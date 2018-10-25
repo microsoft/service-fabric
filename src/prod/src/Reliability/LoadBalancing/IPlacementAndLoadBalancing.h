@@ -41,6 +41,7 @@ namespace Reliability
                 std::vector<FailoverUnitDescription> && failoverUnits,
                 std::vector<LoadOrMoveCostDescription> && loadAndMoveCosts,
                 Client::HealthReportingComponentSPtr const & healthClient,
+                Api::IServiceManagementClientPtr const& serviceManagementClient,
                 Common::ConfigEntry<bool> const& isSingletonReplicaMoveAllowedDuringUpgradeEntry);
 
             virtual ~IPlacementAndLoadBalancing() = 0 {}
@@ -86,7 +87,7 @@ namespace Reliability
 
             virtual void Dispose() = 0;
             virtual Common::ErrorCode TriggerPromoteToPrimary(std::wstring const& serviceName, Common::Guid const& fuId, Federation::NodeId newPrimary) = 0;
-			virtual Common::ErrorCode TriggerSwapPrimary(std::wstring const& serviceName, Common::Guid const& fuId, Federation::NodeId currentPrimary, Federation::NodeId & newPrimary, bool force = false, bool chooseRandom = false) = 0;
+            virtual Common::ErrorCode TriggerSwapPrimary(std::wstring const& serviceName, Common::Guid const& fuId, Federation::NodeId currentPrimary, Federation::NodeId & newPrimary, bool force = false, bool chooseRandom = false) = 0;
             virtual Common::ErrorCode TriggerMoveSecondary(std::wstring const& serviceName, Common::Guid const& fuId, Federation::NodeId currentSecondary, Federation::NodeId & newSecondary, bool force = false, bool chooseRandom = false) = 0;
 
             virtual void OnDroppedPLBMovement(Common::Guid const& failoverUnitId, PlbMovementIgnoredReasons::Enum reason, Common::Guid const& decisionId) = 0;
@@ -94,6 +95,9 @@ namespace Reliability
             virtual void OnFMBusy() = 0;
             virtual void OnExecutePLBMovement(Common::Guid const & partitionId) = 0;
             virtual void OnSafetyCheckAcknowledged(ServiceModel::ApplicationIdentifier const & appId) = 0;
+
+            // Function for updating PLB with available images on specified node
+            virtual void UpdateAvailableImagesPerNode(std::wstring const& nodeId, std::vector<std::wstring> const& images) = 0;
         };
     }
 }

@@ -16,6 +16,9 @@
 #include "Management/FaultAnalysisService/Constants.h"
 #include "Management/UpgradeOrchestrationService/UpgradeOrchestrationServiceConfig.h"
 #include "Management/UpgradeOrchestrationService/Constants.h"
+#include "Management/CentralSecretService/CentralSecretServiceConfig.h"
+#include "Management/LocalSecretService/LocalSecretServiceConfig.h"
+#include "Management/CentralSecretService/Constants.h"
 #include "Management/DnsService/include/DnsEventSource.h"
 #include "Management/DnsService/config/DnsServiceConfig.h"
 #include "Management/ResourceMonitor/config/ResourceMonitorServiceConfig.h"
@@ -83,6 +86,12 @@ namespace Management
         __declspec(property(get = get_IsUpgradeOrchestrationServiceEnabled)) bool IsUpgradeOrchestrationServiceEnabled;
         bool get_IsUpgradeOrchestrationServiceEnabled() const;
 
+        __declspec(property(get = get_IsCentralSecretServiceEnabled)) bool IsCentralSecretServiceEnabled;
+        bool get_IsCentralSecretServiceEnabled() const;
+
+        __declspec(property(get = get_IsLocalSecretServiceEnabled)) bool IsLocalSecretServiceEnabled;
+        bool get_IsLocalSecretServiceEnabled() const;
+
         __declspec(property(get = get_IsDnsServiceEnabled)) bool IsDnsServiceEnabled;
         bool get_IsDnsServiceEnabled() const;
 
@@ -146,6 +155,7 @@ namespace Management
         static Reliability::ServiceDescription CreateUpgradeOrchestrationServiceDescription();
         static Reliability::ServiceDescription CreateUpgradeServiceDescription(std::wstring const & serviceName);
         static Reliability::ServiceDescription CreateBackupRestoreServiceDescription();
+        static Reliability::ServiceDescription CreateCentralSecretServiceDescription();
         static Reliability::ServiceDescription CreateFaultAnalysisServiceDescription();
 
         Common::AsyncOperationSPtr BeginCreateUpgradeOrchestrationService(
@@ -153,6 +163,12 @@ namespace Management
             Common::AsyncCallback const &,
             Common::AsyncOperationSPtr const &);
         Common::ErrorCode EndCreateUpgradeOrchestrationService(Common::AsyncOperationSPtr const &);
+
+        Common::AsyncOperationSPtr BeginCreateCentralSecretService(
+            Common::TimeSpan const,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &);
+        Common::ErrorCode EndCreateCentralSecretService(Common::AsyncOperationSPtr const &);
 
         Common::AsyncOperationSPtr BeginCreateFaultAnalysisService(
                Common::TimeSpan const,
@@ -187,6 +203,7 @@ namespace Management
         static void AddTokenValidationServiceDescription(std::wstring const & serviceName, __in std::vector<Reliability::ServiceDescription> &);
         static void AddDnsServiceDescription(std::wstring const & serviceName, __in std::vector<Reliability::ServiceDescription> &);
         static void AddResourceMonitorServiceDescription(std::wstring const & serviceName, __in std::vector<Reliability::ServiceDescription> &);
+        static void AddLocalSecretServiceDescription(std::wstring const & serviceName, __in std::vector<Reliability::ServiceDescription> &);
 
         std::unique_ptr<Impl> impl_;
     };

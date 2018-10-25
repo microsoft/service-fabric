@@ -28,8 +28,11 @@ namespace Reliability
             Common::TraceEventWriter<Federation::NodeId> PartitionNotificationSequenceNumberStale;
 
             Common::TraceEventWriter<NodeCounts> NodeCounts;
-            Common::TraceEventWriter<Common::Guid, std::wstring, uint64, NodeDeactivationIntent::Trace, Common::DateTime> DeactivateNodeCompletedOperational;
-            
+            Common::TraceEventWriter<Common::Guid, std::wstring, uint64, std::wstring, NodeDeactivationIntent::Trace> DeactivateNodeStartOperational;
+            Common::TraceEventWriter<Common::Guid, std::wstring, uint64, NodeDeactivationIntent::Trace, std::wstring, Common::DateTime> DeactivateNodeCompletedOperational;
+            Common::TraceEventWriter<Common::Guid, std::wstring, std::wstring, uint64, std::wstring, std::wstring, std::wstring, std::wstring> NodeAddedOperational;
+            Common::TraceEventWriter<Common::Guid, std::wstring, std::wstring, uint64, std::wstring, std::wstring, std::wstring, std::wstring> NodeRemovedOperational;
+
             NodeEventSource(Common::TraceTaskCodes::Enum id) :
 
                 NodeAddedToGFUM(id, 160, "NodeAddedToGFUM", Common::LogLevel::Info, "Node {0}:{1} is added to GFUM.", "nodeId", "instanceId"),
@@ -46,10 +49,14 @@ namespace Reliability
 
                 NodeCounts(id, 169, "NodeCounts", Common::LogLevel::Info, "{0}", "nodeCounts"),
                 
-                DeactivateNodeCompletedOperational(id, 170, "_NodesOperational_DeactivateNodeCompletedOperational", Common::LogLevel::Info, Common::TraceChannelType::Operational, Common::TraceKeywords::Default, "Node Deactivation complete. NodeName : {1}, NodeInstance: {2}, EffectiveDeactivateIntent: {3}, StartTime: {4}", "eventInstanceId", "nodeName", "nodeInstance", "effectiveIntent", "startTime"),
-                NodeUpOperational(id, 171, "_NodesOperational_NodeUpOperational", Common::LogLevel::Info, Common::TraceChannelType::Operational, Common::TraceKeywords::Default, "Node is Up. NodeName : {1}, NodeInstance: {2}, LastNodeDownAt: {3}", "eventInstanceId", "nodeName", "nodeInstance", "lastNodeDownAt"),
-                NodeDownOperational(id, 172, "_NodesOperational_NodeDownOperational", Common::LogLevel::Info, Common::TraceChannelType::Operational, Common::TraceKeywords::Default, "Node is Down. NodeName : {1}, NodeInstance: {2}, LastNodeUpAt: {3}", "eventInstanceId", "nodeName", "nodeInstance", "lastNodeUpAt")
+                DeactivateNodeCompletedOperational(Common::ExtendedEventMetadata::Create(L"NodeDeactivateCompleted", OperationalStateTransitionCategory), id, 170, "_NodesOps_DeactivateNodeCompletedOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, Common::TraceKeywords::Default, "Node Deactivation complete. NodeName : {1}, NodeInstance: {2}, EffectiveDeactivateIntent: {3}, AllBatchIdWithDeactivateIntent: {4}, StartTime: {5}", "eventInstanceId", "nodeName", "nodeInstance", "effectiveDeactivateIntent", "batchIdsWithDeactivateIntent", "startTime"),
+                NodeUpOperational(Common::ExtendedEventMetadata::Create(L"NodeUp", OperationalStateTransitionCategory), id, 171, "_NodesOps_NodeUpOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, Common::TraceKeywords::Default, "Node is Up. NodeName : {1}, NodeInstance: {2}, LastNodeDownAt: {3}", "eventInstanceId", "nodeName", "nodeInstance", "lastNodeDownAt"),
+                NodeDownOperational(Common::ExtendedEventMetadata::Create(L"NodeDown", OperationalStateTransitionCategory), id, 172, "_NodesOps_NodeDownOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, Common::TraceKeywords::Default, "Node is Down. NodeName : {1}, NodeInstance: {2}, LastNodeUpAt: {3}", "eventInstanceId", "nodeName", "nodeInstance", "lastNodeUpAt"),
 
+                // These traces are very low volume and only written when a new Node shows up for the first time, or when it is removed. We capture as much details about the node in these traces and other traces can reference these.
+                NodeAddedOperational(Common::ExtendedEventMetadata::Create(L"NodeAddedToCluster", OperationalStateTransitionCategory), id, 173, "_NodesOps_NodeAddedOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, Common::TraceKeywords::Default, "New Node Added. NodeName : {1}, NodeId: {2}, NodeInstance: {3}, NodeType: {4}, FabricVersion: {5}, IpAddressOrFQDN: {6}, NodeCapacities: {7}", "eventInstanceId", "nodeName", "nodeId", "nodeInstance", "nodeType", "fabricVersion", "ipAddressOrFQDN", "nodeCapacities"),
+                NodeRemovedOperational(Common::ExtendedEventMetadata::Create(L"NodeRemovedFromCluster", OperationalStateTransitionCategory), id, 174, "_NodesOps_NodeRemovedOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, Common::TraceKeywords::Default, "Node Removed. NodeName : {1}, NodeId: {2}, NodeInstance: {3}, NodeType : {4}, FabricVersion: {5}, IpAddressOrFQDN: {6}, NodeCapacities: {7}", "eventInstanceId", "nodeName", "nodeId", "nodeInstance", "nodeType", "fabricVersion", "ipAddressOrFQDN", "nodeCapacities"),
+                DeactivateNodeStartOperational(Common::ExtendedEventMetadata::Create(L"NodeDeactivateStarted", OperationalStateTransitionCategory), id, 175, "_NodesOps_DeactivateNodeStartOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, Common::TraceKeywords::Default, "Node Deactivation Started. NodeName : {1}, NodeInstance: {2}, BatchId: {3}, DeactivationIntent: {4}", "eventInstanceId", "nodeName", "nodeInstance", "batchId", "deactivateIntent")
                 // Event id limit: 220
             {
             }

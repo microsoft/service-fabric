@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include "KtlLogShimKernel.h"
 
 //************************************************************************************
@@ -82,16 +86,6 @@ KtlLogStreamKernel::~KtlLogStreamKernel()
     }
     _IsOnContainerActiveList = FALSE;
 }
-
-#ifndef UDRIVER
-KtlLogStream::KtlLogStream()
-{
-}
-
-KtlLogStream::~KtlLogStream()
-{
-}
-#endif
 
 //
 // Stream specific routines
@@ -208,16 +202,6 @@ KtlLogStreamKernel::AsyncQueryRecordRangeContextKernel::OnCancel(
 {
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
 }
-
-#ifndef UDRIVER
-KtlLogStream::AsyncQueryRecordRangeContext::AsyncQueryRecordRangeContext()
-{
-}
-
-KtlLogStream::AsyncQueryRecordRangeContext::~AsyncQueryRecordRangeContext()
-{
-}
-#endif
 
 KtlLogStreamKernel::AsyncQueryRecordRangeContextKernel::AsyncQueryRecordRangeContextKernel()
 {
@@ -355,16 +339,6 @@ KtlLogStreamKernel::AsyncQueryRecordContextKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
 }
 
-#ifndef UDRIVER
-KtlLogStream::AsyncQueryRecordContext::AsyncQueryRecordContext()
-{
-}
-
-KtlLogStream::AsyncQueryRecordContext::~AsyncQueryRecordContext()
-{
-}
-#endif
-
 KtlLogStreamKernel::AsyncQueryRecordContextKernel::AsyncQueryRecordContextKernel()
 {
 }
@@ -495,16 +469,6 @@ KtlLogStreamKernel::AsyncQueryRecordsContextKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
 }
 
-#ifndef UDRIVER
-KtlLogStream::AsyncQueryRecordsContext::AsyncQueryRecordsContext()
-{
-}
-
-KtlLogStream::AsyncQueryRecordsContext::~AsyncQueryRecordsContext()
-{
-}
-#endif
-
 KtlLogStreamKernel::AsyncQueryRecordsContextKernel::AsyncQueryRecordsContextKernel()
 {
 }
@@ -547,6 +511,7 @@ KtlLogStreamKernel::CreateAsyncQueryRecordsContext(__out AsyncQueryRecordsContex
 //
 // Write Record
 //
+
 VOID
 KtlLogStreamKernel::AsyncWriteContextKernel::OnCompleted(
     )
@@ -600,7 +565,7 @@ KtlLogStreamKernel::AsyncWriteContextKernel::WriteCompleted(
         _LogStream->AdjustReservationSpace(-1 * _ReservationSpace);
 #endif
     }
-
+    
     _WriteOperation.EndOperation(size);
     
     Complete(status);
@@ -774,13 +739,31 @@ KtlLogStreamKernel::AsyncWriteContextKernel::OnStart(
     }
     
     KAsyncContextBase::CompletionCallback completion(this, &KtlLogStreamKernel::AsyncWriteContextKernel::WriteCompleted);
-    _BaseAsyncWrite->StartReservedWrite(_ReservationSpace,
-                                        _RecordAsn,
-                                        _Version,
-                                        metaDataKBuffer,
-                                        _IoBuffer,
-                                        this,
-                                        completion);
+
+    if (_LogSize != nullptr)
+    {
+        KAssert(_LogSpaceRemaining != nullptr);
+
+        _BaseAsyncWrite->StartReservedWrite(_ReservationSpace,
+            _RecordAsn,
+            _Version,
+            metaDataKBuffer,
+            _IoBuffer,
+            *_LogSize,
+            *_LogSpaceRemaining,
+            this,
+            completion);
+    }
+    else
+    {
+        _BaseAsyncWrite->StartReservedWrite(_ReservationSpace,
+            _RecordAsn,
+            _Version,
+            metaDataKBuffer,
+            _IoBuffer,
+            this,
+            completion);
+    }
 }
 
 VOID
@@ -799,12 +782,42 @@ KtlLogStreamKernel::AsyncWriteContextKernel::StartWrite(
     
     _RecordAsn = RecordAsn;
     _Version = Version;
-    _MetaDataLength = MetaDataLength,
+    _MetaDataLength = MetaDataLength;
     _MetaDataBuffer = MetaDataBuffer;
     _ReservationSpace = ReservationSpace;
-    _IoBuffer = IoBuffer;   
+    _IoBuffer = IoBuffer;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
 
     Start(ParentAsyncContext, CallbackPtr); 
+}
+
+VOID
+KtlLogStreamKernel::AsyncWriteContextKernel::StartWrite(
+    __in KtlLogAsn RecordAsn,
+    __in ULONGLONG Version,
+    __in ULONG MetaDataLength,
+    __in const KIoBuffer::SPtr& MetaDataBuffer,
+    __in const KIoBuffer::SPtr& IoBuffer,
+    __in ULONGLONG ReservationSpace,
+    __out ULONGLONG& LogSize,
+    __out ULONGLONG& LogSpaceRemaining,
+    __in_opt KAsyncContextBase* const ParentAsyncContext,
+    __in_opt KAsyncContextBase::CompletionCallback CallbackPtr
+    )
+{
+    _WriteOperation.BeginOperation();
+
+    _RecordAsn = RecordAsn;
+    _Version = Version;
+    _MetaDataLength = MetaDataLength;
+    _MetaDataBuffer = MetaDataBuffer;
+    _ReservationSpace = ReservationSpace;
+    _IoBuffer = IoBuffer;
+    _LogSize = &LogSize;
+    _LogSpaceRemaining = &LogSpaceRemaining;
+
+    Start(ParentAsyncContext, CallbackPtr);
 }
 
 #if defined(K_UseResumable)
@@ -827,6 +840,39 @@ KtlLogStreamKernel::AsyncWriteContextKernel::WriteAsync(
     _MetaDataBuffer = MetaDataBuffer;
     _IoBuffer = IoBuffer;
     _ReservationSpace = ReservationSpace;
+    _LogSize = nullptr;
+    _LogSpaceRemaining = nullptr;
+
+    NTSTATUS status;
+    ktl::kasync::InplaceStartAwaiter awaiter(*((KAsyncContextBase*)this), ParentAsyncContext, NULL);
+
+    status = co_await awaiter;
+    co_return status;
+}
+
+ktl::Awaitable<NTSTATUS>
+KtlLogStreamKernel::AsyncWriteContextKernel::WriteAsync(
+    __in KtlLogAsn RecordAsn,
+    __in ULONGLONG Version,
+    __in ULONG MetaDataLength,
+    __in const KIoBuffer::SPtr& MetaDataBuffer,
+    __in const KIoBuffer::SPtr& IoBuffer,
+    __in ULONGLONG ReservationSpace,
+    __out ULONGLONG& LogSize,
+    __out ULONGLONG& LogSpaceRemaining,
+    __in_opt KAsyncContextBase* const ParentAsyncContext
+    )
+{
+    _WriteOperation.BeginOperation();
+
+    _RecordAsn = RecordAsn;
+    _Version = Version;
+    _MetaDataLength = MetaDataLength;
+    _MetaDataBuffer = MetaDataBuffer;
+    _IoBuffer = IoBuffer;
+    _ReservationSpace = ReservationSpace;
+    _LogSize = &LogSize;
+    _LogSpaceRemaining = &LogSpaceRemaining;
 
     NTSTATUS status;
     ktl::kasync::InplaceStartAwaiter awaiter(*((KAsyncContextBase*)this), ParentAsyncContext, NULL);
@@ -851,16 +897,6 @@ KtlLogStreamKernel::AsyncWriteContextKernel::OnCancel(
     _BaseAsyncWrite->Cancel();
 }
 
-
-#ifndef UDRIVER
-KtlLogStream::AsyncWriteContext::AsyncWriteContext()
-{
-}
-
-KtlLogStream::AsyncWriteContext::~AsyncWriteContext()
-{
-}
-#endif
 
 KtlLogStreamKernel::AsyncWriteContextKernel::AsyncWriteContextKernel()
 {
@@ -1060,16 +1096,6 @@ KtlLogStreamKernel::AsyncReservationContextKernel::OnCancel(
     _BaseAsyncReservation->Cancel();
 }
 
-
-#ifndef UDRIVER
-KtlLogStream::AsyncReservationContext::AsyncReservationContext()
-{
-}
-
-KtlLogStream::AsyncReservationContext::~AsyncReservationContext()
-{
-}
-#endif
 
 KtlLogStreamKernel::AsyncReservationContextKernel::AsyncReservationContextKernel()
 {
@@ -1416,16 +1442,6 @@ KtlLogStreamKernel::AsyncReadContextKernel::OnCancel(
     _BaseAsyncRead->Cancel();
 }
 
-#ifndef UDRIVER
-KtlLogStream::AsyncReadContext::AsyncReadContext()
-{
-}
-
-KtlLogStream::AsyncReadContext::~AsyncReadContext()
-{
-}
-#endif
-
 KtlLogStreamKernel::AsyncReadContextKernel::AsyncReadContextKernel()
 {
 }
@@ -1619,16 +1635,6 @@ KtlLogStreamKernel::AsyncMultiRecordReadContextKernel::OnCancel(
     _BaseAsyncRead->Cancel();
 }
 
-#ifndef UDRIVER
-KtlLogStream::AsyncMultiRecordReadContext::AsyncMultiRecordReadContext()
-{
-}
-
-KtlLogStream::AsyncMultiRecordReadContext::~AsyncMultiRecordReadContext()
-{
-}
-#endif
-
 KtlLogStreamKernel::AsyncMultiRecordReadContextKernel::AsyncMultiRecordReadContextKernel()
 {
 }
@@ -1757,16 +1763,6 @@ KtlLogStreamKernel::AsyncTruncateContextKernel::OnCancel(
 {
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
 }
-
-#ifndef UDRIVER
-KtlLogStream::AsyncTruncateContext::AsyncTruncateContext()
-{
-}
-
-KtlLogStream::AsyncTruncateContext::~AsyncTruncateContext()
-{
-}
-#endif
 
 KtlLogStreamKernel::AsyncTruncateContextKernel::AsyncTruncateContextKernel()
 {
@@ -1976,16 +1972,6 @@ KtlLogStreamKernel::AsyncWriteMetadataContextKernel::OnCancel(
 }
 
 
-#ifndef UDRIVER
-KtlLogStream::AsyncWriteMetadataContext::AsyncWriteMetadataContext()
-{
-}
-
-KtlLogStream::AsyncWriteMetadataContext::~AsyncWriteMetadataContext()
-{
-}
-#endif
-
 KtlLogStreamKernel::AsyncWriteMetadataContextKernel::AsyncWriteMetadataContextKernel()
 {
 }
@@ -2125,16 +2111,6 @@ KtlLogStreamKernel::AsyncReadMetadataContextKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
     _AsyncReadFileContext->Cancel();
 }
-
-#ifndef UDRIVER
-KtlLogStream::AsyncReadMetadataContext::AsyncReadMetadataContext()
-{
-}
-
-KtlLogStream::AsyncReadMetadataContext::~AsyncReadMetadataContext()
-{
-}
-#endif
 
 KtlLogStreamKernel::AsyncReadMetadataContextKernel::AsyncReadMetadataContextKernel()
 {
@@ -2308,16 +2284,6 @@ KtlLogStreamKernel::AsyncIoctlContextKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
     _AsyncIoctlContext->Cancel();
 }
-
-#ifndef UDRIVER
-KtlLogStream::AsyncIoctlContext::AsyncIoctlContext()
-{
-}
-
-KtlLogStream::AsyncIoctlContext::~AsyncIoctlContext()
-{
-}
-#endif
 
 KtlLogStreamKernel::AsyncIoctlContextKernel::AsyncIoctlContextKernel()
 {
@@ -2998,16 +2964,6 @@ KtlLogStreamKernel::AsyncStreamNotificationContextKernel::OnCancel(
                             (ULONGLONG)_ActiveContext.GetMarshaller());   
     }
 }
-
-#ifndef UDRIVER
-KtlLogStream::AsyncStreamNotificationContext::AsyncStreamNotificationContext()
-{
-}
-
-KtlLogStream::AsyncStreamNotificationContext::~AsyncStreamNotificationContext()
-{
-}
-#endif
 
 KtlLogStreamKernel::AsyncStreamNotificationContextKernel::AsyncStreamNotificationContextKernel()
 {

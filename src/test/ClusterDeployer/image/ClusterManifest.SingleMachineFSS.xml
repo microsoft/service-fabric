@@ -84,7 +84,7 @@
       <Parameter Name="FirewallPolicyEnabled" Value="False" />
       <Parameter Name="SkipDockerProcessManagement" Value="True" />
       <Parameter Name="ContainerHostAddress" Value="http://docker.for.mac.host.internal:2376" />
-      <Parameter Name="DisableContainerServiceStartOnContainerActivatorOpen" Value="True" />
+      <Parameter Name="DisableContainers" Value="True" />
     </Section>
     <Section Name="HttpGateway">
       <Parameter Name="IsEnabled" Value="True" />

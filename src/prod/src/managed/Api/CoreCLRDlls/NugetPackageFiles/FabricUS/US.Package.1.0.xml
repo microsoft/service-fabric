@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServicePackage 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="US" 
+    ManifestVersion="Current" 
+    RolloutVersion="1.0" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>A Windows Fabric system service that does cluster upgrade.</Description>
+    <DigestedServiceTypes RolloutVersion="1.0">
+        <ServiceTypes>
+            <StatefulServiceType ServiceTypeName="UpgradeServiceType" HasPersistedState="true" />
+        </ServiceTypes>
+    </DigestedServiceTypes>
+    <DigestedCodePackage RolloutVersion="1.0">
+        <CodePackage Name="Code" Version="Current">
+            <EntryPoint>
+                <ExeHost>
+                    <Program>FabricUS.sh</Program>
+                </ExeHost>
+            </EntryPoint>
+        </CodePackage>
+    </DigestedCodePackage>
+    <DigestedResources RolloutVersion="1.0">
+      <DigestedEndpoints>
+        <DigestedEndpoint>
+          <Endpoint Name="ReplicatorEndpoint" Type="Internal" Protocol="tcp" />
+        </DigestedEndpoint>
+      </DigestedEndpoints>
+    </DigestedResources>
+  <Diagnostics />
+</ServicePackage>

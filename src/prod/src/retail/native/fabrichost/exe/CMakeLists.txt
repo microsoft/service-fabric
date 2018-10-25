@@ -79,7 +79,5 @@ target_link_libraries(${exe_FabricHost}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 

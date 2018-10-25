@@ -36,9 +36,8 @@ namespace Data
                 __in IBackupManager & backupManager,
                 __in LogRecordLib::InvalidLogRecords & invalidLogRecords,
                 __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
-				__in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
-                __in KAllocator & allocator
-				);
+                __in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
+                __in KAllocator & allocator);
 
             __declspec(property(get = get_LastAppliedBarrierRecord)) LogRecordLib::LogRecord::CSPtr LastAppliedBarrierRecord;
             LogRecordLib::LogRecord::CSPtr get_LastAppliedBarrierRecord() const
@@ -56,6 +55,12 @@ namespace Data
             NTSTATUS get_LogError() const
             {
                 return logError_.load();
+            }
+
+            __declspec(property(get = get_ChangeHandler)) TxnReplicator::ITransactionChangeHandler::SPtr ChangeHandler;
+            TxnReplicator::ITransactionChangeHandler::SPtr get_ChangeHandler() const
+            {
+                return changeHandlerCache_.Get();
             }
 
             void Reuse();
@@ -120,11 +125,11 @@ namespace Data
 
             void Unlock(__in LogRecordLib::LogicalLogRecord & record) override;
 
-			// Notification APIs
-			NTSTATUS RegisterTransactionChangeHandler(
-				__in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept override;
+            // Notification APIs
+            NTSTATUS RegisterTransactionChangeHandler(
+                __in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept override;
 
-			NTSTATUS UnRegisterTransactionChangeHandler() noexcept override;
+            NTSTATUS UnRegisterTransactionChangeHandler() noexcept override;
 
         private:
 
@@ -138,7 +143,7 @@ namespace Data
                 __in IBackupManager & backupManager,
                 __in LogRecordLib::InvalidLogRecords & invalidLogRecords,
                 __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
-				__in TxnReplicator::ITransactionalReplicator & transactionalReplicator);
+                __in TxnReplicator::ITransactionalReplicator & transactionalReplicator);
 
             ktl::Awaitable<void> ApplyCallback(__in LogRecordLib::LogRecord & record) noexcept;
 
@@ -164,13 +169,13 @@ namespace Data
             Common::atomic_long serviceError_;
             Common::atomic_long logError_;
             Utilities::ThreadSafeCSPtrCache<LogRecordLib::LogRecord> lastAppliedBarrierRecord_;
-			Utilities::ThreadSafeSPtrCache<TxnReplicator::ITransactionChangeHandler> changeHandlerCache_;
+            Utilities::ThreadSafeSPtrCache<TxnReplicator::ITransactionChangeHandler> changeHandlerCache_;
 
             // Pointer to a configuration object shared throughout this replicator instance
             TxnReplicator::TRInternalSettingsSPtr const transactionalReplicatorConfig_;
             bool const enableSecondaryCommitApplyAcknowledgement_;
 
-		    TxnReplicator::ITransactionalReplicator * transactionalReplicator_;
+            TxnReplicator::ITransactionalReplicator * transactionalReplicator_;
         };
     }
 }

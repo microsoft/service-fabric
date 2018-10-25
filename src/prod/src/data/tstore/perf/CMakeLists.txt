@@ -15,7 +15,6 @@ add_executable(${exe_TStore_Perf}
   ../DataStructures.Perf.cpp
   ../FileStream.Perf.cpp
   ../KBufferComparer.cpp
-  ../LockManager.Perf.cpp
   ../LongBufferStore.Perf.cpp
   ../LongLongStore.Perf.cpp
   ../MockStateManager.cpp
@@ -55,8 +54,6 @@ target_link_libraries(${exe_TStore_Perf}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

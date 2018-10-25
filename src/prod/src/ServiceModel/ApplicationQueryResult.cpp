@@ -45,37 +45,6 @@ ApplicationQueryResult::ApplicationQueryResult(
 {
 }
 
-ApplicationQueryResult::ApplicationQueryResult(ApplicationQueryResult &&other)
-    : applicationName_(move(other.applicationName_))
-    , applicationTypeName_(move(other.applicationTypeName_))
-    , applicationTypeVersion_(move(other.applicationTypeVersion_))
-    , applicationStatus_(other.applicationStatus_)
-    , applicationParameters_(move(other.applicationParameters_))
-    , applicationDefinitionKind_(other.applicationDefinitionKind_)
-    , upgradeTypeVersion_(move(other.upgradeTypeVersion_))
-    , upgradeParameters_(move(other.upgradeParameters_))
-    , healthState_(move(other.healthState_))
-{
-}
-
-ApplicationQueryResult & ApplicationQueryResult::operator = (ApplicationQueryResult && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        applicationTypeName_ = move(other.applicationTypeName_);
-        applicationTypeVersion_ = move(other.applicationTypeVersion_);
-        applicationStatus_ = move(other.applicationStatus_);
-        healthState_ = move(other.healthState_);
-        applicationParameters_ = move(other.applicationParameters_);
-        applicationDefinitionKind_ = other.applicationDefinitionKind_;
-        upgradeTypeVersion_ = move(other.upgradeTypeVersion_);
-        upgradeParameters_ = move(other.upgradeParameters_);
-    }
-
-    return *this;
-}
-
 void ApplicationQueryResult::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_APPLICATION_QUERY_RESULT_ITEM & publicApplicationQueryResult) const 

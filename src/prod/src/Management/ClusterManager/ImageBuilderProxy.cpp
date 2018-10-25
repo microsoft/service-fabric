@@ -5,6 +5,8 @@
 
 #include "stdafx.h"
 #include <stdio.h>
+#include "Hosting2/SetupConfig.h"
+#include "Hosting2/HostingConfig.h"
 
 using namespace Common;
 using namespace std;
@@ -37,8 +39,10 @@ GlobalWString ImageBuilderProxy::AppTypeOutputDirectory = make_global<wstring>(L
 GlobalWString ImageBuilderProxy::AppOutputDirectory = make_global<wstring>(L"App");
 #if defined(PLATFORM_UNIX)
 GlobalWString ImageBuilderProxy::ImageBuilderExeName = make_global<wstring>(L"ImageBuilder.sh");
-#else
+#elif !DotNetCoreClrIOT
 GlobalWString ImageBuilderProxy::ImageBuilderExeName = make_global<wstring>(L"ImageBuilder.exe");
+#else
+GlobalWString ImageBuilderProxy::ImageBuilderExeName = make_global<wstring>(L"ImageBuilder.bat");
 #endif
 GlobalWString ImageBuilderProxy::ApplicationTypeInfoOutputFilename = make_global<wstring>(L"ApplicationTypeInfo.txt");
 GlobalWString ImageBuilderProxy::FabricUpgradeOutputDirectory = make_global<wstring>(L"FabricUpgrade");
@@ -89,6 +93,11 @@ GlobalWString ImageBuilderProxy::OverrideFilePath = make_global<wstring>(L"/of")
 GlobalWString ImageBuilderProxy::OutputComposeFilePath = make_global<wstring>(L"/ocf");
 GlobalWString ImageBuilderProxy::CleanupComposeFiles = make_global<wstring>(L"/cleanup");
 GlobalWString ImageBuilderProxy::GenerateDnsNames = make_global<wstring>(L"/generateDnsNames");
+GlobalWString ImageBuilderProxy::SingleInstanceApplicationDescriptionString = make_global<wstring>(L"/singleInstanceApplicationDescription");
+GlobalWString ImageBuilderProxy::UseOpenNetworkConfig = make_global<wstring>(L"/useOpenNetworkConfig");
+GlobalWString ImageBuilderProxy::DisableApplicationPackageCleanup = make_global<wstring>(L"/disableApplicationPackageCleanup");
+GlobalWString ImageBuilderProxy::GenerationConfig = make_global<wstring>(L"/generationConfig");
+GlobalWString ImageBuilderProxy::SFVolumeDiskServiceEnabled = make_global<wstring>(L"/sfVolumeDiskServiceEnabled");
 
 GlobalWString ImageBuilderProxy::OperationBuildApplicationTypeInfo = make_global<wstring>(L"BuildApplicationTypeInfo");
 GlobalWString ImageBuilderProxy::OperationDownloadAndBuildApplicationType = make_global<wstring>(L"DownloadAndBuildApplicationType");
@@ -105,6 +114,8 @@ GlobalWString ImageBuilderProxy::OperationValidateComposeFile = make_global<wstr
 GlobalWString ImageBuilderProxy::OperationBuildComposeDeploymentType = make_global<wstring>(L"BuildComposeDeployment");
 GlobalWString ImageBuilderProxy::OperationBuildComposeApplicationTypeForUpgrade = make_global<wstring>(L"BuildComposeApplicationForUpgrade");
 GlobalWString ImageBuilderProxy::OperationCleanupApplicationPackage = make_global<wstring>(L"CleanupApplicationPackage");
+GlobalWString ImageBuilderProxy::OperationBuildSingleInstanceApplication = make_global<wstring>(L"BuildSingleInstanceApplication");
+GlobalWString ImageBuilderProxy::OperationBuildSingleInstanceApplicationForUpgrade = make_global<wstring>(L"BuildSingleInstanceApplicationForUpgrade");
 
 // 
 // *** Async operations for JobQueue
@@ -1049,6 +1060,535 @@ private:
 
     ServiceModelVersion targetVersion_;
     ServiceModelVersion currentVersion_;
+};
+
+class ImageBuilderProxy::BuildSingleInstanceApplicationAsyncOperation : public ImageBuilderAsyncOperationBase
+{
+public:
+    BuildSingleInstanceApplicationAsyncOperation(
+        __in ImageBuilderProxy & owner,
+        Common::ActivityId const & activityId,
+        ModelV2::ApplicationDescription const & applicationDescription,
+        ServiceModelTypeName const &typeName,
+        ServiceModelVersion const &typeVersion,
+        Common::NamingUri const & appName,
+        ServiceModelApplicationId const & appId,
+        TimeSpan const& timeout,
+        AsyncCallback const &callback,
+        AsyncOperationSPtr const &parent)
+        : ImageBuilderAsyncOperationBase(
+            owner,
+            activityId,
+            timeout,
+            callback,
+            parent)
+        , applicationDescription_(applicationDescription)
+        , appName_(appName)
+        , typeName_(typeName)
+        , typeVersion_(typeVersion)
+        , appId_(appId)
+        , outputDirectory_()
+        , buildPath_()
+        , serviceManifests_()
+        , applicationManifestContent_()
+        , healthPolicy_()
+        , defaultParamList_()
+        , currentApplicationResult_()
+        , layoutRoot_(owner.appOutputBaseDirectory_)
+        , storeLayout_(layoutRoot_)
+    {
+    }
+
+    static ErrorCode End(
+        AsyncOperationSPtr const & operation,
+        __out vector<ServiceModelServiceManifestDescription> & serviceManifests,
+        __out wstring & applicationManifestContent,
+        __out ApplicationHealthPolicy & healthPolicy,
+        __out map<wstring, wstring> & defaultParamList,
+        __out DigestedApplicationDescription &digestedAppPackage)
+    {
+        auto casted = AsyncOperation::End<BuildSingleInstanceApplicationAsyncOperation>(operation);
+
+        if (casted->Error.IsSuccess())
+        {
+            serviceManifests = move(casted->serviceManifests_);
+            applicationManifestContent = move(casted->applicationManifestContent_);
+            healthPolicy = move(casted->healthPolicy_);
+            defaultParamList = move(casted->defaultParamList_);
+            digestedAppPackage = move(casted->currentApplicationResult_);
+        }
+
+        return casted->Error;
+    }
+
+    void OnProcessJob(AsyncOperationSPtr const & thisSPtr) override
+    {
+        this->DoBuildApplication(thisSPtr);
+    }
+
+protected:
+    void OnRunImageBuilderComplete(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+        auto error = this->Owner.EndRunImageBuilderExe(operation);
+
+        if (error.IsSuccess())
+        {
+            BuildLayoutSpecification layout(buildPath_);
+
+            ApplicationManifestDescription appManifest;
+            auto applicationManifestPath = layout.GetApplicationManifestFile();
+            error = this->Owner.ReadApplicationManifest(applicationManifestPath, appManifest);
+            if (error.IsSuccess())
+            {
+                error = this->Owner.ParseApplicationManifest(appManifest, layout, serviceManifests_);
+            }
+
+            if (error.IsSuccess())
+            {
+                healthPolicy_ = appManifest.Policies.HealthPolicy;
+                defaultParamList_ = move(appManifest.ApplicationParameters);
+
+                error = this->Owner.ReadApplicationManifestContent(applicationManifestPath, applicationManifestContent_);
+            }
+            
+            if (error.IsSuccess())
+            {
+                wstring applicationVersionInstance = wformatString("{0}", Constants::InitialApplicationVersionInstance);
+                auto appFile = storeLayout_.GetApplicationInstanceFile(typeName_.Value, appId_.Value, applicationVersionInstance);
+
+                ApplicationInstanceDescription appDescription;
+                error = this->Owner.ReadApplication(appFile, /*out*/ appDescription);
+                if (error.IsSuccess())
+                {
+                    error = this->Owner.ParseApplication(
+                        appName_, 
+                        appDescription, 
+                        storeLayout_, 
+                        /*out*/ currentApplicationResult_);
+                }
+            }
+        }
+
+        this->Owner.DeleteDirectory(outputDirectory_);
+        this->Owner.DeleteDirectory(buildPath_);
+
+        this->TryComplete(operation->Parent, error);
+    }
+
+private:
+    virtual void DoBuildApplication(AsyncOperationSPtr const & thisSPtr)
+    {
+        this->Owner.WriteInfo(
+            TraceComponent,
+            "{0}+{1}: processing build single instance application Image Builder job for application: {2} typeName: {3} typeVersion: {4}",
+            ImageBuilderAsyncOperationBase::TraceId,
+            this->ActivityId,
+            applicationDescription_.ApplicationUri,
+            typeName_,
+            typeVersion_);
+
+        wstring cmdLineArgs;
+        this->Owner.InitializeCommandLineArguments(cmdLineArgs);
+
+        // This is the build layout root.
+        buildPath_ = Path::Combine(this->Owner.appTypeOutputBaseDirectory_, typeName_.Value);
+        auto error = this->Owner.CreateOutputDirectory(buildPath_);
+        if (!error.IsSuccess())
+        {
+            this->TryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        // This is CM's store layout root
+        outputDirectory_ = storeLayout_.GetApplicationInstanceFolder(typeName_.Value, appId_.Value);
+        error = this->Owner.CreateOutputDirectory(outputDirectory_);
+        if (!error.IsSuccess())
+        {
+            this->TryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        ByteBufferUPtr applicationDescriptionBuffer;
+        error = JsonHelper::Serialize(applicationDescription_, applicationDescriptionBuffer);
+        if (!error.IsSuccess())
+        {
+            this->Owner.WriteInfo(
+                TraceComponent,
+                "{0}+{1} error serializing ApplicationDescription {2} : {3}",
+                ImageBuilderAsyncOperationBase::TraceId,
+                this->ActivityId,
+                applicationDescription_.ApplicationUri,
+                error);
+            this->TryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        wstring tempFilename = File::GetTempFileNameW(buildPath_);
+        error = this->Owner.WriteToFile(tempFilename, *applicationDescriptionBuffer);
+        if (!error.IsSuccess())
+        {
+            this->TryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        this->Owner.AddImageBuilderArgument(
+            cmdLineArgs,
+            SingleInstanceApplicationDescriptionString,
+            tempFilename);
+
+        ByteBufferUPtr configBuffer;
+        ClusterManager::ContainerGroupConfig config;
+        error = JsonHelper::Serialize(config, configBuffer);
+        if (!error.IsSuccess())
+        {
+            this->Owner.WriteInfo(
+                TraceComponent,
+                "{0}+{1} error serializing ContainerGroupConfig {2}",
+                ImageBuilderAsyncOperationBase::TraceId,
+                this->ActivityId,
+                error);
+            this->TryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        tempFilename = File::GetTempFileNameW(buildPath_);
+        error = this->Owner.WriteToFile(tempFilename, *configBuffer);
+        if (!error.IsSuccess())
+        {
+            this->TryComplete(thisSPtr, move(error));
+            return;
+        }
+
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, ImageBuilderProxy::GenerationConfig, tempFilename);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, AppName, appName_.ToString());
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, AppTypeName, typeName_.Value);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, AppTypeVersion, typeVersion_.Value);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, AppId, appId_.Value);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, BuildPath, buildPath_);
+
+        if (ClusterManagerReplica::IsDnsServiceEnabled())
+        {
+            this->Owner.AddImageBuilderArgument(cmdLineArgs, GenerateDnsNames, L"true");
+        }
+
+        if (ManagementConfig::GetConfig().DisableChecksumValidation)
+        {
+            this->Owner.AddImageBuilderArgument(cmdLineArgs, DisableChecksumValidation, L"true");
+        }
+
+        if (Hosting2::HostingConfig::GetConfig().IPProviderEnabled && 
+            Hosting2::SetupConfig::GetConfig().ContainerNetworkSetup)
+        {
+            this->Owner.AddImageBuilderArgument(cmdLineArgs, UseOpenNetworkConfig, L"true");
+        }
+
+        //
+        // Serverside copy helps in cases where code and data packages need not be downloaded and then re-uploaded to the store, rather directly
+        // copied from incoming location to the store. 
+        // For CGS applications, nothing is present in the incoming location, so serverside copy
+        // is not needed and there is no argument for that in IB as of now.
+        //
+        RunImageBuilderExe(thisSPtr, cmdLineArgs);
+    }
+
+    virtual void RunImageBuilderExe(AsyncOperationSPtr const &thisSPtr, wstring &cmdLineArgs)
+    {
+        auto operation = this->Owner.BeginRunImageBuilderExe(
+            this->ActivityId,
+            OperationBuildSingleInstanceApplication,
+            layoutRoot_,
+            cmdLineArgs,
+            map<wstring, wstring>(),
+            this->Timeout,
+            [this](AsyncOperationSPtr const & operation) { this->OnRunImageBuilderComplete(operation, false); },
+            thisSPtr);
+
+        this->OnRunImageBuilderComplete(operation, true);
+    }
+
+protected:
+    NamingUri appName_;
+    ServiceModelTypeName typeName_;
+    ServiceModelVersion typeVersion_;
+    ModelV2::ApplicationDescription applicationDescription_;
+    ProgressDetailsCallback progressDetailsCallback_;
+    wstring layoutRoot_;
+    StoreLayoutSpecification storeLayout_;
+    ServiceModelApplicationId appId_;
+    wstring buildPath_;
+    wstring outputDirectory_;
+    vector<ServiceModelServiceManifestDescription> serviceManifests_;
+    wstring applicationManifestContent_;
+    ApplicationHealthPolicy healthPolicy_;
+    map<wstring, wstring> defaultParamList_;
+    DigestedApplicationDescription currentApplicationResult_;
+};
+
+class ImageBuilderProxy::BuildSingleInstanceApplicationForUpgradeAsyncOperation : public BuildSingleInstanceApplicationAsyncOperation
+{
+public:
+    BuildSingleInstanceApplicationForUpgradeAsyncOperation(
+        __in ImageBuilderProxy & owner,
+        Common::ActivityId const & activityId,
+        ModelV2::ApplicationDescription const &description,
+        ServiceModelTypeName const &typeName,
+        ServiceModelVersion const & currentTypeVersion,
+        ServiceModelVersion const & targetTypeVersion,
+        Common::NamingUri const & appName,
+        ServiceModelApplicationId const & appId,
+        uint64 currentApplicationVersion,
+        TimeSpan const& timeout,
+        AsyncCallback const &callback,
+        AsyncOperationSPtr const &parent)
+        : BuildSingleInstanceApplicationAsyncOperation(
+            owner,
+            activityId,
+            description,
+            typeName,
+            targetTypeVersion,
+            appName,
+            appId,
+            timeout,
+            callback,
+            parent)
+        , currentTypeVersion_(currentTypeVersion)
+        , targetTypeVersion_(targetTypeVersion)
+        , currentApplicationVersion_(currentApplicationVersion)
+    {
+    }
+
+    static ErrorCode End(
+        AsyncOperationSPtr const & operation,
+        __out vector<ServiceModelServiceManifestDescription> & serviceManifests,
+        __out wstring & applicationManifestContent,
+        __out ApplicationHealthPolicy & healthPolicy,
+        __out map<wstring, wstring> & defaultParamList,
+        __out DigestedApplicationDescription & currentApplicationDescription,
+        __out DigestedApplicationDescription & targetApplicationDescription)
+    {
+        auto casted = AsyncOperation::End<BuildSingleInstanceApplicationForUpgradeAsyncOperation>(operation);
+
+        if (casted->Error.IsSuccess())
+        {
+            serviceManifests = move(casted->serviceManifests_);
+            applicationManifestContent = move(casted->applicationManifestContent_);
+            healthPolicy = move(casted->healthPolicy_);
+            defaultParamList = move(casted->defaultParamList_);
+            currentApplicationDescription = move(casted->currentApplicationResult_);
+            targetApplicationDescription = move(casted->targetApplicationResult_);
+        }
+
+        return casted->Error;
+    }
+
+private:
+    void DoBuildApplication(AsyncOperationSPtr const & thisSPtr) override
+    {
+        this->Owner.WriteInfo(
+            TraceComponent,
+            "{0}+{1}: processing build single instance application for upgrade Image Builder job for application: {2} typeName: {3} currentTypeVersion: {4} targetTypeVersion: {5}",
+            ImageBuilderAsyncOperationBase::TraceId,
+            this->ActivityId,
+            applicationDescription_.ApplicationUri,
+            typeName_,
+            currentTypeVersion_,
+            targetTypeVersion_);
+
+        wstring cmdLineArgs;
+        this->Owner.InitializeCommandLineArguments(cmdLineArgs);
+
+        // This is the build layout root.
+        buildPath_ = Path::Combine(this->Owner.appTypeOutputBaseDirectory_, typeName_.Value);
+        auto error = this->Owner.CreateOutputDirectory(buildPath_);
+        if (!error.IsSuccess())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        // This is CM's store layout root
+        outputDirectory_ = storeLayout_.GetApplicationInstanceFolder(typeName_.Value, appId_.Value);
+        error = this->Owner.CreateOutputDirectory(outputDirectory_);
+        if (!error.IsSuccess())
+        {
+            this->TryComplete(thisSPtr, error);
+            return;
+        }
+
+        ByteBufferUPtr descriptionBuffer;
+        error = JsonHelper::Serialize(applicationDescription_, descriptionBuffer);
+        if (!error.IsSuccess())
+        {
+            this->Owner.WriteInfo(
+                TraceComponent,
+                "{0}+{1} error serializing applicationdescription {2} : {3}",
+                ImageBuilderAsyncOperationBase::TraceId,
+                this->ActivityId,
+                applicationDescription_.ApplicationUri,
+                error);
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        wstring tempFilename = File::GetTempFileNameW(buildPath_);
+        error = this->Owner.WriteToFile(tempFilename, *descriptionBuffer);
+        if (!error.IsSuccess())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        this->Owner.AddImageBuilderArgument(
+            cmdLineArgs,
+            SingleInstanceApplicationDescriptionString,
+            tempFilename);
+
+        ByteBufferUPtr configBuffer;
+        ClusterManager::ContainerGroupConfig config;
+        error = JsonHelper::Serialize(config, configBuffer);
+        if (!error.IsSuccess())
+        {
+            this->Owner.WriteInfo(
+                TraceComponent,
+                "{0}+{1} error serializing ContainerGroupConfig {2}",
+                ImageBuilderAsyncOperationBase::TraceId,
+                this->ActivityId,
+                error);
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        tempFilename = File::GetTempFileNameW(buildPath_);
+        error = this->Owner.WriteToFile(tempFilename, *configBuffer);
+        if (!error.IsSuccess())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, ImageBuilderProxy::GenerationConfig, tempFilename);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, AppName, appName_.ToString());
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, AppTypeName, typeName_.Value);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, CurrentTypeVersion, currentTypeVersion_.Value);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, TargetTypeVersion, targetTypeVersion_.Value);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, AppId, appId_.Value);
+
+        wstring currentAppVersionInstance = wformatString("{0}", currentApplicationVersion_);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, CurrentAppInstanceVersion, currentAppVersionInstance);
+        this->Owner.AddImageBuilderArgument(cmdLineArgs, BuildPath, buildPath_);
+
+        if (ClusterManagerReplica::IsDnsServiceEnabled())
+        {
+            this->Owner.AddImageBuilderArgument(cmdLineArgs, GenerateDnsNames, L"true");
+        }
+
+        if (ManagementConfig::GetConfig().DisableChecksumValidation)
+        {
+            this->Owner.AddImageBuilderArgument(cmdLineArgs, DisableChecksumValidation, L"true");
+        }
+
+        if (Hosting2::HostingConfig::GetConfig().IPProviderEnabled &&
+            Hosting2::SetupConfig::GetConfig().ContainerNetworkSetup)
+        {
+            this->Owner.AddImageBuilderArgument(cmdLineArgs, UseOpenNetworkConfig, L"true");
+        }
+        
+        //
+        // Serverside copy helps in cases where code and data packages need not be downloaded and then re-uploaded to the store, rather directly
+        // copied from incoming location to the store. 
+        //
+        RunImageBuilderExe(thisSPtr, cmdLineArgs);
+    }
+
+    void RunImageBuilderExe(AsyncOperationSPtr const &thisSPtr, wstring &cmdLineArgs) override
+    {
+        auto operation = this->Owner.BeginRunImageBuilderExe(
+            this->ActivityId,
+            OperationBuildSingleInstanceApplicationForUpgrade,
+            layoutRoot_,
+            cmdLineArgs,
+            map<wstring, wstring>(),
+            this->Timeout,
+            [this](AsyncOperationSPtr const & operation) { this->OnRunImageBuilderComplete(operation, false); },
+            thisSPtr);
+
+        this->OnRunImageBuilderComplete(operation, true);
+    }
+
+    void OnRunImageBuilderComplete(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+        auto error = this->Owner.EndRunImageBuilderExe(operation);
+
+        if (error.IsSuccess())
+        {
+            BuildLayoutSpecification layout(buildPath_);
+
+            ApplicationManifestDescription appManifest;
+            auto applicationManifestPath = layout.GetApplicationManifestFile();
+            error = this->Owner.ReadApplicationManifest(applicationManifestPath, appManifest);
+            if (error.IsSuccess())
+            {
+                error = this->Owner.ParseApplicationManifest(appManifest, layout, serviceManifests_);
+            }
+
+            if (error.IsSuccess())
+            {
+                healthPolicy_ = appManifest.Policies.HealthPolicy;
+                defaultParamList_ = move(appManifest.ApplicationParameters);
+
+                error = this->Owner.ReadApplicationManifestContent(applicationManifestPath, applicationManifestContent_);
+            }
+
+            wstring currentAppVersionInstance = wformatString("{0}", currentApplicationVersion_);
+            wstring targetAppVersionInstance = wformatString("{0}", currentApplicationVersion_ + 1);
+            if (error.IsSuccess())
+            {
+                auto appFile = storeLayout_.GetApplicationInstanceFile(typeName_.Value, appId_.Value, currentAppVersionInstance);
+
+                ApplicationInstanceDescription appDescription;
+                error = this->Owner.ReadApplication(appFile, /*out*/ appDescription);
+                if (error.IsSuccess())
+                {
+                    error = this->Owner.ParseApplication(
+                        appName_,
+                        appDescription,
+                        storeLayout_,
+                        /*out*/ currentApplicationResult_);
+                }
+            }
+
+            if (error.IsSuccess())
+            {
+                auto appFile = storeLayout_.GetApplicationInstanceFile(typeName_.Value, appId_.Value, targetAppVersionInstance);
+
+                ApplicationInstanceDescription appDescription;
+                error = this->Owner.ReadApplication(appFile, /*out*/ appDescription);
+                if (error.IsSuccess())
+                {
+                    error = this->Owner.ParseApplication(
+                        appName_,
+                        appDescription,
+                        storeLayout_,
+                        /*out*/ targetApplicationResult_);
+                }
+            }
+        }
+
+        this->Owner.DeleteDirectory(outputDirectory_);
+        this->Owner.DeleteDirectory(buildPath_);
+
+        this->TryComplete(operation->Parent, error);
+    }
+
+    ServiceModelVersion currentTypeVersion_;
+    ServiceModelVersion targetTypeVersion_;
+    uint64 currentApplicationVersion_;
+
+    DigestedApplicationDescription targetApplicationResult_;
 };
 
 class ImageBuilderProxy::BuildApplicationAsyncOperation : public ImageBuilderAsyncOperationBase
@@ -2287,6 +2827,101 @@ ErrorCode ImageBuilderProxy::EndBuildComposeApplicationTypeForUpgrade(
         mergedComposeFile);
 }
 
+AsyncOperationSPtr ImageBuilderProxy::BeginBuildSingleInstanceApplication(
+    ActivityId const & activityId,
+    ServiceModelTypeName const & typeName,
+    ServiceModelVersion const & typeVersion,
+    ServiceModel::ModelV2::ApplicationDescription const & applicationDescription,
+    NamingUri const & appName,
+    ServiceModelApplicationId const & appId,
+    TimeSpan const timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    auto operation = make_shared<BuildSingleInstanceApplicationAsyncOperation>(
+        *this,
+        activityId,
+        applicationDescription,
+        typeName,
+        typeVersion,
+        appName,
+        appId,
+        timeout,
+        callback,
+        parent);
+
+    applicationJobQueue_->TryEnqueueOrFail(*this, operation);
+    return operation;
+}
+
+ErrorCode ImageBuilderProxy::EndBuildSingleInstanceApplication(
+    AsyncOperationSPtr const & operation,
+    __out vector<ServiceModelServiceManifestDescription> & serviceManifests,
+    __out wstring & applicationManifestContent,
+    __out ApplicationHealthPolicy & healthPolicy,
+    __out map<wstring, wstring> & defaultParamList,
+    __out DigestedApplicationDescription & digestedApplicationDescription)
+{
+    return BuildSingleInstanceApplicationAsyncOperation::End(
+        operation,
+        serviceManifests,
+        applicationManifestContent,
+        healthPolicy,
+        defaultParamList,
+        digestedApplicationDescription);
+}
+
+AsyncOperationSPtr ImageBuilderProxy::BeginBuildSingleInstanceApplicationForUpgrade(
+    ActivityId const &activityId,
+    ServiceModelTypeName const &typeName,
+    ServiceModelVersion const &currentTypeVersion,
+    ServiceModelVersion const &targetTypeVersion,
+    ModelV2::ApplicationDescription  const &description,
+    Common::NamingUri const & appName,
+    ServiceModelApplicationId const & appId,
+    uint64 currentApplicationVersion,
+    TimeSpan const timeout,
+    AsyncCallback const &callback,
+    AsyncOperationSPtr const &parent)
+{
+    auto operation = make_shared<BuildSingleInstanceApplicationForUpgradeAsyncOperation>(
+        *this,
+        activityId,
+        description,
+        typeName,
+        currentTypeVersion,
+        targetTypeVersion,
+        appName,
+        appId,
+        currentApplicationVersion,
+        timeout,
+        callback,
+        parent);
+
+    applicationJobQueue_->TryEnqueueOrFail(*this, operation);
+
+    return operation;
+}
+
+ErrorCode ImageBuilderProxy::EndBuildSingleInstanceApplicationForUpgrade(
+   Common::AsyncOperationSPtr const &operation,
+   __out std::vector<ServiceModelServiceManifestDescription> &serviceManifests,
+   __out std::wstring &applicationManifestContent,
+   __out ServiceModel::ApplicationHealthPolicy &healthPolicy,
+   __out map<wstring, wstring> &defaultParamList,
+   __out DigestedApplicationDescription & currentApplicationDescription,
+   __out DigestedApplicationDescription & targetApplicationDescription)
+{
+    return BuildSingleInstanceApplicationForUpgradeAsyncOperation::End(
+        operation,
+        serviceManifests,
+        applicationManifestContent,
+        healthPolicy,
+        defaultParamList,
+        currentApplicationDescription,
+        targetApplicationDescription);
+}
+
 AsyncOperationSPtr ImageBuilderProxy::BeginBuildApplicationType(
     ActivityId const & activityId,
     wstring const & buildPath,
@@ -2903,10 +3538,33 @@ ErrorCode ImageBuilderProxy::AddImageBuilderApplicationParameters(
         parametersList);
 }
 
-
 wstring ImageBuilderProxy::CreatePair(wstring const & key, wstring const & value)
 {
     return wformatString("{0}={1}", key, value);
+}
+
+wstring ImageBuilderProxy::GetEscapedString(wstring &input)
+{
+    wstring::size_type startTokenPos = input.find_first_of(L"\"");
+    if (startTokenPos == wstring::npos)
+    {
+        return move(input);
+    }
+
+    wstring output;
+    for (size_t i = 0; i < input.length(); ++i)
+    {
+        if (input[i] == '"')
+        {
+            output += L"\""; 
+        }
+        else
+        {
+            output += input[i];
+        }
+    }
+
+    return output;
 }
 
 ErrorCode ImageBuilderProxy::RunImageBuilderExe(
@@ -3088,6 +3746,19 @@ ErrorCode ImageBuilderProxy::TryStartImageBuilderProcess(
     {
         AddImageBuilderArgument(args, StoreRoot, Management::ManagementConfig::GetConfig().ImageStoreConnectionString.GetPlaintext());
     }
+
+    // Pass the flag indicating if SFVolumeDisk is enabled or not.
+#if !defined(PLATFORM_UNIX)
+    if (Common::CommonConfig::GetConfig().EnableUnsupportedPreviewFeatures && Hosting2::HostingConfig::GetConfig().IsSFVolumeDiskServiceEnabled)
+    {
+        AddImageBuilderArgument(args, SFVolumeDiskServiceEnabled, L"true");    
+    }
+    else
+#endif // !defined(PLATFORM_UNIX)
+    {
+        AddImageBuilderArgument(args, SFVolumeDiskServiceEnabled, L"false"); 
+    }
+
 
 #if defined(PLATFORM_UNIX)
     vector<char> ansiEnvironment;
@@ -3539,13 +4210,9 @@ ErrorCode ImageBuilderProxy::ReadFromFile(
 
         // wide null for unicode
         buffer.push_back(0);
-
         
         // if the caller indicated that BOM is present, skip byte-order mark
-        if (isBOMPresent)
-        {
-            result = wstring(reinterpret_cast<wchar_t *>(&buffer[2]));
-        }
+        result = wstring(reinterpret_cast<wchar_t *>(&buffer[isBOMPresent ? 2 : 0]));
 
         return ErrorCodeValue::Success;
     }
@@ -4093,6 +4760,9 @@ ErrorCode ImageBuilderProxy::ParseServiceTemplates(
 
         FABRIC_MOVE_COST defaultMoveCost = description.IsDefaultMoveCostSpecified ? static_cast<FABRIC_MOVE_COST>(description.DefaultMoveCost) : FABRIC_MOVE_COST_LOW;
 
+        auto scalingPolicies = description.ScalingPolicies;
+
+
         Reliability::ServiceDescription serviceDescription(
             L"", // service name will be replaced when applying template
             0, // instance
@@ -4113,7 +4783,10 @@ ErrorCode ImageBuilderProxy::ParseServiceTemplates(
             defaultMoveCost, // default move cost
             vector<byte>(), // initialization data,
             appName.ToString(),
-            placementPolicies // Service placement policies
+            placementPolicies,
+            ServicePackageActivationMode::SharedProcess,
+            L"",
+            scalingPolicies
             );
 
         // Trigger special handling for ServiceGroup Templates
@@ -4377,6 +5050,8 @@ ErrorCode ImageBuilderProxy::ParseDefaultServices(
         // (RDBug 3274985 - application upgrade will check this value for default services so we have to keep it as it was prior to 3.1 - zero, unless user specified it).
         FABRIC_MOVE_COST defaultMoveCost = description.IsDefaultMoveCostSpecified ? static_cast<FABRIC_MOVE_COST>(description.DefaultMoveCost) : FABRIC_MOVE_COST_ZERO;
 
+        auto scalingPolicies = description.ScalingPolicies;
+
         WriteNoise(
             TraceComponent,
             "{0} ParseDefaultServices(): ServicePackageActivationMode=[{1}], ServiceDnsName=[{2}].",
@@ -4406,7 +5081,8 @@ ErrorCode ImageBuilderProxy::ParseDefaultServices(
             appName.ToString(),
             placementPolicies, // Service placement policies
             iter->PackageActivationMode,
-			iter->ServiceDnsName);
+			iter->ServiceDnsName,
+            scalingPolicies);
 
         Naming::PartitionedServiceDescriptor partitionedDescriptor;
         switch (description.Partition.Scheme)

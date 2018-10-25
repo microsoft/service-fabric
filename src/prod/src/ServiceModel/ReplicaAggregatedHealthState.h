@@ -22,11 +22,11 @@ namespace ServiceModel
             FABRIC_REPLICA_ID replicaId,
             FABRIC_HEALTH_STATE aggregatedHealthState);
 
-        ReplicaAggregatedHealthState(ReplicaAggregatedHealthState const & other);
-        ReplicaAggregatedHealthState & operator = (ReplicaAggregatedHealthState const & other);
+        ReplicaAggregatedHealthState(ReplicaAggregatedHealthState const & other) = default;
+        ReplicaAggregatedHealthState & operator = (ReplicaAggregatedHealthState const & other) = default;
 
-        ReplicaAggregatedHealthState(ReplicaAggregatedHealthState && other);
-        ReplicaAggregatedHealthState & operator = (ReplicaAggregatedHealthState && other);
+        ReplicaAggregatedHealthState(ReplicaAggregatedHealthState && other) = default;
+        ReplicaAggregatedHealthState & operator = (ReplicaAggregatedHealthState && other) = default;
 
         ~ReplicaAggregatedHealthState();
 

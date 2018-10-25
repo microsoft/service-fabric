@@ -24,7 +24,7 @@ namespace Naming
 
         Common::ErrorCode HarvestRequestMessage(Transport::MessageUPtr &&);
         void PerformRequest(Common::AsyncOperationSPtr const &);
-        Common::ErrorCode ValidateNameFragment();
+        bool AllowNameFragment() override;
 
     private:
         Common::ErrorCode InitializeEnumeration(

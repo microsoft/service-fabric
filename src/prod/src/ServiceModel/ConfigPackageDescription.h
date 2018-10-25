@@ -45,7 +45,7 @@ namespace ServiceModel
         friend struct ServiceManifestDescription;
 
         void ReadFromXml(Common::XmlReaderUPtr const &);
-		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
+        Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const &);
     };
 }
 

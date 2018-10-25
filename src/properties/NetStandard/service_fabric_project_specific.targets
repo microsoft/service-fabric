@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+  <ImportGroup>
+    <!-- Import the NetStandard Targets file -->
+    <Import Project="$(NuGetPackageRoot)\netstandard.library\$(NetStandardImplicitPackageVersion)\build\netstandard2.0\NETStandard.Library.targets"
+            Condition="Exists('$(NuGetPackageRoot)\netstandard.library\$(NetStandardImplicitPackageVersion)\build\netstandard2.0\NETStandard.Library.targets')" />
+    <!-- Import the NetCoreApp Targets file -->
+    <Import Project="$(MicrosoftNETCoreApptargets)"
+	        Condition=" '$(TargetFramework)' == 'netcoreapp2.0' And $(CurrentRuntimeIdentifier) != '' " />
+  </ImportGroup>
+</Project>

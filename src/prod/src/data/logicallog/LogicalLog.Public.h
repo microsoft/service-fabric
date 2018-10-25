@@ -13,6 +13,7 @@
 #include <ktrace.h>
 #include "../../ktllogger/ktlloggerX.h"
 #include "../../ktllogger/sys/inc/KLogicalLog.h"
+#include "../../ktllogger/sys/inc/ktllogger.h"
 #include "../utilities/Data.Utilities.Public.h"
 
 namespace Data
@@ -31,6 +32,7 @@ namespace LogTests
     using namespace Data::Log;
 }
 
+#include "KtlLoggerMode.h"
 #include "LogCreationFlags.h"
 #include "ILogicalLogReadStream.h"
 #include "ILogicalLog.h"

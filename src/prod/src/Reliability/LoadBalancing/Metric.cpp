@@ -19,15 +19,18 @@ Metric::Metric(
     int64 clusterTotalCapacity,
     int64 clusterBufferedCapacity,
     int64 clusterLoad,
-    bool isDefrag, 
+    bool isDefrag,
     int32 defragEmptyNodeCount,
     size_t defragEmptyNodeLoadThreshold,
+    int64 reservationLoad,
     DefragDistributionType defragEmptyNodesDistribution,
     double placementHeuristicIncomingLoadFactor,
     double placementHeuristicEmptySpacePercent,
     bool defragmentationScopedAlgorithmEnabled,
     PlacementStrategy placementStrategy,
-    double defragmentationEmptyNodeWeight)
+    double defragmentationEmptyNodeWeight,
+    double defragmentationNonEmptyNodeWeight,
+    bool balancingByPercentage)
     : name_(move(name)),
     weight_(weight),
     balancingThreshold_(balancingThreshold),
@@ -40,12 +43,15 @@ Metric::Metric(
     isDefrag_(isDefrag),
     defragEmptyNodeCount_(defragEmptyNodeCount),
     defragEmptyNodeLoadThreshold_(defragEmptyNodeLoadThreshold),
+    reservationLoad_(reservationLoad),
     defragEmptyNodesDistribution_(defragEmptyNodesDistribution),
     placementHeuristicIncomingLoadFactor_(placementHeuristicIncomingLoadFactor),
     placementHeuristicEmptySpacePercent_(placementHeuristicEmptySpacePercent),
     defragmentationScopedAlgorithmEnabled_(defragmentationScopedAlgorithmEnabled),
     placementStrategy_(placementStrategy),
-    defragmentationEmptyNodeWeight_(defragmentationEmptyNodeWeight)
+    defragmentationEmptyNodeWeight_(defragmentationEmptyNodeWeight),
+    defragmentationNonEmptyNodeWeight_(defragmentationNonEmptyNodeWeight),
+    balancingByPercentage_(balancingByPercentage)
 {
     // 1.0 means do balancing for any diff, 0.0 means infinity, e.g. never trigger balancing
     ASSERT_IFNOT(balancingThreshold >= 1.0 || balancingThreshold == 0.0,
@@ -65,12 +71,18 @@ Metric::Metric(Metric const & other)
     isDefrag_(other.isDefrag_),
     defragEmptyNodeCount_(other.defragEmptyNodeCount_),
     defragEmptyNodeLoadThreshold_(other.defragEmptyNodeLoadThreshold_),
+    reservationLoad_(other.reservationLoad_),
     defragEmptyNodesDistribution_(other.defragEmptyNodesDistribution_),
     placementHeuristicIncomingLoadFactor_(other.placementHeuristicIncomingLoadFactor_),
     placementHeuristicEmptySpacePercent_(other.placementHeuristicEmptySpacePercent_),
     defragmentationScopedAlgorithmEnabled_(other.defragmentationScopedAlgorithmEnabled_),
     placementStrategy_(other.placementStrategy_),
-    defragmentationEmptyNodeWeight_(other.defragmentationEmptyNodeWeight_)
+    defragmentationEmptyNodeWeight_(other.defragmentationEmptyNodeWeight_),
+    defragmentationNonEmptyNodeWeight_(other.defragmentationNonEmptyNodeWeight_),
+    balancingByPercentage_(other.balancingByPercentage_),
+    indexInGlobalDomain_(other.indexInGlobalDomain_),
+    indexInLocalDomain_(other.indexInLocalDomain_),
+    indexInTotalDomain_(other.indexInTotalDomain_)
 {
 }
 
@@ -87,12 +99,18 @@ Metric::Metric(Metric && other)
     isDefrag_(other.isDefrag_),
     defragEmptyNodeCount_(other.defragEmptyNodeCount_),
     defragEmptyNodeLoadThreshold_(other.defragEmptyNodeLoadThreshold_),
+    reservationLoad_(other.reservationLoad_),
     defragEmptyNodesDistribution_(other.defragEmptyNodesDistribution_),
     placementHeuristicIncomingLoadFactor_(other.placementHeuristicIncomingLoadFactor_),
     placementHeuristicEmptySpacePercent_(other.placementHeuristicEmptySpacePercent_),
     defragmentationScopedAlgorithmEnabled_(other.defragmentationScopedAlgorithmEnabled_),
     placementStrategy_(other.placementStrategy_),
-    defragmentationEmptyNodeWeight_(other.defragmentationEmptyNodeWeight_)
+    defragmentationEmptyNodeWeight_(other.defragmentationEmptyNodeWeight_),
+    defragmentationNonEmptyNodeWeight_(other.defragmentationNonEmptyNodeWeight_),
+    balancingByPercentage_(other.balancingByPercentage_),
+    indexInGlobalDomain_(other.indexInGlobalDomain_),
+    indexInLocalDomain_(other.indexInLocalDomain_),
+    indexInTotalDomain_(other.indexInTotalDomain_)
 {
 }
 
@@ -112,12 +130,18 @@ Metric & Metric::operator = (Metric && other)
         isDefrag_ = other.isDefrag_;
         defragEmptyNodeCount_ = other.defragEmptyNodeCount_;
         defragEmptyNodeLoadThreshold_ = other.defragEmptyNodeLoadThreshold_;
+        reservationLoad_ = other.reservationLoad_;
         defragEmptyNodesDistribution_ = other.defragEmptyNodesDistribution_;
         placementHeuristicIncomingLoadFactor_ = other.placementHeuristicIncomingLoadFactor_;
         placementHeuristicEmptySpacePercent_ = other.placementHeuristicEmptySpacePercent_;
         defragmentationScopedAlgorithmEnabled_ = other.defragmentationScopedAlgorithmEnabled_;
         placementStrategy_ = other.placementStrategy_;
         defragmentationEmptyNodeWeight_ = other.defragmentationEmptyNodeWeight_;
+        defragmentationNonEmptyNodeWeight_ = other.defragmentationNonEmptyNodeWeight_;
+        balancingByPercentage_ = other.balancingByPercentage_;
+        indexInGlobalDomain_ = other.indexInGlobalDomain_;
+        indexInLocalDomain_ = other.indexInLocalDomain_;
+        indexInTotalDomain_ = other.indexInTotalDomain_;
     }
 
     return *this;
@@ -135,18 +159,18 @@ bool Metric::get_ShouldCalculateBeneficialNodesForPlacement() const
 
 void Metric::WriteTo(TextWriter& writer, FormatOptions const&) const
 {
-    writer.Write("{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}",
+    writer.Write("{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}/{9}",
         name_, weight_, balancingThreshold_, isBalanced_, blockList_,
         activityThreshold_, clusterTotalCapacity_, clusterBufferedCapacity_,
-        clusterLoad_);
+        clusterLoad_, balancingByPercentage_);
 
     if (isDefrag_)
     {
-        writer.Write("/{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}",
-            isDefrag_, defragEmptyNodeLoadThreshold_, defragEmptyNodeCount_,
+        writer.Write("/{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}/{9}/{10}",
+            isDefrag_, defragEmptyNodeLoadThreshold_, reservationLoad_, defragEmptyNodeCount_,
             defragEmptyNodesDistribution_, placementHeuristicIncomingLoadFactor_,
             placementHeuristicEmptySpacePercent_, defragmentationScopedAlgorithmEnabled_,
-            defragmentationEmptyNodeWeight_, placementStrategy_);
+            defragmentationEmptyNodeWeight_, placementStrategy_, defragmentationNonEmptyNodeWeight_);
     }
 }
 

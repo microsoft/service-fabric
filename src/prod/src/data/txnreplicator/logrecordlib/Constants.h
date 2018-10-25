@@ -32,6 +32,7 @@ namespace Data
             static const LPCWSTR LogPathPrefix;
             static const std::wstring Test_Ktl_LoggingEngine;
             static const std::wstring Test_File_LoggingEngine;
+            static const std::wstring SerialDispatchingMode;
             static const ULONG PhysicalLogWriterMovingAverageHistory;
             static LONG64 const PhysicalLogWriterSlowFlushDurationInMs;
             static LONG64 const ProgressVectorMaxStringSizeInKb;

@@ -45,7 +45,8 @@ NodeDescription::NodeDescription(
     std::wstring const& nodeName,
     std::wstring const& nodeType,
     std::wstring const& ipAddressOrFQDN,
-    ULONG clusterConnectionPort)
+    ULONG clusterConnectionPort,
+    unsigned short httpGatewayPort)
     : versionInstance_(versionInstance),
       nodeUpgradeDomainId_(nodeUpgradeDomainId),
       nodeFaultDomainIds_(nodeFaultDomainIds),
@@ -55,55 +56,9 @@ NodeDescription::NodeDescription(
       nodeName_(nodeName),
       nodeType_(nodeType),
       ipAddressOrFQDN_(ipAddressOrFQDN),
-      clusterConnectionPort_(clusterConnectionPort)
+      clusterConnectionPort_(clusterConnectionPort),
+      httpGatewayPort_(httpGatewayPort)
 {
-}
-
-NodeDescription::NodeDescription(NodeDescription const& other)
-    : versionInstance_(other.versionInstance_),
-      nodeUpgradeDomainId_(other.nodeUpgradeDomainId_),
-      nodeFaultDomainIds_(other.nodeFaultDomainIds_),
-      nodePropertyMap_(other.nodePropertyMap_),
-      nodeCapacityRatioMap_(other.nodeCapacityRatioMap_),
-      nodeCapacityMap_(other.nodeCapacityMap_),
-      nodeName_(other.nodeName_),
-      nodeType_(other.nodeType_),
-      ipAddressOrFQDN_(other.ipAddressOrFQDN_),
-      clusterConnectionPort_(other.clusterConnectionPort_)
-{
-}
-
-NodeDescription::NodeDescription(NodeDescription && other)
-    : versionInstance_(std::move(other.versionInstance_)),
-      nodeUpgradeDomainId_(std::move(other.nodeUpgradeDomainId_)),
-      nodeFaultDomainIds_(std::move(other.nodeFaultDomainIds_)),
-      nodePropertyMap_(std::move(other.nodePropertyMap_)),
-      nodeCapacityRatioMap_(std::move(other.nodeCapacityRatioMap_)),
-      nodeCapacityMap_(std::move(other.nodeCapacityMap_)),
-      nodeName_(std::move(other.nodeName_)),
-      nodeType_(std::move(other.nodeType_)),
-      ipAddressOrFQDN_(std::move(other.ipAddressOrFQDN_)),
-      clusterConnectionPort_(std::move(other.clusterConnectionPort_))
-{
-}
-
-NodeDescription & NodeDescription::operator=(NodeDescription && other)
-{
-    if (this != &other)
-    {
-        versionInstance_ = std::move(other.versionInstance_);
-        nodeUpgradeDomainId_ = std::move(other.nodeUpgradeDomainId_);
-        nodeFaultDomainIds_ = std::move(other.nodeFaultDomainIds_);
-        nodePropertyMap_ = std::move(other.nodePropertyMap_);
-        nodeCapacityRatioMap_ = std::move(other.nodeCapacityRatioMap_);
-        nodeCapacityMap_ = std::move(other.nodeCapacityMap_);
-        nodeName_ = std::move(other.nodeName_);
-        nodeType_ = std::move(other.nodeType_);
-        ipAddressOrFQDN_ = std::move(other.ipAddressOrFQDN_);
-        clusterConnectionPort_ = other.clusterConnectionPort_;
-    }
-
-    return *this;
 }
 
 void NodeDescription::InitializeNodeName(Federation::NodeId const& nodeId)
@@ -113,7 +68,6 @@ void NodeDescription::InitializeNodeName(Federation::NodeId const& nodeId)
         nodeName_ = Federation::NodeIdGenerator::GenerateNodeName(nodeId);
     }
 }
-
 
 void NodeDescription::WriteTo(Common::TextWriter & w, Common::FormatOptions const&) const
 {
@@ -175,5 +129,10 @@ void NodeDescription::WriteTo(Common::TextWriter & w, Common::FormatOptions cons
         w.WriteLine("IpAddressOrFQDN: {0}", ipAddressOrFQDN_);
     }
 
-    w.WriteLine("ClusterConnectionPort: {0}", clusterConnectionPort_);    
+    w.WriteLine("ClusterConnectionPort: {0}", clusterConnectionPort_);   
+
+    if (httpGatewayPort_)
+    {
+        w.WriteLine("HttpGatewayPort: {0}", httpGatewayPort_);
+    }
 }

@@ -20,12 +20,6 @@ ChaosTargetFilter::ChaosTargetFilter()
 {
 }
 
-ChaosTargetFilter::ChaosTargetFilter(ChaosTargetFilter && other)
-: nodeTypeInclusionList_(move(other.nodeTypeInclusionList_))
-, applicationInclusionList_(move(other.applicationInclusionList_))
-{
-}
-
 ErrorCode ChaosTargetFilter::FromPublicApi(
     FABRIC_CHAOS_TARGET_FILTER const & publicFilter)
 {

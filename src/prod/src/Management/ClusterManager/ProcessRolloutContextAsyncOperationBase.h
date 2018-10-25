@@ -131,7 +131,7 @@ namespace Management
                 ParallelOperationCallback operationCallback_;
             };
 
-        protected:
+        public:
             Common::AsyncOperationSPtr BeginSubmitDeleteDnsServicePropertyBatch(
                 __in Common::AsyncOperationSPtr const & thisSPtr,                
                 __in std::wstring const & serviceDnsName,

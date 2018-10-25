@@ -50,7 +50,8 @@ namespace Reliability
                 std::wstring const & runtimeId) = 0;
 
             virtual void ProcessAppHostClosed(
-                std::wstring const & hostId) = 0;
+                std::wstring const & hostId,
+                Common::ActivityDescription const & activityDescription) = 0;
 
             virtual void ProcessNodeUpAck(
                 Transport::MessageUPtr && nodeUpReply, 

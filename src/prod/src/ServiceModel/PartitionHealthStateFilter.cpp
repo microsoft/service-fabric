@@ -30,29 +30,6 @@ PartitionHealthStateFilter::PartitionHealthStateFilter(
 {
 }
 
-PartitionHealthStateFilter::PartitionHealthStateFilter(PartitionHealthStateFilter && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , healthStateFilter_(move(other.healthStateFilter_))
-    , partitionIdFilter_(move(other.partitionIdFilter_))
-    , replicaFilters_(move(other.replicaFilters_))
-{
-}
-
-PartitionHealthStateFilter & PartitionHealthStateFilter::operator =(PartitionHealthStateFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-        partitionIdFilter_ = move(other.partitionIdFilter_);
-        replicaFilters_ = move(other.replicaFilters_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    return *this;
-}
-
 PartitionHealthStateFilter::~PartitionHealthStateFilter()
 {
 }

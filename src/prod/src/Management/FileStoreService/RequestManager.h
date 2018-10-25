@@ -8,7 +8,7 @@
 namespace Management
 {
     namespace FileStoreService
-    {                        
+    {
         class RequestManager :
             public Common::ComponentRoot,
             public Common::StateMachine,
@@ -56,11 +56,11 @@ namespace Management
             ~RequestManager();
 
             Common::ErrorCode Open();
-            Common::ErrorCode Close();            
+            Common::ErrorCode Close();
 
             void ProcessRequest(Transport::MessageUPtr &&, Transport::IpcReceiverContextUPtr &&);
             StoreFileVersion GetNextFileVersion();
-            
+
             __declspec(property(get=get_LocalStagingLocation)) std::wstring const & LocalStagingLocation;
             inline std::wstring const & get_LocalStagingLocation() const { return localStagingLocation_; }
 
@@ -84,22 +84,29 @@ namespace Management
                 __in Common::AsyncOperationSPtr const &,
                 __out bool & isStateChanged);
 
+            bool IsDataLossExpected();
+
         protected:
             virtual void OnAbort();
 
-        private:                     
+        private:
+
             class RecoverAsyncOperation;
             friend class ProcessRequestAsyncOperation;
             friend class StoreTransactionAsyncOperation;
             friend class FileUploadAsyncOperation;
             friend class FileCopyAsyncOperation;
             friend class ReplicatedStoreWrapper;
-        
+
             void OnProcessRequest(Transport::MessageUPtr &&, Transport::IpcReceiverContextUPtr &&);
             void OnRecoveryCompleted(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
             void OnProcessRequestComplete(Common::AsyncOperationSPtr const & operation);
+            void OnProcessChunkRequestComplete(
+                Common::AsyncOperationSPtr const &,
+                Common::Guid const &,
+                std::wstring const &);
 
-            bool ValidateClientMessage(__in Transport::MessageUPtr & message, __out std::wstring & rejectReason);            
+            bool ValidateClientMessage(__in Transport::MessageUPtr & message, __out std::wstring & rejectReason);
 
             std::wstring localStagingLocation_;
             std::wstring stagingShareLocation_;
@@ -108,10 +115,10 @@ namespace Management
             int64 const epochConfigurationNumber_;
             Common::atomic_uint64 versionNumber_;
             
-            PendingWriteOperations pendingWriteOperations_;                        
+            PendingWriteOperations pendingWriteOperations_;
             std::shared_ptr<RecoverAsyncOperation> recoveryOperation_;
             Common::RwLock recoveryOperationLock_;
-            ImageStoreServiceReplicaHolder serviceReplicaHolder_;     
+            ImageStoreServiceReplicaHolder serviceReplicaHolder_;
 
             std::unique_ptr<Common::DefaultJobQueue<RequestManager>> requestProcessingJobQueue_;
             std::unique_ptr<Common::DefaultTimedJobQueue<RequestManager>> fileOperationProcessingJobQueue_;
@@ -122,6 +129,11 @@ namespace Management
 
             // This is kept alive as we are holding to serviceReplicaHolder_
             SystemServices::ServiceRoutingAgentProxy & routingAgentProxy_;
+
+            // For creating predictable chaos for test
+            Common::atomic_uint64 uploadChunkCount_;
+            Common::atomic_uint64 commitUploadChunkCount_;
+            Common::atomic_uint64 createUploadChunkCount_;
         };
     }
 }

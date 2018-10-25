@@ -313,10 +313,10 @@ Awaitable<NTSTATUS> TestStateProviderManager::RestoreCheckpointAsync(
     co_return STATUS_SUCCESS;
 }
 
-NTSTATUS TestStateProviderManager::BeginSettingCurrentState() noexcept
+Awaitable<NTSTATUS> TestStateProviderManager::BeginSettingCurrentStateAsync() noexcept
 {
     beginSettingCurrentStateApiCount_++;
-    return STATUS_SUCCESS;
+    co_return STATUS_SUCCESS;
 }
 
 Awaitable<NTSTATUS> TestStateProviderManager::EndSettingCurrentState() noexcept

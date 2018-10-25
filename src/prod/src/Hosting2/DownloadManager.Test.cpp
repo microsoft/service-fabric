@@ -111,6 +111,7 @@ BOOST_AUTO_TEST_CASE(DownloadApplicationPackageTest)
     this->downloadManagerTestHelper_.GetDownloadManager().BeginDownloadApplicationPackage(
         appId,
         ApplicationVersion(),
+        ServicePackageActivationContext(),
         L"",
         1,
         [this, &deployDone](AsyncOperationSPtr const & operation) 
@@ -118,7 +119,7 @@ BOOST_AUTO_TEST_CASE(DownloadApplicationPackageTest)
         ApplicationPackageDescription appDesc;
         OperationStatus downloadStatus;
         auto error = this->downloadManagerTestHelper_.GetDownloadManager().EndDownloadApplicationPackage(operation, downloadStatus, appDesc);
-        Trace.WriteNoise(TraceType, "DownloadStatus", downloadStatus);
+        Trace.WriteNoise(TraceType, "DownloadStatus = {0}", downloadStatus);
         VERIFY_IS_TRUE(downloadStatus.FailureCount == 0, L"downloadStatus.FailureCount == 0");
         VERIFY_IS_TRUE(downloadStatus.LastError.IsSuccess(), L"downloadStatus.LastError.IsSuccess()");
         VERIFY_IS_TRUE(downloadStatus.State == OperationState::Completed, L"downloadStatus.State == OperationState::Completed");
@@ -210,6 +211,112 @@ BOOST_AUTO_TEST_CASE(DownloadServicePackageWithDebugParametersTest)
     HostingConfig::GetConfig().set_EnableProcessDebugging(false);
 }
 
+#if !defined(PLATFORM_UNIX)
+BOOST_AUTO_TEST_CASE(DownloadServicePackageInParallelTest)
+{
+    Trace.WriteInfo(TraceType, "DownloadServicePackageInParallelTest Start");
+
+    ServicePackageIdentifier packageId;
+    ErrorCode error = ServicePackageIdentifier::FromString(L"SandboxPersistentQueueApp_App1:PersistentQueueServicePackage", packageId);
+    VERIFY_IS_TRUE(error.IsSuccess(), L"ServicePackageIdentifier::FromString");
+
+    bool generatedTestFile(true);
+    wstring tempFileName(L"Download.Parallel.Data");
+    wstring tempTestFilePath = Path::Combine(Directory::GetCurrentDirectory(), tempFileName);
+    int sizeInMB = 1500;
+    std::vector<char> buffer(1024, 0);
+    std::ofstream ofstream(tempTestFilePath.c_str(), std::ios::binary | std::ios::out);
+    for (int i = 0; i < 1024 * sizeInMB; i++)
+    {
+        if (!ofstream.write(&buffer[0], buffer.size()))
+        {
+            generatedTestFile = false;
+            break;
+        }
+    }
+
+    VERIFY_IS_TRUE_FMT(generatedTestFile, "Problem writring to file: {0}", tempTestFilePath);
+    wstring remotePath = L"Store\\SandboxPersistentQueueApp\\PersistentQueueServicePackage.PersistentQueueService.Code.1.0\\" + tempFileName;
+    error = this->downloadManagerTestHelper_.GetDownloadManager().ImageStore->UploadContent(
+        remotePath,
+        tempTestFilePath,
+        TimeSpan::FromSeconds(30),
+        Management::ImageStore::CopyFlag::Enum::Overwrite);
+
+    if (!error.IsSuccess())
+    {
+        generatedTestFile = false;
+    }
+    else
+    {
+        this->downloadManagerTestHelper_.sandboxedPQueuePackageFiles.push_back(L"SandboxPersistentQueueApp_App1\\PersistentQueueServicePackage.PersistentQueueService.Code.1.0\\" + tempFileName);
+    }
+
+    VERIFY_IS_TRUE_FMT(generatedTestFile, "Problem uploading file: {0}", remotePath);
+    Trace.WriteInfo(TraceType, "DownloadServicePackageInParallelTest upload completed {0}", remotePath);
+
+    int const operationCountInParallel = 5;
+    int index = operationCountInParallel - 1;
+    int64 completionTime[operationCountInParallel + 1] = { DateTime::Now().Ticks };
+    OperationStatus downloadStatus[operationCountInParallel];
+    atomic_uint64 pendingOperationCount(operationCountInParallel);
+
+    ManualResetEvent deployDone;
+    do
+    {
+        
+        this->downloadManagerTestHelper_.GetDownloadManager().BeginDownloadServicePackage(
+            packageId,
+            ServicePackageVersion(),
+            ServicePackageActivationContext(Guid::NewGuid()),
+            L"",
+            1,
+            [this, &deployDone, index, &pendingOperationCount, &completionTime, &downloadStatus](AsyncOperationSPtr const & operation)
+        {
+            ServicePackageDescription packageDesc;
+            auto error = this->downloadManagerTestHelper_.GetDownloadManager().EndDownloadServicePackage(operation, downloadStatus[index], packageDesc);
+            Trace.WriteNoise(TraceType, "DownloadStatus = {0}, Round = {1}", downloadStatus[index], index);
+            completionTime[index] = DateTime::Now().Ticks;
+            
+            uint64 pendingOperations = --pendingOperationCount;
+
+            if (pendingOperations == 0)
+            {
+                deployDone.Set();
+            }
+        },
+            AsyncOperationSPtr());
+    } while (--index >= 0);
+
+    error = deployDone.Wait();
+    VERIFY_IS_TRUE(error.IsSuccess(), L"DownloadServicePackageInParallelTest failed.");
+
+    for (int i = 0; i < operationCountInParallel; i++)
+    {
+        VERIFY_IS_TRUE_FMT(downloadStatus[i].FailureCount == 0, L"downloadStatus.FailureCount == 0, Round = {0}", i);
+        VERIFY_IS_TRUE_FMT(downloadStatus[i].LastError.IsSuccess(), L"downloadStatus.LastError.IsSuccess(), Round = {0}", i);
+        VERIFY_IS_TRUE_FMT(downloadStatus[i].State == OperationState::Completed, L"downloadStatus.State == OperationState::Completed, Round = {0}", i);
+    }
+    VERIFY_IS_TRUE_FMT(this->downloadManagerTestHelper_.VerifyDeployment(this->downloadManagerTestHelper_.fabricNodeHost_->GetDeploymentRoot(), this->downloadManagerTestHelper_.sandboxedPQueuePackageFiles), L"VerifyPackageDeployment");
+    TimeSpan primaryCompletionTime = TimeSpan::FromTicks(completionTime[operationCountInParallel] - completionTime[0]);
+    Trace.WriteInfo(TraceType, "Primary completed after {0} ms", primaryCompletionTime.get_Milliseconds());
+    int SecondaryCount = operationCountInParallel - 1;
+    int64 maxAllowedGap = TimeSpan::FromMilliseconds(100).Ticks;
+    for (int i = 0; i < SecondaryCount; i++)
+    {
+        TimeSpan secondaryCompletionTime = TimeSpan::FromTicks(completionTime[SecondaryCount - i] - completionTime[0]);
+        Trace.WriteInfo(TraceType, "Secondary {0} completed after {1} ms", i + 1, secondaryCompletionTime.get_Milliseconds());
+        VERIFY_IS_TRUE((primaryCompletionTime < secondaryCompletionTime) || (maxAllowedGap > std::abs(completionTime[operationCountInParallel] - completionTime[SecondaryCount - i])), L"VerfiyCompletionTimeSpan");
+    }
+
+    error = this->downloadManagerTestHelper_.GetDownloadManager().ImageStore->RemoveRemoteContent(remotePath);
+    if (!error.IsSuccess())
+    {
+        Trace.WriteWarning(TraceType, "Problem deleting file: {0}", remotePath);
+    }
+}
+#endif
+
 BOOST_AUTO_TEST_CASE(ApplicationDownloadSpecificationTest)
 {
     Trace.WriteInfo(TraceType, "ApplicationDownloadSpecificationTest Start");
@@ -282,6 +389,7 @@ BOOST_AUTO_TEST_CASE(ApplicationSymbolicLinkTest)
     this->downloadManagerTestHelper_.GetDownloadManager().BeginDownloadApplicationPackage(
         appId,
         ApplicationVersion(),
+        ServicePackageActivationContext(),
         L"",
         1,
         [this, &deployDone](AsyncOperationSPtr const & operation)
@@ -296,7 +404,7 @@ BOOST_AUTO_TEST_CASE(ApplicationSymbolicLinkTest)
         ApplicationPackageDescription appDesc;
         OperationStatus downloadStatus;
         auto error = this->downloadManagerTestHelper_.GetDownloadManager().EndDownloadApplicationPackage(operation, downloadStatus, appDesc);
-        Trace.WriteNoise(TraceType, "DownloadStatus", downloadStatus);
+        Trace.WriteNoise(TraceType, "DownloadStatus = {0}", downloadStatus);
         VERIFY_IS_TRUE(downloadStatus.FailureCount == 0, L"downloadStatus.FailureCount == 0");
         VERIFY_IS_TRUE(downloadStatus.LastError.IsSuccess(), L"downloadStatus.LastError.IsSuccess()");
         VERIFY_IS_TRUE(downloadStatus.State == OperationState::Completed, L"downloadStatus.State == OperationState::Completed");

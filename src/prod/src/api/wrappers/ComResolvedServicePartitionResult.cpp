@@ -111,9 +111,7 @@ HRESULT STDMETHODCALLTYPE ComResolvedServicePartitionResult::GetEndpoint(
                 }
                 else
                 {
-                    Assert::TestAssert("RSP.GetEndpoint: there should be at least one endpoint");
-
-                    return ComUtility::OnPublicApiReturn(E_INVALIDARG);
+                    return ComUtility::OnPublicApiReturn(FABRIC_E_SERVICE_OFFLINE);
                 }
             }
         }

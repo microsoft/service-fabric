@@ -1,0 +1,116 @@
+###############################################################################
+# Test: AutoScalingFromManifest.test
+# Owners: nipuzovi, miradic, anuragg
+# This test verifies the flow of information from the service manifest to PLB,
+# and tests CM, FM and PLB workflows for auto scaling. 
+###############################################################################
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+fmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+set EnableDefaultServicesUpgrade true
+
+set SendLoadReportInterval 1
+set PeriodicLoadPersistInterval 1
+# Force placement on highest node, disable balancing
+set DummyPLBEnabled true
+set LoadBalancingEnabled false
+
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
++40 ud=UD4
++50 ud=UD5
+verify
+
+###############################################################################
+#
+# Test Case: create application with default services that auto scale
+#
+###############################################################################
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+app.servicepack versionTC1 ServicePackageA version=v1
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA stateful persist
+app.servicetypes versionTC1 ServicePackageA ServiceTypeB stateless
+app.codepack versionTC1 ServicePackageA CodeA types=ServiceTypeA,ServiceTypeB version=v1
+#app.servicetemplate versionTC1 ServiceTypeA stateful persist replica=5 namedpartition=true partitionnames=0;1;2  metrics=CPU,High,50,50 scalingPolicy=type:partition,metricname:CPU,minCount:2,maxCount:4,metriclow:5,metrichigh:40,scaleincrement:2,scaleinterval:1
+app.reqservices versionTC1 defaultservice1 ServiceTypeA stateful replica=5 namedpartition=true partitionnames=0;1;2  metrics=CPU,High,50,50 scalingPolicy=type:partition,metricname:CPU,minCount:3,maxCount:4,metriclow:35,metrichigh:41,scaleincrement:2,scaleinterval:1
+app.reqservices versionTC1 defaultservice2 ServiceTypeB stateless instance=2 metrics=CPU,High,40,0 scalingPolicy=type:instance,metricname:CPU,mincount:2,maxcount:3,metriclow:20,metrichigh:32,scaleincrement:1,scaleinterval:1
+app.reqservices versionTC1 defaultservice3 ServiceTypeA stateful replica=5 namedpartition=true partitionnames=0;1;2  metrics=CPU,High,50,20 scalingPolicy=type:partition,metricname:CPU,minCount:3,maxCount:4,metriclow:35,metrichigh:43,scaleincrement:2,scaleinterval:1,useonlyprimaryload:true
+app.reqservices versionTC1 defaultservice4 ServiceTypeA stateful replica=5 namedpartition=true partitionnames=0;1;2  metrics=CPU,High,50,20 scalingPolicy=type:partition,metricname:CPU,minCount:3,maxCount:4,metriclow:35,metrichigh:44,scaleincrement:2,scaleinterval:1,useonlyprimaryload:false
+
+
+app.upload versionTC1
+
+provisionapp versionTC1
+createapp fabric:/testcase1 TestAppTC1 vTC1
+
+#createservicefromtemplate fabric:/testcase1/service1 ServiceTypeA fabric:/testcase1 metrics=CPU,High,50,50
+
+!pause 20
+
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice1.50 true
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice1.40 true
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice1.30 true
+
+!pause 20
+# Service that uses partitions should scale up based on default load
+getservicedescription fabric:/testcase1/defaultservice1 verify partitionnames=0,1,2,3
+getservicedescription fabric:/testcase1/defaultservice3 verify partitionnames=0,1,2,3
+getservicedescription fabric:/testcase1/defaultservice4 verify partitionnames=0,1,2
+#getservicedescription fabric:/testcase1/service1 verify partitionnames=0,1,2,3
+
+# Stateless service should exist on 3 nodes (2 + 1 that scaled up)
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice2.50 true
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice2.40 true
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice2.30 true
+!waitforstate FM.Replica.Role.fabric:/testcase1/defaultservice2.20 NullReplica
+!waitforstate FM.Replica.Role.fabric:/testcase1/defaultservice2.10 NullReplica
+
+# Report loads so that stateful serice scale down
+updateservice fabric:/testcase1/defaultservice1 Stateful metrics=CPU,High,3,0 
+updateservice fabric:/testcase1/defaultservice3 Stateful metrics=CPU,High,20,50 
+updateservice fabric:/testcase1/defaultservice4 Stateful metrics=CPU,High,40,50 
+
+!pause 20
+
+getservicedescription fabric:/testcase1/defaultservice1 verify partitionnames=0,1,2
+getservicedescription fabric:/testcase1/defaultservice3 verify partitionnames=0,1,2
+getservicedescription fabric:/testcase1/defaultservice4 verify partitionnames=0,1,2,3
+
+set RestoreReplicaLocationAfterUpgrade true
+
+# Perform an application upgrade:
+#     - Make sure that calling service update will not change instance count for stateless service that is scaled up.
+#     - Change default metrics and auto-scale policies to make sure that both will pass.
+app.add versionTC2 TestAppTC1 vTC2
+app.clear versionTC2
+app.servicepack versionTC2 ServicePackageA version=v2
+app.servicetypes versionTC2 ServicePackageA ServiceTypeB stateless
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA stateful persist
+app.codepack versionTC2 ServicePackageA CodeA types=ServiceTypeA,ServiceTypeB version=v2
+app.reqservices versionTC2 defaultservice1 ServiceTypeA stateful replica=1 namedpartition=true partitionnames=0;1;2  metrics=CPU,High,3,3 scalingPolicy=type:partition,metricname:CPU,minCount:3,maxCount:4,metriclow:5,metrichigh:40,scaleincrement:2,scaleinterval:1
+app.reqservices versionTC2 defaultservice2 ServiceTypeB stateless instance=2 metrics=CPU,High,25,0 scalingPolicy=type:instance,metricname:CPU,mincount:2,maxcount:3,metriclow:15,metrichigh:35,scaleincrement:1,scaleinterval:1
+app.upload versionTC2
+provisionapp versionTC2
+
+upgradeapp fabric:/testcase1 vTC2 Rolling upgrademode=auto
+
+verifyupgradeapp fabric:/testcase1
+
+# Service should still be scaled up
+!pause 20
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice2.50 true
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice2.40 true
+!waitforstate FM.Replica.IsUp.fabric:/testcase1/defaultservice2.30 true
+!waitforstate FM.Replica.Role.fabric:/testcase1/defaultservice2.20 NullReplica
+!waitforstate FM.Replica.Role.fabric:/testcase1/defaultservice2.10 NullReplica
+
+!q

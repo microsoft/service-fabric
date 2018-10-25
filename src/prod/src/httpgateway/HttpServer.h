@@ -80,6 +80,10 @@ namespace HttpGateway
         {
             return (HttpApplicationGateway::IHttpApplicationGatewayEventSource const &)*HttpGatewayEventSource::Trace;
         }
+        Transport::SecurityProvider::Enum GetSecurityProvider()
+        {
+            return securitySettings_.SecurityProvider();
+        }
 
         Common::ErrorCode GetGatewayClientCertificateContext();
 
@@ -93,6 +97,7 @@ namespace HttpGateway
             __in KAllocator &ktlAllocator,
             __in bool allowRedirects,
             __in bool enableCookies,
+            __in bool enableWinauthAutoLogon,
             __out HttpClient::IHttpClientRequestSPtr &clientRequest);
 
         __declspec(property(get = get_AppGatewayHandler)) std::shared_ptr<HttpApplicationGateway::GatewayRequestHandler> & AppGatewayHandler;
@@ -107,6 +112,9 @@ namespace HttpGateway
 
         __declspec(property(get=get_InnerHttpServer)) std::shared_ptr<HttpServer::HttpServerImpl> & InnerServer;
         std::shared_ptr<HttpServer::HttpServerImpl> & get_InnerHttpServer() { return httpServer_; }
+
+        __declspec(property(get = get_NodeConfig)) Common::FabricNodeConfigSPtr & NodeConfig;
+        Common::FabricNodeConfigSPtr const& get_NodeConfig() { return config_; }
 
     protected:
 
@@ -146,6 +154,7 @@ namespace HttpGateway
         static void SecuritySettingsUpdateHandler(std::weak_ptr<Common::ComponentRoot> const& rootWPtr);
         Common::ErrorCode OnSecuritySettingsUpdated();
         void RegisterConfigUpdateHandler();
+        void AllowHttpGatewayOnOtherNodes(Transport::SecuritySettings const & clientSettings);
         std::wstring GetListenUrl();
 
         class CreateAndOpenAsyncOperation;
@@ -166,10 +175,14 @@ namespace HttpGateway
         HttpServer::IHttpRequestHandlerSPtr toolsHandlerSPtr_;
         HttpServer::IHttpRequestHandlerSPtr faultsHandlerSPtr_;
         HttpServer::IHttpRequestHandlerSPtr namesHandlerSPtr_;
+        HttpServer::IHttpRequestHandlerSPtr containerGroupDeploymentsHandlerSPtr_;
+        HttpServer::IHttpRequestHandlerSPtr applicationsResourceHandlerSPtr_;
+        HttpServer::IHttpRequestHandlerSPtr volumesHandlerSPtr_;
 
 #if !defined(PLATFORM_UNIX)
         HttpServer::IHttpRequestHandlerSPtr backupRestoreHandlerSPtr_;
         std::shared_ptr<HttpApplicationGateway::GatewayRequestHandler> appGatewayRequestHandlerSPtr_;
+        HttpServer::IHttpRequestHandlerSPtr eventsStoreHandlerSPtr_;
 #endif
 
         Common::RwLock securitySettingsUpdateLock_;

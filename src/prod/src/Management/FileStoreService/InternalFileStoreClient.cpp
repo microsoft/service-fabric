@@ -42,6 +42,8 @@ public:
         , retryTimer_()
         , timerLock_()
         , stagingLocationInfo_(previousStagingLocationInfo)
+        , accessDeniedErrorRetryCount_(0)
+        , stagingCopyRetryCount_(0)
     {
     }
 
@@ -107,7 +109,7 @@ protected:
 
         if (!error.IsSuccess())
         {
-            TryComplete(operation->Parent, error);
+            TryComplete(operation->Parent, move(error));
             return;
         }
 
@@ -162,6 +164,34 @@ protected:
             // after we get the staging location
             if (ImpersonatedSMBCopyContext::IsRetryableError(error))
             {
+                if (stagingCopyRetryCount_ == FileStoreServiceConfig::GetConfig().MaxStagingCopyFailureRetryCount)
+                {
+                    wstring msg;
+                    if (ImpersonatedSMBCopyContext::IsRetryableNetworkError(error))
+                    {
+                        msg = wformatString(StringResource::Get(IDS_FSS_Staging_SMBCopy_NetworkFailure), error);
+                    }
+                    else
+                    {
+                        msg = wformatString(StringResource::Get(IDS_FSS_Staging_SMBCopyFailure), error);
+                    }
+
+                    ErrorCode convertedError(error.ReadValue(), move(msg));
+                    WriteWarning(
+                        TraceComponent,
+                        owner_.TraceId,
+                        "CopyToStaging Failed. source:{0}, destination:{1}, error:{2} errorMessage:{3} retryCount:{4}",
+                        sourceFullPath_,
+                        destinationFullPath,
+                        convertedError,
+                        convertedError.Message,
+                        stagingCopyRetryCount_);
+
+                    this->TryComplete(thisSPtr, move(convertedError));
+                    return;
+                }
+
+                ++stagingCopyRetryCount_;
                 auto innerError = this->TryScheduleRetry(
                     thisSPtr,
                     [this](AsyncOperationSPtr const & thisSPtr) { this->GetStagingLocation(thisSPtr); });
@@ -172,16 +202,73 @@ protected:
                 }
                 else
                 {
-                    TryComplete(thisSPtr, innerError);
+                    TryComplete(thisSPtr, move(innerError));
                     return;
                 }
             }
+            else if (error.IsError(ErrorCodeValue::AccessDenied))
+            {
+                bool doesStagingLocationExists = false;
+                auto dirError = Directory::Exists(stagingLocationInfo_.ShareLocation, doesStagingLocationExists);
+                WriteInfo(
+                    TraceComponent,
+                    owner_.TraceId,
+                    "Staging Share location:{0}, Destination:{1}, OriginalError:{2} stagingExistsError:{3} DoesStagingLocationExists:{4} stagingRelativePath:{5}",
+                    stagingLocationInfo_.ShareLocation,
+                    destinationFullPath,
+                    error,
+                    dirError,
+                    doesStagingLocationExists,
+                    this->stagingRelativePath_);
 
-            TryComplete(thisSPtr, error);
-            return;
+                auto destPathExists = Directory::Exists(destinationFullPath);
+                if (!destPathExists && doesStagingLocationExists && accessDeniedErrorRetryCount_ < FileStoreServiceConfig::GetConfig().MaxFileOperationFailureRetryCount)
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        owner_.TraceId,
+                        "Destination dir doesn't exist: Retry CopyToStaging : Source:{0}, Destination:{1}, Error:{2}, retryCount={3}",
+                        sourceFullPath_,
+                        destinationFullPath,
+                        error,
+                        accessDeniedErrorRetryCount_);
+
+                        ++accessDeniedErrorRetryCount_;
+                        auto innerError = this->TryScheduleRetry(
+                        thisSPtr,
+                        [this](AsyncOperationSPtr const & thisSPtr) { this->GetStagingLocation(thisSPtr); });
+
+                    if (innerError.IsSuccess())
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        TryComplete(thisSPtr, move(innerError));
+                        return;
+                    }
+                }
+            }
         }
 
-        this->TryComplete(thisSPtr, error);
+        if (!error.IsError(ErrorCodeValue::ObjectClosed))
+        {
+            this->TryComplete(thisSPtr, move(error));
+        }
+        else
+        {
+            WriteInfo(
+                TraceComponent,
+                owner_.TraceId,
+                "CopyToStaging failed with errorCode ObjectClosed. Converting to errorCode OperationCanceled for source:{0} destination:{1}.",
+                sourceFullPath_,
+                destinationFullPath);
+
+            // ScpCopy could return ObjectClosed error when it is unable to establish ScpSession for transfering files.
+            // Returning ObjectClosed would cause CM to assume FSS have failed over and has the potential to block the upgrade.
+            // So returning a retriable error code.
+            this->TryComplete(thisSPtr, ErrorCodeValue::OperationCanceled);
+        }
     }
 
 private:
@@ -225,7 +312,8 @@ private:
     std::wstring stagingRelativePath_;
     TimerSPtr retryTimer_;
     ExclusiveLock timerLock_;
-
+    uint32 accessDeniedErrorRetryCount_;
+    uint32 stagingCopyRetryCount_;
 };
 
 class InternalFileStoreClient::OpenAsyncOperation : public LinkableAsyncOperation
@@ -331,14 +419,14 @@ private:
         auto error = owner_.clientFactory_->CreateQueryClient(this->queryClient_);
         if(!error.IsSuccess())
         {
-            TryComplete(thisSPtr, error);
+            TryComplete(thisSPtr, move(error));
             return;
         }
 
         error = owner_.clientFactory_->CreateInternalFileStoreServiceClient(this->fileStoreServiceClient_);
         if(!error.IsSuccess())
         {
-            TryComplete(thisSPtr, error);
+            TryComplete(thisSPtr, move(error));
             return;
         }
 
@@ -430,7 +518,7 @@ private:
             }
         }
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
     typedef function<void(AsyncOperationSPtr const &)> RetryCallback;
@@ -488,6 +576,7 @@ public:
         , partition_()
         , retryTimer_()
         , timerLock_()
+        , getPartitionRetryCount_(0)
     {
     }
 
@@ -620,7 +709,7 @@ private:
             return;
         }
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
     void GetPartitionContextAndStartOperation(AsyncOperationSPtr const & thisSPtr)
@@ -634,7 +723,34 @@ private:
             }
         }
 
-        ASSERT_IFNOT(partition_, "The key should match atleast one partition");
+        if (!partition_)
+        {
+            if (getPartitionRetryCount_ < FileStoreServiceConfig::GetConfig().MaxFileOperationFailureRetryCount)
+            {
+                WriteWarning(
+                    TraceComponent,
+                    owner_.TraceId,
+                    "GetPartitionContext: Unable to get partition context. Count:{0} retryCount:{1}",
+                    owner_.partitions_.size(),
+                    getPartitionRetryCount_);
+
+                ++getPartitionRetryCount_;
+                auto innerError = TryScheduleRetry(thisSPtr,
+                    [this](AsyncOperationSPtr const & thisSPtr) { this->GetPartitionContextAndStartOperation(thisSPtr); });
+
+                if (innerError.IsSuccess())
+                {
+                    return;
+                }
+                else
+                {
+                    TryComplete(thisSPtr, move(innerError));
+                    return;
+                }
+            }
+        }
+
+        ASSERT_IFNOT(partition_, "The key should match atleast one partition. Owner partition count:{0}", owner_.partitions_.size());
 
         this->OnStartOperation(thisSPtr);
     }
@@ -645,6 +761,7 @@ protected:
     TimeoutHelper timeoutHelper_;
     TimerSPtr retryTimer_;
     ExclusiveLock timerLock_;
+    uint getPartitionRetryCount_;
 };
 
 class InternalFileStoreClient::UploadAsyncOperation : public ClientBaseAsyncOperation
@@ -777,7 +894,7 @@ protected:
             }
         }
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
     bool IsRetryable(ErrorCode const & error, __out bool & refreshPrimary)
@@ -807,7 +924,7 @@ private:
         auto error = CopyToStagingLocationAsyncOperation::End(operation, stagingRelativePath, this->stagingLocationInfo_);
         if (!error.IsSuccess())
         {
-            this->TryComplete(thisSPtr, error);
+            this->TryComplete(thisSPtr, move(error));
             return;
         }
 
@@ -895,7 +1012,7 @@ protected:
             shouldOverwrite_,
             error);
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
 private:
@@ -966,7 +1083,7 @@ protected:
                 this->owner_.TraceId,
                 "JobItem for CopyFromStore timed out before executing. StoreRelativePath: {0}",
                 this->storeRelativePath_);
-			this->TryComplete(thisSPtr, ErrorCodeValue::Timeout);
+            this->TryComplete(thisSPtr, ErrorCodeValue::Timeout);
         });
 
         bool success = owner_.fileStoreJobQueue_->Enqueue(move(jobItem));
@@ -990,7 +1107,7 @@ private:
             auto error = Directory::Create2(destinationDirectory);
             if(!error.IsSuccess())
             {
-                this->TryComplete(thisSPtr, error);
+                this->TryComplete(thisSPtr, move(error));
                 return;
             }
         }
@@ -1030,8 +1147,8 @@ private:
             progressHandler_->IncrementCompletedItems(1);
         }
 
-        TryComplete(thisSPtr, lastError);
-    }   
+        TryComplete(thisSPtr, move(lastError));
+    }
 
     uint64 GetRandomShareIndex(uint64 size)
     {
@@ -1107,7 +1224,7 @@ protected:
             storeRelativePath_,            
             error);
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
 private:
@@ -1191,7 +1308,7 @@ protected:
             return;
         }
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
 private:
@@ -1335,7 +1452,7 @@ protected:
             return;
         }
        
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
 private:
@@ -1436,7 +1553,7 @@ protected:
             return;
         }
        
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
 private:
@@ -1518,7 +1635,7 @@ protected:
             this->fileSize_,
             error);
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
 private:
@@ -1595,7 +1712,7 @@ protected:
             return;
         }
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
 private:
@@ -1659,7 +1776,7 @@ protected:
             this->sessionId_.ToString(),
             error);
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
 private:
@@ -1760,7 +1877,7 @@ private:
         auto error = CopyToStagingLocationAsyncOperation::End(operation, stagingRelativePath, this->stagingLocationInfo_);
         if (!error.IsSuccess())
         {
-            this->TryComplete(thisSPtr, error);
+            this->TryComplete(thisSPtr, move(error));
             return;
         }
 
@@ -1771,13 +1888,13 @@ private:
             this->startPosition_,
             this->endPosition_,
             timeoutHelper_.GetRemainingTime(),
-            [this](AsyncOperationSPtr const & operation) { this->OnUploadChunkComplete(operation, false); },
+            [this, stagingRelativePath](AsyncOperationSPtr const & operation) { this->OnUploadChunkComplete(operation, false, stagingRelativePath); },
             thisSPtr);
 
-        this->OnUploadChunkComplete(uploadChunkOperation, true);
+        this->OnUploadChunkComplete(uploadChunkOperation, true, stagingRelativePath);
     }
 
-    void OnUploadChunkComplete(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    void OnUploadChunkComplete(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously, wstring const & stagingRelativePath)
     {
         if (operation->CompletedSynchronously != expectedCompletedSynchronously)
         {
@@ -1798,6 +1915,25 @@ private:
         if (error.IsError(ErrorCodeValue::OperationCanceled)
             || error.IsError(ErrorCodeValue::StagingFileNotFound))
         {
+            wstring destinationStagingFullPath = Path::Combine(stagingLocationInfo_.ShareLocation, stagingRelativePath);
+
+            // Delete the chunk file
+            if (File::Exists(destinationStagingFullPath))
+            {
+                auto deleteError = File::Delete2(destinationStagingFullPath);
+                if (!deleteError.IsSuccess())
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        owner_.TraceId,
+                        "Deletion of staging chunk file failed with error {0} sessionId:{1} UploadChunkError:{2} stagingDestPath:{3}",
+                        deleteError,
+                        this->sessionId_.ToString(),
+                        error,
+                        destinationStagingFullPath);
+                }
+            }
+
             ErrorCode innerError = this->TryScheduleRetry(
                 operation->Parent,
                 [this](AsyncOperationSPtr const & thisSPtr) { this->CopyToStagingLocation(thisSPtr); });
@@ -1808,11 +1944,12 @@ private:
             }
             else
             {
-                TryComplete(operation->Parent, innerError);
+                TryComplete(operation->Parent, move(innerError));
+                return;
             }
         }
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, move(error));
     }
 
     std::wstring localSource_;
@@ -1822,7 +1959,77 @@ private:
     StagingLocationInfo stagingLocationInfo_;
 };
 
-InternalFileStoreClient::InternalFileStoreClient(    
+class InternalFileStoreClient::UploadChunkContentAsyncOperation : public ClientBaseAsyncOperation
+{
+public:
+    UploadChunkContentAsyncOperation(
+        InternalFileStoreClient & owner,
+        Transport::MessageUPtr && chunkContentMessage,
+        Management::FileStoreService::UploadChunkContentDescription && uploadChunkContentDescription,
+        TimeSpan timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : ClientBaseAsyncOperation(owner, timeout, callback, parent)
+        , chunkContentMessage_(move(chunkContentMessage))
+        , uploadChunkContentDescription_(move(uploadChunkContentDescription))
+    {
+    }
+
+    ~UploadChunkContentAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(AsyncOperationSPtr const & operation)
+    {
+        auto thisSPtr = AsyncOperation::End<UploadChunkContentAsyncOperation>(operation);
+        return thisSPtr->Error;
+    }
+
+protected:
+    void OnStartOperation(AsyncOperationSPtr const & thisSPtr)
+    {
+        WriteNoise(
+            TraceComponent,
+            owner_.TraceId,
+            "InternalFileStoreClient::UploadChunkContentAsyncOperation SessionId {0}",
+            uploadChunkContentDescription_.SessionId);
+
+        auto operation = owner_.fileStoreServiceClient_->BeginUploadChunkContent(
+            partition_->PartitionId,
+            chunkContentMessage_,
+            uploadChunkContentDescription_,
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation) { this->OnUploadChunkContentComplete(operation, false); },
+            thisSPtr);
+        this->OnUploadChunkContentComplete(operation, true);
+    }
+
+    void OnUploadChunkContentComplete(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.fileStoreServiceClient_->EndUploadChunkContent(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceComponent,
+            owner_.TraceId,
+            "End(InternalFileStoreClient::UploadChunkContent): operationId:{0} Error:{1}",
+            uploadChunkContentDescription_.SessionId,
+            error);
+
+        TryComplete(operation->Parent, error);
+    }
+
+private:
+    Management::FileStoreService::UploadChunkContentDescription uploadChunkContentDescription_;
+    Transport::MessageUPtr chunkContentMessage_;
+};
+
+InternalFileStoreClient::InternalFileStoreClient(
     wstring const & serviceName,
     IClientFactoryPtr const & clientFactory,
     bool const shouldImpersonate) 
@@ -2082,6 +2289,28 @@ ErrorCode InternalFileStoreClient::EndUploadChunk(
     Common::AsyncOperationSPtr const & operation)
 {
     return UploadChunkAsyncOperation::End(operation);
+}
+
+AsyncOperationSPtr InternalFileStoreClient::BeginUploadChunkContent(
+    Transport::MessageUPtr & chunkContentMessage,
+    Management::FileStoreService::UploadChunkContentDescription & uploadChunkContentDescription,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<UploadChunkContentAsyncOperation>(
+        *this,
+        move(chunkContentMessage),
+        move(uploadChunkContentDescription),
+        timeout,
+        callback,
+        parent);
+}
+
+ErrorCode InternalFileStoreClient::EndUploadChunkContent(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return UploadChunkContentAsyncOperation::End(operation);
 }
 
 AsyncOperationSPtr InternalFileStoreClient::BeginDeleteUploadSession(

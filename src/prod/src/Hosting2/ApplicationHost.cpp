@@ -380,7 +380,6 @@ ErrorCode ApplicationHost::FindCodePackage(
     return error;
 }
 
-
 ErrorCode ApplicationHost::ValidateCodePackage(
     CodePackageInstanceIdentifier const & codePackageInstanceId,
     CodePackageActivationId const & activationId)
@@ -590,7 +589,6 @@ ErrorCode ApplicationHost::AddFabricRuntime(FabricRuntimeImplSPtr const & fabric
 {
     return runtimeTable_->AddPending(fabricRuntime);
 }
-
 
 // ********************************************************************************************************************
 // ApplicationHost::OpenAsyncOperation Implementation
@@ -1390,6 +1388,7 @@ private:
             owner_.Type,
             ::GetCurrentProcessId(),
             owner_.hostContext_.IsContainerHost,
+            owner_.hostContext_.IsCodePackageActivatorHost,
             timeoutHelper_.GetRemainingTime());
 
         MessageUPtr request = make_unique<Message>(requestBody);
@@ -1419,7 +1418,6 @@ private:
     TimeoutHelper timeoutHelper_;
 };
 
-
 // ********************************************************************************************************************
 // ApplicationHost::CloseAsyncOperation Implementation
 //
@@ -1444,11 +1442,13 @@ class ApplicationHost::CloseAsyncOperation :
 
 public:
     CloseAsyncOperation(
+        ActivityDescription const & activityDescription,
         ApplicationHost & owner,
         TimeSpan const timeout,
         AsyncCallback const & callback,
         AsyncOperationSPtr const & parent)
         : AsyncOperation(callback, parent),
+        activityDescription_(activityDescription),
         owner_(owner),
         timeoutHelper_(timeout),
         removedRuntimes_()
@@ -1471,9 +1471,10 @@ protected:
         WriteNoise(
             TraceType,
             owner_.TraceId,
-            "Closing ApplicationHost: Id={0}, Timeout={1}", 
+            "Closing ApplicationHost: Id={0}, Timeout={1} ActivityDescription={2}",
             owner_.Id, 
-            timeoutHelper_.GetRemainingTime());
+            timeoutHelper_.GetRemainingTime(),
+            activityDescription_);
 
 #if !defined(PLATFORM_UNIX)
         if (BackupRestoreServiceConfig::IsBackupRestoreServiceConfigured())
@@ -1497,8 +1498,9 @@ private:
         owner_.WriteNoise(
             TraceType,
             owner_.TraceId,
-            "Begin(CloseBAP): Timeout={0}",
-            timeout);
+            "Begin(CloseBAP): Timeout={0} ActivityDescription={1}",
+            timeout,
+            activityDescription_);
 
         auto CloseBAPOperation =
             owner_.BackupRestoreAgentProxyObj.BeginClose(
@@ -1527,8 +1529,9 @@ private:
             error.ToLogLevel(),
             TraceType,
             owner_.TraceId,
-            "BAP Close: ErrorCode={0}",
-            error);
+            "BAP Close: ErrorCode={0} ActivityDescription={1}",
+            error,
+            activityDescription_);
         if (!error.IsSuccess())
         {
             TryComplete(closeRAPOperation->Parent, error);
@@ -1546,8 +1549,9 @@ private:
         owner_.WriteNoise(
             TraceType, 
             owner_.TraceId, 
-            "Begin(CloseRAP): Timeout={0}", 
-            timeout);
+            "Begin(CloseRAP): Timeout={0} ActivityDescription={1}", 
+            timeout,
+            activityDescription_);
 
         auto CloseRAPOperation =         
             owner_.ReconfigurationAgentProxyObj.BeginClose(
@@ -1576,8 +1580,9 @@ private:
             error.ToLogLevel(),
             TraceType,
             owner_.TraceId,
-            "RAP Close: ErrorCode={0}",
-            error);
+            "RAP Close: ErrorCode={0} ActivityDescription={1}",
+            error,
+            activityDescription_);
         if (!error.IsSuccess())
         {
             TryComplete(closeRAPOperation->Parent, error);
@@ -1595,8 +1600,9 @@ private:
             error.ToLogLevel(),
             TraceType,
             owner_.TraceId,
-            "Replicator Factory Close: ErrorCode={0}",
-            error);
+            "Replicator Factory Close: ErrorCode={0} ActivityDescription={1}",
+            error,
+            activityDescription_);
         if (!error.IsSuccess())
         {
             TryComplete(thisSPtr, error);
@@ -1626,8 +1632,9 @@ private:
         WriteNoise(
             TraceType,
             owner_.TraceId,
-            "RuntimeTable Closed: Removed {0} FabricRuntimeImpl entries.",
-            removedRuntimes_.size());
+            "RuntimeTable Closed: Removed {0} FabricRuntimeImpl entries. ActivityDescription={1}",
+            removedRuntimes_.size(),
+            activityDescription_);
 
         if (owner_.nodeHostProcessClosed_.load())
         {
@@ -1660,7 +1667,7 @@ private:
             return;
         }
 
-        MessageUPtr request = CreateUnregisterApplicationHostRequestMessage();
+        MessageUPtr request = CreateUnregisterApplicationHostRequestMessage(activityDescription_);
         WriteNoise(
             TraceType, 
             owner_.TraceId, 
@@ -1778,8 +1785,9 @@ private:
             error.ToLogLevel(),
             TraceType,
             owner_.TraceId,
-            "IPC Health Reporting Client Close: ErrorCode={0}",
-            error);
+            "IPC Health Reporting Client Close: ErrorCode={0} ActivityDescription={1}",
+            error,
+            activityDescription_);
 
         error = owner_.ThrottledIpcHealthReportingClientObj.Close();
 
@@ -1797,8 +1805,9 @@ private:
             error.ToLogLevel(),
             TraceType,
             owner_.TraceId,
-            "IPC Client Close: ErrorCode={0}",
-            error);
+            "IPC Client Close: ErrorCode={0} ActivityDescription={1}",
+            error,
+            activityDescription_);
 
         {
             auto runtimes = move(removedRuntimes_);
@@ -1828,7 +1837,7 @@ private:
         owner_.WriteNoise(
             TraceType,
             owner_.TraceId,
-            "Begin(CloseLogManager)");
+            "Begin(CloseLogManager) ActivityDescription={0}", activityDescription_);
 
         auto closeLogManagerOperation =
             owner_.logManager_->BeginClose(
@@ -1868,7 +1877,7 @@ private:
         owner_.WriteNoise(
             TraceType,
             owner_.TraceId,
-            "LogManager Closed.");
+            "LogManager Closed. ActivityDescription={0}", activityDescription_);
 
         owner_.logManager_ = nullptr;
 
@@ -1887,9 +1896,9 @@ private:
         TryComplete(thisSPtr, error);
     }
 
-    MessageUPtr CreateUnregisterApplicationHostRequestMessage()
+    MessageUPtr CreateUnregisterApplicationHostRequestMessage(ActivityDescription const & activityDescription)
     {
-        UnregisterApplicationHostRequest requestBody(owner_.Id);
+        UnregisterApplicationHostRequest requestBody(activityDescription, owner_.Id);
 
         MessageUPtr request = make_unique<Message>(requestBody);
         request->Headers.Add(Transport::ActorHeader(Actor::ApplicationHostManager));
@@ -1901,11 +1910,11 @@ private:
     }
 
 private:
+    ActivityDescription activityDescription_;
     ApplicationHost & owner_;
     TimeoutHelper timeoutHelper_;
     vector<FabricRuntimeImplSPtr> removedRuntimes_;
 };
-
 
 // ********************************************************************************************************************
 // ApplicationHost::CreateComFabricRuntimeAsyncOperation Implementation
@@ -2641,7 +2650,7 @@ ApplicationHost::ApplicationHost(
         *this,
         Id,
         runtimeServiceAddress,
-        ipcUseSsl_.load() ? false : true /* allow use of unreliable transport */,
+        true /* allow use of unreliable transport */,
         L"ApplicationHost");
 
     auto ktlSystemWrapper = make_unique<KtlSystemWrapper>(
@@ -2805,11 +2814,17 @@ ErrorCode ApplicationHost::GetKtlSystem(__out KtlSystem ** ktlSystem)
     return ErrorCodeValue::Success;
 }
 
-Common::ErrorCode ApplicationHost::GetCodePackageActivationContext(
+ErrorCode ApplicationHost::GetCodePackageActivationContext(
     CodePackageContext const & codeContext,
     __out CodePackageActivationContextSPtr & codePackageActivationContext)
 {
     return this->OnGetCodePackageActivationContext(codeContext, codePackageActivationContext);
+}
+
+ErrorCode ApplicationHost::GetCodePackageActivator(
+    _Out_ ApplicationHostCodePackageActivatorSPtr & codePackageActivator)
+{
+    return this->OnGetCodePackageActivator(codePackageActivator);
 }
 
 bool ApplicationHost::IsLeaseExpired()
@@ -2910,9 +2925,27 @@ ErrorCode ApplicationHost::GetHostInformation(
     return error;
 }
 
+ErrorCode ApplicationHost::OnGetCodePackageActivator(_Out_ ApplicationHostCodePackageActivatorSPtr & )
+{
+    //
+    // ApplicationHost types that support code package activation 
+    // should override this method.
+    //
+    return ErrorCode(ErrorCodeValue::OperationNotSupported);
+}
+
+Common::ErrorCode ApplicationHost::OnCodePackageEvent(CodePackageEventDescription const &)
+{
+    //
+    // ApplicationHost types that support code package activation 
+    // should override this method.
+    //
+    return ErrorCode(ErrorCodeValue::OperationNotSupported);
+}
+
 ErrorCode ApplicationHost::GetCodePackageActivationContext(
     __in wstring const & runtimeId,
-    __out Common::ComPointer<IFabricCodePackageActivationContext> & outCodePackageActivationContext)
+    __out ComPointer<IFabricCodePackageActivationContext> & outCodePackageActivationContext)
 {
     FabricRuntimeImplSPtr fabricRuntime;
     CodePackageActivationContextSPtr codePackageActivationContextSPtr;
@@ -2944,6 +2977,28 @@ ErrorCode ApplicationHost::GetCodePackageActivationContext(
     return ErrorCodeValue::Success;
 }
 
+ErrorCode ApplicationHost::GetCodePackageActivator(
+    _Out_ ComPointer<IFabricCodePackageActivator> & codePackageActivator)
+{
+    ApplicationHostCodePackageActivatorSPtr codePackageActivatorSPtr;
+
+    auto error = this->OnGetCodePackageActivator(codePackageActivatorSPtr);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    auto comCodePackageActivator = make_com<ComApplicationHostCodePackageActivator>(codePackageActivatorSPtr);
+
+    auto hr = comCodePackageActivator->QueryInterface(
+        IID_IFabricCodePackageActivator,
+        codePackageActivator.VoidInitializationAddress());
+
+    ASSERT_IFNOT(SUCCEEDED(hr), "ComApplicationHostCodePackageActivator must implement IFabricCodePackageActivator");
+
+    return ErrorCodeValue::Success;
+}
+
 AsyncOperationSPtr ApplicationHost::OnBeginOpen(
     TimeSpan timeout,
     AsyncCallback const & callback,
@@ -2968,6 +3023,7 @@ AsyncOperationSPtr ApplicationHost::OnBeginClose(
 {
     this->codePackageTable_->Close();
     return AsyncOperation::CreateAndStart<CloseAsyncOperation>(
+        ActivityDescription(ActivityId(), ActivityType::Enum::ServicePackageEvent),
         *this,
         timeout,
         callback,
@@ -3152,13 +3208,15 @@ void ApplicationHost::ProcessIpcMessage(Message & message, IpcReceiverContextUPt
 {
     if (message.Action == Hosting2::Protocol::Actions::InvalidateLeaseRequest)
     {
-        ProcessInvalidateLeaseRequest(message, context);
-        return;
+        this->ProcessInvalidateLeaseRequest(message, context);
     }
     else if (message.Action == Hosting2::Protocol::Actions::UpdateCodePackageContextRequest)
     {
-        ProcessUpdateCodePackageContextRequest(message, context);
-        return;
+        this->ProcessUpdateCodePackageContextRequest(message, context);
+    }
+    else if (message.Action == Hosting2::Protocol::Actions::CodePackageEventNotification)
+    {
+        this->ProcessCodePackageEventRequest(message, context);
     }
 }
 
@@ -3182,7 +3240,6 @@ void ApplicationHost::ProcessInvalidateLeaseRequest(Message &, IpcReceiverContex
     context->Reply(move(reply));
 }
 
-
 void ApplicationHost::ProcessUpdateCodePackageContextRequest(Message & message, IpcReceiverContextUPtr & context)
 {
     UpdateCodePackageContextRequest requestBody;
@@ -3198,12 +3255,13 @@ void ApplicationHost::ProcessUpdateCodePackageContextRequest(Message & message, 
         return;
     }
 
-    WriteNoise(
+    WriteInfo(
         TraceType,
         TraceId,
-        "Processing UpdateCodePackageContextRequest: CodePackageContext={0}, ActivationId={1}",
+        "Processing UpdateCodePackageContextRequest: CodePackageContext={0}, ActivationId={1}, HostContext={2}",
         requestBody.CodeContext,
-        requestBody.ActivationId);
+        requestBody.ActivationId,
+        HostContext);
 
     auto error = OnUpdateCodePackageContext(requestBody.CodeContext);
 
@@ -3263,6 +3321,37 @@ void ApplicationHost::ProcessUpdateCodePackageContextRequest(Message & message, 
 
     MessageUPtr reply = make_unique<Message>(replyBody);
     WriteNoise(TraceType, TraceId, "Sending UpdateCodePackageContextReply. Message={0}, Body={1}", *reply, replyBody);
+    context->Reply(move(reply));
+}
+
+void ApplicationHost::ProcessCodePackageEventRequest(Message & message, IpcReceiverContextUPtr & context)
+{
+    CodePackageEventNotificationRequest requestBody;
+    if (!message.GetBody<CodePackageEventNotificationRequest>(requestBody))
+    {
+        auto error = ErrorCode::FromNtStatus(message.Status);
+        WriteWarning(
+            TraceType,
+            TraceId,
+            "GetBody<CodePackageEventNotificationRequest> failed: Message={0}, ErrorCode={1}",
+            message,
+            error);
+        return;
+    }
+
+    WriteNoise(
+        TraceType,
+        TraceId,
+        "Processing {0}.",
+        requestBody.CodePackageEvent);
+
+    auto error = this->OnCodePackageEvent(requestBody.CodePackageEvent);
+
+    CodePackageEventNotificationReply replyBody(error);
+    auto reply = make_unique<Message>(move(replyBody));
+    
+    WriteNoise(TraceType, TraceId, "Sending {0}.", replyBody);
+    
     context->Reply(move(reply));
 }
 

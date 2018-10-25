@@ -22,11 +22,13 @@
 // Internal Runtime header files
 //
 
+#include "Hosting2/ApplicationHostCodePackageOperationRequest.h"
+#include "Hosting2/ApplicationHostCodePackageOperationReply.h"
+
 #include "Hosting2/ComProxyCodePackageHost.h"
 #include "Hosting2/NonActivatedApplicationHost.h"
 #include "Hosting2/SingleCodePackageApplicationHost.h"
 #include "Hosting2/MultiCodePackageApplicationHost.h"
-#include "Hosting2/InProcessApplicationHost.h"
 #include "Hosting2/ComFabricRuntime.h"
 #if !defined (PLATFORM_UNIX)
 #include "Hosting2/ComFabricBackupRestoreAgent.h"
@@ -34,3 +36,6 @@
 #include "Hosting2/LeaseMonitor.h"
 #include "Hosting2/ServiceFactoryRegistrationTable.h"
 #include "Hosting2/ServiceFactoryRegistration.h"
+
+#include "Hosting2/ApplicationHostCodePackageActivator.h"
+#include "Hosting2/SingleCodePackageApplicationHostCodePackageActivator.h"

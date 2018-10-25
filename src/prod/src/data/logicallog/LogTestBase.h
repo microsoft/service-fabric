@@ -7,8 +7,6 @@
 
 namespace LogTests
 {
-    
-
     class LogTestBase 
         : public KObject<LogTestBase>
         , public KShared<LogTestBase>
@@ -17,7 +15,8 @@ namespace LogTests
 
     public:
 
-        static const LPCWSTR TestDirectoryPath;
+        static volatile bool g_UseKtlFilePrefix;
+        static LPCWSTR GetTestDirectoryPath();
 
         virtual NTSTATUS CreateAndOpenLogManager(__out ILogManagerHandle::SPtr& logManager) = 0;
         virtual NTSTATUS CreateDefaultPhysicalLog(
@@ -67,15 +66,15 @@ namespace LogTests
             __in_opt LogicalLog* logicalLog = nullptr,
             __in BOOLEAN logicalLogIsFunctionalExpected = FALSE) = 0;
 
-        VOID OpenManyStreamsTest();
-        VOID BasicIOTest();
-        VOID WriteAtTruncationPointsTest();
-        VOID RemoveFalseProgressTest();
-        VOID ReadAheadCacheTest();
-        VOID TruncateInDataBufferTest();
-        VOID SequentialAndRandomStreamTest();
-        VOID ReadWriteCloseRaceTest();
-        VOID UPassthroughErrorsTest();
+        VOID OpenManyStreamsTest(__in KtlLoggerMode ktlLoggerMode);
+        VOID BasicIOTest(__in KtlLoggerMode ktlLoggerMode, __in KGuid const & physicalLogId);
+        VOID WriteAtTruncationPointsTest(__in KtlLoggerMode ktlLoggerMode);
+        VOID RemoveFalseProgressTest(__in KtlLoggerMode ktlLoggerMode);
+        VOID ReadAheadCacheTest(__in KtlLoggerMode ktlLoggerMode);
+        VOID TruncateInDataBufferTest(__in KtlLoggerMode ktlLoggerMode);
+        VOID SequentialAndRandomStreamTest(__in KtlLoggerMode ktlLoggerMode);
+        VOID ReadWriteCloseRaceTest(__in KtlLoggerMode ktlLoggerMode);
+        VOID UPassthroughErrorsTest(__in KtlLoggerMode ktlLoggerMode);
 
         ktl::Awaitable<void> ReadWriteCloseRaceWorker(
             __in ILogicalLog& logicalLog,
@@ -83,6 +82,7 @@ namespace LogTests
             __in ILogicalLog::SPtr logicalLogs[],
             __in int numLogicalLogs,
             __inout volatile LONGLONG & amountWritten,
+            __inout volatile ULONGLONG & numTruncates,
             __in int fileSize,
             __in int taskId,
             __in ktl::CancellationToken const & cancellationToken);

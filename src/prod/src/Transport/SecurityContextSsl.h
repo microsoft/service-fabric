@@ -32,7 +32,7 @@ namespace Transport
         bool AuthenticateRemoteByClaims() const override;
         bool ShouldPerformClaimsRetrieval() const override;
         void CompleteClaimsRetrieval(Common::ErrorCode const &, std::wstring const & claimsToken) override;
-        void CompleteClientAuth(Common::ErrorCode error, SecuritySettings::RoleClaims const & clientClaims, Common::TimeSpan expiration) override;
+        void CompleteClientAuth(Common::ErrorCode const &, SecuritySettings::RoleClaims const & clientClaims, Common::TimeSpan expiration) override;
 
         virtual bool AccessCheck(AccessControl::FabricAcl const & acl, DWORD desiredAccess) const override;
 
@@ -130,7 +130,7 @@ namespace Transport
             bool onlyCrlOfflineEncountered,
             _Out_opt_ std::wstring * nameMatched = nullptr);
 
-        static MessageUPtr CreateClaimsTokenErrorMessage();
+        static MessageUPtr CreateClaimsTokenErrorMessage(Common::ErrorCode const &);
 
         void TryAuthenticateRemoteAsPeer();
 
@@ -153,6 +153,20 @@ namespace Transport
         SslUPtr ssl_;
         Common::LinuxCryptUtil::CertChainErrors certChainErrors_;
 #else
+        ///
+        /// Verifies whether the chain's trust status contains only allowed/non-fatal errors.
+        ///
+        static inline bool IsExpectedCertChainTrustError(
+            PCCERT_CHAIN_CONTEXT certChainContext,
+            SECURITY_STATUS certChainValidationStatus,
+            HRESULT expectedChainValidationStatus,
+            DWORD nonFatalCertChainErrorMask)
+        {
+            return (certChainValidationStatus == expectedChainValidationStatus)                                                 // act on specific validation errors
+                && nonFatalCertChainErrorMask                                                                                   // must be a trust error
+                && ((certChainContext->TrustStatus.dwErrorStatus & nonFatalCertChainErrorMask) == nonFatalCertChainErrorMask);  // must be an expected trust error
+        }
+
         std::vector<SecurityCredentialsSPtr> svrCredentials_;
         SecPkgContext_StreamSizes streamSizes_;
 

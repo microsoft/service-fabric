@@ -25,6 +25,9 @@ namespace HttpGateway
         static double V5ApiVersion;
         static double V6ApiVersion;
         static double V61ApiVersion;
+        static double V62ApiVersion;
+        static double V63ApiVersion;
+        static double V64ApiVersion;
         static Common::GlobalWString PreviewApiVersion;
 
         static ULONG AllocationTag;
@@ -32,6 +35,7 @@ namespace HttpGateway
         static Common::GlobalWString ApplicationTypesHandlerPath;
         static Common::GlobalWString ClusterManagementHandlerPath;
         static Common::GlobalWString ComposeDeploymentsHandlerPath;
+        static Common::GlobalWString VolumesHandlerPath;
         static Common::GlobalWString NodesHandlerPath;
         static Common::GlobalWString ServicesHandlerPath;
         static Common::GlobalWString PartitionsHandlerPath;
@@ -54,6 +58,7 @@ namespace HttpGateway
         static Common::GlobalWString ServerRedirectResponse;
         static Common::GlobalWString ContentTypeOptionsHeader;
         static Common::GlobalWString ContentTypeNoSniffValue;
+        static Common::GlobalWString ApplicationsResourceHandlerPath;
 
         static Common::GlobalWString JsonContentType;
         static Common::GlobalWString HtmlContentType;
@@ -72,6 +77,7 @@ namespace HttpGateway
         static Common::GlobalWString ApplicationDefinitionKindFilterString;
         static Common::GlobalWString ApplicationIdString;
         static Common::GlobalWString DeploymentNameString;
+        static Common::GlobalWString ContainerNameString;
         static Common::GlobalWString ApplicationNameString;
         static Common::GlobalWString ServiceIdString;
         static Common::GlobalWString PartitionIdString;
@@ -114,6 +120,8 @@ namespace HttpGateway
         static Common::GlobalWString RecursiveString;
         static Common::GlobalWString IncludeValuesString;
         static Common::GlobalWString PropertyNameString;
+        static Common::GlobalWString InstanceIdString;
+        static Common::GlobalWString VolumeNameString;
 
         static Common::GlobalWString CommandType;
 
@@ -137,8 +145,20 @@ namespace HttpGateway
         static Common::GlobalWString ApplicationsEntityKeyPath;
         static Common::GlobalWString ComposeDeploymentsEntitySetPath;
         static Common::GlobalWString ComposeDeploymentsEntityKeyPath;
+        static Common::GlobalWString ContainerEntityKeyPath;
         static Common::GlobalWString ApplicationTypesEntitySetPath;
         static Common::GlobalWString TestCommandProgressPath;
+        static Common::GlobalWString VolumesEntitySetPath;
+        static Common::GlobalWString VolumesEntityKeyPath;
+        static Common::GlobalWString ApplicationsResourceEntitySetPath;
+        static Common::GlobalWString ApplicationsResourceEntityKeyPath;
+        static Common::GlobalWString ServicesResourceEntitySetPath;
+        static Common::GlobalWString ServicesResourceEntityKeyPath;
+        static Common::GlobalWString ReplicasResourceEntitySetPath;
+        static Common::GlobalWString ReplicasResourceEntityKeyPath;
+        static Common::GlobalWString ContainerCodePackageKeyPath;
+        static Common::GlobalWString ContainerCodePackageLogsKeyPath;
+
         // path suffixes for backup restore
         static Common::GlobalWString BackupRestoreServiceName;
         static Common::GlobalWString BackupRestorePath;
@@ -196,6 +216,10 @@ namespace HttpGateway
         static Common::GlobalWString ToolsEntitySetPath;
         static Common::GlobalWString ToolsEntityKeyPath;
         static Common::GlobalWString ToolsHandlerPath;
+
+        static Common::GlobalWString ChaosEntityKeyPath;
+        static Common::GlobalWString ChaosEventSegmentsSetPath;
+        static Common::GlobalWString ChaosScheduleKeyPath;
 
         static Common::GlobalWString FaultsEntitySetPath;
 
@@ -257,6 +281,9 @@ namespace HttpGateway
         static Common::GlobalWString GetTestCommands;
         static Common::GlobalWString Cancel;
         static Common::GlobalWString Report;
+        static Common::GlobalWString Instances;
+        static Common::GlobalWString Schedule;
+
         static Common::GlobalWString StartClusterConfigurationUpgrade;
         static Common::GlobalWString GetClusterConfigurationUpgradeStatus;
         static Common::GlobalWString GetClusterConfiguration;
@@ -334,8 +361,11 @@ namespace HttpGateway
         static Common::GlobalWString GetServicePackage;
         static Common::GlobalWString Activate;
         static Common::GlobalWString Restart;
+        static Common::GlobalWString Logs;
         static Common::GlobalWString ContainerLogs;
         static Common::GlobalWString ContainerApi;
+        static Common::GlobalWString ContainerApiPathString;
+        static Common::GlobalWString ContainerApiPath;
         static Common::GlobalWString Remove;
         static Common::GlobalWString Stop;
         static Common::GlobalWString Start;
@@ -408,6 +438,7 @@ namespace HttpGateway
         //
         // Http status codes
         //
+        static USHORT StatusOk;
         static USHORT StatusCreated;
         static USHORT StatusNoContent;
         static USHORT StatusAccepted;
@@ -418,7 +449,9 @@ namespace HttpGateway
         static USHORT StatusConflict;
         static USHORT StatusPreconditionFailed;
         static USHORT StatusRangeNotSatisfiable;
-        static Common::GlobalWString StatusDecsriptionCreated;
+        static USHORT StatusServiceUnavailable;
+        static Common::GlobalWString StatusDescriptionOk;
+        static Common::GlobalWString StatusDescriptionCreated;
         static Common::GlobalWString StatusDescriptionNoContent;
         static Common::GlobalWString StatusDescriptionAccepted;
         static Common::GlobalWString StatusDescriptionClientCertificateRequired;
@@ -426,6 +459,7 @@ namespace HttpGateway
         static Common::GlobalWString StatusDescriptionUnauthorized;
         static Common::GlobalWString StatusDescriptionNotFound;
         static Common::GlobalWString StatusDescriptionConflict;
+        static Common::GlobalWString StatusDescriptionServiceUnavailable;
 
         static Common::GlobalWString NegotiateHeaderValue;
 
@@ -479,6 +513,11 @@ namespace HttpGateway
         static Common::GlobalWString Type;
         static Common::GlobalWString Force;
         static Common::GlobalWString Immediate;
+
+        static Common::GlobalWString EventsStoreHandlerPath;
+        static Common::GlobalWString EventsStoreServiceName;
+        static Common::GlobalWString EventsStorePrefix;
+        static Common::GlobalWString EventsReaderOutputDir;
 
         #define EMPTY_URI_QUERY_FILTER Common::NamingUri::RootNamingUri
         #define EMPTY_STRING_QUERY_FILTER std::wstring()

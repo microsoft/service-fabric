@@ -41,7 +41,6 @@ NTSTATUS StateManagerTransactionContext::Create(
 
 void StateManagerTransactionContext::Unlock()
 {
-    // TODO: Trace WriteInfo("StateManager.StateManagerTransactionContext.Unlock", "unlock called for tansaction {0}", this.TransactionId);
     THROW_ON_FAILURE(lockContextSPtr_->Unlock(*this));
 }
 

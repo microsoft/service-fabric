@@ -16,6 +16,7 @@ namespace Hosting2
             ApplicationHostType::Enum applicationHostType,
             DWORD applicationHostProcessId,
             bool isContainerHost,
+            bool isCodePackageActivatorHost,
             Common::TimeSpan timeout);
 
         __declspec(property(get = get_hostId)) std::wstring const & Id;
@@ -30,18 +31,22 @@ namespace Hosting2
         __declspec(property(get = get_IsContainerHost)) bool IsContainerHost;
         bool get_IsContainerHost() const { return isContainerHost_; }
 
+        __declspec(property(get = get_IsCodePackageActivatorHost)) bool IsCodePackageActivatorHost;
+        bool get_IsCodePackageActivatorHost() const { return isCodePackageActivatorHost_; }
+
         __declspec(property(get = get_Timeout)) Common::TimeSpan Timeout;
         Common::TimeSpan get_Timeout() const { return timeout_; }
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_05(id_, type_, processId_, timeout_, isContainerHost_);
+        FABRIC_FIELDS_06(id_, type_, processId_, timeout_, isContainerHost_, isCodePackageActivatorHost_);
 
     private:
         std::wstring id_;
         ApplicationHostType::Enum type_;
         DWORD processId_;
         bool isContainerHost_;
+        bool isCodePackageActivatorHost_;
         Common::TimeSpan timeout_;
     };
 }

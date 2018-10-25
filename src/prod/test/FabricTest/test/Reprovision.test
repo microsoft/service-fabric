@@ -81,7 +81,7 @@ app.upload version10
 #
 # Reprovision application version 1.0
 #
-provisionapp version10 Success applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+provisionapp version10 Success applicationPackageCleanupPolicy=Manual
 
 #
 # Recreate application version 1.0
@@ -108,10 +108,10 @@ verifyimagestore
 # Reprovision application version 1.0 with application package cleanup.
 # Doing reprovision should report application package missing
 #
-provisionapp version10 Success applicationPackageCleanupPolicy=CleanupApplicationPackage
+provisionapp version10 Success applicationPackageCleanupPolicy=Automatic
 
 # Expecting directory not found because previous provision would have deleted the application package.
-provisionapp version10 DirectoryNotFound applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+provisionapp version10 DirectoryNotFound applicationPackageCleanupPolicy=Manual
 
 verifyimagestore
 
@@ -123,7 +123,7 @@ provisionapp version10 Success applicationPackageCleanupPolicy=Invalid
 
 # Expecting file not found because previous provision would have deleted the application package.
 # Cluster setting CleanupApplicationPackageOnProvisionSucess is set to true. (If set to false, it should provide already exists error - ApplicationTypeAlreadyExists)
-provisionapp version10 DirectoryNotFound applicationPackageCleanupPolicy=NoCleanupApplicationPackageOnProvision
+provisionapp version10 DirectoryNotFound applicationPackageCleanupPolicy=Manual
 
 verifyimagestore
 

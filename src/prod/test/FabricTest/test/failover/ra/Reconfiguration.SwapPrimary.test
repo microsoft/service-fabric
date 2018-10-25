@@ -1,0 +1,684 @@
+#
+# [owner] aprameyr
+# Test scenarios around Phase4_Activate for a reconfig that promotes a replica
+!load FailoverCITInitialization.test
+set ReconfigurationMessageRetryInterval 5
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 1: Primary is informed of down replicas during catchup
+# CatchupALL is invoked if the replicator does not support catchup specific quorum
+# Ensure slow replication to prevent catchup from succeeding
+# Unblock replication to one secondary
+# Catchup should still be stuck
+# Take down secondary and catchup should succeed
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) initdata=Test_DisableReplicatorCatchupSpecificReplica:true
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+
+clientput fabric:/test1 10 10
+!wait
+
+swapprimary fabric:/test1 40 30
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 Phase0_Demote
+
+#retry of UC should happen
+!pause 3
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 Phase0_Demote
+
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test1.40 None
+
+removebehavior b1
+
++20 nodeprops=system:false
+verify
+
+deleteservice fabric:/test1
+verify
+
+######################################################
+# Scenario 2: Fail CR (P)
+# The action list should be retried
+#####################################################
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+injectfailure 40 fabric:/test2 service.beginchangerole
+
+clientput fabric:/test2 10 10
+!wait
+
+swapprimary fabric:/test2 40 30
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.40 Phase0_Demote
+
+#retry of UC should happen
+!pause 3
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test2.40 Phase0_Demote
+
+removefailure 40 fabric:/test2 service.beginchangerole
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 3: Build a replica during swap primary 
+# Build during catchup all
+# The action list should be retried
+#####################################################
+
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=5 constraint=(system!=true)
+verify
+
+addbehavior b1 * 50 ReplicationOperation
+
+clientput fabric:/test3 10 10
+!wait
+
+swapprimary fabric:/test3 60 50
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.60 Phase0_Demote
+
+addbehavior b3 * * ReplicaUp
+reportfault 40 fabric:/test3 transient
+reportfault 30 fabric:/test3 transient
+reportfault 20 fabric:/test3 transient
+
+!waitforstate RA.Replica.State.fabric:/test3.40.40 SB
+!waitforstate RA.Replica.State.fabric:/test3.30.30 SB
+!waitforstate RA.Replica.State.fabric:/test3.20.20 SB
+removebehavior b3
+
+addbehavior b4 * * UpdateConfigurationReply
+addbehavior b2 * * ReplicatorBuildIdleReplica
+
+!waitforstate RA.Replica.State.fabric:/test3.60.40 IB
+!waitforstate RA.Replica.State.fabric:/test3.60.30 IB
+!waitforstate RA.Replica.State.fabric:/test3.60.20 IB
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.60 Phase0_Demote
+
+removebehavior b2
+
+!waitforstate RA.Replica.State.fabric:/test3.60.40 RD
+!waitforstate RA.Replica.State.fabric:/test3.60.30 RD
+!waitforstate RA.Replica.State.fabric:/test3.60.20 RD
+removebehavior b4
+
+removebehavior b1
+verify
+
+deleteservice fabric:/test3
+verify
+
+-50
+-60
+!waitforstate FM.Node.IsUp.50 false
+!waitforstate FM.Node.IsUp.60 false
+
+#####################################################
+# Scenario 4: Replica restarts and is SB during catchup
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+setsignal 40 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+
+swapprimary fabric:/test4 40 30
+!waitforstate RA.FT.ReconfigStage.fabric:/test4.40 Phase0_Demote
+
+addbehavior b0 * * DoReconfiguration
+reportfault 20 fabric:/test4 transient
+!waitforstate FM.Replica.State.fabric:/test4.20 StandBy
+
+removebehavior b0
+resetsignal 40 fabric:/test4 replicator.updatecatchupreplicasetconfiguration.block
+
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 5: Replica restarts after Demote
+#####################################################
+
+createservice fabric:/test5 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true)
+verify
+
+addbehavior b0 * * GetLSN
+
+swapprimary fabric:/test5 40 30
+!waitforstate RA.FT.ReconfigStage.fabric:/test5.30 Phase1_GetLSN
+
+reportfault 20 fabric:/test5 transient
+!waitforstate FM.Replica.State.fabric:/test5.20 StandBy
+
+removebehavior b0
+verify
+
+deleteservice fabric:/test5
+verify
+
+#####################################################
+# Scenario 6: Down old primary before demote has completed
+#####################################################
+
+createservice fabric:/test6 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test6 10 10
+!wait
+
+addbehavior b1 * * UpdateConfigurationReply
+swapprimary fabric:/test6 40 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test6.40 Phase0_Demote
+
+addbehavior b2 * * DoReconfiguration
+-40
+!waitforstate FM.Replica.IsUp.fabric:/test6.40 false
+
+removebehavior b1
+removebehavior b2
+verify
+
+clientget fabric:/test6 10 10
+!wait
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test6
+verify
+
+#####################################################
+# Scenario 7: Down old primary after demote has completed during phase1
+# and old primary has forwarded doreconfig
+#####################################################
+
+createservice fabric:/test7 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test7 10 10
+!wait
+
+addbehavior b1 * 40 GetLSN
+swapprimary fabric:/test7 40 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test7.20 Phase1_GetLSN
+
+-40
+verify
+
+clientget fabric:/test7 10 10
+!wait
+
++40 nodeprops=system:false
+verify
+
+removebehavior b1
+
+deleteservice fabric:/test7
+verify
+
+#####################################################
+# Scenario 8: Down old primary after demote has completed 
+# FM forwards DoReconfig
+#####################################################
+
+createservice fabric:/test8 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test8 10 10
+!wait
+
+addbehavior b0 40 * DoReconfiguration
+addbehavior b1 * * UpdateConfiguration
+swapprimary fabric:/test8 40 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 Phase0_Demote
+
+removebehavior b1
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.40 None
+
+addbehavior b2 * * GetLSN
+-40
+!waitforstate RA.FT.ReconfigStage.fabric:/test8.20 Phase1_GetLSN
+removebehavior b0
+removebehavior b2
+verify
+
+clientget fabric:/test8 10 10
+!wait
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test8
+verify
+
+#####################################################
+# Scenario 11: Volatile Down old primary before demote has completed
+#####################################################
+
+createservice fabric:/test11 TestStoreServiceType y 1 3 minreplicasetsize=3 constraint=(system!=true)
+verify
+
+clientput fabric:/test11 10 10
+!wait
+
+addbehavior b1 * * UpdateConfigurationReply
+swapprimary fabric:/test11 40 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test11.40 Phase0_Demote
+
+addbehavior b2 * * DoReconfiguration
+-40
+!waitforstate FM.Replica.IsUp.fabric:/test11.40 false
+
+removebehavior b1
+removebehavior b2
+verify
+
+clientget fabric:/test11 10 10
+!wait
+
++40 nodeprops=system:false
+verify
+
+deleteservice fabric:/test11
+verify
+
+#####################################################
+# Scenario 12: Down old primary after demote has completed during phase1
+# and old primary has forwarded doreconfig
+#####################################################
+
+createservice fabric:/test12 TestStoreServiceType y 1 3 constraint=(system!=true)
+verify
+
+clientput fabric:/test12 10 10
+!wait
+
+addbehavior b1 * 40 GetLSN
+swapprimary fabric:/test12 40 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test12.20 Phase1_GetLSN
+
+-40
+verify
+
+clientget fabric:/test12 10 10
+!wait
+
++40 nodeprops=system:false
+verify
+
+removebehavior b1
+
+deleteservice fabric:/test12
+verify 
+
+#####################################################
+# Scenario 13: 1 Slow secondary replica out of 3 in a partition should NOT block swap
+#####################################################
+
+createservice fabric:/test13 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) 
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+
+clientput fabric:/test13 10 10
+!wait
+
+swapprimary fabric:/test13 40 30
+verify
+
+removebehavior b1
+
+deleteservice fabric:/test13
+verify 
+
+#####################################################
+# Scenario 14:  - 5 replica set
+#   1. Slow Target Primary during swap and another secondary also slow
+#   2. Target primary goes down
+#   3. Catchup cancelled 
+#   4. New Swap with another slow target secondary
+#   5. Catchup still stuck 
+#   6. Let the slow target secondary process replication operations
+#   7. Finally catchup should finish
+#####################################################
+
++50 nodeprops=system:false
++60 nodeprops=system:false 
+!wait 
+verify 
+
+createservice fabric:/test14 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true) 
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+addbehavior b2 * 30 ReplicationOperation
+
+clientput fabric:/test14 10 10
+!wait
+
+swapprimary fabric:/test14 60 20
+!waitforstate RA.FT.ReconfigStage.fabric:/test14.60 Phase0_Demote
+
+!pause 5
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test14.60 Phase0_Demote
+
+# take down to be promoted primary
+-20
+!waitforstate RA.FT.ReconfigStage.fabric:/test14.60 None
+removebehavior b1 
++20 nodeprops=system:false
+!wait
+verify 
+
+# this swap should also be stuck 
+swapprimary fabric:/test14 60 30
+!waitforstate RA.FT.ReconfigStage.fabric:/test14.60 Phase0_Demote
+!pause 5
+!waitforstate RA.FT.ReconfigStage.fabric:/test14.60 Phase0_Demote
+
+removebehavior b2 
+verify
+
+deleteservice fabric:/test14 
+
+-60
+-50 
+!wait
+verify 
+
+
+##################################################### 
+# Scenario 15: 1 Slow secondary where primary queue is full and primary has double max queue length than that of secondary
+#####################################################
+ 
+createservice fabric:/test15 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) ###initdata=RE_MaxPrimaryReplicationQueueSize:4;RE_MaxSecondaryReplicationQueueSize:2;RE_InitialPrimaryReplicationQueueSize:2;RE_InitialSecondaryReplicationQueueSize:2
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+
+clientput fabric:/test15 10 10
+clientput fabric:/test15 10 20
+clientput fabric:/test15 10 30
+clientput fabric:/test15 10 40
+!wait
+
+swapprimary fabric:/test15 40 30
+verify
+
+removebehavior b1
+
+deleteservice fabric:/test15
+verify 
+
+##################################################### 
+# Scenario 16: 1 Slow secondary where primary queue is full and primary has higher max queue memory size than that of secondary
+#####################################################
+
+createservice fabric:/test16 TestPersistedStoreServiceType y 1 3 persist constraint=(system!=true) ###initdata=RE_MaxPrimaryReplicationQueueMemorySize:2000;RE_MaxSecondaryReplicationQueueMemorySize:400;RE_MaxReplicationMessageSize:150
+verify
+
+addbehavior b1 * 20 ReplicationOperation
+
+clientput fabric:/test16 10 10
+clientput fabric:/test16 10 20
+clientput fabric:/test16 10 30
+clientput fabric:/test16 10 30
+clientput fabric:/test16 10 30
+clientput fabric:/test16 10 30
+clientput fabric:/test16 10 30
+clientput fabric:/test16 10 30
+clientput fabric:/test16 10 30
+!wait
+
+swapprimary fabric:/test16 40 30
+verify
+
+removebehavior b1
+
+deleteservice fabric:/test16
+verify 
+
+##################################################### 
+# Scenario 17: Primary has pending operations that are not qourum ack'd when it receievs swap
+#####################################################
+
++50 nodeprops=system:false
++60 nodeprops=system:false
+verify
+createservice fabric:/test17 TestPersistedStoreServiceType y 1 5 persist constraint=(system!=true) 
+verify
+
+clientput fabric:/test17 10 10
+!wait 
+
+addbehavior b1 * 20 ReplicationOperation
+addbehavior b2 * 30 ReplicationOperation
+addbehavior b3 * 40 ReplicationOperation 
+
+clientput fabric:/test17 10 20
+
+swapprimary fabric:/test17 60 50 skipverify 
+!pause 5
+removebehavior b1
+!wait
+
+removebehavior b2
+removebehavior b3
+
+deleteservice fabric:/test17
+-50 
+-60 
+!wait
+verify 
+
+#####################################################
+# Scenario 19: DataLoss is not detected during swap primary
+#####################################################
+
++50 nodeprops=system:false
++60 nodeprops=system:false
+!waitforstate FM.Node.IsUp.50 true
+!waitforstate FM.Node.IsUp.60 true
+
+createservice fabric:/test19 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=1 constraint=(system!=true)
+verify
+
+addbehavior b0 * * GetLSN
+swapprimary fabric:/test19 60 50
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test19.50 Phase1_GetLSN
+
+#block dataloss
+addbehavior bx * * DataLossReport
+setsignal 50 fabric:/test19 replicator.beginondataloss.block
+
+reportfault 20 fabric:/test19 permanent
+reportfault 30 fabric:/test19 permanent
+reportfault 40 fabric:/test19 permanent
+
+!waitforstate RA.Replica.State.fabric:/test19.50.40 DD
+!waitforstate RA.Replica.State.fabric:/test19.50.30 DD
+!waitforstate RA.Replica.State.fabric:/test19.50.20 DD
+
+removebehavior b0
+!waitforstate RA.FT.ReconfigStage.fabric:/test19.50 None
+
+verify
+
+removebehavior bx
+
+deleteservice fabric:/test19
+verify
+
+#clean up additional nodes not needed - each test case should start with 3 nodes
+-50
+-60
+!waitforstate FM.Node.IsUp.50 false
+!waitforstate FM.Node.IsUp.60 false
+
+verify
+
+#####################################################
+# Scenario 20: Do not perform get lsn during abort swap primary if the swap
+# gets cancelled but the old Primary didn't receive the initial swap message
+#####################################################
+
+createservice fabric:/test20 TestPersistedStoreServiceType y 1 3 persist minreplicasetsize=3 constraint=(system!=true)
+verify
+
+addbehavior b1 * * DoReconfiguration
+addbehavior b2 * * GetLSN
+
+swapprimary fabric:/test20 40 20
+
+!waitforstate FM.Replica.Role.fabric:/test20.40 Secondary
+
+-20
+!waitforstate FM.Replica.IsUp.fabric:/test20.20 false
+!pause 5
+
+removebehavior b1
+
+# Since the swap got cancelled before the Primary on 40 got the reconfiguration
+# message, it should not perform GetLSN and should finish the reconfiguration
+!waitforstate RA.FT.ReconfigStage.fabric:/test20.40 None
+
++20 nodeprops=system:false
+verify
+
+removebehavior b2
+
+deleteservice fabric:/test20
+
+verify
+
+#####################################################
+# Scenario 21: IB replicas after catchup all is completed
+# regression test for #6993145
+# and replicator has changed to secondary are not built by P->S replica
+# but built by the next primary
+#####################################################
++50 nodeprops=system:false
+verify
+
+createservice fabric:/test21 TestPersistedStoreServiceType y 1 4 persist constraint=(system!=true) 
+verify
+
+setsignal 50 fabric:/test21 service.beginchangerole.block
+
+swapprimary fabric:/test21 50 40
+waitforsignalhit 50 fabric:/test21 service.beginchangerole.block
+
+#block build and wait for the builds to start
+#and ensure that subsequently replicas do not restart
+#restart quorum of replicas first
+addbehavior b0 * * CreateReplica
+addbehavior b1 * * ReplicatorBuildIdleReplica
+reportfault 30 fabric:/test21 transient
+reportfault 20 fabric:/test21 transient
+
+!waitforstate RA.Replica.State.fabric:/test21.50.30 IC
+!waitforstate RA.Replica.State.fabric:/test21.50.20 IC
+
+removebehavior b0
+
+!waitforstate RA.Replica.State.fabric:/test21.50.30 IB
+!waitforstate RA.Replica.State.fabric:/test21.50.20 IB
+
+#now block create and unblock build
+#without the bugfix the replica will get recreated
+addbehavior b2 * * CreateReplica
+removebehavior b1
+
+!pause 10
+!waitforstate RA.Replica.State.fabric:/test21.50.30 IB
+!waitforstate RA.Replica.State.fabric:/test21.50.20 IB
+
+#unblock change role
+#new primary should get stuck in IC
+resetsignal 50 fabric:/test21 service.beginchangerole.block
+
+!waitforstate RA.Replica.State.fabric:/test21.40.30 IC
+!waitforstate RA.Replica.State.fabric:/test21.40.20 IC
+!waitforstate RA.FT.ReconfigStage.fabric:/test21.40 Phase2_Catchup
+
+removebehavior b2
+!waitforstate RA.FT.ReconfigStage.fabric:/test21.40 None
+
+verify
+
+deleteservice fabric:/test21
+verify
+
+-50
+verify
+
+#####################################################
+# Scenario 22: Replicas for which build completes but deactivate reply is not received
+# and demote completes at that time during swap clear ToBeDeactivated flag
+#####################################################
+
++50 nodeprops=system:false
+verify
+
+createservice fabric:/test22 TestPersistedStoreServiceType y 1 4 persist constraint=(system!=true) 
+verify
+
+setsignal 50 fabric:/test22 replicator.beginwaitforcatchupquorum.block
+
+swapprimary fabric:/test22 50 40
+waitforsignalhit 50 fabric:/test22 replicator.beginwaitforcatchupquorum.block
+
+#block build idle replica and ensure build starts
+addbehavior b1 * * ReplicatorBuildIdleReplica
+reportfault 30 fabric:/test22 transient
+reportfault 20 fabric:/test22 transient
+
+!waitforstate RA.Replica.State.fabric:/test22.50.30 IB
+!waitforstate RA.Replica.State.fabric:/test22.50.20 IB
+
+#block deactivate message to 30 and unblock build idle reply 
+addbehavior b2 * 30 Deactivate
+removebehavior b1
+
+!waitforstate RA.Replica.State.fabric:/test22.50.20 RD 
+!waitforstate RA.Replica.State.fabric:/test22.50.30 IB
+
+#wait for retries
+!pause 5
+
+#complete the catchup
+
+resetsignal 50 fabric:/test22 replicator.beginwaitforcatchupquorum.block
+
+!waitforstate RA.FT.ReconfigStage.fabric:/test22.50 None
+
+removebehavior b2
+verify
+
+deleteservice fabric:/test22
+verify
+
+-50
+verify
+
+
+!q

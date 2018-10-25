@@ -111,6 +111,20 @@ void VersionManager::Initialize(__in IVersionProvider & versionProvider)
     THROW_ON_FAILURE(status);
 }
 
+void VersionManager::Reuse()
+{
+    versionListLock_.AcquireExclusive();
+    {
+        KFinally([&] {versionListLock_.ReleaseExclusive(); });
+
+        readerRemovalNotifications_.Clear();
+        versionList_.Clear();
+    }
+
+    registeredNotifications_->Clear();
+    lastDispatchingBarrier_.Put(nullptr);
+}
+
 void VersionManager::UpdateDispatchingBarrierTask(__in CompletionTask & barrierTask)
 {
     lastDispatchingBarrier_.Put(&barrierTask);

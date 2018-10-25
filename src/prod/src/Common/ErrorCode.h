@@ -38,8 +38,6 @@ namespace Common
         bool IsErrno(int error) const;
 
         void SetThreadErrorMessage() const;
-        static std::wstring GetThreadErrorMessage();        
-        static std::wstring GetAndClearThreadErrorMessage();
 
         static std::string AddField(Common::TraceEvent & traceEvent, std::string const & name);
         void FillEventData(Common::TraceEventContext & context) const;
@@ -82,6 +80,7 @@ namespace Common
     private:
         static std::wstring GetThreadErrorMessage(bool clear);
         bool TryAssignFrom(ErrorCode const&, bool allowOverwrite);
+        void ClearThreadErrorMessage() const;
 
         ErrorCodeValue::Enum value_;
 

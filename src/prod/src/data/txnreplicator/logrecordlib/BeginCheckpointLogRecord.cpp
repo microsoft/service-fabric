@@ -33,6 +33,8 @@ BeginCheckpointLogRecord::BeginCheckpointLogRecord(
     , firstCheckpointPhase1CompletionTcs_(nullptr)
     , epoch_(Epoch::InvalidEpoch())
     , earliestPendingTransactionInvalidated_(false)
+    , periodicCheckpointTimeTicks_(0)
+    , periodicTruncationTimeTicks_(0)
 {
 }
 
@@ -46,7 +48,9 @@ BeginCheckpointLogRecord::BeginCheckpointLogRecord(
     __in_opt PhysicalLogRecord * const lastLinkedPhysicalRecord,
     __in PhysicalLogRecord & invalidPhysicalLogRecord,
     __in BackupLogRecord const & lastCompletedBackupLogRecord,
-    __in ULONG progressVectorMaxEntries)
+    __in ULONG progressVectorMaxEntries,
+    __in LONG64 periodicCheckpointTimeTicks,
+    __in LONG64 periodicTruncationTimeTicks)
     : PhysicalLogRecord(LogRecordType::Enum::BeginCheckpoint, lsn, lastLinkedPhysicalRecord, invalidPhysicalLogRecord)
     , backupLogRecordCount_(lastCompletedBackupLogRecord.BackupLogRecordCount) 
     , backupLogSize_(lastCompletedBackupLogRecord.BackupLogSize)
@@ -61,6 +65,8 @@ BeginCheckpointLogRecord::BeginCheckpointLogRecord(
     , isFirstCheckpointOnFullCopy_(isFirstCheckpointOnFullCopy)
     , firstCheckpointPhase1CompletionTcs_(CompletionTask::CreateAwaitableCompletionSource<NTSTATUS>(BEGINCHECKPOINTLOGRECORD_TAG, GetThisAllocator()).RawPtr())
     , earliestPendingTransactionInvalidated_(false)
+    , periodicCheckpointTimeTicks_(periodicCheckpointTimeTicks)
+    , periodicTruncationTimeTicks_(periodicTruncationTimeTicks)
 {
     epoch_ = (earliestPendingTransaction_ != nullptr) ? earliestPendingTransaction_->RecordEpoch : epoch;
     UpdateApproximateDiskSize();
@@ -81,6 +87,8 @@ BeginCheckpointLogRecord::BeginCheckpointLogRecord()
     , isFirstCheckpointOnFullCopy_(false)
     , firstCheckpointPhase1CompletionTcs_(nullptr)
     , earliestPendingTransactionInvalidated_(false)
+    , periodicCheckpointTimeTicks_(0)
+    , periodicTruncationTimeTicks_(0)
 {
 }
 
@@ -102,7 +110,11 @@ BeginCheckpointLogRecord::BeginCheckpointLogRecord(
     , isFirstCheckpointOnFullCopy_(false)
     , firstCheckpointPhase1CompletionTcs_(nullptr)
     , earliestPendingTransactionInvalidated_(false)
+    , periodicCheckpointTimeTicks_(Common::DateTime::Now().Ticks)
+    , periodicTruncationTimeTicks_(Common::DateTime::Now().Ticks)
 {
+    // periodicCheckpointTimeTicks_ persists current time during creation of ZeroBeginCheckpointLogRecord.
+    // Ensures that replica close prior to first checkpoint recovers initial time
     UNREFERENCED_PARAMETER(dummy);
 }
 
@@ -154,6 +166,8 @@ BeginCheckpointLogRecord::SPtr BeginCheckpointLogRecord::Create(
     __in PhysicalLogRecord & invalidPhysicalLogRecord,
     __in BackupLogRecord const & lastCompletedBackupLogRecord,
     __in ULONG progressVectorMaxEntries,
+    __in LONG64 periodicCheckpointTimeTicks,
+    __in LONG64 periodicTruncationTimeTicks,
     __in KAllocator & allocator)
 {
     BeginCheckpointLogRecord* pointer = _new(BEGINCHECKPOINTLOGRECORD_TAG, allocator) BeginCheckpointLogRecord(
@@ -166,7 +180,9 @@ BeginCheckpointLogRecord::SPtr BeginCheckpointLogRecord::Create(
         lastLinkedPhysicalRecord, 
         invalidPhysicalLogRecord, 
         lastCompletedBackupLogRecord,
-        progressVectorMaxEntries);
+        progressVectorMaxEntries,
+        periodicCheckpointTimeTicks,
+        periodicTruncationTimeTicks);
 
     THROW_ON_ALLOCATION_FAILURE(pointer);
     return BeginCheckpointLogRecord::SPtr(pointer);
@@ -210,6 +226,14 @@ void BeginCheckpointLogRecord::Read(
     binaryReader.Read(backupLogRecordCount_);
     binaryReader.Read(backupLogSize_);
 
+    // Conditionally read periodicCheckpointTimeTicks_
+    // Ensures compatibility with versions prior to addition of timestamp field
+    if (binaryReader.Position < endPosition)
+    {
+        binaryReader.Read(periodicCheckpointTimeTicks_);
+        binaryReader.Read(periodicTruncationTimeTicks_);
+    }
+
     ASSERT_IFNOT(
         endPosition >= binaryReader.Position,
         "Invalid begin checkpoint log record, end position: {0} reader position:{1}",
@@ -223,20 +247,23 @@ void BeginCheckpointLogRecord::Read(
 void BeginCheckpointLogRecord::Write(
     __in BinaryWriter & binaryWriter,
     __inout OperationData & operationData,
-    __in bool isPhysicalWrite)
+    __in bool isPhysicalWrite,
+    __in bool forceRecomputeOffsets)
 {
-    __super::Write(binaryWriter, operationData, isPhysicalWrite);
+    __super::Write(binaryWriter, operationData, isPhysicalWrite, forceRecomputeOffsets);
     ULONG32 startingPosition = binaryWriter.Position;
     binaryWriter.Position += sizeof(ULONG32);
 
-    if (earliestPendingTransactionOffset_ == Constants::InvalidLogicalRecordOffset)
+    // By now, all the log records before this begin checkpoint must have been serialized
+    if (earliestPendingTransactionOffset_ == Constants::InvalidLogicalRecordOffset || forceRecomputeOffsets == true)
     {
         ASSERT_IFNOT(
             earliestPendingTransaction_ == nullptr ||
-            earliestPendingTransaction_->RecordType != LogRecordType::Enum::Invalid,
-            "Earliest pending transaction must be null or RecordType Invalid");
+            earliestPendingTransaction_->RecordType != LogRecordType::Enum::Invalid ||
+            forceRecomputeOffsets == true,
+            "Earliest pending transaction must be null or RecordType Invalid. forceRecomputeOffsets={0}",
+            forceRecomputeOffsets);
 
-        // By now, all the log records before this begin checkpoint must have been serialized
         if (earliestPendingTransaction_ == nullptr)
         {
             earliestPendingTransactionOffset_ = 0;
@@ -288,6 +315,9 @@ void BeginCheckpointLogRecord::Write(
 
     binaryWriter.Write(backupLogRecordCount_);
     binaryWriter.Write(backupLogSize_);
+
+    binaryWriter.Write(periodicCheckpointTimeTicks_);
+    binaryWriter.Write(periodicTruncationTimeTicks_);
 
     ULONG32 endPosition = binaryWriter.Position;
     ULONG32 sizeOfSection = endPosition - startingPosition;

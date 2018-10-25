@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 #if !defined(PLATFORM_UNIX)
 #include <hash_set>
@@ -17,6 +17,7 @@
 #include <Iphlpapi.h>
 #include <InitGuid.h>
 #include <netfw.h>
+#include <wrl/client.h>
 #else
 #include <ext/hash_set>
 #endif
@@ -32,6 +33,8 @@
 #include "Management/FileStoreService/FileStoreService.h"
 #include "Management/BackupRestoreService/BackupRestoreServiceConfig.h"
 #include "Management/ResourceMonitor/config/ResourceMonitorServiceConfig.h"
+#include "Management/CentralSecretService/CentralSecretServiceConfig.h"
+
 #if !defined(PLATFORM_UNIX)
 #include "Management/HttpTransport/HttpTransport.Client.h"
 #include "Management/HttpTransport/HttpTransport.Server.h"
@@ -43,6 +46,7 @@
 // Internal Hosting header files
 //
 
+#include "Hosting2/HostingHelpers.h"
 #include "Hosting2/ContainerInfoReply.h"
 #include "Hosting2/HostedServiceParameters.h"
 #include "Hosting2/Hosting.h"
@@ -64,7 +68,6 @@
 #else
 #include "Hosting2/ProcessActivationContext.Linux.h"
 #include "Hosting2/ProcessConsoleRedirector.Linux.h"
-#include "Hosting2/DockerClient.h"
 #endif
 #if !defined(PLATFORM_UNIX)
 #include "Hosting2/ProcessActivator.h"
@@ -73,18 +76,15 @@
 #include "Hosting2/ProcessActivator.Linux.h"
 #endif
 #include "Hosting2/RepositoryAuthConfig.h"
-#include "Hosting2/ContainerImageDownloader.h"
+#include "Hosting2/ClearContainerHelper.h"
 #include "Hosting2/ContainerHostConfig.h"
+#include "Hosting2/VolumeMapper.h"
 #include "Hosting2/ContainerConfig.h"
 #include "Hosting2/ContainerStats.h"
 #include "Hosting2/IContainerActivator.h"
-
-#if !defined(PLATFORM_UNIX)
-#include "Hosting2/ContainerActivatorWindows.h"
-#else
-#include "Hosting2/ContainerActivatorLinux.h"
-#endif
-
+#include "Hosting2/ContainerActivator.h"
+#include "Hosting2/ContainerEventTracker.h"
+#include "Hosting2/NodeAvailableImages.h" // For deserialization json response from docker about available images
 #include "Hosting2/CodePackageActivationId.h"
 #include "Hosting2/CodePackageRuntimeInformation.h"
 #include "Hosting2/ActivateProcessRequest.h"
@@ -122,6 +122,9 @@
 #include "Hosting2/PortAclMap.h"
 #include "Hosting2/NodeEnvironmentManager.h"
 #include "Hosting2/HttpEndpointSecurityProvider.h"
+#if !defined(PLATFORM_UNIX)
+#include "Hosting2/FirewallSecurityProviderHelper.h"
+#endif
 #include "Hosting2/FirewallSecurityProvider.h"
 #include "Hosting2/SecurityIdentityMap.h"
 #include "Hosting2/SecurityPrincipalsProvider.h"
@@ -146,9 +149,6 @@
 #include "Hosting2/VersionedServicePackage.h"
 #include "Hosting2/CodePackage.h"
 #include "Hosting2/CodePackageInstance.h"
-#include "Hosting2/ComGuestServiceInstance.h"
-#include "Hosting2/ComGuestServiceTypeFactory.h"
-#include "Hosting2/GuestServiceTypeHost.h"
 #include "Hosting2/ApplicationHostProxy.h"
 #include "Hosting2/SingleCodePackageApplicationHostProxy.h"
 #include "Hosting2/MultiCodePackageApplicationHostProxy.h"
@@ -157,6 +157,7 @@
 #include "Hosting2/ApplicationManager.h"
 #include "Hosting2/Activator.h"
 #include "Hosting2/Deactivator.h"
+#include "Hosting2/ImageCacheManager.h"
 #include "Hosting2/DownloadManager.h"
 #include "Hosting2/DeletionManager.h"
 #include "Hosting2/FabricUpgradeImpl.h"
@@ -176,10 +177,20 @@
 #include "Hosting2/DnsServiceEnvironmentManager.h"
 #include "Hosting2/LocalResourceManager.h"
 #include "Hosting2/CertificateAclingManager.h"
+#include "Hosting2/LocalSecretServiceManager.h"
 #include "Hosting2/ContainerHelper.h"
-
-# include "Hosting2/SetupConfig.h"
+#include "Hosting2/SetupConfig.h"
 #include "Hosting2/ContainerConfigHelper.h"
+#include "Hosting2/SetupContainerGroupRequest.h"
+#include "Hosting2/DockerUtilities.h"
+#include "FabricContainerActivatorService_.h"
+#include "Hosting2/ContainerActivatorServiceConfig.h"
+#include "Hosting2/ContainerActivatorServiceAgent.h"
+#include "Hosting2/ComHostingSettingsResult.h"
+#include "Hosting2/ContainerLogDriverConfig.h"
+#include "Hosting2/HostingHelper.h"
+#include "Hosting2/DockerProcessTerminatedNotification.h"
+
 //
 // Header files required by flat network implementation
 //

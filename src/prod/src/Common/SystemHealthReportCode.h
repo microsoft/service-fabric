@@ -103,6 +103,7 @@ namespace Common
 
             Hosting_DockerHealthCheckStatusHealthy = 130,
             Hosting_DockerHealthCheckStatusUnhealthy = 131,
+            Hosting_DockerDaemonUnhealthy = 140,
 
             // Source - Replicator
             RE_QueueFull = 57,
@@ -153,6 +154,8 @@ namespace Common
             RA_ReplicaServiceTypeRegistrationStatusHealthy = 124,
             RA_ReconfigurationStuckWarning = 127,
             RA_ReconfigurationHealthy = 128,
+            RA_StoreProviderHealthy = 138,
+            RA_StoreProviderUnhealthy = 139,
 
             // Source = CRM
             CRM_NodeCapacityViolation = 109,
@@ -170,7 +173,7 @@ namespace Common
             // Source = Native TransactionalReplicator
             TR_SlowIO = 129,
 
-            LAST_STATE = RE_RemoteReplicatorConnectionStatusFailed
+            LAST_STATE = Hosting_DockerDaemonUnhealthy
         };
 
         void WriteToTextWriter(__in Common::TextWriter & w, Enum e);

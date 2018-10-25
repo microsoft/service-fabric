@@ -21,7 +21,11 @@ GlobalWString FaultAnalysisServiceTcpMessage::GetPartitionRestartProgressAction 
 GlobalWString FaultAnalysisServiceTcpMessage::CancelTestCommandAction = make_global<wstring>(L"CancelTestCommandAction");
 GlobalWString FaultAnalysisServiceTcpMessage::StartChaosAction = make_global<wstring>(L"StartChaosAction");
 GlobalWString FaultAnalysisServiceTcpMessage::StopChaosAction = make_global<wstring>(L"StopChaosAction");
+GlobalWString FaultAnalysisServiceTcpMessage::GetChaosAction = make_global<wstring>(L"GetChaosAction");
 GlobalWString FaultAnalysisServiceTcpMessage::GetChaosReportAction = make_global<wstring>(L"GetChaosReportAction");
+GlobalWString FaultAnalysisServiceTcpMessage::GetChaosEventsAction = make_global<wstring>(L"GetChaosEventsAction");
+GlobalWString FaultAnalysisServiceTcpMessage::GetChaosScheduleAction = make_global<wstring>(L"GetChaosScheduleAction");
+GlobalWString FaultAnalysisServiceTcpMessage::PostChaosScheduleAction = make_global<wstring>(L"PostChaosScheduleAction");
 GlobalWString FaultAnalysisServiceTcpMessage::StartNodeTransitionAction = make_global<wstring>(L"StartNodeTransitionAction");
 GlobalWString FaultAnalysisServiceTcpMessage::GetNodeTransitionProgressAction = make_global<wstring>(L"GetNodeTransitionProgressAction");
 

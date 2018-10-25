@@ -63,7 +63,7 @@ Common::ErrorCode GetChaosReportDescription::FromPublicApi(
 
     HRESULT hr = StringUtility::LpcwstrToWstring(
         publicDescription.ContinuationToken,
-        true, /*accept null*/
+        true, /*accept nullptr*/
         0, /*IntPtr.Zero from managed translates into "\0", a string of length 0*/
         ParameterValidator::MaxStringSize,
         continuationToken_);
@@ -74,15 +74,15 @@ Common::ErrorCode GetChaosReportDescription::FromPublicApi(
         return ErrorCode::FromHResult(hr);
     }
 
-    if (publicDescription.Reserved != NULL) // managed
+    if (publicDescription.Reserved != nullptr) // managed
     {
         auto descriptionClientType = reinterpret_cast<FABRIC_CHAOS_CLIENT_TYPE*>(publicDescription.Reserved);
 
-        if (descriptionClientType->ClientType != NULL)
+        if (descriptionClientType->ClientType != nullptr)
         {
             hr = StringUtility::LpcwstrToWstring(
                 descriptionClientType->ClientType,
-                true, /*accept null*/
+                true, /*accept nullptr*/
                 0, /*IntPtr.Zero from managed translates into "\0", a string of length 0*/
                 ParameterValidator::MaxStringSize,
                 clientType_);
@@ -120,7 +120,7 @@ void GetChaosReportDescription::ToPublicApi(
     }
     else
     {
-        clientTypeEx1->ClientType = NULL;
+        clientTypeEx1->ClientType = nullptr;
     }
 
     result.Reserved = clientTypeEx1.GetRawPointer();

@@ -349,15 +349,14 @@ Api::IClientFactoryPtr GetGlobalClientFactory()
     return Hosting2::ApplicationHostContainer::FabricGetNodeContext(nodeContext);
 }
 
-#if !defined(PLATFORM_UNIX)
 /* [entry] */ HRESULT FabricGetRuntimeDllVersion( 
     /* [out] */ __RPC__deref_out_opt IFabricStringResult **runtimeDllVersion)
 {
     Common::DllConfig::GetConfig();
 
     std::wstring result;
-    auto error = Common::Environment::GetCurrentModuleFileVersion2(result);
-
+    auto error = Common::FabricEnvironment::GetFabricVersion(result);
+	
     if(error.IsSuccess())
     {
         return Common::ComStringResult::ReturnStringResult(result, runtimeDllVersion);
@@ -367,7 +366,6 @@ Api::IClientFactoryPtr GetGlobalClientFactory()
         return Common::ComUtility::OnPublicApiReturn(error.ToHResult());
     }
 }
-#endif
 
 /* [entry] */ HRESULT FabricLoadReplicatorSettings(
     /* [in] */ __RPC__in IFabricCodePackageActivationContext const * codePackageActivationContext,
@@ -604,6 +602,35 @@ void FabricDisableIpcLeasing(void)
 {
     Common::DllConfig::GetConfig();
     return Hosting2::ApplicationHostContainer::FabricCreateBackupRestoreAgent(riid, backupRestoreAgent);
+}
+
+/* [entry] */ HRESULT FabricBeginGetCodePackageActivator(
+    /* [in] */ __RPC__in REFIID riid,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ __RPC__in_opt IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ __RPC__deref_out_opt IFabricAsyncOperationContext **context)
+{
+    Common::DllConfig::GetConfig();
+
+    return Hosting2::ApplicationHostContainer::FabricBeginGetCodePackageActivator(riid, timeoutMilliseconds, callback, context);
+}
+
+/* [entry] */ HRESULT FabricEndGetCodePackageActivator(
+    /* [in] */ __RPC__in_opt IFabricAsyncOperationContext *context,
+    /* [retval][out] */ __RPC__deref_out_opt void **activator)
+{
+    Common::DllConfig::GetConfig();
+
+    return Hosting2::ApplicationHostContainer::FabricEndGetCodePackageActivator(context, activator);
+}
+
+/* [entry] */ HRESULT FabricGetCodePackageActivator(
+    /* [in] */ __RPC__in REFIID riid,
+    /* [retval][out] */ __RPC__deref_out_opt void **activator)
+{
+    Common::DllConfig::GetConfig();
+
+    return Hosting2::ApplicationHostContainer::FabricGetCodePackageActivator(riid, activator);
 }
 
 struct ReliableCollectionApis;

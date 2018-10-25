@@ -12,57 +12,30 @@ using namespace Hosting2;
 
 ContainerImageDescription::ContainerImageDescription() 
     : imageName_(),
+    useDefaultRepositoryCredentials_(),
+    useTokenAuthenticationCredentials_(),
     repositoryCredentials_()
 {
 }
 
 ContainerImageDescription::ContainerImageDescription(
     wstring const & imageName,
+    bool useDefaultRepositoryCredentials,
+    bool useTokenAuthenticationCredentials,
     RepositoryCredentialsDescription const & repositoryCredentials) 
     : imageName_(imageName),
+    useDefaultRepositoryCredentials_(useDefaultRepositoryCredentials),
+    useTokenAuthenticationCredentials_(useTokenAuthenticationCredentials),
     repositoryCredentials_(repositoryCredentials)
 {
-}
-
-ContainerImageDescription::ContainerImageDescription(
-    ContainerImageDescription const & other) 
-    : imageName_(other.imageName_),
-    repositoryCredentials_(other.repositoryCredentials_)
-{
-}
-
-ContainerImageDescription::ContainerImageDescription(ContainerImageDescription && other) 
-    : imageName_(move(other.imageName_)),
-    repositoryCredentials_(move(other.repositoryCredentials_))
-{
-}
-
-ContainerImageDescription const & ContainerImageDescription::operator = (ContainerImageDescription const & other)
-{
-    if (this != &other)
-    {
-        this->imageName_ = other.imageName_;
-        this->repositoryCredentials_ = other.repositoryCredentials_;
-    }
-
-    return *this;
-}
-
-ContainerImageDescription const & ContainerImageDescription::operator = (ContainerImageDescription && other)
-{
-    if (this != &other)
-    {
-        this->imageName_ = move(other.imageName_);
-        this->repositoryCredentials_ = move(other.repositoryCredentials_);
-    }
-
-    return *this;
 }
 
 void ContainerImageDescription::WriteTo(__in TextWriter & w, FormatOptions const &) const
 {
     w.Write("ContainerImageDescription { ");
     w.Write("imageName = {0}, ", imageName_);
+    w.Write("useDefaultRepositoryCredentials_ = {0}, ", useDefaultRepositoryCredentials_);
+    w.Write("useTokenAuthenticationCredentials_ = {0}, ", useTokenAuthenticationCredentials_);
     w.Write("}");
 }
 
@@ -72,16 +45,24 @@ ErrorCode ContainerImageDescription::ToPublicApi(
 {
     fabricContainerImageDesc.ImageName = heap.AddString(this->ImageName);
 
-    auto  repoCredential = heap.AddItem<FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION>();
+    auto repoCredential = heap.AddItem<FABRIC_REPOSITORY_CREDENTIAL_DESCRIPTION>();
     auto error = this->RepositoryCredentials.ToPublicApi(heap, *repoCredential);
     if (!error.IsSuccess())
     {
         return error;
     }
+
     fabricContainerImageDesc.RepositoryCredential = repoCredential.GetRawPointer();
 
-    fabricContainerImageDesc.Reserved = nullptr;
+    auto fabricContainerImageDescEx1 = heap.AddItem<FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX1>();
+    fabricContainerImageDescEx1->UseDefaultRepositoryCredentials = this->UseDefaultRepositoryCredentials;
+    fabricContainerImageDesc.Reserved = fabricContainerImageDescEx1.GetRawPointer();
+
+    auto fabricContainerImageDescEx2 = heap.AddItem<FABRIC_CONTAINER_IMAGE_DESCRIPTION_EX2>();
+    fabricContainerImageDescEx2->UseTokenAuthenticationCredentials = this->UseTokenAuthenticationCredentials;
+    fabricContainerImageDescEx2->Reserved = nullptr;
+
+    fabricContainerImageDescEx1->Reserved = fabricContainerImageDescEx2.GetRawPointer();
 
     return ErrorCode(ErrorCodeValue::Success);
 }
-

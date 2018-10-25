@@ -13,11 +13,12 @@ namespace Reliability
         ReportFaultRequestMessageBody();
 
         ReportFaultRequestMessageBody(
-            std::wstring nodeName,
+            std::wstring const & nodeName,
             FaultType::Enum faultType,
             int64 replicaId,
-            Common::Guid partitionId,
-            bool isForce);
+            Common::Guid const & partitionId,
+            bool isForce,
+            Common::ActivityDescription const & activityDescription);
 
         ReportFaultRequestMessageBody(ReportFaultRequestMessageBody && other);
 
@@ -38,13 +39,16 @@ namespace Reliability
         __declspec(property(get = get_IsForce)) bool IsForce;
         bool get_IsForce() const { return isForce_; }
 
+        __declspec(property(get = get_ActivityDescription)) Common::ActivityDescription const & ActivityDescription;
+        Common::ActivityDescription const & get_ActivityDescription() const { return activityDescription_; }
+
         static std::string AddField(Common::TraceEvent & traceEvent, std::string const & name);
 
         void FillEventData(Common::TraceEventContext & context) const;
         void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
         void WriteToEtw(uint16 contextSequenceId) const;
 
-        FABRIC_FIELDS_05(nodeName_, faultType_, replicaId_, partitionId_, isForce_);
+        FABRIC_FIELDS_06(nodeName_, faultType_, replicaId_, partitionId_, isForce_, activityDescription_);
 
     private:
         std::wstring nodeName_;
@@ -52,5 +56,6 @@ namespace Reliability
         int64 replicaId_;
         Common::Guid partitionId_;
         bool isForce_;
+        Common::ActivityDescription activityDescription_;
     };
 }

@@ -224,21 +224,8 @@ ServiceContext::~ServiceContext()
 
 ServiceQueryResult ServiceContext::ToQueryResult(wstring const & serviceTypeManifestVersion) const
 {
-    FABRIC_QUERY_SERVICE_STATUS serviceStatus = FABRIC_QUERY_SERVICE_STATUS_UNKNOWN;
+    FABRIC_QUERY_SERVICE_STATUS serviceStatus = GetQueryStatus();
     bool isStateful = this->ServiceDescriptor.Service.IsStateful;
-
-    if (this->IsPending)
-    {
-        serviceStatus = FABRIC_QUERY_SERVICE_STATUS_CREATING;
-    }
-    else if (this->IsDeleting)
-    {
-        serviceStatus = FABRIC_QUERY_SERVICE_STATUS_DELETING;
-    }
-    else if (this->IsFailed)
-    {
-        serviceStatus = FABRIC_QUERY_SERVICE_STATUS_FAILED;
-    }
 
     if (isStateful)
     {
@@ -257,6 +244,29 @@ ServiceQueryResult ServiceContext::ToQueryResult(wstring const & serviceTypeMani
             serviceTypeManifestVersion,
             serviceStatus);
     }
+}
+
+FABRIC_QUERY_SERVICE_STATUS ServiceContext::GetQueryStatus() const
+{
+    FABRIC_QUERY_SERVICE_STATUS serviceStatus;
+    if (this->IsPending)
+    {
+        serviceStatus = FABRIC_QUERY_SERVICE_STATUS_CREATING;
+    }
+    else if (this->IsDeleting)
+    {
+        serviceStatus = FABRIC_QUERY_SERVICE_STATUS_DELETING;
+    }
+    else if (this->IsFailed)
+    {
+        serviceStatus = FABRIC_QUERY_SERVICE_STATUS_FAILED;
+    }
+    else
+    {
+        serviceStatus = FABRIC_QUERY_SERVICE_STATUS_UNKNOWN;
+    }
+
+    return serviceStatus;
 }
 
 Common::ErrorCode ServiceContext::ReadApplicationServices(

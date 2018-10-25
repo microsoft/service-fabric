@@ -47,12 +47,15 @@ namespace Reliability
                 bool isDefrag,
                 int32 defragEmptyNodeCount,
                 size_t defragEmptyNodeLoadThreshold,
+                int64 reservationLoad,
                 DefragDistributionType defragEmptyNodesDistribution,
                 double placementHeuristicIncomingLoadFactor,
                 double placementHeuristicEmptyLoadFactor,
                 bool defragmentationScopedAlgorithmEnabled,
                 PlacementStrategy placementStrategy,
-                double defragmentationEmptyNodeWeight);
+                double defragmentationEmptyNodeWeight,
+                double defragmentationNonEmptyNodeWeight,
+                bool balancingByPercentage);
 
             Metric(Metric const & other);
 
@@ -94,6 +97,9 @@ namespace Reliability
             __declspec (property(get = get_DefragEmptyNodeLoadThreshold)) size_t DefragEmptyNodeLoadThreshold;
             size_t get_DefragEmptyNodeLoadThreshold() const { return defragEmptyNodeLoadThreshold_; }
 
+            __declspec (property(get = get_ReservationLoad)) int64 ReservationLoad;
+            int64 get_ReservationLoad() const { return reservationLoad_; }
+
             __declspec (property(get = get_DefragDistribution)) DefragDistributionType DefragDistribution;
             DefragDistributionType get_DefragDistribution() const { return defragEmptyNodesDistribution_; }
 
@@ -114,6 +120,24 @@ namespace Reliability
 
             __declspec (property(get = get_DefragmentationEmptyNodeWeight)) double DefragmentationEmptyNodeWeight;
             double get_DefragmentationEmptyNodeWeight() const { return defragmentationEmptyNodeWeight_; }
+
+            __declspec (property(get = get_DefragmentationNonEmptyNodeWeight)) double DefragmentationNonEmptyNodeWeight;
+            double get_DefragmentationNonEmptyNodeWeight() const { return defragmentationNonEmptyNodeWeight_; }
+
+            __declspec (property(get = get_BalancingByPercentage)) bool BalancingByPercentage;
+            bool get_BalancingByPercentage() const { return balancingByPercentage_; }
+
+            __declspec (property(get = get_IndexInLocalDomain, put = set_IndexInLocalDomain)) size_t IndexInLocalDomain;
+            size_t get_IndexInLocalDomain() const { return indexInLocalDomain_; }
+            void set_IndexInLocalDomain(size_t value) { indexInLocalDomain_ = value; }
+
+            __declspec (property(get = get_IndexInGlobalDomain, put = set_IndexInGlobalDomain)) size_t IndexInGlobalDomain;
+            size_t get_IndexInGlobalDomain() const { return indexInGlobalDomain_; }
+            void set_IndexInGlobalDomain(size_t value) { indexInGlobalDomain_ = value; }
+            
+            __declspec (property(get = get_IndexInTotalDomain, put = set_IndexInTotalDomain)) size_t IndexInTotalDomain;
+            size_t get_IndexInTotalDomain() const { return indexInTotalDomain_; }
+            void set_IndexInTotalDomain(size_t value) { indexInTotalDomain_ = value; }
 
             bool IsValidNode(uint64 nodeIndex) const
             {
@@ -143,6 +167,8 @@ namespace Reliability
             int32 defragEmptyNodeCount_;
             // Node load which is considering node to be empty
             size_t defragEmptyNodeLoadThreshold_;
+            // How much load on a node should be empty to be considered as reserved load
+            int64 reservationLoad_;
             // Should defragmentation 0 - keep free nodes balanced among UDs/FDs or 1 - it doesn't matter how nodes are distributed
             DefragDistributionType defragEmptyNodesDistribution_;
             // First placement heuristic factor
@@ -151,7 +177,19 @@ namespace Reliability
             double placementHeuristicEmptySpacePercent_;
             bool defragmentationScopedAlgorithmEnabled_;
             PlacementStrategy placementStrategy_;
+            // EmptyNodeWeight affect emptying nodes in Reservation strategies(scoped defrag)
             double defragmentationEmptyNodeWeight_;
+            // NonEmptyNodeWeight affect balancing part in Reservation strategies(scoped defrag)
+            double defragmentationNonEmptyNodeWeight_;
+            
+            // Should balanced state be considered by percentage (instead of absolute load) 
+            bool balancingByPercentage_;
+            // LocalMetricIndex - index of metric in local domain
+            size_t indexInLocalDomain_;
+            // GlobalMetricIndex - index of metric in global domain
+            size_t indexInGlobalDomain_;
+            // TotalMetricIndex - total index of metric
+            size_t indexInTotalDomain_;
         };
 
         void WriteToTextWriter(Common::TextWriter & w, Metric::DefragDistributionType const & val);

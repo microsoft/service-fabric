@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include "KtlLogShimKernel.h"
 
 //************************************************************************************
@@ -10,16 +14,6 @@
 // KtlLogManager Implementation
 //
 //************************************************************************************
-
-#ifndef UDRIVER
-KtlLogManager::KtlLogManager()
-{
-}
-
-KtlLogManager::~KtlLogManager()
-{
-}
-#endif
 
 KtlLogManagerKernel::~KtlLogManagerKernel()
 {
@@ -59,7 +53,7 @@ KtlLogManagerKernel::KtlLogManagerKernel(
 
 #ifdef KDRIVER
 NTSTATUS
-KtlLogManager::Create(
+KtlLogManager::CreateDriver(
     __in ULONG AllocationTag,
     __in KAllocator& Allocator,
     __out KtlLogManager::SPtr& Result
@@ -72,7 +66,47 @@ KtlLogManager::Create(
     
     KInvariant(FALSE);
     Result = nullptr;
-    status = STATUS_SUCCESS;
+    status = STATUS_NOT_SUPPORTED;
+
+    return(status);
+}
+
+NTSTATUS
+KtlLogManager::CreateInproc(
+    __in ULONG AllocationTag,
+    __in KAllocator& Allocator,
+    __out KtlLogManager::SPtr& Result
+    )
+{
+    UNREFERENCED_PARAMETER(AllocationTag);
+    UNREFERENCED_PARAMETER(Allocator);
+    
+    NTSTATUS status;
+    
+    KInvariant(FALSE);
+    Result = nullptr;
+    status = STATUS_NOT_SUPPORTED;
+
+    return(status);
+}
+#endif
+
+#ifdef UDRIVER
+NTSTATUS
+KtlLogManager::CreateInproc(
+    __in ULONG AllocationTag,
+    __in KAllocator& Allocator,
+    __out KtlLogManager::SPtr& Result
+)
+{
+    UNREFERENCED_PARAMETER(AllocationTag);
+    UNREFERENCED_PARAMETER(Allocator);
+
+    NTSTATUS status;
+
+    KInvariant(FALSE);
+    Result = nullptr;
+    status = STATUS_NOT_SUPPORTED;
 
     return(status);
 }
@@ -118,8 +152,29 @@ KtlLogManagerKernel::KtlLogManagerKernel() :
     }   
 }
 
+#if defined(PLATFORM_UNIX)
 NTSTATUS
-KtlLogManager::Create(
+KtlLogManager::CreateDriver(
+    __in ULONG AllocationTag,
+    __in KAllocator& Allocator,
+    __out KtlLogManager::SPtr& Result
+    )
+{
+    UNREFERENCED_PARAMETER(AllocationTag);
+    UNREFERENCED_PARAMETER(Allocator);
+    
+    NTSTATUS status;
+    
+    KInvariant(FALSE);
+    Result = nullptr;
+    status = STATUS_NOT_SUPPORTED;
+
+    return(status);
+}
+#endif
+
+NTSTATUS
+KtlLogManager::CreateInproc(
     __in ULONG AllocationTag,
     __in KAllocator& Allocator,
     __out KtlLogManager::SPtr& Result
@@ -651,16 +706,6 @@ KtlLogManagerKernel::AsyncCreateLogContainerKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, 0);
 }
 
-#ifndef UDRIVER
-KtlLogManager::AsyncCreateLogContainer::AsyncCreateLogContainer()
-{
-}
-
-KtlLogManager::AsyncCreateLogContainer::~AsyncCreateLogContainer()
-{
-}
-#endif
-
 KtlLogManagerKernel::AsyncCreateLogContainerKernel::AsyncCreateLogContainerKernel()
 {
 }
@@ -980,16 +1025,6 @@ KtlLogManagerKernel::AsyncOpenLogContainerKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, 0);
 }
 
-#ifndef UDRIVER
-KtlLogManager::AsyncOpenLogContainer::AsyncOpenLogContainer()
-{
-}
-
-KtlLogManager::AsyncOpenLogContainer::~AsyncOpenLogContainer()
-{
-}
-#endif
-
 KtlLogManagerKernel::AsyncOpenLogContainerKernel::AsyncOpenLogContainerKernel()
 {
 }
@@ -1160,7 +1195,7 @@ KtlLogManagerKernel::AsyncDeleteLogContainerKernel::DeleteLogContainerFSM(
 
         case DeleteBaseLogContainer:
         {
-			DoComplete(Status);
+            DoComplete(Status);
             return;
         }
         
@@ -1187,8 +1222,8 @@ KtlLogManagerKernel::AsyncDeleteLogContainerKernel::OnStart(
     //
     // Ensure path name is not too long
     //
-	NTSTATUS status;
-	
+    NTSTATUS status;
+    
     if (_Path != nullptr)
     {
         if (_Path->Length() > KtlLogManager::MaxPathnameLengthInChar-1)
@@ -1275,16 +1310,6 @@ KtlLogManagerKernel::AsyncDeleteLogContainerKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, 0);
 }
 
-#ifndef UDRIVER
-KtlLogManager::AsyncDeleteLogContainer::AsyncDeleteLogContainer()
-{
-}
-
-KtlLogManager::AsyncDeleteLogContainer::~AsyncDeleteLogContainer()
-{
-}
-#endif
-
 KtlLogManagerKernel::AsyncDeleteLogContainerKernel::AsyncDeleteLogContainerKernel()
 {
 }
@@ -1332,7 +1357,7 @@ KtlLogManagerKernel::CreateAsyncDeleteLogContainerContext(
         return(status);
     }
     context->_BaseAsyncQueryLogIdContainer = down_cast<OverlayManager::AsyncQueryLogIdOverlay>(queryLogIdContext);
-	
+    
     Context = context.RawPtr();
     
     return(STATUS_SUCCESS);
@@ -1401,16 +1426,6 @@ KtlLogManagerKernel::AsyncEnumerateLogContainersKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, 0);
     _BaseAsyncEnumerateLogs->Cancel();
 }
-
-#ifndef UDRIVER
-KtlLogManager::AsyncEnumerateLogContainers::AsyncEnumerateLogContainers()
-{
-}
-
-KtlLogManager::AsyncEnumerateLogContainers::~AsyncEnumerateLogContainers()
-{
-}
-#endif
 
 KtlLogManagerKernel::AsyncEnumerateLogContainersKernel::AsyncEnumerateLogContainersKernel()
 {
@@ -1554,16 +1569,6 @@ KtlLogManagerKernel::AsyncConfigureContextKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, 0);
     _BaseAsyncConfigureContext->Cancel();
 }
-
-#ifndef UDRIVER
-KtlLogManager::AsyncConfigureContext::AsyncConfigureContext()
-{
-}
-
-KtlLogManager::AsyncConfigureContext::~AsyncConfigureContext()
-{
-}
-#endif
 
 KtlLogManagerKernel::AsyncConfigureContextKernel::AsyncConfigureContextKernel()
 {

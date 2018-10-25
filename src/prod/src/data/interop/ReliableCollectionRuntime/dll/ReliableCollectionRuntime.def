@@ -9,13 +9,12 @@ EXPORTS
     Store_ConditionalRemoveAsync
     Store_GetCount
     Store_CreateKeyEnumeratorAsync
-	Store_CreateRangedEnumeratorAsync
+    Store_CreateRangedEnumeratorAsync
     Store_CreateEnumeratorAsync
     Store_ContainsKeyAsync
     Store_SetNotifyStoreChangeCallback
     Store_SetNotifyStoreChangeCallbackMask
     Transaction_Release
-    Transaction_Release2
     Transaction_Dispose
     Transaction_AddRef
     Transaction_CommitAsync
@@ -39,6 +38,7 @@ EXPORTS
     TxnReplicator_RemoveStateProviderAsync
     TxnReplicator_CreateEnumerator
     TxnReplicator_GetStateProvider
+    TxnReplicator_GetInfo
     TxnReplicator_BackupAsync
     TxnReplicator_RestoreAsync
     TxnReplicator_SetNotifyStateManagerChangeCallback
@@ -46,9 +46,12 @@ EXPORTS
     Buffer_Release
     GetTxnReplicator
     Test_UseEnv
-    GetTransactionalReplicator
-    TxnReplicator_AddStateProviderAsync2
-    TxnReplicator_GetOrAddStateProviderAsync2
     StateProvider_GetInfo
     StateProvider_AddRef
     StateProvider_Release
+    PrimaryReplicator_UpdateReplicatorSettings
+    ConcurrentQueue_EnqueueAsync
+    ConcurrentQueue_TryDequeueAsync
+    ConcurrentQueue_GetCount
+    TxnReplicator_BackupAsync2
+    ReliableCollectionRuntime_Initialize2

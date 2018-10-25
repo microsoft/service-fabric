@@ -58,13 +58,15 @@ namespace Management
                 __inout ServiceModel::ServiceHealthStateChunkList & services,
                 __inout ServiceModel::DeployedApplicationHealthStateChunkList & deployedApplications);
 
+            // When isDeployedChildrenPrecedent is one, the deployed application is evluated first such that if service unhealthy evaluations are triggered by Hosting reporting unhealthy events, we will see deployed view still. This is turned on for mesh application/code package because the deployed ones are more helpful.
             Common::ErrorCode EvaluateHealth(
                 Common::ActivityId const & activityId,
                 ServiceModel::ApplicationHealthPolicySPtr const & appHealthPolicy,
                 std::vector<std::wstring> const & upgradeDomains,
                 HealthStatisticsUPtr const & healthStats,
                 __inout FABRIC_HEALTH_STATE & aggregatedHealthState,
-                __inout std::vector<ServiceModel::HealthEvaluation> & unhealthyEvaluations);
+                __inout std::vector<ServiceModel::HealthEvaluation> & unhealthyEvaluations,
+                bool isDeployedChildrenPrecedent = false);
 
             Common::ErrorCode GetApplicationHealthPolicy(
                 __inout std::shared_ptr<ServiceModel::ApplicationHealthPolicy> & appHealthPolicy);

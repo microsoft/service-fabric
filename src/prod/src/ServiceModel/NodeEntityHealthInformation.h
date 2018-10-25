@@ -20,8 +20,8 @@ namespace ServiceModel
             std::wstring const& nodeName,
             FABRIC_NODE_INSTANCE_ID nodeInstanceId);
 
-        NodeEntityHealthInformation(NodeEntityHealthInformation && other);
-        NodeEntityHealthInformation & operator = (NodeEntityHealthInformation && other);
+        NodeEntityHealthInformation(NodeEntityHealthInformation && other) = default;
+        NodeEntityHealthInformation & operator = (NodeEntityHealthInformation && other) = default;
 
         __declspec(property(get=get_NodeId)) Common::LargeInteger const& NodeId;
         Common::LargeInteger const& get_NodeId() const { return nodeId_; }

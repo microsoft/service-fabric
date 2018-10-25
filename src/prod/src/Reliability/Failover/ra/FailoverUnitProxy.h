@@ -368,6 +368,8 @@ namespace Reliability
                 ProxyRequestMessageBody const & msgBody,
                 UpdateConfigurationReason::Enum reason);
 
+            void ProcessUpdateConfigurationMessage(
+                ProxyRequestMessageBody const & msgBody);
             void OnReconfigurationStarting();
             void OnReconfigurationEnding();
             void OpenPartition();

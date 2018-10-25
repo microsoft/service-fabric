@@ -25,6 +25,7 @@ IPlacementAndLoadBalancingUPtr IPlacementAndLoadBalancing::Create(
     vector<FailoverUnitDescription> && failoverUnits,
     vector<LoadOrMoveCostDescription> && loadAndMoveCosts,
     Client::HealthReportingComponentSPtr const & healthClient,
+    Api::IServiceManagementClientPtr const& serviceManagementClient,
     Common::ConfigEntry<bool> const& isSingletonReplicaMoveAllowedDuringUpgradeEntry)
 {
     return make_unique<PlacementAndLoadBalancing>(
@@ -39,5 +40,6 @@ IPlacementAndLoadBalancingUPtr IPlacementAndLoadBalancing::Create(
         move(failoverUnits),
         move(loadAndMoveCosts),
         healthClient,
+        serviceManagementClient,
         isSingletonReplicaMoveAllowedDuringUpgradeEntry);
 }

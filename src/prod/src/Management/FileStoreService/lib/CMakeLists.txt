@@ -35,6 +35,7 @@ set( LINUX_SOURCES
     ../processdeleteuploadsessionrequestasyncoperation.cpp
     ../processlistuploadsessionrequestasyncoperation.cpp
     ../processuploadchunkrequestasyncoperation.cpp
+    ../processuploadchunkcontentrequestasyncoperation.cpp
     ../processcheckexistencerequestasyncoperation.cpp
 )
 

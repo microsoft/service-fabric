@@ -89,6 +89,9 @@ namespace Transport
             case ContainerActivatorService: w << "ContainerActivatorService"; return;
             case ContainerActivatorServiceClient: w << "ContainerActivatorServiceClient"; return;
 
+            // Central Secret Service
+            case CSS: w << "CSS"; return;            
+
             // Test
             case WindowsFabricTestApi: w << "WindowsFabricTestApi"; return;
             case GenericTestActor: w << "GenericTestActor"; return;

@@ -26,7 +26,7 @@ namespace Management
             Common::ErrorCode SetSecurity(
                 Transport::SecuritySettings && securitySettings);
 
-            virtual Common::AsyncOperationSPtr BeginUpload(                
+            virtual Common::AsyncOperationSPtr BeginUpload(
                 std::wstring const & sourceFullPath,
                 std::wstring const & storeRelativePath,
                 bool shouldOverwrite,
@@ -48,7 +48,7 @@ namespace Management
             virtual Common::ErrorCode EndCopy(
                 Common::AsyncOperationSPtr const &operation);
 
-            virtual Common::AsyncOperationSPtr BeginDownload(                
+            virtual Common::AsyncOperationSPtr BeginDownload(
                 std::wstring const & storeRelativePath,
                 std::wstring const & destinationFullPath,
                 StoreFileVersion const version,
@@ -58,7 +58,7 @@ namespace Management
                 Common::AsyncCallback const &callback,
                 Common::AsyncOperationSPtr const &parent);
             virtual Common::ErrorCode EndDownload(
-                Common::AsyncOperationSPtr const &operation);            
+                Common::AsyncOperationSPtr const &operation);
 
             virtual Common::AsyncOperationSPtr BeginCheckExistence(
                 std::wstring const & storeRelativePath,
@@ -124,6 +124,15 @@ namespace Management
             virtual Common::ErrorCode EndUploadChunk(
                 Common::AsyncOperationSPtr const & operation) override;
 
+            virtual Common::AsyncOperationSPtr BeginUploadChunkContent(
+                __inout Transport::MessageUPtr &chunkContentMessage,
+                __inout Management::FileStoreService::UploadChunkContentDescription & uploadChunkContentDescription,
+                Common::TimeSpan const timeout,
+                Common::AsyncCallback const & callback,
+                Common::AsyncOperationSPtr const & parent) override;
+            virtual Common::ErrorCode EndUploadChunkContent(
+                Common::AsyncOperationSPtr const & operation) override;
+
             virtual Common::AsyncOperationSPtr BeginDeleteUploadSession(
                 Common::Guid const & sessionId,
                 Common::TimeSpan const timeout,
@@ -146,28 +155,22 @@ namespace Management
             friend class CopyToStagingLocationAsyncOperation;
 
             class OpenAsyncOperation;
-            friend class OpenAsyncOperation;            
 
             class ClientBaseAsyncOperation;
-            friend class ClientBaseAsyncOperation;     
 
             class UploadAsyncOperation;
-            friend class UploadAsyncOperation;
 
             class CopyAsyncOperation;
-            friend class CopyAsyncOperation;
 
             class DownloadAsyncOperation;
-            friend class DownloadAsyncOperation;
 
             class DeleteAsyncOperation;
-            friend class DeleteAsyncOperation;
 
             class CheckExistenceAsyncOperation;
-            friend class CheckExistenceAsyncOperation;
 
             class ListAsyncOperation;
-            friend class ListAsyncOperation;
+
+            class UploadChunkContentAsyncOperation;
 
             class ListUploadSessionAsyncOperation;
 

@@ -17,6 +17,7 @@ namespace ClientServerTransport
         static Common::GlobalWString GetStoreLocationAction;
         static Common::GlobalWString GetStoreLocationsAction;
         static Common::GlobalWString UploadAction;
+        static Common::GlobalWString UploadChunkContentAction;
         static Common::GlobalWString CopyAction;
         static Common::GlobalWString DeleteAction;
         static Common::GlobalWString CheckExistenceAction;
@@ -106,6 +107,11 @@ namespace ClientServerTransport
         static Client::ClientServerRequestMessageUPtr GetUploadChunk(std::unique_ptr<Management::FileStoreService::UploadChunkRequest> && body)
         {
             return Common::make_unique<FileStoreServiceTcpMessage>(UploadChunkAction, std::move(body));
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetUploadChunkContent(std::unique_ptr<Management::FileStoreService::UploadChunkContentRequest> && body)
+        {
+            return Common::make_unique<FileStoreServiceTcpMessage>(UploadChunkContentAction, std::move(body));
         }
 
         static Client::ClientServerRequestMessageUPtr GetCommitUploadSession(std::unique_ptr<Management::FileStoreService::UploadSessionRequest> && body)

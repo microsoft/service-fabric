@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include "KtlLogShimKernel.h"
 
 #define VERBOSE 1
@@ -1377,15 +1381,26 @@ OverlayManager::MapPathToDiskId(
     // functionality in Linux KTL to determine the physical drives behind the different pathnames and map
     // them to different guids so different drives can have different gates.
     //
+
+	//
+	// For windows, use this random guid as the default in case we are
+	// not able to map the path. In this way any paths that aren't
+	// mapped will still have some kind of disk id
+	//
+	
+    // {3C391CBC-4AC5-4a8b-B38B-413D17E1DB46}
+    static const GUID aGuid = 
+        { 0x3c391cbc, 0x4ac5, 0x4a8b, { 0xb3, 0x8b, 0x41, 0x3d, 0x17, 0xe1, 0xdb, 0x46 } };
+    KGuid diskId = aGuid;
+	
 #if !defined(PLATFORM_UNIX)
-    GUID nullGuid = { 0 };
     ULONG l;
     BOOLEAN b = FALSE;
     UCHAR driveLetter;
     PWCHAR p;
     ULONG len;
 
-    DiskId = nullGuid;
+    DiskId = diskId;
     
     //
     // Expecting a path of the forms:
@@ -1447,11 +1462,7 @@ OverlayManager::MapPathToDiskId(
     //
     return(STATUS_OBJECT_PATH_INVALID);
 #else
-    // {3C391CBC-4AC5-4a8b-B38B-413D17E1DB46}
-    static const GUID aGuid = 
-        { 0x3c391cbc, 0x4ac5, 0x4a8b, { 0xb3, 0x8b, 0x41, 0x3d, 0x17, 0xe1, 0xdb, 0x46 } };
-    DiskId = aGuid;
-    
+    DiskId = diskId;    
     return(STATUS_SUCCESS);
 #endif
 }

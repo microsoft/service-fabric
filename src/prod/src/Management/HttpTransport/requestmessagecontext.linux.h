@@ -48,6 +48,7 @@ namespace HttpServer
         Common::ErrorCode GetClientToken(__out HANDLE &hToken) const;
 
         Common::AsyncOperationSPtr BeginGetClientCertificate(
+            __in Common::TimeSpan const& timeout,
             __in Common::AsyncCallback const& callback,
             __in Common::AsyncOperationSPtr const& parent) const;
 

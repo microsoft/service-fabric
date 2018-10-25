@@ -106,7 +106,10 @@ namespace Transport
 
             ResourceMonitor = 47,
 
-            EndValidEnum = 48,
+            // Central Secret Service
+            CSS = 48,
+
+            EndValidEnum = 49,
 
             // !!! Please add new actor values above this !!!
             FirstValidEnum = Empty,

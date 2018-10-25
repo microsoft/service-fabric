@@ -57,6 +57,7 @@ namespace Reliability
 
                 // Returns true if the incoming sequence number is greater
                 bool TryStartChange(
+                    std::wstring const & activityId,
                     NodeDeactivationInfo const & newActivationInfo);
 
                 void FinishChange(
@@ -71,6 +72,13 @@ namespace Reliability
                     std::wstring const & activityId,
                     NodeDeactivationInfo const & activationInfo,
                     Infrastructure::EntityEntryBaseList && ftsToMonitor);
+
+                bool ShouldSendNodeDeactivationReply(
+                    NodeDeactivationInfo const & activationInfo);
+
+                void SendNodeDeactivationReply(
+                    std::wstring const & activityId,
+                    NodeDeactivationInfo const & activationInfo);
 
                 void CancelReplicaCloseOperation(
                     NodeDeactivationInfo const & activationInfo,

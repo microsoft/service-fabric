@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#include "Common/FabricGlobals.h"
 
 using namespace std;
 using namespace Common;
@@ -11,23 +12,7 @@ using namespace ServiceModel;
 using namespace Federation;
 using namespace Transport;
 
-ConfigLoader * ConfigLoader::singleton_;
-INIT_ONCE ConfigLoader::initOnceConfigLoader_;
-
-ConfigLoader::ConfigLoader()
-    : store_(),
-    lock_(),
-    storeEnvironmentVariableName_(),
-    storeEnvironmentVariableValue_()
-{
-}
-
-ConfigLoader::~ConfigLoader()
-{
-}
-
 HRESULT ConfigLoader::FabricGetConfigStore(
-    HMODULE dllModule,
     /* [in] */ __RPC__in REFIID riid,
     /* [in] */ __RPC__in_opt IFabricConfigStoreUpdateHandler *updateHandler,
     /* [out, retval] */ void ** configStore)
@@ -37,141 +22,69 @@ HRESULT ConfigLoader::FabricGetConfigStore(
         return ComUtility::OnPublicApiReturn(E_POINTER); 
     }
 
-    ConfigLoader & loader = ConfigLoader::GetConfigLoader();
     ComPointer<IFabricConfigStoreUpdateHandler> updateHandlerCPtr;
     if (updateHandler)
     {
         updateHandlerCPtr.SetAndAddRef(updateHandler);
     }
-    ComPointer<ComConfigStore> store = make_com<ComConfigStore>(loader.FabricGetConfigStore(dllModule), updateHandlerCPtr);
+
+    ComPointer<ComConfigStore> store = make_com<ComConfigStore>(FabricGlobals::Get().GetConfigStore().Store, updateHandlerCPtr);
+
     return ComUtility::OnPublicApiReturn(store->QueryInterface(riid, reinterpret_cast<void**>(configStore)));
 }
 
-HRESULT ConfigLoader::FabricGetConfigStoreEnvironmentVariable( 
-    /* [out] */ __RPC__deref_out_opt IFabricStringResult **envVariableName,
-    /* [out] */ __RPC__deref_out_opt IFabricStringResult **envVariableValue)
-{
-    if ((envVariableName == NULL) || (envVariableValue == NULL)) 
-    { 
-        return ComUtility::OnPublicApiReturn(E_POINTER); 
-    }
-
-    ConfigLoader & loader = ConfigLoader::GetConfigLoader();
-
-    wstring envVariableNameStr;
-    wstring envVariableValueStr;
-    loader.FabricGetConfigStoreEnvironmentVariable(envVariableNameStr, envVariableValueStr);
-
-    ComPointer<IFabricStringResult> envVariableNameResult = make_com<ComStringResult, IFabricStringResult>(envVariableNameStr);
-    ComPointer<IFabricStringResult> envVariableValueResult = make_com<ComStringResult, IFabricStringResult>(envVariableValueStr);
-
-    *envVariableName = envVariableNameResult.DetachNoRelease();
-    *envVariableValue = envVariableValueResult.DetachNoRelease();
-    return ComUtility::OnPublicApiReturn(S_OK);
-}
-
-ConfigStoreSPtr ConfigLoader::FabricGetConfigStore(HMODULE dllModule)
-{
-    {
-        AcquireExclusiveLock lock(lock_);
-        if (this->store_ == nullptr)
-        {
-            auto error = CreateConfigStore_CallerHoldsLock(dllModule);
-            if (!error.IsSuccess())
-            {
-                Assert::CodingError("CreateConfigStore failed with error {0}", error);
-            }
-        }
-    }
-
-    return this->store_;
-}
-
-void ConfigLoader::FabricGetConfigStoreEnvironmentVariable(__out std::wstring & envVariableName, __out std::wstring & envVariableValue)
-{
-    {
-        AcquireExclusiveLock lock(lock_);
-        envVariableName = storeEnvironmentVariableName_;
-        envVariableValue = storeEnvironmentVariableValue_;
-    }
-}
-
-ErrorCode ConfigLoader::CreateConfigStore_CallerHoldsLock(HMODULE dllModule)
+ConfigStoreDescriptionUPtr ConfigLoader::CreateConfigStore(HMODULE dllModule)
 {
     ConfigStoreType::Enum storeType;
     wstring storeLocation;
 
     auto error = FabricEnvironment::GetStoreTypeAndLocation(dllModule, storeType, storeLocation);
-    if (!error.IsSuccess()) { return error; }
+    ASSERT_IF(!error.IsSuccess(), "FabricEnvironment::GetStoreTypeAndLocation failed with {0}", error);
 
     ConfigEventSource::Events.ConfigStoreInitialized(ConfigStoreType::ToString(storeType), storeLocation);
 
     if (storeType == ConfigStoreType::Cfg)
     {
-        this->store_ = make_shared<FileConfigStore>(storeLocation);
-        this->storeEnvironmentVariableName_ = (const wstring) FabricEnvironment::FileConfigStoreEnvironmentVariable;
-        this->storeEnvironmentVariableValue_ = storeLocation;
-
-        return ErrorCode(ErrorCodeValue::Success);
+        return make_unique<ConfigStoreDescription>(
+            make_shared<FileConfigStore>(storeLocation),
+            *FabricEnvironment::FileConfigStoreEnvironmentVariable,
+            storeLocation);
     }
 
     if (storeType == ConfigStoreType::Package)
     {
-        this->store_ = PackageConfigStore::Create(
+        auto store = PackageConfigStore::Create(
             storeLocation, 
             L"Fabric.Config",
             [](Common::ConfigSettings & settings) { ConfigLoader::ProcessFabricConfigSettings(settings); });
 
-        this->storeEnvironmentVariableName_ = *FabricEnvironment::PackageConfigStoreEnvironmentVariable;
-        this->storeEnvironmentVariableValue_ = storeLocation;
-
-        return ErrorCode(ErrorCodeValue::Success);
+        return make_unique<ConfigStoreDescription>(
+            store,
+            *FabricEnvironment::PackageConfigStoreEnvironmentVariable,
+            storeLocation);
     }
 
     if (storeType == ConfigStoreType::SettingsFile)
     {
-        this->store_ = FileXmlSettingsStore::Create(
+        auto store = FileXmlSettingsStore::Create(
             storeLocation,
             [](Common::ConfigSettings & settings) { ConfigLoader::ProcessFabricConfigSettings(settings); });
 
-        this->storeEnvironmentVariableName_ = *FabricEnvironment::SettingsConfigStoreEnvironmentVariable;
-        this->storeEnvironmentVariableValue_ = storeLocation;
-
-        return ErrorCode(ErrorCodeValue::Success);
+        return make_unique<ConfigStoreDescription>(
+            store,
+            *FabricEnvironment::SettingsConfigStoreEnvironmentVariable,
+            storeLocation);
     }
 
     if (storeType == ConfigStoreType::None)
     {
-        this->store_ = make_shared<ConfigSettingsConfigStore>(move(ConfigSettings()));
-        this->storeEnvironmentVariableName_ = L"";
-        this->storeEnvironmentVariableValue_ = L"";
-
-        return ErrorCode(ErrorCodeValue::Success);
+        return make_unique<ConfigStoreDescription>(
+            make_shared<ConfigSettingsConfigStore>(move(ConfigSettings())),
+            L"",
+            L"");
     }
 
-    return ErrorCode(ErrorCodeValue::NotImplemented);
-}
-
-void ConfigLoader::MakeAbsolute(wstring & storeLocation)
-{
-    if (Path::IsPathRooted(storeLocation)) { return; }
-
-    wstring path(Directory::GetCurrentDirectory());
-    Path::CombineInPlace(path, storeLocation);
-    if (File::Exists(path))
-    {
-        storeLocation = path;
-        return;
-    }
-
-    path.resize(0);
-    Environment::GetExecutablePath(path);
-    Path::CombineInPlace(path, storeLocation);
-    if(File::Exists(path))
-    {
-        storeLocation = path;
-        return;
-    }
+    Assert::CodingError("unknown config store type {0}", static_cast<int>(storeType));
 }
 
 void ConfigLoader::ProcessFabricConfigSettings(ConfigSettings & configSettings)
@@ -212,7 +125,6 @@ void ConfigLoader::GetNodeIdGeneratorConfig(ConfigSettings & configSettings, wst
         nodeIdGeneratorVersion = instanceNameParam->second.Value;
     }
 }
-
 
 ErrorCode ConfigLoader::GenerateNodeIds(ConfigSettings & configSettings)
 {
@@ -460,25 +372,4 @@ wstring ConfigLoader::GetIPAddressOrFQDN(ConfigSettings & configSettings)
     }
 
     return ipAddrOrFqdn;
-}
-
-ConfigLoader & ConfigLoader::GetConfigLoader()
-{
-    PVOID lpContext = NULL;
-    BOOL  bStatus = FALSE;
-
-    bStatus = ::InitOnceExecuteOnce(
-        &ConfigLoader::initOnceConfigLoader_,
-        ConfigLoader::InitConfigLoaderFunction,
-        NULL,
-        &lpContext);
-
-    ASSERT_IF(!bStatus, "Failed to initialize ConfigLoader singleton");
-    return *(ConfigLoader::singleton_);
-}
-
-BOOL CALLBACK ConfigLoader::InitConfigLoaderFunction(PINIT_ONCE, PVOID, PVOID *)
-{
-    singleton_ = new ConfigLoader();
-    return TRUE;
 }

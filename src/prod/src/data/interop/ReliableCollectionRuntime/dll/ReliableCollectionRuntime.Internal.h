@@ -110,6 +110,34 @@ typedef HRESULT(*pfnStore_ContainsKeyAsync)(
     __in void* ctx,
     __out BOOL* synchronousComplete);
 
+typedef HRESULT (*pfnConcurrentQueue_EnqueueAsync)(
+    __in StateProviderHandle concurrentQueue,
+    __in TransactionHandle txn,
+    __in size_t objectHandle,               // handle of object to be stored  
+    __in void* bytes,                       // serialized byte array of object
+    __in uint32_t bytesLength,              // byte array length
+    __in int64_t timeout,
+    __out CancellationTokenSourceHandle* cts,
+    __in fnNotifyAsyncCompletion callback,
+    __in void* ctx,
+    __out BOOL* synchronousComplete);
+
+typedef HRESULT (*pfnConcurrentQueue_TryDequeueAsync)(
+    __in StateProviderHandle concurrentQueue,
+    __in TransactionHandle txn,
+    __in int64_t timeout,
+    __out size_t* objectHandle,
+    __out Buffer* value,
+    __out CancellationTokenSourceHandle* cts,
+    __out BOOL* succeeded,
+    __in fnNotifyTryDequeueAsyncCompletion callback,      // callback to be called when call does not complete synchronously
+    __in void* ctx,                      // Context to be passed in when making callback
+    __out BOOL* synchronousComplete);    // if call completed synchronously
+
+typedef HRESULT (*pfnConcurrentQueue_GetCount)(
+    __in StateProviderHandle concurrentQueue,
+    __out int64_t* count);
+
 typedef void (*pfnTransaction_Release)(
     __in TransactionHandle txn);
 
@@ -139,39 +167,20 @@ typedef HRESULT (*pfnTxnReplicator_CreateTransaction)(
     __out TransactionHandle* txn);
 
 typedef HRESULT (*pfnGetTxnReplicator)(
+    __in int64_t replicaId,
     __in void* statefulServicePartition,
     __in void* dataLossHandler,
-    __in void const* fabricReplicatorSettings,
-    __in void const* txReplicatorSettings,
-    __in void const* ktlloggerSharedSettings,
-    __out void** primaryReplicator,
-    __out TxnReplicatorHandle* txnReplicatorHandle);
-
-typedef HRESULT (*pfnGetTransactionalReplicator)(
-    __in void* statefulServicePartition,
-    __in void* dataLossHandler,
-    __in const TxnReplicator_Settings* replicatorSettings,
+    __in TxnReplicator_Settings const* replicatorSettings,
     __in LPCWSTR configPackageName,
     __in LPCWSTR replicatorSettingsSectionName,
-    __out void** primaryReplicator,
+    __in LPCWSTR replicatorSecuritySectionName,
+    __out PrimaryReplicatorHandle* primaryReplicator,
     __out TxnReplicatorHandle* txnReplicatorHandle);
 
 typedef void (*pfnTxnReplicator_Release)(
     __in TxnReplicatorHandle txnReplicator);
 
-typedef HRESULT (*pfnTxnReplicator_GetOrAddStateProviderAsync)(
-    __in TxnReplicatorHandle txnReplicator,
-    __in TransactionHandle txn,
-    __in LPCWSTR name,
-    __in int64_t timeout,
-    __out CancellationTokenSourceHandle* cts,
-    __out StateProviderHandle* stateProvider,
-    __out BOOL* alreadyExist,
-    __in fnNotifyGetOrAddStateProviderAsyncCompletion callback,
-    __in void* ctx,
-    __out BOOL* synchronousComplete);
-
-typedef HRESULT(*pfnTxnReplicator_GetOrAddStateProviderAsync2)(
+typedef HRESULT(*pfnTxnReplicator_GetOrAddStateProviderAsync)(
     __in TxnReplicatorHandle txnReplicator,
     __in TransactionHandle txn,
     __in LPCWSTR name,
@@ -186,16 +195,6 @@ typedef HRESULT(*pfnTxnReplicator_GetOrAddStateProviderAsync2)(
     __out BOOL* synchronousComplete);
 
 typedef HRESULT (*pfnTxnReplicator_AddStateProviderAsync)(
-    __in TxnReplicatorHandle txnReplicator,
-    __in TransactionHandle txn,
-    __in LPCWSTR name,
-    __in int64_t timeout,
-    __out CancellationTokenSourceHandle* cts,
-    __in fnNotifyAsyncCompletion callback,
-    __in void* ctx,
-    __out BOOL* synchronousComplete);
-
-typedef HRESULT (*pfnTxnReplicator_AddStateProviderAsync2)(
     __in TxnReplicatorHandle txnReplicator,
     __in TransactionHandle txn,
     __in LPCWSTR name,
@@ -237,7 +236,17 @@ typedef HRESULT (*pfnTxnReplicator_BackupAsync)(
     __in void* ctx,
     __out BOOL* synchronousComplete);
 
-typedef HRESULT(*pfnTxnReplicator_RestoreAsync)(
+typedef HRESULT(*pfnTxnReplicator_BackupAsync2)(
+    __in TxnReplicatorHandle txnReplicator,
+    __in fnUploadAsync2 uploadAsyncCallback,
+    __in Backup_Option backupOption,
+    __in int64_t timeout,
+    __out CancellationTokenSourceHandle* cts,
+    __in fnNotifyAsyncCompletion callback,
+    __in void* ctx,
+    __out BOOL* synchronousComplete);
+
+typedef HRESULT (*pfnTxnReplicator_RestoreAsync)(
     __in TxnReplicatorHandle txnReplicator,
     __in LPCWSTR backupFolder,
     __in Restore_Policy restorePolicy,
@@ -246,6 +255,14 @@ typedef HRESULT(*pfnTxnReplicator_RestoreAsync)(
     __in fnNotifyAsyncCompletion callback,
     __in void* ctx,
     __out BOOL* synchronousComplete);
+
+typedef HRESULT (*pfnTxnReplicator_GetInfo)(
+    __in TxnReplicatorHandle txnReplicator,
+    __out TxnReplicator_Info* info);
+
+typedef HRESULT (*pfnPrimaryReplicator_UpdateReplicatorSettings)(
+    __in PrimaryReplicatorHandle primaryReplicator,
+    __in TxnReplicator_Settings const* replicatorSettings);
 
 typedef void (*pfnCancellationTokenSource_Cancel)(
     CancellationTokenSourceHandle cts);
@@ -367,19 +384,21 @@ struct ReliableCollectionApis
     pfnStore_AddRef Store_AddRef;
     pfnStoreKeyEnumerator_AddRef StoreKeyEnumerator_AddRef;
     pfnStateProviderEnumerator_AddRef StateProviderEnumerator_AddRef;
-    pfnGetTransactionalReplicator GetTransactionalReplicator;
     pfnStore_SetNotifyStoreChangeCallbackMask Store_SetNotifyStoreChangeCallbackMask;
-    pfnTxnReplicator_AddStateProviderAsync2 TxnReplicator_AddStateProviderAsync2;
-    pfnTxnReplicator_GetOrAddStateProviderAsync2 TxnReplicator_GetOrAddStateProviderAsync2;
     pfnStateProvider_GetInfo StateProvider_GetInfo;
     pfnStateProvider_AddRef StateProvider_AddRef;
     pfnStateProvider_Release StateProvider_Release;
     pfnTransaction_GetInfo Transaction_GetInfo;
     pfnTransaction_GetVisibilitySequenceNumberAsync Transaction_GetVisibilitySequenceNumberAsync;
     pfnTransaction_Dispose Transaction_Dispose;
-    pfnTransaction_Release Transaction_Release2;
     pfnStore_CreateRangedEnumeratorAsync Store_CreateRangedEnumeratorAsync;
     pfnStore_ContainsKeyAsync Store_ContainsKeyAsync;
+    pfnTxnReplicator_GetInfo TxnReplicator_GetInfo;
+    pfnPrimaryReplicator_UpdateReplicatorSettings PrimaryReplicator_UpdateReplicatorSettings;
+    pfnConcurrentQueue_EnqueueAsync ConcurrentQueue_EnqueueAsync;
+    pfnConcurrentQueue_TryDequeueAsync ConcurrentQueue_TryDequeueAsync;
+    pfnConcurrentQueue_GetCount ConcurrentQueue_GetCount;
+    pfnTxnReplicator_BackupAsync2 TxnReplicator_BackupAsync2;
 };
 
 extern "C" HRESULT FabricGetReliableCollectionApiTable(

@@ -89,7 +89,13 @@ StringLiteral const TraceSource = "Output";
 class SqlStoreFactory : public IStoreFactory
 {
 public:
-    ErrorCode CreateLocalStore(StoreFactoryParameters const & parameters, ILocalStoreSPtr &)
+    ErrorCode CreateLocalStore(StoreFactoryParameters const & parameters, __out ILocalStoreSPtr & store)
+    {
+        ServiceModel::HealthReport unused;
+        return this->CreateLocalStore(parameters, store, unused);
+    }
+
+    ErrorCode CreateLocalStore(StoreFactoryParameters const & parameters, __out ILocalStoreSPtr &, __out ServiceModel::HealthReport &)
     {
         /*
         if (parameters.Type == StoreType::Sql)

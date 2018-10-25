@@ -5,7 +5,7 @@
     {
       "Name": "JapaneseClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
       "TestExecutionParameters": {
@@ -22,7 +22,7 @@
     {
       "Name": "JapaneseClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-JAPANESE",
       "TestExecutionParameters": {
@@ -38,7 +38,7 @@
     {
       "Name": "GermanClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
       "TestExecutionParameters": {
@@ -55,7 +55,7 @@
     {
       "Name": "GermanClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-GERMAN",
       "TestExecutionParameters": {
@@ -71,7 +71,7 @@
     {
       "Name": "ChineseClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
       "TestExecutionParameters": {
@@ -88,7 +88,7 @@
     {
       "Name": "ChineseClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-CHINESE",
       "TestExecutionParameters": {
@@ -104,7 +104,7 @@
     {
       "Name": "ArabicClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-ARABIC",
       "TestExecutionParameters": {
@@ -121,7 +121,7 @@
     {
       "Name": "ArabicClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-ARABIC",
       "TestExecutionParameters": {
@@ -137,7 +137,7 @@
     {
       "Name": "CzechClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-CZECH",
       "TestExecutionParameters": {
@@ -154,7 +154,7 @@
     {
       "Name": "CzechClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-CZECH",
       "TestExecutionParameters": {
@@ -170,7 +170,7 @@
     {
       "Name": "GreekClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-GREEK",
       "TestExecutionParameters": {
@@ -187,7 +187,7 @@
     {
       "Name": "GreekClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-GREEK",
       "TestExecutionParameters": {
@@ -203,7 +203,7 @@
     {
       "Name": "HebrewClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-HEBREW",
       "TestExecutionParameters": {
@@ -220,7 +220,7 @@
     {
       "Name": "HebrewClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-HEBREW",
       "TestExecutionParameters": {
@@ -236,7 +236,7 @@
     {
       "Name": "KoreanClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-KOREAN",
       "TestExecutionParameters": {
@@ -253,7 +253,7 @@
     {
       "Name": "KoreanClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-KOREAN",
       "TestExecutionParameters": {
@@ -269,7 +269,7 @@
     {
       "Name": "RussianClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
       "TestExecutionParameters": {
@@ -286,7 +286,7 @@
     {
       "Name": "RussianClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-RUSSIAN",
       "TestExecutionParameters": {
@@ -302,7 +302,7 @@
     {
       "Name": "SpanishClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-SPANISH",
       "TestExecutionParameters": {
@@ -319,7 +319,7 @@
     {
       "Name": "SpanishClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-SPANISH",
       "TestExecutionParameters": {
@@ -335,7 +335,7 @@
     {
       "Name": "ThaiClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-THAI",
       "TestExecutionParameters": {
@@ -352,7 +352,7 @@
     {
       "Name": "ThaiClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-THAI",
       "TestExecutionParameters": {
@@ -368,7 +368,7 @@
     {
       "Name": "TurkishClusterSetupSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
       "TestExecutionParameters": {
@@ -385,7 +385,7 @@
     {
       "Name": "TurkishClusterSetupNonSecure",
       "Type": "PowershellTest",
-      "Owners": "amanbha,harahma,taxi,liphigao",
+      "Owners": "amanbha,harahma,ratando",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=LOC-TURKISH",
       "TestExecutionParameters": {

@@ -235,6 +235,8 @@ namespace FabricTest
 
         Common::ComPointer<IFabricStateProvider> GetStateProvider();
 
+        Store::ReplicatedStore * TryGetReplicatedStorePrivate() const;
+
         StatefulPartitionWrapper<IFabricStatefulServicePartition3> partitionWrapper_;
 
         std::wstring serviceName_;

@@ -20,6 +20,7 @@ namespace Management
                     case DeletePending: w << "DeletePending"; return;
                     case Failed: w << "Failed"; return;
                     case Completed: w << "Completed"; return;
+                    case Replacing: w << "Replacing"; return;
                 };
 
                 w << "RolloutStatus(" << static_cast<int>(e) << ')';

@@ -45,12 +45,12 @@ namespace Hosting2
         ~MemoryStats() = default;
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
-            SERIALIZABLE_PROPERTY_INT64_AS_NUM_IF(MemoryStats::CommitBytesParameter, CommitBytes_, (CommitBytes_ != 0))
+            SERIALIZABLE_PROPERTY_INT64_AS_NUM_IF(MemoryStats::MemoryUsageParameter, MemoryUsage_, (MemoryUsage_ != 0))
         END_JSON_SERIALIZABLE_PROPERTIES()
     public:
-        uint64 CommitBytes_;
+        uint64 MemoryUsage_;
 
-        static Common::WStringLiteral const CommitBytesParameter;
+        static Common::WStringLiteral const MemoryUsageParameter;
 
     };
 

@@ -22,6 +22,7 @@ namespace Common
         Common::ErrorCode Close();
 
         void Abort();
+        bool TryAbort();
 
         virtual ~FabricComponent(void);
 

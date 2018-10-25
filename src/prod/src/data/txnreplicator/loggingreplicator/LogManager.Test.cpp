@@ -38,7 +38,6 @@ namespace LoggingReplicatorTests
 
         void EndTest();
 
-        void WaitForAllRecordsToFlush(LONG64 tailPsn);
         Awaitable<void> CreateLogManager();
 
         wstring cwd_;
@@ -113,22 +112,6 @@ namespace LoggingReplicatorTests
             VERIFY_ARE_EQUAL(lastFlushedPsn_ + 1, records[i]->Psn);
             lastFlushedPsn_++;
             records[i]->CompletedFlush(STATUS_SUCCESS);
-        }
-    }
-
-    void LogManagerTests::WaitForAllRecordsToFlush(LONG64 tailPsn)
-    {
-        int count = 0;
-        while (true)
-        {
-            count++;
-            if (lastFlushedPsn_ >= tailPsn)
-            {
-                return;
-            }
-
-            Trace.WriteInfo(TraceComponent, "{0} WaitForAllRecordsToFlush: Count = {1}", prId_->TraceId, count);
-            Sleep(10);
         }
     }
 

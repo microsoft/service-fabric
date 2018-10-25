@@ -61,18 +61,31 @@ protected:
     {
         vector<EndpointDescription> endpointDescriptions;
 
-        for (auto endpointResource : owner_.codePackageInstance_->EnvContext->Endpoints)
+        for (auto const & endpointResource : owner_.codePackageInstance_->EnvContext->Endpoints)
         {
             endpointDescriptions.push_back(endpointResource->EndpointDescriptionObj);
         }
+
+        vector<wstring> depdendentCodePackages;
+        if (owner_.Context.IsCodePackageActivatorHost)
+        {
+            for (auto const & dcpDesc : owner_.PackageDescription.DigestedCodePackages)
+            {
+                depdendentCodePackages.push_back(dcpDesc.Name);
+            }
+        }
         
         auto operation = owner_.TypeHostManager->BeginOpenGuestServiceTypeHost(
-            owner_.HostId,
+            owner_.Context,
             owner_.TypesToHost,
             owner_.codePackageInstance_->Context,
+            move(depdendentCodePackages),
             move(endpointDescriptions),
             timeoutHelper_.GetRemainingTime(),
-            [this](AsyncOperationSPtr const & operation) { this->FinishOpenGuestServiceTypeHost(operation, false); },
+            [this](AsyncOperationSPtr const & operation) 
+            { 
+                this->FinishOpenGuestServiceTypeHost(operation, false); 
+            },
             thisSPtr);
 
         FinishOpenGuestServiceTypeHost(operation, true);
@@ -155,7 +168,7 @@ protected:
         owner_.exitCode_.store(ProcessActivator::ProcessDeactivateExitCode);
 
         auto operation = owner_.TypeHostManager->BeginCloseGuestServiceTypeHost(
-            owner_.HostId,
+            owner_.Context,
             timeoutHelper_.GetRemainingTime(),
             [this](AsyncOperationSPtr const & operation) { this->FinishCloseGuestServiceTypeHost(operation, false); },
             thisSPtr);
@@ -194,6 +207,84 @@ protected:
 private:
     InProcessApplicationHostProxy & owner_;
     TimeoutHelper const timeoutHelper_;
+};
+
+// ********************************************************************************************************************
+// InProcessApplicationHostProxy::CloseAsyncOperation Implementation
+//
+class InProcessApplicationHostProxy::ApplicationHostCodePackageAsyncOperation :
+    public AsyncOperation,
+    TextTraceComponent<TraceTaskCodes::Hosting>
+{
+public:
+    ApplicationHostCodePackageAsyncOperation(
+        __in InProcessApplicationHostProxy & owner,
+        ApplicationHostCodePackageOperationRequest const & request,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(callback, parent)
+        , owner_(owner)
+        , request_(request)
+    {
+    }
+
+    static ErrorCode ApplicationHostCodePackageAsyncOperation::End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<ApplicationHostCodePackageAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (owner_.Hosting.State.Value > FabricComponentState::Opened ||
+            owner_.State.Value > FabricComponentState::Opened ||
+            owner_.ShouldNotify() == false)
+        {
+            //
+            // No need to proceed if Hosting or ApplicationHostProxy
+            // is closing or ApplicationHost has terminated.
+            //
+            this->TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::ObjectClosed));
+            return;
+        }
+
+        auto operation = owner_.codePackageInstance_->BeginApplicationHostCodePackageOperation(
+            request_,
+            [this](AsyncOperationSPtr const & operation)
+            {
+                this->OnApplicationHostCodePackageOperationCompleted(operation, false);
+            },
+            thisSPtr);
+
+        this->OnApplicationHostCodePackageOperationCompleted(operation, true);
+    }
+
+private:
+
+    void OnApplicationHostCodePackageOperationCompleted(
+        AsyncOperationSPtr operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.codePackageInstance_->EndApplicationHostCodePackageOperation(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.TraceId,
+            "OnApplicationHostCodePackageOperationCompleted: ErrorCode={0}",
+            error);
+
+        this->TryComplete(operation->Parent, error);
+    }
+
+private:
+    InProcessApplicationHostProxy & owner_;
+    ApplicationHostCodePackageOperationRequest request_;
 };
 
 AsyncOperationSPtr InProcessApplicationHostProxy::BeginActivateCodePackage(
@@ -331,15 +422,21 @@ InProcessApplicationHostProxy::InProcessApplicationHostProxy(
     CodePackageInstanceSPtr const & codePackageInstance)
     : ApplicationHostProxy(
         hostingHolder,
-        ApplicationHostContext(hostId, ApplicationHostType::Activated_InProcess, false),
+        ApplicationHostContext(
+            hostId, 
+            ApplicationHostType::Activated_InProcess,
+            false,
+            codePackageInstance->IsActivator),
         isolationContext,
         codePackageInstance->RunAsId,
         codePackageInstance->CodePackageInstanceId.ServicePackageInstanceId,
-        codePackageInstance->EntryPoint.EntryPointType)
+        codePackageInstance->EntryPoint.EntryPointType,
+        codePackageInstance->CodePackageObj.RemoveServiceFabricRuntimeAccess)
     , codePackageActivationId_(hostId)
     , codePackageInstance_(codePackageInstance)
     , exitCode_(1)
     , notificationLock_()
+    , shouldNotify_(true)
     , terminatedExternally_(false)
     , isCodePackageActive_(false)
     , codePackageRuntimeInformation_(move(make_shared<CodePackageRuntimeInformation>(L"", ::GetCurrentProcessId())))
@@ -388,6 +485,38 @@ ErrorCode InProcessApplicationHostProxy::OnEndClose(AsyncOperationSPtr const & a
     return CloseAsyncOperation::End(asyncOperation);
 }
 
+AsyncOperationSPtr InProcessApplicationHostProxy::BeginApplicationHostCodePackageOperation(
+    ApplicationHostCodePackageOperationRequest const & requestBody,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<ApplicationHostCodePackageAsyncOperation>(
+        *this,
+        requestBody,
+        callback,
+        parent);
+}
+
+ErrorCode InProcessApplicationHostProxy::EndApplicationHostCodePackageOperation(
+    AsyncOperationSPtr const & operation)
+{
+    return ApplicationHostCodePackageAsyncOperation::End(operation);
+}
+
+void InProcessApplicationHostProxy::SendDependentCodePackageEvent(
+    CodePackageEventDescription const & eventDescription)
+{
+    WriteInfo(
+        TraceType,
+        TraceId,
+        "SendDependentCodePackageEvent: HostContext={0}, CodePackageInstanceId={1}, Event={2}.",
+        this->Context,
+        this->CodePackageInstanceId,
+        eventDescription);
+
+    this->TypeHostManager->ProcessCodePackageEvent(this->Context, eventDescription);
+}
+
 void InProcessApplicationHostProxy::OnAbort()
 {
     WriteWarning(
@@ -400,7 +529,7 @@ void InProcessApplicationHostProxy::OnAbort()
     if (!terminatedExternally_.load())
     {
         this->exitCode_.store(ProcessActivator::ProcessAbortExitCode);
-        this->TypeHostManager->AbortGuestServiceTypeHost(this->HostId);
+        this->TypeHostManager->AbortGuestServiceTypeHost(this->Context);
     }
 
     this->NotifyCodePackageInstance();
@@ -443,7 +572,19 @@ void InProcessApplicationHostProxy::TerminateExternally()
         this->ServicePackageInstanceId);
 
     terminatedExternally_.store(true);
-    this->TypeHostManager->AbortGuestServiceTypeHost(this->HostId);
+    this->TypeHostManager->AbortGuestServiceTypeHost(this->Context);
+}
+
+bool InProcessApplicationHostProxy::ShouldNotify()
+{
+    bool shouldNotify;
+
+    {
+        AcquireWriteLock readLock(notificationLock_);
+        shouldNotify = shouldNotify_;
+    }
+
+    return shouldNotify;
 }
 
 void InProcessApplicationHostProxy::NotifyCodePackageInstance()
@@ -456,15 +597,26 @@ void InProcessApplicationHostProxy::NotifyCodePackageInstance()
 
     {
         AcquireWriteLock writeLock(notificationLock_);
-
-        if (codePackageInstance_ != nullptr)
+        if (!shouldNotify_)
         {
-            auto tempCodePackageInstance = move(codePackageInstance_);
+            return;
+        }
 
-            auto exitCode = (DWORD)exitCode_.load();
-            auto terminatedExternally = terminatedExternally_.load();
-
-            tempCodePackageInstance->OnEntryPointTerminated(codePackageActivationId_, exitCode, !terminatedExternally);
-        }       
+        shouldNotify_ = false;
     }
+
+    auto exitCode = (DWORD)exitCode_.load();
+
+    //
+    // InProc FabricTypeHost is implementation detail for guest app and is only
+    // terminated as part of deactivation or when explicitly terminated to trigger
+    // failover when one of the guest code package terminates. Skipping reporting
+    // health will help not to clutter actual health report that comes from terminating
+    // guest code package and also hides implementation detail.
+    //
+    codePackageInstance_->OnEntryPointTerminated(
+        codePackageActivationId_,
+        exitCode,
+        true /* ignore health reporting */);
 }
+

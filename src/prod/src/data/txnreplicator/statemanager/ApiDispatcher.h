@@ -70,7 +70,7 @@ namespace Data
                 __in ktl::CancellationToken const & cancellationToken) noexcept;
 
         public: // Copy operations
-            NTSTATUS BeginSettingCurrentState(
+            ktl::Awaitable<NTSTATUS> BeginSettingCurrentStateAsync(
                 __in Metadata const & metadata) noexcept;
 
             ktl::Awaitable<NTSTATUS> SetCurrentStateAsync(

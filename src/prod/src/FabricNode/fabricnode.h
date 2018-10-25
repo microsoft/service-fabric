@@ -135,6 +135,7 @@ namespace Fabric
             Common::ProcessTerminationServiceFactory processTerminationFactory);
 
         Common::ErrorCode CreateClusterSecuritySettings(Transport::SecuritySettings & clusterSecuritySettings);
+        Common::ErrorCode CreateIpcServerTlsSecuritySettings(Transport::SecuritySettings & ipcServerTlsSecuritySettings);
 
         void RegisterEvents();
         void UnRegisterEvents();
@@ -150,6 +151,7 @@ namespace Fabric
         void StartInitializeImageStoreService();
         void StartInitializeFaultAnalysisService();
         void StartInitializeUpgradeOrchestrationService();
+        void StartInitializeCentralSecretService();
         void StartInitializeBackupRestoreService();
 
         void TraceState();
@@ -244,6 +246,7 @@ namespace Fabric
         class InitializeFaultAnalysisServiceAsyncOperation;
         class DummyIRouter;
         class InitializeUpgradeOrchestrationServiceAsyncOperation;
+        class InitializeCentralSecretServiceAsyncOperation;
         class InitializeBackupRestoreServiceAsyncOperation;
 
         Common::RwLock clusterSecuritySettingsUpdateLock_;

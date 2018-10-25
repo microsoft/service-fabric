@@ -1,0 +1,3 @@
+# Non standard files
+Dockerfile eol=lf
+DOCKERIMAGE_VERSION eol=lf

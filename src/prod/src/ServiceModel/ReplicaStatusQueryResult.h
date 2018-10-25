@@ -20,6 +20,9 @@ namespace ServiceModel
 
         ReplicaStatusQueryResult const & operator = (ReplicaStatusQueryResult && other);
         
+        __declspec(property(get=get_Kind)) FABRIC_SERVICE_REPLICA_KIND Kind;
+        FABRIC_SERVICE_REPLICA_KIND get_Kind() const { return kind_; }
+
         virtual void ToPublicApi(
             __in Common::ScopedHeap & heap,
             __out FABRIC_REPLICA_STATUS_QUERY_RESULT & publicResult) const;

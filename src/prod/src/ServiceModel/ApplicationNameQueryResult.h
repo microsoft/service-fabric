@@ -12,21 +12,22 @@ namespace ServiceModel
     {
     public:
         ApplicationNameQueryResult();
-        ApplicationNameQueryResult(Common::Uri const & applicationName);
-        ApplicationNameQueryResult(ApplicationNameQueryResult const & other);
-        ApplicationNameQueryResult(ApplicationNameQueryResult && other);
+        explicit ApplicationNameQueryResult(Common::Uri const & applicationName);
+        
+        ApplicationNameQueryResult(ApplicationNameQueryResult const & other) = default;
+        ApplicationNameQueryResult & operator = (ApplicationNameQueryResult const & other) = default;
+        
+        ApplicationNameQueryResult(ApplicationNameQueryResult && other) = default;
+        ApplicationNameQueryResult & operator = (ApplicationNameQueryResult && other) = default;
 
         __declspec(property(get=get_ApplicationName)) Common::Uri const & ApplicationName;
         Common::Uri const & get_ApplicationName() const { return applicationName_; }
-
-        ApplicationNameQueryResult const & operator = (ApplicationNameQueryResult const & other);
-        ApplicationNameQueryResult const & operator = (ApplicationNameQueryResult && other);
-
+        
         void ToPublicApi(
             __in Common::ScopedHeap & heap, 
             __out FABRIC_APPLICATION_NAME_QUERY_RESULT & publicQueryResult) const;
 
-        Common::ErrorCode FromPublicApi(__in FABRIC_APPLICATION_NAME_QUERY_RESULT const& publicQueryResult);
+        Common::ErrorCode FromPublicApi(FABRIC_APPLICATION_NAME_QUERY_RESULT const& publicQueryResult);
 
         void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
         std::wstring ToString() const;

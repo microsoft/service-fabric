@@ -161,6 +161,7 @@ namespace LoggingReplicatorTests
                 nullptr,
                 *util->InvalidRecords->Inv_PhysicalLogRecord,
                 true,
+                0,
                 allocator);
 
             baseRecord->LinkedPhysicalRecord = TestLogRecordUtility::CreateLinkedPhysicalLogRecord(*util->InvalidRecords->Inv_PhysicalLogRecord, allocator);

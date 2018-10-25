@@ -301,10 +301,10 @@ void ScenarioTest::ProcessRuntimeClosed(wstring const & ftShortName)
     RA.ProcessRuntimeClosed(context.STInfo.HostId, context.STInfo.RuntimeId);
 }
 
-void ScenarioTest::ProcessAppHostClosed(wstring const & ftShortName)
+void ScenarioTest::ProcessAppHostClosed(wstring const & ftShortName, ActivityDescription const & activityDescription)
 {
     auto context = GetSingleFTContext(ftShortName);
-    RA.ProcessAppHostClosed(context.STInfo.HostId);
+    RA.ProcessAppHostClosed(context.STInfo.HostId, activityDescription);
 }
 
 void ScenarioTest::ProcessServiceTypeRegistered(wstring const & ftShortName)
@@ -355,10 +355,10 @@ void ScenarioTest::ProcessRuntimeClosedAndDrain(wstring const & ftShortName)
     DrainJobQueues();
 }
 
-void ScenarioTest::ProcessAppHostClosedAndDrain(wstring const & ftShortName)
+void ScenarioTest::ProcessAppHostClosedAndDrain(wstring const & ftShortName, ActivityDescription const & activityDescription)
 {
     LogStep(L"Apphost Down");
-    ProcessAppHostClosed(ftShortName);
+    ProcessAppHostClosed(ftShortName, activityDescription);
     DrainJobQueues();
 }
 
@@ -441,8 +441,8 @@ void ActivateHelper(ReconfigurationAgent & ra, int64 sequenceNumber, bool isActi
 {
     Node::NodeDeactivationInfo info(isActivated, sequenceNumber);
 
-    ra.NodeStateObj.GetNodeDeactivationState(*FailoverManagerId::Fmm).TryStartChange(info);
-    ra.NodeStateObj.GetNodeDeactivationState(*FailoverManagerId::Fm).TryStartChange(info);
+    ra.NodeStateObj.GetNodeDeactivationState(*FailoverManagerId::Fmm).TryStartChange(L"", info);
+    ra.NodeStateObj.GetNodeDeactivationState(*FailoverManagerId::Fm).TryStartChange(L"", info);
 }
 
 void ScenarioTest::ActivateNode(int64 sequenceNumber)

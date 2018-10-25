@@ -63,6 +63,9 @@ ErrorCode ServiceRoutingAgentMessage::UnwrapFromIpc(__inout Message & message)
     Query::QueryAddressHeader queryAddressHeader;
     bool hasQueryAddressHeader = message.Headers.TryReadFirst(queryAddressHeader);
 
+    RequestInstanceHeader requestInstanceHeader;
+    bool hasRequestInstanceHeader = message.Headers.TryReadFirst(requestInstanceHeader);
+
     message.Headers.RemoveAll();
 
     message.Headers.Replace(ActorHeader(proxyHeader.Actor));
@@ -73,6 +76,7 @@ ErrorCode ServiceRoutingAgentMessage::UnwrapFromIpc(__inout Message & message)
     if (hasTimeoutHeader) { message.Headers.Replace(timeoutHeader); }
     if (hasMessageIdHeader) { message.Headers.Replace(messageIdHeader); }
     if (hasQueryAddressHeader) { message.Headers.Replace(queryAddressHeader); }
+    if (hasRequestInstanceHeader) { message.Headers.Replace(requestInstanceHeader); }
 
     return ErrorCodeValue::Success;
 }
@@ -98,7 +102,7 @@ ErrorCode ServiceRoutingAgentMessage::RewrapForRoutingAgentProxy(__inout Message
     {
         TRACE_LEVEL_AND_TESTASSERT(Trace.WriteWarning, TraceComponent, "SystemServiceFilterHeader missing {0}", message.MessageId)
 
-        return ErrorCodeValue::InvalidMessage;
+            return ErrorCodeValue::InvalidMessage;
     }
 
     FabricActivityHeader activityHeader;
@@ -118,6 +122,9 @@ ErrorCode ServiceRoutingAgentMessage::RewrapForRoutingAgentProxy(__inout Message
     Query::QueryAddressHeader queryAddressHeader;
     bool hasQueryAddressHeader = message.Headers.TryReadFirst(queryAddressHeader);
 
+    RequestInstanceHeader requestInstanceHeader;
+    bool hasRequestInstanceHeader = message.Headers.TryReadFirst(requestInstanceHeader);
+
     message.Headers.RemoveAll();
 
     message.Headers.Replace(filterHeader);
@@ -126,6 +133,7 @@ ErrorCode ServiceRoutingAgentMessage::RewrapForRoutingAgentProxy(__inout Message
     if (hasTimeoutHeader) { message.Headers.Replace(timeoutHeader); }
     if (hasMessageIdHeader) { message.Headers.Replace(messageIdHeader); }
     if (hasQueryAddressHeader) { message.Headers.Replace(queryAddressHeader); }
+    if (hasRequestInstanceHeader) { message.Headers.Replace(requestInstanceHeader); }
 
     WrapForIpc(message, routingAgentHeader.Actor, routingAgentHeader.Action);
 

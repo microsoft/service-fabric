@@ -7,7 +7,9 @@
 
 namespace Hosting2
 {
-    typedef std::function<void(DWORD exitCode, int64)> TerminationCallback;
+    typedef std::function<void(Common::ErrorCode, int64)> StartCallback;
+    typedef std::function<void(DWORD, int64)> TerminationCallback;
+    
     class CodePackageInstance :
         public Common::ComponentRoot,
         public Common::StateMachine,
@@ -33,13 +35,15 @@ namespace Hosting2
         STATEMACHINE_ABORTED_TRANSITION(Scheduled|Started|Failed|Stopped);
         STATEMACHINE_TERMINAL_STATES(Aborted|Stopped);
 
-    public:        
-        CodePackageInstance(            
-            CodePackageHolder const & codePackageHolder,            
-            ServiceModel::EntryPointDescription const & entryPoint,            
+    public:
+        CodePackageInstance(
+            CodePackageHolder const & codePackageHolder,
+            ServiceModel::EntryPointDescription const & entryPoint,
+            StartCallback const & entryPointStartedCallback,
             TerminationCallback const & entryPointTerminatedCallback,
             bool isShared,
             bool isSetupEntryPoint,
+            bool isActivator,
             Common::TimeSpan runInterval,
             CodePackage::RunStats & stats,
             std::wstring const & runAsId = L"");
@@ -53,10 +57,22 @@ namespace Hosting2
         inline std::wstring const & get_RunAsId() const { return this->runAsId_; }
 
         __declspec(property(get=get_IsolationPolicyType)) ServiceModel::CodePackageIsolationPolicyType::Enum IsolationPolicyType;
-        inline ServiceModel::CodePackageIsolationPolicyType::Enum get_IsolationPolicyType() const { return this->entryPoint_.IsolationPolicy; }
+        inline ServiceModel::CodePackageIsolationPolicyType::Enum get_IsolationPolicyType() const 
+        {
+            return this->entryPoint_.IsolationPolicy; 
+        }
 
         __declspec(property(get=get_IsShared)) bool IsShared;
-        inline bool get_IsShared() const { return this->isShared_; }    
+        inline bool get_IsShared() const { return this->isShared_; }
+
+        __declspec(property(get = get_IsActivator)) bool IsActivator;
+        inline bool get_IsActivator() const { return isActivator_; }
+
+        __declspec(property(get = get_IsContainerHost)) bool IsContainerHost;
+        inline bool get_IsContainerHost() const
+        { 
+            return (entryPoint_.EntryPointType == ServiceModel::EntryPointType::ContainerHost);
+        }
 
         __declspec(property(get=get_IsSetupEntryPoint)) bool IsSetupEntryPoint;
         inline bool get_IsSetupEntryPoint() const { return isSetupEntryPoint_; }
@@ -74,7 +90,7 @@ namespace Hosting2
         std::wstring const & get_Name() const;
 
         __declspec(property(get=get_IsPackageShared)) bool IsPackageShared;
-        inline bool get_IsPackageShared() const { return this->CodePackageObj.IsShared; }  
+        inline bool get_IsPackageShared() const { return this->CodePackageObj.IsShared; }
 
         __declspec(property(get = get_ProcessDebugParameters)) ProcessDebugParameters const & DebugParameters;
         ProcessDebugParameters const & get_ProcessDebugParameters() const { return this->CodePackageObj.DebugParameters; }
@@ -83,7 +99,10 @@ namespace Hosting2
         std::map<std::wstring, std::wstring> const & get_PortBindings() const { return this->CodePackageObj.PortBindings; }
 
         __declspec(property(get = get_EnvironmentVariablesDescription)) ServiceModel::EnvironmentVariablesDescription const & EnvVariablesDescription;
-        ServiceModel::EnvironmentVariablesDescription const & get_EnvironmentVariablesDescription() const { return this->CodePackageObj.Description.CodePackage.EnvironmentVariables; }
+        ServiceModel::EnvironmentVariablesDescription const & get_EnvironmentVariablesDescription() const 
+        { 
+            return this->CodePackageObj.Description.CodePackage.EnvironmentVariables; 
+        }
 
         __declspec(property(get = get_ServicePackageEnvContext)) ServicePackageInstanceEnvironmentContextSPtr const & EnvContext;
         inline ServicePackageInstanceEnvironmentContextSPtr const & get_ServicePackageEnvContext() const { return this->CodePackageObj.EnvContext; }
@@ -92,15 +111,23 @@ namespace Hosting2
         int64 const get_InstanceId() const { return this->instanceId_; }
 
         __declspec(property(get = get_ResourceGovernancePolicy)) ServiceModel::ResourceGovernancePolicyDescription const & ResourceGovernancePolicy;
-        ServiceModel::ResourceGovernancePolicyDescription const & get_ResourceGovernancePolicy() const { return this->CodePackageObj.Description.ResourceGovernancePolicy; }
+        ServiceModel::ResourceGovernancePolicyDescription const & get_ResourceGovernancePolicy() const 
+        { 
+            return this->CodePackageObj.Description.ResourceGovernancePolicy; 
+        }
 
         __declspec(property(get = get_ContainerPolicies)) ServiceModel::ContainerPoliciesDescription const & ContainerPolicies;
-        ServiceModel::ContainerPoliciesDescription const & get_ContainerPolicies() const { return this->CodePackageObj.Description.ContainerPolicies; }
+        ServiceModel::ContainerPoliciesDescription const & get_ContainerPolicies() const 
+        { 
+            return this->CodePackageObj.Description.ContainerPolicies; 
+        }
 
         __declspec(property(get = get_CountinuousFailureCount)) ULONG ContinuousFailureCount;
         ULONG get_CountinuousFailureCount() const { return this->codePackageHolder_.RootedObject.GetMaxContinuousFailureCount(); }
 
-        Common::AsyncOperationSPtr BeginStart(            
+        Common::DateTime GetLastActivationTime();
+
+        Common::AsyncOperationSPtr BeginStart(
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
         Common::ErrorCode EndStart(
@@ -111,10 +138,10 @@ namespace Hosting2
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
         void EndStop(
-            Common::AsyncOperationSPtr const & operation);        
+            Common::AsyncOperationSPtr const & operation);
 
         Common::AsyncOperationSPtr BeginUpdateContext(
-            CodePackageContext const & updatedContext, 
+            CodePackageContext const & updatedContext,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
@@ -131,15 +158,39 @@ namespace Hosting2
             Common::AsyncOperationSPtr const & operation,
             __out wstring & containerInfo);
 
-        void OnEntryPointTerminated(CodePackageActivationId const & activationId, DWORD exitCode, bool ignoreReporting);    
-        void OnHealthCheckStatusChanged(CodePackageActivationId const & activationId, ContainerHealthStatusInfo const & healthStatusInfo);
+        Common::AsyncOperationSPtr BeginApplicationHostCodePackageOperation(
+            ApplicationHostCodePackageOperationRequest const & request,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+
+        Common::ErrorCode EndApplicationHostCodePackageOperation(
+            Common::AsyncOperationSPtr const & operation);
+
+        void OnEntryPointTerminated(
+            CodePackageActivationId const & activationId,
+            DWORD exitCode, 
+            bool ignoreReporting);
+
+        void OnHealthCheckStatusChanged(
+            CodePackageActivationId const & activationId, 
+            ContainerHealthStatusInfo const & healthStatusInfo);
 
         ServiceModel::CodePackageEntryPoint GetCodePackageEntryPoint();
+
+        void SendDependentCodePackageEvent(
+            CodePackageEventDescription const & eventDesc);
 
         Common::ErrorCode TerminateExternally();
 
         __declspec(property(get = get_CodePackage)) CodePackage const & CodePackageObj;
         inline CodePackage const & get_CodePackage() const { return this->codePackageHolder_.RootedObject; }
+
+        __declspec(property(get = get_ApplicationHostManager)) ApplicationHostManagerUPtr const & ApplicationHostManagerObj;
+        inline ApplicationHostManagerUPtr const & get_ApplicationHostManager() const 
+        { 
+            return this->CodePackageObj.Hosting.ApplicationHostManagerObj;
+        }
+    
     protected:
         virtual void OnAbort();
 
@@ -147,33 +198,37 @@ namespace Hosting2
         void ScheduleStart();
         void OnScheduledStart(Common::AsyncOperationSPtr const & parent);
         void FinishStartCompleted(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynhronously);
-        void CleanupTimer();        
+        void CleanupTimer();
         ServiceModel::CodePackageEntryPointStatistics GetRunStats();
         void GetCodePackageActivationId(__out CodePackageActivationId & activationId);
         void ResetCodePackageActivationId();
 
-    private:        
-        ServiceModel::EntryPointDescription const entryPoint_;                
+    private:
+        class StartAsyncOperation;
+        class StopAsyncOperation;
+        class UpdateAsyncOperation;
+        class GetContaninerInfoAsyncOperation;
+        class ApplicationHostCodePackageOperation;
+
+    private:
+        ServiceModel::EntryPointDescription const entryPoint_;
         std::wstring const runAsId_;
         TerminationCallback const entryPointTerminatedCallback_;
+        StartCallback const entryPointStartedCallback_;
         bool isShared_;
+        bool isActivator_;
         const bool isSetupEntryPoint_;
         const Common::TimeSpan runInterval_;
 
-        CodePackage::RunStats & stats_;        
+        CodePackage::RunStats & stats_;
 
         CodePackageHolder const codePackageHolder_;
         CodePackageActivationIdUPtr activationId_;
         CodePackageRuntimeInformationSPtr codePackageRuntimeInformation_;
 
-        Common::TimerSPtr runTimer_;        
+        Common::TimerSPtr runTimer_;
         Common::TimeSpan dueTime_;
 
-        int64 const instanceId_;  
-
-        class StartAsyncOperation;        
-        class StopAsyncOperation;        
-        class UpdateAsyncOperation;
-        class GetContaninerInfoAsyncOperation;
+        int64 const instanceId_;
     };
 }

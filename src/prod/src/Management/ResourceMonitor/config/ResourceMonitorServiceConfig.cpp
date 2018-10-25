@@ -6,7 +6,6 @@
 #include "stdafx.h"
 
 using namespace Common;
-using namespace ServiceModel;
 using namespace ResourceMonitor;
 
 DEFINE_SINGLETON_COMPONENT_CONFIG(ResourceMonitorServiceConfig)

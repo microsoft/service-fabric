@@ -25,6 +25,8 @@ namespace Data
 
             void Initialize(__in TxnReplicator::IVersionProvider & versionProvider);
 
+            void Reuse();
+
             void UpdateDispatchingBarrierTask(__in TxnReplicator::CompletionTask & barrierTask) override;
 
             ktl::Awaitable<NTSTATUS> TryRemoveCheckpointAsync(

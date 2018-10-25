@@ -67,7 +67,7 @@ AsyncOperationSPtr ReconfigurationAgentProxy::OnBeginOpen(
 
     LocalLoadReportingComponentObj.Open(id_);
     LocalMessageSenderComponentObj.Open(id_);
-    LocalHealthReportingComponentObj.Open(id_, nodeInstanceId, nodeName);
+    LocalHealthReportingComponentObj.Open(id_, Federation::NodeInstance(nodeId, nodeInstanceId), nodeName);
     int threadCount = FailoverConfig::GetConfig().RAPMessageProcessingQueueThreadCount;
     std::wstring queueName = nodeIdString + L"_" + hostIdString + MessageQueueNameSuffix;
     messageQueue_ = make_shared<RAPCommonJobQueue>(queueName, *this, false /*forceEnqueue*/, threadCount);
@@ -962,17 +962,9 @@ void ReconfigurationAgentProxy::UpdateConfigurationMessageHandler(FailoverUnitPr
             // Incompatible work in progress, so drop the message (it will be re-sent by RA)
             RAPEventSource::Events->MessageDropInvalidWorkInProgress(id_, msgContext.Action);
             return;
-        }
+        }        
 
-        // Preserve the replication endpoint and service location already on the FUP since, to handle
-        // standby to active transition
-        ReplicaDescription replicaDesc = msgContext.Body.LocalReplicaDescription;
-        replicaDesc.ReplicationEndpoint = lockedFailoverUnitProxyPtr->ReplicaDescription.ReplicationEndpoint;
-        replicaDesc.ServiceLocation = lockedFailoverUnitProxyPtr->ReplicaDescription.ServiceLocation;
-        lockedFailoverUnitProxyPtr->ReplicaDescription = replicaDesc;
-
-        lockedFailoverUnitProxyPtr->FailoverUnitDescription.PreviousConfigurationEpoch = msgContext.Body.FailoverUnitDescription.PreviousConfigurationEpoch;
-        lockedFailoverUnitProxyPtr->FailoverUnitDescription.CurrentConfigurationEpoch = msgContext.Body.FailoverUnitDescription.CurrentConfigurationEpoch;
+        lockedFailoverUnitProxyPtr->ProcessUpdateConfigurationMessage(msgContext.Body);
     }
 
     ReconfigurationAgentProxy::ActionListExecutorAsyncOperation::CreateAndStart(

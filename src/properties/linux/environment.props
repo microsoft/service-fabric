@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+***********************************************************************************************
+environment.props
+
+This config file holds the Service Fabric managed code encapsulation for compilation on linux.
+
+Copyright (C) Microsoft Corporation. All rights reserved.
+***********************************************************************************************
+-->
+
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)/../.config/build.sdk.props" />
+
+  <PropertyGroup>
+    <BuildLinux>true</BuildLinux>
+    <ObjectRoot>$(SRCROOT)/..</ObjectRoot>
+    <IntermediateOutputPath>./obj/</IntermediateOutputPath>
+    <OutDir>$(BINROOT)/coreclr</OutDir>
+    <PublishDir>$(OutDir)/publish</PublishDir>
+    <BinariesBuildTypeArchDirectory>$(OutDir)</BinariesBuildTypeArchDirectory>
+    <BuildVersion>$(BUILD_VERSION)</BuildVersion>
+    <NuGetFallbackFolder>/usr/share/dotnet/sdk/NuGetFallbackFolder</NuGetFallbackFolder>
+    <ExtendedTargetsPath>$(SRCROOT)/properties/linux</ExtendedTargetsPath>
+    <InformationalVersion>$(BuildVersion)</InformationalVersion>
+    <BuildMajorVersionOnly>$([System.String]::Concat($(BuildVersion.Substring(0, $(BuildVersion.IndexOf('.')))), ".0.0.0"))</BuildMajorVersionOnly>
+    <AssemblyVersion>$(BuildMajorVersionOnly)</AssemblyVersion>
+    <AssemblyFileVersion>$(BuildMajorVersionOnly)</AssemblyFileVersion>
+    <LinuxBuildArtifacts>$(SRCROOT)/../external/ServiceFabric.Linux.Coreclr.BuildArtifacts/build</LinuxBuildArtifacts>
+  </PropertyGroup>
+
+  <!-- Create a dummy SetEnvironment task for linux -->
+  <!-- Find cleaner way to fix : RDBug #12677745 -->
+  <UsingTask
+    Condition="'$(BuildLinux)' == 'true'"
+    TaskName="SetEnvironment"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll" >
+    <ParameterGroup />
+    <Task>
+    </Task>
+  </UsingTask>
+</Project>

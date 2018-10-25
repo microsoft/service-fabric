@@ -15,9 +15,10 @@ namespace Management
         {
         public:
             EventContextMap();
-
-            EventContextMap(EventContextMap && other);
-            EventContextMap const & operator = (EventContextMap && other);
+            EventContextMap(EventContextMap const & other) = default;
+            EventContextMap(EventContextMap && other) = default;
+            EventContextMap & operator = (EventContextMap const & other) = default;
+            EventContextMap & operator = (EventContextMap && other) = default;
 
             Common::ErrorCode FromPublicApi(
                 FABRIC_EVENT_CONTEXT_MAP const & publicEventContextMap);

@@ -247,13 +247,13 @@ TxnReplicator::IRuntimeFolders::SPtr TestHelper::CreateRuntimeFolders(__in KAllo
     return runtimeFolders;
 }
 
-KWfStatefulServicePartition::SPtr TestHelper::CreateStatefulServicePartition( 
+IStatefulPartition::SPtr TestHelper::CreateStatefulServicePartition( 
     __in KAllocator & allocator)
 {
     return CreateStatefulServicePartition(Common::Guid::NewGuid(), allocator);
 }
 
-KWfStatefulServicePartition::SPtr TestHelper::CreateStatefulServicePartition(
+IStatefulPartition::SPtr TestHelper::CreateStatefulServicePartition(
     __in Common::Guid partitionId,
     __in KAllocator & allocator,
     __in FABRIC_SERVICE_PARTITION_ACCESS_STATUS readStatus,

@@ -1693,6 +1693,9 @@ KPhysicalLog;
 /* [entry] */ HRESULT KCreatePhysicalLogManager( 
     /* [out] */ __RPC__deref_out_opt IKPhysicalLogManager **const result);
 
+/* [entry] */ HRESULT KCreatePhysicalLogManagerInproc( 
+    /* [out] */ __RPC__deref_out_opt IKPhysicalLogManager **const result);
+
 /* [entry] */ HRESULT KCreateEmptyKIoBuffer( 
     /* [out] */ __RPC__deref_out_opt IKIoBuffer **const result);
 

@@ -82,10 +82,14 @@ namespace Common
         static bool HasExtension(std::wstring const & path);
         static bool IsPathRooted(std::wstring const & path);
         static std::wstring NormalizePathSeparators(std::wstring const & path);
-        static void Path::CombineInPlace(std::string& path1, std::string const & path2);
-        static void Path::CombineInPlace(std::wstring& path1, std::wstring const & path2);
-        static std::string Path::Combine(std::string const & path1, std::string const & path2);
-        static std::wstring Path::Combine(std::wstring const & path1, std::wstring const & path2);
+        static void CombineInPlace(std::string& path1, std::string const & path2, bool escapePath = false);
+        static void CombineInPlace(std::wstring& path1, std::wstring const & path2, bool escapePath = false);
+        static std::string Combine(std::string const & path1, std::string const & path2, bool escapePath = false);
+        static std::wstring Combine(std::wstring const & path1, std::wstring const & path2, bool escapePath = false);
+
+        // Checks whether the path ends with sfpkg extension. Does not validates that the file exists.
+        static bool IsSfpkg(std::wstring const & path);
+        static void AddSfpkgExtension(__inout std::wstring & path);
 
 #ifdef PLATFORM_UNIX
         static bool IsRegularFile(std::string const & path); 
@@ -111,7 +115,7 @@ namespace Common
         // Converts the argument to a valid absolute path. 
         // (1) Checks if the path is rooted.
         // (2) If not rooted, prepends the Current Directory to the path and probes.
-        // (3) if probe failed, gets the executebale path, probes and returns.
+        // (3) if probe failed, gets the executable path, probes and returns.
         static void MakeAbsolute(std::wstring & file);
 
         static bool IsRemotePath(std::wstring const & path);
@@ -124,6 +128,8 @@ namespace Common
 
         // Gets the path root drive letter
         static const WCHAR GetDriveLetter(std::wstring const & path);
+
+        static Common::GlobalWString const SfpkgExtension;
     };
 
 } // end namespace Common

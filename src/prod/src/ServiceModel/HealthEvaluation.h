@@ -29,6 +29,7 @@ namespace ServiceModel
 
         // Recursively generates description for all entries in the vector.
         static void GenerateDescription(__in std::vector<HealthEvaluation> & evaluations);
+        static std::wstring GetUnhealthyEvaluationDescription(std::vector<HealthEvaluation> const & evaluations);
 
         // Updates health evaluations with description.
         // If max allowed size is hit, the evaluations are trimmed if possible.

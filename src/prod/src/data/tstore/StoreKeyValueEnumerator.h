@@ -27,10 +27,11 @@ namespace Data
                 __in IComparer<TKey> & keyComparer,
                 __in IEnumerator<TKey> & keys,
                 __in IStoreTransaction<TKey, TValue> & storeTransaction,
+                __in ReadMode readMode,
                 __in KAllocator & allocator,
                 __out KSharedPtr<IAsyncEnumerator<KeyValuePair<TKey, KeyValuePair<LONG64, TValue>>>> & result)
             {
-                result = _new(COMPONENTKEYENUMERATOR_TAG, allocator) StoreKeyValueEnumerator(store, keyComparer, keys, storeTransaction);
+                result = _new(COMPONENTKEYENUMERATOR_TAG, allocator) StoreKeyValueEnumerator(store, keyComparer, keys, storeTransaction, readMode);
                 if (!result)
                 {
                     return STATUS_INSUFFICIENT_RESOURCES;
@@ -68,8 +69,17 @@ namespace Data
                         continue;
                     }
 
+                    KSharedPtr<Store<TKey, TValue>> storeSPtr = static_cast<Store<TKey, TValue> *>(storeSPtr_.RawPtr());
+
                     KeyValuePair<LONG64, TValue> kvpair;
-                    bool exists = co_await storeSPtr_->ConditionalGetAsync(*storeTransactionSPtr_, key, Common::TimeSpan::FromSeconds(Constants::EnumerationGetValueTimeoutSeconds), kvpair, ktl::CancellationToken::None);
+                    bool exists = co_await storeSPtr->TryGetValueAsync(
+                        *storeTransactionSPtr_, 
+                        key, 
+                        Common::TimeSpan::FromSeconds(Constants::EnumerationGetValueTimeoutSeconds), 
+                        kvpair, 
+                        readMode_,
+                        ktl::CancellationToken::None);
+
                     if (exists)
                     {
                         current_ = KeyValuePair<TKey, KeyValuePair<LONG64, TValue>>(key, kvpair);
@@ -106,11 +116,13 @@ namespace Data
                 __in IStore<TKey, TValue> & store,
                 __in IComparer<TKey> & keyComparer,
                 __in IEnumerator<TKey> & keys,
-                __in IStoreTransaction<TKey, TValue> & storeTransaction) :
+                __in IStoreTransaction<TKey, TValue> & storeTransaction,
+                __in ReadMode readMode) :
                 keysEnumeratorSPtr_(&keys),
                 storeTransactionSPtr_(&storeTransaction),
                 storeSPtr_(&store),
-                keyComparerSPtr_(&keyComparer)
+                keyComparerSPtr_(&keyComparer),
+                readMode_(readMode)
             {
             }
 
@@ -118,6 +130,7 @@ namespace Data
             KSharedPtr<IStoreTransaction<TKey, TValue>> storeTransactionSPtr_;
             KSharedPtr<IStore<TKey, TValue>> storeSPtr_;
             KSharedPtr<IComparer<TKey>> keyComparerSPtr_;
+            ReadMode readMode_;
 
             bool isDone_ = false;
             KeyValuePair<TKey, KeyValuePair<LONG64, TValue>> current_;

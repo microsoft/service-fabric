@@ -17,8 +17,8 @@ namespace Reliability
             Common::TraceEventWriter<std::wstring, ServiceInfo, int64, int64> ServiceAdded;
             Common::TraceEventWriter<std::wstring> ServiceToBeDeleted;
             Common::TraceEventWriter<std::wstring, uint64> ServiceDeleted;
-            Common::TraceEventWriter<std::wstring, std::wstring, std::wstring, std::wstring, std::wstring> ServiceCreatedOperational;
-            Common::TraceEventWriter<std::wstring, std::wstring, std::wstring, std::wstring> ServiceDeletedOperational;
+            Common::TraceEventWriter<Common::Guid, std::wstring, std::wstring, std::wstring, std::wstring, uint64, bool, int, int, int, std::wstring, Common::Guid> ServiceCreatedOperational;
+            Common::TraceEventWriter<Common::Guid, std::wstring, std::wstring, std::wstring, std::wstring, uint64, bool, int, int, int, std::wstring> ServiceDeletedOperational;
             
             Common::TraceEventWriter<std::wstring, ServiceInfo, int64> ServiceRemoved;
             Common::TraceEventWriter<std::wstring, ServiceInfo, int64, int64> ServiceUpdate;
@@ -46,8 +46,8 @@ namespace Reliability
                 ServiceDeleted(id, 224, "_Services_DEL_ServiceDeleted", Common::LogLevel::Info, Common::TraceChannelType::Debug, TRACE_KEYWORDS2(Default, ForQuery), "Service {0} instance {1} deleted", "id", "dca_instance"),
 
                 // Only FM emits these as Operational traces
-                ServiceCreatedOperational(id, 225, "_ServicesOperational_ServiceCreatedOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, "Service Created: Service {2} partition {4} of ServiceType {3} created in Application {0} ApplicationType {1}.", "applicationName", "applicationTypeName", "serviceName", "serviceTypeName", "partitionId"),
-                ServiceDeletedOperational(id, 226, "_ServicesOperational_ServiceDeletedOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, "Service Deleted: Service {2} of ServiceType {3} deleted in Application {0} ApplicationType {1}.", "applicationName", "applicationTypeName", "serviceName", "serviceTypeName"),
+                ServiceCreatedOperational(Common::ExtendedEventMetadata::Create(L"ServiceCreated", OperationalLifeCycleCategory), id, 225, "_ServicesOps_ServiceCreatedOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, "Service Created: Service {1} partition {11} of ServiceType {2} created in Application {3} ApplicationType {4}.", "eventInstanceId", "serviceName", "serviceTypeName", "applicationName", "applicationTypeName", "serviceInstance", "isStateful", "partitionCount", "targetReplicaSetSize", "minReplicaSetSize", "servicePackageVersion", "partitionId"),
+                ServiceDeletedOperational(Common::ExtendedEventMetadata::Create(L"ServiceDeleted", OperationalLifeCycleCategory), id, 226, "_ServicesOps_ServiceDeletedOperational", Common::LogLevel::Info, id == Common::TraceTaskCodes::FM ? Common::TraceChannelType::Operational : Common::TraceChannelType::Debug, "Service Deleted: Service {1} of ServiceType {2} deleted in Application {3} ApplicationType {4}.", "eventInstanceId", "serviceName", "serviceTypeName", "applicationName", "applicationTypeName", "serviceInstance", "isStateful", "partitionCount", "targetReplicaSetSize", "minReplicaSetSize", "servicePackageVersion"),
 
                 ServiceRemoved(id, 227, "Removed_ServiceUpdate", Common::LogLevel::Info, "Service removed: {1}\r\nCommit Duration = {2} ms", "id", "serviceInfo", "commitDuration"),
                 ServiceUpdate(id, 228, "ServiceUpdate", Common::LogLevel::Info, "Service updated: {1}\r\nCommit Duration = {2} ms, PLB Duration = {3} ms", "id", "serviceInfo", "commitDuration", "plbDuration"),

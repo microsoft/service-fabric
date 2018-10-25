@@ -26,6 +26,7 @@ ReportRequestContext::ReportRequestContext(
     , requestId_(requestId)
     , sequenceStreamFromLsn_(sequenceStreamFromLsn)
     , sequenceStreamUpToLsn_(sequenceStreamUpToLsn)
+    , previousState_(FABRIC_HEALTH_STATE_INVALID)
 {
 }
 
@@ -36,6 +37,7 @@ ReportRequestContext::ReportRequestContext(ReportRequestContext && other)
     , requestId_(move(other.requestId_))
     , sequenceStreamFromLsn_(move(other.sequenceStreamFromLsn_))
     , sequenceStreamUpToLsn_(move(other.sequenceStreamUpToLsn_))
+    , previousState_(move(other.previousState_))
 {
 }
 
@@ -48,6 +50,7 @@ ReportRequestContext & ReportRequestContext::operator = (ReportRequestContext &&
         requestId_ = move(other.requestId_);
         sequenceStreamFromLsn_ = move(other.sequenceStreamFromLsn_);
         sequenceStreamUpToLsn_ = move(other.sequenceStreamUpToLsn_);
+        previousState_ = move(other.previousState_);
     }
 
     RequestContext::operator=(move(other));
@@ -137,7 +140,7 @@ template <> NodeHealthId ReportRequestContext::GetEntityId<NodeHealthId>() const
     }
     else
     {
-        // The node id computed on the client might use different node id generation scheme. 
+        // The node id computed on the client might use different node id generation scheme.
         // Recompute the node here so on the server side is generated with the correct serialization scheme
         const_cast<NodeEntityHealthInformation*>(entityInfo)->GenerateNodeId().ReadValue();
         return entityInfo->NodeId;

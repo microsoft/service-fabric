@@ -3,7 +3,6 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-
 #include "stdafx.h"
 
 using namespace Common;
@@ -41,7 +40,6 @@ ChaosReportFilter::ChaosReportFilter(
 {
 }
 
-
 Common::ErrorCode ChaosReportFilter::FromPublicApi(
     FABRIC_CHAOS_REPORT_FILTER const & publicFilter)
 {
@@ -54,6 +52,24 @@ Common::ErrorCode ChaosReportFilter::FromPublicApi(
 void ChaosReportFilter::ToPublicApi(
     __in Common::ScopedHeap & heap,
     __out FABRIC_CHAOS_REPORT_FILTER & result) const
+{
+    UNREFERENCED_PARAMETER(heap);
+    result.StartTimeUtc = startTimeUtc_.AsFileTime;
+    result.EndTimeUtc = endTimeUtc_.AsFileTime;
+}
+
+Common::ErrorCode ChaosReportFilter::FromPublicApi(
+    FABRIC_CHAOS_EVENTS_SEGMENT_FILTER const & publicFilter)
+{
+    startTimeUtc_ = DateTime(publicFilter.StartTimeUtc);
+    endTimeUtc_ = DateTime(publicFilter.EndTimeUtc);
+
+    return ErrorCodeValue::Success;
+}
+
+void ChaosReportFilter::ToPublicApi(
+    __in Common::ScopedHeap & heap,
+    __out FABRIC_CHAOS_EVENTS_SEGMENT_FILTER & result) const
 {
     UNREFERENCED_PARAMETER(heap);
     result.StartTimeUtc = startTimeUtc_.AsFileTime;

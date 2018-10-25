@@ -84,6 +84,8 @@ namespace Data
             // Default is zero.
             ULONG32 NumberOfInvalidEntries;
 
+            ULONG64 SizeOnDiskThreshold;
+
             // Gets the Merge Policy
             __declspec (property(get = get_mergePolicy, put = set_mergePolicy)) MergePolicy CurrentMergePolicy;
             MergePolicy get_mergePolicy() const
@@ -108,9 +110,7 @@ namespace Data
                 __in MetadataTable& mergeTable,
                 __out KSharedArray<ULONG32>::SPtr& filesToBeMerged);
 
-            KSharedArray<ULONG32>::SPtr GetMergeFileListForInvalidAndDeletedEntries(__in MetadataTable & mergeTable);
-            KSharedArray<ULONG32>::SPtr GetMergeFileListForInvalidEntries(__in MetadataTable & mergeTable);
-            KSharedArray<ULONG32>::SPtr GetMergeFileListForDeletedEntries(__in MetadataTable & mergeTable);
+            ktl::Awaitable<bool> ShouldMergeForSizeOnDiskPolicy(__in MetadataTable& mergeTable);
 
             bool IsFileQualifiedForInvalidEntriesMergePolicy(__in Data::KeyValuePair<ULONG32, FileMetadata::SPtr> item);
             bool IsFileQualifiedForDeletedEntriesMergePolicy(__in Data::KeyValuePair<ULONG32, FileMetadata::SPtr> item);
@@ -118,6 +118,9 @@ namespace Data
             bool IsMergePolicyEnabled(__in MergePolicy mergePolicy);
             void CleanMap();
             void AssertIfMapIsNotClean();
+
+            // Approximate size, 200 MB, of a typical unmerged checkpoint file.
+            static const LONG64 ApproxCheckpointFileSize = 200LL << 20;
 
             //
             // Default file count threshold for invalid entries merge policy.
@@ -130,9 +133,12 @@ namespace Data
             static const ULONG32 DefaultPercentageOfInvalidEntriesPerFile = 33;
 
             //
-            // Default threshold for percentage of deleted entries for a file to be considered for merge
+            // Default threshold for percentage of deleted entries for a file to be considered for merge.
             //
             static const ULONG32 DefaultPercentageOfDeletedEntriesPerFile = 33;
+
+            // Default threshold, ~30 200MB files = 6GB, for total size on disk for Size on Disk Merge Policy to be triggered.
+            static const LONG64 DefaultSizeForSizeOnDiskPolicy = 30 * ApproxCheckpointFileSize;
 
             // Gets or sets the file count merge configuration.  File count merge configruation.
             FileCountMergeConfiguration::SPtr fileCountMergeConfigurationSPtr_;

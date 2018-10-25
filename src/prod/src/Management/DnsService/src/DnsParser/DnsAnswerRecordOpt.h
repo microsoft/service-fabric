@@ -37,7 +37,7 @@ namespace DNS
 
         bool Serialize(
             __in BinaryWriter& writer,
-            __in ULONG ttl
+            __in ULONG ttl = 0
         ) const;
 
     private:

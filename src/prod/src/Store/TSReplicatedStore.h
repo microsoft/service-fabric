@@ -26,8 +26,8 @@ namespace Store
         TSReplicatedStore(
             Common::Guid const & partitionId,
             ::FABRIC_REPLICA_ID replicaId,
-            TSReplicatedStoreSettingsUPtr &&,
             Reliability::ReplicationComponent::ReplicatorSettingsUPtr &&,
+            TSReplicatedStoreSettingsUPtr &&,
             Api::IStoreEventHandlerPtr const &,
             Api::ISecondaryEventHandlerPtr const &,
             Common::ComponentRoot const &);
@@ -118,6 +118,11 @@ namespace Store
         virtual Common::ErrorCode UpdateReplicatorSettings(FABRIC_REPLICATOR_SETTINGS const &) override;
 
         virtual Common::ErrorCode UpdateReplicatorSettings(Reliability::ReplicationComponent::ReplicatorSettingsUPtr const &) override;
+
+        Common::ErrorCode GetQueryStatus(__out Api::IStatefulServiceReplicaStatusResultPtr &) override;
+
+        void SetQueryStatusDetails(std::wstring const &);
+        void SetMigrationQueryResult(std::unique_ptr<MigrationQueryResult> &&) override;
 
         void Test_SetTestHookContext(TestHooks::TestHookContext const &) override;
 
@@ -221,8 +226,8 @@ namespace Store
         Common::ErrorCode CreateKey(std::wstring const & type, std::wstring const & key, __out KString::SPtr &);
         Common::ErrorCode CreateBuffer(void const * value, size_t valueSize, __out KBuffer::SPtr &);
 
-        TSReplicatedStoreSettingsUPtr storeSettings_;
         Reliability::ReplicationComponent::ReplicatorSettingsUPtr replicatorSettings_;
+        TSReplicatedStoreSettingsUPtr storeSettings_;
 
         KtlSystem * ktlSystem_;
 
@@ -245,6 +250,10 @@ namespace Store
         Common::RwLock partitionLock_;
         FABRIC_REPLICA_ROLE replicaRole_;
         Common::atomic_bool isActive_;
+
+        Common::RwLock queryStatusDetailsLock_;
+        std::wstring queryStatusDetails_;
+        MigrationQueryResultSPtr migrationDetails_;
 
         // Used for fault injection from FabricTest
         //

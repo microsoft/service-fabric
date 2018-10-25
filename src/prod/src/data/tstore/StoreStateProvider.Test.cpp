@@ -51,7 +51,7 @@ class StoreStateProviderTest
         return replicator;
     }
 
-    void AddStore(__in MockStateManager &stateManager)
+    ktl::Awaitable<void> AddStoreAsync(__in MockStateManager &stateManager)
     {
         auto txn = stateManager.CreateTransaction();
         StoreInitializationParameters::SPtr paramSPtr = nullptr;
@@ -59,15 +59,17 @@ class StoreStateProviderTest
         Diagnostics::Validate(status);
 
         Data::Utilities::OperationData::SPtr initParamData = paramSPtr->ToOperationData(GetAllocator()).RawPtr();
-        SyncAwait(stateManager.AddAsync(*txn, L"fabric:/myTStore1", L"TStore", initParamData.RawPtr(), Common::TimeSpan::MaxValue, CancellationToken::None));
-        SyncAwait(stateManager.CommitAddAsync(*txn));
+        co_await stateManager.AddAsync(*txn, L"fabric:/myTStore1", L"TStore", initParamData.RawPtr(), Common::TimeSpan::MaxValue, CancellationToken::None);
+        co_await stateManager.CommitAddAsync(*txn);
+        co_return;
     }
 
-    void RemoveStore(__in MockStateManager &stateManager)
+    ktl::Awaitable<void> RemoveStoreAsync(__in MockStateManager &stateManager)
     {
         auto txn = stateManager.CreateTransaction();
-        SyncAwait(stateManager.RemoveAsync(*txn, L"fabric:/myTStore1", Common::TimeSpan::MaxValue, CancellationToken::None));
-        SyncAwait(stateManager.CommitRemoveAsync(*txn));
+        co_await stateManager.RemoveAsync(*txn, L"fabric:/myTStore1", Common::TimeSpan::MaxValue, CancellationToken::None);
+        co_await stateManager.CommitRemoveAsync(*txn);
+        co_return;
     }
 
     MockStateManager::SPtr CreateStateManager(
@@ -87,67 +89,106 @@ class StoreStateProviderTest
 
   private:
     KtlSystem *ktlSystem_;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> AddStore_NumKeyStringVal_ShouldSucceed_Test()
+    {
+        auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
+        StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateLongStringUTF8Factory(GetAllocator());
+        MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
+        co_await AddStoreAsync(*stateManagerSPtr);
+        co_await stateManagerSPtr->CloseAsync();
+        co_return;
+    }
+
+        ktl::Awaitable<void> AddStore_StringUTF8KeyBufferVal_ShouldSucceed_Test()
+    {
+        auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
+        StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateStringUTF8BufferFactory(GetAllocator());
+        MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
+        co_await AddStoreAsync(*stateManagerSPtr);
+        co_await stateManagerSPtr->CloseAsync();
+        co_return;
+    }
+
+        ktl::Awaitable<void> AddStore_StringUTF16KeyBufferVal_ShouldSucceed_Test()
+    {
+        auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
+        StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateStringUTF16BufferFactory(GetAllocator());
+        MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
+        co_await AddStoreAsync(*stateManagerSPtr);
+        co_await stateManagerSPtr->CloseAsync();
+        co_return;
+    }
+
+        ktl::Awaitable<void> RemoveStore_NumKeyStringVal_ShouldSucceed_Test()
+    {
+        auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
+        StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateLongStringUTF8Factory(GetAllocator());
+        MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
+        co_await AddStoreAsync(*stateManagerSPtr);
+        co_await RemoveStoreAsync(*stateManagerSPtr);
+        co_await stateManagerSPtr->CloseAsync();
+        co_return;
+    }
+
+        ktl::Awaitable<void> StoreInitializationParameters_Serialization_ShouldSucceed_Test()
+    {
+        StoreInitializationParameters::SPtr paramSPtr = nullptr;
+        NTSTATUS status = StoreInitializationParameters::Create(GetAllocator(), StoreBehavior::Historical, false, paramSPtr);
+        Diagnostics::Validate(status);
+
+        OperationData::SPtr initParametersSPtr = paramSPtr->ToOperationData(GetAllocator());
+        auto paramSPtr2 = StoreInitializationParameters::FromOperationData(GetAllocator(), *initParametersSPtr);
+        CODING_ERROR_ASSERT(paramSPtr2->StoreBehaviorProperty == paramSPtr->StoreBehaviorProperty);
+        CODING_ERROR_ASSERT(paramSPtr2->AllowReadableSecondary == paramSPtr->AllowReadableSecondary);
+        CODING_ERROR_ASSERT(paramSPtr2->Version == paramSPtr->Version);
+        co_return;
+    }
+
+        ktl::Awaitable<void> AddStore_BufferKeyBufferVal_ShouldSucceed_Test()
+    {
+        auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
+        StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateBufferBufferFactory(GetAllocator());
+        MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
+        co_await AddStoreAsync(*stateManagerSPtr);
+        co_await stateManagerSPtr->CloseAsync();
+        co_return;
+    }
+    #pragma endregion
 };
 
 BOOST_FIXTURE_TEST_SUITE(StoreStateProviderTestSuite, StoreStateProviderTest)
 
 BOOST_AUTO_TEST_CASE(AddStore_NumKeyStringVal_ShouldSucceed)
 {
-    auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
-    StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateLongStringUTF8Factory(GetAllocator());
-    MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
-    AddStore(*stateManagerSPtr);
-    SyncAwait(stateManagerSPtr->CloseAsync());
+    SyncAwait(AddStore_NumKeyStringVal_ShouldSucceed_Test());
 }
 
 BOOST_AUTO_TEST_CASE(AddStore_StringUTF8KeyBufferVal_ShouldSucceed)
 {
-    auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
-    StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateStringUTF8BufferFactory(GetAllocator());
-    MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
-    AddStore(*stateManagerSPtr);
-    SyncAwait(stateManagerSPtr->CloseAsync());
+    SyncAwait(AddStore_StringUTF8KeyBufferVal_ShouldSucceed_Test());
 }
 
 BOOST_AUTO_TEST_CASE(AddStore_StringUTF16KeyBufferVal_ShouldSucceed)
 {
-    auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
-    StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateStringUTF16BufferFactory(GetAllocator());
-    MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
-    AddStore(*stateManagerSPtr);
-    SyncAwait(stateManagerSPtr->CloseAsync());
+    SyncAwait(AddStore_StringUTF16KeyBufferVal_ShouldSucceed_Test());
 }
 
 BOOST_AUTO_TEST_CASE(RemoveStore_NumKeyStringVal_ShouldSucceed)
 {
-    auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
-    StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateLongStringUTF8Factory(GetAllocator());
-    MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
-    AddStore(*stateManagerSPtr);
-    RemoveStore(*stateManagerSPtr);
-    SyncAwait(stateManagerSPtr->CloseAsync());
+    SyncAwait(RemoveStore_NumKeyStringVal_ShouldSucceed_Test());
 }
 
 BOOST_AUTO_TEST_CASE(StoreInitializationParameters_Serialization_ShouldSucceed)
 {
-    StoreInitializationParameters::SPtr paramSPtr = nullptr;
-    NTSTATUS status = StoreInitializationParameters::Create(GetAllocator(), StoreBehavior::Historical, false, paramSPtr);
-    Diagnostics::Validate(status);
-
-    OperationData::SPtr initParametersSPtr = paramSPtr->ToOperationData(GetAllocator());
-    auto paramSPtr2 = StoreInitializationParameters::FromOperationData(GetAllocator(), *initParametersSPtr);
-    CODING_ERROR_ASSERT(paramSPtr2->StoreBehaviorProperty == paramSPtr->StoreBehaviorProperty);
-    CODING_ERROR_ASSERT(paramSPtr2->AllowReadableSecondary == paramSPtr->AllowReadableSecondary);
-    CODING_ERROR_ASSERT(paramSPtr2->Version == paramSPtr->Version);
+    SyncAwait(StoreInitializationParameters_Serialization_ShouldSucceed_Test());
 }
 
 BOOST_AUTO_TEST_CASE(AddStore_BufferKeyBufferVal_ShouldSucceed)
 {
-    auto replicatorSPtr = CreateMockReplicator(FABRIC_REPLICA_ROLE_PRIMARY);
-    StoreStateProviderFactory::SPtr factorySPtr = StoreStateProviderFactory::CreateBufferBufferFactory(GetAllocator());
-    MockStateManager::SPtr stateManagerSPtr = CreateStateManager(factorySPtr, *replicatorSPtr);
-    AddStore(*stateManagerSPtr);
-    SyncAwait(stateManagerSPtr->CloseAsync());
+    SyncAwait(AddStore_BufferKeyBufferVal_ShouldSucceed_Test());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

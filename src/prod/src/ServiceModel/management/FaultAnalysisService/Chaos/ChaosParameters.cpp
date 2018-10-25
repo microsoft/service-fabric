@@ -28,37 +28,6 @@ ChaosParameters::ChaosParameters()
 {
 }
 
-ChaosParameters::ChaosParameters(ChaosParameters && other)
-: maxClusterStabilizationTimeoutInSeconds_(move(other.maxClusterStabilizationTimeoutInSeconds_))
-, maxConcurrentFaults_(move(other.maxConcurrentFaults_))
-, waitTimeBetweenIterationsInSeconds_(move(other.waitTimeBetweenIterationsInSeconds_))
-, waitTimeBetweenFaultsInSeconds_(move(other.waitTimeBetweenFaultsInSeconds_))
-, timeToRunInSeconds_(move(other.timeToRunInSeconds_))
-, enableMoveReplicaFaults_(move(other.enableMoveReplicaFaults_))
-, healthPolicy_(move(other.healthPolicy_))
-, eventContextMap_(move(other.eventContextMap_))
-, chaosTargetFilter_(move(other.chaosTargetFilter_))
-{
-}
-
-ChaosParameters & ChaosParameters::operator =(ChaosParameters && other)
-{
-    if (this != &other)
-    {
-        maxClusterStabilizationTimeoutInSeconds_ = move(other.maxClusterStabilizationTimeoutInSeconds_);
-        maxConcurrentFaults_ = move(other.maxConcurrentFaults_);
-        waitTimeBetweenIterationsInSeconds_ = move(other.waitTimeBetweenIterationsInSeconds_);
-        waitTimeBetweenFaultsInSeconds_ = move(other.waitTimeBetweenFaultsInSeconds_);
-        timeToRunInSeconds_ = move(other.timeToRunInSeconds_);
-        enableMoveReplicaFaults_ = move(other.enableMoveReplicaFaults_);
-        healthPolicy_ = move(other.healthPolicy_);
-        eventContextMap_ = move(other.eventContextMap_);
-        chaosTargetFilter_ = move(other.chaosTargetFilter_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode ChaosParameters::FromPublicApi(
     FABRIC_CHAOS_PARAMETERS const & publicParameters)
 {
@@ -97,7 +66,7 @@ Common::ErrorCode ChaosParameters::FromPublicApi(
 
         if (parametersEx1->ClusterHealthPolicy != NULL)
         {
-            healthPolicy_ = make_unique<ClusterHealthPolicy>();
+            healthPolicy_ = make_shared<ClusterHealthPolicy>();
             healthPolicy_->FromPublicApi(*const_cast<FABRIC_CLUSTER_HEALTH_POLICY*>(parametersEx1->ClusterHealthPolicy));
         }
 
@@ -107,7 +76,7 @@ Common::ErrorCode ChaosParameters::FromPublicApi(
 
             if (parametersEx2->ChaosTargetFilter != NULL)
             {
-                chaosTargetFilter_ = make_unique<ChaosTargetFilter>();
+                chaosTargetFilter_ = make_shared<ChaosTargetFilter>();
                 chaosTargetFilter_->FromPublicApi(*const_cast<FABRIC_CHAOS_TARGET_FILTER*>(parametersEx2->ChaosTargetFilter));
             }
         }

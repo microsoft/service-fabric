@@ -58,6 +58,89 @@ namespace Client
         // The back-off interval before retrying the operation
         PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", RetryBackoffInterval, Common::TimeSpan::FromSeconds(3), Common::ConfigEntryUpgradePolicy::Dynamic);
         // The max number of files that are transferred in parallel
-        PUBLIC_CONFIG_ENTRY(uint, L"FabricClient", MaxFileSenderThreads, 10, Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(uint, L"FabricClient", MaxFileSenderThreads, 8, Common::ConfigEntryUpgradePolicy::Static);
+
+        //
+        // Chunk based FileTransfer
+        //
+
+        // The max number of file chunks that are transferred in parallel
+        INTERNAL_CONFIG_ENTRY(uint, L"FabricClient", MaxFileChunkSenderThreads, 4, Common::ConfigEntryUpgradePolicy::Static);
+
+        // The max number of file chunks that are processed in parallel by file receiver
+        INTERNAL_CONFIG_ENTRY(uint, L"FabricClient", MaxFileChunkReceiverThreads, 8, Common::ConfigEntryUpgradePolicy::Static);
+
+        // The interval to wait for create upload session message response before reporting error
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileCreateMessageResponseWaitInterval, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The interval to wait before resending unacknowledged file chunks by the file sender
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileChunkResendWaitInterval, Common::TimeSpan::FromSeconds(20), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The initial interval to wait before timing out on upload. This is set to large value since single file can be very large
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", PerFileUploadWaitTime, Common::TimeSpan::FromMinutes(100), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The initial interval to wait before resending unacknowledged file chunks by the file sender before upload protocol is selected
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileCreateMessageInitialResponseWaitInterval, Common::TimeSpan::FromSeconds(5), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The max number of attempts allowed for resending the unacknowledged file chunks by the file sender
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", FileChunkResendRetryAttempt, 5, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The interval for retrying of sending the file chunks
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileChunkRetryInterval, Common::TimeSpan::FromMilliseconds(2000), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The interval for retrying the create upload session operation
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileCreateSendRetryInterval, Common::TimeSpan::FromMilliseconds(200), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The max number of attempts made for retrying the create file upload operation to send it to the cluster
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", FileCreateSendAttempt, 225, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The  number of successful file create requests sent (after which filesender waits for response).
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", NumberOfFileCreateRequestsSent, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The max number of file chunk send attempts for retrying the operation
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", FileChunkRetryAttempt, 200, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The interval after which file upload commit message is sent again because of no response from the file store service.
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileUploadCommitRetryInterval, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The max number of file chunk send attempts for retrying the operation
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", FileUploadCommitRetryAttempt, 200, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The number of times file can be tried to resend when commit message fails with missing file chunks.
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", FileUploadResendRetryAttempt, 8, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The number of times to try to resend the file before switching to old protocol. This should be less than FileUploadResendRetryAttempt.
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", SwitchUploadProtocolResendRetryAttempt, 3, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The back-off interval before retrying the resend file operation
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileUploadResendRetryBackoffInterval, Common::TimeSpan::FromSeconds(3), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The number of times file action message is message is retried after getting retryable error when trying to send the action message.
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", SendMessageActionRetryAttempt, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The back-off interval before retrying sending the message action operation
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", SendMessageActionRetryBackoffInterval, Common::TimeSpan::FromMilliseconds(100), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The limit under which gateway not reachable error will be treated as transient error
+        INTERNAL_CONFIG_ENTRY(uint, L"FabricClient", GatewayNotReachableThresholdLimit, 25, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The time file sender waits for the job queue to finish before bringing down the process
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", MaxCloseJobQueueWaitDuration, Common::TimeSpan::FromMinutes(5), Common::ConfigEntryUpgradePolicy::Dynamic, Common::TimeSpanGreaterThan(Common::TimeSpan::FromMinutes(3)));
+
+        // The max number of consecutive failure to establish connection to cluster before switching to non-chunk version of upload protocol.
+        INTERNAL_CONFIG_ENTRY(uint, L"FabricClient", SwitchUploadProtocolThreshold, 5, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The number of chunks batched together to be sent to the fabric gateway.
+        INTERNAL_CONFIG_ENTRY(uint, L"FabricClient", FileChunkBatchCount, 50, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The maximum number of chunks send operation that hasn't completed from the earlier batch before sending next batch of file chunks.
+        INTERNAL_CONFIG_ENTRY(uint, L"FabricClient", MaxAllowedPendingFileChunkSendBeforeNextBatch, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The back-off interval before retrying the resend file operation
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileChunkBatchUploadInterval, Common::TimeSpan::FromSeconds(2), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // The config to enable tracing of file chunk job queue
+        INTERNAL_CONFIG_ENTRY(bool, L"FabricClient", IsEnableFileChunkQueueTracing, false, Common::ConfigEntryUpgradePolicy::Static);
+
     };
 }

@@ -14,7 +14,8 @@ void ReportFaultMessageBody::WriteToEtw(uint16 contextSequenceId) const
 {
     ReliabilityEventSource::Events->ReportFaultMessageBody(
         contextSequenceId,
-		fudesc_,
+        fudesc_,
         replicaDesc_,
-        faultType_);
+        faultType_,
+        activityDescription_);
 }

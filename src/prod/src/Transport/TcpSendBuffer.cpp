@@ -209,15 +209,32 @@ ErrorCode TcpSendBuffer::Frame::PrepareForSending(TcpSendBuffer & sendBuffer)
         return error;
     }
 
+    if (!shouldEncrypt_ && sendBuffer.FrameHeaderErrorCheckingEnabled())
+    {
+#if DBG
+        TcpConnection::WriteNoise(
+            TraceType,
+            "frame header CRC: 0x{0:x}",
+            header_.SetFrameHeaderCRC());
+#else
+        header_.SetFrameHeaderCRC();
+#endif
+    }
+
     // add frame header
     sendBuffer.preparedBuffers_.emplace_back(ConstBuffer(&header_, sizeof(header_)));
     sendBuffer.sendingLength_ += sizeof(header_);
 
     // add message header
+    Common::crc32 msgCRC; 
     for (BiqueChunkIterator chunk = message_->BeginHeaderChunks(); chunk != message_->EndHeaderChunks(); ++chunk)
     {
         sendBuffer.preparedBuffers_.emplace_back(ConstBuffer(chunk->cbegin(), chunk->size()));
         sendBuffer.sendingLength_ += chunk->size();
+        if (!shouldEncrypt_ && sendBuffer.MessageErrorCheckingEnabled())
+        {
+            msgCRC.AddData(chunk->cbegin(), chunk->size());
+        }
     }
 
     // add message body
@@ -227,6 +244,19 @@ ErrorCode TcpSendBuffer::Frame::PrepareForSending(TcpSendBuffer & sendBuffer)
 
         sendBuffer.preparedBuffers_.emplace_back(ConstBuffer(chunk->cbegin(), chunk->size()));
         sendBuffer.sendingLength_ += chunk->size();
+
+        if (!shouldEncrypt_ && sendBuffer.MessageErrorCheckingEnabled())
+        {
+            msgCRC.AddData(chunk->cbegin(), chunk->size());
+        }
+    }
+
+    if (!shouldEncrypt_ && sendBuffer.MessageErrorCheckingEnabled())
+    {
+        header_.SetFrameBodyCRC(msgCRC.Value());
+#if DBG
+        TcpConnection::WriteNoise(TraceType, "message CRC: 0x{0:x}", msgCRC.Value());
+#endif
     }
 
     return error;
@@ -366,6 +396,7 @@ void TcpSendBuffer::Consume(size_t length)
     messageQueue_.truncate_before(frame);
     sendingLength_ = 0;
     totalBufferedBytes_ -= (ULONG)length;
+    sentByteTotal_ += length;
     TcpConnection::WriteNoise(
         TraceType, connection_->TraceId(),
         "leaving Consume: MessageCount: {0} -> {1}, delta = {2}; totalBufferedBytes_ = {3} -> {4}, delta = {5}",
@@ -402,7 +433,7 @@ void TcpSendBuffer::Abort()
 
         if (message->HasSendStatusCallback())
         {
-            message->OnSendStatus(sendError.ReadValue(), move(message));
+            message->OnSendStatus(sendError, move(message));
         }
     }
 
@@ -423,7 +454,7 @@ void TcpSendBuffer::Abort()
             if (frame->Message()->HasSendStatusCallback())
             {
                 auto msg = frame->Dispose();
-                msg->OnSendStatus(sendError.ReadValue(), move(msg));
+                msg->OnSendStatus(sendError, move(msg));
             }
             else
             {

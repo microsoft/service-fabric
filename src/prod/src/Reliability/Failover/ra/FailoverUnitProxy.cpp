@@ -285,14 +285,21 @@ void FailoverUnitProxy::ProcessReadWriteStatusRevokedNotificationReply(Reliabili
 
 void FailoverUnitProxy::UpdateServiceDescription(Reliability::ServiceDescription const & serviceDescription)
 {    
-    AcquireExclusiveLock grab(lock_);
+    {
+        AcquireExclusiveLock grab(lock_);
 
-    if (serviceDescription.UpdateVersion <= serviceDescription_.UpdateVersion)
-    {   
-        return;
+        if (serviceDescription.UpdateVersion <= serviceDescription_.UpdateVersion)
+        {   
+            return;
+        }
+
+        serviceDescription_ = serviceDescription;
     }
 
-    serviceDescription_ = serviceDescription;
+    if (statefulService_)
+    {
+        statefulService_->UpdateInitializationData(serviceDescription.InitializationData);
+    }
 }
 
 void FailoverUnitProxy::UpdateReadWriteStatus()
@@ -1267,6 +1274,40 @@ Common::ErrorCode FailoverUnitProxy::ReplicaGetQuery(__out ServiceModel::Replica
     }
 }
 
+void FailoverUnitProxy::ProcessUpdateConfigurationMessage(
+    ProxyRequestMessageBody const & msgBody)
+{
+    // Preserve the replication endpoint and service location already on the FUP since, to handle
+    // standby to active transition
+    // TODO: This should not be needed on every single UC message
+    auto replicaDesc = msgBody.LocalReplicaDescription;
+    replicaDesc.ReplicationEndpoint = ReplicaDescription.ReplicationEndpoint;
+    replicaDesc.ServiceLocation = ReplicaDescription.ServiceLocation;
+    ReplicaDescription = replicaDesc;
+
+    /*
+        It is important to clear the catchup result here. Consider the scenario below:
+        1. Process add primary on RAP with data loss
+        2. This will leave the RAP state for catchupResult_ marked as "DataLoss" after the on data loss async op completes.
+        3. new replica gets built.RA sends UC with Catchup to promote I / S.Let this be M1.
+        4. Let RA retry UC with catchup.Let this be M2.
+        5. M1 arrives on RAP and sees that the incoming epoch is higher and updates the cc epoch and enqueues the action list.It releases the lock on the FUP
+        6. M2 arrives and acquires the lock sees the CC epoch is matching and the result is DataLoss and assumes M2 is a duplicate and sends back the reply with data loss detected.
+        7. RA drops this and test asserts
+
+        This requires a very tiny window where M1 releases the lock and M2 observes the FUP state.The first action that M1 performs after this is acquire the lock again and fix up the catchupResult_ to indicate that the reconfig is not complete.
+
+        The catchup result must only be cleared by the first uc message otherwise
+        detecting the duplicate completed message is not possible because any retry would clear this state
+    */
+    if (FailoverUnitDescription.CurrentConfigurationEpoch != msgBody.FailoverUnitDescription.CurrentConfigurationEpoch)
+    {
+        catchupResult_ = CatchupResult::NotStarted;
+        FailoverUnitDescription.PreviousConfigurationEpoch = msgBody.FailoverUnitDescription.PreviousConfigurationEpoch;
+        FailoverUnitDescription.CurrentConfigurationEpoch = msgBody.FailoverUnitDescription.CurrentConfigurationEpoch;
+    }
+}
+
 void FailoverUnitProxy::OnReconfigurationStarting()
 {
     AcquireExclusiveLock grab(lock_);
@@ -1859,14 +1900,16 @@ ErrorCode FailoverUnitProxy::ReportFault(FaultType::Enum faultType)
         replicaDescription = replicaDescription_;
     }
 
+    ActivityDescription reasonActivityDescription(ActivityId(), ActivityType::Enum::ServiceReportFaultEvent);
     RAPEventSource::Events->ApiReportFault(
         failoverUnitDescription.FailoverUnitId.Guid, 
-        replicaDescription.FederationNodeId,
+        replicaDescription.FederationNodeId.ToString(),
         replicaDescription.ReplicaId,
         replicaDescription.InstanceId,
-        faultType);
+        faultType,
+        reasonActivityDescription);
 
-    ReportFaultMessageBody msgBody(failoverUnitDescription, replicaDescription, faultType);
+    ReportFaultMessageBody msgBody(failoverUnitDescription, replicaDescription, faultType, reasonActivityDescription);
     Transport::MessageUPtr outMsg = RAMessage::GetReportFault().CreateMessage<ReportFaultMessageBody>(msgBody, msgBody.FailoverUnitDescription.FailoverUnitId.Guid);
 
     ProxyOutgoingMessageUPtr outgoingMessage = make_unique<ProxyOutgoingMessage>(std::move(outMsg), weak_ptr<FailoverUnitProxy>(shared_from_this()));
@@ -1898,7 +1941,6 @@ ApiMonitoring::ApiCallDescriptionSPtr FailoverUnitProxy::CreateApiCallDescriptio
 {
     MonitoringData data(
         FailoverUnitId.Guid,
-        replicaDescription.FederationNodeInstance,
         replicaDescription.ReplicaId,
         replicaDescription.InstanceId,
         std::move(nameDescription),
@@ -2218,5 +2260,5 @@ FailoverUnitProxy::ReportedLoadStore::Data::Data()
 
 LoadMetricReport FailoverUnitProxy::ReportedLoadStore::Data::ToLoadValue(wstring const & metricName) const
 {
-    return LoadMetricReport(metricName, value_, timeStamp_);
+    return LoadMetricReport(metricName, value_, value_, timeStamp_);
 }

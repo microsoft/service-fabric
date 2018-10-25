@@ -63,6 +63,12 @@ bool DeactivateNodesContext::IsReplicaMoveNeeded(Replica const& replica) const
     return false;
 }
 
+bool DeactivateNodesContext::IsRemoveNodeOrDataReplicaWaitNeeded(NodeInfoSPtr const & nodeInfo) const
+{
+    return FailoverConfig::GetConfig().RemoveNodeOrDataUpReplicaTimeout == Common::TimeSpan::MaxValue || 
+        DateTime::Now() - nodeInfo->DeactivationInfo.StartTime < FailoverConfig::GetConfig().RemoveNodeOrDataUpReplicaTimeout;
+}
+
 void DeactivateNodesContext::Process(FailoverManager const& fm, FailoverUnit const& failoverUnit)
 {
     for (auto replica = failoverUnit.BeginIterator; replica != failoverUnit.EndIterator; ++replica)
@@ -80,17 +86,31 @@ void DeactivateNodesContext::Process(FailoverManager const& fm, FailoverUnit con
                 nodesWithUpReplicas_.insert(replica->NodeInfoObj->NodeInstance.Id);
             }
 
-            if (nodesToDeactivate_[replica->FederationNodeId] == NodeDeactivationIntent::RemoveData ||
-                nodesToDeactivate_[replica->FederationNodeId] == NodeDeactivationIntent::RemoveNode)
+            bool isRemoveNodeOrData = nodesToDeactivate_[replica->FederationNodeId] == NodeDeactivationIntent::RemoveData ||
+                nodesToDeactivate_[replica->FederationNodeId] == NodeDeactivationIntent::RemoveNode;
+
+            bool shouldAddToPendingDueToRemove = false;
+
+            if (isRemoveNodeOrData)
             {
-                if (replica->IsUp ||
-                    (replica->IsOffline && !failoverUnit.IsSafeToRemove(batchId_)))
+                //we should not proceed further in case it is not safe to remove this replica
+                //this is data loss check we we always need to do
+                shouldAddToPendingDueToRemove = (replica->IsUp || replica->IsOffline) && !failoverUnit.IsSafeToRemove(batchId_);
+                if (!shouldAddToPendingDueToRemove)
                 {
-                    auto upgradeProgress = NodeUpgradeProgress(replica->FederationNodeId, replica->NodeInfoObj->NodeName, NodeUpgradePhase::PreUpgradeSafetyCheck, UpgradeSafetyCheckKind::EnsurePartitionQuorum, failoverUnit.Id.Guid);
-                    if (AddPendingNode(replica->FederationNodeId, upgradeProgress))
-                    {
-                        failoverUnit.TraceState();
-                    }
+                    //in case it is safe to remove it we will wait for RemoveNodeOrDataUpReplicaTimeout for an up replica to move out to a different node
+                    //once that time is up we are ok with killing the replica
+                    //but we first need to ensure that other safety checks are respected
+                    shouldAddToPendingDueToRemove = replica->IsUp && IsRemoveNodeOrDataReplicaWaitNeeded(replica->NodeInfoObj);
+                }
+            }
+
+            if (isRemoveNodeOrData && shouldAddToPendingDueToRemove)
+            {
+                auto upgradeProgress = NodeUpgradeProgress(replica->FederationNodeId, replica->NodeInfoObj->NodeName, NodeUpgradePhase::PreUpgradeSafetyCheck, UpgradeSafetyCheckKind::EnsurePartitionQuorum, failoverUnit.Id.Guid);
+                if (AddPendingNode(replica->FederationNodeId, upgradeProgress))
+                {
+                    failoverUnit.TraceState();
                 }
             }
             else if (replica->NodeInfoObj->IsPendingDeactivateNode)
@@ -135,6 +155,26 @@ bool DeactivateNodesContext::ReadyToComplete()
     {
         return (pendingNodes_.empty() && !nonPauseNodeWithUpReplicasExists);
     }
+}
+
+void DeactivateNodesContext::Initialize(FailoverManager & fm)
+{
+    for (auto const& nodeToDeactivate : nodesToDeactivate_)
+    {
+        if (nodeToDeactivate.second != NodeDeactivationIntent::Pause)
+        {
+            NodeInfoSPtr const& nodeInfo = fm.NodeCacheObj.GetNode(nodeToDeactivate.first);
+
+            if (nodeInfo->IsUp &&
+                nodeInfo->DeactivationInfo.IsSafetyCheckComplete)
+            {
+                auto upgradeProgress = NodeUpgradeProgress(nodeInfo->Id, nodeInfo->NodeName, NodeUpgradePhase::Upgrading);
+                AddReadyNode(nodeInfo->Id, upgradeProgress, nodeInfo);
+            }
+        }
+    }
+
+    CheckSeedNodes(fm);
 }
 
 // TODO, MMohsin: Consider refactoring with FabricUpgradeContext
@@ -206,12 +246,7 @@ void DeactivateNodesContext::CheckSeedNodes(FailoverManager & fm)
 
         for (size_t i = 0; i < candidates.size(); i++)
         {
-            if (static_cast<int>(i) < readyCount)
-            {
-                auto upgradeProgress = NodeUpgradeProgress(candidates[i]->Id, candidates[i]->NodeName, NodeUpgradePhase::Upgrading);
-                AddReadyNode(candidates[i]->Id, upgradeProgress, candidates[i]);
-            }
-            else
+            if (static_cast<int>(i) >= readyCount)
             {
                 auto upgradeProgress = NodeUpgradeProgress(candidates[i]->Id, candidates[i]->NodeName, NodeUpgradePhase::PreUpgradeSafetyCheck, UpgradeSafetyCheckKind::EnsureSeedNodeQuorum);
                 AddPendingNode(candidates[i]->Id, upgradeProgress);
@@ -250,9 +285,9 @@ void DeactivateNodesContext::Complete(FailoverManager & fm, bool isContextComple
             switch (nodeToDeactivate.second)
             {
             case NodeDeactivationIntent::Pause:
-            case NodeDeactivationIntent::Restart:
                 deactivationStatus = NodeDeactivationStatus::DeactivationComplete;
                 break;
+            case NodeDeactivationIntent::Restart:
             case NodeDeactivationIntent::RemoveData:
             case NodeDeactivationIntent::RemoveNode:
                 deactivationStatus = NodeDeactivationStatus::DeactivationSafetyCheckComplete;
@@ -267,29 +302,22 @@ void DeactivateNodesContext::Complete(FailoverManager & fm, bool isContextComple
             {
             case NodeDeactivationIntent::Pause:
                 TESTASSERT_IF(pendingNodes_.empty(), "Pending node list is empty for node deactivation batch {0}", batchId_);
-                if (pendingNodes_.find(nodeToDeactivate.first) == pendingNodes_.end())
-                {
-                    deactivationStatus = NodeDeactivationStatus::DeactivationSafetyCheckComplete;
-                }
+                deactivationStatus = NodeDeactivationStatus::DeactivationSafetyCheckComplete;
                 break;
             case NodeDeactivationIntent::Restart:
-                if (nodesWithUpReplicas_.find(nodeToDeactivate.first) == nodesWithUpReplicas_.end())
-                {
-                    deactivationStatus = NodeDeactivationStatus::DeactivationComplete;
-                }
-                else if (pendingNodes_.find(nodeToDeactivate.first) == pendingNodes_.end())
-                {
-                    deactivationStatus = NodeDeactivationStatus::DeactivationSafetyCheckComplete;
-                }
+                deactivationStatus = NodeDeactivationStatus::DeactivationSafetyCheckComplete;
                 break;
             case NodeDeactivationIntent::RemoveData:
             case NodeDeactivationIntent::RemoveNode:
-                if (nodesWithUpReplicas_.find(nodeToDeactivate.first) == nodesWithUpReplicas_.end() &&
-                    pendingNodes_.find(nodeToDeactivate.first) == pendingNodes_.end())
+            {
+                NodeInfoSPtr const& nodeInfo = fm.NodeCacheObj.GetNode(nodeToDeactivate.first);
+                bool removeNodeReplicaWaitExpired = !IsRemoveNodeOrDataReplicaWaitNeeded(nodeInfo);
+                if (nodesWithUpReplicas_.find(nodeToDeactivate.first) == nodesWithUpReplicas_.end() || removeNodeReplicaWaitExpired)
                 {
                     deactivationStatus = NodeDeactivationStatus::DeactivationSafetyCheckComplete;
                 }
                 break;
+            }
             default:
                 break;
             }
@@ -315,25 +343,10 @@ void DeactivateNodesContext::Complete(FailoverManager & fm, bool isContextComple
         {
             NodeInfoSPtr const& nodeInfo = fm.NodeCacheObj.GetNode(node.first);
 
-            if (nodeInfo->DeactivationInfo.IsRestart &&
+            if ((nodeInfo->DeactivationInfo.IsRestart || nodeInfo->DeactivationInfo.IsRemove) &&
                 nodeInfo->DeactivationInfo.IsSafetyCheckComplete)
             {
                 SendNodeDeactivateMessage(fm, *nodeInfo);
-            }
-        }
-
-        for (auto const& nodeToDeactivate : nodesToDeactivate_)
-        {
-            if (nodeToDeactivate.second == NodeDeactivationIntent::RemoveData ||
-                (nodeToDeactivate.second == NodeDeactivationIntent::RemoveNode))
-            {
-                NodeInfoSPtr const& nodeInfo = fm.NodeCacheObj.GetNode(nodeToDeactivate.first);
-
-                if (nodeInfo->IsUp &&
-                    nodeInfo->DeactivationInfo.IsSafetyCheckComplete)
-                {
-                    SendNodeDeactivateMessage(fm, *nodeInfo);
-                }
             }
         }
     }
@@ -341,19 +354,15 @@ void DeactivateNodesContext::Complete(FailoverManager & fm, bool isContextComple
 
 void DeactivateNodesContext::SendNodeDeactivateMessage(FailoverManager & fm, NodeInfo const& nodeInfo) const
 {
-    ErrorCode error = fm.NodeCacheObj.SetPendingDeactivateNode(nodeInfo.NodeInstance, true);
-    if (error.IsSuccess())
-    {
-        fm.WriteInfo(
-            fm.TraceDeactivateNode, batchId_,
-            "Sending NodeDeactivateRequest message to node {0}", nodeInfo.Id);
+    fm.WriteInfo(
+        fm.TraceDeactivateNode, batchId_,
+        "Sending NodeDeactivateRequest message to node {0}", nodeInfo.Id);
 
-        // Send NodeDeactivateRequest message to RA
-        NodeDeactivateRequestMessageBody body(nodeInfo.DeactivationInfo.SequenceNumber, fm.IsMaster);
-        Transport::MessageUPtr request = RSMessage::GetNodeDeactivateRequest().CreateMessage(move(body));
-        GenerationHeader header(fm.Generation, fm.IsMaster);
-        request->Headers.Add(header);
+    // Send NodeDeactivateRequest message to RA
+    NodeDeactivateRequestMessageBody body(nodeInfo.DeactivationInfo.SequenceNumber, fm.IsMaster);
+    Transport::MessageUPtr request = RSMessage::GetNodeDeactivateRequest().CreateMessage(move(body));
+    GenerationHeader header(fm.Generation, fm.IsMaster);
+    request->Headers.Add(header);
 
-        fm.SendToNodeAsync(move(request), nodeInfo.NodeInstance);
-    }
+    fm.SendToNodeAsync(move(request), nodeInfo.NodeInstance);
 }

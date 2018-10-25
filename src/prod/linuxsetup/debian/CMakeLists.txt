@@ -14,11 +14,13 @@ add_custom_target(runtimedeb
     COMMAND strip ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/Fabric/Fabric.Code/FabricGateway.exe
     COMMAND strip ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/FileStoreService.Code.Current/FileStoreService.exe
     COMMAND strip ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe
+    COMMAND strip ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/CSS.Code.Current/FabricCSS.exe
     COMMAND strip ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/Fabric/Fabric.Code/*.so
+    COMMAND strip ${Runtime_Deb_Folder}/${Runtime_Deb_Install_Path}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/RMS.Code.Current/ResourceMonitor.exe
     COMMAND mkdir ${Runtime_Deb_Folder}/DEBIAN
 
     COMMAND mkdir -p ${Runtime_Deb_Folder}/usr/share/doc/servicefabric
-    COMMAND cp ${Linux_Setup_Dir}/crossplatsetup/runtime/copyright_runtime ${Runtime_Deb_Folder}/usr/share/doc/servicefabric/
+    COMMAND cp ${Linux_Setup_Dir}/crossplatsetup/runtime/copyright_runtime_deb ${Runtime_Deb_Folder}/usr/share/doc/servicefabric/copyright_runtime
 
     COMMAND cp -r ${Linux_Setup_Dir}/debian/runtime/control/. ${Runtime_Deb_Folder}/DEBIAN
     COMMAND cp ${Linux_Setup_Dir}/crossplatsetup/runtime/preinst ${Runtime_Deb_Folder}/DEBIAN/
@@ -28,7 +30,7 @@ add_custom_target(runtimedeb
     COMMAND mv -f ${Runtime_Deb_Folder}/DEBIAN/control.template ${Runtime_Deb_Folder}/DEBIAN/control
     COMMAND sed -i "s%REPLACE_VERSION%${Cluster_Version}%g" ${Runtime_Deb_Folder}/DEBIAN/control
 
-    COMMAND ${Linux_Setup_Dir}/debian/helpers/writeeula_to_templates.pl ${Runtime_Deb_Folder}/DEBIAN/templates.template ${Linux_Setup_Dir}/crossplatsetup/runtime/copyright_runtime REPLACE_COPYRIGHT_BUILDTIME > ${Runtime_Deb_Folder}/DEBIAN/templates
+    COMMAND ${Linux_Setup_Dir}/debian/helpers/writeeula_to_templates.pl ${Runtime_Deb_Folder}/DEBIAN/templates.template ${Linux_Setup_Dir}/crossplatsetup/runtime/copyright_runtime_deb REPLACE_COPYRIGHT_BUILDTIME > ${Runtime_Deb_Folder}/DEBIAN/templates
     COMMAND rm -f ${Runtime_Deb_Folder}/DEBIAN/templates.template
 
     COMMAND chmod 0755 ${Runtime_Deb_Folder}/DEBIAN/postinst
@@ -57,7 +59,7 @@ add_custom_target(sdkdebcommon
     COMMAND cp -R -p ${Linux_Setup_Dir}/sdkcommon/clustersetup/. ${Sdk_Common_Deb_Folder}/${Sdk_Common_Deb_Install_Path}/clustersetup/.
 
     COMMAND mkdir -p ${Sdk_Common_Deb_Folder}/usr/share/doc/servicefabric
-    COMMAND cp ${Linux_Setup_Dir}/crossplatsetup/common/copyright_common ${Sdk_Common_Deb_Folder}/usr/share/doc/servicefabric/
+    COMMAND cp ${Linux_Setup_Dir}/crossplatsetup/common/copyright_common_deb ${Sdk_Common_Deb_Folder}/usr/share/doc/servicefabric/copyright_common
 
     COMMAND cp -r ${Linux_Setup_Dir}/debian/common/control/. ${Sdk_Common_Deb_Folder}/DEBIAN
     COMMAND cp ${Linux_Setup_Dir}/crossplatsetup/common/preinst ${Sdk_Common_Deb_Folder}/DEBIAN/
@@ -71,7 +73,7 @@ add_custom_target(sdkdebcommon
     COMMAND sed -i "s%GEN_CONTAINER_SF%${Container_Gen_Name}%g" ${Sdk_Common_Deb_Folder}/DEBIAN/postrm
     COMMAND sed -i "s%SFSDK_PATH%/${SFSdk_Path}%g" ${Sdk_Common_Deb_Folder}/DEBIAN/postrm
     
-    COMMAND ${Linux_Setup_Dir}/debian/helpers/writeeula_to_templates.pl ${Sdk_Common_Deb_Folder}/DEBIAN/templates.template ${Linux_Setup_Dir}/crossplatsetup/common/copyright_common REPLACE_COPYRIGHT_BUILDTIME > ${Sdk_Common_Deb_Folder}/DEBIAN/templates
+    COMMAND ${Linux_Setup_Dir}/debian/helpers/writeeula_to_templates.pl ${Sdk_Common_Deb_Folder}/DEBIAN/templates.template ${Linux_Setup_Dir}/crossplatsetup/common/copyright_common_deb REPLACE_COPYRIGHT_BUILDTIME > ${Sdk_Common_Deb_Folder}/DEBIAN/templates
     COMMAND rm -f ${Sdk_Common_Deb_Folder}/DEBIAN/templates.template
 
     COMMAND chmod 0755 ${Sdk_Common_Deb_Folder}/DEBIAN/postinst

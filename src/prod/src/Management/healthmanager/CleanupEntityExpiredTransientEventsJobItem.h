@@ -23,10 +23,6 @@ namespace Management
             virtual HealthJobItemKind::Enum get_Type() const override { return HealthJobItemKind::UpdateEntityEvents; }
 
             virtual ~CleanupEntityExpiredTransientEventsJobItem();
-            
-            virtual bool CanCombine(IHealthJobItemSPtr const & other) const override;
-
-            virtual void Append(IHealthJobItemSPtr && other) override;
 
         protected:
 

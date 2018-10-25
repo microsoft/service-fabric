@@ -11,3 +11,7 @@ add_library(${lib_ManagementSubsystem} STATIC $<TARGET_OBJECTS:objects_Managemen
 set_target_properties(${lib_ManagementSubsystem} PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR}) 
 
+target_link_libraries(${lib_ManagementSubsystem}
+  ${lib_CentralSecretService}
+  ${lib_LocalSecretService}
+)

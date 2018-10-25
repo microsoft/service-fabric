@@ -23,7 +23,9 @@ namespace Management
                 InfrastructureTask = 7,
                 ApplicationUpdate = 8,
                 ComposeDeployment = 9,
-                ComposeDeploymentUpgrade = 10 // TODO rename these to instance based deployment
+                ComposeDeploymentUpgrade = 10,
+                SingleInstanceDeployment = 11,
+                SingleInstanceDeploymentUpgrade = 12
             };
 
             void WriteToTextWriter(Common::TextWriter & w, Enum const & e);

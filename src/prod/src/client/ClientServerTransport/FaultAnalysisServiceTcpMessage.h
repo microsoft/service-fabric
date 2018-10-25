@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 namespace ClientServerTransport
 {
@@ -21,7 +21,11 @@ namespace ClientServerTransport
         static Common::GlobalWString CancelTestCommandAction;
         static Common::GlobalWString StartChaosAction;
         static Common::GlobalWString StopChaosAction;
+        static Common::GlobalWString GetChaosAction;
         static Common::GlobalWString GetChaosReportAction;
+        static Common::GlobalWString GetChaosEventsAction;
+        static Common::GlobalWString GetChaosScheduleAction;
+        static Common::GlobalWString PostChaosScheduleAction;
         static Common::GlobalWString StartNodeTransitionAction;
         static Common::GlobalWString GetNodeTransitionProgressAction;
 
@@ -33,31 +37,31 @@ namespace ClientServerTransport
             WrapForFaultAnalysisService();
         }
 
-		FaultAnalysisServiceTcpMessage(
-			std::wstring const & action)
-			: SystemServiceTcpMessageBase(action, actor_)
-		{
-			WrapForFaultAnalysisService();
-		}
+        FaultAnalysisServiceTcpMessage(
+            std::wstring const & action)
+            : SystemServiceTcpMessageBase(action, actor_)
+        {
+            WrapForFaultAnalysisService();
+        }
 
         // Requests
         static Client::ClientServerRequestMessageUPtr GetStartPartitionDataLoss(std::unique_ptr<Management::FaultAnalysisService::InvokeDataLossMessageBody> && body)
         {
             return Common::make_unique<FaultAnalysisServiceTcpMessage>(StartPartitionDataLossAction, std::move(body));
         }
-        
+
         static Client::ClientServerRequestMessageUPtr GetGetPartitionDataLossProgress(std::unique_ptr<Management::FaultAnalysisService::GetInvokeDataLossProgressMessageBody> && body)
-        {  
+        {
             return Common::make_unique<FaultAnalysisServiceTcpMessage>(GetPartitionDataLossProgressAction, std::move(body));
         }
-        
+
         static Client::ClientServerRequestMessageUPtr GetStartPartitionQuorumLoss(std::unique_ptr<Management::FaultAnalysisService::InvokeQuorumLossMessageBody> && body)
         {
             return Common::make_unique<FaultAnalysisServiceTcpMessage>(StartPartitionQuorumLossAction, std::move(body));
         }
-        
+
         static Client::ClientServerRequestMessageUPtr GetGetPartitionQuorumLossProgress(std::unique_ptr<Management::FaultAnalysisService::GetInvokeQuorumLossProgressMessageBody> && body)
-        {  
+        {
             return Common::make_unique<FaultAnalysisServiceTcpMessage>(GetPartitionQuorumLossProgressAction, std::move(body));
         }
 
@@ -75,7 +79,7 @@ namespace ClientServerTransport
         {
             return Common::make_unique<FaultAnalysisServiceTcpMessage>(CancelTestCommandAction, std::move(body));
         }
-        
+
         static Client::ClientServerRequestMessageUPtr GetStartChaos(std::unique_ptr<Management::FaultAnalysisService::StartChaosMessageBody> && body)
         {
             return Common::make_unique<FaultAnalysisServiceTcpMessage>(StartChaosAction, std::move(body));
@@ -89,6 +93,11 @@ namespace ClientServerTransport
         static Client::ClientServerRequestMessageUPtr GetChaosReport(std::unique_ptr<Management::FaultAnalysisService::GetChaosReportMessageBody> && body)
         {
             return Common::make_unique<FaultAnalysisServiceTcpMessage>(GetChaosReportAction, std::move(body));
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetChaosEvents(std::unique_ptr<Management::FaultAnalysisService::GetChaosEventsMessageBody> && body)
+        {
+            return Common::make_unique<FaultAnalysisServiceTcpMessage>(GetChaosEventsAction, std::move(body));
         }
 
         static Client::ClientServerRequestMessageUPtr GetStartNodeTransition(std::unique_ptr<Management::FaultAnalysisService::StartNodeTransitionMessageBody> && body)

@@ -18,7 +18,7 @@ void RequestHandlerBase::HandlerAsyncOperation::OnStart(AsyncOperationSPtr const
     wstring rawUrl = MessageContext.GetUrl();
     wstring const& verb = MessageContext.GetVerb();
 
-    if (!GatewayUri::TryParse(owner_.validHandlerUris, verb, rawUrl, urlSuffix, uri_))
+    if (!GatewayUri::TryParse(owner_.validHandlerUris, verb, rawUrl, urlSuffix, uri_, owner_.allowHierarchicalEntityKeys))
     {
         WriteInfo(TraceType, "Invalid URL - {0}", rawUrl);
 
@@ -75,9 +75,22 @@ void RequestHandlerBase::HandlerAsyncOperation::OnAccessCheckComplete(__in Async
     auto error = owner_.server_.EndCheckAccess(operation, statusCode, authHeaderName, authHeaderValue, role);
     if (!error.IsSuccess())
     {
+        wstring remoteAddress;
+        MessageContext.GetRemoteAddress(remoteAddress);
+
+        WriteInfo(
+            TraceType,
+            "CheckAccess failed for URL: {0}, from {1}, operation: {2}, responding with ErrorCode: {3} authheader: {4}:{5}, ClientRequestId: {6}",
+            MessageContext.GetUrl(),
+            remoteAddress,
+            Uri.Verb,
+            statusCode,
+            authHeaderName,
+            authHeaderValue,
+            MessageContext.GetClientRequestId());
+
         if (error.IsError(ErrorCodeValue::InvalidCredentials))
         {
-            WriteInfo(TraceType, "CheckAccess failed, responding with ErrorCode - {0} authheader -{1}:{2}", statusCode, authHeaderName, authHeaderValue);
             if (!authHeaderName.empty())
             {
                 MessageContext.SetResponseHeader(authHeaderName, authHeaderValue);

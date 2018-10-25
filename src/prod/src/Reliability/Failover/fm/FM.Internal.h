@@ -110,6 +110,7 @@
 #include "Reliability/Failover/fm/SaveLookupVersionAction.h"
 #include "Reliability/Failover/fm/SendMessageAction.h"
 #include "Reliability/Failover/fm/StateMachineTask.h"
+#include "Reliability/Failover/fm/AutoScalingTask.h"
 #include "Reliability/Failover/fm/StateUpdateTask.h"
 #include "Reliability/Failover/fm/MovementTask.h"
 #include "Reliability/Failover/fm/ReconfigurationTask.h"

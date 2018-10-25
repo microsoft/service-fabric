@@ -68,7 +68,7 @@ namespace Common
         typedef AcquireExclusiveTraits<RWLockBase>     AcquireExclusiveTraitsT;
 
 #ifdef DBG
-        RWLockBase() : owners_()
+        RWLockBase() : owners_(), dtor_(false)
 #else
         RWLockBase()
 #endif
@@ -79,6 +79,22 @@ namespace Common
 #endif
         }
 
+        //
+        // SRW locks cannot be moved or copied. This move constructor is a no-op
+        // and is created so we can allow 'default' move constructor for objects using
+        // the lock.
+        //
+        RWLockBase(RWLockBase &&)
+        {
+        }
+
+#ifdef DBG
+        virtual ~RWLockBase()
+        {
+            dtor_ = true;
+        }
+
+#endif
         _Acquires_exclusive_lock_(lock_)
         LOCKAPI AcquireExclusive(); 
 
@@ -100,20 +116,17 @@ namespace Common
     private:
 
 #ifdef DBG
-
         void CheckOwners();
         void AddOwner();
         void RemoveOwner();
 
         std::set<int> owners_;
         SRWLOCK ownerSetLock_;
-
+        bool dtor_;
 #else
-
     #define CheckOwners()
     #define AddOwner()
     #define RemoveOwner()
-
 #endif
     };
 

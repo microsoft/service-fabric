@@ -79,13 +79,17 @@ void FabricResolve::CloseAsync()
 }
 
 IFabricResolveOp::SPtr FabricResolve::CreateResolveOp(
-    __in ULONG fabricQueryTimeoutInSeconds
+    __in ULONG fabricQueryTimeoutInSeconds,
+    __in const KString::SPtr& spStrPartitionPrefix,
+    __in const KString::SPtr& spStrPartitionSuffix,
+    __in bool fIsPartitionedQueryEnabled
 ) const
 {
     FabricResolveOp::SPtr spOp;
     FabricResolveOp::Create(/*out*/spOp, GetThisAllocator(),
         *_spServiceName, *_spTracer.RawPtr(), *_spData.RawPtr(), *_spCache.RawPtr(),
-        *_spFabricServiceClient.RawPtr(), *_spFabricPropertyClient.RawPtr(), fabricQueryTimeoutInSeconds);
+        *_spFabricServiceClient.RawPtr(), *_spFabricPropertyClient.RawPtr(), fabricQueryTimeoutInSeconds,
+        spStrPartitionPrefix, spStrPartitionSuffix, fIsPartitionedQueryEnabled);
 
     IFabricResolveOp::SPtr spOut = spOp.RawPtr();
     return spOut;

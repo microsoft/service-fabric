@@ -1,0 +1,6 @@
+{
+  "projects": [ "../../plugins/telemetry/telemetrywriters/CoreCLRDll", "../../../../TelemetryAggregation/CoreCLRDll", "../../../../Api/CoreCLRDlls", "../../plugins/azure/table/CoreCLRDll", "../../plugins/azure/common/CoreCLRDll", "../../system.fabric.dca.validator/CoreCLRDll", "../../system.fabric.dca/CoreCLRDll", "../../plugins/azure/blob/CoreCLRDll", "../../plugins/mds/CoreCLRDll", "../../plugins/lttproducer/CoreCLRDll", "../../plugins/lttngproducer/CoreCLRDll", "../../pluginvalidators/CoreCLRDll", "../../plugins/folderproducer/CoreCLRDll", "../../../../LttngReader/CoreCLR"],
+  "sdk": {
+    "version": "2.0.0-preview2-006497"
+  }
+}

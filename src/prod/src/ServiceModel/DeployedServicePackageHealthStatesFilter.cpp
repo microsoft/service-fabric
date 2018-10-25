@@ -21,21 +21,6 @@ DeployedServicePackageHealthStatesFilter::DeployedServicePackageHealthStatesFilt
 {
 }
 
-DeployedServicePackageHealthStatesFilter::DeployedServicePackageHealthStatesFilter(DeployedServicePackageHealthStatesFilter && other)
-    : healthStateFilter_(move(other.healthStateFilter_))
-{
-}
-
-DeployedServicePackageHealthStatesFilter & DeployedServicePackageHealthStatesFilter::operator =(DeployedServicePackageHealthStatesFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-    }
-
-    return *this;
-}
-
 DeployedServicePackageHealthStatesFilter::~DeployedServicePackageHealthStatesFilter()
 {
 }

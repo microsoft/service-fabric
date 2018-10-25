@@ -40,6 +40,9 @@ namespace HttpGateway
         //
         PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"HttpGateway", HttpGatewayHealthReportSendInterval, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Static);
 
+        // Whether or not the volume GET query results are returned in preview format
+        TEST_CONFIG_ENTRY(bool, L"HttpGateway", UsePreviewFormatForVolumeQueryResults, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+
 #if !defined (PLATFORM_UNIX)
         // HttpApplicationGateway settings
         //

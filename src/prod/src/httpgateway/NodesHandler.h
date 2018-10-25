@@ -32,32 +32,32 @@ namespace HttpGateway
         // policy will be used.
         //
 
-        void GetAllNodes(__in Common::AsyncOperationSPtr const& operation);
-        void OnGetAllNodesComplete(__in Common::AsyncOperationSPtr const &operation, __in bool expectedCompletedSynchronously);
+        void GetAllNodes(Common::AsyncOperationSPtr const& operation);
+        void OnGetAllNodesComplete(Common::AsyncOperationSPtr const &operation, bool expectedCompletedSynchronously);
 
-        void GetNodeByName(__in Common::AsyncOperationSPtr const& operation);
-        void OnGetNodeByNameComplete(__in Common::AsyncOperationSPtr const &operation, __in bool expectedCompletedSynchronously);
+        void GetNodeByName(Common::AsyncOperationSPtr const& operation);
+        void OnGetNodeByNameComplete(Common::AsyncOperationSPtr const &operation, bool expectedCompletedSynchronously);
 
-        void ActivateNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnActivateNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void ActivateNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnActivateNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void DeactivateNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnDeactivateNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void DeactivateNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnDeactivateNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void NodeStateRemoved(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnNodeStateRemovedComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void NodeStateRemoved(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnNodeStateRemovedComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void RestartNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnRestartNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void RestartNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnRestartNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void StopNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnStopNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void StopNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnStopNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void StartNode(__in Common::AsyncOperationSPtr const & thisSPtr);
-        void OnStartNodeComplete(__in Common::AsyncOperationSPtr const & operation, __in bool expectedCompletedSynchronously);
+        void StartNode(Common::AsyncOperationSPtr const & thisSPtr);
+        void OnStartNodeComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
 
-        void ApplicationsOnNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnApplicationsOnNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void ApplicationsOnNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnApplicationsOnNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
         void GetDeployedApplicationPagedList(
             Common::AsyncOperationSPtr const& thisSPtr,
             HandlerAsyncOperation * const handlerOperation,
@@ -68,42 +68,49 @@ namespace HttpGateway
             bool expectedCompletedSynchronously,
             bool expectApplicationName);
 
-        void ApplicationsOnNodeByName(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnApplicationsOnNodeByNameComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void ApplicationsOnNodeByName(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnApplicationsOnNodeByNameComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void ServicePackagesOnNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnServicePackagesOnNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void ServicePackagesOnNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnServicePackagesOnNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void ServicePackagesOnNodeByName(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnServicePackagesOnNodeByNameComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void ServicePackagesOnNodeByName(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnServicePackagesOnNodeByNameComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void ServiceTypesOnNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnServiceTypesOnNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void ServiceTypesOnNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnServiceTypesOnNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void ServiceTypesOnNodeByType(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnServiceTypesOnNodeByTypeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void ServiceTypesOnNodeByType(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnServiceTypesOnNodeByTypeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void CodePackagesOnNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnCodePackagesOnNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void CodePackagesOnNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnCodePackagesOnNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void RestartDeployedCodePackage(__in Common::AsyncOperationSPtr const& thisSPtr);
+        void RestartDeployedCodePackage(Common::AsyncOperationSPtr const& thisSPtr);
         void OnRestartDeployedCodePackageComplete(
-            __in Common::AsyncOperationSPtr const& operation,
-            __in bool expectedCompletedSynchronously,
-            __in Management::FaultAnalysisService::RestartDeployedCodePackageDescriptionUsingNodeName const & description);
+            Common::AsyncOperationSPtr const& operation,
+            bool expectedCompletedSynchronously,
+            Management::FaultAnalysisService::RestartDeployedCodePackageDescriptionUsingNodeName const & description);
 
-        void GetContainerLogs(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnGetContainerLogsComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void GetContainerLogs(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnGetContainerLogsComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void CallContainerApi(__in Common::AsyncOperationSPtr const& thisSPtr);
+        void ContainerApiWrapper(__in Common::AsyncOperationSPtr const& thisSPtr);
         void OnContainerApiComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+
+        void ForwardContainerApi(Common::AsyncOperationSPtr const& thisSPtr);
+        void ForwardContainerApi_OnContainerApiComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
+        void ForwardContainerApi_OnGetNodeComplete(
+            Common::AsyncOperationSPtr const& operation,
+            bool expectedCompletedSynchronously,
+            std::wstring const & nodeName);
 
         void ServiceReplicasOnNode(__in Common::AsyncOperationSPtr const& thisSPtr);
         void OnServiceReplicasOnNodeComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
 
         // GetDeployedReplicaDetail
-        void ServiceReplicasOnHost(__in Common::AsyncOperationSPtr const & thisSPtr);
-        void OnServiceReplicasOnHostComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectCompletedSynchronously);
+        void ServiceReplicasOnHost(Common::AsyncOperationSPtr const & thisSPtr);
+        void OnServiceReplicasOnHostComplete(Common::AsyncOperationSPtr const& operation, bool expectCompletedSynchronously);
 
         void EvaluateNodeHealth(Common::AsyncOperationSPtr const& thisSPtr);
         void EvaluateNodeHealthComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
@@ -118,17 +125,17 @@ namespace HttpGateway
         void ReportApplicationOnNodeHealth(Common::AsyncOperationSPtr const& thisSPtr);
         void ReportServicePackagesOnNodeHealth(Common::AsyncOperationSPtr const& thisSPtr);
 
-        void RemoveReplica(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void RestartReplica(__in Common::AsyncOperationSPtr const& thisSPtr);
+        void RemoveReplica(Common::AsyncOperationSPtr const& thisSPtr);
+        void RestartReplica(Common::AsyncOperationSPtr const& thisSPtr);
 
-        void ReportFault(__in Common::AsyncOperationSPtr const &thisSPtr, Reliability::FaultType::Enum faultType);
-        void ReportFaultComplete(__in Common::AsyncOperationSPtr const & thisSPtr, __in bool expectedCompletedSynchronously);
+        void ReportFault(Common::AsyncOperationSPtr const &thisSPtr, Reliability::FaultType::Enum faultType);
+        void ReportFaultComplete(Common::AsyncOperationSPtr const & thisSPtr, bool expectedCompletedSynchronously);
 
-        void GetNodeLoadInformation(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnGetNodeLoadInformationComplete(__in Common::AsyncOperationSPtr const& operation, __in bool expectedCompletedSynchronously);
+        void GetNodeLoadInformation(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnGetNodeLoadInformationComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
-        void DeployServicePackageToNode(__in Common::AsyncOperationSPtr const& thisSPtr);
-        void OnDeployServicePackageToNodeComplete(__in Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
+        void DeployServicePackageToNode(Common::AsyncOperationSPtr const& thisSPtr);
+        void OnDeployServicePackageToNodeComplete(Common::AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously);
 
         class DeactivateNodeData : public Common::IFabricJsonSerializable
         {
@@ -258,5 +265,8 @@ namespace HttpGateway
                 ULONG clusterConnectionPort_;
                 uint64 nodeInstanceId_;
         };
+
+        private:
+            const std::wstring localNodeName_;
     };
 }

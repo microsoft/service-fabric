@@ -217,6 +217,72 @@
         "ExecutionTimeout": "4500",
         "CleanupTimeout": "2100"
       }
+    },
+    {
+      "Name": "ChaosSchedulerApiTest.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "likevi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosSchedulerApiTest.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosSchedulerApiTest_BadScheduleRejection.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "likevi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosSchedulerApiTest_BadScheduleRejection.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosSchedulerApiTest_ResumeFailover.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "likevi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosSchedulerApiTest_ResumeFailover.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosSchedulerApiTest_StopChaosWorks.test",
+      "Type": "V2_ScriptTest",
+      "Owners": "likevi",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosSchedulerApiTest_StopChaosWorks.test",
+        "ExecutionTimeout": "4500",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "ChaosApiTest_GuestExe_TargetFilter",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "motanv,lemai,likevi",
+      "ResourcesRequired": "Server:1;Group=WS2016CT1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\Suite_433_V2_ScriptTests.txt",
+        "TaskName": "ChaosApiTest_GuestExe_TargetFilter.test",
+        "ExecutionTimeout": "10800",
+        "CleanupTimeout": "5400"
+      }
     }
   ]
 }

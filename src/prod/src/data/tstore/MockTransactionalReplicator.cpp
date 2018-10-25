@@ -185,9 +185,9 @@ void MockTransactionalReplicator::SetReadable(bool value)
     isReadable_ = value;
 }
 
-KWfStatefulServicePartition::SPtr MockTransactionalReplicator::get_StatefulPartition() const
+IStatefulPartition::SPtr MockTransactionalReplicator::get_StatefulPartition() const
 {
-    KWfStatefulServicePartition::SPtr statefulServicePartitionSPtr(partition_.RawPtr());
+    IStatefulPartition::SPtr statefulServicePartitionSPtr(partition_.RawPtr());
     return statefulServicePartitionSPtr;
 }
 
@@ -458,7 +458,8 @@ NTSTATUS MockTransactionalReplicator::AddOperation(
 {
     if (delayAddOperationAndThrow_)
     {
-        return SyncAwait(WaitForTimeoutAndThrowAsync());
+        KNt::Sleep(timeout_);
+        return SF_STATUS_NO_WRITE_QUORUM;
     }
 
     LONG64 operationLSN = InterlockedIncrement64(&lastLSN_);
@@ -603,11 +604,6 @@ NTSTATUS MockTransactionalReplicator::GetCurrentEpoch(__out FABRIC_EPOCH & resul
 {
     FABRIC_EPOCH e = {0, 0};
     result = e;
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS MockTransactionalReplicator::Test_RequestCheckpointAfterNextTransaction() noexcept
-{
     return STATUS_SUCCESS;
 }
 

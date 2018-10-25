@@ -10,3 +10,4 @@ using namespace Common;
 using namespace ServiceModel;
 
 GlobalWString ContainerInfoArgs::Tail = make_global<std::wstring>(L"Tail");
+GlobalWString ContainerInfoArgs::Previous = make_global<std::wstring>(L"Previous");

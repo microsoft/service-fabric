@@ -12,8 +12,7 @@ using namespace TxnReplicator;
 using namespace Data::Utilities;
 
 Common::StringLiteral const TraceComponent("RecoveryManager");
-
-ULONG ParallelRecoveryBatchSize = 128;
+ULONG PARALLEL_DISPATCH_BATCHSIZE = 1024;
 
 RecoveryManager::RecoveryManager(
     __in PartitionedReplicaId const & traceId,
@@ -356,7 +355,7 @@ Awaitable<NTSTATUS> RecoveryManager::PerformRecoveryAsync(
     __in ReplicatedLogManager & replicatedLogManager,
     __in LONG64 readAheadSize,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & config)
+    __in TRInternalSettingsSPtr const & config)
 {
     OperationProcessor::SPtr operationProcessorSPtr = &operationProcessor;
     CheckpointManager::SPtr checkpointManagerSPtr = &checkpointManager;
@@ -396,6 +395,9 @@ Awaitable<NTSTATUS> RecoveryManager::PerformRecoveryAsync(
     replicatedLogManagerSPtr->InnerLogManager->SetSequentialAccessReadSize(
         *recoveryLogReader_->ReadStream,
         readAheadSize);
+
+    // Updated to the recovered value in LogRecordsMap during successful recovery
+    LONG64 lastPeriodicTruncationTimeTicks = 0;
 
     {
         LogRecords::SPtr records = LogRecords::Create(
@@ -453,9 +455,54 @@ Awaitable<NTSTATUS> RecoveryManager::PerformRecoveryAsync(
             {
                 status = recoveredRecords.Append(record);
 
-                CO_RETURN_ON_FAILURE(status);
+                ASSERT_IFNOT(
+                    NT_SUCCESS(status),
+                    "{0}: recoveredRecords.Append failed with {1:x}",
+                    TraceId,
+                    status);
 
                 lastRecoverableRecord = record;
+                if (LogRecord::IsBarrierRecord(*lastRecoverableRecord, false) &&
+                    // This condition was needed for LINUX perf as dispatching too often led to slow applies
+                    recoveredRecords.Count() >= PARALLEL_DISPATCH_BATCHSIZE) 
+                {
+                    LoggedRecords::SPtr dispatchRecords = LoggedRecords::Create(
+                        recoveredRecords,
+                        GetThisAllocator());
+
+                    logRecordsDispatcherSPtr->DispatchLoggedRecords(*dispatchRecords);
+                    recoveredRecords.Clear();
+
+                    recoveryError_ = operationProcessorSPtr->ServiceError;
+
+                    if (NT_SUCCESS(recoveryError_))
+                    {
+                        recoveryError_ = operationProcessorSPtr->LogError;
+                    }
+
+                    // If there was an apply or unlock failure, report fault does not help during recovery because the replica is not opened yet.
+                    // The only solution here is to fail OpenAsync
+                    if (!NT_SUCCESS(recoveryError_))
+                    {
+                        EventSource::Events->RMRecoveryFailed(
+                            TracePartitionId,
+                            ReplicaId,
+                            operationProcessorSPtr->ServiceError,
+                            operationProcessorSPtr->LogError,
+                            lastRecoverableRecord->RecordType,
+                            lastRecoverableRecord->Lsn,
+                            lastRecoverableRecord->Psn);
+
+                        ASSERT_IFNOT(
+                            LogRecord::IsBarrierRecord(*lastRecoverableRecord, false),
+                            "{0}: Last Recoverable Record must be a barrier. Else recovery will get stuck here",
+                            TraceId);
+
+                        co_await lastRecoverableRecord->AwaitProcessing();
+
+                        co_return recoveryError_;
+                    }
+                }
             }
             else
             {
@@ -469,28 +516,6 @@ Awaitable<NTSTATUS> RecoveryManager::PerformRecoveryAsync(
 
                 record->CompletedApply(STATUS_SUCCESS);
                 record->CompletedProcessing();
-            }
-
-            if (recoveredRecords.Count() == ParallelRecoveryBatchSize) 
-            {
-                LoggedRecords::SPtr dispatchRecords = LoggedRecords::Create(
-                    recoveredRecords,
-                    GetThisAllocator());
-
-                logRecordsDispatcherSPtr->DispatchLoggedRecords(*dispatchRecords);
-
-                recoveredRecords.Clear();
-
-                recoveryError_ = operationProcessorSPtr->ServiceError;
-
-                if (NT_SUCCESS(recoveryError_))
-                {
-                    recoveryError_ = operationProcessorSPtr->LogError;
-                }
-
-                // If there was an apply or unlock failure, report fault does not help during recovery because the replica is not opened yet.
-                // The only solution here is to throw during OpenAsync
-                CO_RETURN_ON_FAILURE(recoveryError_);
             }
 
             hasMoved = co_await records->MoveNextAsync(CancellationToken::None);
@@ -596,6 +621,8 @@ Awaitable<NTSTATUS> RecoveryManager::PerformRecoveryAsync(
         co_await lastRecoverableRecord->AwaitProcessing();
         co_await replicatedLogManagerSPtr->LastInformationRecord->AwaitProcessing();
         co_await operationProcessorSPtr->WaitForAllRecordsProcessingAsync();
+
+        lastPeriodicTruncationTimeTicks = logRecordsMap->LastPeriodicTruncationTimeTicks;
     }
 
     recoveryError_ = operationProcessorSPtr->ServiceError;
@@ -607,7 +634,25 @@ Awaitable<NTSTATUS> RecoveryManager::PerformRecoveryAsync(
 
     // If there was an apply or unlock failure, report fault does not help during recovery because the replica is not opened yet.
     // The only solution here is to throw during OpenAsync
-    CO_RETURN_ON_FAILURE(recoveryError_);
+    if (!NT_SUCCESS(recoveryError_))
+    {
+        EventSource::Events->RMRecoveryFailed(
+            TracePartitionId,
+            ReplicaId,
+            operationProcessorSPtr->ServiceError,
+            operationProcessorSPtr->LogError,
+            lastRecoverableRecord->RecordType,
+            lastRecoverableRecord->Lsn,
+            lastRecoverableRecord->Psn);
+
+        co_return recoveryError_;
+    }
+
+    // Update the last periodic checkpoint timestamp
+    // Initiates a periodic timer which is only valid if recovery succeeded
+    checkpointManagerSPtr->Recover(
+        recoveredLastCompletedBeginCheckpointRecord,
+        lastPeriodicTruncationTimeTicks);
 
     co_return STATUS_SUCCESS;
 }

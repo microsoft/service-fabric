@@ -27,12 +27,13 @@ ComServiceManager::~ComServiceManager()
 
 void ComServiceManager::AddResult(
     __in LPCWSTR wsz,
-    __in IFabricResolvedServicePartitionResult& result
+    __in IFabricResolvedServicePartitionResult& result,
+    __in IFabricServiceDescriptionResult& sdResult
 )
 {
     KWString str(GetThisAllocator(), wsz);
-    ComPointer<IFabricResolvedServicePartitionResult> spResult = &result;
-    _htResults.Put(str, spResult, TRUE);
+    ServiceResult sr = { &result, &sdResult };
+    _htResults.Put(str, sr, TRUE);
 }
 
 HRESULT ComServiceManager::BeginCreateService(
@@ -131,7 +132,7 @@ HRESULT ComServiceManager::BeginResolveServicePartition(
     UNREFERENCED_PARAMETER(partitionKey);
     UNREFERENCED_PARAMETER(partitionKeyType);
     UNREFERENCED_PARAMETER(name);
-   IFabricAsyncOperationContext* pContext = (IFabricAsyncOperationContext*)(name);
+    IFabricAsyncOperationContext* pContext = (IFabricAsyncOperationContext*)(name);
     callback->Invoke(pContext);
     return S_OK;
 }
@@ -142,11 +143,67 @@ HRESULT ComServiceManager::EndResolveServicePartition(
 {
     LPCWSTR wsz = (LPCWSTR)pContext;
     KWString str(GetThisAllocator(), wsz);
-    ComPointer<IFabricResolvedServicePartitionResult> spResult;
-    _htResults.Get(str, /*out*/spResult);
+    ServiceResult sr;
+    _htResults.Get(str, /*out*/sr);
 
-    ComPointer<IFabricResolvedServicePartitionResult> spOut = spResult;
+    ComPointer<IFabricResolvedServicePartitionResult> spOut = sr.ServicePartitionResult;
     *result = spOut.Detach();
 
-    return (spResult.RawPtr() != nullptr) ? S_OK : E_FAIL;
+    return (sr.ServicePartitionResult.RawPtr() != nullptr) ? S_OK : E_FAIL;
+}
+
+HRESULT ComServiceManager::BeginMovePrimary(
+    /* [in] */ const FABRIC_MOVE_PRIMARY_REPLICA_DESCRIPTION *,
+    /* [in] */ DWORD,
+    /* [in] */ IFabricAsyncOperationCallback *,
+    /* [retval][out] */ IFabricAsyncOperationContext **)
+{
+    return E_NOTIMPL;
+}
+
+HRESULT ComServiceManager::EndMovePrimary(
+    /* [in] */ IFabricAsyncOperationContext *)
+{
+    return E_NOTIMPL;
+}
+
+HRESULT ComServiceManager::BeginMoveSecondary(
+    /* [in] */ const FABRIC_MOVE_SECONDARY_REPLICA_DESCRIPTION *,
+    /* [in] */ DWORD,
+    /* [in] */ IFabricAsyncOperationCallback *,
+    /* [retval][out] */ IFabricAsyncOperationContext **)
+{
+    return E_NOTIMPL;
+}
+
+HRESULT ComServiceManager::EndMoveSecondary(
+    /* [in] */ IFabricAsyncOperationContext *)
+{
+    return E_NOTIMPL;
+}
+
+HRESULT ComServiceManager::BeginGetCachedServiceDescription(
+    /* [in] */ FABRIC_URI name,
+    /* [in] */ DWORD,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ IFabricAsyncOperationContext **)
+{
+    IFabricAsyncOperationContext* context = (IFabricAsyncOperationContext*)(name);
+    callback->Invoke(context);
+    return S_OK;
+}
+
+HRESULT ComServiceManager::EndGetCachedServiceDescription(
+    /* [in] */ IFabricAsyncOperationContext *context,
+    /* [retval][out] */ IFabricServiceDescriptionResult **result )
+{
+    LPCWSTR wsz = (LPCWSTR)context;
+    KWString str(GetThisAllocator(), wsz);
+    ServiceResult sr;
+    _htResults.Get(str, /*out*/sr);
+
+    ComPointer<IFabricServiceDescriptionResult> spOut = sr.ServiceDescriptionResult;
+    *result = spOut.Detach();
+
+    return (sr.ServiceDescriptionResult.RawPtr() != nullptr) ? S_OK : E_FAIL;
 }

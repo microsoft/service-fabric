@@ -32,23 +32,6 @@ ClusterHealthStatisticsFilter::ClusterHealthStatisticsFilter(
 {
 }
 
-ClusterHealthStatisticsFilter::ClusterHealthStatisticsFilter(ClusterHealthStatisticsFilter && other)
-    : HealthStatisticsFilter(move(other))
-    , includeSystemApplicationHealthStatistics_(move(other.includeSystemApplicationHealthStatistics_))
-{
-}
-
-ClusterHealthStatisticsFilter & ClusterHealthStatisticsFilter::operator =(ClusterHealthStatisticsFilter && other)
-{
-    if (this != &other)
-    {
-        includeSystemApplicationHealthStatistics_ = move(other.includeSystemApplicationHealthStatistics_);
-    }
-
-    HealthStatisticsFilter::operator=(move(other));
-    return *this;
-}
-
 ClusterHealthStatisticsFilter::~ClusterHealthStatisticsFilter()
 {
 }

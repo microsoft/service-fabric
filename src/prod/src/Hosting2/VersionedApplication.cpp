@@ -1251,7 +1251,6 @@ private:
     bool ensureLatestVersion_;
 };
 
-
 // ********************************************************************************************************************
 // VersionedApplication::UpgradeServicePackagesAsyncOperation Implementation
 //
@@ -1563,7 +1562,6 @@ protected:
     }
 };
 
-
 // ********************************************************************************************************************
 // VersionedApplication::CloseAsyncOperation Implementation
 //
@@ -1768,7 +1766,6 @@ private:
     ApplicationEnvironmentContextSPtr environmentContext_;
 };
 
-
 // ********************************************************************************************************************
 // VersionedApplication Implementation
 //
@@ -1845,7 +1842,6 @@ ErrorCode VersionedApplication::EndSwitch(AsyncOperationSPtr const & operation)
     return SwitchAsyncOperation::End(operation);
 }
 
-
 AsyncOperationSPtr VersionedApplication::BeginActivateServicePackageInstances(
     vector<ServicePackageInstanceOperation> && packageActivations,
     bool ensureLatestVersion,
@@ -1891,7 +1887,6 @@ ErrorCode VersionedApplication::EndDeactivateServicePackages(
     return DeactivateServicePackageInstancesAsyncOperation::End(operation, statusMap);
 }
 
-
 AsyncOperationSPtr VersionedApplication::BeginUpgradeServicePackages(
     vector<ServicePackageOperation> && packageUpgrades,
     TimeSpan const timeout,
@@ -1912,7 +1907,6 @@ ErrorCode VersionedApplication::EndUpgradeServicePackages(
 {
     return UpgradeServicePackagesAsyncOperation::End(operation, statusMap);
 }
-
 
 AsyncOperationSPtr VersionedApplication::BeginClose(
     TimeSpan const timeout,
@@ -1970,7 +1964,7 @@ EnvironmentManagerUPtr const & VersionedApplication::get_EnvironmentManagerObj()
     return this->ApplicationObj.HostingHolder.RootedObject.ApplicationManagerObj->EnvironmentManagerObj; 
 }
 
-ErrorCode VersionedApplication::AnalyzeApplicationUpgrade(    
+ErrorCode VersionedApplication::AnalyzeApplicationUpgrade(
     ApplicationUpgradeSpecification const & appUpgradeSpec,
     __out set<wstring, IsLessCaseInsensitiveComparer<wstring>> & affectedRuntimeIds)
 {
@@ -2044,6 +2038,19 @@ ErrorCode VersionedApplication::AnalyzeApplicationUpgrade(
     return error;
 }
 
+void VersionedApplication::OnServiceTypesUnregistered(
+    ServicePackageInstanceIdentifier const servicePackageInstanceId,
+    vector<ServiceTypeInstanceIdentifier> const & serviceTypeInstanceIds)
+{
+    ServicePackage2SPtr servicePackage;
+    auto error = this->packageMap__->Find(servicePackageInstanceId, servicePackage);
+
+    if (error.IsSuccess())
+    {
+        servicePackage->OnServiceTypesUnregistered(serviceTypeInstanceIds);
+    }
+}
+
 ErrorCode VersionedApplication::GetServicePackageInstance(
     ServicePackageInstanceIdentifier const & servicePackageInstanceId,
     __out ServicePackage2SPtr & servicePackageInstance) const
@@ -2060,7 +2067,7 @@ ErrorCode VersionedApplication::GetServicePackageInstance(
 }
 
 ErrorCode VersionedApplication::GetAllServicePackageInstances(__out vector<ServicePackage2SPtr> & servicePackageInstance) const
-{    
+{
     return this->packageMap__->GetAllServicePackageInstances(servicePackageInstance);
 }
 

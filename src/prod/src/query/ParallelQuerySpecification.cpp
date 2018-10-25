@@ -86,3 +86,11 @@ ParallelQuerySpecification::ParallelQuerySpecification(
     , parallelQuerySpecifications_()
 {
 }
+
+QueryArgumentMap ParallelQuerySpecification::GetQueryArgumentMap(
+    size_t index,
+    QueryArgumentMap const & baseArg)
+{
+    UNREFERENCED_PARAMETER(index);
+    return baseArg;
+}

@@ -14,5 +14,12 @@ namespace TxnReplicator
         , public IVersionManager
     {
         K_SHARED_INTERFACE(IInternalVersionManager)
+
+    public: 
+        // Initialize the VersionManager
+        virtual void Initialize(__in IVersionProvider & versionProvider) = 0;
+
+        // Clean up the states
+        virtual void Reuse() = 0;
     };
 }

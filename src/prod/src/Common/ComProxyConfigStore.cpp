@@ -8,9 +8,6 @@
 using namespace Common;
 using namespace std;
 
-RwLock SingletonDefaultStoreLock;
-ConfigStoreSPtr SingletonDefaultStore(nullptr);
-
 class ComProxyConfigStore::ComConfigStoreUpdateHandler : 
     public IFabricConfigStoreUpdateHandler,
     private ComUnknownBase
@@ -208,24 +205,6 @@ void ComProxyConfigStore::GetKeys(
         hr);
 }
 
-ConfigStoreSPtr ComProxyConfigStore::Create()
-{
-    if (!SingletonDefaultStore)
-    {
-        AcquireWriteLock grab(SingletonDefaultStoreLock);
-        if (!SingletonDefaultStore)
-        {
-            SingletonDefaultStore = ComProxyConfigStore::Create(
-                [](REFIID riid, IFabricConfigStoreUpdateHandler * updateHandler, void ** configStore)->HRESULT
-                {
-                    return ::FabricGetConfigStore(riid, updateHandler, configStore);
-                });
-        }
-    }
-
-    return SingletonDefaultStore;
-}
-
 ConfigStoreSPtr ComProxyConfigStore::Create(GetConfigStoreImpl const & getConfigStore)
 {
     HRESULT hr;
@@ -242,21 +221,6 @@ ConfigStoreSPtr ComProxyConfigStore::Create(GetConfigStoreImpl const & getConfig
     (static_cast<ComProxyConfigStore::ComConfigStoreUpdateHandler*>(updateHandler.GetRawPointer()))->set_Owner(proxyStore);
 
     return proxyStore;
-}
-
-ErrorCode ComProxyConfigStore::FabricGetConfigStoreEnvironmentVariable(__out wstring & envVarName, __out wstring & envVarValue)
-{
-    ComPointer<IFabricStringResult> envVarNameResult;
-    ComPointer<IFabricStringResult> envVarValueResult;
-
-    auto hr = ::FabricGetConfigStoreEnvironmentVariable(
-        envVarNameResult.InitializationAddress(), 
-        envVarValueResult.InitializationAddress());
-    if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
-
-    envVarName = wstring(envVarNameResult->get_String());
-    envVarValue = wstring(envVarValueResult->get_String());
-    return ErrorCode(ErrorCodeValue::Success);
 }
 
 bool ComProxyConfigStore::DispatchUpdate(wstring const & section, wstring const & key)

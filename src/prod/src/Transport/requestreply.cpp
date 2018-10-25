@@ -89,11 +89,11 @@ protected:
             }
             else
             {
-                request_->SetSendStatusCallback([thisSPtr, operation](ErrorCodeValue::Enum sendFailure, MessageUPtr &&)
+                request_->SetSendStatusCallback([thisSPtr, operation](ErrorCode const & sendFailure, MessageUPtr &&)
                 {
                     RequestAsyncOperationSPtr removed;
                     RequestReplyAsyncOperation * thisPtr = (RequestReplyAsyncOperation*)(thisSPtr.get());
-                    if (sendFailure!= ErrorCodeValue::Success)
+                    if (!sendFailure.IsSuccess())
                     {
                         // Need to remove explicitly instead of relying on RequestAsyncOperationSPtr::OnCancel,
                         // because OnRequestFailure completes RequestReplyAsyncOperation before RequestAsyncOperationSPtr
@@ -192,6 +192,19 @@ void RequestReply::Close()
 
 void RequestReply::OnDisconnected(IDatagramTransport::DisconnectEventArgs const & eventArgs)
 {
+    if (eventArgs.Fault.IsError(SESSION_EXPIRATION_FAULT))
+    {
+        WriteInfo(
+            TraceType,
+            "{0}: OnDisconnected: targetTraceId={1}, targetAddress='{2}', ignore fault {3} as connection will be kept alive for pending reply",
+            TextTraceThis,
+            eventArgs.Target->TraceId(),
+            eventArgs.Target->Address(),
+            eventArgs.Fault);
+
+        return;
+    }
+    
     WriteInfo(
         TraceType,
         "{0}: OnDisconnected: targetTraceId={1}, targetAddress='{2}', fault={3}",

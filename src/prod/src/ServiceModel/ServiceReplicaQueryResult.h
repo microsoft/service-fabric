@@ -49,6 +49,9 @@ namespace ServiceModel
         __declspec(property(get=get_ReplicaId)) int64 ReplicaId;
         int64 get_ReplicaId() const { return replicaId_; }
 
+        __declspec(property(get=get_NodeName)) std::wstring const & NodeName;
+        std::wstring const & get_NodeName() const { return nodeName_; }
+
         __declspec(property(get=get_ReplicaRole)) FABRIC_REPLICA_ROLE ReplicaRole;
         FABRIC_REPLICA_ROLE get_ReplicaRole() const { return replicaRole_; }
 

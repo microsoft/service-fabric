@@ -29,7 +29,6 @@ namespace LoggingReplicatorTests
 }
 
 
-#include <kwfruntime.h>
 #include "KComAdapter.h"
 
 #include "IOperation.h"

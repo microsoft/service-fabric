@@ -29,7 +29,8 @@ namespace Hosting2
             std::wstring const & requestorId,
             std::wstring const & callbackAddress,
             DWORD processId,
-            BOOL obtainToken);
+            BOOL obtainToken,
+            uint64 nodeInstanceId = 0);
 
         ~ActivatorRequestor();
 
@@ -50,6 +51,9 @@ namespace Hosting2
 
         __declspec(property(get=get_ProcessActivationManager)) ProcessActivationManager & ActivationManager;
         ProcessActivationManager & get_ProcessActivationManager() { return this->activatorHolder_.RootedObject; }
+
+        __declspec(property(get = get_NodeInstanceId)) uint64 NodeInstanceId;
+        uint64 get_NodeInstanceId() const { return nodeInstanceId_; }
 
     protected:
         // ****************************************************
@@ -75,5 +79,7 @@ namespace Hosting2
         ProcessActivationManagerHolder const activatorHolder_;
         FabricHostClientProcessTerminationCallback terminationCallback_;
         ActivatorRequestorType::Enum requestorType_;
+        uint64 nodeInstanceId_;
     };
+
 }

@@ -16,6 +16,7 @@ namespace Store
             __in Store::ReplicatedStore &,
             std::shared_ptr<TransactionReplicator> const &,
             TransactionSPtr const & innerTransactionSPtr,
+            IReplicatedStoreTxEventHandlerWPtr const &,
             Common::ActivityId const &,
             Store::TransactionSettings const & settings = Store::TransactionSettings());
 
@@ -23,6 +24,8 @@ namespace Store
 
         __declspec(property(get=get_TransactionSettings)) Store::TransactionSettings const & TransactionSettings;
         Store::TransactionSettings const & get_TransactionSettings() const { return txSettings_; }
+
+        uint64 get_MigrationTxKey() const override { return this->TrackerId; }
 
         bool get_IsEnumerationSupported() const override { return true; };
 
@@ -68,6 +71,7 @@ namespace Store
         typedef std::unordered_set<KeyTrackerEntry, Hasher, Hasher> KeyTracker;
 
         TransactionSPtr innerTransactionSPtr_;
+        IReplicatedStoreTxEventHandlerWPtr txEventHandler_;
         Common::ExclusiveLock txLock_;
 
         bool isReadOnly_;

@@ -24,7 +24,8 @@ namespace ServiceModel
             ULONG runFrequencyInterval,
             bool hasSetupEntryPoint,
             ServiceModel::CodePackageEntryPoint && mainEntryPoint,
-            ServiceModel::CodePackageEntryPoint && setupEntryPoint);
+            ServiceModel::CodePackageEntryPoint && setupEntryPoint,
+            std::wstring const & serviceNameInternalUseOnly);
 
         void ToPublicApi(
             __in Common::ScopedHeap & heap, 
@@ -47,10 +48,10 @@ namespace ServiceModel
         __declspec(property(get = get_ServicePackageActivationId)) std::wstring const & ServicePackageActivationId;
         std::wstring const & get_ServicePackageActivationId() const { return servicePackageActivationId_; }
 
-		__declspec(property(get = get_HostType)) HostType::Enum HostType;
+        __declspec(property(get = get_HostType)) HostType::Enum HostType;
         HostType::Enum get_HostType() const { return hostType_; }
 
-		__declspec(property(get = get_HostIsolationMode)) HostIsolationMode::Enum HostIsolationMode;
+        __declspec(property(get = get_HostIsolationMode)) HostIsolationMode::Enum HostIsolationMode;
         HostIsolationMode::Enum get_HostIsolationMode() const { return hostIsolationMode_; }
 
         __declspec(property(get=get_DeploymentStatus)) DeploymentStatus::Enum DeployedCodePackageStatus;
@@ -68,7 +69,14 @@ namespace ServiceModel
         __declspec(property(get=get_HasSetupEntryPoint)) bool HasSetupEntryPoint;
         bool get_HasSetupEntryPoint() const { return hasSetupEntryPoint_; }        
 
-        FABRIC_FIELDS_11(
+        __declspec(property(get=get_NodeName, put=put_NodeName)) std::wstring const & NodeName;
+        std::wstring const & get_NodeName() const { return nodeName_; }
+        void put_NodeName(std::wstring const & value) { nodeName_ = value; }
+
+        __declspec(property(get = get_ServiceNameInternalUseOnly)) std::wstring const &ServiceNameInternalUseOnly;
+        std::wstring const& get_ServiceNameInternalUseOnly() const { return serviceNameInternalUseOnly_; }
+
+        FABRIC_FIELDS_13(
             codePackageName_, 
             codePackageVersion_, 
             serviceManifestName_, 
@@ -79,7 +87,9 @@ namespace ServiceModel
             hasSetupEntryPoint_, 
             servicePackageActivationId_, 
             hostType_, 
-            hostIsolationMode_);
+            hostIsolationMode_,
+            nodeName_,
+            serviceNameInternalUseOnly_);
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
             SERIALIZABLE_PROPERTY(Constants::Name, codePackageName_)
@@ -107,5 +117,8 @@ namespace ServiceModel
         CodePackageEntryPoint setupEntryPoint_;
         CodePackageEntryPoint mainEntryPoint_;
         bool hasSetupEntryPoint_;
+        std::wstring nodeName_;
+
+        std::wstring serviceNameInternalUseOnly_; // Do not include it in JSON serialization.
     };
 }

@@ -19,6 +19,11 @@
 #include "Hosting2/Constants.h"
 #include "Hosting2/SecurityIdentityMap.h"
 #include "Hosting2/FabricHostConfig.h"
+#if !defined(PLATFORM_UNIX)
+#include <netfw.h>
+#include <wrl/client.h>
+#include "Hosting2/FirewallSecurityProviderHelper.h"
+#endif
 #include "Hosting2/FabricActivationManager.h"
 #include "Hosting2/FabricRestartManager.h"
 #include "Hosting2/HostedServiceActivationManager.h"

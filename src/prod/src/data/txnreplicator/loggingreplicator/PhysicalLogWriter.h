@@ -43,6 +43,7 @@ namespace Data
                 __in Data::Log::ILogicalLog & logicalLogStream,
                 __in PhysicalLogWriterCallbackManager & callbackManager,
                 __in LONG maxWriteCacheSizeBytes,
+                __in bool recomputeOffsets,
                 __in LogRecordLib::LogRecord & invalidTailRecord,
                 __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
@@ -54,6 +55,7 @@ namespace Data
                 __in Data::Log::ILogicalLog & logicalLogStream,
                 __in PhysicalLogWriterCallbackManager & callbackManager,
                 __in LONG maxWriteCacheSizeBytes,
+                __in bool recomputeOffsets,
                 __in LogRecordLib::LogRecord & tailRecord,
                 __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
@@ -185,6 +187,7 @@ namespace Data
                 __in Data::Log::ILogicalLog & logicalLogStream,
                 __in PhysicalLogWriterCallbackManager & callbackManager,
                 __in LONG maxWriteCacheSizeBytes,
+                __in bool recomputeOffsets,
                 __in LogRecordLib::LogRecord & invalidTailRecord,
                 __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
@@ -195,6 +198,7 @@ namespace Data
                 __in Data::Log::ILogicalLog & logicalLogStream,
                 __in PhysicalLogWriterCallbackManager & callbackManager,
                 __in LONG maxWriteCacheSizeBytes,
+                __in bool recomputeOffsets,
                 __in LogRecordLib::LogRecord  & tailRecord,
                 __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
@@ -306,6 +310,10 @@ namespace Data
 
             TxnReplicator::IOMonitor::SPtr ioMonitor_;
             TxnReplicator::TRInternalSettingsSPtr const transactionalReplicatorConfig_;
+
+            // Recalculate offsets between log records
+            // Used during restore to ensure backwards compatiblity if additional fields are added
+            bool const recomputeOffsets_;
         };
     }
 }

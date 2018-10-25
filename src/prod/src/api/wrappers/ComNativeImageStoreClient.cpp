@@ -32,12 +32,12 @@ HRESULT ComNativeImageStoreClient::SetSecurityCredentials(
 {
     Transport::SecuritySettings securitySettings;
     auto error = Transport::SecuritySettings::FromPublicApi(*securityCredentials, securitySettings);
-    if(!error.IsSuccess()) {return ComUtility::OnPublicApiReturn(error.ToHResult());}
+    if(!error.IsSuccess()) {return ComUtility::OnPublicApiReturn(move(error));}
 
     Common::ErrorCode errorCode = client_->SetSecurity(move(securitySettings));
     if (!errorCode.IsSuccess())
     {
-        return ComUtility::OnPublicApiReturn(errorCode.ToHResult());
+        return ComUtility::OnPublicApiReturn(move(errorCode));
     }
 
     return S_OK;
@@ -64,7 +64,7 @@ HRESULT ComNativeImageStoreClient::UploadContent2(
         WrapperFactory::create_rooted_com_proxy(const_cast<IFabricNativeImageStoreProgressEventHandler*>(progressHandler)),
         this->GetTimeSpan(timeoutMilliseconds),
         Management::ImageStore::CopyFlag::FromPublicApi(copyFlag));
-    return ComUtility::OnPublicApiReturn(error.ToHResult());
+    return ComUtility::OnPublicApiReturn(move(error));
 }
 
 HRESULT ComNativeImageStoreClient::UploadContent(
@@ -143,7 +143,7 @@ HRESULT ComNativeImageStoreClient::CopyContent(
         Trace.WriteInfo(TraceComponent, "CopyContent returning error {0}", error);
     }
 
-    return ComUtility::OnPublicApiReturn(error.ToHResult());
+    return ComUtility::OnPublicApiReturn(move(error));
 }
 
 HRESULT ComNativeImageStoreClient::BeginCopyContent(
@@ -202,7 +202,7 @@ HRESULT ComNativeImageStoreClient::DownloadContent2(
         WrapperFactory::create_rooted_com_proxy(const_cast<IFabricNativeImageStoreProgressEventHandler*>(progressHandler)),
         this->GetTimeSpan(timeoutMilliseconds),
         Management::ImageStore::CopyFlag::FromPublicApi(copyFlag));
-    return ComUtility::OnPublicApiReturn(error.ToHResult());
+    return ComUtility::OnPublicApiReturn(move(error));
 }
 
 HRESULT ComNativeImageStoreClient::ListContent(
@@ -223,7 +223,7 @@ HRESULT ComNativeImageStoreClient::ListContent(
 
     if (!error.IsSuccess())
     {
-        return ComUtility::OnPublicApiReturn(error.ToHResult());
+        return ComUtility::OnPublicApiReturn(move(error));
     }
     else
     {
@@ -260,7 +260,7 @@ HRESULT ComNativeImageStoreClient::ListPagedContent(
 
     if (!error.IsSuccess())
     {
-        return ComUtility::OnPublicApiReturn(error.ToHResult());
+        return ComUtility::OnPublicApiReturn(move(error));
     }
     else
     {
@@ -302,7 +302,7 @@ HRESULT ComNativeImageStoreClient::ListContentWithDetails(
     if (!error.IsSuccess())
     {
         Trace.WriteInfo(TraceComponent, "ListContentWithDetails returning error {0}", error);
-        return ComUtility::OnPublicApiReturn(error.ToHResult());
+        return ComUtility::OnPublicApiReturn(move(error));
     }
     else
     {
@@ -424,7 +424,7 @@ HRESULT ComNativeImageStoreClient::DoesContentExist(
         this->GetTimeSpan(timeoutMilliseconds),
         innerResult);
 
-    if (!error.IsSuccess()) { return ComUtility::OnPublicApiReturn(error.ToHResult()); }
+    if (!error.IsSuccess()) { return ComUtility::OnPublicApiReturn(move(error)); }
 
     *result = (innerResult ? TRUE : FALSE);
 
@@ -440,7 +440,7 @@ HRESULT ComNativeImageStoreClient::DeleteContent(
     if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
 
     auto error = client_->DeleteContent(location, this->GetTimeSpan(timeoutMilliseconds));
-    return ComUtility::OnPublicApiReturn(error.ToHResult());
+    return ComUtility::OnPublicApiReturn(move(error));
 }
 
 HRESULT ComNativeImageStoreClient::BeginDeleteContent(

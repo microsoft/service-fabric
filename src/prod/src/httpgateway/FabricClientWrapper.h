@@ -24,6 +24,7 @@ namespace HttpGateway
         __declspec(property(get=get_NativeImageStoreClient)) Api::INativeImageStoreClientPtr & NativeImageStoreClient;
         __declspec(property(get=get_AppMgmtClient)) Api::IApplicationManagementClientPtr &AppMgmtClient;
         __declspec(property(get=get_ComposeAppMgmtClient)) Api::IComposeManagementClientPtr &ComposeAppMgmtClient;
+        __declspec(property(get=get_ResourceMgmtClient)) Api::IResourceManagementClientPtr &ResourceMgmtClient;
         __declspec(property(get=get_QueryClient)) Api::IQueryClientPtr &QueryClient;
         __declspec(property(get=get_ServiceMgmtClient)) Api::IServiceManagementClientPtr &ServiceMgmtClient;
         __declspec(property(get=get_ServiceGroupMgmtClient)) Api::IServiceGroupManagementClientPtr &ServiceGroupMgmtClient;
@@ -41,6 +42,7 @@ namespace HttpGateway
         Api::INativeImageStoreClientPtr const & get_NativeImageStoreClient() const { return nativeImageStoreClientPtr_; }
         Api::IApplicationManagementClientPtr const& get_AppMgmtClient() const{ return appMgmtClientPtr_; }
         Api::IComposeManagementClientPtr const & get_ComposeAppMgmtClient() const { return composeAppMgmtClientPtr_; }
+        Api::IResourceManagementClientPtr const & get_ResourceMgmtClient() const { return resourceMgmtClientPtr_; }
         Api::IQueryClientPtr const& get_QueryClient() const{ return queryClientPtr_; }
         Api::IServiceManagementClientPtr const& get_ServiceMgmtClient() const{ return serviceMgmtClientPtr_; }
         Api::IServiceGroupManagementClientPtr const& get_ServiceGroupMgmtClient() const{ return serviceGroupMgmtClientPtr_; }
@@ -66,6 +68,7 @@ namespace HttpGateway
         Api::INativeImageStoreClientPtr nativeImageStoreClientPtr_;
         Api::IApplicationManagementClientPtr appMgmtClientPtr_;
         Api::IComposeManagementClientPtr composeAppMgmtClientPtr_;
+        Api::IResourceManagementClientPtr resourceMgmtClientPtr_;
         Api::IQueryClientPtr queryClientPtr_;
         Api::IServiceManagementClientPtr serviceMgmtClientPtr_;
         Api::IServiceGroupManagementClientPtr serviceGroupMgmtClientPtr_;

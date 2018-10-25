@@ -367,7 +367,7 @@ void NodeSet::SelectEligible(PlacementReplica const * replica, bool isSwapPrefer
 {
     auto partition = replica->Partition;
     //for singletons or stateless replicas we cannot really do swaps so allow all kinds of moves
-    if (isSwapPreferred && partition->Service->IsStateful && !partition->Service->IsTargetOne)
+    if (isSwapPreferred && partition->Service->IsStateful && !partition->IsTargetOne)
     {
         Clear();
         partition->ForEachExistingReplica([&](PlacementReplica const* r)

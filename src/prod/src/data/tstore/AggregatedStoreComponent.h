@@ -173,7 +173,7 @@ namespace Data
             return count + consolidatedStoreComponentSPtr_->Count();
          }
 
-         LONG64 GetMemorySize() const
+         LONG64 GetMemorySize(__in LONG64 estimatedKeySize) const
          {
             LONG64 size = 0;
             auto deltaDifferentialStateListEnumerator = deltaDifferentialStateListSPtr_->GetEnumerator();
@@ -183,9 +183,10 @@ namespace Data
                 auto currentItem = deltaDifferentialStateListEnumerator->Current();
                 auto componentSPtr = currentItem.Value;
                 size += componentSPtr->Size;
+                size += (estimatedKeySize + Constants::ValueMetadataSizeBytes) * componentSPtr->Count();
             }
 
-            return size + consolidatedStoreComponentSPtr_->Size;
+            return size + consolidatedStoreComponentSPtr_->Size + (estimatedKeySize + Constants::ValueMetadataSizeBytes) * consolidatedStoreComponentSPtr_->Count();
          }
 
          void AddToMemorySize(__in LONG64 size)

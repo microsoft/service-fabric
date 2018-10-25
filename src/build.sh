@@ -9,12 +9,14 @@
 PrintUsage()
 {
     cat << EOF
-Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-all] [-v]
+Usage: ./build.sh [-c] [-d] [-pe] [-pd] [-n] [-createdeb] [-createinstaller] [-ktlonly] [-upgradetestdeb] [-upgradetestinstaller] [-skipbuild] [-s] [-st] [-release] [-debug] [-clang50] [-j<#>] [-all] [-v] [-nocoreclrbuild] [-packagelocalcoreclrbuild]
     -c: Clean build
     -d: Set project binary root to current working directory
-    -p: Disable precompiled headers
+    -pd: Disable precompiled headers
+    -pe: Enable precompiled headers
     -n: Use ninja to build
     -createdeb -createinstaller: Create installer package
+    -ktlonly - only build prod/ktl
     -upgradetestdeb -upgradetestinstalller: Create multiple installer packages (for testing)
     -skipbuild: Skip the build phase (only generate)
     -s: Split symbols
@@ -25,6 +27,8 @@ Usage: ./build.sh [-c] [-d] [-p] [-n] [-createdeb] [-createinstaller] [-upgradet
     -j<#>: Specify number of build threads
     -v: Verbose
     -all: Build third party libraries
+    -nocoreclrbuild: Does not build manage coreclr build
+    -packagelocalcoreclrbuild: Package locally build manage coreclr binaries in installer
 EOF
 }
 
@@ -33,11 +37,11 @@ TotalErrors=0
 GetOs()
 {
     local __resultvar=$1
-    
+
     . /etc/os-release
     local linuxDistrib=$ID
 
-    if [ $linuxDistrib = "ubuntu" ]; then 
+    if [ $linuxDistrib = "ubuntu" ]; then
         eval $__resultvar="DEBIAN"
     elif [ $linuxDistrib = "rhel" ] || [ $linuxDistrib = "centos" ]; then
         eval $__resultvar="REDHAT"
@@ -55,7 +59,7 @@ ProjRoot=${ScriptPath}/..
 ProjBinRoot=${ProjRoot}
 LibPath=${ProjRoot}/external/WinFab.Linux.Libs
 CleanBuildDrop="-nc"
-DisablePrecompile="-p"
+DisablePrecompile="-pd"
 SkipBuild="false"
 CreateInstallerPackage="false"
 CreateMultipleInstallerPackagesForTesting="false"
@@ -66,19 +70,28 @@ CloudBuild="false"
 BuildType="RelWithDebInfo"
 ClangVersion="5.0"
 NumProc=0
-BuildThirdPartyLib="ON"
+BuildThirdPartyLib="OFF"
 VERBOSE=0
+DoKtlOnlyBuild="OFF"
 CLEAN_DEPS=0
+BUILD_MANAGED=1
+PACKAGE_LOCAL_CORECLR_BUILD="ON"
+
 #WinFab.Linux.Libs library version
-LinuxLibVersion="WinFab.Linux.Libs.2.2.7"
+LinuxLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/linuxlibs.version)
+
 if [ $LINUX_DISTRIBUTION = "REDHAT" ]; then
-    LinuxLibVersion="WinFab.Linux.Libs.2.2.2-centos"
+    LinuxLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/linuxlibscentos.version)
 fi
-CoreCLRLibVersion="WinFab.CoreCLR.Libs.6.2.183"
-SFXLibVersion="ServiceFabric.Explorer.2017.11.13.1"
-KtlLibDebugVersion="WinFab.Ktl.Linux.debug.1.1.2.52"
-KtlLibRetailVersion="WinFab.Ktl.Linux.retail.1.1.2.52"
-SFUpgradeTestVersion="Microsoft.ServiceFabric.Upgrade.Test.Internal.6.0.0.22"
+CoreCLRLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/coreclrlibs.version)
+SFXLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/sfxlibs.version)
+SFUpgradeTestVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/upgradetestlibs.version)
+SFResgenVersion="ServiceFabric.ResGen.NetStandard.1.0.1"
+CoreclrBuildArtifacts="ServiceFabric.Linux.Coreclr.BuildArtifacts.1.0.1"
+MCGLinux="Microsoft.DotNet.Interop.1.0.0.7171701"
+DataExtensions="Microsoft.ServiceFabric.Data.Extensions.1.4.4"
+SFAspNetCoreInternal="SF.AspNetCore.Internal.3.3.1"
+SFActorsServicesInternal="SF.ActorsServices.Internal.3.3.9"
 
 export CMAKE_NO_VERBOSE=1
 
@@ -86,9 +99,14 @@ export CMAKE_NO_VERBOSE=1
 # After the docker image has this, this should be removed.
 InstallPkgs()
 {
-    ${ProjRoot}/src/prod/tools/linux/init.sh ${LinuxLibVersion} ${CoreCLRLibVersion} ${SFXLibVersion} ${KtlLibDebugVersion} ${KtlLibRetailVersion} ${SFUpgradeTestVersion} ${CloudBuild}
+    ${ProjRoot}/src/prod/tools/linux/init.sh ${LinuxLibVersion} ${CoreCLRLibVersion} ${SFXLibVersion} ${SFUpgradeTestVersion} ${SFResgenVersion} ${CoreclrBuildArtifacts} ${DataExtensions} ${MCGLinux} ${SFAspNetCoreInternal} ${SFActorsServicesInternal} ${CloudBuild}
     if [ $? != 0 ]; then
         return 1
+    fi
+
+    if [ ! -L ${LibPath}/grpc/include/grpc++ ]; then
+        ln ${LibPath}/grpc/include/grpcxx ${LibPath}/grpc/include/grpc++ -rs
+        ln ${LibPath}/grpc/include/grpcxx/grpcxx.h ${LibPath}/grpc/include/grpcxx/grpc++.h -rs
     fi
 
     if [ -e ${LibPath}/Boost_1_61_0/lib/libc%2B%2B.so.1 ]
@@ -140,7 +158,7 @@ BuildDir()
     DirName=$1
     Clean=$2
     DisablePrecompile=$3
-    
+
     echo
     echo Start to build $1 directory ...
 
@@ -160,25 +178,32 @@ BuildDir()
         rm -rf ${ProjBinRoot}/build.${DirName} 2> /dev/null
         mkdir ${ProjBinRoot}/build.${DirName}  2> /dev/null
         cd ${ProjBinRoot}/build.${DirName}
-        
+
         CMakeGenerator=""
         if [ ${UseNinjaBuild} = "true" ]; then
             CMakeGenerator="-GNinja"
         fi
-        
+
         DisablePrecompileFlag=""
-        if [ "-p" = ${DisablePrecompile} ]; then
+        if [ "-pd" = ${DisablePrecompile} ]; then
             echo -e "\e[0;32mPrecompilation is disabled as requested.\e[0m"
             DisablePrecompileFlag="-DSF_DISABLE_PRECOMPILE=ON"
         else
             echo -e "\e[0;32mPrecompilation is enabled.\e[0m"
         fi
         echo -e "\e[0;32mBuild Type: ${BuildType} \e[0m"
+
+        if [ "ON" = ${DoKtlOnlyBuild} ]; then
+            echo -e "\e[0;32mKTL Only Build \e[0m"
+        fi
+
         cmake ${CMakeGenerator} \
               -DCMAKE_C_COMPILER=${CC} \
               -DCMAKE_CXX_COMPILER=${CXX} \
               -DCMAKE_BUILD_TYPE=${BuildType} \
               -DBUILD_THIRD_PARTY=${BuildThirdPartyLib} \
+              -DBUILD_KTL_ONLY=${DoKtlOnlyBuild} \
+              -DPACKAGE_LOCAL_BUILD_MANAGED=${PACKAGE_LOCAL_CORECLR_BUILD} \
               ${DisablePrecompileFlag} ${ScriptPath}/$DirName
         if [ $? != 0 ]; then
             let TotalErrors+=1
@@ -186,11 +211,11 @@ BuildDir()
             exit ${TotalErrors}
         fi
     fi
-    
+
     if [ -f ${ProjBinRoot}/build.${DirName}/build.ninja ]; then
         BuildSystem="ninja"
     fi
-    
+
     cd ${ProjBinRoot}/build.${DirName}
 
     if [ "false" = ${SkipBuild} ]; then
@@ -205,27 +230,51 @@ BuildDir()
             exit ${TotalErrors}
         fi
 
-        ${BuildSystem} install
-        if [ $? != 0 ]; then
-            let TotalErrors+=1
-            echo Error: cmd failed: make install
-            exit ${TotalErrors}       
+        if [ ${BUILD_MANAGED} == 1 ]; then
+            ${BuildSystem} ManagedCoreClrBuild
+            if [ $? != 0 ]; then
+               let TotalErrors+=1
+               echo Error: cmd failed: make ManagedCoreClrBuild
+               exit ${TotalErrors}
+            fi
+        fi
+
+        if [ "OFF" = ${DoKtlOnlyBuild} ]; then
+            ${BuildSystem} install
+            if [ $? != 0 ]; then
+                let TotalErrors+=1
+                echo Error: cmd failed: make install
+                exit ${TotalErrors}
+            fi
+        else
+            echo Attempting to install -ktlonly
+            pushd ktl/src >/dev/null
+            ${BuildSystem} install
+            installStatus=$?
+            popd >/dev/null
+            if [ ${installStatus} != 0 ]; then
+                let TotalErrors+=1
+                echo Error: cmd failed: make install -ktlonly
+                exit ${TotalErrors}
+            fi
         fi
     fi
 
-    ${BuildSystem} fabricdrop
-    if [ $? != 0 ]; then
-        let TotalErrors+=1
-        echo Error: cmd failed: make fabricdrop
-        exit ${TotalErrors}       
+    if [ "OFF" = ${DoKtlOnlyBuild} ]; then
+        ${BuildSystem} fabricdrop
+        if [ $? != 0 ]; then
+            let TotalErrors+=1
+            echo Error: cmd failed: make fabricdrop
+            exit ${TotalErrors}
+        fi
     fi
-    
+
     if [ "true" = ${SplitSymbols} ]; then
         ${BuildSystem} symsplit
         if [ $? != 0 ]; then
             let TotalErrors+=1
             echo Error: cmd failed: make symsplit
-            exit ${TotalErrors}       
+            exit ${TotalErrors}
         fi
     fi
 
@@ -244,22 +293,22 @@ BuildDir()
             if [ $? != 0 ]; then
                 let TotalErrors+=1
                 echo Error: cmd failed: make runtimedeb
-                exit ${TotalErrors}       
+                exit ${TotalErrors}
             fi
-            
+
             ${BuildSystem} sdkdebcommon
             if [ $? != 0 ]; then
                 let TotalErrors+=1
                 echo Error: cmd failed: make sdkdebcommon
-                exit ${TotalErrors}       
+                exit ${TotalErrors}
             fi
-            
+
             if [ "true" = ${CreateMultipleInstallerPackagesForTesting} ]; then
                 ${BuildSystem} upgradetestdeb
                 if [ $? != 0 ]; then
                     let TotalErrors+=1
                     echo Error: cmd failed: make upgradetestdeb
-                    exit ${TotalErrors}       
+                    exit ${TotalErrors}
                 fi
             fi
         elif [ $LINUX_DISTRIBUTION = "REDHAT" ]; then
@@ -267,28 +316,28 @@ BuildDir()
             if [ $? != 0 ]; then
                 let TotalErrors+=1
                 echo Error: cmd failed: make runtimerpm
-                exit ${TotalErrors}       
+                exit ${TotalErrors}
             fi
-            
+
             ${BuildSystem} sdkrpmcommon
             if [ $? != 0 ]; then
                 let TotalErrors+=1
                 echo Error: cmd failed: make sdkrpmcommon
-                exit ${TotalErrors}       
+                exit ${TotalErrors}
             fi
-            
+
             if [ "true" = ${CreateMultipleInstallerPackagesForTesting} ]; then
                 ${BuildSystem} upgradetestrpm
                 if [ $? != 0 ]; then
                     let TotalErrors+=1
                     echo Error: cmd failed: make upgradetestrpm
-                    exit ${TotalErrors}       
+                    exit ${TotalErrors}
                 fi
             fi
         else
             let TotalErrors+=1
             echo Error: unknown os
-            exit ${TotalErrors}   
+            exit ${TotalErrors}
         fi
 
         popd  > /dev/null
@@ -306,9 +355,11 @@ fi
 while (( "$#" )); do
     if [ "$1" == "-c" ]; then
         CleanBuildDrop=$1
+    elif [ "$1" == "-ktlonly" ]; then
+        DoKtlOnlyBuild="ON"
     elif [ "$1" == "-d" ]; then
         ProjBinRoot=$(pwd)
-    elif [ "$1" == "-p" ]; then
+    elif [ "$1" == "-pe" ] || [ "$1" == "-pd" ]; then
         DisablePrecompile=$1
     elif [ "$1" == "-n" ]; then
         UseNinjaBuild="true"
@@ -329,9 +380,8 @@ while (( "$#" )); do
         BuildType="RelWithDebInfo"
     elif [ "$1" == "-debug" ]; then
         BuildType="Debug"
-    elif [ "$1" == "-clang50" ]; then
-        ClangVersion="5.0-sf"
-        DisablePrecompile=""
+    elif [ "$1" == "-clang60" ]; then
+        ClangVersion="6.0-sf"
     elif [[ "$1" =~ ^-j.* ]]; then
         NumProcStr=${1:2}
         NumProc=$(($NumProcStr + 0))
@@ -344,6 +394,10 @@ while (( "$#" )); do
     elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
         PrintUsage
         exit -1
+    elif [ "$1" == "-nocoreclrbuild" ]; then
+        BUILD_MANAGED=0
+    elif [ "$1" == "-packagelocalcoreclrbuild" ]; then
+        PACKAGE_LOCAL_CORECLR_BUILD="ON"
     else
         echo "Unknown option $1"
         PrintUsage

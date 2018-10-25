@@ -44,6 +44,8 @@ namespace Data
             LONGLONG GetHeadTruncationPosition() const override;
             LONGLONG GetMaximumBlockSize() const override;
             ULONG GetMetadataBlockHeaderSize() const override;
+            ULONGLONG GetSize() const override;
+            ULONGLONG GetSpaceRemaining() const override;
 
             NTSTATUS CreateReadStream(__out ILogicalLogReadStream::SPtr& Stream, __in LONG SequentialAccessReadSize) override;
             void SetSequentialAccessReadSize(__in ILogicalLogReadStream& LogStream, __in LONG SequentialAccessReadSize) override;

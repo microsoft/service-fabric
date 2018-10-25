@@ -336,7 +336,8 @@ ErrorCode FabricClientProxy::EndDeleteName(AsyncOperationSPtr const & operation)
     //
     if (error.IsError(ErrorCodeValue::NameNotFound) ||
         error.IsError(ErrorCodeValue::NameNotEmpty) ||
-        error.IsError(ErrorCodeValue::AccessDenied))
+        error.IsError(ErrorCodeValue::AccessDenied) ||
+        error.IsError(ErrorCodeValue::InvalidNameUri))
     {
         error = ErrorCodeValue::Success;
     }

@@ -41,7 +41,7 @@ target_link_libraries(${exe_FabricRM}
   ${lib_FileStoreService}
   ${lib_Store}
   ${lib_TestHooks}
-  ${lib_KtlLogger}
+  ${lib_KtlLoggerNode}
   ${lib_TStore}
   ${lib_ApiWrappers}
   ${lib_StoreRepairPolicy}
@@ -53,9 +53,9 @@ target_link_libraries(${exe_FabricRM}
   ${lib_ServiceGroup}
   ${lib_ImageModel}
   ${lib_Query}
+  ${lib_Federation}
   ${lib_LeaseAgent}
   ${lib_Lease}
-  ${lib_Federation}
   ${lib_ClientServerTransport}
   ${lib_Transport}
   ${lib_Client}
@@ -80,6 +80,4 @@ target_link_libraries(${exe_FabricRM}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )

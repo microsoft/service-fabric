@@ -24,6 +24,9 @@ namespace Store
         __declspec(property(get=get_TrackerId)) uint64 TrackerId;
         uint64 get_TrackerId() const { return trackerId_; }
         
+        __declspec(property(get=get_MigrationTxKey)) uint64 MigrationTxKey;
+        virtual uint64 get_MigrationTxKey() const = 0;
+
         __declspec(property(get=get_CreationTime)) Common::DateTime CreationTime;
         Common::DateTime get_CreationTime() const { return creationTime_; }
         

@@ -77,16 +77,11 @@ void Helpers::EnableTracing()
 
     FABRIC_NODE_CONTEXT const * nodeContextResult = nodeContext->get_NodeContext();
 
-    wstring traceFileName = wformatString("{0}_{1}", nodeContextResult->NodeName, DateTime::Now().Ticks);
-    wstring traceFilePath = Path::Combine(activationContext->get_WorkDirectory(), traceFileName);
-
     TraceProvider::GetSingleton()->SetDefaultLevel(TraceSinkType::ETW, LogLevel::Noise);
-    TraceTextFileSink::SetOption(L"");
-    TraceTextFileSink::SetPath(traceFilePath);
 
     Trace.WriteInfo(
         TraceComponent,
-        "Node Name = {0}, IP = {1}",
+        "[Helpers::EnableTracing] NodeName = '{0}', IP = '{1}'",
         nodeContextResult->NodeName,
         nodeContextResult->IPAddressOrFQDN);
 }

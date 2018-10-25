@@ -29,6 +29,9 @@ namespace Management
             std::wstring GetApplicationTempFolder(
                 std::wstring const & applicationId) const;
 
+            std::wstring GetApplicationSettingsFolder(
+                std::wstring const & applicationId) const;
+
             std::wstring GetApplicationPackageFile(
                 std::wstring const & applicationId,
                 std::wstring const & applicationRolloutVersion) const;

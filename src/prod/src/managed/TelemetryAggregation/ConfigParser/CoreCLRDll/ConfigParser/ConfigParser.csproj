@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_build_only_linux.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>ConfigParser Class Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>TelemetryConfigParser</AssemblyName>
+    <PackageId>TelemetryConfigParser</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+    ..\..\LexicalAnalyzer.cs;
+    ..\..\ParseResult.cs;
+    ..\..\SemanticsAnalyzer.cs;
+    ..\..\SyntaxAnalyzer.cs;
+    ..\..\Token.cs;
+    ..\..\ManifestEventFieldsLookup.cs"
+    />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\TelemetryAggregation\CoreCLRDll\TelemetryAggregation\TelemetryAggregation.csproj" />
+    <ProjectReference Include="..\..\..\..\CoreCLR\EtlReader\EtlReader.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

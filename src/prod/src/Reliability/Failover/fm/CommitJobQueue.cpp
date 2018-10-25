@@ -222,6 +222,24 @@ bool RemoveNodeCommitJobItem::ProcessJob(FailoverManager & fm)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+MarkServiceAsDeletedCommitJobItem::MarkServiceAsDeletedCommitJobItem(const ServiceInfoSPtr & serviceInfo)
+    : serviceInfo_(serviceInfo)
+{
+}
+
+bool MarkServiceAsDeletedCommitJobItem::ProcessJob(FailoverManager & fm)
+{
+    ErrorCode error = fm.InBuildFailoverUnitCacheObj.DeleteInBuildFailoverUnitsForService(serviceInfo_->Name);
+    if (error.IsSuccess())
+    {
+        fm.ServiceCacheObj.MarkServiceAsDeletedAsync(serviceInfo_->Name, serviceInfo_->Instance);
+    }
+
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 CommitJobQueue::CommitJobQueue(FailoverManager & fm)
     : JobQueue(
       L"FMCommit." + fm.Id,

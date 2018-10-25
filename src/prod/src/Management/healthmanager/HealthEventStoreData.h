@@ -80,6 +80,9 @@ namespace Management
             __declspec(property(get=get_Priority)) ServiceModel::Priority::Enum Priority;
             ServiceModel::Priority::Enum get_Priority() const;
 
+            // Used by automatic cleanup. Remove user events that can't affect health as mitigation for the situation when an entity has accumulated more events than desired.
+            bool DoesNotImpactHealth() const;
+
             // Create new event based on diff to be inserted into store
             virtual void GetDiffEvent(Store::ReplicaActivityId const & replicaActivityId, __inout HealthEventStoreDataUPtr & newEvent) const = 0;
 

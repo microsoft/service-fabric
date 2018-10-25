@@ -3,6 +3,8 @@ add_definitions(-DKTL_BUILD)
 
 
 set( SOURCES
+  ../BaseObjects.cpp
+
   ../KtlLogMarshal.cpp
   ../ManagerShimUser.cpp
   ../ContainerShimUser.cpp

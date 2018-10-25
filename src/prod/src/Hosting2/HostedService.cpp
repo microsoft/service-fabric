@@ -12,6 +12,9 @@ using namespace Hosting2;
 
 StringLiteral const TraceType("HostedService");
 
+#define HOSTED_SERVICE_NAME_PREFIX      L"HostedService/"
+#define HOSTED_SERVICE_NAME_PREFIX_SIZE 14
+
 class HostedService::DeactivateAsyncOperation
     : public AsyncOperation,
     Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>
@@ -303,6 +306,12 @@ private:
             arguments = params_.Arguments;
         }
 
+        // Update service RG policy if needed
+        if (owner_.IsInRgPolicyUpdate)
+        {
+            owner_.UpdateRGPolicy();
+        }
+
         requireRestart = owner_.RequireServiceRestart(secUser) || owner_.IsArgumentsUpdated(arguments);
         secUserUpdated = owner_.IsSecurityUserUpdated(secUser) || requireRestart;
         thumbprintUpdated = owner_.IsThumbprintUpdated(thumbprint);
@@ -337,7 +346,15 @@ private:
                 owner_.activatorHolder_.RootedObject.ActivateHidden,
                 false,
                 true,
-                !owner_.ctrlCSpecified_);
+                !owner_.ctrlCSpecified_,
+                L"",
+                0,
+                0,
+                ProcessDebugParameters(),
+                owner_.RgPolicyDescription,
+                ServiceModel::ServicePackageResourceGovernanceDescription(),
+                owner_.GetServiceNameForCGroupOrJobObject(),
+                true);
         }
 
         //
@@ -576,7 +593,8 @@ HostedService::HostedService(
     SecurityUserSPtr const & runAs,
     wstring const & sslCertificateFindValue,
     wstring const & sslCertStoreLocation,
-    X509FindType::Enum sslCertificateFindType)
+    X509FindType::Enum sslCertificateFindType,
+    ServiceModel::ResourceGovernancePolicyDescription const & rgPolicyDescription)
     : ComponentRoot(),
     StateMachine(Inactive),
     activatorHolder_(activatorHolder),
@@ -595,6 +613,9 @@ HostedService::HostedService(
     sslCertFindValue_(sslCertificateFindValue),
     sslCertFindType_(sslCertificateFindType),
     sslCertStoreLocation_(sslCertStoreLocation),
+    rgPolicyDescription_(rgPolicyDescription),
+    rgPolicyUpdateDescription_(rgPolicyDescription),
+    isInRgPolicyUpdate_(false),
     updateTimer_(),
     timerLock_(),
     childServiceLock_(),
@@ -685,6 +706,8 @@ HostedService::HostedService(
                 serviceName_);
         }
     }
+
+
     processDescription_ = make_unique<ProcessDescription>(
         exeName, 
         arguments, 
@@ -697,7 +720,15 @@ HostedService::HostedService(
         activatorHolder.RootedObject.ActivateHidden,
         false,
         true,
-        !ctrlCSpecified_);
+        !ctrlCSpecified_,
+        L"",
+        0,
+        0,
+        ProcessDebugParameters(),
+        rgPolicyDescription_,
+        ServiceModel::ServicePackageResourceGovernanceDescription(),
+        GetServiceNameForCGroupOrJobObject(),
+        true);
 }
 
 HostedService::~HostedService()
@@ -725,6 +756,7 @@ void HostedService::Create(
     wstring const & sslCertificateFindValue,
     wstring const & sslCertStoreLocation,
     X509FindType::Enum sslCertificateFindType,
+    ServiceModel::ResourceGovernancePolicyDescription const & rgPolicyDescription,
     __out HostedServiceSPtr & hostedService)
 {
     hostedService = HostedServiceSPtr(new HostedService(
@@ -741,7 +773,8 @@ void HostedService::Create(
         runAs,
         sslCertificateFindValue,
         sslCertStoreLocation,
-        sslCertificateFindType));
+        sslCertificateFindType,
+        rgPolicyDescription));
 }
 
 ProcessDescription const & HostedService::GetProcessDescription()
@@ -799,6 +832,23 @@ TimeSpan HostedService::GetDueTime(RunStats stats, TimeSpan runInterval)
     }
 
     return dueTime;
+}
+
+wstring HostedService::GetServiceNameForCGroupOrJobObject()
+{
+#if !defined(PLATFORM_UNIX)
+    wstring::size_type position = serviceName_.find(HOSTED_SERVICE_NAME_PREFIX);
+    if (position != std::string::npos)
+    {
+        return serviceName_.substr(HOSTED_SERVICE_NAME_PREFIX_SIZE, std::wstring::npos);
+    }
+    else
+    {
+        return serviceName_;
+    }
+#else
+    return L"";
+#endif
 }
 
 ULONG HostedService::GetMaxContinuousFailureCount()
@@ -890,6 +940,7 @@ AsyncOperationSPtr HostedService::BeginUpdate(
 ErrorCode HostedService::EndUpdate(
     AsyncOperationSPtr const & operation)
 {
+    isInRgPolicyUpdate_ = false;
     return UpdateAsyncOperation::End(operation);
 }
 
@@ -1005,7 +1056,6 @@ bool HostedService::RescheduleServiceActivation(DWORD exitCode)
         return canReschedule;
     }
 
-
     ErrorCode transitionResult = this->InitializeHostedServiceInstance();
 
     if(!transitionResult.IsSuccess())
@@ -1025,10 +1075,144 @@ void HostedService::TerminateServiceInstance()
 {
     if(hostedServiceInstance_)
     {
-        hostedServiceInstance_->DisableServiceInstance();
+        hostedServiceInstance_->TerminateServiceInstance();
         hostedServiceInstance_.reset();
         TransitionToDeactivated();
     }
+}
+
+bool HostedService::IsRGPolicyUpdateNeeded(StringMap const & entries)
+{
+    if (!isInRgPolicyUpdate_)
+    {
+        // Get CpusetCpus rg policy
+        auto itRgEntry = entries.find(Constants::HostedServiceCpusetCpus);
+        if (itRgEntry != entries.end())
+        {
+            rgPolicyUpdateDescription_.CpusetCpus = itRgEntry->second;
+        }
+        else
+        {
+            rgPolicyUpdateDescription_.CpusetCpus = L"";
+        }
+
+        // Get CpuShares rg policy
+        itRgEntry = entries.find(Constants::HostedServiceCpuShares);
+        if (itRgEntry != entries.end())
+        {
+            if (!Config::TryParse<UINT>(rgPolicyUpdateDescription_.CpuShares, itRgEntry->second))
+            {
+                WriteWarning(
+                    TraceType,
+                    TraceId,
+                    "Failed to parse process CpuShares limit={0}",
+                    itRgEntry->second);
+                return false;
+            };
+        }
+        else
+        {
+            rgPolicyUpdateDescription_.CpuShares = 0;
+        }
+
+        // Get MemoryInMB rg policy
+        itRgEntry = entries.find(Constants::HostedServiceMemoryInMB);
+        if (itRgEntry != entries.end())
+        {
+            if (!Config::TryParse<UINT>(rgPolicyUpdateDescription_.MemoryInMB, itRgEntry->second))
+            {
+                WriteWarning(
+                    TraceType,
+                    TraceId,
+                    "Failed to parse process MemoryInMB limit={0}",
+                    itRgEntry->second);
+                return false;
+            };
+        }
+        else
+        {
+            rgPolicyUpdateDescription_.MemoryInMB = 0;
+        }
+
+        // Get MemorySwapInMB rg policy
+        itRgEntry = entries.find(Constants::HostedServiceMemorySwapInMB);
+        if (itRgEntry != entries.end())
+        {
+            if (!Config::TryParse<UINT>(rgPolicyUpdateDescription_.MemorySwapInMB, itRgEntry->second))
+            {
+                WriteWarning(
+                    TraceType,
+                    TraceId,
+                    "Failed to parse process MemorySwapInMB limit={0}",
+                    itRgEntry->second);
+                return false;
+            };
+        }
+        else
+        {
+            rgPolicyUpdateDescription_.MemorySwapInMB = 0;
+        }
+
+        if (rgPolicyDescription_ != rgPolicyUpdateDescription_)
+        {
+            isInRgPolicyUpdate_ = true;
+        }
+    }
+    return isInRgPolicyUpdate_;
+}
+
+bool HostedService::IsRGPolicyUpdateNeeded(HostedServiceParameters const & params)
+{
+    if (!isInRgPolicyUpdate_ &&
+        (!StringUtility::AreEqualCaseInsensitive(params.CpusetCpus, rgPolicyDescription_.CpusetCpus) ||
+        params.CpuShares != rgPolicyDescription_.CpuShares ||
+        params.MemoryInMB != rgPolicyDescription_.MemoryInMB ||
+        params.MemorySwapInMB != rgPolicyDescription_.MemorySwapInMB))
+    {
+        isInRgPolicyUpdate_ = true;
+        rgPolicyUpdateDescription_.CpusetCpus = params.CpusetCpus;
+        rgPolicyUpdateDescription_.CpuShares = params.CpuShares;
+        rgPolicyUpdateDescription_.MemoryInMB = params.MemoryInMB;
+        rgPolicyUpdateDescription_.MemorySwapInMB = params.MemorySwapInMB;
+    }
+    return isInRgPolicyUpdate_;
+}
+
+void HostedService::UpdateRGPolicy()
+{
+    // Setup new RG policy values
+    processDescription_->ResourceGovernancePolicy = rgPolicyUpdateDescription_;
+    
+    // Update new service limits
+    if (ActivationManager.ProcessActivatorObj->UpdateRGPolicy(
+        hostedServiceInstance_->ActivationContext,
+        processDescription_).IsSuccess())
+    {
+        WriteInfo(
+            TraceType,
+            TraceId,
+            "Successful updated of hosted service {0} rg policy. OldRgPolicy={1}, NewRgPolicy={2}",
+            serviceName_,
+            rgPolicyDescription_,
+            rgPolicyUpdateDescription_);
+
+        rgPolicyDescription_ = rgPolicyUpdateDescription_;
+    }
+    // If upgrade fails, rollback to the previous configuration
+    else
+    {
+        WriteWarning(
+            TraceType,
+            TraceId,
+            "Failed to update hosted service {0} rg policy. OldRgPolicy={1}, NewRgPolicy={2}",
+            serviceName_,
+            rgPolicyDescription_,
+            rgPolicyUpdateDescription_);
+
+        processDescription_->ResourceGovernancePolicy = rgPolicyDescription_;
+        rgPolicyUpdateDescription_ = rgPolicyDescription_;
+    }
+    isInRgPolicyUpdate_ = false;
 }
 
 bool HostedService::IsUpdateNeeded(SecurityUserSPtr const & secUser, wstring const & thumbprint, wstring const & arguments)

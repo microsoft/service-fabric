@@ -7,6 +7,7 @@ EXPORTS
     KCreateGuidIKArray
     KCreateLogRecordMetadataIKArray
     KCreatePhysicalLogManager
+    KCreatePhysicalLogManagerInproc
     KCopyMemory
     KCrc64
     QueryUserBuildInformation

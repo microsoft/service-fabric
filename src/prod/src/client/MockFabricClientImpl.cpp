@@ -117,6 +117,22 @@ ErrorCode MockFabricClientImpl::EndGetServiceDescription(
     return TimedAsyncOperation::End(operation);
 }
 
+AsyncOperationSPtr MockFabricClientImpl::BeginGetCachedServiceDescription(
+    NamingUri const &,
+    TimeSpan const timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<TimedAsyncOperation>(timeout, callback, parent);
+}
+
+ErrorCode MockFabricClientImpl::EndGetCachedServiceDescription(
+    AsyncOperationSPtr const & operation,
+    __inout Naming::PartitionedServiceDescriptor &)
+{
+    return TimedAsyncOperation::End(operation);
+}
+
 AsyncOperationSPtr MockFabricClientImpl::BeginInternalGetServiceDescription(
     NamingUri const &,
     ActivityId const &,

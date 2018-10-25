@@ -128,6 +128,14 @@ namespace Naming
 
         MessageUPtr reply;
         ErrorCode error = RequestAsyncOperationBase::End(asyncOperation, /*out*/reply);
+
+        if (error.IsSuccess() && reply.get() == nullptr)
+        {
+            TRACE_WARNING_AND_TESTASSERT(TraceComponent, "{0}: null reply message on success", this->TraceId);
+
+            error = ErrorCodeValue::OperationFailed;
+        }
+
         if (error.IsSuccess())
         {
             NamePropertyOperationBatchResult batchResult;

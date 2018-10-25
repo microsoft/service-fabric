@@ -177,6 +177,15 @@ private:
 
         if (error.IsSuccess())
         {
+            if (newRole_ == FABRIC_REPLICA_ROLE_PRIMARY)
+            {
+                owner_.TryStartMigration();
+            }
+            else
+            {
+                owner_.TryCancelMigration();
+            }
+
             error = owner_.OnChangeRole(newRole_, serviceLocation_);
         }
         
@@ -209,6 +218,8 @@ protected:
 
     void OnStart(AsyncOperationSPtr const & thisSPtr)
     {
+        owner_.TryCancelMigration();
+
         auto error = owner_.OnClose();
 
         // Best effort service close. Do not leave underlying store
@@ -258,6 +269,8 @@ KeyValueStoreReplica::KeyValueStoreReplica(
     , iReplicatedStore_()
     , partition_()
     , deadlockDetector_()
+    , migrator_()
+    , migratorLock_()
 {
     WriteInfo(
         TraceComponent,
@@ -355,8 +368,8 @@ ErrorCode KeyValueStoreReplica::CreateForPublicStack_V1(
 ErrorCode KeyValueStoreReplica::CreateForPublicStack_V2(
     Guid const & partitionId, 
     FABRIC_REPLICA_ID replicaId,
-    TSReplicatedStoreSettingsUPtr && storeSettings,
     ReplicatorSettingsUPtr && replicatorSettings,
+    TSReplicatedStoreSettingsUPtr && storeSettings,
     Api::IStoreEventHandlerPtr const & storeEventHandler,
     Api::ISecondaryEventHandlerPtr const & secondaryEventHandler,
     __out Api::IKeyValueStoreReplicaPtr & kvs)
@@ -366,8 +379,8 @@ ErrorCode KeyValueStoreReplica::CreateForPublicStack_V2(
         replicaId);
 
     auto error = kvsImpl->InitializeReplicatedStore_V2(
-        move(storeSettings),
         move(replicatorSettings),
+        move(storeSettings),
         storeEventHandler,
         secondaryEventHandler);
 
@@ -393,16 +406,18 @@ ErrorCode KeyValueStoreReplica::InitializeForSystemServices(
     EseLocalStoreSettings const & eseSettings,
     IClientFactoryPtr const & clientFactory,
     NamingUri const & serviceName,
+    vector<byte> const & initData,
     bool allowRepairUpToQuorum)
 {
     if (sharedLogGuid == Guid::Empty())
     {
-        TRACE_ERROR_AND_TESTASSERT(TraceComponent, "sharedLogGuid cannot be empty for system or FabricTest services");
+        TRACE_ERROR_AND_TESTASSERT(
+            TraceComponent,
+            "{0} sharedLogGuid cannot be empty for system or FabricTest services", 
+            this->TraceId);
 
         return ErrorCodeValue::InvalidArgument;
     }
-
-    bool isTStoreEnabled = (enableTStore || Store::StoreConfig::GetConfig().EnableTStore);
 
     auto notificationMode = replicatedStoreSettings_V1.NotificationMode;
     auto storeEventHandler = IStoreEventHandlerPtr(this, this->CreateComponentRoot());
@@ -410,7 +425,30 @@ ErrorCode KeyValueStoreReplica::InitializeForSystemServices(
         ? Api::ISecondaryEventHandlerPtr()
         : Api::ISecondaryEventHandlerPtr(this, this->CreateComponentRoot());
 
-    if (isTStoreEnabled)
+    bool isTStoreEnabled = (enableTStore || Store::StoreConfig::GetConfig().EnableTStore);
+
+    auto migrationData = this->TryDeserializeMigrationInitData(initData);
+
+    if (migrationData.get() != nullptr)
+    {
+        switch (migrationData->GetPhase(this->PartitionId))
+        {
+        case MigrationPhase::TargetDatabaseSwap:
+        case MigrationPhase::SourceDatabaseCleanup:
+        case MigrationPhase::TargetDatabaseActive:
+            //
+            // Only ESE->TStore migration is 
+            // currently supported
+            //
+            isTStoreEnabled = true;
+            break;
+        }
+    }
+
+    // Create and save V2 settings to support dynamically starting migration
+    // without restarting the replica. The KeyValueStoreMigrator will
+    // be created dynamically and passed the saved V2 settings.
+    //
     {
         TxnReplicator::KtlLoggerSharedLogSettingsUPtr sharedLogSettings;
         auto error = TxnReplicator::KtlLoggerSharedLogSettings::CreateForSystemService(
@@ -432,20 +470,34 @@ ErrorCode KeyValueStoreReplica::InitializeForSystemServices(
             return error; 
         }
 
-        auto replicatedStoreSettings_V2 = make_unique<Store::TSReplicatedStoreSettings>(
+        replicatedStoreSettings_V2_ = make_unique<TSReplicatedStoreSettings>(
             Path::Combine(workingDirectory, databaseDirectory),
             move(sharedLogSettings),
             notificationMode);
+    }
 
-        return this->InitializeReplicatedStore_V2(
-            move(replicatedStoreSettings_V2),
+    if (isTStoreEnabled)
+    {
+        auto error = this->InitializeReplicatedStore_V2(
             move(replicatorSettings),
+            make_unique<TSReplicatedStoreSettings>(*replicatedStoreSettings_V2_),
             storeEventHandler,
             secondaryEventHandler);
+
+        if (!error.IsSuccess()) 
+        { 
+            WriteWarning(
+                TraceComponent, 
+                "{0} failed to initialize V2 store: {1}",
+                this->TraceId,
+                error);
+
+            return error; 
+        }
     }
     else
     {
-        return this->InitializeReplicatedStore_V1(
+        auto error = this->InitializeReplicatedStore_V1(
             move(replicatorSettings),
             replicatedStoreSettings_V1,
             eseSettings,
@@ -454,7 +506,22 @@ ErrorCode KeyValueStoreReplica::InitializeForSystemServices(
             clientFactory,
             serviceName.ToString(),
             allowRepairUpToQuorum);
+
+        if (!error.IsSuccess()) 
+        { 
+            WriteWarning(
+                TraceComponent, 
+                "{0} failed to initialize V1 store: {1}",
+                this->TraceId,
+                error);
+
+            return error; 
+        }
     }
+
+    // Migrator depends on initialization of source iReplicatedStore_ first
+    //
+    return this->TryInitializeMigrator(move(migrationData));
 }
 
 ErrorCode KeyValueStoreReplica::InitializeForTestServices(
@@ -512,6 +579,7 @@ ErrorCode KeyValueStoreReplica::InitializeForTestServices(
         eseSettings,
         clientFactory,
         serviceName,
+        vector<byte>(), // initialization data
         allowRepairUpToQuorum);
 }
 
@@ -565,16 +633,16 @@ ErrorCode KeyValueStoreReplica::InitializeReplicatedStore_V1(
 }
 
 ErrorCode KeyValueStoreReplica::InitializeReplicatedStore_V2(
-    TSReplicatedStoreSettingsUPtr && storeSettings,
     ReplicatorSettingsUPtr && replicatorSettings,
+    TSReplicatedStoreSettingsUPtr && storeSettings,
     IStoreEventHandlerPtr const & storeEventHandler,
     ISecondaryEventHandlerPtr const & secondaryEventHandler)
 {
     iReplicatedStore_ = make_unique<TSReplicatedStore>(
         this->PartitionId,
         this->ReplicaId,
-        move(storeSettings),
         move(replicatorSettings),
+        move(storeSettings),
         storeEventHandler,
         secondaryEventHandler,
         *this);
@@ -721,6 +789,61 @@ void KeyValueStoreReplica::Abort()
     this->OnAbort();
 }
 
+ErrorCode KeyValueStoreReplica::UpdateInitializationData(vector<byte> && initData)
+{
+    auto migrationData = this->TryDeserializeMigrationInitData(initData);
+    
+    bool startNewMigration = false;
+    KeyValueStoreMigratorSPtr migrator;
+    {
+        AcquireExclusiveLock lock(migratorLock_);
+
+        if (migrationData.get() == nullptr)
+        {
+            if (migrator_.get() != nullptr)
+            {
+                migrator_->Cancel();
+
+                migrator_.reset();
+
+                this->TransientFault(L"Clearing migration");
+            }
+        }
+        else if (migrator_.get() == nullptr)
+        {
+            startNewMigration = true;
+
+            auto error = this->TryInitializeMigrator_Unlocked(move(migrationData));
+            if (!error.IsSuccess()) { return error; }
+
+            if (iReplicatedStore_->GetIsActivePrimary())
+            {
+                migrator = migrator_;
+            }
+        }
+        else
+        {
+            startNewMigration = false;
+
+            migrator = migrator_;
+        }
+    }
+
+    if (migrator.get() != nullptr)
+    {
+        if (startNewMigration)
+        {
+            this->TryStartMigration_Unlocked(migrator);
+        }
+        else if (migrator->TryUpdateInitializationData(move(migrationData)))
+        {
+            this->TransientFault(L"Updating migration phase");
+        }
+    }
+
+    return ErrorCodeValue::Success;
+}
+
 //
 // IKeyValueStoreMethods methods
 //
@@ -740,6 +863,171 @@ ErrorCode KeyValueStoreReplica::UpdateReplicatorSettings(
     ReplicatorSettingsUPtr const & replicatorSettings)
 {
     return this->iReplicatedStore_->UpdateReplicatorSettings(replicatorSettings);
+}
+
+void KeyValueStoreReplica::TryStartMigration()
+{
+    KeyValueStoreMigratorSPtr migrator;
+    {
+        AcquireExclusiveLock lock(migratorLock_);
+
+        migrator = migrator_;
+    }
+
+    this->TryStartMigration_Unlocked(migrator);
+}
+
+void KeyValueStoreReplica::TryStartMigration_Unlocked(KeyValueStoreMigratorSPtr const & migrator)
+{
+    if (migrator)
+    {
+        auto state = migrator->GetMigrationState();
+
+        if (state == MigrationState::Inactive)
+        {
+            auto operation = migrator->BeginMigration(
+                [this](AsyncOperationSPtr const & operation) { this->OnMigrationComplete(operation, false); },
+                this->CreateAsyncOperationRoot());
+            this->OnMigrationComplete(operation, true);
+        }
+        else
+        {
+            WriteInfo(
+                TraceComponent,
+                "{0} migrator already active: {1}",
+                this->TraceId,
+                state);
+        }
+    }
+    else
+    {
+        WriteInfo(
+            TraceComponent,
+            "{0} migrator not initialized",
+            this->TraceId);
+    }
+}
+
+void KeyValueStoreReplica::TryCancelMigration()
+{
+    AcquireExclusiveLock lock(migratorLock_);
+
+    if (migrator_.get() != nullptr)
+    {
+        migrator_->Cancel();
+    }
+    else
+    {
+        WriteInfo(
+            TraceComponent,
+            "{0} migrator not initialized",
+            this->TraceId);
+    }
+}
+
+
+void KeyValueStoreReplica::OnMigrationComplete(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    AcquireExclusiveLock lock(migratorLock_);
+
+    auto error = migrator_->EndMigration(operation);
+
+    if (error.IsSuccess())
+    {
+        WriteInfo(
+            TraceComponent, 
+            "{0} migration successful",
+            this->TraceId);
+    }
+    else
+    {
+        WriteWarning(
+            TraceComponent, 
+            "{0} migration failed: {1}",
+            this->TraceId,
+            error);
+    }
+}
+
+unique_ptr<MigrationInitData> KeyValueStoreReplica::TryDeserializeMigrationInitData(vector<byte> const & initData)
+{
+    unique_ptr<MigrationInitData> migrationData;
+
+    if (!initData.empty())
+    {
+        migrationData = make_unique<MigrationInitData>();
+
+        auto error = migrationData->FromBytes(initData);
+
+        if (error.IsSuccess())
+        {
+            WriteInfo(
+                TraceComponent, 
+                "{0} deserialized migration data: {1}",
+                this->TraceId,
+                *migrationData);
+        }
+        else
+        {
+            TRACE_ERROR_AND_TESTASSERT(
+                TraceComponent, 
+                "{0} failed to deserialize MigrationInitData: {1}", 
+                this->TraceId, 
+                error);
+
+            //
+            // Ignore initialization data and continue to initialize 
+            // replica without migration support
+            //
+        }
+    }
+
+    return migrationData;
+}
+
+ErrorCode KeyValueStoreReplica::TryInitializeMigrator(unique_ptr<MigrationInitData> && migrationData)
+{
+    AcquireExclusiveLock lock(migratorLock_);
+
+    return this->TryInitializeMigrator_Unlocked(move(migrationData));
+}
+
+ErrorCode KeyValueStoreReplica::TryInitializeMigrator_Unlocked(unique_ptr<MigrationInitData> && migrationData)
+{
+    if (migrationData.get() != nullptr)
+    {
+        auto error = KeyValueStoreMigrator::CreateForTStoreMigration(
+            *this, // ComponentRoot
+            this->PartitionedReplicaId,
+            *iReplicatedStore_, 
+            move(replicatedStoreSettings_V2_),
+            move(migrationData),
+            migrator_);
+
+        if (error.IsSuccess()) 
+        { 
+            WriteInfo(
+                TraceComponent, 
+                "{0} created migrator",
+                this->TraceId);
+        }
+        else
+        {
+            WriteWarning(
+                TraceComponent, 
+                "{0} failed to create migrator: {1}",
+                this->TraceId,
+                error);
+
+            return error; 
+        }
+
+        replicatedStoreSettings_V2_.reset();
+    }
+
+    return ErrorCodeValue::Success;
 }
 
 ErrorCode KeyValueStoreReplica::CreateTransaction(

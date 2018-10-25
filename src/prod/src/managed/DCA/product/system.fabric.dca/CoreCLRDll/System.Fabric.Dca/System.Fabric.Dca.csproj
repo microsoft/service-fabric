@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>System.Fabric.Dca Class Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>System.Fabric.Dca</AssemblyName>
+    <PackageId>System.Fabric.Dca</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\dll\_friends.cs;
+	  ..\..\AppConfig.cs;
+      ..\..\AppActivationTable.cs;
+      ..\..\AppEtwTraceFolders.cs;
+      ..\..\BootstrapTraceProcessor.cs;
+      ..\..\BufferedEtwEventPerformance.cs;
+      ..\..\BufferedEtwEventProvider.cs;
+      ..\..\CsvToUploadFolderWriter.cs;
+      ..\..\ConfigReader.cs;
+      ..\..\ConsumerInitializationParameters.cs;
+      ..\..\ContainerEnvironment.cs;
+      ..\..\CsvEvent.cs;
+      ..\..\CsvFileToSinkProcessor.cs;
+      ..\..\DCATimer.cs;
+      ..\..\DecodedEtwEvent.cs;
+      ..\..\DecodedEventWrapper.cs;
+      ..\..\DiskSpaceManager.cs;
+      ..\..\EtlConsumerConstants.cs;
+      ..\..\EtlToCsvFileWriter.cs;
+      ..\..\EtlToCsvFileWriterConfigReader.cs;
+      ..\..\EtlToInMemoryBufferWriter.cs;
+      ..\..\EtwTraceFilter.cs;
+      ..\..\EventIndex.cs;
+      ..\..\Exceptions\ConfigurationException.cs;
+      ..\..\ExternalOperationTime.cs;
+      ..\..\EventProcessor.cs;
+      ..\..\FileCompressor.cs;
+      ..\..\FileUploaderBase.cs;
+      ..\..\FileUploaderBasePerformance.cs;
+      ..\..\FolderTrimmer.cs;
+      ..\..\HealthClient.cs;
+      ..\..\IBufferedEtwEventProvider.cs;
+      ..\..\IBufferedEtwEventSink.cs;
+      ..\..\IConfigReader.cs;
+      ..\..\IEtwSink.cs;
+      ..\..\ICsvFileSink.cs;
+      ..\..\ICsvSink.cs;
+      ..\..\IEtlFileSink.cs;
+      ..\..\IEtlInMemorySink.cs;
+      ..\..\IEtlProducer.cs;
+      ..\..\IEtlToCsvFileWriterConfigReader.cs;
+      ..\..\IFolderSink.cs;
+      ..\..\IDcaConsumer.cs;
+      ..\..\IDcaInMemoryConsumer.cs;      
+      ..\..\IDcaProducer.cs;
+      ..\..\IDcaUpgradableConsumer.cs;
+      ..\..\InMemorySink.cs;
+      ..\..\InternalFileSink.cs;
+      ..\..\ITraceEventSourceFactory.cs;
+      ..\..\ITraceOutputWriter.cs;
+      ..\..\LocalMapTrimmingHelper.cs;
+      ..\..\PersistedIndex.cs;
+      ..\..\ProducerInitializationParameters.cs;
+      ..\..\RetriableOperationExceptionHandler.cs;
+      ..\..\ServiceConfig.cs;
+      ..\..\ServiceEtwManifestInfo.cs;
+      ..\..\StandardPluginTypes.cs;
+      ..\..\SystemTimer.cs;
+      ..\..\TraceEventSourceFactory.cs;
+      ..\..\Utility.cs;
+      ..\..\UnhandledExceptionHandler.cs;
+      ..\..\V1Constants.cs;
+      ..\..\WinFabDefaultFilter.cs;
+      ..\..\WinFabricEtlType.cs;
+      ..\..\WinFabSummaryFilter.cs;
+      ..\..\WinFabFilter.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\..\..\CoreCLR\EtlReader\EtlReader.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Win32.Registry" Version="4.4.0" />
+  </ItemGroup>
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

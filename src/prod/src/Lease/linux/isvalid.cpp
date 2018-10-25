@@ -91,7 +91,7 @@ Return Value:
     //
     // Check string.
     //
-    return wcsnlen((LPCWSTR)String, StringWcharLengthIncludingNullTerminator) >=0;
+    return wcsnlen((LPCWSTR)String, StringWcharLengthIncludingNullTerminator) < StringWcharLengthIncludingNullTerminator;
 }
 
 BOOLEAN

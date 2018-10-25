@@ -35,6 +35,8 @@ namespace Management
             static Common::GlobalWString LsaRegistryPath;
             static Common::GlobalWString EveryoneIncludesAnonymousRegistryValue;
 
+            static double const StagingFileLockAcquireTimeoutInSeconds;
+
             class StoreType
             {
             public:

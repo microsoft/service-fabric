@@ -94,6 +94,9 @@ namespace Client
         Common::ErrorCode CreateInternalTokenValidationServiceClient(__out Api::IInternalTokenValidationServiceClientPtr &);
         Common::ErrorCode CreateRepairManagementClient(__out Api::IRepairManagementClientPtr &);
         Common::ErrorCode CreateComposeManagementClient(__out Api::IComposeManagementClientPtr &);
+        Common::ErrorCode CreateSecretStoreClient(__out Api::ISecretStoreClientPtr &);
+        Common::ErrorCode CreateResourceManagerClient(__out Api::IResourceManagerClientPtr &);
+        Common::ErrorCode CreateResourceManagementClient(__out Api::IResourceManagementClientPtr &);
 
     private:
 

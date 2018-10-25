@@ -61,8 +61,6 @@ target_link_libraries(${exe_Replication.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

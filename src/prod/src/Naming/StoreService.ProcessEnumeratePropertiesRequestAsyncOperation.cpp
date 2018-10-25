@@ -73,10 +73,10 @@ namespace Naming
         }
     }
 
-    ErrorCode StoreService::ProcessEnumeratePropertiesRequestAsyncOperation::ValidateNameFragment()
+    bool StoreService::ProcessEnumeratePropertiesRequestAsyncOperation::AllowNameFragment()
     {
         // Allow property operations on service group members
-        return ErrorCodeValue::Success;
+        return false;
     }
 
     void StoreService::ProcessEnumeratePropertiesRequestAsyncOperation::PerformRequest(AsyncOperationSPtr const & thisSPtr)

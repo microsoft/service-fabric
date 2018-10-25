@@ -622,6 +622,7 @@ namespace Naming
             service_.PlacementConstraints,
             service_.Metrics,
             service_.Correlations,
+            service_.ScalingPolicies,
             service_.ApplicationName,
             service_.Type,
             service_.PartitionCount,
@@ -909,6 +910,26 @@ namespace Naming
             statefulDescriptionEx2->Reserved = statefulDescriptionEx3.GetRawPointer();
             statefulDescriptionEx3->ServicePackageActivationMode = ServicePackageActivationMode::ToPublicApi(Service.PackageActivationMode);
             statefulDescriptionEx3->ServiceDnsName = heap.AddString(Service.ServiceDnsName);
+
+	    auto statefulDescriptionEx4 = heap.AddItem<FABRIC_STATEFUL_SERVICE_DESCRIPTION_EX4>();
+            statefulDescriptionEx3->Reserved = statefulDescriptionEx4.GetRawPointer();
+
+            size_t scalingPolicyCount = Service.ScalingPolicies.size();
+            if (scalingPolicyCount > 0)
+            {
+                statefulDescriptionEx4->ScalingPolicyCount = static_cast<ULONG>(scalingPolicyCount);
+                auto spArray = heap.AddArray<FABRIC_SERVICE_SCALING_POLICY>(scalingPolicyCount);
+                statefulDescriptionEx4->ServiceScalingPolicies = spArray.GetRawArray();
+                for (size_t spIndex = 0; spIndex < scalingPolicyCount; ++spIndex)
+                {
+                    Service.ScalingPolicies[spIndex].ToPublicApi(heap, spArray[spIndex]);
+                }
+            }
+            else
+            {
+                statefulDescriptionEx4->ScalingPolicyCount = 0;
+                statefulDescriptionEx4->ServiceScalingPolicies = nullptr;
+            }
         }
         else
         {
@@ -1020,6 +1041,26 @@ namespace Naming
             statelessDescriptionEx2->Reserved = statelessDescriptionEx3.GetRawPointer();
             statelessDescriptionEx3->ServicePackageActivationMode = ServicePackageActivationMode::ToPublicApi(Service.PackageActivationMode);
             statelessDescriptionEx3->ServiceDnsName = heap.AddString(Service.ServiceDnsName);
+
+	    auto statelessDescriptionEx4 = heap.AddItem<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX4>();
+            statelessDescriptionEx3->Reserved = statelessDescriptionEx4.GetRawPointer();
+
+            size_t scalingPolicyCount = Service.ScalingPolicies.size();
+            if (scalingPolicyCount > 0)
+            {
+                statelessDescriptionEx4->ScalingPolicyCount = static_cast<ULONG>(scalingPolicyCount);
+                auto spArray = heap.AddArray<FABRIC_SERVICE_SCALING_POLICY> (scalingPolicyCount);
+                statelessDescriptionEx4->ServiceScalingPolicies = spArray.GetRawArray();
+                for (size_t spIndex = 0; spIndex < scalingPolicyCount; ++spIndex)
+                {
+                    Service.ScalingPolicies[spIndex].ToPublicApi(heap, spArray[spIndex]);
+                }
+            }
+            else
+            {
+                statelessDescriptionEx4->ScalingPolicyCount = 0;
+                statelessDescriptionEx4->ServiceScalingPolicies = nullptr;
+            }
         }
     }
 
@@ -1077,7 +1118,8 @@ namespace Naming
             static_cast<DWORD>(service_.StandByReplicaKeepDuration.TotalSeconds()),
             static_cast<FABRIC_MOVE_COST>(service_.DefaultMoveCost),
             service_.PackageActivationMode,
-            service_.ServiceDnsName);
+            service_.ServiceDnsName,
+            service_.ScalingPolicies);
 
         wrapper.IsServiceGroup = IsServiceGroup;
 
@@ -1178,6 +1220,7 @@ namespace Naming
             psdWrapper.PlacementConstraints,
             psdWrapper.Metrics,
             correlations,
+            psdWrapper.ScalingPolicies,
             psdWrapper.ApplicationName,
             typeIdentifier,
             partitionCount,
@@ -1237,7 +1280,8 @@ namespace Naming
             psdWrapper.ApplicationName,
             psdWrapper.PlacementPolicies,
             psdWrapper.PackageActivationMode,
-            psdWrapper.ServiceDnsName);
+            psdWrapper.ServiceDnsName,
+            psdWrapper.ScalingPolicies);
 
 
         service_ = move(description);
@@ -1287,151 +1331,178 @@ namespace Naming
 
         std::wstring serviceDnsName;
 
+        std::vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies;
+
         switch (serviceDescription.Kind)
         {
         case FABRIC_SERVICE_DESCRIPTION_KIND_STATELESS:
+        {
+            auto stateless = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION*>(
+                serviceDescription.Value);
+
+            HRESULT hr = StringUtility::LpcwstrToWstring(stateless->ServiceName, false /*acceptNull*/, ParameterValidator::MinStringSize, CommonConfig::GetConfig().MaxNamingUriLength, name);
+            if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
+
+            hr = StringUtility::LpcwstrToWstring(stateless->ApplicationName, true /*acceptNull*/, applicationName);
+            if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
+
+            wstring serviceTypeName;
+            hr = StringUtility::LpcwstrToWstring(stateless->ServiceTypeName, false /*acceptNull*/, serviceTypeName);
+            if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
+
+            ErrorCode error = ServiceTypeIdentifier::FromString(serviceTypeName, typeIdentifier);
+            if (!error.IsSuccess())
             {
-                auto stateless = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION*>(
-                    serviceDescription.Value);
+                Trace.WriteWarning(TraceComponent, "Could not parse ServiceTypeName '{0}'", stateless->ServiceTypeName);
+                return error;
+            }
 
-                HRESULT hr = StringUtility::LpcwstrToWstring(stateless->ServiceName, false /*acceptNull*/, ParameterValidator::MinStringSize, CommonConfig::GetConfig().MaxNamingUriLength, name);
+            if (stateless->CorrelationCount > 0 && stateless->Correlations == NULL)
+            {
+                Trace.WriteWarning(TraceComponent, "Invalid NULL parameter: Service correlations");
+                return ErrorCode::FromHResult(E_POINTER);
+            }
+            for (ULONG i = 0; i < stateless->CorrelationCount; i++)
+            {
+                wstring correlationServiceName;
+                hr = StringUtility::LpcwstrToWstring(stateless->Correlations[i].ServiceName, true /*acceptNull*/, 0, CommonConfig::GetConfig().MaxNamingUriLength, correlationServiceName);
                 if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
 
-                hr = StringUtility::LpcwstrToWstring(stateless->ApplicationName, true /*acceptNull*/, applicationName);
+                NamingUri correlationServiceNameUri;
+                if (!NamingUri::TryParse(correlationServiceName, correlationServiceNameUri))
+                {
+                    Trace.WriteWarning(TraceComponent, "Could not parse ServiceName '{0}' in correlation description", correlationServiceName);
+                    return ErrorCode(ErrorCodeValue::InvalidArgument);
+                }
+
+                // strip of the fragment (i.e. service group member names)
+                if (!correlationServiceNameUri.Fragment.empty())
+                {
+                    correlationServiceNameUri = NamingUri(correlationServiceNameUri.Path);
+                }
+
+                correlations.push_back(Reliability::ServiceCorrelationDescription(
+                    correlationServiceNameUri.Name,
+                    stateless->Correlations[i].Scheme));
+            }
+
+            isPlacementConstraintsValid_ = (stateless->PlacementConstraints != nullptr);
+
+            hr = StringUtility::LpcwstrToWstring(stateless->PlacementConstraints, true /*acceptNull*/, placementConstraints);
+            if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
+
+            if (stateless->MetricCount > 0 && stateless->Metrics == NULL)
+            {
+                Trace.WriteWarning(TraceComponent, "Invalid NULL parameter: Service description metrics");
+                return ErrorCode::FromHResult(E_POINTER);
+            }
+
+            for (ULONG i = 0; i < stateless->MetricCount; i++)
+            {
+                wstring metricsName;
+                hr = StringUtility::LpcwstrToWstring(stateless->Metrics[i].Name, true /*acceptNull*/, metricsName);
                 if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
-                                
-                wstring serviceTypeName;
-                hr = StringUtility::LpcwstrToWstring(stateless->ServiceTypeName, false /*acceptNull*/, serviceTypeName);
-                if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
-                
-                ErrorCode error = ServiceTypeIdentifier::FromString(serviceTypeName, typeIdentifier);
-                if (!error.IsSuccess())
-                {
-                    Trace.WriteWarning(TraceComponent, "Could not parse ServiceTypeName '{0}'", stateless->ServiceTypeName);
-                    return error;
-                }
+                metrics.push_back(Reliability::ServiceLoadMetricDescription(
+                    move(metricsName),
+                    stateless->Metrics[i].Weight,
+                    stateless->Metrics[i].PrimaryDefaultLoad,
+                    stateless->Metrics[i].SecondaryDefaultLoad));
+            }
 
-                if (stateless->CorrelationCount > 0 && stateless->Correlations == NULL) 
-                { 
-                    Trace.WriteWarning(TraceComponent, "Invalid NULL parameter: Service correlations");
-                    return ErrorCode::FromHResult(E_POINTER); 
-                }
-                for(ULONG i = 0; i < stateless->CorrelationCount; i++)
-                {
-                    wstring correlationServiceName;
-                    hr = StringUtility::LpcwstrToWstring(stateless->Correlations[i].ServiceName, true /*acceptNull*/, 0, CommonConfig::GetConfig().MaxNamingUriLength, correlationServiceName);
-                    if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
+            initializationData = std::vector<byte>(
+                stateless->InitializationData,
+                stateless->InitializationData + stateless->InitializationDataSize);
+            targetReplicaSetSize = stateless->InstanceCount;
+            minReplicaSetSize = 1;
+            isStateful = false;
+            hasPersistedState = false;
+            partitionScheme = stateless->PartitionScheme;
+            partitionDescription = stateless->PartitionSchemeDescription;
 
-                    NamingUri correlationServiceNameUri;
-                    if (!NamingUri::TryParse(correlationServiceName, correlationServiceNameUri))
-                    {
-                        Trace.WriteWarning(TraceComponent, "Could not parse ServiceName '{0}' in correlation description", correlationServiceName);
-                        return ErrorCode(ErrorCodeValue::InvalidArgument);
-                    }
-
-                    // strip of the fragment (i.e. service group member names)
-                    if (!correlationServiceNameUri.Fragment.empty())
-                    {
-                        correlationServiceNameUri = NamingUri(correlationServiceNameUri.Path);
-                    }
-
-                    correlations.push_back(Reliability::ServiceCorrelationDescription(
-                        correlationServiceNameUri.Name, 
-                        stateless->Correlations[i].Scheme));
-                }
-
-                isPlacementConstraintsValid_ = (stateless->PlacementConstraints != nullptr);
-
-                hr = StringUtility::LpcwstrToWstring(stateless->PlacementConstraints, true /*acceptNull*/, placementConstraints);
-                if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
-                
-                if (stateless->MetricCount > 0 && stateless->Metrics == NULL) 
-                { 
-                    Trace.WriteWarning(TraceComponent, "Invalid NULL parameter: Service description metrics");
-                    return ErrorCode::FromHResult(E_POINTER); 
-                }
-
-                for(ULONG i = 0; i < stateless->MetricCount; i++)
-                {
-                    wstring metricsName;
-                    hr = StringUtility::LpcwstrToWstring(stateless->Metrics[i].Name, true /*acceptNull*/, metricsName);
-                    if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
-                    metrics.push_back(Reliability::ServiceLoadMetricDescription(
-                        move(metricsName), 
-                        stateless->Metrics[i].Weight,
-                        stateless->Metrics[i].PrimaryDefaultLoad,
-                        stateless->Metrics[i].SecondaryDefaultLoad));
-                }
-
-                initializationData = std::vector<byte>(
-                    stateless->InitializationData,
-                    stateless->InitializationData + stateless->InitializationDataSize);
-                targetReplicaSetSize = stateless->InstanceCount;
-                minReplicaSetSize = 1;
-                isStateful = false;
-                hasPersistedState = false;
-                partitionScheme = stateless->PartitionScheme;
-                partitionDescription = stateless->PartitionSchemeDescription;
-
-                if (stateless->Reserved == NULL)
-                {
-                    break;
-                }
-
-                auto statelessEx1 = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX1*>(stateless->Reserved);
-                if (statelessEx1->PolicyList != NULL)
-                {
-                    isPlacementPolicyValid_ = true;
-                    auto pList = statelessEx1->PolicyList;
-                    if (pList->PolicyCount > 0 && pList->Policies == NULL)
-                    {
-                        Trace.WriteWarning("PartitionedServiceDescription", "Invalid NULL parameter: Service placement policy");
-                        return ErrorCode::FromHResult(E_POINTER);
-                    }
-
-                    for (ULONG i = 0; i < pList->PolicyCount; i++)
-                    {
-                        std::wstring domainName;
-                        FABRIC_SERVICE_PLACEMENT_POLICY_DESCRIPTION & policyDesc = pList->Policies[i];
-                        ServicePlacementPolicyHelper::PolicyDescriptionToDomainName(policyDesc, domainName);
-                        placementPolicies.push_back(ServiceModel::ServicePlacementPolicyDescription(move(domainName), policyDesc.Type));
-                    }
-                }
-
-                if (statelessEx1->Reserved == NULL)
-                {
-                    break;
-                }
-
-                auto statelessEx2 = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX2*>(statelessEx1->Reserved);
-                if (statelessEx2->IsDefaultMoveCostSpecified)
-                {
-                    defaultMoveCost = statelessEx2->DefaultMoveCost;
-                }
-
-                if (statelessEx2->Reserved == NULL)
-                {
-                    break;
-                }
-
-                auto statelessEx3 = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX3*>(statelessEx2->Reserved);
-                
-                error = ServicePackageActivationMode::FromPublicApi(statelessEx3->ServicePackageActivationMode, servicePackageActivationMode);
-                if (!error.IsSuccess())
-                {
-                    Trace.WriteWarning(
-                        TraceComponent, 
-                        "ReplicaIsolationLevel::FromPublicApi failed. statelessEx3->ServicePackageActivationMode='{0}'",
-                        static_cast<ULONG>(statelessEx3->ServicePackageActivationMode));
-
-                    return error;
-                }
-
-                hr = StringUtility::LpcwstrToWstring(statelessEx3->ServiceDnsName, true /*acceptNull*/, serviceDnsName);
-                if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
-
+            if (stateless->Reserved == NULL)
+            {
                 break;
             }
+
+            auto statelessEx1 = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX1*>(stateless->Reserved);
+            if (statelessEx1->PolicyList != NULL)
+            {
+                isPlacementPolicyValid_ = true;
+                auto pList = statelessEx1->PolicyList;
+                if (pList->PolicyCount > 0 && pList->Policies == NULL)
+                {
+                    Trace.WriteWarning("PartitionedServiceDescription", "Invalid NULL parameter: Service placement policy");
+                    return ErrorCode::FromHResult(E_POINTER);
+                }
+
+                for (ULONG i = 0; i < pList->PolicyCount; i++)
+                {
+                    std::wstring domainName;
+                    FABRIC_SERVICE_PLACEMENT_POLICY_DESCRIPTION & policyDesc = pList->Policies[i];
+                    ServicePlacementPolicyHelper::PolicyDescriptionToDomainName(policyDesc, domainName);
+                    placementPolicies.push_back(ServiceModel::ServicePlacementPolicyDescription(move(domainName), policyDesc.Type));
+                }
+            }
+
+            if (statelessEx1->Reserved == NULL)
+            {
+                break;
+            }
+
+            auto statelessEx2 = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX2*>(statelessEx1->Reserved);
+            if (statelessEx2->IsDefaultMoveCostSpecified)
+            {
+                defaultMoveCost = statelessEx2->DefaultMoveCost;
+            }
+
+            if (statelessEx2->Reserved == NULL)
+            {
+                break;
+            }
+
+            auto statelessEx3 = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX3*>(statelessEx2->Reserved);
+
+            error = ServicePackageActivationMode::FromPublicApi(statelessEx3->ServicePackageActivationMode, servicePackageActivationMode);
+            if (!error.IsSuccess())
+            {
+                Trace.WriteWarning(
+                    TraceComponent,
+                    "ReplicaIsolationLevel::FromPublicApi failed. statelessEx3->ServicePackageActivationMode='{0}'",
+                    static_cast<ULONG>(statelessEx3->ServicePackageActivationMode));
+
+		 return error;
+            }
+
+            hr = StringUtility::LpcwstrToWstring(statelessEx3->ServiceDnsName, true /*acceptNull*/, serviceDnsName);
+            if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
+
+            if (statelessEx3->Reserved == NULL)
+            {
+                break;
+            }
+
+            auto statelessEx4 = reinterpret_cast<FABRIC_STATELESS_SERVICE_DESCRIPTION_EX4*>(statelessEx3->Reserved);
+
+            if (statelessEx4->ScalingPolicyCount > 1)
+            {
+                // Currently, only one scaling policy is allowed per service.
+                // Vector is there for future uses (when services could have multiple scaling policies).
+                return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), statelessEx4->ScalingPolicyCount));
+            }
+
+            for (ULONG i = 0; i < statelessEx4->ScalingPolicyCount; i++)
+            {
+                Reliability::ServiceScalingPolicyDescription scalingDescription;
+                auto scalingError = scalingDescription.FromPublicApi(statelessEx4->ServiceScalingPolicies[i]);
+                if (!scalingError.IsSuccess())
+                {
+                    return scalingError;
+                }
+                scalingPolicies.push_back(move(scalingDescription));
+            }
+
+            break;
+        }
 
         case FABRIC_SERVICE_DESCRIPTION_KIND_STATEFUL:
             {
@@ -1604,6 +1675,31 @@ namespace Naming
 
                 hr = StringUtility::LpcwstrToWstring(statefulEx3->ServiceDnsName, true /*acceptNull*/, serviceDnsName);
                 if (FAILED(hr)) { return ErrorCode::FromHResult(hr); }
+
+		if (statefulEx3->Reserved == NULL)
+                {
+                    break;
+                }
+
+                auto statefulEx4 = reinterpret_cast<FABRIC_STATEFUL_SERVICE_DESCRIPTION_EX4*>(statefulEx3->Reserved);
+
+                if (statefulEx4->ScalingPolicyCount > 1)
+                {
+                    // Currently, only one scaling policy is allowed per service.
+                    // Vector is there for future uses (when services could have multiple scaling policies).
+                    return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), statefulEx4->ScalingPolicyCount));
+                }
+
+                for (ULONG i = 0; i < statefulEx4->ScalingPolicyCount; i++)
+                {
+                    Reliability::ServiceScalingPolicyDescription scalingDescription;
+                    auto scalingError = scalingDescription.FromPublicApi(statefulEx4->ServiceScalingPolicies[i]);
+                    if (!scalingError.IsSuccess())
+                    {
+                        return scalingError;
+                    }
+                    scalingPolicies.push_back(move(scalingDescription));
+                }
             }
             break;
 
@@ -1666,12 +1762,13 @@ namespace Naming
         {
             return TraceAndGetErrorDetails(ErrorCodeValue::InvalidNameUri, wformatString("{0} {1}", GET_NS_RC(Invalid_Uri), name));
         }
-        
+
         auto error = ValidateServiceParameters(
             name,
             placementConstraints,
             metrics,
             correlations,
+            scalingPolicies,
             applicationName,
             typeIdentifier,
             partitionCount,
@@ -1710,7 +1807,8 @@ namespace Naming
             applicationName,
             placementPolicies,
             servicePackageActivationMode,
-            serviceDnsName);
+            serviceDnsName,
+            scalingPolicies);
 
         service_ = move(description);
         partitionScheme_ = partitionScheme;
@@ -1728,6 +1826,7 @@ namespace Naming
         wstring const & placementConstraints,
         vector<Reliability::ServiceLoadMetricDescription> const & metrics,
         vector<Reliability::ServiceCorrelationDescription> const & correlations,
+        vector<Reliability::ServiceScalingPolicyDescription> const & scalingPolicies,
         wstring const & applicationName,
         ServiceTypeIdentifier const & typeIdentifier,
         int partitionCount,
@@ -1744,6 +1843,18 @@ namespace Naming
 
         error = ValidateServiceCorrelations(correlations, serviceName, targetReplicaSetSize);
         if (!error.IsSuccess()) { return error; }
+
+        error = ValidateServiceScalingPolicy(
+            metrics,
+            scalingPolicies,
+            isStateful,
+            scheme,
+            partitionNames);
+
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
 
         if (!typeIdentifier.IsSystemServiceType() && !typeIdentifier.IsTombStoneServiceType())
         {
@@ -1823,6 +1934,100 @@ namespace Naming
         }
 
         return error;
+    }
+
+    Common::ErrorCode PartitionedServiceDescriptor::ValidateServiceScalingPolicy(
+        std::vector<Reliability::ServiceLoadMetricDescription> const & metrics,
+        vector<Reliability::ServiceScalingPolicyDescription> const & scalingPolicies,
+        bool isStateful,
+        FABRIC_PARTITION_SCHEME scheme,
+        std::vector<std::wstring> const & partitionNames) const
+    {
+        if (scalingPolicies.size() == 0)
+        {
+            return ErrorCodeValue::Success;
+        }
+
+        if (scalingPolicies.size() > 1)
+        {
+            // Only 1 scaling policy is allowed. Vector is there for future uses
+            // when services will be allowed to have more than 1 scaling policy.
+            return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), scalingPolicies.size()));
+        }
+
+        auto scalingPolicy = scalingPolicies[0];
+
+        auto error = scalingPolicy.Validate(isStateful);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+
+        if (scalingPolicy.Mechanism != nullptr && scalingPolicy.Mechanism->Kind == ScalingMechanismKind::AddRemoveIncrementalNamedPartition)
+        {
+            // This scaling mechanism will add or remove partitions to scale the service.
+            // This is allowed only with FABRIC_PARTITION_SCHEME_NAMED
+            // Expectation is that partition names will be "0", "1", ..., "N-1" for N partitions.
+            if (scheme != FABRIC_PARTITION_SCHEME_NAMED)
+            {
+                return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, GET_NS_RC(ScalingPolicy_Named_Partitions));
+            }
+            if (partitionNames.size() > 0)
+            {
+                // Other validation will make sure that there are no duplicate names.
+                uint64 minValue = UINT_MAX;
+                uint64 maxValue = 0;
+                for (auto name : partitionNames)
+                {
+                    uint64 value;
+                    if (!Common::TryParseUInt64(name, value))
+                    {
+                        return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, GET_NS_RC(ScalingPolicy_Named_Partitions));
+                    }
+                    if (value < minValue)
+                    {
+                        minValue = value;
+                    }
+                    if (value > maxValue)
+                    {
+                        maxValue = value;
+                    }
+                }
+                if (minValue != 0 || maxValue != partitionNames.size() - 1)
+                {
+                    return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, GET_NS_RC(ScalingPolicy_Named_Partitions));
+                }
+            }
+        }
+
+        // Check the metrics: it can be RG metric or it has to be defined in the description.
+        wstring metricName = L"";
+        if (scalingPolicy.Trigger != nullptr)
+        {
+            metricName = scalingPolicy.Trigger->GetMetricName();
+        }
+        if (metricName != L"")
+        {
+            if (   metricName != Constants::SystemMetricNameCpuCores
+                && metricName != Constants::SystemMetricNameMemoryInMB)
+            {
+                bool found = false;
+                for (auto & metric : metrics)
+                {
+                    if (metric.Name == metricName)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Metric_Name), metricName));
+                }
+            }
+        }
+
+        return ErrorCodeValue::Success;
     }
 
     ErrorCode PartitionedServiceDescriptor::ValidateServiceMetrics(

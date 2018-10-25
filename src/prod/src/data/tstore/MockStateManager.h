@@ -23,7 +23,7 @@ namespace TStoreTests
         TxnReplicator::Transaction::SPtr CreateTransaction();
 
         ktl::Awaitable<void> CommitAddAsync(__in TxnReplicator::Transaction& txn);
-		ktl::Awaitable<void> CommitRemoveAsync(__in TxnReplicator::Transaction& txn);
+        ktl::Awaitable<void> CommitRemoveAsync(__in TxnReplicator::Transaction& txn);
 
         ktl::Awaitable<void> AddAsync(
             __in TxnReplicator::Transaction & transaction,
@@ -33,11 +33,11 @@ namespace TStoreTests
             __in Common::TimeSpan const & timeout,
             __in ktl::CancellationToken const & cancellationToken);
 
-		ktl::Awaitable<void> RemoveAsync(
-			__in TxnReplicator::Transaction & transaction,
-			__in KUriView const & stateProviderName,
-			__in Common::TimeSpan const & timeout,
-			__in ktl::CancellationToken const & cancellationToken);
+        ktl::Awaitable<void> RemoveAsync(
+            __in TxnReplicator::Transaction & transaction,
+            __in KUriView const & stateProviderName,
+            __in Common::TimeSpan const & timeout,
+            __in ktl::CancellationToken const & cancellationToken);
 
         ktl::Awaitable<void> CloseAsync();
 

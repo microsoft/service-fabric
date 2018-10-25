@@ -96,6 +96,11 @@ namespace Common
 
         static void PinCurrentModule();
 
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        void SetLinuxStructuredTraceEnabled(bool linuxStructuredTraceEnabled);
+#endif
+
         void LoadConfiguration(Config & config, std::wstring const & section, bool isUpdate);
 
         void Initialize();
@@ -103,6 +108,11 @@ namespace Common
         void AddEventSources();
 
         TraceTaskCodes::Enum GetTaskId(std::string const & taskName) const;
+
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        void RefreshEnableLinuxStructuredTraces(bool enabled);
+#endif
 
         void RefreshFilterStates(TraceEvent & traceEvent);
 
@@ -136,6 +146,11 @@ namespace Common
         std::unique_ptr<EventSource> sources_[TraceTaskCodes::MaxTask];
         ValueMaps maps_;
         BitMaps bitmaps_;
+
+#if defined(PLATFORM_UNIX)
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        bool isLinuxstructuredTracesEnabled_;
+#endif
 
         mutable RwLock lock_;
     };

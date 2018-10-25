@@ -41,8 +41,6 @@ target_link_libraries(${exe_LinuxRetailTests}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
   minizip
   z
 )

@@ -18,6 +18,10 @@
 #include "Hosting2/FinishRegisterApplicationHostReply.h"
 #include "Hosting2/UnregisterApplicationHostRequest.h"
 #include "Hosting2/UnregisterApplicationHostReply.h"
+#include "Hosting2/ApplicationHostCodePackageOperationRequest.h"
+#include "Hosting2/ApplicationHostCodePackageOperationReply.h"
+#include "Hosting2/CodePackageEventNotificationRequest.h"
+#include "Hosting2/CodePackageEventNotificationReply.h"
 #include "Hosting2/RegisterFabricRuntimeRequest.h"
 #include "Hosting2/RegisterFabricRuntimeReply.h"
 #include "Hosting2/UnregisterFabricRuntimeRequest.h"
@@ -58,6 +62,7 @@
 #include "Hosting2/CleanupApplicationPrincipalsReply.h"
 #include "Hosting2/GetContainerInfoReply.h"
 #include "Hosting2/GetContainerInfoRequest.h"
+#include "Hosting2/GetImagesReply.h"
 #if defined(PLATFORM_UNIX)
 #include "Hosting2/DeleteFolderRequest.h"
 #include "Hosting2/DeleteApplicationFoldersReply.h"
@@ -103,6 +108,7 @@ namespace Hosting2
             std::wstring const CodePackageTerminationNotificationRequest = L"CodePackageTerminationNotificationRequest";
             std::wstring const GetFabricProcessSidRequest = L"GetFabricProcessSidRequest";
             std::wstring const UpdateCodePackageContextRequest = L"UpdateCodePackageContextRequest";
+            std::wstring const CodePackageEventNotification = L"CodePackageEventNotification";
 
             std::wstring const ConfigureSecurityPrincipalRequest = L"ConfigureSecurityPrincipalRequest";
             std::wstring const CleanupSecurityPrincipalRequest = L"CleanupSecurityPrincipalRequest";
@@ -146,6 +152,9 @@ namespace Hosting2
             std::wstring const AssignIpAddresses = L"AssignIpAddresses";
             std::wstring const SetupContainerGroup = L"SetupContainerGroup";
             std::wstring const ConfigureEndpointCertificatesAndFirewallPolicy = L"ConfigureEndpointCertificatesAndFirewallPolicy";
+            std::wstring const GetImages = L"GetImages"; // Header for GetImages request from FabricActivatorClient
+            std::wstring const DockerProcessTerminatedNotificationRequest = L"DockerProcessTerminatedNotificationRequest";
+            std::wstring const ApplicationHostCodePackageOperationRequest = L"ApplicationHostCodePackageOperationRequest";
         }
     }
 }

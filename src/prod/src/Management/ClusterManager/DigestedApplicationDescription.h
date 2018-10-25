@@ -52,6 +52,7 @@ namespace Management
             CodePackageDescriptionMap CodePackages;
 
             std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> ResourceGovernanceDescriptions;
+            std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> CodePackageContainersImages;
 
         private:
             bool HasCodePackageChange(

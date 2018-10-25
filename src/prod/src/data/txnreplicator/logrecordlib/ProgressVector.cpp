@@ -89,7 +89,6 @@ bool ProgressVector::IsBrandNewReplica(CopyContextParameters const & copyContext
            copyContextParameters.LogTailLsn == Constants::OneLsn;
 }
 
-
 CopyModeResult ProgressVector::FindCopyMode(
     __in CopyContextParameters const & sourceParameters,
     __in CopyContextParameters const & targetParameters,
@@ -386,10 +385,13 @@ SharedProgressVectorEntry ProgressVector::FindSharedVector(
 
     if ((targetProgressVector.LastProgressVectorEntry.CurrentEpoch.DataLossVersion == 
             sourceProgressVector.LastProgressVectorEntry.CurrentEpoch.DataLossVersion) &&
-        (targetIndex < targetProgressVector.Length - 1))
+        (targetIndex < targetProgressVector.Length - 1) && 
+        targetProgressVector.LastProgressVectorEntry.CurrentEpoch.DataLossVersion == targetProgressVector.vectors_[targetIndex].CurrentEpoch.DataLossVersion)
     {
         // Target replica could only have repeatedly attempted to become a
         // primary without ever making progress at the shared dataloss number
+        // We can do "double progress check" only if there has NOT been any other data loss happening on the target after shared point. Having a differnt dataloss numbers in shared vector and target's tail
+        // means that target has been a valid primary and progressed in LSN until hitting a dataloss and then a very old secondary can become primary and invalidate all the progress made by the target.
         LONG64 failureLsn = targetProgressVector.vectors_[targetIndex + 1].Lsn;
         LONG64 failureLsnIncremented = 0;
 
@@ -533,12 +535,6 @@ ProgressVectorEntry ProgressVector::Find(__in Epoch const & epoch) const
             return existingVector;
         }
     }
-
-    ASSERT_IFNOT(
-        false,
-        "Failed to find progress vector entry in Epoch <{0},{1}>",
-        epoch.DataLossVersion,
-        epoch.ConfigurationVersion);
 
     return ProgressVectorEntry();
 }

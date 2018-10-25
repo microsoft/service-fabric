@@ -149,6 +149,10 @@ void ServiceCache::RepartitionServiceAsyncOperation::AddPartitions(AsyncOperatio
         failoverUnits_.push_back(FailoverUnitUPtr(failoverUnit));
     }
 
+    // Forced update of PLB (do not check for capacity).
+    int64 dummyDuration = 0;
+    serviceCache_.PLBUpdateService(*newServiceInfo_, dummyDuration, true);
+
     serviceCache_.fm_.Store.BeginUpdateServiceAndFailoverUnits(
         nullptr, // ApplicationInfo
         nullptr, // ServiceType
@@ -163,6 +167,9 @@ void ServiceCache::RepartitionServiceAsyncOperation::AddPartitions(AsyncOperatio
 
 void ServiceCache::RepartitionServiceAsyncOperation::RemovePartitions(AsyncOperationSPtr const& thisSPtr)
 {
+    // Forced update of PLB (do not check for capacity).
+    int64 dummyDuration = 0;
+    serviceCache_.PLBUpdateService(*newServiceInfo_, dummyDuration, true);
     serviceCache_.fm_.Store.BeginUpdateServiceAndFailoverUnits(
         nullptr, // ApplicationInfo
         nullptr, // ServiceType
@@ -222,6 +229,12 @@ void ServiceCache::RepartitionServiceAsyncOperation::OnStoreUpdateCompleted(Asyn
         {
             serviceCache_.fm_.FailoverUnitCacheObj.InsertFailoverUnitInCache(move(failoverUnits_[i]));
         }
+    }
+    else
+    {
+        // Repartitioning failed: need to revert the update to PLB
+        int64 dummyDuration = 0;
+        serviceCache_.PLBUpdateService(*lockedServiceInfo_, dummyDuration, true);
     }
 
     TryComplete(updateOperation->Parent, error);

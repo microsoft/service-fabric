@@ -37,6 +37,7 @@ namespace Data
                 __in FABRIC_REPLICA_ID replicaId,
                 __in ULONG32 rootStateProviderCount,
                 __in ULONG32 stateProviderCount,
+                __in bool doNotWritePrepareCheckpointLSN,
                 __in FABRIC_SEQUENCE_NUMBER prepareCheckpointLSN,
                 __in KAllocator & allocator,
                 __out SPtr & result) noexcept;
@@ -85,6 +86,7 @@ namespace Data
                 __in FABRIC_REPLICA_ID replicaId,
                 __in ULONG32 rootStateProviderCount,
                 __in ULONG32 stateProviderCount,
+                __in bool doNotWritePrepareCheckpointLSN,
                 __in FABRIC_SEQUENCE_NUMBER prepareCheckpointLSN);
 
         private:
@@ -96,6 +98,9 @@ namespace Data
             const KStringView RootStateProviderCountPropertyName_ = L"roots";
             const KStringView StateProviderCountPropertyName_ = L"count";
             const KStringView PrepareCheckpointLSNPropertyName_ = L"checkpointlsn";
+
+        private:
+            const bool doNotWritePrepareCheckpointLSN_;
 
             // Values for the properties
             Utilities::ThreadSafeSPtrCache<Utilities::BlockHandle> blocksHandle_;

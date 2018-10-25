@@ -5,10 +5,6 @@
 
 #include <Serialization.h>
 
-#if !defined(PLATFORM_UNIX)
-#include <kwfcommon.h>
-#endif
-
 using namespace Serialization;
 
 KAllocator& FabricSerializationCommon::GetPagedKtlAllocator()

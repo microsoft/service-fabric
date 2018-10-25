@@ -60,8 +60,6 @@ ErrorCode FailoverManagerServiceFactory::CreateReplica(
     FABRIC_REPLICA_ID replicaId,
     __out IStatefulServiceReplicaPtr & replicaResult)
 {
-    UNREFERENCED_PARAMETER(initializationData);
-
     WriteInfo(
         TraceFactory, 
         "CreateReplica called at node instance = {0}",
@@ -116,7 +114,8 @@ ErrorCode FailoverManagerServiceFactory::CreateReplica(
                 Path::Combine(reliabilitySubsystem_.WorkingDirectory, FMStoreDirectory),
                 FailoverConfig::GetConfig().CompactionThresholdInMB),
             reliabilitySubsystem_.ClientFactory, 
-            serviceName);
+            serviceName,
+            initializationData);
 
         if (!error.IsSuccess()) { return error; }
 
@@ -203,9 +202,24 @@ void FailoverManagerServiceFactory::OnServiceChangeRole(FABRIC_REPLICA_ROLE newR
 
         auto localFederationSPtr = federationSPtr_;
 
+        Api::IServiceManagementClientPtr serviceManagementClient;
+        auto error = reliabilitySubsystem_.ClientFactory->CreateServiceManagementClient(serviceManagementClient);
+
+        if (!error.IsSuccess())
+        {
+            // Do not block opening of FM primary if we can't get the client.
+            // Operations that use client should check if it is valid.
+            WriteWarning(
+                TraceFactory,
+                "FM {0} cannot open ServiceManagementClient. Error={1}",
+                fm_->Id,
+                error);
+        }
+
         fm_ = FailoverManager::CreateFM(
             move(localFederationSPtr),
             reliabilitySubsystem_.HealthClient,
+            serviceManagementClient,
             reliabilitySubsystem_.NodeConfig,
             move(fmStore),
             servicePartition,

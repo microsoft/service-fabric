@@ -57,9 +57,9 @@ namespace ReplicationComponent {
             auto inner = session_->BeginEstablishCopy(
                 replicationStartSeq,
                 parent_.hasPersistedState_,
-                [this, thisSPtr](Common::ErrorCodeValue::Enum error, Transport::MessageUPtr &&)
+                [this, thisSPtr](Common::ErrorCode const & error, Transport::MessageUPtr &&)
                 {
-                    if (error == Common::ErrorCodeValue::Success)
+                    if (error.IsSuccess())
                     {
                         healthReporter_->ScheduleOKReport();
                     }

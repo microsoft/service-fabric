@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>AzureUploaderCommon Class Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>AzureUploaderCommon</AssemblyName>
+    <PackageId>AzureUploaderCommon</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\dll\_friends.cs;
+      ..\..\AzureConstants.cs;
+      ..\..\AzureUtility.cs;
+      ..\..\ConnectionStringParser.cs;
+      ..\..\IProtectedAccountKeyPlatform.cs;
+      ..\..\ProtectedAccountKeyHelper.cs;
+      ..\..\MaxRetriesException.cs;
+      ..\..\StorageConnection.cs;
+      ..\..\StorageAccountFactory.cs;
+      ..\..\CloudStorageAccountFactory.cs"
+      Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <Compile Include="
+      ..\..\..\..\..\..\..\infrastructurewrapper\azurewrapper\AzureFileStore.cs;
+      ..\..\ProtectedAccountKeyPlatformLinux.cs;"
+      Condition=" '$(TargetsLinux)' == 'true' " />
+    <Compile Include="
+      ..\..\..\..\..\..\..\infrastructurewrapper\azurewrapper\AzureRegistryStore.cs;
+      ..\..\ProtectedAccountKeyPlatformWindows.cs;"
+      Condition=" '$(TargetsWindows)' == 'true' " />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\..\..\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.4.0" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

@@ -21,11 +21,11 @@ namespace ServiceModel
             Federation::NodeId const & nodeId,
             FABRIC_HEALTH_STATE aggregatedHealthState);
 
-        NodeAggregatedHealthState(NodeAggregatedHealthState const & other);
-        NodeAggregatedHealthState & operator = (NodeAggregatedHealthState const & other);
+        NodeAggregatedHealthState(NodeAggregatedHealthState const & other) = default;
+        NodeAggregatedHealthState & operator = (NodeAggregatedHealthState const & other) = default;
 
-        NodeAggregatedHealthState(NodeAggregatedHealthState && other);
-        NodeAggregatedHealthState & operator = (NodeAggregatedHealthState && other);
+        NodeAggregatedHealthState(NodeAggregatedHealthState && other) = default;
+        NodeAggregatedHealthState & operator = (NodeAggregatedHealthState && other) = default;
 
         ~NodeAggregatedHealthState();
 

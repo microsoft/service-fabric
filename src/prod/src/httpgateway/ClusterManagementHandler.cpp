@@ -342,34 +342,14 @@ void ClusterManagementHandler::StartClusterConfigurationUpgrade(__in AsyncOperat
     auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
     auto &client = handlerOperation->FabricClient;
 
-    StartUpgradeData data;
-    auto error = JsonDeserialize(data, handlerOperation->Body);
+    StartUpgradeDescription description;
+    auto error = JsonDeserialize(description, handlerOperation->Body);
     if (!error.IsSuccess())
     {
         handlerOperation->OnError(thisSPtr, ErrorCodeValue::InvalidArgument);
         return;
     }
 
-    FABRIC_START_UPGRADE_DESCRIPTION sud;
-    sud.ClusterConfig = data.ClusterConfig.c_str();
-    sud.HealthCheckRetryTimeoutInSeconds = data.HealthCheckRetryTimeout.get_Seconds();
-    sud.HealthCheckWaitDurationInSeconds = data.HealthCheckWaitDurationInSeconds.get_Seconds();
-    sud.HealthCheckStableDurationInSeconds = data.HealthCheckStableDurationInSeconds.get_Seconds();
-    sud.UpgradeDomainTimeoutInSeconds = data.UpgradeDomainTimeoutInSeconds.get_Seconds();
-    sud.UpgradeTimeoutInSeconds = data.UpgradeTimeoutInSeconds.get_Seconds();
-    sud.MaxPercentUnhealthyApplications = data.MaxPercentUnhealthyApplications;
-    sud.MaxPercentUnhealthyNodes = data.MaxPercentUnhealthyNodes;
-    sud.MaxPercentDeltaUnhealthyNodes = data.MaxPercentDeltaUnhealthyNodes;
-    sud.MaxPercentUpgradeDomainDeltaUnhealthyNodes = data.MaxPercentUpgradeDomainDeltaUnhealthyNodes;
-
-    StartUpgradeDescription description;
-    error = description.FromPublicApi(sud);
-    if (!error.IsSuccess())
-    {
-        WriteWarning(TraceType, "StartUpgradeDescription.FromPublicApi failed with {0}", error);
-        handlerOperation->OnError(thisSPtr, error);
-        return;
-    }
     auto inner = client.ClusterMgmtClient->BeginUpgradeConfiguration(
         description,
         handlerOperation->Timeout,

@@ -118,6 +118,18 @@ namespace Common
         static Common::ErrorCode SetEnableCircularTraceSession(
             BOOLEAN, LPCWSTR machineName);
 
+        static Common::ErrorCode SetEnableUnsupportedPreviewFeatures(
+            BOOLEAN, LPCWSTR machineName);
+
+        static Common::ErrorCode GetEnableUnsupportedPreviewFeatures(
+            __out bool &);
+
+        static Common::ErrorCode SetIsSFVolumeDiskServiceEnabled(
+            BOOLEAN, LPCWSTR machineName);
+
+        static Common::ErrorCode GetIsSFVolumeDiskServiceEnabled(
+            __out bool &);
+
         static void GetFabricTracesTestKeyword(
             __out std::wstring &);
 

@@ -15,6 +15,7 @@ namespace Hosting2
         GetContainerInfoRequest(
             std::wstring const & nodeId,
             std::wstring const & appServiceId,
+            bool isServicePackageActivationModeExclusive,
             std::wstring const & containerInfoType,
             std::wstring const & containerInfoArgs);
 
@@ -24,6 +25,9 @@ namespace Hosting2
         __declspec(property(get = get_AppServiceId)) std::wstring const & ApplicationServiceId;
         std::wstring const & get_AppServiceId() const { return appServiceId_; }
 
+        __declspec(property(get = get_IsServicePackageActivationModeExclusive)) bool IsServicePackageActivationModeExclusive;
+        bool get_IsServicePackageActivationModeExclusive() { return isServicePackageActivationModeExclusive_; }
+
         __declspec(property(get = get_ContainerInfoType)) std::wstring const & ContainerInfoType;
         std::wstring const & get_ContainerInfoType() const { return containerInfoType_; }
     
@@ -32,11 +36,12 @@ namespace Hosting2
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_04(nodeId_, appServiceId_, containerInfoType_, containerInfoArgs_);
+        FABRIC_FIELDS_05(nodeId_, appServiceId_, isServicePackageActivationModeExclusive_, containerInfoType_, containerInfoArgs_);
 
     private:
         std::wstring nodeId_;
         std::wstring appServiceId_;
+        bool isServicePackageActivationModeExclusive_;
         std::wstring containerInfoType_;
         std::wstring containerInfoArgs_;
     };

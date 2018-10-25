@@ -47,9 +47,12 @@ namespace Hosting2
             __out Hosting2::ContainerInspectResponse & containerInspect) = 0;
 
         virtual Common::AsyncOperationSPtr BeginDeactivate(
-            std::wstring const & containerName,
+            Hosting2::ContainerDescription const & containerDescription,
             bool configuredForAutoRemove,
             bool isContainerRoot,
+#if defined(PLATFORM_UNIX)
+            bool isContainerIsolated,
+#endif
             std::wstring const & cgroupName,
             bool isGracefulDeactivation,
             Common::TimeSpan const timeout,
@@ -60,9 +63,10 @@ namespace Hosting2
             Common::AsyncOperationSPtr const & operation) = 0;
 
         virtual Common::AsyncOperationSPtr BeginGetLogs(
-            std::wstring const & containerName,
+            Hosting2::ContainerDescription const & containerDescription,
+            bool isServicePackageActivationModeExclusive,
             std::wstring const & containerLogsArgs,
-            bool isContainerRunInteractive,
+            int previous,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent) = 0;
@@ -90,7 +94,7 @@ namespace Hosting2
             Common::AsyncOperationSPtr const & operation) = 0;
 
         virtual Common::AsyncOperationSPtr BeginInvokeContainerApi(
-            std::wstring const & containerName,
+            ContainerDescription const & containerDescription,
             std::wstring const & httpVerb,
             std::wstring const & uriPath,
             std::wstring const & contentType,
@@ -104,7 +108,7 @@ namespace Hosting2
             __out std::wstring & result) = 0;
 
         virtual void TerminateContainer(
-            std::wstring const & containerName,
+            Hosting2::ContainerDescription const & containerDescription,
             bool isContainerRoot,
             std::wstring const & cgroupName) = 0;
 
@@ -119,5 +123,7 @@ namespace Hosting2
             std::wstring const & servicePackageId) = 0;
 
         virtual void CleanupAssignedIpsToNode(std::wstring const & nodeId) = 0;
+
+        virtual void OnContainerActivatorServiceTerminated() = 0;
     };
 }

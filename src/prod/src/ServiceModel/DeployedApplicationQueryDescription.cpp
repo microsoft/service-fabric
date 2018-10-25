@@ -15,7 +15,7 @@ DeployedApplicationQueryDescription::DeployedApplicationQueryDescription()
     : nodeName_()
     , applicationName_()
     , includeHealthState_(false)
-    , queryPagingDescription_()
+    , queryPagingDescriptionUPtr_()
 {
 }
 
@@ -52,7 +52,7 @@ Common::ErrorCode ServiceModel::DeployedApplicationQueryDescription::FromPublicA
             return error;
         }
 
-        queryPagingDescription_ = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryPagingDescriptionUPtr_ = make_unique<QueryPagingDescription>(move(pagingDescription));
     }
 
     return ErrorCode::Success();
@@ -113,7 +113,7 @@ Common::ErrorCode DeployedApplicationQueryDescription::GetDescriptionFromQueryAr
     error = pagingDescription.GetFromArgumentMap(argMap);
     if (error.IsSuccess())
     {
-        queryPagingDescription_ = make_unique<QueryPagingDescription>(move(pagingDescription));
+        queryPagingDescriptionUPtr_ = make_unique<QueryPagingDescription>(move(pagingDescription));
     }
 
     return error;
@@ -139,9 +139,9 @@ void DeployedApplicationQueryDescription::GetQueryArgumentMap(__out QueryArgumen
         Query::QueryResourceProperties::QueryMetadata::IncludeHealthState,
         wformatString(includeHealthState_));
 
-    if (queryPagingDescription_ != nullptr)
+    if (queryPagingDescriptionUPtr_ != nullptr)
     {
-        queryPagingDescription_->SetQueryArguments(argMap);
+        queryPagingDescriptionUPtr_->SetQueryArguments(argMap);
     }
 }
 

@@ -250,6 +250,8 @@ void ProcessFabricUpgradeContextAsyncOperation::TraceQueryableUpgradeStart()
         L""); // targetManifestId
 
     CMEvents::Trace->ClusterUpgradeStartOperational(
+        this->ReplicaActivityId.ActivityId.Guid,
+        this->UpgradeContext.CurrentVersion.ToString(),
         this->UpgradeContext.UpgradeDescription.Version.ToString(),
         this->UpgradeContext.UpgradeDescription.UpgradeType,
         this->UpgradeContext.UpgradeDescription.RollingUpgradeMode,
@@ -269,12 +271,13 @@ void ProcessFabricUpgradeContextAsyncOperation::TraceQueryableUpgradeDomainCompl
         wformatString(recentlyCompletedUDs));
 
     CMEvents::Trace->ClusterUpgradeDomainCompleteOperational(
+        this->ReplicaActivityId.ActivityId.Guid,
         (this->UpgradeContext.UpgradeState == FabricUpgradeState::RollingBack ?
             this->UpgradeContext.CurrentVersion.ToString() :
             this->UpgradeContext.UpgradeDescription.Version.ToString()),
         this->UpgradeContext.UpgradeState,
         wformatString(recentlyCompletedUDs),
-        this->UpgradeContext.UpgradeDomainElapsedTime);
+        this->UpgradeContext.UpgradeDomainElapsedTime.TotalMillisecondsAsDouble());
 }
 
 std::wstring ProcessFabricUpgradeContextAsyncOperation::GetTraceAnalysisContext()
@@ -640,7 +643,7 @@ void ProcessFabricUpgradeContextAsyncOperation::FinishUpgrade(AsyncOperationSPtr
         return;
     }
 
-    error = this->ClearVerifiedUpgradeDomains<StoreDataVerifiedFabricUpgradeDomains>(storeTx, *make_shared<StoreDataVerifiedFabricUpgradeDomains>());
+    error = this->ClearVerifiedUpgradeDomains<StoreDataVerifiedFabricUpgradeDomains>(storeTx, *make_unique<StoreDataVerifiedFabricUpgradeDomains>());
     if (!error.IsSuccess())
     {
         this->TrySchedulePrepareFinishUpgrade(error, thisSPtr);
@@ -681,8 +684,9 @@ void ProcessFabricUpgradeContextAsyncOperation::OnFinishUpgradeCommitComplete(
             L""); // targetManifestId
 
         CMEvents::Trace->ClusterUpgradeCompleteOperational(
+            this->ReplicaActivityId.ActivityId.Guid,
             this->UpgradeContext.UpgradeDescription.Version.ToString(),
-            this->UpgradeContext.OverallUpgradeElapsedTime);
+            this->UpgradeContext.OverallUpgradeElapsedTime.TotalMillisecondsAsDouble());
 
         this->TryComplete(thisSPtr, error);
     }
@@ -734,7 +738,7 @@ void ProcessFabricUpgradeContextAsyncOperation::FinalizeRollback(AsyncOperationS
         return;
     }
 
-    error = this->ClearVerifiedUpgradeDomains<StoreDataVerifiedFabricUpgradeDomains>(storeTx, *make_shared<StoreDataVerifiedFabricUpgradeDomains>());
+    error = this->ClearVerifiedUpgradeDomains<StoreDataVerifiedFabricUpgradeDomains>(storeTx, *make_unique<StoreDataVerifiedFabricUpgradeDomains>());
     if (!error.IsSuccess())
     {
         this->TryScheduleFinalizeRollback(error, thisSPtr);
@@ -775,9 +779,10 @@ void ProcessFabricUpgradeContextAsyncOperation::OnFinalizeRollbackCommitComplete
             L""); // targetManifestId after rollback
 
         CMEvents::Trace->ClusterUpgradeRollbackCompleteOperational(
+            this->ReplicaActivityId.ActivityId.Guid,
             this->UpgradeContext.CurrentVersion.ToString(),
             this->UpgradeContext.CommonUpgradeContextData.FailureReason,
-            this->UpgradeContext.OverallUpgradeElapsedTime);
+            this->UpgradeContext.OverallUpgradeElapsedTime.TotalMillisecondsAsDouble());
 
         this->TryComplete(thisSPtr, error);
     }
@@ -875,6 +880,11 @@ void ProcessFabricUpgradeContextAsyncOperation::StartRollback(AsyncOperationSPtr
             this->SetCommonContextDataForRollback(false); // goalStateExists
 
             error = storeTx.Update(this->UpgradeContext);
+
+            if (error.IsSuccess())
+            {
+                error = this->ClearVerifiedUpgradeDomains<StoreDataVerifiedFabricUpgradeDomains>(storeTx, *make_unique<StoreDataVerifiedFabricUpgradeDomains>());
+            }
         }
     }
 
@@ -929,10 +939,11 @@ void ProcessFabricUpgradeContextAsyncOperation::OnStartRollbackCommitComplete(
             L"", // currentManifestId before rollback
             L""); // targetManifestId after rollback
 
-        CMEvents::Trace->ClusterUpgradeRollbackOperational(
-            this->UpgradeContext.CurrentVersion.ToString(),
+        CMEvents::Trace->ClusterUpgradeRollbackStartOperational(
+            this->ReplicaActivityId.ActivityId.Guid,
+            this->UpgradeContext.CurrentVersion.ToString(),  // rolling back to this version.
             this->UpgradeContext.CommonUpgradeContextData.FailureReason,
-            this->UpgradeContext.OverallUpgradeElapsedTime);
+            this->UpgradeContext.OverallUpgradeElapsedTime.TotalMillisecondsAsDouble());
 
         this->ScheduleRequestToFM(thisSPtr);
     }

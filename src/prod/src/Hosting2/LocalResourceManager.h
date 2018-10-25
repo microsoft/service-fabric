@@ -44,11 +44,17 @@ namespace Hosting2
         // Retrieves the capacity on this node for RG metrics.
         uint64 GetResourceNodeCapacity(std::wstring const& resourceName) const;
 
+        // Retrieves available container images from docker
+        void GetNodeAvailableContainerImages();
+        void OnGetNodeAvailableContainerImagesCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
+        // Method for sending avilable containers images to the FM
+        void SendAvailableContainerImagesToFM() const;
+
     private:
         // FabricComponent functions.
         virtual Common::ErrorCode OnOpen();
         virtual Common::ErrorCode OnClose();
-        virtual void OnAbort() {}
+        virtual void OnAbort();
         bool GetCapacityFromConfiguration(std::wstring const & metric, uint64 & capacity);
 
         double GetCpuFraction(CodePackage const & package, ServiceModel::ResourceGovernancePolicyDescription const & rg, bool & isDefined) const;
@@ -93,7 +99,7 @@ namespace Hosting2
         Common::RwLock lock_;
 
         // reference on hostingSunsystem - needed for reporting health warnings
-        const HostingSubsystem & hosting_;
+        HostingSubsystem & hosting_;
 
         // these mask will determine if node capacities are not specified correctly and we need to emit a health warning
         uint healthWarning_;
@@ -107,6 +113,15 @@ namespace Hosting2
         uint64 systemMemoryInMB_;
         // Number of cores that are present on the machine
         uint64 systemCpuCores_;
+
+        // Timer for GetImages action
+        Common::TimerSPtr getImagesTimer_;
+
+        // Counter for errors
+        int64 getImagesQueryErrors_;
+
+        // Available images on node
+        std::vector<wstring> images_;
     };
 
     class LocalResourceManagerTestHelper

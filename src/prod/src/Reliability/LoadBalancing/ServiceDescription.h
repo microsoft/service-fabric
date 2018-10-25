@@ -34,7 +34,8 @@ namespace Reliability
                 bool hasPersistedState = true,
                 ServiceModel::ServicePackageIdentifier && servicePackageIdentifier = ServiceModel::ServicePackageIdentifier(),
                 ServiceModel::ServicePackageActivationMode::Enum servicePackageActivationMode = ServiceModel::ServicePackageActivationMode::SharedProcess,
-                uint64 serviceInstance = 0);
+                uint64 serviceInstance = 0,
+                vector<Reliability::ServiceScalingPolicyDescription> && scalingPolicies = vector<Reliability::ServiceScalingPolicyDescription>());
 
             ServiceDescription(ServiceDescription const & other);
 
@@ -102,6 +103,16 @@ namespace Reliability
             __declspec (property(get = get_ServicePackageActivationMode)) ServiceModel::ServicePackageActivationMode::Enum ServicePackageActivationMode;
             ServiceModel::ServicePackageActivationMode::Enum get_ServicePackageActivationMode() const { return servicePackageActivationMode_; }
 
+            __declspec(property(get = get_IsAutoScalingDefined)) bool IsAutoScalingDefined;
+            bool get_IsAutoScalingDefined() const { return scalingPolicies_.size() > 0; }
+
+            // Currently we support only one auto scaling policy per service.
+            __declspec(property(get = get_FirstAutoScalingPolicy)) Reliability::ServiceScalingPolicyDescription const& AutoScalingPolicy;
+            Reliability::ServiceScalingPolicyDescription get_FirstAutoScalingPolicy() const;
+
+            __declspec (property(get = get_ServiceScalingPolicies)) vector<Reliability::ServiceScalingPolicyDescription> const & ScalingPolicies;
+            vector<Reliability::ServiceScalingPolicyDescription> const & get_ServiceScalingPolicies() const { return scalingPolicies_; }
+
             __declspec (property(get = get_ServiceInstance, put = set_ServiceInstance)) uint64 ServiceInstance;
             uint64 get_ServiceInstance() const { return serviceInstance_; }
             void set_ServiceInstance(int64 instance) { serviceInstance_ = instance; }
@@ -142,6 +153,7 @@ namespace Reliability
             ServiceModel::ServicePackageIdentifier servicePackageIdentifier_;
             ServiceModel::ServicePackageActivationMode::Enum servicePackageActivationMode_;
             uint64 serviceInstance_;
+            vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies_;
         };
     }
 }

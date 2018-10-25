@@ -1181,7 +1181,7 @@ OperationDataStream::SPtr TestStateProvider::GetCurrentState()
         GetThisAllocator()).RawPtr();
 }
 
-void TestStateProvider::BeginSettingCurrentState()
+Awaitable<void> TestStateProvider::BeginSettingCurrentStateAsync()
 {
     // Only one copy per lifetime
     ASSERT_IFNOT(
@@ -1198,6 +1198,7 @@ void TestStateProvider::BeginSettingCurrentState()
 
     currentVersion_ = StartingVersionNumber;
     currentValue_ = nullptr;
+    co_return;
 }
 
 Awaitable<void> TestStateProvider::SetCurrentStateAsync(

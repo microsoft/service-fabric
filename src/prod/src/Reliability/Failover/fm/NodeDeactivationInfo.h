@@ -101,6 +101,8 @@ namespace Reliability
 
             void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
 
+            std::wstring GetBatchIdsWithIntent();
+
         private:
 
             void UpdateSafetyChecks(Federation::NodeId nodeId, std::map<Federation::NodeId, NodeUpgradeProgress> && progressDetails);

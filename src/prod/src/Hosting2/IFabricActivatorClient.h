@@ -97,7 +97,7 @@ namespace Hosting2
             Common::AsyncOperationSPtr const &,
             __out std::vector<std::wstring> & deletedAppFolders) = 0;
 #endif
-        
+
         virtual Common::AsyncOperationSPtr BeginConfigureSMBShare(
             std::vector<std::wstring> const & sidPrincipals,
             DWORD accessMask,
@@ -221,28 +221,34 @@ namespace Hosting2
             __out std::map<std::wstring, std::wstring> & certificatePaths,
             __out std::map<std::wstring, std::wstring> & certificatePasswordPaths) = 0;
 
-       virtual Common::AsyncOperationSPtr BeginCleanupContainerCertificateExport(
+        virtual Common::AsyncOperationSPtr BeginCleanupContainerCertificateExport(
             std::map<std::wstring, std::wstring> const & certificatePaths,
             std::map<std::wstring, std::wstring> const & certificatePasswordPaths,
             Common::TimeSpan,
             Common::AsyncCallback const &,
             Common::AsyncOperationSPtr const &) = 0;
-       virtual Common::ErrorCode EndCleanupContainerCertificateExport(
+        virtual Common::ErrorCode EndCleanupContainerCertificateExport(
             Common::AsyncOperationSPtr const &) = 0;
 
-       virtual Common::AsyncOperationSPtr BeginSetupContainerGroup(
-           std::wstring const & containerGroupId,
-           std::wstring const & assignedIPAddress,
-           std::wstring const & appfolder,
-           std::wstring const & appId,
-           ServiceModel::ServicePackageResourceGovernanceDescription const & spRg,
-           bool isCleanup,
-           Common::TimeSpan,
-           Common::AsyncCallback const &,
-           Common::AsyncOperationSPtr const &) = 0;
-       virtual Common::ErrorCode EndSetupContainerGroup(
-           Common::AsyncOperationSPtr const &,
-           __out std::wstring & data) = 0;
+        virtual Common::AsyncOperationSPtr BeginSetupContainerGroup(
+            std::wstring const & containerGroupId,
+            std::wstring const & assignedIPAddress,
+            std::wstring const & appfolder,
+            std::wstring const & appId,
+            std::wstring const & appName,
+            std::wstring const & partitionId,
+            std::wstring const & servicePackageActivationId,
+            ServiceModel::ServicePackageResourceGovernanceDescription const & spRg,
+#if defined(PLATFORM_UNIX)
+            ContainerPodDescription const & podDescription,
+#endif
+            bool isCleanup,
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndSetupContainerGroup(
+            Common::AsyncOperationSPtr const &,
+            __out std::wstring & data) = 0;
 
         virtual Common::ErrorCode ConfigureEndpointSecurity(
             std::wstring const & principalSid,
@@ -271,7 +277,8 @@ namespace Hosting2
             Common::AsyncOperationSPtr const &) =0 ;
 
         virtual Common::AsyncOperationSPtr BeginGetContainerInfo(
-            std::wstring const & containerName,
+            std::wstring const & appServiceId,
+            bool isServicePackageActivationModeExclusive,
             std::wstring const & containerInfoType,
             std::wstring const & containerInfoArgs,
             Common::TimeSpan,
@@ -280,7 +287,15 @@ namespace Hosting2
         virtual Common::ErrorCode EndGetContainerInfo(
             Common::AsyncOperationSPtr const &,
             __out wstring & containerInfo) = 0;
-        
+
+        virtual Common::AsyncOperationSPtr BeginGetImages(
+            Common::TimeSpan,
+            Common::AsyncCallback const &,
+            Common::AsyncOperationSPtr const &) = 0;
+        virtual Common::ErrorCode EndGetImages(
+            Common::AsyncOperationSPtr const &,
+            __out std::vector<wstring> & images) = 0;
+
         virtual void AbortApplicationEnvironment(std::wstring const & applicationId) = 0;
 
         virtual void AbortProcess(std::wstring const & appServiceId) = 0;
@@ -291,11 +306,14 @@ namespace Hosting2
         virtual Common::HHandler AddContainerHealthCheckStatusChangeHandler(Common::EventHandler const & eventhandler) = 0;
         virtual void RemoveContainerHealthCheckStatusChangeHandler(Common::HHandler const & handler) = 0;
 
+
+        virtual Common::HHandler AddRootContainerTerminationHandler(Common::EventHandler const & eventhandler) = 0;
+        virtual void RemoveRootContainerTerminationHandler(Common::HHandler const & handler) = 0;
+
         virtual bool IsIpcClientInitialized() = 0;
 
         virtual Common::AsyncOperationSPtr BeginConfigureNodeForDnsService(
             bool,
-            std::wstring const &,
             Common::TimeSpan,
             Common::AsyncCallback const &,
             Common::AsyncOperationSPtr const &) = 0;

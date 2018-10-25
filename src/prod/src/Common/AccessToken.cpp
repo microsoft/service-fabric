@@ -53,9 +53,9 @@ ErrorCode AccessToken::CreateProcessToken(HANDLE processHandle, DWORD desiredAcc
         string s(buf);
         string uidtag("Uid:");
         int idx = s.find(uidtag);
-        if(idx != string::npos)
+        if (idx != string::npos)
         {
-            idx += (int) uidtag.length();
+            idx += (int)uidtag.length();
             sscanf(s.c_str() + idx, "%d", &uid);
         }
     }
@@ -78,14 +78,14 @@ ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountN
 }
 
 ErrorCode AccessToken::CreateUserToken(
-        wstring const & accountName,
-        wstring const & domain,
-        wstring const & password,
-        DWORD logonType,
-        DWORD logonProvider,
-        bool loadProfile,
-        PSID const & sid,
-        __out AccessTokenSPtr & accessToken)
+    wstring const & accountName,
+    wstring const & domain,
+    wstring const & password,
+    DWORD logonType,
+    DWORD logonProvider,
+    bool loadProfile,
+    PSID const & sid,
+    __out AccessTokenSPtr & accessToken)
 {
     accessToken = make_shared<AccessToken>();
     accessToken->accountName_ = accountName;
@@ -247,10 +247,10 @@ ErrorCode AccessToken::GetUserTokenAndProfileHandle(
     ASSERT_IF(password.empty(), "Password must not be empty.");
 
     HANDLE token;
-    if(sid)
+    if (sid)
     {
         auto error = AccessToken::CreateUserTokenWithSid(accountName, domain, password, logonType, logonProvider, sid, tokenHandle);
-        if(!error.IsSuccess())
+        if (!error.IsSuccess())
         {
             return error;
         }
@@ -270,7 +270,7 @@ ErrorCode AccessToken::GetUserTokenAndProfileHandle(
         }
         tokenHandle = TokenHandle::CreateSPtr(token);
     }
-    if(loadProfile)
+    if (loadProfile)
     {
         PROFILEINFO profileInfo = { 0 };
         ::ZeroMemory(&profileInfo, sizeof(PROFILEINFO));
@@ -297,10 +297,10 @@ ErrorCode AccessToken::GetUserTokenAndProfileHandle(
 ErrorCode AccessToken::CreateUserToken(
     wstring const & accountName,
     wstring const & domain,
-    wstring const & password, 
+    wstring const & password,
     DWORD logonType,
     DWORD logonProvider,
-    bool loadProfile, 
+    bool loadProfile,
     PSID const & sid,
     __out AccessTokenSPtr & accessToken)
 {
@@ -314,7 +314,7 @@ ErrorCode AccessToken::CreateUserToken(
         logonType,
         logonProvider,
         loadProfile,
-        sid, 
+        sid,
         tokenHandle,
         profileHandle);
     if (!error.IsSuccess())
@@ -360,25 +360,25 @@ ErrorCode AccessToken::CreateUserToken(
 }
 
 ErrorCode AccessToken::CreateUserTokenWithSid(
-    wstring const & accountName, 
+    wstring const & accountName,
     wstring const & domain,
     wstring const & password,
     DWORD logonType,
     DWORD logonProvider,
-    PSID const & sidToAdd, 
+    PSID const & sidToAdd,
     __out TokenHandleSPtr & tokenHandle)
 {
     PTOKEN_GROUPS tokenGroups = NULL;
     ByteBuffer buffer;
-    PSID logonSid =   NULL;
+    PSID logonSid = NULL;
     LUID luid;
 
     ErrorCode error(ErrorCodeValue::Success);
 
     ASSERT_IF(sidToAdd == NULL, "Sid cannot be null");
 
-    error = SecurityUtility::EnsurePrivilege(SE_TCB_NAME );
-    if(!error.IsSuccess())
+    error = SecurityUtility::EnsurePrivilege(SE_TCB_NAME);
+    if (!error.IsSuccess())
     {
         TraceWarning(
             TraceTaskCodes::Common,
@@ -389,7 +389,7 @@ ErrorCode AccessToken::CreateUserTokenWithSid(
     }
 
     SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
-    if(!::AllocateLocallyUniqueId ( &luid ))
+    if (!::AllocateLocallyUniqueId(&luid))
     {
         error = ErrorCode::FromWin32Error();
         TraceWarning(
@@ -401,14 +401,14 @@ ErrorCode AccessToken::CreateUserTokenWithSid(
         return error;
     }
 
-    if(!::AllocateAndInitializeSid ( &ntAuthority,
+    if (!::AllocateAndInitializeSid(&ntAuthority,
         SECURITY_LOGON_IDS_RID_COUNT,
         SECURITY_LOGON_IDS_RID,
         luid.HighPart,
         luid.LowPart,
         0, 0, 0, 0, 0,
         &logonSid
-        ))
+    ))
     {
         error = ErrorCode::FromWin32Error();
         TraceWarning(
@@ -425,14 +425,42 @@ ErrorCode AccessToken::CreateUserTokenWithSid(
     // Add the local SID and the logon SID - same as what LogonUser does
     tokenGroups->Groups[0].Sid = logonSid;
     tokenGroups->Groups[0].Attributes =
-        SE_GROUP_MANDATORY|SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_LOGON_ID|SE_GROUP_ENABLED;
+        SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_LOGON_ID | SE_GROUP_ENABLED;
     tokenGroups->Groups[1].Sid = sidToAdd;
     tokenGroups->Groups[1].Attributes =
-        SE_GROUP_MANDATORY|SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED;
+        SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED;
 
     HANDLE token;
 
-    if (!::LogonUserExExW(
+    // As stated at https://docs.microsoft.com/en-us/windows/desktop/secauthn/logonuserexexw, LogonUserExExW method is not direclty available in any public header
+    // You must use the GetModuleHandle and GetProcAddress functions to dynamically link to Advapi32.dll and invoke the function.
+    auto moduleHandle = GetModuleHandle(L"Advapi32");
+    if (moduleHandle == nullptr)
+    {
+        error = ErrorCode::FromWin32Error();
+        TraceWarning(
+            TraceTaskCodes::Common,
+            TraceType_AccessToken,
+            "GetModuleHandle for Advapi32 failed with ErrorCode={0}",
+            error);
+
+        return FreeSidAndReturnError(logonSid, error);
+    }
+
+    LogonUserFunction logonFunction = (LogonUserFunction)GetProcAddress(moduleHandle, "LogonUserExExW");
+    if (logonFunction == nullptr)
+    {
+        error = ErrorCode::FromWin32Error();
+        TraceWarning(
+            TraceTaskCodes::Common,
+            TraceType_AccessToken,
+            "GetProcAddress for LogonUserExExW failed with ErrorCode={0}",
+            error);
+
+        return FreeSidAndReturnError(logonSid, error);
+    }
+
+    auto result = logonFunction(
         accountName.c_str(),
         domain.c_str(),
         password.c_str(),
@@ -440,10 +468,12 @@ ErrorCode AccessToken::CreateUserTokenWithSid(
         logonProvider,
         tokenGroups,
         &token,
-        NULL,
-        NULL,
-        NULL,
-        NULL))
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    if (!result)
     {
         error = ErrorCode::FromWin32Error();
         TraceWarning(
@@ -455,13 +485,26 @@ ErrorCode AccessToken::CreateUserTokenWithSid(
     }
     else
     {
+        TraceInfo(
+            TraceTaskCodes::Common,
+            TraceType_AccessToken,
+            "LogonUserExExW call succeeded for {0}",
+            accountName);
         tokenHandle = TokenHandle::CreateSPtr(token);
     }
 
-    if(logonSid != NULL)
+    return FreeSidAndReturnError(logonSid, error);
+}
+
+ErrorCode AccessToken::FreeSidAndReturnError(
+    PSID const& sid,
+    Common::ErrorCode const& error)
+{
+    if (sid != NULL)
     {
-        ::FreeSid(logonSid);
+        ::FreeSid(sid);
     }
+
     return error;
 }
 
@@ -471,11 +514,11 @@ ErrorCode AccessToken::CreateDomainUserToken(
     SecureString const & password,
     bool interactiveLogon,
     bool loadProfile,
-    PSID const & sid, 
+    PSID const & sid,
     __out AccessTokenSPtr & accessToken)
 {
     DWORD logonType = interactiveLogon ? LOGON32_LOGON_INTERACTIVE : LOGON32_LOGON_NETWORK_CLEARTEXT;
-    return AccessToken::CreateUserToken(userName, domain, password.GetPlaintext(), logonType, LOGON32_PROVIDER_DEFAULT, loadProfile, sid, accessToken);    
+    return AccessToken::CreateUserToken(userName, domain, password.GetPlaintext(), logonType, LOGON32_PROVIDER_DEFAULT, loadProfile, sid, accessToken);
 }
 
 ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountName, wstring const & domain, wstring const & password, PSID const & sid, __out AccessTokenSPtr & accessToken)
@@ -484,17 +527,17 @@ ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountN
     ProfileHandleSPtr profileHandle;
 
     HANDLE token = nullptr;
-    if(sid)
+    if (sid)
     {
         auto error = AccessToken::CreateUserTokenWithSid(
-            serviceAccountName.c_str(), 
-            domain.c_str(), 
+            serviceAccountName.c_str(),
+            domain.c_str(),
             password.c_str(),
             LOGON32_LOGON_SERVICE,
             LOGON32_PROVIDER_DEFAULT,
-            sid, 
+            sid,
             tokenHandle);
-        if(!error.IsSuccess())
+        if (!error.IsSuccess())
         {
             return error;
         }
@@ -524,9 +567,9 @@ ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountN
 ErrorCode AccessToken::DuplicateToken(DWORD desiredAccess, __out AccessTokenSPtr & accessToken)
 {
     HANDLE token;
-    if(!::DuplicateTokenEx(tokenHandle_->Value,
+    if (!::DuplicateTokenEx(tokenHandle_->Value,
         desiredAccess,
-        NULL, 
+        NULL,
         SecurityImpersonation,
         TokenPrimary,
         &token))
@@ -554,7 +597,7 @@ ErrorCode AccessToken::IsAllowedPrivilege(__in wstring const & privilege, __out 
     PRIVILEGE_SET privilegeSet = { 0 };
     privilegeSet.Control = PRIVILEGE_SET_ALL_NECESSARY;
     privilegeSet.PrivilegeCount = 1;
-    privilegeSet.Privilege[0].Attributes = SE_PRIVILEGE_ENABLED; 
+    privilegeSet.Privilege[0].Attributes = SE_PRIVILEGE_ENABLED;
     privilegeSet.Privilege[0].Luid = luid;
 
     if (!PrivilegeCheck(TokenHandle->Value, &privilegeSet, &result))
@@ -593,13 +636,13 @@ ErrorCode AccessToken::EnablePrivilege(__in wstring const & privilege)
     tokenPrivilege.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
     if (!::AdjustTokenPrivileges(TokenHandle->Value, FALSE, &tokenPrivilege, sizeof(TOKEN_PRIVILEGES), (PTOKEN_PRIVILEGES)NULL, (PDWORD)NULL))
-    { 
+    {
         return ErrorCode::TraceReturn(
             ErrorCode::FromWin32Error(),
             TraceTaskCodes::Common,
             TraceType_AccessToken,
             "AdjustTokenPrivileges");
-    } 
+    }
 
     if (::GetLastError() == ERROR_NOT_ALL_ASSIGNED)
     {
@@ -613,20 +656,20 @@ ErrorCode AccessToken::EnablePrivilege(__in wstring const & privilege)
 
 ErrorCode AccessToken::CreateRestrictedToken(__out AccessTokenSPtr & restrictedToken)
 {
-    ByteBufferUPtr originalTokenGroupsBuffer; 
+    ByteBufferUPtr originalTokenGroupsBuffer;
     vector<SID_AND_ATTRIBUTES> groupsToDelete;
     auto error = this->GetRestrictedGroups(originalTokenGroupsBuffer, groupsToDelete);
     if (!error.IsSuccess()) { return error; }
 
     HANDLE tHandle;
     if (!::CreateRestrictedToken(
-        TokenHandle->Value, 
-        DISABLE_MAX_PRIVILEGE, 
-        (DWORD)groupsToDelete.size(), 
-        groupsToDelete.data(), 
-        0, 
-        NULL, 
-        0, 
+        TokenHandle->Value,
+        DISABLE_MAX_PRIVILEGE,
+        (DWORD)groupsToDelete.size(),
+        groupsToDelete.data(),
+        0,
+        NULL,
+        0,
         NULL,
         &tHandle))
     {
@@ -668,18 +711,18 @@ ErrorCode AccessToken::CreateRestrictedToken(__out AccessTokenSPtr & restrictedT
 
 ErrorCode AccessToken::CreateRestrictedToken(PSID sidToDeny, __out AccessTokenSPtr & restrictedToken)
 {
-    SID_AND_ATTRIBUTES disableList[1] = {};  
+    SID_AND_ATTRIBUTES disableList[1] = {};
 
     disableList[0].Sid = sidToDeny;
 
     HANDLE tokenHandle;
-    if(!::CreateRestrictedToken(  
-        this->tokenHandle_->Value,  
-        0,  
+    if (!::CreateRestrictedToken(
+        this->tokenHandle_->Value,
+        0,
         1,
-        disableList,  
-        0, nullptr,  
-        0, nullptr,  
+        disableList,
+        0, nullptr,
+        0, nullptr,
         &tokenHandle))
     {
         return ErrorCode::TraceReturn(
@@ -692,9 +735,9 @@ ErrorCode AccessToken::CreateRestrictedToken(PSID sidToDeny, __out AccessTokenSP
 
     //duplicate the token to get primary token
     HANDLE token;
-    if(!::DuplicateTokenEx(tokenHandle,
+    if (!::DuplicateTokenEx(tokenHandle,
         TOKEN_ALL_ACCESS,
-        NULL, 
+        NULL,
         SecurityImpersonation,
         TokenPrimary,
         &token))
@@ -780,7 +823,7 @@ ErrorCode AccessToken::GetLogonSid(__out SidSPtr & sid)
     ByteBuffer buffer;
     buffer.resize(length, 0);
     TOKEN_GROUPS *pGroups = reinterpret_cast<TOKEN_GROUPS*>(buffer.data());
-    if(::GetTokenInformation(TokenHandle->Value, ::TokenGroups, pGroups, length, &length))
+    if (::GetTokenInformation(TokenHandle->Value, ::TokenGroups, pGroups, length, &length))
     {
         for (UINT i = 0; i < pGroups->GroupCount; i++)
         {
@@ -829,7 +872,7 @@ ErrorCode AccessToken::GetRestrictedGroups(__out ByteBufferUPtr & tokenGroupsBuf
             "GetRestrictedGroups:GetTokenInformation");
     }
 
-    PTOKEN_GROUPS originalTokenGroups = reinterpret_cast<PTOKEN_GROUPS>(tokenInformationBuffer); 
+    PTOKEN_GROUPS originalTokenGroups = reinterpret_cast<PTOKEN_GROUPS>(tokenInformationBuffer);
     for (UINT index = 0; index < originalTokenGroups->GroupCount; index++)
     {
         PSID_AND_ATTRIBUTES tokenGroup = &originalTokenGroups->Groups[index];
@@ -838,7 +881,7 @@ ErrorCode AccessToken::GetRestrictedGroups(__out ByteBufferUPtr & tokenGroupsBuf
         SID const & sid = *(static_cast<SID*>(tokenGroup->Sid));
         BYTE IdAuth = sid.IdentifierAuthority.Value[5];
         bool disable = true;
-        switch(IdAuth)
+        switch (IdAuth)
         {
         case 0: // SECURITY_NULL_SID_AUTHORITY
             if (sid.SubAuthority[0] == SECURITY_NULL_RID) //anonymous SID
@@ -862,39 +905,39 @@ ErrorCode AccessToken::GetRestrictedGroups(__out ByteBufferUPtr & tokenGroupsBuf
             break;
 
         case 5: // SECURITY_NT_AUTHORITY - most common
+        {
+            // now consider the first RID
+            switch (sid.SubAuthority[0])
             {
-                // now consider the first RID
-                switch(sid.SubAuthority[0])
+            case SECURITY_NETWORK_RID: // network
+            case SECURITY_AUTHENTICATED_USER_RID: // auth user
+                disable = false;
+                break;
+
+            case SECURITY_BUILTIN_DOMAIN_RID:
+                // built-in
+                if (sid.SubAuthorityCount == 2)
                 {
-                case SECURITY_NETWORK_RID: // network
-                case SECURITY_AUTHENTICATED_USER_RID: // auth user
-                    disable = false;
-                    break;
-
-                case SECURITY_BUILTIN_DOMAIN_RID:
-                    // built-in
-                    if (sid.SubAuthorityCount == 2)
+                    switch (sid.SubAuthority[1])
                     {
-                        switch(sid.SubAuthority[1])
-                        {
-                        case DOMAIN_ALIAS_RID_USERS:
-                        case DOMAIN_ALIAS_RID_GUESTS:
-                            disable = false;
-                            break;
-                        default:
-                            break;
-                        }
+                    case DOMAIN_ALIAS_RID_USERS:
+                    case DOMAIN_ALIAS_RID_GUESTS:
+                        disable = false;
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-
-                default:
-                    disable = true;
-                    break;
                 }
-            }
-            break;
+                break;
 
-        default: 
+            default:
+                disable = true;
+                break;
+            }
+        }
+        break;
+
+        default:
             break;
         }
 
@@ -969,7 +1012,7 @@ ErrorCode AccessToken::CreateSecurityDescriptor(DWORD access, __out SecurityDesc
     vector<DWORD> subauthorities;
     subauthorities.push_back(SECURITY_BUILTIN_DOMAIN_RID);
     subauthorities.push_back(DOMAIN_ALIAS_RID_ADMINS);
-    SID_IDENTIFIER_AUTHORITY ntauthority = SECURITY_NT_AUTHORITY; 
+    SID_IDENTIFIER_AUTHORITY ntauthority = SECURITY_NT_AUTHORITY;
     SidSPtr adminSid;
     error = BufferedSid::CreateSPtr(ntauthority, subauthorities, adminSid);
     if (!error.IsSuccess()) { return error; }
@@ -1002,9 +1045,9 @@ ErrorCode AccessToken::UpdateCachedCredentials(wstring const & username, wstring
     ErrorCode error(ErrorCodeValue::Success);
 
     MSV1_0_CHANGEPASSWORD_REQUEST* pLogonInfo;
-    PMSV1_0_CHANGEPASSWORD_RESPONSE pResponse = NULL;  
+    PMSV1_0_CHANGEPASSWORD_RESPONSE pResponse = NULL;
 
-    DWORD cbResponse = sizeof(*pResponse);  
+    DWORD cbResponse = sizeof(*pResponse);
 
     size_t cbLogonInfo;
     size_t usernameLen = username.size();
@@ -1016,55 +1059,55 @@ ErrorCode AccessToken::UpdateCachedCredentials(wstring const & username, wstring
     size_t passwordBufSize = (passwordLen + 1) * sizeof(WCHAR);
 
 
-    cbLogonInfo = sizeof( MSV1_0_CHANGEPASSWORD_REQUEST );  
-    cbLogonInfo += usernameBufSize;  
-    cbLogonInfo += domainBufSize;  
-    cbLogonInfo += passwordBufSize;  
+    cbLogonInfo = sizeof(MSV1_0_CHANGEPASSWORD_REQUEST);
+    cbLogonInfo += usernameBufSize;
+    cbLogonInfo += domainBufSize;
+    cbLogonInfo += passwordBufSize;
 
-    ByteBuffer buffer;  
+    ByteBuffer buffer;
     buffer.resize(cbLogonInfo);
 
-    pLogonInfo = reinterpret_cast<MSV1_0_CHANGEPASSWORD_REQUEST*>( buffer.data() );  
+    pLogonInfo = reinterpret_cast<MSV1_0_CHANGEPASSWORD_REQUEST*>(buffer.data());
 
-    memset( pLogonInfo, 0, cbLogonInfo );  
+    memset(pLogonInfo, 0, cbLogonInfo);
 
-    pLogonInfo->MessageType = MsV1_0ChangeCachedPassword;  
+    pLogonInfo->MessageType = MsV1_0ChangeCachedPassword;
 
     // concat on end of struct  
     memcpy_s(
         pLogonInfo + 1,
-        cbLogonInfo - 1 ,
+        cbLogonInfo - 1,
         username.c_str(),
         usernameBufSize);
 
     memcpy_s(
-        (PBYTE)( pLogonInfo + 1 ) + usernameBufSize,
+        (PBYTE)(pLogonInfo + 1) + usernameBufSize,
         cbLogonInfo - (1 + usernameBufSize),
         domain.c_str(),
-         domainBufSize);
+        domainBufSize);
 
-    memcpy_s( (PBYTE)( pLogonInfo + 1 ) + usernameBufSize + domainBufSize,  
+    memcpy_s((PBYTE)(pLogonInfo + 1) + usernameBufSize + domainBufSize,
         cbLogonInfo - (1 + usernameBufSize + domainBufSize),
-        password.c_str(),  
-        passwordBufSize); 
+        password.c_str(),
+        passwordBufSize);
 
 
 
     pLogonInfo->AccountName.Length = (USHORT)usernameLen * sizeof(WCHAR);
     pLogonInfo->AccountName.MaximumLength = (USHORT)usernameLen * sizeof(WCHAR);
-    pLogonInfo->AccountName.Buffer = (WCHAR*) (pLogonInfo + 1);  
+    pLogonInfo->AccountName.Buffer = (WCHAR*)(pLogonInfo + 1);
 
     pLogonInfo->DomainName.Length = (USHORT)domainLen * sizeof(WCHAR);
     pLogonInfo->DomainName.MaximumLength = (USHORT)domainLen * sizeof(WCHAR);
-    pLogonInfo->DomainName.Buffer = (WCHAR*) ((PBYTE)(pLogonInfo+1) + usernameBufSize);  
+    pLogonInfo->DomainName.Buffer = (WCHAR*)((PBYTE)(pLogonInfo + 1) + usernameBufSize);
 
     pLogonInfo->NewPassword.Length = (USHORT)passwordLen * sizeof(WCHAR);
     pLogonInfo->NewPassword.MaximumLength = (USHORT)passwordLen * sizeof(WCHAR);
-    pLogonInfo->NewPassword.Buffer = (WCHAR*) ((PBYTE)(pLogonInfo+1) + usernameBufSize + domainBufSize);  
+    pLogonInfo->NewPassword.Buffer = (WCHAR*)((PBYTE)(pLogonInfo + 1) + usernameBufSize + domainBufSize);
 
-    pLogonInfo->OldPassword.Length = 0;  
-    pLogonInfo->OldPassword.MaximumLength = 0;  
-    pLogonInfo->OldPassword.Buffer = NULL; 
+    pLogonInfo->OldPassword.Length = 0;
+    pLogonInfo->OldPassword.MaximumLength = 0;
+    pLogonInfo->OldPassword.Buffer = NULL;
 
     STRING logonName;
     string appName = "WinFabric"; //Logon application name, just used for auditing purposes.   
@@ -1074,13 +1117,13 @@ ErrorCode AccessToken::UpdateCachedCredentials(wstring const & username, wstring
 
     HANDLE hLsa;
 
-    NTSTATUS status = ::LsaRegisterLogonProcess(  
-        &logonName,  
-        &hLsa,  
-        &securityModeIgnored  
-        );  
+    NTSTATUS status = ::LsaRegisterLogonProcess(
+        &logonName,
+        &hLsa,
+        &securityModeIgnored
+    );
 
-    if(status != STATUS_SUCCESS)
+    if (status != STATUS_SUCCESS)
     {
         error = ErrorCode::FromNtStatus(status);
 
@@ -1098,7 +1141,7 @@ ErrorCode AccessToken::UpdateCachedCredentials(wstring const & username, wstring
             &packageName,
             &authPkgId);
 
-        if(status != STATUS_SUCCESS)
+        if (status != STATUS_SUCCESS)
         {
             error = ErrorCode::FromNtStatus(status);
         }
@@ -1107,41 +1150,41 @@ ErrorCode AccessToken::UpdateCachedCredentials(wstring const & username, wstring
             NTSTATUS substatus;
 
             status = LsaCallAuthenticationPackage(
-                hLsa,  
-                authPkgId,  
-                pLogonInfo,  
-                static_cast<ULONG>(cbLogonInfo),  
-                (PVOID *)&pResponse,  
-                &cbResponse,  
-                &substatus);  
+                hLsa,
+                authPkgId,
+                pLogonInfo,
+                static_cast<ULONG>(cbLogonInfo),
+                (PVOID *)&pResponse,
+                &cbResponse,
+                &substatus);
 
             if (status != STATUS_SUCCESS ||
-                substatus != STATUS_SUCCESS)  
-            {  
-                if (status != STATUS_SUCCESS)  
-                {  
-                    error = ErrorCode::FromNtStatus(status);  
-                }  
-                else  
-                {  
-                    error = ErrorCode::FromNtStatus(status);  
-                }  
+                substatus != STATUS_SUCCESS)
+            {
+                if (status != STATUS_SUCCESS)
+                {
+                    error = ErrorCode::FromNtStatus(status);
+                }
+                else
+                {
+                    error = ErrorCode::FromNtStatus(status);
+                }
             }
 
-            RtlSecureZeroMemory(pLogonInfo->NewPassword.Buffer,  
-                pLogonInfo->NewPassword.MaximumLength);  
+            RtlSecureZeroMemory(pLogonInfo->NewPassword.Buffer,
+                pLogonInfo->NewPassword.MaximumLength);
 
             //Free the LSA result.
-            if (pResponse)  
-            {  
-                LsaFreeReturnBuffer( pResponse );  
+            if (pResponse)
+            {
+                LsaFreeReturnBuffer(pResponse);
             }
         }
     }
-    if(hLsa)
+    if (hLsa)
     {
         status = ::LsaDeregisterLogonProcess(hLsa);
-        if(status != STATUS_SUCCESS)
+        if (status != STATUS_SUCCESS)
         {
             TraceError(TraceTaskCodes::Common,
                 TraceType_AccessToken,

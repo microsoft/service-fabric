@@ -40,7 +40,10 @@ namespace DNS
         virtual void CloseAsync() = 0;
 
         virtual IFabricResolveOp::SPtr CreateResolveOp(
-            __in ULONG fabricQueryTimeoutInSeconds
+            __in ULONG fabricQueryTimeoutInSeconds,
+            __in const KString::SPtr& spStrPartitionPrefix,
+            __in const KString::SPtr& spStrPartitionSuffix,
+            __in bool fIsPartitionedQueryEnabled
         ) const = 0;
 
         virtual void NotifyServiceChanged(

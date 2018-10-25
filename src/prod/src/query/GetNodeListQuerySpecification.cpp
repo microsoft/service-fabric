@@ -32,7 +32,8 @@ GetNodeListQuerySpecification::GetNodeListQuerySpecification(bool excludeFAS)
         QueryArgument(Query::QueryResourceProperties::Node::Name, false),
         QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
         QueryArgument(Query::QueryResourceProperties::Node::NodeStatusFilter, false),
-        QueryArgument(Query::QueryResourceProperties::Node::ExcludeStoppedNodeInfo, false))
+        QueryArgument(Query::QueryResourceProperties::Node::ExcludeStoppedNodeInfo, false),
+        QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false))
 {
     querySpecificationId_ = GetInternalSpecificationId(excludeFAS);
 
@@ -43,7 +44,8 @@ GetNodeListQuerySpecification::GetNodeListQuerySpecification(bool excludeFAS)
             QueryArgument(Query::QueryResourceProperties::Node::Name, false),
             QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
             QueryArgument(Query::QueryResourceProperties::Node::NodeStatusFilter, false),
-            QueryArgument(Query::QueryResourceProperties::Node::ExcludeStoppedNodeInfo, false)));
+            QueryArgument(Query::QueryResourceProperties::Node::ExcludeStoppedNodeInfo, false),
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
 
 
     ParallelQuerySpecifications.push_back(
@@ -53,7 +55,8 @@ GetNodeListQuerySpecification::GetNodeListQuerySpecification(bool excludeFAS)
             QueryArgument(Query::QueryResourceProperties::Node::Name, false),
             QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
             QueryArgument(Query::QueryResourceProperties::Node::NodeStatusFilter, false),
-            QueryArgument(Query::QueryResourceProperties::Node::ExcludeStoppedNodeInfo, false)));
+            QueryArgument(Query::QueryResourceProperties::Node::ExcludeStoppedNodeInfo, false),
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
 
     ParallelQuerySpecifications.push_back(
         make_shared<QuerySpecification>(
@@ -61,10 +64,12 @@ GetNodeListQuerySpecification::GetNodeListQuerySpecification(bool excludeFAS)
             QueryAddresses::GetHM(),
             QueryArgument(Query::QueryResourceProperties::Node::Name, false),
             QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
-            QueryArgument(Query::QueryResourceProperties::Node::ExcludeStoppedNodeInfo, false)));
+            QueryArgument(Query::QueryResourceProperties::Node::ExcludeStoppedNodeInfo, false),
+            QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
 
     if (!excludeFAS)
     {
+        // There is no reason to add a MaxResults option here as there is no current use case
         ParallelQuerySpecifications.push_back(
             make_shared<QuerySpecification>(
                 QueryNames::GetNodeList,

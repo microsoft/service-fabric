@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define KDRIVER 1
+#endif
+
 #include "KtlLogShimUser.h"
 
 //************************************************************************************
@@ -72,16 +76,8 @@ KtlLogManagerUser::~KtlLogManagerUser()
                                     nullptr);
 }
 
-KtlLogManager::KtlLogManager()
-{
-}
-
-KtlLogManager::~KtlLogManager()
-{
-}
-
 NTSTATUS
-KtlLogManager::Create(
+KtlLogManager::CreateDriver(
     __in ULONG AllocationTag,
     __in KAllocator& Allocator,
     __out KtlLogManager::SPtr& Result
@@ -890,14 +886,6 @@ KtlLogManagerUser::AsyncCreateLogContainerUser::OnReuse(
     _Marshaller->Reset();
 }
 
-KtlLogManager::AsyncCreateLogContainer::AsyncCreateLogContainer()
-{
-}
-
-KtlLogManager::AsyncCreateLogContainer::~AsyncCreateLogContainer()
-{
-}
-
 KtlLogManagerUser::AsyncCreateLogContainerUser::AsyncCreateLogContainerUser()
 {
 }
@@ -1221,14 +1209,6 @@ KtlLogManagerUser::AsyncOpenLogContainerUser::OnReuse(
     _Marshaller->Reset();
 }
 
-KtlLogManager::AsyncOpenLogContainer::AsyncOpenLogContainer()
-{
-}
-
-KtlLogManager::AsyncOpenLogContainer::~AsyncOpenLogContainer()
-{
-}
-
 KtlLogManagerUser::AsyncOpenLogContainerUser::AsyncOpenLogContainerUser()
 {
 }
@@ -1464,14 +1444,6 @@ KtlLogManagerUser::AsyncDeleteLogContainerUser::OnReuse(
     _Marshaller->Reset();
 }
 
-KtlLogManager::AsyncDeleteLogContainer::AsyncDeleteLogContainer()
-{
-}
-
-KtlLogManager::AsyncDeleteLogContainer::~AsyncDeleteLogContainer()
-{
-}
-
 KtlLogManagerUser::AsyncDeleteLogContainerUser::AsyncDeleteLogContainerUser()
 {
 }
@@ -1655,14 +1627,6 @@ KtlLogManagerUser::AsyncEnumerateLogContainersUser::OnReuse(
 {
     _DevIoCtl->Reuse();
     _Marshaller->Reset();
-}
-
-KtlLogManager::AsyncEnumerateLogContainers::AsyncEnumerateLogContainers()
-{
-}
-
-KtlLogManager::AsyncEnumerateLogContainers::~AsyncEnumerateLogContainers()
-{
 }
 
 KtlLogManagerUser::AsyncEnumerateLogContainersUser::AsyncEnumerateLogContainersUser()
@@ -1873,14 +1837,6 @@ KtlLogManagerUser::AsyncConfigureContextUser::OnReuse(
     _OutBuffer = NULL;
 }
 
-
-KtlLogManager::AsyncConfigureContext::AsyncConfigureContext()
-{
-}
-
-KtlLogManager::AsyncConfigureContext::~AsyncConfigureContext()
-{
-}
 
 KtlLogManagerUser::AsyncConfigureContextUser::AsyncConfigureContextUser()
 {

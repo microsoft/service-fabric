@@ -21,30 +21,6 @@ ApplicationTypeQueryDescription::ApplicationTypeQueryDescription()
 {
 }
 
-ApplicationTypeQueryDescription::ApplicationTypeQueryDescription(ApplicationTypeQueryDescription && other)
-    : applicationTypeNameFilter_(move(other.applicationTypeNameFilter_))
-    , applicationTypeVersionFilter_(move(other.applicationTypeVersionFilter_))
-    , applicationTypeDefinitionKindFilter_(applicationTypeDefinitionKindFilter_)
-    , excludeApplicationParameters_(move(other.excludeApplicationParameters_))
-    , maxResults_(move(other.maxResults_))
-    , continuationToken_(move(other.continuationToken_))
-{
-}
-
-ApplicationTypeQueryDescription & ApplicationTypeQueryDescription::operator =(ApplicationTypeQueryDescription && other)
-{
-    if (this != &other)
-    {
-        applicationTypeNameFilter_ = move(other.applicationTypeNameFilter_);
-        applicationTypeVersionFilter_ = move(other.applicationTypeVersionFilter_);
-        applicationTypeDefinitionKindFilter_ = other.applicationTypeDefinitionKindFilter_;
-        excludeApplicationParameters_ = move(other.excludeApplicationParameters_);
-        maxResults_ = move(other.maxResults_);
-        continuationToken_ = move(other.continuationToken_);
-    }
-    return *this;
-}
-
 ApplicationTypeQueryDescription::~ApplicationTypeQueryDescription()
 {
 }

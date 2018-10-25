@@ -90,6 +90,9 @@ LogicalLog::LogicalLog(
     , streams_(GetThisAllocator())
     , randomGenerator_()
     , internalFlushInProgress_(0)
+    , openReason_(OpenReason::Invalid)
+    , logSize_(0)
+    , logSpaceRemaining_(0)
 {
     NTSTATUS status;
     
@@ -192,6 +195,17 @@ Task LogicalLog::OpenTask()
     {
         status = STATUS_INTERNAL_ERROR;
     }
+
+    if (!NT_SUCCESS(status))
+    {
+        CompleteOpen(status);
+        co_return;
+    }
+
+    status = co_await QueryLogSizeAndSpaceRemainingInternalAsync(
+        CancellationToken::None,
+        logSize_,
+        logSpaceRemaining_);
 
     CompleteOpen(status);
     co_return;
@@ -1683,6 +1697,8 @@ LogicalLog::InternalFlushAsync(
                     mdBuffer,
                     pageAlignedBuffer,
                     0, // todo: figure out what reservation to pass
+                    logSize_,
+                    logSpaceRemaining_,
                     nullptr);
 
                 if (!NT_SUCCESS(status))
@@ -2101,7 +2117,7 @@ LogicalLog::ConfigureWritesToSharedAndDedicatedLogAsync(__in CancellationToken c
 }
 
 Awaitable<NTSTATUS>
-LogicalLog::QueryLogStreamUsageInfo(
+LogicalLog::QueryLogStreamUsageInternalAsync(
     __in CancellationToken const &,
     __out KLogicalLogInformation::CurrentLogUsageInformation& streamUsageInformation)
 {
@@ -2115,7 +2131,7 @@ LogicalLog::QueryLogStreamUsageInfo(
     {
         WriteError(
             TraceComponent,
-            "{0} - QueryLogStreamUsageInfo - Failed to allocate ioctl context. Status: {1}",
+            "{0} - QueryLogStreamUsageInternalAsync - Failed to allocate ioctl context. Status: {1}",
             TraceId,
             status);
 
@@ -2134,7 +2150,7 @@ LogicalLog::QueryLogStreamUsageInfo(
     {
         WriteError(
             TraceComponent,
-            "{0} - QueryLogStreamUsageInfo - Ioctl failed. Status: {1}",
+            "{0} - QueryLogStreamUsageInternalAsync - Ioctl failed. Status: {1}",
             TraceId,
             status);
 
@@ -2157,12 +2173,12 @@ LogicalLog::QueryLogUsageAsync(
 
     KLogicalLogInformation::CurrentLogUsageInformation info;
 
-    NTSTATUS status = co_await QueryLogStreamUsageInfo(cancellationToken, info);
+    NTSTATUS status = co_await QueryLogStreamUsageInternalAsync(cancellationToken, info);
     if (!NT_SUCCESS(status))
     {
         WriteWarning(
             TraceComponent,
-            "{0} - QueryLogUsageAsync - QueryLogStreamUsageInfo failed. Status: {1}",
+            "{0} - QueryLogUsageAsync - QueryLogStreamUsageInternalAsync failed. Status: {1}",
             TraceId,
             status);
 
@@ -2170,6 +2186,57 @@ LogicalLog::QueryLogUsageAsync(
     }
 
     percentUsage = info.PercentageLogUsage;
+    co_return STATUS_SUCCESS;
+}
+
+Awaitable<NTSTATUS>
+LogicalLog::QueryLogSizeAndSpaceRemainingInternalAsync(
+    __in ktl::CancellationToken const & cancellationToken,
+    __out ULONGLONG& logSize,
+    __out ULONGLONG& spaceRemaining)
+{
+    NTSTATUS status;
+    KLogicalLogInformation::LogSizeAndSpaceRemaining* info;
+
+    KtlLogStream::AsyncIoctlContext::SPtr context;
+    status = underlyingStream_->CreateAsyncIoctlContext(context);
+    if (!NT_SUCCESS(status))
+    {
+        WriteError(
+            TraceComponent,
+            "{0} - QueryLogSizeAndSpaceRemainingInternalAsync - Failed to allocate ioctl context. Status: {1}",
+            TraceId,
+            status);
+
+        co_return status;
+    }
+
+    ULONG result;
+    KBuffer::SPtr outBuf;
+    status = co_await context->IoctlAsync(
+        KLogicalLogInformation::QueryLogSizeAndSpaceRemaining,
+        nullptr,
+        result,
+        outBuf,
+        nullptr);
+    if (!NT_SUCCESS(status))
+    {
+        WriteError(
+            TraceComponent,
+            "{0} - QueryLogSizeAndSpaceRemainingInternalAsync - Ioctl failed. Status: {1}",
+            TraceId,
+            status);
+
+        co_return status;
+    }
+
+    KAssert(outBuf != nullptr);
+    KInvariant(outBuf->QuerySize() == sizeof(KLogicalLogInformation::LogSizeAndSpaceRemaining));
+
+    info = static_cast<KLogicalLogInformation::LogSizeAndSpaceRemaining*>(outBuf->GetBuffer());
+    logSize = info->LogSize;
+    spaceRemaining = info->SpaceRemaining;
+    
     co_return STATUS_SUCCESS;
 }
 

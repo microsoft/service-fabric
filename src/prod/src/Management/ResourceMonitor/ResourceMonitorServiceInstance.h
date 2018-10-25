@@ -23,7 +23,7 @@ namespace ResourceMonitor
             wstring const & serviceTypeName,
             Common::Guid const & partitionId,
             FABRIC_INSTANCE_ID instanceId,
-            IFabricRuntime * & pRuntime);
+            Common::ComPointer<IFabricRuntime> const & fabricRuntimeCPtr);
         virtual ~ResourceMonitorServiceInstance();
 
         /*************************************************************
@@ -62,6 +62,8 @@ namespace ResourceMonitor
 
         class OpenComAsyncOperationContext;
         class CloseComAsyncOperationContext;
+
+        Common::ComPointer<IFabricRuntime> fabricRuntimeCPtr_;
 
         // The component that is doing the actual work.
         std::shared_ptr<ResourceMonitoringAgent> resourceMonitorAgent_;

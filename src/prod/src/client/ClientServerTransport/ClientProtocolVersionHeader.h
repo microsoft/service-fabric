@@ -14,15 +14,16 @@ namespace ClientServerTransport
     public:
 
         static const __int64 CurrentMajorVersion = 1;
-        static const __int64 CurrentMinorVersion = 1;
+        static const __int64 CurrentMinorVersion = 2;
 
         static Common::Global<ClientProtocolVersionHeader> CurrentVersionHeader;
-
+        static Common::Global<ClientProtocolVersionHeader> SingleFileUploadVersionHeader;
         // History:
         //
         // 1 (WF-v1.0)   - Gateway only accepts version = 1 clients
         // 1.1 (WF-v3.0) - Introduced PingReplyMessageBody
         //               - Introduced Minor version field
+        // 1.2           - Support for file upload based on chunk APIs.
 
     public:
         ClientProtocolVersionHeader() 

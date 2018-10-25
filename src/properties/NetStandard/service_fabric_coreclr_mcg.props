@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- MCG - Tool props to generate code for interop for coreclr bits-->
+  
+  <!-- Linux specific properties -->
+  <PropertyGroup Condition="$(BuildLinux) == 'true'">
+    <CoreClrMcgRoot>$(SRCROOT)../external/Microsoft.DotNet.Interop/tools</CoreClrMcgRoot>
+    <CoreClrMcgExe>dotnet $(CoreClrMcgRoot)/Mcg.dll</CoreClrMcgExe>
+  </PropertyGroup>
+
+  <!-- Windows specific properties -->
+  <PropertyGroup Condition="$(BuildLinux) != 'true'">
+    <CoreClrMcgRoot>$(PkgMicrosoft_DotNet_Interop)\tools\</CoreClrMcgRoot>
+    <CoreClrMcgExe>$(CoreClrMcgRoot)\Mcg.exe</CoreClrMcgExe>
+  </PropertyGroup>
+
+  <!-- Common properties -->
+  <PropertyGroup>
+    <CoreClrMcgRef>$(DotnetPackagesDir)\netstandard.library\$(NetStandardImplicitPackageVersion)\build\netstandard2.0\ref\</CoreClrMcgRef>
+    <CoreClrMcgIL>$(dotnetcli)\extra\IL</CoreClrMcgIL>
+    <CoreClrMcgPlatform>x64</CoreClrMcgPlatform>
+    <CoreClrMcgInteropClass>McgInterop</CoreClrMcgInteropClass>
+    <CoreClrMcgInDir>$(IntermediateOutputPath)</CoreClrMcgInDir>
+    <CoreClrMcgOutDir>$(IntermediateOutputPath)\..\MCG\</CoreClrMcgOutDir>
+    <CoreClrMcgCompleteExt>mcg</CoreClrMcgCompleteExt>
+    <CoreClrMcgLockFile>$(DotnetPackagesDir)\$(AssemblyName).dll.$(CoreClrMcgCompleteExt)</CoreClrMcgLockFile>
+  </PropertyGroup>
+</Project>

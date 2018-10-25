@@ -194,6 +194,15 @@ Priority::Enum HealthEventStoreData::get_Priority() const
     return priority_;
 }
 
+bool HealthEventStoreData::DoesNotImpactHealth() const
+{
+    // All user reports with HealthState OK and RemoveWhenExpired = true
+    // All user reports with HealthState OK and TTL infinite
+    return priority_ < Priority::High &&
+           FABRIC_HEALTH_STATE_OK == state_ &&
+           (removeWhenExpired_ || timeToLive_ == TimeSpan::MaxValue);
+}
+
 // After inconsistency between diff and current have been persisted to disk, move diff into current
 void HealthEventStoreData::MoveDiffToCurrent(Store::ReplicaActivityId const & replicaActivityId)
 {

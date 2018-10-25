@@ -136,7 +136,6 @@ _Use_decl_annotations_ TcpConnection::TcpConnection(
         TransportConfig::GetConfig().SslReceiveChunkSize :
         TransportConfig::GetConfig().DefaultReceiveChunkSize)
     , receiveMissingThreshold_(TransportConfig::GetConfig().ReceiveMissingThreshold)
-    , lastActivityTime_(Stopwatch::Now())
     , testAssertEnabled_(target->Security()->SecurityProvider == SecurityProvider::None)
     , maxIncomingFrameSizeInBytes_(ToInternalFrameSizeLimit(target->Security()->MaxIncomingFrameSize()))
     , lastReceiveCompleteTime_(Message::NullReceiveTime())
@@ -216,6 +215,12 @@ bool TcpConnection::Initialize(
     sendBuffer_ = transport->BufferFactory().CreateSendBuffer(this);
     sendBuffer_->SetLimit(transport->PerTargetSendQueueLimit());
     sendBuffer_->SetPerfCounters(transport->PerfCounters());
+    sendBuffer_->SetFrameHeaderErrorChecking(transport->FrameHeaderErrorCheckingEnabled());
+    sendBuffer_->SetMessageErrorChecking(transport->MessageErrorCheckingEnabled());
+    WriteInfo(
+        TraceType, traceId_,
+        "FrameHeaderErrorCheckingEnabled={0}, MessageErrorCheckingEnabled={1}",
+        transport->FrameHeaderErrorCheckingEnabled(), transport->MessageErrorCheckingEnabled());
 
     receiveBuffer_ = transport->BufferFactory().CreateReceiveBuffer(this);
     receiveBufferToReserve_ = (receiveChunkSize_ > transport->RecvBufferSize()) ? receiveChunkSize_ : transport->RecvBufferSize();
@@ -636,7 +641,7 @@ void TcpConnection::Close()
     CloseInternal(false, ErrorCode());
 }
 
-void TcpConnection::Abort(ErrorCode fault)
+void TcpConnection::Abort(ErrorCode const & fault)
 {
     CloseInternal(true, fault);
 }
@@ -690,7 +695,7 @@ void TcpConnection::AbortWithRetryableError()
 }
 
 _Use_decl_annotations_
-void TcpConnection::Close_CallerHoldingLock(bool abort, ErrorCode fault)
+void TcpConnection::Close_CallerHoldingLock(bool abort, ErrorCode const & fault)
 {
     Fault_CallerHoldingLock(fault);
 
@@ -836,6 +841,14 @@ void TcpConnection::CheckReceiveMissing_CallerHoldingLock(StopwatchTime now)
         lastDispatchedMessages);
 }
 
+bool TcpConnection::IsSendStuck(StopwatchTime now) const
+{
+    auto sendCompleteDue = pendingSendStartTime_ + TransportConfig::GetConfig().SendTimeout;
+    return
+        (StopwatchTime::Zero < sendCompleteDue) &&
+        (sendCompleteDue < now);
+}
+
 bool TcpConnection::IsIdleTooLongChl(StopwatchTime now) const
 {
     if (idleTimeout_ == TimeSpan::Zero)
@@ -850,7 +863,15 @@ bool TcpConnection::IsIdleTooLongChl(StopwatchTime now) const
         return false;
     }
 
-    if (now < (lastActivityTime_ + idleTimeout_))
+    // Use substraction here as lastRecvCompeteTime_/pendingSendStartTime_ can be StopwatchTime::MaxValue,
+    // in which case, adding idleTimeout_ will overflow.
+    auto lastActionTimeLowerBound = now - idleTimeout_;
+    if (lastActionTimeLowerBound < lastRecvCompeteTime_)
+    {
+        return false;
+    }
+
+    if (lastActionTimeLowerBound < pendingSendStartTime_)
     {
         return false;
     }
@@ -937,6 +958,16 @@ bool TcpConnection::Validate(uint64 instanceLowerBound, Common::StopwatchTime no
             validated = false;
             Close_CallerHoldingLock(false, ErrorCodeValue::ConnectionInstanceObsolete);
         }
+        else if (IsSendStuck(now))
+        {
+            WriteWarning(
+                TraceType, traceId_,
+                "{0}-{1} send timed out: timeout = {2}",
+                localAddress_, targetAddress_, TransportConfig::GetConfig().SendTimeout);
+
+            validated = false;
+            Close_CallerHoldingLock(true, ErrorCodeValue::OperationCanceled);
+        }
         else if (IsIdleTooLongChl(now))
         {
             trace.ConnectionIdleTimeout(ToStringChl());
@@ -948,7 +979,7 @@ bool TcpConnection::Validate(uint64 instanceLowerBound, Common::StopwatchTime no
     return validated;
 }
 
-void TcpConnection::CloseInternal(bool abort, ErrorCode fault)
+void TcpConnection::CloseInternal(bool abort, ErrorCode const & fault)
 {
     AcquireWriteLock grab(lock_);
     Close_CallerHoldingLock(abort, fault);
@@ -1030,7 +1061,7 @@ void TcpConnection::ScheduleCleanup_CallerHoldingLock()
         });
 }
 
-ErrorCode TcpConnection::Fault_CallerHoldingLock(ErrorCode fault)
+ErrorCode TcpConnection::Fault_CallerHoldingLock(ErrorCode const & fault)
 {
     if (fault_.IsSuccess() && !fault.IsSuccess())
     {
@@ -1050,8 +1081,10 @@ ErrorCode TcpConnection::Fault_CallerHoldingLock(ErrorCode fault)
     return fault_;
 }
 
-void TcpConnection::ReportFault(ErrorCode fault)
+void TcpConnection::ReportFault(ErrorCode const & fault)
 {
+    ErrorCode connectionFault = fault;
+
     TcpSendTargetSPtr faultTarget;
     {
         AcquireWriteLock grab(lock_);
@@ -1064,12 +1097,12 @@ void TcpConnection::ReportFault(ErrorCode fault)
         shouldReportFault_ = false;
         faultTarget = tcpTarget_;
 
-        fault = Fault_CallerHoldingLock(fault);
+        connectionFault = Fault_CallerHoldingLock(connectionFault);
     }
 
     if (faultTarget)
     {
-        faultTarget->OnConnectionFault(fault);
+        faultTarget->OnConnectionFault(connectionFault);
     }
 }
 
@@ -1446,7 +1479,7 @@ void TcpConnection::CompleteClaimsRetrieval(ErrorCode const & error, std::wstrin
     sendBuffer_->EnqueueMessagesDelayedBySecurityNegotiation(move(claimsMessage));
 }
 
-void TcpConnection::ReceiveComplete(ErrorCode error, ULONG_PTR bytesTransferred)
+void TcpConnection::ReceiveComplete(ErrorCode const & error, ULONG_PTR bytesTransferred)
 {
     lastReceiveCompleteTime_ = Stopwatch::Now();
     receivePending_ = false;
@@ -1494,7 +1527,7 @@ void TcpConnection::ReceiveComplete(ErrorCode error, ULONG_PTR bytesTransferred)
         return;
     }
 
-    trace.ReceivedData(traceId_, bytesTransferred);
+    trace.ReceivedData(traceId_, bytesTransferred, receiveBuffer_->ReceivedByteTotal());
     receiveBuffer_->Commit(static_cast<size_t>(bytesTransferred));
 
     ProcessReceivedBytes();
@@ -1624,7 +1657,7 @@ ErrorCode TcpConnection::Send(MessageUPtr && message, TimeSpan expiration, bool 
                     message->Actor,
                     message->Action);
 
-                message->OnSendStatus(errorCode.ReadValue(), move(message));
+                message->OnSendStatus(errorCode, move(message));
             }
             else
             {
@@ -1700,7 +1733,7 @@ ErrorCode TcpConnection::Send(MessageUPtr && message, TimeSpan expiration, bool 
     return errorCode;
 }
 
-void TcpConnection::SendComplete(ErrorCode error, ULONG_PTR bytesTransferred)
+void TcpConnection::SendComplete(ErrorCode const & error, ULONG_PTR bytesTransferred)
 {
     // Upon overlapped IO completion, WSASend either has sent all the bytes successfully, or a failure
     // has occurred. Successful partial send can never occur, no need to handle partial send completion.
@@ -1729,7 +1762,8 @@ void TcpConnection::SendComplete(ErrorCode error, ULONG_PTR bytesTransferred)
     {
         AcquireWriteLock grab(lock_);
 
-        trace.SendCompleted(traceId_, bytesTransferred);
+        pendingSendStartTime_ = StopwatchTime::MaxValue;
+        trace.SendCompleted(traceId_, bytesTransferred, sendBuffer_->SentByteTotal());
         sendBuffer_->Consume(bytesTransferred);
         sendActive_ = false;
 
@@ -1921,7 +1955,6 @@ void TcpConnection::SetSecurityContext(TransportSecuritySPtr const & transportSe
     }
     else
     {
-        receiveBuffer_->DisableSecurityProviderCheck(); // todo, leikong, double check when implementing security provider nego
         incomingMessageHandler_ = [this](MessageUPtr & message) { OnUnsecuredMessageReceived(move(message)); };
     }
 }
@@ -2530,7 +2563,7 @@ void TcpConnection::SubmitReceive()
 
         Invariant(!receivePending_);
         receivePending_ = true;
-        lastActivityTime_ = Stopwatch::Now();
+        lastRecvCompeteTime_ = Stopwatch::Now();
         trace.BeginReceive(traceId_);
         error = evtLoopIn_->Activate(fdCtxIn_);
     }
@@ -2553,7 +2586,7 @@ void TcpConnection::SubmitSend()
             return;
         }
 
-        lastActivityTime_ = Stopwatch::Now();
+        pendingSendStartTime_ = Stopwatch::Now();
         trace.BeginSend(traceId_);
         error = evtLoopOut_->Activate(fdCtxOut_);
     }
@@ -2700,7 +2733,7 @@ void TcpConnection::SubmitReceive()
 
         Invariant(!receivePending_);
         receivePending_ = true;
-        lastActivityTime_ = Stopwatch::Now();
+        lastRecvCompeteTime_ = Stopwatch::Now();
         trace.BeginReceive(traceId_);
         threadpoolIo_.StartIo();
 
@@ -2719,7 +2752,7 @@ void TcpConnection::SubmitReceive()
 void TcpConnection::SubmitSend()
 {
     DWORD bytesTransferred = 0;
-    ErrorCode error; 
+    ErrorCode error;
     {
         // read lock is fine here as threadpoolIo_ and socket_ operations performed
         // below are thread safe, and we do not issue concurrent send operations.
@@ -2731,7 +2764,7 @@ void TcpConnection::SubmitSend()
             return;
         }
 
-        lastActivityTime_ = Stopwatch::Now();
+        pendingSendStartTime_ = Stopwatch::Now();
         trace.BeginSend(traceId_);
         threadpoolIo_.StartIo();
 

@@ -53,5 +53,11 @@ namespace Api
         virtual Common::ErrorCode CreateRepairManagementClient(__out IRepairManagementClientPtr& ) = 0;
 
         virtual Common::ErrorCode CreateComposeManagementClient(__out IComposeManagementClientPtr& ) = 0;
+
+        virtual Common::ErrorCode CreateSecretStoreClient(__out ISecretStoreClientPtr&) = 0;
+
+        virtual Common::ErrorCode CreateResourceManagerClient(__out IResourceManagerClientPtr&) = 0;
+
+        virtual Common::ErrorCode CreateResourceManagementClient(__out IResourceManagementClientPtr&) = 0;
     };
 }

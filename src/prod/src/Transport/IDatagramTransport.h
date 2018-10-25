@@ -26,6 +26,9 @@ namespace Transport
         virtual TransportSecuritySPtr Security() const = 0;
         virtual Common::ErrorCode SetSecurity(SecuritySettings const & securitySettings) = 0;
 
+        virtual void SetFrameHeaderErrorChecking(bool enabled) = 0;
+        virtual void SetMessageErrorChecking(bool enabled) = 0;
+
         virtual void DisableSecureSessionExpiration() = 0;
 
         virtual void DisableThrottle() = 0;

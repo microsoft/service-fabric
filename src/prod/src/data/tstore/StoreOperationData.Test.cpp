@@ -37,86 +37,113 @@ namespace TStoreTests
 
    private:
       KtlSystem* ktlSystem_;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> Metadata_NullKeyBytes_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = GetAllocator();
+
+          ULONG32 version = 1;
+          StoreModificationType::Enum modificationType = StoreModificationType::Enum::Add;
+          LONG64 transactionId = 5;
+
+          MetadataOperationData::CSPtr metadataOperationDataSPtr;
+          MetadataOperationData::Create(version, modificationType, transactionId, nullptr, allocator, metadataOperationDataSPtr);
+
+          OperationData::CSPtr operationdataSPtr(metadataOperationDataSPtr.RawPtr());
+          MetadataOperationData::CSPtr deserializedData = MetadataOperationData::Deserialize(1, allocator, operationdataSPtr);
+
+          CODING_ERROR_ASSERT(deserializedData->KeyBytes == nullptr);
+          CODING_ERROR_ASSERT(deserializedData->ModificationType == modificationType);
+          CODING_ERROR_ASSERT(deserializedData->TransactionId == transactionId);
+           co_return;
+       }
+
+        ktl::Awaitable<void> Metadata_NonNullKeyBytes_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = GetAllocator();
+
+          ULONG32 version = 1;
+          StoreModificationType::Enum modificationType = StoreModificationType::Enum::Add;
+          LONG64 transactionId = 5;
+
+          // Create key bytes
+          BinaryWriter binaryWriter(allocator);
+          binaryWriter.Write(5);
+          OperationData::SPtr operationDataSPtr = OperationData::Create(allocator);
+          operationDataSPtr->Append(*binaryWriter.GetBuffer(0));
+
+          MetadataOperationData::CSPtr metadataOperationDataSPtr;
+          MetadataOperationData::Create(version, modificationType, transactionId, operationDataSPtr, allocator, metadataOperationDataSPtr);
+
+          OperationData::CSPtr operationdataSPtr(metadataOperationDataSPtr.RawPtr());
+          MetadataOperationData::CSPtr deserializedData = MetadataOperationData::Deserialize(1, allocator, operationdataSPtr);
+
+          CODING_ERROR_ASSERT(deserializedData->KeyBytes->BufferCount == operationDataSPtr->BufferCount);
+          CODING_ERROR_ASSERT(deserializedData->ModificationType == modificationType);
+          CODING_ERROR_ASSERT(deserializedData->TransactionId == transactionId);
+           co_return;
+       }
+
+        ktl::Awaitable<void> RedoUndo_NullValue_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = GetAllocator();
+
+          RedoUndoOperationData::SPtr redoUndoSPtr;
+          RedoUndoOperationData::Create(allocator, nullptr, nullptr, redoUndoSPtr);
+
+          OperationData::SPtr operationdataSPtr = redoUndoSPtr.DownCast<OperationData>();
+          RedoUndoOperationData::SPtr deserializedData = RedoUndoOperationData::Deserialize(*operationdataSPtr, allocator);
+
+          CODING_ERROR_ASSERT(deserializedData->ValueOperationData == nullptr);
+          CODING_ERROR_ASSERT(deserializedData->NewValueOperationData == nullptr);
+           co_return;
+       }
+
+        ktl::Awaitable<void> RedoUndo_NonNullValue_ShouldSucceed_Test()
+       {
+          KAllocator& allocator = GetAllocator();
+
+          // Create key bytes
+          BinaryWriter binaryWriter(allocator);
+          binaryWriter.Write(5);
+          OperationData::SPtr operationDataSPtr = OperationData::Create(allocator);
+          operationDataSPtr->Append(*binaryWriter.GetBuffer(0));
+
+          RedoUndoOperationData::SPtr redoUndoSPtr;
+          RedoUndoOperationData::Create(allocator, operationDataSPtr, nullptr, redoUndoSPtr);
+
+          OperationData::SPtr operationdataSPtr = redoUndoSPtr.DownCast<OperationData>();
+          RedoUndoOperationData::SPtr deserializedData = RedoUndoOperationData::Deserialize(*operationdataSPtr, allocator);
+
+          CODING_ERROR_ASSERT(deserializedData->ValueOperationData->BufferCount == operationDataSPtr->BufferCount);
+          CODING_ERROR_ASSERT(deserializedData->NewValueOperationData == nullptr);
+           co_return;
+       }
+    #pragma endregion
    };
 
    BOOST_FIXTURE_TEST_SUITE(StoreOperationDataTestSuite, StoreOperationDataTest)
 
    BOOST_AUTO_TEST_CASE(Metadata_NullKeyBytes_ShouldSucceed)
    {
-      KAllocator& allocator = GetAllocator();
-
-      ULONG32 version = 1;
-      StoreModificationType::Enum modificationType = StoreModificationType::Enum::Add;
-      LONG64 transactionId = 5;
-
-      MetadataOperationData::CSPtr metadataOperationDataSPtr;
-      MetadataOperationData::Create(version, modificationType, transactionId, nullptr, allocator, metadataOperationDataSPtr);
-
-      OperationData::CSPtr operationdataSPtr(metadataOperationDataSPtr.RawPtr());
-      MetadataOperationData::CSPtr deserializedData = MetadataOperationData::Deserialize(1, allocator, operationdataSPtr);
-
-      CODING_ERROR_ASSERT(deserializedData->KeyBytes == nullptr);
-      CODING_ERROR_ASSERT(deserializedData->ModificationType == modificationType);
-      CODING_ERROR_ASSERT(deserializedData->TransactionId == transactionId);
+       SyncAwait(Metadata_NullKeyBytes_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(Metadata_NonNullKeyBytes_ShouldSucceed)
    {
-      KAllocator& allocator = GetAllocator();
-
-      ULONG32 version = 1;
-      StoreModificationType::Enum modificationType = StoreModificationType::Enum::Add;
-      LONG64 transactionId = 5;
-
-      // Create key bytes
-      BinaryWriter binaryWriter(allocator);
-      binaryWriter.Write(5);
-      OperationData::SPtr operationDataSPtr = OperationData::Create(allocator);
-      operationDataSPtr->Append(*binaryWriter.GetBuffer(0));
-
-      MetadataOperationData::CSPtr metadataOperationDataSPtr;
-      MetadataOperationData::Create(version, modificationType, transactionId, operationDataSPtr, allocator, metadataOperationDataSPtr);
-
-      OperationData::CSPtr operationdataSPtr(metadataOperationDataSPtr.RawPtr());
-      MetadataOperationData::CSPtr deserializedData = MetadataOperationData::Deserialize(1, allocator, operationdataSPtr);
-
-      CODING_ERROR_ASSERT(deserializedData->KeyBytes->BufferCount == operationDataSPtr->BufferCount);
-      CODING_ERROR_ASSERT(deserializedData->ModificationType == modificationType);
-      CODING_ERROR_ASSERT(deserializedData->TransactionId == transactionId);
+       SyncAwait(Metadata_NonNullKeyBytes_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(RedoUndo_NullValue_ShouldSucceed)
    {
-      KAllocator& allocator = GetAllocator();
-
-      RedoUndoOperationData::SPtr redoUndoSPtr;
-      RedoUndoOperationData::Create(allocator, nullptr, nullptr, redoUndoSPtr);
-
-      OperationData::SPtr operationdataSPtr = redoUndoSPtr.DownCast<OperationData>();
-      RedoUndoOperationData::SPtr deserializedData = RedoUndoOperationData::Deserialize(*operationdataSPtr, allocator);
-
-      CODING_ERROR_ASSERT(deserializedData->ValueOperationData == nullptr);
-      CODING_ERROR_ASSERT(deserializedData->NewValueOperationData == nullptr);
+       SyncAwait(RedoUndo_NullValue_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_CASE(RedoUndo_NonNullValue_ShouldSucceed)
    {
-      KAllocator& allocator = GetAllocator();
-
-      // Create key bytes
-      BinaryWriter binaryWriter(allocator);
-      binaryWriter.Write(5);
-      OperationData::SPtr operationDataSPtr = OperationData::Create(allocator);
-      operationDataSPtr->Append(*binaryWriter.GetBuffer(0));
-
-      RedoUndoOperationData::SPtr redoUndoSPtr;
-      RedoUndoOperationData::Create(allocator, operationDataSPtr, nullptr, redoUndoSPtr);
-
-      OperationData::SPtr operationdataSPtr = redoUndoSPtr.DownCast<OperationData>();
-      RedoUndoOperationData::SPtr deserializedData = RedoUndoOperationData::Deserialize(*operationdataSPtr, allocator);
-
-      CODING_ERROR_ASSERT(deserializedData->ValueOperationData->BufferCount == operationDataSPtr->BufferCount);
-      CODING_ERROR_ASSERT(deserializedData->NewValueOperationData == nullptr);
+       SyncAwait(RedoUndo_NonNullValue_ShouldSucceed_Test());
    }
 
    BOOST_AUTO_TEST_SUITE_END()

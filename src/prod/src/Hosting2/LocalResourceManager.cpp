@@ -25,22 +25,27 @@ LocalResourceManager::LocalResourceManager(
     memoryMBInUse_(0),
     healthWarning_(0),
     systemMemoryInMB_(0),
-    systemCpuCores_(0)
+    systemCpuCores_(0),
+    images_(),
+    getImagesQueryErrors_(0)
 {
 }
 
 Common::ErrorCode LocalResourceManager::RegisterServicePackage(VersionedServicePackage const & package)
 {
-    WriteInfo(
-        Trace_LocalResourceManager,
-        Root.TraceId,
-        "Attempting to register Versioned Service Package {0}.",
-        package);
     AcquireExclusiveLock lockMe(lock_);
 
     auto error = RegisterServicePackageInternal(package.ServicePackageObj.Id,
         package.PackageDescription.ResourceGovernanceDescription,
         package.ServicePackageObj.ApplicationName);
+
+    WriteInfo(
+        Trace_LocalResourceManager,
+        Root.TraceId,
+        "RegisterServicePackage: Id={0}, InstanceId={1}, IsGoverned={2}.",
+        package.ServicePackageObj.Id,
+        package.ServicePackageObj.InstanceId,
+        package.PackageDescription.ResourceGovernanceDescription.IsGoverned);
 
     return error;
 }
@@ -212,6 +217,13 @@ Common::ErrorCode LocalResourceManager::OnOpen()
         numAvailableCores_,
         availableMemoryInMB_);
 
+    // Set up timer to periodically invoke GetNodeAvailableContainerImages
+    auto componentRoot = Root.CreateComponentRoot();
+    getImagesTimer_ = Common::Timer::Create(
+        "LocalResourceManager.GetNodeAvailableContainerImages",
+        [this, componentRoot](Common::TimerSPtr const&) mutable { this->GetNodeAvailableContainerImages(); }, true);
+    getImagesTimer_->Change(HostingConfig::GetConfig().NodeAvailableContainerImagesRefreshInterval);
+
     return ErrorCodeValue::Success;
 }
 
@@ -222,7 +234,21 @@ Common::ErrorCode Hosting2::LocalResourceManager::OnClose()
     {
         hosting_.HealthManagerObj->UnregisterSource(*ServiceModel::Constants::ResourceGovernanceReportProperty);
     }
+
+    if (getImagesTimer_ != nullptr)
+    {
+        getImagesTimer_->Cancel();
+    }
+
     return ErrorCodeValue::Success;
+}
+
+void Hosting2::LocalResourceManager::OnAbort()
+{
+    if (getImagesTimer_ != nullptr)
+    {
+        getImagesTimer_->Cancel();
+    }
 }
 
 Common::ErrorCode LocalResourceManager::CheckAndCorrectAvailableResources()
@@ -579,4 +605,78 @@ double LocalResourceManager::GetCpuFraction(CodePackage const & package, Resourc
     }
 
     return fraction;
+}
+
+void LocalResourceManager::GetNodeAvailableContainerImages()
+{
+    if (hosting_.State.Value > FabricComponentState::Opened)
+    {
+        // no need to notify if the Hosting Subsystem is closing down
+        return;
+    }
+
+    // Read from PLB if preferred container placement is enabled
+    bool preferNodesForContainerPlacement = Reliability::LoadBalancingComponent::PLBConfig::GetConfig().PreferNodesForContainerPlacement;
+
+    // Send available images only if it is enabled and LRM is not in test mode
+    if (preferNodesForContainerPlacement &&
+        !HostingConfig::GetConfig().LocalResourceManagerTestMode &&
+        !HostingConfig::GetConfig().DisableContainers)
+    {
+        // Periodically get available images from docker and send them to the FM
+        auto operation = hosting_.FabricActivatorClientObj->BeginGetImages(
+            HostingConfig::GetConfig().NodeAvailableContainerImagesTimeout,
+            [this](AsyncOperationSPtr const & operation) 
+        {
+            this->OnGetNodeAvailableContainerImagesCompleted(operation, false);
+        },
+            Root.CreateAsyncOperationRoot());
+        OnGetNodeAvailableContainerImagesCompleted(operation, true);
+    }
+}
+
+void LocalResourceManager::OnGetNodeAvailableContainerImagesCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+    {
+        return;
+    }
+
+    auto error = hosting_.FabricActivatorClientObj->EndGetImages(operation, images_);
+
+    int64 nodeAvailableContainerImagesRefreshInterval = HostingConfig::GetConfig().NodeAvailableContainerImagesRefreshInterval.TotalSeconds();
+    if (error.IsSuccess())
+    {
+        getImagesQueryErrors_ = 0;
+        this->SendAvailableContainerImagesToFM();
+    }
+    else
+    {
+        getImagesQueryErrors_++;
+        // wait a bit more due if there are errors
+        nodeAvailableContainerImagesRefreshInterval += (nodeAvailableContainerImagesRefreshInterval * getImagesQueryErrors_) / 2;
+        WriteWarning(
+            Trace_LocalResourceManager,
+            Root.TraceId,
+            "Failed to get images with error: {0}. Query failed {1} times sequentialy, next function for querying images will be scheduled in {2} seconds.",
+            error,
+            getImagesQueryErrors_,
+            nodeAvailableContainerImagesRefreshInterval);
+    }
+
+    TimeSpan getImagesRetryInterval = TimeSpan::FromSeconds(static_cast<double>(nodeAvailableContainerImagesRefreshInterval));
+    getImagesTimer_->Change(getImagesRetryInterval);
+}
+
+void LocalResourceManager::SendAvailableContainerImagesToFM() const
+{
+    WriteInfo(
+        Trace_LocalResourceManager,
+        Root.TraceId,
+        "Message is sent to the FM from node: {0} with images: {1}",
+        hosting_.NodeId,
+        images_);
+
+    SendAvailableContainerImagesEventArgs eventArgs(move(images_), hosting_.NodeId);
+    hosting_.EventDispatcherObj->EnqueueAvaialableImagesEvent(move(eventArgs));
 }

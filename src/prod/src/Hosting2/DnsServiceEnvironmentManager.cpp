@@ -32,14 +32,11 @@ DnsServiceEnvironmentManager::~DnsServiceEnvironmentManager()
 }
 
 Common::AsyncOperationSPtr DnsServiceEnvironmentManager::BeginSetupDnsEnvAndStartMonitor(
-    std::wstring const & sid,
     TimeSpan timeout,
     AsyncCallback const & callback,
     AsyncOperationSPtr const & parent)
 {
     AcquireWriteLock lock(lock_);
-
-    sidString_ = sid;
 
     WriteInfo(TraceType_DnsEnvManager, Root.TraceId, "DnsServiceEnvironmentManager::BeginSetupDnsEnvAndStartMonitor called");
 
@@ -85,7 +82,7 @@ Common::AsyncOperationSPtr DnsServiceEnvironmentManager::BeginSetupDnsEnvAndStar
     WriteInfo(TraceType_DnsEnvManager, Root.TraceId, "Started DnsService environment monitor");
 
     return hosting_.FabricActivatorClientObj->BeginConfigureNodeForDnsService(
-        true /*isDnsServiceEnabled*/, sidString_, timeout, callback, parent);
+        true /*isDnsServiceEnabled*/, timeout, callback, parent);
 }
 
 Common::ErrorCode  DnsServiceEnvironmentManager::EndSetupDnsEnvAndStartMonitor(
@@ -125,7 +122,7 @@ Common::AsyncOperationSPtr DnsServiceEnvironmentManager::BeginRemoveDnsFromEnvAn
     StopMonitorUnsafe();
 
     return hosting_.FabricActivatorClientObj->BeginConfigureNodeForDnsService(
-        false /*isDnsServiceEnabled*/, sidString_, timeout, callback, parent);
+        false /*isDnsServiceEnabled*/, timeout, callback, parent);
 }
 
 Common::ErrorCode DnsServiceEnvironmentManager::EndRemoveDnsFromEnvAndStopMonitor(
@@ -212,7 +209,6 @@ void DnsServiceEnvironmentManager::OnTimer()
         TimeSpan timeout = DNS::DnsServiceConfig::GetConfig().ConfigureDnsEnvironmentTimeoutInterval;
         auto operation = hosting_.FabricActivatorClientObj->BeginConfigureNodeForDnsService(
             true /*isDnsServiceEnabled*/,
-            sidString_,
             timeout,
             [this](AsyncOperationSPtr const & operation) { this->OnConfigureNodeForDnsServiceComplete(operation, false /*expectedCompletedSynchronously*/); },
             nullptr);

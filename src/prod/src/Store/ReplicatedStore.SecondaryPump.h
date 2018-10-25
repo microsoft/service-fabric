@@ -82,6 +82,7 @@ namespace Store
                 IStoreBase::TransactionSPtr && transactionSPtr,
                 Common::ComPointer<IFabricOperation> const &operationCPtr,
                 FABRIC_SEQUENCE_NUMBER operationLsn,
+                std::shared_ptr<std::vector<ReplicationOperation>> const &,
                 size_t updatedTombstoneCount,
                 Common::AsyncCallback const & callback,
                 Common::AsyncOperationSPtr const & root);
@@ -101,6 +102,7 @@ namespace Store
             IStoreBase::TransactionSPtr transactionSPtr_;
             Common::ComPointer<IFabricOperation> operationCPtr_;
             ::FABRIC_SEQUENCE_NUMBER operationLSN_;
+            std::shared_ptr<std::vector<ReplicationOperation>> replicationOperations_;
             size_t updatedTombstoneCount_;
             Common::Stopwatch localCommitStopwatch_;
         };
@@ -161,7 +163,7 @@ namespace Store
 
         Common::ErrorCode ApplyOperationsWithRetry(
             Common::ComPointer<IFabricOperation> const &,
-            std::vector<ReplicationOperation> const &,
+            std::shared_ptr<std::vector<ReplicationOperation>> const &,
             ::FABRIC_SEQUENCE_NUMBER replicationLSN,
             ::FABRIC_SEQUENCE_NUMBER lastQuorumAcked,
             __out std::wstring & errorMessage);
@@ -231,7 +233,12 @@ namespace Store
         Common::ErrorCode DeleteIfDataItemExists(
             TransactionSPtr const & txSPtr,
             std::wstring const & type,
-            std::wstring const & key);
+            std::wstring const & key,
+            FABRIC_SEQUENCE_NUMBER operationLsn);
+
+        void AddPendingInsert(std::wstring const & type, std::wstring const & key, FABRIC_SEQUENCE_NUMBER lsn);
+        void RemovePendingInserts(std::vector<ReplicationOperation> const &, FABRIC_SEQUENCE_NUMBER lsn);
+        bool ContainsPendingInsert(std::wstring const & type, std::wstring const & key, FABRIC_SEQUENCE_NUMBER lsn, __out FABRIC_SEQUENCE_NUMBER & pendingLsn);
 			
         bool ApproveNewOperationCreation();
 		
@@ -249,6 +256,9 @@ namespace Store
         SecondaryPumpState get_PumpState();
         ILocalStoreUPtr const & GetCurrentLocalStore();
         void FlushCurrentLocalStore();
+
+    private:
+        class PendingInsertMetadata;
 
         Common::ComponentRootSPtr root_;
         ReplicatedStore & replicatedStore_;
@@ -275,5 +285,8 @@ namespace Store
         mutable Common::atomic_long pendingOperationsCount_;
 
         std::unique_ptr<Common::File> fullCopyFileUPtr_;
+
+        std::unordered_map<std::wstring, std::shared_ptr<PendingInsertMetadata>> pendingInserts_;
+        Common::RwLock pendingInsertsLock_;
     };
 }

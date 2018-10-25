@@ -40,52 +40,6 @@ DeployedServicePackageAggregatedHealthState::~DeployedServicePackageAggregatedHe
 {
 }
 
-DeployedServicePackageAggregatedHealthState::DeployedServicePackageAggregatedHealthState(DeployedServicePackageAggregatedHealthState const & other)
-    : applicationName_(other.applicationName_)
-    , serviceManifestName_(other.serviceManifestName_)
-    , servicePackageActivationId_(other.servicePackageActivationId_)
-    , nodeName_(other.nodeName_)
-    , aggregatedHealthState_(other.aggregatedHealthState_)
-{
-}
-
-DeployedServicePackageAggregatedHealthState & DeployedServicePackageAggregatedHealthState::operator = (DeployedServicePackageAggregatedHealthState const & other)
-{
-    if (this != &other)
-    {
-        applicationName_ = other.applicationName_;
-        serviceManifestName_ = other.serviceManifestName_;
-        servicePackageActivationId_ = other.servicePackageActivationId_;
-        nodeName_ = other.nodeName_;
-        aggregatedHealthState_ = other.aggregatedHealthState_;
-    }
-
-    return *this;
-}
-
-DeployedServicePackageAggregatedHealthState::DeployedServicePackageAggregatedHealthState(DeployedServicePackageAggregatedHealthState && other)
-    : applicationName_(move(other.applicationName_))
-    , serviceManifestName_(move(other.serviceManifestName_))
-    , servicePackageActivationId_(move(other.servicePackageActivationId_))
-    , nodeName_(move(other.nodeName_))
-    , aggregatedHealthState_(move(other.aggregatedHealthState_))
-{
-}
-
-DeployedServicePackageAggregatedHealthState & DeployedServicePackageAggregatedHealthState::operator = (DeployedServicePackageAggregatedHealthState && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        serviceManifestName_ = move(other.serviceManifestName_);
-        servicePackageActivationId_ = move(other.servicePackageActivationId_);
-        nodeName_ = move(other.nodeName_);
-        aggregatedHealthState_ = move(other.aggregatedHealthState_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode DeployedServicePackageAggregatedHealthState::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_DEPLOYED_SERVICE_PACKAGE_HEALTH_STATE & publicDeployedServicePackageAggregatedHealthState) const 

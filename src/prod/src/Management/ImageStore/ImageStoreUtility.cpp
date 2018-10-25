@@ -18,45 +18,176 @@ Common::ErrorCode ImageStoreUtility::GenerateSfpkg(
     std::wstring const & appPackageRootDirectory,
     std::wstring const & destinationDirectory,
     bool applyCompression,
-    std::wstring const & sfPkgName,
-    __out std::wstring & sfPkgFilePath)
+    std::wstring const & sfpkgName,
+    __out std::wstring & sfpkgFilePath)
 {
-    // If sfPkgName is empty, use the directory name instead.
-    // Change or add .sfpkg extension.
-    wstring sfPkgFileName = sfPkgName;
-    if (sfPkgName.empty())
+    if (!Directory::Exists(appPackageRootDirectory))
     {
-        sfPkgFileName = Path::GetDirectoryName(appPackageRootDirectory);
+        ErrorCode error(
+            ErrorCodeValue::DirectoryNotFound,
+            wformatString(GET_COMMON_RC(DirectoryNotFound), appPackageRootDirectory));
+        Trace.WriteInfo(TraceComponent, "Generate sfpkg failed: {0} {1}", error, error.Message);
+        return error;
     }
 
-    Path::ChangeExtension(sfPkgFileName, *ServiceModel::Constants::SFApplicationPackageExtension);
+    wstring sourcePath = Path::GetFullPath(appPackageRootDirectory);
+    wstring destPath = Path::GetFullPath(destinationDirectory);
 
-    sfPkgFilePath = Path::Combine(destinationDirectory, sfPkgFileName);
+    // The destination directory may not be inside the root directory, or create archive fails.
+    // The error returned by zip only says that it can't access a file, so it's hard to figure out what is wrong.
+    // Add a check so users get an error that it's clear.
+    wstring sourcePathLower(sourcePath);
+    wstring destPathLower(destPath);
+    StringUtility::ToLower(sourcePathLower);
+    StringUtility::ToLower(destPathLower);
+    if (sourcePathLower == destPathLower ||
+        StringUtility::StartsWith(destPathLower, sourcePathLower + Path::GetPathSeparatorWstr()))
+    {
+        ErrorCode error(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(GET_COMMON_RC(ZipToChildDirectoryFails), destinationDirectory, appPackageRootDirectory));
+        Trace.WriteInfo(TraceComponent, "Generate sfpkg failed: {0} {1}", error, error.Message);
+        return error;
+    }
+
+    // If sfpkgName is empty, use the directory name instead.
+    // Change or add .sfpkg extension.
+    wstring sfPkgFileName = sfpkgName;
+    if (sfpkgName.empty())
+    {
+        sfPkgFileName = Path::GetFileName(sourcePath);
+    }
+
+    ASSERT_IF(sfPkgFileName.empty(), "sfpkg name is not set. Input: '{0}, appPackageRootDirectory {1}", sfpkgName, appPackageRootDirectory);
+
+    Trace.WriteInfo(TraceComponent, "Generate sfpkg from {0} to {1}, name {2}...", sourcePath, destPath, sfPkgFileName);
+
+    Path::AddSfpkgExtension(sfPkgFileName);
+
+    sfpkgFilePath = Path::Combine(destPath, sfPkgFileName);
 
     if (applyCompression)
     {
         ArchiveApplicationPackage(appPackageRootDirectory, INativeImageStoreProgressEventHandlerPtr());
     }
 
-    Trace.WriteInfo(TraceComponent, "Generate sfpkg from {0} to {1} ...", appPackageRootDirectory, sfPkgFilePath);
+    // Create the destination directory if it doesn't exist.
+    Directory::Create2(destinationDirectory);
+
+    // Delete any previous file with the same name.
     ErrorCode error(ErrorCodeValue::Success);
-    if (File::Exists(sfPkgFilePath))
+    if (File::Exists(sfpkgFilePath))
     {
-        error = File::Delete2(sfPkgFilePath);
+        Trace.WriteInfo(TraceComponent, "Delete previous sfpkg '{0}'.", sfpkgFilePath);
+        error = File::Delete2(sfpkgFilePath);
         if (!error.IsSuccess())
         {
             return error;
         }
     }
 
-    return Directory::CreateArchive(appPackageRootDirectory, sfPkgFilePath);
+    Trace.WriteInfo(TraceComponent, "Archive to sfpkg '{0}'.", sfpkgFilePath);
+    error = Directory::CreateArchive(appPackageRootDirectory, sfpkgFilePath);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    return error;
 }
 
 Common::ErrorCode ImageStoreUtility::ExpandSfpkg(
-    std::wstring const & sfPkgFilePath,
+    std::wstring const & sfpkgFilePath,
     std::wstring const & appPackageRootDirectory)
 {
-    return Directory::ExtractArchive(sfPkgFilePath, appPackageRootDirectory);
+    // Validate the sfpkg.
+    if (!Path::IsSfpkg(sfpkgFilePath))
+    {
+        return ErrorCode(
+            ErrorCodeValue::InvalidArgument,
+            wformatString(GET_COMMON_RC(Invalid_Sfpkg_Name), sfpkgFilePath));
+    }
+
+    if (!File::Exists(sfpkgFilePath))
+    {
+        return ErrorCode(
+            ErrorCodeValue::FileNotFound,
+            wformatString(GET_COMMON_RC(FileNotFound), sfpkgFilePath));
+    }
+
+    ErrorCode error;
+
+    // Delete sfpkg if it's in the appPackageRootDirectory, to ensure that the extracted package is a valid SF package.
+    bool shouldDelete = false;
+
+    // The destination folder should not contain other files.
+    if (Directory::Exists(appPackageRootDirectory))
+    {
+        auto subDirs = Directory::GetSubDirectories(appPackageRootDirectory);
+        bool hasUnexpectedFiles = false;
+        if (!subDirs.empty())
+        {
+            // More folders in the app package, which is not expected.
+            // The extracted app package should have no other files or folders.
+            Trace.WriteInfo(TraceComponent, "There are {0} sub-directories in {1}, can't extract {2}", subDirs.size(), appPackageRootDirectory, sfpkgFilePath);
+            hasUnexpectedFiles = true;
+        }
+        else
+        {
+            // Enumerate files top directory only.
+            auto files = Directory::GetFiles(appPackageRootDirectory, L"*", false /*fullPath*/, true /*topDirectoryOnly*/);
+            if (files.size() > 1u)
+            {
+                Trace.WriteInfo(TraceComponent, "There are {0} files in {1}, can't extract {2}", files.size(), appPackageRootDirectory, sfpkgFilePath);
+                hasUnexpectedFiles = true;
+            }
+            else if (files.size() == 1u)
+            {
+                // Check if the file inside the directory is the sfpkg to expand.
+                auto sfpkgFileName = Path::GetFileName(sfpkgFilePath);
+                if (StringUtility::AreEqualCaseInsensitive(sfpkgFileName, files[0]))
+                {
+                    Trace.WriteInfo(TraceComponent, "Extract {0}: sfpkg is in directory {1} and will be deleted after successful expand", sfpkgFilePath, appPackageRootDirectory);
+                    shouldDelete = true;
+                }
+                else
+                {
+                    // Different file, not supported.
+                    Trace.WriteInfo(TraceComponent, "Extract {0}: directory {1} has unexpected file {2}. Can't extract, as the folder will not be a valid app folder.", sfpkgFilePath, appPackageRootDirectory, files[0]);
+                    hasUnexpectedFiles = true;
+                }
+            }
+        }
+
+        if (hasUnexpectedFiles)
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidState,
+                wformatString(GET_COMMON_RC(ExpandSfpkgDirectoryNotEmpty), appPackageRootDirectory));
+        }
+    }
+    else
+    {
+        Directory::Create(appPackageRootDirectory);
+    }
+
+    error = Directory::ExtractArchive(sfpkgFilePath, appPackageRootDirectory);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    // Delete the sfpkg since expand is successful.
+    if (shouldDelete)
+    {
+        error = File::Delete2(sfpkgFilePath);
+        if (!error.IsSuccess())
+        {
+            return error;
+        }
+    }
+
+    return error;
 }
 
 ErrorCode ImageStoreUtility::ArchiveApplicationPackage(

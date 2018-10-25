@@ -16,10 +16,12 @@ namespace Store
         __in Store::ReplicatedStore & store,
         shared_ptr<TransactionReplicator> const & txReplicator,
         TransactionSPtr const & innerTransactionSPtr,
+        IReplicatedStoreTxEventHandlerWPtr const & txEventHandler,
         Common::ActivityId const & activityId,
         Store::TransactionSettings const & settings)
         : TransactionBase(store, txReplicator, activityId)
         , innerTransactionSPtr_(innerTransactionSPtr)
+        , txEventHandler_(txEventHandler)
         , txLock_()
         , isReadOnly_(false)
         , replicationOperations_()
@@ -35,6 +37,12 @@ namespace Store
             this->TraceId,
             this->TrackerId,
             static_cast<void*>(this));
+
+        auto txHandler = txEventHandler_.lock();
+        if (txHandler.get() != nullptr)
+        {
+            txHandler->OnCreateTransaction(this->ActivityId, this->TrackerId);
+        }
     }
 
     ReplicatedStore::Transaction::~Transaction()
@@ -45,6 +53,12 @@ namespace Store
             this->TraceId,
             this->TrackerId,
             static_cast<void*>(this));
+
+        auto txHandler = txEventHandler_.lock();
+        if (txHandler.get() != nullptr)
+        {
+            txHandler->OnReleaseTransaction(this->ActivityId, this->TrackerId);
+        }
 
         this->OnDtor();
     }
@@ -159,6 +173,12 @@ namespace Store
         if (!isReadOnly_ && error.IsSuccess())
         {
             this->ReplicatedStore.CloseCurrentSimpleTransactionGroup();
+
+            auto txHandler = txEventHandler_.lock();
+            if (txHandler.get() != nullptr)
+            {
+                error = txHandler->OnCommit(this->ActivityId, this->TrackerId);
+            }
         }
         
         return error;

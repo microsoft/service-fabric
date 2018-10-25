@@ -83,14 +83,15 @@ namespace Naming
         void OnProcessRequestFailed(Common::ErrorCode &&, Federation::RequestReceiverContext &);
 
     protected:
-        // *******************
-        // StatefulServiceBase
-        // *******************
 
-        virtual Common::ErrorCode OnOpen(Common::ComPointer<IFabricStatefulServicePartition> const & servicePartition);
-        virtual Common::ErrorCode OnChangeRole(::FABRIC_REPLICA_ROLE newRole, __out std::wstring & serviceLocation);
-        virtual Common::ErrorCode OnClose();
-        virtual void OnAbort();
+        // 
+        // KeyValueStoreReplica
+        //
+
+        virtual Common::ErrorCode OnOpen(Common::ComPointer<IFabricStatefulServicePartition> const & servicePartition) override;
+        virtual Common::ErrorCode OnChangeRole(::FABRIC_REPLICA_ROLE newRole, __out std::wstring & serviceLocation) override;
+        virtual Common::ErrorCode OnClose() override;
+        virtual void OnAbort() override;
 
     private:
         class ProcessRequestAsyncOperation;
@@ -147,8 +148,6 @@ namespace Naming
 
         void StartRecoveringPrimary();
         void FinishRecoveringPrimary(Common::AsyncOperationSPtr const &, bool expectedCompletedSynchronously);
-
-        Common::AsyncOperationSPtr CreateStoreOperationRoot();
 
         // StoreService belongs to the FabricRuntime object hierarchy so its lifetime
         // is independent of FabricNode. However, since StoreService uses FederationSubsystem, 

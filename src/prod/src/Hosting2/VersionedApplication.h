@@ -44,7 +44,7 @@ namespace Hosting2
         // Opens the service application with the version specified in the ctor
         // if Open is attempted and it is successful, the application transitions to Opened state
         // if Open is attempted and it is unsuccessful, the application transitions to Failed state
-        Common::AsyncOperationSPtr BeginOpen(            
+        Common::AsyncOperationSPtr BeginOpen(
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
@@ -124,7 +124,7 @@ namespace Hosting2
         void OnServiceTypeRegistrationNotFound(
             uint64 const registrationTableVersion,
             ServiceModel::VersionedServiceTypeIdentifier const & versionedServiceTypeId,
-			ServicePackageInstanceIdentifier const & servicePackageInstanceId);
+            ServicePackageInstanceIdentifier const & servicePackageInstanceId);
         
         //Common::ErrorCode HasServicePackage(std::wstring const & servicePackageName, __out bool & exists);
 
@@ -134,7 +134,7 @@ namespace Hosting2
 
         Common::ErrorCode GetServicePackageInstance(
             std::wstring const & servicePackageName, 
-			std::wstring const & servicePackagePublicActivationId,
+            std::wstring const & servicePackagePublicActivationId,
             __out ServicePackage2SPtr & servicePackageInstance) const;
 
         Common::ErrorCode GetServicePackageInstance(
@@ -147,6 +147,10 @@ namespace Hosting2
         void NotifyDcaAboutServicePackages();
 
         Common::ErrorCode IsCodePackageLockFilePresent(__out bool & isCodePackageLockFilePresent) const;
+
+        void OnServiceTypesUnregistered(
+            ServicePackageInstanceIdentifier const servicePackageInstanceId,
+            std::vector<ServiceTypeInstanceIdentifier> const & serviceTypeInstanceIds);
 
     private:
         __declspec(property(get=get_Application)) Application2 const & ApplicationObj;
@@ -175,10 +179,10 @@ namespace Hosting2
         class UpgradeServicePackageInstanceAsyncOperation;
 
         class DeactivateServicePackageInstancesAsyncOperation;
-        class DeactivateServicePackageInstanceAsyncOperation;        
+        class DeactivateServicePackageInstanceAsyncOperation;
 
     private:
-        Application2Holder const applicationHolder_;    
+        Application2Holder const applicationHolder_;
         std::wstring const healthPropertyId_;
 
         // WARNING: Access to the following variables should be restricted to only 

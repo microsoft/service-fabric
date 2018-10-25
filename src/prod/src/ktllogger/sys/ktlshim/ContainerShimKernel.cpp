@@ -3,6 +3,10 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+#ifdef UNIFY
+#define UPASSTHROUGH 1
+#endif
+
 #include "KtlLogShimKernel.h"
 
 //************************************************************************************
@@ -39,16 +43,6 @@ KtlLogContainerKernel::KtlLogContainerKernel(
 KtlLogContainerKernel::~KtlLogContainerKernel()
 {
 }
-
-#ifndef UDRIVER
-KtlLogContainer::KtlLogContainer()
-{
-}
-
-KtlLogContainer::~KtlLogContainer()
-{
-}
-#endif
 
 //
 // IsFunctional()
@@ -534,16 +528,6 @@ KtlLogContainerKernel::AsyncCreateLogStreamContextKernel::OnCancel(
     _BaseAsyncCreateLogStream->Cancel();
 }
 
-#ifndef UDRIVER
-KtlLogContainer::AsyncCreateLogStreamContext::AsyncCreateLogStreamContext()
-{
-}
-
-KtlLogContainer::AsyncCreateLogStreamContext::~AsyncCreateLogStreamContext()
-{
-}
-#endif
-
 KtlLogContainerKernel::AsyncCreateLogStreamContextKernel::AsyncCreateLogStreamContextKernel()
 {
 }
@@ -711,16 +695,6 @@ KtlLogContainerKernel::AsyncDeleteLogStreamContextKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
     _BaseAsyncDeleteLogStream->Cancel();
 }
-
-#ifndef UDRIVER
-KtlLogContainer::AsyncDeleteLogStreamContext::AsyncDeleteLogStreamContext()
-{
-}
-
-KtlLogContainer::AsyncDeleteLogStreamContext::~AsyncDeleteLogStreamContext()
-{
-}
-#endif
 
 KtlLogContainerKernel::AsyncDeleteLogStreamContextKernel::AsyncDeleteLogStreamContextKernel()
 {
@@ -934,16 +908,6 @@ KtlLogContainerKernel::AsyncOpenLogStreamContextKernel::OnCancel(
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
     _BaseAsyncOpenLogStream->Cancel();
 }
-
-#ifndef UDRIVER
-KtlLogContainer::AsyncOpenLogStreamContext::AsyncOpenLogStreamContext()
-{
-}
-
-KtlLogContainer::AsyncOpenLogStreamContext::~AsyncOpenLogStreamContext()
-{
-}
-#endif
 
 KtlLogContainerKernel::AsyncOpenLogStreamContextKernel::AsyncOpenLogStreamContextKernel()
 {
@@ -1436,16 +1400,6 @@ KtlLogContainerKernel::AsyncAssignAliasContextKernel::OnCancel(
     _AsyncAliasOperation->Cancel();
 }
 
-#ifndef UDRIVER
-KtlLogContainer::AsyncAssignAliasContext::AsyncAssignAliasContext()
-{
-}
-
-KtlLogContainer::AsyncAssignAliasContext::~AsyncAssignAliasContext()
-{
-}
-#endif
-
 KtlLogContainerKernel::AsyncAssignAliasContextKernel::AsyncAssignAliasContextKernel()
 {
 }
@@ -1606,16 +1560,6 @@ KtlLogContainerKernel::AsyncRemoveAliasContextKernel::OnCancel(
     _AsyncAliasOperation->Cancel();
 }
 
-#ifndef UDRIVER
-KtlLogContainer::AsyncRemoveAliasContext::AsyncRemoveAliasContext()
-{
-}
-
-KtlLogContainer::AsyncRemoveAliasContext::~AsyncRemoveAliasContext()
-{
-}
-#endif
-
 KtlLogContainerKernel::AsyncRemoveAliasContextKernel::AsyncRemoveAliasContextKernel()
 {
 }
@@ -1765,16 +1709,6 @@ KtlLogContainerKernel::AsyncResolveAliasContextKernel::OnCancel(
 {
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
 }
-
-#ifndef UDRIVER
-KtlLogContainer::AsyncResolveAliasContext::AsyncResolveAliasContext()
-{
-}
-
-KtlLogContainer::AsyncResolveAliasContext::~AsyncResolveAliasContext()
-{
-}
-#endif
 
 KtlLogContainerKernel::AsyncResolveAliasContextKernel::AsyncResolveAliasContextKernel()
 {
@@ -1932,16 +1866,6 @@ KtlLogContainerKernel::AsyncEnumerateStreamsContextKernel::OnCancel(
 {
     KTraceCancelCalled(this, FALSE, FALSE, _ActiveContext.GetMarshaller()->GetRequestId());
 }
-
-#ifndef UDRIVER
-KtlLogContainer::AsyncEnumerateStreamsContext::AsyncEnumerateStreamsContext()
-{
-}
-
-KtlLogContainer::AsyncEnumerateStreamsContext::~AsyncEnumerateStreamsContext()
-{
-}
-#endif
 
 KtlLogContainerKernel::AsyncEnumerateStreamsContextKernel::AsyncEnumerateStreamsContextKernel()
 {

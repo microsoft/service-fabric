@@ -12,6 +12,7 @@ using namespace ServiceModel;
 CodePackageDescription::CodePackageDescription() :
     Name(),
     Version(),
+    IsActivator(false),
     IsShared(false),
     SetupEntryPoint(),
     HasSetupEntryPoint(false),
@@ -23,6 +24,7 @@ CodePackageDescription::CodePackageDescription() :
 CodePackageDescription::CodePackageDescription(CodePackageDescription const & other) :
     Name(other.Name),
     Version(other.Version),
+    IsActivator(other.IsActivator),
     IsShared(other.IsShared),
     SetupEntryPoint(other.SetupEntryPoint),
     HasSetupEntryPoint(other.HasSetupEntryPoint),
@@ -34,6 +36,7 @@ CodePackageDescription::CodePackageDescription(CodePackageDescription const & ot
 CodePackageDescription::CodePackageDescription(CodePackageDescription && other) :
     Name(move(other.Name)),
     Version(move(other.Version)),
+    IsActivator(other.IsActivator),
     IsShared(other.IsShared),
     SetupEntryPoint(move(other.SetupEntryPoint)),
     HasSetupEntryPoint(other.HasSetupEntryPoint),
@@ -48,6 +51,7 @@ CodePackageDescription const & CodePackageDescription::operator = (CodePackageDe
     {
         this->Name = other.Name;
         this->Version = other.Version;
+        this->IsActivator = other.IsActivator;
         this->IsShared = other.IsShared;
         this->SetupEntryPoint = other.SetupEntryPoint;
         this->HasSetupEntryPoint = other.HasSetupEntryPoint;
@@ -64,6 +68,7 @@ CodePackageDescription const & CodePackageDescription::operator = (CodePackageDe
     {
         this->Name = move(other.Name);
         this->Version = move(other.Version);
+        this->IsActivator = other.IsActivator;
         this->IsShared = other.IsShared;
         this->SetupEntryPoint = move(other.SetupEntryPoint);
         this->HasSetupEntryPoint = other.HasSetupEntryPoint;
@@ -85,6 +90,9 @@ bool CodePackageDescription::operator == (CodePackageDescription const & other) 
     if (!equals) { return equals; }
     
     equals = this->IsShared == other.IsShared;
+    if (!equals) { return equals; }
+
+    equals = this->IsActivator == other.IsActivator;
     if (!equals) { return equals; }
 
     equals = this->HasSetupEntryPoint == other.HasSetupEntryPoint;
@@ -111,6 +119,7 @@ void CodePackageDescription::WriteTo(TextWriter & w, FormatOptions const &) cons
     w.Write("CodePackageDescription { ");
     w.Write("Name = {0}, ", Name);
     w.Write("Version = {0}, ", Version);
+    w.Write("IsActivator = {0}, ", IsActivator);
     w.Write("IsShared = {0}, ", IsShared);
     w.Write("HasSetupEntryPoint = {0}, ", HasSetupEntryPoint);
     w.Write("SetupEntryPoint = {0}, ", SetupEntryPoint);
@@ -139,6 +148,17 @@ void CodePackageDescription::ReadFromXml(
             if (!StringUtility::TryFromWString<bool>(
                 attrValue, 
                 this->IsShared))
+            {
+                Parser::ThrowInvalidContent(xmlReader, L"true/false", attrValue);
+            }
+        }
+
+        if (xmlReader->HasAttribute(*SchemaNames::Attribute_IsActivator))
+        {
+            auto attrValue = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_IsActivator);
+            if (!StringUtility::TryFromWString<bool>(
+                attrValue,
+                this->IsActivator))
             {
                 Parser::ThrowInvalidContent(xmlReader, L"true/false", attrValue);
             }
@@ -189,78 +209,87 @@ void CodePackageDescription::ReadFromXml(
 
 ErrorCode CodePackageDescription::WriteToXml(XmlWriterUPtr const & xmlWriter)
 {
-	//<CodePackage>
-	ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_CodePackage, L"", *SchemaNames::Namespace);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Name, this->Name);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Version, this->Version);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = xmlWriter->WriteBooleanAttribute(*SchemaNames::Attribute_IsShared,
-		this->IsShared);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	if (this->HasSetupEntryPoint)
-	{
-		er = WriteSetupEntryPoint(xmlWriter);
-		if (!er.IsSuccess())
-		{
-			return er;
-		}
-	}
+    //<CodePackage>
+    ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_CodePackage, L"", *SchemaNames::Namespace);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Name, this->Name);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Version, this->Version);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteBooleanAttribute(*SchemaNames::Attribute_IsShared, this->IsShared);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
 
-	er = WriteEntryPoint(xmlWriter);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	//</CodePackage>
-	return xmlWriter->WriteEndElement();
+    if (this->IsActivator)
+    {
+        er = xmlWriter->WriteBooleanAttribute(*SchemaNames::Attribute_IsActivator, this->IsActivator);
+        if (!er.IsSuccess())
+        {
+            return er;
+        }
+    }
+
+    if (this->HasSetupEntryPoint)
+    {
+        er = WriteSetupEntryPoint(xmlWriter);
+        if (!er.IsSuccess())
+        {
+            return er;
+        }
+    }
+
+    er = WriteEntryPoint(xmlWriter);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    //</CodePackage>
+    return xmlWriter->WriteEndElement();
 }
 
 ErrorCode CodePackageDescription::WriteSetupEntryPoint(XmlWriterUPtr const & xmlWriter)
 {
-	//<SetupEntryPoint>
-	ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_SetupEntryPoint, L"", *SchemaNames::Namespace);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = this->SetupEntryPoint.WriteToXml(xmlWriter);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	//</SetupEntryPoint>
-	return xmlWriter->WriteEndElement();
+    //<SetupEntryPoint>
+    ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_SetupEntryPoint, L"", *SchemaNames::Namespace);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = this->SetupEntryPoint.WriteToXml(xmlWriter);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    //</SetupEntryPoint>
+    return xmlWriter->WriteEndElement();
 }
 
 ErrorCode CodePackageDescription::WriteEntryPoint(XmlWriterUPtr const & xmlWriter)
 {
-	//<EntryPoint>
-	ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_EntryPoint, L"", *SchemaNames::Namespace);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = this->EntryPoint.WriteToXml(xmlWriter);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	//</EntryPoint>
-	return xmlWriter->WriteEndElement();
+    //<EntryPoint>
+    ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_EntryPoint, L"", *SchemaNames::Namespace);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = this->EntryPoint.WriteToXml(xmlWriter);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    //</EntryPoint>
+    return xmlWriter->WriteEndElement();
 }
 
 ErrorCode CodePackageDescription::FromPublicApi(FABRIC_CODE_PACKAGE_DESCRIPTION const & description)

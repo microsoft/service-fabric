@@ -21,7 +21,8 @@ namespace Hosting2
             Common::EnvironmentMap const & envVars,
             std::vector<std::wstring> const & containerEntryPoints,
             std::vector<std::wstring> const & containerMountedVolumes,
-            std::vector<std::wstring> const & containerEnvironmentBlock);
+            std::vector<std::wstring> const & containerEnvironmentBlock,
+            std::vector<std::wstring> const & containerLabels);
 
         ProcessDebugParameters(ProcessDebugParameters const & other);
 
@@ -59,17 +60,21 @@ namespace Hosting2
         __declspec(property(get = get_ContainerEnvironmentBlock)) std::vector<std::wstring> const & ContainerEnvironmentBlock;
         inline std::vector<std::wstring> const & get_ContainerEnvironmentBlock() const { return containerEnvironmentBlock_; };
 
+        __declspec(property(get = get_ContainerLabels)) std::vector<std::wstring> const & ContainerLabels;
+        inline std::vector<std::wstring> const & get_ContainerLabels() const { return containerLabels_; }
+
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
         Common::ErrorCode ToPublicApi(
             __in Common::ScopedHeap & heap,
             __out FABRIC_PROCESS_DEBUG_PARAMETERS & publicDeployedCodePackageQueryResult) const;
 
-        FABRIC_FIELDS_09(exePath_, arguments_, environmentBlock_,
+        FABRIC_FIELDS_10(exePath_, arguments_, environmentBlock_,
             lockFile_, workingFolder_, debugParametersFile_,
             containerEntryPoints_,
             containerMountedVolumes_,
-            containerEnvironmentBlock_);
+            containerEnvironmentBlock_,
+            containerLabels_);
 
     private:
         std::wstring exePath_;
@@ -81,6 +86,7 @@ namespace Hosting2
         std::vector<std::wstring> containerEntryPoints_;
         std::vector<std::wstring> containerMountedVolumes_;
         std::vector<std::wstring> containerEnvironmentBlock_;
+        std::vector<std::wstring> containerLabels_;
     };
 
     class ProcessDebugParametersJson

@@ -91,18 +91,21 @@ namespace Store
             __in TxnReplicator::TransactionBase const& replicatorTransaction,
             __in KString::SPtr key,
             __in KBuffer::SPtr value,
-            __in LONG64 sequenceNumber) noexcept override;
+            __in LONG64 sequenceNumber,
+            __in bool isPrimary) noexcept override;
         
         ktl::Awaitable<void> OnUpdatedAsync(
             __in TxnReplicator::TransactionBase const& replicatorTransaction,
             __in KString::SPtr key,
             __in KBuffer::SPtr value,
-            __in LONG64 sequenceNumber) noexcept override;
+            __in LONG64 sequenceNumber,
+            __in bool isPrimary) noexcept override;
 
         ktl::Awaitable<void> OnRemovedAsync(
             __in TxnReplicator::TransactionBase const& replicatorTransaction,                
             __in KString::SPtr key,
-            __in LONG64 sequenceNumber) noexcept override;
+            __in LONG64 sequenceNumber,
+            __in bool isPrimary) noexcept override;
 
         ktl::Awaitable<void> OnRebuiltAsync(
             __in Data::Utilities::IAsyncEnumerator<IKvsRebuildEntry> &) noexcept override;

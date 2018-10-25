@@ -159,7 +159,8 @@ ErrorCode CodePackageActivationContext::EnsureData()
     auto error = ReadData(applicationPackageDescription, *servicePackage_, *serviceManifest_, configSettingsMap_);
     if (!error.IsSuccess()) { return error; }
 
-    if (StringUtility::AreEqualCaseInsensitive(this->CodePackageName, Constants::ImplicitTypeHostCodePackageName))
+    if (StringUtility::AreEqualCaseInsensitive(this->CodePackageName, Constants::ImplicitTypeHostCodePackageName)||
+        StringUtility::AreEqualCaseInsensitive(this->CodePackageName, Constants::BlockStoreServiceCodePackageName))
     {
         codePackageVersion_ = servicePackage_->ManifestVersion;
     }

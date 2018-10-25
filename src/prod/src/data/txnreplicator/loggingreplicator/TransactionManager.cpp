@@ -22,8 +22,8 @@ TransactionManager::TransactionManager(
     __in ReplicatedLogManager & replicatedLogManager,
     __in OperationProcessor & operationProcessor,
     __in InvalidLogRecords & invalidLogRecords,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters)
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRPerformanceCountersSPtr const & perfCounters)
     : KObject()
     , KShared()
     , PartitionedReplicaTraceComponent(traceId)
@@ -64,7 +64,7 @@ TransactionManager::SPtr TransactionManager::Create(
     __in OperationProcessor & operationProcessor,
     __in InvalidLogRecords & invalidLogRecords,
     __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
+    __in TRPerformanceCountersSPtr const & perfCounters,
     __in KAllocator & allocator)
 {
     TransactionManager * pointer = _new(TRANSACTIONMANAGER_TAG, allocator) TransactionManager(

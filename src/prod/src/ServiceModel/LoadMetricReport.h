@@ -18,6 +18,7 @@ namespace ServiceModel
         LoadMetricReport(
             std::wstring const & name,
             uint value,
+            double currentValue,
             Common::DateTime lastReportedTime);
 
         LoadMetricReport();
@@ -32,6 +33,9 @@ namespace ServiceModel
         __declspec(property(get = get_Value)) uint Value;
         uint get_Value() const { return value_; }
 
+        __declspec(property(get = get_CurrentValue)) double CurrentValue;
+        double get_CurrentValue() const { return currentValue_; }
+
         Common::ErrorCode ToPublicApi(
             __in Common::ScopedHeap & heap, 
             __out FABRIC_LOAD_METRIC_REPORT & publicResult) const ;
@@ -41,20 +45,23 @@ namespace ServiceModel
         void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;
         std::wstring ToString() const;
 
-        FABRIC_FIELDS_03(
+        FABRIC_FIELDS_04(
             name_, 
             value_, 
-            lastReportedTime_);
+            lastReportedTime_,
+            currentValue_);
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
             SERIALIZABLE_PROPERTY(Constants::Name, name_)
             SERIALIZABLE_PROPERTY(Constants::Value, value_)
             SERIALIZABLE_PROPERTY(Constants::LastReportedUtc, lastReportedTime_)
+            SERIALIZABLE_PROPERTY(Constants::CurrentValue, currentValue_)
         END_JSON_SERIALIZABLE_PROPERTIES()
 
     private:
         std::wstring name_;
         uint value_;
+        double currentValue_;
         Common::DateTime lastReportedTime_;
     };
 }

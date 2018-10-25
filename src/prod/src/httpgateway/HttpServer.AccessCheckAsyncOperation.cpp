@@ -11,7 +11,6 @@ using namespace Transport;
 
 void HttpGatewayImpl::AccessCheckAsyncOperation::OnStart(AsyncOperationSPtr const& thisSPtr)
 {
-    TimedAsyncOperation::OnStart(thisSPtr);
     if (owner_.securitySettings_.SecurityProvider() == SecurityProvider::None)
     {
         TryComplete(thisSPtr, ErrorCode::Success());
@@ -31,7 +30,7 @@ void HttpGatewayImpl::AccessCheckAsyncOperation::StartOrContinueCheckAccess(Asyn
 
         auto inner = handlerSPtr->BeginCheckAccess(
             request_,
-            RemainingTime,
+            timeoutHelper_.GetRemainingTime(),
             [this](AsyncOperationSPtr const& operation)
             {
                 this->OnCheckAccessComplete(operation, false);
@@ -69,7 +68,7 @@ void HttpGatewayImpl::AccessCheckAsyncOperation::OnCheckAccessComplete(
     StartOrContinueCheckAccess(operation->Parent);
 }
 
-ErrorCode HttpGatewayImpl::AccessCheckAsyncOperation::End(            
+ErrorCode HttpGatewayImpl::AccessCheckAsyncOperation::End(
     Common::AsyncOperationSPtr const& operation,
     __out USHORT & httpStatusOnError,
     __out std::wstring & headerName,

@@ -111,6 +111,12 @@ ErrorCode RepairManagerServiceFactory::Initialize()
         return error;
     }
 
+    // Test configurations determine what KVS store provider (ESE vs TStore)
+    // to use for replicas, so initialize the configs before registering the
+    // factory.
+    //
+    this->InitializeFabricTestConfigurations();
+
     auto statefulServiceFactoryCPtr = make_com<Api::ComStatefulServiceFactory>(IStatefulServiceFactoryPtr(
         this,
         this->CreateComponentRoot()));
@@ -118,11 +124,6 @@ ErrorCode RepairManagerServiceFactory::Initialize()
     auto hr = fabricRuntimeCPtr_->RegisterStatefulServiceFactory(
         ServiceModel::ServiceTypeIdentifier::RepairManagerServiceTypeId->ServiceTypeName.c_str(), 
         statefulServiceFactoryCPtr.GetRawPointer());
-
-    if (SUCCEEDED(hr))
-    {
-        this->InitializeFabricTestConfigurations();
-    }
 
     return ErrorCode::FromHResult(hr);
 }
@@ -302,8 +303,6 @@ ErrorCode RepairManagerServiceFactory::CreateReplica(
     FABRIC_REPLICA_ID replicaId,
     __out IStatefulServiceReplicaPtr & serviceReplica)
 {
-    UNREFERENCED_PARAMETER(initializationData);
-
     ASSERT_IF(
         serviceType != ServiceModel::ServiceTypeIdentifier::RepairManagerServiceTypeId->ServiceTypeName,
         "RepairManagerServiceFactory cannot create service of type '{0}'", serviceType);
@@ -347,7 +346,8 @@ ErrorCode RepairManagerServiceFactory::CreateReplica(
                 Path::Combine(workingDir_, Constants::DatabaseDirectory),
                 RepairManagerConfig::GetConfig().CompactionThresholdInMB),
             clientFactory_,
-            serviceName);
+            serviceName,
+            initializationData);
 
         if (!error.IsSuccess()) { return error; }
 

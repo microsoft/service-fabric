@@ -21,8 +21,8 @@ namespace ServiceModel
             std::wstring const & nodeName,
             FABRIC_HEALTH_STATE healthState);
 
-        NodeHealthStateChunk(NodeHealthStateChunk && other);
-        NodeHealthStateChunk & operator = (NodeHealthStateChunk && other);
+        NodeHealthStateChunk(NodeHealthStateChunk && other) = default;
+        NodeHealthStateChunk & operator = (NodeHealthStateChunk && other) = default;
 
         virtual ~NodeHealthStateChunk();
 

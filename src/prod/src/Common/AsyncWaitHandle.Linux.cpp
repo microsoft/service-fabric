@@ -106,8 +106,8 @@ deque<AsyncOperationSPtr> AsyncWaitHandle<ManualReset>::WaiterQueue::PopAll()
 }
 
 template <bool ManualReset> 
-AsyncWaitHandle<ManualReset>::AsyncWaitHandle(bool initialState)
-    : WaitHandle<ManualReset>(initialState)
+AsyncWaitHandle<ManualReset>::AsyncWaitHandle(bool initialState, wstring const &eventName)
+    : WaitHandle<ManualReset>(initialState, eventName)
     , evtLoop_(&(EventLoopPool::GetDefault()->Assign()))
     , waiters_(make_shared<WaiterQueue>())
 {

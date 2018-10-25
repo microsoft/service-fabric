@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
@@ -905,6 +900,27 @@ typedef interface IFabricOrchestrationUpgradeStatusResult IFabricOrchestrationUp
 #endif 	/* __IFabricOrchestrationUpgradeStatusResult_FWD_DEFINED__ */
 
 
+#ifndef __IFabricChaosDescriptionResult_FWD_DEFINED__
+#define __IFabricChaosDescriptionResult_FWD_DEFINED__
+typedef interface IFabricChaosDescriptionResult IFabricChaosDescriptionResult;
+
+#endif 	/* __IFabricChaosDescriptionResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricChaosScheduleDescriptionResult_FWD_DEFINED__
+#define __IFabricChaosScheduleDescriptionResult_FWD_DEFINED__
+typedef interface IFabricChaosScheduleDescriptionResult IFabricChaosScheduleDescriptionResult;
+
+#endif 	/* __IFabricChaosScheduleDescriptionResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricChaosEventsSegmentResult_FWD_DEFINED__
+#define __IFabricChaosEventsSegmentResult_FWD_DEFINED__
+typedef interface IFabricChaosEventsSegmentResult IFabricChaosEventsSegmentResult;
+
+#endif 	/* __IFabricChaosEventsSegmentResult_FWD_DEFINED__ */
+
+
 #ifndef __IFabricChaosReportResult_FWD_DEFINED__
 #define __IFabricChaosReportResult_FWD_DEFINED__
 typedef interface IFabricChaosReportResult IFabricChaosReportResult;
@@ -931,6 +947,27 @@ typedef interface IFabricGetServiceNameResult IFabricGetServiceNameResult;
 typedef interface IFabricGetApplicationNameResult IFabricGetApplicationNameResult;
 
 #endif 	/* __IFabricGetApplicationNameResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricSecretStoreClient_FWD_DEFINED__
+#define __IFabricSecretStoreClient_FWD_DEFINED__
+typedef interface IFabricSecretStoreClient IFabricSecretStoreClient;
+
+#endif 	/* __IFabricSecretStoreClient_FWD_DEFINED__ */
+
+
+#ifndef __IFabricSecretsResult_FWD_DEFINED__
+#define __IFabricSecretsResult_FWD_DEFINED__
+typedef interface IFabricSecretsResult IFabricSecretsResult;
+
+#endif 	/* __IFabricSecretsResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricSecretReferencesResult_FWD_DEFINED__
+#define __IFabricSecretReferencesResult_FWD_DEFINED__
+typedef interface IFabricSecretReferencesResult IFabricSecretReferencesResult;
+
+#endif 	/* __IFabricSecretReferencesResult_FWD_DEFINED__ */
 
 
 #ifndef __FabricClient_FWD_DEFINED__
@@ -1328,6 +1365,13 @@ typedef interface IFabricTestManagementClient2 IFabricTestManagementClient2;
 typedef interface IFabricTestManagementClient3 IFabricTestManagementClient3;
 
 #endif 	/* __IFabricTestManagementClient3_FWD_DEFINED__ */
+
+
+#ifndef __IFabricTestManagementClient4_FWD_DEFINED__
+#define __IFabricTestManagementClient4_FWD_DEFINED__
+typedef interface IFabricTestManagementClient4 IFabricTestManagementClient4;
+
+#endif 	/* __IFabricTestManagementClient4_FWD_DEFINED__ */
 
 
 #ifndef __IFabricGetRepairTaskListResult_FWD_DEFINED__
@@ -1855,6 +1899,27 @@ typedef interface IFabricTestCommandStatusResult IFabricTestCommandStatusResult;
 #endif 	/* __IFabricTestCommandStatusResult_FWD_DEFINED__ */
 
 
+#ifndef __IFabricChaosEventsSegmentResult_FWD_DEFINED__
+#define __IFabricChaosEventsSegmentResult_FWD_DEFINED__
+typedef interface IFabricChaosEventsSegmentResult IFabricChaosEventsSegmentResult;
+
+#endif 	/* __IFabricChaosEventsSegmentResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricChaosDescriptionResult_FWD_DEFINED__
+#define __IFabricChaosDescriptionResult_FWD_DEFINED__
+typedef interface IFabricChaosDescriptionResult IFabricChaosDescriptionResult;
+
+#endif 	/* __IFabricChaosDescriptionResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricChaosScheduleDescriptionResult_FWD_DEFINED__
+#define __IFabricChaosScheduleDescriptionResult_FWD_DEFINED__
+typedef interface IFabricChaosScheduleDescriptionResult IFabricChaosScheduleDescriptionResult;
+
+#endif 	/* __IFabricChaosScheduleDescriptionResult_FWD_DEFINED__ */
+
+
 #ifndef __IFabricChaosReportResult_FWD_DEFINED__
 #define __IFabricChaosReportResult_FWD_DEFINED__
 typedef interface IFabricChaosReportResult IFabricChaosReportResult;
@@ -1883,6 +1948,27 @@ typedef interface IFabricGetApplicationNameResult IFabricGetApplicationNameResul
 #endif 	/* __IFabricGetApplicationNameResult_FWD_DEFINED__ */
 
 
+#ifndef __IFabricSecretsResult_FWD_DEFINED__
+#define __IFabricSecretsResult_FWD_DEFINED__
+typedef interface IFabricSecretsResult IFabricSecretsResult;
+
+#endif 	/* __IFabricSecretsResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricSecretReferencesResult_FWD_DEFINED__
+#define __IFabricSecretReferencesResult_FWD_DEFINED__
+typedef interface IFabricSecretReferencesResult IFabricSecretReferencesResult;
+
+#endif 	/* __IFabricSecretReferencesResult_FWD_DEFINED__ */
+
+
+#ifndef __IFabricSecretStoreClient_FWD_DEFINED__
+#define __IFabricSecretStoreClient_FWD_DEFINED__
+typedef interface IFabricSecretStoreClient IFabricSecretStoreClient;
+
+#endif 	/* __IFabricSecretStoreClient_FWD_DEFINED__ */
+
+
 /* header files for imported files */
 #include "Unknwn.h"
 #include "FabricTypes.h"
@@ -1896,9 +1982,14 @@ extern "C"{
 /* interface __MIDL_itf_fabricclient_0000_0000 */
 /* [local] */ 
 
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 #if ( _MSC_VER >= 1020 )
 #pragma once
 #endif
+
 
 
 
@@ -2044,6 +2135,12 @@ extern RPC_IF_HANDLE __MIDL_itf_fabricclient_0000_0000_v0_0_s_ifspec;
 
 
 #pragma pack(push, 8)
+
+
+
+
+
+
 
 
 
@@ -26318,6 +26415,240 @@ EXTERN_C const IID IID_IFabricOrchestrationUpgradeStatusResult;
 #endif 	/* __IFabricOrchestrationUpgradeStatusResult_INTERFACE_DEFINED__ */
 
 
+#ifndef __IFabricChaosDescriptionResult_INTERFACE_DEFINED__
+#define __IFabricChaosDescriptionResult_INTERFACE_DEFINED__
+
+/* interface IFabricChaosDescriptionResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricChaosDescriptionResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("FA8AA86E-F0FA-4A14-BED7-1DCFA0980B5B")
+    IFabricChaosDescriptionResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_CHAOS_DESCRIPTION *STDMETHODCALLTYPE get_ChaosDescriptionResult( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricChaosDescriptionResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricChaosDescriptionResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricChaosDescriptionResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricChaosDescriptionResult * This);
+        
+        const FABRIC_CHAOS_DESCRIPTION *( STDMETHODCALLTYPE *get_ChaosDescriptionResult )( 
+            IFabricChaosDescriptionResult * This);
+        
+        END_INTERFACE
+    } IFabricChaosDescriptionResultVtbl;
+
+    interface IFabricChaosDescriptionResult
+    {
+        CONST_VTBL struct IFabricChaosDescriptionResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricChaosDescriptionResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricChaosDescriptionResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricChaosDescriptionResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricChaosDescriptionResult_get_ChaosDescriptionResult(This)	\
+    ( (This)->lpVtbl -> get_ChaosDescriptionResult(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricChaosDescriptionResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricChaosScheduleDescriptionResult_INTERFACE_DEFINED__
+#define __IFabricChaosScheduleDescriptionResult_INTERFACE_DEFINED__
+
+/* interface IFabricChaosScheduleDescriptionResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricChaosScheduleDescriptionResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("3B93F0D9-C0A9-4DF5-9B09-B2365DE89D84")
+    IFabricChaosScheduleDescriptionResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_CHAOS_SCHEDULE_DESCRIPTION *STDMETHODCALLTYPE get_ChaosScheduleDescriptionResult( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricChaosScheduleDescriptionResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricChaosScheduleDescriptionResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricChaosScheduleDescriptionResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricChaosScheduleDescriptionResult * This);
+        
+        const FABRIC_CHAOS_SCHEDULE_DESCRIPTION *( STDMETHODCALLTYPE *get_ChaosScheduleDescriptionResult )( 
+            IFabricChaosScheduleDescriptionResult * This);
+        
+        END_INTERFACE
+    } IFabricChaosScheduleDescriptionResultVtbl;
+
+    interface IFabricChaosScheduleDescriptionResult
+    {
+        CONST_VTBL struct IFabricChaosScheduleDescriptionResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricChaosScheduleDescriptionResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricChaosScheduleDescriptionResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricChaosScheduleDescriptionResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricChaosScheduleDescriptionResult_get_ChaosScheduleDescriptionResult(This)	\
+    ( (This)->lpVtbl -> get_ChaosScheduleDescriptionResult(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricChaosScheduleDescriptionResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricChaosEventsSegmentResult_INTERFACE_DEFINED__
+#define __IFabricChaosEventsSegmentResult_INTERFACE_DEFINED__
+
+/* interface IFabricChaosEventsSegmentResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricChaosEventsSegmentResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("DE148299-C48A-4540-877B-5B1DAA518D76")
+    IFabricChaosEventsSegmentResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_CHAOS_EVENTS_SEGMENT *STDMETHODCALLTYPE get_ChaosEventsSegmentResult( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricChaosEventsSegmentResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricChaosEventsSegmentResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricChaosEventsSegmentResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricChaosEventsSegmentResult * This);
+        
+        const FABRIC_CHAOS_EVENTS_SEGMENT *( STDMETHODCALLTYPE *get_ChaosEventsSegmentResult )( 
+            IFabricChaosEventsSegmentResult * This);
+        
+        END_INTERFACE
+    } IFabricChaosEventsSegmentResultVtbl;
+
+    interface IFabricChaosEventsSegmentResult
+    {
+        CONST_VTBL struct IFabricChaosEventsSegmentResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricChaosEventsSegmentResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricChaosEventsSegmentResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricChaosEventsSegmentResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricChaosEventsSegmentResult_get_ChaosEventsSegmentResult(This)	\
+    ( (This)->lpVtbl -> get_ChaosEventsSegmentResult(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricChaosEventsSegmentResult_INTERFACE_DEFINED__ */
+
+
 #ifndef __IFabricChaosReportResult_INTERFACE_DEFINED__
 #define __IFabricChaosReportResult_INTERFACE_DEFINED__
 
@@ -26628,6 +26959,318 @@ EXTERN_C const IID IID_IFabricGetApplicationNameResult;
 
 
 #endif 	/* __IFabricGetApplicationNameResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricSecretStoreClient_INTERFACE_DEFINED__
+#define __IFabricSecretStoreClient_INTERFACE_DEFINED__
+
+/* interface IFabricSecretStoreClient */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricSecretStoreClient;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("38c4c723-3815-49d8-bdf2-68bfb536b8c9")
+    IFabricSecretStoreClient : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE BeginGetSecrets( 
+            /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+            /* [in] */ BOOLEAN includeValue,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetSecrets( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretsResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginSetSecrets( 
+            /* [in] */ const FABRIC_SECRET_LIST *secrets,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndSetSecrets( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretReferencesResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginRemoveSecrets( 
+            /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndRemoveSecrets( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretReferencesResult **result) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricSecretStoreClientVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricSecretStoreClient * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricSecretStoreClient * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetSecrets )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+            /* [in] */ BOOLEAN includeValue,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetSecrets )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretsResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginSetSecrets )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ const FABRIC_SECRET_LIST *secrets,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndSetSecrets )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretReferencesResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginRemoveSecrets )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndRemoveSecrets )( 
+            IFabricSecretStoreClient * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricSecretReferencesResult **result);
+        
+        END_INTERFACE
+    } IFabricSecretStoreClientVtbl;
+
+    interface IFabricSecretStoreClient
+    {
+        CONST_VTBL struct IFabricSecretStoreClientVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricSecretStoreClient_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricSecretStoreClient_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricSecretStoreClient_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricSecretStoreClient_BeginGetSecrets(This,secretReferences,includeValue,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetSecrets(This,secretReferences,includeValue,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricSecretStoreClient_EndGetSecrets(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetSecrets(This,context,result) ) 
+
+#define IFabricSecretStoreClient_BeginSetSecrets(This,secrets,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginSetSecrets(This,secrets,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricSecretStoreClient_EndSetSecrets(This,context,result)	\
+    ( (This)->lpVtbl -> EndSetSecrets(This,context,result) ) 
+
+#define IFabricSecretStoreClient_BeginRemoveSecrets(This,secretReferences,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginRemoveSecrets(This,secretReferences,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricSecretStoreClient_EndRemoveSecrets(This,context,result)	\
+    ( (This)->lpVtbl -> EndRemoveSecrets(This,context,result) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricSecretStoreClient_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricSecretsResult_INTERFACE_DEFINED__
+#define __IFabricSecretsResult_INTERFACE_DEFINED__
+
+/* interface IFabricSecretsResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricSecretsResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("fe15a879-0dbe-4841-9cc6-6e92077cd669")
+    IFabricSecretsResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_SECRET_LIST *STDMETHODCALLTYPE get_Secrets( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricSecretsResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricSecretsResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricSecretsResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricSecretsResult * This);
+        
+        const FABRIC_SECRET_LIST *( STDMETHODCALLTYPE *get_Secrets )( 
+            IFabricSecretsResult * This);
+        
+        END_INTERFACE
+    } IFabricSecretsResultVtbl;
+
+    interface IFabricSecretsResult
+    {
+        CONST_VTBL struct IFabricSecretsResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricSecretsResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricSecretsResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricSecretsResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricSecretsResult_get_Secrets(This)	\
+    ( (This)->lpVtbl -> get_Secrets(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricSecretsResult_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricSecretReferencesResult_INTERFACE_DEFINED__
+#define __IFabricSecretReferencesResult_INTERFACE_DEFINED__
+
+/* interface IFabricSecretReferencesResult */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricSecretReferencesResult;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("bb8f69de-f667-4fab-820d-274cf4303ab4")
+    IFabricSecretReferencesResult : public IUnknown
+    {
+    public:
+        virtual const FABRIC_SECRET_REFERENCE_LIST *STDMETHODCALLTYPE get_SecretReferences( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricSecretReferencesResultVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricSecretReferencesResult * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricSecretReferencesResult * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricSecretReferencesResult * This);
+        
+        const FABRIC_SECRET_REFERENCE_LIST *( STDMETHODCALLTYPE *get_SecretReferences )( 
+            IFabricSecretReferencesResult * This);
+        
+        END_INTERFACE
+    } IFabricSecretReferencesResultVtbl;
+
+    interface IFabricSecretReferencesResult
+    {
+        CONST_VTBL struct IFabricSecretReferencesResultVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricSecretReferencesResult_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricSecretReferencesResult_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricSecretReferencesResult_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricSecretReferencesResult_get_SecretReferences(This)	\
+    ( (This)->lpVtbl -> get_SecretReferences(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricSecretReferencesResult_INTERFACE_DEFINED__ */
 
 
 EXTERN_C const CLSID CLSID_FabricClient;
@@ -28488,6 +29131,411 @@ EXTERN_C const IID IID_IFabricClusterManagementClient10;
 
 
 #endif 	/* __IFabricClusterManagementClient10_INTERFACE_DEFINED__ */
+
+
+#ifndef __IFabricTestManagementClient4_INTERFACE_DEFINED__
+#define __IFabricTestManagementClient4_INTERFACE_DEFINED__
+
+/* interface IFabricTestManagementClient4 */
+/* [uuid][local][object] */ 
+
+
+EXTERN_C const IID IID_IFabricTestManagementClient4;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("b96aa7d4-acc0-4814-89dc-561b0cbb6028")
+    IFabricTestManagementClient4 : public IFabricTestManagementClient3
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE BeginGetChaos( 
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [out][retval] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetChaos( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [out][retval] */ IFabricChaosDescriptionResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetChaosSchedule( 
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [out][retval] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetChaosSchedule( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [out][retval] */ IFabricChaosScheduleDescriptionResult **result) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginSetChaosSchedule( 
+            /* [in] */ const FABRIC_CHAOS_SERVICE_SCHEDULE_DESCRIPTION *setChaosScheduleDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [out][retval] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndSetChaosSchedule( 
+            /* [in] */ IFabricAsyncOperationContext *context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE BeginGetChaosEvents( 
+            /* [in] */ const FABRIC_CHAOS_EVENTS_SEGMENT_DESCRIPTION *chaosEventsDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [out][retval] */ IFabricAsyncOperationContext **context) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE EndGetChaosEvents( 
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [out][retval] */ IFabricChaosEventsSegmentResult **result) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IFabricTestManagementClient4Vtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            IFabricTestManagementClient4 * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            IFabricTestManagementClient4 * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginStartPartitionDataLoss )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_START_PARTITION_DATA_LOSS_DESCRIPTION *invokeDataLossDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndStartPartitionDataLoss )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetPartitionDataLossProgress )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetPartitionDataLossProgress )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricPartitionDataLossProgressResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginStartPartitionQuorumLoss )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_START_PARTITION_QUORUM_LOSS_DESCRIPTION *invokeQuorumLossDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndStartPartitionQuorumLoss )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetPartitionQuorumLossProgress )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetPartitionQuorumLossProgress )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricPartitionQuorumLossProgressResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginStartPartitionRestart )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_START_PARTITION_RESTART_DESCRIPTION *restartPartitionDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndStartPartitionRestart )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetPartitionRestartProgress )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetPartitionRestartProgress )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricPartitionRestartProgressResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetTestCommandStatusList )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_TEST_COMMAND_LIST_DESCRIPTION *operationId,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetTestCommandStatusList )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricTestCommandStatusResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginCancelTestCommand )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_CANCEL_TEST_COMMAND_DESCRIPTION *invokeDataLossDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndCancelTestCommand )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginStartChaos )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_START_CHAOS_DESCRIPTION *restartPartitionDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndStartChaos )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginStopChaos )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndStopChaos )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetChaosReport )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_GET_CHAOS_REPORT_DESCRIPTION *getChaosReportDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetChaosReport )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricChaosReportResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginStartNodeTransition )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_NODE_TRANSITION_DESCRIPTION *description,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndStartNodeTransition )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetNodeTransitionProgress )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ FABRIC_TEST_COMMAND_OPERATION_ID operationId,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [retval][out] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetNodeTransitionProgress )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [retval][out] */ IFabricNodeTransitionProgressResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetChaos )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [out][retval] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetChaos )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [out][retval] */ IFabricChaosDescriptionResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetChaosSchedule )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [out][retval] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetChaosSchedule )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [out][retval] */ IFabricChaosScheduleDescriptionResult **result);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginSetChaosSchedule )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_CHAOS_SERVICE_SCHEDULE_DESCRIPTION *setChaosScheduleDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [out][retval] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndSetChaosSchedule )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context);
+        
+        HRESULT ( STDMETHODCALLTYPE *BeginGetChaosEvents )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ const FABRIC_CHAOS_EVENTS_SEGMENT_DESCRIPTION *chaosEventsDescription,
+            /* [in] */ DWORD timeoutMilliseconds,
+            /* [in] */ IFabricAsyncOperationCallback *callback,
+            /* [out][retval] */ IFabricAsyncOperationContext **context);
+        
+        HRESULT ( STDMETHODCALLTYPE *EndGetChaosEvents )( 
+            IFabricTestManagementClient4 * This,
+            /* [in] */ IFabricAsyncOperationContext *context,
+            /* [out][retval] */ IFabricChaosEventsSegmentResult **result);
+        
+        END_INTERFACE
+    } IFabricTestManagementClient4Vtbl;
+
+    interface IFabricTestManagementClient4
+    {
+        CONST_VTBL struct IFabricTestManagementClient4Vtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IFabricTestManagementClient4_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IFabricTestManagementClient4_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IFabricTestManagementClient4_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IFabricTestManagementClient4_BeginStartPartitionDataLoss(This,invokeDataLossDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginStartPartitionDataLoss(This,invokeDataLossDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndStartPartitionDataLoss(This,context)	\
+    ( (This)->lpVtbl -> EndStartPartitionDataLoss(This,context) ) 
+
+#define IFabricTestManagementClient4_BeginGetPartitionDataLossProgress(This,operationId,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetPartitionDataLossProgress(This,operationId,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetPartitionDataLossProgress(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetPartitionDataLossProgress(This,context,result) ) 
+
+#define IFabricTestManagementClient4_BeginStartPartitionQuorumLoss(This,invokeQuorumLossDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginStartPartitionQuorumLoss(This,invokeQuorumLossDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndStartPartitionQuorumLoss(This,context)	\
+    ( (This)->lpVtbl -> EndStartPartitionQuorumLoss(This,context) ) 
+
+#define IFabricTestManagementClient4_BeginGetPartitionQuorumLossProgress(This,operationId,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetPartitionQuorumLossProgress(This,operationId,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetPartitionQuorumLossProgress(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetPartitionQuorumLossProgress(This,context,result) ) 
+
+#define IFabricTestManagementClient4_BeginStartPartitionRestart(This,restartPartitionDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginStartPartitionRestart(This,restartPartitionDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndStartPartitionRestart(This,context)	\
+    ( (This)->lpVtbl -> EndStartPartitionRestart(This,context) ) 
+
+#define IFabricTestManagementClient4_BeginGetPartitionRestartProgress(This,operationId,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetPartitionRestartProgress(This,operationId,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetPartitionRestartProgress(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetPartitionRestartProgress(This,context,result) ) 
+
+#define IFabricTestManagementClient4_BeginGetTestCommandStatusList(This,operationId,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetTestCommandStatusList(This,operationId,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetTestCommandStatusList(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetTestCommandStatusList(This,context,result) ) 
+
+#define IFabricTestManagementClient4_BeginCancelTestCommand(This,invokeDataLossDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginCancelTestCommand(This,invokeDataLossDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndCancelTestCommand(This,context)	\
+    ( (This)->lpVtbl -> EndCancelTestCommand(This,context) ) 
+
+
+#define IFabricTestManagementClient4_BeginStartChaos(This,restartPartitionDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginStartChaos(This,restartPartitionDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndStartChaos(This,context)	\
+    ( (This)->lpVtbl -> EndStartChaos(This,context) ) 
+
+#define IFabricTestManagementClient4_BeginStopChaos(This,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginStopChaos(This,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndStopChaos(This,context)	\
+    ( (This)->lpVtbl -> EndStopChaos(This,context) ) 
+
+#define IFabricTestManagementClient4_BeginGetChaosReport(This,getChaosReportDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetChaosReport(This,getChaosReportDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetChaosReport(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetChaosReport(This,context,result) ) 
+
+
+#define IFabricTestManagementClient4_BeginStartNodeTransition(This,description,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginStartNodeTransition(This,description,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndStartNodeTransition(This,context)	\
+    ( (This)->lpVtbl -> EndStartNodeTransition(This,context) ) 
+
+#define IFabricTestManagementClient4_BeginGetNodeTransitionProgress(This,operationId,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetNodeTransitionProgress(This,operationId,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetNodeTransitionProgress(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetNodeTransitionProgress(This,context,result) ) 
+
+
+#define IFabricTestManagementClient4_BeginGetChaos(This,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetChaos(This,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetChaos(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetChaos(This,context,result) ) 
+
+#define IFabricTestManagementClient4_BeginGetChaosSchedule(This,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetChaosSchedule(This,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetChaosSchedule(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetChaosSchedule(This,context,result) ) 
+
+#define IFabricTestManagementClient4_BeginSetChaosSchedule(This,setChaosScheduleDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginSetChaosSchedule(This,setChaosScheduleDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndSetChaosSchedule(This,context)	\
+    ( (This)->lpVtbl -> EndSetChaosSchedule(This,context) ) 
+
+#define IFabricTestManagementClient4_BeginGetChaosEvents(This,chaosEventsDescription,timeoutMilliseconds,callback,context)	\
+    ( (This)->lpVtbl -> BeginGetChaosEvents(This,chaosEventsDescription,timeoutMilliseconds,callback,context) ) 
+
+#define IFabricTestManagementClient4_EndGetChaosEvents(This,context,result)	\
+    ( (This)->lpVtbl -> EndGetChaosEvents(This,context,result) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IFabricTestManagementClient4_INTERFACE_DEFINED__ */
 
 
 #ifndef __IFabricGetPartitionLoadInformationResult_INTERFACE_DEFINED__

@@ -16,8 +16,8 @@ namespace ServiceModel
 
         explicit PartitionEntityHealthInformation(Common::Guid const& partitionId);
 
-        PartitionEntityHealthInformation(PartitionEntityHealthInformation && other);
-        PartitionEntityHealthInformation & operator = (PartitionEntityHealthInformation && other);
+        PartitionEntityHealthInformation(PartitionEntityHealthInformation && other) = default;
+        PartitionEntityHealthInformation & operator = (PartitionEntityHealthInformation && other) = default;
         
          __declspec(property(get=get_PartitionId)) Common::Guid const& PartitionId;
         Common::Guid const& get_PartitionId() const { return partitionId_; }

@@ -21,21 +21,6 @@ DeployedApplicationHealthStatesFilter::DeployedApplicationHealthStatesFilter(DWO
 {
 }
 
-DeployedApplicationHealthStatesFilter::DeployedApplicationHealthStatesFilter(DeployedApplicationHealthStatesFilter && other)
-    : healthStateFilter_(move(other.healthStateFilter_))
-{
-}
-
-DeployedApplicationHealthStatesFilter & DeployedApplicationHealthStatesFilter::operator =(DeployedApplicationHealthStatesFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-    }
-
-    return *this;
-}
-
 DeployedApplicationHealthStatesFilter::~DeployedApplicationHealthStatesFilter()
 {
 }

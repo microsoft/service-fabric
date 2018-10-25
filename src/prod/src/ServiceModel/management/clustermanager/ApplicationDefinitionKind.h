@@ -18,8 +18,13 @@ namespace Management
 
                 // Regular app - create application based on application type
                 ServiceFabricApplicationDescription = 0,
+
                 // For compose application - each application instance has its own type
-                Compose= 1
+                Compose= 1,
+
+                // V2 app model - create application resource based on mesh description
+                MeshApplicationDescription = 2,
+
             };
 
             void WriteToTextWriter(Common::TextWriter & w, Enum const & e);
@@ -29,6 +34,8 @@ namespace Management
             FABRIC_APPLICATION_DEFINITION_KIND ToPublicApi(Enum const & toConvert);
 
             Enum FromPublicApi(FABRIC_APPLICATION_DEFINITION_KIND const toConvert);
+
+            DECLARE_ENUM_STRUCTURED_TRACE( ApplicationDefinitionKind )
         }
     }
 }

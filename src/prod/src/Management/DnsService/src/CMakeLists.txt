@@ -37,9 +37,6 @@ set( LINUX_SOURCES
   precomp/stdafx.cpp
 )
 
-# If the build type is debug, the KTL_Lib_Dir variable points to the debug package.
-include_directories(BEFORE "${KTL_LIB_DIR}/inc")
-
 include_directories(BEFORE "../linux_include")
 include_directories(BEFORE "../include")
 include_directories("../config")

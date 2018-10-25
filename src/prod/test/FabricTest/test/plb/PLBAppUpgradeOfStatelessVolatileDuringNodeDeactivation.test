@@ -1,0 +1,90 @@
+#
+# [owner] apopadic, MMicic, MMohsin
+# [bug] 6077853
+#
+# Stateful volatile services with target replica count 1 should not be moved to deactivating nodes during upgrade.
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
+set DummyPLBEnabled true
+set RestoreReplicaLocationAfterUpgrade true
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+set DeactivationFailedRetryIntervalRange 0
+
+# Ensuring that service package deactivation is not too slow
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange 0
+
++10 ud=UD1
++20 ud=UD2
+verify
+
+# Application version 1.0
+app.add version10 TestApp 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0
+app.servicetypes version10 ServicePackageA ServiceTypeA2 stateful
+app.codepack version10 ServicePackageA CodeA1 types=ServiceTypeA2 version=1.0
+app.reqservices version10 Volatile1 ServiceTypeA2 stateful partition=1 replica=1
+app.upload version10
+
+# Application version 1.1
+app.add version11 TestApp 1.1
+app.clear version11
+app.servicepack version11 ServicePackageA version=1.1
+app.servicetypes version11 ServicePackageA ServiceTypeA2 stateful
+app.codepack version11 ServicePackageA CodeA1 types=ServiceTypeA2 version=1.1
+app.reqservices version11 Volatile1 ServiceTypeA2 stateful partition=1 replica=1
+app.upload version11
+
+provisionapp version10
+provisionapp version11
+
+# Create application version 1.0
+createapp fabric:/MyApp TestApp 1.0
+verify
+
+# Adding more nodes for a test service
++30 ud=UD3
++40 ud=UD4
++50 ud=UD5
+verify
+
+# Creating test service - the only purpose of test service is to block deactivation of node 30
+createname fabric:/testService0
+createservice fabric:/testService0 TestPersistedStoreServiceType y 1 5 persist minreplicasetsize=5
+verify
+
+# Making nodes 40 and 50 down so we have test service in quorum loss with no place for missing replicas because of replica load
+-40
+-50
+verify
+
+# Deactivating nodes in a batch with Restart intention
+DeactivateNodes batch0 30:Restart
+
+# Validate deactivation statuses and intentions
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationSafetyCheckInProgress
+
+# Validate the same deactivation states after 5s
+!pause 5
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationSafetyCheckInProgress
+
+# Perform application upgrade from version 1.0 to 1.1
+upgradeapp fabric:/MyApp 1.1 Rolling
+
+# The primary replica should be moved out to (not deactivating) node 10
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile1.10 Primary
+
+# The primary replica should be moved back to original place, node 20
+!waitforstate FM.Replica.Role.fabric:/MyApp/Volatile1.20 Primary
+
+-*
+
+!q

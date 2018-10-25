@@ -22,17 +22,17 @@ ProcessReportRequestAsyncOperation::ProcessReportRequestAsyncOperation(
     Common::ActivityId const & activityId,
     Transport::MessageUPtr && request,
     Federation::RequestReceiverContextUPtr && requestContext,
-    Common::TimeSpan const timeout, 
+    Common::TimeSpan const timeout,
     Common::AsyncCallback const & callback,
     Common::AsyncOperationSPtr const & parent)
     : ProcessRequestAsyncOperation(
-        entityManager, 
-        partitionedReplicaId, 
-        activityId, 
-        move(request), 
-        move(requestContext), 
-        TimeoutWithoutSendBuffer(timeout), 
-        callback, 
+        entityManager,
+        partitionedReplicaId,
+        activityId,
+        move(request),
+        move(requestContext),
+        TimeoutWithoutSendBuffer(timeout),
+        callback,
         parent)
     , requestCount_(0)
     , sequenceStreams_()
@@ -92,7 +92,7 @@ TimeSpan ProcessReportRequestAsyncOperation::TimeoutWithoutSendBuffer(Common::Ti
 
 void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPtr const & thisSPtr)
 {
-    if (this->Request.Action != HealthManagerTcpMessage::ReportHealthAction)   
+    if (this->Request.Action != HealthManagerTcpMessage::ReportHealthAction)
     {
         TRACE_LEVEL_AND_TESTASSERT(
             this->WriteInfo,
@@ -119,7 +119,7 @@ void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPt
 
     vector<SequenceStreamRequestContext> ssContexts;
     map<SequenceStreamId, ErrorCodeValue::Enum> rejectedSequences;
-    
+
     for (auto it = sequenceStreamsInfo.begin(); it != sequenceStreamsInfo.end(); ++it)
     {
         SequenceStreamId id(it->Kind, it->SourceId);
@@ -132,9 +132,9 @@ void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPt
                 currentNestedActivityId_.IncrementIndex();
                 ssContexts.push_back(
                     SequenceStreamRequestContext(
-                        Store::ReplicaActivityId(this->ReplicaActivityId.PartitionedReplicaId, currentNestedActivityId_), 
-                        thisSPtr, 
-                        *this, 
+                        Store::ReplicaActivityId(this->ReplicaActivityId.PartitionedReplicaId, currentNestedActivityId_),
+                        thisSPtr,
+                        *this,
                         move(*it)));
             }
             else
@@ -164,7 +164,7 @@ void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPt
     for (auto it = requests.begin(); it != requests.end(); ++it)
     {
         // Create a health report result which takes the primary key from the report.
-        // For node, it uses the node id generated on the client. For server processing, 
+        // For node, it uses the node id generated on the client. For server processing,
         // the report node id is re-computed to use the server configure generated data.
         HealthReportResult result(*it);
 
@@ -209,7 +209,7 @@ void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPt
                         reportIndex,
                         move(*it),
                         fromLsn,
-                        upToLsn));                  
+                        upToLsn));
                 }
                 else
                 {
@@ -254,7 +254,7 @@ void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPt
     }
 
     this->EntityManager.AddReports(move(contexts));
-    CheckIfAllRequestsProcessed(thisSPtr, initialCount);    
+    CheckIfAllRequestsProcessed(thisSPtr, initialCount);
 }
 
 void ProcessReportRequestAsyncOperation::OnReportProcessed(
@@ -264,7 +264,7 @@ void ProcessReportRequestAsyncOperation::OnReportProcessed(
 {
     ASSERT_IF(thisSPtr.get() != this, "{0}: OnReportProcessed thisSPtr.get() != this: incoming {1}", this->TraceId, context);
 
-    // Both reports and ss are counted towards the max number of allowed reports
+    // Both reports and ss (sequence stream) are counted towards the max number of allowed reports
     this->EntityManager.OnContextCompleted(context);
 
     uint64 remainingCount = numeric_limits<uint64>::max();
@@ -277,6 +277,14 @@ void ProcessReportRequestAsyncOperation::OnReportProcessed(
             wformatString(context.Report.AttributeInfo.Attributes),
             error.Message);
         this->EntityManager.HealthManagerCounters->OnSuccessfulHealthReport(context.StartTime);
+
+        // Trace to operation channel per entity type for all reports with warning/error health states
+        // Also trace for transition to OK state, from warning, error, or expired state.
+        if (HMEvents::ShouldTraceToOperationalChannel(context.PreviousState, context.Report.State))
+        {
+            HMEvents::Trace->TraceProcessReportOperational(
+                context.Report);
+        }
     }
     else
     {
@@ -288,7 +296,7 @@ void ProcessReportRequestAsyncOperation::OnReportProcessed(
             error.Message,
             this->OriginalTimeout);
     }
-    
+
     size_t requestId = static_cast<size_t>(context.RequestId);
     unique_ptr<SequenceStreamRequestContext> ssContext;
 
@@ -348,7 +356,7 @@ void ProcessReportRequestAsyncOperation::OnReportProcessed(
     {
         this->EntityManager.AddSequenceStreamContext(move(*ssContext));
     }
-   
+
     CheckIfAllRequestsProcessed(thisSPtr, remainingCount);
 }
 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(EnvironmentConfig)" />
+    <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+    <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+    <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+
+    <PropertyGroup>
+        <Description>FabricCAS</Description>
+        <TargetFramework>netcoreapp2.0</TargetFramework>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AssemblyName>FabricCAS</AssemblyName>
+        <OutputType>Exe</OutputType>
+        <PackageId>FabricCAS</PackageId>
+        <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="
+        ..\Program.cs;
+        ..\Utility.cs;
+        ..\HostingConfig.cs;
+        ..\TimeoutHelper.cs;
+        ..\RWLock.cs;
+        ..\ContainerActivatorService.cs;
+        ..\ContainerImageDownloader.cs;
+        ..\ActivateContainerOperation.cs;
+        ..\DeactivateContainerOperation.cs;
+        ..\ContainerEventManager.cs;
+        ..\ConfigHelper.cs;
+        ..\HostingTrace.cs;"
+          Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="FabricCAS.sh">
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
+        <None Update="FabricCAS.bat">
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+        <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj"/>
+        <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.ContainerServiceClient\CoreCLR\Microsoft.ServiceFabric.ContainerServiceClient.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Management" Version="4.5.0" />
+    </ItemGroup>
+
+    <ItemGroup  Condition=" '$(TargetsLinux)' == 'true' ">
+        <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

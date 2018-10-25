@@ -13,10 +13,10 @@ include_directories("../sys/ktlshim")
 include_directories("../..")
 include_directories("../pch")
 
-add_library(objects_KtlLogger OBJECT ${LINUX_SOURCES})
-add_precompiled_header(objects_KtlLogger ../stdafx.h)
-add_library(${lib_KtlLogger} STATIC $<TARGET_OBJECTS:objects_KtlLogger>)
+add_library(objects_KtlLoggerNode OBJECT ${LINUX_SOURCES})
+add_precompiled_header(objects_KtlLoggerNode ../stdafx.h)
+add_library(${lib_KtlLoggerNode} STATIC $<TARGET_OBJECTS:objects_KtlLoggerNode>)
 
-set_target_properties(${lib_KtlLogger} PROPERTIES 
+set_target_properties(${lib_KtlLoggerNode} PROPERTIES 
     ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR}) 
 

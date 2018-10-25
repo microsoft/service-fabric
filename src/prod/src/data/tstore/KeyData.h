@@ -26,11 +26,12 @@ namespace Data
                     __in TKey& key, 
                     __in VersionedItem<TValue>& versionedItem, 
                     __in ULONG64 logicalTimeStamp,
+                    __in LONG64 keySize,
                     __in KAllocator& allocator,
                     __out SPtr& result)
             {
                 NTSTATUS status;
-                SPtr output = _new(KEYDATA_TAG, allocator) KeyData(key, versionedItem, logicalTimeStamp);
+                SPtr output = _new(KEYDATA_TAG, allocator) KeyData(key, versionedItem, logicalTimeStamp, keySize);
 
                 if (!output)
                 {
@@ -67,18 +68,27 @@ namespace Data
                 return logicalTimeStamp_;
             }
 
+            __declspec(property(get = get_KeySize)) LONG64 KeySize;
+            LONG64 get_KeySize() const
+            {
+                return keySize_;
+            }
 
         private:
             TKey key_;
             KSharedPtr<VersionedItem<TValue>> versionedItem_;
             ULONG64 logicalTimeStamp_;
+            LONG64 keySize_;
+
             KeyData(
-                __in TKey& key, 
-                __in VersionedItem<TValue>& versionedItem, 
-                __in ULONG64 logicalTimeStamp)
+                __in TKey& key,
+                __in VersionedItem<TValue>& versionedItem,
+                __in ULONG64 logicalTimeStamp,
+                __in LONG64 keySize)
                 : key_(key),
                 versionedItem_(&versionedItem),
-                logicalTimeStamp_(logicalTimeStamp)
+                logicalTimeStamp_(logicalTimeStamp),
+                keySize_(keySize)
             {
             }
 

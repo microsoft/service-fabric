@@ -24,8 +24,8 @@ namespace Reliability
 
         private:
 
-			ServiceInfoSPtr serviceInfo_;
-			FailoverUnitId failoverUnitId_;
+            ServiceInfoSPtr serviceInfo_;
+            FailoverUnitId failoverUnitId_;
         };
     }
 }

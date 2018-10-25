@@ -16,12 +16,16 @@ namespace Reliability
                 SwapPrimarySecondary = 0,
                 MoveSecondary = 1,
                 MovePrimary = 2,
-                AddPrimary = 3,
-                AddSecondary = 4,
-                PromoteSecondary = 5,
-                Void = 6,
-                Drop = 7,
-                LastValidEnum = Drop
+                MoveInstance = 3,
+                AddPrimary = 4,
+                AddSecondary = 5,
+                AddInstance = 6,
+                PromoteSecondary = 7,
+                RequestedPlacementNotPossible = 8,
+                DropPrimary = 9,
+                DropSecondary = 10,
+                DropInstance = 11,
+                LastValidEnum = DropInstance
             };
 
             std::wstring ToString(FailoverUnitMovementType::Enum failoverUnitMovementType);

@@ -10,6 +10,7 @@ using namespace Data::LoggingReplicator;
 using namespace Data::LogRecordLib;
 using namespace TxnReplicator;
 using namespace Data::Utilities;
+using namespace Common;
 
 CheckpointManager::CheckpointManager(
     __in PartitionedReplicaId const & traceId,
@@ -47,6 +48,8 @@ CheckpointManager::CheckpointManager(
     , groupCommitNeeded_(false)
     , groupCommitTask_()
     , lastStableLsn_()
+    , lastPeriodicCheckpointTime_(DateTime::Now())
+    , lastPeriodicTruncationTime_(DateTime::Now())
 {
     EventSource::Events->Ctor(
         TracePartitionId,
@@ -131,7 +134,6 @@ CheckpointManager::SPtr CheckpointManager::Create(
         invalidLogRecords);
 
     THROW_ON_ALLOCATION_FAILURE(pointer);
-
     return CheckpointManager::SPtr(pointer);
 }
 
@@ -192,7 +194,7 @@ Awaitable<bool> CheckpointManager::AcquireBackupAndCopyConsistencyLockAsync(
     __in KDuration const & timeout,
     __in CancellationToken const & cancellationToken)
 {
-    Common::Stopwatch stopWatch;
+    Stopwatch stopWatch;
     stopWatch.Start();
 
     UNREFERENCED_PARAMETER(cancellationToken);
@@ -225,7 +227,7 @@ Awaitable<bool> CheckpointManager::AcquireStateManagerApiLockAsync(
     __in KDuration const & timeout,
     __in CancellationToken const & cancellationToken)
 {
-    Common::Stopwatch stopWatch;
+    Stopwatch stopWatch;
     stopWatch.Start();
 
     UNREFERENCED_PARAMETER(cancellationToken); 
@@ -285,7 +287,7 @@ Awaitable<void> CheckpointManager::CancelFirstCheckpointOnIdleDueToIncompleteCop
         
     InvokePhysicalRecordProcessedCallback(*checkpointRecordSPtr);
 
-    replicatedLogManager_->OnCompletePendingCheckpoint();
+    OnCompletePendingCheckpoint(SF_STATUS_INVALID_OPERATION, checkpointRecordSPtr->CheckpointState);
 }
 
 // Completes the checkpoint and renames the log
@@ -335,7 +337,7 @@ Awaitable<void> CheckpointManager::CompleteFirstCheckpointOnIdleAndRenameLog(
             status);
 
         InvokePhysicalRecordProcessedCallback(*checkpointRecordSPtr);
-        replicatedLogManager_->OnCompletePendingCheckpoint();
+        OnCompletePendingCheckpoint(status, checkpointRecordSPtr->CheckpointState);
         co_return;
     }
 
@@ -349,7 +351,7 @@ Awaitable<void> CheckpointManager::CompleteFirstCheckpointOnIdleAndRenameLog(
     }
 
     InvokePhysicalRecordProcessedCallback(*checkpointRecordSPtr);
-    replicatedLogManager_->OnCompletePendingCheckpoint();
+    OnCompletePendingCheckpoint(status, checkpointRecordSPtr->CheckpointState);
 
     co_return;
 }
@@ -519,7 +521,10 @@ Awaitable<void> CheckpointManager::BlockSecondaryPumpIfNeeded()
 void CheckpointManager::FirstBeginCheckpointOnIdleSecondary()
 {
     BeginCheckpointLogRecord::SPtr record;
-    InitiateCheckpoint(false, true, record);
+    InitiateCheckpoint(
+        false,  // isPrimary
+        true,   // isFirstCheckpointOnFullCopy
+        record);
 
     ASSERT_IFNOT(
         record != nullptr, 
@@ -600,7 +605,7 @@ CopyModeFlag::Enum CheckpointManager::GetLogRecordsToCopy(
                 EventSource::Events->ProgressVectorValidationTelemetry(
                     TracePartitionId,
                     ReplicaId,
-                    Common::StringUtility::ToWString(copyModeResult.SharedProgressVector.FailedValidationMsg),
+                    StringUtility::ToWString(copyModeResult.SharedProgressVector.FailedValidationMsg),
                     sourceCopyContextParameters.ProgressVectorData->ToString(
                         copyModeResult.SharedProgressVector.SourceIndex,
                         Constants::ProgressVectorMaxStringSizeInKb / 2),
@@ -1076,7 +1081,10 @@ BeginCheckpointLogRecord::SPtr CheckpointManager::CheckpointIfNecessary(__in boo
             TraceId);
 
         BeginCheckpointLogRecord::SPtr result;
-        InitiateCheckpoint(isPrimary, false, result);
+        InitiateCheckpoint(
+            isPrimary,
+            false, // isFirstCheckpointOnFullCopy
+            result);
 
         return result;
     }
@@ -1271,6 +1279,19 @@ Task CheckpointManager::InitiateCheckpoint(
 
     BackupLogRecord::CSPtr lastCompletedBackup = backupManager_->GetLastCompletedBackupLogRecord();
 
+    if (logTruncationManager_->PeriodicCheckpointTruncationState == PeriodicCheckpointTruncationState::CheckpointStarted)
+    {
+        // Update cached value for last periodic checkpoint time
+        lastPeriodicCheckpointTime_ = DateTime::Now();
+
+        EventSource::Events->PeriodicCheckpointAndTruncation(
+            TracePartitionId,
+            ReplicaId,
+            logTruncationManager_->PeriodicCheckpointTruncationState,
+            lastPeriodicCheckpointTime_,
+            lastPeriodicTruncationTime_);
+    }
+
     BeginCheckpointLogRecord::SPtr checkpointRecord = BeginCheckpointLogRecord::Create(
         isFirstCheckpointOnFullCopy,
         *replicatedLogManager_->ProgressVectorValue,
@@ -1282,6 +1303,8 @@ Task CheckpointManager::InitiateCheckpoint(
         *invalidLogRecords_->Inv_PhysicalLogRecord,
         *lastCompletedBackup,
         (ULONG)transactionalReplicatorConfig_->ProgressVectorMaxEntries,
+        lastPeriodicCheckpointTime_.Ticks,
+        lastPeriodicTruncationTime_.Ticks,
         GetThisAllocator());
 
     beginCheckpoint = checkpointRecord;
@@ -1348,7 +1371,7 @@ Awaitable<void> CheckpointManager::LogHeadTruncationProcessAsync()
         isTruncationPerformed = true;
     }
 
-    replicatedLogManager_->OnCompletePendingLogHeadTruncation();
+    OnCompletePendingLogHeadTruncation(truncateHeadRecord->TruncationState);
 
     EventSource::Events->TruncateHead(
         TracePartitionId,
@@ -1391,7 +1414,7 @@ Task CheckpointManager::PerformCheckpointAsync(__in NTSTATUS processingError)
             co_return;
         }
 
-        replicatedLogManager_->OnCompletePendingCheckpoint();
+        OnCompletePendingCheckpoint(processingError, checkpointRecord->CheckpointState);
         // Ensure this is the last line before returning as it could end up releasing all the objects
         InvokePhysicalRecordProcessedCallback(*checkpointRecord);
         co_return;
@@ -1407,7 +1430,7 @@ Task CheckpointManager::PerformCheckpointAsync(__in NTSTATUS processingError)
         }
         else
         {
-            replicatedLogManager_->OnCompletePendingCheckpoint();
+            OnCompletePendingCheckpoint(status, checkpointRecord->CheckpointState);
             InvokePhysicalRecordProcessedCallback(*checkpointRecord);
         }
 
@@ -1431,9 +1454,10 @@ Task CheckpointManager::PerformCheckpointAsync(__in NTSTATUS processingError)
     }
 
     status = co_await CompleteCheckpointAndRenameIfNeeded(*checkpointRecord, false);
-    // Nothing can be done if complete checkpoint failed, other than going down
 
-    replicatedLogManager_->OnCompletePendingCheckpoint();
+    // Nothing can be done if complete checkpoint failed, other than going down
+    
+    OnCompletePendingCheckpoint(status, checkpointRecord->CheckpointState);
     InvokePhysicalRecordProcessedCallback(*checkpointRecord);
 
     co_return;
@@ -1539,12 +1563,16 @@ void CheckpointManager::ProcessBarrierRecord(
 
     if (errorCode == STATUS_SUCCESS)
     {
-        K_LOCK_BLOCK(thisLock_)
+        // Optimistic check to ensure the lock is not contended on unnecessarily when there are lots of barriers about to be processed
+        if (lastStableLsn_ < newStableLsn)
         {
-            if (lastStableLsn_ < newStableLsn)
+            K_LOCK_BLOCK(thisLock_)
             {
-                ProcessStableLsnCallerHoldsLock(newStableLsn, barrierRecord);
-                ApplyCheckpointOrLogHeadTruncationIfNecessaryCallerHoldsLock();
+                if (lastStableLsn_ < newStableLsn)
+                {
+                    ProcessStableLsnCallerHoldsLock(newStableLsn, barrierRecord);
+                    ApplyCheckpointOrLogHeadTruncationIfNecessaryCallerHoldsLock();
+                }
             }
         }
     }
@@ -1628,8 +1656,13 @@ Task CheckpointManager::TruncateHeadIfNecessary(__out bool addedTruncateHead)
                 co_return;
             }
 
+            bool isPeriodicTruncation = logTruncationManager_->PeriodicCheckpointTruncationState == PeriodicCheckpointTruncationState::TruncationStarted;
+
             truncateHeadRecord = replicatedLogManager_->TruncateHead(
-                false,
+                false,                      // isStable
+                isPeriodicTruncation ?      // Conditionally update the last periodic truncation time
+                    DateTime::Now().Ticks :
+                    lastPeriodicTruncationTime_.Ticks, 
                 goodLogHeadCalculator_);
 
             if (truncateHeadRecord != nullptr)
@@ -1645,6 +1678,17 @@ Task CheckpointManager::TruncateHeadIfNecessary(__out bool addedTruncateHead)
                     truncateHeadRecord->LogHeadLsn,
                     truncateHeadRecord->LogHeadPsn,
                     truncateHeadRecord->LogHeadRecordPosition);
+
+                if (isPeriodicTruncation)
+                {
+                    lastPeriodicTruncationTime_ = DateTime(truncateHeadRecord->PeriodicTruncationTimeStampTicks);
+                    EventSource::Events->PeriodicCheckpointAndTruncation(
+                        TracePartitionId,
+                        ReplicaId,
+                        logTruncationManager_->PeriodicCheckpointTruncationState,
+                        lastPeriodicCheckpointTime_,
+                        lastPeriodicTruncationTime_);
+                }
 
                 addedTruncateHead = true;
             }
@@ -1741,4 +1785,156 @@ void CheckpointManager::AbortOldTransactionsWorkItem::Execute()
         abortTxList_[0]->Lsn,
         abortTxList_[abortTxList_.Count() - 1]->Lsn,
         checkpointPreventedAtLsn_);
+}
+
+void CheckpointManager::OnCompletePendingLogHeadTruncation(__in Data::LogRecordLib::TruncationState::Enum truncationState)
+{
+    replicatedLogManager_->OnCompletePendingLogHeadTruncation();
+
+    if (truncationState == TruncationState::Completed)
+    {
+        bool tracePeriodicState = logTruncationManager_->PeriodicCheckpointTruncationState == PeriodicCheckpointTruncationState::TruncationStarted;
+        logTruncationManager_->OnTruncationCompleted();
+
+        if (tracePeriodicState)
+        {
+            EventSource::Events->PeriodicCheckpointAndTruncation(
+                TracePartitionId,
+                ReplicaId,
+                logTruncationManager_->PeriodicCheckpointTruncationState,
+                lastPeriodicCheckpointTime_,
+                lastPeriodicTruncationTime_);
+        }
+    }
+}
+
+void CheckpointManager::OnCompletePendingCheckpoint(
+    __in NTSTATUS status,
+    __in Data::LogRecordLib::CheckpointState::Enum checkpointState)
+{
+    bool tracePeriodicState = logTruncationManager_->PeriodicCheckpointTruncationState == PeriodicCheckpointTruncationState::CheckpointStarted;
+ 
+    logTruncationManager_->OnCheckpointCompleted(
+        status,
+        checkpointState,
+        false);
+
+    if (tracePeriodicState)
+    {
+        EventSource::Events->PeriodicCheckpointAndTruncation(
+            TracePartitionId,
+            ReplicaId,
+            logTruncationManager_->PeriodicCheckpointTruncationState,
+            lastPeriodicCheckpointTime_,
+            lastPeriodicTruncationTime_);
+    }
+
+    replicatedLogManager_->OnCompletePendingCheckpoint();
+}
+
+void CheckpointManager::TimerCallback()
+{
+    if (!replicatedLogManager_->RoleContextDrainStateValue->IsClosing)
+    {
+        logTruncationManager_->InitiatePeriodicCheckpoint();
+
+        // Only request group commit on primary replicas
+        if (replicatedLogManager_->RoleContextDrainStateValue->ReplicaRole == FABRIC_REPLICA_ROLE_PRIMARY)
+        {
+            RequestGroupCommit();
+        }
+
+        EventSource::Events->PeriodicCheckpointAndTruncation(
+            TracePartitionId,
+            ReplicaId,
+            logTruncationManager_->PeriodicCheckpointTruncationState,
+            lastPeriodicCheckpointTime_,
+            lastPeriodicTruncationTime_);
+
+        StartPeriodicCheckpointTimer();
+    }
+}
+
+ULONG CheckpointManager::CalculateTruncationTimerDurationMs(
+    __in DateTime lastPeriodicCheckpointTime,
+    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in PeriodicCheckpointTruncationState::Enum const & state)
+{
+    DateTime currentTime = DateTime::Now();
+    TimeSpan elapsedFromCheckpoint = currentTime - lastPeriodicCheckpointTime;
+    TimeSpan remainingTime = transactionalReplicatorConfig->TruncationInterval - elapsedFromCheckpoint;
+
+    if (remainingTime.Ticks <= 0)
+    {
+        // Return 0 if periodic checkpoint/truncation not started and interval has passed, immediately initiating process
+        if (state == PeriodicCheckpointTruncationState::NotStarted)
+        {
+            return 0;
+        }
+
+        // If the process has started and interval has passed, fire timer after 1 full interval
+        return static_cast<ULONG>(transactionalReplicatorConfig->TruncationInterval.TotalMilliseconds());
+    }
+
+    return static_cast<ULONG>(remainingTime.TotalMilliseconds());
+}
+
+void CheckpointManager::StartPeriodicCheckpointTimer()
+{
+    // Calculate appropriate wait duration
+    ULONG waitMs = CalculateTruncationTimerDurationMs(
+        lastPeriodicCheckpointTime_,
+        transactionalReplicatorConfig_,
+        logTruncationManager_->PeriodicCheckpointTruncationState);
+
+    // Start timer with adjusted duration
+    Common::TimeSpan waitDuration = TimeSpan::FromMilliseconds(waitMs);
+    checkpointTimerSPtr_->Change(waitDuration);
+}
+
+void CheckpointManager::CancelPeriodicCheckpointTimer()
+{
+    // Ensure no further timer events are fired
+    if (checkpointTimerSPtr_ != nullptr)
+    {
+        checkpointTimerSPtr_->Cancel();
+    }
+}
+
+void CheckpointManager::Recover(
+    __in Data::LogRecordLib::BeginCheckpointLogRecord::SPtr & lastCompletedBeginCheckpointRecord,
+    __in LONG64 recoveredTruncationTime)
+{
+    LONG64 recoveredCheckpointTime = lastCompletedBeginCheckpointRecord->PeriodicCheckpointTimeTicks;
+    lastPeriodicCheckpointTime_ = DateTime(recoveredCheckpointTime);
+
+    if (lastCompletedBeginCheckpointRecord->PeriodicTruncationTimeStampTicks > recoveredTruncationTime)
+    {
+        recoveredTruncationTime = lastCompletedBeginCheckpointRecord->PeriodicTruncationTimeStampTicks;
+    }
+
+    lastPeriodicTruncationTime_ = DateTime(recoveredTruncationTime);
+
+    logTruncationManager_->Recover(
+        recoveredCheckpointTime,
+        recoveredTruncationTime);
+
+    // Disable
+    if (transactionalReplicatorConfig_->TruncationInterval.TotalMilliseconds() == 0)
+    {
+        return;
+    }
+
+    CheckpointManager::SPtr thisSPtr(this);
+
+    thisSPtr->checkpointTimerSPtr_ = Timer::Create(
+        TimerTagDefault,
+        [thisSPtr](TimerSPtr const &)
+        {
+            thisSPtr->TimerCallback();
+        },
+        false);
+
+    // Start timer
+    StartPeriodicCheckpointTimer();
 }

@@ -9,7 +9,7 @@ namespace Management
 {
     namespace HealthManager
     {
-        class ReplicaEntity 
+        class ReplicaEntity
             : public HealthEntity
             , public std::enable_shared_from_this<ReplicaEntity>
         {
@@ -22,18 +22,20 @@ namespace Management
                 HealthEntityState::Enum entityState);
 
             ~ReplicaEntity();
-            
+
             virtual HealthEntityKind::Enum get_EntityKind() const { return HealthEntityKind::Replica; }
 
             __declspec (property(get = get_EntityId)) ReplicaHealthId const & EntityId;
             ReplicaHealthId const & get_EntityId() const { return entityId_; }
+
+            FABRIC_SERVICE_KIND GetKind() const { return (this->GetAttributesCopy()->UseInstance) ? FABRIC_SERVICE_KIND_STATEFUL : FABRIC_SERVICE_KIND_STATELESS; };
 
             Common::ErrorCode EvaluateHealth(
                 Common::ActivityId const & activityId,
                 ServiceModel::ApplicationHealthPolicy const & healthPolicy,
                 __inout FABRIC_HEALTH_STATE & aggregatedHealthState,
                 __inout std::vector<ServiceModel::HealthEvaluation> & unhealthyEvaluations);
-            
+
             HEALTH_ENTITY_TEMPLATED_METHODS_DECLARATIONS( ReplicaAttributesStoreData )
 
         protected:
@@ -45,9 +47,9 @@ namespace Management
                 __out bool & hasMatch) const;
 
             virtual void UpdateParents(Common::ActivityId const & activityId) override;
-            
+
             virtual bool DeleteDueToParentsCallerHoldsLock() const override;
-            
+
             void OnEntityReadyToAcceptRequests(Common::ActivityId const & activityId);
 
             virtual Common::ErrorCode UpdateContextHealthPoliciesCallerHoldsLock(

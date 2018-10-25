@@ -480,6 +480,8 @@ DNS::DNSNAME_STATUS DNS::IsDnsNameValid(
         return DNSNAME_VALID;
     case DNS_ERROR_NON_RFC_NAME:
         return DNSNAME_NON_RFC_NAME;
+    case DNS_ERROR_INVALID_NAME_CHAR:
+        return DNSNAME_INVALID_NAME_CHAR;
     }
     return DNSNAME_INVALID_NAME;
 #endif

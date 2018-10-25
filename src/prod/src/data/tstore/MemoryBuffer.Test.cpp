@@ -125,6 +125,552 @@ namespace TStoreTests
 
     private:
         KtlSystem* ktlSystem_;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> WriteAsync_FixedCapacityStream_LessThanCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 4;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            ULONG expectedCount = sourceSize;
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+        
+            WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_FixedCapacityStream_WriteCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 16;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            ULONG expectedCount = sourceSize;
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+        
+            WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_FixedCapacityStream_WriteMoreThanCapacity_ShouldFail_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 32;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+        
+            WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_FixedCapacityStream_WriteMoreThanSourceCapacity_ShouldFail_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 16;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 32; // Copy more than the buffer holds
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+        
+            WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_FixedCapacityStream_NonZeroOffset_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 16;
+            ULONG sourceOffset = 8;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            ULONG expectedCount = sourceSize - sourceOffset;
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+        
+            WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_FixedCapacityStream_Chunked_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 1024;
+
+            KBuffer::SPtr sourceBuffer = CreateBuffer(streamCapacity);
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+
+            ULONG offset = 0;
+            ULONG chunkSize = 16;
+
+            while (NT_SUCCESS(co_await streamSPtr->WriteAsync(*sourceBuffer, offset, chunkSize)))
+            {
+                offset += chunkSize;
+            }
+
+            CODING_ERROR_ASSERT(offset == streamCapacity);
+            CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), sourceBuffer, streamCapacity, 0, 0));
+            co_return;
+        }
+
+        ktl::Awaitable<void> ReadAsync_FixedCapacityStream_LessThanCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG destinationSize = 8;
+            ULONG destinationOffset = 0;
+            ULONG destinationCount = 0; // Fill entire buffer
+        
+            ULONG expectedCount = destinationSize - destinationOffset;
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+
+            ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ReadAsync_FixedCapacityStream_FullCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG destinationSize = 16;
+            ULONG destinationOffset = 0;
+            ULONG destinationCount = 0; // Fill entire buffer
+        
+            ULONG expectedCount = destinationSize - destinationOffset;
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+
+            ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ReadAsync_FixedCapacityStream_MoreThanCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG destinationSize = 32;
+            ULONG destinationOffset = 0;
+            ULONG destinationCount = 0; // Fill entire buffer as much as possible
+        
+            ULONG expectedCount = streamCapacity;
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+
+            ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ReadAsync_FixedCapacityStream_Chunked_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 1024;
+
+            KBuffer::SPtr sourceBuffer = CreateBuffer(streamCapacity);
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
+
+            auto status = co_await streamSPtr->WriteAsync(*sourceBuffer); //Write the entire source buffer into the stream
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            streamSPtr->Position = 0;
+
+            ULONG offset = 0;
+            ULONG chunkSize = 16;
+
+            KBuffer::SPtr destinationBuffer;
+            KBuffer::Create(streamCapacity, destinationBuffer, GetAllocator());
+
+            ULONG bytesRead = 0;
+            status = co_await streamSPtr->ReadAsync(*destinationBuffer, bytesRead, offset, chunkSize);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            while (bytesRead > 0)
+            {
+                CODING_ERROR_ASSERT(bytesRead == chunkSize);
+                offset += bytesRead;
+                status = co_await streamSPtr->ReadAsync(*destinationBuffer, bytesRead, offset, chunkSize);
+                CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            }
+
+            CODING_ERROR_ASSERT(offset == streamCapacity);
+            CODING_ERROR_ASSERT(BufferEquals(sourceBuffer, destinationBuffer, streamCapacity, 0, 0));
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ExistingBuffer_LessThanCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 4;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            ULONG expectedCount = sourceSize;
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ExistingBuffer_WriteCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 16;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            ULONG expectedCount = sourceSize;
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+        
+            WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ExistingBuffer_WriteMoreThanCapacity_ShouldFail_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 32;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ExistingBuffer_WriteMoreThanSourceCapacity_ShouldFail_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 16;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 32; // Copy more than the buffer holds
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ExistingBuffer_NonZeroOffset_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG sourceSize = 16;
+            ULONG sourceOffset = 8;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            ULONG expectedCount = sourceSize - sourceOffset;
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ExistingBuffer_Chunked_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 1024;
+
+            KBuffer::SPtr sourceBuffer = CreateBuffer(streamCapacity);
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            ULONG offset = 0;
+            ULONG chunkSize = 16;
+
+            while (NT_SUCCESS(co_await streamSPtr->WriteAsync(*sourceBuffer, offset, chunkSize)))
+            {
+                offset += chunkSize;
+            }
+
+            CODING_ERROR_ASSERT(offset == streamCapacity);
+            CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), sourceBuffer, streamCapacity, 0, 0));
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ExistingBuffer_ByByte_ShouldSucceed_Test()
+        {
+            ULONG bufferSize = 1024;
+
+            KBuffer::SPtr expectedBuffer = CreateBuffer(bufferSize);
+            byte* items = static_cast<byte *>(expectedBuffer->GetBuffer());
+        
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(bufferSize, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+
+            for (ULONG32 i = 0; i < bufferSize; i++)
+            {
+                byte item = items[i];
+                auto status = co_await streamSPtr->WriteAsync(item);
+                CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            }
+
+            CODING_ERROR_ASSERT(BufferEquals(streamBuffer, expectedBuffer, bufferSize, 0, 0));
+            co_return;
+        }
+
+        ktl::Awaitable<void> ReadAsync_ExistingBuffer_LessThanCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG destinationSize = 8;
+            ULONG destinationOffset = 0;
+            ULONG destinationCount = 0; // Fill entire buffer
+        
+            ULONG expectedCount = destinationSize - destinationOffset;
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ReadAsync_ExistingBuffer_FullCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG destinationSize = 16;
+            ULONG destinationOffset = 0;
+            ULONG destinationCount = 0; // Fill entire buffer
+        
+            ULONG expectedCount = destinationSize - destinationOffset;
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ReadAsync_ExistingBuffer_MoreThanCapacity_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 16;
+
+            ULONG destinationSize = 32;
+            ULONG destinationOffset = 0;
+            ULONG destinationCount = 0; // Fill entire buffer as much as possible
+        
+            ULONG expectedCount = streamCapacity;
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> ReadAsync_ExistingBuffer_Chunked_ShouldSucceed_Test()
+        {
+            ULONG streamCapacity = 1024;
+
+            KBuffer::SPtr sourceBuffer = CreateBuffer(streamCapacity);
+
+            KBuffer::SPtr streamBuffer;
+            KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
+        
+            auto status = co_await streamSPtr->WriteAsync(*sourceBuffer); //Write the entire source buffer into the stream
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            streamSPtr->Position = 0;
+
+            ULONG offset = 0;
+            ULONG chunkSize = 16;
+
+            KBuffer::SPtr destinationBuffer;
+            KBuffer::Create(streamCapacity, destinationBuffer, GetAllocator());
+
+            ULONG bytesRead = 0;
+            status = co_await streamSPtr->ReadAsync(*destinationBuffer, bytesRead, offset, chunkSize);
+            CODING_ERROR_ASSERT(NT_SUCCESS(status));
+
+            while (bytesRead > 0)
+            {
+                CODING_ERROR_ASSERT(bytesRead == chunkSize);
+                offset += bytesRead;
+                status = co_await streamSPtr->ReadAsync(*destinationBuffer, bytesRead, offset, chunkSize);
+                CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            }
+
+            CODING_ERROR_ASSERT(offset == streamCapacity);
+            CODING_ERROR_ASSERT(BufferEquals(sourceBuffer, destinationBuffer, streamCapacity, 0, 0));
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ResizableBuffer_ShouldSucceed_Test()
+        {
+            ULONG sourceSize = 4;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            ULONG expectedCount = sourceSize;
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(GetAllocator(), streamSPtr);
+        
+            WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ResizableBuffer_WriteMoreThanSourceCapacity_ShouldFail_Test()
+        {
+            ULONG sourceSize = 16;
+            ULONG sourceOffset = 0;
+            ULONG sourceCount = 32; // Copy more than the buffer holds
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(GetAllocator(), streamSPtr);
+        
+            WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ResizableBuffer_NonZeroOffset_ShouldSucceed_Test()
+        {
+            ULONG sourceSize = 16;
+            ULONG sourceOffset = 8;
+            ULONG sourceCount = 0; // Copy entire buffer
+
+            ULONG expectedCount = sourceSize - sourceOffset;
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(GetAllocator(), streamSPtr);
+        
+            WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ResizableBuffer_Chunked_ShouldSucceed_Test()
+        {
+            ULONG bufferSize = 1024;
+
+            KBuffer::SPtr sourceBuffer = CreateBuffer(bufferSize);
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(GetAllocator(), streamSPtr);
+
+            ULONG offset = 0;
+            ULONG chunkSize = 16;
+
+            while (NT_SUCCESS(co_await streamSPtr->WriteAsync(*sourceBuffer, offset, chunkSize)))
+            {
+                offset += chunkSize;
+            }
+
+            CODING_ERROR_ASSERT(offset == bufferSize);
+            CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), sourceBuffer, bufferSize, 0, 0));
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ResizableBuffer_ByByte_ShouldSucceed_Test()
+        {
+            ULONG bufferSize = 1024;
+
+            KBuffer::SPtr expectedBuffer = CreateBuffer(bufferSize);
+            byte* items = static_cast<byte *>(expectedBuffer->GetBuffer());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(GetAllocator(), streamSPtr);
+
+            for (ULONG32 i = 0; i < bufferSize; i++)
+            {
+                byte item = items[i];
+                auto status = co_await streamSPtr->WriteAsync(item);
+                CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            }
+
+            CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), expectedBuffer, bufferSize, 0, 0));
+            co_return;
+        }
+
+        ktl::Awaitable<void> WriteAsync_ResizableBuffer_ByULONG32_ShouldSucceed_Test()
+        {
+            ULONG numItems = 1024;
+            ULONG bufferSize = numItems * sizeof(ULONG32);
+
+            KBuffer::SPtr expectedBuffer = CreateBuffer(bufferSize);
+            ULONG32* items = static_cast<ULONG32 *>(expectedBuffer->GetBuffer());
+
+            MemoryBuffer::SPtr streamSPtr;
+            MemoryBuffer::Create(GetAllocator(), streamSPtr);
+
+            for (ULONG32 i = 0; i < numItems; i++)
+            {
+                ULONG32 item = items[i];
+                auto status = co_await streamSPtr->WriteAsync(item);
+                CODING_ERROR_ASSERT(NT_SUCCESS(status));
+            }
+
+            CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), expectedBuffer, bufferSize, 0, 0));
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(MemoryBufferTestSuite, MemoryBufferTest)
@@ -132,522 +678,141 @@ namespace TStoreTests
 #pragma region Fixed capacity stream tests
     BOOST_AUTO_TEST_CASE(WriteAsync_FixedCapacityStream_LessThanCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 4;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        ULONG expectedCount = sourceSize;
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-        
-        WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+        SyncAwait(WriteAsync_FixedCapacityStream_LessThanCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_FixedCapacityStream_WriteCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 16;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        ULONG expectedCount = sourceSize;
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-        
-        WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+        SyncAwait(WriteAsync_FixedCapacityStream_WriteCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_FixedCapacityStream_WriteMoreThanCapacity_ShouldFail)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 32;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-        
-        WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+        SyncAwait(WriteAsync_FixedCapacityStream_WriteMoreThanCapacity_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_FixedCapacityStream_WriteMoreThanSourceCapacity_ShouldFail)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 16;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 32; // Copy more than the buffer holds
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-        
-        WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+        SyncAwait(WriteAsync_FixedCapacityStream_WriteMoreThanSourceCapacity_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_FixedCapacityStream_NonZeroOffset_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 16;
-        ULONG sourceOffset = 8;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        ULONG expectedCount = sourceSize - sourceOffset;
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-        
-        WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+        SyncAwait(WriteAsync_FixedCapacityStream_NonZeroOffset_ShouldSucceed_Test());
     }
     
     BOOST_AUTO_TEST_CASE(WriteAsync_FixedCapacityStream_Chunked_ShouldSucceed)
     {
-        ULONG streamCapacity = 1024;
-
-        KBuffer::SPtr sourceBuffer = CreateBuffer(streamCapacity);
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-
-        ULONG offset = 0;
-        ULONG chunkSize = 16;
-
-        while (NT_SUCCESS(SyncAwait(streamSPtr->WriteAsync(*sourceBuffer, offset, chunkSize))))
-        {
-            offset += chunkSize;
-        }
-
-        CODING_ERROR_ASSERT(offset == streamCapacity);
-        CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), sourceBuffer, streamCapacity, 0, 0));
+        SyncAwait(WriteAsync_FixedCapacityStream_Chunked_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ReadAsync_FixedCapacityStream_LessThanCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG destinationSize = 8;
-        ULONG destinationOffset = 0;
-        ULONG destinationCount = 0; // Fill entire buffer
-        
-        ULONG expectedCount = destinationSize - destinationOffset;
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-
-        ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+        SyncAwait(ReadAsync_FixedCapacityStream_LessThanCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ReadAsync_FixedCapacityStream_FullCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG destinationSize = 16;
-        ULONG destinationOffset = 0;
-        ULONG destinationCount = 0; // Fill entire buffer
-        
-        ULONG expectedCount = destinationSize - destinationOffset;
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-
-        ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+        SyncAwait(ReadAsync_FixedCapacityStream_FullCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ReadAsync_FixedCapacityStream_MoreThanCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG destinationSize = 32;
-        ULONG destinationOffset = 0;
-        ULONG destinationCount = 0; // Fill entire buffer as much as possible
-        
-        ULONG expectedCount = streamCapacity;
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-
-        ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+        SyncAwait(ReadAsync_FixedCapacityStream_MoreThanCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ReadAsync_FixedCapacityStream_Chunked_ShouldSucceed)
     {
-        ULONG streamCapacity = 1024;
-
-        KBuffer::SPtr sourceBuffer = CreateBuffer(streamCapacity);
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(streamCapacity, GetAllocator(), streamSPtr);
-
-        auto status = SyncAwait(streamSPtr->WriteAsync(*sourceBuffer)); //Write the entire source buffer into the stream
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        streamSPtr->Position = 0;
-
-        ULONG offset = 0;
-        ULONG chunkSize = 16;
-
-        KBuffer::SPtr destinationBuffer;
-        KBuffer::Create(streamCapacity, destinationBuffer, GetAllocator());
-
-        ULONG bytesRead = 0;
-        status = SyncAwait(streamSPtr->ReadAsync(*destinationBuffer, bytesRead, offset, chunkSize));
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        while (bytesRead > 0)
-        {
-            CODING_ERROR_ASSERT(bytesRead == chunkSize);
-            offset += bytesRead;
-            status = SyncAwait(streamSPtr->ReadAsync(*destinationBuffer, bytesRead, offset, chunkSize));
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        }
-
-        CODING_ERROR_ASSERT(offset == streamCapacity);
-        CODING_ERROR_ASSERT(BufferEquals(sourceBuffer, destinationBuffer, streamCapacity, 0, 0));
+        SyncAwait(ReadAsync_FixedCapacityStream_Chunked_ShouldSucceed_Test());
     }
 #pragma endregion
 
 #pragma region Existing buffer tests
     BOOST_AUTO_TEST_CASE(WriteAsync_ExistingBuffer_LessThanCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 4;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        ULONG expectedCount = sourceSize;
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+        SyncAwait(WriteAsync_ExistingBuffer_LessThanCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ExistingBuffer_WriteCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 16;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        ULONG expectedCount = sourceSize;
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        
-        WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+        SyncAwait(WriteAsync_ExistingBuffer_WriteCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ExistingBuffer_WriteMoreThanCapacity_ShouldFail)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 32;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+        SyncAwait(WriteAsync_ExistingBuffer_WriteMoreThanCapacity_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ExistingBuffer_WriteMoreThanSourceCapacity_ShouldFail)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 16;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 32; // Copy more than the buffer holds
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+        SyncAwait(WriteAsync_ExistingBuffer_WriteMoreThanSourceCapacity_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ExistingBuffer_NonZeroOffset_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG sourceSize = 16;
-        ULONG sourceOffset = 8;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        ULONG expectedCount = sourceSize - sourceOffset;
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+        SyncAwait(WriteAsync_ExistingBuffer_NonZeroOffset_ShouldSucceed_Test());
     }
     
     BOOST_AUTO_TEST_CASE(WriteAsync_ExistingBuffer_Chunked_ShouldSucceed)
     {
-        ULONG streamCapacity = 1024;
-
-        KBuffer::SPtr sourceBuffer = CreateBuffer(streamCapacity);
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        ULONG offset = 0;
-        ULONG chunkSize = 16;
-
-        while (NT_SUCCESS(SyncAwait(streamSPtr->WriteAsync(*sourceBuffer, offset, chunkSize))))
-        {
-            offset += chunkSize;
-        }
-
-        CODING_ERROR_ASSERT(offset == streamCapacity);
-        CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), sourceBuffer, streamCapacity, 0, 0));
+        SyncAwait(WriteAsync_ExistingBuffer_Chunked_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ExistingBuffer_ByByte_ShouldSucceed)
     {
-        ULONG bufferSize = 1024;
-
-        KBuffer::SPtr expectedBuffer = CreateBuffer(bufferSize);
-        byte* items = static_cast<byte *>(expectedBuffer->GetBuffer());
-        
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(bufferSize, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-
-        for (ULONG32 i = 0; i < bufferSize; i++)
-        {
-            byte item = items[i];
-            auto status = SyncAwait(streamSPtr->WriteAsync(item));
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        }
-
-        CODING_ERROR_ASSERT(BufferEquals(streamBuffer, expectedBuffer, bufferSize, 0, 0));
+        SyncAwait(WriteAsync_ExistingBuffer_ByByte_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ReadAsync_ExistingBuffer_LessThanCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG destinationSize = 8;
-        ULONG destinationOffset = 0;
-        ULONG destinationCount = 0; // Fill entire buffer
-        
-        ULONG expectedCount = destinationSize - destinationOffset;
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+        SyncAwait(ReadAsync_ExistingBuffer_LessThanCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ReadAsync_ExistingBuffer_FullCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG destinationSize = 16;
-        ULONG destinationOffset = 0;
-        ULONG destinationCount = 0; // Fill entire buffer
-        
-        ULONG expectedCount = destinationSize - destinationOffset;
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+        SyncAwait(ReadAsync_ExistingBuffer_FullCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ReadAsync_ExistingBuffer_MoreThanCapacity_ShouldSucceed)
     {
-        ULONG streamCapacity = 16;
-
-        ULONG destinationSize = 32;
-        ULONG destinationOffset = 0;
-        ULONG destinationCount = 0; // Fill entire buffer as much as possible
-        
-        ULONG expectedCount = streamCapacity;
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        ReadAsyncPositiveTest(*streamSPtr, streamCapacity, destinationSize, destinationOffset, destinationCount, expectedCount);
+        SyncAwait(ReadAsync_ExistingBuffer_MoreThanCapacity_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(ReadAsync_ExistingBuffer_Chunked_ShouldSucceed)
     {
-        ULONG streamCapacity = 1024;
-
-        KBuffer::SPtr sourceBuffer = CreateBuffer(streamCapacity);
-
-        KBuffer::SPtr streamBuffer;
-        KBuffer::Create(streamCapacity, streamBuffer, GetAllocator());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(*streamBuffer, GetAllocator(), streamSPtr);
-        
-        auto status = SyncAwait(streamSPtr->WriteAsync(*sourceBuffer)); //Write the entire source buffer into the stream
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        streamSPtr->Position = 0;
-
-        ULONG offset = 0;
-        ULONG chunkSize = 16;
-
-        KBuffer::SPtr destinationBuffer;
-        KBuffer::Create(streamCapacity, destinationBuffer, GetAllocator());
-
-        ULONG bytesRead = 0;
-        status = SyncAwait(streamSPtr->ReadAsync(*destinationBuffer, bytesRead, offset, chunkSize));
-        CODING_ERROR_ASSERT(NT_SUCCESS(status));
-
-        while (bytesRead > 0)
-        {
-            CODING_ERROR_ASSERT(bytesRead == chunkSize);
-            offset += bytesRead;
-            status = SyncAwait(streamSPtr->ReadAsync(*destinationBuffer, bytesRead, offset, chunkSize));
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        }
-
-        CODING_ERROR_ASSERT(offset == streamCapacity);
-        CODING_ERROR_ASSERT(BufferEquals(sourceBuffer, destinationBuffer, streamCapacity, 0, 0));
+        SyncAwait(ReadAsync_ExistingBuffer_Chunked_ShouldSucceed_Test());
     }
 #pragma endregion
 
 #pragma region Resizable buffer tests
     BOOST_AUTO_TEST_CASE(WriteAsync_ResizableBuffer_ShouldSucceed)
     {
-        ULONG sourceSize = 4;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        ULONG expectedCount = sourceSize;
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(GetAllocator(), streamSPtr);
-        
-        WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+        SyncAwait(WriteAsync_ResizableBuffer_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ResizableBuffer_WriteMoreThanSourceCapacity_ShouldFail)
     {
-        ULONG sourceSize = 16;
-        ULONG sourceOffset = 0;
-        ULONG sourceCount = 32; // Copy more than the buffer holds
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(GetAllocator(), streamSPtr);
-        
-        WriteAsyncNegativeTest(*streamSPtr, sourceSize, sourceOffset, sourceCount);
+        SyncAwait(WriteAsync_ResizableBuffer_WriteMoreThanSourceCapacity_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ResizableBuffer_NonZeroOffset_ShouldSucceed)
     {
-        ULONG sourceSize = 16;
-        ULONG sourceOffset = 8;
-        ULONG sourceCount = 0; // Copy entire buffer
-
-        ULONG expectedCount = sourceSize - sourceOffset;
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(GetAllocator(), streamSPtr);
-        
-        WriteAsyncPositiveTest(*streamSPtr, sourceSize, sourceOffset, sourceCount, expectedCount);
+        SyncAwait(WriteAsync_ResizableBuffer_NonZeroOffset_ShouldSucceed_Test());
     }
     
     BOOST_AUTO_TEST_CASE(WriteAsync_ResizableBuffer_Chunked_ShouldSucceed)
     {
-        ULONG bufferSize = 1024;
-
-        KBuffer::SPtr sourceBuffer = CreateBuffer(bufferSize);
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(GetAllocator(), streamSPtr);
-
-        ULONG offset = 0;
-        ULONG chunkSize = 16;
-
-        while (NT_SUCCESS(SyncAwait(streamSPtr->WriteAsync(*sourceBuffer, offset, chunkSize))))
-        {
-            offset += chunkSize;
-        }
-
-        CODING_ERROR_ASSERT(offset == bufferSize);
-        CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), sourceBuffer, bufferSize, 0, 0));
+        SyncAwait(WriteAsync_ResizableBuffer_Chunked_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ResizableBuffer_ByByte_ShouldSucceed)
     {
-        ULONG bufferSize = 1024;
-
-        KBuffer::SPtr expectedBuffer = CreateBuffer(bufferSize);
-        byte* items = static_cast<byte *>(expectedBuffer->GetBuffer());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(GetAllocator(), streamSPtr);
-
-        for (ULONG32 i = 0; i < bufferSize; i++)
-        {
-            byte item = items[i];
-            auto status = SyncAwait(streamSPtr->WriteAsync(item));
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        }
-
-        CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), expectedBuffer, bufferSize, 0, 0));
+        SyncAwait(WriteAsync_ResizableBuffer_ByByte_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(WriteAsync_ResizableBuffer_ByULONG32_ShouldSucceed)
     {
-        ULONG numItems = 1024;
-        ULONG bufferSize = numItems * sizeof(ULONG32);
-
-        KBuffer::SPtr expectedBuffer = CreateBuffer(bufferSize);
-        ULONG32* items = static_cast<ULONG32 *>(expectedBuffer->GetBuffer());
-
-        MemoryBuffer::SPtr streamSPtr;
-        MemoryBuffer::Create(GetAllocator(), streamSPtr);
-
-        for (ULONG32 i = 0; i < numItems; i++)
-        {
-            ULONG32 item = items[i];
-            auto status = SyncAwait(streamSPtr->WriteAsync(item));
-            CODING_ERROR_ASSERT(NT_SUCCESS(status));
-        }
-
-        CODING_ERROR_ASSERT(BufferEquals(streamSPtr->GetBuffer(), expectedBuffer, bufferSize, 0, 0));
+        SyncAwait(WriteAsync_ResizableBuffer_ByULONG32_ShouldSucceed_Test());
     }
 #pragma endregion
     BOOST_AUTO_TEST_SUITE_END()

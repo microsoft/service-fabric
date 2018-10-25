@@ -122,7 +122,7 @@ namespace Reliability
             void ResetDynamicNodeLoads();
 
         private:
-            void ForEachValidMetric(NodeEntry const* node, std::function<void(size_t, bool, bool)> processor);
+            void ForEachValidMetric(NodeEntry const* node, std::function<void(size_t, size_t, bool, bool)> processor);
 
             // initialize upgrade/fault domain load tree with Accumulators from tree with AccumulatorWithMinMax
             void InitializeDomainAccTree(
@@ -134,6 +134,7 @@ namespace Reliability
                 Common::TreeNodeIndex const& nodeDomainIndex,
                 int64 nodeLoadOld,
                 int64 nodeLoadNew,
+                int64 nodeCapacity,
                 size_t totalMetricIndex,
                 std::vector<Accumulator> & aggregatedDomainLoads,
                 bool updateAggregates = true);
@@ -150,14 +151,15 @@ namespace Reliability
                 Metric::PlacementStrategy const& placementStrategy,
                 int32 emptyNodesTarget,
                 double defragEmptyNodeWeight,
+                double defragNonEmptyNodeWeight,
                 Metric::DefragDistributionType const& defragDistributionType,
-                size_t defragEmptyNodeLoadThreshold,
+                size_t reservationLoad,
                 double weight);
 
             double CalculateFreeNodeScoreHelper(size_t metricScoreIndex,
                 int32 emptyNodesTarget,
                 Metric::DefragDistributionType const& defragDistributionType,
-                size_t defragEmptyNodeLoadThreshold);
+                size_t reservationLoad);
 
             size_t totalMetricCount_;
             std::vector<LoadBalancingDomainEntry> const& lbDomainEntries_;

@@ -9,6 +9,7 @@ using namespace std;
 using namespace Common;
 using namespace Hosting2;
 using namespace Management;
+using namespace Management::CentralSecretService;
 using namespace ImageModel;
 using namespace ImageStore;
 using namespace ServiceModel;
@@ -324,6 +325,7 @@ public:
         Kind kind,
         __in DownloadManager & owner,
         ApplicationIdentifier const & applicationId,
+        ServicePackageActivationContext const & activationContext,
         wstring const & applicationName,
         wstring const & downloadId,
         int maxFailureCount,
@@ -334,13 +336,12 @@ public:
         owner_(owner),
         applicationId_(applicationId),
         applicationName_(applicationName),
-        downloadId_(downloadId),
+        downloadId_(wformatString("{0}:{1}", downloadId, activationContext.ToString())),
         retryTimer_(),
         lock_(),
         status_(),
-        maxFailureCount_(maxFailureCount),
-        symbolicLinks_(),
-        random_((int)SequenceNumber::GetNext())
+        random_((int)SequenceNumber::GetNext()),
+        maxFailureCount_(maxFailureCount)
     {
     }
 
@@ -469,7 +470,7 @@ protected:
         bool copyToLocalCacheOnly = false,
         bool checkForArchive = false)
     {
-        auto error = owner_.imageStore_->DownloadContent(
+        return owner_.ImageStore->DownloadContent(
             storePath,
             runPath,
             ServiceModelConfig::GetConfig().MaxOperationTimeout,
@@ -479,21 +480,6 @@ protected:
             copyFlag,
             copyToLocalCacheOnly,
             checkForArchive);
-
-        if (!error.IsSuccess())
-        {
-            WriteWarning(
-                Trace_DownloadManager,
-                owner_.Root.TraceId,
-                "CopyFromStore: ErrorCode={0}, StorePath={1}, RunPath={2}, StoreChecksumPath={3}, ExpectedChecksumValue={4}",
-                error,
-                storePath,
-                runPath,
-                storeChecksumPath,
-                expectedChecksumValue);
-        }
-
-        return error;
     }
 
     virtual AsyncOperationSPtr BeginDownloadContent(
@@ -650,36 +636,16 @@ private:
                 return;
             }
         }
-
-        if (error.IsSuccess())
-        {
-            if (!symbolicLinks_.empty())
-            {
-                SetupSymbolicLinks(operation->Parent);
-            }
-            else
-            {
 #if !defined(PLATFORM_UNIX)
-                if (TryStartComplete())
-                {
-                    CompletePendingDownload(ErrorCodeValue::Success);
-                    FinishComplete(operation->Parent, ErrorCodeValue::Success);
-                    return;
-                }
-#else
-                EnsureFolderAcl(operation->Parent);
-#endif
-            }
-        }
-        else
+        if (TryStartComplete())
         {
-            // complete the download
-            if (TryStartComplete())
-            {
-                CompletePendingDownload(error);
-                FinishComplete(operation->Parent, error);
-            }
+            CompletePendingDownload(ErrorCodeValue::Success);
+            FinishComplete(operation->Parent, ErrorCodeValue::Success);
+            return;
         }
+#else
+        EnsureFolderAcl(operation->Parent);
+#endif
     }
 
     void CompletePendingDownload(ErrorCode const error)
@@ -753,47 +719,10 @@ private:
                 healthSequence);
         }
     }
-
     bool IsInternalError(ErrorCode const & error)
     {
         //For Package sharing violation we won't increment the failure count unless it is not from FileLock Reader/Writer
         return error.IsError(ErrorCodeValue::SharingAccessLockViolation);
-    }
-
-    void SetupSymbolicLinks(AsyncOperationSPtr const & thisSPtr)
-    {
-        auto operation = owner_.hosting_.FabricActivatorClientObj->BeginCreateSymbolicLink(
-            this->symbolicLinks_,
-            SYMBOLIC_LINK_FLAG_DIRECTORY,
-            HostingConfig::GetConfig().RequestTimeout,
-            [this](AsyncOperationSPtr const & operation)
-        {
-            this->FinishSymbolicLinksSetup(operation, false);
-        },
-            thisSPtr);
-        FinishSymbolicLinksSetup(operation, true);
-    }
-
-    void FinishSymbolicLinksSetup(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
-        {
-            return;
-        }
-        auto error = owner_.hosting_.FabricActivatorClientObj->EndCreateSymbolicLink(operation);
-        if (error.IsSuccess())
-        {
-#if defined(PLATFORM_UNIX)
-            EnsureFolderAcl(operation->Parent);
-            return;
-#endif
-        }
-        if (TryStartComplete())
-        {
-            CompletePendingDownload(error);
-            FinishComplete(operation->Parent, error);
-        }
-
     }
 
 #if defined(PLATFORM_UNIX)
@@ -1065,13 +994,380 @@ protected:
     wstring const downloadId_;
     wstring const applicationName_;
     ApplicationIdentifier applicationId_;
-    vector<ArrayPair<wstring, wstring>> symbolicLinks_;
 
 private:
     ULONG const maxFailureCount_;
     RwLock lock_;
     TimerSPtr retryTimer_;
     Random random_;
+};
+
+class DownloadManager::DownloadPackagesAsyncOperation : public AsyncOperation
+{
+    DENY_COPY(DownloadPackagesAsyncOperation)
+
+public:
+    DownloadPackagesAsyncOperation(
+        __in DownloadManager & owner,
+        vector<FileDownloadSpec> filesToDownload,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(
+            callback,
+            parent),
+        owner_(owner),
+        filesToDownload_(filesToDownload),
+        pendingOperationCount_(filesToDownload.size()),
+        lastError_(ErrorCodeValue::Success)
+    {
+    }
+
+    virtual ~DownloadPackagesAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(
+        AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<DownloadPackagesAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    virtual void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        for (auto it = filesToDownload_.begin(); it != filesToDownload_.end(); ++it)
+        {
+            DownloadPackageContent(*it, it->Checksum, thisSPtr);
+        }
+    }
+
+    void DownloadPackageContent(
+        FileDownloadSpec const & downloadSpec,
+        wstring const & expectedChecksum,
+        AsyncOperationSPtr const & thisSPtr)
+    {
+        WriteInfo(Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "DownloadPackageContents for Code package remote location{0}:  local location ApplicationTypeName {1}, expectedChecksum {2}",
+            downloadSpec.RemoteSourceLocation,
+            downloadSpec.LocalDestinationLocation,
+            expectedChecksum);
+
+        auto source = downloadSpec.RemoteSourceLocation;
+        auto target = downloadSpec.LocalDestinationLocation;
+        auto operation = owner_.imageCacheManager_->BeginDownload(
+            source,
+            target,
+            downloadSpec.ChecksumFileLocation,
+            expectedChecksum,
+            false,
+            ImageStore::CopyFlag::Echo,
+            downloadSpec.DownloadToCacheOnly,
+            true,
+            [this, source, target](AsyncOperationSPtr const & operation)
+        {
+            this->OnDownloadPackageCompleted(operation, false, source, target);
+        },
+            thisSPtr);
+        OnDownloadPackageCompleted(operation, true, source, target);
+    }
+    void OnDownloadPackageCompleted(
+        AsyncOperationSPtr const & operation,
+        bool expectedCompletedSynchronously,
+        wstring const & source,
+        wstring const & target)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = owner_.imageCacheManager_->EndDownload(operation);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "DownloadPackagesAsyncOperation::OnDownloadPackageCompleted: ErrorCode={0}, source={1}, target={2}",
+            error,
+            source,
+            target);
+        DecrementAndCheckPendingOperations(operation->Parent, error);
+    }
+
+    void DecrementAndCheckPendingOperations(AsyncOperationSPtr const & thisSPtr, ErrorCode const & error)
+    {
+        if (pendingOperationCount_.load() == 0)
+        {
+            Assert::CodingError("Pending operation count is already 0");
+        }
+        uint64 pendingOperationCount = --pendingOperationCount_;
+        if (!error.IsSuccess())
+        {
+            lastError_.ReadValue();
+            lastError_.Overwrite(error);
+        }
+        if (pendingOperationCount == 0)
+        {
+            TryComplete(thisSPtr, lastError_);
+        }
+    }
+    
+
+private:
+    DownloadManager & owner_;
+    vector<FileDownloadSpec> filesToDownload_;
+    atomic_uint64 pendingOperationCount_;
+    ErrorCode lastError_;
+};
+
+
+class DownloadManager::DownloadApplicationPackageContentsAsyncOperation : public AsyncOperation
+{
+    DENY_COPY(DownloadApplicationPackageContentsAsyncOperation)
+
+public:
+    DownloadApplicationPackageContentsAsyncOperation(
+        __in DownloadManager & owner,
+        ApplicationIdentifier const & applicationId,
+        ApplicationVersion const & applicationVersion,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(
+            callback,
+            parent),
+        owner_(owner),
+        applicationId_(applicationId),
+        applicationVersion_(applicationVersion),
+        applicationIdStr_(applicationId.ToString()),
+        applicationPackageDescription_(),
+        applicationVersionStr_(applicationVersion.ToString())
+    {
+    }
+
+    virtual ~DownloadApplicationPackageContentsAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(
+        AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<DownloadApplicationPackageContentsAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    virtual void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (applicationId_ != *ApplicationIdentifier::FabricSystemAppId)
+        {
+            auto error = owner_.EnsureApplicationFolders(applicationIdStr_, false);
+            if (!error.IsSuccess())
+            {
+                WriteWarning(
+                    Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "Ensure application folders: ErrorCode={0}, ApplicationId={1}",
+                    error,
+                    applicationIdStr_);
+            }
+            applicationPackageFilePath_ = owner_.RunLayout.GetApplicationPackageFile(applicationIdStr_, applicationVersionStr_);
+            remoteApplicationPackageFilePath_ = owner_.StoreLayout.GetApplicationPackageFile(applicationId_.ApplicationTypeName, applicationIdStr_, applicationVersionStr_);
+
+            auto operation = owner_.imageCacheManager_->BeginDownload(
+                remoteApplicationPackageFilePath_,
+                applicationPackageFilePath_,
+                L"",
+                L"",
+                false,
+                ImageStore::CopyFlag::Echo,
+                false,
+                false,
+                [this](AsyncOperationSPtr const & operation)
+            {
+                this->EnsureApplicationPackageFileContents(operation, false);
+            },
+                thisSPtr);
+            this->EnsureApplicationPackageFileContents(operation, true);
+        }
+        else
+        {
+            TryComplete(thisSPtr, ErrorCodeValue::Success);
+        }
+    }
+
+
+    void EnsureApplicationPackageFileContents(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = owner_.imageCacheManager_->EndDownload(operation);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        // parse application package file
+        error = Parser::ParseApplicationPackage(applicationPackageFilePath_, applicationPackageDescription_);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "ParseApplicationPackageFile: ErrorCode={0}, ApplicationPackageFile={1}",
+            error,
+            applicationPackageFilePath_);
+
+        if (!error.IsSuccess())
+        {
+            Common::ErrorCode deleteError = this->owner_.DeleteCorruptedFile(applicationPackageFilePath_, remoteApplicationPackageFilePath_, L"ApplicationPackageFile");
+            if (!deleteError.IsSuccess())
+            {
+                WriteTrace(
+                    deleteError.ToLogLevel(),
+                    Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "DeleteApplicationPackageFile: ErrorCode={0}, ApplicationPackageFile={1}",
+                    deleteError,
+                    applicationPackageFilePath_);
+            }
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        ConfigureSymbolicLinks(operation->Parent, applicationIdStr_); 
+    }
+
+    void ConfigureSymbolicLinks(
+        AsyncOperationSPtr const & thisSPtr,
+        wstring const & applicationId)
+    {
+        Common::FabricNodeConfig::KeyStringValueCollectionMap const& jbodDrives = owner_.hosting_.FabricNodeConfigObj.LogicalApplicationDirectories;
+
+        ErrorCode error = ErrorCode(ErrorCodeValue::Success);
+
+        wstring workDir = owner_.RunLayout.GetApplicationWorkFolder(applicationId);
+        wstring deployedDir;
+        auto nodeId = owner_.hosting_.NodeId;
+        wstring logDirectorySymbolicLink(L"");
+
+        for (auto iter = jbodDrives.begin(); iter != jbodDrives.end(); ++iter)
+        {
+            if (StringUtility::AreEqualCaseInsensitive(iter->first, Constants::Log))
+            {
+                logDirectorySymbolicLink = iter->second;
+                continue;
+            }
+
+            //Create the appInstance directory in the JBOD directory ex: JBODFoo:\directory\NodeId\%AppTYpe%_App%AppVersion%
+            deployedDir = Path::Combine(iter->second, nodeId);
+            deployedDir = Path::Combine(deployedDir, applicationId);
+
+            error = Directory::Create2(deployedDir);
+            WriteTrace(
+                error.ToLogLevel(),
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "CreateApplicationInstanceDirectory: CreateFolder: {0}, ErrorCode={1}",
+                deployedDir,
+                error);
+            if (!error.IsSuccess())
+            { 
+                TryComplete(thisSPtr, error);
+                return;
+            }
+
+            //Symbolic Link
+            ArrayPair<wstring, wstring> link;
+            //key is %AppTYpe%_App%AppVersion%\work\directory
+            link.key = Path::Combine(workDir, iter->first);
+            link.value = deployedDir;
+            symbolicLinks_.push_back(link);
+        }
+
+        error = SetupLogDirectory(applicationId, nodeId, logDirectorySymbolicLink);
+        if (!error.IsSuccess() ||
+            symbolicLinks_.empty())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+        SetupSymbolicLinks(thisSPtr);
+    }
+
+    ErrorCode SetupLogDirectory(wstring const & applicationId, wstring const& nodeId, wstring const& logDirectorySymbolicLink)
+    {
+        if (logDirectorySymbolicLink.empty())
+        {
+            // If Log directory is not set in Disk Drive section create the Log directory
+            return owner_.EnsureApplicationLogFolder(applicationId);
+        }
+
+        wstring deployedLogDir = Path::Combine(logDirectorySymbolicLink, nodeId);
+        //Setup symbolic link from log to JBOD:\Dir\Log\NodeId\ApplicationId
+        deployedLogDir = Path::Combine(deployedLogDir, applicationId);
+
+        ErrorCode error = Directory::Create2(deployedLogDir);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "CreateApplicationInstanceLogDirectory: CreateFolder: {0}, ErrorCode={1}",
+            deployedLogDir,
+            error);
+
+        if (!error.IsSuccess()) { return error; }
+
+        //Symbolic Link
+        ArrayPair<wstring, wstring> link;
+        link.key = owner_.RunLayout.GetApplicationLogFolder(applicationId);
+        link.value = deployedLogDir;
+        symbolicLinks_.push_back(link);
+
+        return error;
+    }
+
+    void SetupSymbolicLinks(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto operation = owner_.hosting_.FabricActivatorClientObj->BeginCreateSymbolicLink(
+            this->symbolicLinks_,
+            SYMBOLIC_LINK_FLAG_DIRECTORY,
+            HostingConfig::GetConfig().RequestTimeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->FinishSymbolicLinksSetup(operation, false);
+        },
+            thisSPtr);
+        FinishSymbolicLinksSetup(operation, true);
+    }
+
+    void FinishSymbolicLinksSetup(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = owner_.hosting_.FabricActivatorClientObj->EndCreateSymbolicLink(operation);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "CreateSymbolicLink for application package returned ErrorCode={0}",
+             error);
+        TryComplete(operation->Parent, error);
+    }
+
+private:
+    DownloadManager & owner_;
+    ApplicationIdentifier const applicationId_;
+    ApplicationVersion const applicationVersion_;
+    ApplicationPackageDescription applicationPackageDescription_;
+    wstring const applicationIdStr_;
+    wstring const applicationVersionStr_;
+    wstring const healthPropertyId_;
+    wstring applicationPackageFilePath_;
+    wstring remoteApplicationPackageFilePath_;
+    std::vector<ArrayPair<wstring, wstring>> symbolicLinks_;
 };
 
 // ********************************************************************************************************************
@@ -1088,6 +1384,7 @@ public:
         __in DownloadManager & owner,
         ApplicationIdentifier const & applicationId,
         ApplicationVersion const & applicationVersion,
+        ServicePackageActivationContext const & activationContext,
         wstring const & applicationName,
         ULONG maxFailureCount,
         AsyncCallback const & callback,
@@ -1096,6 +1393,7 @@ public:
         Kind::DownloadApplicationPackageAsyncOperation,
         owner,
         applicationId,
+        activationContext,
         applicationName,
         DownloadManager::GetOperationId(applicationId, applicationVersion),
         maxFailureCount,
@@ -1106,7 +1404,7 @@ public:
         applicationIdStr_(applicationId.ToString()),
         applicationPackageDescription_(),
         applicationVersionStr_(applicationVersion.ToString()),
-        healthPropertyId_(wformatString("Download:{0}", applicationVersion))
+        healthPropertyId_(wformatString("Download:{0}, Application {1}", applicationVersion, activationContext.ToString()))
     {
         ASSERT_IF(
             applicationId_.IsAdhoc(),
@@ -1147,24 +1445,17 @@ protected:
         AsyncCallback const & callback,
         AsyncOperationSPtr const & thisSPtr)
     {
-        ErrorCode error(ErrorCodeValue::Success);
-        if (applicationId_ != *ApplicationIdentifier::FabricSystemAppId)
-        {
-            error = owner_.EnsureApplicationFolders(applicationIdStr_, false);
-            if (error.IsSuccess())
-            {
-                error = SetupSymbolicLinks(applicationIdStr_);
-                if (error.IsSuccess())
-                {
-                    error = EnsureApplicationPackageFileContents();
-                }
-            }
-        }
-
-        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-            error,
+        return AsyncOperation::CreateAndStart<DownloadApplicationPackageContentsAsyncOperation>(
+            owner_,
+            this->applicationId_,
+            this->applicationVersion_,
             callback,
             thisSPtr);
+    }
+
+    virtual ErrorCode EndDownloadContent(AsyncOperationSPtr const & operation)
+    {
+        return DownloadApplicationPackageContentsAsyncOperation::End(operation);
     }
 
 
@@ -1186,124 +1477,6 @@ protected:
             reportCode,
             description,
             sequenceNumber);
-    }
-
-private:
-    ErrorCode EnsureApplicationPackageFileContents()
-    {
-        wstring applicationPackageFilePath = owner_.RunLayout.GetApplicationPackageFile(applicationIdStr_, applicationVersionStr_);
-        wstring remoteApplicationPackageFilePath = owner_.StoreLayout.GetApplicationPackageFile(applicationId_.ApplicationTypeName, applicationIdStr_, applicationVersionStr_);
-
-        auto error = CopyFromStore(
-            remoteApplicationPackageFilePath,
-            applicationPackageFilePath);
-        if (!error.IsSuccess()) { return error; }
-
-        // parse application package file
-        error = Parser::ParseApplicationPackage(applicationPackageFilePath, applicationPackageDescription_);
-        WriteTrace(
-            error.ToLogLevel(),
-            Trace_DownloadManager,
-            owner_.Root.TraceId,
-            "ParseApplicationPackageFile: ErrorCode={0}, ApplicationPackageFile={1}",
-            error,
-            applicationPackageFilePath);
-
-        if (!error.IsSuccess())
-        {
-            Common::ErrorCode deleteError = this->owner_.DeleteCorruptedFile(applicationPackageFilePath, remoteApplicationPackageFilePath, L"ApplicationPackageFile");
-            if (!deleteError.IsSuccess())
-            {
-                WriteTrace(
-                    deleteError.ToLogLevel(),
-                    Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "DeleteApplicationPackageFile: ErrorCode={0}, ApplicationPackageFile={1}",
-                    deleteError,
-                    applicationPackageFilePath);
-            }
-        }
-
-        return error;
-    }
-
-    ErrorCode SetupSymbolicLinks(wstring const & applicationId)
-    {
-        Common::FabricNodeConfig::KeyStringValueCollectionMap const& jbodDrives = owner_.hosting_.FabricNodeConfigObj.LogicalApplicationDirectories;
-
-        ErrorCode error = ErrorCode(ErrorCodeValue::Success);
-
-        wstring workDir = owner_.RunLayout.GetApplicationWorkFolder(applicationId);
-        wstring deployedDir;
-        auto nodeId = owner_.hosting_.NodeId;
-        wstring logDirectorySymbolicLink(L"");
-
-        for (auto iter = jbodDrives.begin(); iter != jbodDrives.end(); ++iter)
-        {
-            if (StringUtility::AreEqualCaseInsensitive(iter->first, Constants::Log))
-            {
-                logDirectorySymbolicLink = iter->second;
-                continue;
-            }
-
-            //Create the appInstance directory in the JBOD directory ex: JBODFoo:\directory\NodeId\%AppTYpe%_App%AppVersion%
-            deployedDir = Path::Combine(iter->second, nodeId);
-            deployedDir = Path::Combine(deployedDir, applicationId);
-
-            error = Directory::Create2(deployedDir);
-            WriteTrace(
-                error.ToLogLevel(),
-                Trace_DownloadManager,
-                owner_.Root.TraceId,
-                "CreateApplicationInstanceDirectory: CreateFolder: {0}, ErrorCode={1}",
-                deployedDir,
-                error);
-            if (!error.IsSuccess()) { return error; }
-
-            //Symbolic Link
-            ArrayPair<wstring, wstring> link;
-            //key is %AppTYpe%_App%AppVersion%\work\directory
-            link.key = Path::Combine(workDir, iter->first);
-            link.value = deployedDir;
-            symbolicLinks_.push_back(link);
-        }
-
-        error = SetupLogDirectory(applicationId, nodeId, logDirectorySymbolicLink);
-
-        return error;
-    }
-
-    ErrorCode SetupLogDirectory(wstring const & applicationId, wstring const& nodeId, wstring const& logDirectorySymbolicLink)
-    {
-        if (logDirectorySymbolicLink.empty())
-        {
-            // If Log directory is not set in Disk Drive section create the Log directory
-            return owner_.EnsureApplicationLogFolder(applicationId);
-        }
-
-        wstring deployedLogDir = Path::Combine(logDirectorySymbolicLink, nodeId);
-        //Setup symbolic link from log to JBOD:\Dir\Log\NodeId\ApplicationId
-        deployedLogDir = Path::Combine(deployedLogDir, applicationId);
-
-        ErrorCode error = Directory::Create2(deployedLogDir);
-
-        WriteTrace(
-            error.ToLogLevel(),
-            Trace_DownloadManager,
-            owner_.Root.TraceId,
-            "CreateApplicationInstanceLogDirectory: CreateFolder: {0}, ErrorCode={1}",
-            deployedLogDir,
-            error);
-
-       if (!error.IsSuccess()){ return error; }
-
-       //Symbolic Link
-       ArrayPair<wstring, wstring> link;
-       link.key = owner_.RunLayout.GetApplicationLogFolder(applicationId);
-       link.value = deployedLogDir;
-       symbolicLinks_.push_back(link);
-
-       return error;
     }
 
 private:
@@ -1415,6 +1588,818 @@ private:
     ServicePackageActivationContext activationContext_;
 };
 
+
+class DownloadManager::DownloadServicePackageContentsAsyncOperation : public AsyncOperation
+{
+    DENY_COPY(DownloadServicePackageContentsAsyncOperation)
+
+public:
+    DownloadServicePackageContentsAsyncOperation(
+        __in DownloadManager & owner,
+        wstring const & applicationIdStr,
+        ServicePackageIdentifier const & servicePackageId,
+        ServicePackageVersion const & servicePackageVersion,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(
+            callback,
+            parent),
+        owner_(owner),
+        applicationIdStr_(applicationIdStr),
+        servicePackageId_(servicePackageId),
+        servicePackageVersion_(servicePackageVersion),
+        servicePackageIdStr_(servicePackageId.ToString())
+    {
+        remoteObject_ = owner_.StoreLayout.GetServicePackageFile(
+            servicePackageId_.ApplicationId.ApplicationTypeName,
+            applicationIdStr_,
+            servicePackageId_.ServicePackageName,
+            servicePackageVersion_.RolloutVersionValue.ToString());
+    }
+
+    virtual ~DownloadServicePackageContentsAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(
+        AsyncOperationSPtr const & operation,
+        __out ServicePackageDescription & packageDescription)
+    {
+        auto thisPtr = AsyncOperation::End<DownloadServicePackageContentsAsyncOperation>(operation);
+        if (thisPtr->Error.IsSuccess())
+        {
+            packageDescription = move(thisPtr->servicePackageDescription_);
+        }
+        return thisPtr->Error;
+    }
+
+protected:
+    virtual void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (servicePackageId_.ApplicationId != *ApplicationIdentifier::FabricSystemAppId)
+        {
+            EnsurePackageFile(thisSPtr);
+        }
+        else
+        {
+            // The system package is already copied to the apps folder
+            packageFilePath_ = owner_.RunLayout.GetServicePackageFile(
+                applicationIdStr_,
+                servicePackageId_.ServicePackageName,
+                servicePackageVersion_.RolloutVersionValue.ToString());
+
+            auto error = Parser::ParseServicePackage(packageFilePath_, servicePackageDescription_);
+            WriteTrace(
+                error.ToLogLevel(),
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "ParseServicePackageFile: ErrorCode={0}, PackageFile={1}",
+                error,
+                packageFilePath_);
+
+            if (!error.IsSuccess())
+            {
+                ErrorCode deleteError = this->owner_.DeleteCorruptedFile(packageFilePath_, remoteObject_, L"ServicePackageFile");
+                if (!deleteError.IsSuccess())
+                {
+                    WriteTrace(
+                        deleteError.ToLogLevel(),
+                        Trace_DownloadManager,
+                        owner_.Root.TraceId,
+                        "DeleteServicePackageFile: ErrorCode={0}, PackageFile={1}",
+                        deleteError,
+                        packageFilePath_);
+                }
+            }
+            TryComplete(thisSPtr, error);
+        }
+    }
+
+    void EnsurePackageFile(AsyncOperationSPtr const & thisSPtr)
+    {
+        packageFilePath_ = owner_.RunLayout.GetServicePackageFile(
+            applicationIdStr_,
+            servicePackageId_.ServicePackageName,
+            servicePackageVersion_.RolloutVersionValue.ToString());
+
+        auto operation = owner_.imageCacheManager_->BeginDownload(
+            remoteObject_,
+            packageFilePath_,
+            L"",
+            L"",
+            false,
+            ImageStore::CopyFlag::Echo,
+            false,
+            false,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnCopyServicePackageFileCompleted(operation, false);
+        },
+            thisSPtr);
+        this->OnCopyServicePackageFileCompleted(operation, true);
+    }
+
+    void OnCopyServicePackageFileCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = owner_.imageCacheManager_->EndDownload(operation);
+        if (!error.IsSuccess())
+        {
+
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        EnsurePackageFileContents(operation->Parent);
+    }
+
+    void EnsurePackageFileContents(AsyncOperationSPtr const & thisSPtr)
+    {
+        // parse service package file
+        ServicePackageDescription servicepackageDescription;
+        auto error = Parser::ParseServicePackage(packageFilePath_, servicepackageDescription);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "ParseServicePackageFile: ErrorCode={0}, PackageFile={1}",
+            error,
+            packageFilePath_);
+
+        if (!error.IsSuccess())
+        {
+            ErrorCode deleteError = this->owner_.DeleteCorruptedFile(packageFilePath_, remoteObject_, L"ServicePackageFile");
+            if (!deleteError.IsSuccess())
+            {
+                WriteTrace(
+                    deleteError.ToLogLevel(),
+                    Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "DeleteServicePackageFile: ErrorCode={0}, PackageFile={1}",
+                    deleteError,
+                    packageFilePath_);
+            }
+            TryComplete(thisSPtr, error);
+            return;
+        }
+        servicePackageDescription_ = move(servicepackageDescription);
+
+        // ensure manifest file is present
+        manifestFilePath_ = owner_.RunLayout.GetServiceManifestFile(
+            applicationIdStr_,
+            servicePackageDescription_.ManifestName,
+            servicePackageDescription_.ManifestVersion);
+
+        storeManifestFilePath_ = owner_.StoreLayout.GetServiceManifestFile(
+            servicePackageId_.ApplicationId.ApplicationTypeName,
+            servicePackageDescription_.ManifestName,
+            servicePackageDescription_.ManifestVersion);
+
+        wstring storeManifestChechsumFilePath = owner_.StoreLayout.GetServiceManifestChecksumFile(
+            servicePackageId_.ApplicationId.ApplicationTypeName,
+            servicePackageDescription_.ManifestName,
+            servicePackageDescription_.ManifestVersion);
+
+        auto operation = owner_.imageCacheManager_->BeginDownload(
+            storeManifestFilePath_,
+            manifestFilePath_,
+            storeManifestChechsumFilePath,
+            servicePackageDescription_.ManifestChecksum,
+            false,
+            ImageStore::CopyFlag::Echo,
+            false,
+            false,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnDownloadServiceManifesFileCompleted(operation, false);
+        },
+            thisSPtr);
+        this->OnDownloadServiceManifesFileCompleted(operation, true);
+     
+    }
+
+    void OnDownloadServiceManifesFileCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = owner_.imageCacheManager_->EndDownload(operation);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        ServiceManifestDescription serviceManifest;
+        error = Parser::ParseServiceManifest(manifestFilePath_, serviceManifest);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "ParseServiceManifestFile: ErrorCode={0}, ManifestFile={1}",
+            error,
+            manifestFilePath_);
+
+        if (!error.IsSuccess())
+        {
+            ErrorCode deleteError = this->owner_.DeleteCorruptedFile(manifestFilePath_, storeManifestFilePath_, L"ServiceManifestFile");
+            if (!deleteError.IsSuccess())
+            {
+                WriteTrace(
+                    deleteError.ToLogLevel(),
+                    Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "DeleteServiceManifestFile: ErrorCode={0}, ManifestFile={1}",
+                    deleteError,
+                    manifestFilePath_);
+            }
+
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        filesToDownload_.clear();
+        error = GetCodePackages(servicePackageDescription_);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        GetConfigPackages(servicePackageDescription_);
+        GetDataPackages(servicePackageDescription_);
+        if (!filesToDownload_.empty())
+        { 
+            auto downloadOp = AsyncOperation::CreateAndStart<DownloadPackagesAsyncOperation>(
+                owner_,
+                filesToDownload_,
+                [this](AsyncOperationSPtr const & downloadOp)
+            {
+                this->OnDownloadPackagesCompleted(downloadOp, false);
+            },
+                operation->Parent);
+            OnDownloadPackagesCompleted(downloadOp, true);
+        }
+        else
+        {
+            DownloadContainerImages(operation->Parent);
+        }
+    }
+
+    void OnDownloadPackagesCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = DownloadPackagesAsyncOperation::End(operation);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        DownloadContainerImages(operation->Parent);
+    }
+
+    void DownloadContainerImages(AsyncOperationSPtr const & thisSPtr)
+    {
+        bool skipdownloadImages = false;
+#if defined(PLATFORM_UNIX)
+        ContainerIsolationMode::Enum isolationMode = ContainerIsolationMode::process;
+        ContainerIsolationMode::FromString(servicePackageDescription_.ContainerPolicyDescription.Isolation, isolationMode);
+        if (isolationMode == ContainerIsolationMode::hyperv)
+        {
+            WriteInfo(
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "Skip downloading container images for {0}",
+                servicePackageId_.ApplicationId);
+            skipdownloadImages = true;
+        }
+#endif
+        if (!containerImages_.empty() &&
+            !skipdownloadImages)
+        {
+            auto containerOp = AsyncOperation::CreateAndStart<DownloadContainerImagesAsyncOperation>
+                (
+                    this->containerImages_,
+                    ServicePackageActivationContext(),
+                    this->owner_,
+                    [this](AsyncOperationSPtr const & containerOp)
+            {
+                this->OnContainerImagesDownloaded(containerOp, false);
+            },
+                    thisSPtr);
+            OnContainerImagesDownloaded(containerOp, true);
+        }
+        else
+        {
+            SetupSymbolicLinks(thisSPtr);
+        }
+    }
+    void OnContainerImagesDownloaded(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = DownloadContainerImagesAsyncOperation::End(operation);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+
+        SetupSymbolicLinks(operation->Parent);
+    }
+
+    ErrorCode GetCodePackages(ServicePackageDescription const & servicePackage)
+    {
+        containerImages_.clear();
+        for (auto iter = servicePackage.DigestedCodePackages.begin();
+            iter != servicePackage.DigestedCodePackages.end();
+            ++iter)
+        {
+            std::wstring imageSource;
+            FileDownloadSpec downloadSpec;
+
+            if (iter->CodePackage.EntryPoint.ContainerEntryPoint.ImageName.empty() ||
+                !iter->CodePackage.SetupEntryPoint.Program.empty())
+            {
+
+                downloadSpec.RemoteSourceLocation = owner_.StoreLayout.GetCodePackageFolder(
+                    servicePackageId_.ApplicationId.ApplicationTypeName,
+                    servicePackage.ManifestName,
+                    iter->CodePackage.Name,
+                    iter->CodePackage.Version);
+
+                downloadSpec.ChecksumFileLocation = owner_.StoreLayout.GetCodePackageChecksumFile(
+                    servicePackageId_.ApplicationId.ApplicationTypeName,
+                    servicePackage.ManifestName,
+                    iter->CodePackage.Name,
+                    iter->CodePackage.Version);
+
+                downloadSpec.Checksum = iter->ContentChecksum;
+
+                wstring runCodePackagePath = owner_.RunLayout.GetCodePackageFolder(
+                    applicationIdStr_,
+                    servicePackageId_.ServicePackageName,
+                    iter->CodePackage.Name,
+                    iter->CodePackage.Version,
+                    iter->IsShared);
+
+                if (HostingConfig::GetConfig().EnableProcessDebugging && !iter->DebugParameters.CodePackageLinkFolder.empty())
+                {
+                    ArrayPair<wstring, wstring> link;
+                    link.key = runCodePackagePath;
+                    link.value = iter->DebugParameters.CodePackageLinkFolder;
+                    this->symbolicLinks_.push_back(link);
+                }
+                else if (iter->IsShared)
+                {
+                    downloadSpec.LocalDestinationLocation = owner_.SharedLayout.GetCodePackageFolder(
+                        servicePackageId_.ApplicationId.ApplicationTypeName,
+                        servicePackage.ManifestName,
+                        iter->CodePackage.Name,
+                        iter->CodePackage.Version);
+
+                    filesToDownload_.push_back(downloadSpec);
+
+                    if (!Directory::IsSymbolicLink(runCodePackagePath))
+                    {
+                        ArrayPair<wstring, wstring> link;
+                        link.key = runCodePackagePath;
+                        link.value = downloadSpec.LocalDestinationLocation;
+                        this->symbolicLinks_.push_back(link);
+                    }
+                }
+                else
+                {
+                    downloadSpec.LocalDestinationLocation = runCodePackagePath;
+                    filesToDownload_.push_back(downloadSpec);
+                }
+
+                if (!iter->CodePackage.EntryPoint.ContainerEntryPoint.FromSource.empty())
+                {
+                    imageSource = Path::Combine(runCodePackagePath, iter->CodePackage.EntryPoint.ContainerEntryPoint.FromSource);
+                }
+            }
+            if (!iter->CodePackage.EntryPoint.ContainerEntryPoint.ImageName.empty())
+            {
+                wstring imageName = iter->CodePackage.EntryPoint.ContainerEntryPoint.ImageName;
+                auto error = ContainerHelper::GetContainerHelper().GetContainerImageName(iter->ContainerPolicies.ImageOverrides, imageName);
+
+                if (!error.IsSuccess())
+                {
+                    WriteError(
+                        Trace_DownloadManager,
+                        owner_.Root.TraceId,
+                        "Failed to get the image name to be downloaded with error {0}",
+                        error);
+
+                    return error;
+                }
+
+                this->containerImages_.push_back(
+                    ContainerImageDescription(
+                        imageName,
+                        iter->ContainerPolicies.UseDefaultRepositoryCredentials,
+                        iter->ContainerPolicies.UseTokenAuthenticationCredentials,
+                        iter->ContainerPolicies.RepositoryCredentials));
+            }
+        }
+        return ErrorCodeValue::Success;
+    }
+
+    void GetConfigPackages(ServicePackageDescription const & servicePackage)
+    {
+
+        for (auto iter = servicePackage.DigestedConfigPackages.begin();
+            iter != servicePackage.DigestedConfigPackages.end();
+            ++iter)
+        {
+            FileDownloadSpec downloadSpec;
+            downloadSpec.RemoteSourceLocation = owner_.StoreLayout.GetConfigPackageFolder(
+                servicePackageId_.ApplicationId.ApplicationTypeName,
+                servicePackage.ManifestName,
+                iter->ConfigPackage.Name,
+                iter->ConfigPackage.Version);
+
+            downloadSpec.ChecksumFileLocation = owner_.StoreLayout.GetConfigPackageChecksumFile(
+                servicePackageId_.ApplicationId.ApplicationTypeName,
+                servicePackage.ManifestName,
+                iter->ConfigPackage.Name,
+                iter->ConfigPackage.Version);
+
+            wstring runConfigPackagePath = owner_.RunLayout.GetConfigPackageFolder(
+                applicationIdStr_,
+                servicePackageId_.ServicePackageName,
+                iter->ConfigPackage.Name,
+                iter->ConfigPackage.Version,
+                iter->IsShared);
+            downloadSpec.Checksum = iter->ContentChecksum;
+            if (HostingConfig::GetConfig().EnableProcessDebugging && !iter->DebugParameters.ConfigPackageLinkFolder.empty())
+            {
+                ArrayPair<wstring, wstring> link;
+                link.key = runConfigPackagePath;
+                link.value = iter->DebugParameters.ConfigPackageLinkFolder;
+                this->symbolicLinks_.push_back(link);
+            }
+            else if (iter->IsShared)
+            {
+                downloadSpec.LocalDestinationLocation = owner_.SharedLayout.GetConfigPackageFolder(
+                    servicePackageId_.ApplicationId.ApplicationTypeName,
+                    servicePackage.ManifestName,
+                    iter->ConfigPackage.Name,
+                    iter->ConfigPackage.Version);
+
+                filesToDownload_.push_back(downloadSpec);
+
+                if (!Directory::IsSymbolicLink(runConfigPackagePath))
+                {
+                    ArrayPair<wstring, wstring> link;
+                    link.key = runConfigPackagePath;
+                    link.value = downloadSpec.LocalDestinationLocation;
+                    this->symbolicLinks_.push_back(link);
+                }
+            }
+            else
+            {
+                downloadSpec.LocalDestinationLocation = runConfigPackagePath;
+                filesToDownload_.push_back(downloadSpec);
+            }
+         
+        }
+    }
+
+    void GetDataPackages(ServicePackageDescription const & servicePackage)
+    {
+        for (auto iter = servicePackage.DigestedDataPackages.begin();
+            iter != servicePackage.DigestedDataPackages.end();
+            ++iter)
+        {
+            FileDownloadSpec downloadSpec;
+            downloadSpec.RemoteSourceLocation = owner_.StoreLayout.GetDataPackageFolder(
+                servicePackageId_.ApplicationId.ApplicationTypeName,
+                servicePackage.ManifestName,
+                iter->DataPackage.Name,
+                iter->DataPackage.Version);
+
+            downloadSpec.ChecksumFileLocation = owner_.StoreLayout.GetDataPackageChecksumFile(
+                servicePackageId_.ApplicationId.ApplicationTypeName,
+                servicePackage.ManifestName,
+                iter->DataPackage.Name,
+                iter->DataPackage.Version);
+
+            wstring runDataPackagePath = owner_.RunLayout.GetDataPackageFolder(
+                applicationIdStr_,
+                servicePackageId_.ServicePackageName,
+                iter->DataPackage.Name,
+                iter->DataPackage.Version,
+                iter->IsShared);
+            downloadSpec.Checksum = iter->ContentChecksum;
+            if (HostingConfig::GetConfig().EnableProcessDebugging && !iter->DebugParameters.DataPackageLinkFolder.empty())
+            {
+                ArrayPair<wstring, wstring> link;
+                link.key = runDataPackagePath;
+                link.value = iter->DebugParameters.DataPackageLinkFolder;
+                this->symbolicLinks_.push_back(link);
+            }
+            else if (iter->IsShared)
+            {
+                downloadSpec.LocalDestinationLocation = owner_.SharedLayout.GetDataPackageFolder(
+                    servicePackageId_.ApplicationId.ApplicationTypeName,
+                    servicePackage.ManifestName,
+                    iter->DataPackage.Name,
+                    iter->DataPackage.Version);
+
+                filesToDownload_.push_back(downloadSpec);
+
+                if (!Directory::IsSymbolicLink(runDataPackagePath))
+                {
+                    ArrayPair<wstring, wstring> link;
+                    link.key = runDataPackagePath;
+                    link.value = downloadSpec.LocalDestinationLocation;
+                    this->symbolicLinks_.push_back(link);
+                }
+            }
+            else
+            {
+                downloadSpec.LocalDestinationLocation = runDataPackagePath;
+                filesToDownload_.push_back(downloadSpec);
+            }
+        }
+    }
+   
+    void SetupSymbolicLinks(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (!this->symbolicLinks_.empty())
+        {
+            WriteNoise(
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "Setting up symbolic links for {0}",
+                symbolicLinks_.size());
+            auto operation = owner_.hosting_.FabricActivatorClientObj->BeginCreateSymbolicLink(
+                this->symbolicLinks_,
+                SYMBOLIC_LINK_FLAG_DIRECTORY,
+                HostingConfig::GetConfig().RequestTimeout,
+                [this](AsyncOperationSPtr const & operation)
+            {
+                this->FinishSymbolicLinksSetup(operation, false);
+            },
+                thisSPtr);
+            FinishSymbolicLinksSetup(operation, true);
+        }
+        else
+        {
+            SetupConfigPackagePolicies(thisSPtr);
+        }
+    }
+
+    void FinishSymbolicLinksSetup(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = owner_.hosting_.FabricActivatorClientObj->EndCreateSymbolicLink(operation);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "CreateSymbolicLink for service package returned ErrorCode={0}",
+            error);
+
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+
+        SetupConfigPackagePolicies(operation->Parent);
+    }
+
+    void SetupConfigPackagePolicies(
+        AsyncOperationSPtr const & thisSPtr)
+    {
+        bool writeConfigSettings = false;
+
+        for (auto const& digestedCodePackage : servicePackageDescription_.DigestedCodePackages)
+        {
+            if (!digestedCodePackage.ConfigPackagePolicy.ConfigPackages.empty())
+            {
+                writeConfigSettings = true;
+                break;
+            }
+        }
+
+        if (!writeConfigSettings)
+        {
+            TryComplete(thisSPtr, ErrorCodeValue::Success);
+            return;
+        }
+
+        map<wstring, ConfigSettings> configSettingsMapResult;
+
+        auto error = HostingHelper::GenerateAllConfigSettings(
+            servicePackageId_.ApplicationId.ToString(),
+            servicePackageId_.ServicePackageName,
+            owner_.RunLayout,
+            servicePackageDescription_.DigestedConfigPackages,
+            configSettingsMapResult);
+
+        if (!error.IsSuccess() || configSettingsMapResult.empty())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        vector<wstring> secretStoreRef;
+        error = HostingHelper::DecryptAndGetSecretStoreRef(configSettingsMapResult, secretStoreRef);
+        if (!error.IsSuccess())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        if (!secretStoreRef.empty())
+        {
+            SetupSecretStoreServiceRefs(configSettingsMapResult, secretStoreRef, thisSPtr);
+        }
+        else
+        {
+            error = WriteConfigSettingToFile(configSettingsMapResult);
+            TryComplete(thisSPtr, error);
+        }
+    }
+
+    void SetupSecretStoreServiceRefs(map<wstring, ConfigSettings> const& configSettingsMapResult, vector<std::wstring> const & secretStoreRefs, AsyncOperationSPtr const & thisSPtr)
+    {
+        GetSecretsDescription getSecretsDesc;
+        ErrorCode error = owner_.hosting_.LocalSecretServiceManagerObj->ParseSecretStoreRef(
+            secretStoreRefs,
+            getSecretsDesc);
+
+        if (!error.IsSuccess())
+        {
+            WriteError(
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "Error while parsing SecretRefs LocalSecretServiceManagerObj->ParseSecretStoreRef {0}",
+                error);
+
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        auto operation = owner_.hosting_.LocalSecretServiceManagerObj->BeginGetSecrets(
+            getSecretsDesc,
+            HostingConfig::GetConfig().RequestTimeout,
+            [this, configSettingsMapResult](AsyncOperationSPtr const & operation)
+        {
+            this->OnBeginGetSecretsCompleted(configSettingsMapResult, operation, false);
+        },
+            thisSPtr);
+        this->OnBeginGetSecretsCompleted(configSettingsMapResult, operation, true);
+    }
+
+    void OnBeginGetSecretsCompleted(
+        map<wstring, ConfigSettings> const& configSettingsMapResult,
+        AsyncOperationSPtr const& operation,
+        bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        SecretsDescription secretsDesc;
+        ErrorCode error = owner_.hosting_.LocalSecretServiceManagerObj->EndGetSecrets(operation, secretsDesc);
+        if (!error.IsSuccess())
+        {
+            WriteError(
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "Error while obtaining SecretStoreRef values LocalSecretServiceManagerObj->EndGetSecrets {0}",
+                error);
+
+            TryComplete(operation->Parent, error);
+            return;
+        }
+
+        std::vector<Secret> secrets = secretsDesc.Secrets;
+        map<wstring, wstring> decryptedSecretStoreRef;
+        for (auto secret : secrets)
+        {
+            wstring key = wformatString("{0}:{1}", secret.Name, secret.Version);
+            decryptedSecretStoreRef.insert(make_pair(key, secret.Value));
+        }
+
+        error = WriteConfigSettingToFile(configSettingsMapResult, decryptedSecretStoreRef);
+        TryComplete(operation->Parent, error);
+    }
+
+    ErrorCode WriteConfigSettingToFile(map<wstring, ConfigSettings> const& configSettingsMapResult, map<wstring, wstring> const& secrteStoreRef = map<wstring, wstring>())
+    {
+        wstring settingsDirectory = owner_.RunLayout.GetApplicationSettingsFolder(servicePackageId_.ApplicationId.ToString());
+
+        for (auto configPackage : configSettingsMapResult)
+        {
+            wstring configPackageVerison;
+            for (auto digestedConfigPackage : servicePackageDescription_.DigestedConfigPackages)
+            {
+                if (StringUtility::AreEqualCaseInsensitive(digestedConfigPackage.Name, configPackage.first))
+                {
+                    configPackageVerison = digestedConfigPackage.ConfigPackage.Version;
+                    break;
+                }
+            }
+
+            //In case of upgrades we need the config package version. If rollback happens then we do not have to query secret store again.
+            wstring ConfigPackagNameVersion = wformatString("{0}{1}", configPackage.first, configPackageVerison);
+
+            wstring fileName = Path::Combine(settingsDirectory, servicePackageId_.ServicePackageName);
+            fileName = Path::Combine(fileName, ConfigPackagNameVersion);
+
+            for (auto section : configPackage.second.Sections)
+            {
+                wstring sectionFile = Path::Combine(fileName, section.first);
+
+                if (section.second.Parameters.size() > 0)
+                {
+                    for (auto parameter : section.second.Parameters)
+                    {
+                        if (!Directory::Exists(sectionFile))
+                        {
+                            auto error = Directory::Create2(sectionFile);
+                            if (!error.IsSuccess())
+                            {
+                                return error;
+                            }
+                        }
+
+                        wstring parameterFileName = Path::Combine(sectionFile, parameter.second.Name);
+                        if (File::Exists(parameterFileName))
+                        {
+                            WriteInfo(
+                                Trace_DownloadManager,
+                                owner_.Root.TraceId,
+                                "Parameter File {0} already exists.",
+                                parameterFileName);
+                            continue;
+                        }
+
+                        if (StringUtility::AreEqualCaseInsensitive(parameter.second.Type, Constants::SecretsStoreRef))
+                        {
+                            auto it = secrteStoreRef.find(parameter.second.Value);
+
+                            if (it != secrteStoreRef.end())
+                            {
+                                parameter.second.Value = it->second;
+                            }
+                            else
+                            {
+                                WriteError(
+                                    Trace_DownloadManager,
+                                    owner_.Root.TraceId,
+                                    "Can't find secret value for given secret {0} in secret store",
+                                    parameter.second.Value);
+                                return ErrorCodeValue::NotFound;
+                            }
+                        }
+
+                        auto error = HostingHelper::WriteSettingsToFile(parameter.second.Name, parameter.second.Value, parameterFileName);
+                        if (!error.IsSuccess())
+                        {
+                            return error;
+                        }
+                    }
+                }
+            }
+        }
+
+        return ErrorCodeValue::Success;
+    }
+
+private:
+    DownloadManager & owner_;
+    ServicePackageIdentifier const servicePackageId_;
+    ServicePackageVersion const servicePackageVersion_;
+    ServicePackageDescription servicePackageDescription_;
+    wstring const servicePackageIdStr_;
+    wstring const applicationIdStr_;
+    wstring packageFilePath_;
+    wstring remoteObject_;
+    wstring manifestFilePath_;
+    wstring storeManifestFilePath_;
+    vector<ContainerImageDescription> containerImages_;
+    ServicePackageActivationContext activationContext_;
+    std::vector<ArrayPair<wstring, wstring>> symbolicLinks_;
+    vector<FileDownloadSpec> filesToDownload_;
+};
+
 // ********************************************************************************************************************
 // DownloadManager.DownloadServicePackageAsyncOperation Implementation
 //
@@ -1438,6 +2423,7 @@ public:
         Kind::DownloadServicePackageAsyncOperation,
         owner,
         servicePackageId.ApplicationId,
+        activationContext,
         applicationName,
         DownloadManager::GetOperationId(servicePackageId, servicePackageVersion),
         maxFailureCount,
@@ -1450,18 +2436,12 @@ public:
         applicationIdStr_(servicePackageId.ApplicationId.ToString()),
         packageFilePath_(),
         manifestFilePath_(),
-        healthPropertyId_(wformatString("Download:{0}", servicePackageVersion))
+        healthPropertyId_(wformatString("Download:{0}:{1}", servicePackageVersion, activationContext.ToString()))
     {
         ASSERT_IF(
             servicePackageId_.ApplicationId.IsAdhoc(),
             "Cannot download ServicePackage of an ad-hoc application. ServicePackageId={0}",
             servicePackageId_);
-
-        remoteObject_ = owner_.StoreLayout.GetServicePackageFile(
-            servicePackageId_.ApplicationId.ApplicationTypeName,
-            applicationIdStr_,
-            servicePackageId_.ServicePackageName,
-            servicePackageVersion_.RolloutVersionValue.ToString());
     }
 
     virtual ~DownloadServicePackageAsyncOperation()
@@ -1496,436 +2476,19 @@ protected:
     virtual AsyncOperationSPtr BeginDownloadContent(
         AsyncCallback const & callback,
         AsyncOperationSPtr const & thisSPtr)
-    {
-        if (servicePackageId_.ApplicationId != *ApplicationIdentifier::FabricSystemAppId)
-        {
-            auto error = EnsurePackageFile();
-            if (error.IsSuccess())
-            {
-                error = EnsurePackageFileContents();
-            }
-            if (!error.IsSuccess() || containerImages_.empty())
-            {
-                containerImages_.clear();
-                return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                    error,
-                    callback,
-                    thisSPtr);
-            }
-
-            return AsyncOperation::CreateAndStart<DownloadContainerImagesAsyncOperation>(
-                this->containerImages_,
-                this->activationContext_,
-                this->owner_,
-                callback,
-                thisSPtr);
-        }
-        else
-        {
-            // The system package is already copied to the apps folder
-            packageFilePath_ = owner_.RunLayout.GetServicePackageFile(
+    {    
+        return AsyncOperation::CreateAndStart<DownloadServicePackageContentsAsyncOperation>(
+                owner_,
                 applicationIdStr_,
-                servicePackageId_.ServicePackageName,
-                servicePackageVersion_.RolloutVersionValue.ToString());
-
-            auto error = Parser::ParseServicePackage(packageFilePath_, servicePackageDescription_);
-            WriteTrace(
-                error.ToLogLevel(),
-                Trace_DownloadManager,
-                owner_.Root.TraceId,
-                "ParseServicePackageFile: ErrorCode={0}, PackageFile={1}",
-                error,
-                packageFilePath_);
-
-            if (!error.IsSuccess())
-            {
-                ErrorCode deleteError = this->owner_.DeleteCorruptedFile(packageFilePath_, remoteObject_, L"ServicePackageFile");
-                if (!deleteError.IsSuccess())
-                {
-                    WriteTrace(
-                        deleteError.ToLogLevel(),
-                        Trace_DownloadManager,
-                        owner_.Root.TraceId,
-                        "DeleteServicePackageFile: ErrorCode={0}, PackageFile={1}",
-                        deleteError,
-                        packageFilePath_);
-                }
-            }
-
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                error,
+                servicePackageId_,
+                servicePackageVersion_,
                 callback,
                 thisSPtr);
-        }
     }
 
     virtual ErrorCode EndDownloadContent(AsyncOperationSPtr const & operation)
     {
-        if (!containerImages_.empty())
-        {
-            return DownloadContainerImagesAsyncOperation::End(operation);
-        }
-        else
-        {
-            return CompletedAsyncOperation::End(operation);
-        }
-    }
-
-    ErrorCode EnsurePackageFile()
-    {
-        packageFilePath_ = owner_.RunLayout.GetServicePackageFile(
-            applicationIdStr_,
-            servicePackageId_.ServicePackageName,
-            servicePackageVersion_.RolloutVersionValue.ToString());
-
-        return CopyFromStore(
-            remoteObject_,
-            packageFilePath_);
-    }
-
-    ErrorCode EnsurePackageFileContents()
-    {
-        // parse service package file
-        ServicePackageDescription servicepackageDescription;
-        auto error = Parser::ParseServicePackage(packageFilePath_, servicepackageDescription);
-        WriteTrace(
-            error.ToLogLevel(),
-            Trace_DownloadManager,
-            owner_.Root.TraceId,
-            "ParseServicePackageFile: ErrorCode={0}, PackageFile={1}",
-            error,
-            packageFilePath_);
-
-        if (!error.IsSuccess())
-        {
-            ErrorCode deleteError = this->owner_.DeleteCorruptedFile(packageFilePath_, remoteObject_, L"ServicePackageFile");
-            if (!deleteError.IsSuccess())
-            {
-                WriteTrace(
-                    deleteError.ToLogLevel(),
-                    Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "DeleteServicePackageFile: ErrorCode={0}, PackageFile={1}",
-                    deleteError,
-                    packageFilePath_);
-            }
-
-            return error;
-        }
-        servicePackageDescription_ = move(servicepackageDescription);
-
-        // ensure manifest file is present
-        manifestFilePath_ = owner_.RunLayout.GetServiceManifestFile(
-            applicationIdStr_,
-            servicePackageDescription_.ManifestName,
-            servicePackageDescription_.ManifestVersion);
-
-        wstring storeManifestFilePath = owner_.StoreLayout.GetServiceManifestFile(
-            servicePackageId_.ApplicationId.ApplicationTypeName,
-            servicePackageDescription_.ManifestName,
-            servicePackageDescription_.ManifestVersion);
-
-        wstring storeManifestChechsumFilePath = owner_.StoreLayout.GetServiceManifestChecksumFile(
-            servicePackageId_.ApplicationId.ApplicationTypeName,
-            servicePackageDescription_.ManifestName,
-            servicePackageDescription_.ManifestVersion);
-
-        error = CopyFromStore(
-            storeManifestFilePath,
-            manifestFilePath_,
-            storeManifestChechsumFilePath,
-            servicePackageDescription_.ManifestChecksum);
-        if (!error.IsSuccess()) { return error; }
-
-        // parse manifest file
-        ServiceManifestDescription serviceManifest;
-        error = Parser::ParseServiceManifest(manifestFilePath_, serviceManifest);
-        WriteTrace(
-            error.ToLogLevel(),
-            Trace_DownloadManager,
-            owner_.Root.TraceId,
-            "ParseServiceManifestFile: ErrorCode={0}, ManifestFile={1}",
-            error,
-            manifestFilePath_);
-
-        if (!error.IsSuccess())
-        {
-            ErrorCode deleteError = this->owner_.DeleteCorruptedFile(manifestFilePath_, storeManifestFilePath, L"ServiceManifestFile");
-            if (!deleteError.IsSuccess())
-            {
-                WriteTrace(
-                    deleteError.ToLogLevel(),
-                    Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "DeleteServiceManifestFile: ErrorCode={0}, ManifestFile={1}",
-                    deleteError,
-                    manifestFilePath_);
-            }
-
-            return error;
-        }
-
-        error = GetCodePackages(servicePackageDescription_);
-        if (!error.IsSuccess()) { return error; }
-
-        error = GetConfigPackages(servicePackageDescription_);
-        if (!error.IsSuccess()) { return error; }
-
-        error = GetDataPackages(servicePackageDescription_);
-        if (!error.IsSuccess()) { return error; }
-
-        return error;
-    }
-
-    ErrorCode GetCodePackages(ServicePackageDescription const & servicePackage)
-    {
-        ErrorCode error = ErrorCodeValue::Success;
-        containerImages_.clear();
-        for (auto iter = servicePackage.DigestedCodePackages.begin();
-            iter != servicePackage.DigestedCodePackages.end();
-            ++iter)
-        {
-            std::wstring imageSource;
-            if (iter->CodePackage.EntryPoint.ContainerEntryPoint.ImageName.empty() ||
-                !iter->CodePackage.SetupEntryPoint.Program.empty())
-            {
-
-                wstring storeCodePackagePath = owner_.StoreLayout.GetCodePackageFolder(
-                    servicePackageId_.ApplicationId.ApplicationTypeName,
-                    servicePackage.ManifestName,
-                    iter->CodePackage.Name,
-                    iter->CodePackage.Version);
-
-                wstring storeCodePackageChecksumPath = owner_.StoreLayout.GetCodePackageChecksumFile(
-                    servicePackageId_.ApplicationId.ApplicationTypeName,
-                    servicePackage.ManifestName,
-                    iter->CodePackage.Name,
-                    iter->CodePackage.Version);
-
-                wstring runCodePackagePath = owner_.RunLayout.GetCodePackageFolder(
-                    applicationIdStr_,
-                    servicePackageId_.ServicePackageName,
-                    iter->CodePackage.Name,
-                    iter->CodePackage.Version,
-                    iter->IsShared);
-
-                if (HostingConfig::GetConfig().EnableProcessDebugging && !iter->DebugParameters.CodePackageLinkFolder.empty())
-                {
-                    ArrayPair<wstring, wstring> link;
-                    link.key = runCodePackagePath;
-                    link.value = iter->DebugParameters.CodePackageLinkFolder;
-                    this->symbolicLinks_.push_back(link);
-                }
-                else if (iter->IsShared)
-                {
-                    wstring sharedCodePackagePath = owner_.SharedLayout.GetCodePackageFolder(
-                        servicePackageId_.ApplicationId.ApplicationTypeName,
-                        servicePackage.ManifestName,
-                        iter->CodePackage.Name,
-                        iter->CodePackage.Version);
-
-                    error = CopySubPackageFromStore(
-                        storeCodePackagePath,
-                        sharedCodePackagePath,
-                        storeCodePackageChecksumPath,
-                        iter->ContentChecksum);
-
-                    if (error.IsSuccess() && !Directory::IsSymbolicLink(runCodePackagePath))
-                    {
-                        ArrayPair<wstring, wstring> link;
-                        link.key = runCodePackagePath;
-                        link.value = sharedCodePackagePath;
-                        this->symbolicLinks_.push_back(link);
-                    }
-                }
-                else
-                {
-                    error = CopySubPackageFromStore(
-                        storeCodePackagePath,
-                        runCodePackagePath,
-                        storeCodePackageChecksumPath,
-                        iter->ContentChecksum);
-                }
-                if (!error.IsSuccess())
-                {
-                    return error;
-                }
-
-                if (!iter->CodePackage.EntryPoint.ContainerEntryPoint.FromSource.empty())
-                {
-                    imageSource = Path::Combine(runCodePackagePath, iter->CodePackage.EntryPoint.ContainerEntryPoint.FromSource);
-                }
-            }
-            if (!iter->CodePackage.EntryPoint.ContainerEntryPoint.ImageName.empty())
-            {
-                wstring imageName = iter->CodePackage.EntryPoint.ContainerEntryPoint.ImageName;
-                error = ContainerHelper::GetContainerHelper().GetContainerImageName(iter->ContainerPolicies.ImageOverrides, imageName);
-
-                if (!error.IsSuccess())
-                {
-                    WriteError(
-                        Trace_DownloadManager,
-                        owner_.Root.TraceId,
-                        "Failed to get the image name to be downloaded with error {0}",
-                        error);
-
-                    return error;
-                }
-
-                this->containerImages_.push_back(
-                    ContainerImageDescription(
-                        imageName,
-                        iter->ContainerPolicies.RepositoryCredentials));
-            }
-        }
-        return error;
-    }
-
-    ErrorCode GetConfigPackages(ServicePackageDescription const & servicePackage)
-    {
-        ErrorCode error = ErrorCodeValue::Success;
-
-        for (auto iter = servicePackage.DigestedConfigPackages.begin();
-            iter != servicePackage.DigestedConfigPackages.end();
-            ++iter)
-        {
-            wstring storeConfigPackagePath = owner_.StoreLayout.GetConfigPackageFolder(
-                servicePackageId_.ApplicationId.ApplicationTypeName,
-                servicePackage.ManifestName,
-                iter->ConfigPackage.Name,
-                iter->ConfigPackage.Version);
-
-            wstring storeConfigPackageChecksumPath = owner_.StoreLayout.GetConfigPackageChecksumFile(
-                servicePackageId_.ApplicationId.ApplicationTypeName,
-                servicePackage.ManifestName,
-                iter->ConfigPackage.Name,
-                iter->ConfigPackage.Version);
-
-            wstring runConfigPackagePath = owner_.RunLayout.GetConfigPackageFolder(
-                applicationIdStr_,
-                servicePackageId_.ServicePackageName,
-                iter->ConfigPackage.Name,
-                iter->ConfigPackage.Version,
-                iter->IsShared);
-
-            if (HostingConfig::GetConfig().EnableProcessDebugging && !iter->DebugParameters.ConfigPackageLinkFolder.empty())
-            {
-                ArrayPair<wstring, wstring> link;
-                link.key = runConfigPackagePath;
-                link.value = iter->DebugParameters.ConfigPackageLinkFolder;
-                this->symbolicLinks_.push_back(link);
-            }
-            else if (iter->IsShared)
-            {
-                wstring sharedConfigPackagePath = owner_.SharedLayout.GetConfigPackageFolder(
-                    servicePackageId_.ApplicationId.ApplicationTypeName,
-                    servicePackage.ManifestName,
-                    iter->ConfigPackage.Name,
-                    iter->ConfigPackage.Version);
-
-                error = CopySubPackageFromStore(
-                    storeConfigPackagePath,
-                    sharedConfigPackagePath,
-                    storeConfigPackageChecksumPath,
-                    iter->ContentChecksum);
-
-                if (error.IsSuccess() && !Directory::IsSymbolicLink(runConfigPackagePath))
-                {
-                    ArrayPair<wstring, wstring> link;
-                    link.key = runConfigPackagePath;
-                    link.value = sharedConfigPackagePath;
-                    this->symbolicLinks_.push_back(link);
-                }
-            }
-            else
-            {
-                error = CopySubPackageFromStore(
-                    storeConfigPackagePath,
-                    runConfigPackagePath,
-                    storeConfigPackageChecksumPath,
-                    iter->ContentChecksum);
-            }
-            if (!error.IsSuccess())
-            {
-                return error;
-            }
-        }
-
-        return error;
-    }
-
-    ErrorCode GetDataPackages(ServicePackageDescription const & servicePackage)
-    {
-        ErrorCode error = ErrorCodeValue::Success;
-
-        for (auto iter = servicePackage.DigestedDataPackages.begin();
-            iter != servicePackage.DigestedDataPackages.end();
-            ++iter)
-        {
-            wstring storeDataPackagePath = owner_.StoreLayout.GetDataPackageFolder(
-                servicePackageId_.ApplicationId.ApplicationTypeName,
-                servicePackage.ManifestName,
-                iter->DataPackage.Name,
-                iter->DataPackage.Version);
-
-            wstring storeDataPackageChecksumPath = owner_.StoreLayout.GetDataPackageChecksumFile(
-                servicePackageId_.ApplicationId.ApplicationTypeName,
-                servicePackage.ManifestName,
-                iter->DataPackage.Name,
-                iter->DataPackage.Version);
-
-            wstring runDataPackagePath = owner_.RunLayout.GetDataPackageFolder(
-                applicationIdStr_,
-                servicePackageId_.ServicePackageName,
-                iter->DataPackage.Name,
-                iter->DataPackage.Version,
-                iter->IsShared);
-
-            if (HostingConfig::GetConfig().EnableProcessDebugging && !iter->DebugParameters.DataPackageLinkFolder.empty())
-            {
-                ArrayPair<wstring, wstring> link;
-                link.key = runDataPackagePath;
-                link.value = iter->DebugParameters.DataPackageLinkFolder;
-                this->symbolicLinks_.push_back(link);
-            }
-            else if (iter->IsShared)
-            {
-                wstring sharedDataPackagePath = owner_.SharedLayout.GetDataPackageFolder(
-                    servicePackageId_.ApplicationId.ApplicationTypeName,
-                    servicePackage.ManifestName,
-                    iter->DataPackage.Name,
-                    iter->DataPackage.Version);
-
-                error = CopySubPackageFromStore(
-                    storeDataPackagePath,
-                    sharedDataPackagePath,
-                    storeDataPackageChecksumPath,
-                    iter->ContentChecksum);
-
-                if (error.IsSuccess() && !Directory::IsSymbolicLink(runDataPackagePath))
-                {
-                    ArrayPair<wstring, wstring> link;
-                    link.key = runDataPackagePath;
-                    link.value = sharedDataPackagePath;
-                    this->symbolicLinks_.push_back(link);
-                }
-            }
-            else
-            {
-                error = CopySubPackageFromStore(
-                    storeDataPackagePath,
-                    runDataPackagePath,
-                    storeDataPackageChecksumPath,
-                    iter->ContentChecksum);
-            }
-
-            if (!error.IsSuccess())
-            {
-                return error;
-            }
-        }
-
-        return error;
+        return DownloadServicePackageContentsAsyncOperation::End(operation, servicePackageDescription_);
     }
 
     virtual ErrorCode OnRegisterComponent()
@@ -1962,6 +2525,572 @@ private:
     ServicePackageActivationContext activationContext_;
 };
 
+class DownloadManager::DownloadServiceManifestContentsAsyncOperation : public AsyncOperation
+{
+    DENY_COPY(DownloadServiceManifestContentsAsyncOperation)
+
+public:
+    DownloadServiceManifestContentsAsyncOperation(
+        DownloadManager & owner,
+        wstring const & applicationTypeName,
+        wstring const & applicationTypeVersion,
+        wstring const & serviceManifestName,
+        PackageSharingPolicyList const & sharingPolicies,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(
+            callback,
+            parent),
+        owner_(owner),
+        applicationTypeName_(applicationTypeName),
+        applicationTypeVersion_(applicationTypeVersion),
+        serviceManifestName_(serviceManifestName),
+        sharingPolicies_(sharingPolicies),
+        sharingScope_(0),
+        cacheLayout_(owner.hosting_.ImageCacheFolder),
+        containerImages_()
+
+    {
+    }
+
+    virtual ~DownloadServiceManifestContentsAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(
+        AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<DownloadServiceManifestContentsAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    virtual void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (!ManagementConfig::GetConfig().ImageCachingEnabled)
+        {
+            ErrorCode err(ErrorCodeValue::PreDeploymentNotAllowed, StringResource::Get(IDS_HOSTING_Predeployment_NotAllowed));
+            WriteWarning(
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "Predeployment cannot be performed since ImageCache is not enabled");   
+            TryComplete(thisSPtr, err);
+            return;
+        }
+
+        storeAppManifestPath_ = owner_.StoreLayout.GetApplicationManifestFile(
+            this->applicationTypeName_,
+            this->applicationTypeVersion_);
+
+        cacheAppManifestPath_ = cacheLayout_.GetApplicationManifestFile(applicationTypeName_, applicationTypeVersion_);
+
+        auto operation = owner_.imageCacheManager_->BeginDownload(
+            storeAppManifestPath_,
+            cacheAppManifestPath_,
+            L"",
+            L"",
+            false,
+            ImageStore::CopyFlag::Echo,
+            false,
+            false,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnCopyAppManifestCompleted(operation, false);
+        },
+            thisSPtr);
+        OnCopyAppManifestCompleted(operation, true);
+    }
+
+    void OnCopyAppManifestCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = owner_.imageCacheManager_->EndDownload(operation);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "DownloadServiceManifestOperation: CopyApplicationManifest for AppType {0} Version {1} returned: ErrorCode={2}",
+            applicationTypeName_,
+            applicationTypeVersion_,
+            error);
+        if (!error.IsSuccess())
+        {
+            auto err = ErrorCode(ErrorCodeValue::FileNotFound,
+                wformatString("{0} {1}, {2}",
+                    StringResource::Get(IDS_HOSTING_AppManifestDownload_Failed),
+                    applicationTypeName_,
+                    applicationTypeVersion_));
+            TryComplete(operation->Parent, err);
+            return;
+        }
+        ApplicationManifestDescription appDescription;
+        error = Parser::ParseApplicationManifest(cacheAppManifestPath_, appDescription);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "ParseApplicationManifestFile: ErrorCode={0}, PackageFile={1}",
+            error,
+            cacheAppManifestPath_);
+
+        if (!error.IsSuccess())
+        {
+            ErrorCode deleteError = this->owner_.DeleteCorruptedFile(cacheAppManifestPath_, storeAppManifestPath_, L"ApplicationManifestFile");
+            if (!deleteError.IsSuccess())
+            {
+                WriteTrace(
+                    deleteError.ToLogLevel(),
+                    Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "DeleteApplicationManifestFile: ErrorCode={0}, PackageFile={1}",
+                    deleteError,
+                    cacheAppManifestPath_);
+            }
+            TryComplete(operation->Parent, error);
+            return;
+        }
+
+        ServiceManifestDescription serviceDescription;
+        wstring manifestVersion;
+
+        for (auto iter = appDescription.ServiceManifestImports.begin(); iter != appDescription.ServiceManifestImports.end(); iter++)
+        {
+            if (StringUtility::AreEqualCaseInsensitive((*iter).ServiceManifestRef.Name, serviceManifestName_))
+            {
+                manifestVersion = (*iter).ServiceManifestRef.Version;
+                containerPolicies_ = iter->ContainerHostPolicies;
+                break;
+            }
+        }
+        if (manifestVersion.empty())
+        {
+            WriteWarning(
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "Failed to find ServiceManifest with Name {0} in ApplicationManifest Name {1}, Version {2}",
+                serviceManifestName_,
+                applicationTypeName_,
+                applicationTypeVersion_);
+
+            auto err = ErrorCode(ErrorCodeValue::ServiceManifestNotFound,
+                wformatString("{0} {1}", StringResource::Get(IDS_HOSTING_ServiceManifestNotFound), serviceManifestName_));
+
+            TryComplete(operation->Parent, err);
+            return;
+        }
+
+        storeManifestChechsumFilePath_ = owner_.StoreLayout.GetServiceManifestChecksumFile(
+            applicationTypeName_,
+            serviceManifestName_,
+            manifestVersion);
+
+        wstring expectedChecksum = L"";
+
+        auto checksumOperation = owner_.imageCacheManager_->BeginGetChecksum(
+            storeManifestChechsumFilePath_,
+            [this, manifestVersion](AsyncOperationSPtr const & checksumOperation)
+        {
+            this->OnGetChecksumCompleted(manifestVersion, checksumOperation, false);
+        },
+            operation->Parent);
+        OnGetChecksumCompleted(manifestVersion, checksumOperation, true);
+     
+    }
+
+    void OnGetChecksumCompleted(
+        wstring const & manifestVersion,
+        AsyncOperationSPtr const & operation,
+        bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        wstring checksum;
+        auto error = owner_.imageCacheManager_->EndGetChecksum(operation, checksum);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        
+        cacheManifestPath_ = cacheLayout_.GetServiceManifestFile(applicationTypeName_, serviceManifestName_, manifestVersion);
+
+        storeManifestFilePath_ = owner_.StoreLayout.GetServiceManifestFile(
+            applicationTypeName_,
+            serviceManifestName_,
+            manifestVersion);
+
+        auto downloadOperation = owner_.imageCacheManager_->BeginDownload(
+            storeManifestFilePath_,
+            cacheManifestPath_,
+            storeManifestChechsumFilePath_,
+            checksum,
+            false,
+            ImageStore::CopyFlag::Echo,
+            false,
+            false,
+            [this](AsyncOperationSPtr const & downloadOperation)
+        {
+            this->OnCopyServiceManifestCompleted(downloadOperation, false);
+        },
+            operation->Parent);
+        OnCopyServiceManifestCompleted(downloadOperation, true);
+    }
+
+    void OnCopyServiceManifestCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = owner_.imageCacheManager_->EndDownload(operation);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+
+        // parse manifest file
+        ServiceManifestDescription serviceManifestDescription;
+        error = Parser::ParseServiceManifest(cacheManifestPath_, serviceManifestDescription);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "ParseServiceManifestFile: ErrorCode={0}, ManifestFile={1}",
+            error,
+            cacheManifestPath_);
+
+        if (!error.IsSuccess())
+        {
+            ErrorCode deleteError = this->owner_.DeleteCorruptedFile(cacheManifestPath_, storeManifestFilePath_, L"ServiceManifestFile");
+            if (!deleteError.IsSuccess())
+            {
+                WriteTrace(
+                    deleteError.ToLogLevel(),
+                    Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "DeleteServiceManifestFile: ErrorCode={0}, ManifestFile={1}",
+                    deleteError,
+                    cacheManifestPath_);
+            }
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        
+        error = GetPackagesToCopy(serviceManifestDescription);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "DownloadServiceManifestContents downloading {0}",
+            error);
+        auto op = AsyncOperation::CreateAndStart<DownloadPackagesAsyncOperation>(
+            owner_,
+            filesToDownload_,
+            [this](AsyncOperationSPtr const & op)
+        {
+            this->OnDownloadPackagesCompleted(op, false);
+        },
+            operation->Parent);
+        OnDownloadPackagesCompleted(op, true);
+    }
+
+    void OnDownloadPackagesCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = DownloadPackagesAsyncOperation::End(operation);
+        if (!error.IsSuccess() || containerImages_.empty())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        auto op = AsyncOperation::CreateAndStart<DownloadContainerImagesAsyncOperation>(
+            this->containerImages_,
+            ServicePackageActivationContext(),
+            this->owner_,
+            [this](AsyncOperationSPtr const & op)
+        {
+            this->OnContainerImagesDownloaded(op, false);
+        },
+            operation->Parent);
+        OnContainerImagesDownloaded(op, true);
+    }
+
+    void OnContainerImagesDownloaded(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = DownloadContainerImagesAsyncOperation::End(operation);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "DownloadContainerImages::End error{0}",
+            error);
+
+        TryComplete(operation->Parent, error);
+    }
+
+    ErrorCode GetPackagesToCopy(ServiceManifestDescription const & serviceManifestDescription)
+    {
+        set<wstring> sharingPolicies;
+        for (auto iter = sharingPolicies_.PackageSharingPolicy.begin(); iter != sharingPolicies_.PackageSharingPolicy.end(); ++iter)
+        {
+            if (!iter->SharedPackageName.empty())
+            {
+                sharingPolicies.insert(iter->SharedPackageName);
+            }
+            else if (iter->PackageSharingPolicyScope == ServicePackageSharingType::Enum::None)
+            {
+                return ErrorCode(ErrorCodeValue::InvalidPackageSharingPolicy, StringResource::Get(IDS_HOSTING_Invalid_PackageSharingPolicy));
+            }
+            sharingScope_ |= iter->PackageSharingPolicyScope;
+        }
+
+        bool sharingScopeCode = (sharingScope_ & ServicePackageSharingType::Code || sharingScope_ & ServicePackageSharingType::All);
+        ErrorCode error(ErrorCodeValue::Success);
+        for (auto iter = serviceManifestDescription.CodePackages.begin(); iter != serviceManifestDescription.CodePackages.end(); iter++)
+        {
+            FileDownloadSpec downloadSpec;
+            std::wstring imageSource;
+            if (iter->EntryPoint.ContainerEntryPoint.ImageName.empty() ||
+                !iter->SetupEntryPoint.Program.empty())
+            {
+                downloadSpec.RemoteSourceLocation = owner_.StoreLayout.GetCodePackageFolder(
+                    applicationTypeName_,
+                    serviceManifestName_,
+                    iter->Name,
+                    iter->Version);
+
+                downloadSpec.ChecksumFileLocation = owner_.StoreLayout.GetCodePackageChecksumFile(
+                    applicationTypeName_,
+                    serviceManifestName_,
+                    iter->Name,
+                    iter->Version);
+
+                downloadSpec.LocalDestinationLocation = cacheLayout_.GetCodePackageFolder(
+                    applicationTypeName_,
+                    serviceManifestName_,
+                    iter->Name,
+                    iter->Version);
+
+                // If we are downloading the Code/Config/Data we should be downloading their corresponding checksum files. The marker file _zip for archived files is also created
+                // with this checksum value to prevent the re-extraction from happening during runtime deployment.
+                // Passing the expected checksum triggers the download of the checksum file on the node. So, while doing an actual deployment at runtime we do not end up refreshing
+                // the cache due to a mismatch since there is no checksum file on the node and is expected(from the digested package) to be there and when we compare the marker file
+                // _zip checksum with the expected it won't match because the marker file will be empty if we did not pass in the exepected checksum value during predeployment.
+
+                error = owner_.imageCacheManager_->GetStoreChecksumValue(downloadSpec.ChecksumFileLocation, downloadSpec.Checksum);
+                if (!error.IsSuccess())
+                {
+                    return error;
+                }
+
+                downloadSpec.DownloadToCacheOnly = true;
+                if (sharingScopeCode ||
+                    sharingPolicies.find(iter->Name) != sharingPolicies.end())
+                {
+                    WriteNoise(Trace_DownloadManager,
+                        owner_.Root.TraceId,
+                        "Sharing is enabled for Code package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
+                        iter->Name,
+                        applicationTypeName_,
+                        applicationTypeVersion_);
+
+                    downloadSpec.LocalDestinationLocation = owner_.SharedLayout.GetCodePackageFolder(applicationTypeName_, serviceManifestName_, iter->Name, iter->Version);
+                    downloadSpec.DownloadToCacheOnly = false;
+                }
+                WriteInfo(Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "DownloadServiceManifestContents for Code package remote location{0}:  local location ApplicationTypeName {1}, expectedChecksum {2}",
+                    downloadSpec.RemoteSourceLocation,
+                    downloadSpec.LocalDestinationLocation,
+                    downloadSpec.Checksum);
+                filesToDownload_.push_back(downloadSpec);
+            }
+            if (!iter->EntryPoint.ContainerEntryPoint.ImageName.empty())
+            {
+                RepositoryCredentialsDescription repositoryCredentials;
+                ImageOverridesDescription imageOverrides;
+                bool useDefaultRepositoryCredentials = false;
+                bool useTokenAuthenticationCredentials = false;
+
+                for (auto it = containerPolicies_.begin(); it != containerPolicies_.end(); ++it)
+                {
+                    if (StringUtility::AreEqualCaseInsensitive(it->CodePackageRef, iter->Name))
+                    {
+                        repositoryCredentials = it->RepositoryCredentials;
+                        imageOverrides = it->ImageOverrides;
+                        useDefaultRepositoryCredentials = it->UseDefaultRepositoryCredentials;
+                        useTokenAuthenticationCredentials = it->UseTokenAuthenticationCredentials;
+                        break;
+                    }
+                }
+
+                wstring imageName = iter->EntryPoint.ContainerEntryPoint.ImageName;
+                error = ContainerHelper::GetContainerHelper().GetContainerImageName(imageOverrides, imageName);
+
+                if (!error.IsSuccess())
+                {
+                    WriteError(
+                        Trace_DownloadManager,
+                        owner_.Root.TraceId,
+                        "Failed to get the image name to be downloaded with error {0}",
+                        error);
+
+                    return error;
+                }
+
+                this->containerImages_.push_back(
+                    ContainerImageDescription(
+                        imageName,
+                        useDefaultRepositoryCredentials,
+                        useTokenAuthenticationCredentials,
+                        repositoryCredentials));
+            }
+        }
+
+        bool sharingScopeConfig = (sharingScope_ & ServicePackageSharingType::Config || sharingScope_ & ServicePackageSharingType::All);
+        for (auto iter = serviceManifestDescription.ConfigPackages.begin(); iter != serviceManifestDescription.ConfigPackages.end(); iter++)
+        {
+            FileDownloadSpec downloadSpec;
+
+            downloadSpec.RemoteSourceLocation = owner_.StoreLayout.GetConfigPackageFolder(
+                applicationTypeName_,
+                serviceManifestName_,
+                iter->Name,
+                iter->Version);
+
+            downloadSpec.ChecksumFileLocation = owner_.StoreLayout.GetConfigPackageChecksumFile(
+                applicationTypeName_,
+                serviceManifestName_,
+                iter->Name,
+                iter->Version);
+
+            downloadSpec.LocalDestinationLocation = cacheLayout_.GetConfigPackageFolder(
+                applicationTypeName_,
+                serviceManifestName_,
+                iter->Name,
+                iter->Version);
+
+            error = owner_.imageCacheManager_->GetStoreChecksumValue(downloadSpec.ChecksumFileLocation, downloadSpec.Checksum);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+
+            downloadSpec.DownloadToCacheOnly = true;
+            if (sharingScopeConfig || sharingPolicies.find(iter->Name) != sharingPolicies.end())
+            {
+                WriteNoise(Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "Sharing is enabled for Config package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
+                    iter->Name,
+                    applicationTypeName_,
+                    applicationTypeVersion_);
+
+                downloadSpec.LocalDestinationLocation = owner_.SharedLayout.GetConfigPackageFolder(applicationTypeName_, serviceManifestName_, iter->Name, iter->Version);
+                downloadSpec.DownloadToCacheOnly = false;
+            }
+
+            WriteInfo(Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "DownloadServiceManifestContents for config package remote location{0}:  local location ApplicationTypeName {1}, expectedChecksum {2}",
+                downloadSpec.RemoteSourceLocation,
+                downloadSpec.LocalDestinationLocation,
+                downloadSpec.Checksum);
+            filesToDownload_.push_back(downloadSpec);
+        }
+
+        bool sharingScopeData = (sharingScope_ & ServicePackageSharingType::Data || sharingScope_ & ServicePackageSharingType::All);
+        for (auto iter = serviceManifestDescription.DataPackages.begin(); iter != serviceManifestDescription.DataPackages.end(); iter++)
+        {
+            FileDownloadSpec downloadSpec;
+
+            downloadSpec.ChecksumFileLocation = owner_.StoreLayout.GetDataPackageChecksumFile(
+                applicationTypeName_,
+                serviceManifestName_,
+                (*iter).Name,
+                (*iter).Version);
+
+            downloadSpec.RemoteSourceLocation = owner_.StoreLayout.GetDataPackageFolder(
+                applicationTypeName_,
+                serviceManifestName_,
+                iter->Name,
+                iter->Version);
+
+
+             downloadSpec.LocalDestinationLocation = cacheLayout_.GetDataPackageFolder(
+                applicationTypeName_,
+                serviceManifestName_,
+                iter->Name,
+                iter->Version);
+
+             error = owner_.imageCacheManager_->GetStoreChecksumValue(downloadSpec.ChecksumFileLocation, downloadSpec.Checksum);
+             if (!error.IsSuccess())
+             {
+                 return error;
+             }
+
+             downloadSpec.DownloadToCacheOnly = true;
+            if (sharingScopeData ||
+                sharingPolicies.find(iter->Name) != sharingPolicies.end())
+            {
+                WriteNoise(Trace_DownloadManager,
+                    owner_.Root.TraceId,
+                    "Sharing is enabled for Data package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
+                    iter->Name,
+                    applicationTypeName_,
+                    applicationTypeVersion_);
+                downloadSpec.DownloadToCacheOnly = false;
+                downloadSpec.LocalDestinationLocation = owner_.SharedLayout.GetDataPackageFolder(applicationTypeName_, serviceManifestName_, iter->Name, iter->Version);
+
+            }
+            WriteInfo(Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "DownloadServiceManifestContents for data package remote location{0}:  local location ApplicationTypeName {1}, expectedChecksum {2}",
+                downloadSpec.RemoteSourceLocation,
+                downloadSpec.LocalDestinationLocation,
+                downloadSpec.Checksum);
+            filesToDownload_.push_back(downloadSpec);
+        }
+        return ErrorCodeValue::Success;
+    }
+
+private:
+    DownloadManager & owner_;
+    wstring const applicationTypeName_;
+    wstring const applicationTypeVersion_;
+    StoreLayoutSpecification cacheLayout_;
+    wstring const serviceManifestName_;
+    wstring cacheAppManifestPath_;
+    wstring storeAppManifestPath_;
+    wstring cacheManifestPath_;
+    wstring storeManifestFilePath_;
+    wstring storeManifestChechsumFilePath_;
+    PackageSharingPolicyList sharingPolicies_;
+    DWORD sharingScope_;
+    vector<ContainerImageDescription> containerImages_;
+    vector<ContainerPoliciesDescription> containerPolicies_;
+    vector<FileDownloadSpec> filesToDownload_;
+};
+
 // ********************************************************************************************************************
 // DownloadManager.DownloadServiceManifestAsyncOperation Implementation
 //
@@ -1989,6 +3118,7 @@ public:
         Kind::DownloadServiceManifestAsyncOperation,
         owner,
         ApplicationIdentifier() /*Empty ApplicationId*/,
+        ServicePackageActivationContext(), /*Empty ServicePackageActivation Guid*/
         L"" /* empty applicationName*/,
         DownloadManager::GetOperationId(applicationTypeName, applicationTypeVersion, serviceManifestName),
         maxFailureCount,
@@ -2020,207 +3150,19 @@ protected:
         AsyncCallback const & callback,
         AsyncOperationSPtr const & thisSPtr)
     {
-        if (!ManagementConfig::GetConfig().ImageCachingEnabled)
-        {
-            ErrorCode err(ErrorCodeValue::PreDeploymentNotAllowed, StringResource::Get(IDS_HOSTING_Predeployment_NotAllowed));
-            WriteWarning(
-                Trace_DownloadManager,
-                owner_.Root.TraceId,
-                "Predeployment cannot be performed since ImageCache is not enabled");
-
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                err,
-                callback,
-                thisSPtr);
-        }
-
-        wstring storeAppManifestPath = owner_.StoreLayout.GetApplicationManifestFile(
-            this->applicationTypeName_,
-            this->applicationTypeVersion_);
-
-        wstring cacheAppManifestPath = cacheLayout_.GetApplicationManifestFile(applicationTypeName_, applicationTypeVersion_);
-
-        auto error = CopyFromStore(storeAppManifestPath, cacheAppManifestPath);
-        WriteTrace(
-            error.ToLogLevel(),
-            Trace_DownloadManager,
-            owner_.Root.TraceId,
-            "DownloadServiceManifestOperation: CopyApplicationManifest for AppType {0} Version {1} returned: ErrorCode={2}",
+        return AsyncOperation::CreateAndStart<DownloadServiceManifestContentsAsyncOperation>(
+            owner_,
             applicationTypeName_,
             applicationTypeVersion_,
-            error);
-
-        if (!error.IsSuccess())
-        {
-            auto err = ErrorCode(ErrorCodeValue::FileNotFound,
-                wformatString("{0} {1}, {2}",
-                StringResource::Get(IDS_HOSTING_AppManifestDownload_Failed),
-                applicationTypeName_,
-                applicationTypeVersion_));
-
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                err,
-                callback,
-                thisSPtr);
-        }
-
-        ApplicationManifestDescription appDescription;
-        error = Parser::ParseApplicationManifest(cacheAppManifestPath, appDescription);
-
-        WriteTrace(
-            error.ToLogLevel(),
-            Trace_DownloadManager,
-            owner_.Root.TraceId,
-            "ParseApplicationManifestFile: ErrorCode={0}, PackageFile={1}",
-            error,
-            cacheAppManifestPath);
-
-        if (!error.IsSuccess())
-        {
-            ErrorCode deleteError = this->owner_.DeleteCorruptedFile(cacheAppManifestPath, storeAppManifestPath, L"ApplicationManifestFile");
-            if (!deleteError.IsSuccess())
-            {
-                WriteTrace(
-                    deleteError.ToLogLevel(),
-                    Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "DeleteApplicationManifestFile: ErrorCode={0}, PackageFile={1}",
-                    deleteError,
-                    cacheAppManifestPath);
-            }
-
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                error,
-                callback,
-                thisSPtr);
-        }
-
-        ServiceManifestDescription serviceDescription;
-        wstring manifestVersion;
-        vector<ContainerPoliciesDescription> containerPolicies;
-        for (auto iter = appDescription.ServiceManifestImports.begin(); iter != appDescription.ServiceManifestImports.end(); iter++)
-        {
-            if (StringUtility::AreEqualCaseInsensitive((*iter).ServiceManifestRef.Name, serviceManifestName_))
-            {
-                manifestVersion = (*iter).ServiceManifestRef.Version;
-                containerPolicies = iter->ContainerHostPolicies;
-                break;
-            }
-        }
-        if (manifestVersion.empty())
-        {
-            WriteWarning(
-                Trace_DownloadManager,
-                owner_.Root.TraceId,
-                "Failed to find ServiceManifest with Name {0} in ApplicationManifest Name {1}, Version {2}",
-                serviceManifestName_,
-                applicationTypeName_,
-                applicationTypeVersion_);
-
-            auto err = ErrorCode(ErrorCodeValue::ServiceManifestNotFound,
-                wformatString("{0} {1}", StringResource::Get(IDS_HOSTING_ServiceManifestNotFound), serviceManifestName_));
-
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                err,
-                callback,
-                thisSPtr);
-        }
-
-        wstring storeManifestFilePath = owner_.StoreLayout.GetServiceManifestFile(
-            applicationTypeName_,
             serviceManifestName_,
-            manifestVersion);
-
-        wstring storeManifestChechsumFilePath = owner_.StoreLayout.GetServiceManifestChecksumFile(
-            applicationTypeName_,
-            serviceManifestName_,
-            manifestVersion);
-
-        wstring expectedChecksum = L"";
-
-        error = owner_.imageStore_->GetStoreChecksumValue(storeManifestChechsumFilePath, expectedChecksum);
-
-        if (!error.IsSuccess())
-        {
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                error,
-                callback,
-                thisSPtr);
-        }
-
-        wstring cacheManifestPath = cacheLayout_.GetServiceManifestFile(applicationTypeName_, serviceManifestName_, manifestVersion);
-
-        error = CopyFromStore(
-            storeManifestFilePath,
-            cacheManifestPath,
-            storeManifestChechsumFilePath,
-            expectedChecksum);
-        if (!error.IsSuccess())
-        {
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                error,
-                callback,
-                thisSPtr);
-        }
-
-        // parse manifest file
-        ServiceManifestDescription serviceManifestDescription;
-        error = Parser::ParseServiceManifest(cacheManifestPath, serviceManifestDescription);
-        WriteTrace(
-            error.ToLogLevel(),
-            Trace_DownloadManager,
-            owner_.Root.TraceId,
-            "ParseServiceManifestFile: ErrorCode={0}, ManifestFile={1}",
-            error,
-            cacheManifestPath);
-
-        if (!error.IsSuccess())
-        {
-            ErrorCode deleteError = this->owner_.DeleteCorruptedFile(cacheManifestPath, storeManifestFilePath, L"ServiceManifestFile");
-            if (!deleteError.IsSuccess())
-            {
-                WriteTrace(
-                    deleteError.ToLogLevel(),
-                    Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "DeleteServiceManifestFile: ErrorCode={0}, ManifestFile={1}",
-                    deleteError,
-                    cacheManifestPath);
-            }
-        }
-        if (error.IsSuccess())
-        {
-            error = EnsurePackages(
-                        serviceManifestDescription,
-                        containerPolicies);
-        }
-        if (!error.IsSuccess() || containerImages_.empty())
-        {
-            containerImages_.clear();
-            return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(
-                error,
-                callback,
-                thisSPtr);
-        }
-
-        return AsyncOperation::CreateAndStart<DownloadContainerImagesAsyncOperation>(
-            this->containerImages_,
-            ServicePackageActivationContext(),
-            this->owner_,
+            sharingPolicies_,
             callback,
             thisSPtr);
     }
 
     virtual ErrorCode EndDownloadContent(AsyncOperationSPtr const & operation)
     {
-        if (!containerImages_.empty())
-        {
-            return DownloadContainerImagesAsyncOperation::End(operation);
-        }
-        else
-        {
-            return CompletedAsyncOperation::End(operation);
-        }
+        return DownloadServiceManifestContentsAsyncOperation::End(operation);
     }
 
     virtual ErrorCode OnRegisterComponent()
@@ -2253,271 +3195,7 @@ protected:
         }
         return false;
     }
-
-private:
-    ErrorCode EnsurePackages(
-        ServiceManifestDescription const & serviceManifestDescription,
-        vector<ContainerPoliciesDescription> const & containerPolcies)
-    {
-        set<wstring> sharingPolicies;
-        for (auto iter = sharingPolicies_.PackageSharingPolicy.begin(); iter != sharingPolicies_.PackageSharingPolicy.end(); ++iter)
-        {
-            if (!iter->SharedPackageName.empty())
-            {
-                sharingPolicies.insert(iter->SharedPackageName);
-            }
-            else if (iter->PackageSharingPolicyScope == ServicePackageSharingType::Enum::None)
-            {
-                return ErrorCode(ErrorCodeValue::InvalidPackageSharingPolicy, StringResource::Get(IDS_HOSTING_Invalid_PackageSharingPolicy));
-            }
-            sharingScope_ |= iter->PackageSharingPolicyScope;
-        }
-
-        bool sharingScopeCode = (sharingScope_ & ServicePackageSharingType::Code || sharingScope_ & ServicePackageSharingType::All);
-        ErrorCode error(ErrorCodeValue::Success);
-        for (auto iter = serviceManifestDescription.CodePackages.begin(); iter != serviceManifestDescription.CodePackages.end(); iter++)
-        {
-            std::wstring imageSource;
-            if (iter->EntryPoint.ContainerEntryPoint.ImageName.empty() ||
-                !iter->SetupEntryPoint.Program.empty())
-            {
-                wstring storeCodePackagePath = owner_.StoreLayout.GetCodePackageFolder(
-                    applicationTypeName_,
-                    serviceManifestName_,
-                    iter->Name,
-                    iter->Version);
-
-                wstring storeCodePackageChecksumPath = owner_.StoreLayout.GetCodePackageChecksumFile(
-                    applicationTypeName_,
-                    serviceManifestName_,
-                    iter->Name,
-                    iter->Version);
-
-                wstring cacheCodePackagePath = cacheLayout_.GetCodePackageFolder(
-                    applicationTypeName_,
-                    serviceManifestName_,
-                    iter->Name,
-                    iter->Version);
-
-                wstring checksum;
-                error = owner_.imageStore_->GetStoreChecksumValue(storeCodePackageChecksumPath, checksum);
-                if (!error.IsSuccess())
-                {
-                    return error;
-                }
-
-                if (sharingScopeCode ||
-                    sharingPolicies.find(iter->Name) != sharingPolicies.end())
-                {
-                    WriteNoise(Trace_DownloadManager,
-                        owner_.Root.TraceId,
-                        "Sharing is enabled for Code package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
-                        iter->Name,
-                        applicationTypeName_,
-                        applicationTypeVersion_);
-
-                    wstring sharedPath = owner_.SharedLayout.GetCodePackageFolder(applicationTypeName_, serviceManifestName_, iter->Name, iter->Version);
-                    error = CopySubPackageFromStore(
-                        storeCodePackagePath,
-                        sharedPath,
-                        storeCodePackageChecksumPath,
-                        checksum);
-                }
-                else
-                {
-                    WriteNoise(Trace_DownloadManager,
-                        owner_.Root.TraceId,
-                        "Sharing is not enabled for Code package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
-                        iter->Name,
-                        applicationTypeName_,
-                        applicationTypeVersion_);
-
-                    error = CopySubPackageFromStore(
-                        storeCodePackagePath,
-                        cacheCodePackagePath,
-                        storeCodePackageChecksumPath,
-                        checksum,
-                        false,
-                        ImageStore::CopyFlag::Echo,
-                        true);
-                }
-            }
-            if (!iter->EntryPoint.ContainerEntryPoint.ImageName.empty())
-            {
-                RepositoryCredentialsDescription repositoryCredentials;
-                ImageOverridesDescription imageOverrides;
-
-                for (auto it = containerPolcies.begin(); it != containerPolcies.end(); ++it)
-                {
-                    if (StringUtility::AreEqualCaseInsensitive(it->CodePackageRef, iter->Name))
-                    {
-                        repositoryCredentials = it->RepositoryCredentials;
-                        imageOverrides = it->ImageOverrides;
-                        break;
-                    }
-                }
-
-                wstring imageName = iter->EntryPoint.ContainerEntryPoint.ImageName;
-                error = ContainerHelper::GetContainerHelper().GetContainerImageName(imageOverrides, imageName);
-
-                if (!error.IsSuccess())
-                {
-                    WriteError(
-                        Trace_DownloadManager,
-                        owner_.Root.TraceId,
-                        "Failed to get the image name to be downloaded with error {0}",
-                        error);
-
-                    return error;
-                }
-
-                this->containerImages_.push_back(
-                    ContainerImageDescription(
-                        imageName,
-                        repositoryCredentials));
-            }
-            if (!error.IsSuccess()) { return error; }
-        }
-
-        bool sharingScopeConfig = (sharingScope_ & ServicePackageSharingType::Config || sharingScope_ & ServicePackageSharingType::All);
-        for (auto iter = serviceManifestDescription.ConfigPackages.begin(); iter != serviceManifestDescription.ConfigPackages.end(); iter++)
-        {
-
-            wstring storeConfigPackagePath = owner_.StoreLayout.GetConfigPackageFolder(
-                applicationTypeName_,
-                serviceManifestName_,
-                iter->Name,
-                iter->Version);
-
-            wstring storeConfigPackageChecksumPath = owner_.StoreLayout.GetConfigPackageChecksumFile(
-                applicationTypeName_,
-                serviceManifestName_,
-                iter->Name,
-                iter->Version);
-
-            wstring cacheConfigPackagePath = cacheLayout_.GetConfigPackageFolder(
-                applicationTypeName_,
-                serviceManifestName_,
-                iter->Name,
-                iter->Version);
-
-            wstring checksum;
-            error = owner_.imageStore_->GetStoreChecksumValue(storeConfigPackageChecksumPath, checksum);
-            if (!error.IsSuccess())
-            {
-                return error;
-            }
-
-            if (sharingScopeConfig || sharingPolicies.find(iter->Name) != sharingPolicies.end())
-            {
-                WriteNoise(Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "Sharing is enabled for Config package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
-                    iter->Name,
-                    applicationTypeName_,
-                    applicationTypeVersion_);
-
-                wstring sharedPath = owner_.SharedLayout.GetConfigPackageFolder(applicationTypeName_, serviceManifestName_, iter->Name, iter->Version);
-                error = CopySubPackageFromStore(
-                    storeConfigPackagePath,
-                    sharedPath,
-                    storeConfigPackageChecksumPath,
-                    checksum);
-            }
-            else
-            {
-                WriteNoise(Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "Sharing is not enabled for Config package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
-                    iter->Name,
-                    applicationTypeName_,
-                    applicationTypeVersion_);
-
-                error = CopySubPackageFromStore(
-                    storeConfigPackagePath,
-                    cacheConfigPackagePath,
-                    storeConfigPackageChecksumPath,
-                    checksum,
-                    false,
-                    ImageStore::CopyFlag::Echo,
-                    true);
-            }
-            if (!error.IsSuccess()) { return error; }
-        }
-
-        bool sharingScopeData = (sharingScope_ & ServicePackageSharingType::Data || sharingScope_ & ServicePackageSharingType::All);
-        for (auto iter = serviceManifestDescription.DataPackages.begin(); iter != serviceManifestDescription.DataPackages.end(); iter++)
-        {
-            wstring dataChecksumPath = cacheLayout_.GetDataPackageChecksumFile(
-                applicationTypeName_,
-                serviceManifestName_,
-                (*iter).Name,
-                (*iter).Version);
-
-            wstring storeDataPackagePath = owner_.StoreLayout.GetDataPackageFolder(
-                applicationTypeName_,
-                serviceManifestName_,
-                iter->Name,
-                iter->Version);
-
-            wstring storeDataPackageChecksumPath = owner_.StoreLayout.GetDataPackageChecksumFile(
-                applicationTypeName_,
-                serviceManifestName_,
-                iter->Name,
-                iter->Version);
-
-            wstring cacheDataPackagePath = cacheLayout_.GetDataPackageFolder(
-                applicationTypeName_,
-                serviceManifestName_,
-                iter->Name,
-                iter->Version);
-
-            wstring checksum;
-            error = owner_.imageStore_->GetStoreChecksumValue(storeDataPackageChecksumPath, checksum);
-            if (!error.IsSuccess())
-            {
-                return error;
-            }
-
-            if (sharingScopeData ||
-                sharingPolicies.find(iter->Name) != sharingPolicies.end())
-            {
-                WriteNoise(Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "Sharing is enabled for Data package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
-                    iter->Name,
-                    applicationTypeName_,
-                    applicationTypeVersion_);
-
-                wstring sharedPath = owner_.SharedLayout.GetConfigPackageFolder(applicationTypeName_, serviceManifestName_, iter->Name, iter->Version);
-                error = CopySubPackageFromStore(
-                    storeDataPackagePath,
-                    sharedPath,
-                    storeDataPackageChecksumPath,
-                    checksum);
-            }
-            else
-            {
-                WriteNoise(Trace_DownloadManager,
-                    owner_.Root.TraceId,
-                    "Sharing is not enabled for data package {0}:  ApplicationTypeName {1}, ApplicationTypeVersion {2}",
-                    iter->Name,
-                    applicationTypeName_,
-                    applicationTypeVersion_);
-                error = CopySubPackageFromStore(
-                    storeDataPackagePath,
-                    cacheDataPackagePath,
-                    storeDataPackageChecksumPath,
-                    checksum,
-                    false,
-                    ImageStore::CopyFlag::Echo,
-                    true);
-            }
-            if (!error.IsSuccess()) { return error; }
-        }
-        return ErrorCodeValue::Success;
-    }
-
+   
 private:
     wstring const applicationTypeName_;
     wstring const applicationTypeVersion_;
@@ -2549,6 +3227,7 @@ public:
         Kind::DownloadFabricUpgradePackageAsyncOperation,
         owner,
         ApplicationIdentifier() /*Empty ApplicationId*/,
+        ServicePackageActivationContext(), /*Empty ServicePackageActivationId*/
         *SystemServiceApplicationNameHelper::SystemServiceApplicationName,
         DownloadManager::GetOperationId(fabricVersion),
         maxFailureCount,
@@ -2887,6 +3566,7 @@ private:
         auto operation = owner_.BeginDownloadApplicationPackage(
             downloadSpec_.ApplicationId,
             downloadSpec_.AppVersion,
+            ServicePackageActivationContext(),
             downloadSpec_.AppName,
             [this](AsyncOperationSPtr const & operation){ this->FinishApplicationPackageDownload(operation, false); },
             thisSPtr);
@@ -3021,6 +3701,7 @@ DownloadManager::DownloadManager(
     fabricUpgradeStoreLayout_(),
     sharedLayout_(Path::Combine(hosting.DeploymentFolder, Constants::SharedFolderName)),
     imageStore_(),
+    imageCacheManager_(),
     nodeConfig_(nodeConfig),
     pendingDownloads_(),
     nonRetryableFailedDownloads_(),
@@ -3032,6 +3713,8 @@ DownloadManager::DownloadManager(
 {
     auto pendingDownloads = make_unique<PendingOperationMap>();
     pendingDownloads_ = move(pendingDownloads);
+    auto imageCacheManager = make_unique<ImageCacheManager>(root, imageStore_);
+    imageCacheManager_ = move(imageCacheManager);
 }
 
 DownloadManager::~DownloadManager()
@@ -3279,6 +3962,7 @@ ErrorCode DownloadManager::EndDownloadApplication(
 AsyncOperationSPtr DownloadManager::BeginDownloadApplicationPackage(
     ApplicationIdentifier const & applicationId,
     ApplicationVersion const & applicationVersion,
+    ServicePackageActivationContext const & activationContext,
     wstring const & applicationName,
     AsyncCallback const & callback,
     AsyncOperationSPtr const & parent)
@@ -3287,6 +3971,7 @@ AsyncOperationSPtr DownloadManager::BeginDownloadApplicationPackage(
         *this,
         applicationId,
         applicationVersion,
+        activationContext,
         applicationName,
         HostingConfig::GetConfig().DeploymentMaxFailureCount,
         callback,
@@ -3296,6 +3981,7 @@ AsyncOperationSPtr DownloadManager::BeginDownloadApplicationPackage(
 AsyncOperationSPtr DownloadManager::BeginDownloadApplicationPackage(
     ApplicationIdentifier const & applicationId,
     ApplicationVersion const & applicationVersion,
+    ServicePackageActivationContext const & activationContext,
     wstring const & applicationName,
     ULONG maxFailureCount,
     AsyncCallback const & callback,
@@ -3305,6 +3991,7 @@ AsyncOperationSPtr DownloadManager::BeginDownloadApplicationPackage(
         *this,
         applicationId,
         applicationVersion,
+        activationContext,
         applicationName,
         maxFailureCount,
         callback,
@@ -3596,13 +4283,13 @@ ErrorCode DownloadManager::DeployFabricSystemPackages(TimeSpan timeout)
 
 ErrorCode DownloadManager::EnsureApplicationFolders(std::wstring const & applicationId, bool createLogFolder)
 {
-    // ensure log, work and temp folders for the application
+    // ensure log, work, temp and settings folders for the application
     auto error = Directory::Create2(RunLayout.GetApplicationWorkFolder(applicationId));
     WriteTrace(
         error.ToLogLevel(),
         Trace_DownloadManager,
         Root.TraceId,
-        "DeployFabricSystemPackages: CreateWorkFolder: {0}, ErrorCode={1}",
+        "EnsureApplicationFolders: CreateWorkFolder: {0}, ErrorCode={1}",
         RunLayout.GetApplicationWorkFolder(applicationId),
         error);
     if (!error.IsSuccess()) { return error; }
@@ -3620,12 +4307,21 @@ ErrorCode DownloadManager::EnsureApplicationFolders(std::wstring const & applica
         error.ToLogLevel(),
         Trace_DownloadManager,
         Root.TraceId,
-        "DeployFabricSystemPackages: CreateTempFolder: {0}, ErrorCode={1}",
+        "EnsureApplicationFolders: CreateTempFolder: {0}, ErrorCode={1}",
         RunLayout.GetApplicationTempFolder(applicationId),
         error);
     if (!error.IsSuccess()) { return error; }
 
-    return ErrorCode(ErrorCodeValue::Success);
+    error = Directory::Create2(RunLayout.GetApplicationSettingsFolder(applicationId));
+    WriteTrace(
+        error.ToLogLevel(),
+        Trace_DownloadManager,
+        Root.TraceId,
+        "DeployFabricSystemPackages: CreateSettingsFolder: {0}, ErrorCode={1}",
+        RunLayout.GetApplicationSettingsFolder(applicationId),
+        error);
+
+    return error;
 }
 
 ErrorCode DownloadManager::EnsureApplicationLogFolder(std::wstring const & applicationId)
@@ -3635,7 +4331,7 @@ ErrorCode DownloadManager::EnsureApplicationLogFolder(std::wstring const & appli
         error.ToLogLevel(),
         Trace_DownloadManager,
         Root.TraceId,
-        "DeployFabricSystemPackages: CreateLogFolder: {0}, ErrorCode={1}",
+        "EnsureApplicationLogFolder: CreateLogFolder: {0}, ErrorCode={1}",
         RunLayout.GetApplicationLogFolder(applicationId),
         error);
     return error;

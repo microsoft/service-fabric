@@ -75,7 +75,6 @@ namespace Reliability
             void GetUpgradedUDsIndex(std::set<std::wstring> const& UDs, std::set<Common::TreeNodeIndex> & UDsIndex) const;
 
             void CreateLoadBalancingDomainEntries();
-            void CreateGlobalMetricIndicesList();
             void CreateLoadsPerLBDomainList();
             void CreateNodeEntries();
             void CreateApplicationUpgradedUDs();
@@ -83,14 +82,17 @@ namespace Reliability
             void CreateLoadsPerLBDomainListInternal(std::vector<std::vector<LoadEntry>> & loadsPerLBDomainList, bool shouldDisappear);
 
             bool IsDefragmentationMetric(std::wstring const & metricName);
-            int32 GetDefragEmptyNodesCount(std::wstring const& metricName);
+            int32 GetDefragEmptyNodesCount(std::wstring const& metricName, bool scopedDefragEnabled);
             int64 GetDefragEmptyNodeLoadTreshold(std::wstring const& metricName);
+            int64 GetReservationLoadAmount(std::wstring const & metricName, int64 nodeCapacity);
             Metric::DefragDistributionType GetDefragDistribution(std::wstring const& metricName);
             double GetPlacementHeuristicIncomingLoadFactor(std::wstring const& metricName);
             double GetPlacementHeuristicEmptySpacePercent(std::wstring const& metricName);
             bool GetDefragmentationScopedAlgorithmEnabled(std::wstring const& metricName);
             Metric::PlacementStrategy GetPlacementStrategy(std::wstring const& metricName);
-            double GetDefragmentationEmptyNodeWeight(std::wstring const& metricName);
+            double GetDefragmentationEmptyNodeWeight(std::wstring const& metricName, Metric::PlacementStrategy placementStrategy);
+            double GetDefragmentationNonEmptyNodeWeight(std::wstring const& metricName, Metric::PlacementStrategy placementStrategy);
+            bool IsBalancingByPercentageEnabled(std::wstring const & metricName);
 
             std::vector<Node> const& nodes_;
             PartitionClosure const& partitionClosure_;

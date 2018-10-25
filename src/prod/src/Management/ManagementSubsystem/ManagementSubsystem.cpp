@@ -4,7 +4,7 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
-#include "client/ClientServerTransport/CreateContainerApplicationRequestHeader.h" //move this to stdafx.h when also needed by other cpps in the component
+#include "client/ClientServerTransport/CreateComposeDeploymentRequestHeader.h" //move this to stdafx.h when also needed by other cpps in the component
 
 using namespace Common;
 using namespace Hosting2;
@@ -22,6 +22,8 @@ using namespace Management::UpgradeService;
 using namespace Management::BackupRestoreService;
 using namespace Management::FaultAnalysisService;
 using namespace Management::UpgradeOrchestrationService;
+using namespace Management::CentralSecretService;
+using namespace Management::LocalSecretService;
 using namespace std;
 using namespace Api;
 using namespace Client;
@@ -201,6 +203,12 @@ namespace Management
         __declspec(property(get = get_IsUpgradeOrchestrationServiceEnabled)) bool IsUpgradeOrchestrationServiceEnabled;
         bool get_IsUpgradeOrchestrationServiceEnabled() const { return (UpgradeOrchestrationServiceConfig::GetConfig().TargetReplicaSetSize > 0); }
 
+        __declspec(property(get = get_IsCentralSecretServiceEnabled)) bool IsCentralSecretServiceEnabled;
+        bool get_IsCentralSecretServiceEnabled() const { return (CentralSecretServiceConfig::GetConfig().TargetReplicaSetSize > 0); }
+
+        __declspec(property(get = get_IsLocalSecretServiceEnabled)) bool IsLocalSecretServiceEnabled;
+        bool get_IsLocalSecretServiceEnabled() const;
+
         __declspec(property(get = get_IsDnsServiceEnabled)) bool IsDnsServiceEnabled;
         bool get_IsDnsServiceEnabled() const;
 
@@ -239,6 +247,12 @@ namespace Management
             AsyncCallback const &,
             AsyncOperationSPtr const &);
         ErrorCode EndCreateUpgradeOrchestrationService(AsyncOperationSPtr const &);
+
+        AsyncOperationSPtr BeginCreateCentralSecretService(
+            TimeSpan const,
+            AsyncCallback const &,
+            AsyncOperationSPtr const &);
+        ErrorCode EndCreateCentralSecretService(AsyncOperationSPtr const &);
 
         AsyncOperationSPtr BeginCreateSystemServiceWithReservedIdRange(
             bool isEnabled,
@@ -1186,6 +1200,16 @@ namespace Management
 
         return (!dnsServiceDescriptions.empty());
     }
+
+    bool ManagementSubsystem::Impl::get_IsLocalSecretServiceEnabled() const
+    {
+        vector<ServiceDescription> serviceDescriptions;
+        ManagementSubsystem::LoadSystemServiceDescriptions(
+            serviceDescriptions,
+            SystemServiceApplicationNameHelper::InternalLocalSecretServiceName);
+
+        return (!serviceDescriptions.empty());
+    }
  
     ClusterManager::ClusterManagerFactory & ManagementSubsystem::Impl::Test_get_ClusterManagerFactory() const
     {
@@ -1379,6 +1403,25 @@ namespace Management
     ErrorCode ManagementSubsystem::Impl::EndInitializeSystemServices(AsyncOperationSPtr const & operation)
     {
         return InitializeSystemServiceAsyncOperation::End(operation);
+    }
+
+    AsyncOperationSPtr ManagementSubsystem::Impl::BeginCreateCentralSecretService(
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+    {
+        return BeginCreateSystemServiceWithReservedIdRange(
+            IsCentralSecretServiceEnabled,
+            CreateCentralSecretServiceDescription(),
+            *ConsistencyUnitId::CentralSecretServiceIdRange,
+            timeout,
+            callback,
+            parent);
+    }
+
+    ErrorCode ManagementSubsystem::Impl::EndCreateCentralSecretService(AsyncOperationSPtr const & operation)
+    {
+        return EndCreateSystemServiceWithReservedIdRange(IsCentralSecretServiceEnabled, operation);
     }
 
     AsyncOperationSPtr ManagementSubsystem::Impl::BeginCreateUpgradeOrchestrationService(
@@ -1596,7 +1639,7 @@ namespace Management
         clusterSecuritySettings,
         root))
     {
-        REGISTER_MESSAGE_HEADER(CreateContainerApplicationRequestHeader);
+        REGISTER_MESSAGE_HEADER(CreateComposeDeploymentRequestHeader);
     }
 
     ManagementSubsystem::~ManagementSubsystem()
@@ -1620,10 +1663,14 @@ namespace Management
     bool ManagementSubsystem::get_IsFaultAnalysisServiceEnabled() const { return impl_->IsFaultAnalysisServiceEnabled; }
 
     bool ManagementSubsystem::get_IsBackupRestoreServiceEnabled() const { return impl_->IsBackupRestoreServiceEnabled; }
+
+    bool ManagementSubsystem::get_IsCentralSecretServiceEnabled() const { return impl_->IsCentralSecretServiceEnabled; }
    
     bool ManagementSubsystem::get_IsUpgradeOrchestrationServiceEnabled() const { return impl_->IsUpgradeOrchestrationServiceEnabled; }
 
     bool ManagementSubsystem::get_IsDnsServiceEnabled() const { return impl_->IsDnsServiceEnabled; }
+
+    bool ManagementSubsystem::get_IsLocalSecretServiceEnabled() const { return impl_->IsLocalSecretServiceEnabled; }
 
     ClusterManager::ClusterManagerFactory & ManagementSubsystem::Test_get_ClusterManagerFactory() const
     {
@@ -1900,6 +1947,11 @@ namespace Management
             {
                 AddDnsServiceDescription(sectionName, descriptions);
             }
+            else if ((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(sectionName, SystemServiceApplicationNameHelper::InternalLocalSecretServiceName)) &&
+                (StringUtility::AreEqualCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalLocalSecretServiceName)))
+            {
+                AddLocalSecretServiceDescription(sectionName, descriptions);
+            }
             else if ((nameFilter.empty() || StringUtility::AreEqualCaseInsensitive(sectionName, SystemServiceApplicationNameHelper::InternalBackupRestoreServiceName)) &&
                 (StringUtility::AreEqualCaseInsensitive(sectionName, *SystemServiceApplicationNameHelper::InternalBackupRestoreServiceName)))
             {
@@ -2130,6 +2182,48 @@ namespace Management
             SystemServiceApplicationNameHelper::SystemServiceApplicationName));
     }
 
+    void ManagementSubsystem::AddLocalSecretServiceDescription(wstring const & serviceName, __in vector<ServiceDescription> & descriptions)
+    {
+        StringMap configSection;
+        ManagementConfig::GetConfig().GetKeyValues(serviceName, configSection);
+
+        LocalSecretServiceConfig const & config = LocalSecretServiceConfig::GetConfig();
+
+        WriteInfo(TraceManagementSubsystem, "LocalSecretService configuration: instance count is {0} ", config.InstanceCount);
+
+        // Provide the config section name for this service instance as initialization data to the service,
+        // so that the managed service code can read additional settings from the same section later.
+        const byte *configSectionNameBuffer = reinterpret_cast<const byte *>(serviceName.c_str());
+        vector<byte> configSectionNameSerialized(
+            configSectionNameBuffer,
+            configSectionNameBuffer + serviceName.size() * sizeof(wchar_t));
+
+        descriptions.push_back(ServiceDescription(
+            serviceName,
+            0, // instance
+            0, // update version
+            1, // partition count
+            config.InstanceCount, // target replica set size
+            config.InstanceCount, // min replica set size
+            false, // stateful
+            false, // persisted
+            ServiceModelConfig::GetConfig().SystemReplicaRestartWaitDuration,
+            ServiceModelConfig::GetConfig().QuorumLossWaitDuration,
+            ServiceModelConfig::GetConfig().SystemStandByReplicaKeepDuration,
+            ServiceTypeIdentifier(
+                ServicePackageIdentifier(
+                    ApplicationIdentifier::FabricSystemAppId->ToString(),
+                    SystemServiceApplicationNameHelper::LocalSecretServicePackageName),
+                SystemServiceApplicationNameHelper::LocalSecretServiceType),
+            vector<Reliability::ServiceCorrelationDescription>(),
+            config.PlacementConstraints,
+            0, // scaleout count
+            vector<Reliability::ServiceLoadMetricDescription>(),
+            FABRIC_MOVE_COST_LOW,
+            configSectionNameSerialized,
+            SystemServiceApplicationNameHelper::SystemServiceApplicationName));
+    }
+
     ServiceDescription ManagementSubsystem::CreateUpgradeServiceDescription(wstring const & serviceName)
     {
         // Provide the config section name for this service instance as initialization data to the service,
@@ -2252,6 +2346,60 @@ namespace Management
             config.QuorumLossWaitDuration,
             config.StandByReplicaKeepDuration,
             *ServiceTypeIdentifier::FaultAnalysisServiceTypeId,
+            vector<Reliability::ServiceCorrelationDescription>(),
+            config.PlacementConstraints,
+            0, // scaleout count
+            move(serviceMetricDescriptions),
+            FABRIC_MOVE_COST_LOW,
+            vector<byte>(),
+            SystemServiceApplicationNameHelper::SystemServiceApplicationName);
+    }
+
+    AsyncOperationSPtr ManagementSubsystem::BeginCreateCentralSecretService(
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & asyncOperation)
+    {
+        return impl_->BeginCreateCentralSecretService(
+            timeout,
+            callback,
+            asyncOperation);
+    }
+
+    ErrorCode ManagementSubsystem::EndCreateCentralSecretService(AsyncOperationSPtr const & asyncOperation)
+    {
+        return impl_->EndCreateCentralSecretService(asyncOperation);
+    }
+
+    ServiceDescription ManagementSubsystem::CreateCentralSecretServiceDescription()
+    {
+        vector<Reliability::ServiceLoadMetricDescription> serviceMetricDescriptions;
+        serviceMetricDescriptions.push_back(Reliability::ServiceLoadMetricDescription(
+            CentralSecretService::Constants::CentralSecretServicePrimaryCountName,
+            FABRIC_SERVICE_LOAD_METRIC_WEIGHT_HIGH,
+            1,
+            0));
+        serviceMetricDescriptions.push_back(Reliability::ServiceLoadMetricDescription(
+            CentralSecretService::Constants::CentralSecretServiceReplicaCountName,
+            FABRIC_SERVICE_LOAD_METRIC_WEIGHT_MEDIUM,
+            1,
+            1));
+
+        CentralSecretServiceConfig const & config = CentralSecretServiceConfig::GetConfig();
+
+        return ServiceDescription(
+            ServiceModel::SystemServiceApplicationNameHelper::InternalCentralSecretServiceName,
+            0,  // instance
+            0,  // update version
+            1,  // partition count
+            config.TargetReplicaSetSize,
+            config.MinReplicaSetSize,
+            true,   // is stateful
+            true,   // has persisted state
+            config.ReplicaRestartWaitDuration,
+            config.QuorumLossWaitDuration,
+            config.StandByReplicaKeepDuration,
+            *ServiceTypeIdentifier::CentralSecretServiceTypeId,
             vector<Reliability::ServiceCorrelationDescription>(),
             config.PlacementConstraints,
             0, // scaleout count

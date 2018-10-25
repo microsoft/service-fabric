@@ -18,8 +18,8 @@ namespace ServiceModel
             Common::Guid partitionId,
             std::unique_ptr<ApplicationHealthPolicy> && healthPolicy);
 
-        PartitionHealthQueryDescription(PartitionHealthQueryDescription && other);
-        PartitionHealthQueryDescription & operator = (PartitionHealthQueryDescription && other);
+        PartitionHealthQueryDescription(PartitionHealthQueryDescription && other) = default;
+        PartitionHealthQueryDescription & operator = (PartitionHealthQueryDescription && other) = default;
 
         ~PartitionHealthQueryDescription();
 

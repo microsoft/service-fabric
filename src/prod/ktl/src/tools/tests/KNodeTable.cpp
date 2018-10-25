@@ -1,0 +1,1 @@
+#include "../knodetable/KNodeTableTests.cpp"

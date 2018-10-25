@@ -46,8 +46,10 @@
 #include "httpgateway/ApplicationsHandler.h"
 #include "httpgateway/ApplicationTypesHandler.h"
 #include "httpgateway/ComposeDeploymentsHandler.h"
+#include "httpgateway/VolumesHandler.h"
 #include "httpgateway/NodesHandler.h"
 #include "httpgateway/NamesHandler.h"
+#include "httpgateway/ApplicationsResourceHandler.h"
 #include "httpgateway/FabricUpgradeProgress.h"
 #include "httpgateway/FabricOrchestrationUpgradeProgress.h"
 #include "httpgateway/DeployedApplicationQueryResultWrapper.h"
@@ -70,6 +72,7 @@
 #include "httpgateway/getfilefromuploadasyncoperation.h"
 #include "httpgateway/HttpKerberosAuthHandler.h"
 #include "httpgateway/ServiceResolver.h"
+#include "httpgateway/EventsStoreHandler.h"
 #endif
 
 #include "httpgateway/HttpServer.AccessCheckAsyncOperation.h"

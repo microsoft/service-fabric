@@ -190,6 +190,13 @@ ErrorCode EntryPointDescription::FromPublicApi(FABRIC_CODE_PACKAGE_ENTRY_POINT_D
             error = DllHostEntryPoint.FromPublicApi(*hostDescription);
         }
         break;
+    case EntryPointType::ContainerHost:
+        {
+            auto hostDescription = static_cast<FABRIC_CONTAINERHOST_ENTRY_POINT_DESCRIPTION*>(description.Value);
+            if (hostDescription == nullptr) { return ErrorCode(ErrorCodeValue::InvalidArgument); }
+            error = ContainerEntryPoint.FromPublicApi(*hostDescription);
+        }
+        break;
     }
 
     return ErrorCode::Success();
@@ -212,6 +219,13 @@ void EntryPointDescription::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_COD
         {
             auto host = heap.AddItem<FABRIC_DLLHOST_ENTRY_POINT_DESCRIPTION>();
             this->DllHostEntryPoint.ToPublicApi(heap, *host);
+            publicDescription.Value = host.GetRawPointer();
+        }
+        break;
+    case EntryPointType::ContainerHost:
+        {
+            auto host = heap.AddItem<FABRIC_CONTAINERHOST_ENTRY_POINT_DESCRIPTION>();
+            this->ContainerEntryPoint.ToPublicApi(heap, *host);
             publicDescription.Value = host.GetRawPointer();
         }
         break;

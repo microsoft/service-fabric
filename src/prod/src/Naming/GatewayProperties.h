@@ -138,4 +138,5 @@ namespace Naming
     };
 
     typedef std::unique_ptr<GatewayProperties> GatewayPropertiesUPtr;
+    typedef std::shared_ptr<GatewayProperties> GatewayPropertiesSPtr;
 }

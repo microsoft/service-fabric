@@ -541,6 +541,16 @@ void HealthEntityCache<TEntityId>::CleanupEntitiesTimerCallback()
                             activityId);
                     }
                 }
+                else if (it->second->ShouldAutoCleanupEvents())
+                {
+                    error = this->TryReserveCleanupJobIfNotThrottled(activityId, it->second, skippedJobItems);
+                    if (error.IsSuccess())
+                    {
+                        cleanupJobItem = make_shared<AutoCleanupEventsJobItem>(
+                            it->second,
+                            activityId);
+                    }
+                }
                 else if (it->second->ShouldCheckConsistencyBetweenMemoryAndStore(activityId))
                 {
                     error = this->TryReserveCleanupJobIfNotThrottled(activityId, it->second, skippedJobItems);

@@ -7,6 +7,8 @@
 
 #include "Common/Common.h"
 #include "Management/ImageModel/ImageModel.h"
+#include "Hosting2/Hosting.Runtime.Internal.h"
+#include "Hosting2/Hosting.GuestApplicationRuntime.Internal.h"
 #include "FabricRuntime.h"
 #include "FabricCommon.h"
 #include "ComStatelessServiceFactory.h"

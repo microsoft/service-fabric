@@ -1,0 +1,145 @@
+#
+# [owner] aprameyr
+# Test scenarios around Replica Restart
+set DummyPLBEnabled true
+set MinActionRetryIntervalPerReplica 0.5
+set NodeUpRetryInterval 0.5
+set ReconfigurationMessageRetryInterval 0.5
+set RAPMessageRetryInterval 0.5
+set FMMessageRetryInterval 2
+set FMPlacementConstraints system==true
+set IgnoreOpenLocalStoreFlag true
+
+votes 10 
+cmservice 0 0
+fmservice 1 1
+namingservice 1 1 1
+cleantest
+
++10 nodeprops=system:true
+verify
+
++20 nodeprops=system:false
++30 nodeprops=system:false
++40 nodeprops=system:false
+verify
+
+#####################################################
+# Scenario 4: Replica Restart While Close is in progress
+#####################################################
+
+createservice fabric:/test4 TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * ReplicaClose
+addbehavior b2 * * ReplicaCloseReply
+addbehavior b3 * * StatefulServiceReopenReply
+deactivatenode 30 Restart
+
+!waitforstate RA.FT.LocalReplicaClosePending.fabric:/test4.30 true
+
+injectfailure 30 fabric:/test4 service.beginclose.reportfault.transient
+
+removebehavior b1
+
+#wait for retry and failure injection. RA should drop the restart request
+!pause 2
+
+removefailure 30 fabric:/test4 service.beginclose.reportfault.transient
+removebehavior b2
+removebehavior b3
+
+verify
+
+activatenode 30
+verify
+
+deleteservice fabric:/test4
+verify
+
+#####################################################
+# Scenario 3: Replica Restart While Drop is in progress
+#####################################################
+
+createservice fabric:/test3 TestPersistedStoreServiceType y 1 2 persist constraint=(system!=true)
+verify
+
+movesecondary fabric:/test3 30 20
+
+addbehavior b1 * * ReplicaClose
+!waitforstate RA.FT.ReconfigStage.fabric:/test3.40 Phase3_Deactivate
+!waitforstate RA.Replica.State.fabric:/test3.30.30 ID
+
+injectfailure 30 fabric:/test3 service.beginclose.reportfault.transient
+
+!waitforstate RA.Replica.State.fabric:/test3.30.30 ID
+
+addbehavior b2 * * ReplicaCloseReply
+removebehavior b1
+
+# wait for retry etc to happen and let the reopen be sent
+!pause 2
+
+#Block Deactivate Reply 
+addbehavior b3 * * DeactivateReply
+
+removefailure 30 fabric:/test3 service.beginclose.reportfault.transient
+removebehavior b2
+
+# remove failures and blocks
+# verify RA state due to deactivate reply block
+!waitforstate RA.FT.State.fabric:/test3.30 Closed
+removebehavior b3
+verify
+
+deleteservice fabric:/test3
+verify
+
+#####################################################
+# Scenario 2: Replica Restart While Open is in progress 
+#####################################################
+
+addbehavior b1 * * ReplicaOpenReply
+addbehavior b2 * * StatefulServiceReopen
+injectfailure 40 fabric:/test2 service.beginopen.reportfault.transient
+
+createservice fabric:/test2 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+!waitforstate RA.Replica.State.fabric:/test2.40.40 SB
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test2.40 false
+
+removefailure 40 fabric:/test2 service.beginopen.reportfault.transient
+addbehavior b3 * * ReplicaUp
+removebehavior b2
+!waitforstate RA.Replica.State.fabric:/test2.40.40 SB
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test2.40 true
+
+removebehavior b3
+removebehavior b1
+verify
+
+deleteservice fabric:/test2
+verify
+
+#####################################################
+# Scenario 1: Replica Restart Simple Scenario
+#####################################################
+
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 1 persist constraint=(system!=true)
+verify
+
+addbehavior b1 * * StatefulServiceReopenReply
+reportfault 40 fabric:/test1 transient
+!waitforstate RA.Replica.State.fabric:/test1.40.40 SB
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test1.40 false
+
+addbehavior b2 * * ReplicaUp
+removebehavior b1
+!waitforstate RA.FT.LocalReplicaOpen.fabric:/test1.40 true
+
+removebehavior b2
+verify
+
+deleteservice fabric:/test1
+verify
+
+!q

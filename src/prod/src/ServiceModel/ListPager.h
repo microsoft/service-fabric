@@ -40,6 +40,7 @@ namespace ServiceModel
 
         void TraceErrorFromTryAdd(Common::ErrorCode const & error, Common::StringLiteral const & traceComponent, wstring const & traceId, wstring const & queryName);
 
+        // Returns true if error is benign (expected as part of normal operations, such as max results reached)
         bool IsBenignError(Common::ErrorCode const & error);
 
     private:

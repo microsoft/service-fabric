@@ -236,8 +236,7 @@ BOOL CopyFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, BOOL bFailIfEx
     string srcA = FileNormalizePath(lpExistingFileName);
     string destA = FileNormalizePath(lpNewFileName);
 
-    int oflags = bFailIfExists ? O_CREAT | O_WRONLY | O_EXCL : O_CREAT | O_WRONLY | O_TRUNC;
-    oflags = O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC;
+    int oflags = O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC;
     int srcfd = open(srcA.c_str(), O_RDONLY | O_CLOEXEC);
     if (srcfd == -1)
     {
@@ -1071,6 +1070,12 @@ namespace Common
         if (result == INVALID_FILE_ATTRIBUTES)
         {
             error = ErrorCode::FromWin32Error(::GetLastError());
+            Trace.WriteWarning(
+                TraceSource,
+                L"File.GetAttributes",
+                "GetAttributes failed with the following error {0} for the path:{1}",
+                error,
+                path);
         }
 
         attribute = FileAttributes::Enum(result);
@@ -1747,6 +1752,7 @@ namespace Common
 
                 if (!connected)
                 {
+                    Trace.WriteInfo(TraceSource, L"SCPCopy", "ScpCopy worker to {0}: connect failed with errno {1}.", worker->peerAddr_, errno);
                     freeaddrinfo(peer);
                     worker->errno_ = errno;
                     ScpWorkerThreadCleanup(worker, 0, 0);
@@ -1758,6 +1764,7 @@ namespace Common
 
                 if (!session)
                 {
+                    Trace.WriteInfo(TraceSource, L"SCPCopy", "ssh session initialization failed.");
                     worker->errno_ = ENOMEM;
                     ScpWorkerThreadCleanup(worker, 0, 0);
                     return 0;
@@ -1766,12 +1773,14 @@ namespace Common
                 int rc = libssh2_session_handshake(session, sock);
 
                 if (rc) {
+                    Trace.WriteInfo(TraceSource, L"SCPCopy", "ScpCopy worker to {0}: ssh session handshake failed with {1}.", worker->peerAddr_, rc);
                     ScpWorkerThreadCleanup(worker, session, 0);
                     return 0;
                 }
 
                 if (libssh2_userauth_password(session, worker->account_.c_str(), worker->password_.c_str()))
                 {
+                    Trace.WriteInfo(TraceSource, L"SCPCopy", "ScpCopy worker to {0}: ssh authentication failed.", worker->peerAddr_);
                     ScpWorkerThreadCleanup(worker, session, 0);
                     return 0;
                 }
@@ -1779,6 +1788,7 @@ namespace Common
                 LIBSSH2_SFTP *sftp_session = libssh2_sftp_init(session);
                 if (!sftp_session)
                 {
+                    Trace.WriteInfo(TraceSource, L"SCPCopy", "ScpCopy worker to {0}: sftp session initialization failed.", worker->peerAddr_);
                     ScpWorkerThreadCleanup(worker, session, sftp_session);
                     return 0;
                 }
@@ -1819,14 +1829,15 @@ namespace Common
 
                     if (pRequest)
                     {
-                        Trace.WriteInfo(TraceSource, L"SCPCopy", "ScpCopy worker to {0} is processing request: Src: {1}, Dest: {2}, Op: {3}, Thread: {4} ",
+                        Trace.WriteInfo(TraceSource, L"SCPCopy", "ScpCopy worker to {0} is processing request: Src: {1}, Dest: {2}, Op: {3}",
                                         pRequest->peer_, pRequest->src_, pRequest->dest_,
-                                        pRequest->write_ ? "Upload" : "Download", (int) syscall(__NR_gettid));
+                                        pRequest->write_ ? "Upload" : "Download");
                         if (pRequest->write_)
                         {
                             struct stat srcinfo;
                             if (stat(pRequest->src_.c_str(), &srcinfo) != 0)
                             {
+                                Trace.WriteInfo(TraceSource, L"SCPCopy", "Failed to stat source file {0}", pRequest->src_);
                                 pRequest->error_.Overwrite(ErrorCodeValue::FileNotFound);
                                 pRequest->SetCompleted();
                                 continue;
@@ -1834,8 +1845,9 @@ namespace Common
 
                             pRequest->szSrc_ = srcinfo.st_size;
 
-                            FILE *srcfile = fopen(pRequest->src_.c_str(), "rb");
-                            if (!srcfile) {
+                            int srcfile = open(pRequest->src_.c_str(), O_RDONLY | O_CLOEXEC);
+                            if (srcfile < 0) {
+                                Trace.WriteInfo(TraceSource, L"SCPCopy", "Failed to open source file {0}", pRequest->src_);
                                 pRequest->error_.Overwrite(ErrorCodeValue::FileNotFound);
                                 pRequest->SetCompleted();
                                 continue;
@@ -1845,6 +1857,8 @@ namespace Common
                             LIBSSH2_CHANNEL *channel = libssh2_scp_send(session, tmpdest.c_str(), srcinfo.st_mode & 0777, (unsigned long)srcinfo.st_size);
                             if (!channel)
                             {
+                                close(srcfile);
+                                Trace.WriteInfo(TraceSource, L"SCPCopy", "Failed to open scp channel for {0}. {1}", tmpdest, libssh2_session_last_errno(session));
                                 pRequest->error_.Overwrite(static_cast<ErrorCodeValue::Enum>(HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)));
                                 pRequest->SetCompleted();
                                 continue;
@@ -1855,8 +1869,9 @@ namespace Common
                             size_t totalsize = 0;
                             do
                             {
-                                size_t nread = fread(buf, 1, sizeof(buf), srcfile);
+                                ssize_t nread = read(srcfile, buf, sizeof(buf));
                                 if (nread <= 0) {
+                                    if (nread < 0 && errno == EINTR) continue;
                                     break;
                                 }
                                 char* ptr = buf;
@@ -1865,6 +1880,7 @@ namespace Common
                                     rc = libssh2_channel_write(channel, ptr, nread);
                                     if (rc < 0)
                                     {
+                                        Trace.WriteInfo(TraceSource, L"SCPCopy", "Failed to write scp channel. {0}", libssh2_session_last_errno(session));
                                         pRequest->error_.Overwrite(ErrorCodeValue::SendFailed);
                                         internal_failure = true;
                                         break;
@@ -1879,9 +1895,9 @@ namespace Common
                                 } while (nread);
                             } while (!internal_failure);
 
-                            if (srcfile)
+                            if (srcfile >= 0)
                             {
-                                fclose(srcfile);
+                                close(srcfile);
                             }
 
                             libssh2_channel_send_eof(channel);
@@ -1897,12 +1913,14 @@ namespace Common
                             }
                             pRequest->SetCompleted();
                         }
+
                         else // if (pRequest->write_)
                         {
                             string tmpdest = pRequest->dest_ + ScpTmpFileSuffix;
-                            FILE *destfile = fopen(tmpdest.c_str(), "wb");
-                            if (!destfile) {
-                                pRequest->error_.Overwrite(ErrorCodeValue::AccessDenied);
+                            int destfile = open(tmpdest.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+                            if (destfile < 0) {
+                                Trace.WriteInfo(TraceSource, L"SCPCopy", "Failed to create tmp target file {0}. {1}", tmpdest, errno);
+                                pRequest->error_.Overwrite(ErrorCode::FromErrno(errno));
                                 pRequest->SetCompleted();
                                 continue;
                             }
@@ -1912,6 +1930,8 @@ namespace Common
 
                             if (!channel)
                             {
+                                close(destfile);
+                                Trace.WriteInfo(TraceSource, L"SCPCopy", "Failed to open scp channel for {0}. {1}", pRequest->src_, libssh2_session_last_errno(session));
                                 pRequest->error_.Overwrite(static_cast<ErrorCodeValue::Enum>(HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)));
                                 pRequest->SetCompleted();
                                 continue;
@@ -1937,9 +1957,11 @@ namespace Common
                                     char* ptr = buf;
                                     do
                                     {
-                                        size_t nwrite = fwrite(ptr, 1, remaining, destfile);
+                                        ssize_t nwrite = write(destfile, ptr, remaining);
                                         if (nwrite < 0)
                                         {
+                                            if (errno == EINTR) continue;
+                                            Trace.WriteInfo(TraceSource, L"SCPCopy", "Failed to write file content");
                                             pRequest->error_.Overwrite(ErrorCode::FromErrno(errno));
                                             break;
                                         }
@@ -1953,13 +1975,14 @@ namespace Common
                                 }
                                 else if(rc < 0)
                                 {
+                                    Trace.WriteInfo(TraceSource, L"SCPCopy", "Failed to read from scp channel {0}", libssh2_session_last_errno(session));
                                     pRequest->error_.Overwrite(ErrorCode::FromErrno(errno));
                                     break;
                                 }
                                 got += rc;
                             }
 
-                            fclose(destfile);
+                            close(destfile);
                             if (rename(tmpdest.c_str(), pRequest->dest_.c_str()) != 0)
                             {
                                 pRequest->error_.Overwrite(ErrorCode::FromErrno(errno));

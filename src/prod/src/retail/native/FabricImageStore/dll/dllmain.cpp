@@ -53,7 +53,7 @@ BOOL APIENTRY DllMain(
         connectionStrings,
         factoryPtr);
 
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(error.ToHResult()); }
+    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
 
     std::wstring dir;
     auto hr = Common::StringUtility::LpcwstrToWstring(workingDirectory, true, dir);
@@ -66,7 +66,7 @@ BOOL APIENTRY DllMain(
         factoryPtr,
         implPtr);
 
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(error.ToHResult()); }
+    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
 
     Common::ComPointer<IFabricNativeImageStoreClient> comPtr = Api::ComNativeImageStoreClient::CreateComNativeImageStoreClient(implPtr);
 
@@ -88,7 +88,7 @@ BOOL APIENTRY DllMain(
         std::make_shared<FabricNodeConfig>(),
         factoryPtr);
 
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(error.ToHResult()); }
+    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
 
     std::wstring dir;
     auto hr = Common::StringUtility::LpcwstrToWstring(workingDirectory, true, dir);
@@ -101,7 +101,7 @@ BOOL APIENTRY DllMain(
         factoryPtr,
         implPtr);
 
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(error.ToHResult()); }
+    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
 
     Common::ComPointer<IFabricNativeImageStoreClient> comPtr = Api::ComNativeImageStoreClient::CreateComNativeImageStoreClient(implPtr);
 
@@ -114,14 +114,12 @@ HRESULT ArchiveApplicationPackage(
     LPCWSTR appPackageRootDirectory,
     IFabricNativeImageStoreProgressEventHandler const * progressHandler)
 {
-    std::wstring dir;
-    auto hr = Common::StringUtility::LpcwstrToWstring(appPackageRootDirectory, false, dir);
-    if (FAILED(hr)) { return Common::ComUtility::OnPublicApiReturn(hr); }
+    TRY_COM_PARSE_PUBLIC_STRING2( appPackageRootDirectory )
 
-    hr = Management::ImageStore::ImageStoreUtility::ArchiveApplicationPackage(
-        dir,
-        WrapperFactory::create_rooted_com_proxy(const_cast<IFabricNativeImageStoreProgressEventHandler*>(progressHandler))).ToHResult();
-    return Common::ComUtility::OnPublicApiReturn(hr);
+    auto error = Management::ImageStore::ImageStoreUtility::ArchiveApplicationPackage(
+        parsed_appPackageRootDirectory,
+        WrapperFactory::create_rooted_com_proxy(const_cast<IFabricNativeImageStoreProgressEventHandler*>(progressHandler)));
+    return Common::ComUtility::OnPublicApiReturn(move(error));
 }
 
 HRESULT TryExtractApplicationPackage(
@@ -134,22 +132,20 @@ HRESULT TryExtractApplicationPackage(
         return Common::ComUtility::OnPublicApiReturn(E_POINTER);
     }
 
-    std::wstring dir;
-    auto hr = Common::StringUtility::LpcwstrToWstring(appPackageRootDirectory, false, dir);
-    if (FAILED(hr)) { return Common::ComUtility::OnPublicApiReturn(hr); }
+    TRY_COM_PARSE_PUBLIC_STRING2( appPackageRootDirectory )
 
     bool result = false;
-    hr = Management::ImageStore::ImageStoreUtility::TryExtractApplicationPackage(
-        dir, 
+    auto error = Management::ImageStore::ImageStoreUtility::TryExtractApplicationPackage(
+        parsed_appPackageRootDirectory, 
         WrapperFactory::create_rooted_com_proxy(const_cast<IFabricNativeImageStoreProgressEventHandler*>(progressHandler)),
-        result).ToHResult();
+        result);
 
-    if (SUCCEEDED(hr))
+    if (error.IsSuccess())
     {
         *archiveExists = result ? TRUE : FALSE;
     }
 
-    return Common::ComUtility::OnPublicApiReturn(hr);
+    return Common::ComUtility::OnPublicApiReturn(move(error));
 }
 
 HRESULT GenerateSfpkg(
@@ -159,26 +155,16 @@ HRESULT GenerateSfpkg(
     LPCWSTR sfPkgName,
     IFabricStringResult ** sfPkgFilePath)
 {
-    ErrorCode error(ErrorCodeValue::Success);
-
-    std::wstring appPackageDir;
-    error = Common::StringUtility::LpcwstrToWstring2(appPackageRootDirectory, false, appPackageDir);
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
-
-    std::wstring destDir;
-    error = Common::StringUtility::LpcwstrToWstring2(destinationDirectory, false, destDir);
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
-
-    std::wstring sfPkg;
-    error = Common::StringUtility::LpcwstrToWstring2(sfPkgName, true, sfPkg);
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
+    TRY_COM_PARSE_PUBLIC_STRING2( appPackageRootDirectory )
+    TRY_COM_PARSE_PUBLIC_STRING2( destinationDirectory )
+    TRY_COM_PARSE_PUBLIC_STRING_ALLOW_NULL2( sfPkgName )
 
     std::wstring result;
-    error = Management::ImageStore::ImageStoreUtility::GenerateSfpkg(
-        appPackageDir,
-        destDir,
+    auto error = Management::ImageStore::ImageStoreUtility::GenerateSfpkg(
+        parsed_appPackageRootDirectory,
+        parsed_destinationDirectory,
         (applyCompression == TRUE),
-        sfPkg,
+        parsed_sfPkgName,
         result);
     if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
 
@@ -189,18 +175,11 @@ HRESULT ExpandSfpkg(
     LPCWSTR sfPkgFilePath,
     LPCWSTR appPackageRootDirectory)
 {
-    ErrorCode error(ErrorCodeValue::Success);
+    TRY_COM_PARSE_PUBLIC_STRING2( sfPkgFilePath )
+    TRY_COM_PARSE_PUBLIC_STRING2( appPackageRootDirectory )
 
-    std::wstring sfPkg;
-    error = Common::StringUtility::LpcwstrToWstring2(sfPkgFilePath, false, sfPkg);
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
-
-    std::wstring destDir;
-    error = Common::StringUtility::LpcwstrToWstring2(appPackageRootDirectory, false, destDir);
-    if (!error.IsSuccess()) { return Common::ComUtility::OnPublicApiReturn(move(error)); }
-
-    error = Management::ImageStore::ImageStoreUtility::ExpandSfpkg(
-        sfPkg,
-        destDir);
+    auto error = Management::ImageStore::ImageStoreUtility::ExpandSfpkg(
+        parsed_sfPkgFilePath,
+        parsed_appPackageRootDirectory);
     return Common::ComUtility::OnPublicApiReturn(move(error));
 }

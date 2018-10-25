@@ -66,7 +66,7 @@ namespace LoggingReplicatorTests
                     return;
                 }
 
-                Sleep(10);
+                Sleep(100);
             }
         }
 
@@ -360,7 +360,8 @@ namespace LoggingReplicatorTests
                 InnerLogManager->CurrentLogTailRecord->Lsn,
                 replicatedLogManager_->LastLinkedPhysicalRecord.RawPtr(), 
                 *invalidRecords.Inv_PhysicalLogRecord,
-                false,
+                false,  // isStable
+                0,      // Zero periodic truncation timestamp
                 allocator);
 
             replicatedLogManager_->InsertTruncateHeadCallerHoldsLock(*truncateHead, *replicatedLogManager_->LastIndexRecord);
@@ -1386,6 +1387,8 @@ namespace LoggingReplicatorTests
                 linkedPhysicalRecord.RawPtr(),
                 *invalidRecords_->Inv_PhysicalLogRecord,
                 *backupLogRecord,
+                0,
+                0,
                 0,
                 allocator);
 

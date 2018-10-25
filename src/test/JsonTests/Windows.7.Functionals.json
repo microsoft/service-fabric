@@ -5,7 +5,7 @@
     {
       "Name": "EndToEndSmokeTestServiceFabric",
       "Type": "V2_ScriptTest",
-      "Owners": "anmola,rsinha",
+      "Owners": "lemai",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win7Test",
       "TestExecutionParameters": {        
@@ -20,7 +20,7 @@
     {
       "Name": "DCollections",
       "Type": "V2_ScriptTest",
-      "Owners": "tyadam, richhas",
+      "Owners": "tyadam,yzha,rajak",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win7Test",
       "TestExecutionParameters": {
@@ -32,9 +32,9 @@
       }
     },
     {
-      "Name": "Backup-CIT",
+      "Name": "Backup-CIT_Win7",
       "Type": "V2_ScriptTest",
-      "Owners": "mcoskun, richhas",
+      "Owners": "zhol,rajak",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win7Test",
       "TestExecutionParameters": {
@@ -49,7 +49,7 @@
     {
       "Name": "Func_Unreliable_Random",
       "Type": "RandomTest",
-      "Owners": "aprameyr,anuragg",
+      "Owners": "manojsi,chuxin",
       "Environment": "Iaas",
       "ResourcesRequired": "Server:1;Group=Win7Test",
       "TestExecutionParameters": {

@@ -1,3 +1,5 @@
+add_subdirectory (managed)
+add_subdirectory (pal)
 add_subdirectory (Common)
 add_subdirectory (Federation)
 add_subdirectory (Hosting2)

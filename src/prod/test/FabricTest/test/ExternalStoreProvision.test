@@ -253,6 +253,9 @@ query GetApplicationTypePagedList expectempty=true
 #set ImageBuilderExeRunDelay 0
 set ImageBuilderJobQueueDelay 0
 
+# Increase the timeout for provision, since it may take longer to download all packages
+set NamingOperationTimeout 300
+
 # Provision some versions through image store
 app.add AltTestApp1V1 AltTestApp1 V1
 app.clear AltTestApp1V1

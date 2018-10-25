@@ -17,6 +17,7 @@ namespace UtilitiesTests
     {
     public:
         Common::CommonConfig config; // load the config object as its needed for the tracing to work
+        Common::StringLiteral const BinaryReaderWriterTestTrace = "BinaryReaderWriterTest";
 
         BinaryReaderWriterTest()
         {
@@ -518,6 +519,65 @@ namespace UtilitiesTests
         CODING_ERROR_ASSERT(writeValue3 == readValue3);
         CODING_ERROR_ASSERT(writeValue4 == readValue4);
         CODING_ERROR_ASSERT(writeValue5 == readValue5);
+    }
+
+    BOOST_AUTO_TEST_CASE(Verify_Padding_Cursor_Behavior)
+    {
+        KAllocator& allocator = BinaryReaderWriterTest::GetAllocator();
+
+        BinaryWriter writer(allocator);
+        CODING_ERROR_ASSERT(NT_SUCCESS(writer.Status()));
+
+        Trace.WriteInfo(
+            BinaryReaderWriterTestTrace,
+            "Initial writer.Position = {0}, writer.Size = {1}",
+            writer.Position,
+            writer.Test_Size);
+
+        unsigned char dummy = '\0';
+        ULONG targetWriterSize = 93;
+        ULONG finalCursorPosition = targetWriterSize + 3;
+
+        while (writer.Test_Size != targetWriterSize)
+        {
+            writer.Write(&dummy);
+
+            Trace.WriteInfo(
+                BinaryReaderWriterTestTrace,
+                "writer.Position = {0}, writer.Size = {1}",
+                writer.Position,
+                writer.Test_Size);
+        }
+
+        Trace.WriteInfo(
+            BinaryReaderWriterTestTrace,
+            "Final writer.Position = {0}, writer.Size = {1}",
+            writer.Position,
+            writer.Test_Size);
+
+        CODING_ERROR_ASSERT(writer.Test_Size == targetWriterSize);
+        CODING_ERROR_ASSERT(writer.Test_Size == writer.Position);
+
+        
+        // Set the cursor to 1 below the current total size
+        // Current size = 93, Cursor position = 92
+        writer.Position = targetWriterSize - 1;
+
+        /*
+         #11444928:Throwing coding error - BinaryWriter:set_Position memchannel cursor 95 is not equal to value 96 
+
+         Repro:
+         1. Set the position to target size + 3 (96), ensuring that padding is necessary
+         2. Difference will be calculated as 3, 3 KMemChannel::Write operations performed
+         3. Cursor position would be incremented by 3. 1 for every KMemChannel::Write.
+         4. Final cursor position = 95, not 96. and BinaryWriter asserts that the target position != cursor
+
+         Fix:
+          Set cursor position == total size if padding is necessary, ensuring cursor position aligns with total size
+        */
+
+        writer.Position = finalCursorPosition;
+        CODING_ERROR_ASSERT(writer.Position == finalCursorPosition);
     }
 
     BOOST_AUTO_TEST_SUITE_END()

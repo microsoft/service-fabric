@@ -12,6 +12,7 @@ using namespace ServiceModel;
 using namespace Management::ClusterManager;
 using namespace Management::FaultAnalysisService;
 using namespace Management::UpgradeOrchestrationService;
+using namespace Management::CentralSecretService;
 using namespace Naming;
 
 StringLiteral const TraceComponent("ComFabricClient");
@@ -279,10 +280,10 @@ public:
             errorMessage = error.TakeMessage();
             return error.ToHResult();
         }
-        
+
         return S_OK;
     }
- 
+
     static HRESULT End(__in IFabricAsyncOperationContext * context)
     {
         if (context == NULL) { return E_POINTER; }
@@ -3334,6 +3335,7 @@ public:
 
     HRESULT Initialize(
         __in FABRIC_URI serviceName,
+        bool fetchCached,
         __in DWORD timeoutMilliSeconds,
         __in IFabricAsyncOperationCallback * callback)
     {
@@ -3343,6 +3345,7 @@ public:
         hr = NamingUri::TryParse(serviceName, Constants::FabricClientTrace, serviceName_);
         if (FAILED(hr)) { return hr; }
 
+        fetchCached_ = fetchCached;
         return S_OK;
     }
 
@@ -3357,24 +3360,27 @@ public:
         {
             thisOperation->description_->QueryInterface(IID_IFabricServiceDescriptionResult, reinterpret_cast<void**>(result));
         }
+
         return hr;
     }
 
     virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
     {
-        auto operation = Owner.serviceMgmtClient_->BeginGetServiceDescription(
-            serviceName_,
-            Timeout,
-            [this](AsyncOperationSPtr const & operation)
-            {
-                this->OnComplete(operation);
-            },
-            proxySPtr);
+        if (fetchCached_)
+        {
+            this->FetchFromCache(proxySPtr);
+        }
+        else
+        {
+            this->FetchFromNamingService(proxySPtr);
+        }
     }
 
 private:
-    void OnComplete(__in AsyncOperationSPtr const& operation)
+    void OnComplete(__in AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously)
     {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
         Naming::PartitionedServiceDescriptor psd;
         auto error = Owner.serviceMgmtClient_->EndGetServiceDescription(operation, psd);
 
@@ -3382,11 +3388,54 @@ private:
         {
             description_ = make_com<ComServiceDescriptionResult, IFabricServiceDescriptionResult>(move(psd));
         }
-        TryComplete(operation->Parent, error);
+
+        TryComplete(operation->Parent, move(error));
+    }
+
+    void OnCompleteFromCache(__in AsyncOperationSPtr const& operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+        Naming::PartitionedServiceDescriptor psd;
+        auto error = Owner.serviceMgmtClient_->EndGetCachedServiceDescription(operation, psd);
+
+        if (error.IsSuccess())
+        {
+            description_ = make_com<ComServiceDescriptionResult, IFabricServiceDescriptionResult>(move(psd));
+        }
+
+        TryComplete(operation->Parent, move(error));
+    }
+
+    void FetchFromCache(AsyncOperationSPtr const & proxySPtr)
+    {
+        auto operation = Owner.serviceMgmtClient_->BeginGetCachedServiceDescription(
+            serviceName_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnCompleteFromCache(operation, false);
+        },
+            proxySPtr);
+        this->OnCompleteFromCache(operation, true);
+    }
+
+    void FetchFromNamingService(AsyncOperationSPtr const & proxySPtr)
+    {
+        auto operation = Owner.serviceMgmtClient_->BeginGetServiceDescription(
+            serviceName_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnComplete(operation, false);
+        },
+            proxySPtr);
+        this->OnComplete(operation, true);
     }
 
     NamingUri serviceName_;
     Common::ComPointer<IFabricServiceDescriptionResult> description_;
+    bool fetchCached_;
 };
 
 // {abb25877-1fed-46ac-9ba7-7e9434a9f926}
@@ -6764,6 +6813,253 @@ private:
     IFabricUpgradeOrchestrationServiceStateResultPtr serviceStateResultPtr_;
 };
 
+// {57C06174-BE24-4C23-98F9-3229966D81B1}
+static const GUID CLSID_ComFabricClient_GetSecretsAsyncOperation =
+{ 0x57c06174, 0xbe24, 0x4c23,{ 0x98, 0xf9, 0x32, 0x29, 0x96, 0x6d, 0x81, 0xb1 } };
+
+class ComFabricClient::GetSecretsAsyncOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(GetSecretsAsyncOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            GetSecretsAsyncOperation,
+            CLSID_ComFabricClient_GetSecretsAsyncOperation,
+            GetSecretsAsyncOperation,
+            ComAsyncOperationContext)
+public:
+
+    GetSecretsAsyncOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+    {
+    }
+
+    virtual ~GetSecretsAsyncOperation() {};
+
+    HRESULT Initialize(
+        __in FABRIC_SECRET_REFERENCE_LIST const *secretReferences,
+        __in BOOLEAN includeValue,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback,
+        __out wstring & errorMessage)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = this->description_.FromPublicApi(secretReferences, includeValue);
+        if (!error.IsSuccess())
+        {
+            errorMessage = error.TakeMessage();
+            return error.ToHResult();
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, IFabricSecretsResult **result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<GetSecretsAsyncOperation> thisOperation(context, CLSID_ComFabricClient_GetSecretsAsyncOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricSecretsResult> secretsResult = make_com<ComSecretsResult, IFabricSecretsResult>(
+                thisOperation->result_);
+            *result = secretsResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.secretStoreClient_->BeginGetSecrets(
+            description_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnGetSecretsComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+    void OnGetSecretsComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.secretStoreClient_->EndGetSecrets(operation, result_);
+        TryComplete(operation->Parent, move(error));
+    }
+
+    GetSecretsDescription description_;
+    SecretsDescription result_;
+};
+
+// {E782934F-4186-4CD8-9E6B-D4F94C530AB9}
+static const GUID CLSID_ComFabricClient_SetSecretsAsyncOperation =
+{ 0xe782934f, 0x4186, 0x4cd8,{ 0x9e, 0x6b, 0xd4, 0xf9, 0x4c, 0x53, 0xa, 0xb9 } };
+
+class ComFabricClient::SetSecretsAsyncOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(SetSecretsAsyncOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            SetSecretsAsyncOperation,
+            CLSID_ComFabricClient_SetSecretsAsyncOperation,
+            SetSecretsAsyncOperation,
+            ComAsyncOperationContext)
+public:
+
+    SetSecretsAsyncOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+    {
+    }
+
+    virtual ~SetSecretsAsyncOperation() {};
+
+    HRESULT Initialize(
+        __in FABRIC_SECRET_LIST const * secrets,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback,
+        __out wstring & errorMessage)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = this->description_.FromPublicApi(secrets);
+        if (!error.IsSuccess())
+        {
+            errorMessage = error.TakeMessage();
+            return error.ToHResult();
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, IFabricSecretReferencesResult **result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<SetSecretsAsyncOperation> thisOperation(context, CLSID_ComFabricClient_SetSecretsAsyncOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricSecretReferencesResult> secretReferencesResult = make_com<ComSecretReferencesResult, IFabricSecretReferencesResult>(
+                thisOperation->result_);
+            *result = secretReferencesResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.secretStoreClient_->BeginSetSecrets(
+            description_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnSetSecretsComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+    void OnSetSecretsComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.secretStoreClient_->EndSetSecrets(operation, result_);
+        TryComplete(operation->Parent, move(error));
+    }
+
+    SecretsDescription description_;
+    SecretReferencesDescription result_;
+};
+
+// {D1A35E10-27B3-41DB-92BA-1541756BFA9E}
+static const GUID CLSID_ComFabricClient_RemoveSecretsAsyncOperation =
+{ 0xd1a35e10, 0x27b3, 0x41db,{ 0x92, 0xba, 0x15, 0x41, 0x75, 0x6b, 0xfa, 0x9e } };
+
+class ComFabricClient::RemoveSecretsAsyncOperation :
+    public ComFabricClient::ClientAsyncOperation
+{
+    DENY_COPY(RemoveSecretsAsyncOperation)
+
+        COM_INTERFACE_AND_DELEGATE_LIST(
+            RemoveSecretsAsyncOperation,
+            CLSID_ComFabricClient_RemoveSecretsAsyncOperation,
+            RemoveSecretsAsyncOperation,
+            ComAsyncOperationContext)
+public:
+
+    RemoveSecretsAsyncOperation(ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+    {
+    }
+
+    virtual ~RemoveSecretsAsyncOperation() {};
+
+    HRESULT Initialize(
+        __in FABRIC_SECRET_REFERENCE_LIST const * secretReferences,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback,
+        __out wstring & errorMessage)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = this->description_.FromPublicApi(secretReferences);
+        if (!error.IsSuccess())
+        {
+            errorMessage = error.TakeMessage();
+            return error.ToHResult();
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(__in IFabricAsyncOperationContext * context, IFabricSecretReferencesResult **result)
+    {
+        if (context == NULL || result == NULL) { return E_POINTER; }
+
+        ComPointer<RemoveSecretsAsyncOperation> thisOperation(context, CLSID_ComFabricClient_RemoveSecretsAsyncOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+        if (SUCCEEDED(hr))
+        {
+            Common::ComPointer<IFabricSecretReferencesResult> secretReferencesResult = make_com<ComSecretReferencesResult, IFabricSecretReferencesResult>(
+                thisOperation->result_);
+            *result = secretReferencesResult.DetachNoRelease();
+        }
+
+        return hr;
+    }
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        Owner.secretStoreClient_->BeginRemoveSecrets(
+            description_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnRemoveSecretsComplete(operation);
+        },
+            proxySPtr);
+    }
+
+private:
+    void OnRemoveSecretsComplete(__in AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.secretStoreClient_->EndRemoveSecrets(operation, result_);
+        TryComplete(operation->Parent, move(error));
+    }
+
+    SecretReferencesDescription description_;
+    SecretReferencesDescription result_;
+};
+
 // {4a7b27f4-1ca0-43a3-8657-257bd8c1eae1}
 static const GUID CLSID_ComFabricClient_InvokeDataLossAsyncOperation =
 { 0x4a7b27f4, 0x1ca0, 0x43a3, { 0x86, 0x57, 0x25, 0x7b, 0xd8, 0xc1, 0xea, 0xe1 } };
@@ -7809,7 +8105,7 @@ public:
         REFIID riid,
         void ** result)
     {
-        if (context == NULL || result == NULL) { return E_POINTER; }
+        if (context == nullptr || result == nullptr) { return E_POINTER; }
 
         ComPointer<GetChaosReportAsyncOperation> thisOperation(context, CLSID_ComFabricClient_GetChaosReportAsyncOperation);
 
@@ -7849,6 +8145,332 @@ private:
 
     GetChaosReportDescription getChaosReportDescription_;
     IChaosReportResultPtr chaosReportResultPtr_;
+};
+
+// {5F76A94E-F46F-406A-93EE-93E47D107058}
+static const GUID CLSID_ComFabricClient_GetChaosEventsAsyncOperation =
+{ 0x5f76a94e, 0xf46f, 0x406a, { 0x93, 0xee, 0x93, 0xe4, 0x7d, 0x10, 0x70, 0x58 } };
+
+class ComFabricClient::GetChaosEventsAsyncOperation:
+public ClientAsyncOperation
+{
+    DENY_COPY(GetChaosEventsAsyncOperation)
+
+    COM_INTERFACE_AND_DELEGATE_LIST(
+    GetChaosEventsAsyncOperation,
+    CLSID_ComFabricClient_GetChaosEventsAsyncOperation,
+    GetChaosEventsAsyncOperation,
+    ComAsyncOperationContext)
+
+public:
+    GetChaosEventsAsyncOperation(_In_ ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+    {
+    }
+
+    virtual ~GetChaosEventsAsyncOperation() {};
+
+    HRESULT Initialize(
+        FABRIC_CHAOS_EVENTS_SEGMENT_DESCRIPTION const * publicChaosEventsDescription,
+        _In_ DWORD timeoutMilliSeconds,
+        _In_ IFabricAsyncOperationCallback * callback,
+        _Out_ wstring & errorMessage)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = chaosEventsDescription_.FromPublicApi(*publicChaosEventsDescription);
+
+        if (!error.IsSuccess())
+        {
+            errorMessage = error.TakeMessage();
+            return error.ToHResult();
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(
+        _In_ IFabricAsyncOperationContext * context,
+        REFIID riid,
+        void ** result)
+    {
+        if (context == nullptr || result == nullptr) { return E_POINTER; }
+
+        ComPointer<GetChaosEventsAsyncOperation> thisOperation(context, CLSID_ComFabricClient_GetChaosEventsAsyncOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+
+        if (SUCCEEDED(hr))
+        {
+            auto comPtr = make_com<ComFabricChaosEventsSegmentResult>(thisOperation->chaosEventsSegmentResultPtr_);
+
+            hr = comPtr->QueryInterface(riid, result);
+        }
+
+        return hr;
+    }
+
+protected:
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        auto operation = Owner.testManagementClient_->BeginGetChaosEvents(
+            chaosEventsDescription_,
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+            {
+                this->OnGetChaosEventsComplete(operation);
+            },
+            proxySPtr);
+    }
+
+private:
+    void OnGetChaosEventsComplete(_In_ AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.testManagementClient_->EndGetChaosEvents(operation, chaosEventsSegmentResultPtr_);
+
+        TryComplete(operation->Parent, error);
+    }
+
+    GetChaosEventsDescription chaosEventsDescription_;
+    IChaosEventsSegmentResultPtr chaosEventsSegmentResultPtr_;
+};
+
+// {2933f56c-dcfa-4f14-9ba6-1d99f3ed5f44}
+static const GUID CLSID_ComFabricClient_GetChaosAsyncOperation =
+{ 0x2933f56c, 0xdcfa, 0x4f14, { 0x9b, 0xa6, 0x1d, 0x99, 0xf3, 0xed, 0x5f, 0x44 } };
+
+class ComFabricClient::GetChaosAsyncOperation :
+public ClientAsyncOperation
+{
+    DENY_COPY(GetChaosAsyncOperation);
+    COM_INTERFACE_AND_DELEGATE_LIST(
+        GetChaosAsyncOperation,
+        CLSID_ComFabricClient_GetChaosAsyncOperation,
+        GetChaosAsyncOperation,
+        ComAsyncOperationContext)
+
+public:
+
+    GetChaosAsyncOperation(_In_ ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+    {
+    }
+
+    virtual ~GetChaosAsyncOperation() {};
+
+    HRESULT Initialize(
+        _In_ DWORD timeoutMilliSeconds,
+        _In_ IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        return S_OK;
+    }
+
+    static HRESULT End(
+        _In_ IFabricAsyncOperationContext * context,
+        REFIID riid,
+        void ** result)
+    {
+        if (context == nullptr || result == nullptr) { return E_POINTER; }
+        ComPointer<GetChaosAsyncOperation> thisOperation(context, CLSID_ComFabricClient_GetChaosAsyncOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+
+        if (SUCCEEDED(hr))
+        {
+            auto comPtr = make_com<ComFabricChaosDescriptionResult>(thisOperation->chaosDescriptionResultPtr_);
+
+            hr = comPtr->QueryInterface(riid, result);
+        }
+
+        return hr;
+    }
+
+protected:
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        auto operation = Owner.testManagementClient_->BeginGetChaos(
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+            {
+                this->OnGetChaosComplete(operation);
+            },
+            proxySPtr);
+    }
+
+private:
+
+    void OnGetChaosComplete(_In_ AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.testManagementClient_->EndGetChaos(operation, chaosDescriptionResultPtr_);
+
+        TryComplete(operation->Parent, error);
+    }
+
+    IChaosDescriptionResultPtr chaosDescriptionResultPtr_;
+};
+
+// {463b1bf7-17cd-4756-8e7a-1ee594f3f41a}
+static const GUID CLSID_ComFabricClient_GetChaosScheduleAsyncOperation =
+{ 0x463b1bf7, 0x17cd, 0x4756, { 0x8e, 0x7a, 0x1e, 0xe5, 0x94, 0xf3, 0xf4, 0x1a } };
+
+class ComFabricClient::GetChaosScheduleAsyncOperation :
+public ClientAsyncOperation
+{
+    DENY_COPY(GetChaosScheduleAsyncOperation);
+    COM_INTERFACE_AND_DELEGATE_LIST(
+        GetChaosScheduleAsyncOperation,
+        CLSID_ComFabricClient_GetChaosScheduleAsyncOperation,
+        GetChaosScheduleAsyncOperation,
+        ComAsyncOperationContext)
+
+public:
+
+    GetChaosScheduleAsyncOperation(_In_ ComFabricClient& owner)
+        : ClientAsyncOperation(owner)
+    {
+    }
+
+    virtual ~GetChaosScheduleAsyncOperation() {};
+
+    HRESULT Initialize(
+        _In_ DWORD timeoutMilliSeconds,
+        _In_ IFabricAsyncOperationCallback * callback)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        return S_OK;
+    }
+
+    static HRESULT End(
+        _In_ IFabricAsyncOperationContext * context,
+        REFIID riid,
+        void ** result)
+    {
+        if (context == nullptr || result == nullptr) { return E_POINTER; }
+        ComPointer<GetChaosScheduleAsyncOperation> thisOperation(context, CLSID_ComFabricClient_GetChaosScheduleAsyncOperation);
+
+        auto hr = thisOperation->ComAsyncOperationContextEnd();
+
+        if (SUCCEEDED(hr))
+        {
+            auto comPtr = make_com<ComFabricChaosScheduleDescriptionResult>(thisOperation->chaosScheduleDescriptionResultPtr_);
+
+            hr = comPtr->QueryInterface(riid, result);
+        }
+
+        return hr;
+    }
+
+protected:
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
+    {
+        auto operation = Owner.testManagementClient_->BeginGetChaosSchedule(
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+            {
+                this->OnGetChaosScheduleComplete(operation);
+            },
+            proxySPtr);
+    }
+
+private:
+
+    void OnGetChaosScheduleComplete(_In_ AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.testManagementClient_->EndGetChaosSchedule(operation, chaosScheduleDescriptionResultPtr_);
+
+        TryComplete(operation->Parent, error);
+    }
+
+    IChaosScheduleDescriptionResultPtr chaosScheduleDescriptionResultPtr_;
+};
+
+
+// {023188B4-48A9-43F1-8CCB-A572A30A0FDA}
+static const GUID CLSID_ComFabricClient_SetChaosScheduleAsyncOperation =
+{ 0x023188b4, 0x48a9, 0x34f1, { 0x8c, 0xcb, 0xa5, 0x72, 0xa3, 0x0a, 0x0f, 0xda} };
+
+class ComFabricClient::SetChaosScheduleAsyncOperation :
+public ClientAsyncOperation
+{
+    DENY_COPY(SetChaosScheduleAsyncOperation);
+    COM_INTERFACE_AND_DELEGATE_LIST(
+        SetChaosScheduleAsyncOperation,
+        CLSID_ComFabricClient_SetChaosScheduleAsyncOperation,
+        SetChaosScheduleAsyncOperation,
+        ComAsyncOperationContext)
+
+public:
+
+    SetChaosScheduleAsyncOperation(_In_ ComFabricClient& owner)
+        : ClientAsyncOperation(owner),
+        setChaosScheduleDescription_()
+    {
+    }
+
+    virtual ~SetChaosScheduleAsyncOperation() {};
+
+    HRESULT Initialize(
+        FABRIC_CHAOS_SERVICE_SCHEDULE_DESCRIPTION const * publicSetChaosScheduleDescription,
+        __in DWORD timeoutMilliSeconds,
+        __in IFabricAsyncOperationCallback * callback,
+        __out wstring & errorMessage)
+    {
+        HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
+        if (FAILED(hr)) { return hr; }
+
+        auto error = setChaosScheduleDescription_.FromPublicApi(*publicSetChaosScheduleDescription);
+
+        if (!error.IsSuccess())
+        {
+            errorMessage = error.TakeMessage();
+            return error.ToHResult();
+        }
+
+        return S_OK;
+    }
+
+    static HRESULT End(
+        _In_ IFabricAsyncOperationContext * context)
+    {
+        if (context == nullptr) { return E_POINTER; }
+
+        ComPointer<SetChaosScheduleAsyncOperation> thisOperation(context, CLSID_ComFabricClient_SetChaosScheduleAsyncOperation);
+
+        return thisOperation->ComAsyncOperationContextEnd();
+    }
+
+protected:
+
+    virtual void OnStart(AsyncOperationSPtr const & proxySPtr) override
+    {
+        auto operation = Owner.testManagementClient_->BeginSetChaosSchedule(
+            move(setChaosScheduleDescription_),
+            Timeout,
+            [this](AsyncOperationSPtr const & operation)
+            {
+                this->OnComplete(operation);
+            },
+            proxySPtr);
+    }
+
+private:
+
+    void OnComplete(_In_ AsyncOperationSPtr const& operation)
+    {
+        auto error = Owner.testManagementClient_->EndSetChaosSchedule(operation);
+        TryComplete(operation->Parent, error);
+    }
+
+    SetChaosScheduleDescription setChaosScheduleDescription_;
 };
 
 /// IFaultManagementClient
@@ -10257,9 +10879,7 @@ class ComFabricClient::GetNodeListOperation :
 public:
     GetNodeListOperation(ComFabricClient& owner)
         : ClientAsyncOperation(owner)
-        , nodeNameFilter_()
-        , nodeStatusFilter_(FABRIC_QUERY_SERVICE_REPLICA_STATUS_FILTER_DEFAULT)
-        , continuationToken_()
+        , queryDescription_()
         , nodeList_()
         , pagingStatus_()
         , excludeStoppedNodeInfo_(false)
@@ -10277,30 +10897,10 @@ public:
         HRESULT hr = ClientAsyncOperation::Initialize(timeoutMilliSeconds, callback);
         if (FAILED(hr)) { return hr; }
 
-        hr = StringUtility::LpcwstrToWstring(
-            queryDescription->NodeNameFilter,
-            true /* acceptNull */,
-            ParameterValidator::MinStringSize,
-            ParameterValidator::MaxStringSize,
-            nodeNameFilter_);
-        if (FAILED(hr)) { return hr; }
-
-        if (queryDescription->Reserved != NULL)
+        auto error = queryDescription_.FromPublicApi(*queryDescription);
+        if (!error.IsSuccess())
         {
-            auto ex1 = reinterpret_cast<FABRIC_NODE_QUERY_DESCRIPTION_EX1*>(queryDescription->Reserved);
-            hr = StringUtility::LpcwstrToWstring(
-                ex1->ContinuationToken,
-                true /* acceptNull */,
-                ParameterValidator::MinStringSize,
-                ParameterValidator::MaxStringSize,
-                continuationToken_);
-            if (FAILED(hr)) { return hr; }
-
-            if (ex1->Reserved != NULL)
-            {
-                auto ex2 = reinterpret_cast<FABRIC_NODE_QUERY_DESCRIPTION_EX2*>(ex1->Reserved);
-                nodeStatusFilter_ = ex2->NodeStatusFilter;
-            }
+            return ComUtility::OnPublicApiReturn(error.ToHResult());
         }
 
         excludeStoppedNodeInfo_ = excludeStoppedNodeInfo == 0 ? false : true;
@@ -10345,10 +10945,8 @@ public:
     virtual void OnStart(AsyncOperationSPtr const & proxySPtr)
     {
        Owner.queryClient_->BeginGetNodeList(
-            nodeNameFilter_,
-            nodeStatusFilter_,
+            queryDescription_,
             excludeStoppedNodeInfo_,
-            continuationToken_,
             Timeout,
             [this](AsyncOperationSPtr const & operation)
             {
@@ -10365,9 +10963,7 @@ private:
     }
 
 private:
-    wstring nodeNameFilter_;
-    DWORD nodeStatusFilter_;
-    wstring continuationToken_;
+    NodeQueryDescription queryDescription_;
     vector<NodeQueryResult> nodeList_;
     PagingStatusUPtr pagingStatus_;
     bool excludeStoppedNodeInfo_;
@@ -13429,6 +14025,9 @@ HRESULT ComFabricClient::Initialize()
     error = factoryPtr_->CreateComposeManagementClient(composeMgmtClient_);
     if (!error.IsSuccess()) { return error.ToHResult(); }
 
+    error = factoryPtr_->CreateSecretStoreClient(secretStoreClient_);
+    if (!error.IsSuccess()) { return error.ToHResult(); }
+
     return S_OK;
 }
 
@@ -15523,6 +16122,7 @@ HRESULT ComFabricClient::BeginGetServiceDescription(
 
     HRESULT hr = operation->Initialize(
         name,
+        false, // Do not fetch from cache.
         timeoutMilliseconds,
         callback);
 
@@ -15533,6 +16133,38 @@ HRESULT ComFabricClient::BeginGetServiceDescription(
 }
 
 HRESULT ComFabricClient::EndGetServiceDescription(
+    /* [in] */ IFabricAsyncOperationContext *context,
+    /* [retval][out] */ IFabricServiceDescriptionResult **result)
+{
+    return ComUtility::OnPublicApiReturn(GetServiceDescriptionOperation::End(context, result));
+}
+
+HRESULT ComFabricClient::BeginGetCachedServiceDescription(
+    /* [in] */ FABRIC_URI name,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ IFabricAsyncOperationContext **context)
+{
+    if (context == NULL || name == NULL)
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    ComPointer<GetServiceDescriptionOperation> operation = make_com<GetServiceDescriptionOperation>(*this);
+
+    HRESULT hr = operation->Initialize(
+        name,
+        true, // fetch from cache.
+        timeoutMilliseconds,
+        callback);
+
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+
+}
+
+HRESULT ComFabricClient::EndGetCachedServiceDescription(
     /* [in] */ IFabricAsyncOperationContext *context,
     /* [retval][out] */ IFabricServiceDescriptionResult **result)
 {
@@ -16817,6 +17449,10 @@ HRESULT ComFabricClient::BeginStopChaos(
     /* [in] */ IFabricAsyncOperationCallback * callback,
     /* [out, retval] */ IFabricAsyncOperationContext ** context)
 {
+    Trace.WriteInfo(
+        TraceComponent,
+        "Enter ComFabricClient::BeginStopChaos");
+
     if (context == NULL)
     {
         return ComUtility::OnPublicApiReturn(E_POINTER);
@@ -16845,13 +17481,16 @@ HRESULT ComFabricClient::BeginGetChaosReport(
     /* [in] */ IFabricAsyncOperationCallback *callback,
     /* [retval][out] */ IFabricAsyncOperationContext **context)
 {
+    Trace.WriteInfo(
+        TraceComponent,
+        "Enter ComFabricClient::BeginGetChaosReport");
+
     if (getChaosReportDescription == NULL || context == NULL)
     {
         return ComUtility::OnPublicApiReturn(E_POINTER);
     }
 
-    ComPointer<GetChaosReportAsyncOperation> operation =
-        make_com<GetChaosReportAsyncOperation>(*this);
+    ComPointer<GetChaosReportAsyncOperation> operation = make_com<GetChaosReportAsyncOperation>(*this);
 
     wstring errorMessage;
     HRESULT hr = operation->Initialize(
@@ -16869,6 +17508,142 @@ HRESULT ComFabricClient::EndGetChaosReport(
     /* [retval][out] */ IFabricChaosReportResult **result)
 {
     return ComUtility::OnPublicApiReturn(GetChaosReportAsyncOperation::End(context, IID_IFabricChaosReportResult, reinterpret_cast<void**>(result)));
+}
+
+HRESULT ComFabricClient::BeginGetChaos(
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ IFabricAsyncOperationContext **context)
+{
+    Trace.WriteInfo(
+        TraceComponent,
+        "Enter ComFabricClient::BeginGetChaos");
+
+    ComPointer<GetChaosAsyncOperation> operation = make_com<GetChaosAsyncOperation>(*this);
+
+    wstring errorMessage;
+    HRESULT hr = operation->Initialize(timeoutMilliseconds, callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetChaos(
+    /* [in] */ IFabricAsyncOperationContext *context,
+    /* [retval][out] */ IFabricChaosDescriptionResult **result)
+{
+    return ComUtility::OnPublicApiReturn(
+        GetChaosAsyncOperation::End(
+            context,
+            IID_IFabricChaosDescriptionResult,
+            reinterpret_cast<void**>(result)));
+}
+
+HRESULT ComFabricClient::BeginGetChaosSchedule(
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback * callback,
+    /* [retval, out] */ IFabricAsyncOperationContext ** context)
+{
+    Trace.WriteInfo(
+        TraceComponent,
+        "Enter ComFabricClient::BeginGetChaosSchedule");
+
+    ComPointer<GetChaosScheduleAsyncOperation> operation = make_com<GetChaosScheduleAsyncOperation>(*this);
+
+    wstring errorMessage;
+    HRESULT hr = operation->Initialize(
+        timeoutMilliseconds,
+        callback);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetChaosSchedule(
+    /* [in] */ IFabricAsyncOperationContext *context,
+    /* [retval, out] */ IFabricChaosScheduleDescriptionResult **result)
+{
+    return ComUtility::OnPublicApiReturn(
+        GetChaosScheduleAsyncOperation::End(
+            context,
+            IID_IFabricChaosScheduleDescriptionResult,
+            reinterpret_cast<void**>(result)));
+}
+
+HRESULT ComFabricClient::BeginSetChaosSchedule(
+    /* [in] */ const FABRIC_CHAOS_SERVICE_SCHEDULE_DESCRIPTION* setChaosScheduleDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval, out] */ IFabricAsyncOperationContext **context)
+{
+    Trace.WriteInfo(
+        TraceComponent,
+        "Enter ComFabricClient::BeginSetChaosSchedule");
+
+    if (setChaosScheduleDescription == NULL || context == NULL)
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    ComPointer<SetChaosScheduleAsyncOperation> operation = make_com<SetChaosScheduleAsyncOperation>(*this);
+
+    wstring errorMessage;
+    HRESULT hr = operation->Initialize(
+        setChaosScheduleDescription,
+        timeoutMilliseconds,
+        callback,
+        errorMessage);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr, move(errorMessage)); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndSetChaosSchedule(
+    /* [in] */ IFabricAsyncOperationContext *context)
+{
+
+    return ComUtility::OnPublicApiReturn(
+        SetChaosScheduleAsyncOperation::End(context));
+}
+
+HRESULT ComFabricClient::BeginGetChaosEvents(
+    /* [in] */ const FABRIC_CHAOS_EVENTS_SEGMENT_DESCRIPTION * chaosEventsDescription,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ IFabricAsyncOperationContext **context)
+{
+    Trace.WriteInfo(
+        TraceComponent,
+        "Enter ComFabricClient::BeginGetChaosEvents");
+
+    if (chaosEventsDescription == NULL || context == NULL)
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    ComPointer<GetChaosEventsAsyncOperation> operation =
+        make_com<GetChaosEventsAsyncOperation>(*this);
+
+    wstring errorMessage;
+    HRESULT hr = operation->Initialize(
+        chaosEventsDescription,
+        timeoutMilliseconds,
+        callback,
+        errorMessage);
+    if (FAILED(hr)) { return ComUtility::OnPublicApiReturn(hr, move(errorMessage)); }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT ComFabricClient::EndGetChaosEvents(
+    /* [in] */ IFabricAsyncOperationContext *context,
+    /* [retval][out] */ IFabricChaosEventsSegmentResult **result)
+{
+    return ComUtility::OnPublicApiReturn(
+        GetChaosEventsAsyncOperation::End(
+            context,
+            IID_IFabricChaosEventsSegmentResult,
+            reinterpret_cast<void**>(result)));
 }
 
 ///
@@ -19009,6 +19784,113 @@ HRESULT ComFabricClient::EndStartApprovedUpgrades(
     /* [in] */ IFabricAsyncOperationContext * context)
 {
     return ComUtility::OnPublicApiReturn(StartApprovedUpgradesAsyncOperation::End(context));
+}
+
+HRESULT STDMETHODCALLTYPE ComFabricClient::BeginGetSecrets(
+    /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+    /* [in] */ BOOLEAN includeValue,
+    /* [in] */  DWORD timeoutMilliseconds,
+    /* [in] */  IFabricAsyncOperationCallback * callback,
+    /* [retval][out] */ IFabricAsyncOperationContext ** context)
+{
+    if (context == NULL)
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    ComPointer<GetSecretsAsyncOperation> operation = make_com<GetSecretsAsyncOperation>(*this);
+
+    wstring errorMessage;
+
+    HRESULT hr = operation->Initialize(
+        secretReferences,
+        includeValue,
+        timeoutMilliseconds,
+        callback,
+        errorMessage);
+    if (FAILED(hr)) 
+    { 
+        return ComUtility::OnPublicApiReturn(hr, move(errorMessage)); 
+    }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT STDMETHODCALLTYPE ComFabricClient::EndGetSecrets(
+    /* [in] */ IFabricAsyncOperationContext * context,
+    /* [retval][out] */ IFabricSecretsResult ** result)
+{
+    return ComUtility::OnPublicApiReturn(GetSecretsAsyncOperation::End(context, result));
+}
+
+HRESULT STDMETHODCALLTYPE ComFabricClient::BeginSetSecrets(
+    /* [in] */ const FABRIC_SECRET_LIST *secrets,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ IFabricAsyncOperationContext **context)
+{
+    if (context == NULL)
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    ComPointer<SetSecretsAsyncOperation> operation = make_com<SetSecretsAsyncOperation>(*this);
+
+    wstring errorMessage;
+
+    HRESULT hr = operation->Initialize(
+        secrets,
+        timeoutMilliseconds,
+        callback,
+        errorMessage);
+    if (FAILED(hr))
+    {
+        return ComUtility::OnPublicApiReturn(hr, move(errorMessage));
+    }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT STDMETHODCALLTYPE ComFabricClient::EndSetSecrets(
+    /* [in] */ IFabricAsyncOperationContext *context,
+    /* [retval][out] */ IFabricSecretReferencesResult **result)
+{
+    return ComUtility::OnPublicApiReturn(SetSecretsAsyncOperation::End(context, result));
+}
+
+HRESULT STDMETHODCALLTYPE ComFabricClient::BeginRemoveSecrets(
+    /* [in] */ const FABRIC_SECRET_REFERENCE_LIST *secretReferences,
+    /* [in] */ DWORD timeoutMilliseconds,
+    /* [in] */ IFabricAsyncOperationCallback *callback,
+    /* [retval][out] */ IFabricAsyncOperationContext **context)
+{
+    if (context == NULL)
+    {
+        return ComUtility::OnPublicApiReturn(E_POINTER);
+    }
+
+    ComPointer<RemoveSecretsAsyncOperation> operation = make_com<RemoveSecretsAsyncOperation>(*this);
+
+    wstring errorMessage;
+
+    HRESULT hr = operation->Initialize(
+        secretReferences,
+        timeoutMilliseconds,
+        callback,
+        errorMessage);
+    if (FAILED(hr))
+    {
+        return ComUtility::OnPublicApiReturn(hr, move(errorMessage));
+    }
+
+    return ComUtility::OnPublicApiReturn(ComAsyncOperationContext::StartAndDetach(move(operation), context));
+}
+
+HRESULT STDMETHODCALLTYPE ComFabricClient::EndRemoveSecrets(
+    /* [in] */ IFabricAsyncOperationContext *context,
+    /* [retval][out] */ IFabricSecretReferencesResult **result)
+{
+    return ComUtility::OnPublicApiReturn(RemoveSecretsAsyncOperation::End(context, result));
 }
 
 HRESULT ComFabricClient::Upload(

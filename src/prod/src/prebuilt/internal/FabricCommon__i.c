@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the IIDs and CLSIDs */
@@ -107,5 +102,6 @@ MIDL_DEFINE_GUID(IID, IID_IFabricRunLayoutSpecification2,0x10AD836A,0x12E5,0x458
 #ifdef __cplusplus
 }
 #endif
+
 
 

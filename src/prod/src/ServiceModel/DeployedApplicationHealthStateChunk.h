@@ -22,8 +22,8 @@ namespace ServiceModel
             FABRIC_HEALTH_STATE healthState,
             DeployedServicePackageHealthStateChunkList && deployedServicePackageHealthStateChunks);
 
-        DeployedApplicationHealthStateChunk(DeployedApplicationHealthStateChunk && other);
-        DeployedApplicationHealthStateChunk & operator = (DeployedApplicationHealthStateChunk && other);
+        DeployedApplicationHealthStateChunk(DeployedApplicationHealthStateChunk && other) = default;
+        DeployedApplicationHealthStateChunk & operator = (DeployedApplicationHealthStateChunk && other) = default;
 
         virtual ~DeployedApplicationHealthStateChunk();
 

@@ -11,7 +11,8 @@
 #include "LeaseAgentInstance.h"
 #include "Lease/inc/public/leaselayerinc.h"
 
-#define DISK_PROBING_FILE_NAME L"LeaseHeartbeat.tmp"
+#define DISK_PROBE_FILE_NAME L"LeaseHeartbeat.tmp"
+#define DISK_PROBE_REOPEN_FILE_NAME L"LeaseHeartbeatReopen.tmp"
 
 // TODO: LeaseAgent and LeasePartner Source Code will be moving to ~src\Lease\Api directory later.
 
@@ -267,10 +268,12 @@ namespace LeaseWrapper
 #if !defined(PLATFORM_UNIX)
         Common::HHandler maintenanceIntervalChangeHandler_;
         Common::HHandler processAssertExitTimeoutChangeHandler_;
+        Common::HHandler delayLeaseAgentCloseIntervalChangeHandler_;
 #endif
         Common::TimerSPtr heartbeatTimer_; // Timer for disk probing
-        HANDLE diskProbingFileHandle_; // File handle for disk probing
-        Common::ByteBuffer diskProbingBuffer_; // Disk probing buffer
+        HANDLE diskProbeFileHandle_; // File handle for disk probing
+        Common::ByteBuffer diskProbeBuffer_; // Disk probing buffer
         static std::function<void(int, wstring const &, wstring const &)> healthReportCallback_;
+        Common::Random random_;
     };
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ ***********************************************************************************************
+ This file wraps the CoreCLR compilation targets.
+ 
+ Copyright (C) Microsoft Corporation. All rights reserved.
+ ***********************************************************************************************
+ -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="CoreBuild" DependsOnTargets="BeforeBuild;ResolveReferences;AfterBuild" />
+ </Project>

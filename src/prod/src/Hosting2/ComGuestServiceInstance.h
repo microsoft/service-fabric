@@ -7,8 +7,8 @@
 
 namespace Hosting2
 {
-    class ComGuestServiceInstance : 
-        public IFabricStatelessServiceInstance,
+    class ComGuestServiceInstance :
+        public IGuestServiceInstance,
         protected Common::ComUnknownBase,
         Common::TextTraceComponent<Common::TraceTaskCodes::Hosting>
     {
@@ -21,11 +21,11 @@ namespace Hosting2
 
     public:
         ComGuestServiceInstance(
+            IGuestServiceTypeHost & typeHost,
             std::wstring const & serviceName,
             std::wstring const & serviceTypeName,
             Common::Guid const & partitionId,
-            FABRIC_INSTANCE_ID instanceId,
-            std::vector<ServiceModel::EndpointDescription> const & endpointdescriptions);
+            FABRIC_INSTANCE_ID instanceId);
 
         virtual ~ComGuestServiceInstance();
 
@@ -47,18 +47,36 @@ namespace Hosting2
         
         void STDMETHODCALLTYPE Abort(void);
 
-    private:
-        HRESULT SetupEndpointAddresses();
+    public:
+        void OnActivatedCodePackageTerminated(
+            CodePackageEventDescription && eventDesc) override;
 
+        bool Test_IsInstanceFaulted();
+        void Test_SetReplicaFaulted(bool value);
+
+    private:
+        static std::wstring BuildTraceInfo(
+            std::wstring const & serviceName,
+            std::wstring const & serviceTypeName,
+            Common::Guid const & partitionId,
+            ::FABRIC_INSTANCE_ID instanceId);
+
+        void RegisterForEvents();
+        void UnregisterForEvents();
+
+    private:
         class EndpointsJsonWrapper;
 
     private:
+        IGuestServiceTypeHost & typeHost_;
         std::wstring const serviceName_;
         std::wstring const serviceTypeName_;
-        std::wstring const traceId_;
+        std::wstring const serviceTraceInfo_;
         std::wstring endpointsAsJsonStr_;
         Common::Guid const partitionId_;
         ::FABRIC_INSTANCE_ID const instanceId_;
-        std::vector<ServiceModel::EndpointDescription> endpointDescriptions_;
+        Common::atomic_bool hasReportedFault_;
+        ULONGLONG eventRegistrationHandle_;
+        Common::ComPointer<IFabricStatelessServicePartition2> partition_;
     };
 }

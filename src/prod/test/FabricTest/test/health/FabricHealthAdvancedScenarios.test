@@ -1,0 +1,771 @@
+#
+# Tests advanced HealthManager scenarios, like throttle, internal errors sent to reporting component etc. 
+# It bypasses HealthReportingComponent and executes commands directly on the HM primary.
+#
+
+votes 10
+cmservice 3 1
+namingservice 3 1 1
+fmservice 2 1
+
+set DummyPLBEnabled true
+set HealthOperationTimeout 20
+set HealthReportSendInterval 0
+set HealthReportRetrySendInterval 1
+
+# Retry queries frequently to speed up validation for operations executed directly on HM (default is 5 sec)
+set QueryOperationRetryDelay 1
+# Retry queries for longer (default 15 times) to allow time for stabilization (eg. in throttled cases)
+set QueryOperationRetryCount 45
+
+set HealthStoreCleanupInterval 5
+set HealthStoreCleanupGraceInterval 5
+set HealthStoreEntityWithoutSystemReportKeptInterval 60
+set ReportHealthThroughHMPrimary true
+
+# Disable slow commits reports so when test runs under load health isn't impacted
+set SlowCommitCountThreshold 100000
+
+cleantest
++10
++20
++30
++40
++50
++60
+verify
+
+# Wait for all system reports to be received
+queryhealth cluster expectedhealthstate=ok expectedstates=nodes-ok:6;apps-ok:1
+queryhealth application appname=fabric:/System expectedstates=services-ok:3
+queryhealth service servicename=fabric:/System/NamingService expectedstates=partitions-ok:3
+queryhealth service servicename=fabric:/System/ClusterManagerService expectedstates=ok:1
+queryhealth service servicename=fabric:/System/FailoverManagerService expectedstates=ok:1
+
+queryhealthlist nodes expectedstates=ok:6
+# we expect this to be 0 instead of 1 because this query is no longer returning ad hoc and system applications
+queryhealthlist applications expectedstates=ok:0
+queryhealthlist services appname=fabric:/System expectedstates=ok:3
+queryhealthlist partitions servicename=fabric:/System/NamingService expectedstates=ok:3
+queryhealthlist partitions servicename=fabric:/System/ClusterManagerService expectedstates=ok:1
+queryhealthlist partitions servicename=fabric:/System/FailoverManagerService expectedstates=ok:1
+
+checkhm partitions expectedcount=5
+
+# If run with security enabled, nodes will send certificate reports 
+# Wait for those to be received as to not impact the count check below
+!pause 5
+
+!string SvcTypeA1Partition0 31299114-0820-4cbd-8090-3ba86b899db2
+
+###########################################
+# Testcase 0: Throttle
+# 0.1. Test reports dropped on max pending report count reached
+# Only the reports within limits are received, the rest are rejected
+############################################
+checkhm nodes expectedcount=6
+
+set EnableMaxPendingHealthReportSizeEstimation false
+
+set MaxPendingHealthReportCount 3
+reporthealth stress reports=1 reportsPerMessage=10
+checkhm nodes expectedcount=9
+
+set MaxPendingHealthReportCount 1
+reporthealth stress reports=1 reportsPerMessage=2
+checkhm nodes expectedcount=10
+
+set MaxPendingHealthReportCount 3
+reporthealth stress reports=1 reportsPerMessage=3
+checkhm nodes expectedcount=13
+
+reporthealth stress reports=1 reportsPerMessage=1
+checkhm nodes expectedcount=14
+
+# Generate both critical and non-critical reports, critical are counted separately
+set MaxPendingHealthReportCount 1
+reporthealth stress reports=1 reportsPerMessage=4 criticalreports=2
+checkhm nodes expectedcount=16
+
+reporthealth stress reports=1 reportsPerMessage=2 criticalreports=2
+checkhm nodes expectedcount=17
+
+set EnableMaxPendingHealthReportSizeEstimation true
+set MaxPendingHealthReportCount 1000
+
+###########################################
+# Testcase 0.2: Throttle cleanup job items and delete multiple entities.
+# Eventually, all entities should be cleaned up
+############################################
+set MaxPendingHealthCleanupJobCount 1
+
+# Disable check cache consistency, to not interfere with the cleanup throttle for the deleted nodes
+set EnableHealthCacheConsistencyCheck false
+
+checkhm nodes expectedcount=17
+
+# Delete multiple entities, they should be cleaned up when grace period expires
+deletehealth node nodeid=1010 node.instanceid=1 sequencenumber=1 sourceid=System.FabricTest
+deletehealth node nodeid=2010 node.instanceid=1 sequencenumber=1 sourceid=System.FabricTest
+deletehealth node nodeid=3010 node.instanceid=1 sequencenumber=1 sourceid=System.FabricTest
+
+checkhm nodes expectedcount=20
+checkhm nodes expectedcount=19
+checkhm nodes expectedcount=17
+
+checkhmentity node nodeid=1010 state=cleanedup node.instanceid=1
+checkhmentity node nodeid=2010 state=cleanedup node.instanceid=1
+checkhmentity node nodeid=3010 state=cleanedup node.instanceid=1
+
+# Reset configuration changes
+set MaxPendingHealthCleanupJobCount 1024
+set EnableHealthCacheConsistencyCheck true
+
+###########################################
+# 0.3. Test reports dropped on max pending report size reached
+# Only the reports within limits are received, the rest are rejected
+############################################
+checkhm nodes expectedcount=17
+
+set EnableMaxPendingHealthReportSizeEstimation true
+
+# one stress report has ~486-525 bytes, so only 3 reports should be accepted.
+set MaxPendingHealthReportSizeBytes 1700
+reporthealth stress reports=1 reportsPerMessage=10
+checkhm nodes expectedcount=20
+
+set MaxPendingHealthReportSizeBytes 700
+reporthealth stress reports=1 reportsPerMessage=2
+checkhm nodes expectedcount=21
+
+set MaxPendingHealthReportSizeBytes 1700
+reporthealth stress reports=1 reportsPerMessage=3
+checkhm nodes expectedcount=24
+
+reporthealth stress reports=1 reportsPerMessage=1
+checkhm nodes expectedcount=25
+
+# Generate both critical and non-critical reports, critical are counted separately
+set MaxPendingHealthReportSizeBytes 700
+reporthealth stress reports=1 reportsPerMessage=4 criticalreports=2
+checkhm nodes expectedcount=27
+
+reporthealth stress reports=1 reportsPerMessage=2 criticalreports=2
+checkhm nodes expectedcount=28
+
+# Reset state
+set MaxPendingHealthReportSizeBytes 52428800
+
+############################################
+# Testcase 1: Query non-created entities, should not exist
+############################################
+
+queryhealth node nodeid=666 expectempty=true "expectederrormessage=Entity not found"
+queryhealth node nodeid=777 expectempty=true "expectederrormessage=Entity not found"
+queryhealth node nodeid=888 expectempty=true "expectederrormessage=Entity not found"
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectempty=true "expectederrormessage=Entity not found"
+queryhealthlist partitions partitionguid=<string.SvcTypeA1Partition0> expectedstates=0
+queryhealth replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> expectempty=true "expectederrormessage=Entity not found"
+queryhealth replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> expectempty=true "expectederrormessage=Entity not found"
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA nodeid=777 expectempty=true "expectederrormessage=Entity not found"
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 expectempty=true "expectederrormessage=Entity not found"
+queryhealth application appname=fabric:/app1/FabricHealth_test expectempty=true "expectederrormessage=Entity not found"
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectempty=true "expectederrormessage=Entity not found"
+queryhealth application appname=fabric:/app1/FabricHealth_notused_test expectempty=true "expectederrormessage=Entity not found"
+queryhealth service servicename=fabric:/app1/FabricHealth_notused_test/ServiceA1 expectempty=true "expectederrormessage=Entity not found"
+queryhealthlist partitions servicename=fabric:/app1/FabricHealth_notused_test/ServiceA1 expectedstates=0
+queryhealthlist deployedservicepackages appname=fabric:/app1/FabricHealth_test nodeid=777 expectedstates=0 
+queryhealthlist deployedapplications appname=fabric:/app1/FabricHealth_test expectedstates=0
+
+############################################
+# Testcase 2: Create dummy entities and check system report logic on query:
+# - if an entity doesn't have a system report, it's not returned by query
+# - if a required entity parent doesn't have system report, it's not returned by query
+# - if an entity doesn't have report from the authority, it's evaluated as Error
+# - if a child of the entity doesn't have report from the authority, it's evaluated as Error
+############################################
+
+# Entities that are not going to be used, should be deleted and cleaned up
+reporthealthinternal application appname=fabric:/app1/FabricHealth_notused_test appinstanceid=1 sequencenumber=1 healthstate=error 	
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_notused_test/ServiceA1 sequencenumber=1 healthstate=error
+
+#
+# Check node health with and without authority report
+#
+
+#
+# Report warning with instance, no authority report.
+#
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=warning ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FabricTest
+# No authority report; expect 2 events, one generated by HM for missing authority event and the other reported above
+queryhealth node nodeid=666 expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+checkisclusterhealthy expectedhealthy=false upgradedomains=10_ud,20_ud,30_ud
+# Apply event filter - the missing authority event is not returned
+queryhealth node nodeid=666 eventsfilter=warning|ok expectedhealthstate=error expectedeventcount=1 expectedreason=event,System.HM,AuthorityReport
+# Authority source
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM
+queryhealth node nodeid=666 expectedhealthstate=warning expectedeventcount=2
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=2 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FabricTest
+queryhealth node nodeid=666 expectedhealthstate=ok expectedeventcount=2
+
+#
+# Report warning without instance, no authority report.
+#
+reporthealthinternal node nodeid=111111 node.instanceid=0 sequencenumber=1 healthstate=warning ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FabricTest property=State
+# No authority report; expect 2 events, one generated by HM for missing authority event and the other reported above.
+# The authority report has Warning state.
+queryhealth node nodeid=111111 expectedhealthstate=warning expectedeventcount=2 expectedreason=event,System.FabricTest,State
+queryhealth node nodeid=111111 clusterpolicy=warningaserror expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.FabricTest,State
+checkisclusterhealthy expectedhealthy=true upgradedomains=10_ud,20_ud,30_ud
+deletehealth node nodeid=111111 node.instanceid=0 sequencenumber=2 sourceid=System.FM
+queryhealth node nodeid=111111 expectempty=true
+
+#
+# Report error with instance, no authority report.
+#
+reporthealthinternal node nodeid=222222 node.instanceid=1 sequencenumber=1 healthstate=error ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FabricTest property=State
+# No authority report; expect 2 events, one generated by HM for missing authority event and the other reported above
+queryhealth node nodeid=222222 expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.FabricTest,State
+checkisclusterhealthy expectedhealthy=false upgradedomains=10_ud,20_ud,30_ud
+# Apply event filter - the missing authority event is not returned
+queryhealth node nodeid=222222 eventsfilter=warning|ok expectedhealthstate=error expectedeventcount=0 expectedreason=event,System.FabricTest,State
+deletehealth node nodeid=222222 node.instanceid=1 sequencenumber=2 sourceid=System.FM
+queryhealth node nodeid=222222 expectempty=true
+
+#
+# Report error without instance, no authority report.
+#
+reporthealthinternal node nodeid=333333 node.instanceid=0 sequencenumber=1 healthstate=error ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FabricTest property=State
+# No authority report; expect 2 events, one generated by HM for missing authority event (warning) and the other reported above.
+queryhealth node nodeid=333333 expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.FabricTest,State
+queryhealth node nodeid=333333 eventsfilter=error expectedhealthstate=error expectedeventcount=1 expectedreason=event,System.FabricTest,State
+checkisclusterhealthy expectedhealthy=false upgradedomains=10_ud,20_ud,30_ud
+deletehealth node nodeid=333333 node.instanceid=1 sequencenumber=2 sourceid=System.FM
+queryhealth node nodeid=333333 expectempty=true
+
+#
+# Report ok with instance, no authority report.
+#
+reporthealthinternal node nodeid=444444 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FabricTest property=State
+# No authority report; expect 2 events, one generated by HM for missing authority event and the other reported above
+queryhealth node nodeid=444444 expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+queryhealth node nodeid=444444 clusterpolicy=warningaserror expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+checkisclusterhealthy expectedhealthy=false upgradedomains=10_ud,20_ud,30_ud
+# Apply event filter - the missing authority event is not returned
+queryhealth node nodeid=444444 eventsfilter=warning|ok expectedhealthstate=error expectedeventcount=1 expectedreason=event,System.HM,AuthorityReport
+deletehealth node nodeid=444444 node.instanceid=1 sequencenumber=2 sourceid=System.FabricTest
+queryhealth node nodeid=444444 expectempty=true
+
+#
+# Report ok without instance, no authority report.
+#
+reporthealthinternal node nodeid=555555 node.instanceid=0 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FabricTest property=State
+# No authority report; expect 2 events, one generated by HM for missing authority event (warning) and the other reported above.
+queryhealth node nodeid=555555 expectedhealthstate=warning expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+queryhealth node nodeid=555555 clusterpolicy=warningaserror expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+queryhealth node nodeid=555555 eventsfilter=warning expectedhealthstate=warning expectedeventcount=1 expectedreason=event,System.HM,AuthorityReport
+checkisclusterhealthy expectedhealthy=true upgradedomains=10_ud,20_ud,30_ud
+deletehealth node nodeid=555555 node.instanceid=1 sequencenumber=2 sourceid=System.FabricTest
+queryhealth node nodeid=555555 expectempty=true
+
+
+#
+# Check application health with and without authority report, no children
+#
+reporthealthinternal application appname=fabric:/app1/FabricHealth_test appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest apppolicy=default apptype=FabricHealthAppType
+# No authority report
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+queryhealth application appname=fabric:/app1/FabricHealth_test eventsfilter=warning|ok expectedhealthstate=error expectedeventcount=1 expectedreason=event,System.HM,AuthorityReport
+# Report from authority source
+reporthealthinternal application appname=fabric:/app1/FabricHealth_test appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=ok expectedeventcount=2
+
+#
+# Check service health with and without authority report, no children
+#
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_test/ServiceA1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest appname=fabric:/app1/FabricHealth_test servicetypename=ServiceTypeA1
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_test/ServiceA1 sequencenumber=1 healthstate=ok sourceid=System.FM appname=fabric:/app1/FabricHealth_test
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedhealthstate=ok expectedeventcount=2
+queryhealthlist partitions servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedstates=0
+
+# Node with no system report
+reporthealthinternal node nodeid=777 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=FabricTest
+queryhealth node nodeid=777 expectempty=true "expectederrormessage=no System report"
+
+# Node with no system report
+reporthealthinternal node nodeid=888 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3337 sourceid=FabricTest
+queryhealth node nodeid=888 expectempty=true "expectederrormessage=no System report"
+
+#
+# Check partition health with and without authority report, no children, parent healthy
+#
+reporthealthinternal partition partitionguid=<string.SvcTypeA1Partition0> servicename=fabric:/app1/FabricHealth_test/ServiceA1 type=persistent sequencenumber=1 healthstate=ok sourceid=System.FabricTest
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+queryhealthlist partitions partitionguid=<string.SvcTypeA1Partition0> expectedstates=error:1
+queryhealthlist partitions partitionguid=<string.SvcTypeA1Partition0> servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedstates=error:1
+reporthealthinternal partition partitionguid=<string.SvcTypeA1Partition0> servicename=fabric:/app1/FabricHealth_test/ServiceA1 type=persistent sequencenumber=1 healthstate=ok sourceid=System.FM
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok expectedstates=0
+queryhealthlist partitions partitionguid=<string.SvcTypeA1Partition0> expectedstates=ok:1
+# Partition id with incorrect service name returns no results
+queryhealthlist partitions partitionguid=<string.SvcTypeA1Partition0> servicename=fabric:/app1/InvalidServiceName  expectedstates=0
+
+# No replica system report
+# Parent node has system report
+reporthealthinternal replica replica.id=10000 replica.instanceid=1 partitionguid=<string.SvcTypeA1Partition0> nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=FabricTest
+queryhealth replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> expectempty=true "expectederrormessage=no System report"
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok expectedstates=0
+
+# Replica with system report
+# Parent node doesn't have system report
+reporthealthinternal replica replica.id=20000 replica.instanceid=1 partitionguid=<string.SvcTypeA1Partition0> nodeid=777 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.RA
+queryhealth replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> expectempty=true "expectederrormessage=parent entity is not found"
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok expectedstates=0
+
+queryhealth service servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedhealthstate=ok expectedstates=ok:1
+queryhealthlist partitions servicename=fabric:/app1/FabricHealth_test/ServiceA1 expectedstates=ok:1
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedhealthstate=ok expectedstates=ok:1
+
+#
+# Check partition health with and without authority report, no children, parent healthy
+#
+reporthealthinternal replica replica.id=10000 replica.instanceid=1 partitionguid=<string.SvcTypeA1Partition0> nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest
+queryhealth replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=error expectedeventcount=3 expectedreason=event,System.HM,AuthorityReport
+# Report replica System event from authority
+reporthealthinternal replica replica.id=10000 replica.instanceid=1 partitionguid=<string.SvcTypeA1Partition0> nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.RA
+queryhealth replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok expectedeventcount=3
+
+queryhealth replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok expectedstates=1
+queryhealthlist replicas partitionguid=<string.SvcTypeA1Partition0> expectedstates=1
+
+# Report node System event
+reporthealthinternal node nodeid=777 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FM ud=ud1
+queryhealth node nodeid=777 expectedhealthstate=ok
+queryhealth replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=ok expectedstates=2
+queryhealthlist partitions partitionguid=<string.SvcTypeA1Partition0> expectedstates=ok:1
+
+# Report deployed service package entity, parent deployed app not created yet
+reporthealthinternal deployedservicepackage appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA nodeid=777 node.instanceid=1 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA nodeid=777 expectempty=true "expectederrormessage=parent entity is not found"
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 expectempty=true "expectederrormessage=no System report"
+
+checkhmentity deployedservicepackage appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA nodeid=777 node.instanceid=1 servicepackageinstanceid=1 state=ok
+checkhmentity deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 state=nosystemreport node.instanceid=0 appinstanceid=-1
+
+#
+# Check deployed application health with and without authority report, no children, parent healthy
+#
+reporthealthinternal deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 node.instanceid=1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.FabricTest
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+# Send authority source report
+reporthealthinternal deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 node.instanceid=1 appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+# Deployed service package child has no system authority report
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 expectedeventcount=2 expectedreason=deployedservicepackages,1
+
+#
+# Check deployed service package health with and without authority report
+#
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA nodeid=777 expectedhealthstate=error expectedeventcount=2 expectedreason=event,System.HM,AuthorityReport
+reporthealthinternal deployedservicepackage appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA nodeid=777 node.instanceid=1 servicepackageinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.Hosting
+queryhealth deployedservicepackage appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA nodeid=777 expectedhealthstate=ok expectedeventcount=2
+
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 expectedhealthstate=ok expectedstates=1 expectedeventcount=2
+queryhealthlist deployedservicepackages appname=fabric:/app1/FabricHealth_test nodeid=777 expectedstates=ok:1
+
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedstates=deployedapps-1
+queryhealth deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 expectedstates=1
+
+# Report for entities already created by child partition to persist entities in store
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_test/ServiceA1 sequencenumber=1 healthstate=ok
+queryhealth application appname=fabric:/app1/FabricHealth_test expectedstates=services-1;deployedapps-1
+
+queryhealthlist deployedapplications appname=fabric:/app1/FabricHealth_test expectedstates=ok:1
+queryhealthlist services appname=fabric:/app1/FabricHealth_test expectedstates=ok:1
+
+# Check entities are created and healthy
+checkhmentity node nodeid=666 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 
+checkhmentity node nodeid=777 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335
+checkhmentity node nodeid=888 state=nosystemreport node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3337
+checkhmentity partition partitionguid=<string.SvcTypeA1Partition0> state=ok appname=fabric:/app1/FabricHealth_test servicetypename=ServiceTypeA1 servicename=fabric:/app1/FabricHealth_test/ServiceA1 type=persistent
+checkhmentity replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> state=ok replica.instanceid=1 nodeid=666 node.instanceid=1 
+checkhmentity replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> state=ok replica.instanceid=1 nodeid=777 node.instanceid=1 
+checkhmentity service servicename=fabric:/app1/FabricHealth_test/ServiceA1 state=ok appname=fabric:/app1/FabricHealth_test servicetypename=ServiceTypeA1 
+checkhmentity application appname=fabric:/app1/FabricHealth_test state=ok apptype=FabricHealthAppType
+checkhmentity application appname=fabric:/app1/FabricHealth_notused_test state=deleted
+checkhmentity service servicename=fabric:/app1/FabricHealth_notused_test/ServiceA1 state=deleted
+checkhmentity deployedservicepackage appname=fabric:/app1/FabricHealth_test servicemanifestname=ServicePackageA nodeid=777 node.instanceid=1 servicepackageinstanceid=1 state=ok
+checkhmentity deployedapplication appname=fabric:/app1/FabricHealth_test nodeid=777 node.instanceid=1 appinstanceid=1 state=ok
+
+############################################
+# Testcase 3: Report new instances and then report on old instance => StaleRequest
+# Report old sequence number => StaleRequest
+############################################
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=2 healthstate=warning ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM
+queryhealth node nodeid=666 expectedhealthstate=warning
+reporthealthinternal node nodeid=666 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=FabricTest expectederror=HealthStaleReport
+queryhealth node nodeid=666 expectedhealthstate=warning
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=2 healthstate=warning ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM expectederror=HealthStaleReport
+queryhealth node nodeid=666 expectedhealthstate=warning
+
+reporthealthinternal replica replica.id=20000 replica.instanceid=2 partitionguid=<string.SvcTypeA1Partition0> nodeid=777 node.instanceid=1 sequencenumber=2 healthstate=error sourceid=System.RA
+queryhealth replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=error
+reporthealthinternal replica replica.id=20000 replica.instanceid=1 partitionguid=<string.SvcTypeA1Partition0> nodeid=777 sequencenumber=1 healthstate=ok sourceid=FabricTest expectederror=HealthStaleReport
+queryhealth replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=error
+reporthealthinternal replica replica.id=20000 replica.instanceid=2 partitionguid=<string.SvcTypeA1Partition0> nodeid=777 sequencenumber=1 healthstate=ok sourceid=System.RA expectederror=HealthStaleReport
+queryhealth replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> expectedhealthstate=error
+
+############################################
+# Testcase 4: Delete node entity. 
+# Query children should return Entity not found.
+# Reporting on same instance returns EntityDeleted
+############################################
+deletehealth node nodeid=666 node.instanceid=2 sequencenumber=2 sourceid=System.FM
+queryhealth node nodeid=666 expectempty=true "expectederrormessage=deleted"
+queryhealth replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> expectempty=true
+# Report on the same instance
+reporthealthinternal node nodeid=666 node.instanceid=2 sequencenumber=1 healthstate=ok expectederror=HealthEntityDeleted
+
+# Report node system error
+reporthealthinternal node nodeid=777 node.instanceid=2 sequencenumber=3 healthstate=error ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property=State
+queryhealth node nodeid=777 expectedhealthstate=error
+# Query replica returns entity not found because node has system error
+queryhealth replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> expectempty=true
+
+# Delete partition
+deletehealth partition partitionguid=<string.SvcTypeA1Partition0> sequencenumber=1 sourceid=System.FM
+queryhealth partition partitionguid=<string.SvcTypeA1Partition0> expectempty=true
+reporthealthinternal partition partitionguid=<string.SvcTypeA1Partition0> appname=fabric:/app1/FabricHealth_test servicetypename=ServiceTypeA1 servicename=fabric:/app1/FabricHealth_test/ServiceA1 type=persistent sequencenumber=1 healthstate=ok sourceid=System.FabricTest expectederror=HealthEntityDeleted
+
+#############################################
+# Testcase 5: Check deleted and cleaned up entities
+#############################################
+# Parent node deleted/system error -> replica deleted
+checkhmentity replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> state=deleted
+checkhmentity replica replica.id=20000 partitionguid=<string.SvcTypeA1Partition0> state=deleted
+
+# Deleted entities are cleaned up
+checkhmentity node nodeid=666 state=cleanedup node.instanceid=2
+checkhmentity partition partitionguid=<string.SvcTypeA1Partition0> state=cleanedup
+checkhmentity replica replica.id=10000 partitionguid=<string.SvcTypeA1Partition0> state=cleanedup node.instanceid=2
+
+# No system report in a long time
+checkhmentity node nodeid=888 state=cleanedup node.instanceid=1
+
+# Entities without system report that are not used
+checkhmentity service servicename=fabric:/app1/FabricHealth_notused_test/ServiceA1 state=cleanedup
+checkhmentity application appname=fabric:/app1/FabricHealth_notused_test state=cleanedup
+
+############################################
+# Testcase 6: Report node with higher instance, all previous events are removed
+############################################
+# No system report
+reporthealthinternal node nodeid=777 node.instanceid=3 sequencenumber=3 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=FabricTest
+queryhealth node nodeid=777 expectempty=true
+
+# Report system report
+reporthealthinternal node nodeid=777 node.instanceid=3 sequencenumber=3 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM
+queryhealth node nodeid=777 expectedhealthstate=ok
+
+# Delete higher instance
+deletehealth node nodeid=777 node.instanceid=4 sequencenumber=4 sourceid=System.FM
+
+###########################################
+# Testcase 7: Transient events
+############################################
+
+reporthealthinternal node nodeid=333 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 sourceid=System.FM
+
+# Report non-system transient event
+reporthealthinternal node nodeid=333 node.instanceid=1 sequencenumber=1 healthstate=error sourceid=FabricTestWatchdog transient=true timetoliveseconds=7
+queryhealth node nodeid=333 expectedhealthstate=error expectedeventcount=2
+checkhmentity node nodeid=333 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 expectedeventcount=2
+
+# After transient event expires, the event is cleaned up
+queryhealth node nodeid=333 expectedhealthstate=ok expectedeventcount=1
+checkhmentity node nodeid=333 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 expectedeventcount=1
+
+# Report system transient event
+reporthealthinternal node nodeid=222 node.instanceid=1 sequencenumber=1 healthstate=warning ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 sourceid=System.FM transient=true timetoliveseconds=7
+queryhealth node nodeid=222 expectedhealthstate=warning expectedeventcount=1
+checkhmentity node nodeid=222 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 expectedeventcount=1
+
+# After transient event expires, node doesn't have system report
+checkhmentity node nodeid=222 state=nosystemreport node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339
+
+# Report system event and system transient error
+reporthealthinternal node nodeid=222 node.instanceid=1 sequencenumber=2 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 sourceid=System.FM
+reporthealthinternal node nodeid=222 node.instanceid=1 sequencenumber=1 healthstate=error ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 sourceid=System.FabricTest2 transient=true timetoliveseconds=7
+queryhealth node nodeid=222 expectedhealthstate=error expectedeventcount=2
+# After transient error expires, the entity has one System event
+checkhmentity node nodeid=222 state=ok node.instanceid=1 ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 expectedeventcount=1
+queryhealth node nodeid=222 expectedhealthstate=ok expectedeventcount=1
+
+###########################################
+# Testcase 8: Report a new entity with very small timeout.
+# Since report fails when entity state is pending write to store, 
+# the entity should transition to PendingFirstReport,
+# so it can be properly cleaned up
+############################################
+queryhealth node nodeid=99999 expectempty=true
+reporthealthinternal node nodeid=99999 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 sourceid=System.FM timeout=0.1 expectederror=Timeout
+checkhmentity node nodeid=99999 state=cleanedup node.instanceid=1
+
+###########################################
+# Testcase 9: Create many nodes, set max message size to smaller value 
+# and check that getting the list returns proper error
+############################################
+set HMMaxMessageSize 1024
+set HMMessageContentBufferRatio 0.2
+
+# Generate nodes with authority reports so they are evaluated as healthy.
+reporthealth stress reports=10 reportsPerMessage=50 criticalreports=50
+queryhealth cluster expectederror=EntryTooLarge
+
+set HMMaxMessageSize 1048576
+set HMMessageContentBufferRatio 0.75
+queryhealth cluster expectedhealthstate=ok
+
+###########################################
+# Testcase 10: Events transition states
+############################################
+reporthealthinternal node nodeid=999 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3339 sourceid=System.FM 
+
+reporthealthinternal node nodeid=999 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=source1 property=p1 
+# Current state is ok, none of the previous states were encountered before
+queryhealth node nodeid=999 expectedhealthstate=ok expectedevents=source1,p1,ok,invalid,invalid
+
+# Ok -> warning
+reporthealthinternal node nodeid=999 node.instanceid=1 sequencenumber=2 healthstate=warning sourceid=source1 property=p1 
+queryhealth node nodeid=999 expectedhealthstate=warning expectedevents=source1,p1,warning,ok,invalid
+
+# Warning -> warning
+reporthealthinternal node nodeid=999 node.instanceid=1 sequencenumber=3 healthstate=warning sourceid=source1 property=p1 
+queryhealth node nodeid=999 expectedhealthstate=warning expectedevents=source1,p1,warning,ok,invalid
+
+# Warning -> error
+reporthealthinternal node nodeid=999 node.instanceid=1 sequencenumber=4 healthstate=error sourceid=source1 property=p1 
+queryhealth node nodeid=999 expectedhealthstate=error expectedevents=source1,p1,error,warning,ok
+
+# Error -> Warning
+reporthealthinternal node nodeid=999 node.instanceid=1 sequencenumber=5 healthstate=warning sourceid=source1 property=p1 
+queryhealth node nodeid=999 expectedhealthstate=warning expectedevents=source1,p1,warning,error,ok
+
+# Warning -> Ok
+reporthealthinternal node nodeid=999 node.instanceid=1 sequencenumber=6 healthstate=ok sourceid=source1 property=p1 
+queryhealth node nodeid=999 expectedhealthstate=ok expectedevents=source1,p1,ok,warning,error
+
+###########################################
+# Testcase 11: Invalid paramaters
+############################################
+queryhealth service servicename= expectederror=InvalidArgument
+queryhealth service servicename=non_uri expectederror=InvalidNameUri
+
+queryhealth application appname= expectederror=InvalidArgument
+queryhealth application appname=non_uri expectederror=InvalidNameUri
+
+queryhealth deployedapplication appname= nodeid=777 expectederror=InvalidArgument
+queryhealth deployedapplication appname=non_uri nodeid=777 expectederror=InvalidNameUri
+
+queryhealth deployedservicepackage appname= servicemanifestname=ServicePackageA nodeid=777 expectederror=InvalidArgument
+queryhealth deployedservicepackage appname=non_uri servicemanifestname=ServicePackageA nodeid=777 expectederror=InvalidNameUri
+queryhealth deployedservicepackage appname=fabric:/app servicemanifestname= nodeid=777 expectederror=InvalidArgument
+
+###########################################
+# Testcase 12: Change parent attributes based on stale checkness
+############################################
+!string Testcase12Partition 1a9b2342-5e56-42f9-9b10-3ec5da28f5b8
+
+set HealthStoreCleanupGraceInterval 60
+
+# Create a replica with no parent node
+reporthealthinternal replica replica.id=1212 replica.instanceid=1 partitionguid=<string.Testcase12Partition> nodeid=12 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.RA
+
+# Node doesn't exist (not created)
+queryhealth node nodeid=12 expectempty=true
+# Partition doesn't have system report
+queryhealth partition partitionguid=<string.Testcase12Partition> expectempty=true
+# Replica doesn't have healthy parents
+queryhealth replica replica.id=1212 partitionguid=<string.Testcase12Partition> expectempty=true
+
+# Create parent partition
+reporthealthinternal partition partitionguid=<string.Testcase12Partition> servicename=fabric:/Testcase12App/Testcase12Service type=persistent sequencenumber=1 healthstate=ok sourceid=System.FM
+reporthealthinternal service servicename=fabric:/Testcase12App/Testcase12Service sequencenumber=1 healthstate=ok sourceid=System.FM appname=fabric:/Testcase12App servicetypename=Testcase12Type
+reporthealthinternal application appname=fabric:/Testcase12App appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default
+
+# Partition is exposed, but has no children 
+queryhealth partition partitionguid=<string.Testcase12Partition> expectedhealthstate=ok expectedstates=0 expectedeventcount=1
+queryhealthlist partitions partitionguid=<string.Testcase12Partition> expectedstates=ok:1
+queryhealth replica replica.id=1212 partitionguid=<string.Testcase12Partition> expectempty=true
+
+# Create node with invalid parameters (non-system source) - the node is created in PendingWriteToStore and eventually cleaned up
+deletehealth node nodeid=12 node.instanceid=0 sequencenumber=1 sourceid=FabricTest expectederror=InvalidArgument
+queryhealth node nodeid=12 expectederror=OperationCanceled
+queryhealth replica replica.id=1212 partitionguid=<string.Testcase12Partition> expectempty=true
+
+checkhmentity node nodeid=12 state=cleanedup node.instanceid=0
+queryhealth node nodeid=12 expectempty=true
+queryhealth replica replica.id=1212 partitionguid=<string.Testcase12Partition> expectempty=true
+
+# Recreate the replica with higher instance
+reporthealthinternal replica replica.id=1212 replica.instanceid=2 partitionguid=<string.Testcase12Partition> nodeid=12 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.RA
+
+# Recreate parent node
+reporthealthinternal node nodeid=12 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3337 sourceid=System.FM
+queryhealth node nodeid=12 expectedhealthstate=ok expectedeventcount=1
+queryhealth replica replica.id=1212 partitionguid=<string.Testcase12Partition> expectedhealthstate=ok expectedeventcount=1
+queryhealth partition partitionguid=<string.Testcase12Partition> expectedhealthstate=ok expectedstates=ok:1 expectedeventcount=1
+
+set HealthStoreCleanupGraceInterval 5
+
+# 
+# Report replica on newer node instance (to simulate node report delay)
+# Delete old node instance does not affect new replica and receiving new node instance exposes the new replica
+#
+!string ReplicaNodeInstanceTestPartition a92c37e3-e46c-4b01-bdf5-22a3da89d7a0
+
+# Report node with instance 1
+reporthealthinternal node nodeid=100010 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property="State"
+queryhealth node nodeid=100010 expectedhealthstate=ok expectedeventcount=1
+
+# Create application chain
+reporthealthinternal application appname=fabric:/ReplicaNodeInstanceTest appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM apppolicy=default apptype="ReplicaNodeInstanceTestAppType"
+reporthealthinternal service servicename=fabric:/ReplicaNodeInstanceTest/ServiceA1 sequencenumber=1 healthstate=ok sourceid=System.FM appname=fabric:/ReplicaNodeInstanceTest servicetypename=ServiceTypeA1 
+reporthealthinternal partition partitionguid=<string.ReplicaNodeInstanceTestPartition> servicename=fabric:/ReplicaNodeInstanceTest/ServiceA1 type=persistent sequencenumber=1 healthstate=ok sourceid=System.FM
+
+# Report replica on node with higher instance
+reporthealthinternal replica replica.id=10000 replica.instanceid=1 partitionguid=<string.ReplicaNodeInstanceTestPartition> nodeid=100010 node.instanceid=2 sequencenumber=1 healthstate=ok sourceid=System.RA
+queryhealth replica replica.id=10000 partitionguid=<string.ReplicaNodeInstanceTestPartition> expectedhealthstate=ok
+checkhmentity replica replica.id=10000 partitionguid=<string.ReplicaNodeInstanceTestPartition> state=ok replica.instanceid=1 nodeid=100010 node.instanceid=2
+
+# Delete node with instance 1
+deletehealth node nodeid=100010 node.instanceid=1 sequencenumber=2 sourceid=System.FM
+queryhealth replica replica.id=10000 partitionguid=<string.ReplicaNodeInstanceTestPartition> expectedempty=true
+checkhmentity replica replica.id=10000 partitionguid=<string.ReplicaNodeInstanceTestPartition> state=ok replica.instanceid=1 nodeid=100010 node.instanceid=2
+
+# Wait for instance 1 to be cleaned up and removed from cache
+!pause 16
+checkhmentity node nodeid=100010 state=notfound
+queryhealth replica replica.id=10000 partitionguid=<string.ReplicaNodeInstanceTestPartition> expectedempty=true
+checkhmentity replica replica.id=10000 partitionguid=<string.ReplicaNodeInstanceTestPartition> state=ok replica.instanceid=1 nodeid=100010 node.instanceid=2
+
+# Report node with instance 2
+reporthealthinternal node nodeid=100010 node.instanceid=2 sequencenumber=3 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM property="State"
+queryhealth node nodeid=100010 expectedhealthstate=ok expectedeventcount=1
+
+queryhealth replica replica.id=10000 partitionguid=<string.ReplicaNodeInstanceTestPartition> expectedhealthstate=ok
+checkhmentity replica replica.id=10000 partitionguid=<string.ReplicaNodeInstanceTestPartition> state=ok replica.instanceid=1 nodeid=100010 node.instanceid=2
+
+###########################################
+# Testcase 13 - test query entity not found error messages
+###########################################
+!string Testcase13Partition 97fba986-0759-4e65-8b40-06cadab73b9b
+
+queryhealth node nodeid=13 expectempty=true "expectederrormessage=Entity not found"
+
+# Report System node
+reporthealthinternal node nodeid=13 node.instanceid=1 sequencenumber=1 healthstate=ok ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3335 sourceid=System.FM
+
+# User only report on replica
+reporthealthinternal replica replica.id=13 partitionguid=<string.Testcase13Partition> nodeid=13 sequencenumber=1 healthstate=ok sourceid=FabricTest
+queryhealth replica replica.id=13 partitionguid=<string.Testcase13Partition> expectempty=true "expectederrormessage=no System report"
+
+# System report on replica, not found because of missing partition report
+reporthealthinternal replica replica.id=13 replica.instanceid=1 partitionguid=<string.Testcase13Partition> nodeid=13 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.RA
+queryhealth replica replica.id=13 partitionguid=<string.Testcase13Partition> expectempty=true "expectederrormessage=parent entity is not found"
+
+# Report System partition, but without service name
+reporthealthinternal partition partitionguid=<string.Testcase13Partition> sequencenumber=1 healthstate=ok sourceid=System.FM
+queryhealth replica replica.id=13 partitionguid=<string.Testcase13Partition> expectempty=true "expectederrormessage=Parent service is not found"
+
+# Report System partition with parent service, no service
+reporthealthinternal partition partitionguid=<string.Testcase13Partition> servicename=fabric:/app1/FabricHealth_test13/Testcase13 sequencenumber=2 healthstate=ok sourceid=System.FM
+queryhealth replica replica.id=13 partitionguid=<string.Testcase13Partition> expectempty=true "expectederrormessage=Service Type name is not set"
+
+# Report System service, no app name and no service type name
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_test13/Testcase13 sequencenumber=1 healthstate=ok sourceid=System.FM 
+queryhealth replica replica.id=13 partitionguid=<string.Testcase13Partition> expectempty=true "expectederrormessage=Service Type name is not set"
+
+# Report service with service type name
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_test13/Testcase13 servicetypename=Testcase13ServiceType sequencenumber=2 healthstate=ok sourceid=System.FM
+queryhealth replica replica.id=13 partitionguid=<string.Testcase13Partition> expectempty=true "expectederrormessage=Parent application is not found"
+
+# Report System service with app name and service type name
+reporthealthinternal service servicename=fabric:/app1/FabricHealth_test13/Testcase13 appname=fabric:/app1/FabricHealth_test13 servicetypename=Testcase13ServiceType sequencenumber=3 healthstate=ok sourceid=System.FM 
+checkhmentity service servicename=fabric:/app1/FabricHealth_test13/Testcase13 appname=fabric:/app1/FabricHealth_test13 servicetypename=Testcase13ServiceType state=ok
+# The application is created as non-persisted entity, check that it exists in HM
+queryhealth application appname=fabric:/app1/FabricHealth_test13 expectempty=true "expectederrormessage=no System report"
+
+# Report System app with no policy
+reporthealthinternal application appname=fabric:/app1/FabricHealth_test13  appinstanceid=1 sequencenumber=1 healthstate=ok sourceid=System.CM
+queryhealth replica replica.id=13 partitionguid=<string.Testcase13Partition> expectempty=true "expectederrormessage=Application policy is not set"
+
+# Report System app with policy
+reporthealthinternal application appname=fabric:/app1/FabricHealth_test13  appinstanceid=1 sequencenumber=2 healthstate=ok sourceid=System.CM apppolicy=default
+queryhealth replica replica.id=13 partitionguid=<string.Testcase13Partition> expectedhealthstate=ok
+
+###########################################
+# Testcase 14 - test query list with entity filters
+# Test both invalid and valid filters.
+###########################################
+
+queryhealthlist nodes nodeid=2 expectedstates=0
+queryhealthlist nodes nodeid=10 expectedstates=ok:1
+
+!string Testcase14Partition1 7cc943c0-6347-4cc7-b315-cf6676afd3be
+!string Testcase14Partition2 92f41ba9-499f-499e-a84a-eaf88c180381
+
+# Create 2 applications
+queryhealthlist applications appname=fabric:/app1/Testcase14 expectedstates=0
+reporthealthinternal application appname=fabric:/app1/Testcase14 appinstanceid=1 sequencenumber=1 healthstate=error sourceid=System.CM apppolicy=default apptype=FabricHealthAppType applicationdefinitionkind=0
+queryhealthlist applications appname=fabric:/app1/Testcase14 expectedstates=error:1
+reporthealthinternal application appname=fabric:/app2/Testcase14 appinstanceid=1 sequencenumber=1 healthstate=warning sourceid=System.CM apppolicy=default apptype=FabricHealth2ndAppType applicationdefinitionkind=1
+queryhealthlist applications apptypename=FabricHealth2ndAppType expectedstates=warning:1
+queryhealthlist applications apptypename=FabricHealth3rdAppType expectedstates=0
+queryhealthlist applications applicationdefinitionkindfilter=1 expectedstates=error:1
+queryhealthlist applications applicationdefinitionkindfilter=2 expectedstates=warning:1
+queryhealthlist applications applicationdefinitionkindfilter=3 expectedstates=warning:1,error:1
+
+# App with 2 services
+reporthealthinternal service servicename=fabric:/app1/Testcase14/Service1 sequencenumber=1 healthstate=ok sourceid=System.FM appname=fabric:/app1/Testcase14 servicetypename=Service14Type1
+queryhealthlist services appname=fabric:/app1/Testcase14 servicename=fabric:/app1/Testcase14/Service2 expectedstates=0
+reporthealthinternal service servicename=fabric:/app1/Testcase14/Service2 sequencenumber=1 healthstate=ok sourceid=System.FM appname=fabric:/app1/Testcase14 servicetypename=Service14Type2
+queryhealthlist services appname=fabric:/app1/Testcase14 servicename=fabric:/app1/Testcase14/Service2 expectedstates=ok:1
+queryhealthlist services appname=fabric:/app1/Testcase14 servicetypename=Service14Type2 expectedstates=ok:1
+queryhealthlist services appname=fabric:/app1/Testcase14 servicetypename=Service14TypeBala expectedstates=0
+
+# Service with 2 partitions
+reporthealthinternal partition partitionguid=<string.Testcase14Partition1> servicename=fabric:/app1/Testcase14/Service1 type=persistent sequencenumber=1 healthstate=ok sourceid=System.FM
+queryhealthlist partitions servicename=fabric:/app1/Testcase14/Service1 partitionguid=<string.Testcase14Partition2> expectedstates=0
+reporthealthinternal partition partitionguid=<string.Testcase14Partition2> servicename=fabric:/app1/Testcase14/Service1 type=persistent sequencenumber=1 healthstate=warning sourceid=System.FM
+queryhealthlist partitions servicename=fabric:/app1/Testcase14/Service1 partitionguid=<string.Testcase14Partition2> expectedstates=warning:1
+
+# Partition with 3 replicas
+reporthealthinternal replica replica.id=14000 replica.instanceid=1 partitionguid=<string.Testcase14Partition1> nodeid=10 sequencenumber=1 healthstate=ok sourceid=System.RA
+reporthealthinternal replica replica.id=14001 replica.instanceid=1 partitionguid=<string.Testcase14Partition1> nodeid=20 sequencenumber=1 healthstate=ok sourceid=System.RA
+queryhealthlist replicas replica.id=14002 partitionguid=<string.Testcase14Partition1> expectedstates=0
+reporthealthinternal replica replica.id=14002 replica.instanceid=1 partitionguid=<string.Testcase14Partition1> nodeid=30 sequencenumber=1 healthstate=ok sourceid=System.RA
+queryhealthlist replicas replica.id=14002 partitionguid=<string.Testcase14Partition1> expectedstates=ok:1
+
+###########################################
+# Testcase 15 - report only System transient reports
+# Set cleanup timer to large value, the transient events are not removed but not used by queries either.
+###########################################
+set HealthStoreCleanupInterval 10
+set HealthStoreCleanupGraceInterval 20
+
+# Wait for previous timer to fire, or it will affect timing.
+!pause 5
+
+reporthealthinternal node nodeid=1515 node.instanceid=1 sequencenumber=1 healthstate=warning ud=ud1 fd=fd1 ipaddressorfqdn=127.0.0.1:3333 sourceid=System.FM transient=true timetoliveseconds=1
+reporthealthinternal node nodeid=1515 node.instanceid=1 sequencenumber=1 healthstate=ok sourceid=System.PLB transient=true timetoliveseconds=1
+reporthealthinternal node nodeid=1515 node.instanceid=1 sequencenumber=1 healthstate=error sourceid=System.RA transient=true timetoliveseconds=1
+
+# The entity is evaluated as error because the authority report is missing (expired)
+queryhealth node nodeid=1515 expectedhealthstate=error expectedeventcount=1 expectedreason=event,System.HM,AuthorityReport
+
+# Once the cleanup timer runs, the entity is not exposed anymore
+queryhealth node nodeid=1515 expectempty=true
+
+!q

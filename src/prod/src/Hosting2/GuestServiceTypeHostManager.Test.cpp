@@ -247,10 +247,11 @@ BOOST_AUTO_TEST_CASE(BasicTest)
     ApplicationVersion appVersion(rolloutVersion);
     ServicePackageVersionInstance versionInstance(ServicePackageVersion(appVersion, rolloutVersion), 1);
 
-    vector<wstring> guestServiceTypes;
-    guestServiceTypes.push_back(L"GuestServiceType1");
-    guestServiceTypes.push_back(L"GuestServiceType2");
-    guestServiceTypes.push_back(L"GuestServiceType3");
+    vector<GuestServiceTypeInfo> guestServiceTypes;
+    guestServiceTypes.push_back(move(GuestServiceTypeInfo(L"GuestStatelessServiceTypeA", false)));
+    guestServiceTypes.push_back(move(GuestServiceTypeInfo(L"GuestStatefulServiceTypeA", true)));
+    guestServiceTypes.push_back(move(GuestServiceTypeInfo(L"GuestStatelessServiceTypeB", false)));
+    guestServiceTypes.push_back(move(GuestServiceTypeInfo(L"GuestStatefulServiceTypeB", true)));
 
     HostingSubsystemHolder hostingHolder(this->GetHosting(), this->GetHosting().Root.CreateComponentRoot());
 
@@ -265,7 +266,7 @@ BOOST_AUTO_TEST_CASE(BasicTest)
         auto hostId = Guid::NewGuid().ToString();
         ServicePackageActivationContext activationContext(Guid::NewGuid());
 
-        hostIds.push_back(hostId);        
+        hostIds.push_back(hostId);
         activationContexts.push_back(activationContext);
 
         ServicePackageInstanceIdentifier servicePackageInstanceId(servicePackageId, activationContext, Guid::NewGuid().ToString());
@@ -275,9 +276,10 @@ BOOST_AUTO_TEST_CASE(BasicTest)
         auto openWaiter = make_shared<AsyncOperationWaiter>();
 
         this->GetTypeHostManager()->BeginOpenGuestServiceTypeHost(
-            hostId,
+            ApplicationHostContext(hostId, ApplicationHostType::Activated_InProcess, false, false),
             guestServiceTypes,
             codePackageContext,
+            move(vector<wstring>()),
             move(vector<EndpointDescription>()),
             Hosting2::HostingConfig::GetConfig().ActivationTimeout,
             [this, openWaiter](AsyncOperationSPtr const & operation)
@@ -294,10 +296,12 @@ BOOST_AUTO_TEST_CASE(BasicTest)
 
         ASSERT_IFNOT(error.IsSuccess(), "OpenGuestServiceTypeHost");
 
-        wstring runtimeId;
-        error = this->GetTypeHostManager()->Test_GetRuntimeId(hostId, runtimeId);
+        GuestServiceTypeHostSPtr guestTypeHost;
+        error = this->GetTypeHostManager()->Test_GetTypeHost(hostId, guestTypeHost);
+        
+        ASSERT_IFNOT(error.IsSuccess(), "Test_GetTypeHost(hostId, guestTypeHost) after Open.");
 
-        ASSERT_IFNOT(error.IsSuccess(), "Test_GetRuntimeId(hostId, runtimeId) after Open.");
+        auto runtimeId = guestTypeHost->RuntimeId;
 
         runtimeIds.push_back(runtimeId);
 
@@ -306,7 +310,7 @@ BOOST_AUTO_TEST_CASE(BasicTest)
 
         for (auto const & guestServiceType : guestServiceTypes)
         {
-            ServiceTypeIdentifier serviceTypeId(servicePackageId, guestServiceType);
+            ServiceTypeIdentifier serviceTypeId(servicePackageId, guestServiceType.ServiceTypeName);
             VersionedServiceTypeIdentifier versionedServiceTypeId(serviceTypeId, versionInstance);
 
             this->VerifyServiceTypeRegistration(versionedServiceTypeId, serviceDescription, activationContext, true, false);
@@ -325,6 +329,8 @@ BOOST_AUTO_TEST_CASE(BasicTest)
     for (int i = 0; i < guestServiceTypeHostCount; i++)
     {
         auto hostId = hostIds.at(i);
+        ApplicationHostContext appHostContext(hostId, ApplicationHostType::Activated_InProcess, false, false);
+
         auto runtimeId = runtimeIds.at(i);
         auto activationContext = activationContexts.at(i);
 
@@ -335,7 +341,7 @@ BOOST_AUTO_TEST_CASE(BasicTest)
             auto closeWaiter = make_shared<AsyncOperationWaiter>();
 
             this->GetTypeHostManager()->BeginCloseGuestServiceTypeHost(
-                hostId,
+                appHostContext,
                 Hosting2::HostingConfig::GetConfig().ActivationTimeout,
                 [this, closeWaiter](AsyncOperationSPtr const & operation)
             {
@@ -353,20 +359,20 @@ BOOST_AUTO_TEST_CASE(BasicTest)
         }
         else
         {
-            this->GetTypeHostManager()->AbortGuestServiceTypeHost(hostId);
+            this->GetTypeHostManager()->AbortGuestServiceTypeHost(appHostContext);
         }        
+        
+        GuestServiceTypeHostSPtr guestTypeHostToIgnore;
+        error = this->GetTypeHostManager()->Test_GetTypeHost(hostId, guestTypeHostToIgnore);
 
-        wstring runtimeIdIgnore;
-        error = this->GetTypeHostManager()->Test_GetRuntimeId(hostId, runtimeIdIgnore);
-
-        ASSERT_IFNOT(error.IsError(ErrorCodeValue::NotFound), "Test_GetRuntimeId(hostId, runtimeIdIgnore) after close.");
+        ASSERT_IFNOT(error.IsError(ErrorCodeValue::NotFound), "Test_GetTypeHost(hostId, guestTypeHostToIgnore) after close.");
 
         this->VerifyApplicationHostRegistration(hostId, false, true);
         this->VerifyRuntimeRegistration(runtimeId, false, true);
 
         for (auto const & guestServiceType : guestServiceTypes)
         {
-            ServiceTypeIdentifier serviceTypeId(servicePackageId, guestServiceType);
+            ServiceTypeIdentifier serviceTypeId(servicePackageId, guestServiceType.ServiceTypeName);
             VersionedServiceTypeIdentifier versionedServiceTypeId(serviceTypeId, versionInstance);
 
             this->VerifyServiceTypeRegistration(versionedServiceTypeId, serviceDescription, activationContext, false, true);

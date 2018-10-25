@@ -27,6 +27,7 @@ StartUpgradeDescription::StartUpgradeDescription()
     , maxPercentUnhealthyNodes_(0)
     , maxPercentDeltaUnhealthyNodes_(0)
     , maxPercentUpgradeDomainDeltaUnhealthyNodes_(0)
+    , applicationHealthPolicies_()
 {
 }
                          
@@ -40,7 +41,8 @@ StartUpgradeDescription::StartUpgradeDescription(
     BYTE &maxPercentUnhealthyApplications,
     BYTE &maxPercentUnhealthyNodes,
     BYTE &maxPercentDeltaUnhealthyNodes,
-    BYTE &maxPercentUpgradeDomainDeltaUnhealthyNodes)
+    BYTE &maxPercentUpgradeDomainDeltaUnhealthyNodes,
+    ApplicationHealthPolicyMap && applicationHealthPolicies)
     : clusterConfig_(clusterConfig)
     , healthCheckRetryTimeout_(healthCheckRetryTimeout)
     , healthCheckWaitDuration_(healthCheckWaitDuration)
@@ -51,6 +53,7 @@ StartUpgradeDescription::StartUpgradeDescription(
     , maxPercentUnhealthyNodes_(maxPercentUnhealthyNodes)
     , maxPercentDeltaUnhealthyNodes_(maxPercentDeltaUnhealthyNodes)
     , maxPercentUpgradeDomainDeltaUnhealthyNodes_(maxPercentUpgradeDomainDeltaUnhealthyNodes)
+    , applicationHealthPolicies_(move(applicationHealthPolicies))
 {
 }
 
@@ -65,6 +68,7 @@ StartUpgradeDescription::StartUpgradeDescription(StartUpgradeDescription const &
     , maxPercentUnhealthyNodes_(other.maxPercentUnhealthyNodes_)
     , maxPercentDeltaUnhealthyNodes_(other.maxPercentDeltaUnhealthyNodes_)
     , maxPercentUpgradeDomainDeltaUnhealthyNodes_(other.maxPercentUpgradeDomainDeltaUnhealthyNodes_)
+    , applicationHealthPolicies_(other.applicationHealthPolicies_)
 {
 }
 
@@ -79,6 +83,7 @@ StartUpgradeDescription::StartUpgradeDescription(StartUpgradeDescription && othe
     , maxPercentUnhealthyNodes_(move(other.maxPercentUnhealthyNodes_))
     , maxPercentDeltaUnhealthyNodes_(move(other.maxPercentDeltaUnhealthyNodes_))
     , maxPercentUpgradeDomainDeltaUnhealthyNodes_(move(other.maxPercentUpgradeDomainDeltaUnhealthyNodes_))
+    , applicationHealthPolicies_(move(other.applicationHealthPolicies_))
 {
 }
 
@@ -93,7 +98,8 @@ bool StartUpgradeDescription::operator == (StartUpgradeDescription const & other
         maxPercentUnhealthyApplications_ == other.maxPercentUnhealthyApplications_ &&
         maxPercentUnhealthyNodes_ == other.maxPercentUnhealthyNodes_ &&
         maxPercentDeltaUnhealthyNodes_ == other.maxPercentDeltaUnhealthyNodes_ &&
-        maxPercentUpgradeDomainDeltaUnhealthyNodes_ == other.maxPercentUpgradeDomainDeltaUnhealthyNodes_;
+        maxPercentUpgradeDomainDeltaUnhealthyNodes_ == other.maxPercentUpgradeDomainDeltaUnhealthyNodes_ &&
+        applicationHealthPolicies_ == other.applicationHealthPolicies_;
 }
 
 bool StartUpgradeDescription::operator != (StartUpgradeDescription const & other) const
@@ -114,6 +120,11 @@ void StartUpgradeDescription::WriteTo(TextWriter & w, FormatOptions const &) con
         maxPercentUnhealthyNodes_,
         maxPercentDeltaUnhealthyNodes_,
         maxPercentUpgradeDomainDeltaUnhealthyNodes_);
+
+    if (!applicationHealthPolicies_.empty())
+    {
+        w.Write(", {0}", applicationHealthPolicies_.ToString());
+    }
 }
 
 Common::ErrorCode StartUpgradeDescription::FromPublicApi(
@@ -148,6 +159,20 @@ Common::ErrorCode StartUpgradeDescription::FromPublicApi(
     if (!error.IsSuccess()) { return error; }
     maxPercentUpgradeDomainDeltaUnhealthyNodes_ = publicDescription.MaxPercentUpgradeDomainDeltaUnhealthyNodes;
 
+    if (publicDescription.Reserved != nullptr)
+    {
+        auto ex1Ptr = reinterpret_cast<FABRIC_START_UPGRADE_DESCRIPTION_EX1*>(publicDescription.Reserved);
+        if (ex1Ptr->ApplicationHealthPolicyMap != nullptr)
+        {
+            error = applicationHealthPolicies_.FromPublicApi(*ex1Ptr->ApplicationHealthPolicyMap);
+            if (!error.IsSuccess())
+            {
+                return error;
+            }
+        }
+
+    }
+
     return ErrorCodeValue::Success;
 }
 
@@ -163,6 +188,17 @@ void StartUpgradeDescription::ToPublicApi(__in Common::ScopedHeap & heap, __out 
     result.MaxPercentUnhealthyApplications = maxPercentUnhealthyApplications_;
     result.MaxPercentDeltaUnhealthyNodes = maxPercentDeltaUnhealthyNodes_;
     result.MaxPercentUpgradeDomainDeltaUnhealthyNodes = maxPercentUpgradeDomainDeltaUnhealthyNodes_;
+
+    if (!applicationHealthPolicies_.empty())
+    {
+        auto policyDescriptionEx = heap.AddItem<FABRIC_START_UPGRADE_DESCRIPTION_EX1>();
+
+        auto publicAppHealthPolicyMap = heap.AddItem<FABRIC_APPLICATION_HEALTH_POLICY_MAP>();
+        policyDescriptionEx->ApplicationHealthPolicyMap = publicAppHealthPolicyMap.GetRawPointer();
+        applicationHealthPolicies_.ToPublicApi(heap, *publicAppHealthPolicyMap);
+
+        result.Reserved = policyDescriptionEx.GetRawPointer();
+    }
 }
 
 DWORD StartUpgradeDescription::ToPublicTimeInSeconds(TimeSpan const & time) const

@@ -31,27 +31,6 @@ NodeHealthStateChunk::NodeHealthStateChunk(
 {
 }
 
-NodeHealthStateChunk::NodeHealthStateChunk(NodeHealthStateChunk && other)
-    : Common::IFabricJsonSerializable(move(other))
-    , Serialization::FabricSerializable(move(other))
-    , nodeName_(move(other.nodeName_))
-    , healthState_(move(other.healthState_))
-{
-}
-
-NodeHealthStateChunk & NodeHealthStateChunk::operator =(NodeHealthStateChunk && other)
-{
-    if (this != &other)
-    {
-        nodeName_ = move(other.nodeName_);
-        healthState_ = move(other.healthState_);
-    }
-
-    Common::IFabricJsonSerializable::operator=(move(other));
-    Serialization::FabricSerializable::operator=(move(other));
-    return *this;
-}
-
 NodeHealthStateChunk::~NodeHealthStateChunk()
 {
 }

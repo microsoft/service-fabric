@@ -24,45 +24,41 @@ target_link_libraries(${exe_FabricTestHost}
   ${lib_DnsServiceConfig}
   ${lib_UpgradeService}
   ${lib_Testability}
-  ${lib_Hosting2}
-  ${lib_Client}
-  ${lib_ManagementCommon}
-  ${lib_ManagementRepairManager}
   ${lib_HealthManager}
   ${lib_ClusterManager}
-  ${lib_ImageStore}
-  ${lib_EntreeService}
   ${lib_StoreService}
   ${lib_FabricGateway}
-  ${lib_EntreeService}
-  ${lib_StoreService}
   ${lib_Hosting2}
-  ${lib_FileStoreService}
   ${lib_FabricTestCommon}
   ${lib_Store}
-  ${lib_KtlLogger}
+  ${lib_KtlLoggerNode}
   ${lib_TStore}
   ${lib_StoreRepairPolicy}
   ${lib_Replication}
   ${lib_TransactionalReplicator}
   ${lib_Failover}
   ${lib_LoadBalancing}
-  ${lib_SystemServices}
   ${lib_ServiceGroup}
   ${lib_ImageModel}
   ${lib_Query}
-  ${lib_HealthManager}
+  ${lib_Federation}
   ${lib_LeaseAgent}
   ${lib_Lease}
-  ${lib_Federation}
-  ${lib_ClientServerTransport}
   ${lib_Transport}
+  ${lib_Client}
+  ${lib_ServiceModel}
+  ${lib_ApiWrappers}
+  ${lib_ManagementRepairManager}
+  ${lib_SystemServices}
+  ${lib_ImageStore}
+  ${lib_EntreeService}
+  ${lib_FileStoreService}
+  ${lib_ManagementCommon}
+  ${lib_ClientServerTransport}
   ${lib_TestCommon}
   ${lib_TestHooks}
   ${lib_FederationTestCommon}
   ${lib_Common}
-  ${lib_ServiceModel}
-  ${lib_ApiWrappers}
   ${lib_Serialization}
   ${lib_FabricCommon}
   ${lib_InternalFabricUUID}
@@ -83,8 +79,6 @@ target_link_libraries(${exe_FabricTestHost}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 add_custom_command(TARGET ${exe_FabricTestHost} 

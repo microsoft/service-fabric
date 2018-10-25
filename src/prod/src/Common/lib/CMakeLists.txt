@@ -1,6 +1,8 @@
 set( LINUX_SOURCES
   ../AccountHelper.cpp
   ../ActivityId.cpp
+  ../ActivityType.cpp
+  ../ActivityDescription.cpp
   ../ApiEventSource.cpp
   ../ApiMonitoring.ApiName.cpp
   ../ApiMonitoring.ApiNameDescription.cpp
@@ -42,7 +44,6 @@ set( LINUX_SOURCES
   ../ConfigEntryBase.cpp
   ../ConfigEntryUpgradePolicy.cpp
   ../ConfigEventSource.cpp
-  ../ConfigOverrideDescription.cpp
   ../ConfigParameter.cpp
   ../ConfigParameterOverride.cpp
   ../ConfigSection.cpp
@@ -52,6 +53,7 @@ set( LINUX_SOURCES
   ../ConfigSettingsOverride.cpp
   ../ConfigStore.cpp
   ../ContainerEnvironment.cpp
+  ../crc.cpp
   ../CryptoBitBlob.cpp
   ../CryptoUtility.cpp
   ../DateTime.cpp
@@ -65,12 +67,14 @@ set( LINUX_SOURCES
   ../ErrorCodeValue.cpp
   ../EventLoop.cpp
   ../Expression.cpp
+  ../ExtendedEventMetadata.cpp
   ../FabricCodeVersion.cpp
   ../FabricComponent.cpp
   ../FabricComponentState.cpp
   ../FabricConfigVersion.cpp
   ../FabricConstants.cpp
   ../FabricEnvironment.cpp  #Partially migrated, logic related to registry needs to be changed
+  ../FabricGlobals.cpp
   ../FabricNodeConfig.cpp
   ../FabricNodeGlobalConfig.cpp
   ../FabricSerializer.cpp
@@ -149,6 +153,7 @@ set( LINUX_SOURCES
   ../TestPortHelper.cpp
   ../TextTraceWriter.cpp
   ../TextWriter.cpp
+  ../ThreadCounter.cpp
   ../ThreadErrorMessages.cpp
   ../Threadpool.cpp
   #../Threadpool.Linux.cpp
@@ -237,6 +242,7 @@ add_precompiled_header(objects_Common ../stdafx.h)
 add_library(${lib_Common} STATIC $<TARGET_OBJECTS:objects_Common> $<TARGET_OBJECTS:objects_Common_Threadpool>)
 target_link_libraries(${lib_Common}
     ${Ktlfull}
+    ${lib_Pal}
     minizip
     z
 )

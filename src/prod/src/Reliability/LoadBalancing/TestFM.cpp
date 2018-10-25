@@ -58,6 +58,11 @@ bool TestFM::IsSafeToUpgradeApp(ServiceModel::ApplicationIdentifier const& appId
     return true;
 }
 
+void TestFM::UpdateFailoverUnitTargetReplicaCount(Common::Guid const & partitionId, int targetCount)
+{
+    autoscalingTargetCount_[partitionId] = targetCount;
+}
+
 void TestFM::Load()
 {
     Load(PLBConfig::GetConfig().InitialRandomSeed);
@@ -82,6 +87,7 @@ void TestFM::Load(int initialPLBSeed)
         vector<FailoverUnitDescription>(),
         vector<LoadOrMoveCostDescription>(),
         CreateDummyHealthReportingComponentSPtr(),
+        Api::IServiceManagementClientPtr(),
         Reliability::FailoverConfig::GetConfig().IsSingletonReplicaMoveAllowedDuringUpgradeEntry);
 
     plbTestHelper_ = make_unique<PlacementAndLoadBalancingTestHelper>(*plb_);
@@ -110,6 +116,8 @@ void TestFM::Clear()
     moveActions_.clear();
     fuMap_.clear();
     appUpgradeChecks_.clear();
+    autoscalingTargetCount_.clear();
+    autoscalingPartitionCountChange_.clear();
 }
 
 void TestFM::ClearMoveActions()
@@ -303,6 +311,7 @@ void TestFM::ApplyActions()
             switch (currentAction.Action)
             {
             case FailoverUnitMovementType::MoveSecondary:
+            case FailoverUnitMovementType::MoveInstance:
                 // move secondary/instance {0}=>{1}
                 ApplyMoveAction(actionPair.first, currentAction.SourceNode, currentAction.TargetNode, ReplicaRole::Secondary);
                 break;
@@ -323,17 +332,20 @@ void TestFM::ApplyActions()
                 break;
 
             case FailoverUnitMovementType::AddSecondary:
+            case FailoverUnitMovementType::AddInstance:
                 // add secondary/instance
                 ApplyAddAction(actionPair.first, currentAction.TargetNode, ReplicaRole::Secondary);
                 break;
 
-            case FailoverUnitMovementType::Void:
+            case FailoverUnitMovementType::RequestedPlacementNotPossible:
                 // void movement on {0}
                 // TODO: clear flegs on the existing replica
                 break;
 
-            case FailoverUnitMovementType::Drop:
-                // drop secondary/instance
+            case FailoverUnitMovementType::DropPrimary:
+            case FailoverUnitMovementType::DropSecondary:
+            case FailoverUnitMovementType::DropInstance:
+                // drop primary/secondary/instance
                 ApplyDropAction(actionPair.first, currentAction.SourceNode);
                 break;
 
@@ -365,7 +377,6 @@ void TestFM::RefreshPLB(Common::StopwatchTime now)
 {
     plbTestHelper_->Refresh(now);
 }
-
 
 TestFM::DummyHealthReportingTransport::DummyHealthReportingTransport(ComponentRoot const& root)
     : Client::HealthReportingTransport(root)
@@ -399,4 +410,19 @@ Client::HealthReportingComponentSPtr TestFM::CreateDummyHealthReportingComponent
     auto healthTransport = make_unique<DummyHealthReportingTransport>(*root);
     auto healthClient = make_shared<Client::HealthReportingComponent>(*healthTransport, L"Dummy", false);
     return Client::HealthReportingComponentSPtr(healthClient);
+}
+
+int TestFM::GetTargetReplicaCountForPartition(Common::Guid const& partitionId)
+{
+    auto autoScaleCountIt = autoscalingTargetCount_.find(partitionId);
+    if (autoScaleCountIt != autoscalingTargetCount_.end())
+    {
+        return autoScaleCountIt->second;
+    }
+    return -1;
+}
+
+int TestFM::GetPartitionCountChangeForService(std::wstring const & serviceName)
+{
+    return plbTestHelper_->GetPartitionCountChangeForService(serviceName);
 }

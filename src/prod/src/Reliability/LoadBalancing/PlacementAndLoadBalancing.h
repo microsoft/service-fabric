@@ -21,7 +21,7 @@
 #include "IntervalCounter.h"
 #include "MetricGraph.h"
 #include "ServicePackage.h"
-#include "RGStatistics.h"
+#include "PLBStatistics.h"
 
 namespace Reliability
 {
@@ -70,6 +70,7 @@ namespace Reliability
                 std::vector<FailoverUnitDescription> && failoverUnits,
                 std::vector<LoadOrMoveCostDescription> && loadAndMoveCosts,
                 Client::HealthReportingComponentSPtr const & healthClient,
+                Api::IServiceManagementClientPtr const& serviceManagementClient,
                 Common::ConfigEntry<bool> const& isSingletonReplicaMoveAllowedDuringUpgradeEntry);
 
             virtual ~PlacementAndLoadBalancing();
@@ -119,6 +120,12 @@ namespace Reliability
 
             virtual void OnSafetyCheckAcknowledged(ServiceModel::ApplicationIdentifier const & appId);
 
+            // Triggers the change of target replica count for auto scaling.
+            void TriggerUpdateTargetReplicaCount(Common::Guid const& failoverUnitId, int targetReplicaSetSize) const;
+
+            __declspec(property(get = get_PendingAutoScalingRepartitions)) std::vector<AutoScalingRepartitionInfo> & PendingAutoScalingRepartitions;
+            std::vector<AutoScalingRepartitionInfo> & get_PendingAutoScalingRepartitions() { return pendingAutoScalingRepartitions_; }
+
             Common::ErrorCode TriggerSwapPrimary(std::wstring const& serviceName, Common::Guid const& fuId, Federation::NodeId currentPrimary, Federation::NodeId & newPrimary, bool force = false, bool chooseRandom = false );
             Common::ErrorCode TriggerPromoteToPrimary(std::wstring const& serviceName, Common::Guid const& fuId, Federation::NodeId newPrimary);
             Common::ErrorCode TriggerMoveSecondary(std::wstring const& serviceName, Common::Guid const& fuId, Federation::NodeId currentSecondary, Federation::NodeId & newSecondary, bool force = false, bool chooseRandom = false );
@@ -133,6 +140,8 @@ namespace Reliability
             virtual Common::ErrorCode ToggleVerboseServicePlacementHealthReporting(bool enabled);
 
             void ProcessPendingUpdatesPeriodicTask();
+
+            virtual void UpdateAvailableImagesPerNode(std::wstring const& nodeId, std::vector<std::wstring> const& images);
 
             __declspec (property(get=get_LoadBalancingCounters)) LoadBalancingCountersSPtr const& LoadBalancingCounters;
             LoadBalancingCountersSPtr const& get_LoadBalancingCounters() const { return plbCounterSPtr_; }
@@ -180,6 +189,9 @@ namespace Reliability
             __declspec (property(get = getSearcherSettings)) SearcherSettings const& Settings;
             SearcherSettings const& getSearcherSettings() const { return settings_; }
 
+            _declspec (property(get = getQuorumBasedServicesCache)) std::set<uint64> const& QuorumBasedServicesCache;
+            std::set<uint64> const& getQuorumBasedServicesCache() const { return quorumBasedServicesCache_; }
+
             void Refresh(Common::StopwatchTime now);
 
             void FMProcessFailoverUnitMovements(std::map<Common::Guid, FailoverUnitMovement> && fuMovements);
@@ -209,6 +221,7 @@ namespace Reliability
                 uint64 msEndRefreshTime = 0;     // Time spent in EndRefresh()
                 uint64 msSnapshotTime = 0;       // Time needed to take snapshots
                 uint64 msTimeCountForEngine = 0; // Time needed for engine run
+                uint64 msAutoScalingTime = 0;    // Time needed for auto scaling operations
                 uint64 msRemainderTime = 0;      // Everything else
                 uint64 msRefreshTime = 0;        // Total time spent in Refresh() 
 
@@ -239,7 +252,7 @@ namespace Reliability
                 auto itNodeIndex = nodeToIndexMap_.find(nodeId);
                 return itNodeIndex == nodeToIndexMap_.end() ? UINT64_MAX : itNodeIndex->second;
             }
-            inline uint64 GetServiceId(std::wstring const& serviceName) const;
+            uint64 GetServiceId(std::wstring const& serviceName) const;
 
             static std::wstring UDsToString(std::set<std::wstring> UDs);
 
@@ -247,6 +260,8 @@ namespace Reliability
 
             //returns nullptr in case the application is not present!
             Application const * GetApplicationPtrCallerHoldsLock(uint64 applicationId) const;
+
+            Common::TextTraceWriter const WriteWarning;
 
         private:
 
@@ -313,6 +328,7 @@ namespace Reliability
             void ChangeServiceMetricsForApplication(uint64 ApplicationId, std::wstring ServiceName, std::vector<ServiceMetric> const& metrics, std::vector<ServiceMetric> const& originalMetrics = std::vector<ServiceMetric>());
             std::pair<Common::ErrorCode, bool> InternalUpdateService(ServiceDescription && serviceDescription, bool forceUpdate, bool traceDetail = true, bool updateMetricConnections=true, bool skipServicePackageUpdate = false);
             ServiceDomain::DomainId GenerateUniqueDomainId(ServiceDescription const& serviceName);
+            ServiceDomain::DomainId GenerateDefaultDomainId(std::wstring const & metricName);
             ServiceDomain::DomainId GenerateUniqueDomainId(std::wstring const& metricName);
             void UpdateServiceDomainId(ServiceDomainTable::iterator itDomain);
             void AddServiceToDomain(ServiceDescription && serviceDescription, ServiceDomainTable::iterator itDomain);
@@ -340,13 +356,14 @@ namespace Reliability
             void ProcessUpdateLoadOrMoveCost(LoadOrMoveCostDescription && loadOrMoveCostDescription, Common::StopwatchTime timeStamp);
 
             void ProcessUpdateNode(NodeDescription && nodeDescription, Common::StopwatchTime timeStamp);
+            void ProcessUpdateNodeImages(Federation::NodeId const& nodeId, vector<wstring>&& nodeImages);
 
             void BeginRefresh(std::vector<ServiceDomain::DomainData> & dataList, ServiceDomainStats & stats, Common::StopwatchTime refreshTime);
             void RunSearcher(ServiceDomain::DomainData * searcherDomainData,
                 ServiceDomainStats const& stats,
                 size_t& totalOperationCount,
                 size_t& currentPlacementMovementCount,
-                size_t& currentBalancingMovementCount);     
+                size_t& currentBalancingMovementCount);
             void EndRefresh(ServiceDomain::DomainData * searcherDomainData, Common::StopwatchTime refreshTime);
 
             void TracePeriodical(ServiceDomainStats& stats, Common::StopwatchTime refreshTime);
@@ -410,7 +427,8 @@ namespace Reliability
                 Federation::NodeId newSecondary,
                 std::vector<FailoverUnitMovement::PLBAction>& actions,
                 bool force,
-                PLBSchedulerActionType::Enum schedulerAction);
+                PLBSchedulerActionType::Enum schedulerAction,
+                bool isStatefull);
 
             Common::ErrorCode FindRandomReplicaHelper(
                 std::wstring const& serviceName,
@@ -420,7 +438,8 @@ namespace Reliability
                 std::vector<FailoverUnitMovement::PLBAction>& actions,
                 ReplicaRole::Enum role,
                 bool force,
-                PLBSchedulerActionType::Enum schedulerAction);
+                PLBSchedulerActionType::Enum schedulerAction,
+                bool isStatefull);
 
             Common::ErrorCode SnapshotConstraintChecker(std::wstring const& serviceName,
                                                         Common::Guid const& fuId,
@@ -456,6 +475,8 @@ namespace Reliability
 
             void TrackDroppedPLBMovements();
 
+            void UpdateQuorumBasedServicesCache(ServiceDomain::DomainData* searcherDomainData);
+
             //Logic for calculating number of allowed movements...
             size_t GetAllowedMovements(PLBSchedulerAction action,
                 size_t existingReplicaCount,
@@ -463,6 +484,20 @@ namespace Reliability
                 size_t currentBalancingMovementCount);
 
             void UpdateUseSeparateSecondaryLoadConfig(bool newUseSeparateSecondaryLoad);
+
+            void EmitCRMOperationTrace(
+                Common::Guid const & failoverUnitId,
+                Common::Guid const & decisionId,
+                PLBSchedulerActionType::Enum schedulerActionType,
+                FailoverUnitMovementType::Enum failoverUnitMovementType,
+                std::wstring const & serviceName,
+                Federation::NodeId const & sourceNode,
+                Federation::NodeId const & destinationNode) const;
+
+            void EmitCRMOperationIgnoredTrace(
+                Common::Guid const & failoverUnitId,
+                PlbMovementIgnoredReasons::Enum movementIgnoredReason,
+                Common::Guid const & decisionId) const;
 
             bool const isMaster_;
 
@@ -564,11 +599,14 @@ namespace Reliability
             std::shared_ptr<std::pair<Snapshot,Snapshot>> snapshotsOnEachRefresh_;
 
             Common::StopwatchTime lastStatisticsTrace_;
-            RGStatistics rgStatistics_;
+            PLBStatistics plbStatistics_;
 
             Common::TimeSpan nextActionPeriod_;
             std::wstring deletedDomainId_;
 
+            // DomainId for metrics without domain
+            ServiceDomain::DomainId defaultDomainId_;
+            
             // metric to total reserved load map for all applications
             // This is used before application added to service domain
             std::map<std::wstring, int64> totalReservedCapacity_;
@@ -603,12 +641,55 @@ namespace Reliability
 
             // synchronization for the test as TestFM can create multiple PLB objects
             bool tracingJobQueueFinished_;
+
+            // Caches ids of services that use quorum based logic. 
+            // Caching is done only if all three conditions are satisfied:
+            //      + PLB config QuorumBasedReplicaDistributionPerUpgradeDomains is false
+            //      + PLB config QuorumBasedReplicaDistributionPerFaultDomains is false
+            //      + PLB config QuorumBasedLogicAutoSwitch is true
+            // In other scenarios, there is no need to cache services.
+            std::set<uint64> quorumBasedServicesCache_;
+
 #if !defined(PLATFORM_UNIX)
             Common::ExclusiveLock testTracingLock_;
 #else
             Common::Mutex testTracingLock_;
 #endif
             Common::ConditionVariable testTracingBarrier_;
+
+            //
+            // Private methods and members for auto scaling
+            //
+
+            // Creates calls to perform repartition of services.
+            // this method is executed outside of the lock.
+            void ProcessAutoScalingRepartitioning();
+
+            // Called when client call is done.
+            void OnAutoScalingRepartitioningComplete(
+                Common::AsyncOperationSPtr const& operation,
+                uint64_t serviceId);
+
+            void ProcessFailedAutoScalingRepartitionsCallerHoldsLock();
+
+            // Client that is used for auto scaling repartitioning.
+            Api::IServiceManagementClientPtr serviceManagementClient_;
+
+            // Pending auto scale operations
+            std::vector<AutoScalingRepartitionInfo> pendingAutoScalingRepartitions_;
+
+            // Pending auto scale errors (repartitioning failed)
+            std::vector<std::pair<uint64_t, Common::ErrorCode>> pendingAutoScalingFailedRepartitions_;
+
+            // Protecting access to pendingAutoScalingFailedRepartitions_
+            Common::RwLock autoScalingFailedOperationsVectorsLock_;
+
+            // Failed operations for processing during current referesh.
+            // We don't want to take autoScalingFailedOperationsVectorsLock_ during BeginRefresh.
+            std::vector<std::pair<uint64_t, Common::ErrorCode>> pendingAutoScalingFailedRepartitionsForRefresh_;
+
+            // Available images on nodes
+            std::map<Federation::NodeId, std::vector<std::wstring>> pendingNodeImagesUpdate_;
         };
     }
 }

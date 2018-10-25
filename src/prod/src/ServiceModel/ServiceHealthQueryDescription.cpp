@@ -31,29 +31,6 @@ ServiceHealthQueryDescription::ServiceHealthQueryDescription(
 {
 }
 
-ServiceHealthQueryDescription::ServiceHealthQueryDescription(ServiceHealthQueryDescription && other)
-    : serviceName_(move(other.serviceName_))
-    , healthPolicy_(move(other.healthPolicy_))
-    , eventsFilter_(move(other.eventsFilter_))
-    , partitionsFilter_(move(other.partitionsFilter_))
-    , healthStatsFilter_(move(other.healthStatsFilter_))
-{
-}
-
-ServiceHealthQueryDescription & ServiceHealthQueryDescription::operator =(ServiceHealthQueryDescription && other)
-{
-    if (this != &other)
-    {
-        serviceName_ = move(other.serviceName_);
-        healthPolicy_ = move(other.healthPolicy_);
-        eventsFilter_ = move(other.eventsFilter_);
-        partitionsFilter_ = move(other.partitionsFilter_);
-        healthStatsFilter_ = move(other.healthStatsFilter_);
-    }
-
-    return *this;
-}
-
 ServiceHealthQueryDescription::~ServiceHealthQueryDescription()
 {
 }

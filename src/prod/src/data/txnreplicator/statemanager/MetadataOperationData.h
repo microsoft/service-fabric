@@ -10,7 +10,7 @@ namespace Data
     namespace StateManager
     {
         /// <summary>
-        /// MetadataOperationData for StateManager opertions like Add and Remove State Provider.
+        /// MetadataOperationData for StateManager operations like Add and Remove State Provider.
         /// </summary>
         /// <dataformat>
         /// OperationData:      [Header]...[n]
@@ -23,7 +23,7 @@ namespace Data
 
         public:
             /// <summary>
-            /// Creates an MetadataOperationData::SPtr from intputs.
+            /// Creates an MetadataOperationData::SPtr from inputs.
             /// Used in the IN path.
             /// </summary>
             static NTSTATUS Create(

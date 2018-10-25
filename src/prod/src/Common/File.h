@@ -11,6 +11,7 @@
 extern DWORD FileGetLastErrorFromErrno(void);
 extern DWORD DirGetLastErrorFromErrno();
 extern std::string FileNormalizePath(LPCWSTR pathW);
+extern bool GlobMatch(const char *str, const char *pat);
 #endif
 
 namespace Common

@@ -18,8 +18,8 @@ namespace ServiceModel
     public:
         ServiceQueryResult();
 
-        ServiceQueryResult(ServiceQueryResult && other);
-        ServiceQueryResult const & operator = (ServiceQueryResult && other);
+        ServiceQueryResult(ServiceQueryResult && other) = default;
+        ServiceQueryResult & operator = (ServiceQueryResult && other) = default;
 
         virtual ~ServiceQueryResult();
 
@@ -37,6 +37,12 @@ namespace ServiceModel
             bool hasPersistedState,
             FABRIC_QUERY_SERVICE_STATUS serviceStatus,
             bool isServiceGroup = false);
+
+        __declspec(property(get=get_Kind)) FABRIC_SERVICE_KIND Kind;
+        FABRIC_SERVICE_KIND get_Kind() const { return serviceKind_; }
+
+        __declspec(property(get=get_HasPersistedState)) bool HasPersistedState;
+        bool get_HasPersistedState() const { return hasPersistedState_; }
 
         __declspec(property(get = get_HealthState, put = put_HealthState)) FABRIC_HEALTH_STATE HealthState;
         FABRIC_HEALTH_STATE get_HealthState() const { return healthState_; }

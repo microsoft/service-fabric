@@ -39,10 +39,10 @@ class OpenCloseUser : public OpenCloseDriver, public KThreadPool::WorkItem
             return(_FOT.RawPtr());
         }
 
-		PVOID GetKernelPointerFromObjectId(
-		    __in ULONGLONG ObjectId
+        PVOID GetKernelPointerFromObjectId(
+            __in ULONGLONG ObjectId
         ) override ;
-		
+        
     protected:
         VOID
         OnStart(
@@ -884,11 +884,11 @@ OpenCloseUser::PostCloseCompletion(
 
 PVOID OpenCloseUser::GetKernelPointerFromObjectId(
     __in ULONGLONG ObjectId
-	)
+    )
 {
-    PVOID p;	
+    PVOID p;    
 
-	p = _FOT->LookupObjectPointer(ObjectId);
+    p = _FOT->LookupObjectPointer(ObjectId);
 
 	return(p);
 }

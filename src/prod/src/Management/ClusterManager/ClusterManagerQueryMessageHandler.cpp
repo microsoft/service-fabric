@@ -57,5 +57,3 @@ ErrorCode ClusterManagerQueryMessageHandler::EndAcceptRequest(Common::AsyncOpera
     CompleteRequest(error);
     return error;
 }
-
-

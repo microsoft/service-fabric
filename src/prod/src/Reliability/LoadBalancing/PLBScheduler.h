@@ -105,7 +105,7 @@ namespace Reliability
             Common::StopwatchTime lastNewNode_;
 
             PLBSchedulerAction currentAction_;
-            // Needed to keep correct transition between Creation and CreationWithMove
+            // Needed to keep correct transition between NewReplicaPlacement and NewReplicaPlacementWithMove
             PLBSchedulerAction placementAction_;
             // Needed to keep correct transition between fast and slow balancing
             PLBSchedulerAction balancingAction_;

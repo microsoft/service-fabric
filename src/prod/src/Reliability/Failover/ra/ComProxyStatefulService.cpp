@@ -22,21 +22,21 @@ ComProxyStatefulService::ComProxyStatefulService(Common::ComPointer<::IFabricSta
     : service_(service)
     , internalService_()
 {
-    auto hr = service_->QueryInterface(IID_IFabricInternalStatefulServiceReplica, internalService_.VoidInitializationAddress());
+    auto hr = service_->QueryInterface(IID_IFabricInternalStatefulServiceReplica2, internalService_.VoidInitializationAddress());
 
     if (SUCCEEDED(hr))
     {
-        Trace.WriteNoise(TraceComponent, "IFabricInternalStatefulServiceReplica supported");
+        Trace.WriteNoise(TraceComponent, "IFabricInternalStatefulServiceReplica2 supported");
     }
     else
     {
         if (hr == E_NOINTERFACE)
         {
-            Trace.WriteNoise(TraceComponent, "IFabricInternalStatefulServiceReplica not supported");
+            Trace.WriteNoise(TraceComponent, "IFabricInternalStatefulServiceReplica2 not supported");
         }
         else
         {
-            Trace.WriteWarning(TraceComponent, "Failed to QI for IFabricInternalStatefulServiceReplica: hr={0}", hr);
+            Trace.WriteWarning(TraceComponent, "Failed to QI for IFabricInternalStatefulServiceReplica2: hr={0}", hr);
         }
     }
 }
@@ -93,21 +93,45 @@ ErrorCode ComProxyStatefulService::GetQueryResult(__out ReplicaStatusQueryResult
     {
         ComPointer<IFabricStatefulServiceReplicaStatusResult> resultCPtr;
         hr = internalService_->GetStatus(resultCPtr.InitializationAddress());
-        Trace.WriteNoise(TraceComponent, "GetStatus returned {0}", hr); //Trace added to investigate RDBug 9191222
-
-        if (resultCPtr.GetRawPointer() == NULL)
-        {
-            hr = E_NOTIMPL;
-        }
 
         if (SUCCEEDED(hr))
         {
-            auto * publicResult = resultCPtr->get_Result();
+            if (resultCPtr.GetRawPointer() != NULL)
+            {
+                auto * publicResult = resultCPtr->get_Result();
 
-            result = ReplicaStatusQueryResult::CreateSPtr(publicResult->Kind);
-            hr = result->FromPublicApi(*publicResult).ToHResult();
+                result = ReplicaStatusQueryResult::CreateSPtr(publicResult->Kind);
+                hr = result->FromPublicApi(*publicResult).ToHResult();
+            }
+            else
+            {
+                Trace.WriteWarning(TraceComponent, "IFabricStatefulServiceReplicaStatusResult is null");
+
+                hr = E_NOTIMPL;
+            }
+        }
+        else
+        {
+            Trace.WriteWarning(TraceComponent, "IFabricInternalStatefulServiceReplica2::GetStatus failed: {0}", hr);
         }
     }
 
     return ErrorCode::FromHResult(hr);
+}
+
+void ComProxyStatefulService::UpdateInitializationData(vector<byte> const & initData)
+{
+    if (internalService_.GetRawPointer() != NULL)
+    {
+        auto hr = internalService_->UpdateInitializationData(static_cast<ULONG>(initData.size()), initData.data());
+
+        if (FAILED(hr))
+        {
+            Trace.WriteWarning(TraceComponent, "IFabricInternalStatefulServiceReplica2::UpdateInitializationData failed: {0}", hr);
+        }
+    }
+    else
+    {
+        Trace.WriteInfo(TraceComponent, "IFabricInternalStatefulServiceReplica2 interface not found");
+    }
 }

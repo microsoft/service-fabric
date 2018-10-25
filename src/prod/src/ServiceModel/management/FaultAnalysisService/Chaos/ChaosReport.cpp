@@ -69,7 +69,7 @@ ErrorCode ChaosReport::FromPublicApi(
     error = PublicApiHelper::FromPublicApiList<ChaosEvent, FABRIC_CHAOS_EVENT_LIST>(
         publicReport.History,
         history_);
-    if (!error.IsSuccess()) 
+    if (!error.IsSuccess())
     {
         Trace.WriteError(TraceComponent, "ChaosReport::FromPublicApi/Failed to retrieve the chaos event list: {0}", error);
         return error;
@@ -96,7 +96,7 @@ ErrorCode ChaosReport::ToPublicApi(
         heap,
         history_,
         *publicChaosEventList);
-    if (!error.IsSuccess()) 
+    if (!error.IsSuccess())
     {
         Trace.WriteError(TraceComponent, "ChaosReport::ToPublicApi/Failed to publish the list of Chaos events with error: {0}", error);
         return error;

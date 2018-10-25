@@ -41,7 +41,7 @@ namespace Management
                 default:
                     return ErrorCode(ErrorCodeValue::InvalidArgument, wformatString("{0}", FASResource::GetResources().ChaosStatusUnknown));
                 }
-                
+
                 return ErrorCode(ErrorCodeValue::Success);
             }
 
@@ -57,7 +57,7 @@ namespace Management
                     return FABRIC_CHAOS_STATUS_INVALID;
                 }
             }
-            
+
             wstring ChaosStatus::ToString(ChaosStatus::Enum const & val)
             {
                 switch (val)

@@ -17,8 +17,8 @@ namespace ServiceModel
         explicit ClusterHealthStatisticsFilter(bool excludeHealthStatistics);
         ClusterHealthStatisticsFilter(bool excludeHealthStatistics, bool includeSystemApplicationHealthStatistics);
         
-        ClusterHealthStatisticsFilter(ClusterHealthStatisticsFilter && other);
-        ClusterHealthStatisticsFilter & operator = (ClusterHealthStatisticsFilter && other);
+        ClusterHealthStatisticsFilter(ClusterHealthStatisticsFilter && other) = default;
+        ClusterHealthStatisticsFilter & operator = (ClusterHealthStatisticsFilter && other) = default;
 
         virtual ~ClusterHealthStatisticsFilter();
 

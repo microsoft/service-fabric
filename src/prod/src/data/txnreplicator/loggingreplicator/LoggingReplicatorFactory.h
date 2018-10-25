@@ -19,14 +19,14 @@ namespace Data
                 __in KString const & logDirectory,
                 __in IStateReplicator & stateReplicator,
                 __in TxnReplicator::IStateProviderManager & stateManager,
-                __in KWfStatefulServicePartition & partition,
+                __in Data::Utilities::IStatefulPartition & partition,
                 __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
                 __in TxnReplicator::SLInternalSettingsSPtr const & ktlLoggerSharedLogConfig,
                 __in Data::Log::LogManager & logManager,
                 __in TxnReplicator::IDataLossHandler & dataLossHandler,
                 __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-				__in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
+                __in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
                 __in KAllocator& allocator,
                 __out IStateProvider::SPtr & stateProvider);
         };

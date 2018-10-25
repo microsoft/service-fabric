@@ -139,7 +139,7 @@ namespace Reliability
             // whether the replica is ToBePromoted, MoveInProgress, ToBeDropped, InBuild, StandBy, Offline
             bool isInTransition_;
 
-            // whether the replica is active (up and non-StandBy) ToBePromoted or InBuild - FU should be marked as in transition
+            // whether the replica is active (up and non-StandBy) ToBePromoted or InBuild - FT should be marked as in transition
             bool makesFuInTransition_;
 
             Reliability::ReplicaFlags::Enum flags_;

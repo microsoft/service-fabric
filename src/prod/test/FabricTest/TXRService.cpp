@@ -89,6 +89,7 @@ wstring TXRService::GetSPNameFromKey(__int64 key)
 ErrorCode TXRService::OnOpen(
     __in ComPointer<IFabricStatefulServicePartition> const & partition,
     __in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
+    __in Common::ComPointer<IFabricPrimaryReplicator> & primaryReplicator,
     __in KAllocator & allocator)
 {
     FABRIC_SERVICE_PARTITION_INFORMATION const *partitionInfo;
@@ -101,6 +102,7 @@ ErrorCode TXRService::OnOpen(
 
     oldPartition_ = partition;
     transactionalReplicator_ = &transactionalReplicator;
+    primaryReplicator_ = primaryReplicator;
     allocator_ = &allocator;
     partition_ = ComPointer<IFabricStatefulServicePartition3>(partition, IID_IFabricStatefulServicePartition3);
     partitionWrapper_.SetPartition(partition_);
@@ -992,4 +994,57 @@ Common::ErrorCode TXRService::FromNTStatus(
         error);
 
     return error;
+}
+
+ErrorCode TXRService::GetReplicationQueueCounters(__out FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS & counters)
+{
+    ComPointer<IFabricInternalStateReplicator> internalStateReplicator;
+    HRESULT hr = primaryReplicator_->QueryInterface(IID_IFabricInternalStateReplicator, internalStateReplicator.VoidInitializationAddress());
+
+    if (SUCCEEDED(hr))
+    {
+        return ErrorCode::FromHResult(internalStateReplicator->GetReplicationQueueCounters(&counters));
+    }
+
+    return ErrorCodeValue::NotFound;
+}
+
+Common::ErrorCode TXRService::GetReplicatorQueryResult(__in ServiceModel::ReplicatorStatusQueryResultSPtr & result)
+{
+    ComPointer<IFabricInternalReplicator> internalReplicator;
+    HRESULT hr = primaryReplicator_->QueryInterface(IID_IFabricInternalReplicator, internalReplicator.VoidInitializationAddress());
+
+    if (SUCCEEDED(hr))
+    {
+        ComPointer<IFabricGetReplicatorStatusResult> replicatorStatusResult;
+        hr = internalReplicator->GetReplicatorStatus(replicatorStatusResult.InitializationAddress());
+
+        if (SUCCEEDED(hr))
+        {
+            FABRIC_REPLICA_ROLE role = replicatorStatusResult->get_ReplicatorStatus()->Role;
+            result = ServiceModel::ReplicatorStatusQueryResult::CreateSPtr(role);
+
+            if (role == FABRIC_REPLICA_ROLE_PRIMARY)
+            {
+                std::shared_ptr<ServiceModel::PrimaryReplicatorStatusQueryResult> primaryQueryResult = static_pointer_cast<ServiceModel::PrimaryReplicatorStatusQueryResult>(result);
+                primaryQueryResult->FromPublicApi(*replicatorStatusResult->get_ReplicatorStatus());
+                result = primaryQueryResult;
+            }
+            else
+            {
+                result->FromPublicApi(*replicatorStatusResult->get_ReplicatorStatus());
+            }
+        }
+    }
+
+    return ErrorCode::FromHResult(hr);
+}
+
+NTSTATUS TXRService::GetPeriodicCheckpointAndTruncationTimestamps(
+    __out LONG64 & lastPeriodicCheckpoint,
+    __out LONG64 & lastPeriodicTruncation)
+{
+    return transactionalReplicator_->Test_GetPeriodicCheckpointAndTruncationTimestampTicks(
+        lastPeriodicCheckpoint,
+        lastPeriodicTruncation);
 }

@@ -123,20 +123,23 @@ void ServerTestSession::ProcessClientMessage(Transport::MessageUPtr & message, T
 
 bool ServerTestSession::StartMonitoringClient(DWORD processId, wstring const& clientId)
 {
-    HANDLE result = ::OpenProcess(SYNCHRONIZE, FALSE, processId);
-    if (result == NULL)
+    HandleUPtr processHandle;
+    auto error = ProcessUtility::OpenProcess(
+        SYNCHRONIZE,
+        FALSE,
+        processId,
+        processHandle);
+
+    if (!error.IsSuccess())
     {
-		if (!isClosed_)
-		{
-			TestSession::WriteError(TraceSource, "OpenProcess for monitoring failed for process id {0}", processId);
-		}        
+        TestSession::WriteError(TraceSource, "OpenProcess for monitoring failed with error {0}", error);
         return false;
     }
 
     auto root = this->CreateComponentRoot();
     auto localClientId = clientId;
     ProcessWaitSPtr proccessMonitor = ProcessWait::CreateAndStart(
-        Handle(result),
+        move(*processHandle),
         processId,
         [this, root, localClientId](pid_t processId, ErrorCode const &, DWORD)
     {

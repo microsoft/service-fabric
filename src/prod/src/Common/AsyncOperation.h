@@ -55,6 +55,8 @@ namespace Common
     public:
         virtual ~AsyncOperation(void);
 
+        __declspec(property(get=get_AsyncOperationTraceId)) std::wstring const & AsyncOperationTraceId;
+
         // returns the ErrorCode from the result of AsyncOperation
         __declspec(property(get=get_Error)) ErrorCode const & Error;
 
@@ -65,6 +67,11 @@ namespace Common
         __declspec(property(get=get_IsCompleted)) bool IsCompleted;
         __declspec(property(get=get_IsCancelRequested)) bool IsCancelRequested;
         __declspec(property(get=get_FailedSynchronously)) bool FailedSynchronously;
+
+        inline std::wstring const & AsyncOperation::get_AsyncOperationTraceId() const
+        {
+            return traceId_;
+        }
 
         inline ErrorCode const & AsyncOperation::get_Error() const
         {
@@ -155,169 +162,14 @@ namespace Common
             return asyncOperation;
         }
 
-        template<typename TAsyncOperation, class Arg0>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(std::forward<Arg0>(arg0));
-            asyncOperation->Start(asyncOperation);
+		template<typename TAsyncOperation, class ...Args>
+		static AsyncOperationSPtr CreateAndStart(Args&& ...args)
+		{
+			AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(std::forward<Args>(args)...);
+			asyncOperation->Start(asyncOperation);
 
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2, class Arg3>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2, Arg3&& arg3)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2),
-                std::forward<Arg3>(arg3));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2, class Arg3, class Arg4>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2, Arg3&& arg3, Arg4&& arg4)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2),
-                std::forward<Arg3>(arg3),
-                std::forward<Arg4>(arg4));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2, Arg3&& arg3, Arg4&& arg4, Arg5&& arg5)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2),
-                std::forward<Arg3>(arg3),
-                std::forward<Arg4>(arg4),
-                std::forward<Arg5>(arg5));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5, class Arg6>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2, Arg3&& arg3, Arg4&& arg4, Arg5&& arg5, Arg6&& arg6)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2),
-                std::forward<Arg3>(arg3),
-                std::forward<Arg4>(arg4),
-                std::forward<Arg5>(arg5),
-                std::forward<Arg6>(arg6));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5, class Arg6, class Arg7>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2, Arg3&& arg3, Arg4&& arg4, Arg5&& arg5, Arg6&& arg6, Arg7&& arg7)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2),
-                std::forward<Arg3>(arg3),
-                std::forward<Arg4>(arg4),
-                std::forward<Arg5>(arg5),
-                std::forward<Arg6>(arg6),
-                std::forward<Arg7>(arg7));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5, class Arg6, class Arg7, class Arg8>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2, Arg3&& arg3, Arg4&& arg4, Arg5&& arg5, Arg6&& arg6, Arg7&& arg7, Arg8&& arg8)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2),
-                std::forward<Arg3>(arg3),
-                std::forward<Arg4>(arg4),
-                std::forward<Arg5>(arg5),
-                std::forward<Arg6>(arg6),
-                std::forward<Arg7>(arg7),
-                std::forward<Arg8>(arg8));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5, class Arg6, class Arg7, class Arg8, class Arg9>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2, Arg3&& arg3, Arg4&& arg4, Arg5&& arg5, Arg6&& arg6, Arg7&& arg7, Arg8&& arg8, Arg9&& arg9)
-        {
-            AsyncOperationSPtr asyncOperation = std::make_shared<TAsyncOperation>(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2),
-                std::forward<Arg3>(arg3),
-                std::forward<Arg4>(arg4),
-                std::forward<Arg5>(arg5),
-                std::forward<Arg6>(arg6),
-                std::forward<Arg7>(arg7),
-                std::forward<Arg8>(arg8),
-                std::forward<Arg9>(arg9));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
-
-        template<typename TAsyncOperation, class Arg0, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5, class Arg6, class Arg7, class Arg8, class Arg9, class Arg10>
-        static AsyncOperationSPtr CreateAndStart(Arg0&& arg0, Arg1&& arg1, Arg2&& arg2, Arg3&& arg3, Arg4&& arg4, Arg5&& arg5, Arg6&& arg6, Arg7&& arg7, Arg8&& arg8, Arg9&& arg9, Arg10&& arg10)
-        {
-            AsyncOperationSPtr asyncOperation = AsyncOperationSPtr(new TAsyncOperation(
-                std::forward<Arg0>(arg0),
-                std::forward<Arg1>(arg1),
-                std::forward<Arg2>(arg2),
-                std::forward<Arg3>(arg3),
-                std::forward<Arg4>(arg4),
-                std::forward<Arg5>(arg5),
-                std::forward<Arg6>(arg6),
-                std::forward<Arg7>(arg7),
-                std::forward<Arg8>(arg8),
-                std::forward<Arg9>(arg9),
-                std::forward<Arg10>(arg10)));
-            asyncOperation->Start(asyncOperation);
-
-            return asyncOperation;
-        }
+			return asyncOperation;
+		}
 
         template<typename TAsyncOperation>
         static TAsyncOperation* Get(AsyncOperationSPtr const & asyncOperation)

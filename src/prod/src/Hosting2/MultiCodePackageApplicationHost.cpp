@@ -726,7 +726,11 @@ MultiCodePackageApplicationHost::MultiCodePackageApplicationHost(
     wstring const & serverThumbprint,
     ComPointer<IFabricCodePackageHost> codePackageHost)
     : ApplicationHost(
-        ApplicationHostContext(hostId, ApplicationHostType::Activated_MultiCodePackage, false /*Container host not supported for this mode*/),
+        ApplicationHostContext(
+            hostId, 
+            ApplicationHostType::Activated_MultiCodePackage,
+            false /* isContainerHost */,
+            false /* isCodePackageActivatorHost */),
         runtimeServiceAddress,
         certContext,
         serverThumbprint,

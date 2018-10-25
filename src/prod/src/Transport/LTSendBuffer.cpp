@@ -327,6 +327,7 @@ void LTSendBuffer::Consume(size_t length)
     messageQueue_.truncate_before(frame);
     sendingLength_ = 0;
     totalBufferedBytes_ -= (ULONG)length;
+    sentByteTotal_ += length;
     TcpConnection::WriteNoise(
         TraceType, connection_->TraceId(),
         "leaving Consume: totalBufferedBytes_ = {0}",
@@ -358,7 +359,7 @@ void LTSendBuffer::Abort()
 
         if (message->HasSendStatusCallback())
         {
-            message->OnSendStatus(sendError.ReadValue(), move(message));
+            message->OnSendStatus(sendError, move(message));
         }
     }
 
@@ -379,7 +380,7 @@ void LTSendBuffer::Abort()
             if (frame->Message()->HasSendStatusCallback())
             {
                 auto msg = frame->Dispose();
-                msg->OnSendStatus(sendError.ReadValue(), move(msg));
+                msg->OnSendStatus(sendError, move(msg));
             }
             else
             {

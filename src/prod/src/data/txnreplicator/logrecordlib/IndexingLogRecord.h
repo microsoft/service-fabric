@@ -60,8 +60,8 @@ namespace Data
             //
             void OnTruncateHead(
                 __in InvalidLogRecords & invalidLogRecords,
-                __out ULONG32 freeLinkCallCount,
-                __out ULONG32 freeLinkCallTrueCount);
+                __out ULONG32 & freeLinkCallCount,
+                __out ULONG32 & freeLinkCallTrueCount);
 
             bool Test_Equals(__in LogRecord const & other) const override;
 
@@ -74,7 +74,8 @@ namespace Data
             virtual void Write(
                 __in Utilities::BinaryWriter & binaryWriter,
                 __inout Utilities::OperationData & operationData,
-                __in bool isPhysicalWrite) override;
+                __in bool isPhysicalWrite,
+                __in bool forceRecomputeOffsets) override;
 
         private:
 

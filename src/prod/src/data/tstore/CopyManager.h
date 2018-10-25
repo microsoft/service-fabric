@@ -20,6 +20,7 @@ namespace Data
             static NTSTATUS Create(
                 __in StoreTraceComponent & traceComponent,
                 __in KAllocator & allocator,
+                __in StorePerformanceCountersSPtr & perfCounters,
                 __out SPtr & result);
 
             ktl::Awaitable<void> AddCopyDataAsync(
@@ -61,7 +62,7 @@ namespace Data
             static ULONG32 GetULONG32(__in KBuffer & buffer, __in ULONG offsetBytes);
             void TraceException(__in KStringView const & methodName, __in ktl::Exception const & exception);
 
-            CopyManager(__in StoreTraceComponent & traceComponent);
+            CopyManager(__in StoreTraceComponent & traceComponent, __in StorePerformanceCountersSPtr & perfCounters);
 
             bool copyCompleted_;
             KString::SPtr currentCopyFileNameSPtr_;
@@ -71,6 +72,7 @@ namespace Data
             ULONG32 fileCount_;
             MetadataTable::SPtr metadataTableSPtr_;
             StoreTraceComponent::SPtr traceComponent_;
+            CopyPerformanceCounterWriter perfCounterWriter_;
         };
     }
 }

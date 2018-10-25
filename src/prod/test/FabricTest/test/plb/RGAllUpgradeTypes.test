@@ -1,0 +1,275 @@
+###############################################################################
+# Test: RGAllUpgradeTypes.Test
+# Owners: mocolic, yangli, anuragg
+# This test verifies the behavior of resource governance in different upgrade types : SF, infra (node deactivation with restart, pause and removing data)
+# Also verifies if placement with move will place successfully for application with scaleout=1
+###############################################################################
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+fmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+set RestoreReplicaLocationAfterUpgrade true
+
+# after node deactivation how long FM waits till creates a copy of replica
+set UserReplicaRestartWaitDuration 5
+
+# We need to be able to move replicas while in upgrade
+set AllowConstraintCheckFixesDuringApplicationUpgrade true
+
+# Disable load balancing to have predictability during test run
+set LoadBalancingEnabled false
+
+# Allow placement with move
+set PLBActionRetryTimes 1
+
+# Allow moving all replicas so that placement with move successfully place new child replica on a new node
+set MaxPercentageToMoveForPlacement 1
+
+# Do not check for available resources and do not enforce RG on the nodes
+# This is to be able to execute the test on any machine, regardless 
+set LocalResourceManagerTestMode true
+
+# Set the expected upgrade durations
+set ExpectedReplicaUpgradeDuration 5
+
+# Allow movement during upgrade for replicas which services have target replica count = 1
+set IsSingletonReplicaMoveAllowedDuringUpgrade true
+
+# Add/move new replicas together for affinity correlated partitions during upgrade
+set RelaxScaleoutConstraintDuringUpgrade true
+
++10 ud=UD1 cap=servicefabric:/_CpuCores:1,servicefabric:/_MemoryInMB:1000,DiskMetric:10
++20 ud=UD2 cap=servicefabric:/_CpuCores:2,servicefabric:/_MemoryInMB:2000,DiskMetric:100
++30 ud=UD3 cap=servicefabric:/_CpuCores:2,servicefabric:/_MemoryInMB:1000,DiskMetric:100
+verify
+
+# 
+# Application type version 1.0
+#
+app.add version10 TestAppType 1.0
+app.clear version10
+app.servicepack version10 ServicePackageA version=1.0 resources=CPU,1,MemoryInMB,1000
+app.servicetypes version10 ServicePackageA ServiceTypeSingletonA stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeSingletonB stateful persist
+app.servicetypes version10 ServicePackageA ServiceTypeSingletonC stateful persist
+app.codepack version10 ServicePackageA CodeSingletonA types=ServiceTypeSingletonA version=1.0
+app.codepack version10 ServicePackageA CodeSingletonB types=ServiceTypeSingletonB version=1.0
+app.codepack version10 ServicePackageA CodeSingletonC types=ServiceTypeSingletonC version=1.0
+app.upload version10 compress
+provisionapp version10
+
+
+#
+# Create application version 1.0
+#
+createapp fabric:/app1 TestAppType 1.0 scaleout=1,1
+verify
+
+createservice fabric:/app1/ServiceSingletonA ServiceTypeSingletonA y 1 1 persist appname=fabric:/app1 metrics=DiskMetric,High,30,20 
+createservice fabric:/app1/ServiceSingletonB ServiceTypeSingletonB y 1 1 persist appname=fabric:/app1 metrics=DiskMetric,High,30,20
+createservice fabric:/app1/ServiceSingletonC ServiceTypeSingletonC y 1 1 persist appname=fabric:/app1 metrics=DiskMetric,High,10,10 servicePackageActivationMode=ExclusiveProcess
+verify
+
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonA.20 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonB.20 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonC.20 Ready
+
+#Verify load on Node20
+verifynodeload nodeid:20 servicefabric:/_CpuCores 2
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:20 DiskMetric 70
+
+verifyresourceonnode 20 servicefabric:/_CpuCores 2
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 2000
+
++40 ud=UD4 cap=servicefabric:/_CpuCores:2,servicefabric:/_MemoryInMB:2000,DiskMetric:100
+
+#-----------------------------------------------------------------------
+# Test case 1: Node Deactivation - Restart
+#
+
+!pause 10
+deactivatenode 10 Restart
+!waitforstate FM.Node.DeactivationIntent.10 Restart
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+
+activatenode 10
+!waitforstate FM.Node.DeactivationIntent.10 None
+!waitforstate FM.Node.DeactivationStatus.10 None
+verify
+
+deactivatenode 20 Restart
+!waitforstate FM.Node.DeactivationIntent.20 Restart
+!waitforstate FM.Node.DeactivationStatus.20 DeactivationComplete
+
+#verify that replicas are moved to new node
+!pause 10
+
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonA.40 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonB.40 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonC.40 Ready
+
+activatenode 20
+!waitforstate FM.Node.DeactivationIntent.20 None
+!waitforstate FM.Node.DeactivationStatus.20 None
+verify
+
+deactivatenode 30 Restart
+!waitforstate FM.Node.DeactivationIntent.30 Restart
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+
+activatenode 30
+!waitforstate FM.Node.DeactivationIntent.30 None
+!waitforstate FM.Node.DeactivationStatus.30 None
+verify
+
+#-----------------------------------------------------------------------
+# Test case 2: Node Deactivation - Pause (No movements initiated)
+#
+
+!pause 10
+
+#Pause Node10
+deactivatenode 10 Pause
+!waitforstate FM.Node.DeactivationIntent.10 Pause
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+
+activatenode 10
+!waitforstate FM.Node.DeactivationIntent.10 None
+!waitforstate FM.Node.DeactivationStatus.10 None
+verify
+
+#Pause Node20
+deactivatenode 20 Pause
+!waitforstate FM.Node.DeactivationIntent.20 Pause
+!waitforstate FM.Node.DeactivationStatus.20 DeactivationComplete
+
+activatenode 20
+!waitforstate FM.Node.DeactivationIntent.20 None
+!waitforstate FM.Node.DeactivationStatus.20 None
+verify
+
+#Pause Node30
+deactivatenode 30 Pause
+!waitforstate FM.Node.DeactivationIntent.30 Pause
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+
+activatenode 30
+!waitforstate FM.Node.DeactivationIntent.30 None
+!waitforstate FM.Node.DeactivationStatus.30 None
+verify
+
+
+#Pause Node40 and verify that no movements were initiated
+deactivatenode 40 Pause
+!waitforstate FM.Node.DeactivationIntent.40 Pause
+!waitforstate FM.Node.DeactivationStatus.40 DeactivationComplete
+
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonA.40 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonB.40 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonC.40 Ready
+
+activatenode 40
+!waitforstate FM.Node.DeactivationIntent.40 None
+!waitforstate FM.Node.DeactivationStatus.40 None
+
+#-----------------------------------------------------------------------
+# Test case 3: Node Deactivation - RemoveData
+#
+
+!pause 10
+
+#RemoveData Node10
+deactivatenode 10 RemoveData
+!waitforstate FM.Node.DeactivationIntent.10 RemoveData
+!waitforstate FM.Node.DeactivationStatus.10 DeactivationComplete
+
+activatenode 10
+!waitforstate FM.Node.DeactivationIntent.10 None
+!waitforstate FM.Node.DeactivationStatus.10 None
+verify
+
+#RemoveData Node20
+deactivatenode 20 RemoveData
+!waitforstate FM.Node.DeactivationIntent.20 RemoveData
+!waitforstate FM.Node.DeactivationStatus.20 DeactivationComplete
+
+activatenode 20
+!waitforstate FM.Node.DeactivationIntent.20 None
+!waitforstate FM.Node.DeactivationStatus.20 None
+verify
+
+#RemoveData Node30
+deactivatenode 30 RemoveData
+!waitforstate FM.Node.DeactivationIntent.30 RemoveData
+!waitforstate FM.Node.DeactivationStatus.30 DeactivationComplete
+
+activatenode 30
+!waitforstate FM.Node.DeactivationIntent.30 None
+!waitforstate FM.Node.DeactivationStatus.30 None
+verify
+
+
+#RemoveData Node40 and verify that everything moved to Node20
+deactivatenode 40 RemoveData
+!waitforstate FM.Node.DeactivationIntent.40 RemoveData
+!waitforstate FM.Node.DeactivationStatus.40 DeactivationComplete
+
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonA.20 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonB.20 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonC.20 Ready
+
+activatenode 40
+!waitforstate FM.Node.DeactivationIntent.40 None
+!waitforstate FM.Node.DeactivationStatus.40 None
+
+
++50 ud=UD1 cap=servicefabric:/_CpuCores:2,servicefabric:/_MemoryInMB:2000,DiskMetric:100
+#-----------------------------------------------------------------------
+# Test case 4: Fabric Upgrade
+#
+!pause 10
+
+prepareupgradefabric code=1.0.0.1 config=v1
+provisionfabric code=1.0.0.1 config=v1
+upgradefabric code=1.0.0.1 config=v1 Rolling upgrademode=manual
+
+verifyupgradefabric upgradedomains=UD1
+upgradefabricmovenext
+
+# Currently upgrading UD2, so all replicas go to Node50
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonA.50 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonB.50 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonC.50 Ready
+
+verifyupgradefabric upgradedomains=UD2
+
+# Finished with UD2, return all replicas to previous node(Node20)
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonA.20 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonB.20 Ready
+!waitforstate FM.Replica.State.fabric:/app1/ServiceSingletonC.20 Ready
+
+upgradefabricmovenext
+verifyupgradefabric upgradedomains=UD3
+
+#Verify load on Node20
+verifynodeload nodeid:20 servicefabric:/_CpuCores 2
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 2000
+verifynodeload nodeid:20 DiskMetric 70
+
+verifyresourceonnode 20 servicefabric:/_CpuCores 2
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 2000
+
+# Test case cleanup
+!pause 5
+deleteapp fabric:/app1
+
+unprovisionapp TestAppType 1.0
+verify
+
+nameexists fabric:/app1 false
+
+!q

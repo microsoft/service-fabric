@@ -19,6 +19,7 @@ add_executable(${exe_FailoverRA.Test}
   ../Test.Unit.ReplicaUploadState.cpp
   ../Test.Unit.RetryableErrorState.cpp
   ../Test.Utility.EntityExecutionContextTestUtility.cpp
+  ../Test.Utility.TestLog.cpp
   ../Test.Unit.FailoverManagerId.cpp
   ../Test.Unit.FailoverUnitPreCommitValidator.cpp
   ../Test.Unit.Infrastructure.FilteredVector.cpp
@@ -125,58 +126,51 @@ target_link_libraries(${exe_FailoverRA.Test}
   ${lib_Communication}
   ${lib_ManagementSubsystem}
   ${lib_UpgradeService}
-  ${lib_Client}
-  ${lib_ManagementCommon}
-  ${lib_ManagementRepairManager}
+  ${lib_Testability}
   ${lib_HealthManager}
   ${lib_ClusterManager}
-  ${lib_ImageStore}
-  ${lib_EntreeService}
   ${lib_StoreService}
   ${lib_FabricGateway}
-  ${lib_EntreeService}
-  ${lib_StoreService}
   ${lib_Hosting2}
-  ${lib_Testability}
-  ${lib_FileStoreService}
   ${lib_FabricTestCommon}
   ${lib_Store}
   ${lib_StoreRepairPolicy}
   ${lib_Store}
   ${lib_TStore}
-  ${lib_KtlLogger}
+  ${lib_KtlLoggerNode}
   ${lib_StoreRepairPolicy}
   ${lib_Replication}
   ${lib_Failover}
-  ${lib_Federation}
-  ${lib_Client}
   ${lib_LoadBalancingCommon}
-  ${lib_SystemServices}
   ${lib_ServiceGroup}
   ${lib_ImageModel}
   ${lib_Query}
-  ${lib_HealthManager}
+  ${lib_Federation}
   ${lib_LeaseAgent}
-  ${lib_ClientServerTransport}
+  ${lib_Lease}
   ${lib_Transport}
   ${lib_TestCommon}
   ${lib_FederationTestCommon}
-  ${lib_Common}
-  ${lib_ServiceModel}
-  ${lib_ManagementRepairManager}
+  ${lib_Client}
   ${lib_ServiceModel}
   ${lib_ApiWrappers}
+  ${lib_ImageStore}
+  ${lib_EntreeService}
+  ${lib_ManagementRepairManager}
+  ${lib_FileStoreService}
+  ${lib_ManagementCommon}
+  ${lib_SystemServices}
+  ${lib_ClientServerTransport}
+  ${lib_Common}
   ${lib_Serialization}
   ${lib_FabricCommon}
   ${lib_InternalFabricUUID}
   ${lib_FabricUUID}
   ${lib_FabricResources}
-  ${lib_Lease}
   ${KtlUser}
   ${BoostTest2}
   ${Cxx}
   ${CxxABI}
-  ${lib_FabricCommon}
   ${lib_FabricResources}
   ssh2
   z
@@ -191,8 +185,6 @@ target_link_libraries(${exe_FailoverRA.Test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

@@ -20,7 +20,9 @@ FailoverUnit::FailoverUnit(
     std::map<Federation::NodeId, std::vector<uint>> && secondaryEntriesMap,
     uint primaryMoveCost,
     uint secondaryMoveCost,
-    bool isServiceOnEveryNode)
+    bool isServiceOnEveryNode,
+    map<Federation::NodeId, ResourceLoad> && resourceMap,
+    Common::StopwatchTime nextScalingCheck)
     : fuDescription_(std::move(fuDescription)),
     primaryEntries_(std::move(primaryEntries)),
     isPrimaryLoadReported_(primaryEntries_.size(), false),
@@ -33,7 +35,8 @@ FailoverUnit::FailoverUnit(
     isSecondaryMoveCostReported_(false),
     actualReplicaDifference_(fuDescription_.ReplicaDifference),
     isServiceOnEveryNode_(isServiceOnEveryNode),
-    resourceLoadMap_()
+    resourceLoadMap_(std::move(resourceMap)),
+    nextScalingCheck_(nextScalingCheck)
 {
     for (auto it = secondaryEntriesMap_.begin(); it != secondaryEntriesMap_.end(); ++it)
     {
@@ -60,26 +63,28 @@ FailoverUnit::FailoverUnit(FailoverUnit && other)
     secondaryEntriesMap_(std::move(other.secondaryEntriesMap_)),
     isSecondaryLoadMapReported_(std::move(other.isSecondaryLoadMapReported_)),
     isServiceOnEveryNode_(other.isServiceOnEveryNode_),
-    resourceLoadMap_(other.resourceLoadMap_)
+    resourceLoadMap_(std::move(other.resourceLoadMap_)),
+    nextScalingCheck_(other.nextScalingCheck_)
 {
 }
 
 FailoverUnit::FailoverUnit(FailoverUnit const & other)
-: fuDescription_(other.fuDescription_),
-primaryEntries_(other.primaryEntries_),
-isPrimaryLoadReported_(other.isPrimaryLoadReported_),
-secondaryEntries_(other.secondaryEntries_),
-isSecondaryLoadReported_(other.isSecondaryLoadReported_),
-primaryMoveCost_(other.primaryMoveCost_),
-isPrimaryMoveCostReported_(other.isPrimaryMoveCostReported_),
-secondaryMoveCost_(other.secondaryMoveCost_),
-isSecondaryMoveCostReported_(other.isSecondaryMoveCostReported_),
-actualReplicaDifference_(other.actualReplicaDifference_),
-updateCount_(other.updateCount_),
-secondaryEntriesMap_(other.secondaryEntriesMap_),
-isSecondaryLoadMapReported_(other.isSecondaryLoadMapReported_),
-isServiceOnEveryNode_(other.isServiceOnEveryNode_),
-resourceLoadMap_(other.resourceLoadMap_)
+    : fuDescription_(other.fuDescription_),
+    primaryEntries_(other.primaryEntries_),
+    isPrimaryLoadReported_(other.isPrimaryLoadReported_),
+    secondaryEntries_(other.secondaryEntries_),
+    isSecondaryLoadReported_(other.isSecondaryLoadReported_),
+    primaryMoveCost_(other.primaryMoveCost_),
+    isPrimaryMoveCostReported_(other.isPrimaryMoveCostReported_),
+    secondaryMoveCost_(other.secondaryMoveCost_),
+    isSecondaryMoveCostReported_(other.isSecondaryMoveCostReported_),
+    actualReplicaDifference_(other.actualReplicaDifference_),
+    updateCount_(other.updateCount_),
+    secondaryEntriesMap_(other.secondaryEntriesMap_),
+    isSecondaryLoadMapReported_(other.isSecondaryLoadMapReported_),
+    isServiceOnEveryNode_(other.isServiceOnEveryNode_),
+    resourceLoadMap_(other.resourceLoadMap_),
+    nextScalingCheck_(other.nextScalingCheck_)
 {
 }
 
@@ -462,7 +467,7 @@ uint FailoverUnit::GetMoveCostValue(ReplicaRole::Enum role, SearcherSettings con
 
 void FailoverUnit::WriteTo(Common::TextWriter& writer, Common::FormatOptions const &) const
 {
-    writer.Write("{0} {1} {2} {3} {4} {5} {6}", fuDescription_, primaryEntries_, secondaryEntries_, primaryMoveCost_, secondaryMoveCost_, actualReplicaDifference_, updateCount_);
+    writer.Write("{0} {1} {2} {3} {4} {5} {6} {7}", fuDescription_, primaryEntries_, secondaryEntries_, primaryMoveCost_, secondaryMoveCost_, actualReplicaDifference_, updateCount_, nextScalingCheck_);
 }
 
 void FailoverUnit::ResetMovementMaps()
@@ -473,6 +478,10 @@ void FailoverUnit::ResetMovementMaps()
 
 bool FailoverUnit::UpdateResourceLoad(wstring const& metricName, int value, Federation::NodeId const& nodeId)
 {
+    if (!fuDescription_.HasAnyReplicaOnNode(nodeId))
+    {
+        return false;
+    }
     if (metricName == *ServiceModel::Constants::SystemMetricNameCpuCores)
     {
         resourceLoadMap_[nodeId].CPUCores_ = value;
@@ -497,5 +506,105 @@ void FailoverUnit::CleanupResourceUsage(FailoverUnitDescription const & newFailo
         {
             ++itEntries;
         }
+    }
+}
+
+uint FailoverUnit::GetResourcePrimaryLoad(std::wstring const & name) const
+{
+    auto primaryReplica = fuDescription_.PrimaryReplica;
+    if (primaryReplica != nullptr)
+    {
+        bool isCpu = name == *ServiceModel::Constants::SystemMetricNameCpuCores;
+        bool isMemory = name == *ServiceModel::Constants::SystemMetricNameMemoryInMB;
+        auto resourceIt = resourceLoadMap_.find(primaryReplica->NodeId);
+        if (resourceIt != resourceLoadMap_.end())
+        {
+            if (isCpu)
+            {
+                return resourceIt->second.CPUCores_;
+            }
+            else if (isMemory)
+            {
+                return resourceIt->second.MemoryInMb_;
+            }
+        }
+    }
+    return 0;
+}
+
+uint FailoverUnit::GetResourceAverageLoad(std::wstring const & metricName) const
+{
+    uint64 averageLoad(0);
+    bool isCpu = metricName == *ServiceModel::Constants::SystemMetricNameCpuCores;
+    bool isMemory = metricName == *ServiceModel::Constants::SystemMetricNameMemoryInMB;
+
+    for (auto it : resourceLoadMap_)
+    {
+        if (isCpu)
+        {
+            averageLoad += it.second.CPUCores_;
+        }
+        else if (isMemory)
+        {
+            averageLoad += it.second.MemoryInMb_;
+        }
+    }
+
+    return static_cast<uint>(floor(static_cast<double>(averageLoad) / resourceLoadMap_.size() + 0.5));
+}
+
+uint FailoverUnit::GetSecondaryLoadForAutoScaling(uint metricIndex) const
+{
+    if (secondaryEntriesMap_.size() > 0)
+    {
+        return GetSecondaryLoadAverage(metricIndex);
+    }
+    return secondaryEntries_[metricIndex];
+}
+
+uint FailoverUnit::GetAverageLoadForAutoScaling(uint metricIndex) const
+{
+    uint64 averageLoad(0);
+
+    auto replicas = this->FuDescription.Replicas.size();
+
+    if (replicas == 0)
+    {
+        return static_cast<uint>(averageLoad);
+    }
+
+    // Primary replica load
+    averageLoad += primaryEntries_[metricIndex];
+
+    if (replicas > 1) 
+    {
+        if (secondaryEntriesMap_.size() > 0)
+        {
+            for (auto it = SecondaryEntriesMap.begin(); it != SecondaryEntriesMap.end(); ++it)
+            {
+                averageLoad += it->second[metricIndex];
+            }
+        }
+        else
+        {
+            // All secondaries have default load
+            averageLoad += secondaryEntries_[metricIndex] * (replicas - 1);
+        }
+    }
+    
+    return static_cast<uint>(floor(static_cast<double>(averageLoad) / replicas + 0.5));
+}
+
+bool FailoverUnit::IsLoadAvailable(std::wstring const & metricName) const
+{
+    if (metricName == *ServiceModel::Constants::SystemMetricNameCpuCores || metricName == *ServiceModel::Constants::SystemMetricNameMemoryInMB)
+    {
+        return resourceLoadMap_.size() > 0;
+    }
+    else
+    {
+        // Default load is always available.
+        // Check if metric is defined for this service is done outside.
+        return true;
     }
 }

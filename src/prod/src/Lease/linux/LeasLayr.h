@@ -719,6 +719,8 @@ LeaseTrace::WriteInfo("ArbitrationSendTimeout", "Arbitration send timeout, faili
 LeaseTrace::WriteInfo("TerminateLeaseRemoteLeaseAgentNotFound", "Terminate lease, remote lease agent not found, leasing application handle = {0}, lease handle = {1}, remote leasing application identifier = {2}",b,c,d)
 #define EventWriteLeaseRelationshipIdentifierDelete(a,b,c,d)  \
 LeaseTrace::WriteInfo("LeaseRelationshipIdentifierDelete", "Lease relationship identifier {0}/{1} is deleted with address {2}",b,c,d)
+#define EventWriteProcessStalePing(a,b,c,d,e,f,g,h,i,j)  \
+LeaseTrace::WriteInfo("ProcessStalePing", "Lease relationship ({0}/{1}, subject = {2}, monitor = {3}) in state ({4}-{5}) received stale ping with message type {6}, message ID {7} and lease instance {8}",b,c,d,e,f,g,h,i,j)
 
 
 //rtl 

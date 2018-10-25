@@ -40,10 +40,10 @@ fi
 #done
 
 echo "Stopping service fabric service"
-systemctl stop servicefabric
+systemctl stop servicefabric 2>&1
 
 echo "Disable service fabric service"
-systemctl disable servicefabric
+systemctl disable servicefabric 2>&1
 
 if [ $DISTROINSTALLER = "DEB" ]; then
     db_get servicefabric/accepted-all-eula
@@ -55,6 +55,15 @@ if [ $DISTROINSTALLER = "DEB" ]; then
             echo EULA not accepted. Exiting installation
             exitCode=2
         fi
+    fi
+
+    # Update to newer dotnet repo source
+    grep -q "packages.microsoft.com" "/etc/apt/sources.list.d/dotnetdev.list"
+    source_added="$?"
+    key_added=`apt-key export BE1229CF`
+    if [ "${source_added}" -ne "0" ] || [ "${key_added}" == "" ]; then
+      echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main " >> /etc/apt/sources.list.d/dotnetdev.list
+      curl "https://packages.microsoft.com/keys/microsoft.asc" | gpg --dearmor | sudo apt-key add -a
     fi
 
     sleep 0.001 # debconf causes script to return error 128 on slow machines if script exits too quickly

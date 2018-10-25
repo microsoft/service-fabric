@@ -1,0 +1,6 @@
+{
+  "projects": [ "../../../../../../TelemetryAggregation/CoreCLRDll" ],
+  "sdk": {
+    "version": "2.0.0-preview2-006497"
+  }
+}

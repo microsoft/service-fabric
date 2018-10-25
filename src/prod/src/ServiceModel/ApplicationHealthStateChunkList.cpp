@@ -27,23 +27,6 @@ ApplicationHealthStateChunkList::ApplicationHealthStateChunkList(
 {
 }
 
-ApplicationHealthStateChunkList::ApplicationHealthStateChunkList(ApplicationHealthStateChunkList && other)
-    : HealthStateChunkList(move(other))
-    , items_(move(other.items_))
-{
-}
-
-ApplicationHealthStateChunkList & ApplicationHealthStateChunkList::operator =(ApplicationHealthStateChunkList && other)
-{
-    if (this != &other)
-    {
-        items_ = move(other.items_);
-    }
-
-    HealthStateChunkList::operator=(move(other));
-    return *this;
-}
-
 ApplicationHealthStateChunkList::~ApplicationHealthStateChunkList()
 {
 }

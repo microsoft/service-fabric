@@ -9,6 +9,8 @@
 #include <boost/test/unit_test.hpp>
 #include "Common/boost-taef.h"
 
+#define PERF_TEST
+
 namespace Data
 {
     namespace Integration
@@ -46,76 +48,59 @@ namespace Data
 
             void EndTest();
 
-            Awaitable<void> DoWorkOnKey(
-                __in IStore<int, int>::SPtr store,
+            Awaitable<void> DoSingleOutstandingTaskWork(
+                __in TxnReplicator::TestCommon::NoopStateProvider::SPtr sp,
                 __in Replica::SPtr replica,
                 __in int numberofUpdates,
-                __in int key);
+                __in int size);
 
-            Awaitable<void> AddOrUpdateKey(
-                __in IStore<int, int>::SPtr store,
+            Awaitable<void> AddOperation(
+                __in TxnReplicator::TestCommon::NoopStateProvider::SPtr sp,
                 __in Replica::SPtr replica,
-                __in int key,
-                __in int value,
-                __in bool isAdd = false);
+                __in Data::Utilities::OperationData const & data);
 
             CommonConfig config; // load the config object as its needed for the tracing to work
             KtlSystem * underlyingSystem_;
 
             KGuid pId_;
             FABRIC_REPLICA_ID rId_;
-            PartitionedReplicaId::SPtr prId_;
+            Common::atomic_long txCount_;
         };
 
-        Awaitable<void> ReplicatorPerfTest::DoWorkOnKey(
-            __in IStore<int, int>::SPtr store,
+        Awaitable<void> ReplicatorPerfTest::DoSingleOutstandingTaskWork(
+            __in TxnReplicator::TestCommon::NoopStateProvider::SPtr sp,
             __in Replica::SPtr replica,
             __in int numberofUpdates,
-            __in int key)
+            __in int size)
         {
-            co_await AddOrUpdateKey(store, replica, key, -1, true);
+            Data::Utilities::OperationData::SPtr data = Data::Utilities::OperationData::Create(sp->GetThisAllocator());
+            KBuffer::SPtr b;
+            KBuffer::Create(size, b, sp->GetThisAllocator());
+            data->Append(*b);
 
             for (int i = 0; i < numberofUpdates; i++)
             {
-                co_await AddOrUpdateKey(store, replica, key, i);
+                co_await AddOperation(sp, replica, *data);
+                txCount_++;
             }
 
             co_return;
         }
 
-        Awaitable<void> ReplicatorPerfTest::AddOrUpdateKey(
-            __in IStore<int, int>::SPtr store,
+        Awaitable<void> ReplicatorPerfTest::AddOperation(
+            __in TxnReplicator::TestCommon::NoopStateProvider::SPtr sp,
             __in Replica::SPtr replica,
-            __in int key,
-            __in int value,
-            __in bool isAdd)
+            __in Data::Utilities::OperationData const & data)
         {
             TxnReplicator::Transaction::SPtr innerTx;
             replica->TxnReplicator->CreateTransaction(innerTx);
-            IStoreTransaction<int, int>::SPtr tx = nullptr;
 
-            store->CreateOrFindTransaction(*innerTx, tx);
-            tx->ReadIsolationLevel = StoreTransactionReadIsolationLevel::Enum::Snapshot;
-
-            if (isAdd)
-            {
-                co_await store->AddAsync(
-                    *tx,
-                    key,
-                    value,
-                    TimeSpan::MaxValue,
-                    CancellationToken::None);
-            }
-            else
-            {
-                co_await store->ConditionalUpdateAsync(
-                    *tx,
-                    key,
-                    value,
-                    TimeSpan::MaxValue,
-                    CancellationToken::None,
-                    value - 1);
-            }
+            sp->AddOperation(
+                *innerTx,
+                &data,
+                nullptr,
+                nullptr,
+                nullptr);
 
             co_await innerTx->CommitAsync();
 
@@ -141,7 +126,10 @@ namespace Data
                 rId_,
                 testFolder,
                 logManager,
-                underlyingSystem_->PagedAllocator());
+                underlyingSystem_->PagedAllocator(),
+                TxnReplicator::TestCommon::NoopStateProviderFactory::Create(underlyingSystem_->PagedAllocator()).RawPtr());
+
+            underlyingSystem_->SetDefaultSystemThreadPoolUsage(FALSE);
 
             co_await replica->OpenAsync();
 
@@ -157,7 +145,7 @@ namespace Data
                 replica->TxnReplicator->CreateTransaction(txn);
                 KFinally([&] {txn->Dispose(); });
 
-                NTSTATUS status = co_await replica->TxnReplicator->AddAsync(*txn, *stateProviderName, L"ReplicatorPerfTest");
+                NTSTATUS status = co_await replica->TxnReplicator->AddAsync(*txn, *stateProviderName, TxnReplicator::TestCommon::NoopStateProvider::TypeName);
                 VERIFY_IS_TRUE(NT_SUCCESS(status));
                 co_await txn->CommitAsync();
             }
@@ -169,17 +157,46 @@ namespace Data
                 VERIFY_IS_NOT_NULL(stateProvider2);
                 VERIFY_ARE_EQUAL(*stateProviderName, stateProvider2->GetName());
 
-                IStore<int, int>::SPtr store = dynamic_cast<IStore<int, int>*>(stateProvider2.RawPtr());
+                TxnReplicator::TestCommon::NoopStateProvider::SPtr sp = dynamic_cast<TxnReplicator::TestCommon::NoopStateProvider *>(stateProvider2.RawPtr());
 
+                Sleep(5000);
                 Stopwatch s;
                 s.Start();
+
+                double opsPerMillisecond = 0;
+                double opsPerSecond = 0;
 
                 KArray<Awaitable<void>> tasks(underlyingSystem_->PagedAllocator(), concurrentTransactions, 0);
 
                 for (int i = 0; i < concurrentTransactions; i++)
                 {
-                    status = tasks.Append(DoWorkOnKey(store, replica, totalTransactions / concurrentTransactions, i));
+                    status = tasks.Append(DoSingleOutstandingTaskWork(sp, replica, totalTransactions / concurrentTransactions, i));
                     KInvariant(NT_SUCCESS(status));
+                }
+
+                ktl::AwaitableCompletionSource<void>::SPtr waiter;
+                ktl::AwaitableCompletionSource<void>::Create(underlyingSystem_->PagedAllocator(), 'abcd', waiter);
+
+                for (;;)
+                {
+                    auto opCount = txCount_ .load();
+                    if (txCount_.load() >= totalTransactions)
+                    {
+                        break;
+                    }
+
+                    opsPerMillisecond = (double)opCount / (double)s.ElapsedMilliseconds;
+                    opsPerSecond = 1000 * opsPerMillisecond;
+
+                    Trace.WriteInfo(
+                        TraceComponent,
+                        "Ops Completed = {0}. OpsPerSecond = {1}",
+                        opCount,
+                        opsPerSecond);
+
+                    KTimer::SPtr timer;
+                    KTimer::Create(timer, underlyingSystem_->PagedAllocator(), 'abcd');
+                    co_await timer->StartTimerAsync(1000, nullptr);
                 }
 
                 co_await TaskUtilities<Awaitable<void>>::WhenAll(tasks);
@@ -190,8 +207,7 @@ namespace Data
 
                 Trace.WriteInfo(
                     TraceComponent,
-                    "{0}: Tx/Sec is {1}",
-                    prId_->TraceId,
+                    "Tx/Sec is {0}",
                     txPerSec);
             }
 
@@ -214,7 +230,6 @@ namespace Data
 
         void ReplicatorPerfTest::EndTest()
         {
-            prId_.Reset();
         }
 
         void ReplicatorPerfTest::InitializeKtlConfig(
@@ -283,7 +298,7 @@ namespace Data
                 status = SyncAwait(logManager->OpenAsync(CancellationToken::None, sharedLogSettings));
                 CODING_ERROR_ASSERT(NT_SUCCESS(status));
 
-                SyncAwait(Run(workFolder, 1000, 200000, *logManager));
+                SyncAwait(Run(workFolder, 1000, 400000, *logManager));
 
                 status = SyncAwait(logManager->CloseAsync(CancellationToken::None));
                 CODING_ERROR_ASSERT(NT_SUCCESS(status));

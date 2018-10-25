@@ -73,7 +73,12 @@ void AffinitySubspace::GetTargetNodes(
     UNREFERENCED_PARAMETER(nodeToConstraintDiagnosticsDataMapSPtr);
 
     ServiceEntry const* service = replica->Partition->Service;
-    if (!service->HasAffinity || (tempSolution.OriginalPlacement->Settings.PlaceChildWithoutParent &&
+
+    // Skip getting target nodes for StandBy replicas as affinity constraint
+    // doesn't care about them and it can happen only when diagnostics goes through all constraints and invalid replicas
+    if (replica->IsStandBy ||
+        !service->HasAffinity ||
+        (tempSolution.OriginalPlacement->Settings.PlaceChildWithoutParent &&
         (service->DependedService == NULL || service->DependedService->PartitionCount == 0)))
     {
         //don't change candidate nodes if it's not a child service or we can place it without parent
@@ -121,7 +126,7 @@ void AffinitySubspace::GetTargetNodes(
         // but it will not be explicitly visible by PLB. For that reason additional condition is required,
         // to allow child service to create new secondary and have more replicas then parent service 
         if (tempSolution.OriginalPlacement->Settings.AllowHigherChildTargetReplicaCountForAffinity && 
-            ((service->DependedService->TargetReplicaSetSize < service->TargetReplicaSetSize) ||
+            ((parentPartition.TargetReplicaSetSize < replica->Partition->TargetReplicaSetSize) ||
             (!parentPartition.IsInSingleReplicaUpgrade && replica->Partition->IsInSingleReplicaUpgrade)))
         {
             ReplicaPlacement const& childPlacement = tempSolution.PartitionPlacements[replica->Partition];
@@ -203,7 +208,7 @@ void AffinitySubspace::GetTargetNodesForReplicas(
 void AffinitySubspace::GetNodesForReplicaDrop(TempSolution const& tempSolution, PartitionEntry const& partition, NodeSet & candidateNodes) const
 {
     ServiceEntry const* service = partition.Service;
-    size_t serviceToDropTargetReplicaCount = service->TargetReplicaSetSize;
+    size_t serviceToDropTargetReplicaCount = partition.TargetReplicaSetSize;
 
     if (service->DependentServices.size() == 0)
     {
@@ -212,18 +217,18 @@ void AffinitySubspace::GetNodesForReplicaDrop(TempSolution const& tempSolution, 
             return;
         }
 
-        size_t parentTargetReplicaCount = service->DependedService->TargetReplicaSetSize;
+        if (service->DependedService->PartitionCount != 1)
+        {
+            return;
+        }
+
+        PartitionEntry const& parentPartition = service->DependedService->SelectPartition(0);
+        size_t parentTargetReplicaCount = parentPartition.TargetReplicaSetSize;
 
         if (tempSolution.OriginalPlacement->Settings.AllowHigherChildTargetReplicaCountForAffinity
             && serviceToDropTargetReplicaCount > parentTargetReplicaCount)
         {
-            if (service->DependedService->PartitionCount != 1)
-            {
-                return;
-            }
-
             ReplicaPlacement const& childPlacement = tempSolution.PartitionPlacements[&partition];
-            PartitionEntry const& parentPartition = service->DependedService->SelectPartition(0);
             std::vector<NodeEntry const*> nodesWithParent;
 
             parentPartition.ForEachReplica([&](PlacementReplica const* parentReplica)
@@ -267,12 +272,13 @@ void AffinitySubspace::GetNodesForReplicaDrop(TempSolution const& tempSolution, 
     for (size_t childIndex = 0; childIndex < service->DependentServices.size(); ++childIndex)
     {
         ServiceEntry const* childService = service->DependentServices[childIndex];
-        size_t childTargetReplicaCount = childService->TargetReplicaSetSize;
 
         for (size_t partitionIndex = 0; partitionIndex < childService->PartitionCount; ++partitionIndex)
         {
             PartitionEntry const& childPartition = childService->SelectPartition(partitionIndex);
             std::vector<NodeEntry const*> nodesWithChild;
+
+            size_t childTargetReplicaCount = childPartition.TargetReplicaSetSize;
 
             childPartition.ForEachExistingReplica([&](PlacementReplica const* r)
             {
@@ -309,8 +315,8 @@ bool AffinityConstraint::IsRelaxAlignAffinityDuringSingletonReplicaUpgrade(
     TempSolution const& tempSolution)
 {
     if (!(tempSolution.OriginalPlacement->Settings.RelaxAlignAffinityConstraintDuringSingletonUpgrade &&
-        parentPartition->Service->IsTargetOne &&
-        childPartition->Service->IsTargetOne))
+        parentPartition->IsTargetOne &&
+        childPartition->IsTargetOne))
     {
         return false;
     }
@@ -483,11 +489,10 @@ void AffinityConstraint::GetInvalidReplicas(
     // add child services which are without parent service to invalidReplicas
     for (ServiceEntry const* childService : childServices)
     {
-        int targetReplicaDif = childService->TargetReplicaSetSize - parentPartition->Service->TargetReplicaSetSize;
-
         for (size_t i = 0; i < childService->PartitionCount; ++i)
         {
             PartitionEntry const& childPartition = childService->SelectPartition(i);
+            int targetReplicaDif = childPartition.TargetReplicaSetSize - parentPartition->TargetReplicaSetSize;
             PlacementReplicaSet invalidReplicasForChildPartition;
 
             // for each partition, first check if primary replica is colocated
@@ -514,7 +519,7 @@ void AffinityConstraint::GetInvalidReplicas(
 
                 int colocatedCount = AffinitySubspace::GetColocatedReplicaCount(tempSolution, colocatePrimary, parentPartition, childPlacement);
 
-                if (parentPartition->Service->TargetReplicaSetSize <= colocatedCount || parentPartition->ActiveReplicaCount == colocatedCount)
+                if (parentPartition->TargetReplicaSetSize <= colocatedCount || parentPartition->ActiveReplicaCount == colocatedCount)
                 {
                     continue;
                 }

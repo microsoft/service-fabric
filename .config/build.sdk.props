@@ -1,0 +1,42 @@
+<!--
+***********************************************************************************************
+SDK props for compiling on windows and linux.
+
+Copyright (C) Microsoft Corporation. All rights reserved.
+***********************************************************************************************
+-->
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+  Build in WindowsFabric repo supports building against a local build of OSS repos (SF-ActorsServices and SF-AspNetCore) repo in addition to the nuget package created from these repos
+  and consumed in WindowsFarbic repo through corext.config.
+  To support this, following conditional properties are defined and binaries from OSS repos are referenced using these properties.
+  To use local build from OSS repo, build will look for repo specific environment variables to determine binaries lcoations.
+  For example:
+     To build against local build of OSS SF ActorsServices repo:
+     1. if OSS SF ActorsServices repo is at E:\git\OSS\ActorsServices, then Local_SF_ActorsServices_Build must be set to its out folder E:\git\ActorsServices\drop\Release  (for Release build)
+
+     To build against local build of OSS SF AspNetCore repo:
+     1. if OSS SF AspeNetCore repo is at E:\git\OSS\aspnetcore, then Local_SF_ActorsServices_Build must be set to its out folder E:\git\aspnetcore\drop\Release  (for Release build)
+  -->
+
+  <!-- If Local_SF_ActorsServices_Build is set use binaries from developers local build else use binaries from the nuget package consumed using corext.config -->
+  <PropertyGroup Condition="'$(Local_SF_ActorsServices_Build)' == ''">
+    <SF_ActorsServices_DotNet_Framework>$(PkgSF_ActorsServices_Internal)\lib\netframework</SF_ActorsServices_DotNet_Framework>
+    <SF_ActorsServices_DotNet_Standard>$(PkgSF_ActorsServices_Internal)\lib\netstandard</SF_ActorsServices_DotNet_Standard>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Local_SF_ActorsServices_Build)' != ''">
+    <SF_ActorsServices_DotNet_Framework>$(Local_SF_ActorsServices_Build)\netframework</SF_ActorsServices_DotNet_Framework>
+    <SF_ActorsServices_DotNet_Standard>$(Local_SF_ActorsServices_Build)\netstandard</SF_ActorsServices_DotNet_Standard>
+  </PropertyGroup>
+
+  <!-- If Local_SF_AspNetCore_Build is set use binaries from developers local build else use binaries from the nuget package consumed using corext.conmfig -->
+  <PropertyGroup Condition="'$(Local_SF_AspNetCore_Build)' == ''">
+    <SF_AspNetCore_DotNet_Standard>$(PkgSF_AspNetCore_Internal)\lib\netstandard</SF_AspNetCore_DotNet_Standard>
+    <SF_AspNetCore_DotNet_Framework>$(PkgSF_AspNetCore_Internal)\lib\netframework</SF_AspNetCore_DotNet_Framework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Local_SF_AspNetCore_Build)' != ''">
+    <SF_AspNetCore_DotNet_Framework>$(Local_SF_AspNetCore_Build)\netframework</SF_AspNetCore_DotNet_Framework>
+    <SF_AspNetCore_DotNet_Standard>$(Local_SF_AspNetCore_Build)\netstandard</SF_AspNetCore_DotNet_Standard>
+  </PropertyGroup>
+</Project>

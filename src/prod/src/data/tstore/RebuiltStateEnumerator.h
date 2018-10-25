@@ -83,7 +83,7 @@ namespace Data
                     }
 
                     // Current metadata table is sufficient since this is only called during restore, recovery, and copy
-                    auto pagedValue = co_await versionedItemSPtr->GetValueAsync(*currentMetadataTableSPtr_, *valueSerializerSPtr_, *traceComponent_, ktl::CancellationToken::None);
+                    auto pagedValue = co_await versionedItemSPtr->GetValueAsync(*currentMetadataTableSPtr_, *valueSerializerSPtr_, ReadMode::ReadValue, *traceComponent_, ktl::CancellationToken::None);
                     auto versionValuePair = KeyValuePair<LONG64, TValue>(versionedItemSPtr->GetVersionSequenceNumber(), pagedValue);
                     currentItem_ = KeyValuePair<TKey, KeyValuePair<LONG64, TValue>>(currentKey, versionValuePair);
                     co_return true;

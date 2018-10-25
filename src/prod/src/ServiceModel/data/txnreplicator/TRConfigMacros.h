@@ -8,9 +8,9 @@
 namespace TxnReplicator
 {
 
-#define TR_GLOBAL_SETTINGS_COUNT 9
-#define TR_OVERRIDABLE_STATIC_SETTINGS_COUNT 8
-#define TR_OVERRIDABLE_DYNAMIC_SETTINGS_COUNT 10
+#define TR_GLOBAL_SETTINGS_COUNT 10
+#define TR_OVERRIDABLE_STATIC_SETTINGS_COUNT 9
+#define TR_OVERRIDABLE_DYNAMIC_SETTINGS_COUNT 11
 #define TR_OVERRIDABLE_SETTINGS_COUNT (TR_OVERRIDABLE_STATIC_SETTINGS_COUNT + TR_OVERRIDABLE_DYNAMIC_SETTINGS_COUNT)
 
 #define TR_SETTINGS_COUNT (TR_GLOBAL_SETTINGS_COUNT + TR_OVERRIDABLE_SETTINGS_COUNT)
@@ -38,6 +38,8 @@ namespace TxnReplicator
             int64 get_MaxMetadataSizeInKB() const; \
             __declspec(property(get=get_SerializationVersion)) int64 SerializationVersion; \
             int64 get_SerializationVersion() const; \
+            __declspec(property(get=get_EnableIncrementalBackupsAcrossReplicas)) bool EnableIncrementalBackupsAcrossReplicas; \
+            bool get_EnableIncrementalBackupsAcrossReplicas() const; \
             __declspec(property(get=get_OptimizeForLocalSSD)) bool OptimizeForLocalSSD; \
             bool get_OptimizeForLocalSSD() const; \
             __declspec(property(get=get_OptimizeLogForLowerDiskUsage)) bool OptimizeLogForLowerDiskUsage; \
@@ -52,6 +54,8 @@ namespace TxnReplicator
             Common::TimeSpan get_SlowLogIOTimeThreshold() const ;\
             __declspec(property(get=get_SlowLogIOHealthReportTTL)) Common::TimeSpan SlowLogIOHealthReportTTL ; \
             Common::TimeSpan get_SlowLogIOHealthReportTTL() const ;\
+            __declspec(property(get=get_TruncationInterval)) Common::TimeSpan TruncationInterval ; \
+            Common::TimeSpan get_TruncationInterval() const ;\
 
 #define DEFINE_TR_GLOBAL_CONFIG_PROPERTIES() \
             __declspec(property(get=get_ReadAheadCacheSizeInKb)) int64 ReadAheadCacheSizeInKb ; \
@@ -72,6 +76,8 @@ namespace TxnReplicator
             double get_TestLogDelayProcessExitRatio() const; \
             __declspec(property(get=get_FlushedRecordsTraceVectorSize)) int64 FlushedRecordsTraceVectorSize ; \
             int64 get_FlushedRecordsTraceVectorSize() const; \
+            std::wstring get_DispatchingMode() const; \
+            __declspec(property(get=get_DispatchingMode)) std::wstring DispatchingMode; \
 
 #define DEFINE_GET_TR_CONFIG_METHOD() \
             void GetTransactionalReplicatorSettingsStructValues(TxnReplicator::TRConfigValues & config) const \
@@ -87,6 +93,7 @@ namespace TxnReplicator
                 config.MaxWriteQueueDepthInKB = static_cast<DWORD>(this->MaxWriteQueueDepthInKB); \
                 config.MaxMetadataSizeInKB = static_cast<DWORD>(this->MaxMetadataSizeInKB); \
                 config.SerializationVersion = static_cast<DWORD>(this->SerializationVersion); \
+                config.EnableIncrementalBackupsAcrossReplicas = this->EnableIncrementalBackupsAcrossReplicas; \
                 config.OptimizeForLocalSSD = this->OptimizeForLocalSSD; \
                 config.OptimizeLogForLowerDiskUsage = this->OptimizeLogForLowerDiskUsage; \
                 config.EnableSecondaryCommitApplyAcknowledgement = this->EnableSecondaryCommitApplyAcknowledgement; \
@@ -94,14 +101,7 @@ namespace TxnReplicator
                 config.SlowLogIOCountThreshold = static_cast<DWORD>(this->SlowLogIOCountThreshold); \
                 config.SlowLogIOTimeThreshold = this->SlowLogIOTimeThreshold; \
                 config.SlowLogIOHealthReportTTL = this->SlowLogIOHealthReportTTL; \
-                config.ReadAheadCacheSizeInKb = static_cast<DWORD>(this->ReadAheadCacheSizeInKb); \
-                config.CopyBatchSizeInKb = static_cast<DWORD>(this->CopyBatchSizeInKb); \
-                config.ProgressVectorMaxEntries = static_cast<DWORD>(this->ProgressVectorMaxEntries); \
-                config.FlushedRecordsTraceVectorSize = static_cast<DWORD>(this->FlushedRecordsTraceVectorSize); \
-                config.Test_LogMinDelayIntervalMilliseconds = static_cast<DWORD>(this->Test_LogMinDelayIntervalMilliseconds); \
-                config.Test_LogMaxDelayIntervalMilliseconds = static_cast<DWORD>(this->Test_LogMaxDelayIntervalMilliseconds); \
-                config.Test_LogDelayRatio = static_cast<DWORD>(this->Test_LogDelayRatio); \
-                config.Test_LogDelayProcessExitRatio = static_cast<DWORD>(this->Test_LogDelayProcessExitRatio); \
+                config.TruncationInterval = this->TruncationInterval; \
             }; \
 
 #define DEFINE_TR_PRIVATE_CONFIG_MEMBERS() \
@@ -117,12 +117,14 @@ namespace TxnReplicator
             int64 maxMetadataSizeInKB_;  \
             int64 slowLogIOCountThreshold_;  \
             int64 serializationVersion_; \
+            bool enableIncrementalBackupsAcrossReplicas_; \
             bool optimizeForLocalSSD_;  \
             bool optimizeLogForLowerDiskUsage_;  \
             bool enableSecondaryCommitApplyAcknowledgement_;  \
             Common::TimeSpan slowLogIODuration_; \
             Common::TimeSpan slowLogIOTimeThreshold_; \
             Common::TimeSpan slowLogIOHealthReportTTL_; \
+            Common::TimeSpan truncationInterval_;
 
 #define DEFINE_TR_PRIVATE_GLOBAL_CONFIG_MEMBERS() \
             int64 readAheadCacheSizeInKb_; \
@@ -134,6 +136,7 @@ namespace TxnReplicator
             int64 test_LogMaxDelayIntervalMilliseconds_; \
             double test_LogDelayRatio_; \
             double test_LogDelayProcessExitRatio_; \
+            std::wstring dispatchingMode_; \
 
 /*ProgressVectorMaxEntires is set to the maximum number of records that can be traced*/
 #define TR_CONFIG_PROPERTIES(section_name)\
@@ -142,10 +145,10 @@ namespace TxnReplicator
             PUBLIC_CONFIG_ENTRY(uint, section_name, MaxAccumulatedBackupLogSizeInMB, 800, Common::ConfigEntryUpgradePolicy::Dynamic); \
             PUBLIC_CONFIG_ENTRY(uint, section_name, MinLogSizeInMB, 0, Common::ConfigEntryUpgradePolicy::Dynamic); \
             PUBLIC_CONFIG_ENTRY(uint, section_name, TruncationThresholdFactor, 2, Common::ConfigEntryUpgradePolicy::Dynamic); \
-            PUBLIC_CONFIG_ENTRY(uint, section_name, ThrottlingThresholdFactor, 5, Common::ConfigEntryUpgradePolicy::Dynamic); \
+            PUBLIC_CONFIG_ENTRY(uint, section_name, ThrottlingThresholdFactor, 4, Common::ConfigEntryUpgradePolicy::Dynamic); \
             PUBLIC_CONFIG_ENTRY(uint, section_name, MaxRecordSizeInKB, 1024, Common::ConfigEntryUpgradePolicy::Static); \
-            PUBLIC_CONFIG_ENTRY(uint, section_name, MaxWriteQueueDepthInKB, 1024, Common::ConfigEntryUpgradePolicy::Static); \
-            PUBLIC_CONFIG_ENTRY(uint, section_name, MaxMetadataSizeInKB, 1024, Common::ConfigEntryUpgradePolicy::Static); \
+            PUBLIC_CONFIG_ENTRY(uint, section_name, MaxWriteQueueDepthInKB, 0, Common::ConfigEntryUpgradePolicy::Static); \
+            PUBLIC_CONFIG_ENTRY(uint, section_name, MaxMetadataSizeInKB, 4, Common::ConfigEntryUpgradePolicy::Static); \
             PUBLIC_CONFIG_ENTRY(bool, section_name, OptimizeForLocalSSD, false, Common::ConfigEntryUpgradePolicy::Static); \
             PUBLIC_CONFIG_ENTRY(bool, section_name, OptimizeLogForLowerDiskUsage, true, Common::ConfigEntryUpgradePolicy::Static); \
             PUBLIC_CONFIG_ENTRY(uint, section_name, ReadAheadCacheSizeInKb, 1024, Common::ConfigEntryUpgradePolicy::Dynamic); \
@@ -154,11 +157,14 @@ namespace TxnReplicator
             PUBLIC_CONFIG_ENTRY(uint, section_name, SlowLogIOCountThreshold, 60, Common::ConfigEntryUpgradePolicy::Dynamic); \
             PUBLIC_CONFIG_ENTRY(Common::TimeSpan, section_name, SlowLogIOTimeThreshold, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic); \
             PUBLIC_CONFIG_ENTRY(Common::TimeSpan, section_name, SlowLogIOHealthReportTTL, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic); \
+            PUBLIC_CONFIG_ENTRY(Common::TimeSpan, section_name, TruncationInterval, Common::TimeSpan::FromSeconds(0), Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(bool, section_name, EnableSecondaryCommitApplyAcknowledgement, false, Common::ConfigEntryUpgradePolicy::Static); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, MaxStreamSizeInMB, 1024, Common::ConfigEntryUpgradePolicy::Static); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, ProgressVectorMaxEntries, 800, Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, FlushedRecordsTraceVectorSize, 32, Common::ConfigEntryUpgradePolicy::Static); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, SerializationVersion, 0, Common::ConfigEntryUpgradePolicy::Static); \
+            INTERNAL_CONFIG_ENTRY(bool, section_name, EnableIncrementalBackupsAcrossReplicas, false, Common::ConfigEntryUpgradePolicy::Static); \
+            INTERNAL_CONFIG_ENTRY(std::wstring, section_name, DispatchingMode, L"", Common::ConfigEntryUpgradePolicy::Dynamic); \
             TEST_CONFIG_ENTRY(std::wstring, section_name, Test_LoggingEngine, L"ktl", Common::ConfigEntryUpgradePolicy::NotAllowed); \
             TEST_CONFIG_ENTRY(uint, section_name, Test_LogMinDelayIntervalMilliseconds, 0, Common::ConfigEntryUpgradePolicy::Dynamic); \
             TEST_CONFIG_ENTRY(uint, section_name, Test_LogMaxDelayIntervalMilliseconds, 0, Common::ConfigEntryUpgradePolicy::Dynamic); \
@@ -172,10 +178,10 @@ namespace TxnReplicator
             INTERNAL_CONFIG_ENTRY(uint, section_name, MaxAccumulatedBackupLogSizeInMB, 800, Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, MinLogSizeInMB, 0, Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, TruncationThresholdFactor, 2, Common::ConfigEntryUpgradePolicy::Dynamic); \
-            INTERNAL_CONFIG_ENTRY(uint, section_name, ThrottlingThresholdFactor, 5, Common::ConfigEntryUpgradePolicy::Dynamic); \
+            INTERNAL_CONFIG_ENTRY(uint, section_name, ThrottlingThresholdFactor, 4, Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, MaxRecordSizeInKB, 1024, Common::ConfigEntryUpgradePolicy::Static); \
-            INTERNAL_CONFIG_ENTRY(uint, section_name, MaxWriteQueueDepthInKB, 1024, Common::ConfigEntryUpgradePolicy::Static); \
-            INTERNAL_CONFIG_ENTRY(uint, section_name, MaxMetadataSizeInKB, 1024, Common::ConfigEntryUpgradePolicy::Static); \
+            INTERNAL_CONFIG_ENTRY(uint, section_name, MaxWriteQueueDepthInKB, 0, Common::ConfigEntryUpgradePolicy::Static); \
+            INTERNAL_CONFIG_ENTRY(uint, section_name, MaxMetadataSizeInKB, 4, Common::ConfigEntryUpgradePolicy::Static); \
             INTERNAL_CONFIG_ENTRY(bool, section_name, OptimizeForLocalSSD, false, Common::ConfigEntryUpgradePolicy::Static); \
             INTERNAL_CONFIG_ENTRY(bool, section_name, OptimizeLogForLowerDiskUsage, true, Common::ConfigEntryUpgradePolicy::Static); \
             INTERNAL_CONFIG_ENTRY(bool, section_name, EnableSecondaryCommitApplyAcknowledgement, false, Common::ConfigEntryUpgradePolicy::Static); \
@@ -183,12 +189,15 @@ namespace TxnReplicator
             INTERNAL_CONFIG_ENTRY(uint, section_name, ReadAheadCacheSizeInKb, 1024, Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, CopyBatchSizeInKb, 64, Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, SerializationVersion, 1, Common::ConfigEntryUpgradePolicy::Static); \
+            INTERNAL_CONFIG_ENTRY(bool, section_name, EnableIncrementalBackupsAcrossReplicas, false, Common::ConfigEntryUpgradePolicy::Static); \
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, section_name, SlowLogIODuration, Common::TimeSpan::FromSeconds(1), Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, SlowLogIOCountThreshold, 60, Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, section_name, SlowLogIOTimeThreshold, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, section_name, SlowLogIOHealthReportTTL, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, ProgressVectorMaxEntries, 800, Common::ConfigEntryUpgradePolicy::Dynamic); \
             INTERNAL_CONFIG_ENTRY(uint, section_name, FlushedRecordsTraceVectorSize, 32, Common::ConfigEntryUpgradePolicy::Static); \
+            INTERNAL_CONFIG_ENTRY(Common::TimeSpan, section_name, TruncationInterval, Common::TimeSpan::FromSeconds(0), Common::ConfigEntryUpgradePolicy::Dynamic); \
+            INTERNAL_CONFIG_ENTRY(std::wstring, section_name, DispatchingMode, L"", Common::ConfigEntryUpgradePolicy::Dynamic); \
             TEST_CONFIG_ENTRY(std::wstring, section_name, Test_LoggingEngine, L"ktl", Common::ConfigEntryUpgradePolicy::NotAllowed); \
             TEST_CONFIG_ENTRY(uint, section_name, Test_LogMinDelayIntervalMilliseconds, 0, Common::ConfigEntryUpgradePolicy::Dynamic); \
             TEST_CONFIG_ENTRY(uint, section_name, Test_LogMaxDelayIntervalMilliseconds, 0, Common::ConfigEntryUpgradePolicy::Dynamic); \

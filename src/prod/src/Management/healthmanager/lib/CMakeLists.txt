@@ -4,6 +4,7 @@ set( LINUX_SOURCES
     ../ApplicationEntity.cpp
     ../ApplicationHealthId.cpp
     ../ApplicationsCache.cpp
+    ../AutoCleanupEventsJobItem.cpp
     ../checkinmemoryentitydatajobitem.cpp
     ../CleanupEntityExpiredTransientEventsJobItem.cpp
     ../CleanupEntityJobItem.cpp

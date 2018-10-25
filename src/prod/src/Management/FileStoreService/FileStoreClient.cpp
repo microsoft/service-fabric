@@ -505,6 +505,27 @@ ErrorCode FileStoreClient::EndUploadChunk(Common::AsyncOperationSPtr const & ope
     return internalFileStoreClient_->EndUploadChunk(operation);
 }
 
+AsyncOperationSPtr FileStoreClient::BeginUploadChunkContent(
+    Transport::MessageUPtr &chunkContentMessage,
+    Management::FileStoreService::UploadChunkContentDescription & uploadChunkContentDescription,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return internalFileStoreClient_->BeginUploadChunkContent(
+        chunkContentMessage,
+        uploadChunkContentDescription,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode FileStoreClient::EndUploadChunkContent(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return internalFileStoreClient_->EndUploadChunkContent(operation);
+}
+
 AsyncOperationSPtr FileStoreClient::BeginDeleteUploadSession(
     Common::Guid const & sessionId,
     Common::TimeSpan const timeout,

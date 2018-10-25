@@ -307,7 +307,7 @@ namespace PlacementAndLoadBalancingUnitTest
         vector<wstring> actionList = GetActionListString(fm_->MoveActions);
         VERIFY_ARE_EQUAL(1u, actionList.size());
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"1 add primary 0|1", value)));
-        VerifyPLBAction(plb, L"Creation");
+        VerifyPLBAction(plb, L"NewReplicaPlacement");
     }
 
     BOOST_AUTO_TEST_CASE(AppGroupsDownNodeAppCapacity)
@@ -574,9 +574,9 @@ namespace PlacementAndLoadBalancingUnitTest
 
     BOOST_AUTO_TEST_CASE(ReservedLoadAboveAndBelow)
     {
-        // Create AppGroup with reservation, and to add FUs with enough load to reach the reservation
-        // Then, to change one FU so that it (internally) we remove it and re-add it again.
-        // Next, add one FU to go over the reservation.
+        // Create AppGroup with reservation, and to add FTs with enough load to reach the reservation
+        // Then, to change one FT so that it (internally) we remove it and re-add it again.
+        // Next, add one FT to go over the reservation.
         // Finally remove two of them to go under the reservation.
         // Purpose: stress internal structures in ServiceDomain to make sure that load sums do not go under zero and we do not assert.
         wstring testName = L"ReservedLoadAboveAndBelow";
@@ -630,12 +630,12 @@ namespace PlacementAndLoadBalancingUnitTest
         plb.ProcessPendingUpdatesPeriodicTask();
         VerifyReservedCapacityAndLoad(L"SurprizeMetric", 60, 60);
 
-        // Delete FU: Application load: 60, reserved load used: 60
+        // Delete FT: Application load: 60, reserved load used: 60
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(3), wstring(L"TestService")));
         plb.ProcessPendingUpdatesPeriodicTask();
         VerifyReservedCapacityAndLoad(L"SurprizeMetric", 60, 60);
 
-        // Delete FU: Application load: 40, reserved load used: 40
+        // Delete FT: Application load: 40, reserved load used: 40
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(2), wstring(L"TestService")));
         plb.ProcessPendingUpdatesPeriodicTask();
         VerifyReservedCapacityAndLoad(L"SurprizeMetric", 60, 40);
@@ -699,15 +699,15 @@ namespace PlacementAndLoadBalancingUnitTest
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(3), wstring(L"TestService"), 0, CreateReplicas(L"P/0,S/1"), 0));
         plb.ProcessPendingUpdatesPeriodicTask();
 
-        // Delete FU: Application load: 60, reserved load used: 60
+        // Delete FT: Application load: 60, reserved load used: 60
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(3), wstring(L"TestService")));
         plb.ProcessPendingUpdatesPeriodicTask();
 
-        // Delete FU: Application load: 40, reserved load used: 40
+        // Delete FT: Application load: 40, reserved load used: 40
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(2), wstring(L"TestService")));
         plb.ProcessPendingUpdatesPeriodicTask();
 
-        // No testing here - if PLB does not assert in Update FU calls above we're good!
+        // No testing here - if PLB does not assert in Update FT calls above we're good!
     }
 
     BOOST_AUTO_TEST_CASE(ReservedLoadWithDefragmentation)
@@ -886,7 +886,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         plb.ProcessPendingUpdatesPeriodicTask();
 
-        // One outside service and a FU that will use 100 load total
+        // One outside service and a FT that will use 100 load total
         plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<Federation::NodeId>()));
         wstring serviceName = wformatString("{0}_OutsideService", testName);
         plb.UpdateService(CreateServiceDescriptionWithApplication(
@@ -1402,7 +1402,7 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->RefreshPLB(Stopwatch::Now() + PLBConfig::GetConfig().MinConstraintCheckInterval);
         VerifyPLBAction(plb, L"ConstraintCheck");
         actionList = GetActionListString(fm_->MoveActions);
-        //we can only fix scaleout of app1 by moving the old FU, we need to be sure that both are in the closure
+        //we can only fix scaleout of app1 by moving the old FT, we need to be sure that both are in the closure
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"0 move primary 0=>1", value)));
         //the app2 is now in violation due to scaleout, we can only fix by moving service5
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"4 move primary 0=>1", value)));
@@ -2921,7 +2921,7 @@ namespace PlacementAndLoadBalancingUnitTest
 
         fm_->RefreshPLB(Stopwatch::Now());
         actionList = GetActionListString(fm_->MoveActions);
-        VerifyPLBAction(plb, L"CreationWithMove");
+        VerifyPLBAction(plb, L"NewReplicaPlacementWithMove");
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"1 add secondary *", value)));
     }
 
@@ -4651,14 +4651,14 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Initial placement (N0 in capacity violation):
         // Nodes:            N0(M1:20)    N1(M1:40)    N2(M1: 40)    N3(M1:40)
-        // App1, S1, FU1:    P(M1:10)                  S(M1:10)
-        // App1, S1, FU2:    P(M1:10)                                S(M1:10)
-        // App1, S1, FU3:    P(M1:10)
-        // App2, S2, FU4:                 P(M1:10)
-        // App2, S2, FU5:                 P(M1:10)     S(M1:10)
-        // App3, S3, FU6:                 P(M1:2)
-        // App3, S3, FU7:                              P(M1:2)
-        // App3, S3, FU8:                                            P(M1:2)
+        // App1, S1, FT1:    P(M1:10)                  S(M1:10)
+        // App1, S1, FT2:    P(M1:10)                                S(M1:10)
+        // App1, S1, FT3:    P(M1:10)
+        // App2, S2, FT4:                 P(M1:10)
+        // App2, S2, FT5:                 P(M1:10)     S(M1:10)
+        // App3, S3, FT6:                 P(M1:2)
+        // App3, S3, FT7:                              P(M1:2)
+        // App3, S3, FT8:                                            P(M1:2)
 
         // Replicas on node N0 are in node capacity violation, hence one of them will be moved
         fm_->RefreshPLB(Stopwatch::Now());
@@ -4723,12 +4723,12 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Initial placement (N0 in capacity violation):
         // Nodes:            N0(M1:15)    N1(M1:40)    N2(M1: 40)
-        // App1, S1, FU1:    P(M1:10)
-        // App1, S1, FU2:    P(M1:10)
-        // App2, S2, FU3:                 P(M1:10)
-        // App2, S2, FU4:                 P(M1:10)
-        // App3, S3, FU5:                 P(M1:2)
-        // App3, S3, FU6:                              P(M1:2)
+        // App1, S1, FT1:    P(M1:10)
+        // App1, S1, FT2:    P(M1:10)
+        // App2, S2, FT3:                 P(M1:10)
+        // App2, S2, FT4:                 P(M1:10)
+        // App3, S3, FT5:                 P(M1:2)
+        // App3, S3, FT6:                              P(M1:2)
 
         // Replicas on node N0 are in node capacity violation, hence one of them will be moved
         fm_->RefreshPLB(Stopwatch::Now());
@@ -4784,11 +4784,11 @@ namespace PlacementAndLoadBalancingUnitTest
 
         // Initial placement (N0 in capacity violation):
         // Nodes:            N0(M1:15)    N1(M1:40)    N2(M1: 40)    N3(M1:40)
-        // App1, S1, FU1:    P(M1:10)
-        // App1, S1, FU2:    P(M1:10)
-        // App2, S2, FU3:                 P(M1:10)     S(M1:5)
-        // App2, S2, FU4:                              P(M1:10)
-        // App2, S2, FU5:                 P(M1:10)..................S(M1:5)
+        // App1, S1, FT1:    P(M1:10)
+        // App1, S1, FT2:    P(M1:10)
+        // App2, S2, FT3:                 P(M1:10)     S(M1:5)
+        // App2, S2, FT4:                              P(M1:10)
+        // App2, S2, FT5:                 P(M1:10)..................S(M1:5)
 
         // Replicas on node N0 are in node capacity violation, hence one of them will be moved
         fm_->RefreshPLB(Stopwatch::Now());

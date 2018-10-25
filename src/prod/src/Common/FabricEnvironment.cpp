@@ -599,6 +599,34 @@ ErrorCode FabricEnvironment::SetEnableCircularTraceSession(BOOLEAN enableCircula
     return SetRegistryKeyHelper(FabricConstants::EnableCircularTraceSessionRegKeyName, enableCircularTraceSession, machineName);
 }
 
+ErrorCode FabricEnvironment::SetEnableUnsupportedPreviewFeatures(BOOLEAN enableUnsupportedPreviewFeatures, LPCWSTR machineName)
+{
+    return SetRegistryKeyHelper(FabricConstants::EnableUnsupportedPreviewFeaturesRegKeyName, enableUnsupportedPreviewFeatures, machineName);
+}
+
+ErrorCode FabricEnvironment::GetEnableUnsupportedPreviewFeatures(bool & enableUnsupportedPreviewFeatures)
+{
+    // Default to false and ignore if not present
+    DWORD val = 0;
+    auto err = GetRegistryKeyHelper(FabricConstants::EnableUnsupportedPreviewFeaturesRegKeyName, FabricConstants::EnableUnsupportedPreviewFeaturesRegKeyName, ErrorCodeValue::Success, NULL, val);
+    enableUnsupportedPreviewFeatures = val != 0;
+    return err;
+}
+
+ErrorCode FabricEnvironment::SetIsSFVolumeDiskServiceEnabled(BOOLEAN isSFVolumeDiskServiceEnabled, LPCWSTR machineName)
+{
+    return SetRegistryKeyHelper(FabricConstants::IsSFVolumeDiskServiceEnabledRegKeyName, isSFVolumeDiskServiceEnabled, machineName);
+}
+
+ErrorCode FabricEnvironment::GetIsSFVolumeDiskServiceEnabled(bool & isSFVolumeDiskServiceEnabled)
+{
+    // Default to false and ignore if not present
+    DWORD val = 0;
+    auto err = GetRegistryKeyHelper(FabricConstants::IsSFVolumeDiskServiceEnabledRegKeyName, FabricConstants::IsSFVolumeDiskServiceEnabledRegKeyName, ErrorCodeValue::Success, NULL, val);
+    isSFVolumeDiskServiceEnabled = val != 0;
+    return err;
+}
+
 ErrorCode FabricEnvironment::SetRegistryKeyHelper(const wstring & name, const wstring & value, LPCWSTR machineName)
 {
     if (machineName == NULL || machineName[0] == 0)

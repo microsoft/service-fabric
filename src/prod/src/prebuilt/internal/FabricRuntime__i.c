@@ -1,8 +1,3 @@
-// ------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// ------------------------------------------------------------
-
 
 
 /* this ALWAYS GENERATED file contains the IIDs and CLSIDs */
@@ -103,6 +98,9 @@ MIDL_DEFINE_GUID(IID, IID_IFabricStateProviderSupportsCopyUntilLatestLsn,0xD37CE
 MIDL_DEFINE_GUID(IID, IID_IFabricInternalStatefulServiceReplica,0xE5395A45,0xC9FC,0x43F7,0xA5,0xC7,0x4C,0x34,0xD6,0xB5,0x67,0x91);
 
 
+MIDL_DEFINE_GUID(IID, IID_IFabricInternalStatefulServiceReplica2,0x1A670F6C,0x7C0E,0x4E64,0x85,0x0D,0x58,0xDE,0xCC,0xA2,0xD8,0x8C);
+
+
 MIDL_DEFINE_GUID(IID, IID_IFabricStatefulServiceReplicaStatusResult,0x908DCBB4,0xBB4E,0x4B2E,0xAE,0x0A,0x46,0xDA,0xC4,0x21,0x84,0xBC);
 
 
@@ -143,5 +141,6 @@ MIDL_DEFINE_GUID(IID, IID_IFabricGetRestorePointDetailsResult,0x64965ed4,0xb3d0,
 #ifdef __cplusplus
 }
 #endif
+
 
 

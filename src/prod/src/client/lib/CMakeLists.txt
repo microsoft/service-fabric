@@ -1,6 +1,8 @@
 set( LINUX_SOURCES
   ../ApplicationUpgradeProgressResult.cpp
   ../ChaosReportResult.cpp
+  ../ChaosEventsSegmentResult.cpp
+  ../CallSystemServiceResult.cpp
   ../ClientConfig.cpp
   ../ClientConnectionManager.cpp
   ../ClientHealthReporting.cpp
@@ -14,7 +16,6 @@ set( LINUX_SOURCES
   ../FabricClientImpl.ForwardToServiceAsyncOperation.cpp
   ../FabricClientImpl.DeleteServiceAsyncOperation.cpp
   ../FabricClientImpl.GetServiceDescriptionAsyncOperation.cpp
-  ../FabricClientImpl.Test_TestNamespaceManagerAsyncOperation.cpp
   ../FabricClientInternalSettings.cpp
   ../FabricClientInternalSettingsHolder.cpp
   ../FileReceiver.cpp
@@ -31,6 +32,7 @@ set( LINUX_SOURCES
   ../LruClientCacheEntry.cpp
   ../LruClientCacheManager.cpp
   ../LruClientCacheManager.CacheAsyncOperationBase.cpp
+  ../LruClientCacheManager.GetPsdAsyncOperation.cpp
   ../LruClientCacheManager.ResolveServiceAsyncOperation.cpp
   ../LruClientCacheManager.UpdateCacheEntryAsyncOperation.cpp
   ../LruClientCacheManager.UpdateServiceTableEntryAsyncOperation.cpp
@@ -58,6 +60,8 @@ set( LINUX_SOURCES
   ../StopNodeResult.cpp
   ../UpgradeProgressResult.cpp
   ../Utility.cpp
+  ../ChaosDescriptionResult.cpp
+  ../ChaosScheduleDescriptionResult.cpp
 )
 
 include_directories("..")
@@ -67,5 +71,5 @@ add_precompiled_header(objects_Client ../stdafx.h)
 add_library(${lib_Client} STATIC $<TARGET_OBJECTS:objects_Client>)
 
 set_target_properties(${lib_Client} PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR}) 
+    ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR})
 

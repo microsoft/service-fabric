@@ -37,48 +37,6 @@ ReplicaAggregatedHealthState::~ReplicaAggregatedHealthState()
 {
 }
 
-ReplicaAggregatedHealthState::ReplicaAggregatedHealthState(ReplicaAggregatedHealthState const & other)
-    : kind_(other.kind_)
-    , partitionId_(other.partitionId_)
-    , replicaId_(other.replicaId_)
-    , aggregatedHealthState_(other.aggregatedHealthState_)
-{
-}
-
-ReplicaAggregatedHealthState & ReplicaAggregatedHealthState::operator = (ReplicaAggregatedHealthState const & other)
-{
-    if (this != &other)
-    {
-        kind_ = other.kind_;
-        partitionId_ = other.partitionId_;
-        replicaId_ = other.replicaId_;
-        aggregatedHealthState_ = other.aggregatedHealthState_;
-    }
-
-    return *this;
-}
-
-ReplicaAggregatedHealthState::ReplicaAggregatedHealthState(ReplicaAggregatedHealthState && other)
-    : kind_(move(other.kind_))
-    , partitionId_(move(other.partitionId_))
-    , replicaId_(move(other.replicaId_))
-    , aggregatedHealthState_(move(other.aggregatedHealthState_))
-{
-}
-
-ReplicaAggregatedHealthState & ReplicaAggregatedHealthState::operator = (ReplicaAggregatedHealthState && other)
-{
-    if (this != &other)
-    {
-        kind_ = move(other.kind_);
-        partitionId_ = move(other.partitionId_);
-        replicaId_ = move(other.replicaId_);
-        aggregatedHealthState_ = move(other.aggregatedHealthState_);
-    }
-
-    return *this;
-}
-
 Common::ErrorCode ReplicaAggregatedHealthState::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_REPLICA_HEALTH_STATE & publicReplicaHealth) const 

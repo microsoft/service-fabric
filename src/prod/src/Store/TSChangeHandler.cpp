@@ -897,9 +897,11 @@ ktl::Awaitable<void> TSChangeHandler::OnAddedAsync(
     __in TxnReplicator::TransactionBase const& replicatorTransaction,
     __in KString::SPtr kKey,
     __in KBuffer::SPtr kValue,
-    __in LONG64 sequenceNumber) noexcept
+    __in LONG64 sequenceNumber,
+    __in bool isPrimary) noexcept
 {
     UNREFERENCED_PARAMETER(replicatorTransaction);
+    UNREFERENCED_PARAMETER(isPrimary);
 
     if (this->ShouldIgnore()) { co_return; }
 
@@ -946,9 +948,11 @@ ktl::Awaitable<void> TSChangeHandler::OnUpdatedAsync(
     __in TxnReplicator::TransactionBase const& replicatorTransaction,        
     __in KString::SPtr kKey,
     __in KBuffer::SPtr kValue,
-    __in LONG64 sequenceNumber) noexcept
+    __in LONG64 sequenceNumber,
+    __in bool isPrimary) noexcept
 {
     UNREFERENCED_PARAMETER(replicatorTransaction);
+    UNREFERENCED_PARAMETER(isPrimary);
 
     if (this->ShouldIgnore()) { co_return; }
 
@@ -992,10 +996,12 @@ ktl::Awaitable<void> TSChangeHandler::OnUpdatedAsync(
 ktl::Awaitable<void> TSChangeHandler::OnRemovedAsync(
     __in TxnReplicator::TransactionBase const& replicatorTransaction,        
     __in KString::SPtr kKey,
-    __in LONG64 sequenceNumber) noexcept
+    __in LONG64 sequenceNumber,
+    __in bool isPrimary) noexcept
 {
     UNREFERENCED_PARAMETER(replicatorTransaction);
-    
+    UNREFERENCED_PARAMETER(isPrimary);
+
     if (this->ShouldIgnore()) { co_return; }
 
     wstring type, key;
@@ -1043,8 +1049,6 @@ ktl::Awaitable<void> TSChangeHandler::OnRemovedAsync(
 ktl::Awaitable<void> TSChangeHandler::OnRebuiltAsync(
     __in IAsyncEnumerator<IKvsRebuildEntry> & enumerator) noexcept
 {
-    AcquireWriteLock lock(rebuildBufferLock_);
-
     bool shouldBuffer = this->ShouldBuffer();
 
     WriteInfo(
@@ -1055,6 +1059,8 @@ ktl::Awaitable<void> TSChangeHandler::OnRebuiltAsync(
 
     if (shouldBuffer)
     {
+        RebuildBuffer tempBuffer;
+
         // Recovery
         //
         while (co_await enumerator.MoveNextAsync(CancellationToken::None))
@@ -1064,11 +1070,23 @@ ktl::Awaitable<void> TSChangeHandler::OnRebuiltAsync(
             wstring type, key;
             this->SplitKey(rebuildEntry.Key, type, key);
 
-            rebuildBuffer_[type][key] = enumerator.GetCurrent();
+            tempBuffer[type][key] = enumerator.GetCurrent();
+        }
+
+        AcquireWriteLock lock(rebuildBufferLock_);
+
+        for (auto const & temp : tempBuffer)
+        {
+            for (auto const & entry : temp.second)
+            {
+                rebuildBuffer_[temp.first][entry.first] = entry.second;
+            }
         }
     }
     else
     {
+        AcquireWriteLock lock(rebuildBufferLock_);
+
         // Full build - It's okay to dispatch the copy completion notification
         // inline since replicator only waits for recovery notifications
         // to drain before completing change role to Idle. This will not block

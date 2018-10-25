@@ -57,176 +57,221 @@ namespace TStoreTests
         }
 
         Common::CommonConfig config; // load the config object as it's needed for the tracing to work
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> Add_SingleTransaction_ShouldSucceed_Test()
+        {
+            LONG64 key = 5;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            {
+               WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
+               co_await Store->AddAsync(*tx->StoreTransactionSPtr, key, value, Common::TimeSpan::MaxValue, CancellationToken::None);
+               co_await VerifyKeyExistsAsync(*Store, *tx->StoreTransactionSPtr, key, nullptr, value);
+               co_await tx->CommitAsync();
+            }
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdateAbort_DifferentTransaction_ShouldSucceed_Test()
+        {
+            LONG64 key = 5;
+
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr updatedValue = GenerateStringValue(L"updated");
+
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr addTx = CreateWriteTransaction();
+                co_await Store->AddAsync(*addTx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+                co_await VerifyKeyExistsAsync(*Store, *addTx->StoreTransactionSPtr, key, nullptr, value);
+                co_await addTx->CommitAsync();
+            }
+
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr updateTx = CreateWriteTransaction();
+                co_await Store->ConditionalUpdateAsync(*updateTx->StoreTransactionSPtr, key, updatedValue, DefaultTimeout, CancellationToken::None);
+                co_await VerifyKeyExistsAsync(*Store, *updateTx->StoreTransactionSPtr, key, nullptr, updatedValue);
+                co_await updateTx->AbortAsync();
+            }
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> DeleteAddUpdateReadDelete_DifferentTransaction_ShouldSucceed_Test()
+        {
+            // Repeat twice 
+            for (ULONG32 i = 0; i < 2; i++)
+            {
+                LONG64 key = 17;
+                KString::SPtr value = GenerateStringValue(L"value");
+                KString::SPtr updatedValue = GenerateStringValue(L"updated");
+
+                {
+                    WriteTransaction<LONG64, KString::SPtr>::SPtr tx1 = CreateWriteTransaction();
+                    bool result = co_await Store->ConditionalRemoveAsync(*tx1->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
+                    CODING_ERROR_ASSERT(result == false);
+                    co_await tx1->AbortAsync();
+                }
+            
+                {
+                    WriteTransaction<LONG64, KString::SPtr>::SPtr tx2 = CreateWriteTransaction();
+                    co_await Store->AddAsync(*tx2->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+                    co_await VerifyKeyExistsAsync(*Store, *tx2->StoreTransactionSPtr, key, nullptr, value);
+                    co_await tx2->CommitAsync();
+                }
+
+                {
+                    WriteTransaction<LONG64, KString::SPtr>::SPtr tx3 = CreateWriteTransaction();
+                    co_await Store->ConditionalUpdateAsync(*tx3->StoreTransactionSPtr, key, updatedValue, DefaultTimeout, CancellationToken::None);
+                    co_await VerifyKeyExistsAsync(*Store, *tx3->StoreTransactionSPtr, key, nullptr, updatedValue);
+                    co_await tx3->CommitAsync();
+                }
+
+                co_await VerifyKeyExistsInStoresAsync(key, nullptr, updatedValue, EqualityFunction);
+
+                {
+                    WriteTransaction<LONG64, KString::SPtr>::SPtr tx4 = CreateWriteTransaction();
+                    bool result = co_await Store->ConditionalRemoveAsync(*tx4->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
+                    CODING_ERROR_ASSERT(result == true);
+                    co_await tx4->CommitAsync();
+                }
+            }
+            co_return;
+        }
+
+        ktl::Awaitable<void> DeleteAddDelete_SameTransaction_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
+
+                bool result = co_await Store->ConditionalRemoveAsync(*tx->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
+                CODING_ERROR_ASSERT(result == false);
+
+                co_await Store->AddAsync(*tx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+                co_await VerifyKeyExistsAsync(*Store, *tx->StoreTransactionSPtr, key, nullptr, value);
+
+                result = co_await Store->ConditionalRemoveAsync(*tx->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
+                CODING_ERROR_ASSERT(result == true);
+                co_await VerifyKeyDoesNotExistAsync(*Store, *tx->StoreTransactionSPtr, key);
+
+                co_await tx->CommitAsync();
+            }
+
+            co_await VerifyKeyDoesNotExistInStoresAsync(key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddDeleteAbort_DifferentTransaction_ShouldSucceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr tx1 = CreateWriteTransaction();
+                co_await Store->AddAsync(*tx1->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+                co_await VerifyKeyExistsAsync(*Store, *tx1->StoreTransactionSPtr, key, nullptr, value);
+                co_await tx1->CommitAsync();
+            }
+
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr tx2 = CreateWriteTransaction();
+                co_await Store->ConditionalRemoveAsync(*tx2->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None);
+                co_await VerifyKeyDoesNotExistAsync(*Store, *tx2->StoreTransactionSPtr, key);
+                co_await tx2->AbortAsync();
+            }
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddMultipleUpdates_MultipleTransactions_ShouldSuceed_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr initialValue = GenerateStringValue(1);
+
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
+                co_await Store->AddAsync(*tx->StoreTransactionSPtr, key, initialValue, DefaultTimeout, CancellationToken::None);
+                co_await tx->CommitAsync();
+            }
+
+            KString::SPtr updateValue;
+            for (ULONG32 i = 0; i < 10; i++)
+            {
+                updateValue = GenerateStringValue(i + 1);
+                {
+                    WriteTransaction<LONG64, KString::SPtr>::SPtr updateTx = CreateWriteTransaction();
+                    bool result = co_await Store->ConditionalUpdateAsync(*updateTx->StoreTransactionSPtr, key, updateValue, DefaultTimeout, CancellationToken::None);
+                    CODING_ERROR_ASSERT(result == true);
+                    co_await updateTx->CommitAsync();
+                }
+            }
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, updateValue, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> NoAdd_Update_ShouldFail_Test()
+        {
+            LONG64 key = 17;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr tx1 = CreateWriteTransaction();
+                bool result = co_await Store->ConditionalUpdateAsync(*tx1->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None);
+                CODING_ERROR_ASSERT(result == false);
+                co_await VerifyKeyDoesNotExistAsync(*Store, *tx1->StoreTransactionSPtr, key);
+                co_await tx1->AbortAsync();
+            }
+
+            co_await VerifyKeyDoesNotExistInStoresAsync(key);
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(LongStringStoreTestSuite, LongStringStoreTest)
 
     BOOST_AUTO_TEST_CASE(Add_SingleTransaction_ShouldSucceed)
     {
-        LONG64 key = 5;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        {
-           WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
-           SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, key, value, Common::TimeSpan::MaxValue, CancellationToken::None));
-           SyncAwait(VerifyKeyExistsAsync(*Store, *tx->StoreTransactionSPtr, key, nullptr, value));
-           SyncAwait(tx->CommitAsync());
-        }
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction));
+        SyncAwait(Add_SingleTransaction_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdateAbort_DifferentTransaction_ShouldSucceed)
     {
-        LONG64 key = 5;
-
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr updatedValue = GenerateStringValue(L"updated");
-
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr addTx = CreateWriteTransaction();
-            SyncAwait(Store->AddAsync(*addTx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-            SyncAwait(VerifyKeyExistsAsync(*Store, *addTx->StoreTransactionSPtr, key, nullptr, value));
-            SyncAwait(addTx->CommitAsync());
-        }
-
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr updateTx = CreateWriteTransaction();
-            SyncAwait(Store->ConditionalUpdateAsync(*updateTx->StoreTransactionSPtr, key, updatedValue, DefaultTimeout, CancellationToken::None));
-            SyncAwait(VerifyKeyExistsAsync(*Store, *updateTx->StoreTransactionSPtr, key, nullptr, updatedValue));
-            SyncAwait(updateTx->AbortAsync());
-        }
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction));
+        SyncAwait(AddUpdateAbort_DifferentTransaction_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(DeleteAddUpdateReadDelete_DifferentTransaction_ShouldSucceed)
     {
-        // Repeat twice 
-        for (ULONG32 i = 0; i < 2; i++)
-        {
-            LONG64 key = 17;
-            KString::SPtr value = GenerateStringValue(L"value");
-            KString::SPtr updatedValue = GenerateStringValue(L"updated");
-
-            {
-                WriteTransaction<LONG64, KString::SPtr>::SPtr tx1 = CreateWriteTransaction();
-                bool result = SyncAwait(Store->ConditionalRemoveAsync(*tx1->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None));
-                CODING_ERROR_ASSERT(result == false);
-                SyncAwait(tx1->AbortAsync());
-            }
-            
-            {
-                WriteTransaction<LONG64, KString::SPtr>::SPtr tx2 = CreateWriteTransaction();
-                SyncAwait(Store->AddAsync(*tx2->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-                SyncAwait(VerifyKeyExistsAsync(*Store, *tx2->StoreTransactionSPtr, key, nullptr, value));
-                SyncAwait(tx2->CommitAsync());
-            }
-
-            {
-                WriteTransaction<LONG64, KString::SPtr>::SPtr tx3 = CreateWriteTransaction();
-                SyncAwait(Store->ConditionalUpdateAsync(*tx3->StoreTransactionSPtr, key, updatedValue, DefaultTimeout, CancellationToken::None));
-                SyncAwait(VerifyKeyExistsAsync(*Store, *tx3->StoreTransactionSPtr, key, nullptr, updatedValue));
-                SyncAwait(tx3->CommitAsync());
-            }
-
-            SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, updatedValue, EqualityFunction));
-
-            {
-                WriteTransaction<LONG64, KString::SPtr>::SPtr tx4 = CreateWriteTransaction();
-                bool result = SyncAwait(Store->ConditionalRemoveAsync(*tx4->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None));
-                CODING_ERROR_ASSERT(result == true);
-                SyncAwait(tx4->CommitAsync());
-            }
-        }
+        SyncAwait(DeleteAddUpdateReadDelete_DifferentTransaction_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(DeleteAddDelete_SameTransaction_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
-
-            bool result = SyncAwait(Store->ConditionalRemoveAsync(*tx->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None));
-            CODING_ERROR_ASSERT(result == false);
-
-            SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-            SyncAwait(VerifyKeyExistsAsync(*Store, *tx->StoreTransactionSPtr, key, nullptr, value));
-
-            result = SyncAwait(Store->ConditionalRemoveAsync(*tx->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None));
-            CODING_ERROR_ASSERT(result == true);
-            SyncAwait(VerifyKeyDoesNotExistAsync(*Store, *tx->StoreTransactionSPtr, key));
-
-            SyncAwait(tx->CommitAsync());
-        }
-
-        SyncAwait(VerifyKeyDoesNotExistInStoresAsync(key));
+        SyncAwait(DeleteAddDelete_SameTransaction_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddDeleteAbort_DifferentTransaction_ShouldSucceed)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr tx1 = CreateWriteTransaction();
-            SyncAwait(Store->AddAsync(*tx1->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-            SyncAwait(VerifyKeyExistsAsync(*Store, *tx1->StoreTransactionSPtr, key, nullptr, value));
-            SyncAwait(tx1->CommitAsync());
-        }
-
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr tx2 = CreateWriteTransaction();
-            SyncAwait(Store->ConditionalRemoveAsync(*tx2->StoreTransactionSPtr, key, DefaultTimeout, CancellationToken::None));
-            SyncAwait(VerifyKeyDoesNotExistAsync(*Store, *tx2->StoreTransactionSPtr, key));
-            SyncAwait(tx2->AbortAsync());
-        }
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction));
+        SyncAwait(AddDeleteAbort_DifferentTransaction_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddMultipleUpdates_MultipleTransactions_ShouldSuceed)
     {
-        LONG64 key = 17;
-        KString::SPtr initialValue = GenerateStringValue(1);
-
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
-            SyncAwait(Store->AddAsync(*tx->StoreTransactionSPtr, key, initialValue, DefaultTimeout, CancellationToken::None));
-            SyncAwait(tx->CommitAsync());
-        }
-
-        KString::SPtr updateValue;
-        for (ULONG32 i = 0; i < 10; i++)
-        {
-            updateValue = GenerateStringValue(i + 1);
-            {
-                WriteTransaction<LONG64, KString::SPtr>::SPtr updateTx = CreateWriteTransaction();
-                bool result = SyncAwait(Store->ConditionalUpdateAsync(*updateTx->StoreTransactionSPtr, key, updateValue, DefaultTimeout, CancellationToken::None));
-                CODING_ERROR_ASSERT(result == true);
-                SyncAwait(updateTx->CommitAsync());
-            }
-        }
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, updateValue, EqualityFunction));
+        SyncAwait(AddMultipleUpdates_MultipleTransactions_ShouldSuceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(NoAdd_Update_ShouldFail)
     {
-        LONG64 key = 17;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr tx1 = CreateWriteTransaction();
-            bool result = SyncAwait(Store->ConditionalUpdateAsync(*tx1->StoreTransactionSPtr, key, value, DefaultTimeout, CancellationToken::None));
-            CODING_ERROR_ASSERT(result == false);
-            SyncAwait(VerifyKeyDoesNotExistAsync(*Store, *tx1->StoreTransactionSPtr, key));
-            SyncAwait(tx1->AbortAsync());
-        }
-
-        SyncAwait(VerifyKeyDoesNotExistInStoresAsync(key));
+        SyncAwait(NoAdd_Update_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_SUITE_END()

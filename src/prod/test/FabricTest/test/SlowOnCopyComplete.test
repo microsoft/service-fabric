@@ -5,6 +5,7 @@ cmservice 1 1
 cleantest
 
 set UpgradeStatusPollInterval 5
+set RestoreReplicaLocationAfterUpgrade true
 
 +10
 verify

@@ -51,6 +51,7 @@ NodeQueryResult::NodeQueryResult(
     Federation::NodeId const & nodeId,
     uint64 instanceId,
     NodeDeactivationQueryResult && nodeDeactivationInfo,
+    unsigned short httpGatewayPort,
     ULONG clusterConnectionPort,
     bool isStopped)
     : nodeName_(nodeName)
@@ -70,6 +71,7 @@ NodeQueryResult::NodeQueryResult(
     , nodeId_(nodeId)
     , instanceId_(instanceId)
     , nodeDeactivationInfo_(move(nodeDeactivationInfo))
+    , httpGatewayPort_(httpGatewayPort)
     , clusterConnectionPort_(clusterConnectionPort)
     , isStopped_(isStopped)
 {
@@ -133,57 +135,6 @@ NodeQueryResult::NodeQueryResult(
     , clusterConnectionPort_(0)
     , isStopped_(false)
 {
-}
-
-NodeQueryResult::NodeQueryResult(NodeQueryResult && other)
-    :  nodeName_(move(other.nodeName_))
-    , ipAddressOrFQDN_(move(other.ipAddressOrFQDN_))
-    , nodeType_(move(other.nodeType_))
-    , codeVersion_(move(other.codeVersion_))
-    , configVersion_(move(other.configVersion_))
-    , nodeStatus_(move(other.nodeStatus_))
-    , nodeUpTimeInSeconds_(move(other.nodeUpTimeInSeconds_))
-    , nodeDownTimeInSeconds_(move(other.nodeDownTimeInSeconds_))
-    , nodeUpAt_(move(other.nodeUpAt_))
-    , nodeDownAt_(move(other.nodeDownAt_))
-    , healthState_(move(other.healthState_))
-    , isSeedNode_(move(other.isSeedNode_))
-    , upgradeDomain_(move(other.upgradeDomain_))
-    , faultDomain_(move(other.faultDomain_))
-    , nodeId_(move(other.nodeId_))
-    , instanceId_(move(other.instanceId_))
-    , nodeDeactivationInfo_(move(other.nodeDeactivationInfo_))
-    , clusterConnectionPort_(other.clusterConnectionPort_)
-    , isStopped_(other.isStopped_)
-{
-}
-
-NodeQueryResult const & NodeQueryResult::operator = (NodeQueryResult && other)
-{
-    if (this != &other)
-    {
-        nodeName_ = move(other.nodeName_);
-        ipAddressOrFQDN_ = move(other.ipAddressOrFQDN_);
-        nodeType_ = move(other.nodeType_);
-        codeVersion_ = move(other.codeVersion_);
-        configVersion_ = move(other.configVersion_);
-        nodeStatus_ = move(other.nodeStatus_);
-        nodeUpTimeInSeconds_ = move(other.nodeUpTimeInSeconds_);
-        nodeDownTimeInSeconds_ = move(other.nodeDownTimeInSeconds_);
-        nodeUpAt_ = move(other.nodeUpAt_);
-        nodeDownAt_ = move(other.nodeDownAt_);
-        healthState_ = move(other.healthState_);
-        isSeedNode_ = move(other.isSeedNode_);
-        upgradeDomain_ = move(other.upgradeDomain_);
-        faultDomain_ = move(other.faultDomain_);
-        nodeId_ = move(other.nodeId_);
-        instanceId_ = move(other.instanceId_);
-        nodeDeactivationInfo_ = move(other.nodeDeactivationInfo_);
-        clusterConnectionPort_ = other.clusterConnectionPort_;
-        isStopped_ = other.isStopped_;
-    }
-
-    return *this;
 }
 
 NodeQueryResult::~NodeQueryResult()

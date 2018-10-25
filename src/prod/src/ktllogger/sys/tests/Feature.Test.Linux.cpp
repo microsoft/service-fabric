@@ -320,7 +320,19 @@ namespace KtlPhysicalLogTest
         ::StreamCheckpointAtEndOfLogTest(_diskId);
     }
 
-    BOOST_AUTO_TEST_SUITE_END()
+    BOOST_AUTO_TEST_CASE(DuplicateRecordInLogTest)
+    {
+        ::DuplicateRecordInLogTest(_diskId);
+    }
+
+    BOOST_AUTO_TEST_CASE(CorruptedRecordTest)
+    {
+        ::CorruptedRecordTest(_diskId);
+    }
+
+
+
+	BOOST_AUTO_TEST_SUITE_END()
 #endif // UDRIVER
 
 
@@ -341,6 +353,7 @@ namespace KtlPhysicalLogTest
         bool Setup()
         {
             ::SetupOverlayLogTests(_diskId,
+								   _driveLetter,
                                    _startingAllocs,
                                    _system);
 
@@ -350,6 +363,7 @@ namespace KtlPhysicalLogTest
         bool Cleanup()
         {
             ::CleanupOverlayLogTests(_diskId,
+ 								     _driveLetter,
                                      _startingAllocs,
                                      _system);
 
@@ -363,6 +377,7 @@ namespace KtlPhysicalLogTest
         // hit. At some point we may want to delete them, but not yet.
         //
         KGuid _diskId;
+        UCHAR _driveLetter;		
         ULONGLONG _startingAllocs;
         KtlSystem* _system;
 
@@ -375,6 +390,11 @@ namespace KtlPhysicalLogTest
         ::PeriodicTimerCloseRaceTest(_diskId);
     }
 
+    BOOST_AUTO_TEST_CASE(DiscontiguousRecordsRecoveryTest)
+    {
+        ::DiscontiguousRecordsRecoveryTest(_diskId);
+    }
+	
     BOOST_AUTO_TEST_CASE(RecoveryPartlyCreatedStreamTest)
     {
         ::RecoveryPartlyCreatedStreamTest(_diskId);
@@ -395,12 +415,17 @@ namespace KtlPhysicalLogTest
     {
         ::ThrottledAllocatorTest(_diskId);
     }
-    
+   
+    BOOST_AUTO_TEST_CASE(VerifyCopyFromSharedToBackupTest)
+    {
+        ::VerifyCopyFromSharedToBackupTest(_driveLetter, _diskId);
+    }
+
     BOOST_AUTO_TEST_CASE(VerifySharedTruncateOnDedicatedFailureTest)
     {
         ::VerifySharedTruncateOnDedicatedFailureTest(_diskId);
     }
-    
+	
     BOOST_AUTO_TEST_CASE(FlushAllRecordsForCloseWaitTest)
     {
         ::FlushAllRecordsForCloseWaitTest(_diskId);

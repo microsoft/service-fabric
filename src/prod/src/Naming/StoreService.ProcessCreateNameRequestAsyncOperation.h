@@ -126,5 +126,7 @@ namespace Naming
         
         // Tentative names that must be created
         PendingNamesHierarchy tentativeNames_;
+
+        bool authorityNameAlreadyCompleted_;
     };
 }

@@ -292,13 +292,15 @@ namespace Common
             do
             {
                 err = unzReadCurrentFile(zipFile, buffer.data(), static_cast<unsigned int>(buffer.size()));
-                if (err <= 0) break;
 
-                outputFile.write(buffer.data(), err);
-                if (!outputFile.good())
+                if (err > 0)
                 {
-                    Zip::CopyFromString(wformatString(StringResource::Get(IDS_COMMON_UNIX_Unzip_Failure), "Write to file", ""), errorMessageBuffer, errorMessageBufferSize);
-                    return err;
+                    outputFile.write(buffer.data(), err);
+                    if (!outputFile.good())
+                    {
+                        Zip::CopyFromString(wformatString(StringResource::Get(IDS_COMMON_UNIX_Unzip_Failure), "Write to file", ""), errorMessageBuffer, errorMessageBufferSize);
+                        return err;
+                    }
                 }
             }
             while (err > 0);

@@ -173,6 +173,7 @@ namespace ServiceModel {
     template class ListPager<NodeQueryResult>;
     template class ListPager<ApplicationQueryResult>;
     template class ListPager<ComposeDeploymentStatusQueryResult>;
+    template class ListPager<ReplicaResourceQueryResult>;
     template class ListPager<ServiceQueryResult>;
 
     template class ListPager<ServicePartitionQueryResult>;
@@ -180,6 +181,11 @@ namespace ServiceModel {
 
     template class ListPager<ApplicationTypeQueryResult>;
     template class ListPager<DeployedApplicationQueryResult>;
+    template class ListPager<ReplicasByServiceQueryResult>;
+    template class ListPager<ModelV2::ApplicationDescriptionQueryResult>;
+    template class ListPager<ModelV2::ContainerServiceQueryResult>;
+    template class ListPager<ApplicationUnhealthyEvaluation>;
+    template class ListPager<ModelV2::VolumeQueryResult>;
 }
 
 template<class TKey, class TEntry>
@@ -318,5 +324,7 @@ namespace ServiceModel {
     template class MergedQueryListPager<std::wstring, ServiceQueryResult>;
     template class MergedQueryListPager<Common::Guid, ServicePartitionQueryResult>;
     template class MergedQueryListPager<FABRIC_REPLICA_ID, ServiceReplicaQueryResult>;
+    template class MergedQueryListPager<std::wstring, ModelV2::ApplicationDescriptionQueryResult>;
+    template class MergedQueryListPager<std::wstring, ModelV2::ContainerServiceQueryResult>;
 }
 

@@ -36,14 +36,20 @@ vector<MovementTask::Action> MovementTask::GetActions() const
         }
         else if (it->Action == FailoverUnitMovementType::AddSecondary)
         {
-            auto actionType = (movement_.IsStateful ? ActionType::AddReplica : ActionType::AddInstance);
+            auto actionType = ActionType::AddReplica;
             actions.push_back(make_pair(it->TargetNode, actionType));
         }
-        else if (it->Action == FailoverUnitMovementType::MoveSecondary)
+        else if (it->Action == FailoverUnitMovementType::AddInstance)
+        {
+            auto actionType = ActionType::AddInstance;
+            actions.push_back(make_pair(it->TargetNode, actionType));
+        }
+        else if (it->Action == FailoverUnitMovementType::MoveSecondary ||
+            it->Action == FailoverUnitMovementType::MoveInstance)
         {
             actions.push_back(make_pair(it->SourceNode, ActionType::MoveReplica));
 
-            auto actionType = (movement_.IsStateful ? ActionType::AddReplica : ActionType::AddInstance);
+            auto actionType = (it->Action == FailoverUnitMovementType::MoveSecondary ? ActionType::AddReplica : ActionType::AddInstance);
             actions.push_back(make_pair(it->TargetNode, actionType));
         }
         else if (it->Action == FailoverUnitMovementType::SwapPrimarySecondary ||
@@ -57,11 +63,13 @@ vector<MovementTask::Action> MovementTask::GetActions() const
 
             actions.push_back(make_pair(it->TargetNode, ActionType::AddReplicaAndPromote));
         }
-        else if (it->Action == FailoverUnitMovementType::Void)
+        else if (it->Action == FailoverUnitMovementType::RequestedPlacementNotPossible)
         {
             actions.push_back(make_pair(it->SourceNode, ActionType::ClearFlags));
         }
-        else if (it->Action == FailoverUnitMovementType::Drop)
+        else if (it->Action == FailoverUnitMovementType::DropPrimary ||
+            it->Action == FailoverUnitMovementType::DropSecondary ||
+            it->Action == FailoverUnitMovementType::DropInstance)
         {
             actions.push_back(make_pair(it->SourceNode, ActionType::DropReplica));
         }
@@ -137,7 +145,7 @@ vector<MovementTask::Action> MovementTask::GetActionsForEmptyFT() const
     vector<Action> actions;
     for (auto it = movement_.Actions.begin(); it != movement_.Actions.end(); ++it)
     {
-        if (it->Action == FailoverUnitMovementType::AddSecondary)
+        if (it->Action == FailoverUnitMovementType::AddSecondary || it->Action == FailoverUnitMovementType::AddInstance)
         {
             // Make it the only action
             actions.push_back(make_pair(it->TargetNode, ActionType::AddPrimaryReplica));

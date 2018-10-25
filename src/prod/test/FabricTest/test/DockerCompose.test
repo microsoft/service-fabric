@@ -6,7 +6,7 @@ namingservice 1 1 1
 cmservice 1 1
 cleantest
 
-+10
++10 cap=servicefabric:/_CpuCores:6
 verify
 
 # App 1
@@ -76,10 +76,18 @@ createapp fabric:/RegularApp RegularApp vRegular
 createcompose RegularApp App2 App2 v1 error=ApplicationAlreadyExists
 
 deleteapp fabric:/RegularApp
+unprovisionapp RegularApp vRegular
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=1 expectempty=true
+
 
 #
-# Test case 3: Parallel create and delete
+# Test case 3: Create failed and override create
 #
+# Create a failed deployment with a non-existing application type and recreate it after provisioning the application type
+# ImageBuilder error
+createcompose iberror App2 App2 v1
+!pause 20
+query GetDockerComposeApplicationStatusList verify DeploymentName=iberror,Status=Failed
 
 # App 2
 app.add App2 App2 v1
@@ -90,6 +98,85 @@ app.servicetypes App2 ServicePackageA ServiceTypeA stateful persist
 app.codepack App2 ServicePackageA CodeA types=ServiceTypeA version=v1
 
 app.upload App2
+
+# Override Create
+createcompose iberror isSkipSetIB=true verify
+query GetDockerComposeApplicationStatusList verify DeploymentName=iberror,Status=Ready
+query GetApplicationList verify ApplicationName=fabric:/iberror,ApplicationDefinitionKind=Compose
+
+# ServiceFabricApplicationDescription=1, Compose=2
+query GetApplicationList ApplicationDefinitionKindFilter=2 verify ApplicationName=fabric:/iberror,ApplicationDefinitionKind=Compose
+query GetApplicationList ApplicationDefinitionKindFilter=1 expectempty=true
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=2 verify ApplicationTypeName=App2,ApplicationTypeVersion=v1,Status=Available,ApplicationTypeDefinitionKind=Compose
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=3 verify ApplicationTypeName=App2,ApplicationTypeVersion=v1,Status=Available,ApplicationTypeDefinitionKind=Compose
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=1 expectempty=true
+
+deletecompose iberror verify
+query GetDockerComposeApplicationStatusList DeploymentName=iberror expectempty=true
+
+#
+# Test case 4: Create failed and override create
+#
+# Create a failed deployment with one service requiring exceeding CPU cores, and recreate it with all services requiring resources within cluster capacity
+
+# App 4
+app.add App4 App4 v1
+app.clear App4
+
+app.servicepack App4 ServicePackageA version=v1 resources=CPU,150
+app.servicetypes App4 ServicePackageA ServiceTypeA stateful persist
+app.codepack App4 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.reqservices App4 ServiceA ServiceTypeA stateful partition=1 replica=1 servicePackageActivationMode=ExclusiveProcess
+app.servicepack App4 ServicePackageB version=v1 resources=CPU,1
+app.servicetypes App4 ServicePackageB ServiceTypeB stateful persist
+app.codepack App4 ServicePackageB CodeB types=ServiceTypeB version=v1
+app.reqservices App4 ServiceB ServiceTypeB stateful partition=1 replica=1 servicePackageActivationMode=ExclusiveProcess
+
+app.upload App4
+
+# Creation failed due to insufficient cluster capacity
+createcompose plberror App4 App4 v1
+!pause 20
+query GetDockerComposeApplicationStatusList verify DeploymentName=plberror,Status=Failed
+!waitforstate FM.Service.IsDeleted.fabric:/plberror/ServiceA NULL
+!waitforstate FM.Service.IsDeleted.fabric:/plberror/ServiceB true
+
+# App 5
+app.add App5 App5 v1
+app.clear App5
+
+app.servicepack App5 ServicePackageA version=v1 resources=CPU,1
+app.servicetypes App5 ServicePackageA ServiceTypeA stateful persist
+app.codepack App5 ServicePackageA CodeA types=ServiceTypeA version=v1
+app.reqservices App5 ServiceA ServiceTypeA stateful partition=1 replica=1 servicePackageActivationMode=ExclusiveProcess
+app.servicepack App5 ServicePackageB version=v1 resources=CPU,1
+app.servicetypes App5 ServicePackageB ServiceTypeB stateful persist
+app.codepack App5 ServicePackageB CodeB types=ServiceTypeB version=v1
+app.reqservices App5 ServiceB ServiceTypeB stateful partition=1 replica=1 servicePackageActivationMode=ExclusiveProcess
+
+app.upload App5
+
+# Override Create after reducing resource of serviceA
+createcompose plberror App5 App5 v1 isOverrideIB=true verify
+!pause 20
+query GetDockerComposeApplicationStatusList verify DeploymentName=plberror,Status=Ready
+query GetApplicationList verify ApplicationName=fabric:/plberror,ApplicationDefinitionKind=Compose
+
+# ServiceFabricApplicationDescription=1, Compose=2
+query GetApplicationList ApplicationDefinitionKindFilter=2 verify ApplicationName=fabric:/plberror,ApplicationDefinitionKind=Compose
+query GetApplicationList ApplicationDefinitionKindFilter=1 expectempty=true
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=2 verify ApplicationTypeName=App5,ApplicationTypeVersion=v1,Status=Available,ApplicationTypeDefinitionKind=Compose
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=3 verify ApplicationTypeName=App5,ApplicationTypeVersion=v1,Status=Available,ApplicationTypeDefinitionKind=Compose
+query getapplicationtypepagedlist ApplicationTypeDefinitionKindFilter=1 expectempty=true
+
+deletecompose plberror verify
+query GetDockerComposeApplicationStatusList DeploymentName=plberror expectempty=true
+!waitforstate FM.Service.IsDeleted.fabric:/plberror/ServiceA true
+!waitforstate FM.Service.IsDeleted.fabric:/plberror/ServiceB true
+
+#
+# Test case 5: Parallel create and delete
+#
 
 # App 3
 app.add App3 App3 v3

@@ -78,7 +78,7 @@ namespace Common
         template <typename TK, typename TV>
         static bool MapCompare(const std::map<TK, TV>& lhs, const std::map<TK, TV>& rhs)
         {
-            if (lhs.size() != rhs.size()) { false; }
+            if (lhs.size() != rhs.size()) { return false; }
 
             return std::equal(lhs.begin(), lhs.end(), rhs.begin());
         }

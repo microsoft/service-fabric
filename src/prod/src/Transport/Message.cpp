@@ -447,7 +447,7 @@ bool Message::HasSendStatusCallback() const
     return sendStatusCallback_ != nullptr;
 }
 
-void Message::OnSendStatus(ErrorCodeValue::Enum error, MessageUPtr && msg)
+void Message::OnSendStatus(ErrorCode const & error, MessageUPtr && msg)
 {
     if (sendStatusCallback_)
     {

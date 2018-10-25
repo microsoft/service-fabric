@@ -253,8 +253,6 @@ ErrorCode FileStoreServiceFactory::CreateReplica(
     FABRIC_REPLICA_ID replicaId,
     __out Api::IStatefulServiceReplicaPtr & serviceReplica)
 {
-    UNREFERENCED_PARAMETER(initializationData);
-
     ASSERT_IF(
         serviceType != ServiceModel::ServiceTypeIdentifier::FileStoreServiceTypeId->ServiceTypeName, 
         "FileStoreServiceFactory cannot create service of type '{0}'", serviceType);    
@@ -269,7 +267,10 @@ ErrorCode FileStoreServiceFactory::CreateReplica(
         replicatorAddress_,
         clusterSecuritySettings_,
         replicatorSettings);
-    if (!error.IsSuccess()) { return error; }
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
 
     shared_ptr<FileStoreServiceReplica> fileStoreServiceReplicaSPtr;    
     {
@@ -310,7 +311,8 @@ ErrorCode FileStoreServiceFactory::CreateReplica(
                 FileStoreServiceConfig::GetConfig().MaxCacheSizeInMB,
                 FileStoreServiceConfig::GetConfig().MinCacheSizeInMB),
             clientFactory_,
-            serviceName);
+            serviceName,
+            initializationData);
 
         if (!error.IsSuccess()) { return error; }
 

@@ -21,21 +21,6 @@ HealthEventsFilter::HealthEventsFilter(DWORD healthStateFilter)
 {
 }
 
-HealthEventsFilter::HealthEventsFilter(HealthEventsFilter && other)
-    : healthStateFilter_(move(other.healthStateFilter_))
-{
-}
-
-HealthEventsFilter & HealthEventsFilter::operator =(HealthEventsFilter && other)
-{
-    if (this != &other)
-    {
-        healthStateFilter_ = move(other.healthStateFilter_);
-    }
-
-    return *this;
-}
-
 HealthEventsFilter::~HealthEventsFilter()
 {
 }

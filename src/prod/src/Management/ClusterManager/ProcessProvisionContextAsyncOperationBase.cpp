@@ -49,7 +49,28 @@ void ProcessProvisionContextAsyncOperationBase::OnStart(AsyncOperationSPtr const
     }
     else
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
+    }
+}
+
+bool ProcessProvisionContextAsyncOperationBase::ShouldCleanupApplicationPackage() const
+{
+    // Cleanup only on successful provision
+    if (context_.IsAsync && !provisioningError_.IsSuccess())
+    {
+        return false;
+    }
+
+    switch (context_.ApplicationPackageCleanupPolicy)
+    {
+    case ApplicationPackageCleanupPolicy::Automatic:
+        // User requested automatic cleanup on succesful provision.
+        return true;
+    case ApplicationPackageCleanupPolicy::Default:
+    case ApplicationPackageCleanupPolicy::Invalid:
+        return ManagementConfig::GetConfig().CleanupApplicationPackageOnProvisionSuccess;
+    default:
+        return false;
     }
 }
 
@@ -60,10 +81,7 @@ void ProcessProvisionContextAsyncOperationBase::OnCommitComplete(AsyncOperationS
     auto error = StoreTransaction::EndCommit(operation);
 
     // Check if application package needs to be deleted
-    if (this->context_.ApplicationPackageCleanupPolicy == ApplicationPackageCleanupPolicy::Enum::CleanupApplicationPackageOnSuccessfulProvision ||
-        ((this->context_.ApplicationPackageCleanupPolicy == ApplicationPackageCleanupPolicy::Enum::ClusterDefault || 
-            this->context_.ApplicationPackageCleanupPolicy == ApplicationPackageCleanupPolicy::Enum::Invalid) &&
-            ManagementConfig::GetConfig().CleanupApplicationPackageOnProvisionSuccess))
+    if (error.IsSuccess() && this->ShouldCleanupApplicationPackage())
     {
         WriteNoise(
             TraceComponent,
@@ -75,14 +93,15 @@ void ProcessProvisionContextAsyncOperationBase::OnCommitComplete(AsyncOperationS
         
         WriteInfo(
             TraceComponent,
-            "{0}: application package deletion completed on provision success. BuildPath: {1} remaining timeout: {2} Policy: {3}",
+            "{0}: application package deletion completed with error {1} on provision success. BuildPath: {2} remaining timeout: {3} Policy: {4}",
             this->TraceId,
+            error,
             this->context_.BuildPath,
             RemainingTimeout,
             this->context_.ApplicationPackageCleanupPolicy);
     }
 
-    this->TryComplete(operation->Parent, error);
+    this->TryComplete(operation->Parent, move(error));
 }
 
 // Perform case insensitive check within the tracking performed by ApplicationTypeRequestTracker so that there is

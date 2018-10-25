@@ -1446,7 +1446,7 @@ namespace Common
         }
 
         //
-        // Returns true if the object starts with a field name 'Kind'. 
+        // Returns true if the object starts with a field name 'Kind' or 'kind'. 
         //
         static bool IsDynamicType(JsonReaderVisitor* pVisitor)
         {
@@ -1468,7 +1468,7 @@ namespace Common
             hr = pVisitor->GetFieldName(fieldName);
             if (FAILED(hr)) { return false; }
 
-            if (fieldName == L"Kind")
+            if ((fieldName == L"Kind") || (fieldName == L"kind"))
             {
                 return true;
             }

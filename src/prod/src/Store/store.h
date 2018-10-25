@@ -40,6 +40,7 @@
 #include "Store/StoreBase.h"
 #include "Store/IStoreBase.h"
 #include "Store/ILocalStore.h"
+#include "Store/IReplicatedStoreTxEventHandler.h"
 #include "Store/IReplicatedStore.h"
 
 #include "Store/StoreData.h"
@@ -48,6 +49,16 @@
 
 #include "Store/EseLocalStoreSettings.h"
 #include "Store/TSReplicatedStoreSettings.h"
+
+#include "Store/MigrationSettings.h"
+#include "Store/MigrationInitData.h"
+#include "Store/AzureStorageClient.h"
+
+#if !defined(PLATFORM_UNIX)
+#include "Store/KeyValueStoreMigrator.h"
+#else
+#include "Store/KeyValueStoreMigrator_Linux.h"
+#endif
 
 #include "Store/DeadlockDetector.h"
 #include "Store/KeyValueStoreReplica.h"

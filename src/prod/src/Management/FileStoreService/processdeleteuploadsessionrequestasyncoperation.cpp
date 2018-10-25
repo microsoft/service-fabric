@@ -135,3 +135,15 @@ ErrorCode ProcessDeleteUploadSessionRequestAsyncOperation::EndOperation(
 
     return errorCode;
 }
+
+void ProcessDeleteUploadSessionRequestAsyncOperation::WriteTrace(__in Common::ErrorCode const &error)
+{
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "DeleteUploadSession request failed with error {0}, sessionId:{1}",
+            error,
+            this->sessionId_);
+    }
+}

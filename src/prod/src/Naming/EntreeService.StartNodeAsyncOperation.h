@@ -42,14 +42,14 @@ namespace Naming
             Common::AsyncOperationSPtr const& thisSPtr,
             bool expectedCompletedSynchronously);
 
-        bool IncomingInstanceIdMatchesFile(StartNodeRequestMessageBody const & body);
+        Common::ErrorCode IncomingInstanceIdMatchesFile(StartNodeRequestMessageBody const & body);
         Common::ErrorCode TryCreateQueryClient();
 
         Api::IClusterManagementClientPtr clusterManagementClientPtr_;
         Api::IQueryClientPtr queryClientPtr_;
         StartNodeRequestMessageBody startNodeRequestBody_;
         
-    private:
+    private:              
         static bool IsNodeRunning(FABRIC_QUERY_NODE_STATUS nodeStatus);
         static bool IsNodeInvalid(FABRIC_QUERY_NODE_STATUS nodeStatus);
     };

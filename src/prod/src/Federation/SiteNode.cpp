@@ -69,6 +69,7 @@ protected:
         // Which will be bypassed in case there is no unreliable transport behavior specified.
         this->siteNode_.channelSPtr_ = DatagramTransportFactory::CreateUnreliable(this->siteNode_, this->siteNode_.channelSPtr_);
         this->siteNode_.channelSPtr_->SetConnectionOpenTimeout(FederationConfig::GetConfig().ConnectionOpenTimeout);
+        this->siteNode_.channelSPtr_->SetMessageErrorChecking(FederationConfig::GetConfig().MessageErrorCheckingEnabled);
 		
         WriteInfo(TraceChannel, "Node {0} created channel at {1}", this->siteNode_.Id, this->siteNode_.Address);
 

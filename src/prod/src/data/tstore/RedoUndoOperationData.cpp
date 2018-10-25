@@ -51,7 +51,7 @@ void RedoUndoOperationData::Serialize()
 
    if (newValueOperationDataSPtr_ != nullptr)
    {
-      KInvariant(valueOperationDataSPtr_->BufferCount == 1);
+      KInvariant(newValueOperationDataSPtr_->BufferCount == 1);
       Append(*newValueOperationDataSPtr_);
    }
 }

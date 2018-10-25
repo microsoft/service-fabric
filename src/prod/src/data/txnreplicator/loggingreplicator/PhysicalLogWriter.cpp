@@ -19,10 +19,11 @@ PhysicalLogWriter::PhysicalLogWriter(
     __in ILogicalLog & logicalLogStream,
     __in PhysicalLogWriterCallbackManager & callbackManager,
     __in LONG maxWriteCacheSizeBytes,
+    __in bool recomputeOffsets,
     __in LogRecord & invalidTailRecord,
     __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig)
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig)
     : KObject()
     , KShared()
     , PartitionedReplicaTraceComponent(traceId)
@@ -53,6 +54,7 @@ PhysicalLogWriter::PhysicalLogWriter(
     , writeSpeedBytesPerSecondSum_(0)
     , avgRunningLatencyMilliseconds_(GetThisAllocator(), Constants::PhysicalLogWriterMovingAverageHistory, 0)
     , avgWriteSpeedBytesPerSecond_(GetThisAllocator(), Constants::PhysicalLogWriterMovingAverageHistory, 0)
+    , recomputeOffsets_(recomputeOffsets)
 {
     EventSource::Events->Ctor(
         TracePartitionId,
@@ -92,10 +94,11 @@ PhysicalLogWriter::PhysicalLogWriter(
     __in ILogicalLog & logicalLogStream,
     __in PhysicalLogWriterCallbackManager & callbackManager,
     __in LONG maxWriteCacheSizeBytes,
+    __in bool recomputeOffsets,
     __in LogRecord & tailRecord,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
+    __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in NTSTATUS closedError)
     : KObject()
     , KShared()
@@ -127,6 +130,7 @@ PhysicalLogWriter::PhysicalLogWriter(
     , writeSpeedBytesPerSecondSum_(0)
     , avgRunningLatencyMilliseconds_(GetThisAllocator(), Constants::PhysicalLogWriterMovingAverageHistory, 0)
     , avgWriteSpeedBytesPerSecond_(GetThisAllocator(), Constants::PhysicalLogWriterMovingAverageHistory, 0)
+    , recomputeOffsets_(recomputeOffsets)
 {
     EventSource::Events->Ctor(
         TracePartitionId,
@@ -201,10 +205,11 @@ PhysicalLogWriter::SPtr PhysicalLogWriter::Create(
     __in ILogicalLog & logicalLogStream,
     __in PhysicalLogWriterCallbackManager & callbackManager,
     __in LONG maxWriteCacheSizeBytes,
+    __in bool recomputeOffsets,
     __in LogRecord & invalidTailRecord,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
+    __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in KAllocator & allocator)
 {
     PhysicalLogWriter * pointer = _new(PHYSICALLOGWRITER_TAG, allocator)PhysicalLogWriter(
@@ -212,6 +217,7 @@ PhysicalLogWriter::SPtr PhysicalLogWriter::Create(
         logicalLogStream,
         callbackManager,
         maxWriteCacheSizeBytes,
+        recomputeOffsets,
         invalidTailRecord,
         perfCounters,
         healthClient,
@@ -227,10 +233,11 @@ PhysicalLogWriter::SPtr PhysicalLogWriter::Create(
     __in ILogicalLog & logicalLogStream,
     __in PhysicalLogWriterCallbackManager & callbackManager,
     __in LONG maxWriteCacheSizeBytes,
+    __in bool recomputeOffsets,
     __in LogRecord & tailRecord,
-    __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
+    __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
-    __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+    __in TRInternalSettingsSPtr const & transactionalReplicatorConfig,
     __in NTSTATUS closedError,
     __in KAllocator & allocator)
 {
@@ -239,6 +246,7 @@ PhysicalLogWriter::SPtr PhysicalLogWriter::Create(
         logicalLogStream,
         callbackManager,
         maxWriteCacheSizeBytes,
+        recomputeOffsets,
         tailRecord,
         perfCounters,
         healthClient,
@@ -852,7 +860,10 @@ OperationData::CSPtr PhysicalLogWriter::WriteRecord(
     return LogRecord::WriteRecord(
         record,
         recordWriter_,
-        GetThisAllocator());
+        GetThisAllocator(),
+        true,
+        true,
+        recomputeOffsets_);
 }
 
 void PhysicalLogWriter::PrepareToClose()

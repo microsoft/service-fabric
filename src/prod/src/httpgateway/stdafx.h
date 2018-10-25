@@ -11,5 +11,6 @@
 #include <fstream>
 
 #include "ContainerApiCall.h"
+#include "Hosting2/HostingConfig.h"
 
 using namespace std;

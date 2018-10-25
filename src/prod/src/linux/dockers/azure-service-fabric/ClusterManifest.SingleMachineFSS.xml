@@ -84,7 +84,7 @@
       <Parameter Name="FirewallPolicyEnabled" Value="False" />
       <Parameter Name="SkipDockerProcessManagement" Value="True" />
       <Parameter Name="ContainerHostAddress" Value="http://docker.for.mac.host.internal:2376" />
-      <Parameter Name="DisableContainerServiceStartOnContainerActivatorOpen" Value="True" />
+      <Parameter Name="DisableContainers" Value="True" />
     </Section>
     <Section Name="HttpGateway">
       <Parameter Name="IsEnabled" Value="True" />
@@ -134,24 +134,20 @@
     </Section>
     <Section Name="Diagnostics">
       <Parameter Name="ProducerInstances" Value="WinFabLttProducer" />
-      <Parameter Name="ConsumerInstances" Value="AzureWinFabCsv"/>
     </Section>
     <Section Name="WinFabLttProducer">
       <Parameter Name="ProducerType" Value="LttProducer"/>
       <Parameter Name="IsEnabled" Value="true"/>
-    </Section>
-    <Section Name="AzureWinFabCsv">
-      <Parameter Name="ConsumerType" Value="AzureBlobCsvUploader"/>
-      <Parameter Name="ProducerInstance" Value="WinFabLttProducer"/>
-      <Parameter Name="IsEnabled" Value="true"/>
-      <Parameter Name="StoreConnectionString" Value="xstore:DefaultEndpointsProtocol=https;AccountName=[];AccountKey=[]"/>
-      <Parameter Name="ContainerName" Value="fabriclogs"/>
     </Section>
     <Section Name="RunAs_DCA">
       <Parameter Name="RunAsAccountType" Value="LocalSystem" />
     </Section>
     <Section Name="Setup">
       <Parameter Name="SkipFirewallConfiguration" Value="True" />
+      <Parameter Name="ContainerDnsSetup" Value="Disallow" />
+    </Section>
+    <Section Name="DnsService">
+      <Parameter Name="IsEnabled" Value="False" />
     </Section>
   </FabricSettings>
 </ClusterManifest>

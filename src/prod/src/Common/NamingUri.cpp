@@ -272,6 +272,39 @@ namespace Common
         return true;
     }
 
+    ErrorCode NamingUri::ValidateName(NamingUri const & uri, std::wstring const & uriString, bool allowFragment)
+    {
+        if (uri == NamingUri::RootNamingUri)
+        {
+            return ErrorCode(
+                ErrorCodeValue::AccessDenied,
+                wformatString(GET_COMMON_RC(InvalidOperationOnRootNameURI), uriString));
+        }
+
+        if (uriString.size() > static_cast<size_t>(CommonConfig::GetConfig().MaxNamingUriLength))
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidNameUri,
+                wformatString(GET_COMMON_RC(InvalidNameExceedsMaxSize), uriString, uriString.size(), CommonConfig::GetConfig().MaxNamingUriLength));
+        }
+
+        if (!uri.Query.empty())
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidNameUri,
+                wformatString(GET_COMMON_RC(InvalidNameQueryCharacter), uriString));
+        }
+
+        if (allowFragment && !uri.Fragment.empty())
+        {
+            return ErrorCode(
+                ErrorCodeValue::InvalidNameUri,
+                wformatString(GET_COMMON_RC(InvalidNameServiceGroupCharacter), uriString));
+        }
+
+        return ErrorCode::Success();
+    }
+
     bool NamingUri::TryCombine(std::wstring const & path, __out NamingUri & result) const
     {
         wstring temp(this->ToString());

@@ -150,6 +150,18 @@ void NodeDeactivationInfo::AddBatch(wstring const& batchId, NodeDeactivationInte
     sequenceNumber_ = sequenceNumber;
 }
 
+std::wstring NodeDeactivationInfo::GetBatchIdsWithIntent()
+{
+    wstring result;
+    result.append(L"{");
+    for (int i = 0; i < batchIds_.size(); i++)
+    {
+        result.append(wformatString("[{0}:{1}]", batchIds_[i], intents_[i]));
+    }
+    result.append(L"}");
+    return result;
+}
+
 void NodeDeactivationInfo::RemoveBatch(wstring const& batchId, int64 sequenceNumber, bool isNodeUp)
 {
     for (int i = 0; i < batchIds_.size(); i++)

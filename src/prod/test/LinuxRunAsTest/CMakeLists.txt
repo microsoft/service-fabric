@@ -21,6 +21,12 @@ set_target_properties(${exe_LinuxRunAsTest} PROPERTIES
     LINK_FLAGS "-L${LIBRARY_OUTPUT_DIR} -L${BOOST_LIBRARY_DIRS} -lFabricClient -lFabricRuntime -lFabricCommon -lFabricResources")
 
 target_link_libraries( ${exe_LinuxRunAsTest}
+   ${lib_Common}
+   ${lib_Transport}
+   ssl
+   crypto
+   ssh2
+   dl
    FabricUUID
    minizip
    z

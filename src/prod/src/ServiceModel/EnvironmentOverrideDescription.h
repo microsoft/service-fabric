@@ -7,31 +7,31 @@
 
 namespace ServiceModel
 {
-    struct EnvironmentVariableDescription;
+    struct EnvironmentVariableOverrideDescription;
     // ServiceManifestImports/EnvironmentOverrides
     struct EnvironmentOverridesDescription
     {
     public:
         EnvironmentOverridesDescription();
-        EnvironmentOverridesDescription(EnvironmentOverridesDescription const & other);
-        EnvironmentOverridesDescription(EnvironmentOverridesDescription && other);
+        EnvironmentOverridesDescription(EnvironmentOverridesDescription const & other) = default;
+        EnvironmentOverridesDescription(EnvironmentOverridesDescription && other) = default;
 
-        EnvironmentOverridesDescription const & operator = (EnvironmentOverridesDescription const & other);
-        EnvironmentOverridesDescription const & operator = (EnvironmentOverridesDescription && other);
+        EnvironmentOverridesDescription & operator = (EnvironmentOverridesDescription const & other) = default;
+		EnvironmentOverridesDescription & operator = (EnvironmentOverridesDescription && other) = default;
 
         bool operator == (EnvironmentOverridesDescription const & other) const;
         bool operator != (EnvironmentOverridesDescription const & other) const;
-		
+        
         void clear();
 
     public:
-        std::vector<EnvironmentVariableDescription> EnvironmentVariables;
+        std::vector<EnvironmentVariableOverrideDescription> EnvironmentVariables;
         std::wstring CodePackageRef;
 
     private:
-		friend struct ServiceModel::ServiceManifestImportDescription;
+        friend struct ServiceModel::ServiceManifestImportDescription;
         void ReadFromXml(Common::XmlReaderUPtr const &);
-		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const & xmlWriter);
+        Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const & xmlWriter);
     };
 }
 

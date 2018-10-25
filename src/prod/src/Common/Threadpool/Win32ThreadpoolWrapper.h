@@ -109,4 +109,4 @@ extern "C" VOID CloseThreadpoolWork(PTP_WORK pwk);
 
 extern "C" VOID SubmitThreadpoolWork(PTP_WORK pwk);
 
-VOID WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks);
+extern "C" VOID WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks);

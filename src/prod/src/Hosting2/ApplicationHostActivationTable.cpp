@@ -302,3 +302,9 @@ void ApplicationHostActivationTable::Test_GetAllRMReports(std::vector<Applicatio
     pending = pendingRMUpdates_;
     ongoing = ongoingRMUpdates_;
 }
+
+void ApplicationHostActivationTable::Test_GetHostProxyMap(HostProxyMap & proxyMap)
+{
+    AcquireWriteLock readLock(lock_);
+    proxyMap = map_;
+}

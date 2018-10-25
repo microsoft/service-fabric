@@ -48,6 +48,8 @@ namespace Management
             
             FABRIC_INSTANCE_ID get_InstanceId() const override { return static_cast<FABRIC_INSTANCE_ID>(nodeInstanceId_); }
 
+            bool get_HasInvalidInstance() const override { return nodeInstanceId_ == FABRIC_INVALID_NODE_INSTANCE_ID; }
+
             _declspec (property(get=get_NodeName, put=set_NodeName)) std::wstring const & NodeName;
             std::wstring const & get_NodeName() const { return nodeName_; }
             void set_NodeName(std::wstring const & value) { nodeName_ = value; attributeFlags_.SetNodeName(); }

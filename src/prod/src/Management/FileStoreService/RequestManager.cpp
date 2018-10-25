@@ -28,11 +28,11 @@ public:
         , owner_(requestManager)
         , filesToCopy_()
         , filesToDelete_()
-        , initializedEvent_(false)
         , pendingRecoveryCount_(0)
         , completionError_(ErrorCodeValue::Success)
         , completionLock_()
         , expectDataLoss_(false)
+        , copyRetryCount_(0)
     {
     }
 
@@ -44,18 +44,20 @@ public:
         return thisSPtr->Error;
     }
 
-    bool ExpectDataLoss()
+    void SetExpectDataLoss()
     {
         WriteInfo(
             TraceComponent,
             owner_.TraceId,
             "Setting expect data loss");
 
-        initializedEvent_.WaitOne();
-
         expectDataLoss_ = true;
+        return;
+    }
 
-        return !filesToCopy_.empty();
+    bool IsDataLossExpected()
+    {
+        return expectDataLoss_;
     }
 
 protected:
@@ -216,8 +218,6 @@ protected:
             }
         } // for each file metadata
 
-        initializedEvent_.Set();
-
         error = owner_.TransitionToRecoveryStarted();
 
         if (!error.IsSuccess())
@@ -335,6 +335,7 @@ protected:
                 {
                     timer->Cancel();
                     this->StartCopyMissingFiles(activityId, thisSPtr);
+                    ++copyRetryCount_;
                 },
                 false);
         }
@@ -396,38 +397,52 @@ protected:
                     continue;
                 }
 
-                for (auto const & secondaryShare : secondaryShares)
+                if (secondaryShares.empty())
                 {
-                    auto currentSourceFilePath = Utility::GetVersionedFileFullPath(
-                        secondaryShare, 
-                        metadata.StoreRelativeLocation, 
-                        metadata.CurrentVersion);
-
-                    error = owner_.ReplicaObj.SmbContext->CopyFileW(currentSourceFilePath, currentDestinationFilePath);
-                    if (error.IsSuccess()) 
-                    { 
-                        WriteInfo(
-                            TraceComponent,
-                            owner_.TraceId,
-                            "Copied missing file: {0} -> {1}",
-                            currentSourceFilePath,
-                            currentDestinationFilePath);
-
-                        break;
-                    }
-                    else
+                    WriteInfo(
+                        TraceComponent,
+                        owner_.TraceId,
+                        "No secondary replica is up. Failed to copy missing file: {0} : Error:{1}",
+                        currentDestinationFilePath,
+                        error);
+                    ++failures;
+                    break;
+                }
+                else
+                {
+                    for (auto const & secondaryShare : secondaryShares)
                     {
-                        WriteInfo(
-                            TraceComponent,
-                            owner_.TraceId,
-                            "Failed to copy missing file: {0} -> {1}: Error:{2}",
-                            currentSourceFilePath,
-                            currentDestinationFilePath,
-                            error);
+                        auto currentSourceFilePath = Utility::GetVersionedFileFullPath(
+                            secondaryShare,
+                            metadata.StoreRelativeLocation,
+                            metadata.CurrentVersion);
 
-                        ++failures;
-                    }
-                } // secondaryShares
+                        error = owner_.ReplicaObj.SmbContext->CopyFileW(currentSourceFilePath, currentDestinationFilePath);
+                        if (error.IsSuccess())
+                        {
+                            WriteInfo(
+                                TraceComponent,
+                                owner_.TraceId,
+                                "Copied missing file: {0} -> {1}",
+                                currentSourceFilePath,
+                                currentDestinationFilePath);
+
+                            break;
+                        }
+                        else
+                        {
+                            WriteInfo(
+                                TraceComponent,
+                                owner_.TraceId,
+                                "Failed to copy missing file: {0} -> {1}: Error:{2}",
+                                currentSourceFilePath,
+                                currentDestinationFilePath,
+                                error);
+
+                            ++failures;
+                        }
+                    } // secondaryShares
+                }
             } // filesToCopy_
 
             // A stable file (Available_V1, Committed) must exist on at least one replica since it was 
@@ -435,6 +450,16 @@ protected:
             //
             if (failures > 0)
             {
+                // It is possible that FSS primary could be failed over before recovery operation is done with data loss set.
+                // When primary failed over before recovery ran, new primary will be stuck in recovery operation trying to copy the missing file since dataloss will not be set in the new primary.
+                // For test, this causes failures and uneccessary noise. We will fix this for test to automatically go into data loss to recover FSS
+                // For product (TODO), we have to send health event to notify the user about recovery being stuck and ask them to take appropriate action.
+                if (FileStoreServiceConfig::GetConfig().EnableAutomaticRecoveryAfterDataloss && 
+                    copyRetryCount_.load() > static_cast<long>(FileStoreServiceConfig::GetConfig().RetryMissingCopyFileCountDuringRecovery))
+                {
+                    expectDataLoss_ = true;
+                }
+
                 if (expectDataLoss_)
                 {
                     WriteInfo(
@@ -486,8 +511,6 @@ protected:
 
     void CleanupTimers()
     {
-        initializedEvent_.Set();
-
         AcquireWriteLock lock(timerLock_);
 
         if (startRetryTimer_)
@@ -512,7 +535,6 @@ private:
     RequestManager & owner_;
     vector<FileMetadata> filesToCopy_;
     vector<FileMetadata> filesToDelete_;
-    ManualResetEvent initializedEvent_;
 
     int pendingRecoveryCount_;
     ErrorCode completionError_;
@@ -521,6 +543,7 @@ private:
     TimerSPtr startRetryTimer_;
     TimerSPtr copyRetrytimer_;
     ExclusiveLock timerLock_;
+    Common::atomic_long copyRetryCount_;
 
     bool expectDataLoss_;
 };
@@ -545,7 +568,10 @@ RequestManager::RequestManager(
     recoveryOperation_(),
     recoveryOperationLock_(),
     requestProcessingJobQueue_(),
-    fileOperationProcessingJobQueue_()
+    fileOperationProcessingJobQueue_(),
+    uploadChunkCount_(0),
+    commitUploadChunkCount_(0),
+    createUploadChunkCount_(0)
 {
     this->SetTraceId(serviceReplicaHolder.Value.PartitionedReplicaId.TraceId);
 
@@ -640,6 +666,20 @@ ErrorCode RequestManager::Close()
     return this->TransitionToDeactivated();
 }
 
+bool RequestManager::IsDataLossExpected()
+{
+    AcquireReadLock lock(recoveryOperationLock_);
+
+    if (recoveryOperation_)
+    {
+        return recoveryOperation_->IsDataLossExpected();
+    }
+    else
+    {
+        return false;
+    }
+}
+
 AsyncOperationSPtr RequestManager::BeginOnDataLoss(
     __in AsyncCallback const & callback,
     __in AsyncOperationSPtr const & parent)
@@ -656,7 +696,7 @@ ErrorCode RequestManager::EndOnDataLoss(
 
         if (recoveryOperation_)
         {
-            recoveryOperation_->ExpectDataLoss();
+            recoveryOperation_->SetExpectDataLoss();
 
             isStateChanged = true;
         }
@@ -1015,15 +1055,17 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        wstring storeRelativePath = uploadSessionRequest.StoreRelativePath;
+        Guid sessionId = uploadSessionRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessListUploadSessionRequestAsyncOperation>(
             *this,
             move(uploadSessionRequest),
             move(receiverContext),
             activityId,
             timeout,
-            [this](AsyncOperationSPtr const & asyncOperation)
+            [this, storeRelativePath, sessionId](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessRequestComplete(asyncOperation);
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, storeRelativePath);
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1046,15 +1088,16 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        Guid sessionId = deleteUploadSessionRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessDeleteUploadSessionRequestAsyncOperation>(
             *this,
             move(deleteUploadSessionRequest),
             move(receiverContext),
             activityId,
             timeout,
-            [this](AsyncOperationSPtr const & asyncOperation)
+            [this, sessionId](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessRequestComplete(asyncOperation);
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"");
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1077,15 +1120,35 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
+        {
+            ++createUploadChunkCount_;
+            if (createUploadChunkCount_.load() % 7 == 0)
+            {
+                WriteWarning(
+                    TraceComponent,
+                    TraceId,
+                    "{0}: Dropping incoming message SessionId {1} StorePath : {2}",
+                    action,
+                    createUploadSessionRequest.SessionId,
+                    createUploadSessionRequest.StoreRelativePath
+                );
+
+                return;
+            }
+        }
+
+        wstring storeRelativePath = createUploadSessionRequest.StoreRelativePath;
+        Guid sessionId = createUploadSessionRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessCreateUploadSessionRequestAsyncOperation>(
             *this,
             move(createUploadSessionRequest),
             move(receiverContext),
             activityId,
             timeout,
-            [this](AsyncOperationSPtr const & asyncOperation)
+            [this, sessionId, storeRelativePath](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessRequestComplete(asyncOperation);
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, storeRelativePath);
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1108,15 +1171,67 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
+        {
+            ++uploadChunkCount_;
+            if (uploadChunkCount_.load() % 11 == 0)
+            {
+                WriteWarning(
+                    TraceComponent,
+                    TraceId,
+                    "{0}: Dropping incoming message SessionId {1} start/end : {2}/{3}",
+                    action,
+                    uploadChunkRequest.SessionId,
+                    uploadChunkRequest.StartPosition,
+                    uploadChunkRequest.EndPosition
+                );
+
+                return;
+            }
+        }
+
+        Guid sessionId = uploadChunkRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessUploadChunkRequestAsyncOperation>(
             *this,
             move(uploadChunkRequest),
             move(receiverContext),
             activityId,
             timeout,
-            [this](AsyncOperationSPtr const & asyncOperation)
+            [this, sessionId](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessRequestComplete(asyncOperation);
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"");
+        },
+            this->CreateAsyncOperationRoot());
+    }
+    else if (action == FileStoreServiceTcpMessage::UploadChunkContentAction)
+    {
+        UploadChunkContentRequest uploadChunkContentRequest;
+        if (!request->GetBody<UploadChunkContentRequest>(uploadChunkContentRequest))
+        {
+            auto error = ErrorCode::FromNtStatus(request->Status);
+            if (!error.IsSuccess())
+            {
+                WriteError(
+                    TraceComponent,
+                    TraceId,
+                    "Parsing UploadChunkContentRequest failed. Error:{0}, MessageId:{1}",
+                    error,
+                    request->MessageId);
+
+                return;
+            }
+        }
+
+        Guid sessionId = uploadChunkContentRequest.SessionId;
+        AsyncOperation::CreateAndStart<ProcessUploadChunkContentRequestAsyncOperation>(
+            *this,
+            move(uploadChunkContentRequest),
+            move(receiverContext),
+            activityId,
+            timeout,
+            [this, sessionId](AsyncOperationSPtr const & asyncOperation)
+        {
+            this->OnProcessChunkRequestComplete(asyncOperation, sessionId, L"");
         },
             this->CreateAsyncOperationRoot());
     }
@@ -1139,21 +1254,137 @@ void RequestManager::OnProcessRequest(
             }
         }
 
+        if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
+        {
+            ++commitUploadChunkCount_;
+            if (commitUploadChunkCount_.load() % 9 == 0)
+            {
+                WriteWarning(
+                    TraceComponent,
+                    TraceId,
+                    "{0} : Dropping incoming message SessionId {1} StorePath : {2}",
+                    action,
+                    uploadSessionRequest.SessionId,
+                    uploadSessionRequest.StoreRelativePath
+                );
+
+                return;
+            }
+        }
+
+        wstring storeRelativePath = uploadSessionRequest.StoreRelativePath;
+        Guid sessionId = uploadSessionRequest.SessionId;
         AsyncOperation::CreateAndStart<ProcessCommitUploadSessionRequestAsyncOperation>(
             *this,
             move(uploadSessionRequest),
             move(receiverContext),
             activityId,
             timeout,
-            [this](AsyncOperationSPtr const & asyncOperation)
+            [this, storeRelativePath, sessionId](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessRequestComplete(asyncOperation);
+            this->OnProcessChunkRequestComplete(asyncOperation,
+                sessionId,
+                storeRelativePath);
         },
             this->CreateAsyncOperationRoot());
     }
     else
     {
         routingAgentProxy_.OnIpcFailure(ErrorCodeValue::InvalidOperation, *receiverContext, activityId);
+    }
+}
+
+void RequestManager::OnProcessChunkRequestComplete(
+    Common::AsyncOperationSPtr const & operation,
+    Guid const& sessionId,
+    wstring const &storeRelativePath)
+{
+    IpcReceiverContextUPtr receiverContext;
+    MessageUPtr reply;
+    ActivityId activityId;
+    auto processRequestOperation = AsyncOperation::Get<ProcessRequestAsyncOperation>(operation);
+    ASSERT_IFNOT(processRequestOperation, "Unexpected FSS request operation type");
+
+    auto error = ProcessRequestAsyncOperation::End(operation, receiverContext, reply, activityId);
+    if (error.IsSuccess())
+    {
+        if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
+        {
+            if (processRequestOperation->IsCommitUploadSessionOperation())
+            {
+                if (commitUploadChunkCount_.load() % 11 == 0)
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        TraceId,
+                        "CommitUploadSession: Dropping success reply message SessionId {0} StorePath : {1}",
+                        sessionId,
+                        storeRelativePath
+                    );
+
+                    return;
+                }
+            }
+            else if (processRequestOperation->IsUploadChunkOperation())
+            {
+                if (uploadChunkCount_.load() % 23 == 0)
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        TraceId,
+                        "UplaodChunk: Dropping success reply message SessionId {0} StorePath : {1}",
+                        sessionId,
+                        storeRelativePath
+                    );
+
+                    return;
+                }
+            }
+            else if (processRequestOperation->IsCreateUploadSessionOperation())
+            {
+                if (createUploadChunkCount_.load() % 13 == 0)
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        TraceId,
+                        "CreateUploadSession: Dropping success reply message SessionId {0} StorePath : {1}",
+                        sessionId,
+                        storeRelativePath
+                    );
+
+                    return;
+                }
+            }
+        }
+
+        ASSERT_IFNOT(reply, "Reply should be set if the request is processed successfully");
+        routingAgentProxy_.SendIpcReply(move(reply), *receiverContext);
+    }
+    else
+    {
+        if (processRequestOperation->IsCommitUploadSessionOperation())
+        {
+            if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
+            {
+                if (commitUploadChunkCount_.load() % 7 == 0)
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        TraceId,
+                        "CommitUploadSession in error {0}: Dropping reply message SessionId:{1}, StorePath:{2}",
+                        error,
+                        sessionId,
+                        storeRelativePath
+                    );
+
+                    return;
+                }
+            }
+        }
+
+        processRequestOperation->WriteTrace(error);
+
+        routingAgentProxy_.OnIpcFailure(error, *receiverContext, activityId);
     }
 }
 

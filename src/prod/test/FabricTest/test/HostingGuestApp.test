@@ -1,0 +1,109 @@
+set CacheCleanupScanInterval 2
+set DeactivationGraceInterval 0
+set DeactivationFailedRetryIntervalRange 0
+
+votes 20 30
+fmservice 3 2
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
+verify
+
+# 
+# Provision And Create TestAppA version 1.0
+#
+app.add GuestAppA GuestAppTypeA 1.0
+app.clear GuestAppA
+
+app.servicepack GuestAppA ServicePackageA version=1.0
+app.servicetypes GuestAppA ServicePackageA ServiceTypeA stateless implicit
+app.codepack GuestAppA ServicePackageA CodeA version=1.0 isGuestExe=true
+
+app.servicepack GuestAppA ServicePackageB version=1.0
+app.servicetypes GuestAppA ServicePackageB ServiceTypeB stateful implicit
+app.codepack GuestAppA ServicePackageB CodeB1 version=1.0 isGuestExe=true
+app.codepack GuestAppA ServicePackageB CodeB2 version=1.0 isGuestExe=true
+
+app.servicepack GuestAppA ServicePackageC version=1.0
+app.servicetypes GuestAppA ServicePackageC ServiceTypeC stateless implicit
+app.codepack GuestAppA ServicePackageC CodeC1 version=1.0 isGuestExe=true
+app.codepack GuestAppA ServicePackageC CodeC2 version=1.0 isGuestExe=true
+app.codepack GuestAppA ServicePackageC CodeC3 version=1.0 isGuestExe=true
+
+app.servicepack GuestAppA ServicePackageD version=1.0
+app.servicetypes GuestAppA ServicePackageD ServiceTypeD stateful implicit
+app.codepack GuestAppA ServicePackageD CodeD1 version=1.0 isGuestExe=true
+app.codepack GuestAppA ServicePackageD CodeD2 version=1.0 isGuestExe=true
+app.codepack GuestAppA ServicePackageD CodeD3 version=1.0 isGuestExe=true
+app.codepack GuestAppA ServicePackageD CodeD5 version=1.0 isGuestExe=true
+
+app.upload GuestAppA
+provisionapp GuestAppA
+
+createapp fabric:/GuestAppA GuestAppTypeA 1.0
+verify
+
+createservice fabric:/GuestAppA/GuestServiceA ServiceTypeA n 1 3 appname=fabric:/GuestAppA servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/GuestAppA/GuestServiceB ServiceTypeB y 1 3 appname=fabric:/GuestAppA servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/GuestAppA/GuestServiceC ServiceTypeC n 1 3 appname=fabric:/GuestAppA servicePackageActivationMode=ExclusiveProcess
+createservice fabric:/GuestAppA/GuestServiceD ServiceTypeD y 1 3 appname=fabric:/GuestAppA servicePackageActivationMode=ExclusiveProcess
+
+createservice fabric:/GuestAppA/GuestServiceAA1 ServiceTypeA n 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceAA2 ServiceTypeA n 1 3 appname=fabric:/GuestAppA
+
+createservice fabric:/GuestAppA/GuestServiceBB1 ServiceTypeB y 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceBB2 ServiceTypeB y 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceBB3 ServiceTypeB y 1 3 appname=fabric:/GuestAppA
+
+createservice fabric:/GuestAppA/GuestServiceCC1 ServiceTypeC n 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceCC2 ServiceTypeC n 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceCC3 ServiceTypeC n 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceCC4 ServiceTypeC n 1 3 appname=fabric:/GuestAppA
+
+createservice fabric:/GuestAppA/GuestServiceDD1 ServiceTypeD y 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceDD2 ServiceTypeD y 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceDD3 ServiceTypeD y 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceDD4 ServiceTypeD y 1 3 appname=fabric:/GuestAppA
+createservice fabric:/GuestAppA/GuestServiceDD5 ServiceTypeD y 1 3 appname=fabric:/GuestAppA
+
+# Wait for things to stabilizes
+!pause 60
+
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceA Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceB Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceC Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceD Ready
+
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceAA1 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceAA2 Ready
+
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceBB1 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceBB2 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceBB3 Ready
+
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceCC1 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceCC2 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceCC3 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceCC4 Ready
+
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceDD1 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceDD2 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceDD3 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceDD4 Ready
+!waitforstate FM.FT.Status.fabric:/GuestAppA/GuestServiceDD5 Ready
+
+VerifyDeployedCodePackageCount ApplicationName=fabric:/GuestAppA ServiceManifestName=ServicePackageA NodeIdList=10,20,30 ExpectedCount=6
+VerifyDeployedCodePackageCount ApplicationName=fabric:/GuestAppA ServiceManifestName=ServicePackageB NodeIdList=10,20,30 ExpectedCount=8
+VerifyDeployedCodePackageCount ApplicationName=fabric:/GuestAppA ServiceManifestName=ServicePackageC NodeIdList=10,20,30 ExpectedCount=18
+VerifyDeployedCodePackageCount ApplicationName=fabric:/GuestAppA ServiceManifestName=ServicePackageD NodeIdList=10,20,30 ExpectedCount=16
+
+deleteapp fabric:/GuestAppA
+
+!pause 15
+verify
+
+!q

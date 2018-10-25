@@ -9,7 +9,7 @@ namespace Management
 {
     namespace FaultAnalysisService
     {
-        class FaultAnalysisServiceAgent 
+        class FaultAnalysisServiceAgent
             : public Api::IFaultAnalysisServiceAgent
             , public Common::ComponentRoot
             , private Federation::NodeTraceComponent<Common::TraceTaskCodes::FaultAnalysisService>
@@ -32,7 +32,7 @@ namespace Management
             virtual void RegisterFaultAnalysisService(
                 ::FABRIC_PARTITION_ID,
                 ::FABRIC_REPLICA_ID,
-                Api::IFaultAnalysisServicePtr const &,  
+                Api::IFaultAnalysisServicePtr const &,
                 __out std::wstring & serviceAddress);
 
             virtual void UnregisterFaultAnalysisService(
@@ -49,8 +49,8 @@ namespace Management
 
             // Send the query from the FaultAnalysisServiceAgent to the service itself
             Common::AsyncOperationSPtr BeginSendQueryToService(
-            FABRIC_TEST_COMMAND_STATE_FILTER stateFilter, 
-            FABRIC_TEST_COMMAND_TYPE_FILTER typeFilter, 
+            FABRIC_TEST_COMMAND_STATE_FILTER stateFilter,
+            FABRIC_TEST_COMMAND_TYPE_FILTER typeFilter,
                 Common::ActivityId const & activityId,
                 Common::TimeSpan timeout,
                 Common::AsyncCallback const & callback,
@@ -99,7 +99,7 @@ namespace Management
 
             Common::ErrorCode EndProcessQuery(
                 Common::AsyncOperationSPtr const & operation,
-                Transport::MessageUPtr & reply);         
+                Transport::MessageUPtr & reply);
 
             void ReplaceServiceLocation(SystemServices::SystemServiceLocation const & location);
             void DispatchMessage(Api::IFaultAnalysisServicePtr const &, __in Transport::MessageUPtr &, __in Transport::IpcReceiverContextUPtr &);

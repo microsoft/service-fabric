@@ -21,8 +21,8 @@ namespace Reliability
 
             void Open(
                 ReconfigurationAgentProxyId const & id, 
-                uint64 nodeInstanceId,
-                wstring nodeName);
+                Federation::NodeInstance const & nodeInstance,
+                wstring const & nodeName);
             
             void Close();
             
@@ -44,12 +44,13 @@ namespace Reliability
             void OnHealthEvent(
                 Common::SystemHealthReportCode::Enum code, 
                 Common::ApiMonitoring::MonitoringHealthEventList const & events, 
+                ApiMonitoring::MonitoringComponentMetadata const & metaData,
                 Common::TimeSpan const & ttl,
                 std::wstring const & status);
 
             Client::IpcHealthReportingClientSPtr healthClient_;
             Common::ApiMonitoring::MonitoringComponentUPtr monitoringComponent_;
-            std::wstring nodeName_;
+            Federation::NodeInstance nodeInstance_;
         };
     }
 }

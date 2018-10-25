@@ -249,12 +249,12 @@ Awaitable<NTSTATUS> ApiDispatcher::RecoverCheckpointAsync(
     co_return STATUS_SUCCESS;
 }
 
-NTSTATUS ApiDispatcher::BeginSettingCurrentState(
+ktl::Awaitable<NTSTATUS> ApiDispatcher::BeginSettingCurrentStateAsync(
     __in Metadata const & metadata) noexcept
 {
     try
     {
-        metadata.StateProvider->BeginSettingCurrentState();
+        co_await metadata.StateProvider->BeginSettingCurrentStateAsync();
     }
     catch (Exception const & exception)
     {
@@ -264,10 +264,10 @@ NTSTATUS ApiDispatcher::BeginSettingCurrentState(
             metadata.StateProviderId,
             BeginSettingCurrentState_FunctionName,
             exception.GetStatus());
-        return exception.GetStatus();
+        co_return exception.GetStatus();
     }
 
-    return STATUS_SUCCESS;
+    co_return STATUS_SUCCESS;
 }
 
 Awaitable<NTSTATUS> ApiDispatcher::SetCurrentStateAsync(
@@ -359,7 +359,7 @@ Awaitable<NTSTATUS> ApiDispatcher::OpenAsync(
             metadataArray.Count());
 
         // Clean opened state providers.
-        // TODO: As an additional feature we can try to close the opened state providers.
+        // #11908301: As an additional feature we can close the opened state providers.
         for (ULONG index = 0; index < awaitableArray.Count(); index++)
         {
             NTSTATUS awaitableStatus = co_await awaitableArray[index];

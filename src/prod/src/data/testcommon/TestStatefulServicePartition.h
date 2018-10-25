@@ -10,7 +10,7 @@ namespace Data
     namespace TestCommon
     {
         class TestStatefulServicePartition final
-            : public KWfStatefulServicePartition
+            : public Utilities::IStatefulPartition
         {
             K_FORCE_SHARED(TestStatefulServicePartition)
 
@@ -23,16 +23,6 @@ namespace Data
             NTSTATUS GetReadStatus(__out FABRIC_SERVICE_PARTITION_ACCESS_STATUS* ReadStatus) override;
 
             NTSTATUS GetWriteStatus(__out FABRIC_SERVICE_PARTITION_ACCESS_STATUS* WriteStatus) override;
-
-            NTSTATUS CreateReplicator(
-                __in KWfStateProvider* StateProvider,
-                __in const FABRIC_REPLICATOR_SETTINGS* ReplicatorSettings,
-                __out KSharedPtr<KWfReplicator>& Replicator,
-                __out KSharedPtr<KWfStateReplicator>& StateReplicator) override;
-
-            NTSTATUS ReportLoad(
-                __in ULONG MetricCount,
-                __in_ecount(MetricCount) const FABRIC_LOAD_METRIC* Metrics) override;
             
             NTSTATUS ReportFault(__in FABRIC_FAULT_TYPE FaultType) override;
 

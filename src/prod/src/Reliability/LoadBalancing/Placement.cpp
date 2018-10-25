@@ -34,7 +34,8 @@ Placement::Placement(
     set<Common::Guid> const& partialClosureFTs,
     ServicePackagePlacement && servicePackagePlacement,
     size_t quorumBasedServicesCount,
-    size_t quorumBasedPartitionsCount)
+    size_t quorumBasedPartitionsCount,
+    std::set<uint64> && quorumBasedServicesTempCache)
     : balanceChecker_(move(balanceChecker)),
     services_(move(services)),
     partitions_(move(partitions)),
@@ -73,7 +74,8 @@ Placement::Placement(
     partitionClosureType_(partitionClosureType),
     servicePackagePlacements_(move(servicePackagePlacement)),
     quorumBasedServicesCount_(quorumBasedServicesCount),
-    quorumBasedPartitionsCount_(quorumBasedPartitionsCount)
+    quorumBasedPartitionsCount_(quorumBasedPartitionsCount),
+    quorumBasedServicesTempCache_(move(quorumBasedServicesTempCache))
 {
     // Remove down and deactivated nodes from eligible nodes!
     eligibleNodes_.DeleteNodeVecWithIndex(BalanceCheckerObj->DownNodes);
@@ -82,8 +84,8 @@ Placement::Placement(
     PreparePartitions();
     PrepareReplicas(partialClosureFTs);
     ComputeBeneficialTargetNodesPerMetric();
-    if (schedulerAction.Action == PLBSchedulerActionType::Creation ||
-        schedulerAction.Action == PLBSchedulerActionType::CreationWithMove)
+    if (schedulerAction.Action == PLBSchedulerActionType::NewReplicaPlacement ||
+        schedulerAction.Action == PLBSchedulerActionType::NewReplicaPlacementWithMove)
     {
         ComputeBeneficialTargetNodesForPlacementPerMetric();
     }
@@ -320,7 +322,7 @@ void Placement::PreparePartitions()
         // and relaxed scaleout during upgrade should be performed,
         // increase the required movement count for placement
         if (settings_.RelaxScaleoutConstraintDuringUpgrade &&
-            partition.Service->IsTargetOne &&                                           // It is single replica service
+            partition.IsTargetOne &&                                           // It is single replica service
             partition.Service->Application != nullptr &&                                // Partition has application
             partition.Service->Application->HasPartitionsInSingletonReplicaUpgrade &&   // Application has at least one partition in upgrade
             !partition.IsInSingleReplicaUpgrade)                                        // Partition is not in upgrade
@@ -492,7 +494,7 @@ void Placement::PrepareReplicas(set<Common::Guid>const& partialClosureFTs)
         {
             if (metric->IsDefrag && metric->DefragmentationScopedAlgorithmEnabled)
             {
-                dynamicNodeLoads.PrepareBeneficialNodes(totalMetricIndex, metric->DefragNodeCount, metric->DefragDistribution, metric->DefragEmptyNodeLoadThreshold);
+                dynamicNodeLoads.PrepareBeneficialNodes(totalMetricIndex, metric->DefragNodeCount, metric->DefragDistribution, metric->ReservationLoad);
                 
                 if (metric->DefragDistribution == Metric::DefragDistributionType::SpreadAcrossFDs_UDs)
                 {
@@ -588,17 +590,33 @@ void Placement::ComputeBeneficialTargetNodesPerMetric()
                     auto & node = balanceChecker_->Nodes[i];
                     auto & loadStat = lbDomain.GetLoadStat(metricIndex);
 
-                    double average = loadStat.Average;
-                    if (metric.IsDefrag && metric.DefragmentationScopedAlgorithmEnabled && metric.DefragNodeCount < loadStat.Count)
+                    double loadDiff;
+                    if (metric.BalancingByPercentage)
                     {
-                        // Since we want to empty out a certain number of nodes,
-                        // the amount of load we want to have on all nodes changes
-                        // (we try to distribute the load on all nodes, except on the empty nodes).
-                        // Here we calculate the total load from the average and use it to calculate the desired load (new average)
-                        average = loadStat.Average * loadStat.Count / (loadStat.Count - metric.DefragNodeCount);
-                    }
+                        double average = loadStat.AbsoluteSum / loadStat.CapacitySum;
+                        if (metric.IsDefrag && metric.DefragmentationScopedAlgorithmEnabled && metric.DefragNodeCount < loadStat.Count)
+                        {
+                            average = loadStat.AbsoluteSum / (loadStat.CapacitySum - metric.DefragNodeCount * metric.ReservationLoad);
+                        }
 
-                    double loadDiff = node.GetLoadLevel(globalIndex) - average;
+                        auto nodeCapacity = node.GetNodeCapacity(metric.IndexInGlobalDomain);
+                        auto nodeLoad = node.GetLoadLevel(globalIndex);
+
+                        loadDiff = nodeLoad - nodeCapacity * average;
+                    }
+                    else
+                    {
+                        double average = loadStat.Average;
+                        if (metric.IsDefrag && metric.DefragmentationScopedAlgorithmEnabled && metric.DefragNodeCount < loadStat.Count)
+                        {
+                            // Since we want to empty out a certain number of nodes,
+                            // the amount of load we want to have on all nodes changes
+                            // (we try to distribute the load on all nodes, except on the empty nodes).
+                            // Here we calculate the total load from the average and use it to calculate the desired load (new average)
+                            average = loadStat.Average * loadStat.Count / (loadStat.Count - metric.DefragNodeCount);
+                        }
+                        loadDiff = node.GetLoadLevel(globalIndex) - average;
+                    }
 
                     if (!node.IsDeactivated && node.IsUp && metric.IsValidNode(node.NodeIndex))
                     {
@@ -688,7 +706,7 @@ void Placement::ComputeBeneficialTargetNodesForPlacementPerMetric()
                     dynamicNodeLoads.PrepareBeneficialNodes(totalIndex,
                         metric.DefragNodeCount,
                         metric.DefragDistribution,
-                        metric.DefragEmptyNodeLoadThreshold);
+                        metric.ReservationLoad);
                 }
 
                 vector<NodeEntry const*> sortedNodes;
@@ -925,9 +943,24 @@ bool Placement::IsSwapBeneficial(PlacementReplica const* replica)
             if (lbDomain != nullptr)
             {
                 size_t totalMetricIndex = lbDomain->MetricStartIndex + metricIndex;
-                int64 defragCoefficient = lbDomain->Metrics[metricIndex].IsDefrag ? -1 : 1;
+                auto metric = lbDomain->Metrics[metricIndex];
+                auto loadStat = lbDomain->GetLoadStat(metricIndex);
+                int64 defragCoefficient = metric.IsDefrag ? -1 : 1;
                 int64 tempCoefficient = coefficient * defragCoefficient;
-                double loadDiff = replica->Node->GetLoadLevel(totalMetricIndex) - lbDomain->GetLoadStat(metricIndex).Average;
+                double loadDiff;
+                if (metric.BalancingByPercentage)
+                {
+                    double average = loadStat.AbsoluteSum / loadStat.CapacitySum;
+                    auto nodeCapacity = replica->Node->GetNodeCapacity(metric.IndexInGlobalDomain);
+                    auto nodeLoad = replica->Node->GetLoadLevel(totalMetricIndex);
+
+                    loadDiff = nodeLoad - nodeCapacity * average;
+                }
+                else
+                {
+                    loadDiff = replica->Node->GetLoadLevel(totalMetricIndex) -
+                        loadStat.Average;
+                }
 
                 if (!lbDomain->Metrics[metricIndex].IsBalanced && loadDiff * tempCoefficient > defragCoefficient * 1e-9)
                 {
@@ -939,10 +972,24 @@ bool Placement::IsSwapBeneficial(PlacementReplica const* replica)
             size_t totalMetricIndexInGlobalDomain = partition->Service->GlobalMetricIndices[metricIndex];
             LoadBalancingDomainEntry const* globalDomain = partition->Service->GlobalLBDomain;
             size_t metricIndexInGlobalDomain = totalMetricIndexInGlobalDomain - globalDomain->MetricStartIndex;
-            int64 defragCoefficient = globalDomain->Metrics[metricIndexInGlobalDomain].IsDefrag ? -1 : 1;
+            auto metric = globalDomain->Metrics[metricIndexInGlobalDomain];
+            auto loadStat = globalDomain->GetLoadStat(metricIndexInGlobalDomain);
+            int64 defragCoefficient = metric.IsDefrag ? -1 : 1;
             int64 tempCoefficient = coefficient * defragCoefficient;
-            double loadDiff = replica->Node->GetLoadLevel(totalMetricIndexInGlobalDomain) -
-                globalDomain->GetLoadStat(metricIndexInGlobalDomain).Average;
+
+            double loadDiff;
+            if (metric.BalancingByPercentage)
+            {
+                double average = loadStat.AbsoluteSum / loadStat.CapacitySum;
+                auto nodeCapacity = replica->Node->GetNodeCapacity(metric.IndexInGlobalDomain);
+                auto nodeLoad = replica->Node->GetLoadLevel(totalMetricIndexInGlobalDomain);
+
+                loadDiff = nodeLoad - nodeCapacity * average;
+            }
+            else
+            {
+                loadDiff = replica->Node->GetLoadLevel(totalMetricIndexInGlobalDomain) - loadStat.Average;
+            }
 
             if (!globalDomain->Metrics[metricIndexInGlobalDomain].IsBalanced && loadDiff * tempCoefficient > defragCoefficient * 1e-9)
             {

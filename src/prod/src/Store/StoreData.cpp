@@ -10,6 +10,8 @@ using namespace std;
 
 namespace Store
 {
+    StringLiteral const TraceComponent("StoreData");
+
     StoreData::StoreData()
         : ReplicaActivityTraceComponent(PartitionedReplicaId(Guid::Empty(), 0), Common::ActivityId())
         , cachedKey_(L"")
@@ -88,6 +90,13 @@ namespace Store
 
     void StoreData::SetSequenceNumber(FABRIC_SEQUENCE_NUMBER sequenceNumber)
     {
-        sequenceNumber_ = sequenceNumber;
+        if (sequenceNumber >= 0)
+        {
+            sequenceNumber_ = sequenceNumber;
+        }
+        else
+        {
+            TRACE_LEVEL_AND_TESTASSERT(Trace.WriteError, TraceComponent, "Ignoring negative sequence number: {0}", sequenceNumber);
+        }
     }
 }

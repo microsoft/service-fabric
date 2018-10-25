@@ -1199,17 +1199,15 @@ extern "C" DllImport int TryZipDirectory(
 
         if (!success)
         {
-            auto errorMessage = wstring(move(&errMessageBuffer[0]));
+            auto msg = wformatString(GET_COMMON_RC( Zip_Failed ), src, dest);
+            msg.append(L"\n");
+            msg.append(GET_COMMON_RC( Win_Long_Paths ));
+            msg.append(L"\n");
+            msg.append(wstring(move(&errMessageBuffer[0])));
 
-            Trace.WriteWarning(
-                TraceSource,
-                L"CreateArchive",
-                "TryZipDirectory failed: src={0} dest={1} error={2}",
-                src,
-                dest,
-                errorMessage);
+            Trace.WriteWarning(TraceSource, "{0}", msg);
 
-            return ErrorCodeValue::OperationFailed;
+            return ErrorCode(ErrorCodeValue::OperationFailed, move(msg));
         }
         else
         {
@@ -1250,17 +1248,15 @@ extern "C" DllImport int TryUnzipDirectory(
 
         if (!success)
         {
-            auto errorMessage = wstring(move(&errMessageBuffer[0]));
+            auto msg = wformatString(GET_COMMON_RC( Unzip_Failed ), src, dest);
+            msg.append(L"\n");
+            msg.append(GET_COMMON_RC( Win_Long_Paths ));
+            msg.append(L"\n");
+            msg.append(wstring(move(&errMessageBuffer[0])));
 
-            Trace.WriteWarning(
-                TraceSource,
-                L"ExtractArchive",
-                "TryUnzipDirectory failed: src={0} dest={1} error={2}",
-                src,
-                dest,
-                errorMessage);
+            Trace.WriteWarning(TraceSource, "{0}", msg);
 
-            return ErrorCodeValue::OperationFailed;
+            return ErrorCode(ErrorCodeValue::OperationFailed, move(msg));
         }
         else
         {

@@ -99,16 +99,7 @@ ErrorCode ProcessCreateUploadSessionRequestAsyncOperation::ValidateRequest()
             this->RequestManagerObj.TraceId,
             "Empty store relative path");
         return ErrorCodeValue::InvalidArgument;
-    }
-    
-    if(this->fileSize_ == 0)
-    {
-        WriteInfo(
-            TraceComponent,
-            this->RequestManagerObj.TraceId,
-            "Zero file size"); 
-        return ErrorCodeValue::InvalidArgument;
-    }
+    }    
 
     return ErrorCodeValue::Success;
 }
@@ -138,4 +129,18 @@ ErrorCode ProcessCreateUploadSessionRequestAsyncOperation::EndOperation(
     }
 
     return errorCode;
+}
+
+void ProcessCreateUploadSessionRequestAsyncOperation::WriteTrace(__in Common::ErrorCode const &error)
+{
+    if (!error.IsSuccess())
+    {
+        WriteWarning(
+            TraceComponent,
+            "CreateUploadSession request failed with error {0}, sessionId:{1}, storeRelativePath:{2}, fileSize:{3}",
+            error,
+            this->sessionId_,
+            this->storeRelativePath_,
+            this->fileSize_);
+    }
 }

@@ -225,8 +225,9 @@ OperationDataStream::SPtr NoopStateProvider::GetCurrentState()
     return nullptr;
 }
 
-void NoopStateProvider::BeginSettingCurrentState()
+ktl::Awaitable<void> NoopStateProvider::BeginSettingCurrentStateAsync()
 {
+    co_return;
 }
 
 Awaitable<void> NoopStateProvider::SetCurrentStateAsync(

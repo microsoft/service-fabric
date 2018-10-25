@@ -169,7 +169,8 @@ namespace FailoverManagerUnitTest
             defaultNodeName,
             defaultNodeType,
             defaultIpAddressOrFQDN,
-            defaultClientConnectionPort);
+            defaultClientConnectionPort,
+            0);
 
         return make_shared<NodeInfo>(nodeInstance, move(nodeDescription), true);
     }

@@ -20,7 +20,8 @@ namespace Management
                 Query = 4,
                 QueryEntityHealthStateChunk = 5,
                 QueryEntityHealthState = 6,
-                LAST_STATE = QueryEntityHealthState,
+                QueryEntityUnhealthyChildren = 7,
+                LAST_STATE = QueryEntityUnhealthyChildren,
             };
 
             void WriteToTextWriter(__in Common::TextWriter & w, Enum e);

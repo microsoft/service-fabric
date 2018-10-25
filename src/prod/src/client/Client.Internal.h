@@ -55,6 +55,8 @@
 #include "client/RestartPartitionProgressResult.h"
 #include "client/NodeTransitionProgressResult.h"
 #include "client/ChaosReportResult.h"
+#include "client/ChaosEventsSegmentResult.h"
+#include "client/CallSystemServiceResult.h"
 #include "client/ClientHealthReporting.h"
 #include "client/ResolvedServicePartitionCacheEntry.h"
 #include "client/LruClientCacheCallback.h"
@@ -66,6 +68,8 @@
 #include "client/ServiceAddressTracker.h"
 #include "client/ServiceAddressTrackerManager.h"
 #include "client/ClientEventSource.h"
+#include "client/ChaosDescriptionResult.h"
+#include "client/ChaosScheduleDescriptionResult.h"
 
 //
 // Service Notifications
@@ -98,6 +102,7 @@
 #include "client/ServiceAddressTrackerManager.h"
 #include "client/LruClientCacheManager.h"
 #include "client/LruClientCacheManager.CacheAsyncOperationBase.h"
+#include "client/LruClientCacheManager.GetPsdAsyncOperation.h"
 #include "client/LruClientCacheManager.ResolveServiceAsyncOperation.h"
 #include "client/LruClientCacheManager.UpdateCacheEntryAsyncOperation.h"
 #include "client/LruClientCacheManager.ParallelUpdateCacheEntriesAsyncOperation.h"
@@ -121,5 +126,4 @@
 #include "client/FabricClientImpl.GetServiceDescriptionAsyncOperation.h"
 #include "client/FabricClientImpl.DeleteServiceAsyncOperation.h"
 #include "client/FabricClientImpl.LocationChangeNotificationAsyncOperation.h"
-#include "client/FabricClientImpl.Test_TestNamespaceManagerAsyncOperation.h"
 #include "client/FabricClientImpl.CreateContainerAppAsyncOperation.h"

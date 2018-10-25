@@ -97,7 +97,8 @@ namespace DNS
         virtual void CloseAsync() = 0;
 
         virtual void CreateUdpListener(
-            __out IUdpListener::SPtr& spListener
+            __out IUdpListener::SPtr& spListener,
+            __in bool fEnableSocketAddressReuse
         ) = 0;
 
 #if defined(PLATFORM_UNIX)

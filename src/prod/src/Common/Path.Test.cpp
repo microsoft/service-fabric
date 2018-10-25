@@ -18,6 +18,79 @@ namespace Common
 
     BOOST_FIXTURE_TEST_SUITE(TestPathsSuite,TestPaths)
 
+    BOOST_AUTO_TEST_CASE(TestEscapedCombinePath)
+    {
+#if !defined(PLATFORM_UNIX)
+        std::wstring path1 = L"c:\\Some directory location here\\logDir";
+        std::wstring path2 = L"MyFileName.pid";
+
+        std::wstring combinedPath = Path::Combine(path1, path2, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"\"c:\\Some directory location here\\logDir\\MyFileName.pid\"");
+
+        combinedPath = Path::Combine(path1, path2, false /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"c:\\Some directory location here\\logDir\\MyFileName.pid");
+
+        std::string path1MultiByte = "c:\\Some directory location here\\logDir";
+        std::string path2MultiByte = "MyFileName.pid";
+
+        std::string combinedPathMultiByte = Path::Combine(path1MultiByte, path2MultiByte, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPathMultiByte == "\"c:\\Some directory location here\\logDir\\MyFileName.pid\"");
+
+        combinedPathMultiByte = Path::Combine(path1MultiByte, path2MultiByte, false /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPathMultiByte == "c:\\Some directory location here\\logDir\\MyFileName.pid");
+
+        path1 = L"";
+        path2 = L"c:\\Some directory location here\\logDir";
+        combinedPath = Path::Combine(path1, path2, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"\"c:\\Some directory location here\\logDir\"");
+
+        path1 = L"c:\\Some directory location here\\logDir";
+        path2 = L"";
+        combinedPath = Path::Combine(path1, path2, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"\"c:\\Some directory location here\\logDir\"");
+
+        path1 = L"";
+        path2 = L"";
+        combinedPath = Path::Combine(path1, path2, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"");
+#else
+
+        std::wstring path1 = L"//Some_directory_location_here//logDir";
+        std::wstring path2 = L"MyFileName.pid";
+
+        std::wstring combinedPath = Path::Combine(path1, path2, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"\"//Some_directory_location_here//logDir/MyFileName.pid\"");
+
+        combinedPath = Path::Combine(path1, path2, false /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"//Some_directory_location_here//logDir/MyFileName.pid");
+
+        std::string path1MultiByte = "//Some_directory_location_here//logDir";
+        std::string path2MultiByte = "MyFileName.pid";
+
+        std::string combinedPathMultiByte = Path::Combine(path1MultiByte, path2MultiByte, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPathMultiByte == "\"//Some_directory_location_here//logDir/MyFileName.pid\"");
+
+        combinedPathMultiByte = Path::Combine(path1MultiByte, path2MultiByte, false /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPathMultiByte == "//Some_directory_location_here//logDir/MyFileName.pid");
+
+        path1 = L"";
+        path2 = L"//Some_directory_location_here//logDir";
+        combinedPath = Path::Combine(path1, path2, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"\"//Some_directory_location_here//logDir\"");
+
+        path1 = L"//Some_directory_location_here//logDir";
+        path2 = L"";
+        combinedPath = Path::Combine(path1, path2, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"\"//Some_directory_location_here//logDir\"");
+
+        path1 = L"";
+        path2 = L"";
+        combinedPath = Path::Combine(path1, path2, true /*escapePath*/);
+        VERIFY_IS_TRUE(combinedPath == L"");
+
+#endif
+    }
+
     BOOST_AUTO_TEST_CASE(ChangeExtensionTest)
     {
         std::wstring path;

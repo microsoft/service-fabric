@@ -9,12 +9,18 @@ using namespace std;
 using namespace Common;
 using namespace Hosting2;
 
+
+
 GlobalWString Constants::AdhocApplicationTypeName = make_global<wstring>(L"AdhocApplicationType");
 GlobalWString Constants::AdhocApplicationId = make_global<wstring>(L"");
+GlobalWString Constants::DockerProcessIdFileDirectory = make_global<wstring>(L"_sf_docker_pid");
+GlobalWString Constants::DockerProcessFile = make_global<wstring>(L"sfdocker.pid");
+GlobalWString Constants::DockerLogDirectory = make_global<wstring>(L"_sf_docker_logs");
 GlobalWString Constants::SharedApplicationFolderName = make_global<wstring>(L"shared");
 GlobalWString Constants::SecurityPrincipalIdentifier = make_global<wstring>(L"WinFabPrincipal");
 GlobalWString Constants::ImplicitTypeHostName = make_global<wstring>(L"FabricTypeHost.exe");
 GlobalWString Constants::ImplicitTypeHostCodePackageName = make_global<wstring>(L"FabricTypeHost-DF95B56E-29EE-4418-B124-061740D7282C");
+GlobalWString Constants::BlockStoreServiceCodePackageName = make_global<wstring>(L"BlockstoreServiceHost-DF95B56E-29EE-4418-B124-061740D7282C");
 GlobalWString Constants::EndpointConfiguration_FilteringEngineProviderName = make_global<wstring>(L"fabric_filter_provider");
 GlobalWString Constants::EndpointConfiguration_FilteringEngineBlockAllFilterName = make_global<wstring>(L"fabric_filter_blockall");
 GlobalWString Constants::EndpointConfiguration_FilteringEnginePortFilterName = make_global<wstring>(L"fabric_filter_allowed_port");
@@ -23,9 +29,11 @@ GlobalWString Constants::SharedFolderName = make_global<wstring>(L"__shared");
 GlobalWString Constants::DebugProcessIdParameter = make_global<wstring>(L"[ProcessId]");
 GlobalWString Constants::DebugThreadIdParameter = make_global<wstring>(L"[ThreadId]");
 GlobalWString Constants::ContainerNetworkName = make_global<wstring>(L"servicefabric_network");
+
+
 //used for hosts that should be members of windows fabric administrator group
 GlobalWString Constants::WindowsFabricAdministratorsGroupAllowedUser = make_global<wstring>(L"WindowsFabricAdministratorsGroupAllowedUser_4294967295");
-
+GlobalWString Constants::DockerTempDirName = make_global<wstring>(L"_sf_docker_temp");
 GlobalWString Constants::EnvironmentVariable::RuntimeConnectionAddress = make_global<wstring>(L"Fabric_RuntimeConnectionAddress");
 GlobalWString Constants::EnvironmentVariable::RuntimeSslConnectionAddress = make_global<wstring>(L"Fabric_RuntimeSslConnectionAddress");
 GlobalWString Constants::EnvironmentVariable::RuntimeSslConnectionCertKey= make_global<wstring>(L"Fabric_RuntimeSslConnectionCertKey");
@@ -40,7 +48,15 @@ GlobalWString Constants::EnvironmentVariable::EndpointIPAddressOrFQDNPrefix = ma
 GlobalWString Constants::EnvironmentVariable::FoldersPrefix = make_global<wstring>(L"Fabric_Folder_");
 GlobalWString Constants::EnvironmentVariable::ContainerName = make_global<wstring>(L"Fabric_ContainerName");
 GlobalWString Constants::EnvironmentVariable::ServiceName = make_global<wstring>(L"Fabric_ServiceName");
-
+GlobalWString Constants::EnvironmentVariable::PartitionId = make_global<wstring>(L"Fabric_PartitionId");
+GlobalWString Constants::EnvironmentVariable::TempDir = make_global<wstring>(L"TMP");
+GlobalWString Constants::EnvironmentVariable::DockerTempDir = make_global<wstring>(L"DOCKER_TMPDIR");
+GlobalWString Constants::WellKnownValueDelimiter = make_global<wstring>(L"@");
+GlobalWString Constants::WellKnownPartitionIdFormat = make_global<wstring>(L"@PartitionId@");
+GlobalWString Constants::EnvironmentVariable::OnPrimaryEventName = make_global<wstring>(L"Fabric_ActivateEventName");
+GlobalWString Constants::EnvironmentVariable::OnSecondaryEventName = make_global<wstring>(L"Fabric_DeactivateEventName");
+GlobalWString Constants::EnvironmentVariable::OnActivationCompletedEventName = make_global<wstring>(L"Fabric_ActivationCompletedEventName");
+GlobalWString Constants::EnvironmentVariable::OnDeactivationCompletedEventName = make_global<wstring>(L"Fabric_DeactivatingCompletedEventName");
 
 StringLiteral Constants::FabricUpgrade::MSIExecCommand = "msiexec /i \"{0}\" /l*v \"{1}\" /q IACCEPTEULA=Yes";
 StringLiteral Constants::FabricUpgrade::DISMExecCommand = "DISM.exe /Online /Add-Package /PackagePath:\"{0}\"  /Quiet /LogPath:\"{1}\"";
@@ -48,7 +64,7 @@ StringLiteral Constants::FabricUpgrade::DISMExecUnInstallCommand = "DISM.exe /On
 
 GlobalWString Constants::FabricUpgrade::StartFabricHostServiceCommand = make_global<wstring>(L"net start FabricHostSvc");
 GlobalWString Constants::FabricUpgrade::StopFabricHostServiceCommand = make_global<wstring>(L"net stop FabricHostSvc");
-StringLiteral Constants::FabricUpgrade::TargetInformationXmlContent = 
+StringLiteral Constants::FabricUpgrade::TargetInformationXmlContent =
     "<?xml version=\"1.0\" ?>\n"
     "<TargetInformation xmlns=\"http://schemas.microsoft.com/2011/01/fabric\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n{0}\n{1}\n</TargetInformation>";
 StringLiteral Constants::FabricUpgrade::CurrentInstallationElement = "<CurrentInstallation InstanceId=\"{0}\" TargetVersion=\"{1}\" ClusterManifestLocation=\"{2}\" MSILocation=\"{3}\" NodeName=\"{4}\"/>";
@@ -67,7 +83,7 @@ int const Constants::FabricUpgrade::FabricUpgradeFailureCountResetPeriodInDays =
 StringLiteral Constants::FabricUpgrade::ErrorMessageFormat = "{0}, ErrorCode:{1}";
 GlobalWString Constants::FabricUpgrade::LinuxPackageInstallerScriptFileName = make_global<wstring>(L"startservicefabricupdater.sh");
 
-#if defined(PLATFORM_UNIX)   
+#if defined(PLATFORM_UNIX)
 GlobalWString Constants::FabricDeployer::ExeName = make_global<wstring>(L"FabricDeployer.sh");
 
 // TODO: figure out why passing in quotes in the arg is causing failure in Linux. We need to support spaces in paths
@@ -78,14 +94,20 @@ StringLiteral Constants::FabricDeployer::ValidateAndAnalyzeArguments = "/operati
 const DWORD Constants::FabricDeployer::ExitCode_RestartRequired = 256;
 const DWORD Constants::FabricDeployer::ExitCode_RestartNotRequired = 512;
 #else
+
+#if !DotNetCoreClrIOT
 GlobalWString Constants::FabricDeployer::ExeName = make_global<wstring>(L"FabricDeployer.exe");
+#else
+GlobalWString Constants::FabricDeployer::ExeName = make_global<wstring>(L"FabricDeployer.bat");
+#endif
+
 StringLiteral Constants::FabricDeployer::ConfigUpgradeArguments = "/operation:Update /cm:\"{0}\" /targetVersion:{1} /instanceId:{2} /nodeName:{3} /error:\"{4}\"";
 StringLiteral Constants::FabricDeployer::InstanceIdOnlyUpgradeArguments = "/operation:UpdateInstanceId /targetVersion:{0} /instanceId:{1} /nodeName:{2} /error:\"{3}\"";
 StringLiteral Constants::FabricDeployer::ValidateAndAnalyzeArguments = "/operation:Validate /cm:\"{0}\" /nodeName:{1} /nodeTypeName:\"{2}\" /output:\"{3}\" /error:\"{4}\"";
 
 const DWORD Constants::FabricDeployer::ExitCode_RestartRequired = 1;
 const DWORD Constants::FabricDeployer::ExitCode_RestartNotRequired = 2;
-#endif 
+#endif
 
 
 GlobalWString Constants::FabricSetup::ExeName = make_global<wstring>(L"FabricSetup.exe");
@@ -101,12 +123,18 @@ TimeSpan const Constants::FabricSetup::TimeoutInterval = TimeSpan::FromMinutes(5
 //
 wstring const Constants::ContainerLabels::ApplicationNameLabelKeyName = L"ApplicationName";
 wstring const Constants::ContainerLabels::ApplicationIdLabelKeyName = L"ApplicationId";
+wstring const Constants::ContainerLabels::DigestedApplicationNameLabelKeyName = L"DigestedApplicationName";
 wstring const Constants::ContainerLabels::ServiceNameLabelKeyName = L"ServiceName";
+wstring const Constants::ContainerLabels::SimpleApplicationNameLabelKeyName = L"SimpleApplicationName";
 wstring const Constants::ContainerLabels::CodePackageNameLabelKeyName = L"CodePackageName";
+wstring const Constants::ContainerLabels::CodePackageInstanceLabelKeyName = L"CodePackageInstance";
+wstring const Constants::ContainerLabels::PartitionIdLabelKeyName = L"PartitionId";
 wstring const Constants::ContainerLabels::ServicePackageActivationIdLabelKeyName = L"ServicePackageActivationId";
 wstring const Constants::ContainerLabels::PlatformLabelKeyName = L"Platform";
 wstring const Constants::ContainerLabels::PlatformLabelKeyValue = L"ServiceFabric";
-wstring const Constants::ContainerLabels::QueryFilterLabelKeyName = L"ServiceName_CodePackageName_PartitionId";
+wstring const Constants::ContainerLabels::LogBasePathKeyName = L"LogRootPath";
+wstring const Constants::ContainerLabels::SrppQueryFilterLabelKeyName = L"ServiceName_CodePackageName_PartitionId";
+wstring const Constants::ContainerLabels::MrppQueryFilterLabelKeyName = L"ServiceName_CodePackageName_ApplicationId";
 
 // In filtering engine we add block all filter with weight = 1, all the other filters which enable the port allocation have higher weight
 // This enables a service to open only specific ports.
@@ -125,7 +153,14 @@ wstring const Constants::ConfigSectionName = L"FabricActivatorService";
 wstring const Constants::PrivateObjectNamespaceAlias = L"WindowsFabricObjectPrivateNamespace-{0FC73FB6-F925-4340-A1C1-4425BCB56B31}";
 
 wstring const Constants::FabricContainerActivatorServiceName = L"FabricContainerActivatorService";
+
+#if defined(PLATFORM_UNIX)
+wstring const Constants::FabricContainerActivatorServiceExeName = L"FabricCAS.sh";
+#elif DotNetCoreClrIOT
+wstring const Constants::FabricContainerActivatorServiceExeName = L"FabricCAS.bat";
+#else
 wstring const Constants::FabricContainerActivatorServiceExeName = L"FabricCAS.exe";
+#endif
 
 wstring const Constants::WorkingDirectory = L"WorkingDirectory";
 
@@ -146,6 +181,12 @@ wstring const Constants::HostedServiceSSLCertStoreName = L"ServerAuthX509StoreNa
 wstring const Constants::HostedServiceSSLCertFindType = L"ServerAuthX509FindType";
 wstring const Constants::HostedServiceSSLCertFindValue = L"ServerAuthX509FindValue";
 
+wstring const Constants::HostedServiceRgPolicies = L"NodeSfssRgPolicies";
+wstring const Constants::HostedServiceCpusetCpus = L"ProcessCpusetCpus";
+wstring const Constants::HostedServiceCpuShares = L"ProcessCpuShares";
+wstring const Constants::HostedServiceMemoryInMB = L"ProcessMemoryInMB";
+wstring const Constants::HostedServiceMemorySwapInMB = L"ProcessMemorySwapInMB";
+
 wstring const Constants::FabricActivatorAddressEnvVariable = L"FabricActivatorAddress";
 
 int const Constants::RestartManager::NodePollingIntervalForRepairTaskInSeconds = 10;
@@ -153,7 +194,7 @@ int const Constants::RestartManager::NodePollingIntervalForRepairTaskInSeconds =
 // 600 seconds
 // There is no foolproof way to predict a good timeout value here
 // as it depends on the density of apps being hosted and how long they
-// take to release all the allocations in ktl after all pending IO's 
+// take to release all the allocations in ktl after all pending IO's
 // that are completed
 ULONG const Constants::Ktl::AbortTimeoutMilliseconds = 600000;
 
@@ -172,21 +213,16 @@ const int32 Constants::CgroupsCpuPeriod = 100000;
 
 string const Constants::DockerInfo = "/v1.24/info";
 string const Constants::Containers = "/containers";
-StringLiteral Constants::ContainersLogs = "/containers/{0}/logs?stderr=1&stdout=1&timestamps=0&tail={1}";
 string const Constants::VolumesCreate = "/volumes/create";
 string const Constants::ContainersCreate = "/containers/create";
 string const Constants::ContainersStart = "/start";
 StringLiteral Constants::ContainersStop = "/containers/{0}/stop?t={1}";
 StringLiteral Constants::ContainersForceRemove = "/containers/{0}?force=1";
-GlobalString const Constants::ContentTypeJson = make_global<string>("application/json");
-string const Constants::DefaultContainerLogsTail = "100";
-
 #else
 // When using job objects, 10000 represents all available cores.
 const int32 Constants::JobObjectCpuCyclesNumber = 10000;
 
 wstring const Constants::DockerInfo = L"{0}/v1.24/info";
-wstring const Constants::ContainersLogsUriPath = L"containers/{0}/logs?stderr=1&stdout=1&timestamps=0&tail={1}";
 wstring const Constants::EventsSince = L"{0}/events?since={1}&filters={2}";
 wstring const Constants::EventsSinceUntil = L"{0}/events?since={1}&until={2}&filters={3}";
 wstring const Constants::EventsFilter = L"{\"type\":[\"container\"],\"event\":[\"die\",\"stop\"]}";
@@ -200,6 +236,24 @@ wstring const Constants::ContainersForceRemove = L"{0}/containers/{1}?force=1";
 wstring const Constants::VolumesCreate = L"{0}/volumes/create";
 wstring const Constants::NetworkNatConnect = L"{0}/networks/nat/connect";
 wstring const Constants::ExecStart = L"{0}/exec/{1}/start";
-GlobalWString const Constants::ContentTypeJson = make_global<wstring>(L"application/json");
-wstring const Constants::DefaultContainerLogsTail = L"100";
 #endif
+
+wstring const Constants::ContainersLogsUriPath = L"containers/{0}/logs?stderr=1&stdout=1&timestamps=0&tail={1}";
+string const Constants::ContentTypeJson = "application/json";
+wstring const Constants::DefaultContainerLogsTail = L"100";
+wstring const Constants::ContainerLogDriverOptionLogBasePathKey = L"logRoot";
+
+GlobalWString Constants::HttpGetVerb = make_global<wstring>(L"GET");
+GlobalWString Constants::HttpPostVerb = make_global<wstring>(L"POST");
+GlobalWString Constants::HttpPutVerb = make_global<wstring>(L"PUT");
+GlobalWString Constants::HttpDeleteVerb = make_global<wstring>(L"DELETE");
+GlobalWString Constants::HttpHeadVerb = make_global<wstring>(L"HEAD");
+GlobalWString Constants::HttpOptionsVerb = make_global<wstring>(L"OPTIONS");
+GlobalWString Constants::HttpTraceVerb = make_global<wstring>(L"TRACE");
+GlobalWString Constants::HttpConnectVerb = make_global<wstring>(L"CONNECT");
+
+GlobalWString Constants::HttpContentTypeJson = make_global<wstring>(L"application/json");
+GlobalWString Constants::SecretsStoreRef = make_global<wstring>(L"SecretsStoreRef");
+GlobalWString Constants::Encrypted = make_global<wstring>(L"Encrypted");
+
+GlobalWString Constants::FileStoreServiceUserGroup = make_global<wstring>(L"FSSGroupffffffff");

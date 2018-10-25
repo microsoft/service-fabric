@@ -17,7 +17,11 @@ namespace Hosting2
     class ApplicationHost;
     typedef std::shared_ptr<ApplicationHost> ApplicationHostSPtr;
 
+    class InProcessApplicationHost;
+    typedef std::shared_ptr<InProcessApplicationHost> InProcessApplicationHostSPtr;
+
     class ComFabricRuntime;
+    class ComGuestServiceCodePackageActivationManager;
     
     class FabricRuntimeContext;
     typedef std::unique_ptr<FabricRuntimeContext> FabricRuntimeContextUPtr;

@@ -59,7 +59,7 @@ namespace Management
 
             void OnFailRolloutContext() override { /* no-op */ }
 
-            void AddPendingDefaultService(Common::NamingUri const &);
+            void AddPendingDefaultService(ServiceModelServiceNameEx &&);
             void ClearPendingDefaultServices();
 
             __declspec(property(get=get_ComposeDeploymentStatus, put=set_ComposeDeploymentStatus)) ServiceModel::ComposeDeploymentStatus::Enum ComposeDeploymentStatus;
@@ -81,9 +81,12 @@ namespace Management
             bool get_IsUpgrading() const { return composeDeploymentStatus_ == ServiceModel::ComposeDeploymentStatus::Upgrading; }
             ServiceModel::ComposeDeploymentStatusQueryResult ToQueryResult() const;
 
+            __declspec(property(get = get_PendingDefaultServices)) std::vector<ServiceModelServiceNameEx> const & PendingDefaultServices;
+            std::vector<ServiceModelServiceNameEx> const & get_PendingDefaultServices() const { return pendingDefaultServices_; }
+
             virtual std::wstring const & get_Type() const override;
             virtual void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const override;
-
+            
             //
             // Helper methods to update the ComposeContext state as well as the 
             // rollout manager specific state during create/delete.
@@ -125,7 +128,7 @@ namespace Management
             ServiceModelVersion appTypeVersion_;
 
             Common::ExclusiveLock pendingDefaultServicesLock_;
-            std::vector<ServiceModelServiceName> pendingDefaultServices_;
+            std::vector<ServiceModelServiceNameEx> pendingDefaultServices_;
 
             ServiceModel::ComposeDeploymentStatus::Enum composeDeploymentStatus_;
 

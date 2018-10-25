@@ -10,8 +10,8 @@ using namespace std;
 using namespace Common;
 using namespace Reliability::LoadBalancingComponent;
 
-AccumulatorWithMinMax::AccumulatorWithMinMax()
-    : Accumulator(),
+AccumulatorWithMinMax::AccumulatorWithMinMax(bool usePercentages)
+    : Accumulator(usePercentages),
     min_(0),
     minValid_(false),
     max_(0),
@@ -24,23 +24,6 @@ AccumulatorWithMinMax::AccumulatorWithMinMax()
     nonBeneficialMin_(0),
     nonBeneficialMax_(0),
     nonBeneficialCount_(0)
-{
-}
-
-AccumulatorWithMinMax::AccumulatorWithMinMax(AccumulatorWithMinMax const& other)
-    : Accumulator(other),
-    min_(other.min_),
-    minValid_(other.minValid_),
-    max_(other.max_),
-    maxValid_(other.maxValid_),
-    minNode_(other.minNode_),
-    maxNode_(other.maxNode_),
-    emptyNodeCount_(other.emptyNodeCount_),
-    nonEmptyNodeCount_(other.nonEmptyNodeCount_),
-    nonEmptyNodeLoad_(other.nonEmptyNodeLoad_),
-    nonBeneficialMin_(other.nonBeneficialMin_),
-    nonBeneficialMax_(other.nonBeneficialMax_),
-    nonBeneficialCount_(other.nonBeneficialCount_)
 {
 }
 
@@ -65,29 +48,7 @@ void AccumulatorWithMinMax::Clear()
     nonBeneficialCount_ = 0;
 }
 
-AccumulatorWithMinMax & AccumulatorWithMinMax::operator= (AccumulatorWithMinMax const & other)
-{
-    if (this != &other)
-    {
-        Accumulator::operator=(other);
-        min_ = other.min_;
-        minValid_ = other.minValid_;
-        max_ = other.max_;
-        maxValid_ = other.maxValid_;
-        minNode_ = other.minNode_;
-        maxNode_ = other.maxNode_;
-        emptyNodeCount_ = other.emptyNodeCount_;
-        nonEmptyNodeCount_ = other.nonEmptyNodeCount_;
-        nonEmptyNodeLoad_ = other.nonEmptyNodeLoad_;
-        nonBeneficialMin_ = other.nonBeneficialMin_;
-        nonBeneficialMax_ = other.nonBeneficialMax_;
-        nonBeneficialCount_ = other.nonBeneficialCount_;
-    }
-
-    return *this;
-}
-
-void AccumulatorWithMinMax::AddOneValue(int64 value, Federation::NodeId const & nodeId)
+void AccumulatorWithMinMax::AddOneValue(int64 value, int64 capacity, Federation::NodeId const & nodeId)
 {
     if (IsEmpty)
     {
@@ -113,10 +74,10 @@ void AccumulatorWithMinMax::AddOneValue(int64 value, Federation::NodeId const & 
         }
     }
 
-    Accumulator::AddOneValue(value);
+    Accumulator::AddOneValue(value, capacity);
 }
 
-void AccumulatorWithMinMax::AdjustOneValue(int64 oldValue, int64 newValue, Federation::NodeId const & nodeId)
+void AccumulatorWithMinMax::AdjustOneValue(int64 oldValue, int64 newValue, int64 capacity, Federation::NodeId const & nodeId)
 {
     ASSERT_IF(maxValid_ && oldValue > max_, "Error: old value {0}, max {1}", oldValue, max_);
     ASSERT_IF(minValid_ && oldValue < min_, "Error: old value {0}, min {1}", oldValue, min_);
@@ -152,7 +113,7 @@ void AccumulatorWithMinMax::AdjustOneValue(int64 oldValue, int64 newValue, Feder
         }
     }
 
-    Accumulator::AdjustOneValue(oldValue, newValue);
+    Accumulator::AdjustOneValue(oldValue, newValue, capacity);
 }
 
 int64 AccumulatorWithMinMax::get_Min() const

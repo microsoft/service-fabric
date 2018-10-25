@@ -13,23 +13,31 @@ using namespace Reliability::LoadBalancingComponent;
 GlobalWString const Node::FormatHeader = make_global<wstring>(L"NodeId NodeName");
 
 Node::Node(NodeDescription && nodeDescription)
-    : nodeDescription_(move(nodeDescription))
+    : nodeDescription_(move(nodeDescription)),
+    nodeImages_()
 {
 }
 
 Node::Node(Node const& other)
-    : nodeDescription_(other.NodeDescriptionObj)
+    : nodeDescription_(other.NodeDescriptionObj),
+    nodeImages_(other.nodeImages_)
 {
 }
 
 Node::Node(Node && other)
-    : nodeDescription_(move(other.nodeDescription_))
+    : nodeDescription_(move(other.nodeDescription_)),
+    nodeImages_(move(other.nodeImages_))
 {
 }
 
 void Node::UpdateDescription(NodeDescription && description)
 {
     nodeDescription_ = move(description);
+}
+
+void Node::UpdateNodeImages(std::vector<std::wstring>&& images)
+{
+    nodeImages_ = move(images);
 }
 
 void Node::WriteTo(TextWriter& writer, FormatOptions const&) const

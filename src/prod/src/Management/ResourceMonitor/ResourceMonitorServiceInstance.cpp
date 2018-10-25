@@ -172,15 +172,15 @@ ResourceMonitorServiceInstance::ResourceMonitorServiceInstance(
     wstring const & serviceTypeName,
     Guid const & partitionId,
     FABRIC_INSTANCE_ID instanceId,
-    IFabricRuntime * & pRuntime)
+    Common::ComPointer<IFabricRuntime> const & fabricRuntimeCPtr)
     : IFabricStatelessServiceInstance()
      , ComUnknownBase()
      , serviceName_(serviceName)
      , serviceTypeName_(serviceTypeName)
      , partitionId_(partitionId)
      , instanceId_(instanceId)
+     , fabricRuntimeCPtr_(fabricRuntimeCPtr)
 {
-    resourceMonitorAgent_ = make_shared<ResourceMonitoringAgent>(pRuntime);
 }
 
 ResourceMonitorServiceInstance::~ResourceMonitorServiceInstance()
@@ -193,6 +193,25 @@ HRESULT ResourceMonitorServiceInstance::BeginOpen(
     /* [retval][out] */ IFabricAsyncOperationContext **context)
 {
     UNREFERENCED_PARAMETER(partition);
+
+    Hosting2::ComFabricRuntime * castedRuntimePtr;
+    try
+    {
+#if !defined(PLATFORM_UNIX)
+        castedRuntimePtr = dynamic_cast<Hosting2::ComFabricRuntime*>(fabricRuntimeCPtr_.GetRawPointer());
+#else
+        castedRuntimePtr = (Hosting2::ComFabricRuntime*)(fabricRuntimeCPtr_.GetRawPointer());
+#endif
+    }
+    catch (...)
+    {
+        Assert::TestAssert("ResourceMonitorService unable to get ComFabricRuntime");
+        return ComUtility::OnPublicApiReturn(ErrorCode(ErrorCodeValue::OperationFailed).ToHResult());
+    }
+
+    Transport::IpcClient & ipcClient = castedRuntimePtr->Runtime->Host.Client;
+
+    resourceMonitorAgent_ = make_shared<ResourceMonitoringAgent>(castedRuntimePtr, ipcClient);
 
     // Start opening the ResourceMonitoringAgent
     resourceMonitorAgent_->WriteNoise(TraceComponent, "ResourceMonitorServiceInstance BeginOpen called.");

@@ -21,16 +21,14 @@ namespace TxnReplicator
         __declspec(property(get = get_IsReadable)) bool IsReadable;
         virtual bool get_IsReadable() const = 0;
 
-        __declspec(property(get = get_StatefulPartition)) KWfStatefulServicePartition::SPtr StatefulPartition;
-        virtual KWfStatefulServicePartition::SPtr get_StatefulPartition() const = 0;
+        __declspec(property(get = get_StatefulPartition)) Data::Utilities::IStatefulPartition::SPtr StatefulPartition;
+        virtual Data::Utilities::IStatefulPartition::SPtr get_StatefulPartition() const = 0;
 
         virtual NTSTATUS GetLastStableSequenceNumber(__out LONG64 & lsn) noexcept = 0;
 
         virtual NTSTATUS GetLastCommittedSequenceNumber(__out LONG64 & lsn) noexcept = 0;
 
         virtual NTSTATUS GetCurrentEpoch(__out FABRIC_EPOCH & epoch) noexcept = 0;
-
-        virtual NTSTATUS Test_RequestCheckpointAfterNextTransaction() noexcept = 0;
 
         virtual NTSTATUS RegisterTransactionChangeHandler(
             __in ITransactionChangeHandler & transactionChangeHandler) noexcept = 0;
@@ -62,6 +60,12 @@ namespace TxnReplicator
             __in Common::TimeSpan const & timeout,
             __in ktl::CancellationToken const & cancellationToken) noexcept = 0;
 
+    public: // Test Support
+        virtual NTSTATUS Test_RequestCheckpointAfterNextTransaction() noexcept
+        {
+            CODING_ASSERT("Test_RequestCheckpointAfterNextTransaction not implemented");
+        }
+
         virtual void Test_SetTestHookContext(TestHooks::TestHookContext const &)
         {
             CODING_ASSERT("Test_SetTestHookContext not implemented");
@@ -70,6 +74,15 @@ namespace TxnReplicator
         virtual TestHooks::TestHookContext const & Test_GetTestHookContext()
         {
             CODING_ASSERT("Test_GetTestHookContext not implemented");
+        }
+
+        virtual NTSTATUS Test_GetPeriodicCheckpointAndTruncationTimestampTicks(
+            __out LONG64 & lastPeriodicCheckpointTimeTicks,
+            __out LONG64 & lastPeriodicTruncationTimeTicks) noexcept
+        {
+            UNREFERENCED_PARAMETER(lastPeriodicCheckpointTimeTicks);
+            UNREFERENCED_PARAMETER(lastPeriodicTruncationTimeTicks);
+            CODING_ASSERT("STATUS_NOT_IMPLEMENTED");
         }
     };
 }

@@ -61,7 +61,9 @@ ComPointer<IFabricServiceGroupManagementClient2> CreateFabricServiceGroupClient2
 
 ComPointer<IFabricApplicationManagementClient4> CreateFabricApplicationClient4(__in FabricTestFederation &);
 
-ComPointer<IInternalFabricServiceManagementClient> CreateInternalFabricServiceClient(__in FabricTestFederation &);
+ComPointer<IFabricQueryClient10> CreateFabricQueryClient10(__in FabricTestFederation &);
+
+ComPointer<IInternalFabricServiceManagementClient2> CreateInternalFabricServiceClient2(__in FabricTestFederation &);
 
 // Create latest version of API by default. The caller should QI to an older version of the API
 // if needed for the specific test.
@@ -594,6 +596,8 @@ bool TestFabricClient::CreateService(StringCollection const & params)
         return false;
     }
 
+    ScopedHeap heap;
+
     nameString = name.ToString();
 
     wstring type = params[1];
@@ -668,6 +672,14 @@ bool TestFabricClient::CreateService(StringCollection const & params)
     wstring placementConstraints;
     parser.TryGetString(L"constraint", placementConstraints, FabricTestDispatcher::DefaultPlacementConstraints);
     placementConstraints.erase(std::remove(placementConstraints.begin(), placementConstraints.end(), L'\\'), placementConstraints.end());
+
+    vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies;
+    wstring scalingPolicy;
+    parser.TryGetString(L"scalingPolicy", scalingPolicy, L"");
+    if (!scalingPolicy.empty() && !GetServiceScalingPolicy(scalingPolicy, scalingPolicies))
+    {
+        return false;
+    }
 
     bool overrideConstraints = parser.GetBool(L"xconstraint");
 
@@ -767,6 +779,9 @@ bool TestFabricClient::CreateService(StringCollection const & params)
 
     FABRIC_STATEFUL_SERVICE_DESCRIPTION_EX3 statefulEx3 = { FABRIC_SERVICE_PACKAGE_ACTIVATION_MODE_SHARED_PROCESS };
     FABRIC_STATELESS_SERVICE_DESCRIPTION_EX3 statelessEx3 = { FABRIC_SERVICE_PACKAGE_ACTIVATION_MODE_SHARED_PROCESS };
+
+    FABRIC_STATEFUL_SERVICE_DESCRIPTION_EX4 statefulEx4 = { 0 };
+    FABRIC_STATELESS_SERVICE_DESCRIPTION_EX4 statelessEx4 = { 0 };
 
     FABRIC_STATEFUL_SERVICE_FAILOVER_SETTINGS failoverSettings = {0};
     FABRIC_STATEFUL_SERVICE_FAILOVER_SETTINGS_EX1 failoverSettingsEx1 = {0};
@@ -913,6 +928,20 @@ bool TestFabricClient::CreateService(StringCollection const & params)
         statefulEx2.Reserved = &statefulEx3;
         statefulEx3.ServicePackageActivationMode = ServiceModel::ServicePackageActivationMode::ToPublicApi(activationMode);
         statefulEx3.ServiceDnsName = serviceDnsName.c_str();
+
+        statefulEx3.Reserved = &statefulEx4;
+        if (scalingPolicies.size() == 1)
+        {
+            statefulEx4.ScalingPolicyCount = 1;
+            auto nativeScalingPolicies = heap.AddArray<FABRIC_SERVICE_SCALING_POLICY>(1);
+            scalingPolicies[0].ToPublicApi(heap, nativeScalingPolicies[0]);
+            statefulEx4.ServiceScalingPolicies = nativeScalingPolicies.GetRawArray();
+        }
+        else
+        {
+            statefulEx4.ScalingPolicyCount = 0;
+            statefulEx4.ServiceScalingPolicies = NULL;
+        }
     }
     else
     {
@@ -942,6 +971,20 @@ bool TestFabricClient::CreateService(StringCollection const & params)
         statelessEx2.Reserved = &statelessEx3;
         statelessEx3.ServicePackageActivationMode = ServiceModel::ServicePackageActivationMode::ToPublicApi(activationMode);
         statelessEx3.ServiceDnsName = serviceDnsName.c_str();
+
+        statelessEx3.Reserved = &statelessEx4;
+        if (scalingPolicies.size() == 1)
+        {
+            statelessEx4.ScalingPolicyCount = 1;
+            auto nativeScalingPolicies = heap.AddArray<FABRIC_SERVICE_SCALING_POLICY>(1);
+            scalingPolicies[0].ToPublicApi(heap, nativeScalingPolicies[0]);
+            statelessEx4.ServiceScalingPolicies = nativeScalingPolicies.GetRawArray();
+        }
+        else
+        {
+            statelessEx4.ScalingPolicyCount = 0;
+            statelessEx4.ServiceScalingPolicies = NULL;
+        }
     }
 
     switch (partitionScheme)
@@ -1017,8 +1060,9 @@ bool TestFabricClient::UpdateService(StringCollection const & params)
     FABRIC_STATEFUL_SERVICE_UPDATE_DESCRIPTION_EX3 statefulUpdateDescriptionEx3 = {0};
     FABRIC_STATEFUL_SERVICE_UPDATE_DESCRIPTION_EX4 statefulUpdateDescriptionEx4 = {static_cast<FABRIC_MOVE_COST>(0), 0};
     FABRIC_STATELESS_SERVICE_UPDATE_DESCRIPTION statelessUpdateDescription = {0};
-    FABRIC_STATELESS_SERVICE_UPDATE_DESCRIPTION_EX1 statelessUpdateDescriptionEx1 = {0};
-    FABRIC_STATELESS_SERVICE_UPDATE_DESCRIPTION_EX2 statelessUpdateDescriptionEx2 = {static_cast<FABRIC_MOVE_COST>(0), 0 };
+    FABRIC_STATELESS_SERVICE_UPDATE_DESCRIPTION_EX1 statelessUpdateDescriptionEx1 = { 0 };
+    FABRIC_STATELESS_SERVICE_UPDATE_DESCRIPTION_EX2 statelessUpdateDescriptionEx2 = { static_cast<FABRIC_MOVE_COST>(0), 0  };
+    FABRIC_STATELESS_SERVICE_UPDATE_DESCRIPTION_EX3 statelessUpdateDescriptionEx3 = { FABRIC_SERVICE_PARTITION_KIND_INVALID, 0, 0, 0, 0 };
 
     vector<ServiceCorrelationDescription> serviceCorrelations;
     vector<FABRIC_SERVICE_CORRELATION_DESCRIPTION> serviceCorrelationDescriptions;
@@ -1045,6 +1089,8 @@ bool TestFabricClient::UpdateService(StringCollection const & params)
     vector<wstring> removedNames;
     parser.TryGetString(L"removednames", removedNamesString, L""); 
     StringUtility::Split(removedNamesString, removedNames, delimiter);
+
+    vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies;
 
     if (isStateful)
     {
@@ -1246,6 +1292,9 @@ bool TestFabricClient::UpdateService(StringCollection const & params)
 
         }
 
+        auto ex5 = heap.AddItem<FABRIC_STATEFUL_SERVICE_UPDATE_DESCRIPTION_EX5>();
+        statefulUpdateDescriptionEx4.Reserved = ex5.GetRawPointer();
+
         if (!addedNames.empty() || !removedNames.empty())
         {
             auto repartitionDescription = heap.AddItem<FABRIC_NAMED_REPARTITION_DESCRIPTION>();
@@ -1266,11 +1315,28 @@ bool TestFabricClient::UpdateService(StringCollection const & params)
             repartitionDescription->NamesToRemoveCount = static_cast<ULONG>(removedNames.size());
             repartitionDescription->NamesToRemove = removedNamesArray.GetRawArray();
 
-            auto ex5 = heap.AddItem<FABRIC_STATEFUL_SERVICE_UPDATE_DESCRIPTION_EX5>();
             ex5->RepartitionKind = FABRIC_SERVICE_PARTITION_KIND_NAMED;
             ex5->RepartitionDescription = repartitionDescription.GetRawPointer();
+        }
 
-            statefulUpdateDescriptionEx4.Reserved = ex5.GetRawPointer();
+        wstring scalingPolicy;
+        parser.TryGetString(L"scalingPolicy", scalingPolicy, L"");
+        if (!scalingPolicy.empty())
+        {
+            if (!GetServiceScalingPolicy(scalingPolicy, scalingPolicies))
+            {
+                return false;
+            }
+        }
+
+        if (scalingPolicies.size() == 1)
+        {
+            statefulUpdateDescription.Flags |= FABRIC_STATEFUL_SERVICE_SCALING_POLICY;
+            ex5->ScalingPolicyCount = 1;
+            auto nativeScalingPolicies = heap.AddArray<FABRIC_SERVICE_SCALING_POLICY>(1);
+            scalingPolicies[0].ToPublicApi(heap, nativeScalingPolicies[0]);
+            ex5->ServiceScalingPolicies = nativeScalingPolicies.GetRawArray();
+            serviceDescription.ScalingPolicies = scalingPolicies;
         }
     }
     else
@@ -1280,6 +1346,7 @@ bool TestFabricClient::UpdateService(StringCollection const & params)
         serviceUpdateDescription.Value = &statelessUpdateDescription;
         statelessUpdateDescription.Reserved = &statelessUpdateDescriptionEx1;
         statelessUpdateDescriptionEx1.Reserved = &statelessUpdateDescriptionEx2;
+        statelessUpdateDescriptionEx2.Reserved = &statelessUpdateDescriptionEx3;
 
         int instanceCount;
         if (parser.TryGetInt(L"InstanceCount", instanceCount, -1))
@@ -1440,7 +1507,7 @@ bool TestFabricClient::UpdateService(StringCollection const & params)
             auto repartitionDescription = heap.AddItem<FABRIC_NAMED_REPARTITION_DESCRIPTION>();
 
             auto addedNamesArray = heap.AddArray<LPCWSTR>(addedNames.size());
-            for (auto ix=0; ix<addedNames.size(); ++ix)
+            for (auto ix = 0; ix < addedNames.size(); ++ix)
             {
                 addedNamesArray[ix] = heap.AddString(addedNames[ix]);
             }
@@ -1448,18 +1515,35 @@ bool TestFabricClient::UpdateService(StringCollection const & params)
             repartitionDescription->NamesToAdd = addedNamesArray.GetRawArray();
 
             auto removedNamesArray = heap.AddArray<LPCWSTR>(removedNames.size());
-            for (auto ix=0; ix<removedNames.size(); ++ix)
+            for (auto ix = 0; ix < removedNames.size(); ++ix)
             {
                 removedNamesArray[ix] = heap.AddString(removedNames[ix]);
             }
             repartitionDescription->NamesToRemoveCount = static_cast<ULONG>(removedNames.size());
             repartitionDescription->NamesToRemove = removedNamesArray.GetRawArray();
 
-            auto ex3 = heap.AddItem<FABRIC_STATELESS_SERVICE_UPDATE_DESCRIPTION_EX3>();
-            ex3->RepartitionKind = FABRIC_SERVICE_PARTITION_KIND_NAMED;
-            ex3->RepartitionDescription = repartitionDescription.GetRawPointer();
+            statelessUpdateDescriptionEx3.RepartitionKind = FABRIC_SERVICE_PARTITION_KIND_NAMED;
+            statelessUpdateDescriptionEx3.RepartitionDescription = repartitionDescription.GetRawPointer();
+        }
 
-            statelessUpdateDescriptionEx2.Reserved = ex3.GetRawPointer();
+        wstring scalingPolicy;
+        parser.TryGetString(L"scalingPolicy", scalingPolicy, L"");
+        if (!scalingPolicy.empty())
+        {
+            if (!GetServiceScalingPolicy(scalingPolicy, scalingPolicies))
+            {
+                return false;
+            }
+        }
+
+        if (scalingPolicies.size() == 1)
+        {
+            statelessUpdateDescription.Flags |= FABRIC_STATELESS_SERVICE_SCALING_POLICY;
+            statelessUpdateDescriptionEx3.ScalingPolicyCount = 1;
+            auto nativeScalingPolicies = heap.AddArray<FABRIC_SERVICE_SCALING_POLICY>(1);
+            scalingPolicies[0].ToPublicApi(heap, nativeScalingPolicies[0]);
+            statelessUpdateDescriptionEx3.ServiceScalingPolicies = nativeScalingPolicies.GetRawArray();
+            serviceDescription.ScalingPolicies = scalingPolicies;
         }
     }
 
@@ -2199,7 +2283,7 @@ bool TestFabricClient::MovePrimaryReplicaFromClient(StringCollection const & par
 
     if (params.size() ==  3)
     {
-	wstring constraintsParam = StringUtility::ToWString(params[2]);
+    wstring constraintsParam = StringUtility::ToWString(params[2]);
         StringUtility::ToLower(constraintsParam);
 
         ignoreConstraints = !constraintsParam.compare(StringUtility::ToWString("force"));
@@ -2238,7 +2322,7 @@ void TestFabricClient::MovePrimaryReplicaFromClient(std::wstring const & nodeNam
 {
     Guid forTrace(partitionId);
     TestSession::WriteNoise(TraceSource, "Move primary called for Node = {0}. Partition = {1}.", nodeName, forTrace);
-    auto serviceManagementClient = CreateInternalFabricServiceClient(FABRICSESSION.FabricDispatcher.Federation);
+    auto serviceManagementClient = CreateInternalFabricServiceClient2(FABRICSESSION.FabricDispatcher.Federation);
     this->PerformFabricClientOperation(
         L"MovePrimary",
         FabricTestSessionConfig::GetConfig().NamingOperationTimeout,
@@ -2307,7 +2391,7 @@ bool TestFabricClient::MoveSecondaryReplicaFromClient(StringCollection const & p
 
     if (params.size() ==  4)
     {
-	    wstring constraintsParam = StringUtility::ToWString(params[3]);
+        wstring constraintsParam = StringUtility::ToWString(params[3]);
         StringUtility::ToLower(constraintsParam);
 
         ignoreConstraints = !constraintsParam.compare(StringUtility::ToWString("force"));
@@ -2346,7 +2430,7 @@ void TestFabricClient::MoveSecondaryReplicaFromClient(std::wstring const & curre
 {
     Guid forTrace(partitionId);
     TestSession::WriteNoise(TraceSource, "Move secondary called from Node= {0} to Node= {1} for Partition= {2}.", currentNodeName, newNodeName, forTrace);
-    auto serviceManagementClient = CreateInternalFabricServiceClient(FABRICSESSION.FabricDispatcher.Federation);
+    auto serviceManagementClient = CreateInternalFabricServiceClient2(FABRICSESSION.FabricDispatcher.Federation);
     FABRICSESSION.FabricDispatcher.VerifyAll(true);
     this->PerformFabricClientOperation(
         L"MovePrimary",
@@ -2805,6 +2889,7 @@ bool TestFabricClient::DeployServicePackages(StringCollection const & params)
         FABRICSESSION.PrintHelp(FabricTestCommands::DeployServicePackageCommand);
         return false;
     }
+
     CommandLineParser parser(params);
     wstring applicationTypeName;
     wstring applicationTypeVersion;
@@ -2910,6 +2995,118 @@ bool TestFabricClient::DeployServicePackages(StringCollection const & params)
         expectedShared);
 
     return true;
+}
+
+bool TestFabricClient::VerifyDeployedCodePackageCount(StringCollection const & params)
+{
+    if (params.size() < 4 || params.size() > 5)
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::VerifyDeployedCodePackageCountCommand);
+        return false;
+    }
+
+    CommandLineParser parser(params);
+    ULONG expectedCount;
+    wstring nodeIdList;
+    wstring applicationName;
+    wstring serviceManifestName;
+    wstring servicePackageActivationId;
+
+    if (!parser.TryGetULONG(FabricTestConstants::ExpectedCount, expectedCount))
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::VerifyDeployedCodePackageCountCommand);
+        return false;
+    }
+    if (!parser.TryGetString(FabricTestConstants::NodeIdList, nodeIdList))
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::VerifyDeployedCodePackageCountCommand);
+        return false;
+    }
+    if (!parser.TryGetString(FabricTestConstants::ApplicationName, applicationName))
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::VerifyDeployedCodePackageCountCommand);
+        return false;
+    }
+
+    parser.TryGetString(FabricTestConstants::ServiceManifestName, serviceManifestName);
+
+    vector<wstring> nodeIds;
+    StringUtility::Split(nodeIdList, nodeIds, wstring(L","));
+
+    if (nodeIds.empty())
+    {
+        TestSession::FailTestIf(nodeIds.empty(), "VerifyDeployedCodePackageCount: No nodeIds specified.");
+    }
+
+    vector<wstring> nodeNames;
+    for (auto const & nodeId : nodeIds)
+    {
+        nodeNames.push_back(wformatString("nodeid:{0}", nodeId));
+    }
+
+    ULONG codePackageCount = 0;
+    for (auto const & nodeName : nodeNames)
+    {
+        auto count = VerifyDeployedCodePackageCount(nodeName, applicationName, serviceManifestName);
+
+        TestSession::WriteNoise(
+            TraceSource,
+            "VerifyDeployedCodePackageCount: NodeName={0}, ApplicationName={1}, ServiceManifestName={2}, CodePackageCount={3}",
+            nodeName,
+            applicationName,
+            serviceManifestName,
+            count);
+
+        codePackageCount += count;
+    }
+
+    TestSession::FailTestIfNot(
+        codePackageCount == expectedCount,
+        "VerifyDeployedCodePackageCount mismatch '{0}' != '{1}'.",
+        codePackageCount,
+        expectedCount);
+
+    return true;
+}
+
+ULONG TestFabricClient::VerifyDeployedCodePackageCount(
+    wstring const & nodeName,
+    wstring const & applicationName,
+    wstring const & serviceManifestName)
+{
+    auto appClient = CreateFabricQueryClient10(FABRICSESSION.FabricDispatcher.Federation);
+
+    vector<HRESULT> retryableErrors;
+    retryableErrors.push_back(S_OK);
+
+    FABRIC_DEPLOYED_CODE_PACKAGE_QUERY_DESCRIPTION queryDesc = {};
+    queryDesc.NodeName = nodeName.c_str();
+    queryDesc.ApplicationName = applicationName.c_str();
+    queryDesc.ServiceManifestNameFilter = serviceManifestName.c_str();
+
+    ComPointer<IFabricGetDeployedCodePackageListResult> resultCPtr;
+
+    this->PerformFabricClientOperation(
+        L"BeginGetDeployedServicePackageList",
+        FabricTestSessionConfig::GetConfig().VerifyTimeout,
+        [&](DWORD const timeout, ComPointer<ComCallbackWaiter> const & callback, ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+        {
+            return appClient->BeginGetDeployedCodePackageList(
+                &queryDesc,
+                timeout,
+                callback.GetRawPointer(),
+                context.InitializationAddress());
+        },
+        [&](ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+        {
+            return appClient->EndGetDeployedCodePackageList(context.GetRawPointer(), resultCPtr.InitializationAddress());
+        });
+
+    auto result = resultCPtr->get_DeployedCodePackageList();
+
+    TestSession::FailTestIf(result == nullptr, "VerifyDeployedCodePackageCount: Query returned nullptr.");
+
+    return result->Count;
 }
 
 void TestFabricClient::CreateName(NamingUri const& name, wstring const& clientName, HRESULT expectedError)
@@ -3801,6 +3998,105 @@ void TestFabricClient::GetProperty(
             expectedValue,
             expectedCustomTypeId);
     }
+}
+
+bool TestFabricClient::DnsNameExists(Common::StringCollection const & params)
+{
+    if (params.size() < 2)
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::DnsNameExistsCommand);
+        return false;
+    }
+
+    CommandLineParser parser(params, 1);
+
+    wstring error;
+    parser.TryGetString(L"error", error, L"Success");
+    ErrorCodeValue::Enum errorValue = FABRICSESSION.FabricDispatcher.ParseErrorCode(error);
+    HRESULT expectedError = ErrorCode(errorValue).ToHResult();
+
+    GetDnsNamePropertyValue(/*propertyName*/ params[0], /*expectedValue*/ params[1], expectedError);
+
+    return true;
+}
+
+void TestFabricClient::GetDnsNamePropertyValue(
+    wstring const& propertyName,
+    wstring const& expectedValue,
+    HRESULT expectedError)
+{
+    TestSession::WriteNoise(TraceSource, "GetDnsNameProperty called for expected propertyName {0}, expectedValue {1}, error {2},  ", propertyName, expectedValue, expectedError);
+    TestSession::FailTestIf(IsRetryableError(expectedError), "Expected error for GetProperty cannot be retryable");
+
+    ComPointer<IFabricPropertyValueResult> propertyResult;
+    auto propertyClient = CreateFabricPropertyClient(FABRICSESSION.FabricDispatcher.Federation);
+    
+    NamingUri name;
+    NamingUri::TryParse(L"fabric:/System/DnsService", name);
+
+    HRESULT hr = this->PerformFabricClientOperation(
+        L"GetProperty",
+        FabricTestSessionConfig::GetConfig().NamingOperationTimeout,
+        [&](DWORD const timeout, ComPointer<ComCallbackWaiter> const & callback, ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+    {
+        return propertyClient->BeginGetProperty(
+            name.Name.c_str(),
+            propertyName.c_str(),
+            timeout,
+            callback.GetRawPointer(),
+            context.InitializationAddress());
+    },
+        [&](ComPointer<IFabricAsyncOperationContext> & context) -> HRESULT
+    {
+        return propertyClient->EndGetProperty(context.GetRawPointer(), propertyResult.InitializationAddress());
+    },
+        expectedError);
+
+    if (SUCCEEDED(hr))
+    {
+        CheckDnsProperty(
+            propertyResult,
+            expectedValue);
+    }
+}
+
+void TestFabricClient::CheckDnsProperty(
+    Common::ComPointer<IFabricPropertyValueResult> const& propertyResult,
+    std::wstring const& expectedValue)
+{
+    FABRIC_NAMED_PROPERTY const * fabricProperty = propertyResult->get_Property();
+    
+    vector<byte> bytes;
+    bytes.insert(bytes.begin(), fabricProperty->Value, fabricProperty->Value + fabricProperty->Metadata->ValueSize);
+
+    StringBody strBody(L"");
+    auto error = FabricSerializer::Deserialize(strBody, bytes);
+
+    TestSession::FailTestIfNot(
+        error.IsSuccess(),
+        "Failed to deserialize DNS property value: error={0}",
+        error);
+
+    std::wstring actualValue = strBody.String;
+
+    TestSession::FailTestIfNot(
+        expectedValue.size() == actualValue.size(),
+        "Data size mismatch. '{0}' != '{1}'",
+        expectedValue.size(),
+        actualValue.size());
+
+    bool matched = true;
+    size_t matchIndex = 0;
+    for (matchIndex = 0; matchIndex < expectedValue.size(); ++matchIndex)
+    {
+        if (expectedValue[matchIndex] != actualValue[matchIndex])
+        {
+            matched = false;
+            break;
+        }
+    }
+
+    TestSession::FailTestIfNot(matched, "Data mismatch. '{0}' != '{1}' (index={2})", expectedValue, actualValue, matchIndex);
 }
 
 void TestFabricClient::SaveSequenceNumber(std::wstring const & varName, uint64 value)
@@ -4843,19 +5139,12 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
 
     do
     {
-        ManualResetEvent resetEvent(false);
-        auto callback = make_com<ComAsyncOperationCallbackTestHelper>(
-            [&resetEvent](IFabricAsyncOperationContext *)
-        {
-            resetEvent.Set();
-        });
-
         if (client && cacheItemName != L"")
         {
             ServiceLocationChangeCacheInfoSPtr cacheInfo;
             if (!client->GetCacheInfo(cacheItemName, cacheInfo))
             {
-                TestSession::WriteNoise(TraceSource, "ResolveService: Cache with name: {0} does not exists. Resolve without refresh", cacheItemName);
+                TestSession::WriteNoise(TraceSource, "ResolveService: Cache with name: {0} does not exist. Resolve without refresh", cacheItemName);
             }
             else
             {
@@ -4863,6 +5152,12 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
                 previous = cacheInfo->CacheItem;
             }
         }
+
+        auto resetEvent = make_shared<ManualResetEvent>(false);
+        auto callback = make_com<ComAsyncOperationCallbackTestHelper>([resetEvent](IFabricAsyncOperationContext *)
+        {
+            resetEvent->Set();
+        });
 
         ComPointer<IFabricAsyncOperationContext> context;
         beginResolveHr = serviceClient->BeginResolveServicePartition(
@@ -4875,6 +5170,8 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
             context.InitializationAddress());
         if (!SUCCEEDED(beginResolveHr))
         {
+            TestSession::WriteInfo(TraceSource, "BeginResolveServicePartition failed: error={0} allowAllError={1}", beginResolveHr, allowAllError);
+
             if (allowAllError)
             {
                 break;
@@ -4886,12 +5183,12 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
         }
 
         TimeSpan timeToWait = FabricTestSessionConfig::GetConfig().NamingOperationTimeout + FabricTestSessionConfig::GetConfig().NamingOperationTimeoutBuffer;
-        resetEvent.WaitOne(); // infinite
+        resetEvent->WaitOne(); // infinite
 
         ComPointer<IFabricResolvedServicePartitionResult> resolvedServiceResult;
         endResolveHr = serviceClient->EndResolveServicePartition(context.GetRawPointer(), resolvedServiceResult.InitializationAddress());
 
-        if(SUCCEEDED(beginResolveHr) && SUCCEEDED(endResolveHr))
+        if (SUCCEEDED(beginResolveHr) && SUCCEEDED(endResolveHr))
         {
             ResolvedServicePartition resolvedServiceLocations;
             HRESULT hr = TryConvertComResult(resolvedServiceResult, resolvedServiceLocations);
@@ -4914,7 +5211,7 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
                 }
 
             }
-            else if(resolvedServiceLocations.Locations.ConsistencyUnitId.Guid != fuId)
+            else if (resolvedServiceLocations.Locations.ConsistencyUnitId.Guid != fuId)
             {
                 TestSession::WriteWarning(
                     TraceSource,
@@ -4926,52 +5223,55 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
 
             if ((expectedError != S_OK))
             {
-                if(allowAllError)
+                if (allowAllError)
                 {
                     break;
                 }
                 else
                 {
-                    TestSession::FailTest(
+                    TestSession::WriteWarning(
+                        TraceSource,
                         "EndResolveServicePartition expected {0} but completed with {1}",
                         expectedError,
                         endResolveHr);
                 }
             }
-
-            storeServiceFound = false;
-            if (!isCommand && resolvedServiceLocations.IsStateful && resolvedServiceLocations.Locations.ServiceReplicaSet.IsPrimaryLocationValid)
-            {
-                TestSession::WriteNoise(
-                    TraceSource,
-                    "Looking for IStoreService at location '{0}'.", resolvedServiceLocations.Locations.ServiceReplicaSet.PrimaryLocation);
-
-                storeServiceFound = FABRICSESSION.FabricDispatcher.Federation.TryFindStoreService(
-                    resolvedServiceLocations.Locations.ServiceReplicaSet.PrimaryLocation,
-                    storeService);
-            }
-
-            if (!skipVerifyLocation)
-            {
-                verifyResult = FABRICSESSION.FabricDispatcher.VerifyResolveResult(resolvedServiceLocations, serviceName);
-            }
             else
             {
-                TestSession::WriteNoise(
-                    TraceSource,
-                    "Resolve {0}: Skip verifyResult.",
-                    serviceName);
-                verifyResult = true;
-            }
+                storeServiceFound = false;
+                if (!isCommand && resolvedServiceLocations.IsStateful && resolvedServiceLocations.Locations.ServiceReplicaSet.IsPrimaryLocationValid)
+                {
+                    TestSession::WriteNoise(
+                        TraceSource,
+                        "Looking for IStoreService at location '{0}'.", resolvedServiceLocations.Locations.ServiceReplicaSet.PrimaryLocation);
 
-            if (client && cacheItemName != L"")
-            {
-                client->AddCacheItem(cacheItemName, serviceName, keyType, key, resolvedServiceResult, isCommand, expectedCompareVersionError);
-            }
-            else
-            {
-                // Remember the previous result to refresh it on retry
-                previous = resolvedServiceResult;
+                    storeServiceFound = FABRICSESSION.FabricDispatcher.Federation.TryFindStoreService(
+                        resolvedServiceLocations.Locations.ServiceReplicaSet.PrimaryLocation,
+                        storeService);
+                }
+
+                if (!skipVerifyLocation)
+                {
+                    verifyResult = FABRICSESSION.FabricDispatcher.VerifyResolveResult(resolvedServiceLocations, serviceName);
+                }
+                else
+                {
+                    TestSession::WriteNoise(
+                        TraceSource,
+                        "Resolve {0}: Skip verifyResult.",
+                        serviceName);
+                    verifyResult = true;
+                }
+
+                if (client && cacheItemName != L"")
+                {
+                    client->AddCacheItem(cacheItemName, serviceName, keyType, key, resolvedServiceResult, isCommand, expectedCompareVersionError);
+                }
+                else
+                {
+                    // Remember the previous result to refresh it on retry
+                    previous = resolvedServiceResult;
+                }
             }
         }
         else
@@ -5036,10 +5336,10 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
             retryCount,
             doRetry);
 
-        if(!isCommand && failed)
+        if (!isCommand && failed)
         {
             storeService.reset();
-            if(FABRICSESSION.FabricDispatcher.IsQuorumLostFU(fuId) || FABRICSESSION.FabricDispatcher.IsRebuildLostFU(fuId))
+            if (FABRICSESSION.FabricDispatcher.IsQuorumLostFU(fuId) || FABRICSESSION.FabricDispatcher.IsRebuildLostFU(fuId))
             {
                 TestSession::WriteNoise(TraceSource, "Quorum or Rebuild lost at {0}:{1} for key {2} so skipping ResolveService", serviceName, fuId, keyValue);
                 return nullptr;
@@ -5048,7 +5348,7 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
             if (endResolveHr == ErrorCode(ErrorCodeValue::GatewayUnreachable).ToHResult() ||
                 endResolveHr == ErrorCode(ErrorCodeValue::Timeout).ToHResult())
             {
-                TestSession::WriteNoise(TraceSource, "Resolve {0}:{1}: Timeout or communication error: Ceheck whether the naming client has any active gateways, skip resolve", serviceName, keyValue);
+                TestSession::WriteNoise(TraceSource, "Resolve {0}:{1}: Timeout or communication error: Check whether the naming client has any active gateways, skip resolve", serviceName, keyValue);
                 return nullptr;
             }
         }
@@ -5065,7 +5365,13 @@ ITestStoreServiceSPtr TestFabricClient::ResolveService(
         TestSession::FailTestIfNot(verifyResult, "Verification of resolve result failed");
         TestSession::FailTestIf(!isCommand && !storeServiceFound, "Store for service {0}, key {1} not found after {2} iterations", serviceName, keyValue, retryCount);
     }
-
+    else if ((expectedError != S_OK) && !allowAllError && (SUCCEEDED(beginResolveHr) && SUCCEEDED(endResolveHr)))
+    {
+        TestSession::FailTest(
+            "EndResolveServicePartition expected {0} but completed with {1}",
+            expectedError,
+            endResolveHr);
+    }
     return storeService;
 }
 
@@ -5963,7 +6269,7 @@ void TestFabricClient::VerifyPartitionLoad(FABRIC_PARTITION_ID partitionId, wstr
         IID_IFabricQueryClient6,
         (void **)queryClient.InitializationAddress());
 
-	bool expectedMetricNotExist = expectedPrimaryLoad == -1 && expectedSecondaryLoad == -1;
+    bool expectedMetricNotExist = expectedPrimaryLoad == -1 && expectedSecondaryLoad == -1;
 
     TestSession::FailTestIfNot(SUCCEEDED(hr), "ComFabricClient does not support IFabricQueryClient6");
     uint maxTry = FabricTestSessionConfig::GetConfig().QueryOperationRetryCount;
@@ -6009,7 +6315,7 @@ void TestFabricClient::VerifyPartitionLoad(FABRIC_PARTITION_ID partitionId, wstr
             }
         }
 
-		if (toAssert && !expectedMetricNotExist)
+        if (toAssert && !expectedMetricNotExist)
         {
             TestSession::FailTestIfNot(primaryloadFound, "Cannot find metirc for the primary load {0}", metricName);
         }
@@ -6030,27 +6336,27 @@ void TestFabricClient::VerifyPartitionLoad(FABRIC_PARTITION_ID partitionId, wstr
             }
         }
 
-		if (toAssert && !expectedMetricNotExist)
+        if (toAssert && !expectedMetricNotExist)
         {
             TestSession::FailTestIfNot(secondaryloadFound, "Cannot find metirc for the secondary load  {0}", metricName);
         }
 
-		if (primaryLoadMatch && secondaryLoadMatch && !expectedMetricNotExist)
+        if (primaryLoadMatch && secondaryLoadMatch && !expectedMetricNotExist)
         {
             return;
         }
 
-		if (expectedMetricNotExist)
-		{
-			if (primaryloadFound || secondaryloadFound)
-			{
-				TestSession::FailTest("Expect metric not exists but found in partition load. Metric name: {0}", metricName);
-			}
-			else
-			{
-				break;
-			}
-		}
+        if (expectedMetricNotExist)
+        {
+            if (primaryloadFound || secondaryloadFound)
+            {
+                TestSession::FailTest("Expect metric not exists but found in partition load. Metric name: {0}", metricName);
+            }
+            else
+            {
+                break;
+            }
+        }
 
         Sleep(static_cast<DWORD>(FabricTestSessionConfig::GetConfig().ApiDelayInterval.TotalMilliseconds()));
     }
@@ -8499,6 +8805,194 @@ bool TestFabricClient::GetPlacementPolicies(StringCollection const& policiesColl
     return true;
 }
 
+bool TestFabricClient::GetServiceScalingPolicy(std::wstring const & scalingCollection, vector<Reliability::ServiceScalingPolicyDescription> & scalingPolicy)
+{
+    std::vector<wstring> scalingElements;
+    StringUtility::Split<wstring>(scalingCollection, scalingElements, L",", true);
+
+    std::vector<wstring> scalingKind;
+    StringUtility::Split<wstring>(scalingElements[0], scalingKind, L":", true);
+
+    if (scalingKind.size() != 2)
+    {
+        TestSession::WriteError(
+            TraceSource,
+            "Bad scaling policy kind");
+        return false;
+    }
+
+    // Used for trigger
+    wstring metricName;
+    double minLoad = -1.0;
+    double maxLoad = -1.0;
+    int scaleInterval = -1;
+    bool useOnlyPrimaryLoad = false;
+    // used for mechanism
+    int minCount = -2;
+    int maxCount = -2;
+    int increment = -2;
+
+    for (int i = 1; i < scalingElements.size(); ++i)
+    {
+        std::vector<wstring> scalingData;
+        StringUtility::Split<wstring>(scalingElements[i], scalingData, L":", true);
+        if (StringUtility::AreEqualCaseInsensitive(scalingData[0], L"metricname"))
+        {
+            metricName = scalingData[1];
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(scalingData[0], L"minCount"))
+        {
+            int64 minInstanceCount;
+            if (Common::TryParseInt64(scalingData[1], minInstanceCount))
+            {
+                minCount = (int)minInstanceCount;
+            }
+            else
+            {
+                TestSession::WriteError(
+                    TraceSource,
+                    "Bad min count");
+                return false;
+            }
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(scalingData[0], L"maxcount"))
+        {
+            int64 maxInstanceCount;
+            if (Common::TryParseInt64(scalingData[1], maxInstanceCount))
+            {
+                maxCount = (int)maxInstanceCount;
+            }
+            else
+            {
+                TestSession::WriteError(
+                    TraceSource,
+                    "Bad max count");
+                return false;
+            }
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(scalingData[0], L"metriclow"))
+        {
+            double metricLow;
+            if (Common::TryParseDouble(scalingData[1], metricLow))
+            {
+                minLoad = metricLow;
+            }
+            else
+            {
+                TestSession::WriteError(
+                    TraceSource,
+                    "Bad metric limit low");
+                return false;
+            }
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(scalingData[0], L"metrichigh"))
+        {
+            double metricHigh;
+            if (Common::TryParseDouble(scalingData[1], metricHigh))
+            {
+                maxLoad = metricHigh;
+            }
+            else
+            {
+                TestSession::WriteError(
+                    TraceSource,
+                    "Bad metric limit high");
+                return false;
+            }
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(scalingData[0], L"scaleinterval"))
+        {
+            uint64 parsedScaleInterval;
+            if (Common::TryParseUInt64(scalingData[1], parsedScaleInterval))
+            {
+                scaleInterval = (int)parsedScaleInterval;
+            }
+            else
+            {
+                TestSession::WriteError(
+                    TraceSource,
+                    "Bad scale interval");
+                return false;
+            }
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(scalingData[0], L"scaleincrement"))
+        {
+            int64 scaleIncrement;
+            if (Common::TryParseInt64(scalingData[1], scaleIncrement))
+            {
+                increment = (int)scaleIncrement;
+            }
+            else
+            {
+                TestSession::WriteError(
+                    TraceSource,
+                    "Bad scale interval");
+                return false;
+            }
+        }
+        else if (StringUtility::AreEqualCaseInsensitive(scalingData[0], L"useonlyprimaryload"))
+        {
+            if (scalingData[1].compare( L"true") == 0)
+            {
+                useOnlyPrimaryLoad = true;
+            }
+            else
+            {
+                useOnlyPrimaryLoad = false;
+            }
+        }
+        else
+        {
+            TestSession::WriteError(
+                TraceSource,
+                "Bad argument for average load scaling");
+            return false;
+        }
+    }
+
+
+    if (StringUtility::AreEqualCaseInsensitive(scalingKind[1], L"instance"))
+    {
+        Reliability::ScalingMechanismSPtr mechanism = make_shared<Reliability::InstanceCountScalingMechanism>(
+            minCount,
+            maxCount,
+            increment);
+        Reliability::ScalingTriggerSPtr trigger = make_shared<Reliability::AveragePartitionLoadScalingTrigger>(
+            metricName,
+            minLoad,
+            maxLoad,
+            scaleInterval);
+        scalingPolicy.push_back(Reliability::ServiceScalingPolicyDescription(trigger, mechanism));
+
+        return true;
+    }
+    else if (StringUtility::AreEqualCaseInsensitive(scalingKind[1], L"partition"))
+    {
+        Reliability::ScalingMechanismSPtr mechanism = make_shared<Reliability::AddRemoveIncrementalNamedPartitionScalingMechanism>(
+            minCount,
+            maxCount,
+            increment);
+        Reliability::ScalingTriggerSPtr trigger = make_shared<Reliability::AverageServiceLoadScalingTrigger>(
+            metricName,
+            minLoad,
+            maxLoad,
+            scaleInterval, 
+            useOnlyPrimaryLoad);
+        scalingPolicy.push_back(Reliability::ServiceScalingPolicyDescription(trigger, mechanism));
+
+        return true;
+    }
+    else
+    {
+        TestSession::WriteError(
+            TraceSource,
+            "Bad scaling policy kind");
+        return false;
+    }
+
+    return true;
+}
+
 // COM helper implementations
 
 IClientFactoryPtr TestFabricClient::FabricCreateNativeClientFactory(__in FabricTestFederation &testFederation)
@@ -8722,14 +9216,26 @@ ComPointer<IFabricApplicationManagementClient4> CreateFabricApplicationClient4(_
     return result;
 }
 
-ComPointer<IInternalFabricServiceManagementClient> CreateInternalFabricServiceClient(__in FabricTestFederation & testFederation)
+ComPointer<IFabricQueryClient10> CreateFabricQueryClient10(__in FabricTestFederation & testFederation)
 {
-    ComPointer<IInternalFabricServiceManagementClient> result;
+    ComPointer<IFabricQueryClient10> result;
     HRESULT hr = TestFabricClient::FabricCreateComFabricClient(testFederation)->QueryInterface(
-        IID_IInternalFabricServiceManagementClient,
+        IID_IFabricQueryClient10,
         (void **)result.InitializationAddress());
 
-    TestSession::FailTestIfNot(SUCCEEDED(hr), "ComFabricClient does not support IInternalFabricServiceManagementClient");
+    TestSession::FailTestIfNot(SUCCEEDED(hr), "ComFabricClient does not support IFabricQueryClient10");
+
+    return result;
+}
+
+ComPointer<IInternalFabricServiceManagementClient2> CreateInternalFabricServiceClient2(__in FabricTestFederation & testFederation)
+{
+    ComPointer<IInternalFabricServiceManagementClient2> result;
+    HRESULT hr = TestFabricClient::FabricCreateComFabricClient(testFederation)->QueryInterface(
+        IID_IInternalFabricServiceManagementClient2,
+        (void **)result.InitializationAddress());
+
+    TestSession::FailTestIfNot(SUCCEEDED(hr), "ComFabricClient does not support IInternalFabricServiceManagementClient2");
 
     return result;
 }

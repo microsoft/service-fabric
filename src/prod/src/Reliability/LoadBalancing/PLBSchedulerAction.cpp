@@ -50,100 +50,6 @@ void PLBSchedulerAction::End()
     isConstraintCheckLight_ = false;
 }
 
-void PLBSchedulerAction::Increase()
-{
-    int retryTimes = PLBConfig::GetConfig().PLBActionRetryTimes;
-
-    switch (action_)
-    {
-    case PLBSchedulerActionType::None:
-        action_ = PLBSchedulerActionType::Creation;
-        break;
-    case PLBSchedulerActionType::Creation:
-        ++iteration_;
-        if (iteration_ >= retryTimes)
-        {
-            if (PLBConfig::GetConfig().MoveExistingReplicaForPlacement)
-            {
-                action_ = PLBSchedulerActionType::CreationWithMove;
-            }
-            else
-            {
-                action_ = PLBSchedulerActionType::ConstraintCheck;
-            }
-            iteration_ = 0;
-        }
-        break;
-    case PLBSchedulerActionType::CreationWithMove:
-        ++iteration_;
-        if (iteration_ > 0)
-        {
-            action_ = PLBSchedulerActionType::ConstraintCheck;
-            iteration_ = 0;
-        }
-        break;
-    case PLBSchedulerActionType::ConstraintCheck:
-        ++iteration_;
-        if (iteration_ >= retryTimes)
-        {
-            action_ = PLBSchedulerActionType::FastBalancing;
-            iteration_ = 0;
-        }
-        break;
-    case PLBSchedulerActionType::FastBalancing:
-        ++iteration_;
-        if (iteration_ >= retryTimes)
-        {
-            action_ = PLBSchedulerActionType::SlowBalancing;
-            iteration_ = 0;
-        }
-        break;
-    case PLBSchedulerActionType::SlowBalancing:
-        ++iteration_;
-        if (iteration_ >= retryTimes)
-        {
-            action_ = PLBSchedulerActionType::NoActionNeeded;
-            iteration_ = 0;
-        }
-        break;
-    case PLBSchedulerActionType::NoActionNeeded:
-        break;
-    default:
-        Assert::CodingError("Unknown current action");
-    }
-
-    isSkip_ = false;
-}
-
-void PLBSchedulerAction::MoveForward()
-{
-    switch (action_)
-    {
-    case PLBSchedulerActionType::None:
-        action_ = PLBSchedulerActionType::Creation;
-        break;
-    case PLBSchedulerActionType::Creation:
-        action_ = PLBSchedulerActionType::ConstraintCheck;
-        break;
-    case PLBSchedulerActionType::ConstraintCheck:
-        action_ = PLBSchedulerActionType::FastBalancing;
-        break;
-    case PLBSchedulerActionType::FastBalancing:
-        action_ = PLBSchedulerActionType::SlowBalancing;
-        break;
-    case PLBSchedulerActionType::SlowBalancing:
-        action_ = PLBSchedulerActionType::NoActionNeeded;
-        break;
-    case PLBSchedulerActionType::NoActionNeeded:
-        break;
-    default:
-        Assert::CodingError("Unknown current action");
-    }
-
-    iteration_ = 0;
-    isSkip_ = false;
-}
-
 void PLBSchedulerAction::IncreaseIteration()
 {
     iteration_++;
@@ -151,7 +57,7 @@ void PLBSchedulerAction::IncreaseIteration()
 
 bool PLBSchedulerAction::CanRetry() const
 {
-    if (action_ == PLBSchedulerActionType::CreationWithMove)
+    if (action_ == PLBSchedulerActionType::NewReplicaPlacementWithMove)
     {
         return iteration_ == 0;
     }
@@ -166,25 +72,23 @@ void PLBSchedulerAction::WriteTo(Common::TextWriter & w, Common::FormatOptions c
     switch (action_)
     {
     case PLBSchedulerActionType::None:
-        w.Write("None");
+    case PLBSchedulerActionType::NoActionNeeded:
+        w.Write("NoActionNeeded");
         break;
-    case PLBSchedulerActionType::Creation:
-        w.Write("Creation");
+    case PLBSchedulerActionType::NewReplicaPlacement:
+        w.Write("NewReplicaPlacement");
         break;
-    case PLBSchedulerActionType::CreationWithMove:
-        w.Write("CreationWithMove");
+    case PLBSchedulerActionType::NewReplicaPlacementWithMove:
+        w.Write("NewReplicaPlacementWithMove");
         break;
     case PLBSchedulerActionType::ConstraintCheck:
         w.Write("ConstraintCheck");
         break;
-    case PLBSchedulerActionType::FastBalancing:
-        w.Write("FastBalancing");
+    case PLBSchedulerActionType::QuickLoadBalancing:
+        w.Write("QuickLoadBalancing");
         break;
-    case PLBSchedulerActionType::SlowBalancing:
-        w.Write("SlowBalancing");
-        break;
-    case PLBSchedulerActionType::NoActionNeeded:
-        w.Write("NoActionNeeded");
+    case PLBSchedulerActionType::LoadBalancing:
+        w.Write("LoadBalancing");
         break;
     default:
         w.Write("Unknown");
@@ -210,18 +114,17 @@ std::wstring PLBSchedulerAction::ToQueryString() const
         switch (action_)
         {
         case PLBSchedulerActionType::None:
-            return L"None";
-        case PLBSchedulerActionType::Creation:
-            return L"Creation";
-        case PLBSchedulerActionType::CreationWithMove:
-            return L"CreationWithMove";
-        case PLBSchedulerActionType::ConstraintCheck:
-            return L"ConstraintCheck";
-        case PLBSchedulerActionType::FastBalancing:
-        case PLBSchedulerActionType::SlowBalancing:
-            return L"LoadBalancing";
         case PLBSchedulerActionType::NoActionNeeded:
             return L"NoActionNeeded";
+        case PLBSchedulerActionType::NewReplicaPlacement:
+            return L"NewReplicaPlacement";
+        case PLBSchedulerActionType::NewReplicaPlacementWithMove:
+            return L"NewReplicaPlacementWithMove";
+        case PLBSchedulerActionType::ConstraintCheck:
+            return L"ConstraintCheck";
+        case PLBSchedulerActionType::QuickLoadBalancing:
+        case PLBSchedulerActionType::LoadBalancing:
+            return L"LoadBalancing";
         default:
             return L"UnknownAction";
         }

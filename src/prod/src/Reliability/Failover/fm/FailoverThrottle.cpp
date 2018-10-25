@@ -10,7 +10,7 @@ using namespace Common;
 using namespace Reliability;
 using namespace Reliability::FailoverManagerComponent;
 
-FailoverThrottle::FailoverThrottle(Common::TimeSpan throttleTime) 
+FailoverThrottle::FailoverThrottle(Common::ConfigEntry<Common::TimeSpan> & throttleTime)
     : stopwatch_()
     , throttleTime_(throttleTime)
     , isFirstCall_(true)
@@ -21,7 +21,7 @@ bool FailoverThrottle::IsThrottling()
 {
     if (!isFirstCall_) 
     {
-        if (stopwatch_.Elapsed > throttleTime_)
+        if (stopwatch_.Elapsed > throttleTime_.GetValue())
         {
             stopwatch_.Restart();
             return true;

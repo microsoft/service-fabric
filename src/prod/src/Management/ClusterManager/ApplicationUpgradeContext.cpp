@@ -492,51 +492,6 @@ bool ApplicationUpgradeContext::TryInterrupt()
     }
 }
 
-bool ApplicationUpgradeContext::TryUpdateHealthPolicies(ApplicationUpgradeDescription const & other)
-{
-    // We allow switching from any upgrade mode to monitored as long as all
-    // other aspects of the upgrade (other than health policies) remain the same.
-    //
-    // We also allow updating just the health policies by issuing another upgrade,
-    // though the modify API is easier to use and the recommended approach for
-    // updating health policies.
-    //
-    if (upgradeDescription_.EqualsIgnoreHealthPolicies(other) && other.RollingUpgradeMode == RollingUpgradeMode::Monitored)
-    {
-        ApplicationUpgradeDescription description(
-            upgradeDescription_.ApplicationName,
-            upgradeDescription_.TargetApplicationTypeVersion,
-            upgradeDescription_.ApplicationParameters,
-            upgradeDescription_.UpgradeType,
-            ServiceModel::RollingUpgradeMode::Monitored,
-            upgradeDescription_.ReplicaSetCheckTimeout,
-            other.MonitoringPolicy,
-            other.HealthPolicy,
-            other.IsHealthPolicyValid);
-
-        // When switching from unmonitored manual to monitored, the next health check occurs
-        // immediately upon UD completion since the caller is expected to complete the
-        // current unmonitored manual health check work before changing the upgrade mode.
-        //
-        healthCheckElapsedTime_ = description.MonitoringPolicy.HealthCheckWaitDuration;
-        lastHealthCheckResult_ = false;
-
-        // Remaining timeouts are reset since this could be the first time we are going from
-        // unmonitored manual to monitored, in which case there is no previous timeout state.
-        // This implies that when continuing a failed monitored upgrade, the new overall
-        // upgrade timeout being set should account for any elapsed time.
-        //
-        overallUpgradeElapsedTime_ = TimeSpan::Zero;
-        upgradeDomainElapsedTime_ = TimeSpan::Zero;
-
-        upgradeDescription_ = move(description);
-
-        return true;
-    }
-
-    return false;
-}
-
 bool ApplicationUpgradeContext::TryModifyUpgrade(
     ApplicationUpgradeUpdateDescription const & update,
     __out wstring & validationErrorMessage)

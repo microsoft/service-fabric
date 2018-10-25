@@ -39,7 +39,7 @@ target_link_libraries(${exe_FabricTypeHost}
   ${lib_Testability}
   ${lib_FileStoreService}
   ${lib_Store}
-  ${lib_KtlLogger}
+  ${lib_KtlLoggerNode}
   ${lib_TStore}
   ${lib_TransactionalReplicator}
   ${lib_StoreRepairPolicy}
@@ -78,6 +78,4 @@ target_link_libraries(${exe_FabricTypeHost}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )

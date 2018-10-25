@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
+#include "TestHeaders.h"
 
 #include <boost/test/unit_test.hpp>
 #include "Common/boost-taef.h"
@@ -254,7 +255,7 @@ namespace LogTests
     {
         TEST_TRACE_BEGIN("FileLogicalLog_ReadAheadCacheTest")
         {
-            testContext_->ReadAheadCacheTest();
+            testContext_->ReadAheadCacheTest(KtlLoggerMode::Default);
         }
     }
 

@@ -15,27 +15,43 @@
 
     "TestTypeExecutionMode": {
         "ParallelTestTypes": "ExeTest, Azure_Chaos, FabricTest, FederationTest, TAEFTest,LBSimulator,FabricTraceTest",
-        "SequentialTestTypes": "ExeTest_Sequential, FabricTest_Sequential, TAEFTest_Sequential, V2_DllTest, V2_ScriptTest"
+        "SequentialTestTypes": "ExeTest_Sequential, FabricTest_Sequential, TAEFTest_Sequential, V2_DllTest, V2_ScriptTest, FabricTest_As_System"
     },
 
     "AppSettings": {
         "JSONTestsPath": "JsonTests",
         "JSONTestTypesPath": "JsonTestTypes",
+        "SchedulingServiceUri": "fabric:/winfabtestinfra/WcfScheduler",
         "LogsFolderPath": "RunTests\\log",
+        "TestInfra.IAAS.Endpoint": "http://10.158.23.133:8000",
+        "TestInfra.PAAS.Endpoint": "https://sftestinfra.westus.cloudapp.azure.com:8000",
+        "TestInfra.PAAS.CertThumbprint": "27B3DFCE8054446DDE1E238591933EB4FE7B0C8C",
+        "TestKeyVaultUri": "https://TestInfraKeyVault.vault.azure.net",
+        "TestKeyVaultClientId": "33e3af95-cf38-49be-9db9-909bb5b3cb2e",
+        "TestKeyVaultAppCertThumbprint": "27B3DFCE8054446DDE1E238591933EB4FE7B0C8C",
+        "TestInfraDbConnectionStringKeyVaultName": "TestInfraDbConnectionString",
+        "LogsLocationConnectionStringKeyVaultName": "LogsLocationConnectionString",
+        "BuildLocationConnectionStringKeyVaultName": "BuildLocationConnectionString",
+        "MsiInstalled": "false",
+        "PerfTestValidatorExe": "WinFabricTest\\PerfTestResultValidator.exe",
         "FabricSetupExe": "FabricUnitTests\\FabricSetup.exe",
         "RingCertSetupExe": "FabricUnitTests\\RingCertSetup.exe",
+        "MakeDropScriptPath": "%srcroot%\\prod\\setup\\scripts\\MakeDrop.cmd",
         "NumberOfTestsPerGroup": "25",
         "NumberOfGroups": "20",
         "RuntimeConfigFileName": "CITRuntimes.csv",
-        "RunTestsExe": "RunTests\\RunTests.exe",
+        "WinFabricTestInfraTestToolsExe": "RunTests\\WinFabric.TestInfra.TestTools.exe",
+        "RunTestsExe": "DotnetCoreCli\\dotnet.exe",
+        "RunTestsExeLinux": "RunTests/RunTests.sh",
         "CloudBuildPath": "BinCache\\bins",
         "DefaultFileSharePath": "\\\\winfabfs\\scratch2\\WinFabCITLogs",
         "SkippedTestTypes": "",
         "SkippedTests": "",
         "ConfigFilesPath": "FabricUnitTests",
-        "NonGroupableTestTypes": "V2_ScriptTest,V2_DllTest,PowershellTest,PowershellTest_Glob,PowershellTest_Glob_Secure,RandomTest",
+        "NonGroupableTestTypes": "V2_ScriptTest,V2_DllTest,PowershellTest,PowershellTest_Glob,PowershellTest_Glob_Secure,RandomTest,V2_ScriptTest_With_Locale,V2_ScriptTest_RetailOnly,Windows_SFRP_ScriptTest",
         "AnalysisTestTypes": "FabricTest",
-        "AzCopyBinaryPath": "C:\\MCRoot\\Tools\\AzCopy.exe",        
+        "AzCopyBinaryPath": "C:\\MCRoot\\Tools\\AzCopy.exe",       
+        "AzCopyBinaryPathLinux": "/usr/bin/azcopy",
         "RunTestsAdapterDllPath": "FabricUnitTests\\RunTests.Adapter.dll",
         "TimeToWaitForWERFaultExitInSeconds": "900",
         "NTServicesToStop": "FabricHostSvc",
@@ -43,6 +59,7 @@
         "ProcessImageNamesToKillAfterTest": "FabricHost,FabricTest,FederationTest,FabricTestHost,Fabric,TE,WinFabricTestRunner,Common.Test,Transport.Test,Naming.Test,Hosting2.Test",
         "LinuxSuiteWhitelist": "SingleMachine-CIT.json,SingleMachine-Functional.json",
         "TestTypesToExcludeFromRetailBuildRuns": "V2_ScriptTest_DebugOnly,Azure_ScriptTest_DebugOnly",
-        "TestTypesToExcludeFromDebugBuildRuns": "V2_ScriptTest_RetailOnly,Azure_ScriptTest_RetailOnly,FabricTest_RetailOnly"
+        "TestTypesToExcludeFromDebugBuildRuns": "V2_ScriptTest_RetailOnly,Azure_ScriptTest_RetailOnly,FabricTest_RetailOnly",
+        "LinuxCITDefaultMachineGroup": "linuxcit",
     }
 }

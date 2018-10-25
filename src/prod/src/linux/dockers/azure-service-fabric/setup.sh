@@ -13,7 +13,7 @@ apt install -y cgroup-bin acl net-tools apt-transport-https rssh vim atop libcur
 sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ xenial main" > /etc/apt/sources.list.d/dotnetdev.list'
 apt-key adv --keyserver apt-mo.trafficmanager.net --recv-keys 417A0893
 apt-get update
-apt-get install -y dotnet-runtime-2.0.0
+apt-get install -y dotnet-runtime-2.0.7
 /etc/init.d/ssh start
 locale-gen en_US.UTF-8
 export LANG=en_US.UTF-8

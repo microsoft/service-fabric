@@ -135,8 +135,5 @@ namespace Api
 
         virtual Common::ErrorCode EndRestore(
             __in Common::AsyncOperationSPtr const & operation) = 0;
-
-        virtual Common::ErrorCode GetQueryStatus(
-            __out IStatefulServiceReplicaStatusResultPtr &) = 0;
     };
 }

@@ -191,8 +191,8 @@ namespace Reliability
 
             // If metric is considered for balancing, useNodeLoadAsHeuristic will prefer swaps/moves from overloaded to underloaded nodes.
             // If metric is considered for defrag, useNodeLoadAsHeuristic will prefer swaps/moves from underloaded to overloaded nodes.
-            // Heuristics are used for fast balancing - during FastBalancing and at the end of Placement and ConstraintCheck phases.
-            // During SlowBalancing heuristic should not be used - engine should try swaps/moves from any to any node.
+            // Heuristics are used for fast balancing - during QuickLoadBalancing and at the end of Placement and ConstraintCheck phases.
+            // During LoadBalancing heuristic should not be used - engine should try swaps/moves from any to any node.
             void AddSimulatedAnnealingSolution(
                 CandidateSolution const& solution,
                 std::vector<SimulatedAnnealingSolution> & solutions,

@@ -38,6 +38,8 @@ namespace ClientServerTransport
         static Common::GlobalWString RollbackApplicationUpgradeAction;
         static Common::GlobalWString RollbackFabricUpgradeAction;
 
+        static Common::GlobalWString CreateApplicationResourceAction;
+
         ClusterManagerTcpMessage(std::wstring const & action)
             : Client::ClientServerRequestMessage(action, actor_)
         {
@@ -197,6 +199,12 @@ namespace ClientServerTransport
         static Client::ClientServerRequestMessageUPtr GetRollbackFabricUpgrade()
         {  
             return Common::make_unique<ClusterManagerTcpMessage>(RollbackFabricUpgradeAction);
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetCreateApplicationResource(
+            std::unique_ptr<Management::ClusterManager::CreateApplicationResourceMessageBody> && body)
+        {
+            return Common::make_unique<ClusterManagerTcpMessage>(CreateApplicationResourceAction, std::move(body));
         }
 
     private:

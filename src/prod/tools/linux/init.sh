@@ -5,8 +5,10 @@
 # Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 # ------------------------------------------------------------
 
+# Replace "PkgName" and "PkgVer"
+# NugetRepo="https://msazure.pkgs.visualstudio.com/_packaging/ManualMirror/nuget/v2?id=PkgName&version=PkgVer"
 
-NugetRepoList=("http://wanuget.corp.microsoft.com/ManualMirror/api/v2/package/" "http://wanuget.corp.microsoft.com/Dev/api/v2/package/")
+PrebuiltBlobStore="https://sfprebuilt.blob.core.windows.net/binaries"
 
 PkgsList=()
 
@@ -17,7 +19,7 @@ do
         PkgsList+=($param)
     else
         IsJenkins=$param
-    fi 
+    fi
     paramNum=$((paramNum+1))
 done
 
@@ -27,25 +29,10 @@ popd > /dev/null
 
 ExtLibPath=${ScriptPath}/../../../../external
 
-CxCache="/tmp/CxCache"
-if [ ! -d "$CxCache" ]; then
-  mkdir "$CxCache";
+SFPkgCache="/tmp/SFPkgCache"
+if [ ! -d "$SFPkgCache" ]; then
+  mkdir "$SFPkgCache";
 fi;
-
-AcctDomain=""
-AcctName=""
-
-PromptForCreds() {
-    if [ $IsJenkins == "true" ]; then
-      return
-    fi
-    if [ -z $AcctName ]; then
-        read -rp "NTLM User(e.g. redmond\user): " domainAccount
-        IFS='\\' read -ra domainAccount <<< "$domainAccount"
-        AcctDomain=${domainAccount[0]}
-        AcctName=${domainAccount[1]}
-    fi
-}
 
 ParsePkgNameVersionSuf(){
     local pkgName
@@ -87,36 +74,19 @@ DownloadPkg() {
     local pkgPath=/tmp/${pkgName}.${pkgVerSuf}.nupkg
 
     if [ -f $pkgPath ]; then
-        echo "Nuget package already downloaded: ${pkgPath}"
+        echo "prebuilt package already downloaded: ${pkgPath}"
         return
     fi
 
-    PromptForCreds
+    shopt -u nullglob dotglob #Disable nullglob dotglob
 
-    httpResp=
-    found=0
-    for nugetRepo in "${NugetRepoList[@]}"
-    do
-        echo Connecting to $nugetRepo..
-        if [ $IsJenkins == "true" ]; then
-            httpResp=$(curl -s -w %{http_code} --ntlm -u ${AZURE_CREDENTIALS} $nugetRepo/${pkgName}/${pkgVerSuf} -o ${pkgPath})
-        else
-            httpResp=$(curl -s -w %{http_code} --ntlm -u ${AcctDomain}\\${AcctName} $nugetRepo/${pkgName}/${pkgVerSuf} -o ${pkgPath})
-        fi
-        if [ "$httpResp" -eq "200" ]; then
-            found=1 
-            break
-        elif [ "$httpResp" -eq "0" ]; then
-            echo "HTTP $httpResp; Nuget repo may not be reachable."
-            break
-        else
-            echo "HTTP $httpResp"
-        fi
-    done
-   
-    if [ "$found" -ne "1" ]; then
-        echo "Download failed. Aborting."
-        exit -1
+    local url=${PrebuiltBlobStore}
+    url="${url}/${pkgName}.${pkgVerSuf}.nupkg"
+    wget $url -O $pkgPath
+
+    if [ $? != 0 ]; then
+        echo "Failed to download ${pkgName}. Aborting."
+        exit 1
     fi
 }
 
@@ -133,38 +103,43 @@ ExtractPkg() {
     local pkgDestPath=${ExtLibPath}/${pkgFullName}
     local pkgPathlink=${ExtLibPath}/${pkgName}
 
-    if [ -d ${pkgPathlink} ] && [ ! -L ${pkgPathlink} ]; then
-        mkdir -p ${ExtLibPath}/generated > /dev/null
-        pkgPathlink=${ExtLibPath}/generated/${pkgName}
-    fi
-
     if [ "$forceInstall" = "true" ] || [ ! -d $pkgDestPath ]; then
         echo "Extracting ${pkgPath}..."
-        local pkgCachePath=$CxCache/$pkgFullName
+        local pkgCachePath=$SFPkgCache/$pkgFullName
         shopt -s nullglob dotglob
         local cacheFiles=($pkgCachePath/*)
         if [ ! -d $pkgCachePath ] || [ ${#cacheFiles[@]} -eq 0 ]; then
           mkdir -p $pkgCachePath;
           unzip $pkgPath -d $pkgCachePath > /dev/null;
           if [ $? != 0 ]; then
-              echo "Unzip failed."
-
+              echo "unzip failed. Package $pkgPath may be incomplete or corrupted.  Try deleting package and trying again."
               cacheFiles=($pkgCachePath/*)
               if [ ${#cacheFiles[@]} -eq 0 ]; then
                   rm -rf $pkgCachePath
               fi
-              
               exit 1
           fi
         fi;
 
         rm -rf $pkgDestPath
         mkdir $pkgDestPath;
+
+        # Historically, some nupkgs had content/Content folder : give preference to these folders.
         if [ -d $pkgCachePath/content ]; then
             cp $pkgCachePath/content/* $pkgDestPath -r -f
-        fi
-        if [ -d $pkgCachePath/Content ]; then
+        elif [ -d $pkgCachePath/Content ]; then
             cp $pkgCachePath/Content/* $pkgDestPath -r -f
+        else
+            countNuspec=`ls -1 $pkgCachePath/*.nuspec 2>/dev/null | wc -l`
+            if [ $countNuspec == 1 ]; then
+              # This is an actual nupkg, copy its content directly.
+              cp $pkgCachePath/* $pkgDestPath -r -f
+              # Copy nupkg to destination folder so that it can work for PackageReference
+              cp ${pkgPath} ${pkgDestPath}
+            else
+              echo "Bad nupkg format : $pkgPath"
+              exit 1
+            fi
         fi
     fi
 

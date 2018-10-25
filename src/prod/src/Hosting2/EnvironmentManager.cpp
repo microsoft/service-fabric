@@ -896,7 +896,7 @@ private:
 
 private:
     EnvironmentManager & owner_;
-    ApplicationEnvironmentContextSPtr const & appEnvironmentContext_;
+    ApplicationEnvironmentContextSPtr const appEnvironmentContext_;
     TimeoutHelper timeoutHelper_;
     ErrorCode lastError_;
 };
@@ -917,6 +917,7 @@ public:
         ServicePackageInstanceIdentifier const & servicePackageInstanceId,
         ServiceModel::ServicePackageDescription const & servicePackageDescription,
         int64 instanceId,
+        std::wstring const & applicationName,
         TimeSpan const timeout,
         AsyncCallback const & callback,
         AsyncOperationSPtr const & parent)
@@ -925,6 +926,7 @@ public:
         appEnvironmentContext_(appEnvironmentContext),
         servicePackageInstanceId_(servicePackageInstanceId),
         instanceId_(instanceId),
+        applicationName_(applicationName),
         servicePackageDescription_(servicePackageDescription),
         timeoutHelper_(timeout),
         packageInstanceEnvironmentContext(),
@@ -933,7 +935,10 @@ public:
         endpointsAclCount_(0),
         setupContainerGroup_(false),
         lastError_(ErrorCodeValue::Success),
-        endpointsWithACL_()
+        endpointsWithACL_(),
+        runLayout_(owner_.Hosting.DeploymentFolder),
+        codePackagesWithOpenNetwork_(),
+        servicePackageEnvironmentId_(EnvironmentManager::GetServicePackageIdentifier(servicePackageInstanceId_.ToString(), instanceId_))
     {
         packageInstanceEnvironmentContext = make_shared<ServicePackageInstanceEnvironmentContext>(servicePackageInstanceId_);
     }
@@ -944,13 +949,11 @@ public:
 
     static ErrorCode SetupServicePackageInstanceAsyncOperation::End(
         AsyncOperationSPtr const & operation,
-        __out ServicePackageInstanceEnvironmentContextSPtr & packageEnvironmentContext)
+        _Out_ ServicePackageInstanceEnvironmentContextSPtr & packageEnvironmentContext)
     {
         auto thisPtr = AsyncOperation::End<SetupServicePackageInstanceAsyncOperation>(operation);
-        if (thisPtr->Error.IsSuccess())
-        {
-            packageEnvironmentContext = move(thisPtr->packageInstanceEnvironmentContext);
-        }
+
+        packageEnvironmentContext = move(thisPtr->packageInstanceEnvironmentContext);
 
         return thisPtr->Error;
     }
@@ -961,14 +964,23 @@ protected:
         SetupEnvironment(thisSPtr);
     }
 
+#if defined(PLATFORM_UNIX)
+    bool ContainerGroupIsolated()
+    {
+        ContainerIsolationMode::Enum isolationMode = ContainerIsolationMode::process;
+        ContainerIsolationMode::FromString(this->servicePackageDescription_.ContainerPolicyDescription.Isolation, isolationMode);
+        return (isolationMode == ContainerIsolationMode::hyperv);
+    }
+#endif
+
 private:
     void SetupEnvironment(AsyncOperationSPtr const & thisSPtr)
     {
-        WriteNoise(
+        WriteInfo(
             TraceEnvironmentManager,
             owner_.Root.TraceId,
             "SetupServicePackage: Id={0}, RunAsPolicyEnabled={1}, EndpointProviderEnabled={2}",
-            servicePackageInstanceId_,
+            servicePackageEnvironmentId_,
             HostingConfig::GetConfig().RunAsPolicyEnabled,
             HostingConfig::GetConfig().EndpointProviderEnabled);
 
@@ -979,6 +991,15 @@ private:
     {
         vector<wstring> codePackages;
         int containerCount = 0;
+#if defined(PLATFORM_UNIX)
+        bool isolated = servicePackageDescription_.ContainerPolicyDescription.Isolation
+                           == ContainerIsolationMode::EnumToString(ContainerIsolationMode::hyperv);
+        WriteNoise(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "SetupServicePackage: Id={0}, Isolation={1}",
+                servicePackageEnvironmentId_, servicePackageDescription_.ContainerPolicyDescription.Isolation);
+#endif
         for (auto it = servicePackageDescription_.DigestedCodePackages.begin(); it != servicePackageDescription_.DigestedCodePackages.end(); ++it)
         {
             if (it->CodePackage.EntryPoint.EntryPointType == EntryPointType::ContainerHost)
@@ -987,27 +1008,27 @@ private:
             }
             if (it->ContainerPolicies.NetworkConfig.Type == NetworkType::Enum::Open)
             {
-#if defined(PLATFORM_UNIX)
-                if (codePackages.empty())
-                {
-                    codePackages.push_back(it->Name);
-                }
-#else
-                codePackages.push_back(it->Name);
-#endif
+                codePackagesWithOpenNetwork_.push_back(it->Name);
             }
         }
 
 #if defined(PLATFORM_UNIX)
-        if (containerCount > 1) 
+        if (containerCount > 1 || ContainerGroupIsolated())
         {
             setupContainerGroup_ = true;
         }
 #endif
-        if (codePackages.empty())
+        if (codePackagesWithOpenNetwork_.empty())
         {
             if (setupContainerGroup_)
             {
+#if defined(PLATFORM_UNIX)
+                if (ContainerGroupIsolated())
+                {
+                    SetupEndpoints(thisSPtr);
+                    return;
+                }
+#endif
                 SetupContainerGroup(thisSPtr, L"");
             }
             else
@@ -1017,15 +1038,25 @@ private:
         }
         else
         {
-            BeginAssignIpAddress(thisSPtr, codePackages);
+            BeginAssignIpAddress(thisSPtr);
         }
     }
 
-    void BeginAssignIpAddress(AsyncOperationSPtr const & thisSPtr, vector<wstring> const & codePackages)
+    void BeginAssignIpAddress(AsyncOperationSPtr const & thisSPtr)
     {
+        WriteInfo(
+            TraceEnvironmentManager,
+            owner_.Root.TraceId,
+            "{0}: Start BeginAssignIpAddress.",
+            servicePackageEnvironmentId_);
+
         auto operation = owner_.Hosting.FabricActivatorClientObj->BeginAssignIpAddresses(
             this->servicePackageInstanceId_.ToString(),
-            codePackages,
+#if defined(PLATFORM_UNIX)
+            {codePackagesWithOpenNetwork_.front()},  //In linux, for container grouping assign Ip's to the container group.
+#else
+            codePackagesWithOpenNetwork_,
+#endif
             false,
             timeoutHelper_.GetRemainingTime(),
             [this](AsyncOperationSPtr const & operation)
@@ -1044,8 +1075,16 @@ private:
         }
         vector<wstring> assignedIps;
         auto error = owner_.Hosting.FabricActivatorClientObj->EndAssignIpAddresses(operation, assignedIps);
+
         if (!error.IsSuccess())
         {
+            WriteWarning(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: End BeginAssignIpAddress. Error {1}",
+                servicePackageEnvironmentId_,
+                error);
+
             lastError_.Overwrite(error);
             CleanupOnError(operation->Parent, lastError_);
             return;
@@ -1063,9 +1102,17 @@ private:
             WriteNoise(
                 TraceEnvironmentManager,
                 owner_.Root.TraceId,
-                "Group assigned Ip: Id={0}, Ip = {2}",
-                servicePackageInstanceId_,
+                "Group assigned Ip: Id={0}, Ip = {1}",
+                servicePackageEnvironmentId_,
                 groupIp);
+#if defined(PLATFORM_UNIX)
+            if (ContainerGroupIsolated())
+            {
+                SetupEndpoints(operation->Parent);
+                return;
+            }
+#endif
+
             SetupContainerGroup(operation->Parent, groupIp);
         }
         else
@@ -1078,13 +1125,62 @@ private:
         AsyncOperationSPtr const & thisSPtr,
         wstring const & assignedIp)
     {
+        WriteInfo(
+            TraceEnvironmentManager,
+            owner_.Root.TraceId,
+            "{0}: Start SetupContainerGroup.",
+            servicePackageEnvironmentId_);
+
+#if defined(PLATFORM_UNIX)
+        std::vector<PodPortMapping> portMappings;
+        if (ContainerGroupIsolated())
+        {
+            for (auto pb : this->servicePackageDescription_.ContainerPolicyDescription.PortBindings)
+            {
+                if (this->servicePackageDescription_.DigestedResources.DigestedEndpoints.find(pb.EndpointResourceRef)
+                    != this->servicePackageDescription_.DigestedResources.DigestedEndpoints.end())
+                {
+                    EndpointDescription const &ep = this->servicePackageDescription_.DigestedResources.DigestedEndpoints.at(pb.EndpointResourceRef).Endpoint;
+                    int port = ep.Port;
+                    if (port == 0)
+                    {
+                        for (auto iep : packageInstanceEnvironmentContext->Endpoints)
+                        {
+                            if (iep->Name == ep.Name)
+                            {
+                                port = iep->Port; break;
+                            }
+                        }
+                    }
+                    portMappings.emplace_back(
+                            owner_.Hosting.FabricNodeConfigObj.IPAddressOrFQDN,
+                            ep.Protocol == ProtocolType::Udp ? PodPortMapping::UDP : PodPortMapping::TCP,
+                            pb.ContainerPort,
+                            port);
+                }
+            }
+        }
+
+        packageInstanceEnvironmentContext->SetContainerGroupIsolatedFlag(ContainerGroupIsolated());
+
+        ContainerPodDescription podDescription(
+                this->servicePackageDescription_.ContainerPolicyDescription.Hostname,
+                ContainerGroupIsolated()? ContainerIsolationMode::hyperv : ContainerIsolationMode::process,
+                portMappings);
+#endif
         packageInstanceEnvironmentContext->SetContainerGroupSetupFlag(true);
         auto op = owner_.Hosting.FabricActivatorClientObj->BeginSetupContainerGroup(
             this->servicePackageInstanceId_.ToString(),
             assignedIp,
-            owner_.Hosting.RunLayout.GetApplicationFolder(appEnvironmentContext_->ApplicationId.ToString()),
+            runLayout_.GetApplicationFolder(appEnvironmentContext_->ApplicationId.ToString()),
             StringUtility::ToWString(appEnvironmentContext_->ApplicationId.ApplicationNumber),
+            this->applicationName_,
+            this->servicePackageInstanceId_.ActivationContext.ToString(),
+            this->servicePackageInstanceId_.PublicActivationId,
             this->servicePackageDescription_.ResourceGovernanceDescription,
+#if defined(PLATFORM_UNIX)
+            podDescription,
+#endif
             false,
             timeoutHelper_.GetRemainingTime(),
             [this](AsyncOperationSPtr const & op)
@@ -1105,6 +1201,13 @@ private:
         auto error = owner_.Hosting.FabricActivatorClientObj->EndSetupContainerGroup(operation, containerName);
         if (!error.IsSuccess())
         {
+            WriteWarning(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: End SetupContainerGroup. Error{1}",
+                servicePackageEnvironmentId_,
+                error);
+
             TryComplete(operation->Parent, error);
             return;
         }
@@ -1114,7 +1217,14 @@ private:
             owner_.Root.TraceId,
             "Container group with container name {0} set for service instance {1}",
             containerName,
-            this->servicePackageInstanceId_);
+            servicePackageEnvironmentId_);
+#if defined(PLATFORM_UNIX)
+        if (ContainerGroupIsolated())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+#endif
         SetupEndpoints(operation->Parent);
     }
 
@@ -1182,14 +1292,25 @@ private:
 
                 if (endpointIter->second.Endpoint.ExplicitPortSpecified)
                 {
+                    //If the codePackageRef is an OpenNetwork the we don't need to add firewall rules. Open network by default has firewall enabled.
+                    bool isOpenNetworkConfigured = false;
+                    wstring codePackageRef = endpointResource->EndpointDescriptionObj.CodePackageRef;
+                    if (!codePackageRef.empty()
+                        && (std::find(codePackagesWithOpenNetwork_.begin(), codePackagesWithOpenNetwork_.end(), codePackageRef) != codePackagesWithOpenNetwork_.end()))
+                    {
+                        isOpenNetworkConfigured = true;
+                    }
+
                     WriteInfo(TraceEnvironmentManager,
                         owner_.Root.TraceId,
-                        "ExplicitPort specified for Endpoint '{0}' Port {1}. ServicePackageInstanceId={2}",
+                        "ExplicitPort specified for Endpoint '{0}' Port {1}. ServicePackageInstanceId={2} OpenNetwork={3} CodePackageRef={4}",
                         endpointIter->second.Endpoint.Name,
                         endpointIter->second.Endpoint.Port,
-                        servicePackageInstanceId_);
+                        servicePackageEnvironmentId_,
+                        isOpenNetworkConfigured,
+                        codePackageRef);
 
-                    if (HostingConfig::GetConfig().FirewallPolicyEnabled)
+                    if (HostingConfig::GetConfig().FirewallPolicyEnabled && !isOpenNetworkConfigured)
                     {
                         firewallPortsToOpen_.push_back(endpointIter->second.Endpoint.Port);
                     }
@@ -1241,7 +1362,7 @@ private:
                     TraceEnvironmentManager,
                     owner_.Root.TraceId,
                     "EndpointProvider is not enabled on this node, however the ServicePackage {0} contains {1} endpoints.",
-                    servicePackageInstanceId_,
+                    servicePackageEnvironmentId_,
                     servicePackageDescription_.DigestedResources.DigestedEndpoints.size());
                 auto error = ErrorCode(ErrorCodeValue::EndpointProviderNotEnabled);
                 error.ReadValue();
@@ -1262,6 +1383,12 @@ private:
 
     void SetupEndpointSecurity(AsyncOperationSPtr thisSPtr)
     {
+        WriteInfo(
+            TraceEnvironmentManager,
+            owner_.Root.TraceId,
+            "Start ConfigureEndpointSecurity for servicepackage {0}",
+            servicePackageEnvironmentId_);
+
         endpointsAclCount_.store(endpointsWithACL_.size());
         EnvironmentResource::ResourceAccess resourceAccess;
         for(auto iter = endpointsWithACL_.begin(); iter != endpointsWithACL_.end(); ++iter)
@@ -1322,6 +1449,14 @@ private:
     {
         if (pendingOperationCount == 0)
         {
+            WriteTrace(
+                lastError_.ToLogLevel(),
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: End ConfigureEndpointSecurity. lastError {1}",
+                servicePackageEnvironmentId_,
+                lastError_);
+
             for (auto & endpoint : endpointsWithACL_)
             {
                 //Donot add the endpoint if it is empty because it failed the SetupSecurity.
@@ -1329,7 +1464,7 @@ private:
                 {
                     AddEndpointResource(endpoint);
                 }
-                
+
             }
             if(!lastError_.IsSuccess())
             {
@@ -1349,12 +1484,9 @@ private:
 
     void ConfigureEndpointBindingAndFirewallPolicy(AsyncOperationSPtr const & thisSPtr)
     {
-        bool enableFirewallPolicy = false;
-
-        if (HostingConfig::GetConfig().FirewallPolicyEnabled &&
-            !firewallPortsToOpen_.empty())
+        if (!firewallPortsToOpen_.empty())
         {
-            enableFirewallPolicy = true;
+            packageInstanceEnvironmentContext->FirewallPorts = firewallPortsToOpen_;
         }
 
         vector<EndpointCertificateBinding> endpointCertBindings;
@@ -1363,14 +1495,20 @@ private:
             servicePackageDescription_.DigestedResources.DigestedCertificates,
             endpointCertBindings);
 
-        if (!endpointCertBindings.empty() || enableFirewallPolicy)
+        if (!endpointCertBindings.empty() || !packageInstanceEnvironmentContext->FirewallPorts.empty())
         {
+            WriteInfo(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: Start ConfigureEndpointBindingAndFirewallPolicy",
+                servicePackageEnvironmentId_);
+
             auto operation = owner_.Hosting.FabricActivatorClientObj->BeginConfigureEndpointCertificateAndFirewallPolicy(
                 EnvironmentManager::GetServicePackageIdentifier(servicePackageInstanceId_.ToString(), instanceId_),
                 endpointCertBindings,
                 false,
                 false,
-                firewallPortsToOpen_,
+                packageInstanceEnvironmentContext->FirewallPorts,
                 timeoutHelper_.GetRemainingTime(),
                 [this](AsyncOperationSPtr const & operation)
             {
@@ -1380,7 +1518,7 @@ private:
             this->OnBeginConfigureEndpointCertificateAndFirewallPolicy(operation, true);
         }
         else
-        { 
+        {
             SetupContainerCertificates(thisSPtr);
         }
     }
@@ -1392,12 +1530,19 @@ private:
             return;
         }
         ErrorCode error = owner_.Hosting.FabricActivatorClientObj->EndConfigureEndpointCertificateAndFirewallPolicy(operation);
+
         if (!error.IsSuccess())
         {
+            WriteWarning(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: End ConfigureEndpointBindingAndFirewallPolicy. Error {1}",
+                servicePackageEnvironmentId_,
+                error);
             CleanupOnError(operation->Parent, error);
             return;
         }
-  
+
         SetupContainerCertificates(operation->Parent);
     }
 
@@ -1416,9 +1561,9 @@ private:
 
         if (!allCertificateRef.empty())
         {
-            wstring applicationWorkFolder = owner_.hosting_.RunLayout.GetApplicationWorkFolder(servicePackageInstanceId_.ApplicationId.ToString());
+            wstring applicationWorkFolder = runLayout_.GetApplicationWorkFolder(servicePackageInstanceId_.ApplicationId.ToString());
             wstring certificateFolder = Path::Combine(applicationWorkFolder, L"Certificates_" + servicePackageDescription_.ManifestName);
-            ErrorCode error = Directory::Create2(certificateFolder); 
+            ErrorCode error = Directory::Create2(certificateFolder);
             if (!error.IsSuccess())
             {
                 WriteError(
@@ -1430,6 +1575,12 @@ private:
                 CleanupOnError(thisSPtr, error);
                 return;
             }
+
+            WriteInfo(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: Start ConfigureContainerCertificateExport.",
+                servicePackageEnvironmentId_);
 
             auto operation = owner_.Hosting.FabricActivatorClientObj->BeginConfigureContainerCertificateExport(
                 allCertificateRef,
@@ -1458,8 +1609,15 @@ private:
         map<std::wstring, std::wstring> certificatePaths;
         map<std::wstring, std::wstring> certificatePasswordPaths;
         ErrorCode error = owner_.Hosting.FabricActivatorClientObj->EndConfigureContainerCertificateExport(operation, certificatePaths, certificatePasswordPaths);
+
         if (!error.IsSuccess())
         {
+            WriteWarning(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: End ConfigureContainerCertificateExport. Error {1}",
+                servicePackageEnvironmentId_,
+                error);
             CleanupOnError(operation->Parent, error);
             return;
         }
@@ -1470,10 +1628,8 @@ private:
 
     void WriteResources(AsyncOperationSPtr const & thisSPtr)
     {
-        ImageModel::RunLayoutSpecification runLayout(owner_.Hosting.DeploymentFolder);
-
         // Write the endpoint file
-        wstring endpointFileName = runLayout.GetEndpointDescriptionsFile(
+        wstring endpointFileName = runLayout_.GetEndpointDescriptionsFile(
             servicePackageInstanceId_.ApplicationId.ToString(),
             servicePackageInstanceId_.ServicePackageName,
             servicePackageInstanceId_.PublicActivationId);
@@ -1487,9 +1643,16 @@ private:
                 owner_.Root.TraceId,
                 "EndpointDescription successfully written to file {0}, ServicePackageInstanceId={1}, NodeVersion={2}.",
                 endpointFileName,
-                servicePackageInstanceId_,
+                servicePackageEnvironmentId_,
                 owner_.Hosting.FabricNodeConfigObj.NodeVersion);
 
+#if defined(PLATFORM_UNIX)
+            if (ContainerGroupIsolated())
+            {
+                SetupContainerGroup(thisSPtr, L"");
+                return;
+            }
+#endif
             TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::Success));
             return;
         }
@@ -1500,7 +1663,7 @@ private:
                 owner_.Root.TraceId,
                 "Could not write the endpoints to file {0}, ServicePackageInstanceId={1}, NodeVersion={2}. Cleaning the ServicePackageInstanceEnvironmentContext and retrying.",
                 endpointFileName,
-                servicePackageInstanceId_,
+                servicePackageEnvironmentId_,
                 owner_.Hosting.FabricNodeConfigObj.NodeVersion);
 
             CleanupOnError(thisSPtr, ErrorCode(ErrorCodeValue::OperationFailed));
@@ -1515,16 +1678,22 @@ private:
         auto error = owner_.etwSessionProvider_->SetupServiceEtw(servicePackageDescription_, packageInstanceEnvironmentContext);
         if(!error.IsSuccess())
         {
+            WriteWarning(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: End SetupServiceEtw. Error {1}",
+                servicePackageEnvironmentId_,
+                error);
             CleanupOnError(thisSPtr, error);
             return;
         }
 #endif
         ASSERT_IFNOT(owner_.crashDumpProvider_, "Crash dump provider should exist");
-        WriteNoise(
+        WriteInfo(
             TraceEnvironmentManager,
             owner_.Root.TraceId,
-            "{0}: BeginSetupServiceCrashDumps.)",
-            servicePackageInstanceId_);
+            "{0}: Start BeginSetupServiceCrashDumps.",
+            servicePackageEnvironmentId_);
         auto operation = owner_.crashDumpProvider_->BeginSetupServiceCrashDumps(
             servicePackageDescription_,
             packageInstanceEnvironmentContext,
@@ -1542,15 +1711,14 @@ private:
         }
 
         auto error = owner_.crashDumpProvider_->EndSetupServiceCrashDumps(operation);
-        WriteTrace(
-            error.ToLogLevel(),
-            TraceEnvironmentManager,
-            owner_.Root.TraceId,
-            "{0}: EndSetupServiceCrashDumps: error {1}",
-            servicePackageInstanceId_,
-            error);
         if(!error.IsSuccess())
         {
+            WriteWarning(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: End SetupServiceCrashDumps. Error {1}",
+                servicePackageEnvironmentId_,
+                error);
             CleanupOnError(operation->Parent, error);
             return;
         }
@@ -1562,18 +1730,18 @@ private:
     {
         // Call cleanup, best effort
         lastError_.Overwrite(error);
-        WriteNoise(
+        WriteInfo(
             TraceEnvironmentManager,
             owner_.Root.TraceId,
             "{0}: Begin(Setup->BeginCleanupServicePackageEnvironment due to error {1})",
-            servicePackageInstanceId_,
+            servicePackageEnvironmentId_,
             error);
 
         auto operation = owner_.BeginCleanupServicePackageInstanceEnvironment(
             packageInstanceEnvironmentContext,
             servicePackageDescription_,
             instanceId_,
-            timeoutHelper_.GetRemainingTime(),
+            timeoutHelper_.OriginalTimeout,
             [this](AsyncOperationSPtr const & operation) { this->FinishCleanupServicePackageEnvironment(operation, false); },
             thisSPtr);
         this->FinishCleanupServicePackageEnvironment(operation, true);
@@ -1592,7 +1760,7 @@ private:
             TraceEnvironmentManager,
             owner_.Root.TraceId,
             "{0}: End(Setup->EndCleanupServicePackageEnvironment due to error {1}): error {2}",
-            servicePackageInstanceId_,
+            servicePackageEnvironmentId_,
             lastError_,
             error);
 
@@ -1657,6 +1825,7 @@ private:
     ServicePackageInstanceIdentifier const servicePackageInstanceId_;
     ServiceModel::ServicePackageDescription const servicePackageDescription_;
     int64 instanceId_;
+    std::wstring const applicationName_;
     TimeoutHelper timeoutHelper_;
     ServicePackageInstanceEnvironmentContextSPtr packageInstanceEnvironmentContext;
     bool setupContainerGroup_;
@@ -1665,6 +1834,9 @@ private:
     atomic_uint64 endpointsAclCount_;
     ErrorCode lastError_;
     vector<EndpointResourceSPtr> endpointsWithACL_;
+    ImageModel::RunLayoutSpecification runLayout_;
+    vector<wstring> codePackagesWithOpenNetwork_;
+    wstring servicePackageEnvironmentId_;
 };
 
 // ********************************************************************************************************************
@@ -1692,8 +1864,8 @@ public:
         instanceId_(instanceId),
         timeoutHelper_(timeout),
         pendingOperations_(0),
-        clearFirewallPolicy_(false),
-        lastError_(ErrorCodeValue::Success)
+        lastError_(ErrorCodeValue::Success),
+        servicePackageInstaceId_(EnvironmentManager::GetServicePackageIdentifier(packageInstanceEnvironmentContext->ServicePackageInstanceId.ToString(), instanceId_))
     {
     }
 
@@ -1711,15 +1883,19 @@ public:
 protected:
     void OnStart(AsyncOperationSPtr const & thisSPtr)
     {
+        // Note: For cleanup we use OrignalTimeout for each of the operation individually.
+        // This will give it a chance to cleanup atleast every resource if even one of them timesout.
+        // If we still fail to do a cleanup then Abort should do it.
+
         ASSERT_IFNOT(owner_.crashDumpProvider_, "Crash dump provider should exist");
-        WriteNoise(
+        WriteInfo(
             TraceEnvironmentManager,
             owner_.Root.TraceId,
-            "{0}: BeginCleanupServiceCrashDumps.)",
-            packageInstanceEnvironmentContext->ServicePackageInstanceId.ToString());
+            "{0}: Start CleanupServiceCrashDumps.",
+            servicePackageInstaceId_);
         auto operation = owner_.crashDumpProvider_->BeginCleanupServiceCrashDumps(
             packageInstanceEnvironmentContext,
-            timeoutHelper_.GetRemainingTime(),
+            timeoutHelper_.OriginalTimeout,
             [this](AsyncOperationSPtr const & operation) { this->FinishCleanupServiceCrashDumps(operation, false); },
             thisSPtr);
         this->FinishCleanupServiceCrashDumps(operation, true);
@@ -1735,15 +1911,15 @@ private:
         }
 
         auto error = owner_.crashDumpProvider_->EndCleanupServiceCrashDumps(operation);
-        WriteTrace(
-            error.ToLogLevel(),
-            TraceEnvironmentManager,
-            owner_.Root.TraceId,
-            "{0}: EndCleanupServiceCrashDumps: error {1}",
-            packageInstanceEnvironmentContext->ServicePackageInstanceId.ToString(),
-            error);
         if(!error.IsSuccess())
         {
+            WriteWarning(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: End CleanupServiceCrashDumps. Error {1}",
+                servicePackageInstaceId_,
+                error);
+
             lastError_.Overwrite(error);
         }
 
@@ -1756,14 +1932,26 @@ private:
             auto thisSPtr = operation->Parent;
             if (packageInstanceEnvironmentContext->SetupContainerGroup)
             {
+                WriteInfo(
+                    TraceEnvironmentManager,
+                    owner_.Root.TraceId,
+                    "{0}: Start SetupContainerGroup Cleanup",
+                    servicePackageInstaceId_);
+
                 auto op = owner_.Hosting.FabricActivatorClientObj->BeginSetupContainerGroup(
                     packageInstanceEnvironmentContext->ServicePackageInstanceId.ToString(),
                     wstring(),
                     wstring(),
                     wstring(),
+                    wstring(),
+                    wstring(),
+                    wstring(),
                     ServicePackageResourceGovernanceDescription(),
+#if defined(PLATFORM_UNIX)
+                    ContainerPodDescription(),
+#endif
                     true,
-                    timeoutHelper_.GetRemainingTime(),
+                    timeoutHelper_.OriginalTimeout,
                     [this](AsyncOperationSPtr const & op)
                 {
                     this->OnCleanupContainerGroupSetupCompleted(op, false);
@@ -1791,9 +1979,10 @@ private:
             WriteWarning(
                 TraceEnvironmentManager,
                 owner_.Root.TraceId,
-                "EndSetupContainerGroupCleanup:  ServicePackageId={0}, ErrorCode={1}.",
-                packageInstanceEnvironmentContext->ServicePackageInstanceId,
+                "{0}: End SetupContainerGroup Cleanup. Error {1}",
+                servicePackageInstaceId_,
                 error);
+
             lastError_.Overwrite(error);
         }
         ReleaseAssignedIPs(operation->Parent);
@@ -1803,11 +1992,17 @@ private:
     {
         if (packageInstanceEnvironmentContext->HasIpsAssigned)
         {
+            WriteInfo(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: Start AssignIpAddress Cleanup",
+                servicePackageInstaceId_);
+
             auto operation = owner_.Hosting.FabricActivatorClientObj->BeginAssignIpAddresses(
                 packageInstanceEnvironmentContext->ServicePackageInstanceId.ToString(),
                 vector<wstring>(),
                 true,
-                timeoutHelper_.GetRemainingTime(),
+                timeoutHelper_.OriginalTimeout,
                 [this](AsyncOperationSPtr const & operation)
             {
                 this->OnIPAddressesReleased(operation, false);
@@ -1829,14 +2024,16 @@ private:
         }
         vector<wstring> result;
         ErrorCode error = owner_.Hosting.FabricActivatorClientObj->EndAssignIpAddresses(operation, result);
+
         if (!error.IsSuccess())
         {
             WriteWarning(
                 TraceEnvironmentManager,
                 owner_.Root.TraceId,
-                "EndReleaseIPAddresses:  ServicePackageId={0}, ErrorCode={1}.",
-                packageInstanceEnvironmentContext->ServicePackageInstanceId,
+                "{0}: End AssignIpAddress Cleanup. Error {1}",
+                servicePackageInstaceId_,
                 error);
+
             lastError_.Overwrite(error);
         }
         CleanupEndpointSecurity(operation->Parent);
@@ -1881,15 +2078,11 @@ private:
                             TraceEnvironmentManager,
                             owner_.Root.TraceId,
                             "RemoveEndpoint failed. ServicePackageId={0}, Endpoint={1}, ErrorCode={2}. Continuing to remove other endpoints.",
-                            packageInstanceEnvironmentContext->ServicePackageInstanceId,
+                            servicePackageInstaceId_,
                             (*iter)->Name,
                             error);
                         lastError_.Overwrite(error);
                     }
-                }
-                if (endpointResource->EndpointDescriptionObj.ExplicitPortSpecified)
-                {
-                    clearFirewallPolicy_ = true;
                 }
             }
         }
@@ -1913,6 +2106,14 @@ private:
             SecurityPrincipalInformationSPtr principalInfo;
             auto error = EndpointProvider::GetPrincipal(endpointResource, principalInfo);
             ASSERT_IFNOT(error.IsSuccess(), "EndpointProvider::GetPrincipal returned error {0}", error);
+
+            WriteInfo(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: Start ConfigureEndpointSecurity Cleanup. Endpoint Name:{1}, Port: {2}",
+                servicePackageInstaceId_,
+                endpointResource->Name,
+                endpointResource->Port);
 
             auto operation = owner_.hosting_.FabricActivatorClientObj->BeginConfigureEndpointSecurity(
                 principalInfo->SidString,
@@ -1948,9 +2149,10 @@ private:
             WriteWarning(
                 TraceEnvironmentManager,
                 owner_.Root.TraceId,
-                "EndConfigureEndpointSecurity:  ServicePackageId={0}, Endpoint={1}, ErrorCode={2}.",
-                packageInstanceEnvironmentContext->ServicePackageInstanceId,
+                "{0}: End ConfigureEndpointSecurity Cleanup: EndpointName={1} Port={2}, ErrorCode={3}.",
+                servicePackageInstaceId_,
                 endpointResource->Name,
+                endpointResource->Port,
                 error);
             lastError_.Overwrite(error);
         }
@@ -1986,14 +2188,6 @@ private:
 
     void ConfigureEndpointBindingAndFirewallPolicyPolicy(AsyncOperationSPtr const & thisSPtr)
     {
-        bool cleanupFirewallPolicy = false;
-
-        if (HostingConfig::GetConfig().FirewallPolicyEnabled &&
-            clearFirewallPolicy_)
-        {
-            cleanupFirewallPolicy = true;
-        }
-
         vector<EndpointCertificateBinding> endpointCertBindings;
         auto error = owner_.GetEndpointBindingPolicies(packageInstanceEnvironmentContext->Endpoints, servicePackageDescription_.DigestedResources.DigestedCertificates, endpointCertBindings);
         if (!error.IsSuccess())
@@ -2003,21 +2197,37 @@ private:
                 owner_.Root.TraceId,
                 "Error getting EndpointBindingPolicies {0}",
                 error);
+            lastError_.Overwrite(error);
         }
 
-        auto operation = owner_.Hosting.FabricActivatorClientObj->BeginConfigureEndpointCertificateAndFirewallPolicy(
-            EnvironmentManager::GetServicePackageIdentifier(packageInstanceEnvironmentContext->ServicePackageInstanceId.ToString(), instanceId_),
-            endpointCertBindings,
-            true,
-            cleanupFirewallPolicy,
-            vector<LONG>(),
-            timeoutHelper_.GetRemainingTime(),
-            [this](AsyncOperationSPtr const & operation)
-         {
-            this->OnConfigureEndpointBindingsAndFirewallPolicyCompleted(operation, false);
-         },
-            thisSPtr);
-         this->OnConfigureEndpointBindingsAndFirewallPolicyCompleted(operation, true);
+        if (!endpointCertBindings.empty() || !packageInstanceEnvironmentContext->FirewallPorts.empty())
+        {
+            WriteInfo(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: Start ConfigureEndpointCertificateAndFirewallPolicy Cleanup. CleanupFirewallPolicy {1}, CleanupEndpointCertificate {2}",
+                servicePackageInstaceId_,
+                !packageInstanceEnvironmentContext->FirewallPorts.empty(),
+                !endpointCertBindings.empty());
+
+            auto operation = owner_.Hosting.FabricActivatorClientObj->BeginConfigureEndpointCertificateAndFirewallPolicy(
+                EnvironmentManager::GetServicePackageIdentifier(packageInstanceEnvironmentContext->ServicePackageInstanceId.ToString(), instanceId_),
+                endpointCertBindings,
+                true,
+                true,
+                packageInstanceEnvironmentContext->FirewallPorts,
+                timeoutHelper_.OriginalTimeout,
+                [this](AsyncOperationSPtr const & operation)
+            {
+                this->OnConfigureEndpointBindingsAndFirewallPolicyCompleted(operation, false);
+            },
+                thisSPtr);
+            this->OnConfigureEndpointBindingsAndFirewallPolicyCompleted(operation, true);
+        }
+        else
+        {
+            CleanupContainerCertificates(thisSPtr);
+        }
     }
 
     void OnConfigureEndpointBindingsAndFirewallPolicyCompleted(AsyncOperationSPtr operation, bool expectedCompletedSynchronously)
@@ -2032,10 +2242,15 @@ private:
             WriteWarning(
                 TraceEnvironmentManager,
                 owner_.Root.TraceId,
-                "EndConfigureEndpointBinding:  ServicePackageInstanceId={0} ErrorCode={1}.",
-                packageInstanceEnvironmentContext->ServicePackageInstanceId,
+                "{0}: End ConfigureEndpointCertificateAndFirewallPolicy cleanup. ErrorCode={1}.",
+                servicePackageInstaceId_,
                 error);
             lastError_.Overwrite(error);
+        }
+        else
+        {
+            // This is an optimization and needed because the firewall rule API's are slow.
+            packageInstanceEnvironmentContext->FirewallPorts = vector<LONG>();
         }
 
         CleanupContainerCertificates(operation->Parent);
@@ -2087,10 +2302,16 @@ private:
     {
         if (!packageInstanceEnvironmentContext->CertificatePaths.empty())
         {
+            WriteInfo(
+                TraceEnvironmentManager,
+                owner_.Root.TraceId,
+                "{0}: Start CleanupContainerCertificateExport Cleanup.",
+                servicePackageInstaceId_);
+
             auto operation = owner_.Hosting.FabricActivatorClientObj->BeginCleanupContainerCertificateExport(
                 packageInstanceEnvironmentContext->CertificatePaths,
                 packageInstanceEnvironmentContext->CertificatePasswordPaths,
-                timeoutHelper_.GetRemainingTime(),
+                timeoutHelper_.OriginalTimeout,
                 [this](AsyncOperationSPtr const & operation)
             {
                 this->OnCleanupContainerCertificateExportCompleted(operation, false);
@@ -2116,8 +2337,8 @@ private:
             WriteWarning(
                 TraceEnvironmentManager,
                 owner_.Root.TraceId,
-                "CleanupContainerCertificateExport:  ServicePackageInstanceId={0} ErrorCode={1}.",
-                packageInstanceEnvironmentContext->ServicePackageInstanceId,
+                "{0}: CleanupContainerCertificateExport cleanup. ErrorCode={1}.",
+                servicePackageInstaceId_,
                 error);
             lastError_.Overwrite(error);
         }
@@ -2131,9 +2352,9 @@ private:
     TimeoutHelper timeoutHelper_;
     ErrorCode lastError_;
     atomic_uint64 pendingOperations_;
-    bool clearFirewallPolicy_;
     ServiceModel::ServicePackageDescription servicePackageDescription_;
     int64 instanceId_;
+    wstring servicePackageInstaceId_;
 };
 
 EnvironmentManager::EnvironmentManager(
@@ -2312,6 +2533,7 @@ AsyncOperationSPtr EnvironmentManager::BeginSetupServicePackageInstanceEnvironme
     ServicePackageInstanceIdentifier const & servicePackageInstanceId,
     int64 instanceId,
     ServiceModel::ServicePackageDescription const & servicePackageDescription,
+    std::wstring const & applicationName,
     TimeSpan const timeout,
     AsyncCallback const & callback,
     AsyncOperationSPtr const & parent)
@@ -2322,6 +2544,7 @@ AsyncOperationSPtr EnvironmentManager::BeginSetupServicePackageInstanceEnvironme
         servicePackageInstanceId,
         move(servicePackageDescription),
         instanceId,
+        applicationName,
         timeout,
         callback,
         parent);
@@ -2329,7 +2552,7 @@ AsyncOperationSPtr EnvironmentManager::BeginSetupServicePackageInstanceEnvironme
 
 ErrorCode EnvironmentManager::EndSetupServicePackageInstanceEnvironment(
     AsyncOperationSPtr const & asyncOperation,
-    __out ServicePackageInstanceEnvironmentContextSPtr & packageEnvironmentContext)
+    _Out_ ServicePackageInstanceEnvironmentContextSPtr & packageEnvironmentContext)
 {
     return SetupServicePackageInstanceAsyncOperation::End(asyncOperation, packageEnvironmentContext);
 }
@@ -2378,19 +2601,19 @@ void EnvironmentManager::AbortServicePackageInstanceEnvironment(
 ErrorCode EnvironmentManager::CleanupServicePackageInstanceEnvironment(
     ServicePackageInstanceEnvironmentContextSPtr const & packageEnvironmentContext,
     ServicePackageDescription const & packageDescription,
-    int64)
+    int64 instanceId)
 {
     if (!packageEnvironmentContext)
     {
         return ErrorCode(ErrorCodeValue::Success);
     }
 
+    auto servicePackageInstanceId = EnvironmentManager::GetServicePackageIdentifier(packageEnvironmentContext->ServicePackageInstanceId.ToString(), instanceId);
+
     ErrorCode lastError(ErrorCodeValue::Success);
     if (HostingConfig::GetConfig().EndpointProviderEnabled)
     {
         ASSERT_IFNOT(endpointProvider_, "Endpoint provider must not be null as EndpointFiltering is enabled");
-
-        bool cleanupFirewallPolicy = false;
 
         for(auto iter = packageEnvironmentContext->Endpoints.begin();
             iter != packageEnvironmentContext->Endpoints.end();
@@ -2408,7 +2631,7 @@ ErrorCode EnvironmentManager::CleanupServicePackageInstanceEnvironment(
                         endpointResource->Port,
                         endpointResource->Protocol == ServiceModel::ProtocolType::Enum::Https,
                         true,
-                        packageEnvironmentContext->ServicePackageInstanceId.ToString(),
+                        servicePackageInstanceId,
                         endpointResource->EndpointDescriptionObj.ExplicitPortSpecified);
 
                     if (!error.IsSuccess())
@@ -2419,12 +2642,8 @@ ErrorCode EnvironmentManager::CleanupServicePackageInstanceEnvironment(
                             "Remove EndpointSecurity failed. Endpoint={0}, ErrorCode={1}. Continuing to remove other endpoints.",
                             endpointResource->Name,
                             error);
-                    }             
-                }
-
-                if (endpointResource->EndpointDescriptionObj.ExplicitPortSpecified && HostingConfig::GetConfig().FirewallPolicyEnabled)
-                {
-                    cleanupFirewallPolicy = true;
+                        lastError.Overwrite(error);
+                    }
                 }
             }
             else
@@ -2443,7 +2662,7 @@ ErrorCode EnvironmentManager::CleanupServicePackageInstanceEnvironment(
                     TraceEnvironmentManager,
                     Root.TraceId,
                     "RemoveEndpoint failed. ServicePackageInstanceId={0}, Endpoint={1}, ErrorCode={2}. Continuing to remove other endpoints.",
-                    packageEnvironmentContext->ServicePackageInstanceId,
+                    servicePackageInstanceId,
                     (*iter)->Name,
                     error);
                 lastError.Overwrite(error);
@@ -2458,49 +2677,55 @@ ErrorCode EnvironmentManager::CleanupServicePackageInstanceEnvironment(
                 Root.TraceId,
                 "Error getting EndpointBindingPolicies {0}",
                 error);
+            lastError.Overwrite(error);
         }
 
-        if (!endpointCertBindings.empty() || cleanupFirewallPolicy)
+        if (!endpointCertBindings.empty() || !packageEnvironmentContext->FirewallPorts.empty())
         {
             error = Hosting.FabricActivatorClientObj->ConfigureEndpointBindingAndFirewallPolicy(
-                packageEnvironmentContext->ServicePackageInstanceId.ToString(),
+                servicePackageInstanceId,
                 endpointCertBindings,
                 true,
-                cleanupFirewallPolicy,
-                vector<LONG>());
+                true,
+                packageEnvironmentContext->FirewallPorts);
 
             if (!error.IsSuccess())
             {
                 WriteWarning(
                     TraceEnvironmentManager,
                     Root.TraceId,
-                    "Error in ConfigureEndpointBindingAndFirewallPolicy {0}",
+                    "{0}: Error in ConfigureEndpointBindingAndFirewallPolicy during Abort. Error {1}",
+                    servicePackageInstanceId,
                     error);
+                lastError.Overwrite(error);
             }
         }
-        if (packageEnvironmentContext->SetupContainerGroup)
+    }
+
+    if (packageEnvironmentContext->SetupContainerGroup)
+    {
+        Hosting.FabricActivatorClientObj->AbortProcess(packageEnvironmentContext->ServicePackageInstanceId.ToString());
+    }
+    if (packageEnvironmentContext->HasIpsAssigned)
+    {
+        auto error = Hosting.FabricActivatorClientObj->CleanupAssignedIPs(packageEnvironmentContext->ServicePackageInstanceId.ToString());
+        if (!error.IsSuccess())
         {
-           Hosting.FabricActivatorClientObj->AbortProcess(packageEnvironmentContext->ServicePackageInstanceId.ToString());
-        }
-        if (packageEnvironmentContext->HasIpsAssigned)
-        {
-            error = Hosting.FabricActivatorClientObj->CleanupAssignedIPs(packageEnvironmentContext->ServicePackageInstanceId.ToString());
-            if (!error.IsSuccess())
-            {
-                WriteWarning(
-                    TraceEnvironmentManager,
-                    Root.TraceId,
-                    "Error in CleanupAssignedIps {0}",
-                    error);
-            }
-        }
-        else
-        {
-            WriteNoise(TraceEnvironmentManager,
+            WriteWarning(
+                TraceEnvironmentManager,
                 Root.TraceId,
-                "No assigned IPs for {0}",
-                packageEnvironmentContext->ServicePackageInstanceId.ToString());
+                "{0}: Error in CleanupAssignedIps {1}",
+                servicePackageInstanceId,
+                error);
+            lastError.Overwrite(error);
         }
+    }
+    else
+    {
+        WriteNoise(TraceEnvironmentManager,
+            Root.TraceId,
+            "No assigned IPs for {0}",
+            servicePackageInstanceId);
     }
 
 #if !defined(PLATFORM_UNIX)

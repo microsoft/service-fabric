@@ -69,6 +69,7 @@ namespace HttpServer
         virtual Common::ErrorCode GetClientToken(__out HANDLE &hToken) const = 0;
 
         virtual Common::AsyncOperationSPtr BeginGetClientCertificate(
+            __in Common::TimeSpan const& timeout,
             __in Common::AsyncCallback const& callback,
             __in Common::AsyncOperationSPtr const& parent) const = 0;
 
@@ -176,6 +177,7 @@ namespace HttpServer
         virtual Common::ErrorCode GetClientToken(__out HANDLE &hToken) const = 0;
 
         virtual Common::AsyncOperationSPtr BeginGetClientCertificate(
+			__in Common::TimeSpan const& timeout,
             __in Common::AsyncCallback const& callback,
             __in Common::AsyncOperationSPtr const& parent) const = 0;
 

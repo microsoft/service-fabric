@@ -31,29 +31,6 @@ PartitionHealthQueryDescription::PartitionHealthQueryDescription(
 {
 }
 
-PartitionHealthQueryDescription::PartitionHealthQueryDescription(PartitionHealthQueryDescription && other)
-    : partitionId_(move(other.partitionId_))
-    , healthPolicy_(move(other.healthPolicy_))
-    , eventsFilter_(move(other.eventsFilter_))
-    , replicasFilter_(move(other.replicasFilter_))
-    , healthStatsFilter_(move(other.healthStatsFilter_))
-{
-}
-
-PartitionHealthQueryDescription & PartitionHealthQueryDescription::operator =(PartitionHealthQueryDescription && other)
-{
-    if (this != &other)
-    {
-        partitionId_ = move(other.partitionId_);
-        healthPolicy_ = move(other.healthPolicy_);
-        eventsFilter_ = move(other.eventsFilter_);
-        replicasFilter_ = move(other.replicasFilter_);
-        healthStatsFilter_ = move(other.healthStatsFilter_);
-    }
-
-    return *this;
-}
-
 PartitionHealthQueryDescription::~PartitionHealthQueryDescription()
 {
 }

@@ -518,11 +518,20 @@ VOID PeriodicTimerCloseRaceTest(
     KGuid& diskId
     );
 
+VOID DiscontiguousRecordsRecoveryTest(
+    KGuid& diskId
+    );
+   
 VOID WriteStuckConditionsTest(
     KGuid& diskId
     );
 
 VOID FlushAllRecordsForCloseWaitTest(
+    KGuid& diskId
+    );
+
+VOID VerifyCopyFromSharedToBackupTest(
+    UCHAR DriveLetter,
     KGuid& diskId
     );
 
@@ -550,6 +559,10 @@ VOID ReadFromCoalesceBuffersTruncateTailTest(
     KGuid& diskId
     );
 
+VOID VerifySharedLogUsageThrottlingTest(
+    KGuid& diskId
+    );
+
 VOID DestagedWriteTest(
     KGuid& diskId
     );
@@ -563,12 +576,14 @@ VOID CoalescedWrite2Test(
 
 VOID SetupOverlayLogTests(
     KGuid& DiskId,
+    UCHAR& driveLetter,
     ULONGLONG& StartingAllocs,
     KtlSystem*& System
     );
 
 VOID CleanupOverlayLogTests(
     KGuid& DiskId,
+    UCHAR& driveLetter,
     ULONGLONG& StartingAllocs,
     KtlSystem*& System
     );
@@ -601,6 +616,14 @@ VOID DeleteRecordsTest(
     );
 
 VOID StreamCheckpointAtEndOfLogTest(
+    KGuid DiskId
+    );
+
+VOID DuplicateRecordInLogTest(
+    KGuid DiskId
+    );
+
+VOID CorruptedRecordTest(
     KGuid DiskId
     );
 
@@ -664,4 +687,13 @@ VerifyRawRecordCallback(
     __in_bcount(MetaDataBufferSize) UCHAR const *const MetaDataBuffer,
     __in ULONG MetaDataBufferSize,
     __in const KIoBuffer::SPtr& IoBuffer
+);
+
+VOID
+CreateStreamAndContainerPathnames(
+    __in UCHAR DriveLetter,
+    __out KString::SPtr& containerFullPathName,
+    __out KtlLogContainerId& LogContainerId,
+    __out KString::SPtr& streamFullPathName,
+    __out KtlLogStreamId& LogStreamId
 );

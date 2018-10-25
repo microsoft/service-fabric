@@ -92,47 +92,6 @@ FabricClientSettings::~FabricClientSettings()
 {
 }
 
-FabricClientSettings::FabricClientSettings(
-    FabricClientSettings && other)
-    : clientFriendlyName_(move(other.clientFriendlyName_))
-    , partitionLocationCacheLimit_(move(other.partitionLocationCacheLimit_))
-    , serviceChangePollIntervalInSeconds_(move(other.serviceChangePollIntervalInSeconds_))
-    , connectionInitializationTimeoutInSeconds_(move(other.connectionInitializationTimeoutInSeconds_))
-    , keepAliveIntervalInSeconds_(move(other.keepAliveIntervalInSeconds_))
-    , healthOperationTimeoutInSeconds_(move(other.healthOperationTimeoutInSeconds_))
-    , healthReportSendIntervalInSeconds_(move(other.healthReportSendIntervalInSeconds_))
-    , healthReportRetrySendIntervalInSeconds_(move(other.healthReportRetrySendIntervalInSeconds_))
-    , partitionLocationCacheBucketCount_(move(other.partitionLocationCacheBucketCount_))
-    , notificationGatewayConnectionTimeoutInSeconds_(move(other.notificationGatewayConnectionTimeoutInSeconds_))
-    , notificationCacheUpdateTimeoutInSeconds_(move(other.notificationCacheUpdateTimeoutInSeconds_))
-    , authTokenBufferSize_(move(other.authTokenBufferSize_))
-    , connectionIdleTimeoutInSeconds_(move(other.connectionIdleTimeoutInSeconds_))
-{
-}
-
-FabricClientSettings & FabricClientSettings::operator =(
-    FabricClientSettings && other)
-{
-    if (this != &other)
-    {
-        clientFriendlyName_ = move(other.clientFriendlyName_);
-        partitionLocationCacheLimit_ = move(other.partitionLocationCacheLimit_);
-        serviceChangePollIntervalInSeconds_ = move(other.serviceChangePollIntervalInSeconds_);
-        connectionInitializationTimeoutInSeconds_ = move(other.connectionInitializationTimeoutInSeconds_);
-        keepAliveIntervalInSeconds_ = move(other.keepAliveIntervalInSeconds_);
-        healthOperationTimeoutInSeconds_ = move(other.healthOperationTimeoutInSeconds_);
-        healthReportSendIntervalInSeconds_ = move(other.healthReportSendIntervalInSeconds_);
-        healthReportRetrySendIntervalInSeconds_ = move(other.healthReportRetrySendIntervalInSeconds_);
-        partitionLocationCacheBucketCount_ = move(other.partitionLocationCacheBucketCount_);
-        notificationGatewayConnectionTimeoutInSeconds_ = move(other.notificationGatewayConnectionTimeoutInSeconds_);
-        notificationCacheUpdateTimeoutInSeconds_ = move(other.notificationCacheUpdateTimeoutInSeconds_);
-        authTokenBufferSize_ = move(other.authTokenBufferSize_);
-        connectionIdleTimeoutInSeconds_ = move(other.connectionIdleTimeoutInSeconds_);
-    }
-
-    return *this;
-}
-
 ErrorCode FabricClientSettings::FromPublicApi(
     FABRIC_CLIENT_SETTINGS const & settings)
 {
@@ -253,6 +212,7 @@ ErrorCode FabricClientSettings::FromPublicApi(
 
                     }
                     connectionIdleTimeoutInSeconds_ = 0;
+
                 }
             }
         }
@@ -304,4 +264,5 @@ void FabricClientSettings::ToPublicApi(
     ex4->ConnectionIdleTimeoutInSeconds = connectionIdleTimeoutInSeconds_;
 
     ex3->Reserved = ex4.GetRawPointer();
+
 }

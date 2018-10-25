@@ -18,11 +18,11 @@ namespace ServiceModel
             BYTE maxPercentDeltaUnhealthyNodes,
             BYTE maxPercentUpgradeDomainDeltaUnhealthyNodes);
 
-        ClusterUpgradeHealthPolicy(ClusterUpgradeHealthPolicy const & other);
-        ClusterUpgradeHealthPolicy & operator = (ClusterUpgradeHealthPolicy const & other);
+        ClusterUpgradeHealthPolicy(ClusterUpgradeHealthPolicy const & other) = default;
+        ClusterUpgradeHealthPolicy & operator = (ClusterUpgradeHealthPolicy const & other) = default;
 
-        ClusterUpgradeHealthPolicy(ClusterUpgradeHealthPolicy && other);
-        ClusterUpgradeHealthPolicy & operator = (ClusterUpgradeHealthPolicy && other);
+        ClusterUpgradeHealthPolicy(ClusterUpgradeHealthPolicy && other) = default;
+        ClusterUpgradeHealthPolicy & operator = (ClusterUpgradeHealthPolicy && other) = default;
 
         virtual ~ClusterUpgradeHealthPolicy();
 

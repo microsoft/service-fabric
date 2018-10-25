@@ -22,9 +22,10 @@ namespace Hosting2
         virtual ~GuestServiceTypeHostManager();
 
         Common::AsyncOperationSPtr BeginOpenGuestServiceTypeHost(
-            std::wstring const & hostId,
-            std::vector<std::wstring> const & typesToHost,
+            ApplicationHostContext const & appHostContext,
+            std::vector<GuestServiceTypeInfo> const & typesToHost,
             CodePackageContext const & codePackageContext,
+            std::vector<std::wstring> && depdendentCodePackages,
             std::vector<ServiceModel::EndpointDescription> && endpointDescriptions,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
@@ -34,7 +35,7 @@ namespace Hosting2
             Common::AsyncOperationSPtr const & operation);
 
         Common::AsyncOperationSPtr BeginCloseGuestServiceTypeHost(
-            std::wstring const & hostId,
+            ApplicationHostContext const & appHostContext,
             Common::TimeSpan const timeout,
             Common::AsyncCallback const & callback,
             Common::AsyncOperationSPtr const & parent);
@@ -42,11 +43,18 @@ namespace Hosting2
         Common::ErrorCode EndCloseGuestServiceTypeHost(
             Common::AsyncOperationSPtr const & operation);
 
-        void AbortGuestServiceTypeHost(std::wstring const & hostId);
+        void AbortGuestServiceTypeHost(ApplicationHostContext const & appHostContext);
+
+        void ProcessCodePackageEvent(
+            ApplicationHostContext const & appHostContext,
+            CodePackageEventDescription eventDescription);
 
         Common::ErrorCode Test_HasGuestServiceTypeHost(std::wstring const & hostId, __out bool & isPresent);
-        Common::ErrorCode Test_GetRuntimeId(std::wstring const & hostId, __out std::wstring & runtimeId);
+        Common::ErrorCode Test_GetTypeHost(std::wstring const & hostId, __out GuestServiceTypeHostSPtr & guestTypeHost);
         Common::ErrorCode Test_GetTypeHostCount(__out size_t & typeHostCount);
+        Common::ErrorCode Test_GetTypeHost(
+            ServicePackageInstanceIdentifier const & servicePackageInstanceId,
+            _Out_ GuestServiceTypeHostSPtr & guestTypeHost);
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(

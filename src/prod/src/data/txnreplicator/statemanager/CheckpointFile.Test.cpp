@@ -229,7 +229,12 @@ namespace StateManagerTests
             CODING_ERROR_ASSERT(NT_SUCCESS(status));
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
-            SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
 
             KBlockFile::SPtr FileSPtr = nullptr;
             io::KFileStream::SPtr fileStreamSPtr = nullptr;
@@ -269,10 +274,18 @@ namespace StateManagerTests
             try
             {
                 SyncAwait(checkpointFileSPtr->ReadAsync(CancellationToken::None));
-                auto enumerator = checkpointFileSPtr->GetAsyncEnumerator();
+                CheckpointFileAsyncEnumerator::SPtr enumerator = checkpointFileSPtr->GetAsyncEnumerator();
 
-                while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+                while (true)
                 {
+                    SerializableMetadata::CSPtr serializableMetadataCSPtr = nullptr;
+                    status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, serializableMetadataCSPtr));
+                    if (status == STATUS_NOT_FOUND || STATUS_INTERNAL_DB_CORRUPTION)
+                    {
+                        break;
+                    }
+
+                    VERIFY_IS_TRUE(NT_SUCCESS(status));
                 }
 
                 SyncAwait(enumerator->CloseAsync());
@@ -282,8 +295,8 @@ namespace StateManagerTests
                 VERIFY_ARE_EQUAL(exception.GetStatus(), STATUS_INTERNAL_DB_CORRUPTION);
                 isThrow = true;
             }
-
-            CODING_ERROR_ASSERT(isThrow);
+           
+            VERIFY_IS_TRUE(isThrow || status == STATUS_INTERNAL_DB_CORRUPTION);
             OpenAndCloseFileThenDelete(fileName, allocator);
         }
     }
@@ -314,7 +327,12 @@ namespace StateManagerTests
                 fileName, 
                 allocator, 
                 temp);
-            SyncAwait(temp->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, prepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(temp->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                prepareCheckpointLSN, 
+                CancellationToken::None));
 
             KBlockFile::SPtr FileSPtr = nullptr;
 
@@ -369,28 +387,40 @@ namespace StateManagerTests
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
 
-            SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
             VERIFY_ARE_EQUAL(checkpointFileSPtr->PropertiesSPtr->PrepareCheckpointLSN, expectedPrepareCheckpointLSN);
 
             SyncAwait(checkpointFileSPtr->ReadAsync(CancellationToken::None));
             VERIFY_ARE_EQUAL(checkpointFileSPtr->PropertiesSPtr->PrepareCheckpointLSN, expectedPrepareCheckpointLSN);
 
-            auto enumerator = checkpointFileSPtr->GetAsyncEnumerator();
-            ULONG32 i = 0;
+            CheckpointFileAsyncEnumerator::SPtr enumerator = checkpointFileSPtr->GetAsyncEnumerator();
+            ULONG32 i = 0;     
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
 
                 if (isInitParameterNull)
                 {
-                    VERIFY_IS_NULL(sermeta->InitializationParameters);
+                    VERIFY_IS_NULL(metadata->InitializationParameters);
                 }
 
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, expectedParentId);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, expectedCreateLSN);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, expectedDeleteLSN);
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, expectedParentId);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, expectedCreateLSN);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, expectedDeleteLSN);
 
                 ++i;
             }
@@ -603,7 +633,12 @@ namespace StateManagerTests
             try
             {
                 checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
-                SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+                SyncAwait(checkpointFileSPtr->WriteAsync(
+                    *SerializableMetadataArray, 
+                    SerializationMode::Enum::Native, 
+                    false, 
+                    expectedPrepareCheckpointLSN, 
+                    CancellationToken::None));
             }
             catch (Exception & exception)
             {
@@ -639,7 +674,12 @@ namespace StateManagerTests
             try
             {
                 checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
-                SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+                SyncAwait(checkpointFileSPtr->WriteAsync(
+                    *SerializableMetadataArray, 
+                    SerializationMode::Enum::Native, 
+                    false, 
+                    expectedPrepareCheckpointLSN, 
+                    CancellationToken::None));
             }
             catch (Exception & exception)
             {
@@ -676,7 +716,12 @@ namespace StateManagerTests
             try
             {
                 CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
-                SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+                SyncAwait(checkpointFileSPtr->WriteAsync(
+                    *SerializableMetadataArray, 
+                    SerializationMode::Enum::Native, 
+                    false, 
+                    expectedPrepareCheckpointLSN, 
+                    CancellationToken::None));
             }
             catch (Exception exception)
             {
@@ -748,10 +793,17 @@ namespace StateManagerTests
 
             SyncAwait(checkpointFileSPtr->ReadAsync(CancellationToken::None));
 
-            auto enumerator = checkpointFileSPtr->GetAsyncEnumerator();
+            CheckpointFileAsyncEnumerator::SPtr enumerator = checkpointFileSPtr->GetAsyncEnumerator();
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
+                SerializableMetadata::CSPtr metadata = nullptr;
+                NTSTATUS status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
                 // No item in the file. Shoule not reach here.
                 CODING_ERROR_ASSERT(false);
             }
@@ -799,9 +851,16 @@ namespace StateManagerTests
             //      StateProviderId = 1
             //      TypeString = null
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                SerializableMetadata::CSPtr metadata = enumerator->GetCurrent();
+                SerializableMetadata::CSPtr metadata = nullptr;
+                NTSTATUS status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
 
                 VERIFY_ARE_EQUAL(*(metadata->Name), expectedName);
                 VERIFY_ARE_EQUAL(metadata->CreateLSN, 1);
@@ -856,9 +915,16 @@ namespace StateManagerTests
             //      StateProviderId = 709695431
             //      TypeString = null
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                SerializableMetadata::CSPtr metadata = enumerator->GetCurrent();
+                SerializableMetadata::CSPtr metadata = nullptr;
+                NTSTATUS status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
 
                 VERIFY_ARE_EQUAL(*(metadata->Name), expectedName);
                 VERIFY_ARE_EQUAL(metadata->CreateLSN, 0);
@@ -918,9 +984,16 @@ namespace StateManagerTests
             const int count = 8;
             byte managedInitializationParameters[count] = {23,20,179,186,116,75,251,225};
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                SerializableMetadata::CSPtr metadata = enumerator->GetCurrent();
+                SerializableMetadata::CSPtr metadata = nullptr;
+                NTSTATUS status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
 
                 VERIFY_ARE_EQUAL(*(metadata->Name), expectedName);
                 VERIFY_ARE_EQUAL(metadata->CreateLSN, -1);
@@ -982,9 +1055,16 @@ namespace StateManagerTests
             //      TypeString = null
             CheckpointFileAsyncEnumerator::SPtr enumerator = checkpointFileSPtr->GetAsyncEnumerator();
             int i = 1;
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                SerializableMetadata::CSPtr metadata = enumerator->GetCurrent();
+                SerializableMetadata::CSPtr metadata = nullptr;
+                NTSTATUS status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
 
                 VERIFY_ARE_EQUAL(*(metadata->Name), *CreateStateProviderName(i, expectedName, allocator));
                 VERIFY_ARE_EQUAL(metadata->CreateLSN, i);
@@ -1056,7 +1136,12 @@ namespace StateManagerTests
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
 
-            SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
             VERIFY_ARE_EQUAL(checkpointFileSPtr->PropertiesSPtr->PrepareCheckpointLSN, expectedPrepareCheckpointLSN);
 
             SyncAwait(checkpointFileSPtr->ReadAsync(CancellationToken::None));
@@ -1065,16 +1150,23 @@ namespace StateManagerTests
             auto enumerator = checkpointFileSPtr->GetAsyncEnumerator();
             ULONG32 i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
 
-                VERIFY_IS_NOT_NULL(sermeta->InitializationParameters);
-                VERIFY_ARE_EQUAL(sermeta->InitializationParameters->BufferCount, 0);
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, EmptyStateProviderId);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, expectedCreateLSN);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, expectedDeleteLSN);
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_IS_NOT_NULL(metadata->InitializationParameters);
+                VERIFY_ARE_EQUAL(metadata->InitializationParameters->BufferCount, 0);
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, EmptyStateProviderId);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, expectedCreateLSN);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, expectedDeleteLSN);
 
                 ++i;
             }
@@ -1123,7 +1215,12 @@ namespace StateManagerTests
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
 
-            SyncAwait(checkpointFileSPtr->WriteAsync(*serializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *serializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
             VERIFY_ARE_EQUAL(checkpointFileSPtr->PropertiesSPtr->PrepareCheckpointLSN, expectedPrepareCheckpointLSN);
 
             SyncAwait(checkpointFileSPtr->ReadAsync(CancellationToken::None));
@@ -1132,13 +1229,21 @@ namespace StateManagerTests
             auto enumerator = checkpointFileSPtr->GetAsyncEnumerator();
             ULONG32 i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, expectedParentId);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, expectedCreateLSN);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, expectedDeleteLSN);
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, expectedParentId);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, expectedCreateLSN);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, expectedDeleteLSN);
 
                 ++i;
             }
@@ -1151,13 +1256,21 @@ namespace StateManagerTests
             enumerator = checkpointFileSPtr->GetAsyncEnumerator();
             i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, expectedParentId);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, expectedCreateLSN);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, expectedDeleteLSN);
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, expectedParentId);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, expectedCreateLSN);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, expectedDeleteLSN);
 
                 ++i;
             }
@@ -1192,7 +1305,12 @@ namespace StateManagerTests
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
 
-            SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
             VERIFY_ARE_EQUAL(checkpointFileSPtr->PropertiesSPtr->PrepareCheckpointLSN, expectedPrepareCheckpointLSN);
 
             SyncAwait(checkpointFileSPtr->ReadAsync(CancellationToken::None));
@@ -1201,13 +1319,21 @@ namespace StateManagerTests
             auto enumerator = checkpointFileSPtr->GetAsyncEnumerator();
             ULONG32 i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId + i);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, expectedParentId + i);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, i);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, i);
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId + i);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, expectedParentId + i);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, i);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, i);
                 ++i;
             }
 
@@ -1241,7 +1367,12 @@ namespace StateManagerTests
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
 
-            SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
             VERIFY_ARE_EQUAL(checkpointFileSPtr->PropertiesSPtr->PrepareCheckpointLSN, expectedPrepareCheckpointLSN);
 
             SyncAwait(checkpointFileSPtr->ReadAsync(CancellationToken::None));
@@ -1250,13 +1381,21 @@ namespace StateManagerTests
             auto enumerator = checkpointFileSPtr->GetAsyncEnumerator();
             ULONG32 i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId + i);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, expectedParentId + i);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, i);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, i);
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId + i);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, expectedParentId + i);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, i);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, i);
                 ++i;
             }
 
@@ -1291,7 +1430,12 @@ namespace StateManagerTests
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
 
-            SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
             VERIFY_ARE_EQUAL(checkpointFileSPtr->PropertiesSPtr->PrepareCheckpointLSN, expectedPrepareCheckpointLSN);
 
             SyncAwait(checkpointFileSPtr->ReadAsync(CancellationToken::None));
@@ -1300,13 +1444,21 @@ namespace StateManagerTests
             auto enumerator = checkpointFileSPtr->GetAsyncEnumerator();
             ULONG32 i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId + i);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, expectedParentId + i);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, i);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, i);
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId + i);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, expectedParentId + i);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, i);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, i);
 
                 ++i;
             }
@@ -1470,7 +1622,12 @@ namespace StateManagerTests
             }
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(currentFileName, allocator);
-            SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
 
             // Create the Next CheckpointFile
             for (ULONG32 i = 10; i < 30; ++i)
@@ -1481,7 +1638,12 @@ namespace StateManagerTests
             }
 
             CheckpointFile::SPtr nextCheckpointFileSPtr = CreateCheckpointFileSPtr(tmpFileName, allocator);
-            SyncAwait(nextCheckpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(nextCheckpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
 
             // Test
             SyncAwait(CheckpointFile::SafeFileReplaceAsync(
@@ -1502,13 +1664,21 @@ namespace StateManagerTests
             CheckpointFileAsyncEnumerator::SPtr enumerator = checkpointFileSPtr->GetAsyncEnumerator();
             ULONG32 i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId + i);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, expectedParentId + i);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, i);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, i);
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId + i);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, expectedParentId + i);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, i);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, i);
 
                 ++i;
             }
@@ -1550,7 +1720,12 @@ namespace StateManagerTests
             }
 
             CheckpointFile::SPtr nextCheckpointFileSPtr = CreateCheckpointFileSPtr(tmpFileName, allocator);
-            SyncAwait(nextCheckpointFileSPtr->WriteAsync(*serializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(nextCheckpointFileSPtr->WriteAsync(
+                *serializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
 
             // Test
             SyncAwait(CheckpointFile::SafeFileReplaceAsync(
@@ -1573,13 +1748,21 @@ namespace StateManagerTests
             auto enumerator = checkpointFileReopenSPtr->GetAsyncEnumerator();
             ULONG32 i = 0;
 
-            while (SyncAwait(enumerator->MoveNextAsync(CancellationToken::None)))
+            while (true)
             {
-                auto sermeta = enumerator->GetCurrent();
-                VERIFY_ARE_EQUAL(sermeta->StateProviderId, expectedStateProviderId + i);
-                VERIFY_ARE_EQUAL(sermeta->ParentStateProviderId, expectedParentId + i);
-                VERIFY_ARE_EQUAL(sermeta->CreateLSN, i);
-                VERIFY_ARE_EQUAL(sermeta->DeleteLSN, i);
+                SerializableMetadata::CSPtr metadata = nullptr;
+                status = SyncAwait(enumerator->GetNextAsync(CancellationToken::None, metadata));
+                if (status == STATUS_NOT_FOUND)
+                {
+                    break;
+                }
+
+                VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+                VERIFY_ARE_EQUAL(metadata->StateProviderId, expectedStateProviderId + i);
+                VERIFY_ARE_EQUAL(metadata->ParentStateProviderId, expectedParentId + i);
+                VERIFY_ARE_EQUAL(metadata->CreateLSN, i);
+                VERIFY_ARE_EQUAL(metadata->DeleteLSN, i);
 
                 ++i;
             }
@@ -1642,7 +1825,12 @@ namespace StateManagerTests
             try
             {
                 CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
-                SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, cts->Token));
+                SyncAwait(checkpointFileSPtr->WriteAsync(
+                    *SerializableMetadataArray, 
+                    SerializationMode::Enum::Native, 
+                    false, 
+                    expectedPrepareCheckpointLSN, 
+                    cts->Token));
             }
             catch (Exception & exception)
             {
@@ -1669,7 +1857,12 @@ namespace StateManagerTests
             KSharedArray<SerializableMetadata::CSPtr>::SPtr SerializableMetadataArray = TestHelper::CreateSerializableMetadataArray(allocator);
 
             CheckpointFile::SPtr checkpointFileSPtr = CreateCheckpointFileSPtr(fileName, allocator);
-            SyncAwait(checkpointFileSPtr->WriteAsync(*SerializableMetadataArray, SerializationMode::Enum::Native, expectedPrepareCheckpointLSN, CancellationToken::None));
+            SyncAwait(checkpointFileSPtr->WriteAsync(
+                *SerializableMetadataArray, 
+                SerializationMode::Enum::Native, 
+                false, 
+                expectedPrepareCheckpointLSN, 
+                CancellationToken::None));
 
             CancellationTokenSource::SPtr cts;
             NTSTATUS status = CancellationTokenSource::Create(allocator, TEST_TAG, cts);

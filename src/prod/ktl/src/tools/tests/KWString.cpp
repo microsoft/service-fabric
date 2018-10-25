@@ -1,0 +1,1 @@
+#include "../kwstring/KWStringTests.cpp"

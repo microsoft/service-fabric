@@ -35,7 +35,8 @@ namespace Hosting2
 
     private:
         Common::TimeSpan GetPollInterval() const;
-        Common::TimeSpan GetPollStartDelay(Common::TimeSpan pollInterval) const;
+        Common::TimeSpan GetPollDelay(Common::TimeSpan pollInterval) const;
+        void SetPollTimer(Common::TimeSpan leaseTtl, bool isForceSet);
         void PollLeaseExpiration();
         void OnLeaseRequestComplete(Common::AsyncOperationSPtr const & operation, Common::StopwatchTime requestTime);
         bool IsLeaseExpired_DirectRead();
@@ -46,5 +47,6 @@ namespace Hosting2
         volatile int64 expirationInTicks_;
         Common::TimerSPtr pollTimer_;
         bool useDirectLease_;
+        const double minLeaseRenewInterval = 1000;
     };
 }

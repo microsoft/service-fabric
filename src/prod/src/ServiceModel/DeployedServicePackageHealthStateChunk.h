@@ -22,8 +22,8 @@ namespace ServiceModel
             std::wstring const & servicePackageActivationId,
             FABRIC_HEALTH_STATE healthState);
 
-        DeployedServicePackageHealthStateChunk(DeployedServicePackageHealthStateChunk && other);
-        DeployedServicePackageHealthStateChunk & operator = (DeployedServicePackageHealthStateChunk && other);
+        DeployedServicePackageHealthStateChunk(DeployedServicePackageHealthStateChunk && other) = default;
+        DeployedServicePackageHealthStateChunk & operator = (DeployedServicePackageHealthStateChunk && other) = default;
 
         virtual ~DeployedServicePackageHealthStateChunk();
 

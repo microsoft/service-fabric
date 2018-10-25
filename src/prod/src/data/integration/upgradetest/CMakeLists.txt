@@ -12,8 +12,10 @@ add_definitions(-DNO_INLINE_EVENTDESCCREATE)
 add_executable(${exe_data_integration_upgrade_test}
   ${PROJECT_SOURCE_DIR}/test/BoostUnitTest/btest.cpp
   ../BackCompatible.BackupRestore.Test.cpp
+  ../BackCompatible.RestoreChkptTruncRecords.Test.cpp
   ../UpgradeIntegration.Test.cpp
   ../Replica.cpp
+  ../TestBackupCallbackHandler.cpp
   ../UpgradeStateProviderFactory.cpp
 )
 
@@ -29,10 +31,10 @@ target_link_libraries(${exe_data_integration_upgrade_test}
   ${lib_data_testcommon}
   ${lib_Replication}
   ${lib_Hosting2}
-  ${lib_Common}
   ${lib_ServiceModel}
   ${lib_Serialization}
   ${lib_Transport}
+  ${lib_Common}
   ${lib_ApiWrappers}
   ${lib_txnreplicator_testcommon}
   ${BoostTest2}
@@ -52,8 +54,6 @@ target_link_libraries(${exe_data_integration_upgrade_test}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )
 
 install(

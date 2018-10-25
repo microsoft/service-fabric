@@ -19,7 +19,9 @@ namespace Hosting2
         ApplicationHostContext(
             std::wstring const & hostId,
             ApplicationHostType::Enum const hostType,
-            bool isContainerHost);
+            bool isContainerHost,
+            bool isCodePackageActivatorHost);
+
         ApplicationHostContext(ApplicationHostContext const & other);
         ApplicationHostContext(ApplicationHostContext && other);
 
@@ -32,6 +34,9 @@ namespace Hosting2
         __declspec(property(get = get_IsContainerHost)) bool IsContainerHost;
         inline bool get_IsContainerHost() const { return isContainerHost_; };
 
+        __declspec(property(get = get_IsCodePackageActivatorHost)) bool IsCodePackageActivatorHost;
+        inline bool get_IsCodePackageActivatorHost() const { return isCodePackageActivatorHost_; };
+
         __declspec(property(get = get_ProcessId, put = put_ProcessId)) DWORD ProcessId;
         inline DWORD get_ProcessId() const { return processId_; };
         inline void put_ProcessId(DWORD value) { processId_ = value; }
@@ -42,19 +47,25 @@ namespace Hosting2
         bool operator == (ApplicationHostContext const & other) const;
         bool operator != (ApplicationHostContext const & other) const;
 
-        static Common::ErrorCode FromEnvironmentMap(Common::EnvironmentMap const & envMap, __out ApplicationHostContext & hostContext);
+        static Common::ErrorCode FromEnvironmentMap(
+            Common::EnvironmentMap const & envMap, 
+            __out ApplicationHostContext & hostContext);
+        
         void ToEnvironmentMap(Common::EnvironmentMap & envMap) const;
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
-        FABRIC_FIELDS_04(hostId_, hostType_, processId_, isContainerHost_);
+
+        FABRIC_FIELDS_05(hostId_, hostType_, processId_, isContainerHost_, isCodePackageActivatorHost_);
 
     private:
         std::wstring hostId_;
         ApplicationHostType::Enum hostType_;
         DWORD processId_;
         bool isContainerHost_;
+        bool isCodePackageActivatorHost_;
 
         static Common::GlobalWString EnvVarName_HostId;
         static Common::GlobalWString EnvVarName_HostType;
+        static Common::GlobalWString EnvVarName_IsCodePackageActivatorHost;
     };
 }

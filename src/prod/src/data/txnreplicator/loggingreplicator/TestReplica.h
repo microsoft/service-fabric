@@ -145,10 +145,16 @@ namespace LoggingReplicatorTests
             return recordsDispatcher_;
         }
 
-        __declspec(property(get = get_LogTruncationManager)) TestLogTruncationManager::SPtr LogTruncationManager;
-        TestLogTruncationManager::SPtr get_LogTruncationManager() const
+        __declspec(property(get = get_TestLogTruncationManager)) TestLogTruncationManager::SPtr TestLogTruncationManager;
+        TestLogTruncationManager::SPtr get_TestLogTruncationManager() const
         {
             return testLogTruncationManager_;
+        }
+
+        __declspec(property(get = get_LogTruncationManager)) Data::LoggingReplicator::LogTruncationManager::SPtr LogTruncationManager;
+        Data::LoggingReplicator::LogTruncationManager::SPtr get_LogTruncationManager() const
+        {
+            return logTruncationManager_;
         }
 
         __declspec(property(get = get_ApiFaultUtility)) ApiFaultUtility::SPtr ApiFaultUtility;
@@ -276,7 +282,9 @@ namespace LoggingReplicatorTests
         void Initialize(
             __in int seed, 
             __in bool skipChangeRoleToPrimary, 
-            __in bool delayApis);
+            __in bool delayApis,
+            __in bool useTestLogTruncationManager = true,
+            __in TRANSACTIONAL_REPLICATOR_SETTINGS * publicSettings = nullptr);
 
         void Initialize(
             __in int seed, 
@@ -285,7 +293,9 @@ namespace LoggingReplicatorTests
         ktl::Awaitable<void> InitializeAsync(
             __in int seed,
             __in bool skipChangeRoleToPrimary,
-            __in bool delayApis);
+            __in bool delayApis,
+            __in bool useTestLogTruncationManager = true,
+            __in TRANSACTIONAL_REPLICATOR_SETTINGS * publicSettings = nullptr);
 
         void EndTest(__in bool reset);
         void EndTest(__in bool reset, __in bool cleanupLog);
@@ -323,6 +333,7 @@ namespace LoggingReplicatorTests
         Data::LoggingReplicator::TransactionMap::SPtr transactionMap_;
         TestLogTruncationManager::SPtr testLogTruncationManager_;
         Data::LoggingReplicator::RecoveryManager::SPtr recoveryManager_;
+        Data::LoggingReplicator::LogTruncationManager::SPtr logTruncationManager_;
 
         TestBackupRestoreProvider::SPtr testBackupRestoreProvider_;
         TestStateReplicator::SPtr testStateReplicator_;

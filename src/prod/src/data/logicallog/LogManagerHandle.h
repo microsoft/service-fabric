@@ -35,6 +35,8 @@ namespace Data
             __declspec(property(get = get_Id)) long Id;
             long get_Id() const { return id_; }
 
+            KtlLoggerMode get_Mode() const override { return owner_->ktlLoggerMode_; }
+
             ktl::Awaitable<NTSTATUS> OpenAsync(__in ktl::CancellationToken const & cancellationToken);
 
             ktl::Awaitable<NTSTATUS> CloseAsync(__in ktl::CancellationToken const & cancellationToken) override;

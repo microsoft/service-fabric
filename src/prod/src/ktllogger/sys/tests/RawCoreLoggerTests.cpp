@@ -517,7 +517,8 @@ VOID StreamCheckpointBoundaryTest(
                 );
             VERIFY_IS_TRUE((newEntry != nullptr) ? TRUE : FALSE);
 
-            logStreamDesc->AsnIndex.AddOrUpdate(newEntry, resultEntry, entryState, previousIndexEntryWasStored);
+			ULONGLONG dontCare;
+            logStreamDesc->AsnIndex.AddOrUpdate(newEntry, resultEntry, entryState, previousIndexEntryWasStored, dontCare);
             asn = asn.Get() + 1;
             lsn = lsn.Get() + 1;
         }
@@ -1381,6 +1382,608 @@ VOID StreamCheckpointAtEndOfLogTest(
     logManager.Reset();
 }
 
+
+VOID DuplicateRecordInLogTest(
+    KGuid DiskId
+    )
+{
+	//
+	// This test case is to verify that a duplicate record in the same
+	// stream, that is, two records that have the same ASN and Version
+	// persisted in the same stream will cause the stream to fail to
+	// open rather than silently failing the second record and opening
+	// successfully. There was a case where a duplicate record was
+	// written to a stream but this was not caught on stream recovery.
+	//
+    NTSTATUS status;
+    KSynchronizer activateSync;
+    KSynchronizer sync;
+    RvdLogManager::SPtr logManager;
+
+    //
+    // Get a log manager
+    //
+    status = RvdLogManager::Create(KTL_TAG_LOGGER, KtlSystem::GlobalNonPagedAllocator(), logManager);
+    VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+    status = logManager->Activate(nullptr, activateSync);
+    VERIFY_IS_TRUE(K_ASYNC_SUCCESS(status));
+
+    logManager->RegisterVerificationCallback(KtlLogInformation::KtlLogDefaultStreamType(), &VerifyRawRecordCallback);
+
+    //
+    // Create a container and a stream
+    //
+    KGuid logContainerGuid;
+    RvdLogId logContainerId;
+    RvdLogManager::AsyncCreateLog::SPtr createLogOp;
+    RvdLog::SPtr logContainer;
+
+    logContainerGuid.CreateNew();
+    logContainerId = static_cast<RvdLogId>(logContainerGuid);
+
+    KGuid otherStreamGuid;
+    RvdLogStreamId otherStreamId;
+    RvdLogStream::SPtr otherLogStream;
+
+    otherStreamGuid.CreateNew();
+    otherStreamId = static_cast<RvdLogStreamId>(otherStreamGuid);
+
+	ULONG otherAsn = 1;
+	
+    {
+        RvdLog::AsyncCreateLogStreamContext::SPtr createStreamOp;
+
+        status = logManager->CreateAsyncCreateLogContext(createLogOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        KWString logType(KtlSystem::GlobalNonPagedAllocator(), L"TestLogType");
+        KInvariant(NT_SUCCESS(logType.Status()));
+        
+        createLogOp->StartCreateLog(
+            DiskId,
+            logContainerId,
+            logType,
+            DefaultTestLogFileSize,
+            4,          // 4 streams
+            64 * 1024,
+            logContainer,
+            nullptr,
+            sync);
+
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        status = logContainer->CreateAsyncCreateLogStreamContext(createStreamOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        createStreamOp->StartCreateLogStream(otherStreamId,
+            KtlLogInformation::KtlLogDefaultStreamType(),
+            otherLogStream,
+            nullptr,
+            sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        RvdLogStream::AsyncWriteContext::SPtr otherStreamWriteOp;
+
+        status = otherLogStream->CreateAsyncWriteContext(otherStreamWriteOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+
+        //
+        // Write 512 records - this should be enough.
+        //
+        for (ULONG i = 0; i < 512; i++)
+        {
+            status = CoreLoggerWrite(NULL,
+                otherLogStream,
+                otherAsn,
+                0);
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+            otherAsn++;
+        }
+
+        // 
+        // Close the container and streams
+        //
+        KAsyncEvent closeEvent;
+        KAsyncEvent::WaitContext::SPtr waitForClose;
+
+        status = closeEvent.CreateWaitContext(KTL_TAG_TEST, KtlSystem::GlobalNonPagedAllocator(), waitForClose);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        createLogOp.Reset();
+        createStreamOp.Reset();
+        otherStreamWriteOp.Reset();
+        otherLogStream.Reset();
+        logContainer->SetShutdownEvent(&closeEvent);
+        logContainer.Reset();
+
+        waitForClose->StartWaitUntilSet(NULL, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+    }
+
+	//
+	// Corrupt log by effectively truncating it at an earlier point and
+	// then rewrite an existing record
+	//
+	{
+		KBlockFile::SPtr logFile;
+		KWString logPath(*g_Allocator);
+
+		//
+		// Format is: \\??\Volume{a3316ef4-dfb4-40a3-9fae-427705f23d1f}\Log{3b4b7db6-ba84-4ab1-af83-ae0154a4d268}.log
+		//
+		logPath = L"\\??\\Volume";
+		logPath += DiskId;
+		logPath += L"\\rvdlog\\Log";
+		logPath += logContainerId.Get();
+		logPath += L".log";
+
+		status = logPath.Status();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		status = KBlockFile::Create(logPath,
+									TRUE,
+									KBlockFile::CreateDisposition::eOpenExisting,
+									logFile,
+									sync,
+									nullptr,
+									*g_Allocator);
+		
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		ULONG recordSize = 0x1000;
+		ULONGLONG corruptionOffset = 0x218000;
+		
+		KIoBuffer::SPtr zeroBuffer;
+		PVOID p;
+        status = KIoBuffer::CreateSimple(recordSize, zeroBuffer, p, *g_Allocator);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		memset(p, 0, recordSize);
+		status = logFile->Transfer(KBlockFile::IoPriority::eForeground,
+								   KBlockFile::TransferType::eWrite,
+								   corruptionOffset,
+								   *zeroBuffer,
+								   sync,
+								   nullptr,
+								   nullptr);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		logFile->Close();
+	}
+
+
+    {
+        //
+        // Reopen the log container and stream, expect success at the
+        // lower ASN and then write the duplicate record
+        //
+        RvdLogManager::AsyncOpenLog::SPtr openLogOp;
+        status = logManager->CreateAsyncOpenLogContext(openLogOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openLogOp->StartOpenLog(DiskId, logContainerId, logContainer, nullptr, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        RvdLog::AsyncOpenLogStreamContext::SPtr openStreamOp;
+        status = logContainer->CreateAsyncOpenLogStreamContext(openStreamOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openStreamOp->StartOpenLogStream(otherStreamId,
+                                         otherLogStream,
+                                         nullptr,
+                                         sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		RvdLogAsn lowAsn;
+		RvdLogAsn highAsn;
+		RvdLogAsn truncationAsn;
+		otherLogStream->QueryRecordRange(&lowAsn, &highAsn, &truncationAsn);
+		VERIFY_IS_TRUE(highAsn.Get() == 507);
+
+        //
+        // Write copy of the end record earlier
+        //
+		otherAsn = otherAsn - 2;
+		status = CoreLoggerWrite(NULL,
+			otherLogStream,
+			otherAsn,
+			0);
+		VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		otherAsn++;
+		
+		
+        KAsyncEvent closeEvent;
+        KAsyncEvent::WaitContext::SPtr waitForClose;
+
+        status = closeEvent.CreateWaitContext(KTL_TAG_TEST, KtlSystem::GlobalNonPagedAllocator(), waitForClose);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openLogOp.Reset();
+        openStreamOp.Reset();
+        otherLogStream.Reset();
+        logContainer->SetShutdownEvent(&closeEvent);
+        logContainer.Reset();
+
+        waitForClose->StartWaitUntilSet(NULL, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+    }
+	
+	
+    {
+        //
+        // Reopen the log container, expect failure K_STATUS_LOG_STRUCTURE_FAULT
+        //
+        RvdLogManager::AsyncOpenLog::SPtr openLogOp;
+        status = logManager->CreateAsyncOpenLogContext(openLogOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openLogOp->StartOpenLog(DiskId, logContainerId, logContainer, nullptr, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        RvdLog::AsyncOpenLogStreamContext::SPtr openStreamOp;
+        status = logContainer->CreateAsyncOpenLogStreamContext(openStreamOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openStreamOp->StartOpenLogStream(otherStreamId,
+                                         otherLogStream,
+                                         nullptr,
+                                         sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(status == K_STATUS_LOG_STRUCTURE_FAULT);
+
+        KAsyncEvent closeEvent;
+        KAsyncEvent::WaitContext::SPtr waitForClose;
+
+        status = closeEvent.CreateWaitContext(KTL_TAG_TEST, KtlSystem::GlobalNonPagedAllocator(), waitForClose);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openLogOp.Reset();
+        openStreamOp.Reset();
+        otherLogStream.Reset();
+        logContainer->SetShutdownEvent(&closeEvent);
+        logContainer.Reset();
+
+        waitForClose->StartWaitUntilSet(NULL, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+    }
+	
+
+    RvdLogManager::AsyncDeleteLog::SPtr deleteLogOp;
+
+    status = logManager->CreateAsyncDeleteLogContext(deleteLogOp);
+    VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+    deleteLogOp->StartDeleteLog(DiskId, logContainerId, nullptr, sync);
+    status = sync.WaitForCompletion();
+    VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+    logManager->Deactivate();
+    activateSync.WaitForCompletion();
+    logManager.Reset();
+}
+
+
+VOID CorruptedRecordTest(
+    KGuid DiskId
+    )
+{
+	//
+	// This test case is to verify that a corrupted record in the
+	// middle of a log will cause the log to fail to open and not cause
+	// the log to under recover
+	//
+    NTSTATUS status;
+    KSynchronizer activateSync;
+    KSynchronizer sync;
+    RvdLogManager::SPtr logManager;
+
+    //
+    // Get a log manager
+    //
+    status = RvdLogManager::Create(KTL_TAG_LOGGER, KtlSystem::GlobalNonPagedAllocator(), logManager);
+    VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+    status = logManager->Activate(nullptr, activateSync);
+    VERIFY_IS_TRUE(K_ASYNC_SUCCESS(status));
+
+    logManager->RegisterVerificationCallback(KtlLogInformation::KtlLogDefaultStreamType(), &VerifyRawRecordCallback);
+
+    //
+    // Create a container and a stream
+    //
+    KGuid logContainerGuid;
+    RvdLogId logContainerId;
+    RvdLogManager::AsyncCreateLog::SPtr createLogOp;
+    RvdLog::SPtr logContainer;
+
+    logContainerGuid.CreateNew();
+    logContainerId = static_cast<RvdLogId>(logContainerGuid);
+
+    KGuid otherStreamGuid;
+    RvdLogStreamId otherStreamId;
+    RvdLogStream::SPtr otherLogStream;
+
+    otherStreamGuid.CreateNew();
+    otherStreamId = static_cast<RvdLogStreamId>(otherStreamGuid);
+
+	ULONG otherAsn = 1;
+	
+    {
+        RvdLog::AsyncCreateLogStreamContext::SPtr createStreamOp;
+
+        status = logManager->CreateAsyncCreateLogContext(createLogOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        KWString logType(KtlSystem::GlobalNonPagedAllocator(), L"TestLogType");
+        KInvariant(NT_SUCCESS(logType.Status()));
+        
+        createLogOp->StartCreateLog(
+            DiskId,
+            logContainerId,
+            logType,
+            DefaultTestLogFileSize,
+            4,          // 4 streams
+            64 * 1024,
+			RvdLogManager::AsyncCreateLog::FlagSparseFile,
+            logContainer,
+            nullptr,
+            sync);
+
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        status = logContainer->CreateAsyncCreateLogStreamContext(createStreamOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        createStreamOp->StartCreateLogStream(otherStreamId,
+            KtlLogInformation::KtlLogDefaultStreamType(),
+            otherLogStream,
+            nullptr,
+            sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        RvdLogStream::AsyncWriteContext::SPtr otherStreamWriteOp;
+
+        status = otherLogStream->CreateAsyncWriteContext(otherStreamWriteOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+
+        //
+        // Write 512 records - this should be enough.
+        //
+        for (ULONG i = 0; i < 512; i++)
+        {
+            status = CoreLoggerWrite(NULL,
+                otherLogStream,
+                otherAsn,
+                0);
+            VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+            otherAsn++;
+        }
+
+        // 
+        // Close the container and streams
+        //
+        KAsyncEvent closeEvent;
+        KAsyncEvent::WaitContext::SPtr waitForClose;
+
+        status = closeEvent.CreateWaitContext(KTL_TAG_TEST, KtlSystem::GlobalNonPagedAllocator(), waitForClose);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        createLogOp.Reset();
+        createStreamOp.Reset();
+        otherStreamWriteOp.Reset();
+        otherLogStream.Reset();
+        logContainer->SetShutdownEvent(&closeEvent);
+        logContainer.Reset();
+
+        waitForClose->StartWaitUntilSet(NULL, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+    }
+
+
+
+	KBlockFile::SPtr logFile;
+	KWString logPath(*g_Allocator);
+	ULONG recordSize = 0x1000;
+	ULONGLONG corruptionOffset = 0x218000;
+
+	//
+	// Format is: \\??\Volume{a3316ef4-dfb4-40a3-9fae-427705f23d1f}\Log{3b4b7db6-ba84-4ab1-af83-ae0154a4d268}.log
+	//
+	logPath = L"\\??\\Volume";
+	logPath += DiskId;
+	logPath += L"\\rvdlog\\Log";
+	logPath += logContainerId.Get();
+	logPath += L".log";
+
+	status = logPath.Status();
+	VERIFY_IS_TRUE(NT_SUCCESS(status));
+	
+
+	//
+	// Corrupt a single record in the log by flipping a bit
+	//
+	{
+		status = KBlockFile::Create(logPath,
+									TRUE,
+									KBlockFile::CreateDisposition::eOpenExisting,
+									logFile,
+									sync,
+									nullptr,
+									*g_Allocator);
+		
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		
+		KIoBuffer::SPtr recordBuffer;
+		PVOID p;
+        status = KIoBuffer::CreateSimple(recordSize, recordBuffer, p, *g_Allocator);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		status = logFile->Transfer(KBlockFile::IoPriority::eForeground,
+								   KBlockFile::TransferType::eRead,
+								   corruptionOffset,
+								   *recordBuffer,
+								   sync,
+								   nullptr,
+								   nullptr);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		PUCHAR pp = (PUCHAR)p;
+		pp[0x30] = 0x99;
+
+		status = logFile->Transfer(KBlockFile::IoPriority::eForeground,
+								   KBlockFile::TransferType::eWrite,
+								   corruptionOffset,
+								   *recordBuffer,
+								   sync,
+								   nullptr,
+								   nullptr);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+				
+		logFile->Close();
+	}
+
+
+    {
+        //
+        // Reopen the log container and stream, expect error
+		//
+        RvdLogManager::AsyncOpenLog::SPtr openLogOp;
+        status = logManager->CreateAsyncOpenLogContext(openLogOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openLogOp->StartOpenLog(DiskId, logContainerId, logContainer, nullptr, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(status == K_STATUS_LOG_STRUCTURE_FAULT);
+	}	
+
+	
+	//
+	// Corrupt log by effectively truncating it at an earlier point by
+	// zeroing out a record.
+	//
+	{
+		status = KBlockFile::Create(logPath,
+									TRUE,
+									KBlockFile::CreateDisposition::eOpenExisting,
+									logFile,
+									sync,
+									nullptr,
+									*g_Allocator);
+		
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		KIoBuffer::SPtr zeroBuffer;
+		PVOID p;
+        status = KIoBuffer::CreateSimple(recordSize, zeroBuffer, p, *g_Allocator);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		memset(p, 0, recordSize);
+		status = logFile->Transfer(KBlockFile::IoPriority::eForeground,
+								   KBlockFile::TransferType::eWrite,
+								   corruptionOffset,
+								   *zeroBuffer,
+								   sync,
+								   nullptr,
+								   nullptr);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		logFile->Close();
+	}
+
+
+    {
+        //
+        // Reopen the log container and stream, expect success at the
+        // lower ASN 
+        //
+        RvdLogManager::AsyncOpenLog::SPtr openLogOp;
+        status = logManager->CreateAsyncOpenLogContext(openLogOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openLogOp->StartOpenLog(DiskId, logContainerId, logContainer, nullptr, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        RvdLog::AsyncOpenLogStreamContext::SPtr openStreamOp;
+        status = logContainer->CreateAsyncOpenLogStreamContext(openStreamOp);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openStreamOp->StartOpenLogStream(otherStreamId,
+                                         otherLogStream,
+                                         nullptr,
+                                         sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+		RvdLogAsn lowAsn;
+		RvdLogAsn highAsn;
+		RvdLogAsn truncationAsn;
+		otherLogStream->QueryRecordRange(&lowAsn, &highAsn, &truncationAsn);
+		VERIFY_IS_TRUE(highAsn.Get() == 507);
+
+		
+        KAsyncEvent closeEvent;
+        KAsyncEvent::WaitContext::SPtr waitForClose;
+
+        status = closeEvent.CreateWaitContext(KTL_TAG_TEST, KtlSystem::GlobalNonPagedAllocator(), waitForClose);
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+        openLogOp.Reset();
+        openStreamOp.Reset();
+        otherLogStream.Reset();
+        logContainer->SetShutdownEvent(&closeEvent);
+        logContainer.Reset();
+
+        waitForClose->StartWaitUntilSet(NULL, sync);
+        status = sync.WaitForCompletion();
+        VERIFY_IS_TRUE(NT_SUCCESS(status));
+    }	
+
+    RvdLogManager::AsyncDeleteLog::SPtr deleteLogOp;
+
+    status = logManager->CreateAsyncDeleteLogContext(deleteLogOp);
+    VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+    deleteLogOp->StartDeleteLog(DiskId, logContainerId, nullptr, sync);
+    status = sync.WaitForCompletion();
+    VERIFY_IS_TRUE(NT_SUCCESS(status));
+
+    logManager->Deactivate();
+    activateSync.WaitForCompletion();
+    logManager.Reset();
+}
 
 
 VOID SetupRawCoreLoggerTests(

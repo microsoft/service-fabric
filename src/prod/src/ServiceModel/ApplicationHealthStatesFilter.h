@@ -18,8 +18,8 @@ namespace ServiceModel
 
         explicit ApplicationHealthStatesFilter(DWORD healthStateFilter);
 
-        ApplicationHealthStatesFilter(ApplicationHealthStatesFilter && other);
-        ApplicationHealthStatesFilter & operator = (ApplicationHealthStatesFilter && other);
+        ApplicationHealthStatesFilter(ApplicationHealthStatesFilter && other) = default;
+        ApplicationHealthStatesFilter & operator = (ApplicationHealthStatesFilter && other) = default;
 
         ~ApplicationHealthStatesFilter();
 

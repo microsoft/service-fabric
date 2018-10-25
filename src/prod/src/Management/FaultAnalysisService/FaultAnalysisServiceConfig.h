@@ -46,6 +46,9 @@ namespace Management
             // This parameter is used when the data loss api is called.  It controls how long the system will wait for a replica to get dropped after remove replica is internally invoked on it.
             PUBLIC_CONFIG_ENTRY(int, L"FaultAnalysisService", ReplicaDropWaitDurationInSeconds, 600, Common::ConfigEntryUpgradePolicy::Static);            
 
+            // This parameter is used to enable or disable ClusterAnalysis.
+            PUBLIC_CONFIG_ENTRY(bool, L"FaultAnalysisService", ClusterAnalysisEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
+
             // The maximum delay for internal retries when failures are encountered
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FaultAnalysisService", MaxOperationRetryDelay, Common::TimeSpan::FromSeconds(5), Common::ConfigEntryUpgradePolicy::Dynamic);
             // The maximum timeout for internal communications between RepairManager and other system services (e.g. Cluster Manager, Failover Manager, etc.)

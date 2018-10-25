@@ -10,16 +10,19 @@ using namespace Common;
 using namespace ServiceModel;
 
 ServiceManifestImportDescription::ServiceManifestImportDescription()
-: ServiceManifestRef(),
-ConfigOverrides(),
-ResourceOverrides(),
-RunAsPolicies(),
-SecurityAccessPolicies(),
-PackageSharingPolicies(),
-EndpointBindingPolicies(),
-EnvironmentOverrides(),
-ContainerHostPolicies(),
-ResourceGovernanceDescription()
+    : ServiceManifestRef(),
+    ConfigOverrides(),
+    ResourceOverrides(),
+    RunAsPolicies(),
+    SecurityAccessPolicies(),
+    PackageSharingPolicies(),
+    EndpointBindingPolicies(),
+    EnvironmentOverrides(),
+    ContainerHostPolicies(),
+    ServicePackageContainerPolicy(),
+    ResourceGovernanceDescription(),
+    SFRuntimeAccessDescription(),
+    ConfigPackagePolicies()
 {
 }
 
@@ -34,21 +37,27 @@ ServiceManifestImportDescription::ServiceManifestImportDescription(
     EndpointBindingPolicies(other.EndpointBindingPolicies),
     EnvironmentOverrides(other.EnvironmentOverrides),
     ContainerHostPolicies(other.ContainerHostPolicies),
-    ResourceGovernanceDescription(other.ResourceGovernanceDescription)
+    ServicePackageContainerPolicy(other.ServicePackageContainerPolicy),
+    ResourceGovernanceDescription(other.ResourceGovernanceDescription),
+    SFRuntimeAccessDescription(other.SFRuntimeAccessDescription),
+    ConfigPackagePolicies(other.ConfigPackagePolicies)
 {
 }
 
 ServiceManifestImportDescription::ServiceManifestImportDescription(ServiceManifestImportDescription && other)
-: ServiceManifestRef(move(other.ServiceManifestRef)),
-ConfigOverrides(move(other.ConfigOverrides)),
-ResourceOverrides(move(other.ResourceOverrides)),
-RunAsPolicies(move(other.RunAsPolicies)),
-SecurityAccessPolicies(move(other.SecurityAccessPolicies)),
-PackageSharingPolicies(move(other.PackageSharingPolicies)),
-EndpointBindingPolicies(move(other.EndpointBindingPolicies)),
-EnvironmentOverrides(move(other.EnvironmentOverrides)),
-ContainerHostPolicies(move(other.ContainerHostPolicies)),
-ResourceGovernanceDescription(move(other.ResourceGovernanceDescription))
+    : ServiceManifestRef(move(other.ServiceManifestRef)),
+    ConfigOverrides(move(other.ConfigOverrides)),
+    ResourceOverrides(move(other.ResourceOverrides)),
+    RunAsPolicies(move(other.RunAsPolicies)),
+    SecurityAccessPolicies(move(other.SecurityAccessPolicies)),
+    PackageSharingPolicies(move(other.PackageSharingPolicies)),
+    EndpointBindingPolicies(move(other.EndpointBindingPolicies)),
+    EnvironmentOverrides(move(other.EnvironmentOverrides)),
+    ContainerHostPolicies(move(other.ContainerHostPolicies)),
+    ServicePackageContainerPolicy(move(other.ServicePackageContainerPolicy)),
+    SFRuntimeAccessDescription(move(other.SFRuntimeAccessDescription)),
+    ResourceGovernanceDescription(move(other.ResourceGovernanceDescription)),
+    ConfigPackagePolicies(move(other.ConfigPackagePolicies))
 {
 }
 
@@ -65,7 +74,10 @@ ServiceManifestImportDescription const & ServiceManifestImportDescription::opera
         this->EndpointBindingPolicies = other.EndpointBindingPolicies;
         this->EnvironmentOverrides = other.EnvironmentOverrides;
         this->ContainerHostPolicies = other.ContainerHostPolicies;
+        this->ServicePackageContainerPolicy = other.ServicePackageContainerPolicy;
         this->ResourceGovernanceDescription = other.ResourceGovernanceDescription;
+        this->SFRuntimeAccessDescription = other.SFRuntimeAccessDescription;
+        this->ConfigPackagePolicies = other.ConfigPackagePolicies;
     }
     return *this;
 }
@@ -83,7 +95,10 @@ ServiceManifestImportDescription const & ServiceManifestImportDescription::opera
         this->EndpointBindingPolicies = move(other.EndpointBindingPolicies);
         this->EnvironmentOverrides = move(other.EnvironmentOverrides);
         this->ContainerHostPolicies = move(other.ContainerHostPolicies);
+        this->ServicePackageContainerPolicy = move(other.ServicePackageContainerPolicy);
         this->ResourceGovernanceDescription = move(other.ResourceGovernanceDescription);
+        this->SFRuntimeAccessDescription = move(other.SFRuntimeAccessDescription);
+        this->ConfigPackagePolicies = move(other.ConfigPackagePolicies);
     }
     return *this;
 }
@@ -95,7 +110,7 @@ bool ServiceManifestImportDescription::operator == (ServiceManifestImportDescrip
     equals = this->ServiceManifestRef == other.ServiceManifestRef;
     if (!equals) { return equals; }
 
-    if (this->ConfigOverrides.size() != other.ConfigOverrides.size()) { return false;}
+    if (this->ConfigOverrides.size() != other.ConfigOverrides.size()) { return false; }
     for (auto i = 0; i < ConfigOverrides.size(); ++i)
     {
         equals = this->ConfigOverrides[i] == other.ConfigOverrides[i];
@@ -136,7 +151,22 @@ bool ServiceManifestImportDescription::operator == (ServiceManifestImportDescrip
         if (!equals) { return equals; }
     }
 
+    equals = this->ServicePackageContainerPolicy == other.ServicePackageContainerPolicy;
+    if (!equals) { return equals; }
+
     equals = this->ResourceGovernanceDescription == other.ResourceGovernanceDescription;
+    if (!equals) { return equals; }
+
+    for (auto i = 0; i < ConfigPackagePolicies.size(); i++)
+    {
+        equals = this->ConfigPackagePolicies[i] == other.ConfigPackagePolicies[i];
+        if (!equals)
+        {
+            return equals;
+        }
+    }
+
+    equals = this->SFRuntimeAccessDescription == other.SFRuntimeAccessDescription;
 
     return equals;
 }
@@ -174,7 +204,7 @@ void ServiceManifestImportDescription::ReadFromXml(
     {
         this->ServiceManifestRef.ReadFromXml(xmlReader);
     }
-   
+
     // <ConfigOverrides>
     if (xmlReader->IsStartElement(
         *SchemaNames::Element_ConfigOverrides,
@@ -186,7 +216,7 @@ void ServiceManifestImportDescription::ReadFromXml(
             // <ConfigOverrides/>
             xmlReader->ReadElement();
         }
-        else{
+        else {
             xmlReader->ReadStartElement();
             bool configs = true;
             while (configs)
@@ -248,7 +278,7 @@ void ServiceManifestImportDescription::ReadFromXml(
         {
             xmlReader->ReadStartElement();
             bool hasPolicies = true;
-            while (hasPolicies){
+            while (hasPolicies) {
                 if (xmlReader->IsStartElement(
                     *SchemaNames::Element_RunAsPolicy,
                     *SchemaNames::Namespace))
@@ -290,6 +320,14 @@ void ServiceManifestImportDescription::ReadFromXml(
                     ContainerHostPolicies.push_back(move(description));
                 }
                 else if (xmlReader->IsStartElement(
+                    *SchemaNames::Element_ServicePackageContainerPolicy,
+                    *SchemaNames::Namespace))
+                {
+                    ServicePackageContainerPolicyDescription description;
+                    description.ReadFromXml(xmlReader);
+                    ServicePackageContainerPolicy = description;
+                }
+                else if (xmlReader->IsStartElement(
                     *SchemaNames::Element_ResourceGovernancePolicy,
                     *SchemaNames::Namespace))
                 {
@@ -302,6 +340,20 @@ void ServiceManifestImportDescription::ReadFromXml(
                 {
                     // No need to read SP RG policy here
                     xmlReader->ReadElement();
+                }
+                else if (xmlReader->IsStartElement(
+                    *SchemaNames::Element_ServiceFabricRuntimeAccessPolicy,
+                    *SchemaNames::Namespace))
+                {
+                    SFRuntimeAccessDescription.ReadFromXml(xmlReader);
+                }
+                else if (xmlReader->IsStartElement(
+                    *SchemaNames::Element_ConfigPackagePolicies,
+                    *SchemaNames::Namespace))
+                {
+                    ConfigPackagePoliciesDescription description;
+                    description.ReadFromXml(xmlReader);
+                    ConfigPackagePolicies.push_back(move(description));
                 }
                 else {
                     hasPolicies = false;
@@ -399,7 +451,19 @@ ErrorCode ServiceManifestImportDescription::WriteToXml(Common::XmlWriterUPtr con
                 return er;
             }
         }
-
+        for (auto i = 0; i < this->ConfigPackagePolicies.size(); ++i)
+        {
+            er = ConfigPackagePolicies[i].WriteToXml(xmlWriter);
+            if (!er.IsSuccess())
+            {
+                return er;
+            }
+        }
+        er = ServicePackageContainerPolicy.WriteToXml(xmlWriter);
+        if (!er.IsSuccess())
+        {
+            return er;
+        }
         //</Policies>
         er = xmlWriter->WriteEndElement();
     }
@@ -417,5 +481,7 @@ void ServiceManifestImportDescription::clear()
     this->PackageSharingPolicies.clear();
     this->EndpointBindingPolicies.clear();
     this->ContainerHostPolicies.clear();
+    this->ServicePackageContainerPolicy.clear();
     this->ResourceGovernanceDescription.clear();
+    this->ConfigPackagePolicies.clear();
 }

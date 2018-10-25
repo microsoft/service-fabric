@@ -29,26 +29,6 @@ ApplicationEntityHealthInformation::ApplicationEntityHealthInformation(
 {
 }
 
-ApplicationEntityHealthInformation::ApplicationEntityHealthInformation(ApplicationEntityHealthInformation && other)
-    : EntityHealthInformation(move(other))
-    , applicationName_(move(other.applicationName_))
-    , applicationInstanceId_(move(other.applicationInstanceId_))
-{
-}
-
-ApplicationEntityHealthInformation & ApplicationEntityHealthInformation::operator = (ApplicationEntityHealthInformation && other)
-{
-    if (this != &other)
-    {
-        applicationName_ = move(other.applicationName_);
-        applicationInstanceId_ = move(other.applicationInstanceId_);
-    }
-
-    EntityHealthInformation::operator=(move(other));
-
-    return *this;
-}
-
 ErrorCode ApplicationEntityHealthInformation::ToPublicApi(
     __in Common::ScopedHeap & heap,
     __in FABRIC_HEALTH_INFORMATION * commonHealthInformation,

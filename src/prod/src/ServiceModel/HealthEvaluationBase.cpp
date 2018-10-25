@@ -50,6 +50,21 @@ void HealthEvaluationBase::GenerateDescription()
     this->SetDescription();
 }
 
+wstring HealthEvaluationBase::GetUnhealthyEvaluationDescription(wstring const & indent) const
+{
+    if (indent.empty())
+    {
+        return description_;
+    }
+
+    wstring result;
+    StringWriter writer(result);
+    // Add a newline to separate from the parent.
+    writer.WriteLine();
+    writer.Write("{0}{1}", indent, description_);
+    return result;
+}
+
 Common::ErrorCode HealthEvaluationBase::GenerateDescriptionAndTrimIfNeeded(size_t maxAllowedSize, __inout size_t & currentSize)
 {
     this->SetDescription();

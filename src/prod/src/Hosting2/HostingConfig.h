@@ -69,8 +69,21 @@ namespace Hosting2
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", EndpointProviderEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
         //Enables management of IP addresses.
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", IPProviderEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
-		//How often hosting should attempt to find and acl new cluster certificates
-		INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ClusterCertificateAclingInterval, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);
+        //How often hosting should attempt to find and acl new cluster certificates
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ClusterCertificateAclingInterval, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // Default credentials used instead of credentials specified in ApplicationManifest.xml
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultContainerRepositoryAccountName, L"", Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultContainerRepositoryPassword, L"", Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", IsDefaultContainerRepositoryPasswordEncrypted, false, Common::ConfigEntryUpgradePolicy::Static);
+
+        // Endpoint that an HTTP GET request is made from to get authentication token for downloading container images.  Any valid URI can be specified here
+        // as long as the endpoint returns a simple JSON format with "access_token" as an attribute so the token can be parsed.
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerRepositoryCredentialTokenEndPoint, L"", Common::ConfigEntryUpgradePolicy::Static);
+
+        // Default endpoint URI for MSI.  Adding a variable here instead of hardcoding it in case the folks handling MSI decide to change the endpoint.
+        // See here (https://docs.microsoft.com/en-us/azure/active-directory/managed-service-identity/howto-assign-access-portal) for more information.
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultMSIEndpointForTokenAuthentication, L"http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.core.windows.net/", Common::ConfigEntryUpgradePolicy::Static);
 
 #if defined(PLATFORM_UNIX)
         //The name of the plugin used for flat networks
@@ -112,6 +125,8 @@ namespace Hosting2
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DeactivationScanInterval, Common::TimeSpan::FromSeconds(600), Common::ConfigEntryUpgradePolicy::Dynamic);
         //Grace interval after which the process can be marked for deactivation
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DeactivationGraceInterval, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);
+        //Grace interval after which service package can be marked for deactivation for ServicePackageActivationMode=ExclusiveProcess
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ExclusiveModeDeactivationGraceInterval, Common::TimeSpan::FromSeconds(1), Common::ConfigEntryUpgradePolicy::Dynamic);
         //On every continuous failure system will generate a randomized time between 0 to DeactivationFailedRetryIntervalRange. Retry backoff interval will be Random(0, DeactivationFailedRetryIntervalRange) + failureCount*DeactivationGraceInterval.
         DEPRECATED_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DeactivationFailedRetryIntervalRange, Common::TimeSpan::FromSeconds(90), Common::ConfigEntryUpgradePolicy::Dynamic);
         //Max retry interval for Deactivation. On every continuous failure if the retry interval is more than the backoff interval, we set the backoff interval as DeactivationMaxRetryInterval.
@@ -137,6 +152,10 @@ namespace Hosting2
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", CacheCleanupScanInterval, Common::TimeSpan::FromSeconds(3600), Common::ConfigEntryUpgradePolicy::Static);
         //Setting to enable or disable pruning of container images when application type is unregistered
         INTERNAL_CONFIG_ENTRY(bool, L"Hosting", PruneContainerImages, false, Common::ConfigEntryUpgradePolicy::Dynamic);
+        //Prune stopped/dead containers. Only delete containers created before provided time. By default all stopped containers created more than 10 minutes will be deleted
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", DeadContainerCleanupUntilInMinutes, 10, Common::ConfigEntryUpgradePolicy::Static);
+        //Scan interval to prune stopped/dead containers. By default runs every hour
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerCleanupScanIntervalInMinutes, 30, Common::ConfigEntryUpgradePolicy::Static);
         //list of container image names that we should skip deleting. List is | delimited. If no tag is specified images with all tags will be skipped
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerImagesToSkip, L"microsoft/windowsservercore|microsoft/nanoserver", Common::ConfigEntryUpgradePolicy::Static);
 
@@ -158,15 +177,20 @@ namespace Hosting2
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", FabricUpgradeTimeout, Common::TimeSpan::FromSeconds(1800), Common::ConfigEntryUpgradePolicy::Dynamic);
 
         TEST_CONFIG_ENTRY(std::wstring, L"Hosting", FabricTypeHostPath, L"FabricTypeHost.exe", Common::ConfigEntryUpgradePolicy::Static);
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", SFBlockStoreSvcPath, L"SFBlockstoreService.exe", Common::ConfigEntryUpgradePolicy::Static);
 
+#if defined(PLATFORM_UNIX)
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", FabricContainerAppsEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
+#else
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", FabricContainerAppsEnabled, true, Common::ConfigEntryUpgradePolicy::Static);
+#endif
 
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerProviderServiceName, L"docker", Common::ConfigEntryUpgradePolicy::Dynamic);
 
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerProviderProcessName, L"dockerd", Common::ConfigEntryUpgradePolicy::Static);
 
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerHostAddress, L"", Common::ConfigEntryUpgradePolicy::Static);
-        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerHostPort, L"2375", Common::ConfigEntryUpgradePolicy::Static);
+        DEPRECATED_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerHostPort, L"2375", Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerImageDownloadTimeout, Common::TimeSpan::FromSeconds(1200), Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerImageDownloadRetryCount, 3, Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerImageDownloadBackoff, Common::TimeSpan::FromSeconds(5), Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -175,34 +199,61 @@ namespace Hosting2
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerTerminationTimeout, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerPackageRootFolder, L"C:\\SFPackageRoot", Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerFabricBinRootFolder, L"C:\\SFFabricBin", Common::ConfigEntryUpgradePolicy::Static);
+
+
+#if defined(PLATFORM_UNIX)
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DockerRequestTimeout, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Dynamic);
+#else
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DockerRequestTimeout, Common::TimeSpan::FromSeconds(120), Common::ConfigEntryUpgradePolicy::Dynamic);
-        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerTerminationMaxRetryCount, 5, Common::ConfigEntryUpgradePolicy::Dynamic);
+#endif
+        // Report health with time to live (DockerHealthReportTTL) if Docker process crashes.
+        INTERNAL_CONFIG_ENTRY(bool, L"Hosting", ReportDockerHealth, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DockerHealthReportTTL, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DockerProcessContinuousExitFailureResetInterval, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DockerProcessRetryBackoffInterval, Common::TimeSpan::FromSeconds(1), Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", DockerProcessMaxRetryInterval, Common::TimeSpan::FromSeconds(5), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerTerminationMaxRetryCount, 30, Common::ConfigEntryUpgradePolicy::Dynamic);
         DEPRECATED_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerDeactivationRetryDelayInMilliseconds, Common::TimeSpan::FromMilliseconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", SkipDockerProcessManagement, false, Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(int, L"Hosting", MaxContainerOperations, 100, Common::ConfigEntryUpgradePolicy::Static);
-        DEPRECATED_CONFIG_ENTRY(int, L"Hosting", ContainerDeactivationRetryDelayInSec, 1, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerDeactivationRetryDelayInSec, 1, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         //Config to determine the time to trace number of active Containers and Exe
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", InitialStatisticsInterval, Common::TimeSpan::FromMinutes(20), Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", StatisticsInterval, Common::TimeSpan::FromMinutes(300), Common::ConfigEntryUpgradePolicy::Static);
 
-
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultNatNetwork, L"bridge", Common::ConfigEntryUpgradePolicy::Dynamic);
 #if defined(PLATFORM_UNIX)
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerGroupRootImageName, L"ubuntu:16.04", Common::ConfigEntryUpgradePolicy::Static);
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerGroupEntrypoint, L"", Common::ConfigEntryUpgradePolicy::Static);
         //The primary directory of external executable commands on the node.
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", LinuxExternalExecutablePath, L"/usr/bin/", Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultContainerNetwork, L"host", Common::ConfigEntryUpgradePolicy::Dynamic);
 #else
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerGroupRootImageName, L"microsoft/nanoserver:latest", Common::ConfigEntryUpgradePolicy::Static);
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerGroupEntrypoint, L"powershell.exe", Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", DefaultContainerNetwork, L"", Common::ConfigEntryUpgradePolicy::Dynamic);
 #endif
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerDeactivationQueueTimeount, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(bool, L"Hosting", ContainerImageCachingEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
+
+#if defined(PLATFORM_UNIX)
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerMountPointForSettings, L"/var/settings", Common::ConfigEntryUpgradePolicy::Static);
+#else
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerMountPointForSettings, L"C:\\settings", Common::ConfigEntryUpgradePolicy::Static);
+#endif
+        INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", MountPointForSettings, L"settings", Common::ConfigEntryUpgradePolicy::Static);
 
         //Allow containers to be run as privileged. Disallowed by default.
         PUBLIC_CONFIG_ENTRY(bool, L"Hosting", EnablePrivilegedContainers, false, Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerFabricLogRootFolder, L"C:\\SFFabricLog", Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerNodeWorkFolder, L"C:\\SFNodeFolder", Common::ConfigEntryUpgradePolicy::Static);
+
+#if !defined(PLATFORM_UNIX)
+        //Cleanup HNS endpoints before docker process starts.
+        INTERNAL_CONFIG_ENTRY(bool, L"Hosting", HNSEndpointsCleanup, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+#endif
 
         // Setting this to true will include guest service type host in deployed code package query
         INTERNAL_CONFIG_ENTRY(bool, L"Hosting", IncludeGuestServiceTypeHostInCodePackageQuery, false, Common::ConfigEntryUpgradePolicy::Dynamic);
@@ -244,24 +295,65 @@ namespace Hosting2
         // This is used to test LRM <-> FM <-> CRM flows in FabricTest.
         TEST_CONFIG_ENTRY(bool, L"Hosting", LocalResourceManagerTestMode, false, Common::ConfigEntryUpgradePolicy::Static);
 
+        // Default behavior of Resource Governance is to put limit specified in MemoryInMB on amount of total memory (RAM + swap) that process uses.
+        // If the limit is exceeded, the process will receive OutOfMemory exception.
+        // If this parameter is set to true, limit will be applied only to the amount of RAM memory that a process will use.
+        // If this limit is exceeded, and if this setting is true, then OS will swap the main memory to disk.
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", GovernOnlyMainMemoryForProcesses, false, Common::ConfigEntryUpgradePolicy::Static);
+
         // Max number of continuous failure for ContainerEventManager trying to register for docker events after which it will assert.
         INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerEventManagerMaxContinuousFailure, 20, Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerEventManagerFailureBackoffInSec, 5, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // Used by DockerProcessManager trying to start docker service after which it will assert.
-        INTERNAL_CONFIG_ENTRY(int, L"Hosting", DockerProcessManagerMaxRetryCount, 20, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", DockerProcessManagerMaxRetryCount, 30, Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(int, L"Hosting", DockerProcessManagerRetryIntervalInSec, 2, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+#if !defined(PLATFORM_UNIX)
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", EnableContainerServiceDebugMode, true, Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerServiceLogFileNamePrefix, L"sfcontainerlogs", Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(int, L"Hosting", ContainerServiceLogFileRetentionCount, 10, Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(int, L"Hosting", ContainerServiceLogFileMaxSizeInKb, 32768, Common::ConfigEntryUpgradePolicy::Static);
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", ContainerServiceLogFileRetentionFactor, 3, Common::ConfigEntryUpgradePolicy::Static);
+#endif
+        //
+        // This is the value of base used in calculating the retry time when a CodePackage fails to start or terminates
+        // unexpectedly. The retry is computed as:
+        // 
+        // RetryTime = (ActivationRetryBackoffInterval in seconds) * (ActivationRetryBackoffExponentiationBase ^ ContinuousFailureCount)
+        //
+        // The backoff can be made constant by using a value of zero and linear by using a value of 1.
+        //
+        INTERNAL_CONFIG_ENTRY(double, L"Hosting", ActivationRetryBackoffExponentiationBase, 1.5, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        //
+        // For guest applications, if one or more CodePackages in a ServicePackage undergoes these many continuous failures,
+        // Hosting will trigger failover by killing the FabricTypeHost. After every failure, the retry time is computed as:
+        //
+        // RetryTime = (ActivationRetryBackoffInterval in seconds) * (ActivationRetryBackoffExponentiationBase ^ ContinuousFailureCount)
+        //
+        // The value of 11 will give the stabilization time of approx 30-40 mins before trigger failover. This will allow users to use this 
+        // time to observe health report, use dead container log query and do other investigation as needed etc.
+        //
+        INTERNAL_CONFIG_ENTRY(int, L"Hosting", DeployedServiceFailoverContinuousFailureThreshold, 11, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        //
+        // This config tells hosting to skip passing arguments (specified in config ContainerServiceArguments) to docker daemon.
+        //
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", UseContainerServiceArguments, true, Common::ConfigEntryUpgradePolicy::Static);
+
 
 #if !defined(PLATFORM_UNIX)
         //
         // Service Fabric (SF) manages docker daemon (except windows client machines like Win10). This configuration allows
-        // user to specify endpoint on which docker daemon should listen on when started by SF. By default, SF will start
-        // docker daemon to listen both on http and named pipe protocols.
+        // user to specify custom arguments that should be passed to docker daemon when starting it. For example endpoint on
+        // which docker daemon should listen on when started by SF etc. By default, SF will start docker daemon to listen both
+        // on http and named pipe protocols on windows and on unix domain socker on unix.
         //
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerServiceAddressArgument, L"", Common::ConfigEntryUpgradePolicy::Static);
-
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerServiceArguments, L"-H localhost:2375 -H npipe://", Common::ConfigEntryUpgradePolicy::Static);
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerServiceNamedPipeOrUnixSocketAddress, L"npipe://./pipe/docker_engine", Common::ConfigEntryUpgradePolicy::Static);
 #else
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerServiceArguments, L"-H unix:///var/run/docker.sock", Common::ConfigEntryUpgradePolicy::Static);
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", ContainerServiceNamedPipeOrUnixSocketAddress, L"unix:///var/run/docker.sock", Common::ConfigEntryUpgradePolicy::Static);
 #endif
 
@@ -271,18 +363,49 @@ namespace Hosting2
         // Currently when ContainerActivator opens, it starts container service process. When FabricTests runs in parallel on one machine
         // it may cause multiple container service process to start in parallel. For FabricTest this config is set to true by default.
         // Those FabricTest which uses container need to set it to false and run sequentially.
-        TEST_CONFIG_ENTRY(bool, L"Hosting", DisableContainerServiceStartOnContainerActivatorOpen, false, Common::ConfigEntryUpgradePolicy::Static);
+        DEPRECATED_CONFIG_ENTRY(bool, L"Hosting", DisableContainerServiceStartOnContainerActivatorOpen, false, Common::ConfigEntryUpgradePolicy::Static);
+
+        // Config for disabling containers - used instead of DisableContainerServiceStartOnContainerActivatorOpen which is depricated config
+        PUBLIC_CONFIG_ENTRY(bool, L"Hosting", DisableContainers, false, Common::ConfigEntryUpgradePolicy::Static);
 
         // Amount of time we wait for a container stats response
-        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerStatsTimeout, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", ContainerStatsTimeout, Common::TimeSpan::FromSeconds(15), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        //The timeout to activate process of sending available containers images from nodes
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", NodeAvailableContainerImagesRefreshInterval, Common::TimeSpan::FromSeconds(300), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        // Amount of time we wait for a container images response
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", NodeAvailableContainerImagesTimeout, Common::TimeSpan::FromSeconds(20), Common::ConfigEntryUpgradePolicy::Dynamic);
+
+        //Enable cleanup of Firewall rules on start of FabricHost and restart of Fabric.exe
+        INTERNAL_CONFIG_ENTRY(bool, L"Hosting", EnableFirewallSecurityCleanup, true, Common::ConfigEntryUpgradePolicy::Dynamic);
+
+#if !defined(PLATFORM_UNIX)
+        // Define the flag to be used to determine if SFVolumeDisk should be enabled or not.
+        // The name of the flag is the same as set by the AddonService processing.
+        INTERNAL_CONFIG_ENTRY(bool, L"Hosting", IsSFVolumeDiskServiceEnabled, false, Common::ConfigEntryUpgradePolicy::Static);
+#endif // !defined(PLATFORM_UNIX)
+
+        // Comma-separated list of volume plugin names and the port numbers that they are listening on. Format:
+        // <pluginName1>:<port1>,<pluginName2>:<port2>, ...
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Hosting", VolumePluginPorts, L"", Common::ConfigEntryUpgradePolicy::Static);
+
+        // Timeout for messages that are sent to the volume plugin
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"Hosting", VolumePluginRequestTimeout, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Static);
 
     public:
+        std::wstring GetContainerHostAddress()
+        {
+            return ContainerHostAddress.empty() ?
+                Common::wformatString("http://localhost:{0}", ContainerHostPort) : ContainerHostAddress;
+        }
+
         std::wstring GetContainerApplicationFolder(std::wstring const& applicationId)
         {
             return Common::Path::Combine(this->ContainerAppDeploymentRootFolder, applicationId);
         }
 
-        void ToPublicApi(
+        Common::ErrorCode ToPublicApi(
             __in Common::ScopedHeap & heap,
             __out FABRIC_HOSTING_SETTINGS & settings) const;
     };

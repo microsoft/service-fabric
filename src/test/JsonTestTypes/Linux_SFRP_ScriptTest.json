@@ -1,6 +1,7 @@
 {
-    "RequiredParameters": [ "TaskName" ],
-
+    "RequiredParameters": [
+        "TaskName"
+    ],
     "Defaults": {
         "SetupArgs": "",
         "SetupType": "",
@@ -12,14 +13,12 @@
         "ExecutionTimeout": "70000",
         "CleanupTimeout": "2100"
     },
-
     "TestSetup": {
         "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
         "Arguments": "[SETUPTYPE] [SETUPARGS] ",
         "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
         "WorkingDirectory": "[CLOUDBINPATH]"
     },
-
     "TestExecution": [
         {
             "ExeName": "[BINS]\\WinFabricTest\\WinFabricTestRunner.exe",
@@ -39,12 +38,12 @@
             "Arguments": "",
             "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
         },
-         {
+        {
             "ExeName": "[BINS]\\WinFabricTest\\WinFabric.TestInfra.PerfUploader.exe",
             "Arguments": "",
             "WorkingDirectory": "[BINS]",
             "MaxExecutionTimeInSeconds": "300"
-        },    
+        },
         {
             "ExeName": "__ARCHIVE__",
             "Arguments": "",
@@ -57,9 +56,7 @@
         "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
         "WorkingDirectory": "[CLOUDBINPATH]"
     },
-
     "ArchiverProperties": {
-        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$"
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.etl$,.*\\.pdb$,.*\\.dmp$,.*\\.out$,.*\\.json$"
     }
-
 }

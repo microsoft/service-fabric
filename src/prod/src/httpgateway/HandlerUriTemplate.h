@@ -59,6 +59,22 @@ namespace HttpGateway
         }
 
         HandlerUriTemplate(
+                std::wstring const &suffixPath,
+                Common::GlobalWString const &verb,
+                Common::AsyncCallback const &handleCallback,
+                double minApiVersion,
+                bool allowAnonymous = false)
+            : suffixPath_(suffixPath)
+            , verb_(*verb)
+            , handlerFunction_(handleCallback)
+            , minApiVersion_(minApiVersion)
+            , maxApiVersion_(HandlerUriTemplate::defaultMaxApiVersion_)
+            , allowAnonymous_(allowAnonymous)
+            , requireApiVersion_(true)
+        {
+        }
+
+        HandlerUriTemplate(
             std::wstring const &suffixPath,
             Common::GlobalWString const &verb,
             Common::AsyncCallback const &handleCallback,

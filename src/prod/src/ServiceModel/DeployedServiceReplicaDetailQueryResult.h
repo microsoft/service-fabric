@@ -37,12 +37,14 @@ namespace ServiceModel
             FABRIC_SERVICE_PARTITION_ACCESS_STATUS writeStatus,
             std::vector<ServiceModel::LoadMetricReport> && reportedLoad);
 
-        DeployedServiceReplicaDetailQueryResult(DeployedServiceReplicaDetailQueryResult && other);
-
-        DeployedServiceReplicaDetailQueryResult & operator=(DeployedServiceReplicaDetailQueryResult&& other);
+        DeployedServiceReplicaDetailQueryResult(DeployedServiceReplicaDetailQueryResult && other) = default;
+        DeployedServiceReplicaDetailQueryResult & operator=(DeployedServiceReplicaDetailQueryResult&& other) = default;
 
         __declspec(property(get=get_IsInvalid)) bool IsInvalid;
         bool get_IsInvalid() const { return kind_ == FABRIC_SERVICE_KIND_INVALID; }
+
+        __declspec(property(get = get_ReplicaStatusQueryResult)) ReplicaStatusQueryResultSPtr const & ReplicaStatusQueryResult;
+        ReplicaStatusQueryResultSPtr const & get_ReplicaStatusQueryResult() const { return replicaStatus_; }
 
         __declspec(property(get = get_DeployedServiceReplicaQueryResult)) DeployedServiceReplicaQueryResultSPtr DeployedServiceReplicaQueryResult;
         DeployedServiceReplicaQueryResultSPtr get_DeployedServiceReplicaQueryResult() const { return deployedServiceReplicaQueryResult_; }

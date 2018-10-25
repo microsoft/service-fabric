@@ -42,8 +42,10 @@ bool WaitHandle<ManualReset>::IsSet()
 #ifdef PLATFORM_UNIX
 
 template <bool ManualReset>
-WaitHandle<ManualReset>::WaitHandle(bool initialState) : signaled_(initialState)
+WaitHandle<ManualReset>::WaitHandle(bool initialState, std::wstring eventName) : signaled_(initialState)
 {
+    // @TODO - eventName isn't actually supported in linux. we need to find another way
+    UNREFERENCED_PARAMETER(eventName);
     pthread_cond_init(&cond_, nullptr);
     pthread_mutex_init(&mutex_, nullptr);
 }
@@ -160,13 +162,13 @@ ErrorCode WaitHandle<ManualReset>::Reset()
 #else
 
 template <bool ManualReset>
-WaitHandle<ManualReset>::WaitHandle(bool initialState)
+WaitHandle<ManualReset>::WaitHandle(bool initialState, std::wstring eventName)
 {
     handle_ = CreateEventW(
         nullptr,
         ManualReset ? TRUE : FALSE,
         initialState,
-        nullptr);
+        eventName.empty() ? nullptr : eventName.c_str());
 
     ASSERT_IFNOT(handle_, "CreateEvent failed: {0}", ErrorCode::FromWin32Error());
 }
@@ -223,7 +225,7 @@ ErrorCode WaitHandle<ManualReset>::Set()
     if(!::SetEvent(handle_))
     {
         err = ErrorCode::FromWin32Error();
-        WriteError(TraceType, "SetEvent failed: {0}", err); 
+        TRACE_ERROR_AND_ASSERT(TraceType, "SetEvent failed: {0}", err); 
     }
 
     return err;
@@ -236,7 +238,7 @@ ErrorCode WaitHandle<ManualReset>::Reset()
     if (!::ResetEvent(handle_))
     {
         err = ErrorCode::FromWin32Error();
-        WriteError(TraceType, "ResetEvent failed: {0}", err); 
+        TRACE_ERROR_AND_ASSERT(TraceType, "ResetEvent failed: {0}", err); 
     }
 
     return err;

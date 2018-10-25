@@ -11,8 +11,6 @@ namespace Management
     {
         class ApplicationTypeContext : public RolloutContext
         {
-            DENY_COPY(ApplicationTypeContext)
-
         public:
             static const RolloutContextType::Enum ContextType;
 
@@ -21,7 +19,7 @@ namespace Management
             ApplicationTypeContext(
                 ServiceModelTypeName const &,
                 ServiceModelVersion const &);
-            
+
             ApplicationTypeContext(
                 Common::ComponentRoot const &,
                 ClientRequestSPtr const &,
@@ -50,6 +48,7 @@ namespace Management
                 std::wstring const &);
             
             ApplicationTypeContext(ApplicationTypeContext &&) = default;
+            ApplicationTypeContext(ApplicationTypeContext const &) = default;
             ApplicationTypeContext & operator=(ApplicationTypeContext &&) = default;
 
             virtual ~ApplicationTypeContext();

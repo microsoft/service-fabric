@@ -27,6 +27,14 @@ namespace LoggingReplicatorTests
             __in TxnReplicator::TRInternalSettingsSPtr const & config,
             __in KAllocator & allocator);
 
+        static TestOperationProcessor::SPtr CreateWithParallelDispatcher(
+            __in Data::Utilities::PartitionedReplicaId const & traceId,
+            __in int minDelay, 
+            __in int maxDelay, 
+            __in int seed,
+            __in TxnReplicator::TRInternalSettingsSPtr const & config,
+            __in KAllocator & allocator);
+
         __declspec(property(get = get_LogRecordsDispatcher)) Data::LoggingReplicator::LogRecordsDispatcher & RecordsDispatcher;
         Data::LoggingReplicator::LogRecordsDispatcher & get_LogRecordsDispatcher()
         {
@@ -102,11 +110,11 @@ namespace LoggingReplicatorTests
 
         void Unlock(__in Data::LogRecordLib::LogicalLogRecord & record) override;
 
-		// Notification APIs
-		NTSTATUS RegisterTransactionChangeHandler(
-			__in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept override;
+        // Notification APIs
+        NTSTATUS RegisterTransactionChangeHandler(
+            __in TxnReplicator::ITransactionChangeHandler & transactionChangeHandler) noexcept override;
 
-		NTSTATUS UnRegisterTransactionChangeHandler() noexcept override;
+        NTSTATUS UnRegisterTransactionChangeHandler() noexcept override;
 
     private:
 
@@ -116,6 +124,7 @@ namespace LoggingReplicatorTests
             __in int maxDelay,
             __in int seed,
             __in TxnReplicator::TRInternalSettingsSPtr const & config,
+            __in bool useParallelDispatcher,
             __in KAllocator & allocator);
 
         Data::LoggingReplicator::LogRecordsDispatcher::SPtr recordsDispatcher_;

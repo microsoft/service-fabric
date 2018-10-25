@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Microsoft.ServiceFabric.DockerClient Class Library</Description>
+    <AssemblyName>Microsoft.ServiceFabric.ContainerServiceClient</AssemblyName>
+    <PackageId>Microsoft.ServiceFabric.ContainerServiceClient</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Include="
+    ..\_friends.cs;
+    ..\BufferedClientStream.cs;
+    ..\ChunkedRequestWriter.cs;
+    ..\ChunkedResponseReader.cs;
+    ..\ContainerApiResponse.cs;
+    ..\ContainerOperation.cs;
+    ..\ContainerServiceClient.cs;
+    ..\ContainerServiceHttpMessageHandler.cs;
+    ..\ContainerServiceHttpResponseContent.cs;
+    ..\ContentLengthResponseReader.cs;
+    ..\ContainerServiceHttpConnection.cs;
+    ..\ExecOperation.cs;
+    ..\HttpRequestExtensions.cs;
+    ..\ImageOperation.cs;
+    ..\JsonSerializer.cs;
+    ..\NamedPipeHttpMessageHandler.cs;
+    ..\UnixDomainSocketHttpMessageHandler.cs;
+    ..\UnixDomainSocketEndPoint.cs;
+    ..\NetworkOperation.cs;
+    ..\SystemOperation.cs;
+    ..\VolumeOperation.cs;
+    ..\JsonRequestContent.cs;
+    ..\ContainerApiException.cs;
+    ..\QueryParameterHelper.cs;
+    ..\Config\ContainerConfig.cs;
+    ..\Config\ContainersPruneConfig.cs;
+    ..\Config\HealthConfig.cs;
+    ..\Config\ContainerEventsConfig.cs;
+    ..\Config\HostConfig.cs;
+    ..\Config\NetworkingConfig.cs;
+    ..\Config\LogConfig.cs;
+    ..\Config\PortBinding.cs;
+    ..\Config\VolumeConfig.cs;
+    ..\Config\EndpointSettings.cs;
+    ..\Config\EndpointIPAMConfig.cs;
+    ..\Config\ContainerExecStartConfig.cs;
+    ..\Config\NetworkConnectConfig.cs;
+    ..\Config\ContainerExecConfig.cs;
+    ..\Config\AuthConfig.cs;
+    ..\Config\NetworkListConfig.cs;
+    ..\Config\NetworkCreateConfig.cs;
+    ..\Response\NetworkListResponse.cs;
+    ..\Response\NetworkCreateResponse.cs;
+    ..\Response\ContainerEventResponse.cs;
+    ..\Response\CreateContainerResponse.cs;
+    ..\Response\CreateContainerExecResponse.cs;
+    ..\Response\ContainersPruneResponse.cs;
+    ..\Response\ContainerInspectResponse.cs;
+    ..\Response\VersionResponse.cs;" 
+    Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="System.Buffers" Version="4.3.0" />
+    <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
+    <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
+    <PackageReference Include="System.Net.Requests" Version="4.3.0" />
+    <PackageReference Include="System.Net.Security" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Extensions" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.TypeExtensions" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Overlapped" Version="4.3.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj"/>
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

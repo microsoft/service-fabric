@@ -331,6 +331,7 @@ bool FabricTestDispatcher::Open()
     fabricClientUpgrade_ = make_unique<TestFabricClientUpgrade>(fabricClient_);
     fabricClientScenarios_ = make_unique<TestFabricClientScenarios>(*this, fabricClient_);
     nativeImageStoreExecutor_ = make_unique<NativeImageStoreExecutor>(*this);
+    checkpointTruncationTimestampValidator_ = make_unique<CheckpointTruncationTimestampValidator>(*this);
 
     SetCommandHandlers();
 
@@ -351,7 +352,7 @@ ErrorCode FabricTestDispatcher::OpenFabricActivationManager()
    auto activationManager = fabricActivationManager_;
 
     fabricActivationManager_->BeginOpen(
-        TimeSpan::FromSeconds(30),
+        TimeSpan::FromSeconds(60),
         [activateWaiter, activationManager](AsyncOperationSPtr const & operation)
     {
         auto error = activationManager->EndOpen(operation);
@@ -360,7 +361,7 @@ ErrorCode FabricTestDispatcher::OpenFabricActivationManager()
     },
     FABRICSESSION.CreateAsyncOperationRoot());
     ErrorCode error(ErrorCodeValue::Success);
-    if(activateWaiter->WaitOne(TimeSpan::FromSeconds(30)))
+    if(activateWaiter->WaitOne(TimeSpan::FromSeconds(60)))
     {
         error = activateWaiter->GetError();
     }
@@ -664,6 +665,10 @@ void FabricTestDispatcher::SetCommandHandlers()
     {
         return FabricClient.DeleteName(paramCollection);
     };
+    commandHandlers_[FabricTestCommands::DnsNameExistsCommand] = [this](StringCollection const & paramCollection)
+    {
+        return FabricClient.DnsNameExists(paramCollection);
+    };
     commandHandlers_[FabricTestCommands::NameExistsCommand] = [this](StringCollection const & paramCollection)
     {
         return FabricClient.NameExists(paramCollection);
@@ -827,6 +832,10 @@ void FabricTestDispatcher::SetCommandHandlers()
     commandHandlers_[FabricTestCommands::NodeStateRemovedCommand] = [this](StringCollection const & paramCollection)
     {
         return FabricClient.NodeStateRemoved(paramCollection);
+    };
+    commandHandlers_[FabricTestCommands::UpdateNodeImagesCommand] = [this](StringCollection const & paramCollection)
+    {
+        return UpdateNodeImages(paramCollection);
     };
     commandHandlers_[FabricTestCommands::RecoverPartitionsCommand] = [this](StringCollection const & paramCollection)
     {
@@ -1312,6 +1321,11 @@ void FabricTestDispatcher::SetCommandHandlers()
         return FabricClient.DeployServicePackages(paramCollection);
     };
 
+    commandHandlers_[FabricTestCommands::VerifyDeployedCodePackageCountCommand] = [this](StringCollection const & paramCollection)
+    {
+        return FabricClient.VerifyDeployedCodePackageCount(paramCollection);
+    };
+
     // unreliable transport command
     commandHandlers_[FabricTestCommands::AddBehaviorCommand] = [this](StringCollection const & paramCollection)
     {
@@ -1388,6 +1402,11 @@ void FabricTestDispatcher::SetCommandHandlers()
     commandHandlers_[FabricTestCommands::SetEseOnly] = [this](StringCollection const &)
     {
         return SetEseOnly();
+    };
+
+    commandHandlers_[FabricTestCommands::EnableLogTruncationTimestampValidation] = [this](StringCollection const & paramCollection)
+    {
+        return EnableLogTruncationTimestampValidation(paramCollection);
     };
 }
 
@@ -2269,7 +2288,6 @@ map<wstring, EseDumpDeserializationCallback> EseDumpGetKeyDeserializers()
 
     return deserializers;
 }
-
 
 bool FabricTestDispatcher::EseDump(StringCollection const & params)
 {
@@ -4159,6 +4177,8 @@ bool FabricTestDispatcher::StopClient(StringCollection const & params)
     if(params.size() == 0 || testClients_.size() == 1)
     {
         clientsStopped_ = true;
+        checkpointTruncationTimestampValidator_->Stop();
+
         map<wstring, shared_ptr<TestStoreClient>> testClients(testClients_.begin(), testClients_.end());
         testClients_.clear();
         for (auto it = testClients.begin() ; it != testClients.end(); it++ )
@@ -4658,6 +4678,67 @@ bool FabricTestDispatcher::VerifyApplicationLoad(Common::StringCollection const 
     return true;
 }
 
+bool FabricTestDispatcher::UpdateNodeImages(Common::StringCollection const & params)
+{
+    if (params.size() != 2)
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::UpdateNodeImagesCommand);
+        return false;
+    }
+
+    NodeId nodeId = ParseNodeId(params[0]);
+    FabricTestNodeSPtr testNode = testFederation_.GetNode(nodeId);
+
+    if (testNode == nullptr)
+    {
+        TestSession::WriteWarning(
+            TraceSource,
+            "Cannot find node with ID {0}.",
+            nodeId);
+        return false;
+    }
+
+    shared_ptr<FabricNodeWrapper> nodeWrapper;
+    if (!testNode->TryGetFabricNodeWrapper(nodeWrapper))
+    {
+        TestSession::WriteWarning(
+            TraceSource,
+            "Cannot get node wrapper for ID {0}.",
+            nodeId);
+        return false;
+    }
+
+    wstring nodeIdString = nodeWrapper->GetHostingSubsystem().NodeId;
+
+    CommandLineParser parser(params, 1);
+    wstring availableImagesString;
+    parser.TryGetString(L"images", availableImagesString, L"");
+    Common::StringCollection imagesCollection;
+    Common::StringUtility::Split<std::wstring>(availableImagesString, imagesCollection, L",");
+
+    vector<wstring> availableImagesOnNode;
+    for (size_t index = 0; index < imagesCollection.size(); ++index)
+    {
+        availableImagesOnNode.push_back(imagesCollection[index]);
+    }
+
+    auto fm = GetFM();
+
+    if (!fm)
+    {
+        TestSession::WriteWarning(TraceSource, "FM not ready");
+        return false;
+    }
+
+    auto plb = fm->PLBTestHelper;
+
+    TestSession::FailTestIf(!plb, "PLB not valid");
+
+    plb->UpdateAvailableImagesPerNode(nodeIdString, availableImagesOnNode);
+
+    return true;
+}
+
 bool FabricTestDispatcher::VerifyResourceOnNode(Common::StringCollection const & params)
 {
     if (params.size() != 3)
@@ -5073,7 +5154,6 @@ bool FabricTestDispatcher::VerifyMoveCostValue(Common::StringCollection const & 
     return true;
 }
 
-
 bool FabricTestDispatcher::PromoteToPrimary(StringCollection const & params)
 {
     if (params.size() != 2)
@@ -5451,6 +5531,9 @@ bool FabricTestDispatcher::ResolveService(
         expectedCompareVersionError = ErrorCode(error).ToHResult();
     }
 
+    // Force named partition even if name is integer
+    bool namedPartition = parser.GetBool(L"namedpartition");
+
     bool savePartitionId = parser.GetBool(L"savecuid");
     bool verifyPartitionId = parser.GetBool(L"verifycuid");
 
@@ -5495,7 +5578,7 @@ bool FabricTestDispatcher::ResolveService(
             skipVerifyResults,
             expectedCompareVersionError);
     }
-    else if (Common::TryParseInt64(params[1], key))
+    else if (!namedPartition && Common::TryParseInt64(params[1], key))
     {
         FabricClient.ResolveService(
             serviceName,
@@ -5871,6 +5954,10 @@ bool FabricTestDispatcher::VerifyUpgradeApp(StringCollection const & params)
             {
                 upgradeState = FABRIC_APPLICATION_UPGRADE_STATE_ROLLING_FORWARD_COMPLETED;
             }
+            else if (upgradeStateString == L"rollbackpending")
+            {
+                upgradeState = FABRIC_APPLICATION_UPGRADE_STATE_ROLLING_BACK_PENDING;
+            }
 
             if (upgradeState != FABRIC_APPLICATION_UPGRADE_STATE_INVALID)
             {
@@ -6096,6 +6183,10 @@ bool FabricTestDispatcher::VerifyUpgradeFabric(StringCollection const & params)
             else if (upgradeStateString == L"rollforwardcompleted")
             {
                 upgradeState = FABRIC_UPGRADE_STATE_ROLLING_FORWARD_COMPLETED;
+            }
+            else if (upgradeStateString == L"rollbackpending")
+            {
+                upgradeState = FABRIC_UPGRADE_STATE_ROLLING_BACK_PENDING;
             }
 
             if (upgradeState != FABRIC_UPGRADE_STATE_INVALID)
@@ -8333,38 +8424,196 @@ bool FabricTestDispatcher::IsQuorumLostForReconfigurationFU(ReconfigurationAgent
     return false;
 }
 
-bool FabricTestDispatcher::WaitForAllToApplyLsn(Common::StringCollection const & params)
+bool FabricTestDispatcher::EnableLogTruncationTimestampValidation(Common::StringCollection const & params)
 {
-    if (params.size() < 3)
+    if (params.size() != 2)
     {
-        FABRICSESSION.PrintHelp(FabricTestCommands::WaitForAllToApplyLsn);
         return false;
     }
 
     wstring serviceName(params[0]);
-    NodeId nodeId = ParseNodeId(params[1]);
-    FABRIC_SEQUENCE_NUMBER targetLsn = stoll(params[2]);
-    TimeSpan timeout = params.size() > 3 ? TimeSpan::FromSeconds(Double_Parse(params[3])) : TimeSpan::FromSeconds(100);
-    DateTime deadline = DateTime::Now() + timeout;
+    wstring action(params[1]);
 
-    ITestStoreServiceSPtr testStoreService;
-    FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS counters;
+    if (action == L"start")
+    {
+        checkpointTruncationTimestampValidator_->AddService(serviceName);
+    }
+    else if (action == L"stop")
+    {
+        checkpointTruncationTimestampValidator_->RemoveService(serviceName);
+    }
+    else 
+    {
+        TestSession::FailTest("Invalid action. Expected enablelogtruncationtimestampvalidation <serviceName> <start/stop> ");
+    }
+    return true;
+}
+
+bool FabricTestDispatcher::WaitForAllToApplyLsn(Common::StringCollection const & params)
+{
+    if (params.size() < 3)
+    {
+        if (params.size() != 1)
+        {
+            FABRICSESSION.PrintHelp(FabricTestCommands::WaitForAllToApplyLsn);
+            return false;
+        }
+    }
+
+    wstring serviceName(params[0]);
+    NodeId nodeId;
+    TimeSpan timeout = params.size() > 3 ? TimeSpan::FromSeconds(Double_Parse(params[3])) : TimeSpan::FromSeconds(100);
+
+    if (params.size() == 1)
+    {
+        StringCollection findArgs;
+        std::wstring arg1 = L"Primary";
+        findArgs.push_back(arg1);
+        findArgs.push_back(serviceName);
+        std::wstring fuPrimaryLocation = GetFailoverUnitLocationState(findArgs);
+
+        TestSession::WriteInfo(
+            TraceSource,
+            "{0} {1} node = {2}",
+            serviceName,
+            arg1,
+            fuPrimaryLocation);
+
+        nodeId = ParseNodeId(fuPrimaryLocation);
+        return WaitForAllToApplyLsnExtension(serviceName, nodeId, timeout);
+    }
+
+    nodeId = ParseNodeId(params[1]);
+    FABRIC_SEQUENCE_NUMBER targetLsn = stoll(params[2]);
+    WaitForTargetLsn(serviceName, nodeId, timeout, targetLsn);
+    return false;
+}
+
+bool FabricTestDispatcher::WaitForAllToApplyLsnExtension(std::wstring & serviceName, NodeId & nodeId, TimeSpan timeout)
+{
     ErrorCode er;
+    ITestStoreServiceSPtr testStoreService;
 
     TestSession::FailTestIfNot(
         FABRICSESSION.FabricDispatcher.Federation.TryFindStoreService(serviceName, nodeId, testStoreService),
         "Failed to get Service:{0} on Node:{1}", serviceName, nodeId);
 
+    FABRIC_SEQUENCE_NUMBER targetLsn = CalculateTargetLsn(serviceName, nodeId);
+
+    return WaitForTargetLsn(serviceName, nodeId, timeout, targetLsn);
+}
+
+FABRIC_SEQUENCE_NUMBER FabricTestDispatcher::CalculateTargetLsn(std::wstring & serviceName, NodeId & nodeId)
+{
+    ErrorCode er;
+    ScopedHeap heap;
+    ITestStoreServiceSPtr service;
+
+    TestSession::FailTestIfNot(
+        FABRICSESSION.FabricDispatcher.Federation.TryFindStoreService(serviceName, nodeId, service),
+        "Failed to get Service:{0} on Node:{1}", serviceName, nodeId);
+
+    ServiceModel::ReplicatorStatusQueryResultSPtr queryResultSPtr;
+    std::shared_ptr<ServiceModel::PrimaryReplicatorStatusQueryResult> primaryQueryResultSPtr;
+
+    FABRIC_REPLICATOR_STATUS_QUERY_RESULT queryResult = {};
+    FABRIC_SEQUENCE_NUMBER targetLsn = -1;
+    int repeatLastLsnCount = 0;
+
+    DateTime deadline = DateTime::Now() + TimeSpan::FromSeconds(2);
+
+    while (DateTime::Now() < deadline)
+    {
+        Sleep(100);
+        er = service->GetReplicatorQueryResult(queryResultSPtr);
+
+        if (!er.IsSuccess())
+        {
+            TestSession::FailTest(
+                "ITestStoreServiceSPtr::GetReplicatorQueryResult failed with {0}",
+                er.ErrorCodeValueToString());
+        }
+
+        primaryQueryResultSPtr =
+            static_pointer_cast<ServiceModel::PrimaryReplicatorStatusQueryResult>(queryResultSPtr);
+
+        er = primaryQueryResultSPtr->ToPublicApi(heap, queryResult);
+
+        if (!er.IsSuccess())
+        {
+            TestSession::FailTest(
+                "ITestStoreServiceSPtr::GetReplicatorQueryResult failed with {0}",
+                er.ErrorCodeValueToString());
+        }
+
+        auto primaryReplicatorStatus = static_cast<FABRIC_PRIMARY_REPLICATOR_STATUS_QUERY_RESULT *>(queryResult.Value);
+        FABRIC_SEQUENCE_NUMBER newLastLsn = primaryReplicatorStatus->ReplicationQueueStatus->LastSequenceNumber;
+
+        if (newLastLsn > targetLsn)
+        {
+            if (targetLsn > 0)
+            {
+                TestSession::WriteInfo(
+                    TraceSource,
+                    "{0} targetLsn updated : {1} -> {2}",
+                    serviceName,
+                    targetLsn,
+                    newLastLsn);
+            }
+
+            targetLsn = newLastLsn;
+        }
+        else if (newLastLsn == targetLsn)
+        {
+            repeatLastLsnCount++;
+        }
+
+        // Exit if the same last LSN is seen over 3 loops
+        if (repeatLastLsnCount == 3)
+        {
+            break;
+        }
+    }
+
+    TestSession::FailTestIfNot(
+        targetLsn > 0,
+        "Failed to retrieve targetLsn for {0} on node {1}",
+        serviceName,
+        nodeId);
+
+    return targetLsn;
+}
+
+bool FabricTestDispatcher::WaitForTargetLsn(std::wstring & serviceName, NodeId & nodeId, TimeSpan timeout, FABRIC_SEQUENCE_NUMBER targetLsn)
+{
+    ITestStoreServiceSPtr service;
+
+    TestSession::FailTestIfNot(
+        FABRICSESSION.FabricDispatcher.Federation.TryFindStoreService(serviceName, nodeId, service),
+        "Failed to get Service:{0} on Node:{1}", serviceName, nodeId);
+
+    FABRIC_INTERNAL_REPLICATION_QUEUE_COUNTERS counters;
+    ErrorCode er;
+    DateTime deadline = DateTime::Now() + timeout;
+
     bool reachedTargetApplyAckLsn = false;
+
     while (!reachedTargetApplyAckLsn)
     {
-        er = testStoreService->GetReplicationQueueCounters(counters);
-        if(!er.IsSuccess())
+        er = service->GetReplicationQueueCounters(counters);
+        if (!er.IsSuccess())
         {
             TestSession::FailTest(
                 "ITestStoreServiceSPtr::GetReplicationQueueCounters failed with {0}",
                 er.ErrorCodeValueToString());
         }
+
+        TestSession::WriteInfo(
+            TraceSource,
+            "{0}.{1} allApplyAckLsn: {1}",
+            serviceName,
+            nodeId,
+            counters.allApplyAckLsn);
 
         if (counters.allApplyAckLsn >= targetLsn)
         {
@@ -8375,81 +8624,39 @@ bool FabricTestDispatcher::WaitForAllToApplyLsn(Common::StringCollection const &
         {
             TestSession::WriteInfo(
                 TraceSource,
-                "{0} target lsn: {1} / current lsn: {2}",
+                "{0}.{1} target lsn: {2} / current lsn: {3}",
                 serviceName,
+                nodeId,
                 targetLsn,
                 counters.allApplyAckLsn);
 
-            Sleep(1000);
+            Sleep(500);
         }
         else
         {
             TestSession::FailTest(
-                "{0} target lsn: {1} / current lsn: {2}",
-                serviceName, targetLsn, counters.allApplyAckLsn);
+                "{0}.{1} target lsn: {2} / current lsn: {3}",
+                serviceName,
+                nodeId,
+                targetLsn,
+                counters.allApplyAckLsn);
         }
     }
 
     return false;
 }
 
-bool FabricTestDispatcher::CheckContainers(Common::StringCollection const & params)
+bool FabricTestDispatcher::CheckContainers(Common::StringCollection const &)
 {
-    UNREFERENCED_PARAMETER(params);
+    auto & dockerProcessMgr = fabricActivationManager_->ProcessActivationManagerObj->ContainerActivatorObj->DockerProcessManagerObj;
 
-#if defined(PLATFORM_UNIX)
-    int retryCount = 5;
-    bool isDockerPresent = false;
-
-    for (int i = 0; i < retryCount; ++i)
+    if (HostingConfig::GetConfig().DisableContainers ||
+        !dockerProcessMgr.IsDockerServicePresent)
     {
-        AsyncOperationWaiterSPtr operationWaiter = make_shared<AsyncOperationWaiter>();
-
-        fabricActivationManager_->ProcessActivationManagerObj->ContainerActivatorObj->DockerProcessManagerObj.BeginInitialize(
-            HostingConfig::GetConfig().ActivationTimeout,
-            [&](AsyncOperationSPtr const & operation)
-            {
-                auto error = fabricActivationManager_->ProcessActivationManagerObj->ContainerActivatorObj->DockerProcessManagerObj.EndInitialize(operation);
-                operationWaiter->SetError(error);
-                operationWaiter->Set();
-            },
-            fabricActivationManager_->CreateAsyncOperationRoot()
-            );
-
-        ErrorCode error;
-        if (operationWaiter->WaitOne(HostingConfig::GetConfig().ActivationTimeout))
-        {
-            error = operationWaiter->GetError();
-            if (!error.IsSuccess())
-            {
-                TestSession::WriteWarning(TraceSource, "Container setup failed with {0} in iteration {1}", error, i);
-            }
-        }
-        else
-        {
-            TestSession::WriteWarning(TraceSource, "Container setup timed out in iteration {0}", i);
-            error = ErrorCode(ErrorCodeValue::Timeout);
-        }
-        if (error.IsSuccess())
-        {
-            isDockerPresent = true;
-            break;
-        }
-    }
-    if (!isDockerPresent)
-    {
-        //bail out here containers seem to not be supported on this machine
         FabricTestSession::GetFabricTestSession().FinishExecution(1);
     }
-    return true;
 
-#else
-    //
-    // Disable temporarily for windows.
-    //
-    FabricTestSession::GetFabricTestSession().FinishExecution(1);
-    return true; 
-#endif
+    return true;
 }
 
 bool FabricTestDispatcher::TryGetPrimaryRAFU(
@@ -8866,7 +9073,9 @@ bool FabricTestDispatcher::VerifyGFUM(
             }
         }
 
-        if (static_cast<int>(serviceFailoverUnits.size()) != testServiceDescription.PartitionCount)
+        // If auto scaling is enabled, then PLB will initiate repartitioning from inside SF and ServiceMap won't know about it.
+        // In case that it is enabled, do not check if number of FTs will match
+        if (testServiceDescription.ScalingPolicies.size() == 0 && static_cast<int>(serviceFailoverUnits.size()) != testServiceDescription.PartitionCount)
         {
             if(FabricTestSessionConfig::GetConfig().AllowServiceAndFULossOnRebuild)
             {
@@ -8903,7 +9112,8 @@ bool FabricTestDispatcher::VerifyGFUM(
 
             if(!serviceFailoverUnitIter->IsQuorumLost())
             {
-                TestSession::FailTestIf(serviceFailoverUnitIter->IsToBeDeleted,
+                TestSession::FailTestIf(
+                    testServiceDescription.ScalingPolicies.size() == 0 && serviceFailoverUnitIter->IsToBeDeleted,
                     "FailoverUnit {0} should not be marked IsToBeDeleted",
                     serviceFailoverUnitIter->Id);
 

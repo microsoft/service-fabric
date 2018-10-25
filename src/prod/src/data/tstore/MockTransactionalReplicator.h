@@ -255,8 +255,6 @@ namespace TStoreTests
 
         NTSTATUS GetCurrentEpoch(__out FABRIC_EPOCH & epoch) noexcept override;
 
-        NTSTATUS Test_RequestCheckpointAfterNextTransaction() noexcept override;
-
         ktl::Awaitable<NTSTATUS> TryRemoveCheckpointAsync(
             LONG64 checkpointLsnToBeRemoved,
             LONG64 nextCheckpointLsn) noexcept override;
@@ -292,7 +290,7 @@ namespace TStoreTests
             throw Exception(STATUS_NOT_IMPLEMENTED);
         }
 
-        KWfStatefulServicePartition::SPtr get_StatefulPartition() const override;
+        Data::Utilities::IStatefulPartition::SPtr get_StatefulPartition() const override;
         void SetWriteStatus(__in FABRIC_SERVICE_PARTITION_ACCESS_STATUS writeStatus);
         void SetReadStatus(__in FABRIC_SERVICE_PARTITION_ACCESS_STATUS readStatus);
 

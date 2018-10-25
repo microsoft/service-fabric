@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>System.Fabric.Management Class Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>System.Fabric.Management</AssemblyName>
+    <PackageId>System.Fabric.Management</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src\FirewallEnums.cs;
+      .\src\INetFwRule.cs;
+      .\src\INetFwRules.cs;
+      .\src\NetFwRule.cs;
+      .\src\NetFwRules.cs;"
+      Condition=" '$(TargetsLinux)' == 'true' " />
+    <Compile Include="NetFwTypeLib.cs;" Condition=" '$(TargetsLinux)' == 'false' " />
+    <Compile Include="
+      ..\..\Dlls\System.Fabric.Management\_friends.cs;
+      ..\..\src\System\Fabric\Management\common\ArtifactsSpecificationDescription.cs;
+      ..\..\src\System\Fabric\Management\common\NativeHelper.cs;
+      ..\..\src\System\Fabric\Management\common\TimeoutHelper.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\AzureInfrastructure.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\ClusterSettings.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\ConfigureOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\Constants.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\CreateOrUpdateOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DcaSettings.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DeployerTrace.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DeploymentNode.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DeploymentOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DeploymentOperations.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DeploymentParameters.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DockerDnsHelper.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DockerDnsSetupOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\DockerDnsCleanupOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FabricDeployerServiceController.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkDeploymentOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkSetupOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkCleanupOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\FlatNetworkConstants.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\Interface.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\Interfaces.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\IPAddressDetails.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\IpamConfig.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\IPSubnet.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\NetworkConfig.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\Config.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\CnsResponse.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\CreateNetworkRequest.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\InitializeRequest.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FabricNodeFirewallRules.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FabricValidatorWrapper.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\Firewall.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FirewallManager.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\FirewallRule.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\Infrastructure.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\NativeMethods.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\NetworkApiHelper.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\NodeSettings.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\PaaSInfrastructure.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\RemoveOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\RestartOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\RollbackOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\SafeInteropStructureToPtrMemoryHandle.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\SafeInteropPtrToStructureMemoryHandle.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\ServerInfrastructure.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\SetupSettings.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\TopologyProvider.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\UnreliableTransportSettings.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\UpdateInstanceIdOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\UpdateNodeStateOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\Utility.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\ValidateClusterManifestOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\ValidateOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\Versions.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\XMLHelper.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\BaseFabricConfigurationValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\ConfigDescription.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\DCASettingsValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\DcaStandardPluginValidators.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\DeploymentFolders.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\DnsServiceConfigurationValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\FabricSettingsValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\FabricValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorAzure.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorBlackbird.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorPaaS.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorServer.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorUtility.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\HttpAppGatewaySettingsValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\HttpGatewaySettingsValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\KtlLoggerConfigurationValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\SettingsOverridesTypeSectionParameter.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\TokenValidationServiceSettingsValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\ValueValidator.cs;
+      ..\..\src\System\Fabric\Management\fabricvalidator\WindowsFabricSettings.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationCreateInstanceOperation.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationDiagnosticsValidator.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationInstanceBuilder.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationInstanceContext.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationInstanceOperationBase.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationManifestValidator.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationProvisionOperation.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationProvisionProgressHandler.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationTypeContext.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationTypeInformation.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ApplicationUpgradeInstanceOperation.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\CodePackage.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ConfigPackage.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DataPackage.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeApplicationTypeDescription.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeObjectDescription.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeResourceGovernance.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceLoggingOptions.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServicePorts.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceTypeDescription.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceVolume.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeVolumeDescription.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeNetworkDescription.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ContainerApplicationPkgGenerator.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ContainerRepositoryCredentials.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeConstants.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeUtils.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\FabricDockerComposeException.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Application.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationPackageGenerator.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMount.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMountJsonConverter.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeProvider.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescription.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionAzureFile.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionVolumeDisk.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationScopedVolumeProvider.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\CertificateRef.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\CodePackage.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Endpoint.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\FabricApplicationException.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\NetworkRef.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ReliableCollectionsRef.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ImageRegistryCredential.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Resource.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Service.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Label.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\GenerationConfig.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\EnvironmentVariable.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsDescription.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsSinkBase.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsRef.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\AzureInternalMonitoringPipelineSinkDescription.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\DuplicateDetector.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\FabricImageBuilderValidationException.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\FabricProvisionOperation.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\FabricUpgradeOperation.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\IApplicationValidator.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilder.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilderSorterUtility.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilderUtility.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ImageStoreWrapper.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ManifestValidatorUtility.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ServiceManifest.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\ServiceManifestValidator.cs;
+      ..\..\src\System\Fabric\Management\ImageStore\ImageStoreFactoryProxy.cs;
+      ..\..\src\System\Fabric\Management\ImageStore\XStoreBlobWrapper.cs;
+      ..\..\src\System\Fabric\Management\ImageStore\XStoreCommon.cs;
+      ..\..\src\System\Fabric\Management\ImageStore\XStoreFileOperations.cs;
+      ..\..\src\System\Fabric\Management\ImageStore\XStoreFileOperationsWorker.cs;
+      ..\..\src\System\Fabric\Management\ImageStore\XStoreImageStore.cs;
+      ..\..\src\System\Fabric\Management\ImageBuilder\StringConstants.cs;"
+      Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <Compile Include="
+      ..\..\src\System\Fabric\Management\fabricdeployer\RemoveNodeConfigOperation.cs;
+      ..\..\src\System\Fabric\Management\fabricdeployer\V1FabricFirewallRuleSpecifications.cs;"
+      Condition=" '$(TargetsWindows)' == 'true' " />
+    <EmbeddedResource Include="$(BinariesBuildTypeArchDirectory)\inc\Configurations.csv;
+      $(SrcRoot)\prod\Setup\ArtifactsSpecification.csv"
+      Exclude="bin\**;obj\**;**\*.xproj;packages\**;@(EmbeddedResource)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\DCA\product\plugins\azure\blob\CoreCLRDll\AzureFileUploader\AzureFileUploader.csproj" />
+    <ProjectReference Include="..\..\..\DCA\product\plugins\azure\table\CoreCLRDll\AzureTableUploader\AzureTableUploader.csproj" />
+    <ProjectReference Include="..\..\..\DCA\product\plugins\azure\common\CoreCLRDll\AzureUploaderCommon\AzureUploaderCommon.csproj" />
+    <ProjectReference Include="..\..\..\DCA\product\plugins\folderproducer\CoreCLRDll\FolderProducer\FolderProducer.csproj" />
+    <ProjectReference Include="..\..\..\DCA\product\plugins\lttproducer\CoreCLRDll\LttProducer\LttProducer.csproj" />
+    <ProjectReference Include="..\..\..\DCA\product\pluginvalidators\CoreCLRDll\pluginvalidators\pluginvalidators.csproj" />
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\DCA\product\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
+    <ProjectReference Include="..\..\..\DCA\product\system.fabric.dca.validator\CoreCLRDll\System.Fabric.Dca.Validator\System.Fabric.Dca.Validator.csproj" />
+    <ProjectReference Include="..\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.ContainerServiceClient\CoreCLR\Microsoft.ServiceFabric.ContainerServiceClient.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\test\generated\generated.coreclr.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Win32.Registry" Version="4.4.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController " Version="4.4.0" />
+	<PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+    <PackageReference Include="YamlDotNet.Signed" Version="4.2.1" />
+    <PackageReference Include="System.Security.Cryptography.Csp" Version="4.3.0" />
+    <PackageReference Include="System.Net.NetworkInformation" Version="4.3.0" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_iot.props" />
+</Project>

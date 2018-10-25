@@ -287,6 +287,31 @@ ErrorCode UriArgumentParser::TryGetApplicationName(
     return TryGetPathId(Constants::ApplicationIdString, applicationName);
 }
 
+ErrorCode UriArgumentParser::TryGetAbsoluteServiceName(
+    __out NamingUri & name)
+{
+    wstring serviceName;
+    if (!uri_.GetItem(Constants::ServiceIdString, serviceName))
+    {
+        return ErrorCodeValue::NameNotFound;
+    }
+    
+    wstring applicationName;
+    if (!uri_.GetItem(Constants::ApplicationIdString, applicationName))
+    {
+        return ErrorCodeValue::NameNotFound;
+    }
+    
+    wstring nameString;
+    auto error = NamingUri::IdToFabricName(NamingUri::RootNamingUriString, wformatString("{0}/{1}", applicationName, serviceName), nameString);
+    if (!error.IsSuccess())
+    {
+        return error;
+    }
+
+    return NamingUri::TryParse(nameString, Constants::HttpGatewayTraceId, name);
+}
+
 ErrorCode UriArgumentParser::TryGetDeploymentName(
     __out wstring & deploymentName)
 {
@@ -297,6 +322,19 @@ ErrorCode UriArgumentParser::TryGetDeploymentName(
     else
     {
         return Utility::ValidateString(deploymentName);
+    }
+}
+
+ErrorCode UriArgumentParser::TryGetContainerName(
+    __out wstring & containerName)
+{
+    if (!uri_.GetItem(Constants::ContainerNameString, containerName))
+    {
+        return ErrorCodeValue::NameNotFound;
+    }
+    else
+    {
+        return Utility::ValidateString(containerName);
     }
 }
 
@@ -328,6 +366,17 @@ ErrorCode UriArgumentParser::TryGetImageStoreRelativePath(
     }
 
     return NamingUri::UnescapeString(unescapedRelativePath, relativePath);
+}
+
+ErrorCode UriArgumentParser::TryGetInstanceId(
+    __out wstring & instanceId) const
+{
+    if (!uri_.GetItem(Constants::InstanceIdString, instanceId))
+    {
+        return ErrorCodeValue::NameNotFound;
+    }
+
+    return Utility::ValidateString(instanceId);
 }
 
 ErrorCode UriArgumentParser::TryGetServiceName(
@@ -898,4 +947,16 @@ Common::ErrorCode UriArgumentParser::TryGetExcludeStatisticsFilter(
     __inout bool & filter)
 {
     return TryGetBoolOrError(Constants::ExcludeHealthStatisticsString, filter);
+}
+
+ErrorCode UriArgumentParser::TryGetVolumeName(
+    __out std::wstring & volumeName)
+{
+    std::wstring escapedVolumeName;
+    if (!uri_.GetItem(Constants::VolumeNameString, escapedVolumeName))
+    {
+        return ErrorCodeValue::NameNotFound;
+    }
+
+    return NamingUri::UnescapeString(escapedVolumeName, volumeName);
 }

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>FileShareUploader Class Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>FileShareUploader</AssemblyName>
+    <PackageId>FileShareUploader</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\dll\_friends.cs;
+      ..\..\EtwCsvUploadWorker.cs;
+      ..\..\FileShareCommon.cs;
+      ..\..\FileShareEtwCsvUploader.cs;
+      ..\..\FileShareFolderUploader.cs;
+      ..\..\FileSharePerformance.cs;
+      ..\..\FileShareTrimmer.cs;
+      ..\..\FileShareUploader.cs;
+      ..\..\FileShareUploaderConstants.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\..\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\Api\CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+    <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.4.0" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

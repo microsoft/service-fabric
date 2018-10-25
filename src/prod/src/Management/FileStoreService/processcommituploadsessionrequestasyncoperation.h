@@ -27,6 +27,11 @@ namespace Management
 
             virtual ~ProcessCommitUploadSessionRequestAsyncOperation();
 
+            __declspec(property(get = get_SessionId)) Common::Guid const & SessionId;
+            Common::Guid const & get_SessionId() const { return sessionId_; }
+
+            virtual void WriteTrace(__in Common::ErrorCode const &error) override;
+
         protected:
 
             Common::AsyncOperationSPtr BeginOperation(
@@ -42,7 +47,7 @@ namespace Management
         private:
 
             class CommitUploadSessionAsyncOperation;
-     
+
             Common::Guid sessionId_;
         };
     }

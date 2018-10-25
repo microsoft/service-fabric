@@ -11,7 +11,7 @@ namespace Client
 
     // HealthReportingComponent; used to send health reports to HealthManager
     class HealthReportingComponent:
-        public Common::FabricComponent, 
+        public Common::FabricComponent,
         public Common::ComponentRoot,
         public Common::TextTraceComponent<Common::TraceTaskCodes::HealthClient>
     {
@@ -67,20 +67,20 @@ namespace Client
         void ReportHealthTimerCallback();
         void ReportHealth(
             Common::ActivityId const & activityId,
-            Management::HealthManager::ReportHealthMessageBody && messageBody, 
+            Management::HealthManager::ReportHealthMessageBody && messageBody,
             Common::ComponentRootSPtr const & transportRoot);
         void OnReportHealthCompleted(
             Common::AsyncOperationSPtr const & asyncOperation,
             bool expectedCompletedSynchronously);
         void GetSequenceStreamProgress(
             Common::ActivityId const & activityId,
-            Management::HealthManager::GetSequenceStreamProgressMessageBody && messageBody, 
+            Management::HealthManager::GetSequenceStreamProgressMessageBody && messageBody,
             Common::ComponentRootSPtr const & transportRoot);
         void OnGetSequenceStreamProgressCompleted(
             Common::AsyncOperationSPtr const & asyncOperation,
-            Common::ActivityId const & activityId, 
+            Common::ActivityId const & activityId,
             bool expectedCompletedSynchronously);
-        
+
         static bool IsReportResultErrorNonActionable(Common::ErrorCodeValue::Enum const errorCodeValue);
         static bool IsRetryableError(Common::ErrorCodeValue::Enum const errorCodeValue);
         static bool RepresentsHMBusyError(Common::ErrorCodeValue::Enum const errorCodeValue);
@@ -94,9 +94,9 @@ namespace Client
         // Accepts reports until max queued reports is reached.
         // Returns the number of accepted reports.
         long AcceptReportsPerMaxCount(std::vector<ServiceModel::HealthReport> const & reports);
-        
+
     private:
-        
+
         // Map with sequence streams, keyed with sequence stream id.
         // NOT thread safe, it must be protected by the caller.
         class SequenceStreamMap
@@ -145,7 +145,7 @@ namespace Client
         FabricClientInternalSettingsHolder settingsHolder_;
         Common::ComponentRootSPtr transportRoot_;
         std::wstring traceContext_;
-        bool isEnabled_;
+        bool isEnabled_; // bool for if health reporting is enabled
         int maxNumberOfReports_;
 
         // The current number of reports queued. Updated when reports are added or completed

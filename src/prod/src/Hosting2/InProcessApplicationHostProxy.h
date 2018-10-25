@@ -54,6 +54,17 @@ namespace Hosting2
             Common::AsyncOperationSPtr const & operation,
             __out wstring & containerInfo) override;
         
+        virtual Common::AsyncOperationSPtr BeginApplicationHostCodePackageOperation(
+            ApplicationHostCodePackageOperationRequest const & requestBody,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent) override;
+
+        virtual Common::ErrorCode EndApplicationHostCodePackageOperation(
+            Common::AsyncOperationSPtr const & operation) override;
+
+        virtual void SendDependentCodePackageEvent(
+            CodePackageEventDescription const & eventDescription) override;
+
         virtual bool HasHostedCodePackages() override;
 
         virtual void OnApplicationHostRegistered() override;
@@ -94,14 +105,24 @@ namespace Hosting2
         virtual void OnAbort() override;
     
     private:
-        __declspec(property(get = get_GuestServiceTypeNames)) std::vector<std::wstring> const & TypesToHost;
-        std::vector<std::wstring> const & get_GuestServiceTypeNames() const { return codePackageInstance_->CodePackageObj.GuestServiceTypes; }
+        __declspec(property(get = get_TypesToHost)) std::vector<GuestServiceTypeInfo> const & TypesToHost;
+        std::vector<GuestServiceTypeInfo> const & get_TypesToHost() const { return codePackageInstance_->CodePackageObj.GuestServiceTypes; }
+
+        __declspec(property(get = get_PackageDescription)) ServiceModel::ServicePackageDescription const & PackageDescription;
+        ServiceModel::ServicePackageDescription const & get_PackageDescription() const 
+        { 
+            return codePackageInstance_->CodePackageObj.VersionedServicePackageObj.PackageDescription;
+        }
 
         __declspec(property(get = get_TypeHostManager)) GuestServiceTypeHostManagerUPtr const & TypeHostManager;
         inline GuestServiceTypeHostManagerUPtr const & get_TypeHostManager() { return Hosting.GuestServiceTypeHostManagerObj; }
 
+        __declspec(property(get = get_CodePackageInstanceIdentifier)) CodePackageInstanceIdentifier const & CodePackageInstanceId;
+        inline CodePackageInstanceIdentifier const & get_CodePackageInstanceIdentifier() const { return codePackageInstance_->CodePackageInstanceId; }
+
     private:
         void NotifyCodePackageInstance();
+        bool ShouldNotify();
 
     private:
         class OpenAsyncOperation;
@@ -109,6 +130,9 @@ namespace Hosting2
 
         class CloseAsyncOperation;
         friend class CloseAsyncOperation;
+
+        class ApplicationHostCodePackageAsyncOperation;
+        friend class ApplicationHostCodePackageAsyncOperation;
     
     private:
         CodePackageActivationId codePackageActivationId_;
@@ -116,6 +140,17 @@ namespace Hosting2
         Common::atomic_bool isCodePackageActive_;
         Common::atomic_uint64 exitCode_;
         Common::RwLock notificationLock_;
+
+        //
+        // This flag is set to true after codePackageInstance_ has been
+        // notified of termination. We can set the codePackageInstance_ to 
+        // nullptr but this class has certain properties which may get
+        // accessed after termination. As a conveinence we use this
+        // flag for notification purposes and let the properties be accessed
+        // without taking locks.
+        //
+        bool shouldNotify_;
+
         Common::atomic_bool terminatedExternally_;
         CodePackageRuntimeInformationSPtr codePackageRuntimeInformation_;
     };

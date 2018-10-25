@@ -19,13 +19,12 @@ namespace ServiceModel
             std::wstring const & serviceManifestVersion,
             DeploymentStatus::Enum deployedServiceManifestStatus);
 
-        DeployedServiceManifestQueryResult(DeployedServiceManifestQueryResult && other);
-        DeployedServiceManifestQueryResult(DeployedServiceManifestQueryResult const & other);
+        DeployedServiceManifestQueryResult(DeployedServiceManifestQueryResult && other) = default;
+        DeployedServiceManifestQueryResult(DeployedServiceManifestQueryResult const & other) = default;
 
-        DeployedServiceManifestQueryResult const & operator = (DeployedServiceManifestQueryResult const & other);
-        DeployedServiceManifestQueryResult const & operator = (DeployedServiceManifestQueryResult && other);
-
-
+        DeployedServiceManifestQueryResult & operator = (DeployedServiceManifestQueryResult const & other) = default;
+        DeployedServiceManifestQueryResult & operator = (DeployedServiceManifestQueryResult && other) = default;
+        
         __declspec(property(get=get_ServiceManifestName, put = put_ServiceManifestName)) std::wstring const & ServiceManifestName;
         std::wstring const& get_ServiceManifestName() const { return serviceManifestName_; }
         void put_ServiceManifestName(std::wstring const& serviceManifestName) { serviceManifestName_ = serviceManifestName; }

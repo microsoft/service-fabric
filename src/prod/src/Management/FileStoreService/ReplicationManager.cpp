@@ -325,6 +325,7 @@ bool ReplicationManager::ReplicateFile(FileMetadata const & metadata)
     }
 
     uint failureCount = 0;
+    static uint chaosFileCopyCount = 0;
 
     do
     {
@@ -352,6 +353,21 @@ bool ReplicationManager::ReplicateFile(FileMetadata const & metadata)
                 storeLocation, 
                 metadata.StoreRelativeLocation, 
                 metadata.CurrentVersion);
+
+            if (FileStoreServiceConfig::GetConfig().EnableChaosDuringFileUpload)
+            {
+                ++chaosFileCopyCount;
+                if (chaosFileCopyCount % 11 == 0)
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        TraceId,
+                        "Chaos enabled. Not copying file from primary nor retrying from any other share. Expecting retry to succeed next time: current src={0} dest={1}",
+                        currentSourceFilePath,
+                        currentDestinationFilePath);
+                    break;
+                }
+            }
 
             auto error = this->ReplicaObj.SmbContext->CopyFileW(currentSourceFilePath, currentDestinationFilePath);
 
@@ -394,7 +410,7 @@ bool ReplicationManager::ReplicateFile(FileMetadata const & metadata)
         FileState::Enum state;
         StoreFileVersion version;
         wstring storeLocation;
-        auto error = this->IsFilePresentInPrimary(metadata.StoreRelativeLocation, isPresent, state, version, storeLocation);        
+        auto error = this->IsFilePresentInPrimary(metadata.StoreRelativeLocation, isPresent, state, version, storeLocation);
 
         WriteTrace(
             error.ToLogLevel(LogLevel::Warning, LogLevel::Info),
@@ -413,10 +429,42 @@ bool ReplicationManager::ReplicateFile(FileMetadata const & metadata)
                 currentPrimaryStoreLocation_ = storeLocation;
             }
 
+            // We should retry replicating the file if the filestate is in "Updating" state
+            // since primary's local state was expected to be in "Updating" state 
+            // until it gets quorum number of acks from secondaries to commit to stable state (Available).
+            // Based on our replication logic secondary would have received the state as "Available",
+            // even though primary's local state is in "Updating".(until it gets quorum acks to change it's local state to "Available").
             if (!isPresent || state == FileState::Deleting || version != metadata.CurrentVersion)
             {
                 return true;
             }
+        }
+        else if (error.IsError(ErrorCodeValue::FSSPrimaryInDatalossRecovery))
+        {
+            // During dataloss, there is a possibility of additional metadata entries on replicated store than files that exist on disk.
+            // In this scenario, primary's change role gets completed but it is stuck in recovery operation,
+            // when trying to delete the metadata for the orphaned files (no write quorum).
+            // Because secondaries are in IB state trying to catch upto primary by copying files,
+            // but they are stuck in a loop trying to copy the missing files.
+            // In this scenario both primary and secondary are unable to progress because they have a dependency on each other.
+
+            // When this scenario is detected, we break the dependency by allowing secondary replication operation to succeed
+            // even though it was unable to copy missing files so as to get secondaries to the ready state (but still inconsistent).
+            // When primary retries to delete metadata entry it is successful now since secondaries are available for the write quorum.
+            // Primary will then remove additional metadata entries as part of recovery process to get into a consistent state.
+            // Primary then moves on to the active state where it can process fss requests.
+            // Secondaries will receive metadata update through replication notification which makes its metadata consistent with the store.
+            // The period of time where secondary is yet to receive the replication operation to delete the additional metadata entry is not observable,
+            // since all metadata requests goes to primary.
+
+            WriteInfo(
+                TraceComponent,
+                TraceId,
+                "Data loss scenario detected. Primary stuck in recovery and the specified file {0} (version {1}) is present in disk.",
+                metadata.StoreRelativeLocation,
+                metadata.CurrentVersion);
+
+            return true;
         }
 
         auto retryDelay = FileStoreServiceConfig::GetConfig().SecondaryFileCopyRetryDelayMilliseconds;
@@ -434,6 +482,12 @@ bool ReplicationManager::ReplicateFile(FileMetadata const & metadata)
         this->TryRefreshShareLocations(metadata.StoreRelativeLocation);
 
     } while (++failureCount < FileStoreServiceConfig::GetConfig().MaxSecondaryFileCopyFailureThreshold);
+
+    WriteInfo(
+        TraceComponent,
+        TraceId,
+        "Replication failed for {0}",
+        metadata);
 
     return false;
 }

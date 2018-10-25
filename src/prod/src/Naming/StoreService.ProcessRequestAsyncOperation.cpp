@@ -116,12 +116,22 @@ namespace Naming
 
         if (error.IsSuccess())
         {
-            error = this->ValidateName();
+            bool allowFragment = this->AllowNameFragment();
+            error = NamingUri::ValidateName(this->Name, this->NameString, allowFragment);
+            if (!error.IsSuccess())
+            {
+                WriteWarning(
+                    TraceComponent,
+                    "{0} validate name failed with {1}: {2}",
+                    this->TraceId,
+                    error,
+                    error.Message);
+            }
         }
 
         if (!error.IsSuccess())
         {
-            this->TryComplete(thisSPtr, error);
+            this->TryComplete(thisSPtr, move(error));
         }
         else
         {
@@ -147,55 +157,7 @@ namespace Naming
         this->GetDurationPerfCounter().IncrementBy(stopwatch_.ElapsedMicroseconds);
         this->CompleteHealthMonitoredOperation();
     }
-
-    ErrorCode StoreService::ProcessRequestAsyncOperation::ValidateName()
-    {
-        if (this->Name == NamingUri::RootNamingUri)
-        {
-            WriteWarning(
-                TraceComponent,
-                "{0} cannot perform operation on name {1}", 
-                this->TraceId,
-                this->NameString);
-            return ErrorCodeValue::AccessDenied;
-        }
-        else if (this->NameString.size() > static_cast<size_t>(CommonConfig::GetConfig().MaxNamingUriLength))
-        {
-            WriteWarning(
-                TraceComponent, 
-                "{0} name '{1}' exceeds maximum allowed length: length = {2} max = {3}",
-                this->TraceId,
-                this->NameString,
-                this->NameString.size(),
-                CommonConfig::GetConfig().MaxNamingUriLength);
-
-            return ErrorCodeValue::InvalidNameUri;
-        }
-        else if (!this->Name.Query.empty())
-        {
-            WriteWarning(
-                TraceComponent, 
-                "{0} '?' is a reserved character: invalid name = {1}",
-                this->TraceId,
-                this->NameString);
-
-            return ErrorCodeValue::InvalidNameUri;
-        }
-
-        ErrorCode error = this->ValidateNameFragment();
-
-        if (!error.IsSuccess())
-        {
-            WriteWarning(
-                TraceComponent, 
-                "{0} '#' is reserved for use by Service Groups: invalid name = {1}",
-                this->TraceId,
-                this->NameString);
-        }
-
-        return error;
-    }
-
+    
     bool StoreService::ProcessRequestAsyncOperation::TryGetNameFromRequest(Transport::MessageUPtr const & request)
     {
         NamingUri name;
@@ -214,16 +176,6 @@ namespace Naming
     {
         name_ = name;
         nameString_ = name_.ToString();
-    }
-
-    ErrorCode StoreService::ProcessRequestAsyncOperation::ValidateNameFragment()
-    {
-        if (!this->Name.Fragment.empty())
-        {
-            return ErrorCodeValue::InvalidNameUri;
-        }
-
-        return ErrorCodeValue::Success;
     }
 
     bool StoreService::ProcessRequestAsyncOperation::TryAcceptRequestAtAuthorityOwner(AsyncOperationSPtr const & thisSPtr)
@@ -368,12 +320,24 @@ namespace Naming
         TimeSpan const delay,
         RetryCallback const & callback)
     {
-        WriteNoise(
-            TraceComponent,
-            "{0} scheduling retry: delay = {1} timeout = {2}",
-            this->TraceId,
-            delay,
-            timeoutHelper_.GetRemainingTime());
+        if (this->IsPrimaryRecovery)
+        {
+            WriteInfo(
+                TraceComponent,
+                "{0} scheduling primary recovery retry: delay = {1} timeout = {2}",
+                this->TraceId,
+                delay,
+                timeoutHelper_.GetRemainingTime());
+        }
+        else
+        {
+            WriteNoise(
+                TraceComponent,
+                "{0} scheduling retry: delay = {1} timeout = {2}",
+                this->TraceId,
+                delay,
+                timeoutHelper_.GetRemainingTime());
+        }
 
         {
             AcquireExclusiveLock lock(timerLock_);

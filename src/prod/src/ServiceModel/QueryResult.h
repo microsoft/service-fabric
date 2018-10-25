@@ -103,6 +103,23 @@ namespace ServiceModel
         }
 
         template<class TServiceModel>
+        Common::ErrorCode GetList(__out std::vector<TServiceModel> & itemList)
+        {
+            if (!queryProcessingError_.IsSuccess())
+            {
+                return queryProcessingError_;
+            }
+
+            ASSERT_IF(resultWrapper_ == nullptr, "Item list is already moved or not initialized");
+            QueryResultListWrapper<TServiceModel>* castedResultWrapper = nullptr;
+            auto error = CastWrapper(castedResultWrapper);
+            if(!error.IsSuccess()) { return error;}
+
+            itemList = castedResultWrapper->ItemList;
+            return Common::ErrorCode::Success();
+        }
+
+        template<class TServiceModel>
         Common::ErrorCode MoveItem(__out TServiceModel & item)
         {
             if (!queryProcessingError_.IsSuccess())

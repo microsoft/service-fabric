@@ -85,7 +85,7 @@ private:
                 this->AppTypeContext.TypeVersion);
 
             //
-            // This is happening as a part of Docker compose Application creation, which is async. So
+            // This is happening as a part of compose deployment creation, which is async. So
             // the imagebuilder timeout is maxval.
             //
             auto operation = this->ImageBuilder.BeginBuildComposeDeploymentType(
@@ -201,6 +201,7 @@ private:
         }
         else
         {
+            //TODO: If IB build fails, this path should fail applicationtype. Consider fail app as well in the following path.
             error = provisioningError_;
         }
 
@@ -233,7 +234,7 @@ private:
                 this->TraceId,
                 error);
 
-            this->TryComplete(thisSPtr, error);
+            this->TryComplete(thisSPtr, move(error));
         }
     }
 
@@ -306,8 +307,9 @@ private:
                         context_.PackageInstance,
                         psd);
 
-                    // Persist pending default service in docker compose application context
-                    this->ComposeDeploymentContext.AddPendingDefaultService(serviceContext.AbsoluteServiceName);
+                    // Persist pending default service in ComposeDeploymentContext
+                    ServiceModelServiceNameEx name(serviceContext.AbsoluteServiceName, serviceContext.ServiceDescriptor.Service.ServiceDnsName);
+                    this->ComposeDeploymentContext.AddPendingDefaultService(move(name));
                     defaultServices_.push_back(move(serviceContext));
 
                     break;
@@ -337,7 +339,7 @@ private:
             // create application failure, delete application must also clean up (delete) all
             // pending default services
             error = storeTx.Update(this->ComposeDeploymentContext);
-
+            
             if (error.IsSuccess())
             {
                 auto commitOperation = StoreTransaction::BeginCommit(
@@ -459,7 +461,7 @@ private:
         }
         else
         {
-            this->TryComplete(thisSPtr, error);
+            this->TryComplete(thisSPtr, move(error));
         }
 
     }
@@ -497,7 +499,7 @@ protected:
     {
         if (context_.ShouldTerminateProcessing())
         {
-            this->TryComplete(thisSPtr, error);
+            this->TryComplete(thisSPtr, move(error));
             return;
         }
 
@@ -611,7 +613,7 @@ void ProcessComposeDeploymentContextAsyncOperation::OnProvisionComposeDeployment
     {
         WriteWarning(
             DockerComposeTraceComponent,
-            "{0} docker compose application provision failed due to {1} {2}",
+            "{0} compose deployment provision failed due to {1} {2}",
             TraceId,
             error,
             error.Message);
@@ -640,7 +642,7 @@ void ProcessComposeDeploymentContextAsyncOperation::OnProvisionComposeDeployment
                 innerError,
                 innerError.Message);
 
-            this->TryComplete(thisSPtr, innerError);
+            this->TryComplete(thisSPtr, move(innerError));
         }
     }
 }
@@ -695,7 +697,7 @@ void ProcessComposeDeploymentContextAsyncOperation::OnCreateApplicationComplete(
     {
         WriteInfo(
             DockerComposeTraceComponent,
-            "{0} docker compose create application failed due to {1} {2}. Enqueue to retry.",
+            "{0} compose deployment create failed due to {1} {2}. Enqueue to retry.",
             TraceId,
             error,
             error.Message);
@@ -705,7 +707,7 @@ void ProcessComposeDeploymentContextAsyncOperation::OnCreateApplicationComplete(
     {
         WriteWarning(
             DockerComposeTraceComponent,
-            "{0} docker compose create application failed due to {1} {2}",
+            "{0} compose deployment create failed due to {1} {2}",
             TraceId,
             error,
             error.Message);

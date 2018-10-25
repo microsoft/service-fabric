@@ -45,13 +45,19 @@ fi
 # Start tracing
 echo "Starting tracing session"
 if command -v lttng >/dev/null 2>&1; then
-    ./Fabric/DCA.Code/lttng_handler.sh "${FabricDataRoot}/log/Traces"
+    ./Fabric/DCA.Code/lttng_handler.sh $(cat ./Fabric/DCA.Code/ClusterVersion)
 else
     echo "LTTng is not installed." >&2;
 fi
+
+echo Configuring block devices for system services
+for i in `lsblk -l | cut -d' ' -f1 |grep -v NAME`
+do 
+    setfacl -m "u:sfuser:rw-" /dev/${i}
+done
 
 /opt/microsoft/servicefabric/bin/Fabric/Fabric.Code/FabricDeployer.sh
 check_errs $? FabricDeployer
 
 echo Starting FabricHost
-/opt/microsoft/servicefabric/bin/FabricHost --console --skipfabricsetup
+/opt/microsoft/servicefabric/bin/FabricHost -c -skipfabricsetup

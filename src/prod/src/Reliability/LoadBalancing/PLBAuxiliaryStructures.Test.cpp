@@ -30,14 +30,14 @@ namespace PlacementAndLoadBalancingUnitTest
 
     BOOST_AUTO_TEST_CASE(AccumulatorBasicTest)
     {
-        AccumulatorWithMinMax s;
+        AccumulatorWithMinMax s(false);
         Federation::NodeId id;
         Federation::NodeIdGenerator::GenerateFromString(L"WorkerRole1.0", id);
         VERIFY_ARE_EQUAL(L"6e2eb710b98296decd1fb3d31b6e54df", id.ToString());
 
-        s.AddOneValue(1, Federation::NodeId::MinNodeId);
-        s.AddOneValue(2, Federation::NodeId::MaxNodeId);
-        s.AddOneValue(3, id);
+        s.AddOneValue(1, 0, Federation::NodeId::MinNodeId);
+        s.AddOneValue(2, 0, Federation::NodeId::MaxNodeId);
+        s.AddOneValue(3, 0, id);
 
         VERIFY_ARE_EQUAL(2.0, s.Average);
         VERIFY_ARE_EQUAL(6.0, s.Sum);
@@ -47,8 +47,8 @@ namespace PlacementAndLoadBalancingUnitTest
         VERIFY_ARE_EQUAL(Federation::NodeId::MinNodeId, s.MinNode);
         VERIFY_ARE_EQUAL(id, s.MaxNode);
 
-        s.AdjustOneValue(1, 3, Federation::NodeId::MinNodeId);
-        s.AdjustOneValue(3, 10, Federation::NodeId::MinNodeId);
+        s.AdjustOneValue(1, 3, 0, Federation::NodeId::MinNodeId);
+        s.AdjustOneValue(3, 10, 0, Federation::NodeId::MinNodeId);
 
         VERIFY_ARE_EQUAL(5.0, s.Average);
         VERIFY_ARE_EQUAL(15.0, s.Sum);
@@ -59,8 +59,10 @@ namespace PlacementAndLoadBalancingUnitTest
 
     BOOST_AUTO_TEST_CASE(EmptyTest)
     {
-        AccumulatorWithMinMax s;
+        AccumulatorWithMinMax s(false);
         VERIFY_ARE_EQUAL(0.0, s.NormStdDev);
+        AccumulatorWithMinMax s2(true);
+        VERIFY_ARE_EQUAL(0.0, s2.NormStdDev);
     }
 
     BOOST_AUTO_TEST_CASE(DynamicBitSetBasicTest)

@@ -7,11 +7,13 @@
 #include <ktrace.h>
 #include <minmax.h>
 #include <kinstrumentop.h>
-#include "ktllogger.h"
+
+#include "KtlPhysicalLog.h"
+#include "../inc/ktllogger.h"
+#include "../inc/KLogicalLog.h"
 
 #include "fileio.h"
 
-#include "KLogicalLog.h"
 #include "KtlLogMarshal.h"
 #include "DevIoUmKm.h"
 
@@ -302,6 +304,19 @@ class KtlLogStreamUser : public KtlLogStream
                     __in_opt KAsyncContextBase* const ParentAsyncContext,
                     __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) override;
 
+                VOID
+                StartWrite(
+                    __in KtlLogAsn RecordAsn,
+                    __in ULONGLONG Version,
+                    __in ULONG MetaDataLength,
+                    __in const KIoBuffer::SPtr& MetaDataBuffer,
+                    __in const KIoBuffer::SPtr& IoBuffer,
+                    __in ULONGLONG ReservationSpace,
+                    __out ULONGLONG& LogSize,
+                    __out ULONGLONG& LogSpaceRemaining,
+                    __in_opt KAsyncContextBase* const ParentAsyncContext,
+                    __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) override;
+
 #if defined(K_UseResumable)
                 ktl::Awaitable<NTSTATUS>
                 WriteAsync(
@@ -311,6 +326,18 @@ class KtlLogStreamUser : public KtlLogStream
                     __in const KIoBuffer::SPtr& MetaDataBuffer,
                     __in const KIoBuffer::SPtr& IoBuffer,
                     __in ULONGLONG ReservationSpace,
+                    __in_opt KAsyncContextBase* const ParentAsyncContext) override;
+
+                ktl::Awaitable<NTSTATUS>
+                WriteAsync(
+                    __in KtlLogAsn RecordAsn,
+                    __in ULONGLONG Version,
+                    __in ULONG MetaDataLength,
+                    __in const KIoBuffer::SPtr& MetaDataBuffer,
+                    __in const KIoBuffer::SPtr& IoBuffer,
+                    __in ULONGLONG ReservationSpace,
+                    __out ULONGLONG& LogSize,
+                    __out ULONGLONG& LogSpaceRemaining,
                     __in_opt KAsyncContextBase* const ParentAsyncContext) override;
 #endif
 
@@ -346,6 +373,8 @@ class KtlLogStreamUser : public KtlLogStream
                 KIoBuffer::SPtr _MetaDataBuffer;
                 KIoBuffer::SPtr _IoBuffer;
                 ULONGLONG _ReservationSpace;
+                ULONGLONG* _LogSize;
+                ULONGLONG* _LogSpaceRemaining;
 
                 //
                 // Members needed for functionality

@@ -15,9 +15,10 @@ namespace Reliability
         class AccumulatorWithMinMax : public Accumulator
         {
         public:
-            AccumulatorWithMinMax();
-            AccumulatorWithMinMax(AccumulatorWithMinMax const& other);
-
+            AccumulatorWithMinMax(bool usePercentages = false);
+            AccumulatorWithMinMax(AccumulatorWithMinMax const& other) = default;
+            AccumulatorWithMinMax & operator = (AccumulatorWithMinMax const & other) = default;
+            
             virtual ~AccumulatorWithMinMax();
 
             __declspec (property(get = get_Min)) int64 Min;
@@ -66,13 +67,11 @@ namespace Reliability
             size_t get_NonBeneficialCount() const { return nonBeneficialCount_; }
 
             virtual void Clear();
-            virtual void AddOneValue(int64 value, Federation::NodeId const & nodeId);
-            virtual void AdjustOneValue(int64 oldValue, int64 newValue, Federation::NodeId const & nodeId);
+            virtual void AddOneValue(int64 value, int64 capacity, Federation::NodeId const & nodeId);
+            virtual void AdjustOneValue(int64 oldValue, int64 newValue, int64 capacity, Federation::NodeId const & nodeId);
             virtual void AddEmptyNodes(size_t nodeCount);
             virtual void AddNonEmptyLoad(int64 val);
             virtual void AddNonBeneficialLoad(int64 val);
-
-            virtual AccumulatorWithMinMax & operator = (AccumulatorWithMinMax const & other);
 
         private:
             int64 min_;

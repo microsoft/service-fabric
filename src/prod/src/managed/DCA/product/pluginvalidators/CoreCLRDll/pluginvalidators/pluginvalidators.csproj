@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>pluginvalidators Class Library</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>pluginvalidators</AssemblyName>
+    <PackageId>pluginvalidators</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+      ..\..\..\plugins\etlproducer\EtlProducerConstants.cs;
+      ..\..\..\plugins\etlinmemoryproducer\EtlInMemoryProducerConstants.cs;
+      ..\..\..\system.fabric.dca\WinFabricEtlType.cs;
+      ..\..\..\plugins\fileshareuploader\FileShareUploaderConstants.cs;
+      ..\..\..\plugins\mds\MdsConstants.cs;
+      ..\..\..\plugins\mdsfileproducer\MdsFileProducerConstants.cs;
+      ..\..\..\plugins\perfcounterproducer\PerfCounterProducerConstants.cs;
+      ..\..\AzureBlobCsvUploaderValidator.cs;
+      ..\..\AzureBlobEtwCsvUploaderValidator.cs;
+      ..\..\AzureBlobEtwUploaderValidator.cs;
+      ..\..\AzureBlobFolderUploaderValidator.cs;
+      ..\..\AzureBlobSettingsValidator.cs;
+      ..\..\AzureSettingsValidator.cs;
+      ..\..\AzureTableEtwEventUploaderValidator.cs;
+      ..\..\AzureTableSelectiveEventUploaderValidator.cs;
+      ..\..\EtlInMemoryProducerValidator.cs;
+      ..\..\EtlProducerValidator.cs;
+      ..\..\FileShareEtwCsvUploaderValidator.cs;
+      ..\..\FileShareFolderUploaderValidator.cs;
+      ..\..\FileShareSettingsValidator.cs;
+      ..\..\FolderProducerValidator.cs;
+      ..\..\LttProducerValidator.cs;
+      ..\..\MdsEtwEventUploaderValidator.cs;
+      ..\..\MdsFileProducerValidator.cs;
+      ..\..\PerfCounterConfigReaderValidator.cs;
+      ..\..\SettingsValidator.cs;
+      ..\..\..\plugins\folderproducer\FolderProducerConstants.cs;
+      ..\..\..\plugins\folderproducer\FolderProducerType.cs"
+	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\plugins\azure\common\CoreCLRDll\AzureUploaderCommon\AzureUploaderCommon.csproj" />
+    <ProjectReference Include="..\..\..\plugins\lttproducer\CoreCLRDll\LttProducer\LttProducer.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
+    <ProjectReference Include="..\..\..\system.fabric.dca.validator\CoreCLRDll\System.Fabric.Dca.Validator\System.Fabric.Dca.Validator.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

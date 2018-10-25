@@ -29,47 +29,6 @@ DeployedServiceManifestQueryResult::DeployedServiceManifestQueryResult(
 {
 }
 
-DeployedServiceManifestQueryResult::DeployedServiceManifestQueryResult(DeployedServiceManifestQueryResult && other)
-    : serviceManifestName_(move(other.serviceManifestName_))
-    , servicePackageActivationId_(move(other.servicePackageActivationId_))
-    , serviceManifestVersion_(move(other.serviceManifestVersion_))
-    , deployedServiceManifestStatus_(move(other.deployedServiceManifestStatus_))
-{
-}
-
-DeployedServiceManifestQueryResult::DeployedServiceManifestQueryResult(DeployedServiceManifestQueryResult const & other)
-    : serviceManifestName_(other.serviceManifestName_)
-    , servicePackageActivationId_(other.servicePackageActivationId_)
-    , serviceManifestVersion_(other.serviceManifestVersion_)
-    , deployedServiceManifestStatus_(other.deployedServiceManifestStatus_)
-{
-}
-
-DeployedServiceManifestQueryResult const & DeployedServiceManifestQueryResult::operator = (DeployedServiceManifestQueryResult const & other)
-{
-    if (this != &other)
-    {
-        serviceManifestName_ = other.serviceManifestName_;
-        servicePackageActivationId_ = other.servicePackageActivationId_;
-        serviceManifestVersion_ = other.serviceManifestVersion_;
-        deployedServiceManifestStatus_ = other.deployedServiceManifestStatus_;
-    }
-
-    return *this;
-}
-DeployedServiceManifestQueryResult const & DeployedServiceManifestQueryResult::operator = (DeployedServiceManifestQueryResult && other)
-{
-    if (this != &other)
-    {
-        serviceManifestName_ = move(other.serviceManifestName_);
-        servicePackageActivationId_ = move(other.servicePackageActivationId_);
-        serviceManifestVersion_ = move(other.serviceManifestVersion_);
-        deployedServiceManifestStatus_ = move(other.deployedServiceManifestStatus_);
-    }
-
-    return *this;
-}
-
 void DeployedServiceManifestQueryResult::ToPublicApi(
     __in Common::ScopedHeap & heap, 
     __out FABRIC_DEPLOYED_SERVICE_PACKAGE_QUERY_RESULT_ITEM & publicDeployedServiceManifestQueryResult) const 

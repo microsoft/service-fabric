@@ -128,6 +128,7 @@ private:
                 perfCounters,
                 queueSize,
                 DequePolicy::FifoLifo)
+            , onFinishEvent_()
         {
         }
 

@@ -351,10 +351,13 @@ void WorkingFolderTestClass::VerifyHostIsolation()
                 
                 if (isImplicitServiceType)
                 {
-                    wstring runtimeId;
-                    error = this->GetTypeHostManager()->Test_GetRuntimeId(registration->HostId, runtimeId);
+                    GuestServiceTypeHostSPtr guestTypeHost;
+                    error = this->GetTypeHostManager()->Test_GetTypeHost(registration->HostId, guestTypeHost);
 
-                    ASSERT_IFNOT(error.IsSuccess(), "Test_GetRuntimeId(registration->HostId, runtimeId).");
+                    ASSERT_IFNOT(error.IsSuccess(), "Test_GetTypeHost(registration->HostId, guestTypeHost).");
+
+                    auto runtimeId = guestTypeHost->RuntimeId;
+                    
                     ASSERT_IFNOT(runtimeId == registration->RuntimeId, "runtimeId == registration->RuntimeId");
                 }
 

@@ -511,6 +511,9 @@ TransactionalReplicatorSettingsUPtr TransactionalReplicatorSettingServiceInitDat
     uint maxRecordSizeInKB = GetRandomMultipleOf4();
     maxRecordSizeInKB = 256;
 
+    // Configure log truncation for 1 minute
+    uint truncationIntervalSeconds = 60;
+
     /*
     // Generate checkpoint threshold between 1 and 10
     uint maxCheckpointThreshold = 10;
@@ -575,6 +578,9 @@ TransactionalReplicatorSettingsUPtr TransactionalReplicatorSettingServiceInitDat
 
     txReplicatorSettings.Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_MAX_STREAM_SIZE_MB;
     txReplicatorSettings.MaxStreamSizeInMB = maxStreamSizeInMB;
+
+    txReplicatorSettings.Flags |= FABRIC_TRANSACTIONAL_REPLICATOR_LOG_TRUNCATION_INTERVAL_SECONDS;
+    txReplicatorSettings.LogTruncationIntervalSeconds = truncationIntervalSeconds;
 
     TransactionalReplicatorSettingsUPtr trv;
     auto error = TransactionalReplicatorSettings::FromPublicApi(txReplicatorSettings, trv);

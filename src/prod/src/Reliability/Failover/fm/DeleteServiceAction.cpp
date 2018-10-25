@@ -12,42 +12,39 @@ using namespace std;
 
 DeleteServiceAction::DeleteServiceAction(ServiceInfoSPtr const& serviceInfo, FailoverUnitId const& failoverUnitId)
     : serviceInfo_(serviceInfo)
-	, failoverUnitId_(failoverUnitId)
+    , failoverUnitId_(failoverUnitId)
 {
 }
 
 int DeleteServiceAction::OnPerformAction(FailoverManager & fm)
 {
-    if (serviceInfo_->FailoverUnitIds.size() != serviceInfo_->ServiceDescription.PartitionCount)
+    if (serviceInfo_->FailoverUnitIds.size() != serviceInfo_->ServiceDescription.PartitionCount && !serviceInfo_->IsForceDelete)
     {
         return 0;
     }
 
-	bool shouldMarkServiceAsDeleted = true;
-	for (auto const& failoverUnitId : serviceInfo_->FailoverUnitIds)
-	{
-		if (failoverUnitId != failoverUnitId_)
-		{
-			// TODO: Do not lock the FailoverUnit
-			LockedFailoverUnitPtr failoverUnit;
-			fm.FailoverUnitCacheObj.TryGetLockedFailoverUnit(failoverUnitId, failoverUnit, TimeSpan::Zero);
+    bool shouldMarkServiceAsDeleted = true;
+    for (auto const& failoverUnitId : serviceInfo_->FailoverUnitIds)
+    {
+        if (failoverUnitId != failoverUnitId_)
+        {
+            // TODO: Do not lock the FailoverUnit
+            LockedFailoverUnitPtr failoverUnit;
+            fm.FailoverUnitCacheObj.TryGetLockedFailoverUnit(failoverUnitId, failoverUnit, TimeSpan::Zero);
 
-			if (!failoverUnit || !failoverUnit->IsOrphaned)
-			{
-				shouldMarkServiceAsDeleted = false;
-				break;
-			}
-		}
-	}
+            if (!failoverUnit || !failoverUnit->IsOrphaned)
+            {
+                shouldMarkServiceAsDeleted = false;
+                break;
+            }
+        }
+    }
 
-	if (shouldMarkServiceAsDeleted)
-	{
-		ErrorCode error = fm.InBuildFailoverUnitCacheObj.DeleteInBuildFailoverUnitsForService(serviceInfo_->Name);
-		if (error.IsSuccess())
-		{
-			fm.ServiceCacheObj.MarkServiceAsDeletedAsync(serviceInfo_->Name, serviceInfo_->Instance);
-		}
-	}
+    if (shouldMarkServiceAsDeleted)
+    {
+        MarkServiceAsDeletedCommitJobItemUPtr jobItem = make_unique<MarkServiceAsDeletedCommitJobItem>(serviceInfo_);
+        fm.CommitQueue.Enqueue(move(jobItem));
+    }
 
     return 0;
 }

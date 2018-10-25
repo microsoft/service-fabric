@@ -19,8 +19,8 @@ namespace ServiceModel
         explicit ReplicaHealthStateFilter(
             DWORD healthStateFilter);
 
-        ReplicaHealthStateFilter(ReplicaHealthStateFilter && other);
-        ReplicaHealthStateFilter & operator = (ReplicaHealthStateFilter && other);
+        ReplicaHealthStateFilter(ReplicaHealthStateFilter && other) = default;
+        ReplicaHealthStateFilter & operator = (ReplicaHealthStateFilter && other) = default;
 
         virtual ~ReplicaHealthStateFilter();
 

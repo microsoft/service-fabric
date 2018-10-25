@@ -137,6 +137,7 @@ namespace FabricTest
 #include "TestFabricClientHelperClasses.h"
 #include "TestFabricClient.h"
 #include "TestWatchDog.h"
+#include "CheckpointTruncationTimestampValidator.h"
 #include "TestHealthTable.h"
 #include "TestFabricClientHealth.h"
 #include "TestFabricClientQuery.h"

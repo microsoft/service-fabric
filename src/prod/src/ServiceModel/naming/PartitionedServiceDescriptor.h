@@ -213,6 +213,7 @@ namespace Naming
             std::wstring const & placementConstraints,
             std::vector<Reliability::ServiceLoadMetricDescription> const & metrics,
             std::vector<Reliability::ServiceCorrelationDescription> const & correlations,
+            vector<Reliability::ServiceScalingPolicyDescription> const & scalingPolicies,
             std::wstring const & applicationName,
             ServiceModel::ServiceTypeIdentifier const &,
             int partitionCount,
@@ -222,6 +223,13 @@ namespace Naming
             FABRIC_PARTITION_SCHEME scheme,
             __int64 lowRange,
             __int64 highRange,
+            std::vector<std::wstring> const & partitionNames) const;
+
+        Common::ErrorCode ValidateServiceScalingPolicy(
+            std::vector<Reliability::ServiceLoadMetricDescription> const & metrics,
+            vector<Reliability::ServiceScalingPolicyDescription> const & scalingPolicies,
+            bool isStateful,
+            FABRIC_PARTITION_SCHEME scheme,
             std::vector<std::wstring> const & partitionNames) const;
 
         Common::ErrorCode ValidateServiceMetrics(

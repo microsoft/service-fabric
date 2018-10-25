@@ -28,7 +28,11 @@ HostedServiceParameters::HostedServiceParameters()
     runasPasswordEncrypted_(),
     sslCertificateFindValue_(),
     sslCertStoreLocation_(),
-    sslCertificateFindType_()
+    sslCertificateFindType_(),
+    cpusetCpus_(),
+    cpuShares_(),
+    memoryInMB_(),
+    memorySwapInMB_()
 {
 }
 
@@ -50,7 +54,12 @@ HostedServiceParameters::HostedServiceParameters(
     bool runasPasswordEncrypted,
     wstring const & sslCertificateFindValue,
     wstring const & sslCertStoreLocation,
-    X509FindType::Enum sslCertificateFindType)
+    X509FindType::Enum sslCertificateFindType,
+    std::wstring const & cpusetCpus,
+    uint cpuShares,
+    uint memoryInMB,
+    uint memorySwapInMB
+    )
     : serviceName_(serviceName),
     exeName_(exeName),
     arguments_(arguments),
@@ -68,7 +77,11 @@ HostedServiceParameters::HostedServiceParameters(
     runasPasswordEncrypted_(runasPasswordEncrypted),
     sslCertificateFindValue_(sslCertificateFindValue),
     sslCertStoreLocation_(sslCertStoreLocation),
-    sslCertificateFindType_(sslCertificateFindType)
+    sslCertificateFindType_(sslCertificateFindType),
+    cpusetCpus_(cpusetCpus),
+    cpuShares_(cpuShares),
+    memoryInMB_(memoryInMB),
+    memorySwapInMB_(memorySwapInMB)
 {
 }
 
@@ -93,5 +106,9 @@ void HostedServiceParameters::WriteTo(__in TextWriter & w, FormatOptions const &
     w.Write("SslCertificateFindValue = {0}", sslCertificateFindValue_);
     w.Write("SslCertificateStoreLocation = {0}", sslCertStoreLocation_);
     w.Write("SslCertificateFindType = {0}", sslCertificateFindType_);
+    w.Write("CpusetCpus = {0}", cpusetCpus_);
+    w.Write("CpuShares = {0}", cpuShares_);
+    w.Write("MemoryInMB = {0}", memoryInMB_);
+    w.Write("MemorySwapInMB = {0}", memorySwapInMB_);
     w.Write("}");
 }

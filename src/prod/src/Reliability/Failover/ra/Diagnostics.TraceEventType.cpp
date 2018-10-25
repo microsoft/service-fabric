@@ -27,14 +27,14 @@ namespace Reliability
                         w << L"Reconfiguration Complete"; return;
                     case ResourceUsageReport:
                         w << L"ResourceUsageReport"; return;
+                    case ReplicaStateChange:
+                        w << L"ReplicaStateChange"; return;
                     default:
                         Common::Assert::CodingError("Unknown Trace Event Type {0}", static_cast<int>(val));
                     }
                 }
 
                 ENUM_STRUCTURED_TRACE(TraceEventType, ReconfigurationSlow, LastValidEnum);
-
-                
             }
         }
     }

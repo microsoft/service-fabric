@@ -366,7 +366,7 @@ ErrorCode NodeCache::DeactivateNodes(map<NodeId, NodeDeactivationIntent::Enum> c
 
         bool isNewEntry;
         LockedNodeInfo lockedNodeInfo;
-        ErrorCode error = GetLockedNode(it->first, lockedNodeInfo, true, isNewEntry);
+        ErrorCode error = GetLockedNode(it->first, lockedNodeInfo, true, FailoverConfig::GetConfig().LockAcquireTimeout, isNewEntry);
         if (!error.IsSuccess())
         {
             fm_.WriteInfo(
@@ -428,6 +428,31 @@ ErrorCode NodeCache::DeactivateNodes(map<NodeId, NodeDeactivationIntent::Enum> c
                 Constants::NodeUpdateSource, newNodeInfo->IdString,
                 "Node deactivation started for batch {0}: {1}, PLB Duration = {2} ms", batchId, *newNodeInfo, plbElapsedTime);
 
+            // It implies that this is a new node which we are seeing for first time.
+            if (newNodeInfo->PersistenceState == PersistenceState::ToBeInserted)
+            {
+                // Push data to Event store.
+                fm_.NodeEvents.NodeAddedOperational(
+                    Common::Guid::NewGuid(),
+                    newNodeInfo->Description.NodeName,
+                    newNodeInfo->IdString,
+                    newNodeInfo->NodeInstance.InstanceId,
+                    newNodeInfo->NodeType,
+                    newNodeInfo->VersionInstance.ToString(),
+                    newNodeInfo->IpAddressOrFQDN,
+                    wformatString(newNodeInfo->NodeCapacities));
+
+                nodeCount_++;
+            }
+
+            // Push the information that node Deactivation has started to Event Store.
+            fm_.NodeEvents.DeactivateNodeStartOperational(
+                Common::Guid::NewGuid(),
+                newNodeInfo->Description.NodeName,
+                newNodeInfo->NodeInstance.InstanceId,
+                batchId,
+                nodesToDeactivate.find(newNodeInfo->Id)->second); // we know the entry is there so no need to check existence.
+
             if (newNodeInfo->DeactivationInfo.Status == NodeDeactivationStatus::DeactivationComplete)
             {
                 // Push this information to Event Store
@@ -436,6 +461,7 @@ ErrorCode NodeCache::DeactivateNodes(map<NodeId, NodeDeactivationIntent::Enum> c
                     newNodeInfo->Description.NodeName,
                     newNodeInfo->NodeInstance.InstanceId,
                     newNodeInfo->DeactivationInfo.Intent,
+                    newNodeInfo->DeactivationInfo.GetBatchIdsWithIntent(),
                     newNodeInfo->DeactivationInfo.StartTime);
             }
 
@@ -600,48 +626,57 @@ ErrorCode NodeCache::UpdateNodeDeactivationStatus(
 
     lockedNodeInfo->DeactivationInfo.UpdateProgressDetails(nodeId, move(pending), move(ready), move(waiting), deactivationStatus == NodeDeactivationStatus::DeactivationComplete);
 
-    if (lockedNodeInfo->DeactivationInfo.Intent == deactivationIntent &&
-        (lockedNodeInfo->DeactivationInfo.Status != deactivationStatus ||
-         (lockedNodeInfo->IsPendingDeactivateNode && deactivationStatus == NodeDeactivationStatus::DeactivationComplete)))
+    if (lockedNodeInfo->DeactivationInfo.Intent != deactivationIntent)
     {
-        NodeInfoSPtr newNodeInfo = make_shared<NodeInfo>(*lockedNodeInfo);
-        newNodeInfo->DeactivationInfo.Status = deactivationStatus;
+        return error;
+    }
 
-        if (deactivationStatus == NodeDeactivationStatus::DeactivationComplete)
+    if (lockedNodeInfo->DeactivationInfo.Status == deactivationStatus)
+    {
+        return error;
+    }
+
+    NodeInfoSPtr newNodeInfo = make_shared<NodeInfo>(*lockedNodeInfo);
+    newNodeInfo->DeactivationInfo.Status = deactivationStatus;
+
+    if (deactivationStatus == NodeDeactivationStatus::DeactivationComplete)
+    {
+        newNodeInfo->IsPendingDeactivateNode = false;
+    }
+    else if (!newNodeInfo->DeactivationInfo.IsPause && deactivationStatus == NodeDeactivationStatus::DeactivationSafetyCheckComplete)
+    {
+        newNodeInfo->IsPendingDeactivateNode = true;
+    }
+
+    int64 commitDuration;
+    error = fm_.Store.UpdateData(*newNodeInfo, commitDuration);
+    if (error.IsSuccess())
+    {
+        int64 plbElapsedTime;
+        fm_.PLB.UpdateNode(newNodeInfo->GetPLBNodeDescription(), plbElapsedTime);
+        fm_.WriteInfo(
+            Constants::NodeUpdateSource, newNodeInfo->IdString,
+            "Node deactivation status updated: {0}Commit Duration = {1} ms, PLB Duration = {2} ms", *newNodeInfo, commitDuration, plbElapsedTime);
+
+        if (newNodeInfo->DeactivationInfo.Status == NodeDeactivationStatus::DeactivationComplete)
         {
-            newNodeInfo->IsPendingDeactivateNode = false;
+            // Push this information to Event Store
+            fm_.NodeEvents.DeactivateNodeCompletedOperational(
+                Common::Guid::NewGuid(),
+                newNodeInfo->Description.NodeName,
+                newNodeInfo->NodeInstance.InstanceId,
+                newNodeInfo->DeactivationInfo.Intent,
+                newNodeInfo->DeactivationInfo.GetBatchIdsWithIntent(),
+                newNodeInfo->DeactivationInfo.StartTime);
         }
 
-        int64 commitDuration;
-        error = fm_.Store.UpdateData(*newNodeInfo, commitDuration);
-        if (error.IsSuccess())
-        {
-            int64 plbElapsedTime;
-            fm_.PLB.UpdateNode(newNodeInfo->GetPLBNodeDescription(), plbElapsedTime);
-
-            fm_.WriteInfo(
-                Constants::NodeUpdateSource, newNodeInfo->IdString,
-                "Node deactivation status updated: {0}Commit Duration = {1} ms, PLB Duration = {2} ms", *newNodeInfo, commitDuration, plbElapsedTime);
-
-            if (newNodeInfo->DeactivationInfo.Status == NodeDeactivationStatus::DeactivationComplete)
-            {
-                // Push this information to Event Store
-                fm_.NodeEvents.DeactivateNodeCompletedOperational(
-                    Common::Guid::NewGuid(),
-                    newNodeInfo->Description.NodeName,
-                    newNodeInfo->NodeInstance.InstanceId,
-                    newNodeInfo->DeactivationInfo.Intent,
-                    newNodeInfo->DeactivationInfo.StartTime);
-            }
-
-            lockedNodeInfo.Commit(move(newNodeInfo));
-        }
-        else
-        {
-            fm_.WriteInfo(
-                Constants::NodeSource, wformatString(nodeId),
-                "UpdateNodeDeactivationStatus processing for node {0} failed with {1}\r\nCommit Duration = {2} ms", nodeId, error, commitDuration);
-        }
+        lockedNodeInfo.Commit(move(newNodeInfo));
+    }
+    else
+    {
+        fm_.WriteInfo(
+            Constants::NodeSource, wformatString(nodeId),
+            "UpdateNodeDeactivationStatus processing for node {0} failed with {1}\r\nCommit Duration = {2} ms", nodeId, error, commitDuration);
     }
 
     return error;
@@ -675,7 +710,7 @@ void NodeCache::ProcessNodeDeactivateReplyAsync(NodeId const& nodeId, int64 sequ
         return;
     }
 
-    if (lockedNodeInfo->DeactivationInfo.IsRemove && lockedNodeInfo->DeactivationInfo.IsSafetyCheckComplete)
+    if (lockedNodeInfo->DeactivationInfo.IsSafetyCheckComplete)
     {
         NodeInfoSPtr newNodeInfo = make_shared<NodeInfo>(*lockedNodeInfo);
         newNodeInfo->DeactivationInfo.Status = NodeDeactivationStatus::DeactivationComplete;
@@ -704,6 +739,7 @@ void NodeCache::ProcessNodeDeactivateReplyAsync(NodeId const& nodeId, int64 sequ
                         newNodeInfo->Description.NodeName,
                         newNodeInfo->NodeInstance.InstanceId,
                         newNodeInfo->DeactivationInfo.Intent,
+                        newNodeInfo->DeactivationInfo.GetBatchIdsWithIntent(),
                         newNodeInfo->DeactivationInfo.StartTime);
 
                     auto lockedNodeInfo = lockedNodeInfoMover.TakeUPtr();
@@ -770,7 +806,7 @@ void NodeCache::ProcessNodeActivateReplyAsync(NodeId const& nodeId, int64 sequen
 
                     fm_.WriteInfo(
                         Constants::NodeUpdateSource, newNodeInfo->IdString,
-                        "Node activativation complete: {0}Commit Duration = {1} ms, PLB Duration = {2} ms", *newNodeInfo, commitDuration, plbElapsedTime);
+                        "Node activation complete: {0}Commit Duration = {1} ms, PLB Duration = {2} ms", *newNodeInfo, commitDuration, plbElapsedTime);
 
                     auto lockedNodeInfo = lockedNodeInfoMover.TakeUPtr();
                     lockedNodeInfo->Commit(move(newNodeInfo));
@@ -846,7 +882,7 @@ void NodeCache::AddDeactivateNodeContext(vector<BackgroundThreadContextUPtr> & c
         }
 
         auto context = make_unique<DeactivateNodesContext>(it->second, it->first);
-        context->CheckSeedNodes(fm_);
+        context->Initialize(fm_);
 
         contexts.push_back(move(context));
     }
@@ -911,67 +947,6 @@ ErrorCode NodeCache::EndUpdateNodeSequenceNumber(AsyncOperationSPtr const& opera
     return CompletedAsyncOperation::End(operation);
 }
 
-AsyncOperationSPtr NodeCache::BeginPartitionNotification(
-    std::vector<PartitionId> && disabledPartitions,
-    uint64 sequenceNumber,
-    Federation::NodeInstance const& nodeInstance,
-    Common::AsyncCallback const& callback,
-    Common::AsyncOperationSPtr const& state)
-{
-    LockedNodeInfo lockedNodeInfo;
-    ErrorCode error = GetLockedNode(nodeInstance.Id, lockedNodeInfo);
-    if (!error.IsSuccess())
-    {
-        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(error, callback, state);
-    }
-
-    if (lockedNodeInfo->NodeInstance != nodeInstance || lockedNodeInfo->SequenceNumber >= sequenceNumber)
-    {
-        fm_.NodeEvents.PartitionNotificationSequenceNumberStale(nodeInstance.Id);
-        return AsyncOperation::CreateAndStart<CompletedAsyncOperation>(ErrorCodeValue::StaleRequest, callback, state);
-    }
-
-    NodeInfoSPtr newNodeInfo = make_shared<NodeInfo>(*lockedNodeInfo);
-    newNodeInfo->SequenceNumber = sequenceNumber;
-    newNodeInfo->DisabledPartitions = move(disabledPartitions);
-
-    auto newNodeInfoPtr = newNodeInfo.get();
-
-    pair<LockedNodeInfo, NodeInfoSPtr> context(move(lockedNodeInfo), move(newNodeInfo));
-
-    return fm_.Store.BeginUpdateData(
-        *newNodeInfoPtr,
-        OperationContextCallback<pair<LockedNodeInfo, NodeInfoSPtr>>(callback, move(context)),
-        state);
-}
-
-ErrorCode NodeCache::EndPartitionNotification(AsyncOperationSPtr const& operation)
-{
-    unique_ptr<OperationContext<pair<LockedNodeInfo, NodeInfoSPtr>>> context = operation->PopOperationContext<pair<LockedNodeInfo, NodeInfoSPtr>>();
-
-    if (context)
-    {
-        LockedNodeInfo & lockedNodeInfo = context->Context.first;
-        NodeInfoSPtr & newNodeInfo = context->Context.second;
-
-        int64 commitDuration;
-        ErrorCode error = fm_.Store.EndUpdateData(*newNodeInfo, operation, commitDuration);
-
-        if (error.IsSuccess())
-        {
-            fm_.WriteInfo(
-                Constants::NodeUpdateSource, newNodeInfo->IdString,
-                "DisabledPartitions updated: {0}Commit Duration = {1} ms", *newNodeInfo, commitDuration);
-
-            lockedNodeInfo.Commit(move(newNodeInfo));
-        }
-
-        return error;
-    }
-
-    return CompletedAsyncOperation::End(operation);
-}
-
 void NodeCache::UpdateVersionInstanceAsync(NodeInstance const& nodeInstance, FabricVersionInstance const& versionInstance)
 {
     LockedNodeInfo lockedNodeInfo;
@@ -1002,7 +977,8 @@ void NodeCache::UpdateVersionInstanceAsync(NodeInstance const& nodeInstance, Fab
         lockedNodeInfo->NodeName,
         lockedNodeInfo->NodeType,
         lockedNodeInfo->IpAddressOrFQDN,
-        lockedNodeInfo->Description.ClusterConnectionPort);
+        lockedNodeInfo->Description.ClusterConnectionPort,
+        lockedNodeInfo->Description.HttpGatewayPort);
 
     NodeInfoSPtr newNodeInfo = make_shared<NodeInfo>(*lockedNodeInfo);
     newNodeInfo->Description = nodeDescription;
@@ -1037,13 +1013,16 @@ void NodeCache::UpdateVersionInstanceAsync(NodeInstance const& nodeInstance, Fab
         fm_.CreateAsyncOperationRoot());
 }
 
-ErrorCode NodeCache::NodeUp(NodeInfoSPtr && node)
+ErrorCode NodeCache::NodeUp(
+    NodeInfoSPtr && node,
+    bool isVersionGateKeepingNeeded,
+    _Out_ FabricVersionInstance & targetVersionInstance)
 {
     NodeInstance nodeInstance = node->NodeInstance;
 
     bool isNewEntry;
     LockedNodeInfo lockedNodeInfo;
-    ErrorCode error = GetLockedNode(nodeInstance.Id, lockedNodeInfo, true, isNewEntry);
+    ErrorCode error = GetLockedNode(nodeInstance.Id, lockedNodeInfo, true, FailoverConfig::GetConfig().LockAcquireTimeout, isNewEntry);
     if (!error.IsSuccess())
     {
         return error;
@@ -1051,8 +1030,27 @@ ErrorCode NodeCache::NodeUp(NodeInfoSPtr && node)
 
     if ((lockedNodeInfo->NodeInstance.InstanceId < node->NodeInstance.InstanceId) ||
         (lockedNodeInfo->NodeInstance.InstanceId == node->NodeInstance.InstanceId &&
-            lockedNodeInfo->IsUp && !lockedNodeInfo->IsReplicaUploaded && node->IsReplicaUploaded))
+         lockedNodeInfo->IsUp && !lockedNodeInfo->IsReplicaUploaded && node->IsReplicaUploaded))
     {
+        if (isVersionGateKeepingNeeded &&
+            fm_.FabricUpgradeManager.IsFabricUpgradeNeeded(node->VersionInstance, node->ActualUpgradeDomainId, targetVersionInstance))
+        {
+            fm_.WriteWarning(
+                Constants::NodeUpSource, wformatString(nodeInstance.Id),
+                "NodeUp from {0} ignored due to fabric version mismatch: Current={1}, Incoming={2}",
+                nodeInstance.Id, targetVersionInstance, node->VersionInstance);
+
+            if (isNewEntry)
+            {
+                AcquireWriteLock lock(lock_);
+
+                lockedNodeInfo.IsDeleted = true;
+                nodes_.erase(nodeInstance.Id);
+            }
+
+            return ErrorCodeValue::FMInvalidRolloutVersion;
+        }
+
         if (lockedNodeInfo->IsUp)
         {
             node->NodeDownTime = DateTime::Now();
@@ -1084,6 +1082,22 @@ ErrorCode NodeCache::NodeUp(NodeInfoSPtr && node)
         {
             lastNodeUpTime_ = DateTime::Now();
 
+            if (isNewEntry)
+            {
+                // This is a new Node and we are pushing detailed information about it to Event Store.
+                fm_.NodeEvents.NodeAddedOperational(
+                    Common::Guid::NewGuid(),
+                    node->Description.NodeName,
+                    node->IdString,
+                    node->NodeInstance.InstanceId,
+                    node->NodeType,
+                    node->VersionInstance.ToString(),
+                    node->IpAddressOrFQDN,
+                    wformatString(node->NodeCapacities));
+
+                nodeCount_++;
+            }
+
             if (!fm_.IsMaster)
             {
                 fm_.NodeEvents.NodeUp(node->IdString, node->NodeInstance.InstanceId);
@@ -1099,11 +1113,6 @@ ErrorCode NodeCache::NodeUp(NodeInfoSPtr && node)
             fm_.WriteInfo(Constants::NodeUpdateSource, wformatString(nodeInstance.Id), "NodeUp: {0}Commit Duration = {1} ms, PLB Duration = {2} ms", *node, commitDuration, plbElapsedTime);
 
             AddUpgradeDomain(*node);
-
-            if (isNewEntry)
-            {
-                nodeCount_++;
-            }
 
             if (!lockedNodeInfo->IsUp)
             {
@@ -1222,7 +1231,7 @@ ErrorCode NodeCache::NodeDown(NodeInstance const& nodeInstance)
 
     bool isNewEntry;
     LockedNodeInfo lockedNodeInfo;
-    ErrorCode error = GetLockedNode(nodeInstance.Id, lockedNodeInfo, true, isNewEntry);
+    ErrorCode error = GetLockedNode(nodeInstance.Id, lockedNodeInfo, true, FailoverConfig::GetConfig().LockAcquireTimeout, isNewEntry);
     if (!error.IsSuccess())
     {
         return error;
@@ -1272,6 +1281,22 @@ ErrorCode NodeCache::NodeDown(NodeInstance const& nodeInstance)
 
     if (error.IsSuccess())
     {
+        if (isNewEntry)
+        {
+            // This is a new Node and we are pushing detailed information about it to Event Store.
+            fm_.NodeEvents.NodeAddedOperational(
+                Common::Guid::NewGuid(),
+                node->Description.NodeName,
+                node->IdString,
+                node->NodeInstance.InstanceId,
+                node->NodeType,
+                node->VersionInstance.ToString(),
+                node->IpAddressOrFQDN,
+                wformatString(node->NodeCapacities));
+
+            nodeCount_++;
+        }
+
         if (!fm_.IsMaster)
         {
             fm_.NodeEvents.NodeDown(node->IdString, node->NodeInstance.InstanceId);
@@ -1286,11 +1311,6 @@ ErrorCode NodeCache::NodeDown(NodeInstance const& nodeInstance)
         fm_.PLB.UpdateNode(node->GetPLBNodeDescription(), plbElapsedTime);
 
         fm_.WriteInfo(Constants::NodeUpdateSource, wformatString(nodeInstance.Id), "NodeDown: {0}Commit Duration = {1} ms PLB Duration = {2} ms", node, commitDuration, plbElapsedTime);
-
-        if (isNewEntry)
-        {
-            nodeCount_--;
-        }
 
         if (lockedNodeInfo->IsUp)
         {
@@ -2174,6 +2194,18 @@ void NodeCache::FinishRemoveNode(LockedNodeInfo & lockedNodeInfo, int64 commitDu
     lockedNodeInfo.IsDeleted = true;
     nodes_.erase(lockedNodeInfo->Id);
     nodeCount_--;
+
+    // Push to Operational store.
+    fm_.NodeEvents.NodeRemovedOperational(
+        Common::Guid::NewGuid(),
+        lockedNodeInfo->Description.NodeName,
+        lockedNodeInfo->IdString,
+        lockedNodeInfo->NodeInstance.InstanceId,
+        lockedNodeInfo->NodeType,
+        lockedNodeInfo->VersionInstance.ToString(),
+        lockedNodeInfo->IpAddressOrFQDN,
+        wformatString(lockedNodeInfo->NodeCapacities));
+
     fm_.WriteInfo(Constants::NodeUpdateSource, lockedNodeInfo->IdString, "Node removed: {0}\r\nCommit Duration = {1} ms", *lockedNodeInfo, commitDuration);
 }
 
@@ -2185,16 +2217,17 @@ void NodeCache::WriteTo(TextWriter& writer, FormatOptions const&) const
     }
 }
 
-ErrorCode NodeCache::GetLockedNode(NodeId const& nodeId, LockedNodeInfo & lockedNodeInfo)
+ErrorCode NodeCache::GetLockedNode(NodeId const& nodeId, LockedNodeInfo & lockedNodeInfo, TimeSpan timeout)
 {
     bool isNewEntry = false;
-    return GetLockedNode(nodeId, lockedNodeInfo, false, isNewEntry);
+    return GetLockedNode(nodeId, lockedNodeInfo, false, timeout, isNewEntry);
 }
 
 ErrorCode NodeCache::GetLockedNode(
     NodeId const& nodeId,
     LockedNodeInfo & lockedNodeInfo,
     bool createNewEntry,
+    TimeSpan timeout,
     __out bool & isNewEntry)
 {
     isNewEntry = false;
@@ -2218,7 +2251,11 @@ ErrorCode NodeCache::GetLockedNode(
 
     if (entry)
     {
-        return entry->Lock(entry, lockedNodeInfo);
+        ErrorCode error = entry->Lock(entry, lockedNodeInfo, timeout);
+        if (!createNewEntry || !error.IsError(ErrorCodeValue::NodeNotFound))
+        {
+            return error;
+        }
     }
 
     AcquireWriteLock grab(lock_);

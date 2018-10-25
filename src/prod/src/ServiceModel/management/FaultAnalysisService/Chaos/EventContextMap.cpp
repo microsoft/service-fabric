@@ -19,21 +19,6 @@ EventContextMap::EventContextMap()
 {
 }
 
-EventContextMap::EventContextMap(EventContextMap && other)
-: map_(move(other.map_))
-{
-}
-
-EventContextMap const & EventContextMap::operator = (EventContextMap && other)
-{
-    if (this != &other)
-    {
-        map_ = move(other.map_);
-    }
-
-    return *this;
-}
-
 ErrorCode EventContextMap::FromPublicApi(FABRIC_EVENT_CONTEXT_MAP const & publicEventContextMap)
 {
     return FromPublicApiMap(publicEventContextMap, map_);
@@ -57,10 +42,10 @@ Common::ErrorCode EventContextMap::FromPublicApiMap(
         // Key
         wstring key;
         error = StringUtility::LpcwstrToWstring2(
-            publicEventContextMapItem.Key, 
-            true, 
-            0, 
-            ParameterValidator::MaxStringSize, 
+            publicEventContextMapItem.Key,
+            true,
+            0,
+            ParameterValidator::MaxStringSize,
             key);
         if (!error.IsSuccess())
         {
@@ -71,7 +56,7 @@ Common::ErrorCode EventContextMap::FromPublicApiMap(
         // Value
         wstring value;
         error = StringUtility::LpcwstrToWstring2(
-            publicEventContextMapItem.Value, 
+            publicEventContextMapItem.Value,
             true,
             0,
             ParameterValidator::MaxStringSize,

@@ -160,6 +160,13 @@ void DeleteComposeDeploymentContextAsyncOperation::DeleteApplication(AsyncOperat
     }
     else
     {
+        // PendingDefaultServices are persisted in dockerComposeDeploymentContext_, while InnerDeleteApplication() will only check applicationContext_.
+        // Deleting application must also delete all pending default services, so PendingDefaultServices should be passed to applicationContext_.
+        for (auto iter = dockerComposeDeploymentContext_.PendingDefaultServices.begin(); iter != dockerComposeDeploymentContext_.PendingDefaultServices.end(); ++iter)
+        {
+            ServiceModelServiceNameEx name(*iter);
+            applicationContext_.AddPendingDefaultService(move(name));
+        }
         this->InnerDeleteApplication(thisSPtr);
     }
 }
@@ -432,20 +439,22 @@ ErrorCode DeleteComposeDeploymentContextAsyncOperation::GetApplicationTypeContex
         return error;
     }
 
-    // Lifecycle management of the application context is controlled via the container application context.
-    if (!appTypeContext.IsComplete)
+    // Lifecycle management of the application context is controlled via the compose deployment context.
+    if (!appTypeContext.IsComplete && !appTypeContext.IsFailed)
     {
         this->WriteWarning(
             TraceComponent,
-            "{0} Application type context for {1} is not ready for deleting when ContainerApplication context is deletable - current state {2}",
+            "{0} Application type context for {1} {2} is not ready for deleting when ComposeDeployment context is deletable - current state {3}",
             this->TraceId,
-            dockerComposeDeploymentContext_.ApplicationName,
+            appTypeContext.TypeName,
+            appTypeContext.TypeVersion.Value,
             appTypeContext.Status);
 
         Assert::TestAssert(
-            "{0} Application type context for {1} is not ready for deleting when ContainerApplication context is deletable - current state {2}",
+            "{0} Application type context for {1} {2} is not ready for deleting when ComposeDeployment context is deletable - current state {3}",
             this->TraceId,
-            dockerComposeDeploymentContext_.ApplicationName,
+            appTypeContext.TypeName,
+            appTypeContext.TypeVersion.Value,
             appTypeContext.Status);
     }
 
@@ -484,18 +493,18 @@ ErrorCode DeleteComposeDeploymentContextAsyncOperation::GetApplicationContextFor
     }
     else
     {
-        // Lifecycle management of the application context is controlled via the container application context.
-        if (!applicationContext_.IsComplete)
+        // Lifecycle management of the application context is controlled via the compose deployment context.
+        if (!applicationContext_.IsComplete && !applicationContext_.IsFailed)
         {
             this->WriteWarning(
                 TraceComponent,
-                "{0} Application context for {1} is not ready for deleting when ContainerApplication context is deletable - curent state {2}",
+                "{0} Application context for {1} is not ready for deleting when ComposeDeployment context is deletable - curent state {2}",
                 this->TraceId,
                 applicationContext_.ApplicationName,
                 applicationContext_.Status);
 
             Assert::TestAssert(
-                "{0} Application context for {1} is not ready for deleting when ContainerApplication context is deletable - curent state {2}",
+                "{0} Application context for {1} is not ready for deleting when ComposeDeployment context is deletable - curent state {2}",
                 this->TraceId,
                 applicationContext_.ApplicationName,
                 applicationContext_.Status);

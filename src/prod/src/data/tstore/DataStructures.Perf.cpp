@@ -137,6 +137,24 @@ namespace TStoreTests
         PartitionedSortedList_SingleKeyReadPerfTest(1'000'000, 200);
     }
 
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTablePerf_LongByte_SequentialAddRead_1M)
+    {
+        TRACE_TEST();
+        ConcurrentHashTablePerf_SequentialAddReadTest(1'000'000);
+    }
+
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTable_LongByte_ConcurrentAddThenReadTest_1M_200Tasks)
+    {
+        TRACE_TEST();
+        ConcurrentHashTable_ConcurrentAddThenReadTest(1'000'000, 200);
+    }
+
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTable_LongByte_SingleKeyConcurrentRead_1M_200Task)
+    {
+        TRACE_TEST();
+        ConcurrentHashTable_SingleKeyReadPerfTest(1'000'000, 200);
+    }
+
     BOOST_AUTO_TEST_SUITE_END()
 #pragma endregion
 
@@ -188,6 +206,22 @@ namespace TStoreTests
         PartitionedSortedList_SingleKeyReadPerfTest(1'000'000, 200);
     }
 
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTablePerf_LongBuffer_SequentialAddRead_1M)
+    {
+        ConcurrentHashTablePerf_SequentialAddReadTest(1'000'000);
+    }
+
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTable_LongBuffer_ConcurrentAddThenReadTest_1M_200Tasks)
+    {
+        ConcurrentHashTable_ConcurrentAddThenReadTest(1'000'000, 200);
+    }
+
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTable_LongBuffer_SingleKeyConcurrentRead_1M_200Task)
+    {
+        ConcurrentHashTable_SingleKeyReadPerfTest(1'000'000, 200);
+    }
+
+
     BOOST_AUTO_TEST_SUITE_END()
 #pragma endregion
 
@@ -237,6 +271,21 @@ namespace TStoreTests
     BOOST_AUTO_TEST_CASE(PartitionSortedList_StringBuffer_ConcurrentSingleKeyReadTest_1M_200Tasks)
     {
         PartitionedSortedList_SingleKeyReadPerfTest(1'000'000, 200);
+    }
+
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTablePerf_StringBuffer_SequentialAddRead_1M)
+    {
+        ConcurrentHashTablePerf_SequentialAddReadTest(1'000'000);
+    }
+
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTable_StringBuffer_ConcurrentAddThenReadTest_1M_200Tasks)
+    {
+        ConcurrentHashTable_ConcurrentAddThenReadTest(1'000'000, 200);
+    }
+
+    BOOST_AUTO_TEST_CASE(ConcurrentHashTable_StringBuffer_SingleKeyConcurrentRead_1M_200Task)
+    {
+        ConcurrentHashTable_SingleKeyReadPerfTest(1'000'000, 200);
     }
 
     BOOST_AUTO_TEST_SUITE_END()

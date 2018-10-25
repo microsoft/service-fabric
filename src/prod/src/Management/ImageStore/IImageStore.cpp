@@ -123,6 +123,14 @@ ErrorCode IImageStore::DownloadToCache(
     __out std::wstring & cacheObject,
     __out bool & alreadyInCache)
 {
+    Trace.WriteInfo(
+        ImageStoreLiteral,
+        "DownloadToCache invoked with remoteObject {0}, shouldOverwrite{1}, checkForArchive {2}, isStaging {3}",
+        remoteObject,
+        shouldOverwrite,
+        checkForArchive,
+        isStaging);
+
     TimeoutHelper timeoutHelper(timeout);
     cacheObject = GetCacheFileName(remoteObject);
     auto path = Path::GetDirectoryName(cacheObject);
@@ -193,8 +201,9 @@ ErrorCode IImageStore::DownloadToCache(
         {
             WriteNoise(
                 ImageStoreLiteral,
-                "Cache object '{0}' does not exist so downloading",
-                cacheObject);
+                "Cache object '{0}' does not exist so downloading. shouldOverwrite {1}",
+                cacheObject,
+                shouldOverwrite);
 
             vector<wstring> storeTagsToDownload;
             vector<wstring> cacheTagsToUpdate;
@@ -336,7 +345,7 @@ Common::ErrorCode IImageStore::DownloadContent(
             auto downloadedObject = *localObjects.begin();
             if (ImageModelUtility::IsArchiveFile(downloadedObject))
             {
-                error = ExtractArchive(downloadedObject, localObject, false); // overwrite
+                error = ExtractArchive(downloadedObject, localObject);
 
                 if (error.IsSuccess())
                 {
@@ -374,6 +383,11 @@ Common::ErrorCode IImageStore::DownloadContent(
                 // The checksum file is not there in the cache, but is present in the store.
                 // In this case, overwrite the cache object with the store object
                 shouldOverwriteCache = true;
+                Trace.WriteInfo(
+                    ImageStoreLiteral,
+                    "The checksum file is not there in the cache. Overwrite the cache object with the store object. ShouldOverwriteCache: {0}, remoteObject: {1}",
+                    shouldOverwriteCache,
+                    remoteObject);
             }
             else
             {
@@ -438,6 +452,13 @@ Common::ErrorCode IImageStore::DownloadContent(
         }
     }
 
+    Trace.WriteInfo(
+        ImageStoreLiteral,
+        "ShouldOverwriteCache: {0}, RefreshCache: {1}, remoteObject: {2}",
+        shouldOverwriteCache,
+        refreshCache,
+        remoteObject);
+
     if (!shouldOverwriteCache) { shouldOverwriteCache = refreshCache; }
 
     if (timeoutHelper.GetRemainingTime() <= Common::TimeSpan::Zero) { return ErrorCodeValue::Timeout; }
@@ -474,6 +495,14 @@ Common::ErrorCode IImageStore::DownloadContent(
                 cacheObject,
                 deleteError);
         }
+
+        Trace.WriteTrace(
+            error.ToLogLevel(),
+            ImageStoreLiteral,
+            "DownloadToCache failed with Error:{0}, ShouldOverwriteCache {1}, RefreshCache {2}",
+            cacheObject,
+            shouldOverwriteCache,
+            refreshCache);
 
         return error;
     }
@@ -523,7 +552,12 @@ Common::ErrorCode IImageStore::DownloadContent(
 
     if (checkForArchive && ImageModelUtility::IsArchiveFile(cacheObject))
     {
-        error = ExtractArchive(cacheObject, localObject, shouldOverwriteCache);
+        error = ExtractArchive(
+            cacheObject, 
+            localObject, 
+            shouldOverwriteCache, 
+            expectedChecksumValue,
+            cacheChecksumObject);
     }
     else
     {
@@ -1005,7 +1039,12 @@ ErrorCode IImageStore::DoesArchiveExistInStore(wstring const & archive, TimeSpan
     return error;
 }
 
-ErrorCode IImageStore::ExtractArchive(wstring const & src, wstring const & dest, bool overwrite)
+ErrorCode IImageStore::ExtractArchive(
+    wstring const & src, 
+    wstring const & dest, 
+    bool overwrite,
+    wstring const & expectedChecksumValue,
+    wstring const & cacheChecksumObject)
 {
     auto root = Path::GetDirectoryName(dest);
     if (!Directory::Exists(root))
@@ -1028,29 +1067,89 @@ ErrorCode IImageStore::ExtractArchive(wstring const & src, wstring const & dest,
     }
 
     auto markerFile = Path::Combine(dest, *ArchiveMarkerFileName);
+
     if (Directory::Exists(dest))
     {
-        if (File::Exists(markerFile) && !overwrite)
+        if (File::Exists(markerFile))
         {
-            return ErrorCodeValue::Success;
-        }
+            if (!overwrite)
+            {
+                return ErrorCodeValue::Success;
+            }
 
-        WriteInfo(ImageStoreLiteral, "ExtractArchive: delete {0}", dest);
+            // Hosting does not serialize checksum download and checking, so there can be multiple
+            // threads attempting to refresh the cache and setting the "overwrite" flag concurrently.
+            //
+            // The latest checksum value will be placed inside the marker file so that we can skip
+            // extracting to the destination if the checksum is already up-to-date. Otherwise, we
+            // may attempt to re-extract (which includes deleting the old directory) after the
+            // destination has started being used (such as when the destination is a shared code
+            // package directory).
+            //
+            if (!expectedChecksumValue.empty())
+            {
+                wstring destinationChecksumValue;
+                error = ReadChecksumFile(markerFile, destinationChecksumValue);
+
+                if (!error.IsSuccess())
+                {
+                    WriteInfo(ImageStoreLiteral, "ExtractArchive: failed to read checksum from marker file {0}: {1}", markerFile, error);
+
+                    return error;
+                }
+
+                if (expectedChecksumValue == destinationChecksumValue)
+                {
+                    WriteInfo(ImageStoreLiteral, "ExtractArchive: checksum matched - skip overwrite: checksum='{0}'", destinationChecksumValue);
+
+                    return ErrorCodeValue::Success;
+                }
+                else
+                {
+                    WriteInfo(ImageStoreLiteral, "ExtractArchive: checksum mismatch - overwriting destination: expected='{0}' destination='{1}'", expectedChecksumValue, destinationChecksumValue);
+                }
+            }
+        } // end marker file exists
+
+        WriteInfo(ImageStoreLiteral, "ExtractArchive: deleting {0}", dest);
 
         error = Directory::Delete(dest, true); // recursive
+
         if (!error.IsSuccess())
         {
+            WriteInfo(ImageStoreLiteral, "ExtractArchive: delete of {0} failed: {1}", dest, error);
+
             return error;
         }
     }
 
-    WriteInfo(ImageStoreLiteral, "ExtractArchive: {0} to {1} overwrite={2}", src, dest, overwrite);
+    WriteInfo(
+        ImageStoreLiteral, 
+        "ExtractArchive: {0} to {1}: overwrite={2} checksum={3} ({4})", 
+        src, 
+        dest, 
+        overwrite, 
+        cacheChecksumObject,
+        expectedChecksumValue);
 
     error = Directory::ExtractArchive(src, dest);
 
     if (error.IsSuccess())
     {
-        error = File::Touch(Path::Combine(dest, *ArchiveMarkerFileName));
+        WriteInfo(ImageStoreLiteral, "ExtractArchive: extraction completed for src {0} destination {1}", src, dest);
+
+        if (!cacheChecksumObject.empty())
+        {
+            error = File::Copy(cacheChecksumObject, markerFile);
+        }
+        else
+        {
+            error = File::Touch(markerFile);
+        }
+    }
+    else
+    {
+        WriteInfo(ImageStoreLiteral, "ExtractArchive: extraction failed: {0}", error);
     }
 
     return error;

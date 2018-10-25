@@ -10,18 +10,23 @@ using namespace Common;
 using namespace Hosting2;
 
 UnregisterApplicationHostRequest::UnregisterApplicationHostRequest()
-    : id_()
+    : activityDescription_()
+    , id_()
 {
 }
 
-UnregisterApplicationHostRequest::UnregisterApplicationHostRequest(wstring const & hostId)
-    : id_(hostId)
+UnregisterApplicationHostRequest::UnregisterApplicationHostRequest(
+    Common::ActivityDescription const & activityDescription,
+    wstring const & hostId)
+    : activityDescription_(activityDescription)
+    , id_(hostId)
 {
 }
 
 void UnregisterApplicationHostRequest::WriteTo(TextWriter & w, FormatOptions const &) const
 {
     w.Write("UnregisterApplicationHostRequest { ");
+    w.Write("ActivityDescription = {0}", ActivityDescription);
     w.Write("Id = {0}", Id);
     w.Write("}");
 }

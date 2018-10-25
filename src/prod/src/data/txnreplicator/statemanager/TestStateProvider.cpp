@@ -866,12 +866,14 @@ OperationDataStream::SPtr TestStateProvider::GetCurrentState()
     return TestOperationDataStream::Create(lastCompleteCheckpointLSN, GetThisAllocator()).RawPtr();
 }
 
-void TestStateProvider::BeginSettingCurrentState()
+ktl::Awaitable<void> TestStateProvider::BeginSettingCurrentStateAsync()
 {
     ThrowExceptionIfFaultyAPI(FaultStateProviderType::FaultAPI::BeginSettingCurrentState);
 
     isEndSettingCurrentStateCalled_ = false;
     isBeginSettingCurrentStateCalled_ = true;
+
+    co_return;
 }
 
 Awaitable<void> TestStateProvider::SetCurrentStateAsync(

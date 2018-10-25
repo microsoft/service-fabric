@@ -75,6 +75,4 @@ target_link_libraries(${lib_FabricUpgradeOrchestrationService}
   dl
   xml2
   uuid
-  unwind
-  unwind-x86_64
 )

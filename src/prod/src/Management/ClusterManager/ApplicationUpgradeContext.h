@@ -249,7 +249,6 @@ namespace Management
             Common::ErrorCode CompleteRollback(Store::StoreTransaction const &);
 
             bool TryInterrupt();
-            bool TryUpdateHealthPolicies(ApplicationUpgradeDescription const &);
             bool TryModifyUpgrade(
                 ApplicationUpgradeUpdateDescription const &,
                 __out std::wstring & validationErrorMessage);

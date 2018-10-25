@@ -1445,16 +1445,18 @@ bool ProcessUpgradeContextAsyncOperationBase<TUpgradeContext, TUpgradeRequestBod
         this->ModifyRequestToFMBodies();
     }
 
+    auto verifiedDomains = verifiedUpgradeDomains_;
+
     wstring requestTrace;
     if (upgradeContext_.IsRollforwardState)
     {
-        auto verifiedDomains = verifiedUpgradeDomains_;
         rollforwardRequestBody_.UpdateVerifiedUpgradeDomains(move(verifiedDomains));
         request = this->GetUpgradeMessageTemplate().CreateMessage(rollforwardRequestBody_);
         requestTrace = wformatString("{0}", rollforwardRequestBody_);
     }
     else if (upgradeContext_.IsRollbackState)
     {
+        rollbackRequestBody_.UpdateVerifiedUpgradeDomains(move(verifiedDomains));
         request = this->GetUpgradeMessageTemplate().CreateMessage(rollbackRequestBody_);
         requestTrace = wformatString("{0}", rollbackRequestBody_);
     }
@@ -1602,6 +1604,10 @@ void ProcessUpgradeContextAsyncOperationBase<TUpgradeContext, TUpgradeRequestBod
 
     if (this->TrySetCommonContextDataForFailure() && this->UpgradeContext.IsInterrupted)
     {
+        this->UpgradeContext.UpdateInProgressUpgradeDomain(L"");
+        this->UpgradeContext.UpdateCompletedUpgradeDomains(vector<wstring>());
+        this->UpgradeContext.UpdatePendingUpgradeDomains(vector<wstring>());
+
         this->UpgradeContext.CommonUpgradeContextData.FailureReason = UpgradeFailureReason::Interrupted;
     }
 }
@@ -1693,6 +1699,8 @@ ErrorCode ProcessUpgradeContextAsyncOperationBase<TUpgradeContext, TUpgradeReque
     StoreTransaction const & storeTx,
     __inout TStoreData & storeData)
 {
+    verifiedUpgradeDomains_.clear();
+
     return this->Replica.ClearVerifiedUpgradeDomains(storeTx, storeData);
 }
 

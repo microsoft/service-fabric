@@ -10,17 +10,13 @@ using namespace std;
 using namespace Common;
 using namespace Reliability::LoadBalancingComponent;
 
-Accumulator::Accumulator()
+Accumulator::Accumulator(bool usePercentages)
     : count_(0),
       sum_(0.0),
-      squaredSum_(0.0)
-{
-}
-
-Accumulator::Accumulator(Accumulator const& other)
-    : count_(other.count_),
-      sum_(other.sum_),
-      squaredSum_(other.squaredSum_)
+      squaredSum_(0.0),
+      absoluteSum_(0.0),
+      capacitySum_(0.0),
+      usePercentage_(usePercentages)
 {
 }
 
@@ -33,29 +29,26 @@ void Accumulator::Clear()
     count_ = 0;
     sum_ = 0.0;
     squaredSum_ = 0.0;
+    absoluteSum_ = 0.0;
+    capacitySum_ = 0.0;
 }
 
-Accumulator & Accumulator::operator= (Accumulator const & other)
-{
-    if (this != &other)
-    {
-        count_ = other.count_;
-        sum_ = other.sum_;
-        squaredSum_ = other.squaredSum_;
-    }
-
-    return *this;
-}
-
-void Accumulator::AddOneValue(int64 value)
+void Accumulator::AddOneValue(int64 value, int64 capacity)
 {
     double val = static_cast<double>(value);
     ++count_;
+    absoluteSum_ += value;
+    capacitySum_ += capacity;
+
+    if (usePercentage_)
+    {
+        val /= capacity;
+    }
     sum_ += val;
     squaredSum_ += val * val;
 }
 
-void Accumulator::AdjustOneValue(int64 oldValue, int64 newValue)
+void Accumulator::AdjustOneValue(int64 oldValue, int64 newValue, int64 capacity)
 {
     ASSERT_IFNOT( count_ > 0, "Accumulator is empty, not able to adjust values");
 
@@ -67,7 +60,14 @@ void Accumulator::AdjustOneValue(int64 oldValue, int64 newValue)
     double oldVal = static_cast<double>(oldValue);
     double newVal = static_cast<double>(newValue);
 
+    if (usePercentage_)
+    {
+        oldVal /= capacity;
+        newVal /= capacity;
+    }
+
     double diff = newVal - oldVal;
+
     sum_ += diff;
     squaredSum_ += diff * (newVal + oldVal);
 }

@@ -18,7 +18,13 @@
         "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
         "Arguments": "[SETUPTYPE] [SETUPARGS] ",
         "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
-        "WorkingDirectory": "[CLOUDBINPATH]"
+        "WorkingDirectory": "[BINS]"
+    },
+   "TestSetupLinux": {
+        "ExeName": "[BINS]/FabricUnitTests/testrunsetup.sh",
+        "Arguments": "[SETUPTYPE] [SETUPARGS] ",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[BINS]"
     },
 
     "TestExecution": [
@@ -28,6 +34,7 @@
             "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
         }
     ],
+
     "IndividualTestCleanup": [
         {
             "ExeName": "__WER__",
@@ -45,11 +52,30 @@
             "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
         }
     ],
+    "IndividualTestCleanupLinux": [
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+
     "TestCleanup": {
         "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
         "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
         "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
-        "WorkingDirectory": "[CLOUDBINPATH]"
+        "WorkingDirectory": "[BINS]"
+    },
+  "TestCleanupLinux": {
+        "ExeName": "[BINS]/FabricUnitTests/testruncleanup.sh",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[BINS]"
     },
 
     "ArchiverProperties": {

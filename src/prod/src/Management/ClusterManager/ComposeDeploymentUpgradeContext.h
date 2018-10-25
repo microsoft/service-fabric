@@ -15,8 +15,6 @@ namespace Management
             DENY_COPY(ComposeDeploymentUpgradeContext)
 
         public:
-            static const RolloutContextType::Enum ContextType;
-
             ComposeDeploymentUpgradeContext();
 
             ComposeDeploymentUpgradeContext(std::wstring const &deploymentName);
@@ -106,7 +104,6 @@ namespace Management
             virtual std::wstring ConstructKey() const override;
 
         private:
-
             void InnerUpdateUpgradeStatus(ServiceModel::ComposeDeploymentUpgradeState::Enum const status);
 
             std::wstring deploymentName_;
@@ -126,6 +123,5 @@ namespace Management
             //
             std::shared_ptr<ApplicationUpgradeDescription> upgradeDescription_;
         };
-
     }
 }

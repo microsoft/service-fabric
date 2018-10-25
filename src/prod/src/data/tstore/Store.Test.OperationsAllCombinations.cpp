@@ -153,293 +153,404 @@ namespace TStoreTests
 
         // Load the config object as it's needed for the tracing to work.
         Common::CommonConfig config;
+
+#pragma region test functions
+    public:
+        ktl::Awaitable<void> Add_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            co_await AddItemAsync(key, value);
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Update_NonExistentKey_ShouldFail_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            co_await UpdateItemShouldFailAsync(key, value);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Remove_NonExistentKey_ShouldFail_Test()
+        {
+            LONG64 key = 1;
+
+            co_await RemoveItemShouldFailAsync(key);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddAdd_ShouldFail_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await AddItemShouldFailAsync(key, value1);
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdate_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await UpdateItemAsync(key, value1);
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddRemove_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            co_await AddItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddRemoveUpdate_ShouldFail_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            co_await AddItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+            co_await UpdateItemShouldFailAsync(key, value);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddRemoveAdd_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+            co_await AddItemAsync(key, value1);
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddRemoveAddAdd_ShouldFail_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+            co_await AddItemAsync(key, value1);
+            co_await AddItemShouldFailAsync(key, value);
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddRemoveRemove_ShouldFail_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            co_await AddItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+            co_await RemoveItemShouldFailAsync(key);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdateRemoveAdd_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await UpdateItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+            co_await AddItemAsync(key, value1);
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdateRemoveRemove_ShouldFail_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+
+            co_await AddItemAsync(key, value);
+            co_await UpdateItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+            co_await RemoveItemShouldFailAsync(key);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddRemoveAddUpdate_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+            co_await AddItemAsync(key, value);
+            co_await UpdateItemAsync(key, value1);
+
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddRemoveAddUpdateRemove_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+            co_await AddItemAsync(key, value);
+            co_await UpdateItemAsync(key, value1);
+            co_await RemoveItemAsync(key);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdateRemoveAddUpdateRemove_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await UpdateItemAsync(key, value1);
+            co_await RemoveItemAsync(key);
+            co_await AddItemAsync(key, value1);
+            co_await UpdateItemAsync(key, value);
+            co_await RemoveItemAsync(key);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddUpdateRemoveUpdate_ShouldFail_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            co_await AddItemAsync(key, value);
+            co_await UpdateItemAsync(key, value1);
+            co_await RemoveItemAsync(key);
+            co_await UpdateItemShouldFailAsync(key, value);
+
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+            co_return;
+        }
+
+        ktl::Awaitable<void> Add_ConditionalUpdate_ConditionalRemove_ShouldSucceed_Test()
+        {
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+
+            auto version1 = co_await AddItemAsync(key, value);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction);
+
+            auto version2 = co_await UpdateItemAsync(key, value1, version1);
+            CODING_ERROR_ASSERT(version1 != version2);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction);
+
+            co_await UpdateItemShouldFailAsync(key, value, version1);
+            co_await RemoveItemShouldFailAsync(key, version1);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction);
+
+            auto version3 = co_await RemoveItemAsync(key, version2);
+            CODING_ERROR_ASSERT(version2 != version3);
+            co_await VerifyKeyDoesNotExistAsync(*Store, key);
+
+            auto version4 = co_await AddItemAsync(key, value);
+            CODING_ERROR_ASSERT(version3 != version4);
+            co_await VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction);
+            co_return;
+        }
+
+        ktl::Awaitable<void> AddGetUpdateGetRemoveGet_ShouldFail_Test()
+        {
+            LONG64 version = -1;
+            LONG64 key = 1;
+            KString::SPtr value = GenerateStringValue(L"value");
+            KString::SPtr value1 = GenerateStringValue(L"value1");
+            KeyValuePair<LONG64, KString::SPtr> kvpair(-1, GenerateStringValue(L"-1"));
+
+            version = co_await AddItemAsync(key, value);
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
+
+                bool exists = co_await Store->ConditionalGetAsync(
+                    *tx->StoreTransactionSPtr,
+                    key,
+                    DefaultTimeout,
+                    kvpair,
+                    CancellationToken::None);
+                CODING_ERROR_ASSERT(exists);
+                CODING_ERROR_ASSERT(kvpair.Key == version);
+                CODING_ERROR_ASSERT(kvpair.Value == value);
+
+                co_await tx->CommitAsync();
+            }
+
+            version = co_await UpdateItemAsync(key, value1);
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
+
+                bool exists = co_await Store->ConditionalGetAsync(
+                    *tx->StoreTransactionSPtr,
+                    key,
+                    DefaultTimeout,
+                    kvpair,
+                    CancellationToken::None);
+                CODING_ERROR_ASSERT(exists);
+                CODING_ERROR_ASSERT(kvpair.Key == version);
+                CODING_ERROR_ASSERT(kvpair.Value == value1);
+
+                co_await tx->CommitAsync();
+            }
+
+            co_await RemoveItemAsync(key);
+            {
+                WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
+
+                bool exists = co_await Store->ConditionalGetAsync(
+                    *tx->StoreTransactionSPtr,
+                    key,
+                    DefaultTimeout,
+                    kvpair,
+                    CancellationToken::None);
+                CODING_ERROR_ASSERT(!exists);
+
+                co_await tx->CommitAsync();
+            }
+            co_return;
+        }
+    #pragma endregion
     };
 
     BOOST_FIXTURE_TEST_SUITE(OperationsAllCombinationsTestSuite, OperationsAllCombinationsTest)
 
     BOOST_AUTO_TEST_CASE(Add_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        SyncAwait(AddItemAsync(key, value));
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction));
+        SyncAwait(Add_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Update_NonExistentKey_ShouldFail)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        SyncAwait(UpdateItemShouldFailAsync(key, value));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(Update_NonExistentKey_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Remove_NonExistentKey_ShouldFail)
     {
-        LONG64 key = 1;
-
-        SyncAwait(RemoveItemShouldFailAsync(key));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(Remove_NonExistentKey_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddAdd_ShouldFail)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(AddItemShouldFailAsync(key, value1));
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction));
+        SyncAwait(AddAdd_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdate_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(UpdateItemAsync(key, value1));
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction));
+        SyncAwait(AddUpdate_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddRemove_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(AddRemove_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddRemoveUpdate_ShouldFail)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(UpdateItemShouldFailAsync(key, value));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(AddRemoveUpdate_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddRemoveAdd_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(AddItemAsync(key, value1));
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction));
+        SyncAwait(AddRemoveAdd_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddRemoveAddAdd_ShouldFail)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(AddItemAsync(key, value1));
-        SyncAwait(AddItemShouldFailAsync(key, value));
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction));
+        SyncAwait(AddRemoveAddAdd_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddRemoveRemove_ShouldFail)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(RemoveItemShouldFailAsync(key));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(AddRemoveRemove_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdateRemoveAdd_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(UpdateItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(AddItemAsync(key, value1));
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction));
+        SyncAwait(AddUpdateRemoveAdd_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdateRemoveRemove_ShouldFail)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(UpdateItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(RemoveItemShouldFailAsync(key));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(AddUpdateRemoveRemove_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddRemoveAddUpdate_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(UpdateItemAsync(key, value1));
-
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction));
+        SyncAwait(AddRemoveAddUpdate_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddRemoveAddUpdateRemove_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(UpdateItemAsync(key, value1));
-        SyncAwait(RemoveItemAsync(key));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(AddRemoveAddUpdateRemove_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdateRemoveAddUpdateRemove_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(UpdateItemAsync(key, value1));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(AddItemAsync(key, value1));
-        SyncAwait(UpdateItemAsync(key, value));
-        SyncAwait(RemoveItemAsync(key));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(AddUpdateRemoveAddUpdateRemove_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddUpdateRemoveUpdate_ShouldFail)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        SyncAwait(AddItemAsync(key, value));
-        SyncAwait(UpdateItemAsync(key, value1));
-        SyncAwait(RemoveItemAsync(key));
-        SyncAwait(UpdateItemShouldFailAsync(key, value));
-
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
+        SyncAwait(AddUpdateRemoveUpdate_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_CASE(Add_ConditionalUpdate_ConditionalRemove_ShouldSucceed)
     {
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-
-        auto version1 = SyncAwait(AddItemAsync(key, value));
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction));
-
-        auto version2 = SyncAwait(UpdateItemAsync(key, value1, version1));
-        CODING_ERROR_ASSERT(version1 != version2);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction));
-
-        SyncAwait(UpdateItemShouldFailAsync(key, value, version1));
-        SyncAwait(RemoveItemShouldFailAsync(key, version1));
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value1, EqualityFunction));
-
-        auto version3 = SyncAwait(RemoveItemAsync(key, version2));
-        CODING_ERROR_ASSERT(version2 != version3);
-        SyncAwait(VerifyKeyDoesNotExistAsync(*Store, key));
-
-        auto version4 = SyncAwait(AddItemAsync(key, value));
-        CODING_ERROR_ASSERT(version3 != version4);
-        SyncAwait(VerifyKeyExistsInStoresAsync(key, nullptr, value, EqualityFunction));
+        SyncAwait(Add_ConditionalUpdate_ConditionalRemove_ShouldSucceed_Test());
     }
 
     BOOST_AUTO_TEST_CASE(AddGetUpdateGetRemoveGet_ShouldFail)
     {
-        LONG64 version = -1;
-        LONG64 key = 1;
-        KString::SPtr value = GenerateStringValue(L"value");
-        KString::SPtr value1 = GenerateStringValue(L"value1");
-        KeyValuePair<LONG64, KString::SPtr> kvpair(-1, GenerateStringValue(L"-1"));
-
-        version = SyncAwait(AddItemAsync(key, value));
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
-
-            bool exists = SyncAwait(Store->ConditionalGetAsync(
-                *tx->StoreTransactionSPtr,
-                key,
-                DefaultTimeout,
-                kvpair,
-                CancellationToken::None));
-            CODING_ERROR_ASSERT(exists);
-            CODING_ERROR_ASSERT(kvpair.Key == version);
-            CODING_ERROR_ASSERT(kvpair.Value == value);
-
-            SyncAwait(tx->CommitAsync());
-        }
-
-        version = SyncAwait(UpdateItemAsync(key, value1));
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
-
-            bool exists = SyncAwait(Store->ConditionalGetAsync(
-                *tx->StoreTransactionSPtr,
-                key,
-                DefaultTimeout,
-                kvpair,
-                CancellationToken::None));
-            CODING_ERROR_ASSERT(exists);
-            CODING_ERROR_ASSERT(kvpair.Key == version);
-            CODING_ERROR_ASSERT(kvpair.Value == value1);
-
-            SyncAwait(tx->CommitAsync());
-        }
-
-        SyncAwait(RemoveItemAsync(key));
-        {
-            WriteTransaction<LONG64, KString::SPtr>::SPtr tx = CreateWriteTransaction();
-
-            bool exists = SyncAwait(Store->ConditionalGetAsync(
-                *tx->StoreTransactionSPtr,
-                key,
-                DefaultTimeout,
-                kvpair,
-                CancellationToken::None));
-            CODING_ERROR_ASSERT(!exists);
-
-            SyncAwait(tx->CommitAsync());
-        }
+        SyncAwait(AddGetUpdateGetRemoveGet_ShouldFail_Test());
     }
 
     BOOST_AUTO_TEST_SUITE_END()

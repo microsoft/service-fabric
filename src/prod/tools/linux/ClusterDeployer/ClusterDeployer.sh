@@ -13,6 +13,14 @@ BuildDir=${ScriptPath}/..
 DropPath=$(pwd)/ClusterData
 SkipDrop=false
 
+# A subset of this script is used to set up harness runs.  All parts other than the ones that starts the FabricDeployer and FabricHost are run.
+SetupHarnessRun="false"
+if [ "$1" == "-h" ]
+  then
+     SetupHarnessRun="true"
+fi
+
+
 if [ "$(id -u)" != "0" ]; then
     echo "ClusterDeployer.sh must be run as root. Please rerun it with sudo."
     exit 1
@@ -33,7 +41,7 @@ BinPath=${BuildDir}/FabricDrop/bin
 CodePath=${BuildDir}/FabricDrop/bin/Fabric/Fabric.Code
 IPAddr=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
 if [ -z "$IPAddr" ]; then
-IPAddr=`ifconfig | perl -ple 'print $_ if /inet addr/ and $_ =~ s/.*inet addr:((?:\d+\.){3}\d+).*/$1/g  ;$_=""' | grep -v ^\s*$ | grep -v 127.0.0.1 | grep -v 172.17.* | head -n 1`
+IPAddr=`ifconfig | perl -ple 'print $_ if /inet addr/ and $_ =~ s/.*inet addr:((?:\d+\.){3}\d+).*/$1/g  ;$_=""' | grep -v ^\s*$ | grep -v 127.0.0.1 | grep -v 172.17.* | grep -v 10.88.* | head -n 1`
 fi
 if [ -z "$IPAddr" ]; then
 IPAddr=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1`
@@ -62,12 +70,14 @@ sed -i "s%REPLACE_DROPPATH%${DropPath}%g" ClusterManifest.SingleMachine.Replaced
 echo "Setting environment for FabricHost & FabricDeployer to run"
 export LD_LIBRARY_PATH=${CodePath}
 
-echo "Running CoreCLR FabricDeployer on ClusterManifest.SingleMachine.xml"
-${CodePath}/FabricDeployer.sh /operation:Create /fabricBinRoot:${BinPath} /fabricDataRoot:${DataRoot} /cm:ClusterManifest.SingleMachine.Replaced.xml
+if [ ${SetupHarnessRun} == "false" ] ; then
+    echo "Running CoreCLR FabricDeployer on ClusterManifest.SingleMachine.xml"
+    ${CodePath}/FabricDeployer.sh /operation:Create /fabricBinRoot:${BinPath} /fabricDataRoot:${DataRoot} /cm:ClusterManifest.SingleMachine.Replaced.xml
 
-if [ $? != 0 ]; then
-    echo Error: FabricDeployer.exe failed
-    exit 1
+    if [ $? != 0 ]; then
+        echo Error: FabricDeployer.exe failed
+        exit 1
+    fi
 fi
 }
 
@@ -83,7 +93,7 @@ if [ "$SkipDrop" == "false" ]; then
 
 echo "Starting tracing session"
 if command -v lttng >/dev/null 2>&1; then
-    ./../FabricDrop/bin/Fabric/DCA.Code/lttng_handler.sh "${DataRoot}/log/Traces"
+    ./../FabricDrop/bin/Fabric/DCA.Code/lttng_handler.sh $(cat ./../FabricDrop/bin/Fabric/DCA.Code/ClusterVersion)
 else
     echo "LTTng is not installed." >&2;
 fi
@@ -184,12 +194,14 @@ setfacl -R -m "d:g:ServiceFabricAllowedUsers:rwx,g:ServiceFabricAllowedUsers:rwx
 
 find ${DataRoot} -name libFabricCommon.so -exec rm -f {} \;
 
-echo "Running FabricDeployer"
-cd $CodePath
-./FabricDeployer.sh
+if [ ${SetupHarnessRun} == "false" ] ; then
+    echo "Running FabricDeployer"
+    cd $CodePath
+    ./FabricDeployer.sh
 
-echo "Starting FabricHost"
-cd $BinPath
-./FabricHost -c -skipfabricsetup
+    echo "Starting FabricHost"
+    cd $BinPath
+    ./FabricHost -c -skipfabricsetup
+fi
 
 exit
