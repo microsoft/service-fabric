@@ -59,8 +59,8 @@ To install the SDK and the associated runtime package via the apt-get command-li
 After you have updated your sources, you can install the runtime and SDK, confirm the installation, and agree to the license agreement. Please cd to the location in the output directory where the debians are placed i.e. out/build.prod/FabricDrop/deb/. Install the runtime and sdk Debian packages named as servicefabric_x.x.x.x.deb and servicefabric_sdkcommon_y.y.y.deb, where x.x.x.x and y.y.y is the actual version numbers in the same of the file. Please replace the commands below with the actual files names in the folder 
 
 ```bash
-sudo dpkg -i out/build.prod/FabricDrop/deb/servicefabric_6*.deb && sudo apt-get install -fy
-sudo dpkg -i out/build.prod/FabricDrop/deb/servicefabric_sdkcommon_*.deb && sudo apt-get install -fy
+sudo apt-get install -fy && sudo dpkg -i out/build.prod/FabricDrop/deb/servicefabric_6*.deb
+sudo apt-get install -fy && sudo dpkg -i out/build.prod/FabricDrop/deb/servicefabric_sdkcommon_*.deb
 ```
 
 >   The following commands automate accepting the license for Service Fabric packages:
