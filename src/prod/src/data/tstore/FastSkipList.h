@@ -24,8 +24,8 @@ namespace Data
         KFinally([&] {InterlockedDecrement64(&numInflightOperations_); }) 
 
       //
-      // This skiplist supports concurrent adds, deletes and updates. Deltes cannot be concurrent. 
-      // This is used for differential store component where deletes happen only druing false progress and is always serial
+      // This skiplist supports concurrent adds, deletes and updates. Deletes cannot be concurrent. 
+      // This is used for differential store component where deletes happen only during false progress and is always serial
       // With deletes being non-concurrent, traversing the list does not need shared ptrs.
 
       template<typename TKey, typename TValue>
