@@ -5,7 +5,7 @@ Description=ServiceFabric Updater Daemon
 Type=simple
 EnvironmentFile=/etc/servicefabric/servicefabricupdater.config
 ExecStart=/opt/microsoft/servicefabric/bin/doupgrade.sh $PathToTargetInfoFile
-ExecStartPost=/bin/sh -c 'umask 022; pgrep starthost.sh > /var/run/servicefabricupdater.pid'
+ExecStartPost=/bin/sh -c 'umask 022; pgrep doupgrade.sh > /var/run/servicefabricupdater.pid'
 Restart=on-failure
 RestartSec=5s
 
