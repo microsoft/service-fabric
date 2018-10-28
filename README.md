@@ -6,7 +6,7 @@ Service Fabric is a distributed systems platform for packaging, deploying, and m
 [Learn about Service Fabric's Core Subsystems](docs/architecture/README.md), mapped to this repo's folder structure.
  
 ## Project timeline and development
-Service Fabric is currently undergoing a big transition to open development. Our main goal right now is to move the entire build, test, and development process to GitHub. For now the Service Fabric team will continue regular feature development internally while we work on transitioning everything to GitHub.  
+Service Fabric is currently undergoing a big transition to open development. Our main goal right now is to move the entire build, test, and development process to GitHub. For now, the Service Fabric team will continue regular feature development internally while we work on transitioning everything to GitHub.  
 
 We'll be providing frequent updates here and on our [team blog](https://blogs.msdn.microsoft.com/azureservicefabric/) as we work to get situated in our new home.  
 
@@ -92,7 +92,7 @@ If you would prefer to build the container locally, you can run the following sc
 sudo ./tools/builddocker.sh
 ```
 
-Currently, the build container is based off a base image that includes a few Service Fabric dependencies that have either not yet been open sourced, or must be included due to technical constraints (for example, some .NET files currently only build on Windows, but are required for a Linux build).
+Currently, the build container is based off a base image that includes a few Service Fabric dependencies that have either not yet been open sourced or must be included due to technical constraints (for example, some .NET files currently only build on Windows, but are required for a Linux build).
 
 This will pull all of the required packages, add Service Fabric internal dependencies, and apply patches.
 
