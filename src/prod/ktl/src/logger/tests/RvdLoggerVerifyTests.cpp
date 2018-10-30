@@ -2388,7 +2388,7 @@ ReportLogStateDifferences(__in LogState& RecoveredState, __in LogState& LogState
         KWString    streamId(KtlSystem::GlobalNonPagedAllocator(), RecoveredState._StreamDescs[ix0]._Info.LogStreamId.Get());
         ULONG       ix1;
 
-        for (ix1 = 0; ix0 < LogState._NumberOfStreams; ix1++)
+        for (ix1 = 0; ix1 < LogState._NumberOfStreams; ix1++)
         {
             if (RecoveredState._StreamDescs[ix0]._Info.LogStreamId == LogState._StreamDescs[ix1]._Info.LogStreamId)
             {
