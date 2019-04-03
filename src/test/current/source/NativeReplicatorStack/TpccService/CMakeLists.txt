@@ -1,0 +1,130 @@
+set (exe_tpccservice "TpccService.exe" CACHE STRING "Tpcc test")
+
+add_executable(${exe_tpccservice}
+    ./GuidComparer.cpp
+    ./GuidSerializer.cpp
+    ./HistoryStoreUtil.cpp
+    ./HistoryValue.cpp
+    ./HistoryValueSerializer.cpp
+    ./HttpPostResponse.cpp
+    ./main.cpp
+    ./Service.cpp
+    ./ServiceProgress.cpp
+    ./StockStoreUtil.cpp
+    ./StockValueSerializer.cpp
+    ./TestComStateProvider2Factory.cpp
+    ./HttpPostRequest.cpp
+    ./IntSerializer.cpp
+    ./Long64Serializer.cpp
+    ./WarehouseValue.cpp
+    ./WarehouseValueByteSerializer.cpp
+    ./WarehouseStoreUtil.cpp
+    ./DistrictValue.cpp
+    ./DistrictValueByteSerializer.cpp
+    ./DistrictKey.cpp
+    ./DistrictKeyComparer.cpp
+    ./DistrictKeySerializer.cpp
+    ./DistrictStoreUtil.cpp
+    ./CustomerKey.cpp
+    ./CustomerKeyComparer.cpp
+    ./CustomerKeySerializer.cpp
+    ./CustomerValue.cpp
+    ./CustomerValueSerializer.cpp
+    ./CustomerStoreUtil.cpp
+    ./NewOrderKey.cpp
+    ./NewOrderKeyComparer.cpp
+    ./NewOrderKeySerializer.cpp
+    ./NewOrderValue.cpp
+    ./NewOrderValueSerializer.cpp
+    ./NewOrderStoreUtil.cpp
+    ./OrderKey.cpp
+    ./OrderKeyComparer.cpp
+    ./OrderKeySerializer.cpp
+    ./OrderValue.cpp
+    ./OrderValueSerializer.cpp
+    ./OrderStoreUtil.cpp
+    ./OrderLineKey.cpp
+    ./OrderLineKeyComparer.cpp
+    ./OrderLineKeySerializer.cpp
+    ./OrderLineValue.cpp
+    ./OrderLineValueSerializer.cpp
+    ./OrderLineStoreUtil.cpp
+    ./ItemValue.cpp
+    ./ItemValueSerializer.cpp
+    ./ItemStoreUtil.cpp
+    ./StockKey.cpp
+    ./StockKeyComparer.cpp
+    ./StockKeySerializer.cpp
+    ./StockValue.cpp
+)
+
+add_precompiled_header(${exe_tpccservice} stdafx.h)
+
+target_include_directories(${exe_tpccservice} BEFORE PUBLIC ".")
+
+target_link_libraries(${exe_tpccservice}
+    ${lib_TransactionalReplicator}
+    ${lib_txnreplicator_testcommon}
+    ${lib_data_utilities}
+    ${lib_httptransport}
+    ${lib_TestableService}
+    ${lib_StatefulServiceBase}
+    ${lib_FabricNode}
+    ${lib_Communication}
+    ${lib_ManagementSubsystem}
+    ${lib_UpgradeService}
+    ${lib_Testability}
+    ${lib_HealthManager}
+    ${lib_ClusterManager}
+    ${lib_FabricGateway}
+    ${lib_Hosting2}
+    ${lib_ReliableConcurrentQueue}
+    ${lib_TestHooks}
+    ${lib_KtlLoggerNode}
+    ${lib_TStore}
+    ${lib_StoreRepairPolicy}
+    ${lib_Replication}
+    ${lib_TransactionalReplicator}
+    ${lib_LoadBalancing}
+    ${lib_Failover}
+    ${lib_ServiceGroup}
+    ${lib_ImageModel}
+    ${lib_Query}
+    ${lib_Federation}
+    ${lib_LeaseAgent}
+    ${lib_Lease}
+    ${lib_Transport}
+    ${lib_EntreeService}
+    ${lib_StoreService}
+    ${lib_Client}
+    ${lib_ServiceModel}
+    ${lib_ApiWrappers}
+    ${lib_ImageStore}
+    ${lib_ManagementRepairManager}
+    ${lib_Store}
+    ${lib_FileStoreService}
+    ${lib_ManagementCommon}
+    ${lib_SystemServices}
+    ${lib_ClientServerTransport}
+    ${lib_Common}
+    ${Ktlfull}
+    ${lib_FabricRuntime}
+    ${lib_FabricCommon}
+    ${lib_InternalFabricUUID}
+    ${lib_FabricUUID}
+    ssh2
+    ssl
+    crypto
+    minizip
+    z
+    m
+    rt
+    pthread
+    c
+    dl
+    xml2
+    uuid
+)
+
+set_target_properties(${exe_tpccservice} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})

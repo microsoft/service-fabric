@@ -5,8 +5,7 @@
     {
       "Name": "Mgmt_LongHaul",
       "Type": "V2_DllTest",
-      "Owners": "mialu",
-      "ResourcesRequired": "Server:8",
+      "Owners": "iyyappam, oanapl",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
         "SetupTimeout": "900",
@@ -14,7 +13,7 @@
         "DllPath": "MS.Test.WinFabric.Cases.dll",
         "ClassName": "ManagementTestCases",
         "TaskName": "Mgmt_LongHaul",
-        "ExecutionTimeout": "72000",
+        "ExecutionTimeout": "18000",
         "CleanupType": "XCopy",
         "CleanupTimeout": "2100"
       }

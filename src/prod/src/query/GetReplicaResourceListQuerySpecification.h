@@ -15,14 +15,14 @@ namespace Query
         GetReplicaResourceListQuerySpecification();
 
         Common::ErrorCode GetNext(
-            __in QuerySpecificationSPtr const & previousQuerySpecification,
+            QuerySpecificationSPtr const & previousQuerySpecification,
             __in std::unordered_map<Query::QueryNames::Enum, ServiceModel::QueryResult> & queryResults,
             __inout ServiceModel::QueryArgumentMap & queryArgs,
             __out Query::QuerySpecificationSPtr & nextQuery,
             __out Transport::MessageUPtr & replyMessage) override;
 
         bool ShouldContinueSequentialQuery(
-           Query::QuerySpecificationSPtr const & lastExecutedQuerySpecification,
-           Common::ErrorCode const & error) override;
+            Query::QuerySpecificationSPtr const & lastExecutedQuerySpecification,
+            Common::ErrorCode const & error) override;
     };
 }

@@ -1033,8 +1033,8 @@ namespace PlacementAndLoadBalancingUnitTest
         wstring appTypeName = wformatString("{0}_AppType", testName);
         wstring appName = wformatString("{0}_Application", testName);
         vector<ServicePackageDescription> packages;
-        ServiceModel::ServicePackageIdentifier spId;
-        packages.push_back(CreateServicePackageDescription(L"ServicePackageName", appTypeName, appName, 4, 2048, spId));
+        ServiceModel::ServicePackageIdentifier spId1;
+        packages.push_back(CreateServicePackageDescription(L"ServicePackageName", appTypeName, appName, 4, 2048, spId1));
         plb.UpdateApplication(CreateApplicationWithServicePackages(appTypeName, appName, packages));
 
         plb.UpdateServiceType(ServiceTypeDescription(L"ServiceType1", set<Federation::NodeId>()));
@@ -1053,7 +1053,7 @@ namespace PlacementAndLoadBalancingUnitTest
             4,                                  // Partition count
             1,                                  // Target replica set size
             true,                               // Persisted?
-            ServiceModel::ServicePackageIdentifier(spId),
+            ServiceModel::ServicePackageIdentifier(spId1),
             ServiceModel::ServicePackageActivationMode::SharedProcess));
 
         plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(serviceName), 0, CreateReplicas(L"S/0"), 0));
@@ -1064,6 +1064,21 @@ namespace PlacementAndLoadBalancingUnitTest
         fm_->RefreshPLB(Stopwatch::Now() + PLBConfig::GetConfig().MinPlacementInterval);
 
         auto actionList = GetActionListString(fm_->MoveActions);
+        VerifyPLBAction(plb, L"LoadBalancing");
+        VERIFY_ARE_EQUAL(1u, actionList.size());
+        VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"* move instance 0=>1", value)));
+
+        //Clear actions and check will default metrics stay after RG metrics update
+        fm_->ClearMoveActions();
+
+        vector<ServicePackageDescription> packages2;
+        packages2.push_back(CreateServicePackageDescription(L"ServicePackageName", appTypeName, appName, 20, 2048, spId1));
+        plb.UpdateApplication(CreateApplicationWithServicePackages(appTypeName, appName, packages, packages2));
+
+        fm_->RefreshPLB(Stopwatch::Now() + PLBConfig::GetConfig().MinPlacementInterval);
+
+        actionList.clear();
+        actionList = GetActionListString(fm_->MoveActions);
         VerifyPLBAction(plb, L"LoadBalancing");
         VERIFY_ARE_EQUAL(1u, actionList.size());
         VERIFY_ARE_EQUAL(1u, CountIf(actionList, ActionMatch(L"* move instance 0=>1", value)));
@@ -4159,6 +4174,171 @@ namespace PlacementAndLoadBalancingUnitTest
         VerifyServicePackageReplicaNumber(ServiceModel::ServicePackageIdentifier(spId1), 0, 0, 1, CreateNodeId(0));
         VerifyServicePackageReplicaNumber(ServiceModel::ServicePackageIdentifier(spId1), 0, 0, 1, CreateNodeId(1));
         VerifyServicePackageReplicaNumber(ServiceModel::ServicePackageIdentifier(spId2), 1, 0, 0, CreateNodeId(2));
+    }
+
+    BOOST_AUTO_TEST_CASE(NoneReplicaWithResourceGovernanceSPIncludeLoadTest)
+    {
+        wstring testName = L"NoneReplicaWithResourceGovernanceSPIncludeLoadTest";
+        Trace.WriteInfo("PLBResourceGovernanceTestSource", "{0}", testName);
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        plb.UpdateNode(CreateNodeDescriptionWithResources(0, 2, 2048));
+        plb.UpdateNode(CreateNodeDescriptionWithResources(1, 2, 2048));
+        plb.UpdateNode(CreateNodeDescriptionWithResources(2, 2, 2048));
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        wstring appTypeName = wformatString("{0}_AppType", testName);
+        wstring appName = wformatString("{0}_Application", testName);
+        vector<ServicePackageDescription> packages;
+        ServiceModel::ServicePackageIdentifier spId1;
+        packages.push_back(CreateServicePackageDescription(L"SP1", appTypeName, appName, 2, 1024, spId1));
+        ServiceModel::ServicePackageIdentifier spId2;
+        packages.push_back(CreateServicePackageDescription(L"SP2", appTypeName, appName, 1, 512, spId2));
+        ServiceModel::ServicePackageIdentifier spIdNoRG;
+        packages.push_back(CreateServicePackageDescription(L"SPNoRG", appTypeName, appName, 0, 0, spIdNoRG));
+
+        plb.UpdateApplication(CreateApplicationWithServicePackages(appTypeName, appName, packages));
+
+        plb.UpdateServiceType(ServiceTypeDescription(L"ServiceType", set<Federation::NodeId>()));
+
+        wstring service1Name = L"Service1";
+        plb.UpdateService(ServiceDescription(wstring(service1Name),
+            wstring(L"ServiceType"),            // Service type
+            wstring(appName),                   // Application name
+            true,                               // Stateful?
+            wstring(L""),                       // Placement constraints
+            wstring(L""),                       // Parent
+            true,                               // Aligned affinity
+            move(CreateMetrics(L"")),           // Default metrics
+            FABRIC_MOVE_COST_LOW,               // Move cost
+            false,                              // On every node
+            1,                                  // Partition count
+            1,                                  // Target replica set size
+            true,                               // Persisted?
+            ServiceModel::ServicePackageIdentifier(spId1)));   // shared service package
+
+        wstring service2Name = L"Service2";
+        plb.UpdateService(ServiceDescription(wstring(service2Name),
+            wstring(L"ServiceType"),            // Service type
+            wstring(appName),                   // Application name
+            true,                               // Stateful?
+            wstring(L""),                       // Placement constraints
+            wstring(L""),                       // Parent
+            true,                               // Aligned affinity
+            move(CreateMetrics(L"")),           // Default metrics
+            FABRIC_MOVE_COST_LOW,               // Move cost
+            false,                              // On every node
+            1,                                  // Partition count
+            1,                                  // Target replica set size
+            true,                               // Persisted?
+            ServiceModel::ServicePackageIdentifier(spId1)));   // shared service package
+
+        wstring service3Name = L"Service3";
+        plb.UpdateService(ServiceDescription(wstring(service3Name),
+            wstring(L"ServiceType"),            // Service type
+            wstring(appName),                   // Application name
+            true,                               // Stateful?
+            wstring(L""),                       // Placement constraints
+            wstring(L""),                       // Parent
+            true,                               // Aligned affinity
+            move(CreateMetrics(L"")),           // Default metrics
+            FABRIC_MOVE_COST_LOW,               // Move cost
+            false,                              // On every node
+            1,                                  // Partition count
+            1,                                  // Target replica set size
+            true,                               // Persisted?
+            ServiceModel::ServicePackageIdentifier(spId2),
+            ServiceModel::ServicePackageActivationMode::ExclusiveProcess));   // exclusive service package
+
+        wstring service4Name = L"Service4";
+        plb.UpdateService(ServiceDescription(wstring(service4Name),
+            wstring(L"ServiceType"),            // Service type
+            wstring(appName),                   // Application name
+            true,                               // Stateful?
+            wstring(L""),                       // Placement constraints
+            wstring(L""),                       // Parent
+            true,                               // Aligned affinity
+            move(CreateMetrics(L"Dummy/1.0/5/5")),           // Default metrics
+            FABRIC_MOVE_COST_LOW,               // Move cost
+            false,                              // On every node
+            1,                                  // Partition count
+            1,                                  // Target replica set size
+            true,                               // Persisted?
+            ServiceModel::ServicePackageIdentifier(spIdNoRG),
+            ServiceModel::ServicePackageActivationMode::ExclusiveProcess));   // exclusive service package
+
+        // Config IncludeResourceGovernanceNoneReplicaLoad is on - so include load for none replicas
+        // Scenario1: Check load for None replica that have RG load
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(service1Name), 0, CreateReplicas(L"N/0"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(service2Name), 0, CreateReplicas(L"N/0"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(2), wstring(service3Name), 0, CreateReplicas(L"N/1"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(3), wstring(service4Name), 0, CreateReplicas(L"N/2"), 0));
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        VerifyNodeLoadQuery(plb, 0, *ServiceModel::Constants::SystemMetricNameMemoryInMB, 0);
+        VerifyNodeLoadQuery(plb, 0, *ServiceModel::Constants::SystemMetricNameCpuCores, 0);
+
+        VerifyNodeLoadQuery(plb, 1, *ServiceModel::Constants::SystemMetricNameMemoryInMB, 512);
+        VerifyNodeLoadQuery(plb, 1, *ServiceModel::Constants::SystemMetricNameCpuCores, 1);
+
+        VerifyNodeLoadQuery(plb, 2, L"Dummy", 0);
+        VerifyNodeLoadQuery(plb, 2, *ServiceModel::Constants::SystemMetricNameMemoryInMB, 0);
+        VerifyNodeLoadQuery(plb, 2, *ServiceModel::Constants::SystemMetricNameCpuCores, 0);
+
+        // expectedExclusiveRegularReplicaCount, expectedSharedRegularReplicaCount, expectedSharedDisappearReplicaCount
+        VerifyServicePackageReplicaNumber(ServiceModel::ServicePackageIdentifier(spId1), 0, 0, 0, CreateNodeId(0));
+        VerifyServicePackageReplicaNumber(ServiceModel::ServicePackageIdentifier(spId2), 0, 0, 0, CreateNodeId(1));
+    }
+
+    BOOST_AUTO_TEST_CASE(NoneReplicaWithResourceGovernanceSPLoadTest)
+    {
+        PLBConfigScopeChange(IncludeResourceGovernanceNoneReplicaLoad, bool, false);
+
+        wstring testName = L"NoneReplicaWithResourceGovernanceSPLoadTest";
+        Trace.WriteInfo("PLBResourceGovernanceTestSource", "{0}", testName);
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        plb.UpdateNode(CreateNodeDescriptionWithResources(0, 2, 2048));
+        plb.UpdateNode(CreateNodeDescriptionWithResources(1, 2, 2048));
+        plb.UpdateNode(CreateNodeDescriptionWithResources(2, 2, 2048));
+
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        wstring appTypeName = wformatString("{0}_AppType", testName);
+        wstring appName = wformatString("{0}_Application", testName);
+        vector<ServicePackageDescription> packages;
+        ServiceModel::ServicePackageIdentifier spId;
+        packages.push_back(CreateServicePackageDescription(L"SP", appTypeName, appName, 2, 1024, spId));
+
+        plb.UpdateApplication(CreateApplicationWithServicePackages(appTypeName, appName, packages));
+
+        plb.UpdateServiceType(ServiceTypeDescription(L"ServiceType", set<Federation::NodeId>()));
+        wstring serviceName = L"Service";
+        plb.UpdateService(ServiceDescription(wstring(serviceName),
+            wstring(L"ServiceType"),            // Service type
+            wstring(appName),                   // Application name
+            true,                               // Stateful?
+            wstring(L""),                       // Placement constraints
+            wstring(L""),                       // Parent
+            true,                               // Aligned affinity
+            move(CreateMetrics(L"")),           // Default metrics
+            FABRIC_MOVE_COST_LOW,               // Move cost
+            false,                              // On every node
+            1,                                  // Partition count
+            1,                                  // Target replica set size
+            true,                               // Persisted?
+            ServiceModel::ServicePackageIdentifier(spId),
+            ServiceModel::ServicePackageActivationMode::ExclusiveProcess));   // exclusive service package
+
+        // Config IncludeResourceGovernanceNoneReplicaLoad is off - so do not include load for none replicas
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(serviceName), 0, CreateReplicas(L"N/0"), 0));
+
+        fm_->RefreshPLB(Stopwatch::Now());
+
+        VerifyNodeLoadQuery(plb, 0, *ServiceModel::Constants::SystemMetricNameMemoryInMB, 0);
+        VerifyNodeLoadQuery(plb, 0, *ServiceModel::Constants::SystemMetricNameCpuCores, 0);
     }
 
     BOOST_AUTO_TEST_CASE(BalancingCpuCoresActivityThreshold)

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" Condition=" $(CurrentRuntimeIdentifier) != ''"  />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <Import Project="$(DotnetPackagesDir)\microsoft.net.test.sdk\15.3.0\build\netcoreapp1.0\Microsoft.Net.Test.Sdk.targets" Condition=" $(CurrentRuntimeIdentifier) != ''"  />
+  <PropertyGroup>
+    <RuntimeIdentifierLocation Condition="$(TargetsWindows)=='true'">w</RuntimeIdentifierLocation>
+    <RuntimeIdentifierLocation Condition="$(TargetsLinux)=='true'">l</RuntimeIdentifierLocation>
+  </PropertyGroup>
+  <!-- Currently copy to FabricUnitTests only in windows. -->
+  <ItemGroup Condition=" $(TargetsWindows) == true ">
+    <Robocopy Include="$(PublishDir)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\CoreCLRDlls\$(RuntimeIdentifierLocation)\$(AssemblyName)</DestinationFolder>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+  <Target Name="RobocopyFilesToFabricUnitTests" AfterTargets="AfterBuild" DependsOnTargets="$(RobocopyFilesDependsOn)" Condition="'@(Robocopy)' != ''">
+    <Robocopy RetryCount="$(RobocopyRetryCount)" RetryWait="$(RobocopyRetryWait)" ShowDiagnosticTrace="$(RobocopyShowDiagnosticTrace)" ShowErrorOnRetry="$(RobocopyShowErrorOnRetry)" Sources="@(Robocopy)" Condition="'@(Robocopy)' != ''" />
+  </Target>
+</Project>

@@ -1,0 +1,4 @@
+LIBRARY FabricContainerActivatorService
+EXPORTS
+    CreateFabricContainerActivatorServiceAgent
+    LoadHostingSettings

@@ -33,21 +33,12 @@ ErrorCode Parser::ParseServiceManifest(
 
 ErrorCode Parser::ParseConfigSettings(
     wstring const & fileName, 
-    __out Common::ConfigSettings & configSettings)
+    __out ConfigSettings & configSettings)
 {
-    ConfigSettingsDescription desc;
-
-    auto error = ParseElement<ConfigSettingsDescription>(
+    return ParseElement<ConfigSettings>(
         fileName,
         L"ConfigSettings",
-        desc);
-
-    if (error.IsSuccess())
-    {
-        configSettings = move(desc.Settings);
-    }
-
-    return error;
+        configSettings);
 }
 
 ErrorCode Parser::ParseApplicationManifest(

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <PropertyGroup>
+    <ProjectGuid>{B704FA26-786A-4AB9-B61A-99887FB79F8B}</ProjectGuid>
+    <InputHeaderFile>..\..\ClusterManagerCounters.h</InputHeaderFile>
+    <OutputHeaderFile>..\..\Generated.PerformanceCounters.h</OutputHeaderFile>
+  </PropertyGroup>
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Target Name="BeforeBuild" Inputs="$(InputHeaderFile)" Outputs="$(OutputHeaderFile)">
+    <!--
+    This step generates a header after some manipulation of the generated header file. This header is then consumed by Store.vcxproj
+    -->
+	  <Exec Command="$(PkgVisualCpp_Corext)\bin\x64\cl.exe /C /EP $(InputHeaderFile) > $(OutputHeaderFile)" />
+    <Message Importance="High" Text="Generated $(OutputHeaderFile). Please remember to commit and push this file if different from previous version!" />
+  </Target>
+</Project>
+

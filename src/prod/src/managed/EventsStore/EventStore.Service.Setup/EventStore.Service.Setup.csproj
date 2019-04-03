@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{FCCC4EF6-BFCE-5555-BB9D-A8B224E2629B}</ProjectGuid>
+    <RootNamespace>EventStore.Service.Setup</RootNamespace>
+    <AssemblyName>EventStore.Service.Setup</AssemblyName>
+    <AssemblyDescription>EventStore Service Setup</AssemblyDescription>
+    <OutputType>Exe</OutputType>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Api\Dlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj">
+      <Project>{3869599b-43ed-46ee-b2ac-fbe66657b858}</Project>
+      <Name>Microsoft.ServiceFabric.Internal.Strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Project>{eb728138-47ac-41cb-a2c7-53521b396afd}</Project>
+      <Name>Microsoft.ServiceFabric.Internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{fc4947d4-a39d-47eb-a3e2-445510ffc430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(OutputPath)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\ES.Code.Current</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileExclude>.pdb</FileExclude>
+    </Robocopy>
+    <Robocopy Include="$(OutputPath)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\ES.Code.Current</DestinationFolder>
+      <IsRecursive>True</IsRecursive>
+      <FileExclude>.pdb</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

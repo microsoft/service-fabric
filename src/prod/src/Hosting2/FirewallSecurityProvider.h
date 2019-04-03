@@ -29,6 +29,14 @@ namespace Hosting2
             std::vector<LONG> const& ports,
             uint64 nodeInstanceId);
 
+#if !defined(PLATFORM_UNIX)
+        static ErrorCode FirewallSecurityProvider::AddLocalNatFirewallRule(
+            wstring const & localAddress,
+            wstring const & remoteAddress);
+
+        static ErrorCode FirewallSecurityProvider::RemoveLocalNatFirewallRule();
+#endif // !defined(PLATFORM_UNIX)
+
     protected:
         virtual Common::ErrorCode OnOpen();
         virtual Common::ErrorCode OnClose();
@@ -58,7 +66,6 @@ namespace Hosting2
         Common::ErrorCode CleanupRulesForAllProfiles(std::wstring const & policyName, Microsoft::WRL::ComPtr<INetFwRules> rules, vector<LONG> const& ports, uint64 nodeInstanceId);
 #endif
 
-
         static std::wstring GetFirewallRuleName(
             std::wstring const & policyName,
             bool outgoing,
@@ -66,6 +73,28 @@ namespace Hosting2
             LONG protocol,
             LONG port,
             uint64 nodeInstanceId);
+
+        Common::ErrorCode ConfigurePortFirewallPolicyInternal(
+            std::wstring const & policyName,
+            std::vector<LONG> ports,
+            uint64 nodeInstanceId,
+            bool isComInitialized);
+
+        Common::ErrorCode RemoveFirewallRuleInternal(
+            std::wstring const & policyName,
+            std::vector<LONG> const& ports,
+            uint64 nodeInstanceId,
+            bool isComInitialized);
+
+#if !defined(PLATFORM_UNIX)
+        static HRESULT FirewallSecurityProvider::AddRuleWithLocalAddress(
+            Microsoft::WRL::ComPtr<INetFwRules> pFwRules,
+            wstring const & policyName,
+            wstring const & ruleDescription,
+            wstring const & localAddress,
+            wstring const & remoteAddress,
+            bool outgoing);
+#endif // !defined(PLATFORM_UNIX)
 
     private:
         static LONG allProfiles_[3];

@@ -27,7 +27,7 @@ namespace ServiceModel
 
     public:
         ServiceManifestReference ServiceManifestRef;
-        std::vector<ConfigOverrideDescription> ConfigOverrides;
+        std::vector<Common::ConfigOverrideDescription> ConfigOverrides;
         ResourceOverridesDescription ResourceOverrides;
         std::vector<RunAsPolicyDescription> RunAsPolicies;
         std::vector<SecurityAccessPolicyDescription> SecurityAccessPolicies;

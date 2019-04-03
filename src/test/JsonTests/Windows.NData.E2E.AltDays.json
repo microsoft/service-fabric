@@ -5,7 +5,7 @@
         {
             "Name": "Robust-TXR-3R-1P-IaaS (LAB)",
             "Type": "V2_ScriptTest",
-            "Owners": "ImanG, HaNagar, SumukhS",
+            "Owners": "rahku,alanwar,tyadam,preethas",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
             "TestExecutionParameters": {
@@ -20,7 +20,7 @@
         {
             "Name": "Robust-TXR-3R-1P-IaaS-Large (LAB)",
             "Type": "V2_ScriptTest",
-            "Owners": "ImanG, HaNagar, SumukhS",
+            "Owners": "rahku,alanwar,tyadam,preethas",
             "Environment": "Iaas",
             "ResourcesRequired": "Server:4;Group=ReplicatorPerf",
             "TestExecutionParameters": {

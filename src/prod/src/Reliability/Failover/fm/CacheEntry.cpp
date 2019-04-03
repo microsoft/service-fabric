@@ -244,3 +244,26 @@ template class Reliability::FailoverManagerComponent::LockedCacheEntry<FailoverM
 template class Reliability::FailoverManagerComponent::LockedCacheEntry<ServiceType>;
 template class Reliability::FailoverManagerComponent::LockedCacheEntry<ApplicationInfo>;
 
+template class Reliability::FailoverManagerComponent::CacheEntry<Management::NetworkInventoryManager::NetworkManager>;
+template class Reliability::FailoverManagerComponent::LockedCacheEntry<Management::NetworkInventoryManager::NetworkManager>;
+
+template class Reliability::FailoverManagerComponent::CacheEntry<Management::NetworkInventoryManager::NIMNetworkMACAddressPoolStoreData>;
+template class Reliability::FailoverManagerComponent::LockedCacheEntry<Management::NetworkInventoryManager::NIMNetworkMACAddressPoolStoreData>;
+
+template <>
+struct NotFoundErrorCodeTraits<Management::NetworkInventoryManager::NetworkManager>
+{
+    static Common::ErrorCode GetErrorCode()
+    {
+        return Common::ErrorCodeValue::NodeNotFound;
+    }
+};
+
+template <>
+struct NotFoundErrorCodeTraits<Management::NetworkInventoryManager::NIMNetworkMACAddressPoolStoreData>
+{
+    static Common::ErrorCode GetErrorCode()
+    {
+        return Common::ErrorCodeValue::NodeNotFound;
+    }
+};

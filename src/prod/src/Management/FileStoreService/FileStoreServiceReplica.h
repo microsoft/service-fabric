@@ -83,6 +83,9 @@ namespace Management
             __declspec(property(get=get_FileStoreServiceFactory)) FileStoreServiceFactory & FileStoreServiceFactoryObj;
             FileStoreServiceFactory & get_FileStoreServiceFactory() const { return factoryHolder_.RootedObject; }
 
+            __declspec (property(get = get_FileStoreServiceCounters)) FileStoreServiceCountersSPtr const & FileStoreServiceCounters;
+            FileStoreServiceCountersSPtr const & get_FileStoreServiceCounters() const { return fileStoreServiceCounters_; }
+
             bool Test_TryGetStoreShareRoot(__out std::wstring & storeShareRoot);
             Common::ErrorCode Test_GetReplicaData(
                 __out std::vector<FileMetadata> & metadataList, 
@@ -160,6 +163,9 @@ namespace Management
             // The reference of the RoutingAgentProxy is held by FileStoreServiceFactory
             SystemServices::ServiceRoutingAgentProxy & routingAgentProxy_;
             FileStoreServiceFactoryHolder factoryHolder_;
+
+            // Performance counters written by this replica
+            FileStoreServiceCountersSPtr fileStoreServiceCounters_;
 
 #if !defined(PLATFORM_UNIX)
             void LogFreeSpaceForDisks();

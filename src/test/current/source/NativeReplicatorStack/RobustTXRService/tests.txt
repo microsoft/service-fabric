@@ -1,0 +1,2 @@
+Windows.NData.LongHaul.json
+    -TESTS:Robust-TXR-3R-1P-Iaas (LAB),Robust-TXR-3R-1P-IaaS-Large (LAB)

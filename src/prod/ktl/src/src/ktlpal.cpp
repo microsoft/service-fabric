@@ -44,12 +44,21 @@ ULONG Microsoft_Windows_KTLEnableBits[1] = { 0x1a8 };
 #define WINBASEAPI extern "C"
 
 #if !__has_builtin(__int2c)
+#ifdef __aarch64__
+WINBASEAPI
+VOID
+WINAPI __int2c(VOID)
+{
+    __builtin_debugtrap();
+}
+#else
 WINBASEAPI
 VOID
 WINAPI __int2c(VOID)
 {
     __asm__ __volatile__("int $0x2c");
 }
+#endif
 #endif
 
 using namespace std;
@@ -2074,6 +2083,20 @@ CHAR InterlockedExchange8(CHAR volatile *Target, CHAR Value)
 }
 
 
+#ifdef __aarch64__ 
+VOID
+__stosq (
+    IN PDWORD64 Destination,
+    IN DWORD64 Value,
+    IN SIZE_T Count
+    )
+{
+    for(size_t i = 0 ;i < Count;i++)
+    {
+        Destination[i] = Value;
+    }
+}
+#else
 VOID
 __stosq (
     IN PDWORD64 Destination,
@@ -2083,6 +2106,7 @@ __stosq (
 {
     __asm__("rep stosq" : : "D"(Destination), "a"(Value), "c"(Count));
 }
+#endif
 
 
 //
@@ -2592,7 +2616,7 @@ KtlAnsiStringToUnicodeString (
     ULONG index;
     NTSTATUS status;
 
-	KAssert(AllocateDestinationString == FALSE);
+    KAssert(AllocateDestinationString == FALSE);
 
     unicodeLength = (SourceString->Length * sizeof(WCHAR)) +
                     sizeof(UNICODE_NULL);
@@ -2625,9 +2649,9 @@ KtlAnsiStringToUnicodeString (
 
 NTSTATUS
 KtlInt64ToUnicodeString (
-	__in ULONGLONG Value,
-	__in ULONG Base,
-	__in PUNICODE_STRING String
+    __in ULONGLONG Value,
+    __in ULONG Base,
+    __in PUNICODE_STRING String
 )
 {
     NTSTATUS status;
@@ -2664,6 +2688,35 @@ WINBASEAPI HRESULT KtlStringCchLengthW(
     size_t cchMaxPrev = cchMax;
 
     while (cchMax && (*psz != L'\0'))
+    {
+        psz++;
+        cchMax--;
+    }
+
+    if (cchMax == 0)
+    {
+        // the string is longer than cchMax
+        hr = STRSAFE_E_INVALID_PARAMETER;
+    }
+
+    if (SUCCEEDED(hr) && pcch)
+    {
+        *pcch = cchMaxPrev - cchMax;
+    }
+
+    return hr;
+}
+
+WINBASEAPI HRESULT KtlStringCchLengthA(
+    _In_  LPCSTR psz,
+    _In_  size_t  cchMax,
+    _Out_ size_t  *pcch
+    )
+{
+    HRESULT hr = S_OK;
+    size_t cchMaxPrev = cchMax;
+
+    while (cchMax && (*psz != '\0'))
     {
         psz++;
         cchMax--;
@@ -2733,6 +2786,58 @@ KtlStringCchCopyW(
 
     return hr;
 }
+
+STRSAFEAPI
+KtlStringCopyWorkerA(char* pszDest, size_t cchDest, const char* pszSrc)
+{
+    HRESULT hr = S_OK;
+
+    if (cchDest == 0)
+    {
+        // can not null terminate a zero-byte dest buffer
+        hr = STRSAFE_E_INVALID_PARAMETER;
+    }
+    else
+    {
+        while (cchDest && (*pszSrc != '\0'))
+        {
+            *pszDest++ = *pszSrc++;
+            cchDest--;
+        }
+
+        if (cchDest == 0)
+        {
+            // we are going to truncate pszDest
+            pszDest--;
+            hr = STRSAFE_E_INSUFFICIENT_BUFFER;
+        }
+
+        *pszDest= '\0';
+    }
+
+    return hr;
+}
+
+STRSAFEAPI
+KtlStringCchCopyA(
+        _Out_writes_(cchDest) _Always_(_Post_z_) STRSAFE_LPSTR pszDest,
+        _In_ size_t cchDest,
+        _In_ STRSAFE_LPCSTR pszSrc)
+{
+    HRESULT hr;
+
+    if (cchDest > STRSAFE_MAX_CCH)
+    {
+        hr = STRSAFE_E_INVALID_PARAMETER;
+    }
+    else
+    {
+        hr = KtlStringCopyWorkerA(pszDest, cchDest, pszSrc);
+    }
+
+    return hr;
+}
+
 
 STRSAFEAPI
 KtlStringVPrintfWorkerW(wchar_t* pszDest, size_t cchDest, const wchar_t* pszFormat, va_list argList)
@@ -3035,5 +3140,4 @@ KtlStringCchVPrintfW(
     pszDest[len] = 0;
     return S_OK;
 }
-
 

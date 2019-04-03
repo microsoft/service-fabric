@@ -7,6 +7,7 @@
 
 using namespace std;
 using namespace Common;
+using namespace ServiceModel;
 
 ConfigParameter::ConfigParameter()
     : Name(),
@@ -17,20 +18,6 @@ ConfigParameter::ConfigParameter()
 {
 }
 
-ConfigParameter::ConfigParameter(
-    std::wstring && name,
-    std::wstring && value,
-    bool mustOverride,
-    bool isEncrypted,
-    std::wstring && type) :
-    Name(move(name)),
-    Value(move(value)),
-    MustOverride(mustOverride),
-    IsEncrypted(isEncrypted),
-    Type(move(type))
-{
-}
-      
 ConfigParameter::ConfigParameter(ConfigParameter const & other)
     : Name(other.Name),
     Value(other.Value),
@@ -85,6 +72,36 @@ void ConfigParameter::WriteTo(TextWriter & w, FormatOptions const &) const
     w.Write("IsEncrypted = {0}", this->IsEncrypted);
     w.Write("Type = {0}", this->Type);
     w.Write("}");
+}
+
+void ConfigParameter::ReadFromXml(
+    XmlReaderUPtr const & xmlReader)
+{
+    clear();
+
+    // ensure that we are positioned on ConfigParameter
+    xmlReader->StartElement(
+        *SchemaNames::Element_ConfigParameter, 
+        *SchemaNames::Namespace);
+
+    this->Name = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Name);
+    this->Value = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Value);
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_MustOverride))
+    {
+        this->MustOverride = xmlReader->ReadAttributeValueAs<bool>(*SchemaNames::Attribute_MustOverride);
+    }
+
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_IsEncrypted))
+    {
+        this->IsEncrypted = xmlReader->ReadAttributeValueAs<bool>(*SchemaNames::Attribute_IsEncrypted);
+    }
+
+    if (xmlReader->HasAttribute(*SchemaNames::Attribute_Type))
+    {
+        this->Type = xmlReader->ReadAttributeValue(*SchemaNames::Attribute_Type);
+    }
+
+    xmlReader->ReadElement();
 }
 
 void ConfigParameter::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_CONFIGURATION_PARAMETER & publicParameter) const

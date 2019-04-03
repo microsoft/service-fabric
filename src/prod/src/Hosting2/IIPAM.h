@@ -80,7 +80,7 @@ namespace Hosting2
         //  Success, if an IP can be assigned; a failure value if it cannot
         //  (this includes pool exhaustion and calling before initialization)
         //
-        virtual Common::ErrorCode Reserve(std::wstring const &reservationId, uint &ip) = 0;
+        virtual Common::ErrorCode Reserve(std::wstring const & reservationId, uint & ip) = 0;
 
         // Release: Release a previously reserved IP using the supplied
         // reservation key.  This is idempotent, in that it will succeed if
@@ -95,14 +95,14 @@ namespace Hosting2
         //  a failure value if it cannot (typically from calling before
         //  initialization completes)
         //
-        virtual Common::ErrorCode Release(std::wstring const &reservationId) = 0;
+        virtual Common::ErrorCode Release(std::wstring const & reservationId) = 0;
 
         // GetGhostReservations: Gets the current list of reservation ids that
         // are known ghosts.
         //
         virtual std::list<std::wstring> GetGhostReservations() = 0;
 
-        // Get the gateway ip address for the vnet
-        virtual Common::ErrorCode GetGatewayIpAddress(uint &gatewayIpAddress) = 0;
+        // Get the subnet(CIDR) and gateway ip address for the vnet
+        virtual Common::ErrorCode GetSubnetAndGatewayIpAddress(wstring & subnetCIDR, uint & gatewayIpAddress) = 0;
     };
 }

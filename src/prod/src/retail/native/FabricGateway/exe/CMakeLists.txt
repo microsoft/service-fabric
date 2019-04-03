@@ -17,39 +17,46 @@ set_target_properties(${exe_FabricGateway} PROPERTIES
 
 set(Casablanca_LIBRARY ${LIB}cpprest)
 
+ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
+SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
+    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)  
+
 target_link_libraries(${exe_FabricGateway}
   ${lib_Communication}
   ${lib_ManagementSubsystem}
-  ${lib_StoreService}
   ${lib_FabricGateway}
   ${lib_httpgateway}
   ${lib_httptransport}
   ${Casablanca_LIBRARIES}  
   ${BoostFileSystem}
-  ${lib_EntreeService}
   ${lib_FabricGateway}
-  ${lib_StoreService}
   ${lib_Hosting2}
+  ${lib_StoreService}
+  ${lib_EntreeService}
+  ${lib_StoreService}
   ${lib_Client}
   ${lib_ManagementRepairManager}
   ${lib_ManagementCommon}
   ${lib_ImageStore}
-  ${lib_ApiWrappers}
   ${lib_FileStoreService}
   ${lib_Store}
+  ${lib_KtlLoggerNode}
+  ${lib_TStore}
+  ${lib_Replication}
   ${lib_Query}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_SystemServices}
   ${lib_ImageModel}
-  ${lib_ApiWrappers}
-  ${lib_LeaseAgent}
-  ${lib_Lease}
   ${lib_Federation}
-  ${lib_ClientServerTransport}
+  ${lib_LeaseAgent}
+  ${lib_Lease}  
   ${lib_Transport}
   ${lib_AadWrapperServer}
+  ${lib_ClientServerTransport}
   ${lib_Common}
   ${lib_ServiceModel}
+  ${lib_ApiWrappers}
   ${lib_Serialization}
   ${lib_FabricCommon}
   ${lib_InternalFabricUUID}
@@ -58,7 +65,7 @@ target_link_libraries(${exe_FabricGateway}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
-  ssh2
+  patched_libssh2
   minizip
   z
   ssl

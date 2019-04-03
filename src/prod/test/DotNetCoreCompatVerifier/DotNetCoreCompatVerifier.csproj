@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test_signing.props" />
+  <PropertyGroup>
+    <ProjectGuid>{22bfb310-aeba-4a21-8f3a-72f5eb8af512}</ProjectGuid>
+    <RootNamespace>DotNetCoreCompatVerifier</RootNamespace>
+    <AssemblyName>DotNetCoreCompatVerifier</AssemblyName>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <!-- Only build for windows as we need .exe untill we have a way to run dotnet <>.dll in test infra. -->
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <NetStandardBuildLinux>false</NetStandardBuildLinux>
+    <NetStandardBuildWindows>true</NetStandardBuildWindows>
+    <OutputType>Exe</OutputType>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric.BackupRestore\System.Fabric.BackupRestore.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.Data.Impl\CoreClr\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgMono_Reflection)\lib\netstandard2.0\Mono.Reflection.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="metadata\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_publish.targets" Condition=" $(CurrentRuntimeIdentifier) != ''"  />
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(PublishDir)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\CoreCLRDlls\w\$(AssemblyName)</DestinationFolder>
+      <FileExclude>*.pdb</FileExclude>
+    </Robocopy>
+  </ItemGroup>
+  <Target Name="RobocopyLocalFilesToFabricUnitTests" AfterTargets="Publish" DependsOnTargets="$(RobocopyFilesDependsOn)" Condition="'@(Robocopy)' != ''">
+    <Robocopy RetryCount="$(RobocopyRetryCount)" RetryWait="$(RobocopyRetryWait)" ShowDiagnosticTrace="$(RobocopyShowDiagnosticTrace)" ShowErrorOnRetry="$(RobocopyShowErrorOnRetry)" Sources="@(Robocopy)" Condition="'@(Robocopy)' != ''" />
+  </Target>
+</Project>

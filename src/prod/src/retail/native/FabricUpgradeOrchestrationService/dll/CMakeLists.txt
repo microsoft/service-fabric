@@ -17,6 +17,10 @@ set_target_properties(${lib_FabricUpgradeOrchestrationService} PROPERTIES
 
 set_target_properties(${lib_FabricUpgradeOrchestrationService} PROPERTIES 
     LINK_FLAGS -Wl,-Bsymbolic)
+    
+ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
+SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
+    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
 
 target_link_libraries(${lib_FabricUpgradeOrchestrationService}
   ${lib_FabricNode}
@@ -43,6 +47,7 @@ target_link_libraries(${lib_FabricUpgradeOrchestrationService}
   ${lib_Replication}
   ${lib_TransactionalReplicator}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}
@@ -65,7 +70,7 @@ target_link_libraries(${lib_FabricUpgradeOrchestrationService}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
-  ssh2
+  patched_libssh2
   ssl
   crypto
   m

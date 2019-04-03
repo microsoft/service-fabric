@@ -13,41 +13,41 @@ using namespace std;
 using namespace Management::CentralSecretService;
 
 SecretsDescription::SecretsDescription()
-	: ClientServerMessageBody()
-	, secrets_()
+    : ClientServerMessageBody()
+    , secrets_()
 {
 }
 
 SecretsDescription::SecretsDescription(std::vector<Secret> const & secrets)
-	: ClientServerMessageBody()
-	, secrets_(secrets)
+    : ClientServerMessageBody()
+    , secrets_(secrets)
 {
 }
 
 ErrorCode SecretsDescription::FromPublicApi(__in FABRIC_SECRET_LIST const * secretList)
 {
-	return ServiceModel::PublicApiHelper::FromPublicApiList(secretList, this->secrets_);
+    return ServiceModel::PublicApiHelper::FromPublicApiList(secretList, this->secrets_);
 }
 
 ErrorCode SecretsDescription::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_SECRET_LIST & secretList) const
 {
-	return ServiceModel::PublicApiHelper::ToPublicApiList<Secret, FABRIC_SECRET, FABRIC_SECRET_LIST>(heap, this->secrets_, secretList);
+    return ServiceModel::PublicApiHelper::ToPublicApiList<Secret, FABRIC_SECRET, FABRIC_SECRET_LIST>(heap, this->secrets_, secretList);
 }
 
 ErrorCode SecretsDescription::Validate() const
 {
-	ErrorCode error = ErrorCode::Success();
+    ErrorCode error = ErrorCode::Success();
 
-	for (Secret secret : this->secrets_)
-	{
-		error = secret.Validate();
+    for (Secret secret : this->secrets_)
+    {
+        error = secret.Validate();
 
-		if (!error.IsSuccess())
-		{
-			break;
-		}
-	}
+        if (!error.IsSuccess())
+        {
+            break;
+        }
+    }
 
-	return error;
+    return error;
 }
 

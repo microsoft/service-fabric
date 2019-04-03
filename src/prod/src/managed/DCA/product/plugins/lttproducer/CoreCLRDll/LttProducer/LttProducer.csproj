@@ -12,7 +12,7 @@
     <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition=" '$(TargetsLinux)' == 'true' ">
     <Compile Include="
     _friends.cs;
     ..\..\WFManifestRepository.cs;
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\LttngReader\CoreCLR\dll\LttngReader.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\CoreCLR\EtlReader\EtlReader.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
     <ProjectReference Include="..\..\..\..\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj" />
   </ItemGroup>

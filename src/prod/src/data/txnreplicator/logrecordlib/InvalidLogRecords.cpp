@@ -42,6 +42,16 @@ InvalidLogRecords::SPtr InvalidLogRecords::Create(__in KAllocator & allocator)
     return InvalidLogRecords::SPtr(pointer);
 }
 
+std::wstring Data::LogRecordLib::InvalidLogRecords::ToString() const
+{
+     std::wstring logRecordString = 
+         Constants::StartingJSON +
+         L"Invalid LogRecord\n" +
+         Constants::CloseJSON;
+
+     return logRecordString;
+}
+
 LogRecord::SPtr InvalidLogRecords::InvalidLogRecord(__in KAllocator & allocator)
 {
     LogRecord * pointer = _new(INVALID_LOGRECORDS, allocator)LogRecord();

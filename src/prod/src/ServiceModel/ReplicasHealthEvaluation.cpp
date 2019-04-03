@@ -95,7 +95,6 @@ void ReplicasHealthEvaluation::SetDescription()
 {
     size_t unhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1}% ({2}/{3}), MaxPercentUnhealthyReplicasPerPartition={4}%.",
         HMResource::GetResources().HealthEvaluationUnhealthyReplicasPerPolicy,
         GetUnhealthyPercent(unhealthyCount, totalCount_),
         unhealthyCount,

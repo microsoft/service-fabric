@@ -13,7 +13,28 @@ using namespace FabricTypeHost;
 StringLiteral const TraceComponent("ReliableCollectionService");
 WStringLiteral const ReplicatorEndpointName(L"ReplicatorEndpoint");
 
-ComPointer<IFabricRuntime> fabricRuntime;
+IFabricRuntime *g_pFabricRuntime = nullptr;
+static ReliableCollectionApis g_reliableCollectionApis;
+
+// TODO: Make this thread-safe
+//
+// This method is used to explicitly release any resources used by ReliableCollectionService
+// infrastructure. Any user of RCS must invoke this method when they are done using it
+// to prevent any resource leaks.
+extern "C" __declspec(dllexport) HRESULT ReliableCollectionService_Cleanup()
+{
+    if (g_pFabricRuntime != nullptr)
+    {
+        g_pFabricRuntime->Release();
+        g_pFabricRuntime = nullptr;
+
+        return S_OK;
+    }
+    else
+    {
+        return S_FALSE;
+    }
+}
 
 extern "C" __declspec(dllexport) HRESULT ReliableCollectionService_InitializeEx(
     LPCWSTR serviceTypeName, 
@@ -21,6 +42,7 @@ extern "C" __declspec(dllexport) HRESULT ReliableCollectionService_InitializeEx(
     addPartitionContextCallback addCallback,
     removePartitionContextCallback removeCallback,
     changeRoleCallback changeCallback,
+    abortCallback abortCallback,
     BOOL registerManifestEndpoints,
     BOOL skipUserPortEndpointRegistration,
     BOOL reportEndpointsOnlyOnPrimaryReplica)
@@ -29,7 +51,7 @@ extern "C" __declspec(dllexport) HRESULT ReliableCollectionService_InitializeEx(
     UNREFERENCED_PARAMETER(skipUserPortEndpointRegistration);
     UNREFERENCED_PARAMETER(port);
 
-    StatefulServiceBase::SetCallback(addCallback, removeCallback, changeCallback);
+    StatefulServiceBase::SetCallback(addCallback, removeCallback, changeCallback, abortCallback);
     
     Helpers::EnableTracing();
 
@@ -42,13 +64,13 @@ extern "C" __declspec(dllexport) HRESULT ReliableCollectionService_InitializeEx(
 
     Trace.WriteInfo(TraceComponent, "[ReliableCollectionService_Initialize] Calling ReliableCollectionRuntime_Initialize...");
 
-    hr = ReliableCollectionRuntime_Initialize(RELIABLECOLLECTION_API_VERSION);
+    hr = FabricGetReliableCollectionApiTable(RELIABLECOLLECTION_API_VERSION, &g_reliableCollectionApis);
     if (FAILED(hr))
     {
-        Trace.WriteError(TraceComponent, "[ReliableCollectionService_Initialize] ReliableCollectionRuntime_Initialize failed with hr = '{0}'", hr);
+        Trace.WriteError(TraceComponent, "[ReliableCollectionService_Initialize] FabricGetReliableCollectionApiTable failed with hr={0}", hr);
         return hr;
-    }
-
+    }    
+    
     auto callback =
         [registerManifestEndpoints, 
         skipUserPortEndpointRegistration,
@@ -67,6 +89,7 @@ extern "C" __declspec(dllexport) HRESULT ReliableCollectionService_InitializeEx(
     ComPointer<ComFactory> comFactory = make_com<ComFactory>(serviceTypeName, *factory.get());
 
     Trace.WriteInfo(TraceComponent, "[ReliableCollectionService_Initialize] Calling FabricCreateRuntime...");
+    ComPointer<IFabricRuntime> fabricRuntime;
     hr = FabricCreateRuntime(IID_IFabricRuntime, fabricRuntime.VoidInitializationAddress());
     if (FAILED(hr))
     {
@@ -84,6 +107,7 @@ extern "C" __declspec(dllexport) HRESULT ReliableCollectionService_InitializeEx(
         return hr;
     }
 
+    g_pFabricRuntime = fabricRuntime.DetachNoRelease();
     Trace.WriteInfo(TraceComponent, "[ReliableCollectionService_Initialize] Succeeded.");
 
     return S_OK;
@@ -97,7 +121,7 @@ extern "C" __declspec(dllexport) HRESULT ReliableCollectionService_Initialize(
 {
     // The default initialization is to only report user-port endpoint on all replicas.
     return ReliableCollectionService_InitializeEx(
-        serviceTypeName, port, addCallback, removeCallback, nullptr,
+        serviceTypeName, port, addCallback, removeCallback, nullptr, nullptr,
         TRUE,   // registerManifestEndpoints,
         FALSE,  // skipUserPortEndpointRegistration
         FALSE   // reportEndpointsOnlyOnPrimaryReplica
@@ -110,6 +134,7 @@ ULONG const numberOfParallelHttpRequests = 100;
 addPartitionContextCallback StatefulServiceBase::s_addPartitionContextCallbackFnptr;
 removePartitionContextCallback StatefulServiceBase::s_removePartitionContextCallbackFnptr;
 changeRoleCallback StatefulServiceBase::s_changeRoleCallbackFnPtr;
+abortCallback StatefulServiceBase::s_abortCallbackFnPtr;
 
 StatefulServiceBase::StatefulServiceBase(
     __in FABRIC_PARTITION_ID partitionId,
@@ -175,7 +200,7 @@ HRESULT StatefulServiceBase::BeginOpen(
     // TODO leaking
     IFabricDataLossHandler* dataLossHandler = new TestComProxyDataLossHandler(TRUE);
 
-    hr = GetTxnReplicator(
+    hr = g_reliableCollectionApis.GetTxnReplicator(
         ReplicaId,
         statefulServicePartition,
         dataLossHandler,
@@ -488,7 +513,7 @@ HRESULT StatefulServiceBase::BeginClose(
     IfFailReturn(operation->Initialize(root_, callback));
 
     IfFailReturn(ComAsyncOperationContext::StartAndDetach<ComCompletedAsyncOperationContext>(move(operation), context));
-   
+
     Trace.WriteInfo(TraceComponent, "[StatefulServiceBase::BeginClose] succeeded");
 
     return S_OK;
@@ -512,6 +537,21 @@ HRESULT StatefulServiceBase::EndClose(
 
 void StatefulServiceBase::Abort()
 {
+    if (s_abortCallbackFnPtr != nullptr)
+    {
+        LONGLONG key;
+        HRESULT hr = GetPartitionLowKey(key);
+        if (FAILED(hr))
+        {
+            Trace.WriteError(TraceComponent, "[StatefulServiceBase::EndChangeRole] GetPartitionLowKey failed with hr = '{0}'", hr);
+        }
+        else
+        {
+            key = 0;
+        }
+        //call abort even if it fails to get the key.
+        s_abortCallbackFnPtr(key);
+    }
 }
 
 HRESULT StatefulServiceBase::GetPartitionLowKey(LONGLONG &lowKey)

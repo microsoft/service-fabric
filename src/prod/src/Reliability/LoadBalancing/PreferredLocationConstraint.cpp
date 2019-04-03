@@ -17,8 +17,10 @@ using namespace std;
 using namespace Common;
 using namespace Reliability::LoadBalancingComponent;
 
+std::set<Common::TreeNodeIndex> const& PreferredLocationConstraint::EmptyUpgradedUDs = std::set<Common::TreeNodeIndex>();
+
 PreferredLocationSubspace::PreferredLocationSubspace(PreferredLocationConstraint const* constraint)
-    : StaticSubspace(constraint)
+    : StaticSubspace(constraint, false)
 {
 }
 
@@ -380,7 +382,6 @@ bool PreferredLocationConstraint::CheckReplica(TempSolution const& tempSolution,
     }
 
     bool hasPreferredLocations = partition->ExistsUpgradeLocation || !partition->StandByLocations.empty();
-
     set<Common::TreeNodeIndex> const& upgradedUDs = PreferredLocationConstraint::GetUpgradedUDs(tempSolution, partition);
     bool hasUpgradCompletedUDs = !upgradedUDs.empty();
 
@@ -414,12 +415,13 @@ bool PreferredLocationConstraint::CheckReplica(TempSolution const& tempSolution,
     {
         return true;
     }
-    
+
     // Check upgraded UDs for both cluster and application upgrade
     if (CheckUpgradedUDs(upgradedUDs, target))
     {
         return true;
     }
+
 
     // If no standby locations or replica is not in the locations, check if there is already replica in the target location;
     // This will help prefer swap over move
@@ -434,11 +436,16 @@ bool PreferredLocationConstraint::CheckReplica(TempSolution const& tempSolution,
     }
 
     return true;
-
 }
 
 set<Common::TreeNodeIndex> const& PreferredLocationConstraint::GetUpgradedUDs(TempSolution const& tempSolution, PartitionEntry const* partition)
 {
+
+    if (!tempSolution.OriginalPlacement->Settings.PreferUpgradedUDs)
+    {
+        return PreferredLocationConstraint::EmptyUpgradedUDs;
+    }
+
     set<Common::TreeNodeIndex> const& fabricUpgradedUDs = tempSolution.BaseSolution.OriginalPlacement->BalanceCheckerObj->UpgradeCompletedUDs;
 
     ApplicationEntry const* application = partition->Service->Application;

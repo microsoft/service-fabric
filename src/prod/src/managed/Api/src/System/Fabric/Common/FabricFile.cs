@@ -8,9 +8,8 @@ namespace System.Fabric.Common
     using System.Fabric.Interop;
     using System.IO;
     using System.Runtime.InteropServices;
-
+    using System.ComponentModel;
     using Microsoft.Win32.SafeHandles;
-
     using BOOLEAN = System.SByte;
 
     internal class FabricFile
@@ -18,9 +17,14 @@ namespace System.Fabric.Common
 #if DotNetCoreClrLinux
         // Fake calls for Linux
         public static bool SetFileInformationByHandle(SafeHandle hFile, Kernel32Types.FILE_INFO_BY_HANDLE_CLASS FileInformationClass, ref Kernel32Types.FileInformation FileInformation, int dwBufferSize)
-		{
-			return true;
-		}
+        {
+            return true;
+        }
+
+        public static bool SetFileInformationByHandle(SafeHandle hFile, Kernel32Types.FILE_INFO_BY_HANDLE_CLASS FileInformationClass, ref Kernel32Types.FILE_BASIC_INFO lpFileInformation, int dwBufferSize)
+        {
+            return true;
+        }
 #else
         /// <summary>
         /// PInvokes to SetFileInformationByHandle: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365539(v=vs.85).aspx
@@ -51,6 +55,9 @@ namespace System.Fabric.Common
         /// </devnote>
         [DllImport("Kernel32.dll", SetLastError = true)]
         public static extern bool SetFileInformationByHandle(SafeHandle hFile, Kernel32Types.FILE_INFO_BY_HANDLE_CLASS FileInformationClass, ref Kernel32Types.FileInformation FileInformation, int dwBufferSize);
+
+        [DllImport("Kernel32.dll", SetLastError = true)]
+        public static extern bool SetFileInformationByHandle(SafeHandle hFile, Kernel32Types.FILE_INFO_BY_HANDLE_CLASS FileInformationClass, ref Kernel32Types.FILE_BASIC_INFO FileBasicInformation, int dwBufferSize);
 
         /// <summary>
         /// PInvokes to NtQueryInformationFile: https://msdn.microsoft.com/en-us/library/windows/hardware/ff567052(v=vs.85).aspx
@@ -142,6 +149,19 @@ namespace System.Fabric.Common
         internal static void Delete(string path)
         {
             FabricFile.Delete(path, false);
+        }
+
+        internal static void SetLastWriteTime(string path, DateTime lastWriteTime)
+        {
+            Requires.Argument("path", path).NotNullOrEmpty();  
+
+#if DotNetCoreClrLinux
+            File.SetLastWriteTime(path, lastWriteTime);
+#else
+            Utility.WrapNativeSyncInvokeInMTA(() => SetLastWriteTimeHelper(path, lastWriteTime.ToFileTime()), "FabricFile.SetLastWriteTime");
+#endif
+
+            
         }
 
         /// <summary>
@@ -279,6 +299,41 @@ namespace System.Fabric.Common
                 return new FileStream(new SafeFileHandle(handle, true), fileAccess, cacheSize, fileOptions.HasFlag(FileOptions.Asynchronous));
 #endif
             }
+        }
+
+        private static void SetLastWriteTimeHelper(string path, long lastWriteTime)
+        {
+#if DotNetCoreClrLinux
+            throw new NotSupportedException("This operation is not supported on Linux. Please use File.SetLastWriteTime API");
+#else
+            using (var pin = new PinCollection())
+            {
+                // Default values indicate "no change". Use defaults.
+                var basicInfo = new Kernel32Types.FILE_BASIC_INFO
+                {
+                    CreationTime = -1,
+                    LastAccessTime = -1,
+                    LastWriteTime = lastWriteTime,
+                    ChangeTime = -1,
+                    FileAttributes = 0
+                };
+
+                // To update the file last written time, it needs to be opened up with Write access.
+                using (FileStream file = FabricFile.Open(path, FileMode.Open, FileAccess.ReadWrite))
+                {
+                    var success = SetFileInformationByHandle(
+                        file.SafeFileHandle,
+                        Kernel32Types.FILE_INFO_BY_HANDLE_CLASS.FileBasicInfo,
+                        ref basicInfo,
+                        Marshal.SizeOf(typeof(Kernel32Types.FILE_BASIC_INFO)));
+
+                    if (!success)
+                    {
+                        throw new Win32Exception(Marshal.GetLastWin32Error());
+                    }
+                }
+            }
+#endif
         }
 
         private static bool ExistsHelper(string path)

@@ -292,6 +292,9 @@ private:
 // ********************************************************************************************************************
 // FabricActivationManager::OpenAsyncOperation Implementation
 //
+// NOTE: WE SHOULD NOT BE ACCESSING ANY HOSTING CONFIGS BEFORE WE EXECUTE FABRIC SETUP
+// AS FABRIC SETUP UPDATES THE CONFIG VALUES AND WILL CAUSE FABRIC HOST RESTART.
+
 class FabricActivationManager::OpenAsyncOperation : public AsyncOperation
 {
     DENY_COPY(OpenAsyncOperation)
@@ -343,35 +346,35 @@ private:
 
     void CleanupFirewallRules(AsyncOperationSPtr const & thisSPtr)
     {
+        // Schedule a cleanup before running FabricSetup. If we do the cleanup after FabricSetup has executed and there are too many firewall rules,
+        // FabricSetup would timeout and we may never be able to complete the FabricSetup.
+
 #if !defined(PLATFORM_UNIX)
-        if (HostingConfig::GetConfig().EnableFirewallSecurityCleanup && HostingConfig::GetConfig().FirewallPolicyEnabled)
+        std::vector<BSTR> rules;
+        auto error = FirewallSecurityProviderHelper::GetOrRemoveFirewallRules(rules, FirewallSecurityProviderHelper::firewallGroup_);
+
+        if (!error.IsSuccess())
         {
-            std::vector<BSTR> rules;
-            auto error = FirewallSecurityProviderHelper::GetOrRemoveFirewallRules(rules, FirewallSecurityProviderHelper::firewallGroup_);
-
-            if (!error.IsSuccess())
-            {
-                WriteError(TraceType_ActivationManager, activationManager_.TraceId, "GetFirewallRules for cleanup failed with {0}", error);
-                TryComplete(thisSPtr, error);
-                return;
-            }
-
-            if (!rules.empty())
-            {
-                wstring traceId = activationManager_.TraceId;
-
-                //Cleanup firewall on a thread
-                Threadpool::Post([rules, traceId]() {
-
-                    auto error = FirewallSecurityProviderHelper::RemoveRules(rules);
-                    if (!error.IsSuccess())
-                    {
-                        WriteError(TraceType_ActivationManager, traceId, "RemoveFirewallRules failed with {0}", error);
-                    }
-                });
-            }
+            WriteError(TraceType_ActivationManager, activationManager_.TraceId, "GetFirewallRules for cleanup failed with {0}", error);
+            TryComplete(thisSPtr, error);
+            return;
         }
-#endif 
+
+        if (!rules.empty())
+        {
+            wstring traceId = activationManager_.TraceId;
+
+            //Cleanup firewall on a thread
+            Threadpool::Post([rules, traceId]() {
+
+                auto error = FirewallSecurityProviderHelper::RemoveRules(rules);
+                if (!error.IsSuccess())
+                {
+                    WriteError(TraceType_ActivationManager, traceId, "RemoveFirewallRules failed with {0}", error);
+                }
+            });
+        }
+#endif
 
         RunFabricSetup(thisSPtr);
     }
@@ -421,7 +424,7 @@ private:
                 return;
             }
             
-            OpenCertificateAclingManager(operation->Parent);
+            SetupContainerLogRootDirectory(operation->Parent);
         }
         else if (!operation->CompletedSynchronously &&
             setupRetryCount_ < FabricHostConfig::GetConfig().ActivationMaxFailureCount)
@@ -466,6 +469,48 @@ private:
             TryComplete(operation->Parent, error);
         }
         return;
+    }
+
+    void SetupContainerLogRootDirectory(AsyncOperationSPtr const& thisSPtr)
+    {
+        // This need to happen before FabricDCA is launched by FabricHost.
+        // If this folder is not there FabricDCA will fail to monitor container log directory for runtime traces.
+        wstring fabricLogRoot;
+        auto error = FabricEnvironment::GetFabricLogRoot(fabricLogRoot);
+        if (!error.IsSuccess())
+        {
+            WriteError(TraceType_ActivationManager, activationManager_.TraceId, "SetupContainerLogRootDirectory failed to determine FabricLogRoot with error {0}", error);
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        wstring fabricContainerLogRoot = Path::Combine(fabricLogRoot, L"Containers");
+
+        if (!Directory::Exists(fabricContainerLogRoot))
+        {
+            error = Directory::Create2(fabricContainerLogRoot);
+            if (!error.IsSuccess())
+            {
+                WriteError(TraceType_ActivationManager, activationManager_.TraceId, "SetupContainerLogRootDirectory failed with {0} while creaing directory {1}", error, fabricContainerLogRoot);
+                TryComplete(thisSPtr, error);
+                return;
+            }
+        }
+
+#if defined(PLATFORM_UNIX)
+        // Permission needs to be fixed for Upgrade scenarios as well because release 6.4+ Fabric will create the directories under "Containers".
+        // If you don't set the permissions all new container creations will fail because Fabric won't be able to create the directory for them.
+        // On windows Fabric runs as network service and fabricContainerLogRoot inherits permissions from parent directory which already has access.
+        error = File::AllowAccessToAll(fabricContainerLogRoot);
+        if (!error.IsSuccess())
+        {
+            WriteError(TraceType_ActivationManager, activationManager_.TraceId, "SetupContainerLogRootDirectory failed trying to setup permissions for {0} with {1}", fabricContainerLogRoot, error);
+            TryComplete(thisSPtr, error);
+            return;
+        }
+#endif
+
+        OpenCertificateAclingManager(thisSPtr);
     }
 
     void OpenCertificateAclingManager(AsyncOperationSPtr const & thisSPtr)
@@ -574,7 +619,7 @@ private:
         }
         else
         {
-            TryComplete(operation->Parent, errorCode);
+            SetupNatNetworkProvider(operation->Parent);
         }
     }
 
@@ -603,8 +648,51 @@ private:
             return;
         }
         
-        TryComplete(operation->Parent, errorCode);
-        WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "FabricRestartManager open succeeded");
+        WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "FabricRestartManager open succeeded");
+        //Setup Local Nat network
+        SetupNatNetworkProvider(operation->Parent);
+    }
+
+    void SetupNatNetworkProvider(AsyncOperationSPtr const& operation)
+    {
+        ErrorCode error;
+        if (HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+        {
+            WriteInfo(
+                TraceType_ActivationManager,
+                activationManager_.TraceId,
+                "Starting SetupNatNetworkProvider");
+            auto & processActivationManager = activationManager_.ProcessActivationManagerObj;
+
+            error = processActivationManager->ContainerActivatorObj->RegisterNatIpAddressProvider();
+            WriteInfo(
+                TraceType_ActivationManager,
+                activationManager_.TraceId,
+                "Register NatIPAddressProvider error {0}.",
+                error);
+
+#if defined(LOCAL_NAT_NETWORK_SETUP)
+            if(!error.IsSuccess())
+            {
+                TryComplete(operation, error);
+                return;
+            }
+#if !defined(PLATFORM_UNIX)
+            error = FirewallSecurityProvider::AddLocalNatFirewallRule(
+                processActivationManager->ContainerActivatorObj->NatIPAddressProviderObj.GatewayIP,
+                HostingConfig::GetConfig().LocalNatIpProviderNetworkRange
+            );
+            
+            WriteTrace(
+                error.ToLogLevel(),
+                TraceType_ActivationManager,
+                activationManager_.TraceId,
+                "Create firewall rule for container to host communication error {0}.",
+                error);
+#endif
+#endif // defined(LOCAL_NAT_NETWORK_SETUP)
+        }
+        TryComplete(operation, error);
     }
 
 private:
@@ -643,7 +731,11 @@ public:
 protected:
     void OnStart(AsyncOperationSPtr const & thisSPtr)
     {
+#if defined(LOCAL_NAT_NETWORK_SETUP)
+        RemoveNatIpAddressProvider(thisSPtr);
+#else
         CloseServiceActivator(thisSPtr);
+#endif
     }
 
     void CloseIpcServer(AsyncOperationSPtr const & thisSPtr)
@@ -656,7 +748,7 @@ protected:
             TryComplete(thisSPtr, error);
             return;
         }
-        WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "IPC server closed");
+        WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "IPC server closed");
         CloseCertificateAclingManager(thisSPtr);
     }
 
@@ -664,7 +756,7 @@ protected:
     {
         WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "closing certificate acling manager");
         activationManager_.certificateAclingManager_->Close();
-        WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "certificate acling manager closed");
+        WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "certificate acling manager closed");
         CloseTraceSessionManager(thisSPtr);
     }
 
@@ -682,8 +774,36 @@ protected:
                 return;
             }
         }
-        WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "TraceSessionManager close succeeded");
+        WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "TraceSessionManager close succeeded");
         TryComplete(thisSPtr, errorCode);
+    }
+    
+    void RemoveNatIpAddressProvider(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+        {
+            WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "Start RemoveNatIpAddressProvider");
+#if !defined(PLATFORM_UNIX)
+            auto error = FirewallSecurityProvider::RemoveLocalNatFirewallRule();
+            if (error.IsSuccess())
+            {
+                WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "Removed container to host firewall rule");
+            }
+            else
+            {
+                WriteError(TraceType_ActivationManager, activationManager_.TraceId, "Failed to remove container to host firewall rule");
+            }
+
+#endif // !defined(PLATFORM_UNIX)
+            auto errorCode = activationManager_.ProcessActivationManagerObj->ContainerActivatorObj->UnregisterNatIpAddressProvider();
+            if (!errorCode.IsSuccess())
+            {
+                WriteError(TraceType_ActivationManager, activationManager_.TraceId, "RemoveNatIpAddressProvider failed with {0}", errorCode);
+                TryComplete(thisSPtr, errorCode);
+                return;
+            }
+        }
+        CloseServiceActivator(thisSPtr);
     }
 
     void CloseServiceActivator(AsyncOperationSPtr const & thisSPtr)
@@ -710,7 +830,7 @@ protected:
             TryComplete(operation->Parent, errorCode);
             return;
         }
-        WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "ServiceActivator close succeeded");
+        WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "ServiceActivator close succeeded");
         CloseProcessActivationManager(operation->Parent);
     }
 
@@ -738,7 +858,7 @@ protected:
             TryComplete(operation->Parent, errorCode);
             return;
         }
-        WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "ProcessActivationManager close succeeded");
+        WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "ProcessActivationManager close succeeded");
         if (Hosting2::FabricHostConfig::GetConfig().EnableRestartManagement)
         {
             CloseFabricRestartManager(operation->Parent);
@@ -746,7 +866,7 @@ protected:
         else
         {
             CloseIpcServer(operation->Parent);
-        }        
+        }
     }
 
     void CloseFabricRestartManager(AsyncOperationSPtr thisSPtr)
@@ -774,7 +894,7 @@ protected:
             return;
         }
 
-        WriteNoise(TraceType_ActivationManager, activationManager_.TraceId, "FabricRestartManager close succeeded");
+        WriteInfo(TraceType_ActivationManager, activationManager_.TraceId, "FabricRestartManager close succeeded");
         CloseIpcServer(operation->Parent);
     }
 
@@ -785,7 +905,7 @@ private:
 
 FabricActivationManager::FabricActivationManager(
     bool activateHidden,
-    bool skipFabricSetup) 
+    bool skipFabricSetup)
     : hostedServiceActivateHidden_(activateHidden),
     skipFabricSetup_(skipFabricSetup),
     serviceActivator_(),
@@ -860,7 +980,7 @@ ErrorCode FabricActivationManager::Initialize()
     if(!error.IsSuccess())
     {
         WriteError(
-            TraceType_ActivationManager, 
+            TraceType_ActivationManager,
             "ipcServer->SecuritySettings.CreateNegotiateServer error={0}",
             error);
         return error;
@@ -870,7 +990,7 @@ ErrorCode FabricActivationManager::Initialize()
     if (!error.IsSuccess())
     {
         WriteError(
-            TraceType_ActivationManager, 
+            TraceType_ActivationManager,
             "ipcServer->SetSecurity error={0}",
             error);
         return error;
@@ -881,12 +1001,12 @@ ErrorCode FabricActivationManager::Initialize()
     auto serviceActivator = make_shared<HostedServiceActivationManager>(
         *this, // Common::ComponentRoot const &
         *this, // FabricActivationManager const &
-        hostedServiceActivateHidden_, 
+        hostedServiceActivateHidden_,
         skipFabricSetup_);
     serviceActivator_ = move(serviceActivator);
 
     auto processActivationManager = make_shared<ProcessActivationManager>(
-        *this, 
+        *this,
         *this);
     processActivationManager_ = move(processActivationManager);
 
@@ -928,6 +1048,10 @@ void FabricActivationManager::OnAbort()
             this->setupRetryTimer_.reset();
         }
     }
+    if(processActivationManager_)
+    {
+        this->processActivationManager_->ContainerActivatorObj->AbortNatIpAddressProvider();
+    }
     if(ipcServer_)
     {
         this->ipcServer_->Abort();
@@ -943,5 +1067,13 @@ void FabricActivationManager::OnAbort()
     if (traceSessionManager_)
     {
         this->traceSessionManager_->Abort();
+    }
+    if (certificateAclingManager_)
+    {
+        certificateAclingManager_->Abort();
+    }
+    if (fabricRestartManager_)
+    {
+        fabricRestartManager_->Abort();
     }
 }

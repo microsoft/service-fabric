@@ -534,6 +534,18 @@ VariableArgument::VariableArgument(FABRIC_DIAGNOSTICS_SINKS_KIND value)
     value_.valueInt64_ = value;
 }
 
+VariableArgument::VariableArgument(FABRIC_NETWORK_TYPE value)
+    : type_(Type_FABRIC_NETWORK_TYPE)
+{
+    value_.valueInt64_ = value;
+}
+
+VariableArgument::VariableArgument(FABRIC_NETWORK_STATUS value)
+    : type_(Type_FABRIC_NETWORK_STATUS)
+{
+    value_.valueInt64_ = value;
+}
+
 VariableArgument::VariableArgument(XmlNodeType value)
     : type_(Type_XmlNodeType)
 {
@@ -1868,6 +1880,49 @@ void VariableArgument::WriteTo(TextWriter& w, FormatOptions const & format) cons
             break;
         default:
             w << "Undefined Type_FABRIC_DIAGNOSTICS_SINKS_KIND = " << value_.valueInt64_;
+        }
+        break;
+
+    case Type_FABRIC_NETWORK_TYPE:
+        switch (value_.valueInt64_)
+        {
+        case FABRIC_NETWORK_TYPE_INVALID:
+            w << "FABRIC_NETWORK_TYPE_INVALID";
+            break;
+        case FABRIC_NETWORK_TYPE_LOCAL:
+            w << "FABRIC_NETWORK_TYPE_LOCAL";
+            break;
+        case FABRIC_NETWORK_TYPE_FEDERATED:
+            w << "FABRIC_NETWORK_TYPE_FEDERATED";
+            break;
+        default:
+            w << "Undefined FABRIC_NETWORK_TYPE = " << value_.valueInt64_;
+        }
+        break;
+
+    case Type_FABRIC_NETWORK_STATUS:
+        switch (value_.valueInt64_)
+        {
+        case FABRIC_NETWORK_STATUS_INVALID:
+            w << "FABRIC_NETWORK_STATUS_INVALID";
+            break;
+        case FABRIC_NETWORK_STATUS_READY:
+            w << "FABRIC_NETWORK_STATUS_READY";
+            break;
+        case FABRIC_NETWORK_STATUS_CREATING:
+            w << "FABRIC_NETWORK_STATUS_CREATING";
+            break;
+        case FABRIC_NETWORK_STATUS_DELETING:
+            w << "FABRIC_NETWORK_STATUS_DELETING";
+            break;
+        case FABRIC_NETWORK_STATUS_UPDATING:
+            w << "FABRIC_NETWORK_STATUS_UPDATING";
+            break;
+        case FABRIC_NETWORK_STATUS_FAILED:
+            w << "FABRIC_NETWORK_STATUS_FAILED";
+            break;
+        default:
+            w << "Undefined FABRIC_NETWORK_STATUS = " << value_.valueInt64_;
         }
         break;
 

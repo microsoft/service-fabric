@@ -1,0 +1,2 @@
+SingleMachine-Functional.json
+  TESTS:HttpgatewayService.test.dll

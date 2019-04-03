@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{E0E61AAE-FDC0-4C47-B212-99F49FCD5461}</ProjectGuid>
+    <RootNamespace>TelemetryAggregation</RootNamespace>
+    <AssemblyName>TelemetryConfigChecker</AssemblyName>
+    <AssemblyDescription>Code to parse the telemetry config file for testing changes </AssemblyDescription>
+    <AssemblyTitle>Telemetry Configuration File Parser for Testing Config File</AssemblyTitle>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\TelemetryConfigChecker\Program.cs" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\TelemetryAggregation\ConfigParser\dll\TelemetryConfigParser.csproj" >
+      <Project>{8F5269D6-6F47-411A-8DF1-98A61D30890B}</Project>
+      <Name>TelemetryConfigParser</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\TelemetryAggregation\dll\TelemetryAggregation.csproj">
+      <Project>{4ED2B9F1-639E-465D-8200-CD05E499232F}</Project>
+      <Name>TelemetryAggregation</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\EtlReader\EtlReader.csproj">
+      <Project>{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}</Project>
+      <Name>EtlReader</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <Exec Command="$(OutputPath)TelemetryConfigChecker.exe $(SrcRoot)\prod\src\managed\dca\product\host\tconfig.ini $(SrcRoot)\prod\manifests\components\Microsoft-ServiceFabric-Events.man $(SrcRoot)\prod\manifests\components\Microsoft-ServiceFabric-KtlEvents.man $(SrcRoot)\prod\manifests\components\Microsoft-ServiceFabric-LeaseEvents.man" />
+  </Target>
+</Project>

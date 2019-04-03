@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-#pragma once 
+#pragma once
 
 // NOTE: To add a new query result type
 // - Create a enum in QueryResultHelpers.h
@@ -13,7 +13,7 @@
 //    - This type will be only available internally via QueryResult.
 //    - Add public query API's and corresponding result and interfaces.
 
-// - **TO BE REMOVED ONCE FABRICTEST IS FIXED** 
+// - **TO BE REMOVED ONCE FABRICTEST IS FIXED**
 // - If the type is public and returned as query result via Query API
 //    - Create IDL type
 //    - Create en entry in FABRIC_QUERY_RESULT_ITEM_KIND enum
@@ -85,10 +85,17 @@ namespace ServiceModel
             ServiceResourceList = 56,
             ReplicaResource = 57,
             ApplicationUnhealthyEvaluation = 58,
-            VolumeResourceList = 59
+            VolumeResourceList = 59,
+            Network = 60,
+            NetworkApplication = 61,
+            NetworkNode = 62,
+            ApplicationNetwork = 63,
+            DeployedNetwork = 64,
+            DeployedNetworkCodePackage = 65,
+            NetworkResourceList = 66,
+            GatewayResourceList = 67
         };
 
         Serialization::FabricSerializable* CreateNew(QueryResultHelpers::Enum resultKind);
     }
 }
-

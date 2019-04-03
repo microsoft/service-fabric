@@ -170,6 +170,11 @@ namespace FabricTest
         static Hosting2::IHostingSubsystemSPtr Create(Hosting2::HostingSubsystemConstructorParameters & parameters);
 
         uint64 GetResourceNodeCapacity(std::wstring const& resourceName) const;
+
+        __declspec(property(get = get_NetworkInventoryAgent, put = set_NetworkInventoryAgent)) Hosting2::NetworkInventoryAgentSPtr NetworkInventoryAgent;
+        Hosting2::NetworkInventoryAgentSPtr const get_NetworkInventoryAgent() const { return networkInventoryAgent_; }
+        void set_NetworkInventoryAgent(Hosting2::NetworkInventoryAgentSPtr value) { networkInventoryAgent_ = value; }
+                
     private:
         TestHostingSubsystem(Hosting2::HostingSubsystemConstructorParameters & parameters);
 
@@ -191,5 +196,6 @@ namespace FabricTest
 
         Federation::NodeId const nodeId_;
         Hosting2::IHostingSubsystemSPtr hosting_;
+        Hosting2::NetworkInventoryAgentSPtr networkInventoryAgent_;
     };
 }

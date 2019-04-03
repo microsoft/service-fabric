@@ -50,7 +50,6 @@ namespace Reliability
 
             Client::IpcHealthReportingClientSPtr healthClient_;
             Common::ApiMonitoring::MonitoringComponentUPtr monitoringComponent_;
-            Federation::NodeInstance nodeInstance_;
         };
     }
 }

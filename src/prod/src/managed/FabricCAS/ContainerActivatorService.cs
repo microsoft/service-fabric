@@ -23,7 +23,6 @@ namespace Hosting.ContainerActivatorService
     internal class ContainerActivatorService : IContainerActivatorService
     {
         #region Private Member
-
         private const string TraceType = "ContainerActivatorService";
 
         private readonly FabricContainerActivatorServiceAgent activatorServiceAgent;
@@ -37,7 +36,7 @@ namespace Hosting.ContainerActivatorService
 #if !DotNetCoreClrLinux
         private string osVersion;
 #endif
-    #endregion
+        #endregion
 
         internal ContainerActivatorService()
         {
@@ -48,7 +47,6 @@ namespace Hosting.ContainerActivatorService
             this.versionLock = new SemaphoreSlim(1);
             this.isVersionInitialized = false;
             this.dockerVersion = string.Empty;
-
 #if !DotNetCoreClrLinux
             FindOSVersion();
 #endif
@@ -92,7 +90,7 @@ namespace Hosting.ContainerActivatorService
                     return this.dockerVersion;
                 }
 
-                var response = await Utility.ExecuteWithRetriesAsync(
+                var response = await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.client.SystemOperation.GetVersionAsync(
@@ -216,6 +214,12 @@ namespace Hosting.ContainerActivatorService
             return operation.ExecuteAsync();
         }
 
+        public Task ExecuteUpdateRoutesAsync(ContainerUpdateRouteArgs updateRouteArgs, TimeSpan timeout)
+        {
+            var operation = new ExecuteContainerUpdateRoutesOperation(this, updateRouteArgs, timeout);
+            return operation.ExecuteAsync();
+        }
+
         public Task DeactivateContainerAsync(ContainerDeactivationArgs deactivationArgs, TimeSpan timeout)
         {
             var operation = new DeactivateContainerOperation(this, deactivationArgs, timeout);
@@ -301,7 +305,6 @@ namespace Hosting.ContainerActivatorService
                 throw;
             }
         }
-
         #endregion
 
 #if !DotNetCoreClrLinux

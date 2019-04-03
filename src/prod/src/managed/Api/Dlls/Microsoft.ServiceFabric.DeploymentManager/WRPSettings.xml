@@ -1,0 +1,18 @@
+﻿<Settings  xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Section Name="RequiredParameters">
+  </Section>
+  <Section Name="NotAllowedParameters">
+  </Section>
+  <Section Name="SystemServicesForScale">
+    <Parameter Name="FailoverManager" Value="fabric:/System/FailoverManagerService"/>
+    <Parameter Name="ClusterManager" Value="fabric:/System/ClusterManagerService"/>
+    <Parameter Name="NamingService" Value="fabric:/System/NamingService"/>
+    <Parameter Name="ImageStoreService" Value="fabric:/System/ImageStoreService"/>
+    <Parameter Name="FaultAnalysisService" Value="fabric:/System/FaultAnalysisService" />
+    <Parameter Name="UpgradeOrchestrationService" Value="fabric:/System/UpgradeOrchestrationService" />
+    <Parameter Name="RepairManager" Value="fabric:/System/RepairManagerService" />
+    <Parameter Name="BackupRestoreService" Value="fabric:/System/BackupRestoreService" />
+    <Parameter Name="EventStoreService" Value="fabric:/System/EventStoreService" />
+    <Parameter Name="GatewayResourceManager" Value="fabric:/System/GatewayResourceManager" />
+  </Section>
+</Settings>

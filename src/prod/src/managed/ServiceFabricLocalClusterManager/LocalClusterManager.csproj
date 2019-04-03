@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>LocalClusterManager</RootNamespace>
+    <AssemblyName>ServiceFabricLocalClusterManager</AssemblyName>
+    <ResourcesFileName>SR</ResourcesFileName>
+    <ResourcesClassName>SR</ResourcesClassName>
+    <ResourcesNamespace>LocalClusterManager.Resources</ResourcesNamespace>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <ProjectGuid>{192DDD7C-F970-4767-84AC-9C15784CF2EE}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Resources\ServiceFabricIcon32.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Name>System.Fabric</Name>
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Name>System.Fabric.Management.ServiceModel</Name>
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationManager.cs" />
+    <Compile Include="ClusterMode.cs" />
+    <Compile Include="ClusterManager.cs" />
+    <Compile Include="ClusterOperationType.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="TrayApplicationContext.cs" />
+    <Compile Include="Utilities\CommandExecutionResult.cs" />
+    <Compile Include="Utilities\ProjectUtility.cs" />
+    <Compile Include="Utilities\ThreadSafeStringBuilder.cs" />
+    <Compile Include="$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\$(ResourcesFileName).resx" />
+    <EmbeddedResource Include="Resources\ServiceFabricIcon16.ico" />
+    <EmbeddedResource Include="Resources\ServiceFabricIcon32.ico" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <!-- DO NOT CHANGE Inputs to $(ResourcesFileName).resx. It is required to build incrementally as MSBUILD cannot
+       expand the Inputs tag correctly for BeforeResGen targets
+   -->
+  <Target Name="BeforeResGen" Inputs="Resources\SR.resx" Outputs="$(IntermediateOutputPath)$(ResourcesFileName).cs">
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe Resources\$(ResourcesFileName).resx $(IntermediateOutputPath)\$(ResourcesNamespace).$(ResourcesFileName).resources /str:csharp,$(ResourcesNamespace),$(ResourcesClassName),$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </Target>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" />
+  </Target>
+</Project>

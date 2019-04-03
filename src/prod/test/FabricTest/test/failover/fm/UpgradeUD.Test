@@ -12,6 +12,7 @@ cleantest
 
 set UpgradeStatusPollInterval 5
 set ExpectedReplicaUpgradeDuration 10
+set SwapPrimaryRequestTimeout 10
 set IsSingletonReplicaMoveAllowedDuringUpgrade true
 
 +10 ud=MyUD

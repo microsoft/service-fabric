@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{FABB45C1-28DE-4C48-A28E-3647F43BA49F}</ProjectGuid>
+    <RootNamespace>System.Fabric.BackupRestore.Dsms</RootNamespace>
+    <AssemblyName>System.Fabric.BackupRestore.Dsms</AssemblyName>
+    <AssemblyDescription>Service Fabric BackupRestore Dsms Helper Library</AssemblyDescription>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+  <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.BackupRestore\System.Fabric.BackupRestore.csproj">
+      <Project>{FABB432F-46A5-4D4B-99FA-52400896BCC4}</Project>
+      <Name>System.Fabric.BackupRestore</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="$(PkgDsmsCredentialsManagement_2_9_526)\lib\net40\Microsoft.WindowsAzure.Security.CredentialsManagement.Client.dll" />
+    <Reference Include="$(PkgDsmsCredentialsManagement_2_9_526)\lib\net40\Microsoft.WindowsAzure.Security.CredentialsManagement.StorageHelper.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DsmsAzureStorageHelper.cs" />
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Robocopy Include="$(PkgDsmsCredentialsManagement_2_9_526)\lib\Native\*.dll">
+      <DestinationFolder>$(OutputPath)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <ItemGroup>
+    <Robocopy Include="$(OutputPath)">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\bin;$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests;$(BinariesBuildTypeArchDirectory)\bin\WinFabricTestInfra</DestinationFolder>
+      <FileExclude>*.pdb;*.lib</FileExclude>
+      <IsRecursive>True</IsRecursive>
+    </Robocopy>
+    <Robocopy Include="$(OutputPath)\*.pdb">
+      <DestinationFolder>$(BinariesBuildTypeArchDirectory)\symbols</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+</Project>

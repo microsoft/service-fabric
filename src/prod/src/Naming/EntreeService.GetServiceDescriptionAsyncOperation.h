@@ -60,6 +60,15 @@ namespace Naming
             Common::AsyncCallback const & callback, 
             Common::AsyncOperationSPtr const & parent);
 
+        GetServiceDescriptionAsyncOperation(
+            __in GatewayProperties & properties,
+            Common::NamingUri const & name,
+            Transport::FabricActivityHeader const & activityHeader,
+            bool expectsReplyMessage,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback, 
+            Common::AsyncOperationSPtr const & parent);
+
         void StartGetServiceDescription(
             Common::AsyncOperationSPtr const & thisSPtr);
 
@@ -126,5 +135,6 @@ namespace Naming
         PartitionedServiceDescriptorSPtr psd_;
         __int64 storeVersion_;
         bool refreshCache_;
+        bool expectsReplyMessage_;
     };
 }

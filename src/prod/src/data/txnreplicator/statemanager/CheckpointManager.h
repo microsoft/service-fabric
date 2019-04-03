@@ -40,7 +40,8 @@ namespace Data
 
             ktl::Awaitable<void> PerformCheckpointAsync(
                 __in MetadataManager const & metadataManager,
-                __in ktl::CancellationToken const & cancellationToken);
+                __in ktl::CancellationToken const & cancellationToken,
+                __in bool hasPersistedState = true);
 
             ktl::Awaitable<void> CompleteCheckpointAsync(
                 __in MetadataManager const & metadataManager,

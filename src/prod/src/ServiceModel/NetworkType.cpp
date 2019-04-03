@@ -11,48 +11,107 @@ using namespace ServiceModel;
 
 void NetworkType::WriteToTextWriter(TextWriter & w, Enum const & val)
 {
-    switch (val)
-    {
-    case NetworkType::Open:
-        w << L"Open";
-        return;
-    case NetworkType::Other:
-        w << L"Other";
-        return;
+    wstring result = EnumToString(val);
+    w << result;
+}
 
-    default:
-        Assert::CodingError("Unknown NetworkType value {0}", (int)val);
+std::wstring NetworkType::EnumToString(ServiceModel::NetworkType::Enum val)
+{
+    wstring result;
+    if ((val & NetworkType::Open) == NetworkType::Open)
+    {
+        if (result.empty())
+        {
+            result = NetworkType::OpenStr;
+        }
+        else
+        {
+            result = wformatString("{0}{1}{2}", result, NetworkType::NetworkSeparator, NetworkType::OpenStr);
+        }
     }
+
+    if ((val & NetworkType::Other) == NetworkType::Other)
+    {
+        if (result.empty())
+        {
+            result = NetworkType::OtherStr;
+        }
+        else
+        {
+            result = wformatString("{0}{1}{2}", result, NetworkType::NetworkSeparator, NetworkType::OtherStr);
+        }
+    }
+        
+    if ((val & NetworkType::Isolated) == NetworkType::Isolated)
+    {
+        if (result.empty())
+        {
+            result = NetworkType::IsolatedStr;
+        }
+        else
+        {
+            result = wformatString("{0}{1}{2}", result, NetworkType::NetworkSeparator, NetworkType::IsolatedStr);
+        }
+    }
+
+    return result;
 }
 
 ErrorCode NetworkType::FromString(wstring const & value, __out Enum & val)
 {
-    if (value == L"Open" || value == L"default")
+    vector<wstring> enumValues;
+    StringUtility::Split<wstring>(value, enumValues, NetworkType::NetworkSeparator, true);
+    bool updated = false;
+
+    for (int i = 0; i < enumValues.size(); i++)
     {
-        val = NetworkType::Open;
-        return ErrorCode(ErrorCodeValue::Success);
-    } 
-    else if (value == L"Other")
+        if (enumValues[i] == NetworkType::OpenStr || enumValues[i] == L"default")
+        {
+            val = val | NetworkType::Open;
+            updated = true;
+        }
+
+        if (enumValues[i] == NetworkType::OtherStr)
+        {
+            val = val | NetworkType::Other;
+            updated = true;
+        }
+
+        if (enumValues[i] == NetworkType::IsolatedStr)
+        {
+            val = val | NetworkType::Isolated;
+            updated = true;
+        }
+    }
+
+    if (updated)
     {
-        val = NetworkType::Other;
         return ErrorCode(ErrorCodeValue::Success);
-    } 
+    }
     else
     {
         return ErrorCode::FromHResult(E_INVALIDARG);
     }
 }
 
-std::wstring NetworkType::EnumToString(
-	ServiceModel::NetworkType::Enum val)
+FABRIC_CONTAINER_NETWORK_TYPE NetworkType::ToPublicApi(Enum networkType)
 {
-	switch (val)
-	{
-	case NetworkType::Open:
-		return L"Open";
-	case NetworkType::Other:
-		return L"Other";
-	default:
-		Assert::CodingError("Unknown NetworkType value {0}", (int)val);
-	}
+    FABRIC_CONTAINER_NETWORK_TYPE containerNetworkType = FABRIC_CONTAINER_NETWORK_TYPE_OTHER;
+
+    if ((networkType & NetworkType::Open) == NetworkType::Open)
+    {
+        containerNetworkType = (FABRIC_CONTAINER_NETWORK_TYPE)(containerNetworkType | FABRIC_CONTAINER_NETWORK_TYPE_OPEN);
+    }
+
+    if ((networkType & NetworkType::Isolated) == NetworkType::Isolated)
+    {
+        containerNetworkType = (FABRIC_CONTAINER_NETWORK_TYPE)(containerNetworkType | FABRIC_CONTAINER_NETWORK_TYPE_ISOLATED);
+    }
+    
+    return containerNetworkType;
+}
+
+bool NetworkType::IsMultiNetwork(wstring const & networkingMode)
+{
+    return StringUtility::ContainsCaseInsensitive(networkingMode, NetworkType::NetworkSeparator);
 }

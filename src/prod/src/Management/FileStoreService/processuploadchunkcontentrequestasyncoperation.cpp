@@ -189,6 +189,56 @@ private:
                 return error;
             }
 
+            // For non-empty file, make sure content written is of expected size
+            uint64 expectedSize = 0;
+            if (!(startPosition_ == 0 && endPosition_ == 0))
+            {
+                expectedSize = (endPosition_ - startPosition_ + 1);
+            }
+            else
+            {
+                // Get the file size from the metadata since the expected size can be 0 or 1 byte
+                UploadSessionMetadataSPtr uploadSessionMetadata;
+                auto metadataError = this->requestManager_.UploadSessionMap->GetUploadSessionMapEntry(this->sessionId_, uploadSessionMetadata);
+                if (metadataError.IsSuccess())
+                {
+                    expectedSize = uploadSessionMetadata->FileSize;
+                }
+                else
+                {
+                    WriteWarning(
+                        TraceComponent,
+                        "Unable to get metadata for validation of chunk size for sessionId:{0} startPosition:{1} endPosition:{2} stagingFilePath:{3}",
+                        sessionId_,
+                        startPosition_,
+                        endPosition_,
+                        stagingFullPath_);
+
+                    return metadataError;
+                }
+            }
+
+            if (bytesWritten != expectedSize)
+            {
+                WriteWarning(
+                    TraceComponent,
+                    "Expected staging file size {0} bytes is not written to staging file. actual chunk size(bytes):{1} sessionId:{2} startPosition:{3} endPosition:{4} stagingFilePath:{5}",
+                    expectedSize,
+                    bytesWritten,
+                    sessionId_,
+                    startPosition_,
+                    endPosition_,
+                    stagingFullPath_);
+
+                wstring msg = wformatString(
+                    StringResource::Get(IDS_FSS_UnexpectedStagingChunkSize),
+                    bytesWritten,
+                    expectedSize);
+
+                // Use retryable error so that file will be sent again
+                return ErrorCode(ErrorCodeValue::OperationCanceled, move(msg));
+            }
+
             fileUptr->Flush();
             fileUptr->Close();
         }
@@ -225,6 +275,8 @@ ProcessUploadChunkContentRequestAsyncOperation::ProcessUploadChunkContentRequest
     wstring tempChunkFileLocation(wformatString("{0}_{1}", uploadChunkContentRequest_.SessionId, uploadChunkContentRequest_.StartPosition));
     stagingFullPath_ = Path::Combine(requestManager.LocalStagingLocation, tempChunkFileLocation);
 #if !defined(PLATFORM_UNIX)
+    // This takes care of staging file path that is greater than MAX_PATH chars.
+    // For more info: https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
     stagingFullPath_.insert(0, L"\\\\?\\");
 #endif
     sessionId_ = uploadChunkContentRequest_.SessionId;
@@ -289,9 +341,11 @@ void ProcessUploadChunkContentRequestAsyncOperation::OnRequestCompleted(__inout 
 
     // For error case, delete the staging file
     // For error with FileStoreServiceNotReady, gateway would retry to upload to the new primary
+    // For error with operationsPending which means it is unable to obtain file lock then do not delete the staging file
     if (!this->stagingFullPath_.empty() && 
         !error.IsSuccess() && 
-        !error.IsError(ErrorCodeValue::FileStoreServiceNotReady))
+        !error.IsError(ErrorCodeValue::FileStoreServiceNotReady) &&
+        !error.IsError(ErrorCodeValue::OperationsPending))
     {
         // Delete staging file
         if (File::Exists(this->stagingFullPath_))

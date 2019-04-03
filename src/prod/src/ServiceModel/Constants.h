@@ -194,6 +194,7 @@ public: \
         static Common::WStringLiteral const DomainName;
         static Common::WStringLiteral const ManifestVersion;
         static Common::WStringLiteral const NodeName;
+        static Common::WStringLiteral const NodeNameCamelCase;
         static Common::WStringLiteral const NodeId;
         static Common::WStringLiteral const NodeInstanceId;
         static Common::WStringLiteral const Content;
@@ -457,6 +458,8 @@ public: \
         static Common::WStringLiteral const ExpiryDate;
         static Common::WStringLiteral const StartTime;
         static Common::WStringLiteral const EndTime;
+        static Common::WStringLiteral const StartTimeUtc;
+        static Common::WStringLiteral const EndTimeUtc;
         static Common::WStringLiteral const ChaosParametersMap;
         static Common::WStringLiteral const Jobs;
         static Common::WStringLiteral const Days;
@@ -597,6 +600,7 @@ public: \
         static Common::GlobalWString EventSystemSourcePrefix;
 
         static Common::WStringLiteral const Port;
+        static Common::WStringLiteral const useDynamicHostPort;
         static Common::WStringLiteral const ClusterConnectionPort;
 
         static Common::WStringLiteral const ApplicationIds;
@@ -731,9 +735,21 @@ public: \
         //
         // Secret Store Service
         //
-        static int const SecretNameMaxLength = 256;
-        static int const SecretVersionMaxLength = 256;
-        static int const SecretValueMaxSize = 4 * 1024 * 1024; // 4MB
+
+        // The max length of Secret Name in characters.
+        static int const SecretNameMaxLength;
+
+        // The max length of Secret Version in characters.
+        static int const SecretVersionMaxLength;
+
+        // The max length of Secret Kind in characters.
+        static int const SecretKindMaxLength;
+
+        // The max length of Secret Content Type in characters.
+        static int const SecretContentTypeMaxLength;
+
+        // The max size of Secret Value in bytes.
+        static int const SecretValueMaxSize;
 
         //
         // Compose deployment
@@ -800,6 +816,24 @@ public: \
         static Common::WStringLiteral const volumeDescriptionForImageBuilder;
         static Common::WStringLiteral const volumeParameters;
         static Common::WStringLiteral const osType;
+        static Common::WStringLiteral const doNotPersistState;
+        static Common::WStringLiteral const gatewayName;
+
+        static Common::WStringLiteral const autoScalingPolicies;
+        static Common::WStringLiteral const autoScalingName;
+        static Common::WStringLiteral const autoScalingTrigger;
+        static Common::WStringLiteral const autoScalingTriggerKind;
+        static Common::WStringLiteral const autoScalingMetric;
+        static Common::WStringLiteral const autoScalingMetricKind;
+        static Common::WStringLiteral const autoScalingMetricName;
+        static Common::WStringLiteral const autoScalingLowerLoadThreshold;
+        static Common::WStringLiteral const autoScalingUpperLoadThreshold;
+        static Common::WStringLiteral const autoScaleIntervalInSeconds;
+        static Common::WStringLiteral const autoScalingMechanism;
+        static Common::WStringLiteral const autoScalingMechanismKind;
+        static Common::WStringLiteral const autoScalingMinInstanceCount;
+        static Common::WStringLiteral const autoScalingMaxInstanceCount;
+        static Common::WStringLiteral const autoScaleIncrement;
 
         static Common::WStringLiteral const RemoveServiceFabricRuntimeAccess;
         static Common::WStringLiteral const AzureFilePluginName;
@@ -820,6 +854,24 @@ public: \
         static Common::GlobalWString const SystemMetricNameCpuCores;
         static Common::GlobalWString const SystemMetricNameMemoryInMB;
         static uint const ResourceGovernanceCpuCorrectionFactor;
+
+        // Container Network
+        static Common::WStringLiteral const NetworkType;
+        static Common::WStringLiteral const NetworkTypeCamelCase;
+        static Common::WStringLiteral const NetworkName;
+        static Common::WStringLiteral const NetworkNameCamelCase;
+        static Common::WStringLiteral const NetworkAddressPrefix;
+        static Common::WStringLiteral const NetworkAddressPrefixCamelCase;
+        static Common::WStringLiteral const NetworkStatus;
+        static Common::WStringLiteral const NetworkDescription;
+        static Common::WStringLiteral const CodePackageVersion;
+        static Common::WStringLiteral const ContainerAddress;
+        static Common::WStringLiteral const ContainerId;
+        static Common::WStringLiteral const ContainerNetworkPolicies;
+        static Common::WStringLiteral const NetworkRef;
+        static Common::WStringLiteral const EndpointBindings;
+        static Common::WStringLiteral const EndpointRef;
+        static Common::WStringLiteral const endpointRefsCamelCase;
 
         DECLARE_TEST_MUTABLE_CONSTANT(size_t, NamedPropertyMaxValueSize)
     };

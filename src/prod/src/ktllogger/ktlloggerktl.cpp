@@ -7,6 +7,8 @@
 
 using namespace KtlLogger;
 
+const ULONG KtlLogContainer::MaxAliasLength; 
+
 //
 // KtlLoggerInitializationContext
 //
@@ -111,15 +113,38 @@ KtlLoggerInitializationContext::FSMContinue(
                                 (ULONGLONG)(memoryThrottleLimits->WriteBufferMemoryPoolPerStream),
                                 (ULONGLONG)((100000000 * memoryThrottleLimits->PeriodicFlushTimeInSec) +
                                            memoryThrottleLimits->PeriodicTimerIntervalInSec));
-            
-            _State = ConfigureThrottleSettings2;
-            _ConfigureAsync->StartConfigure(KtlLogManager::ConfigureCode::ConfigureMemoryThrottleLimits2,
+
+
+            _State = ConfigureThrottleSettings3;
+            _ConfigureAsync->StartConfigure(KtlLogManager::ConfigureCode::ConfigureMemoryThrottleLimits3,
                                             _InBuffer.RawPtr(),
                                             _Result,
                                             _OutBuffer,
                                             this,
                                             completion);
             break;
+        }
+        
+        case ConfigureThrottleSettings3:
+        {
+            if (! NT_SUCCESS(Status))
+            {
+                //
+                // If ConfigureMemoryThrottleLimits3 failed then we may
+                // have an older driver. In this case retry with the
+                // older ConfigureMemoryThrottleLimits2
+                //
+                _State = ConfigureThrottleSettings2;
+                _ConfigureAsync->StartConfigure(KtlLogManager::ConfigureCode::ConfigureMemoryThrottleLimits2,
+                                                _InBuffer.RawPtr(),
+                                                _Result,
+                                                _OutBuffer,
+                                                this,
+                                                completion);
+                break;
+            }
+
+            goto ConfigureThrottleSettings;
         }
 
         case ConfigureThrottleSettings2:
@@ -147,6 +172,39 @@ KtlLoggerInitializationContext::FSMContinue(
         
         case ConfigureThrottleSettings:
         {
+ConfigureThrottleSettings:          
+            if (! NT_SUCCESS(Status))
+            {               
+                _KtlLoggerNode->WriteTraceError(__LINE__, _State, Status);
+                goto StartCleanupOnError;
+            }
+
+            Status = KBuffer::Create(sizeof(KtlLogManager::AcceleratedFlushLimits), _InBuffer, GetThisAllocator());
+            if (! NT_SUCCESS(Status))
+            {               
+                KTraceFailedAsyncRequest(Status, this, _State, 0);
+                _KtlLoggerNode->WriteTraceError(__LINE__, _State, Status);
+                goto StartCleanupOnError;
+            }
+            
+            KtlLogManager::AcceleratedFlushLimits* accelerateFlushLimits = (KtlLogManager::AcceleratedFlushLimits*)_InBuffer->GetBuffer();
+            *accelerateFlushLimits = _AccelerateFlushLimits;
+            
+            _State = ConfigureAccelerateFlushSettings;
+            _ConfigureAsync->Reuse();
+            _ConfigureAsync->StartConfigure(KtlLogManager::ConfigureCode::ConfigureAcceleratedFlushLimits,
+                                            _InBuffer.RawPtr(),
+                                            _Result,
+                                            _OutBuffer,
+                                            this,
+                                            completion);
+            break;
+
+            
+        }
+
+        case ConfigureAccelerateFlushSettings:
+        {            
             if (! NT_SUCCESS(Status))
             {               
                 _KtlLoggerNode->WriteTraceError(__LINE__, _State, Status);
@@ -470,6 +528,7 @@ VOID
 KtlLoggerInitializationContext::StartInitializeKtlLogger(
     __in BOOLEAN UseInprocLogger,
     __in KtlLogManager::MemoryThrottleLimits& MemoryLimits,
+    __in KtlLogManager::AcceleratedFlushLimits& AccelerateFlushLimits,
     __in KtlLogManager::SharedLogContainerSettings& SharedLogSettings,
     __in LPCWSTR NodeWorkDirectory,
     __in_opt KAsyncContextBase* const ParentAsyncContext,
@@ -479,6 +538,7 @@ KtlLoggerInitializationContext::StartInitializeKtlLogger(
 
     _UseInprocLogger = UseInprocLogger;
     _MemoryLimits = MemoryLimits;
+    _AccelerateFlushLimits = AccelerateFlushLimits;
     _SharedLogSettings = SharedLogSettings;
 
     hr = StringCchCopy(_NodeWorkDirectory, MAX_PATH, NodeWorkDirectory);

@@ -21,6 +21,9 @@ extern "C" {
 #endif // MIDL_PASS
 #endif // EVNTAPI
 
+#define MAX_LTTNG_EVENT_DATA_SIZE 65536
+#define MAX_LTTNG_UNSTRUCTURED_EVENT_LEN (MAX_LTTNG_EVENT_DATA_SIZE / sizeof(wchar_t) - 1)
+
 typedef ULONGLONG REGHANDLE, *PREGHANDLE;
 
 typedef struct _EVENT_DATA_DESCRIPTOR {

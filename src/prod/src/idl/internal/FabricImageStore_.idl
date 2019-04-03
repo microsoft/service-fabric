@@ -1,0 +1,190 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricTypes_.idl";
+
+//
+// Forward Declarations
+//
+interface IFabricNativeImageStoreProgressEventHandler;
+interface IFabricNativeImageStoreClient;
+
+[
+    uuid(aec959c5-f990-427a-be8f-89a04492940b),
+    version(1.0),
+]
+library FabricImageStoreLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+
+    // ----------------------------------------------------------------------------
+    // Structures
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricNativeImageStoreClient;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(49f77ae3-ac64-4f9e-936e-4058c570a387),
+        noncreatable
+    ]
+    coclass FabricNativeImageStoreClient
+    {
+        [default] interface IFabricNativeImageStoreClient;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+
+    [
+        uuid(3f0777a1-87ea-481b-bb19-bfa6bf1d9556),
+        dllname("FabricImageStore.dll")
+    ]
+    module FabricImageStore {
+        [entry("FabricCreateNativeImageStoreClient")] HRESULT FabricCreateNativeImageStoreClient(
+            [in] BOOLEAN isInternal,
+            [in] LPCWSTR workingDirectory,
+            [in] USHORT connectionStringsSize,
+            [in, size_is(connectionStringsSize)] const LPCWSTR * connectionStrings,
+            [in] REFIID riid,
+            [out, retval] void ** nativeImageStoreClient);
+
+        [entry("FabricCreateLocalNativeImageStoreClient")] HRESULT FabricCreateLocalNativeImageStoreClient(
+            [in] BOOLEAN isInternal,
+            [in] LPCWSTR workingDirectory, 
+            [in] REFIID riid,
+            [out, retval] void ** nativeImageStoreClient);
+
+        [entry("ArchiveApplicationPackage")] HRESULT ArchiveApplicationPackage(
+            [in] LPCWSTR appPackageRootDirectory,
+            [in] IFabricNativeImageStoreProgressEventHandler const * progressHandler);
+
+        [entry("ExtractApplicationPackage")] HRESULT TryExtractApplicationPackage(
+            [in] LPCWSTR appPackageRootDirectory,
+            [in] IFabricNativeImageStoreProgressEventHandler const * progressHandler,
+            [out, retval] BOOLEAN * archiveExists);
+
+        [entry("GenerateSfpkg")] HRESULT GenerateSfpkg(
+            [in] LPCWSTR appPackageRootDirectory,
+            [in] LPCWSTR destinationDirectory,
+            [in] BOOLEAN applyCompression,
+            [in] LPCWSTR sfPkgName,
+            [out, retval] IFabricStringResult ** sfPkgFilePath);
+
+        [entry("ExpandSfpkg")] HRESULT ExpandSfpkg(
+            [in] LPCWSTR sfPkgFilePath,
+            [in] LPCWSTR appPackageRootDirectory);
+    }
+
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(62119833-ad63-47d8-bb8b-167483f7b05a)]
+interface IFabricNativeImageStoreProgressEventHandler : IUnknown
+{
+    [] HRESULT GetUpdateInterval([out] DWORD * milliseconds);
+
+    [] HRESULT OnUpdateProgress([in] ULONGLONG completedItems, [in] ULONGLONG totalItems, [in] FABRIC_PROGRESS_UNIT_TYPE ItemType);
+}
+
+[object, local, uuid(f6b3ceea-3577-49fa-8e67-2d0ad1024c79)]
+interface IFabricNativeImageStoreClient : IUnknown
+{
+    [] HRESULT SetSecurityCredentials(
+        [in] const FABRIC_SECURITY_CREDENTIALS * securityCredentials);
+
+    [] HRESULT UploadContent(
+        [in] LPCWSTR remoteDestination, 
+        [in] LPCWSTR localSource,
+        [in] DWORD timeoutMilliseconds,
+        [in] FABRIC_IMAGE_STORE_COPY_FLAG copyFlag);
+
+    [] HRESULT CopyContent(
+        [in] LPCWSTR remoteSource, 
+        [in] LPCWSTR remoteDestination,
+        [in] DWORD timeoutMilliseconds,
+        [in] FABRIC_STRING_LIST *skipFiles,
+        [in] FABRIC_IMAGE_STORE_COPY_FLAG copyFlag,
+        [in] BOOLEAN checkMarkFile);
+
+    [] HRESULT DownloadContent(
+        [in] LPCWSTR remoteSource,
+        [in] LPCWSTR localDestination,
+        [in] DWORD timeoutMilliseconds,
+        [in] FABRIC_IMAGE_STORE_COPY_FLAG copyFlag);
+
+    [] HRESULT ListContent(
+        [in] LPCWSTR remoteLocation,
+        [in] DWORD timeoutMilliseconds,
+        [out, retval] IFabricStringListResult ** result);
+
+    [] HRESULT ListContentWithDetails(
+        [in] LPCWSTR remoteLocation,
+        [in] BOOLEAN isRecursive,
+        [in] DWORD timeoutMilliseconds,
+        [out, retval] FABRIC_IMAGE_STORE_CONTENT_QUERY_RESULT ** result);
+
+    [] HRESULT DoesContentExist(
+        [in] LPCWSTR remoteLocation,
+        [in] DWORD timeoutMilliseconds,
+        [out,retval] BOOLEAN * result);
+
+    [] HRESULT DeleteContent(
+        [in] LPCWSTR remoteLocation,
+        [in] DWORD timeoutMilliseconds);
+}
+
+[object, local, uuid(80fa7785-4ad1-45b1-9e21-0b8c0307c22f)]
+interface IFabricNativeImageStoreClient2 : IFabricNativeImageStoreClient
+{
+    [] HRESULT DownloadContent2(
+        [in] LPCWSTR remoteSource,
+        [in] LPCWSTR localDestination,
+        [in] IFabricNativeImageStoreProgressEventHandler const * progressHandler,
+        [in] DWORD timeoutMilliseconds,
+        [in] FABRIC_IMAGE_STORE_COPY_FLAG copyFlag);
+
+    [] HRESULT UploadContent2(
+        [in] LPCWSTR remoteDestination,
+        [in] LPCWSTR localSource,
+        [in] IFabricNativeImageStoreProgressEventHandler const * progressHandler,
+        [in] DWORD timeoutMilliseconds,
+        [in] FABRIC_IMAGE_STORE_COPY_FLAG copyFlag);
+}
+
+[object, local, uuid(d5e63df3-ffb1-4837-9959-2a5b1da94f33)]
+interface IFabricNativeImageStoreClient3 : IFabricNativeImageStoreClient2
+{
+    [] HRESULT ListPagedContent(
+        [in] const FABRIC_IMAGE_STORE_LIST_DESCRIPTION * listDescription,
+        [in] DWORD timeoutMilliseconds,
+        [out, retval] FABRIC_IMAGE_STORE_PAGED_RELATIVEPATH_QUERY_RESULT ** result);
+
+    [] HRESULT ListPagedContentWithDetails(
+        [in] const FABRIC_IMAGE_STORE_LIST_DESCRIPTION * listDescription,
+        [in] DWORD timeoutMilliseconds,
+        [out, retval] FABRIC_IMAGE_STORE_PAGED_CONTENT_QUERY_RESULT ** result);
+}

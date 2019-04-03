@@ -1183,7 +1183,29 @@ ErrorCode TcpConnection::EnableKeepAliveIfNeeded(Socket const & socket, TimeSpan
     }
 
 #ifdef PLATFORM_UNIX
-    //LINUXTODO setsockopt(socket, setsockopt, setsockopt, ...)
+    int keepalive = 1;
+    if (setsockopt(socket.GetHandle(), SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)) < 0)
+    {
+        auto error = ErrorCode::FromErrno();
+        WriteError(TraceType, traceId_, "setsockopt(SO_KEEPALIVE) failed: {0}", error);
+        return error;
+    }
+
+    int keepidle = (int) keepAliveTimeout.TotalSeconds();
+    if (setsockopt(socket.GetHandle(), SOL_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle)) < 0)
+    {
+        auto error = ErrorCode::FromErrno();
+        WriteError(TraceType, traceId_, "setsockopt(TCP_KEEPIDLE) failed: {0}", error);
+        return error;
+    }
+
+    int keepintvl = 1;
+    if (setsockopt(socket.GetHandle(), SOL_TCP, TCP_KEEPINTVL, &keepintvl, sizeof(keepintvl)) < 0)
+    {
+        auto error = ErrorCode::FromErrno();
+        WriteError(TraceType, traceId_, "setsockopt(TCP_KEEPINTVL) failed: {0}", error);
+        return error;
+    }
 #else
     struct tcp_keepalive keepAliveParam =
     {

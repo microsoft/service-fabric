@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+        <Authors>Microsoft</Authors>
+        <Owners>Microsoft,ServiceFabric</Owners>
+        <ReleaseNotes></ReleaseNotes>
+        <ProjectUrl>http://aka.ms/servicefabric</ProjectUrl>
+        <LicenseUrl>http://www.microsoft.com/web/webpi/eula/net_library_eula_ENU.htm</LicenseUrl>
+        <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+        <RequireLicenseAcceptance>True</RequireLicenseAcceptance>
+        <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+        <NoNuspecTags>true</NoNuspecTags>
+        <Tags>ServiceFabric Microsoft Azure Fabric</Tags>
+        <IconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</IconUrl>
+        <Language>en-US</Language>
+        <NupkgOutputDir>$(OutputRoot)\packages</NupkgOutputDir>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <NetStandardOutDir20>netstandard2.0</NetStandardOutDir20>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(AGENT_NAME)' != ''">
+        <GitOrigin>$(BUILD_REPOSITORY_URI)</GitOrigin>
+        <GitRepository>$(BUILD_REPOSITORY_NAME)</GitRepository>
+        <GitHead>$(BUILD_SOURCEBRANCHNAME)</GitHead>
+        <GitExitCode>0</GitExitCode>
+    </PropertyGroup>
+</Project>

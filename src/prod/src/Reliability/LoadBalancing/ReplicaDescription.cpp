@@ -83,6 +83,11 @@ bool ReplicaDescription::UseSecondaryLoad() const
     return role_ == ReplicaRole::Secondary || role_ == ReplicaRole::StandBy;
 }
 
+bool ReplicaDescription::UseNoneLoad(bool isRGLoad) const
+{
+    return role_ == ReplicaRole::None && isRGLoad;
+}
+
 bool ReplicaDescription::HasLoad() const
 {
     return (UsePrimaryLoad() || UseSecondaryLoad());

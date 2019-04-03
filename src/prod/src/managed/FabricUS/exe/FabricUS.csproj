@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{7BAC7289-CE68-4AF2-A561-B446E9CC83FF}</ProjectGuid>
+    <RootNamespace>FabricUS</RootNamespace>
+    <AssemblyName>FabricUS</AssemblyName>
+    <AssemblyDescription>Fabric Upgrade Service</AssemblyDescription>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|amd64'">
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\src\system\fabric\upgradeservice\KvsExtensions.cs">
+      <Link>KvsExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ApplicationClient.cs">
+      <Link>WRP\ApplicationClient.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ApplicationCommandProcessor.cs">
+      <Link>WRP\ApplicationCommandProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ApplicationTypeClient.cs">
+      <Link>WRP\ApplicationTypeClient.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ApplicationTypeCommandProcessor.cs">
+      <Link>WRP\ApplicationTypeCommandProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\FabricClientApplicationWrapper.cs">
+      <Link>WRP\FabricClientApplicationWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ResourceCommandProcessor.cs">
+      <Link>WRP\ResourceCommandProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ServiceClient.cs">
+      <Link>WRP\ServiceClient.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ServiceCommandProcessor.cs">
+      <Link>WRP\ServiceCommandProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\UpgradeServiceApplicationResponse.cs">
+      <Link>WRP\UpgradeServiceApplicationResponse.cs</Link>
+    </Compile>
+    <Compile Include="WRP\StreamChannel\ClusterStreamingId.cs" />
+    <Compile Include="WRP\StreamChannel\Error.cs" />
+    <Compile Include="WRP\StreamChannel\ErrorDetails.cs" />
+    <Compile Include="WRP\StreamChannel\StreamChannelPutResponse.cs" />
+    <Compile Include="WRP\StreamChannel\StreamRequest.cs" />
+    <Compile Include="WRP\StreamChannel\StreamResponse.cs" />
+    <Compile Include="WRP\StreamChannel\StreamChannelException.cs" />
+    <Compile Include="WRP\StreamChannel\WrpStreamChannel.cs" />
+    <Compile Include="WRP\StreamChannel\WrpStreamReader.cs" />
+    <Compile Include="WRP\WrpGatewayClient.cs" />
+    <Compile Include="_aliases.cs" />
+    <Compile Include="_friends.cs" />
+    <Compile Include="..\src\system\fabric\upgradeservice\ClusterUpgradeCommandParameter.cs">
+      <Link>ClusterUpgradeCommandParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\CommandProcessorClusterUpgradeDescription.cs">
+      <Link>CommandProcessorClusterUpgradeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\CommandProcessorClusterUpgradeHealthPolicy.cs">
+      <Link>CommandProcessorClusterUpgradeHealthPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\ConfigStoreExtensionHelper.cs">
+      <Link>ConfigStoreExtensionHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\Constants.cs">
+      <Link>Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\IFabricClientWrapper.cs">
+      <Link>IFabricClientWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\FabricClientWrapper.cs">
+      <Link>FabricClientWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\JsonSerializationHelper.cs">
+      <Link>JsonSerializationHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\IPackageRetriever.cs">
+      <Link>IPackageRetriever.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\IUpgradeCoordinator.cs">
+      <Link>IUpgradeCoordinator.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\DummyCoordinator.cs">
+      <Link>DummyCoordinator.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\Program.cs">
+      <Link>Program.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\TestPackageRetriever.cs">
+      <Link>TestPackageRetriever.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\TimeoutHelper.cs">
+      <Link>TimeoutHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\Trace.cs">
+      <Link>Trace.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\UpgradeSystemService.cs">
+      <Link>UpgradeSystemService.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\UpgradeSystemServiceFactory.cs">
+      <Link>UpgradeSystemServiceFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WindowsUpdateServiceCoordinator.cs">
+      <Link>WindowsUpdateServiceCoordinator.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WindowsUpdate\NativeMethods.cs">
+      <Link>WindowsUpdate\NativeMethods.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WindowsUpdate\UpdatePackageRetriever.cs">
+      <Link>WindowsUpdate\UpdatePackageRetriever.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\CommandParameterGenerator.cs">
+      <Link>WRP\CommandParameterGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\NodeStatusManager.cs">
+      <Link>WRP\NodeStatusManager.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\PaasCoordinator.cs">
+      <Link>WRP\PaasCoordinator.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\PaasModelExtension.cs">
+      <Link>WRP\PaasModelExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\RestClientHelper.cs">
+      <Link>WRP\RestClientHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\UpgradeResponse.cs">
+      <Link>WRP\UpgradeResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\WRPPackageRetriever.cs">
+      <Link>WRP\WRPPackageRetriever.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ClusterCommandProcessor.cs">
+      <Link>WRP\ClusterCommandProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ExceptionHandlingPolicy.cs">
+      <Link>WRP\HealthPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ResourceOperations.cs">
+      <Link>WRP\ResourceOperations.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\StreamChannelCoordinator.cs">
+      <Link>WRP\StreamChannelCoordinator.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ResourceCoordinator.cs">
+      <Link>WRP\ResourceCoordinator.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\OperationContext.cs">
+      <Link>WRP\OperationContext.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\DictionaryExtensions.cs">
+      <Link>WRP\DictionaryExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\src\system\fabric\upgradeservice\WRP\ClusterOperation.cs">
+      <Link>WRP\ClusterOperation.cs</Link>
+    </Compile>
+    <Content Include="FabricUS.exe.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="FabricUS.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net40\Newtonsoft.Json.dll" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Name>Microsoft.ServiceFabric.Internal</Name>
+      <Project>{EB728138-47AC-41CB-A2C7-53521B396AFD}</Project>
+      <Aliases>ServiceFabricInternal</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.linq" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\US.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\US.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

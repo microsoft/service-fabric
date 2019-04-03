@@ -161,22 +161,22 @@ void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPt
     uint64 reportIndex = 0;
     this->EntityManager.HealthManagerCounters->OnHealthReportsReceived(requests.size());
 
-    for (auto it = requests.begin(); it != requests.end(); ++it)
+    for (auto & report : requests)
     {
         // Create a health report result which takes the primary key from the report.
         // For node, it uses the node id generated on the client. For server processing,
         // the report node id is re-computed to use the server configure generated data.
-        HealthReportResult result(*it);
+        HealthReportResult result(report);
 
-        if (it->SequenceNumber <= FABRIC_INVALID_SEQUENCE_NUMBER)
+        if (report.SequenceNumber <= FABRIC_INVALID_SEQUENCE_NUMBER)
         {
             // If the new report has invalid LSN, reject immediately
-            HMEvents::Trace->DropReportInvalidSourceLSN(this->TraceId, *it);
+            HMEvents::Trace->DropReportInvalidSourceLSN(this->TraceId, report);
             result.Error = ErrorCodeValue::HealthStaleReport;
         }
         else
         {
-            SequenceStreamId id(it->Kind, it->SourceId);
+            SequenceStreamId id(report.Kind, report.SourceId);
             auto itReject = rejectedSequences.find(id);
             if (itReject != rejectedSequences.end())
             {
@@ -189,7 +189,7 @@ void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPt
                 FABRIC_SEQUENCE_NUMBER upToLsn = FABRIC_INVALID_SEQUENCE_NUMBER;
                 for (auto itSS = sequenceStreams_.begin(); itSS != sequenceStreams_.end(); ++itSS)
                 {
-                    if (itSS->first.IsHealthInformationRelevant(*it))
+                    if (itSS->first.IsHealthInformationRelevant(report))
                     {
                         fromLsn = itSS->first.FromLsn;
                         upToLsn = itSS->first.UpToLsn;
@@ -200,20 +200,20 @@ void ProcessReportRequestAsyncOperation::HandleRequest(Common::AsyncOperationSPt
                 // Create a context that will be given to the cache entity manager
                 // for processing
                 currentNestedActivityId_.IncrementIndex();
-                if (HealthEntityKind::CanAccept(it->Kind))
+                if (HealthEntityKind::CanAccept(report.Kind))
                 {
                     contexts.push_back(ReportRequestContext(
                         Store::ReplicaActivityId(this->ReplicaActivityId.PartitionedReplicaId, currentNestedActivityId_),
                         thisSPtr,
                         *this,
                         reportIndex,
-                        move(*it),
+                        move(report),
                         fromLsn,
                         upToLsn));
                 }
                 else
                 {
-                    WriteInfo(TraceComponent, "{0}: Invalid context kind {1}", currentNestedActivityId_, it->Kind);
+                    WriteInfo(TraceComponent, "{0}: Invalid context kind {1}", currentNestedActivityId_, report.Kind);
                     // Complete the report with error
                     result.Error = ErrorCodeValue::InvalidArgument;
                 }

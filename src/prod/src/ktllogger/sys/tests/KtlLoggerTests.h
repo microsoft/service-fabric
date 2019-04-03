@@ -51,6 +51,12 @@ MissingStreamFileTest(
     );
 
 VOID
+OneBitLogCorruptionTest(
+    UCHAR driveLetter,
+    KtlLogManager::SPtr logManager
+    );
+
+VOID
 CorruptedLCMBInfoTest(
     UCHAR driveLetter,
     KtlLogManager::SPtr logManager
@@ -379,6 +385,13 @@ DeletedDedicatedLogTest(
     KGuid diskId,
     KtlLogManager::SPtr logManager
 );
+
+
+VOID
+AccelerateFlushTest(
+    KGuid diskId,
+    KtlLogManager::SPtr logManager
+    );
 
 VOID
 ServiceWrapperStressTest(

@@ -12,6 +12,7 @@ using namespace ServiceModel;
 using namespace Reliability;
 using namespace Reliability::FailoverManagerComponent;
 using namespace Reliability::LoadBalancingComponent;
+using namespace Management::NetworkInventoryManager;
 using namespace Federation;
 using namespace std;
 using namespace Store;
@@ -63,6 +64,7 @@ FailoverManagerSPtr FailoverManager::CreateFM(
     FederationSubsystemSPtr && federation,
     HealthReportingComponentSPtr const & healthClient,
     Api::IServiceManagementClientPtr serviceManagementClient,
+    Api::IClientFactoryPtr const & clientFactory,
     FabricNodeConfigSPtr const& nodeConfig,
     FailoverManagerStoreUPtr && fmStore,
     ComPointer<IFabricStatefulServicePartition> const& servicePartition,
@@ -71,7 +73,7 @@ FailoverManagerSPtr FailoverManager::CreateFM(
 {
     wstring fmId = federation->Instance.ToString() + L":" + StringUtility::ToWString(SequenceNumber::GetNext());
     wstring performanceCounterInstanceName = partitionId.ToString() + L":" + wformatString(replicaId) + L":" + wformatString(Common::SequenceNumber::GetNext());
-    return make_shared<FailoverManager>(
+    auto fm = make_shared<FailoverManager>(
         move(federation),
         healthClient,
         serviceManagementClient,
@@ -81,6 +83,9 @@ FailoverManagerSPtr FailoverManager::CreateFM(
         servicePartition,
         fmId,
         performanceCounterInstanceName);
+    fm->ClientFactory = clientFactory;
+
+    return fm;
 }
 
 FailoverManager::FailoverManager(
@@ -416,6 +421,15 @@ void FailoverManager::Load()
                     rebuildContext_->Start();
                 }
 
+                if (!isMaster_ && !networkInventoryServiceUPtr_)
+                {
+                    error = InitializeNetworkInventoryService();
+                    if (!error.IsSuccess())
+                    {
+                        StartLoading(true);
+                    }
+                }
+
                 return;
             }
             else
@@ -432,6 +446,15 @@ void FailoverManager::Load()
             // Reopening the store is not necessary
             StartLoading(true);
         }
+        else if (!networkInventoryServiceUPtr_)
+        {
+            error = InitializeNetworkInventoryService();
+            if (!error.IsSuccess())
+            {
+                StartLoading(true);
+            }
+        }
+
     }
     else
     {
@@ -439,6 +462,32 @@ void FailoverManager::Load()
 
         fmFailedEvent_->Fire(EventArgs(), true);
     }
+}
+
+Common::ErrorCode FailoverManager::InitializeNetworkInventoryService()
+{
+     Common::ErrorCode error;
+
+    if (!Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
+    {
+        WriteInfo(TraceLifeCycle, "NetworkInventoryService setting is not enabled in this config. Skipping initialization");
+        return error;
+    }
+
+    // Instantiate the NetworkInventoryService service.
+    auto nis = make_unique<NetworkInventoryService>(*this);
+    error = nis->Initialize();
+
+    if (error.IsSuccess())
+    {
+        networkInventoryServiceUPtr_ = move(nis);
+    }
+    else
+    {
+        WriteInfo(TraceLifeCycle, "NetworkInventoryService failed to open with error {0}", error);
+    }
+
+    return error;
 }
 
 void FailoverManager::AdjustTimestamps(vector<LoadInfoSPtr> & loadInfos)
@@ -677,6 +726,11 @@ SerializedGFUMUPtr FailoverManager::Close(bool isStoreCloseNeeded)
     {
         WriteInfo(TraceLifeCycle, "{0} disposing store", Id);
         fmStore_->Dispose(isStoreCloseNeeded);
+    }
+
+    if (networkInventoryServiceUPtr_ != nullptr)
+    {
+        networkInventoryServiceUPtr_->Close();
     }
 
     // Save GFUM for potential transfer to the new FMM.
@@ -2112,6 +2166,7 @@ void FailoverManager::CreateApplicationAsyncMessageHandler(Message & request, Ti
         body.ApplicationCapacity,
         body.ResourceGovernanceDescription,
         body.CodePackageContainersImages,
+        body.Networks,
         [this, activityId, contextMover](AsyncOperationSPtr const & operation) mutable
         {
             ErrorCode error = ServiceCacheObj.EndCreateApplication(operation);

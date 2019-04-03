@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{98634BFA-BA2B-4798-8C17-6B1F63ADE999}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.Diagnostics</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Diagnostics</AssemblyName>
+    <AssemblyTitle>Microsoft.ServiceFabric.Diagnostics</AssemblyTitle>
+    <OutputType>Library</OutputType>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <AssemblyCLSCompliant>true</AssemblyCLSCompliant>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="_friends.cs" />
+    <Compile Include="Tracing\Config\SettingsConfigReader.cs" />
+    <Compile Include="Tracing\Config\TraceConfig.cs" />
+    <Compile Include="Tracing\ServiceFabricEventSource.cs" />
+    <Compile Include="Tracing\ServiceFabricStringEventSource.cs" />
+    <Compile Include="Tracing\Filter\TraceSinkFilter.cs" />
+    <Compile Include="Tracing\Writer\EventDataArrayBuilder.cs" />
+    <Compile Include="Tracing\Writer\TraceEvent.cs" />
+    <Compile Include="Tracing\Writer\Variant.cs" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

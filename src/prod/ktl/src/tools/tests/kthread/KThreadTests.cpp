@@ -99,9 +99,18 @@ KThreadTest(
     int argc, WCHAR* args[]
     )
 {
-    KTestPrintf("KThreadTest: STARTED\n");
-
     NTSTATUS status;
+
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
+    KTestPrintf("KThreadTest: STARTED\n");
 
     status = KtlSystem::Initialize();
 
@@ -114,6 +123,11 @@ KThreadTest(
     KtlSystem::Shutdown();
 
     KTestPrintf("KThreadTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return status;
 }
 

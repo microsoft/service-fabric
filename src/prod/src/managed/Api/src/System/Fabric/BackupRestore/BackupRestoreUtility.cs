@@ -141,8 +141,15 @@ namespace System.Fabric.BackupRestore
             var initialRetryIntervalMs = BackupRestoreManager.InitialRetryInterval.Milliseconds;
             var maxRetryCount = BackupRestoreManager.MaxRetryCount;
             var maxRetryIntervalMs = BackupRestoreManager.MaxRetryInterval.Milliseconds;
-
             return PerformWithRetriesAsync<T, TResult>(worker, context, cancellationToken, new RetriableOperationExceptionHandler(RetriableIOExceptionHandler), initialRetryIntervalMs, maxRetryCount, maxRetryIntervalMs);
+        }
+
+        internal static Task PerformIOWithRetriesAsync<T>(Func<T, CancellationToken, Task> worker, T context, CancellationToken cancellationToken,
+            int initialRetryIntervalMs, int maxRetryCount, int maxRetryIntervalMs)
+        {
+
+            return PerformWithRetriesAsync<T>(worker, context, cancellationToken, new RetriableOperationExceptionHandler(RetriableIOExceptionHandler),
+                initialRetryIntervalMs, maxRetryCount, maxRetryIntervalMs);
         }
 
         internal static void PerformWithRetries<T>(Action<T> worker, T context, RetriableOperationExceptionHandler exceptionHandler, int initialRetryIntervalMs, int maxRetryCount, int maxRetryIntervalMs)
@@ -266,6 +273,57 @@ namespace System.Fabric.BackupRestore
                 }
             }
         }
+
+        internal static async Task<bool> TryPerformOperationWithWaitAsync<T>(Func<T, CancellationToken, Task> worker, Func<bool> condition, T context,
+            CancellationToken cancellationToken, int initialRetryIntervalMs, int maxRetryCount, int maxRetryIntervalMs)
+        {
+            var retryCount = 0;
+            var retryIntervalMs = initialRetryIntervalMs;
+
+            for (; ; )
+            {
+                if (condition())
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    // Perform the operation
+                    await worker(context, cancellationToken);
+                    return true;
+                }
+                else
+                {
+                    // Should retry the operation
+                    if (retryCount < maxRetryCount)
+                    {
+                        // We should retry the operation after an interval
+                        await Task.Delay(retryIntervalMs, cancellationToken);
+
+                        // Update the retry count
+                        retryCount++;
+
+                        // Update the interval to wait between retries. We are using a backoff mechanism here. 
+                        // The caller is responsible for ensuring that this doesn't overflow by providing a 
+                        // reasonable combination of initialRetryIntervalMS and maxRetryCount.
+                        int nextRetryIntervalMs;
+                        checked
+                        {
+                            nextRetryIntervalMs = retryIntervalMs * 2;
+                        }
+
+                        if (nextRetryIntervalMs <= maxRetryIntervalMs)
+                        {
+                            retryIntervalMs = nextRetryIntervalMs;
+                        }
+                    }
+                    else
+                    {
+                        TraceSource.WriteError(TraceType, "Retry count exausted for operation : {0}.", worker.GetType().Name);
+                        return false;
+                    }
+                }
+            }
+        }
+
+
 
         internal static TResult PerformWithRetries<T, TResult>(Func<T, TResult> worker, T context, RetriableOperationExceptionHandler exceptionHandler)
         {

@@ -1,0 +1,20 @@
+# Increment version number in UBUNTUIMAGE_VERSION file after any changes in this file.
+
+FROM ubuntu:16.04
+
+ADD tools/build/UBUNTUIMAGE_VERSION .
+
+ADD tools/build/sf-prep.sh /setup/
+
+# .NET Core <3.0 adds ~1.0GB of bloat to the container in the NugetFallbackFolder (removed in >=3.0)
+# by caching numerous packages your build may not need 
+# These settings help mitigate this bloat.
+ENV NUGET_XMLDOC_MODE=skip
+ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+RUN /setup/sf-prep.sh && rm -rf /var/lib/apt/lists/*
+
+RUN locale-gen en_US.UTF-8
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8

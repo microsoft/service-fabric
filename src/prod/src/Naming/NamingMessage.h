@@ -28,6 +28,8 @@ namespace Naming
         static Common::GlobalWString RecoverSystemPartitionsReplyAction;
         static Common::GlobalWString ResetPartitionLoadReplyAction;
         static Common::GlobalWString ToggleVerboseServicePlacementHealthReportingReplyAction;
+        static Common::GlobalWString CreateNetworkReplyAction;
+        static Common::GlobalWString DeleteNetworkReplyAction;
 
         // Client protocol messages
         static Common::GlobalWString ClientOperationFailureAction;
@@ -100,6 +102,8 @@ namespace Naming
         static Transport::MessageUPtr GetRecoverSystemPartitionsReply() { return CreateMessage(RecoverSystemPartitionsReplyAction); }
         static Transport::MessageUPtr GetResetPartitionLoadReply() { return CreateMessage(ResetPartitionLoadReplyAction); }
         static Transport::MessageUPtr GetToggleVerboseServicePlacementHealthReportingReply() { return CreateMessage(ToggleVerboseServicePlacementHealthReportingReplyAction); }
+        static Transport::MessageUPtr GetCreateNetworkReply() { return CreateMessage(CreateNetworkReplyAction); }
+        static Transport::MessageUPtr GetDeleteNetworkReply() { return CreateMessage(DeleteNetworkReplyAction); }
 
         // Naming Client <-> Entree Service
         static Transport::MessageUPtr GetNameOperationReply() { return CreateMessage(NameOperationReplyAction); }

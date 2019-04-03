@@ -433,6 +433,9 @@ namespace Naming
             this->AddHandler(t, NamingTcpMessage::ResetPartitionLoadAction, CreateHandler<ResetPartitionLoadAsyncOperation>);
             this->AddHandler(t, NamingTcpMessage::ToggleVerboseServicePlacementHealthReportingAction, CreateHandler<ToggleVerboseServicePlacementHealthReportingAsyncOperation>);
 
+            this->AddHandler(t, NamingTcpMessage::CreateNetworkAction, CreateHandler<CreateNetworkAsyncOperation>);
+            this->AddHandler(t, NamingTcpMessage::DeleteNetworkAction, CreateHandler<DeleteNetworkAsyncOperation>);
+
             this->AddHandler(t, NamingMessage::ForwardMessageAction, CreateHandler<ForwardToServiceOperation>);
             this->AddHandler(t, NamingMessage::ForwardToFileStoreMessageAction, CreateHandler<ForwardToFileStoreServiceAsyncOperation>);
 
@@ -798,6 +801,20 @@ namespace Naming
                 Transport::Actor::FAS,
                 QueryTcpMessage::QueryAction,
                 *ServiceTypeIdentifier::FaultAnalysisServiceTypeId);
+
+            return AsyncOperation::CreateAndStart<ForwardToServiceOperation>(this->Properties, std::move(message), timeout, callback, parent);
+        }
+        else if (Common::StringUtility::AreEqualCaseInsensitive(childAddressSegment, QueryAddresses::GRMAddressSegment))
+        {
+            ServiceRoutingAgentMessage::SetForwardingHeaders(
+                *message,
+                Transport::Actor::GatewayResourceManager,
+                QueryTcpMessage::QueryAction,
+                *ServiceTypeIdentifier::GatewayResourceManagerServiceTypeId);
+
+            NamingUri serviceName;
+            NamingUri::TryParse(*SystemServiceApplicationNameHelper::PublicGatewayResourceManagerName, serviceName);
+            message->Headers.Replace(ServiceTargetHeader(serviceName));
 
             return AsyncOperation::CreateAndStart<ForwardToServiceOperation>(this->Properties, std::move(message), timeout, callback, parent);
         }

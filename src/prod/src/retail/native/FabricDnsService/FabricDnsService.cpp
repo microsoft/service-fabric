@@ -52,6 +52,7 @@ FabricDnsService::FabricDnsService(
 
 FabricDnsService::~FabricDnsService()
 {
+    _tracer.Trace(DnsTraceLevel_Info, "Destructing FabricDnsService.");
 }
 
 HRESULT FabricDnsService::BeginOpen(
@@ -188,6 +189,18 @@ HRESULT FabricDnsService::BeginClose(
     _spService->CloseAsync();
     _spServiceManagementClient = nullptr;
 
+    // If the close time out config has been enabled, waiting for the event to be signaled
+    // or shutdown the process after the configured timeout.
+    if (_params.EnableOnCloseTimeout)
+    {
+        const ULONG timeoutInMs = _params.OnCloseTimeoutInSeconds * 1000;
+        if (!_closeCompletedEvent.WaitUntilSet(timeoutInMs))
+        {
+            _tracer.Trace(DnsTraceLevel_Error, "FabricDnsService BeginClose failed to complete after {0} ms, killing the process", timeoutInMs);
+            KInvariant(false);
+        }
+    }
+
     return S_OK;
 }
 
@@ -245,6 +258,8 @@ void FabricDnsService::OnCloseCompleted(
 
     _tracer.Trace(DnsTraceLevel_Info, "FabricDnsService OnCloseCompleted called");
 
+    _closeCompletedEvent.SetEvent();
+
     if (_spCloseOperationContext != nullptr)
     {
         ComPointer<IFabricAsyncOperationCallback> spCallback;
@@ -258,8 +273,6 @@ void FabricDnsService::OnCloseCompleted(
         _spCloseOperationContext->SetCompleted(TRUE);
         spCallback->Invoke(_spCloseOperationContext.RawPtr());
     }
-
-    _closeCompletedEvent.SetEvent();
 }
 
 void FabricDnsService::LoadConfig(
@@ -278,6 +291,8 @@ void FabricDnsService::LoadConfig(
     params.TimeToLiveInSeconds = max((ULONG)1, (ULONG)DnsServiceConfig::GetConfig().TimeToLive.TotalSeconds());
     params.AllowMultipleListeners = DnsServiceConfig::GetConfig().AllowMultipleListeners;
     params.EnablePartitionedQuery = DnsServiceConfig::GetConfig().EnablePartitionedQuery;
+    params.EnableOnCloseTimeout = DnsServiceConfig::GetConfig().EnableOnCloseTimeout;
+    params.OnCloseTimeoutInSeconds = (ULONG)DnsServiceConfig::GetConfig().OnCloseTimeoutInSeconds.TotalSeconds();
 
     if (!DnsServiceConfig::GetConfig().PartitionPrefix.empty())
     {

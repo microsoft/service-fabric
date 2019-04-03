@@ -34,5 +34,7 @@ namespace DNS
         INTERNAL_CONFIG_ENTRY(bool, L"DnsService", SetContainerDnsWhenPortBindingsAreEmpty, true, Common::ConfigEntryUpgradePolicy::Static);
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"DnsService", NodeDnsEnvironmentHealthCheckInterval, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"DnsService", ConfigureDnsEnvironmentTimeoutInterval, Common::TimeSpan::FromSeconds(10), Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(bool, L"DnsService", EnableOnCloseTimeout, true, Common::ConfigEntryUpgradePolicy::Static);
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"DnsService", OnCloseTimeoutInSeconds, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Static);
     };
 }

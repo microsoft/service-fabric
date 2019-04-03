@@ -1096,6 +1096,15 @@ KUriTest(
     int argc, WCHAR* args[]
     )
 {
+#if defined(PLATFORM_UNIX)
+    NTSTATUS status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     KTestPrintf("KUriTest: STARTED\n");
 
     NTSTATUS Result;
@@ -1139,6 +1148,11 @@ KUriTest(
     EventUnregisterMicrosoft_Windows_KTL();
 
     KTestPrintf("KUriTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return Result;
 }
 

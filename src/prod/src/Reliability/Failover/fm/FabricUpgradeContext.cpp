@@ -319,7 +319,7 @@ bool FabricUpgradeContext::IsReplicaWaitNeeded(Replica const& replica) const
         return false;
     }
 
-    if (upgrade_.CurrentDomainStartedTime + FailoverConfig::GetConfig().ExpectedNodeFabricUpgradeDuration > DateTime::Now())
+    if (DateTime::Now() - upgrade_.CurrentDomainStartedTime < FailoverConfig::GetConfig().ExpectedNodeFabricUpgradeDuration)
     {
         return replica.IsPreferredPrimaryLocation;
     }
@@ -329,7 +329,7 @@ bool FabricUpgradeContext::IsReplicaWaitNeeded(Replica const& replica) const
 
 bool FabricUpgradeContext::IsReplicaMoveNeeded(Replica const& replica) const
 {
-    if (upgrade_.CurrentDomainStartedTime + FailoverConfig::GetConfig().ExpectedNodeFabricUpgradeDuration > DateTime::Now())
+    if (DateTime::Now() - upgrade_.CurrentDomainStartedTime < FailoverConfig::GetConfig().SwapPrimaryRequestTimeout)
     {
         return replica.FailoverUnitObj.IsReplicaMoveNeededDuringUpgrade(replica);
     }

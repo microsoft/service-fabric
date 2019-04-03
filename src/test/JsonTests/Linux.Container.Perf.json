@@ -1,0 +1,40 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "E2E Linux Container Perf Density 1N (D4)",
+      "Type": "LinuxWindowsTestType",
+      "Owners": "arya,harahma,abhisram",
+      "ResourcesRequired": "Server:1&Azure:2",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "E2EPerfLinuxContainerDensityClusterCreate1N.test",
+        "TaskName1": "E2EPerfLinuxContainerDensity1N.test",
+        "TaskName2": "E2EPerfLinuxClusterDelete.test",
+        "ConfigName": "WinFabricTest\\Config\\E2ELinuxPerfTestConfig.txt",
+        "ExecutionTimeout": "25200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Linux Container Perf HiDynam (D2)",
+      "Type": "LinuxWindowsTestType",
+      "Owners": "arya,harahma,abhisram",
+      "ResourcesRequired": "Server:1&Azure:2",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "E2EPerfLinuxContainerSmallClusterCreate.test",
+        "TaskName1": "E2EContainerPerf-HiDyn.test",
+        "TaskName2": "E2EPerfLinuxClusterDelete.test",
+        "ConfigName": "WinFabricTest\\Config\\E2ELinuxPerfTestConfig.txt",
+        "ExecutionTimeout": "25200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "5400"
+      }
+    },
+  ]
+}

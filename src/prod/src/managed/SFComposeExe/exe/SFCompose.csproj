@@ -1,0 +1,211 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{0C121154-75BB-4DF4-B23C-C0A6E3D85381}</ProjectGuid>
+    <RootNamespace>SFCompose</RootNamespace>
+    <AssemblyName>SFCompose</AssemblyName>
+    <DefineConstants>StandaloneTool</DefineConstants>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\SFCompose.cs">
+      <Link>SFCompose.cs</Link>
+    </Compile>
+    <Compile Include="..\Arguments.cs">
+      <Link>Arguments.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\ImageBuilderExe\DiagnosticsSinkJsonConverter.cs">
+      <Link>DiagnosticsJsonSinkConverter.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\AppManifestCleanupUtil\CommandLineParser\IndentedWriter.cs">
+      <Link>CommandLineParser\IndentedWriter.cs</Link>
+    </Compile>
+	 <Compile Include="$(SrcRoot)\prod\src\managed\AppManifestCleanupUtil\CommandLineParser\DefaultCommandLineArgumentAttribute.cs">
+      <Link>CommandLineParser\DefaultCommandLineArgumentAttribute.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\AppManifestCleanupUtil\CommandLineParser\CommandLineUtility.cs">
+      <Link>CommandLineParser\CommandLineUtility.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\AppManifestCleanupUtil\CommandLineParser\CommandLineArgumentAttribute.cs">
+      <Link>CommandLineParser\CommandLineArguments.cs</Link>
+    </Compile>
+	 <Compile Include="$(SrcRoot)\prod\src\managed\AppManifestCleanupUtil\CommandLineParser\CommandLineArgumentType.cs">
+      <Link>CommandLineParser\CommandLineArgumentType.cs</Link>
+    </Compile>
+	 <Compile Include="$(SrcRoot)\prod\src\managed\AppManifestCleanupUtil\CommandLineParser\CommandLineArgumentParser.cs">
+      <Link>CommandLineParser\CommandLineArgumentParser.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeApplicationTypeDescription.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeApplicationTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeObjectDescription.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeObjectDescription.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ContainerRepositoryCredentials.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ContainerRepositoryCredentials.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceLoggingOptions.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceLoggingOptions.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServicePorts.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServicePorts.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceTypeDescription.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceVolume.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceVolume.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeVolumeDescription.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeVolumeDescription.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeNetworkDescription.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeNetworkDescription.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeResourceGovernance.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceResourceGovernance.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeConstants.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeConstants.cs</Link>
+   </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\FabricDockerComposeException.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\FabricDockerComposeException.cs</Link>
+   </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeUtils.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeUtils.cs</Link>
+   </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\DockerCompose\ContainerApplicationPkgGenerator.cs">
+      <Link>System\Fabric\Management\ImageBuilder\DockerCompose\ContainerApplicationPkgGenerator.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\Application.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\Application.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\ImageBuilderUtilityExtension.cs">
+      <Link>System\Fabric\Management\ImageBuilder\ImageBuilderUtilityExtension.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationPackageGenerator.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationPackageGenerator.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Common\CodePackageDebugParameters.cs">
+      <Link>System\Fabric\Common\CodePackageDebugParameters.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\StringConstants.cs">
+      <Link>System\Fabric\Management\ImageBuilder\StringConstants.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMount.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMount.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMountJsonConverter.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMountJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeProvider.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\VolumeProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescription.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescription.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionAzureFile.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionAzureFile.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionVolumeDisk.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionVolumeDisk.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationScopedVolumeProvider.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationScopedVolumeProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\CertificateRef.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\CertificateRef.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\CodePackage.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\CodePackage.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\Endpoint.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\Endpoint.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\EnvironmentVariable.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\EnvironmentVariable.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\FabricApplicationException.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\FabricApplicationException.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\ReliableCollectionsRef.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\ReliableCollectionsRef.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\GenerationConfig.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\GenerationConfig.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\ImageRegistryCredential.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\ImageRegistryCredential.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\Resource.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\Resource.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\Service.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\Service.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\ScalingPolicy.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\ScalingPolicy.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\Setting.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\Setting.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsDescription.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsDescription.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsSinkBase.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsSinkBase.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsRef.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsRef.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\AzureInternalMonitoringPipelineSinkDescription.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\AzureInternalMonitoringPipelineSinkDescription.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\Label.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\Label.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\NetworkRef.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\NetworkRef.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\SingleInstance\EndpointRef.cs">
+      <Link>System\Fabric\Management\ImageBuilder\SingleInstance\EndpointRef.cs</Link>
+    </Compile>
+    <Compile Include="$(SrcRoot)\prod\src\managed\Api\src\System\Fabric\Management\ImageBuilder\XmlUtility.cs">
+      <Link>System\Fabric\Management\ImageBuilder\XmlUtility.cs</Link>
+    </Compile>
+   <Compile Include="$(BinariesBuildTypeArchDirectory)\WindowsFabricServiceModel\ServiceFabricServiceModel.cs" />
+    <Compile Include="$(SrcRoot)\prod\src\managed\AppManifestCleanupUtil\SR.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SR.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.IO" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(PkgYamlDotNet_Signed_4_1_0)\lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\YamlDotNet.dll">
+      <Name>YamlDotNet.dll</Name>
+    </Reference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel.CsFileBuilder\System.Fabric.Management.ServiceModel.CsFileBuilder.csproj">
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+</ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -20,5 +20,14 @@ namespace Hosting2
 #endif
         // The network name to use when setting up a flat container network
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Setup", ContainerNetworkName, L"", Common::ConfigEntryUpgradePolicy::Static);
+
+        // The flag used to decide if isolated container network should be set up
+        PUBLIC_CONFIG_ENTRY(bool, L"Setup", IsolatedNetworkSetup, false, Common::ConfigEntryUpgradePolicy::Static);
+
+        // The network name to use when setting up an isolated container network
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Setup", IsolatedNetworkName, L"", Common::ConfigEntryUpgradePolicy::Static);
+
+        // The network interface to be used for isolated container network set up
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Setup", IsolatedNetworkInterfaceName, L"", Common::ConfigEntryUpgradePolicy::Static);
     };
 }

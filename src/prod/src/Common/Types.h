@@ -91,7 +91,10 @@ namespace Common
         void reset();
 
         std::string const & FilePath() const { return filePath_; }
-        void SetFilePath(std::string const & filePath) { filePath_ = filePath; }
+        void SetFilePath(std::string const & filePath) { filePath_ = move(filePath); }
+        
+        std::string const & PrivateKeyFilePath() const { return privateKeyFilePath_; }
+        void SetPrivateKeyFilePath(std::string const & privateKeyFilePath) { privateKeyFilePath_ = privateKeyFilePath; }
 
         static uint64 ObjCount();
 
@@ -99,6 +102,7 @@ namespace Common
         T* obj_ = nullptr;
         void (*deleter_)(T*) = nullptr;
         std::string filePath_;
+        std::string privateKeyFilePath_;
     };
 
     class X509Context : public CryptObjContext<X509>

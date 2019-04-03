@@ -31,6 +31,15 @@ namespace Hosting2
         _declspec(property(get = get_DockerManager)) DockerProcessManager & DockerProcessManagerObj;
         DockerProcessManager & get_DockerManager() override { return *dockerProcessManager_; };
 
+        _declspec(property(get = get_OverlayNetworkManager)) OverlayNetworkManager & OverlayNetworkManagerObj;
+        inline OverlayNetworkManager & get_OverlayNetworkManager() { return *overlayNetworkManager_; };
+
+        _declspec(property(get = get_IPAddressProvider)) IPAddressProvider & IPAddressProviderObj;
+        inline IPAddressProvider & get_IPAddressProvider() { return *ipAddressProvider_; };
+
+        _declspec(property(get = get_NatIPAddressProvider)) NatIPAddressProvider & NatIPAddressProviderObj;
+        inline NatIPAddressProvider & get_NatIPAddressProvider() { return *natIpAddressProvider_; };
+
         __declspec(property(get = get_JobQueue)) Common::DefaultTimedJobQueue<IContainerActivator> & JobQueueObject;
         Common::DefaultTimedJobQueue<IContainerActivator> & get_JobQueue() const override { return *requestJobQueue_; }
 
@@ -46,7 +55,8 @@ namespace Hosting2
             Common::AsyncOperationSPtr const & parent) override;
 
         Common::ErrorCode EndActivate(
-            Common::AsyncOperationSPtr const & operation) override;
+            Common::AsyncOperationSPtr const & operation,
+            std::wstring & containerId) override;
 
         Common::AsyncOperationSPtr BeginQuery(
             Hosting2::ContainerDescription const & containerDescription,
@@ -105,6 +115,22 @@ namespace Hosting2
         Common::ErrorCode EndDeleteImages(
             Common::AsyncOperationSPtr const & operation) override;
 
+        AsyncOperationSPtr BeginGetStats(
+            Hosting2::ContainerDescription const & containerDescription,
+            Hosting2::ProcessDescription const & processDescription,
+            std::wstring const & parentId,
+            std::wstring const & appServiceId,
+            TimeSpan const timeout,
+            AsyncCallback const & callback,
+            AsyncOperationSPtr const & parent) override;
+
+        ErrorCode EndGetStats(
+            AsyncOperationSPtr const & operation,
+            __out uint64 & memoryUsage,
+            __out uint64 & totalCpuTime,
+            __out Common::DateTime & timeRead) override;
+
+
         Common::AsyncOperationSPtr BeginInvokeContainerApi(
             Hosting2::ContainerDescription const & containerDescription,
             std::wstring const & httpVerb,
@@ -140,6 +166,128 @@ namespace Hosting2
 
         _declspec(property(get = get_ActivationManager)) FabricActivationManager const & ActivationManager;
         inline FabricActivationManager const & get_ActivationManager() const;
+
+        Common::AsyncOperationSPtr BeginAssignOverlayNetworkResources(
+            std::wstring const & nodeId,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & servicePackageId,
+            std::map<wstring, std::vector<std::wstring>> const & codePackageNetworkNames,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndAssignOverlayNetworkResources(
+            Common::AsyncOperationSPtr const & operation,
+            __out std::map<std::wstring, std::map<std::wstring, std::wstring>> & assignedNetworkResources) override;
+
+        Common::AsyncOperationSPtr BeginReleaseOverlayNetworkResources(
+            std::wstring const & nodeId,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & servicePackageId,
+            std::vector<std::wstring> const & networkNames,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndReleaseOverlayNetworkResources(
+            Common::AsyncOperationSPtr const & operation) override;
+
+        Common::AsyncOperationSPtr BeginCleanupAssignedOverlayNetworkResourcesToNode(
+            std::wstring const & nodeId,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndCleanupAssignedOverlayNetworkResourcesToNode(
+            Common::AsyncOperationSPtr const & operation) override;
+
+        Common::AsyncOperationSPtr BeginAttachContainerToNetwork(
+            std::wstring const & nodeId,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & containerId,
+            std::map<std::wstring, std::wstring> const & overlayNetworkResources,
+            Common::StringCollection const & dnsServerList,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndAttachContainerToNetwork(
+            Common::AsyncOperationSPtr const & operation) override;
+
+        Common::AsyncOperationSPtr BeginDetachContainerFromNetwork(
+            std::wstring const & nodeId,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & containerId,
+            std::vector<std::wstring> const & networkNames,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndDetachContainerFromNetwork(
+            Common::AsyncOperationSPtr const & operation) override;
+
+#if defined(PLATFORM_UNIX)
+        Common::AsyncOperationSPtr BeginSaveContainerNetworkParamsForLinuxIsolation(
+            std::wstring const & nodeId,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & containerId,
+            std::wstring const & openNetworkAssignedIp,
+            std::map<std::wstring, std::wstring> const & overlayNetworkResources,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndSaveContainerNetworkParamsForLinuxIsolation(
+            Common::AsyncOperationSPtr const & operation) override;
+
+        Common::AsyncOperationSPtr BeginClearContainerNetworkParamsForLinuxIsolation(
+            std::wstring const & nodeId,
+            std::wstring const & nodeName,
+            std::wstring const & nodeIpAddress,
+            std::wstring const & containerId,
+            std::vector<std::wstring> const & networkNames,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndClearContainerNetworkParamsForLinuxIsolation(
+            Common::AsyncOperationSPtr const & operation) override;
+#endif
+
+        Common::AsyncOperationSPtr BeginUpdateRoutes(
+            OverlayNetworkRoutingInformationSPtr const & routingInfo,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndUpdateRoutes(
+            Common::AsyncOperationSPtr const & operation) override;
+
+        Common::AsyncOperationSPtr BeginContainerUpdateRoutes(
+            std::wstring const & containerId,
+            ContainerDescription const & containerDescription,
+            Common::TimeSpan timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndContainerUpdateRoutes(
+            Common::AsyncOperationSPtr const & operation) override;
+
+        void GetDeployedNetworkCodePackages(
+            std::vector<std::wstring> const & servicePackageIds,
+            std::wstring const & codePackageName,
+            std::wstring const & networkName,
+            __out std::map<std::wstring, std::vector<std::wstring>> & networkReservedCodePackages) override;
+
+        void GetDeployedNetworkNames(
+            ServiceModel::NetworkType::Enum networkType,
+            std::vector<std::wstring> & networkNames) override;
+
+        void RetrieveGatewayIpAddresses(
+            ContainerDescription const & containerDescription,
+            __out std::vector<std::wstring> & gatewayIpAddresses) override;
+
+        Common::ErrorCode RegisterNatIpAddressProvider() override;
+
+        Common::ErrorCode UnregisterNatIpAddressProvider() override;
+
+        void AbortNatIpAddressProvider() override;
 
     protected:
         virtual Common::AsyncOperationSPtr OnBeginOpen(
@@ -215,12 +363,16 @@ namespace Hosting2
         class DeactivateAsyncOperation;
         friend class DeactivateAsyncOperation;
 
+        class GetContainerStatsAsyncOperation;
+        friend class GetContainerStatsAsyncOperation;
+
         class GetContainerLogsAsyncOperation;
         friend class GetContainerLogsAsyncOperation;
 
         class DownloadContainerImagesAsyncOperation;
         class DeleteContainerImagesAsyncOperation;
         class ContainerApiOperation;
+        class ContainerUpdateRoutesAsyncOperation;
 
         class InvokeContainerApiOperation;
         class SendIpcMessageAsyncOperation;
@@ -249,10 +401,29 @@ namespace Hosting2
         ContainerEngineTerminationCallback engineTerminationCallback_;
         ContainerHealthCheckStatusCallback healthCheckStatusCallback_;
 
-        // Provider that configures ip adresses
+        // Provider that configures ip addresses
         IPAddressProviderUPtr ipAddressProvider_;
 
+        // Provider that configures nat ip addresses
+        NatIPAddressProviderUPtr natIpAddressProvider_;
+
+        // Overlay network manager
+        OverlayNetworkManagerUPtr overlayNetworkManager_;
+
+        // Network plugin process manager
+        INetworkPluginProcessManagerSPtr networkPluginProcessManager_;
+
+        // This is the callback registered with the network plugin process manager.
+        // It is used by the plugin process manager when the plugin process is restarted.
+        NetworkPluginProcessRestartedCallback networkPluginProcessRestartedCallback_;
+
+        // Class supporting common overlay network operations
+        ContainerNetworkOperationUPtr containerNetworkOperations_;
+
         std::unique_ptr<Common::DefaultTimedJobQueue<IContainerActivator>> requestJobQueue_;
+
+        const DWORD NatIpRetryIntervalInMilliseconds = 30*1000;
+        const int NatIpRetryCount = 5;
 
 #if defined(PLATFORM_UNIX)
         void *containerStatusCallback_;

@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  <PropertyGroup>
+    <AssemblyName>WorkerRole</AssemblyName>
+    <RootNamespace>Microsoft.Fabric.InfrastructureWrapper</RootNamespace>
+    <ProjectGuid>{BEB523A8-3318-4431-8830-236EBD49E084}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <OutDirSuffix>$(AssemblyName).AzureSDK2.7</OutDirSuffix>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\WorkerRole.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\WindowsFabricRoleProperties.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="$(PkgWinFab_Azure_Libs)\Microsoft.WindowsAzure.ServiceRuntime.v2.7\Microsoft.WindowsAzure.ServiceRuntime.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <Copy SourceFiles="..\..\..\ServiceDefinition.AzureSDK2.7.csdef " DestinationFiles="$(OutDir)\ServiceDefinition.csdef" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="..\..\..\ServiceConfiguration.AzureSDK2.7.cscfg " DestinationFiles="$(OutDir)\ServiceConfiguration.cscfg" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\AzureSDK2.7" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\AzureSDK2.7" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

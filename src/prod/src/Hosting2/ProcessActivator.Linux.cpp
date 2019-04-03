@@ -492,13 +492,33 @@ private:
         WriteNoise(TraceType_Activator, owner_.Root.TraceId, "Launching process via fork and execve");
 
         char** env = nullptr;
-        int envIndex = 0;
-        if (envMap_.size() > 0)
+        if (!envMap_.empty())
         {
-            bool libpathExist = false;
-            const char* libpathName="LD_LIBRARY_PATH";
+            const char* libpathNameA = "LD_LIBRARY_PATH";
+            const wstring libpathNameW = L"LD_LIBRARY_PATH";
+            const char* hostEnvLibpathValueA = getenv(libpathNameA);
+            if (hostEnvLibpathValueA)
+            {
+                wstring& envMapLibpathValueW = envMap_[libpathNameW];
+                wstring hostEnvLibpathValueW;
+                StringUtility::Utf8ToUtf16(hostEnvLibpathValueA, hostEnvLibpathValueW);
+                if (envMapLibpathValueW.empty())
+                {
+                    envMapLibpathValueW = hostEnvLibpathValueW;
+                }
+                // Quick check to avoid adding host's lib path environment again
+                // for fabric processes (FabricGateway.exe, FileStoreService.exe etc.)
+                // which may already have it specified in their environment map.
+                // Note this quick check just looks at the entire value of the variable
+                // and not individual subpaths.
+                else if (envMapLibpathValueW.compare(hostEnvLibpathValueW) != 0)
+                {
+                    envMapLibpathValueW += L":" + hostEnvLibpathValueW;
+                }
+            }
 
-            env = new char *[envMap_.size() + 2];
+            int envIndex = 0;
+            env = new char *[envMap_.size() + 1];
             for (EnvironmentMap::iterator it = envMap_.begin(); it != envMap_.end(); it++) {
                 wstring envVariableW = it->first + L"=" + it->second;
                 string envVariableA;
@@ -506,22 +526,6 @@ private:
                 env[envIndex] = new char[envVariableA.length() + 1];
                 memcpy(env[envIndex], envVariableA.c_str(), envVariableA.length());
                 env[envIndex][envVariableA.length()] = 0;
-                envIndex++;
-
-                if(envVariableA.compare(libpathName)==0)
-                {
-                    libpathExist = true;
-                }
-            }
-
-            char* libpathValue = 0;
-            if(!libpathExist && (libpathValue = getenv(libpathName)))
-            {
-                int libpathLen = strlen(libpathName) + strlen(libpathValue) + 1;
-                env[envIndex] = new char[libpathLen + 1];
-                memcpy(env[envIndex],libpathName, strlen(libpathName));
-                env[envIndex][strlen(libpathName)] = '=';
-                memcpy(env[envIndex]+strlen(libpathName) + 1, libpathValue, strlen(libpathValue) + 1);
                 envIndex++;
             }
             env[envIndex] = 0;
@@ -1055,6 +1059,51 @@ int ProcessActivator::Test_QueryCgroupInfo(std::string const & cgroupName, uint6
         {
             memoryLimit = 0;
         }
+        if (error) goto CgroupQueryCleanup;
+    }
+    else
+    {
+        error = ECGFAIL;
+        goto CgroupQueryCleanup;
+    }
+CgroupQueryCleanup:
+     if (cgroupCP)
+     {
+        cgroup_free(&cgroupCP);
+     }
+     return error;
+}
+
+
+int ProcessActivator::GetCgroupUsage(std::string const & cgroupName, uint64 & cpuUsage, uint64 & memoryUsage)
+{
+    AcquireExclusiveLock grab(cgroupLock_);
+    struct cgroup * cgroupCP = nullptr;
+    int error = 0;
+
+    cgroupCP = cgroup_new_cgroup(cgroupName.c_str());
+    if (cgroupCP)
+    {
+        error = cgroup_get_cgroup(cgroupCP);
+        if (error) goto CgroupQueryCleanup;
+
+        auto memoryController = cgroup_get_controller(cgroupCP, "memory");
+        if (!memoryController) 
+        {
+            error = ECGFAIL;
+            goto CgroupQueryCleanup;
+        }
+        auto cpuController = cgroup_get_controller(cgroupCP, "cpuacct");
+        if (!cpuController) 
+        {
+            error = ECGFAIL;
+            goto CgroupQueryCleanup;
+        }
+        error = cgroup_get_value_uint64(memoryController, "memory.usage_in_bytes", &memoryUsage);
+        if (error) goto CgroupQueryCleanup;
+        
+        error = cgroup_get_value_uint64(cpuController, "cpuacct.usage", &cpuUsage);
+        
         if (error) goto CgroupQueryCleanup;
     }
     else

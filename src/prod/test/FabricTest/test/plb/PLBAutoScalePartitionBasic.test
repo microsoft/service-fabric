@@ -7,6 +7,7 @@ namingservice 1 1 1
 
 set NamingOperationTimeout 15
 set NamingOperationRetryTimeout 60
+set LoadBalancingEnabled false
 
 +10 ud=UD1
 +20 ud=UD2 

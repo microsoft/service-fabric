@@ -25,6 +25,7 @@
 #include "Reliability/Failover/FailoverPointers.h"
 
 // Common
+#include "Management/NetworkInventoryManager/common/NIMMessage.h"
 #include "Reliability/Failover/common/VersionedCuid.h"
 #include "Reliability/Failover/common/UpgradeDescription.h"
 #include "Reliability/Failover/common/ReplicaStatus.h"
@@ -86,3 +87,4 @@
 #include "Reliability/Failover/ServiceResolver.h"
 #include "Reliability/Failover/FederationWrapper.h"
 #include "Reliability/Failover/IReliabilitySubsystem.h"
+

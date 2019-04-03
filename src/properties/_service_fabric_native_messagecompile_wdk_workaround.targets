@@ -1,0 +1,15 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--Temporary workaround as right now the WDK expects the BuildType to be
+    something different-->
+  <Target Name="FixBuildType" BeforeTargets="RunWpp;MessageCompile;_Midl;_Xsd;Ctrpp" DependsOnTargets="PreBuildEvent">
+    <PropertyGroup>
+      <WorkaroundBuildType>$(BuildType)</WorkaroundBuildType>
+      <BuildType>Build</BuildType>
+    </PropertyGroup>
+  </Target>
+  <Target Name="FixBuildTypePost" BeforeTargets="BeforeClCompile" DependsOnTargets="RunWpp;MessageCompile;_Midl;_Xsd;Ctrpp">
+    <PropertyGroup>
+      <BuildType>$(WorkaroundBuildType)</BuildType>
+    </PropertyGroup>
+  </Target>
+</Project>

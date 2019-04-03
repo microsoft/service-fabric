@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Section Name="TestServiceCommunicationListenerEndpointTransportSettings">
+        <Parameter Name="MaxMessageSize" Value="10000000" />
+        <Parameter Name="SecurityCredentialsType" Value="X509" />
+        <Parameter Name="CertificateFindType" Value="FindByThumbprint" />
+        <Parameter Name="CertificateFindValue" Value="78 12 20 5a 39 d2 23 76 da a0 37 f0 5a ed e3 60 1a 7e 64 bf" />
+        <Parameter Name="CertificateStoreLocation" Value="LocalMachine" />
+        <Parameter Name="CertificateStoreName" Value="My" />
+        <Parameter Name="CertificateProtectionLevel" Value="EncryptAndSign" />
+        <Parameter Name="CertificateRemoteCommonNames" Value="WinFabric-Test-SAN1-Alice" />
+    </Section>
+</Settings>

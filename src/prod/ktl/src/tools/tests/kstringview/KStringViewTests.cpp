@@ -113,7 +113,7 @@ TestSequence()
         return Status;
     }
 
-	Status = UnencodeEscapeTestA();
+    Status = UnencodeEscapeTestA();
     if (!NT_SUCCESS(Status))
     {
         return Status;
@@ -125,7 +125,7 @@ TestSequence()
         return Status;
     }
 
-	Status = ConstructorsTestA();
+    Status = ConstructorsTestA();
     if (!NT_SUCCESS(Status))
     {
         return Status;
@@ -144,13 +144,13 @@ TestSequence()
         return Status;
     }
 
-	Status = InsertRemoveConcat();
+    Status = InsertRemoveConcat();
     if (!NT_SUCCESS(Status))
     {
         return Status;
     }
 
-	Status = InsertRemoveConcatA();
+    Status = InsertRemoveConcatA();
     if (!NT_SUCCESS(Status))
     {
         return Status;
@@ -348,6 +348,15 @@ KStringViewTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
+#if defined(PLATFORM_UNIX)
+    NTSTATUS status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+
     KTestPrintf("KStringViewTest: STARTED\n");
 
     NTSTATUS Result;
@@ -392,6 +401,11 @@ KStringViewTest(
     EventUnregisterMicrosoft_Windows_KTL();
 
     KTestPrintf("KStringViewTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return Result;
 }
 

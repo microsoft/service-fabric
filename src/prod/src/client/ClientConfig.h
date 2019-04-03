@@ -58,7 +58,7 @@ namespace Client
         // The back-off interval before retrying the operation
         PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", RetryBackoffInterval, Common::TimeSpan::FromSeconds(3), Common::ConfigEntryUpgradePolicy::Dynamic);
         // The max number of files that are transferred in parallel
-        PUBLIC_CONFIG_ENTRY(uint, L"FabricClient", MaxFileSenderThreads, 8, Common::ConfigEntryUpgradePolicy::Static);
+        PUBLIC_CONFIG_ENTRY(uint, L"FabricClient", MaxFileSenderThreads, 4, Common::ConfigEntryUpgradePolicy::Static);
 
         //
         // Chunk based FileTransfer
@@ -88,6 +88,9 @@ namespace Client
         // The interval for retrying of sending the file chunks
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileChunkRetryInterval, Common::TimeSpan::FromMilliseconds(2000), Common::ConfigEntryUpgradePolicy::Dynamic);
 
+        // The max interval to wait before retrying the sending of the file chunks
+        INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileChunkMaxRetryInterval, Common::TimeSpan::FromMilliseconds(10000), Common::ConfigEntryUpgradePolicy::Dynamic);
+
         // The interval for retrying the create upload session operation
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileCreateSendRetryInterval, Common::TimeSpan::FromMilliseconds(200), Common::ConfigEntryUpgradePolicy::Dynamic);
 
@@ -98,7 +101,7 @@ namespace Client
         INTERNAL_CONFIG_ENTRY(int, L"FabricClient", NumberOfFileCreateRequestsSent, 10, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // The max number of file chunk send attempts for retrying the operation
-        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", FileChunkRetryAttempt, 200, Common::ConfigEntryUpgradePolicy::Dynamic);
+        INTERNAL_CONFIG_ENTRY(int, L"FabricClient", FileChunkRetryAttempt, 500, Common::ConfigEntryUpgradePolicy::Dynamic);
 
         // The interval after which file upload commit message is sent again because of no response from the file store service.
         INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"FabricClient", FileUploadCommitRetryInterval, Common::TimeSpan::FromSeconds(30), Common::ConfigEntryUpgradePolicy::Dynamic);

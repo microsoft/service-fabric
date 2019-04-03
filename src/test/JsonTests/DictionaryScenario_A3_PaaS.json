@@ -5,7 +5,7 @@
     {
       "Name": "DictionaryScenario-36P-6N-WCF (A3)",
       "Type": "Azure_ScriptTest_Perf_Quark",
-      "Owners": "HaNagar, SumukhS",
+      "Owners": "kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -22,7 +22,7 @@
     {
       "Name": "DictionaryScenario-3P-3N-WCF (A3)",
       "Type": "Azure_ScriptTest_Perf_Quark",
-      "Owners": "HaNagar, SumukhS",
+      "Owners": "kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -39,7 +39,7 @@
     {
       "Name": "DictionaryScenario-36P-3N-WCF (A3)",
       "Type": "Azure_ScriptTest_Perf_Quark",
-      "Owners": "HaNagar, SumukhS",
+      "Owners": "kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -56,7 +56,7 @@
     {
       "Name": "DictionaryScenario-36P-3N (A3)",
       "Type": "Azure_ScriptTest_Perf_Quark",
-      "Owners": "HaNagar, SumukhS",
+      "Owners": "kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -73,7 +73,7 @@
     {
       "Name": "DictionaryScenario-36P-36N (A3)",
       "Type": "Azure_ScriptTest_Perf_Quark",
-      "Owners": "HaNagar, SumukhS",
+      "Owners": "kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "Perf",
@@ -90,7 +90,7 @@
     {
       "Name": "DictionaryScenario-3P-3N-Backups (A3)",
       "Type": "Azure_ScriptTest_Perf_Quark",
-      "Owners": "HaNagar, SumukhS",
+      "Owners": "kailasl,preethas",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "Perf",

@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Microsoft.ServiceFabric.DeploymentManager</AssemblyName>
+    <AssemblyDescription>Fabric Common Deployment Library</AssemblyDescription>
+    <RootNamespace>Microsoft.ServiceFabric.DeploymentManager</RootNamespace>
+    <ProjectGuid>{738570C5-43DB-4C00-AB7B-6975ECA8A61E}</ProjectGuid>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>INTERNAL_COMMON_ASSEMBLY;TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Common\MachineHealthContainer.cs" />
+    <Compile Include="BPA\AnalysisSummary.cs" />
+    <Compile Include="BPA\BestPracticesAnalyzer.cs" />
+    <Compile Include="ClusterCreationOptions.cs" />
+    <Compile Include="Common\StandaloneAdminConfig.cs" />
+    <Compile Include="Common\StandAloneCertificateClusterUpgradeState.cs" />
+    <Compile Include="Common\StandAloneClusterManifestBuilderActivator.cs" />
+    <Compile Include="Common\StandAloneClusterManifestSettings.cs" />
+    <Compile Include="Common\StandAloneCluster.cs" />
+    <Compile Include="Common\StandAloneClusterJsonDeserializer.cs" />
+    <Compile Include="Common\StandAloneClusterTopology.cs" />
+    <Compile Include="Common\StandAloneFabricSettingsGenerator.cs" />
+    <Compile Include="Common\StandAloneFabricSettingsActivator.cs" />
+    <Compile Include="Common\StandaloneSettingsValidator.cs" />
+    <Compile Include="Common\StandAloneSimpleClusterUpgradeState.cs" />
+    <Compile Include="Common\StandAloneAutoScaleClusterUpgradeState.cs" />
+    <Compile Include="Common\StandAloneStringConstants.cs" />
+    <Compile Include="Common\StandAloneTraceLogger.cs" />
+    <Compile Include="Common\StandAloneUpgradeStateActivator.cs" />
+    <Compile Include="Common\StandaloneUserConfig.cs" />
+    <Compile Include="Common\StandaloneUtility.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="DeploymentManager.cs" />
+    <Compile Include="DeploymentManagerInternal.cs" />
+    <Compile Include="Model\DownloadableRuntimeVersionsReturnSet.cs" />
+    <Compile Include="Model\GoalStateModel.cs" />
+    <Compile Include="Model\PropertyJune2018.cs" />
+    <Compile Include="Model\RuntimePackageDetails.cs" />
+    <Compile Include="Model\NodeDescriptionGA.cs" />
+    <Compile Include="Model\NodeTypeDescriptionGA.cs" />
+    <Compile Include="Model\NodeTypeDescriptionAugust2017.cs" />
+    <Compile Include="Model\PackageDetails.cs" />
+    <Compile Include="Model\PropertyGA.cs" />
+    <Compile Include="Model\PropertyApril2017.cs" />
+    <Compile Include="Model\PropertyJanuary2017.cs" />
+    <Compile Include="Model\SecurityGA.cs" />
+    <Compile Include="Model\SecurityBase.cs" />
+    <Compile Include="Model\SecurityJanuary2017.cs" />
+    <Compile Include="Model\StandAloneInstallerJSONModelGA.cs" />
+    <Compile Include="Common\StandAloneSeedNodeUpgradeState.cs" />
+    <Compile Include="Common\StandAloneBaselineUpgradeState.cs" />
+    <Compile Include="Common\StandAloneClusterManifestBuilder.cs" />
+    <Compile Include="Model\StandAloneInstallerJSONModelApril2017.cs" />
+    <Compile Include="Model\StandAloneInstallerJSONModelBase.cs" />
+    <Compile Include="Model\StandAloneInstallerJSONModelJan2017.cs" />
+    <Compile Include="Model\StandAloneInstallerJSONModelAugust2017.cs" />
+    <Compile Include="Model\StandAloneInstallerJSONModelJune2018.cs" />
+    <Compile Include="Model\StandAloneInstallerJSONModelOctober2017.cs" />
+    <Compile Include="Model\DevJsonModel.cs" />
+    <Compile Include="Model\StandAloneInstallerJSONModelMay2017.cs" />
+    <Compile Include="Model\PropertyMay2017.cs" />
+    <Compile Include="Model\PropertyAugust2017.cs" />
+    <Compile Include="Model\PropertyOctober2017.cs" />
+    <Compile Include="Model\PropertyBase.cs" />
+    <Compile Include="Model\SecurityMay2017.cs" />
+    <Compile Include="Model\SecurityOctober2017.cs" />
+    <Compile Include="Model\X509GA.cs" />
+    <Compile Include="Model\X509May2017.cs" />
+    <Compile Include="Model\X509October2017.cs" />
+    <Compile Include="Model\WindowsJanuary2017.cs" />
+    <Compile Include="SFDeployerTrace.cs" />
+    <Compile Include="Model\WindowsBase.cs" />
+    <Compile Include="_friends.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.DirectoryServices.AccountManagement" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="$(PkgNewtonsoft_Json_6_0)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+    <ProjectReference Include="..\Microsoft.ServiceFabric.ClusterManagementCommon\Microsoft.ServiceFabric.ClusterManagementCommon.csproj">
+      <Project>{F4598049-C09F-4A6C-A5C7-9D215EF355CA}</Project>
+      <Name>Microsoft.ServiceFabric.ClusterManagementCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Management\System.Fabric.Management.csproj">
+      <Project>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</Project>
+      <Name>System.Fabric.Management</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599f-c6b0-4c47-ae92-5bdafe19f12e}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Strings\system.fabric.strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <Reference Include="System.Management" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClusterSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DefaultCsmInitiatedUpgradePolicy.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="WRPSettings.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <BinplaceFiles Include="$(SrcRoot)\prod\src\managed\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager\WRPSettings.xml" />
+      <BinplaceFiles Include="$(SrcRoot)\prod\src\managed\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager\ClusterSettings.json" />
+      <BinplaceFiles Include="$(SrcRoot)\prod\src\managed\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager\DefaultCsmInitiatedUpgradePolicy.json" />
+      <BinplaceFilesToWinFabricTest Include="$(SrcRoot)\prod\src\managed\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager\WRPSettings.xml" />
+      <BinplaceFilesToWinFabricTest Include="$(SrcRoot)\prod\src\managed\Api\Dlls\Microsoft.ServiceFabric.DeploymentManager\ClusterSettings.json" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTestInfra" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFilesToWinFabricTest)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

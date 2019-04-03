@@ -10,9 +10,9 @@
 #include "Common/TimerEventSource.h"
 #include "Common/GeneralEventSource.h"
 #include "Common/ConfigEventSource.h"
+#include "ServiceModel/SchemaNames.h"
 #include <iomanip>
 #include <regex>
-#include <mutex>
 
 #ifdef PLATFORM_UNIX
 #include <unistd.h>

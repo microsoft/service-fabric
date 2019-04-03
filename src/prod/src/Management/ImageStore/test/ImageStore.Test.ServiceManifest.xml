@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="TestServices" Version="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>Package which supports all test service types</Description>
+
+    <ServiceTypes>
+        <StatelessServiceType ServiceTypeName="TestServiceType1" />
+        <StatefulServiceType ServiceTypeName="TestServiceType2" />
+        <StatefulServiceType ServiceTypeName="TestServiceType3" />
+    </ServiceTypes>
+
+  <CodePackage Name="TestService.Code" Version="1.0">
+    <EntryPoint>
+      <ExeHost>
+          <Program>MyEntryPoint.exe</Program>
+      </ExeHost>
+    </EntryPoint>    
+  </CodePackage>
+  <ConfigPackage Name="TestService.Config" Version="1.0" />
+  <DataPackage Name="TestService.Data" Version="1.0" />
+</ServiceManifest>

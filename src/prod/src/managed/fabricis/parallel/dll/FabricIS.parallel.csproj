@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{EDB25CBC-9AEA-4629-B28D-984E7B5C3AF9}</ProjectGuid>
+    <RootNamespace>System.Fabric.InfrastructureService.Parallel</RootNamespace>
+    <AssemblyName>FabricIS.parallel</AssemblyName>
+    <AssemblyDescription>Fabric Infrastructure Service with parallel job handling mechanism.</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Actions\ActionHelper.cs" />
+    <Compile Include="Actions\CancelJobAction.cs" />
+    <Compile Include="Actions\CancelRestoringHealthCheckAction.cs" />
+    <Compile Include="Actions\ClaimedRepairTaskAction.cs" />
+    <Compile Include="Actions\CoordinatorContext.cs" />
+    <Compile Include="Actions\MoveToCompletedAction.cs" />
+    <Compile Include="Actions\RequestRepairAction.cs" />
+    <Compile Include="CommandHandling\AllowActionMap.cs" />
+    <Compile Include="CommandHandling\AllowActionRecord.cs" />
+    <Compile Include="Coordinator\AzureParallelDisabledCoordinator.cs" />
+    <Compile Include="Coordinator\AzureParallelDisabledCoordinatorFactory.cs" />
+    <Compile Include="Coordinator\AzureParallelInfrastructureCoordinator.cs" />
+    <Compile Include="Coordinator\AzureParallelInfrastructureCoordinatorFactory.cs" />
+    <Compile Include="CommandHandling\CoordinatorCommandProcessor.cs" />
+    <Compile Include="Coordinator\CoordinatorDiagnosticInfo.cs" />
+    <Compile Include="CommandHandling\CoordinatorStateData.cs" />
+    <Compile Include="CommandHandling\IAllowActionMap.cs" />
+    <Compile Include="CommandHandling\IAllowActionRecord.cs" />
+    <Compile Include="Coordinator\CoordinatorEnvironment.cs" />
+    <Compile Include="Coordinator\ManagementChannelTerminallyUnhealthyException.cs" />
+    <Compile Include="Helpers\ImpactedRoleInstance.cs" />
+    <Compile Include="Helpers\RepairTaskExecutorData.cs" />
+    <Compile Include="Helpers\RepairTaskPrepareArgs.cs" />
+    <Compile Include="IActionableWorkItem.cs" />
+    <Compile Include="ImpactTranslator.cs" />
+    <Compile Include="JobClassifier.cs" />
+    <Compile Include="Policies\ExternalAllowActionPolicy.cs" />
+    <Compile Include="Policies\PrePostExecuteActionPolicy.cs" />
+    <Compile Include="Repairs\IRepairTask.cs" />
+    <Compile Include="Actions\AckJobAction.cs" />
+    <Compile Include="Actions\CancelRepairTaskAction.cs" />
+    <Compile Include="Actions\CreateInPreparingAction.cs" />
+    <Compile Include="Actions\ExecuteJobAction.cs" />
+    <Compile Include="Actions\MoveToExecutingAction.cs" />
+    <Compile Include="Actions\MoveToPreparingAction.cs" />
+    <Compile Include="Actions\MoveToRestoringAction.cs" />
+    <Compile Include="Policies\JobThrottlingActionPolicy.cs" />
+    <Compile Include="Policies\DefaultActionPolicyFactory.cs" />
+    <Compile Include="Actions\IAction.cs" />
+    <Compile Include="Policies\IActionPolicy.cs" />
+    <Compile Include="Policies\IActionPolicyFactory.cs" />
+    <Compile Include="Helpers\RepairActionProvider.cs" />
+    <Compile Include="Policies\JobBlockingActionPolicy.cs" />
+    <Compile Include="Actions\Action.cs" />
+    <Compile Include="Actions\ActionFactory.cs" />
+    <Compile Include="Actions\ActionType.cs" />
+    <Compile Include="Policies\ActionPolicy.cs" />
+    <Compile Include="Reconciler.cs" />
+    <Compile Include="Repairs\ServiceFabricRepairTask.cs" />
+    <Compile Include="Telemetry\ActivityEvent.cs" />
+    <Compile Include="Telemetry\ActivityEventHelper.cs" />
+    <Compile Include="Telemetry\ActivityEventType.cs" />
+    <Compile Include="Telemetry\ActivityLoggerFactory.cs" />
+    <Compile Include="Telemetry\ChangeStateEvent.cs" />
+    <Compile Include="Telemetry\IActivityEvent.cs" />
+    <Compile Include="Helpers\BondHelper.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="Helpers\CoordinatorHelper.cs" />
+    <Compile Include="IMappedTenantJob.cs" />
+    <Compile Include="IMappedRepairTask.cs" />
+    <Compile Include="PolicyAgent\IPolicyAgentClient.cs" />
+    <Compile Include="PolicyAgent\IPolicyAgentServiceWrapper.cs" />
+    <Compile Include="Repairs\IRepairManager.cs" />
+    <Compile Include="Repairs\IRepairManagerFactory.cs" />
+    <Compile Include="Helpers\JobSummary.cs" />
+    <Compile Include="MappedTenantJob.cs" />
+    <Compile Include="MappedRepairTask.cs" />
+    <Compile Include="PolicyAgent\PolicyAgentClient.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="PolicyAgent\PolicyAgentServiceWrapper.cs" />
+    <Compile Include="Repairs\ServiceFabricRepairManager.cs" />
+    <Compile Include="Repairs\ServiceFabricRepairManagerFactory.cs" />
+    <Compile Include="Telemetry\IActivityLogger.cs" />
+    <Compile Include="Telemetry\IActivityLoggerFactory.cs" />
+    <Compile Include="Telemetry\OperationEvent.cs" />
+    <Compile Include="Telemetry\OperationResult.cs" />
+    <Compile Include="Telemetry\TraceActivitySubject.cs" />
+    <Compile Include="Wrappers\IImpactInfo.cs" />
+    <Compile Include="Wrappers\IJobStepInfo.cs" />
+    <Compile Include="Wrappers\ImpactInfoWrapper.cs" />
+    <Compile Include="Wrappers\IPolicyAgentDocumentForTenant.cs" />
+    <Compile Include="Wrappers\IRoleInstanceImpactedByJob.cs" />
+    <Compile Include="Wrappers\ITenantJob.cs" />
+    <Compile Include="Wrappers\JobStepInfoWrapper.cs" />
+    <Compile Include="Wrappers\PolicyAgentDocumentForTenantWrapper.cs" />
+    <Compile Include="Wrappers\RoleInstanceImpactedByJobWrapper.cs" />
+    <Compile Include="Wrappers\TenantJobWrapper.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\dll\FabricIS.common.csproj">
+      <Project>{b2c86537-979a-473a-b5a0-f9d1082a7e22}</Project>
+      <Name>FabricIS.common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\schema\FabricIS.parallel.schema.csproj">
+      <Project>{a14cf6a8-0565-4282-806e-82d44001cfb5}</Project>
+      <Name>FabricIS.parallel.schema</Name>
+    </ProjectReference>
+    <!-- 
+    Note: Use net45 instead of portable-net45+wp80+win8+wpa81+dnxcore50 for now till CoreCLR v-team gets back to us
+    about correct usage.
+    -->
+    <Reference Include="$(PkgBond_Core_CSharp)\lib\net45\Bond.dll">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="$(PkgBond_Core_CSharp)\lib\net45\Bond.Attributes.dll">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="$(PkgBond_Core_CSharp)\lib\net45\Bond.Reflection.dll">
+      <Private>True</Private>
+    </Reference>
+    <!-- 
+    TODO - migrate to 8.0.3 or later
+    FabricIS functionality has been verified with version 8.0.3 which is CoreCLR compatible and also supported on CoreXT4. 
+    But this caused CIT failures in other modules that referenced Newtonsoft.json. So, leaving this up to the 
+    CoreCLR/SF-build v-teams to handle this version upgrade across the entire code base. 
+
+    Bug: 6998835
+
+    Till then FabricIS isn't CoreCLR compatible.
+    -->
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\IS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

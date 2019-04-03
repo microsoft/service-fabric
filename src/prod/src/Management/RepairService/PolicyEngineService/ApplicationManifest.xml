@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest ApplicationTypeName="RepairPolicyEngineApplication" ApplicationTypeVersion="!FABRIC_VERSION!" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Description>
+  RepairPolicyEngineService monitors Microsoft Azure Service Fabric nodes and if there are any reported health errors reported against the node
+  for specific amount of time it will schedule repairs based on the policies.
+  </Description>
+  <Parameters>
+  <!-- Not sure we need to have constraints for Policy -->
+    <Parameter Name="RepairPolicy_PlacementConstraint" DefaultValue="" />
+  </Parameters>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="RepairPolicyEnginePackage" ServiceManifestVersion="!FABRIC_VERSION!" />
+  </ServiceManifestImport>
+  <DefaultServices>
+    <Service Name="RepairPolicyEngineService">
+      <StatefulService ServiceTypeName="RepairPolicyEngineService" TargetReplicaSetSize="3" MinReplicaSetSize="1">
+        <SingletonPartition />
+        <PlacementConstraints>[RepairPolicy_PlacementConstraint]</PlacementConstraints>
+      </StatefulService>
+    </Service>
+  </DefaultServices>
+</ApplicationManifest>

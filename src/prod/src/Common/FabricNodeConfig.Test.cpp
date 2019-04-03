@@ -9,8 +9,6 @@
 #include "Common/boost-taef.h"
 #include "Common/Config.h"
 
-#define FabricNodeConfigTestTraceType "FabricNodeConfigTest"
-
 namespace Common
 {
     using namespace std;
@@ -24,7 +22,7 @@ namespace Common
         void CreateConfigSettings(wstring const & nodeVersion, __out ConfigSettings & configSettings);
     };
 
-    BOOST_FIXTURE_TEST_SUITE(NodeConfigTests,FabricNodeConfigTest)
+    BOOST_FIXTURE_TEST_SUITE2(NodeConfigTests,FabricNodeConfigTest)
 
     BOOST_AUTO_TEST_CASE(VersionLoadTest)
     {
@@ -42,7 +40,7 @@ namespace Common
 
         // get the node version
         auto nodeVersion= nodeConfig->NodeVersion;
-        WriteInfo(FabricNodeConfigTestTraceType, "nodeConfig->NodeVersion = {0}", nodeVersion.ToString());
+        WriteInfo(TraceType, "nodeConfig->NodeVersion = {0}", nodeVersion.ToString());
         
         // check if it is the same
         VERIFY_IS_TRUE(nodeVersionV1 == nodeVersion.ToString());
@@ -68,7 +66,7 @@ namespace Common
             nodeConfig = make_shared<FabricNodeConfig>(configStore);
 
             auto nodeVersion= nodeConfig->NodeVersion;
-            WriteInfo(FabricNodeConfigTestTraceType, "nodeConfig->NodeVersion = {0}", nodeVersion.ToString());
+            WriteInfo(TraceType, "nodeConfig->NodeVersion = {0}", nodeVersion.ToString());
             VERIFY_IS_TRUE(nodeVersionString == nodeVersion.ToString());
         }
 
@@ -92,7 +90,7 @@ namespace Common
             configStore->Update(updatedConfigSettings);
             VERIFY_IS_TRUE(waiter->WaitOne(5000));
 
-            WriteInfo(FabricNodeConfigTestTraceType, "updatedNodeVersion = {0}", updatedNodeVersion.ToString());
+            WriteInfo(TraceType, "updatedNodeVersion = {0}", updatedNodeVersion.ToString());
             VERIFY_IS_TRUE(updatedNodeVersionString == nodeConfig->NodeVersion.ToString());
         }
         
@@ -107,7 +105,7 @@ namespace Common
             configStore->Update(updatedConfigSettings);
             VERIFY_IS_TRUE(waiter->WaitOne(5000));
 
-            WriteInfo(FabricNodeConfigTestTraceType, "updatedNodeVersion = {0}", updatedNodeVersion.ToString());
+            WriteInfo(TraceType, "updatedNodeVersion = {0}", updatedNodeVersion.ToString());
             VERIFY_IS_TRUE(updatedNodeVersionString == nodeConfig->NodeVersion.ToString());
         }
         
@@ -122,7 +120,7 @@ namespace Common
             configStore->Update(updatedConfigSettings);
             VERIFY_IS_TRUE(waiter->WaitOne(5000));
 
-            WriteInfo(FabricNodeConfigTestTraceType, "updatedNodeVersion = {0}", updatedNodeVersion.ToString());
+            WriteInfo(TraceType, "updatedNodeVersion = {0}", updatedNodeVersion.ToString());
             VERIFY_IS_TRUE(updatedNodeVersionString == nodeConfig->NodeVersion.ToString());
         }
         
@@ -137,7 +135,7 @@ namespace Common
             configStore->Update(updatedConfigSettings);
             VERIFY_IS_TRUE(waiter->WaitOne(5000));
 
-            WriteInfo(FabricNodeConfigTestTraceType, "updatedNodeVersion = {0}", updatedNodeVersion.ToString());
+            WriteInfo(TraceType, "updatedNodeVersion = {0}", updatedNodeVersion.ToString());
             VERIFY_IS_TRUE(updatedNodeVersionString == nodeConfig->NodeVersion.ToString());
         }
         
@@ -158,7 +156,7 @@ namespace Common
         fabricNodeConfigSection.Parameters[nodeVersionParam.Name] = nodeVersionParam;
         
         configSettings.Sections[fabricNodeConfigSection.Name] = fabricNodeConfigSection;
-        WriteInfo(FabricNodeConfigTestTraceType, "Configuration Settings: {0}", configSettings);
+        WriteInfo(TraceType, "Configuration Settings: {0}", configSettings);
     }
     bool FabricNodeConfigTest::Setup()
     {

@@ -7,6 +7,9 @@
 
 namespace ServiceModel
 {
+    class QueryPagingDescription;
+    typedef std::unique_ptr<QueryPagingDescription> QueryPagingDescriptionUPtr;
+
     class QueryPagingDescription
         : public Serialization::FabricSerializable
         , public Common::IFabricJsonSerializable
@@ -33,7 +36,7 @@ namespace ServiceModel
         Common::ErrorCode FromPublicApi(FABRIC_QUERY_PAGING_DESCRIPTION const & pagingDescription);
         void ToPublicApi(__in Common::ScopedHeap & heap, __out FABRIC_QUERY_PAGING_DESCRIPTION &) const;
 
-        void SetQueryArguments(__out QueryArgumentMap & argMap) const;
+        void SetQueryArguments(__inout QueryArgumentMap & argMap) const;
 
         // Fills out this object with values from argMap
         Common::ErrorCode GetFromArgumentMap(QueryArgumentMap const & argMap);
@@ -55,7 +58,7 @@ namespace ServiceModel
 
         BEGIN_JSON_SERIALIZABLE_PROPERTIES()
             SERIALIZABLE_PROPERTY(ServiceModel::Constants::ContinuationToken, continuationToken_);
-            SERIALIZABLE_PROPERTY(ServiceModel::Constants::MaxResults, maxResults_);
+        SERIALIZABLE_PROPERTY(ServiceModel::Constants::MaxResults, maxResults_);
         END_JSON_SERIALIZABLE_PROPERTIES()
 
     private:
@@ -63,4 +66,3 @@ namespace ServiceModel
         int64 maxResults_;
     };
 }
-

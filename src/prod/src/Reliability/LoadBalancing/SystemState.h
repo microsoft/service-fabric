@@ -80,7 +80,10 @@ namespace Reliability
             virtual size_t BalancingMovementCount() const;
             virtual size_t PlacementMovementCount() const;
 
+            // Creates placement and checker based on closure type.
             void CreatePlacementAndChecker(PartitionClosureType::Enum closureType) const;
+            // Creates placement and checker based on scheduler action (checker may be different for different actions)
+            void CreatePlacementAndChecker(PLBSchedulerActionType::Enum action) const;
 
             ServiceDomain & serviceDomain_;
 

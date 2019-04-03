@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generate Custom Resource File needed by FabricResources.dll -->
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SrcRoot)\prod\src\resources\dll\Definitions.props"/>
+  <Target Name="BeforeBuild" Outputs="$(GeneratedRCFile)" Inputs="$(SrcRoot)\prod\src\inc\resourceids.h">
+    <MakeDir Directories="$(O)" />
+    <Exec Command="perl resgen.pl $(SrcRoot)\prod\src\inc\resourceids.h $(GeneratedRCFile)" />
+  </Target>
+</Project>

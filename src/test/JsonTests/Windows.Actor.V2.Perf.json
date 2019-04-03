@@ -5,7 +5,7 @@
     {
       "Name": "ActorWriteKVS3NV2 (D4)",
       "Type": "Azure_ScriptTest_Perf",
-      "Owners": "suchia,abhisram,amanbha,harahma",
+      "Owners": "suchia,abhisram,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -22,7 +22,7 @@
     {
       "Name": "ActorRead3NV2 (D4)",
       "Type": "Azure_ScriptTest_Perf",
-      "Owners": "suchia,abhisram,amanbha,harahma",
+      "Owners": "suchia,abhisram,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -39,7 +39,7 @@
     {
       "Name": "ActorDataSizeKVS3NV2 (D4)",
       "Type": "Azure_ScriptTest",
-      "Owners": "suchia,abhisram,amanbha,harahma",
+      "Owners": "suchia,abhisram,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -54,7 +54,7 @@
     {
       "Name": "ActorWriteKVS36NV2 (D4)",
       "Type": "Azure_ScriptTest",
-      "Owners": "suchia,abhisram,amanbha,harahma",
+      "Owners": "suchia,abhisram,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",
@@ -69,7 +69,7 @@
     {
       "Name": "ActorRead36NV2 (D4)",
       "Type": "Azure_ScriptTest",
-      "Owners": "suchia,abhisram,amanbha,harahma",
+      "Owners": "suchia,abhisram,amanbha",
       "ResourcesRequired": "Server:1&Azure:1",
       "TestExecutionParameters": {
         "SetupType": "XCopy",

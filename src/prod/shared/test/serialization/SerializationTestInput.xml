@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Data>
+    <Table Id="Test">
+        <ParameterTypes>
+            <ParameterType Name="Parameters" Array="true">String</ParameterType>
+        </ParameterTypes>
+        <Row Name="Test">
+            <Parameter Name="Parameters">
+		<Value>BasicSerializationTest:</Value>
+		<Value>BasicSerializationWithChildTest:</Value>
+		<Value>BasicVersioningChildReadBaseTest:</Value>
+		<Value>BasicVersioningChildTest:</Value>
+		<Value>BasicVersioningChild2Test:</Value>
+		<Value>BasicNestedObjectTest:</Value>
+		<Value>BasicObjectWithPointersTest:</Value>
+		<Value>PolymorphicObjectChildTest:</Value>
+		<Value>BasicObjectVersioningV1ToV2Test:</Value>
+		<Value>BasicObjectVersioningV2ToV1ToV2Test:</Value>
+		<Value>ObjectWithArraysVersioningV1ToV2Test:</Value>
+		<Value>ObjectWithArraysVersioningV2ToV1ToV2Test:</Value>
+		<Value>InheritedObjectV2ToV1ToV2Test:</Value>
+		<Value>BasicRvdObjectTest:</Value>
+		<Value>TreeObjectTest:</Value>
+		<Value>TreeObjectMixedVersionsTest:</Value>
+		<Value>BadObjectVersioningV2ToV1WithUnknownByteArrayNoCopy:</Value>
+            </Parameter>
+        </Row>
+    </Table>
+</Data>

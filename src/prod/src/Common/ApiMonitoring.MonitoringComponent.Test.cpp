@@ -308,7 +308,7 @@ void TestMonitoringComponent::TestSetup()
 
     CreateComponent();
 
-    component_->Open(MonitoringComponentMetadata(L"", L""));
+    component_->Open(MonitoringComponentMetadata(L"", Federation::NodeInstance()));
 }
 
 bool TestMonitoringComponent::TestCleanup()

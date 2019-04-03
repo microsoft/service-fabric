@@ -853,6 +853,16 @@ KAsyncHelperTests(int argc, WCHAR* args[])
     KTestPrintf("KAsyncQueueUserTests: STARTED\n");
     NTSTATUS status = STATUS_SUCCESS;
 
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+
+	
     if ((status = KQuotaGateTest(argc, args)) != STATUS_SUCCESS)
     {
         KTestPrintf("KQuotaGateTest Unit Test: FAILED\n");
@@ -875,6 +885,11 @@ KAsyncHelperTests(int argc, WCHAR* args[])
     }
 
     KTestPrintf("KAsyncQueueUserTests: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+	KtlTraceUnregister();
+#endif	
+	
     return status;
 }
 

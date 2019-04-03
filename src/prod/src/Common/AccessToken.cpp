@@ -67,12 +67,20 @@ ErrorCode AccessToken::CreateProcessToken(HANDLE processHandle, DWORD desiredAcc
 
 ErrorCode AccessToken::CreateRestrictedToken(PSID sidToDeny, __out AccessTokenSPtr & restrictedToken)
 {
+    UNREFERENCED_PARAMETER(sidToDeny);
+
     restrictedToken = make_shared<AccessToken>();
     return ErrorCode::Success();
 }
 
-ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountName, wstring const & domain, wstring const & password, PSID const & sid, __out AccessTokenSPtr & accessToken)
+ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountName, wstring const & domain, wstring const & password, bool loadProfile, PSID const & sid, __out AccessTokenSPtr & accessToken)
 {
+    UNREFERENCED_PARAMETER(serviceAccountName);
+    UNREFERENCED_PARAMETER(domain);
+    UNREFERENCED_PARAMETER(password);
+    UNREFERENCED_PARAMETER(loadProfile);
+    UNREFERENCED_PARAMETER(sid);
+
     accessToken = make_shared<AccessToken>();
     return ErrorCode::Success();
 }
@@ -270,10 +278,10 @@ ErrorCode AccessToken::GetUserTokenAndProfileHandle(
         }
         tokenHandle = TokenHandle::CreateSPtr(token);
     }
+
     if (loadProfile)
     {
         PROFILEINFO profileInfo = { 0 };
-        ::ZeroMemory(&profileInfo, sizeof(PROFILEINFO));
         profileInfo.dwSize = sizeof(profileInfo);
         profileInfo.lpUserName = (LPWSTR)&accountName[0];
 
@@ -288,9 +296,15 @@ ErrorCode AccessToken::GetUserTokenAndProfileHandle(
                 error);
             return error;
         }
-
         profileHandle = ProfileHandle::CreateSPtr(tokenHandle, profileInfo.hProfile);
+
+        TraceInfo(
+            TraceTaskCodes::Common,
+            TraceType_AccessToken,
+            "LoadUserProfileW succeeded for {0}.",
+            accountName);
     }
+
     return ErrorCode(ErrorCodeValue::Success);
 }
 
@@ -521,12 +535,12 @@ ErrorCode AccessToken::CreateDomainUserToken(
     return AccessToken::CreateUserToken(userName, domain, password.GetPlaintext(), logonType, LOGON32_PROVIDER_DEFAULT, loadProfile, sid, accessToken);
 }
 
-ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountName, wstring const & domain, wstring const & password, PSID const & sid, __out AccessTokenSPtr & accessToken)
+ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountName, wstring const & domain, wstring const & password, bool loadProfile, PSID const & sid, __out AccessTokenSPtr & accessToken)
 {
     TokenHandleSPtr tokenHandle = nullptr;
-    ProfileHandleSPtr profileHandle;
-
+    ProfileHandleSPtr profileHandle = nullptr;
     HANDLE token = nullptr;
+
     if (sid)
     {
         auto error = AccessToken::CreateUserTokenWithSid(
@@ -558,9 +572,33 @@ ErrorCode AccessToken::CreateServiceAccountToken(wstring const & serviceAccountN
         tokenHandle = TokenHandle::CreateSPtr(token);
     }
 
+    if (loadProfile)
+    {
+        PROFILEINFO profileInfo = { 0 };
+        profileInfo.dwSize = sizeof(profileInfo);
+        profileInfo.lpUserName = (LPWSTR)&serviceAccountName[0];
+
+        if (!::LoadUserProfileW(tokenHandle->Value, &profileInfo))
+        {
+            auto error = ErrorCode::FromWin32Error();
+            TraceWarning(
+                TraceTaskCodes::Common,
+                TraceType_AccessToken,
+                "LoadUserProfileW failed for {0}. ErrorCode={1}",
+                serviceAccountName,
+                error);
+            return error;
+        }
+        profileHandle = ProfileHandle::CreateSPtr(tokenHandle, profileInfo.hProfile);
+
+        TraceInfo(
+            TraceTaskCodes::Common,
+            TraceType_AccessToken,
+            "LoadUserProfileW succeeded for {0}.",
+            serviceAccountName);
+    }
 
     accessToken = make_unique<AccessToken>(move(tokenHandle), move(profileHandle));
-
     return ErrorCode(ErrorCodeValue::Success);
 }
 

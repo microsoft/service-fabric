@@ -19,7 +19,10 @@ namespace Hosting2
             std::wstring const & nodeId,
             std::wstring const & partitionId,
             std::wstring const & servicePackageActivationId,
-            std::wstring const & assignedIp,
+            ServiceModel::NetworkType::Enum networkType,
+            std::wstring const & openNetworkAssignedIp,
+            std::map<std::wstring, std::wstring> const & overlayNetworkResources,
+            std::vector<std::wstring> const & dnsServers,
             int64 timeoutTicks,
 #if defined(PLATFORM_UNIX)
             ContainerPodDescription const & podDesc,
@@ -47,8 +50,17 @@ namespace Hosting2
         __declspec(property(get = get_AppFolder)) std::wstring const & AppFolder;
         std::wstring const & get_AppFolder() const { return appfolder_; }
 
-        __declspec(property(get = get_AssignedIP)) std::wstring const & AssignedIP;
-        std::wstring const & get_AssignedIP() const { return assignedIp_; }
+        __declspec(property(get = get_NetworkType)) ServiceModel::NetworkType::Enum const & NetworkType;
+        ServiceModel::NetworkType::Enum const & get_NetworkType() const { return networkType_; }
+
+        __declspec(property(get = get_OpenNetworkAssignedIp)) std::wstring const & OpenNetworkAssignedIp;
+        std::wstring const & get_OpenNetworkAssignedIp() const { return openNetworkAssignedIp_; }
+
+        __declspec(property(get = get_OverlayNetworkResources)) std::map<std::wstring, std::wstring> const & OverlayNetworkResources;
+        std::map<std::wstring, std::wstring> const & get_OverlayNetworkResources() const { return overlayNetworkResources_; }
+
+        __declspec(property(get = get_DnsServers))  std::vector<std::wstring> const & DnsServers;
+        inline std::vector<std::wstring> const & get_DnsServers() const { return dnsServers_; };
 
         __declspec(property(get = get_TimeoutTicks)) int64 TimeoutInTicks;
         int64 get_TimeoutTicks() const { return ticks_; }
@@ -64,14 +76,22 @@ namespace Hosting2
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
 #if !defined(PLATFORM_UNIX)
-        FABRIC_FIELDS_10(servicePackageId_, appId_, appfolder_, nodeId_, assignedIp_, ticks_, spRg_, appName_, partitionId_, servicePackageActivationId_);
+        FABRIC_FIELDS_14(servicePackageId_, appId_, appfolder_, nodeId_, assignedIp_, ticks_, 
+            spRg_, appName_, partitionId_, servicePackageActivationId_, networkType_,
+            openNetworkAssignedIp_, overlayNetworkResources_, dnsServers_);
 #else
-        FABRIC_FIELDS_11(servicePackageId_, appId_, appfolder_, nodeId_, assignedIp_, ticks_, spRg_, podDescription_, appName_, partitionId_, servicePackageActivationId_);
+        FABRIC_FIELDS_15(servicePackageId_, appId_, appfolder_, nodeId_, assignedIp_, ticks_, 
+            spRg_, podDescription_, appName_, partitionId_, servicePackageActivationId_,
+            networkType_, openNetworkAssignedIp_, overlayNetworkResources_, dnsServers_);
 #endif
 
     private:
         std::wstring servicePackageId_;
         std::wstring assignedIp_;
+        ServiceModel::NetworkType::Enum networkType_;
+        std::wstring openNetworkAssignedIp_;
+        std::map<std::wstring, std::wstring> overlayNetworkResources_;
+        std::vector<std::wstring> dnsServers_;
         std::wstring appId_;
         std::wstring appName_;
         std::wstring appfolder_;

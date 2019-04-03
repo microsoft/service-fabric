@@ -363,6 +363,8 @@
       <xs:element name="BackupRestoreServiceReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
       <xs:element name="UpgradeOrchestrationServiceReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
       <xs:element name="CentralSecretServiceReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
+      <xs:element name="EventStoreServiceReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
+      <xs:element name="GatewayResourceManagerReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
       <xs:element name="DefaultReplicatorEndpoint" type="InternalEndpointType" minOccurs="0"/>
       <xs:element name="ApplicationEndpoints" minOccurs="0">
         <xs:complexType>
@@ -588,6 +590,11 @@
       <xs:element name="ConfigPackagePolicies" type="ConfigPackagePoliciesType" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Config Packages to be mounted inside the container.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="NetworkPolicies" type="NetworkPoliciesType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies network policies including container network policies.</xs:documentation>
         </xs:annotation>
       </xs:element>
     </xs:choice>
@@ -861,7 +868,7 @@
     <xs:attributeGroup ref="AccountCredentialsGroup"/>
     <xs:attribute name="PasswordEncrypted" type="xs:boolean" use="optional">
       <xs:annotation>
-        <xs:documentation>Specifies if password is encrypted or plain text.</xs:documentation>
+        <xs:documentation>Specifies if password is encrypted or plain text. This attribute is deprecated. Please use the 'Type' attribute to indicate encrypted password.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="Email">
@@ -870,6 +877,15 @@
           <xs:minLength value="1"/>
         </xs:restriction>
       </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="Type" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          This value defines the type of password you have specified in the 'Password' Attribute. It can be SecretsStoreRef/Encrypted/PlainText.
+          If set to SecretsStoreRef, we retrive the reference value from the SecretStore.
+          If set to Encrypted, the application developer is responsible for creating a certificate and using the Invoke-ServiceFabricEncryptSecret cmdlet to encrypt sensitive information.
+        </xs:documentation>
+      </xs:annotation>
     </xs:attribute>
   </xs:complexType>
   <xs:complexType name="PortBindingType">
@@ -1016,12 +1032,22 @@
             <xs:documentation>The value of the driver option. </xs:documentation>
           </xs:annotation>
         </xs:attribute>
+        <!-- TODO [dragosav] this needs to be deprecated; unclear if we can outright remove it, or give advance notice and remove it in an upcoming release. -->
         <xs:attribute name="IsEncrypted" type="xs:string" use="optional" default="false" />
+        <xs:attribute name="Type" type="xs:string" use="optional" default="PlainText" >
+          <xs:annotation>
+            <xs:documentation>
+              This value defines the protection of the value of the attribute. It may be SecretsStoreRef/Encrypted/PlainText.
+              If set to SecretsStoreRef, the value references a secret stored encrypted in the cluster's SecureStore, which is de-referenced and decrypted upon activation.
+              If set to Encrypted, the application developer is responsible for creating a certificate and using the Invoke-ServiceFabricEncryptSecret cmdlet to encrypt sensitive information.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
     <xs:complexType name="ContainerNetworkConfigType">
         <xs:attribute name="NetworkType" use="required" type="xs:string">
             <xs:annotation>
-                <xs:documentation>NetworkType. Currently only supported type is "Open".</xs:documentation>
+                <xs:documentation>NetworkType. Currently supported types are "Open" and "Isolated".</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
@@ -1051,6 +1077,52 @@
       <xs:annotation>
         <xs:documentation>Build version of the OS. For example, the build version of Windows Server version 1709 is 16299.</xs:documentation>
       </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="NetworkPoliciesType">
+    <xs:annotation>
+      <xs:documentation>Describes network policies including container network policie for the service package.</xs:documentation>
+    </xs:annotation>
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="ContainerNetworkPolicy" type="ContainerNetworkPolicyType" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>Describes container network policies for the service package.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+  <xs:complexType name="ContainerNetworkPolicyType">
+    <xs:annotation>
+      <xs:documentation>Describes association between a service package and a container network and optionally association between endpoints of the service package and the container network.</xs:documentation>
+    </xs:annotation>
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="EndpointBinding" type="ContainerNetworkPolicyEndpointBindingType" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>Specifies an endpoint that should be exposed on the container network.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+    <xs:attribute name="NetworkRef" use="required">
+      <xs:annotation>
+        <xs:documentation>The name of the container network (case-insensitive). It has to be name of a container network already created or reserved names including "Open" or "NAT".</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:minLength value="1"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="ContainerNetworkPolicyEndpointBindingType">
+    <xs:attribute name="EndpointRef">
+      <xs:annotation>
+        <xs:documentation>The name of the endpoint, which must be declared in the Resources section of the service manifest.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:minLength value="1"/>
+        </xs:restriction>
+      </xs:simpleType>
     </xs:attribute>
   </xs:complexType>
   <xs:complexType name="EnvironmentOverridesType">
@@ -1097,7 +1169,11 @@
     </xs:attribute>
     <xs:attribute name="Type" use="optional" default="PlainText">
       <xs:annotation>
-        <xs:documentation>The type for the Environment Variable. It can be PlainText/Encrypted/SecretsStoreRef. </xs:documentation>
+        <xs:documentation>
+          The type for the Environment Variable. It can be PlainText/Encrypted/SecretsStoreRef.
+          If set to SecretsStoreRef, we retrive  the reference value from the SecretStore.
+          If set to Encrypted, the application developer is responsible for creating a certificate and using the Invoke-ServiceFabricEncryptSecret cmdlet to encrypt sensitive information.
+        </xs:documentation>
       </xs:annotation>
       <xs:simpleType>
         <xs:restriction base="xs:string">
@@ -1302,11 +1378,19 @@
                 <xs:attribute name="IsEncrypted" type="xs:boolean" default="false">
                   <xs:annotation>
                     <xs:documentation>
-                      If true, the value of this parameter is encrypted. The application developer is responsible for creating a certificate and using the Invoke-ServiceFabricEncryptSecret cmdlet to encrypt sensitive information. The certificate information that will be used to encrypt the value is specified in the Certificates section.
+                      If true, the value of this parameter is encrypted. The application developer is responsible for creating a certificate and using the Invoke-ServiceFabricEncryptSecret cmdlet to encrypt sensitive information. The certificate information that will be used to encrypt the value is specified in the Certificates section. This attribute is deprecated. Please use Type attribute.
                     </xs:documentation>
                                     </xs:annotation>
                                 </xs:attribute>
-                <xs:attribute name="Type" type="xs:string" use="optional" />
+                <xs:attribute name="Type" type="xs:string" use="optional" >
+                  <xs:annotation>
+                    <xs:documentation>
+                      This value defines the type of value you have specified in the 'Value' Attribute. It can be SecretsStoreRef/Encrypted/PlainText.
+                      If set to SecretsStoreRef, we retrive  the reference value from the SecretStore.
+                      If set to Encrypted, the application developer is responsible for creating a certificate and using the Invoke-ServiceFabricEncryptSecret cmdlet to encrypt sensitive information.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
                             </xs:complexType>
                         </xs:element>
                     </xs:sequence>
@@ -3523,6 +3607,7 @@
           <xs:attributeGroup ref="VersionedItemAttrGroup"/>
         </xs:complexType>
       </xs:element>
+      <xs:element name="NetworkPolicies" type="NetworkPoliciesType" minOccurs="0" maxOccurs="1" />
       <xs:element name="Diagnostics" type="ServiceDiagnosticsType"/>
     </xs:sequence>
     <xs:attribute name="Name" type="xs:string" use="required"/>

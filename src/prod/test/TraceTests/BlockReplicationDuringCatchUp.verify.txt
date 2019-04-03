@@ -1,0 +1,12 @@
+###Partition ea6856fd-b28a-4667-89d8-7bca45adf22c time range 10/31/2014 7:02:44 PM-10/31/2014 7:08:55 PM
+Partition stuck in reconfiguration for at least ###00:05:19.6590000
+Checking primary on node 70
+Primary is stuck in Phase2_Catchup for at least ###00:05:19.9400000
+Replication catch up seems to be stuck
+Replica on node 40 current progress 3, needs to be caught up to 8
+Replica on node 50 current progress 3, needs to be caught up to 8
+Checking replica on 40
+Received up to 8 but acknowledged only 3, service is probably stuck in applying the replication operation
+Checking replica on 50
+Received up to 8 but acknowledged only 3, service is probably stuck in applying the replication operation
+

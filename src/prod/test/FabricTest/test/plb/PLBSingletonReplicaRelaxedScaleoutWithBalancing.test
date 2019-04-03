@@ -47,6 +47,9 @@ set DeactivationFailedRetryIntervalRange 0
 set NamingOperationTimeout 60
 set NamingOperationRetryTimeout 180
 
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 +10 ud=UD1 cap=CPU:30
 +20 ud=UD1 cap=CPU:120
 +30 ud=UD2 cap=CPU:30

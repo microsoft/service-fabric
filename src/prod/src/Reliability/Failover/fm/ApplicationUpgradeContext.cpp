@@ -225,7 +225,7 @@ bool ApplicationUpgradeContext::IsReplicaWaitNeeded(Replica const& replica) cons
         return false;
     }
 
-    if (application_->Upgrade->CurrentDomainStartedTime + FailoverConfig::GetConfig().ExpectedReplicaUpgradeDuration > DateTime::Now())
+    if (DateTime::Now() - application_->Upgrade->CurrentDomainStartedTime < FailoverConfig::GetConfig().ExpectedReplicaUpgradeDuration)
     {
         return replica.IsPreferredPrimaryLocation;
     }
@@ -246,7 +246,7 @@ bool ApplicationUpgradeContext::IsReplicaMoveNeeded(Replica const& replica) cons
     }
 
     if (isCodePackageBeingUpgraded &&
-        application_->Upgrade->CurrentDomainStartedTime + FailoverConfig::GetConfig().ExpectedReplicaUpgradeDuration > DateTime::Now())
+        DateTime::Now() - application_->Upgrade->CurrentDomainStartedTime < FailoverConfig::GetConfig().SwapPrimaryRequestTimeout)
     {
         return replica.FailoverUnitObj.IsReplicaMoveNeededDuringUpgrade(replica);
     }

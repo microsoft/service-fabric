@@ -140,7 +140,7 @@ namespace Client
         std::vector<HandlerNotification> pendingNotifications_;
             
         // Latest update, which will be immediately raised when adding new trackers 
-        // TODO: 847196, oanapl: support notifications for all partitions:
+        // TODO: 847196, support notifications for all partitions:
         // keep a vector when registering for *all* partition updates
         Naming::ResolvedServicePartitionSPtr lastUpdate_;
         Naming::AddressDetectionFailureSPtr lastError_;

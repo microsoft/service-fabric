@@ -41,6 +41,16 @@ namespace Hosting2
             std::wstring const & serviceName,
             std::wstring const & serviceId);
 
+        Common::ErrorCode CreateSecurityUser(
+            wstring const & applicationId,
+            wstring const & serviceNodeName,
+            bool runasSpecified,
+            ServiceModel::SecurityPrincipalAccountType::Enum runasAccountType,
+            wstring const & runasAccountName,
+            wstring const & runasPassword,
+            bool runasPasswordEncrypted,
+            __out SecurityUserSPtr & secUser);
+
         Common::ErrorCode CreateSecurityUser(std::wstring const & section, Common::StringMap const & entries, __out SecurityUserSPtr & secUser);
         Common::ErrorCode CreateSecurityUser(HostedServiceParameters const & params, __out SecurityUserSPtr & secUser);
 
@@ -114,6 +124,7 @@ namespace Hosting2
             __in bool stopGracefully,
             __in_opt Transport::IpcReceiverContextUPtr context = nullptr);
         void FinishStopHostedService(Common::AsyncOperationSPtr op, bool expectedCompletedSynchronously);
+        bool IsFabricService(const std::wstring & hostedServiceName, const std::wstring & serviceNodeName);
 
     private:
 

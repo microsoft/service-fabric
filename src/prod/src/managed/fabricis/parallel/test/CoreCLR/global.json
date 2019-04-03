@@ -1,0 +1,6 @@
+{
+  "projects": [ "../../../../Api/CoreCLRDlls", "../../schema/CoreCLR", "../../../common/test/CoreCLR", "../../CoreCLR"],
+  "sdk": {
+    "version": "1.0.0-preview2-003131"
+  }
+}

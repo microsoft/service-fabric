@@ -22,7 +22,7 @@ namespace System.Fabric.Management.ImageBuilder
     using System.Xml.Serialization;
     using System.Threading.Tasks;
 
-    internal static class ImageBuilderUtility
+    internal static partial class ImageBuilderUtility
     {
         internal static readonly TimeSpan ImageStoreDefaultTimeout = TimeSpan.FromMinutes(10);
         private static HashSet<char> InvalidFileNameChars = new HashSet<char>(Path.GetInvalidFileNameChars().ToList<char>());
@@ -42,10 +42,46 @@ namespace System.Fabric.Management.ImageBuilder
             {
                 T v = ReadXml<T>(fileName, xmlReader);
 #if DotNetCoreClr
-                var applicationManifestType = v as IXmlValidator ;
-                if (applicationManifestType != null)
+                try
                 {
-                    applicationManifestType.Validate();
+                    var applicationManifestType = v as IXmlValidator ;
+                    if (applicationManifestType != null)
+                    {
+                        applicationManifestType.Validate();
+                    }
+                }
+                catch (InvalidOperationException xmlParseException)
+                {
+                    if (FabricFile.Exists(fileName))
+                    {
+                        ImageBuilder.TraceSource.WriteError(
+                            TraceType,
+                            "Invalid XML Content. File Size: {0}",
+                            FabricFile.GetSize(fileName));
+                    }
+                    else
+                    {
+                        ImageBuilder.TraceSource.WriteError(
+                            TraceType,
+                            "File '{0}' does not exist.",
+                            fileName);
+                    }
+
+                    TraceAndThrowValidationErrorWithFileName(
+                        xmlParseException,
+                        TraceType,
+                        fileName,
+                        StringResources.ImageBuilderError_ErrorParsingXmlFile,
+                        fileName);
+                }
+                catch(XmlException xmlException)
+                {
+                    TraceAndThrowValidationErrorWithFileName(
+                        xmlException,
+                        TraceType,
+                        fileName,
+                        StringResources.ImageBuilderError_ErrorParsingXmlFile,
+                        fileName);
                 }
 #endif
                 return v;
@@ -180,11 +216,6 @@ namespace System.Fabric.Management.ImageBuilder
             where T : class
         {
             return !ImageBuilderUtility.IsArrayItemCountEqual<T>(param1, param2);
-        }
-
-        public static T ConvertString<T>(string value)
-        {
-            return (T)TypeDescriptor.GetConverter(typeof(T)).ConvertFromString(null, CultureInfo.InvariantCulture, value);
         }
 
         public static bool Equals(string string1, string string2)
@@ -335,6 +366,43 @@ namespace System.Fabric.Management.ImageBuilder
             }
 
             return true;
+        }
+
+        public static void DeleteTempLocationWithRetry(string location)
+        {
+            int maxRetryCount = 5;
+            int retryCount = 0;
+            while (retryCount < maxRetryCount)
+            {
+                try
+                {
+                    DeleteTempLocation(location);
+                    return;
+                }
+                catch (FileLoadException ex)
+                {
+                    ++retryCount;
+                    if (retryCount == maxRetryCount)
+                    {
+                        ImageBuilder.TraceSource.WriteWarning(
+                               TraceType,
+                               "DeleteTempLocation {0} failed with {1} and max retry count {2} was reached.",
+                               location,
+                               ex,
+                               retryCount);
+                        throw;
+                    }
+                    else
+                    {
+                        ImageBuilder.TraceSource.WriteWarning(
+                               TraceType,
+                               "DeleteTempLocation {0} failed with {1}. Retry count: {2}, retrying.",
+                               location,
+                               ex,
+                               retryCount);
+                    }
+                }
+            }
         }
 
         public static void DeleteTempLocation(string location)
@@ -599,6 +667,16 @@ namespace System.Fabric.Management.ImageBuilder
             }
         }
 
+        internal static bool IsOpenNetworkReference(string networkRef)
+        {
+            return Equals(networkRef, StringConstants.OpenNetworkName);
+        }
+
+        internal static bool IsNatNetworkReference(string networkRef)
+        {
+            return Equals(networkRef, StringConstants.NatNetworkName);
+        }
+
         private static T ReadXml<T>(string fileName, XmlReader reader)
         {
             try
@@ -641,6 +719,11 @@ namespace System.Fabric.Management.ImageBuilder
         }
 
         public static void CompareAndFixTargetManifestVersionsForUpgrade(
+            System.Fabric.Common.ImageModel.StoreLayoutSpecification storeLayoutSpecification,
+            ImageStoreWrapper destinationImageStoreWrapper,
+            TimeoutHelper timeoutHelper,
+            Dictionary<string, Dictionary<string, SettingsType>> settingsType,
+            string typeName,
             ApplicationManifestType currentApplicationManifest,
             ApplicationManifestType targetApplicationManifest,
             IList<ServiceManifestType> currentServiceManifests,
@@ -660,11 +743,72 @@ namespace System.Fabric.Management.ImageBuilder
                 var currentManifestVersion = currentManifest.Version;
                 var targetManifestVersion = targetManifest.Version;
 
-                var equal = ImageBuilderUtility.IsEqual<ServiceManifestType>(
+                bool equal = ImageBuilderUtility.IsEqual<ServiceManifestType>(
                     ReplaceVersion(currentManifest, "0"), ReplaceVersion(targetManifest, "0"));
 
                 ReplaceVersion(currentManifest, currentManifestVersion);
-                ReplaceVersion(targetManifest, targetManifestVersion); 
+                ReplaceVersion(targetManifest, targetManifestVersion);
+
+                #region Determine if settings have been changed since last version
+                if (equal && settingsType != null)
+                {
+                    string serviceManifestName = currentManifest.Name;
+
+                    // 1. Check if setting count remains the same
+                    int newSettingsTypeCount = 0;
+                    if (settingsType.ContainsKey(serviceManifestName))
+                    {
+                        newSettingsTypeCount = settingsType[serviceManifestName].Count(cp => cp.Key != null);
+                    }
+                    int currentSettingsTypeCount = 0;
+                    if (currentManifest.ConfigPackage != null)
+                    {
+                        currentSettingsTypeCount = currentManifest.ConfigPackage.Count();
+                    }
+
+                    if (newSettingsTypeCount != currentSettingsTypeCount)
+                    {
+                        equal = false;
+                    }
+
+                    // 2. Read settings from each configPackage and compare the value
+                    if (equal && currentManifest.ConfigPackage != null)
+                    {
+                        foreach (var configPackage in currentManifest.ConfigPackage)
+                        {
+                            SettingsType newSettingsType = null;
+                            if (settingsType.ContainsKey(serviceManifestName) && settingsType[serviceManifestName].ContainsKey(configPackage.Name))
+                            {
+                                newSettingsType = settingsType[serviceManifestName][configPackage.Name];
+                            }
+
+                            string configPackageDirectory = storeLayoutSpecification.GetConfigPackageFolder(typeName, serviceManifestName, configPackage.Name, configPackage.Version);
+                            string settingsFile = storeLayoutSpecification.GetSettingsFile(configPackageDirectory);
+                            SettingsType currentSettingsType = null;
+                            if (destinationImageStoreWrapper.DoesContentExists(settingsFile, timeoutHelper.GetRemainingTime()))
+                            {
+                                currentSettingsType = destinationImageStoreWrapper.GetFromStore<SettingsType>(settingsFile, timeoutHelper.GetRemainingTime());
+                            }
+
+                            equal &= CompareSettingsType(currentSettingsType, newSettingsType);
+                            if (!equal) break;
+                        }
+                    }
+
+                    // Code pacakge versions not change for settings upgrade
+                    if (!equal)
+                    {
+                        if (targetManifest.CodePackage != null)
+                        {
+                            for (int i = 0; i < targetManifest.CodePackage.Count(); ++i)
+                            {
+                                ReplaceVersion(ref targetManifest.CodePackage[i], currentManifestVersion);
+                            }
+                        }
+                    }
+                }
+                #endregion
+
                 if (equal)
                 {
                     unchangedServiceManifests.Add(currentManifest);
@@ -698,6 +842,43 @@ namespace System.Fabric.Management.ImageBuilder
                 }
 
                 targetServiceManifests = updatedTargetServiceManifests;
+            }
+        }
+
+        private static bool CompareSettingsType(SettingsType currentSettingsType, SettingsType newSettingsType)
+        {
+            if (newSettingsType == null && currentSettingsType == null)
+            {
+                return true;
+            }
+            else if (newSettingsType == null || currentSettingsType == null)
+            {
+                return false;
+            }
+            else
+            {
+                foreach (SettingsTypeSection section in currentSettingsType.Section)
+                {
+                    SettingsTypeSection newSection = newSettingsType.Section.FirstOrDefault(sts => sts.Name.Equals(section.Name));
+                    if (newSection == null || newSection.Parameter.Count() != section.Parameter.Count())
+                    {
+                        return false;
+                    }
+                    var newParameters = newSection.Parameter.OrderBy(p => p.Name);
+                    var currentParameters = section.Parameter.OrderBy(p => p.Name);
+                    for (int i = 0; i < newSection.Parameter.Count(); i++)
+                    {
+                        SettingsTypeSectionParameter curPara = section.Parameter[i];
+                        SettingsTypeSectionParameter newPara = newSection.Parameter[i];
+                        if (curPara.Name != newPara.Name
+                            || curPara.Value != newPara.Value
+                            || curPara.IsEncrypted != curPara.IsEncrypted)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                return true;
             }
         }
 

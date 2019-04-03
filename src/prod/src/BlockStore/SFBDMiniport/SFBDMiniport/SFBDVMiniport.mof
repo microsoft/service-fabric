@@ -1,0 +1,160 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------    
+
+#pragma namespace ("\\root\\wmi")
+
+#include ("SFBDhbaapi.mof")
+
+[Dynamic, Provider("WMIProv"),
+ WMI,
+ Description("SFBDMPDriver Schema") : amended,
+ guid("33168F61-67A8-408e-B262-1240AAC03447"),
+
+ DisplayName("SFBDMPDriver counters") : amended,
+ locale("MS\\0x409")]
+
+// Driver logic assumes the next class comprises (besides boilerplate) 2 ULONGs and a string.
+
+class SFBDMPDriver
+{
+    [key, read]
+       string  InstanceName;
+
+    [read]
+       boolean Active;
+
+    [read,
+       WmiDataId(1),
+       Description("The Answer")
+    ]
+       uint32  TheAnswer;
+
+    [read,
+       WmiDataId(2),
+       Description("The Next Answer")
+    ]
+       uint32  TheNextAnswer;
+
+    [read,
+       WmiDataId(3),
+       Description("SRBs seen")
+    ]
+       uint32  SRBsSeen;
+
+    [read,
+       WmiDataId(4),
+       Description("WMI SRBs seen")
+    ]
+       uint32  WMISRBsSeen;
+
+};
+
+[Dynamic, Provider("WMIProv"),
+ WMI,
+ Description("SFBDMPDriver Schema2"),
+ guid("33168F62-67A8-408e-B262-1240AAC03447"),
+PerfDetail(100),
+ HiPerf,
+ DisplayName("SFBDMPDriver") : amended,
+ locale("MS\\0x409")]
+
+class SFBDMPDriver2
+{
+    [key, read]
+       string  InstanceName;
+
+    [read]
+       boolean Active;
+
+    [read, write,
+       WmiDataId(1),
+     DisplayName("Number array elements") : amended,
+       Description("Number of array elements")
+    ]
+       uint32  NumberElements;
+
+    [read, write,
+       WmiDataId(2),
+       Description("The array"),
+       WmiSizeIs("NumberElements")
+    ]
+       uint32  UlongArray[];
+};
+
+[WMI, 
+ Dynamic,
+ Provider("WmiProv"),
+ Locale("MS\\0x409"),
+ Description("Performance counter class that keeps counts of SRBs") : amended,
+ DisplayName("SFBDMPDriver SRB Counts") : amended,
+ guid("33168F63-67A8-408e-B262-1240AAC03447"),
+ PerfDetail(100),
+ HiPerf
+]
+class SFBDMPDriverSrbActivity : Win32_PerfRawData
+{
+    [key, read] 
+     string InstanceName;
+    [read] boolean Active;
+
+    [WmiDataId(1),
+     DisplayName("Total CREATE SRBs") : amended,
+
+     PerfDefault,
+     CounterType(0x00000000),    //  PERF_COUNTER_RAWCOUNT
+     DefaultScale(0),
+     PerfDetail(100),
+
+     read,
+     Description("Count of CREATE SRBs received") : amended
+    ] uint32 TotalCreateSRBs;
+
+    [WmiDataId(2),
+     DisplayName("Total CLOSE SRBs") : amended,
+
+     CounterType(0x00000000),    //  PERF_COUNTER_RAWCOUNT
+     DefaultScale(0),
+     PerfDetail(100),
+
+     read,
+     Description("Count of CLOSE SRBs received") : amended
+    ] uint32 TotalCloseSRBs;
+
+    [WmiDataId(3),
+     DisplayName("Total IOCTL SRBs") : amended,
+
+     CounterType(0x00000000),    //  PERF_COUNTER_RAWCOUNT
+     DefaultScale(0),
+     PerfDetail(100),
+
+     read,
+     Description("Count of IOCTL SRBs received") : amended
+    ] uint32 TotalIoCtlSrbs;
+};
+
+[WMI, 
+ Dynamic,
+ Provider("WmiProv"),
+ Locale("MS\\0x409"),
+ Description("WMI method") : amended,
+ guid("33168F64-67A8-408e-B262-1240AAC03447")
+]
+class GmDrvDrvMethod
+{
+    [key, read] 
+     string InstanceName;
+
+    [read] boolean Active;
+
+    [Implemented, WmiMethodId(1)] void
+     GmDrvDemoMethod1([in] uint32 inDatum, [out] uint32 outDatum);
+
+    [Implemented, WmiMethodId(2)] void
+     GmDrvDemoMethod2([in] uint32 inDatum1, [in] uint32 inDatum2, [out] uint32 outDatum1);
+
+    [Implemented, WmiMethodId(3)] void
+     GmDrvDemoMethod3([in] uint32 inDatum1, [in] uint32 inDatum2, [out] uint32 outDatum1, [out] uint32 outDatum2);
+
+};

@@ -1,0 +1,12 @@
+<Config
+FastBalancingTemperatureDecayRate = 0.99
+LoadBalancingEnabled = true
+>
+
+MetricCount:1
+FaultDomains:{dc1,dc2,dc3,dc4}
+NodeCount:10
+PartitionCount:{100, 100, 100, 100}
+ReplicaCountPerPartition:{3, 3, 3, 3}
+PrimaryLoadRange:{P/5/10/0}
+SecondaryLoadRange:{U/5/10}

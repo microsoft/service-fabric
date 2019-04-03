@@ -1,0 +1,523 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "wtypes.idl";
+import "FabricTypes.idl";
+import "FabricCommon.idl";
+
+
+// Forward Declarations
+//
+interface IKPhysicalLogManager;
+interface IKPhysicalLogContainer;
+interface IKPhysicalLogStream;
+interface IKIoBuffer;
+interface IKIoBufferElement;
+interface IKArray;
+
+[
+    uuid(5d817d09-53d6-4a6a-846a-6076105cf600),
+    helpstring("KTL Physical Logger Internal Types"),
+    version(1.0),
+]
+library KPhysicalLog_Lib
+{
+    #pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // Typedefs
+    //
+    typedef GUID KTL_LOG_STREAM_ID;
+    typedef GUID KTL_LOG_STREAM_TYPE_ID;
+    typedef GUID KTL_LOG_ID;
+    typedef GUID KTL_DISK_ID;
+    typedef ULONGLONG KTL_LOG_ASN;
+
+
+    // ----------------------------------------------------------------------------
+    // Constants
+    //
+    // (None)
+
+    // ----------------------------------------------------------------------------
+    // Enumerations
+    //
+    // See KPHYSICAL_LOG_STREAM_RECORD_DISPOSITION documentation in NativeLog.cs
+    [v1_enum, uuid(8aafa011-ad17-413b-9769-cb3d121bf524)]
+    typedef enum KPHYSICAL_LOG_STREAM_RECORD_DISPOSITION
+    {
+        DispositionPending = 0,    // The log record is being written to a stable storage.
+        DispositionPersisted = 1,  // The log record has been persisted on a stable storage.
+        DispositionNone = 2,       // The log record does not exist.
+    } KPHYSICAL_LOG_STREAM_RECORD_DISPOSITION;
+
+    // See KPHYSICAL_LOG_STREAM_NOTIFICATION_TYPE documentation in NativeLog.cs
+    [v1_enum, uuid(10c7e359-bd5b-4e9e-bab5-0442a7297af1)]
+    typedef enum KPHYSICAL_LOG_STREAM_NOTIFICATION_TYPE
+    {
+        LogSpaceUtilization = 0,
+    } KPHYSICAL_LOG_STREAM_NOTIFICATION_TYPE;
+
+
+
+    // ----------------------------------------------------------------------------
+    // Structures
+    // See KIOBUFFER_ELEMENT_DESCRIPTOR documentation in NativeLog.cs
+    typedef struct KIOBUFFER_ELEMENT_DESCRIPTOR
+    {
+        ULONG                           Size;
+        ULONGLONG                       ElementBaseAddress;
+    } KIOBUFFER_ELEMENT_DESCRIPTOR;
+
+    
+    // ----------------------------------------------------------------------------
+    // See KPHYSICAL_LOG_STREAM_RecordMetadata documentation in NativeLog.cs
+    typedef struct KPHYSICAL_LOG_STREAM_RecordMetadata
+    {
+        KTL_LOG_ASN                     Asn;
+        ULONGLONG                       Version;
+        KPHYSICAL_LOG_STREAM_RECORD_DISPOSITION Disposition;
+        ULONG                           Size;
+        LONGLONG                        Debug_LsnValue;
+    } KPHYSICAL_LOG_STREAM_RecordMetadata;
+
+    
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+    interface IKPhysicalLogManager;
+    interface IKPhysicalLogContainer;
+    interface IKPhysicalLogStream;
+    interface IKBuffer;
+    interface IKIoBuffer;
+    interface IKIoBufferElement;
+    interface IKArray;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+    [
+        uuid(eb324718-9ae0-4b66-a351-8819c4907a79),
+        noncreatable
+    ]
+    coclass KPhysicalLog
+    {
+        [default] interface IKPhysicalLogManager;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions - see DLL interface documentation in NativeLog.cs
+    [
+        uuid(01619a5d-51da-413c-bd0a-96ee4d10b1b6),
+        dllname("KPhysicalLog.dll")
+    ]
+    module Ktl
+    {
+        [entry("CreateLogManager")] HRESULT KCreatePhysicalLogManager([out] IKPhysicalLogManager** const result);
+        [entry("CreateLogManager")] HRESULT KCreatePhysicalLogManagerInproc([out] IKPhysicalLogManager** const result);
+        [entry("CreateEmptyKIoBuffer")] HRESULT KCreateEmptyKIoBuffer([out] IKIoBuffer** const result);
+        [entry("CreateSimpleKIoBuffer")] HRESULT KCreateSimpleKIoBuffer(
+            [in] ULONG size,
+            [out] IKIoBuffer** const result);
+
+        [entry("CreateKIoBufferElement")] HRESULT KCreateKIoBufferElement(
+            [in] ULONG size,
+            [out] IKIoBufferElement** const result);
+
+        [entry("CreateKBuffer")] HRESULT KCreateKBuffer(
+            [in] ULONG size,
+            [out] IKBuffer** const result);
+
+        [entry("CreateGuidIKArray")] HRESULT KCreateGuidIKArray(
+            [in] ULONG initialSize,
+            [out] IKArray** const result);
+
+        [entry("CreateLogRecordMetadataIKArray")] HRESULT KCreateLogRecordMetadataIKArray(
+            [in] ULONG initialSize,
+            [out] IKArray** const result);
+
+        [entry("CopyMemory")] HRESULT KCopyMemory(
+            [in] ULONGLONG sourcePtr,
+            [in] ULONGLONG destPtr,
+            [in] ULONG size);
+    }
+    #pragma pack (pop)
+}
+
+
+// Interfaces
+
+// See IKIoBuffer interface documentation in NativeLog.cs
+[object, local, uuid(29a7c7a2-a96e-419b-b171-6263625b6219)]
+interface IKIoBuffer : IUnknown 
+{
+    [] HRESULT AddIoBufferElement([in] IKIoBufferElement* const element);
+
+    [] HRESULT QueryNumberOfIoBufferElements([out] ULONG* const result);
+
+    [] HRESULT QuerySize([out] ULONG* const result);
+
+    [] HRESULT First([out] void** const resultToken);
+
+    [] HRESULT Next([in]void* const currentToken, [out] void** const resultToken);
+
+    [] HRESULT Clear();
+
+    [] HRESULT AddIoBuffer([in] IKIoBuffer* const toAdd);
+
+    [] HRESULT AddIoBufferReference([in] IKIoBuffer* const sourceIoBuffer, [in] ULONG sourceStartingOffset, [in] ULONG size);
+
+    [] HRESULT QueryElementInfo([in] void *const token, [out] BYTE** const resultBuffer, [out] ULONG* const resultSize);
+
+    [] HRESULT GetElement([in] void* const fromToken,  [out] IKIoBufferElement** const result);
+
+    // Returns an IKArray with an element type of KIOBUFFER_ELEMENT_DESCRIPTOR
+    [] HRESULT GetElements([out] ULONG* const numberOfElements, [out] IKArray** const result);
+}
+
+// See IKIoBufferElement interface documentation in NativeLog.cs
+[object, local, uuid(61f6b9bf-1d08-4d04-b97f-e645782e7981)]
+interface IKIoBufferElement : IUnknown 
+{
+    [] HRESULT GetBuffer([out] BYTE** const result);
+
+    [] HRESULT QuerySize([out] ULONG* const result);
+}
+
+// See IKBuffer interface documentation in NativeLog.cs
+[object, local, uuid(89ab6225-2cb4-48b4-be5c-04bd441c774f)]
+interface IKBuffer : IUnknown 
+{
+    [] HRESULT GetBuffer([out] BYTE** const result);
+
+    [] HRESULT QuerySize([out] ULONG* const result);
+}
+
+// See IKArray interface documentation in NativeLog.cs
+[object, local, uuid(b5a6bf9e-8247-40ce-aa31-acf8b099bd1c)]
+interface IKArray : IUnknown 
+{
+    [] HRESULT GetStatus();
+
+    [] HRESULT GetCount([out] ULONG* const result);
+
+    [] HRESULT GetArrayBase([out] void** const result);
+
+    [] HRESULT AppendGuid([in]GUID *const toAdd);
+
+    [] HRESULT AppendRecordMetadata([in]KPHYSICAL_LOG_STREAM_RecordMetadata *const toAdd);
+}
+
+// See IKPhysicalLogManager interface documentation in NativeLog.cs
+[object, local, uuid(c63c9378-6018-4859-a91e-85c268435d99)]
+interface IKPhysicalLogManager : IUnknown 
+{
+    [] HRESULT BeginOpen(
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT EndOpen(
+        [in] IFabricAsyncOperationContext* const context);
+
+
+    [] HRESULT BeginClose(
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT EndClose(
+        [in] IFabricAsyncOperationContext* const context);
+
+
+    [] HRESULT BeginCreateLogContainer(
+        [in] LPCWSTR fullyQualifiedLogFilePath,
+        [in] KTL_LOG_ID logId,
+        [in] LPCWSTR logType,
+        [in] LONGLONG logSize,
+        [in] ULONG maxAllowedStreams,
+        [in] ULONG maxRecordSize,
+        [in] DWORD creationFlags,
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT EndCreateLogContainer(
+        [in] IFabricAsyncOperationContext* const context,
+        [out] IKPhysicalLogContainer** const result);
+
+
+    [] HRESULT BeginOpenLogContainerById(
+        [in] KTL_DISK_ID diskId,
+        [in] KTL_LOG_ID logId,
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT BeginOpenLogContainer(
+        [in] LPCWSTR fullyQualifiedLogFilePath,
+        [in] KTL_LOG_ID logId,
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT EndOpenLogContainer(
+        [in] IFabricAsyncOperationContext* const context,
+        [out] IKPhysicalLogContainer** const result);
+
+    
+    [] HRESULT BeginDeleteLogContainer(
+        [in] LPCWSTR fullyQualifiedLogFilePath,
+        [in] KTL_LOG_ID logId,
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT BeginDeleteLogContainerById(
+        [in] KTL_DISK_ID diskId,
+        [in] KTL_LOG_ID logId,
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT EndDeleteLogContainer(
+        [in] IFabricAsyncOperationContext* const context);
+
+
+    [] HRESULT BeginEnumerateLogContainers(
+        [in] KTL_LOG_ID diskId,
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT EndEnumerateLogContainers(
+        [in] IFabricAsyncOperationContext* const context,
+        [out] IKArray** const result);
+
+    //** Utility support methods
+    [] HRESULT BeginGetVolumeIdFromPath(
+        [in]LPCWSTR Path,
+        [in] IFabricAsyncOperationCallback* const callback,     
+        [out] IFabricAsyncOperationContext** const context);
+
+    [] HRESULT EndGetVolumeIdFromPath(
+        [in] IFabricAsyncOperationContext* const context,
+        [out]GUID* const result);
+}
+
+// See IKPhysicalLogContainer interface documentation in NativeLog.cs
+[object, local, uuid(1bf056c8-57ba-4fa1-b9c7-bd9c4783bf6a)]
+interface IKPhysicalLogContainer : IUnknown 
+{
+    [] HRESULT IsFunctional();
+
+    [] HRESULT BeginCreateLogStream(
+        [in] KTL_LOG_STREAM_ID logStreamId,
+        [in] KTL_LOG_STREAM_TYPE_ID logStreamType,
+        [in] LPCWSTR optionalLogStreamAlias,
+        [in] LPCWSTR path,
+        [in] IKBuffer *const optionalSecurityInfo,
+        [in] LONGLONG maximumStreamSize,
+        [in] ULONG maximumBlockSize,
+        [in] DWORD creationFlags,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndCreateLogStream(
+        [in] IFabricAsyncOperationContext* context,
+        [out] IKPhysicalLogStream** result);
+
+
+    [] HRESULT BeginDeleteLogStream(
+        [in] KTL_LOG_STREAM_ID logStreamId,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndDeleteLogStream(
+        [in] IFabricAsyncOperationContext* context);
+
+
+    [] HRESULT BeginOpenLogStream(
+        [in] KTL_LOG_STREAM_ID logStreamId,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndOpenLogStream(
+        [in] IFabricAsyncOperationContext* context,
+        [out] IKPhysicalLogStream** result);
+
+
+    [] HRESULT BeginAssignAlias(
+        [in] LPCWSTR alias,
+        [in] KTL_LOG_STREAM_ID logStreamId,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndAssignAlias(
+        [in] IFabricAsyncOperationContext* context);
+
+
+    [] HRESULT BeginRemoveAlias(
+        [in] LPCWSTR alias,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndRemoveAlias(
+        [in] IFabricAsyncOperationContext* context);
+
+
+    [] HRESULT BeginResolveAlias(
+        [in] LPCWSTR alias,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndResolveAlias(
+        [in] IFabricAsyncOperationContext* context,
+        [out]KTL_LOG_STREAM_ID* const result);
+    
+
+    [] HRESULT BeginClose(
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndClose(
+        [in] IFabricAsyncOperationContext* context);
+}
+
+// See IKPhysicalLogStream interface documentation in NativeLog.cs
+[object, local, uuid(094fda74-d14b-4316-abad-aca133dfcb22)]
+interface IKPhysicalLogStream : IUnknown 
+{
+    [] HRESULT IsFunctional();
+
+    [] HRESULT QueryLogStreamId(
+        [out] KTL_LOG_STREAM_ID* const result);
+
+    [] HRESULT QueryReservedMetadataSize([out] ULONG* const result);
+
+
+    [] HRESULT BeginQueryRecordRange(
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndQueryRecordRange(
+        [in] IFabricAsyncOperationContext* context,
+        [out] KTL_LOG_ASN* const optionalLowestAsn,
+        [out] KTL_LOG_ASN* const optionalHighestAsn,
+        [out] KTL_LOG_ASN* const optionalLogTruncationAsn);
+
+
+    [] HRESULT BeginWrite(
+        [in] KTL_LOG_ASN asn,
+        [in] ULONGLONG version,
+        [in] ULONG metadataSize,
+        [in] IKIoBuffer* const metadataBuffer,
+        [in] IKIoBuffer* const ioBuffer,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndWrite([in] IFabricAsyncOperationContext* context);
+
+
+    [] HRESULT BeginRead(
+        [in] KTL_LOG_ASN asn,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndRead(
+        [in] IFabricAsyncOperationContext* context,
+        [out] ULONGLONG* const optionalVersion,
+        [out] ULONG* const metadataSize,
+        [out] IKIoBuffer** const resultingMetadata,
+        [out] IKIoBuffer** const resultingIoBuffer);
+
+
+    [] HRESULT BeginReadContaining(
+        [in] KTL_LOG_ASN asn,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndReadContaining(
+        [in] IFabricAsyncOperationContext* context,
+        [out] KTL_LOG_ASN* const containingAsn,
+        [out] ULONGLONG* const containingVersion,
+        [out] ULONG* const metadataSize,
+        [out] IKIoBuffer** const resultingMetadata,
+        [out] IKIoBuffer** const resultingIoBuffer);
+
+    
+    [] HRESULT BeginQueryRecord(
+        [in] KTL_LOG_ASN asn,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndQueryRecord(
+        [in] IFabricAsyncOperationContext* context,
+        [out] ULONGLONG* const optionalVersion,
+        [out] KPHYSICAL_LOG_STREAM_RECORD_DISPOSITION* const optionalDisposition,
+        [out] ULONG* const optionalIoBufferSize,
+        [out] ULONGLONG* const optionalDebugInfo1);
+
+
+    [] HRESULT BeginQueryRecords(
+        [in] KTL_LOG_ASN lowestAsn,
+        [in] KTL_LOG_ASN highestAsn,
+        [in] IKArray* const resultArray,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndQueryRecords(
+        [in] IFabricAsyncOperationContext* context);
+
+
+    [] HRESULT Truncate(
+        [in] KTL_LOG_ASN truncationPoint,
+        [in] KTL_LOG_ASN preferredTruncationPoint);
+
+
+    [] HRESULT BeginWaitForNotification(
+        [in] KPHYSICAL_LOG_STREAM_NOTIFICATION_TYPE notificationType,
+        [in] ULONGLONG notificationValue,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndWaitForNotification(
+        [in] IFabricAsyncOperationContext* context);
+
+
+    [] HRESULT BeginIoctl(
+        [in] ULONG controlCode,
+        [in] IKBuffer* const inBuffer,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndIoctl(
+        [in] IFabricAsyncOperationContext* context,
+        [out] ULONG *const result,
+        [out] IKBuffer** const outBuffer);
+
+
+    [] HRESULT BeginClose(
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndClose(
+        [in] IFabricAsyncOperationContext* context);
+}
+
+// See IKPhysicalLogStream interface documentation in NativeLog.cs
+[object, local, uuid(E40B452B-03F9-4b6e-8229-53C509B87F2F)]
+interface IKPhysicalLogStream2 : IKPhysicalLogStream 
+{
+    [] HRESULT BeginMultiRecordRead(
+        [in] KTL_LOG_ASN asn,
+        [in] ULONG BytesToRead,
+        [in] IFabricAsyncOperationCallback* callback,       
+        [out] IFabricAsyncOperationContext** context);
+
+    [] HRESULT EndMultiRecordRead(
+        [in] IFabricAsyncOperationContext* context,
+        [out] IKIoBuffer** const resultingMetadata,
+        [out] IKIoBuffer** const resultingIoBuffer);    
+}

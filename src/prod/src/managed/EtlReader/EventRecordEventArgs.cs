@@ -20,6 +20,28 @@ namespace Tools.EtlReader
             private set;
         }
 
+#if DotNetCoreClrLinux
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        // This is needed to allow the processing of unstructured and structured traces at the same time
+        public string UnstructuredRecord
+        {
+            get;
+            set;
+        }
+
+        public bool IsUnstructured
+        {
+            get;
+            set;
+        }
+
+        public string TaskNameEventName
+        {
+            get;
+            set;
+        }
+#endif
+
         public bool Cancel
         {
             get;

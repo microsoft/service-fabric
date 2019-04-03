@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Section Name="FabricMdsAgentServiceConfig">
+    <Parameter Name="MAConfigFileName" Value="" MustOverride="true" />
+    <Parameter Name="ClusterName" Value="" MustOverride="true" />
+    <Parameter Name="DataCenterName" Value="" MustOverride="false" />
+    <Parameter Name="MAXStoreAccounts" Value="" MustOverride="true" />
+    <Parameter Name="MAMdmAccountName" Value="" MustOverride="false" />
+    <Parameter Name="MAMdmNamespace" Value="" MustOverride="false" />
+    <Parameter Name="MARestartDelayInSeconds" Value="" MustOverride="true" />
+    <!-- Parameters to support GCS. Refer to GCS documentation on Geneva portal. -->
+    <Parameter Name="GCSEnvironment" Value="" MustOverride="false" />
+    <Parameter Name="GCSAccount" Value="" MustOverride="false" />
+    <Parameter Name="GCSNamespace" Value="" MustOverride="false" />
+    <Parameter Name="GCSRegion" Value="" MustOverride="false" />
+    <Parameter Name="GCSEndpoint" Value="" MustOverride="false" />
+    <Parameter Name="GCSThumbprint" Value="" MustOverride="false" />
+    <Parameter Name="GCSCertStore" Value="" MustOverride="false" />
+    <Parameter Name="GCSDsmsUrl" Value="" MustOverride="false" />
+    <Parameter Name="GCSAgentVersion" Value="" MustOverride="false" />
+    <Parameter Name="UseGCS" Value="" MustOverride="false" />
+    <Parameter Name="GCSConfigVersion" Value="" MustOverride="false" />
+    <Parameter Name="GCSExactVersion" Value="" MustOverride="false" />
+    <!--Optional parameters for AzSecPack.-->
+    <Parameter Name="AZSECPACK_PILOT_FEATURES" Value="" MustOverride="false" />
+    <Parameter Name="AZSECPACK_CUSTOMPOLICY_LOCATION" Value="" MustOverride="false" />
+    <Parameter Name="AZSECPACK_DISABLED_FEATURES" Value="" MustOverride="false" />
+    <Parameter Name="AZSECPACK_DISABLED_SCENARIOS" Value="" MustOverride="false" />
+  </Section>
+</Settings>

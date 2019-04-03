@@ -15,11 +15,6 @@ add_executable(${exe_Hosting2Test}
   ../NonActivatedApplicationHost.Test.cpp
   ../CodePackageAcivationContext.Test.cpp
   ../DownloadManager.Test.cpp
-  ../IPAddressProvider.Test.cpp
-  ../ReservationManager.Test.cpp
-  ../OnDemandCodePackageActivation.Test.cpp
-  ../FlatIPConfiguration.Test.cpp
-  ../IPAM.Test.cpp
   ../DownloadManagerFSSSetup.Test.cpp
   ../ServiceTypeStateManager.Test.cpp
   ../FabricNodeHost.Test.cpp
@@ -70,8 +65,10 @@ target_link_libraries(${exe_Hosting2Test}
   ${lib_ClientServerTransport}
   ${lib_Transport}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_FailoverCommon}
+  ${lib_NetworkInventoryManager}
   ${lib_Replication}
   ${lib_HealthManager}
   ${lib_ImageStore}
@@ -98,6 +95,7 @@ target_link_libraries(${exe_Hosting2Test}
   ${lib_FabricUUID}
   ${lib_InternalFabricUUID}
   ${lib_DnsServiceConfig}
+  ${lib_GatewayResourceManager}
   ${KtlUser}
   ${KtlLoggerUser}
   ${lib_KtlLoggerShimUnify}
@@ -141,7 +139,8 @@ install(
 
 # CRI-O executables and confs
 install(
-    FILES ../crio.sh
+    FILES ../crio.cc.sh
+          ../crio.kata.sh
           ${EXTERNAL_LIB_PATH}/cri-o/crio
           ${EXTERNAL_LIB_PATH}/cri-o/conmon
           ${EXTERNAL_LIB_PATH}/cri-o/pause

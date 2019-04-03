@@ -152,7 +152,8 @@ void CheckpointManager::PrepareCheckpoint(
 
 Awaitable<void> CheckpointManager::PerformCheckpointAsync(
     __in MetadataManager const & metadataManager,
-    __in CancellationToken const & cancellationToken)
+    __in CancellationToken const & cancellationToken,
+    __in bool hasPersistedState)
 {
     KShared$ApiEntry();
 
@@ -176,6 +177,13 @@ Awaitable<void> CheckpointManager::PerformCheckpointAsync(
 
         this->PopulateSnapshotAndMetadataCollection(*serializableMetadataCollection, MetadataMode::Active);
         this->PopulateSnapshotAndMetadataCollection(*serializableMetadataCollection, MetadataMode::DelayDelete);
+    }
+
+    if (hasPersistedState == false)
+    {
+        // No need to write to disk
+        // TODO: RDBug 13398799: Trace PerformCheckpoint in volatile case
+        co_return;
     }
 
     // In the checkpoint file write path, we need to pass in the PrepareCheckpointLSN and write in the file.

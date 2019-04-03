@@ -11,11 +11,14 @@ set_target_properties(${exe_ResourceMonitor} PROPERTIES
 add_custom_target(CopyFabricResourceMonitorService ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/ResourceMonitorService.Code.Current
     COMMAND ${CMAKE_COMMAND} -E copy ${TEST_OUTPUT_DIR}/${exe_ResourceMonitor} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/ResourceMonitor.Code.Current/ResourceMonitor.exe
-    COMMAND strip ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/ResourceMonitor.Code.Current/ResourceMonitor.exe
+    COMMAND ${CMAKE_STRIP} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/ResourceMonitor.Code.Current/ResourceMonitor.exe
     DEPENDS ${exe_ResourceMonitor}
 )
 
-    
+ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
+SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
+    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
+ 
 target_link_libraries(${exe_ResourceMonitor}
   ${lib_ResourceMonitor}
   ${lib_ResourceMonitorConfig}
@@ -44,6 +47,7 @@ target_link_libraries(${exe_ResourceMonitor}
   ${lib_Replication}
   ${lib_TransactionalReplicator}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}
@@ -62,7 +66,7 @@ target_link_libraries(${exe_ResourceMonitor}
   ${lib_FabricCommon}
   ${Cxx}
   ${CxxABI}
-  ssh2
+  patched_libssh2
   ssl
   crypto
   m

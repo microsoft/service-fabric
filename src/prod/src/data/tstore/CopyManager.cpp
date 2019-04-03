@@ -10,6 +10,7 @@ using namespace Data::TStore;
 using namespace Common;
 
 NTSTATUS CopyManager::Create(
+    __in KStringView const & directory,
     __in StoreTraceComponent & traceComponent,
     __in KAllocator & allocator,
     __in StorePerformanceCountersSPtr & perfCounters,
@@ -17,7 +18,7 @@ NTSTATUS CopyManager::Create(
 {
     NTSTATUS status;
 
-    SPtr output = _new(COPY_MANAGER_TAG, allocator) CopyManager(traceComponent, perfCounters);
+    SPtr output = _new(COPY_MANAGER_TAG, allocator) CopyManager(directory, traceComponent, perfCounters);
 
     if (!output)
     {
@@ -35,6 +36,7 @@ NTSTATUS CopyManager::Create(
 }
 
 CopyManager::CopyManager(
+    __in KStringView const & directory,
     __in StoreTraceComponent & traceComponent,
     __in StorePerformanceCountersSPtr & perfCounters) :
     copyCompleted_(true), // Starting at true in case of empty copy
@@ -46,13 +48,15 @@ CopyManager::CopyManager(
     traceComponent_(&traceComponent),
     perfCounterWriter_(perfCounters)
 {
+    NTSTATUS status = KString::Create(workDirectorySPtr_, this->GetThisAllocator(), directory);
+    Diagnostics::Validate(status);
 }
 
 CopyManager::~CopyManager()
 {
 }
 
-ktl::Awaitable<void> CopyManager::AddCopyDataAsync(__in KStringView const & directory, __in OperationData const & data)
+ktl::Awaitable<void> CopyManager::AddCopyDataAsync(__in OperationData const & data)
 {
     OperationData::CSPtr dataCSPtr = &data;
     ULONG32 receivedBytes = 0;
@@ -61,7 +65,7 @@ ktl::Awaitable<void> CopyManager::AddCopyDataAsync(__in KStringView const & dire
         KBuffer::CSPtr bufferCSPtr = (*dataCSPtr)[i];
         STORE_ASSERT(bufferCSPtr != nullptr, "OperationData buffer is null");
         KBuffer::SPtr bufferSPtr = const_cast<KBuffer *>(&*bufferCSPtr);
-        receivedBytes += co_await ProcessCopyOperationAsync(directory, *bufferSPtr);
+        receivedBytes += co_await ProcessCopyOperationAsync(*workDirectorySPtr_, *bufferSPtr);
     }
     
     StoreEventSource::Events->CopyManagerAddCopyDataAsync(traceComponent_->PartitionId, traceComponent_->TraceTag, receivedBytes);

@@ -111,13 +111,12 @@ void DeltaNodesCheckHealthEvaluation::SetDescription()
 {
     size_t currentUnhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1}% ({2}/{3}) - {4}% ({5}/{6}), MaxPercentDeltaUnhealthyNodes={7}%.",
         HMResource::GetResources().HealthEvaluationUnhealthyDeltaNodesCheck,
-        GetUnhealthyPercent(baselineErrorCount_, baselineTotalCount_),
-        baselineErrorCount_,
-        baselineTotalCount_,
         GetUnhealthyPercent(currentUnhealthyCount, totalCount_),
         currentUnhealthyCount,
         totalCount_,
+        GetUnhealthyPercent(baselineErrorCount_, baselineTotalCount_),
+        baselineErrorCount_,
+        baselineTotalCount_,
         maxPercentDeltaUnhealthyNodes_);
 }

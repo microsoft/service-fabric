@@ -131,7 +131,8 @@ namespace Common
 
             if (!description.empty())
             {
-                FabricGlobals::Get().GetThreadErrorMessages().SetMessage(description);
+                DWORD threadId = 0;
+                ::FabricSetLastErrorMessage(description.c_str(), &threadId);
             }
         } 
         

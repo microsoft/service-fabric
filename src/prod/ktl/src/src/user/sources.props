@@ -1,0 +1,201 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SrcRoot)\properties\ktl\UserBasic.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <!-- Only define TRACK_ALLOCATIONS when you want retail builds to keep the list -->
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions)
+        _STL100_;
+        KTL_MIXED_STL_ATL;
+      </PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\inc\kallocator.h"/>
+    <ClInclude Include="..\..\..\inc\karray.h"/>
+    <ClInclude Include="..\..\..\inc\KAsyncContext.h"/>
+    <ClInclude Include="..\..\..\inc\KAsyncEvent.h"/>
+    <ClInclude Include="..\..\..\inc\KAsyncLock.h"/>
+    <ClInclude Include="..\..\..\inc\KAsyncQueue.h"/>
+    <ClInclude Include="..\..\..\inc\KAsyncService.h"/>
+    <ClInclude Include="..\..\..\inc\kavltree.h"/>
+    <ClInclude Include="..\..\..\inc\KAWIpc.h"/>
+    <ClInclude Include="..\..\..\inc\kbitmap.h"/>
+    <ClInclude Include="..\..\..\inc\KBlockDevice.h"/>
+    <ClInclude Include="..\..\..\inc\kblockfile.h"/>
+    <ClInclude Include="..\..\..\inc\kbuffer.h"/>
+    <ClInclude Include="..\..\..\inc\kcachedblockfile.h"/>
+    <ClInclude Include="..\..\..\inc\kchecksum.h"/>
+    <ClInclude Include="..\..\..\inc\kdatetime.h"/>
+    <ClInclude Include="..\..\..\inc\kdeferredcall.h"/>
+    <ClInclude Include="..\..\..\inc\kdelegate.h"/>
+    <ClInclude Include="..\..\..\inc\kdgrammeta.h"/>
+    <ClInclude Include="..\..\..\inc\KDom.h"/>
+    <ClInclude Include="..\..\..\inc\kdompath.h"/>
+    <ClInclude Include="..\..\..\inc\kdomutil.h"/>
+    <ClInclude Include="..\..\..\inc\ketw.h"/>
+    <ClInclude Include="..\..\..\inc\kevent.h"/>
+    <ClInclude Include="..\..\..\inc\keventlog.h"/>
+    <ClInclude Include="..\..\..\inc\kfilestream.h"/>
+    <ClInclude Include="..\..\..\inc\kfinally.h"/>
+    <ClInclude Include="..\..\..\inc\KGuid.h"/>
+    <ClInclude Include="..\..\..\inc\khashtable.h"/>
+    <ClInclude Include="..\..\..\inc\HLPalFunctions.h"/>
+    <ClInclude Include="..\..\..\inc\khttp.h"/>
+    <ClInclude Include="..\..\..\inc\kinstrumentop.h"/>
+    <ClInclude Include="..\..\..\inc\kiobuffer.h"/>
+    <ClInclude Include="..\..\..\inc\kKerberos.h"/>
+    <ClInclude Include="..\..\..\inc\KLinkList.h"/>
+    <ClInclude Include="..\..\..\inc\klookaside.h"/>
+    <ClInclude Include="..\..\..\inc\kmemchannel.h"/>
+    <ClInclude Include="..\..\..\inc\kmessageport.h"/>
+    <ClInclude Include="..\..\..\inc\kmgmt.h"/>
+    <ClInclude Include="..\..\..\inc\kmgmtserver.h"/>
+    <ClInclude Include="..\..\..\inc\knetchannel.h"/>
+    <ClInclude Include="..\..\..\inc\knetfaultinjector.h"/>
+    <ClInclude Include="..\..\..\inc\knetwork.h"/>
+    <ClInclude Include="..\..\..\inc\knetworkendpoint.h"/>
+    <ClInclude Include="..\..\..\inc\knodelist.h"/>
+    <ClInclude Include="..\..\..\inc\knodetable.h"/>
+    <ClInclude Include="..\..\..\inc\knt.h"/>
+    <ClInclude Include="..\..\..\inc\kperfcounter.h"/>
+    <ClInclude Include="..\..\..\inc\kpointer.h"/>
+    <ClInclude Include="..\..\..\inc\kPriorityQueue.h"/>
+    <ClInclude Include="..\..\..\inc\kqueue.h"/>
+    <ClInclude Include="..\..\..\inc\KQuotaGate.h"/>
+    <ClInclude Include="..\..\..\inc\krangelock.h"/>
+    <ClInclude Include="..\..\..\inc\kreadcache.h"/>
+    <ClInclude Include="..\..\..\inc\kregistry.h"/>
+    <ClInclude Include="..\..\..\inc\kresourcelock.h"/>
+    <ClInclude Include="..\..\..\inc\KResumable.h"/>
+    <ClInclude Include="..\..\..\inc\krtt.h"/>
+    <ClInclude Include="..\..\..\inc\ksemaphore.h"/>
+    <ClInclude Include="..\..\..\inc\kserial.h"/>
+    <ClInclude Include="..\..\..\inc\KShiftArray.h"/>
+    <ClInclude Include="..\..\..\inc\ksocket.h"/>
+    <ClInclude Include="..\..\..\inc\ksockettable.h"/>
+    <ClInclude Include="..\..\..\inc\kspinlock.h"/>
+    <ClInclude Include="..\..\..\inc\kssl.h"/>
+    <ClInclude Include="..\..\..\inc\ksspi.h"/>
+    <ClInclude Include="..\..\..\inc\kstack.h"/>
+    <ClInclude Include="..\..\..\inc\kstatus.h"/>
+    <ClInclude Include="..\..\..\inc\kstream.h"/>
+    <ClInclude Include="..\..\..\inc\KStreams.h"/>
+    <ClInclude Include="..\..\..\inc\kstringview.h"/>
+    <ClInclude Include="..\..\..\inc\kstringview.proto.h"/>
+    <ClInclude Include="..\..\..\inc\ksynchronizer.h"/>
+    <ClInclude Include="..\..\..\inc\ktags.h"/>
+    <ClInclude Include="..\..\..\inc\ktask.h"/>
+    <ClInclude Include="..\..\..\inc\KTextFile.h"/>
+    <ClInclude Include="..\..\..\inc\kthread.h"/>
+    <ClInclude Include="..\..\..\inc\kthreadpool.h"/>
+    <ClInclude Include="..\..\..\inc\KTimer.h"/>
+    <ClInclude Include="..\..\..\inc\ktl.h"/>
+    <ClInclude Include="..\..\..\inc\ktlcommon.h"/>
+    <ClInclude Include="..\..\..\inc\KtlCoreAllocator.h"/>
+    <ClInclude Include="..\..\..\inc\ktlevents.um.h"/>
+    <ClInclude Include="..\..\..\inc\ktlperf.h"/>
+    <ClInclude Include="..\..\..\inc\KtlSystem.h"/>
+    <ClInclude Include="..\..\..\inc\KtlSystemCoreImp.h"/>
+    <ClInclude Include="..\..\..\inc\KTpl.h"/>
+    <ClInclude Include="..\..\..\inc\ktrace.h"/>
+    <ClInclude Include="..\..\..\inc\KTypes.h"/>
+    <ClInclude Include="..\..\..\inc\kuri.h"/>
+    <ClInclude Include="..\..\..\inc\kvariant.h"/>
+    <ClInclude Include="..\..\..\inc\kvolumenamespace.h"/>
+    <ClInclude Include="..\..\..\inc\kwebsocket.h"/>
+    <ClInclude Include="..\..\..\inc\kwstring.h"/>
+    <ClInclude Include="..\..\..\inc\KXmlParser.h"/>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\KtlCoreAllocator.cpp" />
+    <ClCompile Include="..\..\KtlSystemCoreImp.cpp" />
+    <ClCompile Include="..\..\ktpl.cpp" />
+    <ClCompile Include="..\..\probeandlock.c" />
+    <ClCompile Include="..\..\kwebsocket.cpp" />
+    <ClCompile Include="..\..\KAWIpcSharedMemory.cpp" />
+    <ClCompile Include="..\..\KAWIpcEventWaiter.cpp" />
+    <ClCompile Include="..\..\kawipcclient.cpp" />
+    <ClCompile Include="..\..\kawipcclientpipe.cpp" />
+    <ClCompile Include="..\..\kawipcclientserverconnection.cpp" />
+    <ClCompile Include="..\..\kawipcheap.cpp" />
+    <ClCompile Include="..\..\kawipclifolist.cpp" />
+    <ClCompile Include="..\..\kawipcpipe.cpp" />
+    <ClCompile Include="..\..\kawipcring.cpp" />
+    <ClCompile Include="..\..\kawipcringconsumer.cpp" />
+    <ClCompile Include="..\..\kawipcringproducer.cpp" />
+    <ClCompile Include="..\..\kawipcserver.cpp" />
+    <ClCompile Include="..\..\kawipcserverclientconnection.cpp" />
+    <ClCompile Include="..\..\kawipcserverpipe.cpp" />
+    <ClCompile Include="..\..\kawipcserverpipeendpoint.cpp" />
+    <ClCompile Include="..\..\khttp.cpp" />
+    <ClCompile Include="..\..\khttpserver.cpp" />
+    <ClCompile Include="..\..\khttpclient.cpp" />
+    <ClCompile Include="..\..\kstringview.cpp" />
+    <ClCompile Include="..\..\kthread.cpp" />
+    <ClCompile Include="..\..\kthreadpool.cpp" />
+    <ClCompile Include="..\..\ktlbase.cpp" />
+    <ClCompile Include="..\..\kallocator.cpp" />
+    <ClCompile Include="..\..\kinstrumentop.cpp" />
+    <ClCompile Include="..\..\kiobuffer.cpp" />
+    <ClCompile Include="..\..\kbitmap.cpp" />
+    <ClCompile Include="..\..\kbuffer.cpp" />
+    <ClCompile Include="..\..\kasynccontext.cpp" />
+    <ClCompile Include="..\..\ktrace.cpp"/>
+    <ClCompile Include="..\..\kwstring.cpp" />
+    <ClCompile Include="..\..\kregistry.cpp" />
+    <ClCompile Include="..\..\ktimer.cpp" />
+    <ClCompile Include="..\..\kblockfile.cpp" />
+    <ClCompile Include="..\..\kblockdevice.cpp" />
+    <ClCompile Include="..\..\kspinlock.cpp" />
+    <ClCompile Include="..\..\kevent.cpp" />
+    <ClCompile Include="..\..\ksemaphore.cpp" />
+    <ClCompile Include="..\..\knodetable.cpp" />
+    <ClCompile Include="..\..\kvolumenamespace.cpp" />
+    <ClCompile Include="..\..\knt.cpp" />
+    <ClCompile Include="..\..\kchecksum.cpp" />
+    <ClCompile Include="..\..\krangelock.cpp" />
+    <ClCompile Include="..\..\kreadcache.cpp" />
+    <ClCompile Include="..\..\kcachedblockfile.cpp" />
+    <ClCompile Include="..\..\knetwork.cpp" />
+    <ClCompile Include="..\..\kmemchannel.cpp" />
+    <ClCompile Include="..\..\ktextfile.cpp" />
+    <ClCompile Include="..\..\kasyncevent.cpp" />
+    <ClCompile Include="..\..\knetfaultinjector.cpp" />
+    <ClCompile Include="..\..\ksocket.cpp" />
+    <ClCompile Include="..\..\kquotagate.cpp" />
+    <ClCompile Include="..\..\ktlsystembase.cpp" />
+    <ClCompile Include="..\..\knetchannel.cpp" />
+    <ClCompile Include="..\..\kresourcelock.cpp" />
+    <ClCompile Include="..\..\kperfcounter.cpp" />
+    <ClCompile Include="..\..\kxmlparser.cpp" />
+    <ClCompile Include="..\..\kdompipe.cpp" />
+    <ClCompile Include="..\..\ksynchronizer.cpp" />
+    <ClCompile Include="..\..\kuri.cpp" />
+    <ClCompile Include="..\..\ktask.cpp" />
+    <ClCompile Include="..\..\knetworkendpoint.cpp" />
+    <ClCompile Include="..\..\kvariant.cpp" />
+    <ClCompile Include="..\..\kdom.cpp" />
+    <ClCompile Include="..\..\kdompath.cpp" />
+    <ClCompile Include="..\..\kserial.cpp" />
+    <ClCompile Include="..\..\kasyncservice.cpp" />
+    <ClCompile Include="..\..\kmgmt.cpp" />
+    <ClCompile Include="..\..\kmgmtserver.cpp" />
+    <ClCompile Include="..\..\kssl.cpp" />
+    <ClCompile Include="..\..\kkerberos.cpp" />
+    <ClCompile Include="..\..\ksspi.cpp" />
+    <ClCompile Include="..\..\kpointer.cpp" />
+    <ClCompile Include="..\..\kfilestream.cpp" />
+    <ClCompile Include="..\..\winpal.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostBuildCopy Include="$(IntDir)\$(TargetName).pdb">
+      <DestinationFolder>$(OutDir)</DestinationFolder>
+    </PostBuildCopy>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(KtlSrcRoot)\mc\user\ktlevents.vcxproj" />
+    <ProjectReference Include="$(KtlSrcRoot)\StatusCodes\StatusCodes.vcxproj" />
+  </ItemGroup>
+</Project>

@@ -52,6 +52,8 @@ namespace Data
                 linkedPhysicalRecord_ = value;
             }
 
+            virtual std::wstring ToString() const override;
+
             __declspec(property(get = get_nextPhysicalRecord, put = set_nextPhysicalRecord)) PhysicalLogRecord::SPtr NextPhysicalRecord;
             PhysicalLogRecord::SPtr get_nextPhysicalRecord()
             {

@@ -1,0 +1,150 @@
+#######################################################
+# Test data for ImpactTranslatorTest.ScriptedTest
+#######################################################
+#
+# !clear: Clears all configuration
+# !set <Key>=<Value>: Sets a configuration setting
+#
+# All other lines run a test case.  The format is:
+#
+#     ImpactActionEnum,ComputeImpact,DiskImpact,NetworkImpact,OSImpact,ApplicationConfigImpact,EstimatedImpactDurationInSeconds,ExpectedResult
+#
+# Takes all but the last field, builds the arguments to ImpactTranslator.TranslateImpactDetailToNodeImpactLevel() and calls it,
+# and verifies that the result returned matches ExpectedResult.
+#
+
+#
+# Standard impactful RootHE
+#
+PlatformUpdate,Reset,Freeze,Reset,Freeze,None,-1,Restart
+
+#
+# NMAgent update
+#
+PlatformUpdate,None,None,Freeze,None,None,9,None
+PlatformUpdate,None,None,Freeze,None,None,10,Restart
+
+#
+# Excessively-long impact duration
+#
+PlatformUpdate,None,None,Freeze,None,None,604799,Restart
+PlatformUpdate,None,None,Freeze,None,None,604800,RemoveData
+PlatformUpdate,Reset,None,None,None,None,604799,Restart
+PlatformUpdate,Reset,None,None,None,None,604800,RemoveData
+
+#
+# Legacy impact type equivalents
+#
+# Reboot
+TenantMaintenance,Reset,Freeze,Reset,Freeze,None,-1,Restart
+PlatformMaintenance,Reset,Freeze,Reset,Freeze,None,-1,Restart
+# ReimageOS
+TenantMaintenance,Reset,Freeze,Reset,Reset,None,-1,Restart
+PlatformMaintenance,Reset,Freeze,Reset,Reset,None,-1,Restart
+# RepaveData
+TenantMaintenance,Reset,Reset,Reset,Reset,None,-1,RemoveData
+PlatformMaintenance,Reset,Reset,Reset,Reset,None,-1,RemoveData
+# Relocation
+TenantMaintenance,Reset,Reset,Initialize,Reset,None,-1,RemoveData
+PlatformMaintenance,Reset,Reset,Initialize,Reset,None,-1,RemoveData
+# VendorRepairBegin
+TenantMaintenance,Wipe,Wipe,Wipe,Wipe,Wipe,-1,RemoveData
+PlatformMaintenance,Wipe,Wipe,Wipe,Wipe,Wipe,-1,RemoveData
+# ApplicationUpdate
+TenantUpdate,Reset,Freeze,Freeze,Freeze,None,-1,Restart
+# ConfigUpdate
+TenantUpdate,None,None,None,None,Reset,-1,None
+# OSUpdate
+TenantUpdate,Reset,Freeze,Reset,Reset,None,-1,Restart
+# InstanceRemoval
+TenantUpdate,Wipe,Wipe,Wipe,Wipe,Wipe,-1,RemoveNode
+# InstanceAddition
+TenantUpdate,Initialize,Initialize,Initialize,Initialize,Initialize,-1,None
+
+# Actual guest OS update (ConfigUpdate+OSUpdate)
+TenantUpdate,Reset,Freeze,Reset,Reset,Reset,-1,Restart
+
+# Actual cspkg update (ApplicationUpdate+ConfigUpdate)
+TenantUpdate,Reset,Freeze,Reset,Freeze,Reset,-1,Restart
+
+# Disk firmware update proposed Feb 2018
+PlatformUpdate,None,Freeze,None,None,None,8,None
+PlatformMaintenance,None,Freeze,None,None,None,8,None
+PlatformUpdate,None,Freeze,None,None,None,10,Restart
+PlatformMaintenance,None,Freeze,None,None,None,10,Restart
+
+# TOR maintenance as of March 2018
+PlatformMaintenance,None,Freeze,Freeze,None,None,30,Restart
+
+
+# Repeat everything with SFRP settings for ignoring certain freezes
+!set Azure.ImpactTranslator.ResourceMap.Disk.Freeze=NoImpact
+!set Azure.ImpactTranslator.ResourceMap.Network.Freeze=NoImpact
+
+#
+# Standard impactful RootHE
+#
+PlatformUpdate,Reset,Freeze,Reset,Freeze,None,-1,Restart
+
+#
+# NMAgent update
+#
+PlatformUpdate,None,None,Freeze,None,None,9,None
+# Behavior change due to config: NMAgent update is ignored
+PlatformUpdate,None,None,Freeze,None,None,10,None
+
+#
+# Excessively-long impact duration
+#
+# Behavior change due to config: These freezes are ignored
+PlatformUpdate,None,None,Freeze,None,None,604799,None
+PlatformUpdate,None,None,Freeze,None,None,604800,None
+# These are the same as without the config change
+PlatformUpdate,Reset,None,None,None,None,604799,Restart
+PlatformUpdate,Reset,None,None,None,None,604800,RemoveData
+
+#
+# Legacy impact type equivalents
+#
+# Reboot
+TenantMaintenance,Reset,Freeze,Reset,Freeze,None,-1,Restart
+PlatformMaintenance,Reset,Freeze,Reset,Freeze,None,-1,Restart
+# ReimageOS
+TenantMaintenance,Reset,Freeze,Reset,Reset,None,-1,Restart
+PlatformMaintenance,Reset,Freeze,Reset,Reset,None,-1,Restart
+# RepaveData
+TenantMaintenance,Reset,Reset,Reset,Reset,None,-1,RemoveData
+PlatformMaintenance,Reset,Reset,Reset,Reset,None,-1,RemoveData
+# Relocation
+TenantMaintenance,Reset,Reset,Initialize,Reset,None,-1,RemoveData
+PlatformMaintenance,Reset,Reset,Initialize,Reset,None,-1,RemoveData
+# VendorRepairBegin
+TenantMaintenance,Wipe,Wipe,Wipe,Wipe,Wipe,-1,RemoveData
+PlatformMaintenance,Wipe,Wipe,Wipe,Wipe,Wipe,-1,RemoveData
+# ApplicationUpdate
+TenantUpdate,Reset,Freeze,Freeze,Freeze,None,-1,Restart
+# ConfigUpdate
+TenantUpdate,None,None,None,None,Reset,-1,None
+# OSUpdate
+TenantUpdate,Reset,Freeze,Reset,Reset,None,-1,Restart
+# InstanceRemoval
+TenantUpdate,Wipe,Wipe,Wipe,Wipe,Wipe,-1,RemoveNode
+# InstanceAddition
+TenantUpdate,Initialize,Initialize,Initialize,Initialize,Initialize,-1,None
+
+# Actual guest OS update (ConfigUpdate+OSUpdate)
+TenantUpdate,Reset,Freeze,Reset,Reset,Reset,-1,Restart
+
+# Actual cspkg update (ApplicationUpdate+ConfigUpdate)
+TenantUpdate,Reset,Freeze,Reset,Freeze,Reset,-1,Restart
+
+# Disk firmware update proposed Feb 2018
+PlatformUpdate,None,Freeze,None,None,None,8,None
+PlatformMaintenance,None,Freeze,None,None,None,8,None
+# Behavior change due to config: disk firmware update is ignored
+PlatformUpdate,None,Freeze,None,None,None,10,None
+PlatformMaintenance,None,Freeze,None,None,None,10,None
+
+# TOR maintenance as of March 2018
+# Behavior change due to config: TOR update is ignored
+PlatformMaintenance,None,Freeze,Freeze,None,None,30,None

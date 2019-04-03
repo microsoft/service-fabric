@@ -7,6 +7,7 @@ namespace System.Fabric.Dca.FileUploader
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Fabric.Common;
     using System.Fabric.Common.Tracing;
     using System.IO;
@@ -301,7 +302,23 @@ namespace System.Fabric.Dca.FileUploader
 
         private void AddFileToCopy(string filename)
         {
+#if DotNetCoreClrLinux
+            if (this.filesToCopy.Contains(filename))
+            {
+                // On Linux, the filewatcher keeps raising events for every write
+                // Return here stops trace spamming
+                return;
+            }
+
+            if(Utility.IgnoreUploadFileList.Exists(x => x.Equals(filename)))
+            {
+                this.TraceSource.WriteInfo(this.logSourceId, "Skipping file:{0} for upload as it is in ignore list.", filename);
+                return;
+            }
+#endif
+
             this.TraceSource.WriteInfo(this.logSourceId, "Found file to copy {0}.", filename);
+
             lock (this.filesToCopy)
             {
                 this.filesToCopy.Add(filename);
@@ -424,7 +441,7 @@ namespace System.Fabric.Dca.FileUploader
             string localMapDestinationDir;
             try
             {
-                localMapDestinationDir = Path.GetDirectoryName(localMapDestination);
+                localMapDestinationDir = FabricPath.GetDirectoryName(localMapDestination);
             }
             catch (PathTooLongException e)
             {
@@ -548,7 +565,8 @@ namespace System.Fabric.Dca.FileUploader
                 // File already exists in the local map. Set the last
                 // write time for the file in the local map to the last
                 // write time from the source file snapshot
-                File.SetLastWriteTime(localMapDestination, sourceLastWriteTime);
+                // It's a Best Effort operation.
+                this.TryUpdateLastWriteTime(localMapDestination, sourceLastWriteTime);
             }
 
             return true;
@@ -671,13 +689,14 @@ namespace System.Fabric.Dca.FileUploader
                 return false;
             }
 
-            // Set the last write time for the temp file to the
-            // last write time from the source file snapshot
-            File.SetLastWriteTime(tempFile, sourceLastWriteTime);
-
             // Move the temp file to the local map
             try
             {
+                // Set the last write time for the temp file to the
+                // last write time from the source file snapshot
+                // Today, it appear that last write time isn't really being used (for LMap files.. so we ignore the rare case where it may fail)
+                this.TryUpdateLastWriteTime(tempFile, sourceLastWriteTime);
+
                 Utility.PerformIOWithRetries(
                     () => { FabricFile.Move(tempFile, localMapDestination); },
                     retryCount);
@@ -992,6 +1011,51 @@ namespace System.Fabric.Dca.FileUploader
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Bit of explanation required here. So, we have a problem at hand where some of our files are beyond the max that .NET can handle for us.
+        /// One such operation that .net can't handle is setting last write time. This is a Windows specific problem and not something that happens on windows.
+        /// </summary>
+        /// <remarks>
+        /// The below code is written to minimize the changes in the current behavior. First we use the .net API and only if we get a Path too long exception, we fallback to Native Version. Technically,
+        /// we can always use the Native one for Windows, but this change is going very late in release, as part of a P0 bug, and I am aiming for
+        /// as few deviation from original behavior as possible. In 6.5, this should be cleaned up.
+        /// </remarks>
+        /// <param name="fullPath"></param>
+        /// <param name="dateTime"></param>
+        /// <returns></returns>
+        private bool TryUpdateLastWriteTime(string fullPath, DateTime dateTime)
+        {
+            try
+            {
+                File.SetLastWriteTime(fullPath, dateTime);
+                return true;
+            }
+            catch (PathTooLongException)
+            {
+                this.TraceSource.WriteInfo(
+                    this.LogSourceId,
+                    "Encountered Path too long exception while updating LastWritten time of file : {0}. Retrying with Native API",
+                    fullPath);
+
+                try
+                {
+                    FabricFile.SetLastWriteTime(fullPath, dateTime);
+                    return true;
+                }
+                catch (Win32Exception exp)
+                {
+                    this.TraceSource.WriteWarning(
+                        this.LogSourceId,
+                        "Encountered Exception: {0} while Trying to update file : {1} last Write time to : {2}",
+                        exp.ToString(),
+                        fullPath,
+                        dateTime);
+
+                    return false;
+                }
+            }
         }
 
         private struct FolderInfo

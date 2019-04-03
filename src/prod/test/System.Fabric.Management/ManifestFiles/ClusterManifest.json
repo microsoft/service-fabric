@@ -1,0 +1,106 @@
+{
+      "nodes": [{
+          "nodeName": "vm1",
+          "ipAddress": "169.10.0.4",
+          "roleName": "vm",
+          "nodeTypeRef": "NodeType2",
+          "faultDomain": "FD0",
+          "upgradeDomain": "UD0"
+      },
+      {
+          "nodeName": "vm2",
+          "ipAddress": "169.10.0.4",
+          "roleName": "vm",
+          "nodeTypeRef": "NodeType2",
+          "faultDomain": "FD0",
+          "upgradeDomain": "UD0"
+      },
+      {
+          "nodeName": "vm3",
+          "ipAddress": "169.10.0.4",
+          "roleName": "vm",
+          "nodeTypeRef": "NodeType3",
+          "faultDomain": "FD0",
+          "upgradeDomain": "UD0"
+      }],
+      "apiVersion": "2015-01-01-alpha",
+      "type": "Microsoft.ServiceFabric/clusters",
+      "name": "[parameters('clusterName')]",
+      "location": "[parameters('clusterLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticStorageAccountName'))]"
+      ],
+      "properties": {
+        "diagnosticsStorageAccountConfig": {
+          "blobEndpoint": "[concat('https://',parameters('diagnosticStorageAccountName'),'.blob.core.windows.net/')]",
+          "primaryAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName')),'2015-05-01-preview').key1]",
+          "queueEndpoint": "[concat('https://',parameters('diagnosticStorageAccountName'),'.queue.core.windows.net/')]",
+          "secondaryAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName')),'2015-05-01-preview').key2]",
+          "storageAccountName": "[parameters('diagnosticStorageAccountName')]",
+          "tableEndpoint": "[concat('https://',parameters('diagnosticStorageAccountName'),'.table.core.windows.net/')]"
+        },
+        "expectedVMResources": [
+          {
+            "name": "VM2",
+            "nodeTypeRef": "NodeType2",
+            "vmInstanceCount": 3
+          }
+        ],
+        "fabricSettings": [],
+        "managementEndpoint": "[concat('http://',reference(parameters('lbIPName')).dnsSettings.fqdn,':',parameters('fabricHttpGatewayPort'))]",
+        "nodeTypes": [
+          {
+            "name": "NodeType2",
+            "applicationPorts": {
+              "endPort": "30000",
+              "startPort": "20000"
+            },
+            "clientConnectionEndpointPort": "19000",
+            "ephemeralPorts": {
+              "endPort": "65534",
+              "startPort": "49152"
+            },
+            "httpGatewayEndpointPort": "19000",
+            "placementProperties": {
+              "nodeColor": "Red"
+            }
+          },
+          {
+            "name": "NodeType3",
+            "applicationPorts": {
+              "endPort": "30001",
+              "startPort": "20001"
+            },
+            "clientConnectionEndpointPort": "19002",
+            "ephemeralPorts": {
+              "endPort": "65533",
+              "startPort": "49151"
+            },
+            "httpGatewayEndpointPort": "19001",
+            "placementProperties": {
+              "nodeColor": "Red"
+            }
+          }
+        ],
+        "upgradeDescription": {
+          "deltaHealthPolicy": {
+            "maxPercentDeltaUnhealthyApplications": 0,
+            "maxPercentDeltaUnhealthyNodes": "[parameters('maxPercentDeltaUnhealthyNodes')]",
+            "maxPercentUpgradeDomainDeltaUnhealthyNodes": "[parameters('maxPercentUpgradeDomainDeltaUnhealthyNodes')]"
+          },
+          "forceRestart": false,
+          "healthCheckRetryTimeout": "00:05:00",
+          "healthCheckStableDuration": "00:00:30",
+          "healthCheckWaitDuration": "00:00:30",
+          "healthPolicy": {
+            "maxPercentUnhealthyApplications": "[parameters('maxPercentageUnhealthyApplications')]",
+            "maxPercentUnhealthyNodes": "[parameters('maxPercentageUnhealthyNodes')]"
+          },
+          "overrideUserUpgradePolicy": false,
+          "upgradeDomainTimeout": "00:15:00",
+          "upgradeReplicaSetCheckTimeout": "00:10:00",
+          "upgradeTimeout": "00:15:00"
+        }
+      },
+      "clusterManifestVersion": 1
+}

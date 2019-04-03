@@ -973,5 +973,7 @@ namespace Common
         AddEventSource(TraceTaskCodes::ResourceMonitor, "ResourceMonitor");
 
         AddEventSource(TraceTaskCodes::RCR, "RCR");
+
+        AddEventSource(TraceTaskCodes::GatewayResourceManager, "GRM");
     }
 }

@@ -13,9 +13,25 @@
     <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
   </PropertyGroup>
 
+  <Choose>
+    <When Condition="'$(OSSBUILD)' != ''">
+      <ItemGroup>
+        <Compile Include="..\..\AppInsightsTelemetryKey.cs">
+          <Link>AppInsightsTelemetryKey.cs</Link>
+        </Compile>
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <Compile Include="..\..\AppInsightsTelemetryKey.Internal.cs">
+          <Link>AppInsightsTelemetryKey.Internal.cs</Link>
+        </Compile>
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
   <ItemGroup>
     <Compile Include="
-    ..\..\AppInsightsTelemetryKey.cs;
     ..\..\AppInsightsTelemetryWriter.cs;
     ..\..\FileShareTelemetryWriter.cs" />
   </ItemGroup>

@@ -22,9 +22,11 @@
         ..\HostingConfig.cs;
         ..\TimeoutHelper.cs;
         ..\RWLock.cs;
+        ..\UpdateRoutesContainerOperation.cs;
         ..\ContainerActivatorService.cs;
         ..\ContainerImageDownloader.cs;
         ..\ActivateContainerOperation.cs;
+        ..\ExecuteContainerUpdateRoutesOperation.cs;
         ..\DeactivateContainerOperation.cs;
         ..\ContainerEventManager.cs;
         ..\ConfigHelper.cs;
@@ -46,7 +48,7 @@
         <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj"/>
         <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.ContainerServiceClient\CoreCLR\Microsoft.ServiceFabric.ContainerServiceClient.csproj" />
     </ItemGroup>
-
+	
     <ItemGroup>
         <PackageReference Include="System.Management" Version="4.5.0" />
     </ItemGroup>

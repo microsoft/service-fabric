@@ -287,6 +287,15 @@ KDeferredCallTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
+#if defined(PLATFORM_UNIX)
+    NTSTATUS status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     KTestPrintf("KDeferredCallTest: STARTED\n");
 
     KtlSystem* underlyingSystem;
@@ -322,6 +331,11 @@ KDeferredCallTest(
     EventUnregisterMicrosoft_Windows_KTL();
 
     KTestPrintf("KDeferredCallTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif      
+    
     return Result;
 }
 

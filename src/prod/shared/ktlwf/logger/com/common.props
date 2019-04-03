@@ -1,0 +1,6 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!-- Common properties for the native ktlwf logger projects -->
+  <PropertyGroup>
+    <KtlWfIncludePath>$(SrcRoot)\prod\src\ktllogger\sys\inc</KtlWfIncludePath>
+  </PropertyGroup>
+</Project>

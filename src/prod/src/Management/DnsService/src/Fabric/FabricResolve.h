@@ -68,6 +68,9 @@ namespace DNS
         ) override;
 
     private:
+        IDnsTracer & Tracer() { return *_spTracer; }
+
+    private:
         bool _fActive;
         KSpinLock _lock;
         KString::SPtr _spServiceName;

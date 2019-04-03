@@ -587,7 +587,7 @@ ErrorCode ProcessInnerQueryRequestAsyncOperation::CreateServiceQueryListContext(
         return error;
     }
 
-    context.SetContinuationToken();
+    context.SetPagingStatus();
 
     AttributesMap filters;
     wstring serviceName;

@@ -1,0 +1,138 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <ClCompile>
+
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <CallingConvention>Cdecl</CallingConvention>
+      <RuntimeTypeInfo></RuntimeTypeInfo>
+      <FavorSizeOrSpeed></FavorSizeOrSpeed>
+      <OmitFramePointers></OmitFramePointers>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+
+      <MinimalRebuild>false</MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>true</OmitDefaultLibName>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ExceptionHandling>false</ExceptionHandling>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DisableSpecificWarnings></DisableSpecificWarnings>
+
+      <PreprocessorDefinitions>
+        KTL_USER_MODE=0;
+        CONDITION_HANDLING=1;
+        NT_UP=1;
+        NT_INST=0;
+        WIN32=100;
+        _NT1X_=100;
+        WINNT=1;
+        _WIN32_WINNT=0x0601;
+        WINVER=0x0601;
+        _WIN32_IE=0x0A00;
+        WIN32_LEAN_AND_MEAN=1;
+        DEVL=1;
+        NDEBUG;
+        UNICODE=1;
+        _UNICODE;
+        BUILD_WINDOWS;
+        __WRL_CONFIGURATION_LEGACY__;
+        _USE_DECLSPECS_FOR_SAL=1;
+        KMDF_VERSION_MAJOR=$(KMDF_VERSION_MAJOR);
+        KMDF_VERSION_MINOR=$(KMDF_VERSION_MINOR);
+      </PreprocessorDefinitions>
+      <ForcedIncludeFiles>$(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\warning.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>
+        <!--Explicitly drop any previous includes to ignore default SDK-->
+        <!--TODO: Start using the default WDK imports instead of this custom crap-->
+        $(KTLSRCROOT)\mc\kernel\$(O)\;
+        $(KTLSRCROOT)\StatusCodes\$(O)\;
+        $(KTLSRCROOT)\src\kernel\$(O)\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ifskit)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\mincore\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\clientcore\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\crt\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\priv_ssdk\inc\net\;
+        <!--$(KmdfVersion) gets set to by using the WindowsWDK package-->
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\wdf\kmdf\$(KmdfVersion)\;
+        $(KTLSRCROOT)\inc\;
+        <!--For any generated header files-->
+        $(IntDir);
+        <!--Needed for generated header files-->
+        $(O); 
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions>/MT /Zc:sizedDealloc- /U_MT /favor:AMD64 /kernel /d2guardspecload %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>
+        <!--Explicitly drop any previous includes to ignore default SDK-->
+        $(KTLSRCROOT)\mc\user\$(O)\;
+        $(KTLSRCROOT)\mc\kernel\$(O)\;
+        $(KTLSRCROOT)\StatusCodes\$(O)\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ifskit)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\mincore\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\clientcore\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\crt\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\priv_ssdk\inc\net\;
+        <!--$(KmdfVersion) gets set to by using the WindowsWDK package-->
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\wdf\kmdf\$(KmdfVersion)\;
+        $(KTLSRCROOT)\inc\;
+        <!--For any generated header files-->
+        $(IntDir);
+        <!--Needed for generated header files-->
+        $(O); 
+      </AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <!--Ignore the default libraries when searching for external references-->
+    <Link>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <AdditionalOptions>%(AdditionalOptions) /highentropyva /guard:cf /d2:-guardspecload</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>DBG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+     <Optimization>Full</Optimization>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+     <PreprocessorDefinitions>NDEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_WIN64=1;_AMD64_=1;AMD64=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+</Project>

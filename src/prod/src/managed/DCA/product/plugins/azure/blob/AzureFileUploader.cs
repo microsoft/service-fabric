@@ -183,13 +183,14 @@ namespace FabricDCA
             List<string> sourceRelativeParts = new List<string>();
 
             // Add each directory in the directory hierarchy to the list
-            string sourceRelativePath = Path.GetDirectoryName(sourceRelative);
+            string sourceRelativePath = FabricPath.GetDirectoryName(sourceRelative);
+
             while (false == string.IsNullOrEmpty(sourceRelativePath))
             {
                 string sourceRelativePart = Path.GetFileName(sourceRelativePath);
                 sourceRelativeParts.Add(sourceRelativePart);
 
-                sourceRelativePath = Path.GetDirectoryName(sourceRelativePath);
+                sourceRelativePath = FabricPath.GetDirectoryName(sourceRelativePath);
             }
 
             // Reverse the list, so that top-level directories appear first

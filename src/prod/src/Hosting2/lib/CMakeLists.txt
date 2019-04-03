@@ -38,7 +38,6 @@ set( LINUX_SOURCES
     ../ApplicationServiceMap.cpp
     ../AssignIpAddressesReply.cpp
     ../AssignIpAddressesRequest.cpp
-    ../AzureVnetPluginProcessManager.cpp
     ../BuiltinServiceAccount.cpp
     ../CertificateAccessDescription.cpp
     ../CertificateAclingManager.cpp
@@ -87,6 +86,7 @@ set( LINUX_SOURCES
     ../ContainerHostConfig.cpp
     ../ContainerLogDriverConfig.cpp
     ../ContainerStats.cpp
+    ../ContainerNetworkOperations.cpp
     ../CrashDumpConfigurationManager.cpp
     ../CrashDumpProvider.cpp
     ../CreateSymbolicLinkRequest.cpp
@@ -142,6 +142,10 @@ set( LINUX_SOURCES
     ../FinishRegisterApplicationHostRequest.cpp
     ../FirewallSecurityProvider.cpp
     ../GetFabricProcessSidReply.cpp
+    ../GetNetworkDeployedPackagesRequest.cpp
+    ../GetNetworkDeployedPackagesReply.cpp
+    ../GetDeployedNetworksRequest.cpp
+    ../GetDeployedNetworksReply.cpp
     ../HostedServiceActivationManager.cpp
     ../HostedService.cpp
     ../HostedServiceInstance.cpp
@@ -163,9 +167,21 @@ set( LINUX_SOURCES
     ../LeaseMonitor.cpp
     ../LocalUser.cpp
     ../LogCollectionProviderFactory.cpp
+    ../MACHelper.cpp
+    ../ManageOverlayNetworkAction.cpp
+    ../ManageOverlayNetworkResourcesReply.cpp 
+    ../ManageOverlayNetworkResourcesRequest.cpp
     ../MultiCodePackageApplicationHost.cpp
     ../MultiCodePackageApplicationHostProxy.cpp
+    ../NatIPAM.cpp
+    ../NatIpAddressProvider.cpp
+    ../NetworkConfig.cpp
+    ../NetworkIPAM.cpp
+    ../NetworkIPAMConfig.cpp
+    ../NetworkPluginProcessManager.cpp
     ../NetworkContextType.cpp
+    ../NetworkInventoryAgent.cpp
+    ../NetworkPluginProcessManager.cpp
     ../NodeDisabledNotification.cpp
     ../NodeEnabledNotification.cpp
     ../NodeEnvironmentManager.cpp
@@ -174,6 +190,18 @@ set( LINUX_SOURCES
     ../NonActivatedApplicationHost.cpp
     ../OperationStatus.cpp
     ../OperationStatusMap.cpp
+    ../OverlayNetworkRoutingInformation.cpp
+    ../OverlayNetworkContainerParameters.cpp
+    ../OverlayNetworkDefinition.cpp
+    ../OverlayNetworkPluginOperationsLinux.cpp
+    ../OverlayNetworkPlugin.cpp
+    ../OverlayNetworkDriver.cpp
+    ../OverlayNetworkManager.cpp
+    ../OverlayNetworkResource.cpp
+    ../OverlayNetworkRoute.cpp
+    ../OverlayNetworkResourceProvider.cpp
+    ../OverlayNetworkReservationManager.cpp
+    ../OverlayIPAM.cpp
     ../PendingOperationMap.cpp
     ../PortAclMap.cpp
     ../PortAclRef.cpp
@@ -240,6 +268,8 @@ set( LINUX_SOURCES
     ../UnregisterFabricRuntimeRequest.cpp
     ../UpdateCodePackageContextReply.cpp
     ../UpdateCodePackageContextRequest.cpp
+    ../UpdateOverlayNetworkRoutesRequest.cpp
+    ../UpdateOverlayNetworkRoutesReply.cpp
     ../VersionedApplication.cpp
     ../VersionedServicePackage.cpp
     ../LocalResourceManager.cpp

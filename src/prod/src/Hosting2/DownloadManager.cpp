@@ -618,13 +618,15 @@ private:
                 {
                     CompletePendingDownload(error);
                     FinishComplete(operation->Parent, error);
+                    return;
                 }
             }
             // If failure is due to file not found, query CM to get status of ApplicationInstance
             if (error.IsError(ErrorCodeValue::FileNotFound) &&
                 kind_ != Kind::DownloadFabricUpgradePackageAsyncOperation)
             {
-                QueryDeletedApplicationInstance(operation->Parent, retryCount);
+                // passing in original error is necessary for a more descriptive error message
+                QueryDeletedApplicationInstance(operation->Parent, retryCount, move(error));
                 return;
             }
 
@@ -634,6 +636,16 @@ private:
                 UpdatePendingDownload(error);
                 ScheduleDownload(operation->Parent);
                 return;
+            }
+            else
+            {
+                // hit retry limit
+                if (TryStartComplete())
+                {
+                    CompletePendingDownload(error);
+                    FinishComplete(operation->Parent, error);
+                    return;
+                }
             }
         }
 #if !defined(PLATFORM_UNIX)
@@ -713,6 +725,11 @@ private:
             {
                 description = error.Message;
             }
+            else
+            {
+                description = wformatString("{0}", error.ReadValue());
+            }
+
             this->ReportHealth(
                 SystemHealthReportCode::Hosting_DownloadFailed,
                 description /*extraDescription*/,
@@ -842,7 +859,7 @@ private:
 
 #endif
 
-    void QueryDeletedApplicationInstance(AsyncOperationSPtr const & thisSPtr, ULONG const retryCount)
+    void QueryDeletedApplicationInstance(AsyncOperationSPtr const & thisSPtr, ULONG const retryCount, ErrorCode && originalError)
     {
         vector<wstring> appIds;
         appIds.push_back(applicationId_.ToString());
@@ -877,11 +894,11 @@ private:
             QueryNames::ToString(QueryNames::GetDeletedApplicationsList),
             argsMap,
             HostingConfig::GetConfig().RequestTimeout,
-            [this, retryCount](AsyncOperationSPtr const& operation) { this->OnGetDeletedApplicationsListCompleted(operation, retryCount); },
+            [this, retryCount, originalError](AsyncOperationSPtr const& operation) { this->OnGetDeletedApplicationsListCompleted(operation, retryCount, originalError); },
             thisSPtr);
     }
 
-    void OnGetDeletedApplicationsListCompleted(AsyncOperationSPtr const & operation, ULONG const retryCount)
+    void OnGetDeletedApplicationsListCompleted(AsyncOperationSPtr const & operation, ULONG const retryCount, ErrorCode const & originalError)
     {
         QueryResult result;
         wstring queryObStr;
@@ -926,7 +943,7 @@ private:
                 }
                 else
                 {
-                    error = ErrorCodeValue::FileNotFound;
+                    error = originalError;
                 }
             }
         }
@@ -1819,104 +1836,16 @@ protected:
             TryComplete(operation->Parent, error);
             return;
         }
+
+        GetCodePackages(servicePackageDescription_, operation->Parent);
+    }
+
+    void GetCodePackages(ServicePackageDescription const & servicePackage, AsyncOperationSPtr const & thisSPtr)
+    {
         filesToDownload_.clear();
-        error = GetCodePackages(servicePackageDescription_);
-        if (!error.IsSuccess())
-        {
-            TryComplete(operation->Parent, error);
-            return;
-        }
-        GetConfigPackages(servicePackageDescription_);
-        GetDataPackages(servicePackageDescription_);
-        if (!filesToDownload_.empty())
-        { 
-            auto downloadOp = AsyncOperation::CreateAndStart<DownloadPackagesAsyncOperation>(
-                owner_,
-                filesToDownload_,
-                [this](AsyncOperationSPtr const & downloadOp)
-            {
-                this->OnDownloadPackagesCompleted(downloadOp, false);
-            },
-                operation->Parent);
-            OnDownloadPackagesCompleted(downloadOp, true);
-        }
-        else
-        {
-            DownloadContainerImages(operation->Parent);
-        }
-    }
-
-    void OnDownloadPackagesCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
-        {
-            return;
-        }
-        auto error = DownloadPackagesAsyncOperation::End(operation);
-        if (!error.IsSuccess())
-        {
-            TryComplete(operation->Parent, error);
-            return;
-        }
-        DownloadContainerImages(operation->Parent);
-    }
-
-    void DownloadContainerImages(AsyncOperationSPtr const & thisSPtr)
-    {
-        bool skipdownloadImages = false;
-#if defined(PLATFORM_UNIX)
-        ContainerIsolationMode::Enum isolationMode = ContainerIsolationMode::process;
-        ContainerIsolationMode::FromString(servicePackageDescription_.ContainerPolicyDescription.Isolation, isolationMode);
-        if (isolationMode == ContainerIsolationMode::hyperv)
-        {
-            WriteInfo(
-                Trace_DownloadManager,
-                owner_.Root.TraceId,
-                "Skip downloading container images for {0}",
-                servicePackageId_.ApplicationId);
-            skipdownloadImages = true;
-        }
-#endif
-        if (!containerImages_.empty() &&
-            !skipdownloadImages)
-        {
-            auto containerOp = AsyncOperation::CreateAndStart<DownloadContainerImagesAsyncOperation>
-                (
-                    this->containerImages_,
-                    ServicePackageActivationContext(),
-                    this->owner_,
-                    [this](AsyncOperationSPtr const & containerOp)
-            {
-                this->OnContainerImagesDownloaded(containerOp, false);
-            },
-                    thisSPtr);
-            OnContainerImagesDownloaded(containerOp, true);
-        }
-        else
-        {
-            SetupSymbolicLinks(thisSPtr);
-        }
-    }
-    void OnContainerImagesDownloaded(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
-        {
-            return;
-        }
-
-        auto error = DownloadContainerImagesAsyncOperation::End(operation);
-        if (!error.IsSuccess())
-        {
-            TryComplete(operation->Parent, error);
-            return;
-        }
-
-        SetupSymbolicLinks(operation->Parent);
-    }
-
-    ErrorCode GetCodePackages(ServicePackageDescription const & servicePackage)
-    {
         containerImages_.clear();
+        vector<wstring> secretStoreRefs;
+        bool getRespositoryPwdForSecretStore = true;
         for (auto iter = servicePackage.DigestedCodePackages.begin();
             iter != servicePackage.DigestedCodePackages.end();
             ++iter)
@@ -1997,8 +1926,8 @@ protected:
                         owner_.Root.TraceId,
                         "Failed to get the image name to be downloaded with error {0}",
                         error);
-
-                    return error;
+                    TryComplete(thisSPtr, error);
+                    return;
                 }
 
                 this->containerImages_.push_back(
@@ -2007,14 +1936,204 @@ protected:
                         iter->ContainerPolicies.UseDefaultRepositoryCredentials,
                         iter->ContainerPolicies.UseTokenAuthenticationCredentials,
                         iter->ContainerPolicies.RepositoryCredentials));
+
+                GetSecretStoreRefForRepositoryCredentials(secretStoreRefs, iter->ContainerPolicies, getRespositoryPwdForSecretStore);
             }
         }
+
+        if (!secretStoreRefs.empty())
+        {
+            auto secretStoreOp = HostingHelper::BeginGetSecretStoreRef(
+                owner_.hosting_,
+                secretStoreRefs,
+                [this](AsyncOperationSPtr const & secretStoreOp)
+            {
+                this->OnSecretStoreOpCompleted(secretStoreOp, false);
+            },
+                thisSPtr);
+            OnSecretStoreOpCompleted(secretStoreOp, true);
+        }
+        else
+        {
+            GetConfigAndDataPackages(thisSPtr);
+        }
+    }
+
+    void OnSecretStoreOpCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        map<wstring, wstring> decryptedSecretStoreRef;
+        auto error = HostingHelper::EndGetSecretStoreRef(operation, decryptedSecretStoreRef);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "GetSecretStoreRef Values for RepositoryCredentials returned error:{0}",
+            error);
+
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, move(error));
+            return;
+        }
+
+        error = ReplaceRepositoryCredentialValues(decryptedSecretStoreRef);
+        if (!error.IsSuccess())
+        {
+            WriteError(
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "Failed to substitute SecretStoreRef {0}",
+                error);
+            TryComplete(operation->Parent, move(error));
+            return;
+        }
+
+        GetConfigAndDataPackages(operation->Parent);
+    }
+
+    void GetSecretStoreRefForRepositoryCredentials(
+        _Out_ vector<wstring> & secretStoreRefs,
+        ServiceModel::ContainerPoliciesDescription const& containerPolicies,
+        _Inout_ bool & getRespositoryPwdForSecretStore)
+    {
+        // Retrive the default repository credentials.
+        // Only reterieve if :
+        // 1. you haven't retrieved before
+        // 2. Type is SecretsStoreRef
+        // 3. Default credentials in cluster manifest are not empty.
+        if (containerPolicies.UseDefaultRepositoryCredentials
+            && getRespositoryPwdForSecretStore
+            && !HostingConfig::GetConfig().DefaultContainerRepositoryAccountName.empty()
+            && !HostingConfig::GetConfig().DefaultContainerRepositoryPassword.empty()
+            && !HostingConfig::GetConfig().DefaultContainerRepositoryPasswordType.empty()
+            && StringUtility::AreEqualCaseInsensitive(HostingConfig::GetConfig().DefaultContainerRepositoryPasswordType, Constants::SecretsStoreRef))
+        {
+            secretStoreRefs.push_back(HostingConfig::GetConfig().DefaultContainerRepositoryPassword);
+            getRespositoryPwdForSecretStore = false;
+        }
+        if (StringUtility::AreEqualCaseInsensitive(containerPolicies.RepositoryCredentials.Type, Constants::SecretsStoreRef))
+        {
+            secretStoreRefs.push_back(containerPolicies.RepositoryCredentials.Password);
+        }
+    }
+
+    ErrorCode ReplaceRepositoryCredentialValues(map<wstring, wstring> const& decryptedSecretStoreRef)
+    {
+        for (auto & containerImageDescription : this->containerImages_)
+        {
+            if (StringUtility::AreEqualCaseInsensitive(containerImageDescription.RepositoryCredentials.Type, Constants::SecretsStoreRef))
+            {
+                auto it = decryptedSecretStoreRef.find(containerImageDescription.RepositoryCredentials.Password);
+                if (it == decryptedSecretStoreRef.end())
+                {
+                    return ErrorCode(ErrorCodeValue::NotFound,
+                        wformatString(StringResource::Get(IDS_HOSTING_SecretStoreReferenceDecryptionFailed), L"RepositoryCredentials", containerImageDescription.RepositoryCredentials.Password));
+                }
+
+                containerImageDescription.SetContainerRepositoryPassword(it->second);
+            }
+        }
+
         return ErrorCodeValue::Success;
+    }
+
+    void GetConfigAndDataPackages(AsyncOperationSPtr const & thisSPtr)
+    {
+        GetConfigPackages(servicePackageDescription_);
+        GetDataPackages(servicePackageDescription_);
+        if (!filesToDownload_.empty())
+        {
+            auto downloadOp = AsyncOperation::CreateAndStart<DownloadPackagesAsyncOperation>(
+                owner_,
+                filesToDownload_,
+                [this](AsyncOperationSPtr const & downloadOp)
+            {
+                this->OnDownloadPackagesCompleted(downloadOp, false);
+            },
+                thisSPtr);
+            OnDownloadPackagesCompleted(downloadOp, true);
+        }
+        else
+        {
+            DownloadContainerImages(thisSPtr);
+        }
+    }
+
+    void OnDownloadPackagesCompleted(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+        auto error = DownloadPackagesAsyncOperation::End(operation);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        DownloadContainerImages(operation->Parent);
+    }
+
+    void DownloadContainerImages(AsyncOperationSPtr const & thisSPtr)
+    {
+        bool skipdownloadImages = false;
+#if defined(PLATFORM_UNIX)
+        ContainerIsolationMode::Enum isolationMode = ContainerIsolationMode::process;
+        ContainerIsolationMode::FromString(servicePackageDescription_.ContainerPolicyDescription.Isolation, isolationMode);
+        if (isolationMode == ContainerIsolationMode::hyperv)
+        {
+            WriteInfo(
+                Trace_DownloadManager,
+                owner_.Root.TraceId,
+                "Skip downloading container images for {0}",
+                servicePackageId_.ApplicationId);
+            skipdownloadImages = true;
+        }
+#endif
+        if (!containerImages_.empty() &&
+            !skipdownloadImages)
+        {
+            auto containerOp = AsyncOperation::CreateAndStart<DownloadContainerImagesAsyncOperation>
+                (
+                    this->containerImages_,
+                    ServicePackageActivationContext(),
+                    this->owner_,
+                    [this](AsyncOperationSPtr const & containerOp)
+            {
+                this->OnContainerImagesDownloaded(containerOp, false);
+            },
+                    thisSPtr);
+            OnContainerImagesDownloaded(containerOp, true);
+        }
+        else
+        {
+            SetupSymbolicLinks(thisSPtr);
+        }
+    }
+    void OnContainerImagesDownloaded(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = DownloadContainerImagesAsyncOperation::End(operation);
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+
+        SetupSymbolicLinks(operation->Parent);
     }
 
     void GetConfigPackages(ServicePackageDescription const & servicePackage)
     {
-
         for (auto iter = servicePackage.DigestedConfigPackages.begin();
             iter != servicePackage.DigestedConfigPackages.end();
             ++iter)
@@ -2217,7 +2336,7 @@ protected:
         }
 
         vector<wstring> secretStoreRef;
-        error = HostingHelper::DecryptAndGetSecretStoreRef(configSettingsMapResult, secretStoreRef);
+        error = HostingHelper::DecryptAndGetSecretStoreRefForConfigSetting(configSettingsMapResult, secretStoreRef);
         if (!error.IsSuccess())
         {
             TryComplete(thisSPtr, error);
@@ -2237,32 +2356,17 @@ protected:
 
     void SetupSecretStoreServiceRefs(map<wstring, ConfigSettings> const& configSettingsMapResult, vector<std::wstring> const & secretStoreRefs, AsyncOperationSPtr const & thisSPtr)
     {
-        GetSecretsDescription getSecretsDesc;
-        ErrorCode error = owner_.hosting_.LocalSecretServiceManagerObj->ParseSecretStoreRef(
+        auto secretStoreOp = HostingHelper::BeginGetSecretStoreRef(
+            owner_.hosting_,
             secretStoreRefs,
-            getSecretsDesc);
-
-        if (!error.IsSuccess())
+            [this, configSettingsMapResult](AsyncOperationSPtr const & secretStoreOp)
         {
-            WriteError(
-                Trace_DownloadManager,
-                owner_.Root.TraceId,
-                "Error while parsing SecretRefs LocalSecretServiceManagerObj->ParseSecretStoreRef {0}",
-                error);
-
-            TryComplete(thisSPtr, error);
-            return;
-        }
-
-        auto operation = owner_.hosting_.LocalSecretServiceManagerObj->BeginGetSecrets(
-            getSecretsDesc,
-            HostingConfig::GetConfig().RequestTimeout,
-            [this, configSettingsMapResult](AsyncOperationSPtr const & operation)
-        {
-            this->OnBeginGetSecretsCompleted(configSettingsMapResult, operation, false);
+            this->OnBeginGetSecretsCompleted(configSettingsMapResult, secretStoreOp, false);
         },
             thisSPtr);
-        this->OnBeginGetSecretsCompleted(configSettingsMapResult, operation, true);
+
+        this->OnBeginGetSecretsCompleted(configSettingsMapResult, secretStoreOp, true);
+
     }
 
     void OnBeginGetSecretsCompleted(
@@ -2274,27 +2378,19 @@ protected:
         {
             return;
         }
+        map<wstring, wstring> decryptedSecretStoreRef;
+        auto error = HostingHelper::EndGetSecretStoreRef(operation, decryptedSecretStoreRef);
+        WriteTrace(
+            error.ToLogLevel(),
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "GetSecretStoreRef Values for ConfigPackagePolicies Settings returned error:{0}",
+            error);
 
-        SecretsDescription secretsDesc;
-        ErrorCode error = owner_.hosting_.LocalSecretServiceManagerObj->EndGetSecrets(operation, secretsDesc);
         if (!error.IsSuccess())
         {
-            WriteError(
-                Trace_DownloadManager,
-                owner_.Root.TraceId,
-                "Error while obtaining SecretStoreRef values LocalSecretServiceManagerObj->EndGetSecrets {0}",
-                error);
-
             TryComplete(operation->Parent, error);
             return;
-        }
-
-        std::vector<Secret> secrets = secretsDesc.Secrets;
-        map<wstring, wstring> decryptedSecretStoreRef;
-        for (auto secret : secrets)
-        {
-            wstring key = wformatString("{0}:{1}", secret.Name, secret.Version);
-            decryptedSecretStoreRef.insert(make_pair(key, secret.Value));
         }
 
         error = WriteConfigSettingToFile(configSettingsMapResult, decryptedSecretStoreRef);
@@ -2567,6 +2663,15 @@ public:
 protected:
     virtual void OnStart(AsyncOperationSPtr const & thisSPtr)
     {
+        WriteInfo(
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "Predeployment invoked for ApplicationType: {0}, ApplicationVersion: {1}, ServiceManifestName: {2}. PackageSharingPolicies: {3}",
+            applicationTypeName_,
+            applicationTypeVersion_,
+            serviceManifestName_,
+            sharingPolicies_);
+
         if (!ManagementConfig::GetConfig().ImageCachingEnabled)
         {
             ErrorCode err(ErrorCodeValue::PreDeploymentNotAllowed, StringResource::Get(IDS_HOSTING_Predeployment_NotAllowed));
@@ -3319,6 +3424,17 @@ private:
     ErrorCode EnsureCurrentVersionFiles()
     {
         auto nodeVersionInstance = owner_.hosting_.FabricNodeConfigObj.NodeVersion;
+
+        WriteInfo(
+            Trace_DownloadManager,
+            owner_.Root.TraceId,
+            "FabricUpgrade Version -> Node-{0}, Requested-{1}. CodeVersion: Node-{2}, Requested-{3}. ConfigVersion: Node-{4}, Requested-{5}.",
+            nodeVersionInstance,
+            fabricVersion_,
+            nodeVersionInstance.Version.CodeVersion,
+            fabricVersion_.CodeVersion,
+            nodeVersionInstance.Version.ConfigVersion,
+            fabricVersion_.ConfigVersion);
 
         if (nodeVersionInstance.Version.ConfigVersion != fabricVersion_.ConfigVersion)
         {

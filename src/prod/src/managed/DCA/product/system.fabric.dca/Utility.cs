@@ -34,6 +34,10 @@ namespace System.Fabric.Dca
         internal const string AppDiagnosticStoreAccessRequiresImpersonationValueName = "AppDiagnosticStoreAccessRequiresImpersonation";
         internal const string TestOnlyDtrDeletionAgeMinutesValueName = "TestOnlyDtrDeletionAgeInMinutes";
 
+        // We need to ignore a few linux specific files for kernel
+        // crash dumps.
+        internal static readonly List<string> IgnoreUploadFileList = new List<string>() { "kexec_cmd" };
+
         // Timestamp up to which application ETW traces should be decoded
         internal static readonly object ApplicationEtwTracesEndTimeLock = new object();
 
@@ -249,6 +253,15 @@ namespace System.Fabric.Dca
             // Create a sub-folder for temporary files under the DCA work directory
             DcaTempFolder = Path.Combine(DcaWorkFolder, DcaTempFolderName);
             FabricDirectory.CreateDirectory(DcaTempFolder);
+        }
+
+        internal static string GetOrCreateContainerWorkDirectory(string containerLogDirectory)
+        {
+            // Create a sub-folder for work under the container log directory
+            string workFolder = Path.Combine(containerLogDirectory, DcaWorkFolderName);
+            FabricDirectory.CreateDirectory(workFolder);
+
+            return workFolder;
         }
 
         internal static string GetTempFileName()
@@ -893,7 +906,7 @@ namespace System.Fabric.Dca
                     return true;
                 }
 
-                folderName = Path.GetDirectoryName(folderName);
+                folderName = FabricPath.GetDirectoryName(folderName);
             }
             while (false == string.IsNullOrEmpty(folderName));
 

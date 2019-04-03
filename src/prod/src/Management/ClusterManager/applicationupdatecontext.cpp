@@ -28,7 +28,6 @@ ApplicationUpdateContext::ApplicationUpdateContext(
     , applicationId_(applicationId)
     , currentCapacities_(currentCapacity)
     , updatedCapacities_(updatedCapacity)
-    , isCommitPending_(false)
 {
 }
 
@@ -39,7 +38,6 @@ ApplicationUpdateContext::ApplicationUpdateContext(ApplicationUpdateContext && o
     , applicationId_(move(other.applicationId_))
     , currentCapacities_(move(other.currentCapacities_))
     , updatedCapacities_(move(other.updatedCapacities_))
-    , isCommitPending_(other.isCommitPending_)
 {
 }
 
@@ -50,7 +48,6 @@ ApplicationUpdateContext::ApplicationUpdateContext(
     , applicationId_(0)
     , currentCapacities_()
     , updatedCapacities_()
-    , isCommitPending_(false)
 {
 }
 
@@ -64,7 +61,6 @@ ApplicationUpdateContext & ApplicationUpdateContext::operator=(
         this->applicationId_ = move(other.applicationId_);
         this->currentCapacities_ = move(other.currentCapacities_);
         this->updatedCapacities_ = move(other.updatedCapacities_);
-        this->isCommitPending_ = other.isCommitPending_;
     }
 
     return *this;
@@ -86,7 +82,7 @@ std::wstring ApplicationUpdateContext::ConstructKey() const
 void ApplicationUpdateContext::WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const
 {
     w.Write(
-        "ApplicationUpdateContext({0})[name={1}, applicationId={2}, currentCapacities=[{3}], currentCapacities=[{4}]]",
+        "ApplicationUpdateContext({0})[name={1}, applicationId={2}, currentCapacities=[{3}], updatedCapacities=[{4}]]",
         this->Status, 
         applicationName_,
         applicationId_,

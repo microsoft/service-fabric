@@ -81,7 +81,7 @@ namespace System.Fabric.WRP.Model
 
         public List<PaasNodeStatusInfo> NodesStatus { get; set; }
 
-        public Dictionary<string, ReplicaSetSize> SystemServiceReplicaSetSize { get; set; }
+        public Dictionary<string, ServiceRuntimeDescription> SystemServiceDescriptions { get; set; }
     }
 
     public class ClusterOperationDescription : OperationDescription
@@ -100,16 +100,19 @@ namespace System.Fabric.WRP.Model
 
         public List<PaasNodeStatusInfo> ProcessedNodesStatus { get; set; }
 
-        public Dictionary<string, ReplicaSetSize> SystemServiceReplicaSetSizeToSet { get; set; }
+        public Dictionary<string, ServiceRuntimeDescription> SystemServiceDescriptionsToSet { get; set; }
+
+        public List<string> PrimaryNodeTypes { get; set; }
     }
 
-    public class ReplicaSetSize
+    public class ServiceRuntimeDescription
     {
         public int TargetReplicaSetSize { get; set; }
 
         public int MinReplicaSetSize { get; set; }
-    }
 
+        public string PlacementConstraints { get; set; } 
+    }
 
     public class PaasNodeStatusInfo
     {

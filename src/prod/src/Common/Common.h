@@ -38,11 +38,11 @@ namespace Common
 #if defined(PLATFORM_UNIX)
 
 #include <sal.h>
-#include <signal.h>
 #include <aio.h>
 #include <pwd.h>
 #include <grp.h>
 #include <sys/epoll.h>
+#include <signal.h>
 #include "PAL.h" // from prod/src/inc/clr
 
 #undef __in    // is used in stdlib
@@ -186,8 +186,6 @@ typedef int pid_t;
 #include "Common/X509StoreLocation.h"      // For Config.h
 #include "Common/Config.h"
 #include "Common/AssertWF.h"
-
-#include "Common/FabricGlobals.h"
 
 #if !defined(PLATFORM_UNIX)
 #include "Common/CRTAbortBehavior.h"
@@ -339,6 +337,7 @@ typedef int pid_t;
 #include "Common/ConfigParameterOverride.h"
 #include "Common/ConfigSectionOverride.h"
 #include "Common/ConfigSettingsOverride.h"
+#include "Common/ConfigOverrideDescription.h"
 #include "Common/ConfigParameter.h"
 #include "Common/ConfigSection.h"
 #include "Common/ConfigSettings.h"
@@ -353,6 +352,7 @@ typedef int pid_t;
 #include "Common/MutexHandle.h"
 #include "Common/ResourceHolder.h"
 #if defined(PLATFORM_UNIX)
+#include "Common/DiagnosticsConfig.h"
 #include "Common/LinuxPackageManagerType.h"
 #endif
 

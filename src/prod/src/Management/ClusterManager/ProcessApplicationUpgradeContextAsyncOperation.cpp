@@ -13,6 +13,7 @@ using namespace ServiceModel;
 using namespace Store;
 using namespace Transport;
 using namespace Management::ClusterManager;
+using namespace Management::NetworkInventoryManager;
 
 StringLiteral const ApplicationUpgradeParallelRetryableAsyncOperationTraceComponent("ApplicationUpgradeParallelRetryableAsyncOperationTraceComponent");
 
@@ -133,6 +134,13 @@ void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOpera
     auto const & thisSPtr = operation->Parent;
 
     auto error = owner_.EndLoadApplicationDescriptions(operation);
+
+    // This is a validation error thrown from IB proxy
+    if (error.IsError(ErrorCodeValue::DnsServiceNotFound))
+    {
+        error = ErrorCodeValue::ApplicationUpgradeValidationError;
+    }
+
     if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
 
     this->ValidateServices(thisSPtr);
@@ -143,7 +151,7 @@ void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOpera
     auto error = owner_.LoadUpgradePolicies();
     if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
 
-    // Only need to perform active service validation
+    // Only need to perform network validation and active service validation
     // while initially preparing the upgrade (not on failover)
     //
     if (!owner_.UpgradeContext.IsPreparingUpgrade)
@@ -152,36 +160,87 @@ void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOpera
     }
     else
     {
-        error = owner_.LoadActiveServices();
-        if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
-
-        error = owner_.LoadDefaultServices();
-        if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
-
-        error = owner_.ValidateRemovedServiceTypes();
-        if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
-
-        // Commit upgrade context before invoking retryable async operation which would potentially refresh store data.
-        auto storeTx = owner_.CreateTransaction();
-        error = storeTx.Update(owner_.UpgradeContext);
-
-        if (error.IsSuccess())
+        if(Management::NetworkInventoryManager::NetworkInventoryManagerConfig::IsNetworkInventoryManagerEnabled())
         {
-            auto operation = owner_.BeginCommitUpgradeContext(
-                move(storeTx),
-                [this](AsyncOperationSPtr const & operation) { this->OnValidateServicesComplete(operation, false); },
-                thisSPtr);
-            this->OnValidateServicesComplete(operation, true);
+            this->ValidateNetworks(thisSPtr);
         }
         else
         {
-            WriteWarning(
-                owner_.TraceComponent,
-                "{0} could not update validated upgrade context due to {1}",
-                owner_.TraceId,
-                error);
-            this->TryComplete(thisSPtr, move(error));
+            this->ValidateActiveDefaultServices(thisSPtr);
         }
+    }
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::ValidateNetworks(AsyncOperationSPtr const & thisSPtr)
+{
+    // When target version is referring to non-existing container networks, we should directly fail the upgrade request by the client.
+    // This is achieved by sending a request to NIM as soon as image builder upgradeApplication operation completes, when the application's network references in target version is parsed.
+    // The validation is only needed when the target version refers to any container network.
+    // It requires a new message exchange between CM and FM since existing workflow only sends the first message to FM after upgrade is accepted.
+    if (owner_.IsNetworkValidationNeeded())
+    {
+        WriteNoise(
+            owner_.TraceComponent,
+            "{0} validating network references",
+            owner_.TraceId);
+
+        auto operation = owner_.BeginValidateNetworks(
+            [&](AsyncOperationSPtr const & operation) { this->OnValidateNetworksComplete(operation, false); },
+            thisSPtr);
+
+        this->OnValidateNetworksComplete(operation, true);
+    }
+    else
+    {
+        this->ValidateActiveDefaultServices(thisSPtr);
+    }
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::OnValidateNetworksComplete(
+    AsyncOperationSPtr const & operation,
+    bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto const & thisSPtr = operation->Parent;
+
+    auto error = owner_.EndValidateNetworks(operation);
+    if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+
+    this->ValidateActiveDefaultServices(thisSPtr);
+}
+
+void ProcessApplicationUpgradeContextAsyncOperation::InitializeUpgradeAsyncOperation::ValidateActiveDefaultServices(AsyncOperationSPtr const & thisSPtr)
+{
+    auto error = owner_.LoadActiveServices();
+    if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+
+    error = owner_.LoadDefaultServices();
+    if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+
+    error = owner_.ValidateRemovedServiceTypes();
+    if (!error.IsSuccess()) { this->TryComplete(thisSPtr, error); return; }
+
+    // Commit upgrade context before invoking retryable async operation which would potentially refresh store data.
+    auto storeTx = owner_.CreateTransaction();
+    error = storeTx.Update(owner_.UpgradeContext);
+
+    if (error.IsSuccess())
+    {
+        auto operation = owner_.BeginCommitUpgradeContext(
+            move(storeTx),
+            [this](AsyncOperationSPtr const & operation) { this->OnValidateServicesComplete(operation, false); },
+            thisSPtr);
+        this->OnValidateServicesComplete(operation, true);
+    }
+    else
+    {
+        WriteWarning(
+            owner_.TraceComponent,
+            "{0} could not update validated upgrade context due to {1}",
+            owner_.TraceId,
+            error);
+        this->TryComplete(thisSPtr, move(error));
     }
 }
 
@@ -631,6 +690,8 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadRollforwardMessage
     ServiceModel::ServicePackageResourceGovernanceMap spRGSettings = targetApplication_.ResourceGovernanceDescriptions;
     ServiceModel::CodePackageContainersImagesMap cpContainersImages = targetApplication_.CodePackageContainersImages;
 
+    vector<wstring> networks(targetApplication_.Networks);
+
     return LoadMessageBody(
         targetApplication_.Application,
         this->UpgradeContext.UpgradeDescription.IsInternalMonitored,
@@ -643,6 +704,7 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadRollforwardMessage
         this->UpgradeContext.RollforwardInstance,
         move(spRGSettings),
         move(cpContainersImages),
+        move(networks),
         requestBody);
 }
 
@@ -681,6 +743,8 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadRollbackMessageBod
     ServiceModel::ServicePackageResourceGovernanceMap spRGSettings = currentApplication_.ResourceGovernanceDescriptions;
     ServiceModel::CodePackageContainersImagesMap cpContainersImages = currentApplication_.CodePackageContainersImages;
 
+    vector<wstring> networks(currentApplication_.Networks);
+
     return LoadMessageBody(
         currentApplication_.Application, 
         this->UpgradeContext.UpgradeDescription.IsInternalMonitored,
@@ -693,6 +757,7 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadRollbackMessageBod
         this->UpgradeContext.RollbackInstance,
         move(spRGSettings),
         move(cpContainersImages),
+        move(networks),
         requestBody);
 }
 
@@ -2190,6 +2255,12 @@ void ProcessApplicationUpgradeContextAsyncOperation::OnRollbackUpdatedDefaultSer
         innerError = storeTx.Update(this->UpgradeContext);
     }
 
+    // If rollback fails, the packageInstance will be mismatch between CM (N + 1) and FM (N + 2). So set packageInstance to N + 2 before fail the upgrade.
+    if (innerError.IsSuccess())
+    {
+        innerError = appContextUPtr_->SetUpgradePending(storeTx, this->UpgradeContext.RollbackInstance);
+    }
+
     // Prepare to fail rollback
     if (innerError.IsSuccess())
     {
@@ -2529,7 +2600,7 @@ void ProcessApplicationUpgradeContextAsyncOperation::OnFinishRollbackCommitCompl
 
         CMEvents::Trace->ApplicationUpgradeRollbackComplete(
             appContextUPtr_->ApplicationName.ToString(),
-            this->UpgradeContext.RollforwardInstance,
+            this->UpgradeContext.RollbackInstance,
             0, // dca_version
             this->ReplicaActivityId, 
             appContextUPtr_->TypeVersion.Value,
@@ -2901,6 +2972,75 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::EndLoadApplicationDesc
     return error;
 }
 
+bool ProcessApplicationUpgradeContextAsyncOperation::IsNetworkValidationNeeded()
+{
+    return targetApplication_.Networks.size() > 0;
+}
+
+AsyncOperationSPtr ProcessApplicationUpgradeContextAsyncOperation::BeginValidateNetworks(
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    ValidateNetworkMessageBody body(targetApplication_.Networks);
+
+    WriteNoise(
+        TraceComponent,
+        "{0} sending request to FM to validate networks referred to by application {1} : {2}",
+        this->TraceId,
+        appContextUPtr_->ApplicationName,
+        body);
+
+    MessageUPtr validateNetworkMessage = NIMMessage::GetValidateNetwork().CreateMessage<ValidateNetworkMessageBody>(body);
+
+    NIMMessage::AddActivityHeader(*validateNetworkMessage, FabricActivityHeader(this->ActivityId));
+    validateNetworkMessage->Idempotent = true;
+
+    return this->Router.BeginRequestToFM(
+        move(validateNetworkMessage),
+        TimeSpan::MaxValue,
+        this->GetCommunicationTimeout(),
+        callback,
+        parent);
+}
+
+ErrorCode ProcessApplicationUpgradeContextAsyncOperation::EndValidateNetworks(
+    AsyncOperationSPtr const & operation)
+{
+    MessageUPtr reply;
+    auto error = this->Router.EndRequestToFM(operation, reply);
+
+    if (error.IsSuccess())
+    {
+        BasicFailoverReplyMessageBody body;
+        if (reply->GetBody(body))
+        {
+            error = body.ErrorCodeValue;
+        }
+        else
+        {
+            error = ErrorCode::FromNtStatus(reply->GetStatus());
+        }
+
+        WriteNoise(
+            TraceComponent,
+            "{0} request to FM to validate networks referred to by application {1} completed with error : {2}",
+            this->TraceId,
+            appContextUPtr_->ApplicationName,
+            error);
+    }
+    else
+    {
+        WriteNoise(
+            TraceComponent,
+            "{0} request to FM to validate networks referred to by application {1} failed with : {2}",
+            this->TraceId,
+            appContextUPtr_->ApplicationName,
+            error);
+    }
+
+    return error;
+}
+
 ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadUpgradePolicies()
 {
     if (!this->UpgradeContext.UpgradeDescription.IsHealthMonitored)
@@ -3104,6 +3244,7 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadMessageBody(
     uint64 instanceId,
     ServiceModel::ServicePackageResourceGovernanceMap && spRGSettings,
     ServiceModel::CodePackageContainersImagesMap && cpContainersImages,
+    vector<wstring> && networks,
     __out UpgradeApplicationRequestMessageBody & requestMessage)
 {
     auto sequenceNumber = this->UpgradeContext.SequenceNumber;
@@ -3266,7 +3407,8 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadMessageBody(
         move(packageUpgradeSpecifications),
         move(typeRemovalSpecifications),
         move(spRGSettings),
-        move(cpContainersImages));
+        move(cpContainersImages),
+        move(networks));
 
     requestMessage = UpgradeApplicationRequestMessageBody(
         move(upgradeSpecification),
@@ -3406,16 +3548,21 @@ ErrorCode ProcessApplicationUpgradeContextAsyncOperation::LoadDefaultServices()
 
             activeDefaultServiceDescriptions_.push_back(move(completePSD));
         }
-        else if (findIter->second != completePSD)
+        else
         {
-            WriteWarning(
-                TraceComponent,
-                "{0} modified default service: {1} -> {2}",
-                this->TraceId,
-                findIter->second,
-                completePSD);
+            auto error = findIter->second.Equals(completePSD);
 
-            return this->TraceAndGetErrorDetails( ErrorCodeValue::ApplicationUpgradeValidationError, wformatString(GET_RC( Default_Service_Description ), completePSD.Service.Name));
+            if(!error.IsSuccess())
+            {
+                WriteWarning(
+                    TraceComponent,
+                    "{0} modified default service: {1} -> {2}",
+                    this->TraceId,
+                    findIter->second,
+                    completePSD);
+
+                return this->TraceAndGetErrorDetails(ErrorCodeValue::ApplicationUpgradeValidationError, wformatString(GET_RC(Default_Service_Description), completePSD.Service.Name, error.TakeMessage()));
+            }
         }
     } // for all default service types in target application
 

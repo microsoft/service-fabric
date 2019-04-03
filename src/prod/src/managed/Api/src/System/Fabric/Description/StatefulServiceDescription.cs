@@ -288,7 +288,7 @@ namespace System.Fabric.Description
             description.ServicePackageActivationMode = InteropHelpers.FromNativeServicePackageActivationMode(ex3->ServicePackageActivationMode);
             description.ServiceDnsName = NativeTypes.FromNativeString(ex3->ServiceDnsName);
 
-	    if (ex3->Reserved == IntPtr.Zero)
+     	    if (ex3->Reserved == IntPtr.Zero)
             {
                 return description;
             }
@@ -396,7 +396,7 @@ namespace System.Fabric.Description
             }
 
             ex3[0].Reserved = pin.AddBlittable(ex4);
-
+            
             nativeDescription[0].Reserved = pin.AddBlittable(ex1);
 
             kind = NativeTypes.FABRIC_SERVICE_DESCRIPTION_KIND.FABRIC_SERVICE_DESCRIPTION_KIND_STATEFUL;

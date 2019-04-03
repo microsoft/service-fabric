@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{FABBC4A6-F3DB-4E98-87EE-8996CAD34092}</ProjectGuid>
+    <RootNamespace>System.Fabric.BackupCopier</RootNamespace>
+    <AssemblyName>BackupCopier</AssemblyName>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="BackupCopier.cs" />
+    <Compile Include="StringConstants.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(SRCROOT)\prod\src\managed\Api\src\System\Fabric\BackupRestore\FileShareBackupStoreManager.cs">
+      <Link>BackupStore\FileShareBackupStoreManager.cs</Link>
+    </Compile>
+    <Compile Include="$(SRCROOT)\prod\src\managed\Api\src\System\Fabric\BackupRestore\IBackupStoreManager.cs">
+      <Link>BackupStore\IBackupStoreManager.cs</Link>
+    </Compile>
+    <Compile Include="$(SRCROOT)\prod\src\managed\Api\src\System\Fabric\BackupRestore\AzureBlobBackupStoreManagerBase.cs">
+      <Link>BackupStore\AzureBlobBackupStoreManagerBase.cs</Link>
+    </Compile>
+    <Compile Include="$(SRCROOT)\prod\src\managed\Api\src\System\Fabric\BackupRestore\AzureBlobBackupStoreManager.cs">
+      <Link>BackupStore\AzureBlobBackupStoreManager.cs</Link>
+    </Compile>
+    <Compile Include="$(SRCROOT)\prod\src\managed\Api\src\System\Fabric\BackupRestore\DsmsAzureBackupStoreManager.cs">
+      <Link>BackupStore\DsmsAzureBackupStoreManager.cs</Link>
+    </Compile>
+    <Compile Include="$(SRCROOT)\prod\src\managed\Api\src\System\Fabric\BackupRestore\BackupStoreManagerFactory.cs">
+      <Link>BackupStore\BackupStoreManagerFactory.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Api\Dlls\System.Fabric.BackupRestore\System.Fabric.BackupRestore.csproj">
+      <Project>{FABB432F-46A5-4D4B-99FA-52400896BCC4}</Project>
+      <Name>System.Fabric.BackupRestore</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

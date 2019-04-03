@@ -51,6 +51,13 @@ mkdir -p ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricFAS/FAS.Code.Current
 cp -r ${MANAGED_PUBLISH_DIR}/FabricFAS/. ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricFAS/FAS.Code.Current/
 cp -r ${NUGET_PACKAGE_FILES}/FabricFAS/. ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricFAS/
 
+# setup FabricGRM
+mkdir -p ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricGRM/GRM.Code.Current
+cp -r ${MANAGED_PUBLISH_DIR}/FabricGRM/. ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricGRM/GRM.Code.Current/
+cp -r ${NUGET_PACKAGE_FILES}/FabricGRM/. ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricGRM/
+mkdir -p ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricGRM/GRM.Data.Current
+cp -r ${SRC_ROOT}/prod/src/managed/FabricGRM/src/system/fabric/FabricGRM/GRM.Data.Current/. ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricGRM/GRM.Data.Current/
+
 # setup FabricIS
 # uncomment when FabricIS is compiling on linux.
 # mkdir -p ${MANAGED_PUBLISH_EXTERNAL_DIR}/FabricIS/IS.Code.Current

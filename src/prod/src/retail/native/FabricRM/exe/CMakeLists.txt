@@ -17,9 +17,13 @@ set_target_properties(${exe_FabricRM} PROPERTIES
 add_custom_target(CopyFabricRM ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/RM.Code.Current
     COMMAND ${CMAKE_COMMAND} -E copy ${TEST_OUTPUT_DIR}/${exe_FabricRM} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe
-    COMMAND strip ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe
+    COMMAND ${CMAKE_STRIP} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe
     DEPENDS ${exe_FabricRM}
 )
+
+ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
+SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
+    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
 
 target_link_libraries(${exe_FabricRM}
   ${lib_ManagementRepairManager}
@@ -48,6 +52,7 @@ target_link_libraries(${exe_FabricRM}
   ${lib_Replication}
   ${lib_TransactionalReplicator}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}
@@ -70,7 +75,7 @@ target_link_libraries(${exe_FabricRM}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
-  ssh2
+  patched_libssh2
   ssl
   crypto
   m

@@ -11,42 +11,26 @@ namespace Microsoft.ServiceFabric.ReplicatedStore.Diagnostics
     using System.Fabric.Common.Tracing;
     using System.Threading;
 
-    internal class ReadLatencyMetric : IMetric, ISamplingSuggester
+    internal class ReadLatencyMetric : IMetricReporter, ISamplingSuggester
     {
+        private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
+
+        // totalReadLatencyInTicks and totalReads are used to calculate AvgReadLatency.
         private long totalReadLatencyInTicks = 0;
         private long totalReads = 0;
-        private bool samplingSuggested = true;
 
-        /// <summary>
-        /// Advises this metric to return true on next suggestion requested.
-        /// </summary>
-        public void ResetSampling()
-        {
-            samplingSuggested = true;
-        }
+        // lastReadLatencyInTicks is used to get percentile metrics.
+        private long lastReadLatencyInTicks = 0;
 
-        /// <summary>
-        /// Returns a suggestion on whether a sample metric measurement should be taken.
-        /// </summary>
-        /// <returns>True if metric measurement is recommended. False otherwise.</returns>
-        public bool GetSamplingSuggestion()
-        {
-            bool result = this.samplingSuggested;
-
-            if (result == true)
-            {
-                this.samplingSuggested = false;
-            }
-
-            return result;
-        }
+        private SamplingSuggester samplingSuggester = new SamplingSuggester();
 
         /// <summary>
         /// Updates the read latency counters.
         /// </summary>
         /// <param name="readTicks">New read latency record (ticks).</param>
-        public void Update(long readTicks)
+        internal void Update(long readTicks)
         {
+            this.lastReadLatencyInTicks = readTicks;
             Interlocked.Add(ref this.totalReadLatencyInTicks, readTicks);
             Interlocked.Increment(ref this.totalReads);
         }
@@ -57,20 +41,19 @@ namespace Microsoft.ServiceFabric.ReplicatedStore.Diagnostics
         /// <param name="context">Required trace parameters.</param>
         public void Report(StatefulServiceContext context)
         {
+#if !DotNetCoreClr
             long totalReadTicks = GetTotalReadTicksAndReset(out long numberOfReads);
-
             if (numberOfReads > 0)
             {
-                double avgReadLatencyInMs = (double)totalReadTicks / (numberOfReads * TimeSpan.TicksPerMillisecond);
-#if !DotNetCoreClr
                 // This trace gets picked up by TelemetryEtwSink.
-                FabricEvents.Events.ReadLatency(
+                FabricEvents.Events.ReadLatencyTelemetry(
                     context.PartitionId,
                     context.ReplicaId,
-                    avgReadLatencyInMs,
-                    numberOfReads);
-#endif
+                    totalReadTicks / TicksPerMicrosecond,
+                    numberOfReads,
+                    this.lastReadLatencyInTicks / TicksPerMicrosecond);
             }
+#endif
         }
 
         /// <summary>
@@ -83,6 +66,23 @@ namespace Microsoft.ServiceFabric.ReplicatedStore.Diagnostics
         {
             numberOfReads = Interlocked.Exchange(ref this.totalReads, 0);
             return (numberOfReads > 0) ? Interlocked.Exchange(ref this.totalReadLatencyInTicks, 0) : 0;
+        }
+
+        /// <summary>
+        /// Advises this metric to return true on next suggestion requested.
+        /// </summary>
+        public void ResetSampling()
+        {
+            this.samplingSuggester.ResetSampling();
+        }
+
+        /// <summary>
+        /// Returns a suggestion on whether a sample metric measurement should be taken.
+        /// </summary>
+        /// <returns>True if metric measurement is recommended. False otherwise.</returns>
+        public bool GetSamplingSuggestion()
+        {
+            return this.samplingSuggester.GetSamplingSuggestion();
         }
     }
 }

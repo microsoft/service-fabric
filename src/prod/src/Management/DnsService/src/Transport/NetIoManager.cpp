@@ -40,7 +40,7 @@ NetIoManager::NetIoManager(
 _spTracer(spTracer),
 _htSockets(numberOfConcurrentQueries, K_DefaultHashFunction, GetThisAllocator())
 {
-    Tracer().Trace(DnsTraceLevel_Info, "DNS NetIoManager constructed");
+    Tracer().Trace(DnsTraceLevel_Info, "Constructing DNS NetIoManager.");
 
 #if !defined(PLATFORM_UNIX)
     WORD wVersionRequested = MAKEWORD(2, 2);
@@ -49,21 +49,35 @@ _htSockets(numberOfConcurrentQueries, K_DefaultHashFunction, GetThisAllocator())
     int err = WSAStartup(wVersionRequested, &wsaData);
     if (err != 0)
     {
+        Tracer().Trace(DnsTraceLevel_Error,
+            "DNS NetIoManager, failed to initialize Winsock, error {0}.", static_cast<LONG>(err));
+
         KInvariant(false);
     }
 #else
     _efd = epoll_create1(0);
     if (_efd == -1)
     {
-        Tracer().Trace(DnsTraceLevel_Warning, "DNS NetIoManager, failed to create epoll fd, error {0}", errno);
+        Tracer().Trace(DnsTraceLevel_Error, "DNS NetIoManager, failed to create epoll fd, error {0}", errno);
     }
 #endif
 }
 
 NetIoManager::~NetIoManager()
 {
+    Tracer().Trace(DnsTraceLevel_Info, "Destructing DNS NetIoManager.");
+
 #if !defined(PLATFORM_UNIX)
-    WSACleanup();
+    int err = WSACleanup();
+    if (err != 0)
+    {
+        int error = 0;
+        error = WSAGetLastError();
+        Tracer().Trace(DnsTraceLevel_Error,
+            "DNS NetIoManager, failed to uninitialize Winsock, API return code, {0}, WSAGetLastError {1}.",
+            static_cast<LONG>(err),
+            static_cast<LONG>(error));
+    }
 #endif
 }
 
@@ -84,11 +98,14 @@ void NetIoManager::OnStart()
 
 void NetIoManager::OnCancel()
 {
+    Tracer().Trace(DnsTraceLevel_Info, "DNS NetIoManager OnCancel called.");
     Complete(STATUS_CANCELLED);
 }
 
 void NetIoManager::OnCompleted()
 {
+    Tracer().Trace(DnsTraceLevel_Info, "DNS NetIoManager OnCompleted called.");
+
     K_LOCK_BLOCK(_lockSockets)
     {
         ULONG_PTR h;
@@ -118,7 +135,7 @@ void NetIoManager::OnCompleted()
         _htSockets.Clear();
     }
 
-    Tracer().Trace(DnsTraceLevel_Noise, "DNS NetIoManager Completed");
+    Tracer().Trace(DnsTraceLevel_Info, "DNS NetIoManager Completed.");
 }
 
 //***************************************
@@ -134,7 +151,7 @@ void NetIoManager::StartManager(
 
 void NetIoManager::CloseAsync()
 {
-    Tracer().Trace(DnsTraceLevel_Noise, "DNS NetIoManager CloseAsync");
+    Tracer().Trace(DnsTraceLevel_Info, "DNS NetIoManager CloseAsync");
     Cancel();
 }
 

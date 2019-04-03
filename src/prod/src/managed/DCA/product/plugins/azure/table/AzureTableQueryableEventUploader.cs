@@ -8,6 +8,10 @@ namespace FabricDCA
     using System;
     using System.Fabric.Dca;
     using System.Xml;
+#if DotNetCoreClrLinux
+    using System.Fabric.Common.Tracing;
+    using Tools.EtlReader;
+#endif
 
     /// <summary>
     /// An uploader that consumes queryable etl traces.
@@ -18,6 +22,18 @@ namespace FabricDCA
             : base(initParam)
         {
         }
+
+#if DotNetCoreClrLinux
+        protected override bool IsEventInThisTable(EventRecord eventRecord)
+        {
+            if ((eventRecord.EventHeader.EventDescriptor.Keyword & (ulong)FabricEvents.Keywords.ForQuery) != 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
+#endif
 
         protected override bool IsEventConsidered(string providerName, XmlElement eventDefinition)
         {

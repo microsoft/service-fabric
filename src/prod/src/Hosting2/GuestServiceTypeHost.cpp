@@ -303,12 +303,6 @@ protected:
 private:
     void CloseApplicationHost(AsyncOperationSPtr const & thisSPtr)
     {
-        if (owner_.applicationhost_->HostContext.IsCodePackageActivatorHost)
-        {
-            owner_.activationManager_->Close();
-            owner_.activationManager_.Release();
-        }
-
         owner_.runtime_.Release();
 
         WriteNoise(
@@ -325,6 +319,14 @@ private:
             thisSPtr);
         
         FinishCloseApplicationHost(operation, true);
+
+        // Note that the close/release should be done after the close of application host.
+        // If activationManager_ is released before applicationhost closes aborts it will result in an access violation.
+        if (owner_.applicationhost_->HostContext.IsCodePackageActivatorHost)
+        {
+            owner_.activationManager_->Close();
+            owner_.activationManager_.Release();
+        }
     }
 
     void FinishCloseApplicationHost(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
@@ -429,20 +431,24 @@ ErrorCode GuestServiceTypeHost::OnEndClose(AsyncOperationSPtr const & asyncOpera
 
 void GuestServiceTypeHost::OnAbort()
 {
-    if (hostContext_.IsCodePackageActivatorHost && activationManager_)
-    {
-        activationManager_->Close();
-        activationManager_.Release();
-    }
-
     if (runtime_)
     {
         runtime_.Release();
     }
 
+    // Note the order of abort/release here is important.
+    // If activationManager_ is released before applicationhost aborts it will result in an access violation.
+    // ComGuestServiceInstance has a reference to this class and on abort will attempt to access activationManager
+    // to call UnregisterServiceReplicaOrInstance.
     if (applicationhost_)
     {
         applicationhost_->Abort();
+    }
+
+    if (hostContext_.IsCodePackageActivatorHost && activationManager_)
+    {
+        activationManager_->Close();
+        activationManager_.Release();
     }
 }
 

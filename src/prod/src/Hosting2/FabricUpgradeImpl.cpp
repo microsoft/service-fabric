@@ -4,7 +4,6 @@
 // ------------------------------------------------------------
 
 #include "stdafx.h"
-#include "Common/FabricGlobals.h"
 
 using namespace std;
 using namespace Common;
@@ -262,7 +261,7 @@ protected:
             wstring value = tokens[index++];
             bool isEncrypted = StringUtility::AreEqualCaseInsensitive(tokens[index++], L"true");
 
-            auto configStore = FabricGlobals::Get().GetConfigStore().Store;
+            auto configStore = ComProxyConfigStore::Create();
             bool canUpgradeWithoutRestart = configStore->CheckUpdate(
                 section,
                 key,
@@ -465,7 +464,7 @@ protected:
             else
             {
                 // Directory package no longer supported
-                WriteError(TraceType, "CodeUpgrade did not find CAB/MSI package for the given version.");
+                WriteError(TraceType, owner_.Root.TraceId, "CodeUpgrade did not find CAB/MSI package for the given version.");
                 TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::InvalidArgument));
                 return;
             }
@@ -500,7 +499,7 @@ protected:
                 error.ToLogLevel(),
                 TraceType,
                 owner_.Root.TraceId,
-                "WriteInstallationScriptFile : Error:{0}",
+                "WriteInstallationScriptFile : Error: {0}",
                 error);
             if (!error.IsSuccess())
             {
@@ -515,7 +514,7 @@ protected:
             error.ToLogLevel(),
             TraceType,
             owner_.Root.TraceId,
-            "WriteTargetInformationFile : Error:{0}",
+            "WriteTargetInformationFile : Error: {0}",
             error);
         if (!error.IsSuccess())
         {
@@ -537,6 +536,21 @@ protected:
                 "Begin(FabricActivatorClient FabricUpgrade): InstallationScript:{0}",
                 installationScriptFilePath);
         }
+
+#if defined(PLATFORM_UNIX)
+        error = SwapUpdaterService(downloadedFabricPackage, fabricDeploymentSpec);
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.Root.TraceId,
+            "SwapUpdaterService : Error: {0}",
+            error);
+        if (!error.IsSuccess())
+        {
+            TryComplete(thisSPtr, error);
+            return;
+        }
+#endif
         
         auto operation = owner_.hosting_.FabricActivatorClientObj->BeginFabricUpgrade(
             useFabricInstallerService,
@@ -774,6 +788,193 @@ protected:
         return ErrorCodeValue::Success;
 #endif
     }
+
+#if defined(PLATFORM_UNIX)
+    ErrorCode SwapUpdaterService(wstring const& fabricPackagePath, FabricDeploymentSpecification & fabricDeploymentSpec)
+    {
+        Common::LinuxPackageManagerType::Enum packageManagerType;
+        auto error = FabricEnvironment::GetLinuxPackageManagerType(packageManagerType);
+        ASSERT_IF(!error.IsSuccess(), "GetLinuxPackageManagerType failed. Type: {0}. Error: {1}", packageManagerType, error);
+        CODING_ERROR_ASSERT(packageManagerType != Common::LinuxPackageManagerType::Enum::Unknown);
+
+        DWORD dwErr = ERROR_SUCCESS;
+        string command;
+
+        // Extract doupgrade.sh to [DataRoot]/doupgrade.sh
+        wstring const & filename = Constants::FabricUpgrade::LinuxUpgradeScriptFileName;
+        wstring metaDirectory = Path::Combine(fabricDeploymentSpec.DataRoot, Constants::FabricUpgrade::LinuxUpgradeMetadataDirectoryName);
+        wstring upgradeScriptMetaPath = Path::Combine(metaDirectory, filename);
+
+        if (!Directory::Exists(metaDirectory))
+        {
+            error = Directory::Create2(metaDirectory);
+            if (!error.IsSuccess())
+            {
+                WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: Directory create failed with err {0} ; Path: {1}.", error, metaDirectory);
+                return error;
+            }
+        }
+
+        switch (packageManagerType)
+        {
+            case Common::LinuxPackageManagerType::Enum::Deb:
+            {
+                // Write debian control data file to [DataRoot]/meta/
+                wstring metaFilename = wformatString(Constants::FabricUpgrade::LinuxUpgradeScriptMetaFileNameFormat, Constants::FabricUpgrade::LinuxUpgradeScript_RollbackCutoffVersion);
+                string metaFilePathInArchive = formatString("./{0}", metaFilename);
+                wstring metaFilePath = Path::Combine(metaDirectory, metaFilename);
+
+                command = formatString(
+                    "dpkg-deb --ctrl-tarfile '{0}' | tar --directory '{1}' -x '{2}'",
+                    fabricPackagePath,
+                    metaDirectory,
+                    metaFilePathInArchive);
+
+                dwErr = system(command.c_str());
+                if (dwErr != ERROR_SUCCESS)
+                {
+                    dwErr = dwErr >> 8;
+                    if (dwErr == ERROR_FILE_NOT_FOUND)
+                    {
+                        WriteWarning(TraceType,
+                            owner_.Root.TraceId,
+                            "SwapUpdaterService: deb archive {0} did not contain meta file: {1}. Assuming backcompat path; not attempting to extract Vnext upgrade script.",
+                            fabricPackagePath,
+                            metaFilePathInArchive);
+                        return ErrorCodeValue::Success;
+                    }
+
+                    WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: dpkg ctrl data query failed with err {0} ; Command: {1}", dwErr, command);
+                    return ErrorCode::FromWin32Error(dwErr);
+                }
+
+                error = File::MoveTransacted(metaFilePath, upgradeScriptMetaPath, true);
+                if (!error.IsSuccess())
+                {
+                    WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: File Move failed with {0} ; from {1} to {2}.", error, metaFilePath, upgradeScriptMetaPath);
+                    return error;
+                }
+
+                break;
+            }
+            case Common::LinuxPackageManagerType::Enum::Rpm:
+            {
+                string filenameEscaped = formatString("{0}", filename);
+                StringUtility::Replace(filenameEscaped, string("."), string("\\."));
+
+                string metaPayloadExtractPathEscaped = Constants::FabricUpgrade::MetaPayloadDefaultExtractPath;
+                StringUtility::Replace(metaPayloadExtractPathEscaped, string("."), string("\\."));
+                StringUtility::Replace(metaPayloadExtractPathEscaped, string("/"), string("\\/"));
+
+                string metaFileWritePathEscaped = formatString("{0}", upgradeScriptMetaPath);
+                StringUtility::Replace(metaFileWritePathEscaped, string("."), string("\\."));
+                StringUtility::Replace(metaFileWritePathEscaped, string("/"), string("\\/"));
+
+                command = formatString(
+                    "rpm -qp --scripts \"{0}\" | sed '/^#FilePayload: {1}/,/^#EndFilePayload/!d;//d' | sed 's/{2}/\"{3}\"/g' | xargs -0 bash -c && chmod +x \"{4}\"",
+                    fabricPackagePath,
+                    filenameEscaped,
+                    metaPayloadExtractPathEscaped,
+                    metaFileWritePathEscaped,
+                    upgradeScriptMetaPath);
+
+                dwErr = system(command.c_str());
+                if (dwErr != ERROR_SUCCESS)
+                {
+                    dwErr = dwErr >> 8;
+                    if (dwErr == ERROR_INVALID_NAME)
+                    {
+                        WriteWarning(TraceType,
+                            owner_.Root.TraceId,
+                            "SwapUpdaterService: rpm archive {0} did not contain meta file: {1}. Assuming backcompat path; not attempting to extract Vnext upgrade script.",
+                            fabricPackagePath,
+                            filename);
+                        return ErrorCodeValue::Success;
+                    }
+
+                    WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: Extract RPM meta file failed with err {0} ; Command: {1}", dwErr, command);
+                    return ErrorCode::FromWin32Error(dwErr);
+                }
+
+                break;
+            }
+        }
+
+        if (!File::Exists(upgradeScriptMetaPath))
+        {
+            WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: Upgrade script not found at {0}.", upgradeScriptMetaPath);
+            return ErrorCodeValue::NotFound;
+        }
+
+        // Move [DataRoot]/meta/doupgrade.sh to data root base
+        wstring newServiceScriptFilePath = fabricDeploymentSpec.GetUpgradeScriptFile(owner_.hosting_.NodeName);
+        error = File::MoveTransacted(upgradeScriptMetaPath, newServiceScriptFilePath, true);
+        if (!error.IsSuccess())
+        {
+            WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: File Move failed with {0} ; from {1} to {2}.", error, upgradeScriptMetaPath, newServiceScriptFilePath);
+            return error;
+        }
+
+        // Swap the upgrade service line to use the doupgrade.sh script of the new deb/rpm installer package
+        wstring servicePath; 
+        error = FabricEnvironment::GetUpdaterServicePath(servicePath);
+        ASSERT_IF(!error.IsSuccess(), "GetUpdaterServicePath failed. Error: {0}", error);
+
+        wstring tmpServicePath = Path::Combine(fabricDeploymentSpec.DataRoot, L"tmpUpdaterService.service");
+        if (File::Exists(tmpServicePath))
+        {
+            error = File::Delete2(tmpServicePath, true);
+            if (!error.IsSuccess())
+            {
+                WriteWarning(TraceType, owner_.Root.TraceId, "SwapUpdaterService: Deleting preexisting tmp service file failed with err {0}. Proceeding.", error);
+            }
+        }
+
+        string replacementExecStart = formatString("ExecStart={0} \\$PathToTargetInfoFile", newServiceScriptFilePath);
+        StringUtility::Replace(replacementExecStart, string("/"), string("\\/")); // escape slashes for sed call
+
+        command = formatString("cat \"{0}\" | sed \"s/^ExecStart=.*/{1}/g\" > \"{2}\"", servicePath, replacementExecStart, tmpServicePath);
+
+        dwErr = system(command.c_str());
+        if (dwErr != ERROR_SUCCESS)
+        {
+            dwErr = dwErr >> 8;
+            WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: Write tmp service file failed with err {0} ; Command: {1}", dwErr, command);
+            return ErrorCode::FromWin32Error(dwErr);
+        }
+
+        int64 size;
+        error = File::GetSize(tmpServicePath, size);
+        if (!error.IsSuccess())
+        {
+            WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: getting size of tmp service file failed with err {0}", error);
+            return error;
+        }
+        else if (size == 0)
+        {
+            WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: tmp service file write failed. File is empty.");
+            return ErrorCodeValue::OperationFailed;
+        }
+
+        command = formatString("cat \"{0}\" > \"{1}\"", tmpServicePath, servicePath);
+
+        dwErr = system(command.c_str());
+        if (dwErr != ERROR_SUCCESS)
+        {
+            dwErr = dwErr >> 8;
+            WriteError(TraceType, owner_.Root.TraceId, "SwapUpdaterService: Rewrite service file failed with err {0} ; Command: {1}", dwErr, command);
+            return ErrorCode::FromWin32Error(dwErr);
+        }
+
+        error = File::Delete2(tmpServicePath);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(TraceType, owner_.Root.TraceId, "SwapUpdaterService: Deleting temporary upgrade service file failed with err {0}. Path: {1}. Proceeding.", error, tmpServicePath);
+        }
+
+        return ErrorCodeValue::Success;
+    }
+#endif
 
     void ConfigUpgrade(AsyncOperationSPtr const & thisSPtr, bool instanceIdOnlyUpgrade)
     {                

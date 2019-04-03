@@ -1,0 +1,145 @@
+###############################################################################
+# Test: RGUpgradePersistedServices.Test
+# Owners: mocolic, nipuzovi, sfplbtestfailures
+# This test verifies the sync betweeen PLB and LRM through upgrade of stateful persisted replicas 
+# It also verifies that PLB account load of None replicas for exclusive services with RG configured
+###############################################################################
+
+votes 10 20 30
+namingservice 1 3 1
+cmservice 3 1
+cleantest
+
+set NamingOperationTimeout 120
+#use fast balancing
+set PLBActionRetryTimes 30
+set DeactivationGraceInterval 1
+set DeactivationFailedRetryIntervalRange to 1
+
+# Do not check for available resources and do not enforce RG on the nodes
+# This is to be able to execute the test on any machine, regardless 
+set LocalResourceManagerTestMode true
+
+# We need to be able to move replicas while in upgrade
+set AllowConstraintCheckFixesDuringApplicationUpgrade true
+
++10 ud=UD1 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
++20 ud=UD2 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
++30 ud=UD3 cap=ServiceFabric:/_CpuCores:6,ServiceFabric:/_MemoryInMB:6000
+verify
+
+###############################################################################
+#
+# Create two applications:
+# - One application that will go through upgrade and decrease CPU from 3 -> 2
+# - Other app that will require 4 cores
+# - Start the upgrade and creation of the second service in the same time
+# - Check that we will not allow creation of the second service before the upgrade finishes
+# as that used to stuck the upgrade
+###############################################################################
+
+app.add versionTC1 TestAppTC1 vTC1
+app.clear versionTC1
+app.servicepack versionTC1 ServicePackageA version=v1 resources=CPU,3
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes versionTC1 ServicePackageA ServiceTypeA2 stateful persist
+app.codepack versionTC1 ServicePackageA CodeA1 types=ServiceTypeA1 version=v1 rgpolicies=MemoryInMB;1000
+app.codepack versionTC1 ServicePackageA CodeA2 types=ServiceTypeA2 version=v1 rgpolicies=MemoryInMB;1000
+app.upload versionTC1
+provisionapp versionTC1
+
+# App - version2
+app.add versionTC2 TestAppTC1 vTC2 versionTC1
+app.clear versionTC2
+app.servicepack versionTC2 ServicePackageA version=v2 resources=CPU,2
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA1 stateful persist
+app.servicetypes versionTC2 ServicePackageA ServiceTypeA2 stateful persist
+app.codepack versionTC2 ServicePackageA CodeA1 types=ServiceTypeA1 version=v2 rgpolicies=MemoryInMB;1000
+app.codepack versionTC2 ServicePackageA CodeA2 types=ServiceTypeA2 version=v2 rgpolicies=MemoryInMB;500
+app.upload versionTC2
+provisionapp versionTC2
+
+
+app.add versionTC3 TestAppTC3 vTC3
+app.clear versionTC3
+app.servicepack versionTC3 ServicePackageB version=v1 resources=CPU,4
+app.servicetypes versionTC3 ServicePackageB ServiceTypeB stateful persist
+app.codepack versionTC3 ServicePackageB CodeB types=ServiceTypeB version=v1 rgpolicies=MemoryInMB;1000
+app.upload versionTC3
+provisionapp versionTC3
+
+# Create first application
+createapp fabric:/app1 TestAppTC1 vTC1
+verify
+
+# Create second application
+createapp fabric:/app2 TestAppTC3 vTC3
+verify
+
+# Create first service
+# app1 - small service, 1 partition, 3 replicas
+createservice fabric:/app1/smallservice ServiceTypeA1 y 1 3 persist metrics=dummy,Low,0,0 appname=fabric:/app1 servicePackageActivationMode=ExclusiveProcess
+verify
+
+#
+# Start the manual upgrade application from version vTC1 to vTC2
+#
+upgradeapp fabric:/app1 vTC2 Rolling upgrademode=manual
+
+# Block ReplicaOpen reply from RA to FM 
+# This will leave replica in None state until we remove the behavior and check that no other services was placed on node
+addbehavior b1 * * ReplicaOpen
+addbehavior b2 * * StatefulServiceReopen
+
+createservice fabric:/app2/otherservice ServiceTypeB y 1 3 persist appname=fabric:/app2
+
+# Verify that load of None replicas is accounted in PLB
+verifynodeload nodeid:10 servicefabric:/_CpuCores 3 3
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 2000 2000
+
+verifyresourceonnode 10 servicefabric:/_CpuCores 3
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 2000
+
+removebehavior b1
+removebehavior b2
+
+# Go through domains
+verifyupgradeapp fabric:/app1 upgradedomains=UD1
+upgradeappmovenext fabric:/app1
+
+verifyupgradeapp fabric:/app1 upgradedomains=UD2
+upgradeappmovenext fabric:/app1
+
+verifyupgradeapp fabric:/app1 upgradedomains=UD3
+verify
+
+# Verify that when upgrade was finished - PLB places otherservice
+
+!waitforstate FM.Replica.State.fabric:/app2/otherservice.10 Ready
+!waitforstate FM.Replica.State.fabric:/app2/otherservice.20 Ready
+!waitforstate FM.Replica.State.fabric:/app2/otherservice.30 Ready
+
+verifynodeload nodeid:10 servicefabric:/_CpuCores 6 6
+verifynodeload nodeid:10 servicefabric:/_MemoryInMB 2500 2500
+verifyresourceonnode 10 servicefabric:/_CpuCores 6
+verifyresourceonnode 10 servicefabric:/_MemoryInMB 2500
+
+verifynodeload nodeid:20 servicefabric:/_CpuCores 6 6
+verifynodeload nodeid:20 servicefabric:/_MemoryInMB 2500 2500
+verifyresourceonnode 20 servicefabric:/_CpuCores 6
+verifyresourceonnode 20 servicefabric:/_MemoryInMB 2500
+
+verifynodeload nodeid:30 servicefabric:/_CpuCores 6 6
+verifynodeload nodeid:30 servicefabric:/_MemoryInMB 2500 2500
+verifyresourceonnode 30 servicefabric:/_CpuCores 6
+verifyresourceonnode 30 servicefabric:/_MemoryInMB 2500
+
+verifyplbandlrmsync
+
+# Delete services
+deleteservice fabric:/app1/smallservice
+deleteservice fabric:/app2/otherservice
+
+verify
+
+!q

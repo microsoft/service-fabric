@@ -69,19 +69,21 @@ SecuritySettings & object)
 _Use_decl_annotations_
 ErrorCode SecuritySettings::GenerateClientCert(SecureString & certKey, CertContextUPtr & cert) const
 {
-#ifndef PLATFORM_UNIX
     wstring commonName = Guid::NewGuid().ToString();
-
-    auto error = CryptoUtility::GenerateExportableKey(
+    ErrorCode error;
+#ifndef PLATFORM_UNIX
+    error = CryptoUtility::GenerateExportableKey(
         L"CN=" + commonName,
+        false /* fMachineKeyset=false */,
         certKey);
 
     if (!error.IsSuccess()) { return error; }
-
+#endif
     error = CryptoUtility::CreateSelfSignedCertificate(
-            L"CN=" + commonName,
-            L"CN=" + commonName,
-            cert);
+        L"CN=" + commonName,
+        L"CN=" + commonName,
+        false /* fMachineKeyset=false */,
+        cert);
 
     if (!error.IsSuccess()) { return error; }
 
@@ -91,7 +93,6 @@ ErrorCode SecuritySettings::GenerateClientCert(SecureString & certKey, CertConte
     if (!error.IsSuccess()) { return error; }
 
     remoteCertThumbprints_.Add(thumbprint);
-#endif
 
     return ErrorCode::Success();
 }
@@ -101,17 +102,14 @@ ErrorCode SecuritySettings::CreateSelfGeneratedCertSslServer(SecuritySettings & 
 {
     object = SecuritySettings();
 
-#ifdef PLATFORM_UNIX
-    object.securityProvider_ = SecurityProvider::None;
-#else
-
     wstring commonName = Guid::NewGuid().ToString();
 
     CertContextUPtr cert;
     auto error = CryptoUtility::CreateSelfSignedCertificate(
-            L"CN=" + commonName,
-            L"CN=" + commonName,
-            cert);
+        L"CN=" + commonName,
+        L"CN=" + commonName,
+        false /* fMachineKeyset=false */,
+        cert);
     object.certContext_ = make_shared<CertContextUPtr>(move(cert));
 
     if (!error.IsSuccess()) { return error; }
@@ -126,7 +124,6 @@ ErrorCode SecuritySettings::CreateSelfGeneratedCertSslServer(SecuritySettings & 
 
     // Need to turn on protection to mitigate "forwarding attacks", details described in bug 931057
     object.protectionLevel_ = ProtectionLevel::EncryptAndSign;
-#endif
 
     return ErrorCode::Success();
 
@@ -140,10 +137,6 @@ ErrorCode SecuritySettings::CreateSslClient(
 {
     object = SecuritySettings();
 
-#ifdef PLATFORM_UNIX
-    object.securityProvider_ = SecurityProvider::None;
-#else
-
     object.isSelfGeneratedCert_ = true;
     object.securityProvider_ = SecurityProvider::Ssl;
     object.certContext_ = make_shared<CertContextUPtr>(move(certContext));
@@ -152,7 +145,6 @@ ErrorCode SecuritySettings::CreateSslClient(
 
     // Need to turn on protection to mitigate "forwarding attacks", details described in bug 931057
     object.protectionLevel_ = ProtectionLevel::EncryptAndSign;
-#endif
 
     return ErrorCode::Success();
 }

@@ -18,8 +18,15 @@ namespace Common
             );
 
         ErrorCode GetIpAddressesPerAdapter(
-            __out std::map<std::wstring, std::vector<Common::IPPrefix>> & map
+            __out std::map<std::wstring, std::vector<Common::IPPrefix>> & map,
+            bool byFriendlyName = FALSE
             );
+
+        ErrorCode GetIpAddressOnAdapter(
+            __in std::wstring adapterName,
+            ADDRESS_FAMILY addressFamily,
+            __out std::wstring & ipAddress
+        );
 
         ErrorCode GetAdapterAddressOnTheSameNetwork(
             __in std::wstring input,

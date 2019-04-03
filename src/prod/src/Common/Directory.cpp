@@ -166,7 +166,8 @@ namespace Common
     void Directory::Create(
         std::wstring const & path)
     {
-        while (!::CreateDirectory(Path::ConvertToNtPath(path).c_str(), NULL))
+        auto ntPath = Path::ConvertToNtPath(path);
+        while (!::CreateDirectory(ntPath.c_str(), NULL))
         {
             switch (::GetLastError())
             {
@@ -214,7 +215,8 @@ namespace Common
         std::wstring const & path)
     {
         bool parentDirectoryCreated = false;
-        while (!::CreateDirectory(Path::ConvertToNtPath(path).c_str(), NULL))
+        auto ntPath = Path::ConvertToNtPath(path);
+        while (!::CreateDirectory(ntPath.c_str(), NULL))
         {
             switch (::GetLastError())
             {
@@ -315,7 +317,8 @@ namespace Common
 
     ErrorCode Directory::DeleteInternal(std::wstring const & path, bool recursive, bool deleteReadOnlyFiles)
     {
-        while (!::RemoveDirectory(Path::ConvertToNtPath(path).c_str()))
+        auto ntPath = Path::ConvertToNtPath(path);
+        while (!::RemoveDirectory(ntPath.c_str()))
         {
             if (!recursive || (::GetLastError() != ERROR_DIR_NOT_EMPTY))
             {
@@ -405,7 +408,8 @@ namespace Common
 
     bool Directory::Exists(std::wstring const & path)
     {
-        auto result = ::GetFileAttributesW(Path::ConvertToNtPath(path).c_str());
+        auto ntPath = Path::ConvertToNtPath(path);
+        auto result = ::GetFileAttributesW(ntPath.c_str());
         return (result != INVALID_FILE_ATTRIBUTES) && ((result & FILE_ATTRIBUTE_DIRECTORY) != 0);
     }
 
@@ -668,13 +672,36 @@ namespace Common
         error = Directory::Copy(src, tempFilePath, overwrite);
         if (!error.IsSuccess())
         {
+            auto err = Directory::Delete(tempFilePath, true);
+            if (!err.IsSuccess())
+            {
+                Trace.WriteInfo(
+                    TraceSource,
+                    L"SafeCopy",
+                    "SafeCopy failed to clean up '{0}' after copy from '{1}' failed. Error: {2}",
+                    tempFilePath,
+                    src,
+                    err);
+            }
             return error;
         }
 
         error = Directory::MoveFile(tempFilePath, dest, overwrite);
-        srcLock.Release();
-        cacheLock.Release();
-        destLock.Release();
+        if (!error.IsSuccess())
+        {
+            auto err = Directory::Delete(tempFilePath, true);
+            if (!err.IsSuccess())
+            {
+                Trace.WriteInfo(
+                    TraceSource,
+                    L"SafeCopy",
+                    "SafeCopy failed to clean up '{0}' after move to '{1}' failed. Error: {2}",
+                    tempFilePath,
+                    dest,
+                    err);
+            }
+        }
+
         return error;
     }
 
@@ -1096,7 +1123,8 @@ namespace Common
     ErrorCode Directory::GetLastWriteTime(std::wstring const & path, __out DateTime & lastWriteTime)
     {
         WIN32_FILE_ATTRIBUTE_DATA fileAttributes;
-        if (!::GetFileAttributesEx(Path::ConvertToNtPath(path).c_str(), GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard	, &fileAttributes))
+        auto ntPath = Path::ConvertToNtPath(path);
+        if (!::GetFileAttributesEx(ntPath.c_str(), GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &fileAttributes))
         {
             Trace.WriteWarning(
                 TraceSource,

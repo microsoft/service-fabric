@@ -91,7 +91,6 @@ Common::ErrorCode ServiceHealthEvaluation::FromPublicApi(
 void ServiceHealthEvaluation::SetDescription()
 {
     description_ = wformatString(
-        "{0} ServiceName='{1}', AggregatedHealthState='{2}'.",
         HMResource::GetResources().HealthEvaluationUnhealthyService,
         serviceName_,
         aggregatedHealthState_);

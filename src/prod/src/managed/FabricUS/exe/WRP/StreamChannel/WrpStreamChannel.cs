@@ -573,9 +573,12 @@ namespace System.Fabric.UpgradeService
             {
                 foreach (var x509NamesKvp in x509NamesAndIssuers)
                 {
+                    var simpleName = cert.GetNameInfo(X509NameType.SimpleName, false);
                     var dnsAlternativeName = cert.GetNameInfo(X509NameType.DnsFromAlternativeName, false);
                     var dnsName = cert.GetNameInfo(X509NameType.DnsName, false);
+
                     if (cert.Subject.Equals(x509NamesKvp.Key, StringComparison.OrdinalIgnoreCase) ||
+                       (simpleName != null && simpleName.Equals(x509NamesKvp.Key, StringComparison.OrdinalIgnoreCase)) ||
                        (dnsAlternativeName != null && dnsAlternativeName.Equals(x509NamesKvp.Key, StringComparison.OrdinalIgnoreCase)) ||
                        (dnsName != null && dnsName.Equals(x509NamesKvp.Key, StringComparison.OrdinalIgnoreCase)))
                     {

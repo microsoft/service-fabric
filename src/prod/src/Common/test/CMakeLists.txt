@@ -8,7 +8,7 @@ add_definitions(-DNO_INLINE_EVENTDESCCREATE)
 add_executable(${exe_CommonTest}
   # boost.test main
   ../../../test/BoostUnitTest/btest.cpp
-  ../../../test/BoostUnitTest/FabricGlobalsInitializationFixture.Test.cpp
+
   # test code
   ../AccountHelper.Test.cpp
   ../ApiMonitoring.MonitoringComponent.Test.cpp

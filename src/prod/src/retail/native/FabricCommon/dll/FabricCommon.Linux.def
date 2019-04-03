@@ -7,6 +7,9 @@ EXPORTS
     FabricCreateWinFabRunLayoutSpecification
     FabricCreateFabricDeploymentSpecification
     FabricGetConfigStore
+    FabricGetConfigStoreEnvironmentVariable
+    FabricGetThreadCount
+    FabricSetThreadTestLimit
     FabricEncryptText
     FabricEncryptText2
     FabricDecryptText
@@ -35,6 +38,15 @@ EXPORTS
     FabricSetDataRoot
     FabricSetLogRoot2
     FabricSetLogRoot
+    FabricSetEnableCircularTraceSession2
+    FabricSetEnableCircularTraceSession
+    FabricGetEnableCircularTraceSession2
+    FabricGetEnableCircularTraceSession
+    FabricSetEnableUnsupportedPreviewFeatures2
+    FabricSetEnableUnsupportedPreviewFeatures
+    FabricSetIsSFVolumeDiskServiceEnabled2
+    FabricSetIsSFVolumeDiskServiceEnabled
+    FabricSetSfInstalledMoby
     FabricDirectoryCreate
     FabricDirectoryGetDirectories
     FabricDirectoryGetFiles
@@ -100,5 +112,7 @@ EXPORTS
     wcsrev
     wcscasecmp
     wcstod
-	FabricGetGlobals
+    FabricSetCrashLeasingApplicationCallback
+    FabricGetCrashLeasingApplicationCallback
+
 

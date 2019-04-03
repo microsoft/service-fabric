@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+
+  <PropertyGroup>
+    <Description>Microsoft.ServiceFabric.Preview</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Microsoft.ServiceFabric.Preview</AssemblyName>
+    <PackageId>Microsoft.ServiceFabric.Preview</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<Compile Include="..\..\ComposeDeploymentDescription.cs" />
+	<Compile Include="..\..\ComposeDeploymentQueryDescription.cs" />
+	<Compile Include="..\..\ComposeDeploymentStatus.cs" />
+	<Compile Include="..\..\ComposeDeploymentStatusList.cs" />
+	<Compile Include="..\..\ComposeDeploymentStatusResultItem.cs" />
+  <Compile Include="..\..\ComposeDeploymentUpgradeDescription.cs" />
+  <Compile Include="..\..\DeleteComposeDeploymentDescription.cs" />
+  <Compile Include="..\..\ComposeDeploymentRollbackDescription.cs" />
+	<Compile Include="..\..\Extensions.cs" />
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj" />
+    <ProjectReference Include="..\..\..\Api\CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

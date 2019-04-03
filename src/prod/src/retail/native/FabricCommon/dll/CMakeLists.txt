@@ -1,20 +1,28 @@
 set( LINUX_SOURCES
-  ./ConfigLoader.cpp
-  ./stdafx.cpp
+  ../FabricCommon.cpp
+  ../ConfigLoader.cpp
+  ../stdafx.cpp
   ./dllmain.cpp
   ../../../../pal/wc16.c
 )
 
 set( LINUX_SOURCES2
   ./TraceTemplates.Linux.c
-  ./TraceWrapper.Linux.c
+  ../TraceWrapper.Linux.c
+  ../TraceBinaryWrapper.Linux.c
 )
+
+add_precompiled_header(${lib_FabricCommon} ../stdafx.h)
 
 include_directories("../pch")
 
 add_library(objects_fabriccommon OBJECT ${LINUX_SOURCES})
 add_library(objects_fabriccommon2 OBJECT ${LINUX_SOURCES2})
 add_library(${lib_FabricCommon} SHARED $<TARGET_OBJECTS:objects_fabriccommon> $<TARGET_OBJECTS:objects_fabriccommon2>)
+
+ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
+SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
+    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
 
 set_target_properties(${lib_FabricCommon} PROPERTIES 
     LIBRARY_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR})
@@ -40,7 +48,7 @@ target_link_libraries(${lib_FabricCommon}
   lttng-ust
   ${Cxx}
   ${CxxABI}
-  ssh2
+  patched_libssh2
   ssl
   crypto
   xml2

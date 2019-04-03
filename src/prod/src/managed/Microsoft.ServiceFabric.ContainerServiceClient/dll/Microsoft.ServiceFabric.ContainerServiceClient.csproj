@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.ContainerServiceClient</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.ContainerServiceClient</AssemblyName>
+    <AssemblyDescription>Service Fabric Container Service Client</AssemblyDescription>
+    <AssemblyTitle>Service Fabric Container Service Client</AssemblyTitle>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\_friends.cs">
+      <Link>_friends.cs</Link>
+    </Compile>
+    <Compile Include="..\BufferedClientStream.cs">
+      <Link>BufferedClientStream.cs</Link>
+    </Compile>
+    <Compile Include="..\ChunkedRequestWriter.cs">
+      <Link>ChunkedRequestWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\ChunkedResponseReader.cs">
+      <Link>ChunkedResponseReader.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerApiResponse.cs">
+      <Link>ContainerApiResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerOperation.cs">
+      <Link>ContainerOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerServiceClient.cs">
+      <Link>ContainerServiceClient.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerServiceHttpMessageHandler.cs">
+      <Link>ContainerServiceHttpMessageHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerServiceHttpResponseContent.cs">
+      <Link>ContainerServiceHttpResponseContent.cs</Link>
+    </Compile>
+    <Compile Include="..\ContentLengthResponseReader.cs">
+      <Link>ContentLengthResponseReader.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerServiceHttpConnection.cs">
+      <Link>ContainerServiceHttpConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\ExecOperation.cs">
+      <Link>ExecOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\HttpRequestExtensions.cs">
+      <Link>HttpRequestExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\ImageOperation.cs">
+      <Link>ImageOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\JsonSerializer.cs">
+      <Link>JsonSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\NamedPipeHttpMessageHandler.cs">
+      <Link>NamedPipeHttpMessageHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\UnixDomainSocketHttpMessageHandler.cs">
+      <Link>UnixDomainSocketHttpMessageHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\UnixDomainSocketEndPoint.cs">
+      <Link>UnixDomainSocketEndPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\NetworkOperation.cs">
+      <Link>NetworkOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\SystemOperation.cs">
+      <Link>SystemOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\VolumeOperation.cs">
+      <Link>VolumeOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\JsonRequestContent.cs">
+      <Link>JsonRequestContent.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerApiException.cs">
+      <Link>ContainerApiException.cs</Link>
+    </Compile>
+    <Compile Include="..\QueryParameterHelper.cs">
+      <Link>QueryParameterHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\ContainerConfig.cs">
+      <Link>Config\ContainerConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\ContainersPruneConfig.cs">
+      <Link>Config\ContainersPruneConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\HealthConfig.cs">
+      <Link>Config\HealthConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\ContainerEventsConfig.cs">
+      <Link>Config\ContainerEventsConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\HostConfig.cs">
+      <Link>Config\HostConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\NetworkingConfig.cs">
+      <Link>Config\NetworkingConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\LogConfig.cs">
+      <Link>Config\LogConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\PortBinding.cs">
+      <Link>Config\PortBinding.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\VolumeConfig.cs">
+      <Link>Config\VolumeConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\EndpointSettings.cs">
+      <Link>Config\EndpointSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\EndpointIPAMConfig.cs">
+      <Link>Config\EndpointIPAMConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\ContainerExecStartConfig.cs">
+      <Link>Config\ContainerExecStartConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\NetworkConnectConfig.cs">
+      <Link>Config\NetworkConnectConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\ContainerExecConfig.cs">
+      <Link>Config\ContainerExecConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\AuthConfig.cs">
+      <Link>Config\AuthConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\NetworkListConfig.cs">
+      <Link>Config\NetworkListConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Config\NetworkCreateConfig.cs">
+      <Link>Config\NetworkCreateConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Response\ContainerEventResponse.cs">
+      <Link>Response\ContainerEventResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\Response\CreateContainerResponse.cs">
+      <Link>Response\CreateContainerResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\Response\CreateContainerExecResponse.cs">
+      <Link>Response\CreateContainerExecResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\Response\VersionResponse.cs">
+      <Link>Response\VersionResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\Response\NetworkListResponse.cs">
+      <Link>Response\NetworkListResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\Response\NetworkCreateResponse.cs">
+      <Link>Response\NetworkCreateResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\Response\ContainersPruneResponse.cs">
+      <Link>Response\ContainersPruneResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\Response\ContainerInspectResponse.cs">
+      <Link>Response\ContainerListResponse.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.IO" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Threading.Tasks" />
+    <Reference Include="System.Net.Primitives" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Name>System.Fabric</Name>
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\Dlls\system.fabric.strings\system.fabric.strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgNewtonsoft_Json_6_0)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -258,6 +258,7 @@ ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
             // Vector is there for future uses (when services could have multiple scaling policies).
             return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), statefulEx4->ScalingPolicyCount));
         }
+
         for (ULONG i = 0; i < statefulEx4->ScalingPolicyCount; i++)
         {
             Reliability::ServiceScalingPolicyDescription scalingDescription;
@@ -268,7 +269,7 @@ ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
             }
             scalingPolicies_.push_back(move(scalingDescription));
         }
-
+        
         return err;
     }
     else if (serviceDescription.Kind == FABRIC_SERVICE_DESCRIPTION_KIND_STATELESS)
@@ -410,7 +411,7 @@ ErrorCode PartitionedServiceDescWrapper::FromPublicApi(
             // Vector is there for future uses (when services could have multiple scaling policies).
             return TraceAndGetErrorDetails(ErrorCodeValue::InvalidServiceScalingPolicy, wformatString(GET_NS_RC(ScalingPolicy_Scaling_Count), statelessEx4->ScalingPolicyCount));
         }
-		
+
         for (ULONG i = 0; i < statelessEx4->ScalingPolicyCount; i++)
         {
             Reliability::ServiceScalingPolicyDescription scalingDescription;
@@ -659,7 +660,7 @@ void PartitionedServiceDescWrapper::ToPublicApi(__in ScopedHeap &heap, __in FABR
         {
             statefulDescriptionEx4->ScalingPolicyCount = 0;
             statefulDescriptionEx4->ServiceScalingPolicies = nullptr;
-        }
+	}
     }
     else
     {
@@ -792,7 +793,7 @@ void PartitionedServiceDescWrapper::ToPublicApi(__in ScopedHeap &heap, __in FABR
         {
             statelessDescriptionEx4->ScalingPolicyCount = 0;
             statelessDescriptionEx4->ServiceScalingPolicies = nullptr;
-        }
+	}
     }
 }
 

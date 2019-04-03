@@ -1,0 +1,355 @@
+{
+  "properties": {
+    "security": {
+      "windowsIdentities": null,
+      "clusterCredentialType": 0,
+      "serverCredentialType": 0,
+      "certificateInformation": null,
+      "azureActiveDirectory": null
+    },
+    "reliabilityLevel": "Silver",
+    "fabricSettings": [
+      {
+        "name": "ClusterManager",
+        "parameters": [
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "3"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          },
+          {
+            "name": "UpgradeStatusPollInterval",
+            "value": "5"
+          },
+          {
+            "name": "FabricUpgradeStatusPollInterval",
+            "value": "5"
+          },
+          {
+            "name": "UpgradeHealthCheckInterval",
+            "value": "5"
+          },
+          {
+            "name": "FabricUpgradeHealthCheckInterval",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "Common",
+        "parameters": [
+          {
+            "name": "EnableEndpointV2",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "FailoverManager",
+        "parameters": [
+          {
+            "name": "ClusterStableWaitDuration",
+            "value": "0"
+          },
+          {
+            "name": "PeriodicStateScanInterval",
+            "value": "2"
+          },
+          {
+            "name": "MinActionRetryIntervalPerReplica",
+            "value": "5"
+          },
+          {
+            "name": "PeriodicStateCleanupScanInterval",
+            "value": "15"
+          },
+          {
+            "name": "DeletedReplicaKeepDuration",
+            "value": "5"
+          },
+          {
+            "name": "ExpectedClusterSize",
+            "value": "1"
+          },
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "3"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          },
+          {
+            "name": "SystemReplicaRestartWaitDuration",
+            "value": "5"
+          },
+          {
+            "name": "UserReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "FaultAnalysisService",
+        "parameters": [
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "3"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "Federation",
+        "parameters": [
+          {
+            "name": "NodeIdGeneratorVersion",
+            "value": "V4"
+          }
+        ]
+      },
+      {
+        "name": "HealthManager",
+        "parameters": [
+          {
+            "name": "EnableApplicationTypeHealthEvaluation",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "Hosting",
+        "parameters": [
+          {
+            "name": "ActivatedProcessDieOnUnhandledExceptionEnabled",
+            "value": "False"
+          },
+          {
+            "name": "RunAsPolicyEnabled",
+            "value": "True"
+          },
+          {
+            "name": "EndpointProviderEnabled",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "HttpGateway",
+        "parameters": [
+          {
+            "name": "IsEnabled",
+            "value": "True"
+          },
+          {
+            "name": "VersionCheck",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "ImageStoreService",
+        "parameters": [
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "3"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "Management",
+        "parameters": [
+          {
+            "name": "ImageStoreConnectionString",
+            "value": "fabric:ImageStore"
+          }
+        ]
+      },
+      {
+        "name": "NamingService",
+        "parameters": [
+          {
+            "name": "PartitionCount",
+            "value": "3"
+          },
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "3"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "ReconfigurationAgent",
+        "parameters": [
+          {
+            "name": "ReplicaUpMessageRetryInterval",
+            "value": "5"
+          },
+          {
+            "name": "RAUpgradeProgressCheckInterval",
+            "value": "2"
+          },
+          {
+            "name": "FabricUpgradeReplicaCloseCompleteCheckInterval",
+            "value": "1"
+          },
+          {
+            "name": "IsDeactivationInfoEnabled",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "Setup",
+        "parameters": [
+          {
+            "name": "FabricDataRoot",
+            "value": "C:\\MCRoot\\BinCache\\bins\\test\\UpgradeFabricSA_ReliabilityChange.test\\TestCase"
+          },
+          {
+            "name": "FabricLogRoot",
+            "value": "C:\\MCRoot\\BinCache\\bins\\test\\UpgradeFabricSA_ReliabilityChange.test\\TestCase\\log"
+          }
+        ]
+      },
+      {
+        "name": "UpgradeOrchestrationService",
+        "parameters": [
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "InfrastructureService",
+        "parameters": [
+          {
+            "name": "CoordinatorType",
+            "value": "AzureParallel"
+          }
+        ]
+      }
+    ],
+    "nodeTypes": [
+      {
+        "name": "NodeType0",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 10548,
+        "httpGatewayEndpointPort": 10549,
+        "reverseProxyEndpointPort": null,
+        "leaseDriverEndpointPort": 10545,
+        "clusterConnectionEndpointPort": 10546,
+        "serviceConnectionEndpointPort": 10547,
+        "applicationPorts": {
+          "startPort": 10565,
+          "endPort": 10594
+        },
+        "ephemeralPorts": {
+          "startPort": 10551,
+          "endPort": 10564
+        },
+        "ktlLogger": null,
+        "isPrimary": true
+      }
+    ],
+    "enableTelemetry": false,
+    "diagnosticsStore": {
+      "storeType": "AzureStorage",
+      "dataDeletionAgeInDays": 7,
+      "connectionstring": "MIICwQYJKoZIhvcNAQcDoIICsjCCAq4CAQAxggE1MIIBMQIBADCBmTCBgTETMBEGCgmSJomT8ixkARkWA2NvbTEZMBcGCgmSJomT8ixkARkWCW1pY3Jvc29mdDEWMBQGCgmSJomT8ixkARkWBm50dGVzdDEYMBYGCgmSJomT8ixkARkWCG92ZXJsYXkxMR0wGwYDVQQDExRXaW5GYWJyaWMtVGVzdC1UQS1DQQITIAAAABhksANqC7Xz1wAAAAAAGDANBgkqhkiG9w0BAQcwAASBgBw6SuiAWaXfMdRotOtm3ozWgtR5d130tqu+VmJSWwpxgG/fyiP1/50Ud/6sxYVig5dhpBbVXhvNNcAiLSHPHmgqzHYUxwyTDFPZUTJHP4NG+yLS8rwFzCdf8rB7Dgrk/AOcbIZKpvYuwCZQvWxspFickRzkKoR+BEb1KqBgIVq1MIIBbgYJKoZIhvcNAQcBMB0GCWCGSAFlAwQBKgQQVIFnyKPrGOltE2GaCOj8TICCAUAijfUtcU8/kmzaTQpj5Gd7oQz9yL17QMAaRi1kXU6eRyGe8x0UvKCrolFlDA+cyiW8TEGRs85JJZecpfZsPOa1ploQVSYlaWfF56d0C3C0rFO+jk3DkA1ZbmsekHlY/lxzA/8S0RDqbXjffn9HR9pBAcpZIBI15STtcFsA0j6xFBL5ZbjMxEI7DkUZ5HClBGtHmqWCwl0QHnP+S2HX+J/pO9jbLH3kxVbrZxRoF12araKSg/7Fw6F5xUlQSI2vguCJAZB91zhl02Uvw4teIQ2kvyJDubACybCPT4kSCkYNvnJbuWev/QQz1o4Zf+1n3o47yTnYuvOXZSX8d/VMp37/5y3mZhIXzmdwUV3tzmXg2/v+tH7N6oRLR4Gs4I7LKADm2Z/GkNSPTLh9z3xOZ5BrQf7MrFoWNyTIHDTcB4eHOw==",
+      "isEncrypted": true
+    },
+    "fabricClusterAutoupgradeEnabled": null,
+    "clusterRegistrationId": "11744a42-5d0c-4447-941e-ac7e88654363"
+  },
+  "nodes": [
+    {
+      "nodeName": "N0010",
+      "nodeTypeRef": "NodeType0",
+      "iPAddress": "100.114.222.18",
+      "faultDomain": "fd:/DC1/r0",
+      "upgradeDomain": "UD_1"
+    },
+    {
+      "nodeName": "N0020",
+      "nodeTypeRef": "NodeType0",
+      "iPAddress": "100.114.250.26",
+      "faultDomain": "fd:/DC2/r0",
+      "upgradeDomain": "UD_2"
+    },
+    {
+      "nodeName": "N0030",
+      "nodeTypeRef": "NodeType0",
+      "iPAddress": "100.114.232.22",
+      "faultDomain": "fd:/DC3/r0",
+      "upgradeDomain": "UD_3"
+    },
+    {
+      "nodeName": "N0040",
+      "nodeTypeRef": "NodeType0",
+      "iPAddress": "100.115.28.46",
+      "faultDomain": "fd:/DC4/r0",
+      "upgradeDomain": "UD_4"
+    },
+    {
+      "nodeName": "N0050",
+      "nodeTypeRef": "NodeType0",
+      "iPAddress": "100.115.38.40",
+      "faultDomain": "fd:/DC5/r0",
+      "upgradeDomain": "UD_5"
+    },
+    {
+      "nodeName": "N0060",
+      "nodeTypeRef": "NodeType0",
+      "iPAddress": "100.115.28.39",
+      "faultDomain": "fd:/DC6/r0",
+      "upgradeDomain": "UD_6"
+    },
+    {
+      "nodeName": "N0070",
+      "nodeTypeRef": "NodeType0",
+      "iPAddress": "100.115.28.37",
+      "faultDomain": "fd:/DC7/r0",
+      "upgradeDomain": "UD_7"
+    }
+  ],
+  "apiVersion": "01-2017",
+  "name": "TestCluster",
+  "clusterConfigurationVersion": "v1"
+}

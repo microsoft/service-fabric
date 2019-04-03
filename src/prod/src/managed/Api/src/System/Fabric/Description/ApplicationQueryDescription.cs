@@ -100,8 +100,6 @@ namespace System.Fabric.Description
             ExclusiveFilterHelper(!string.IsNullOrEmpty(description.ApplicationTypeNameFilter), ref hasFilterSet);
 
             ExclusiveFilterHelper(description.ApplicationDefinitionKindFilter != ApplicationDefinitionKindFilter.Default, ref hasFilterSet);
-
-            ValidatePaging(description);
         }
 
         internal IntPtr ToNative(PinCollection pinCollection)

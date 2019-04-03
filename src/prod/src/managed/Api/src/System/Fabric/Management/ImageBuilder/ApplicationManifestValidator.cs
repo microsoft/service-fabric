@@ -66,6 +66,7 @@ namespace System.Fabric.Management.ImageBuilder
 
             this.ValidateDefaultServices(applicationTypeContext);
             this.ValidateServiceTemplates(applicationTypeContext);
+
         }
 
         public void Validate(ApplicationInstanceContext applicationInstanceContext)
@@ -130,6 +131,8 @@ namespace System.Fabric.Management.ImageBuilder
                     applicationInstanceContext.MergedApplicationParameters,
                     applicationManifestFile);
                 resourceGovernancePolicies.Clear();
+
+                ValidateServicePackageNetworkPolicies(servicePackage, applicationManifestFile);
             }
         }
 
@@ -324,6 +327,8 @@ namespace System.Fabric.Management.ImageBuilder
 
             ApplicationManifestTypeServiceManifestImport[] serviceManifestImports = applicationManifestType.ServiceManifestImport;
 
+            bool useNewStyleContainerNetworkConfig = false;
+            bool useOldStyleContainerNetworkConfig = false;
             for (int i = 0; i < serviceManifestImports.Length; i++)
             {
                 ApplicationManifestTypeServiceManifestImport serviceManifestImport = serviceManifestImports[i];
@@ -362,6 +367,7 @@ namespace System.Fabric.Management.ImageBuilder
                     DuplicateDetector duplicateContainerPolicy = new DuplicateDetector("ContainerHostPolicies", "CodePackageRef", context.GetApplicationManifestFileName());
                     DuplicateDetector duplicateResourceGovernancePolicy = new DuplicateDetector("ResourceGovernancePolicy", "CodePackageRef", context.GetApplicationManifestFileName());
                     DuplicateDetector duplicateServicePackageResourceGovernancePolicyType = new DuplicateDetector("ServicePackageResourceGovernancePolicy", "ServicePackageResourceGovernancePolicy", context.GetApplicationManifestFileName());
+                    DuplicateDetector duplicateNetworkPolicies = new DuplicateDetector("NetworkPolicies", "NetworkPolicies", context.GetApplicationManifestFileName());
 
                     List<RunAsPolicyType> runasPolicies = new List<RunAsPolicyType>();
                     List<ContainerHostPoliciesType> containerPolicies = new List<ContainerHostPoliciesType>();
@@ -434,6 +440,13 @@ namespace System.Fabric.Management.ImageBuilder
                                 context.ApplicationParameters,
                                 context.GetApplicationManifestFileName());
                         }
+                        else if (policy.GetType() == typeof(NetworkPoliciesType))
+                        {
+                            bool hasAnyContainerNetworkPolicy;
+                            duplicateNetworkPolicies.Add(typeof(NetworkPoliciesType).Name);
+                            this.ValidateApplicationManifestNetworkPolicies((NetworkPoliciesType)policy, serviceManifestType, context, out hasAnyContainerNetworkPolicy);
+                            useNewStyleContainerNetworkConfig = useNewStyleContainerNetworkConfig || hasAnyContainerNetworkPolicy;
+                        }
                         else if (policy.GetType() == typeof(ServiceFabricRuntimeAccessPolicyType))
                         {
                             // Service has specified to use the replicated store feature, so confirm if 
@@ -448,7 +461,7 @@ namespace System.Fabric.Management.ImageBuilder
                                     TraceType,
                                     context.GetApplicationManifestFileName(),
                                     StringResources.ImageBuilderError_InvalidReplicatedStoreUsage);
-                                } 
+                                }
                             }
                         }
                         else
@@ -462,13 +475,26 @@ namespace System.Fabric.Management.ImageBuilder
                     }
                     if (containerPolicies.Count > 0)
                     {
-                        this.ValidateContainerHostPolicies(containerPolicies, serviceManifestType, context);
+                        bool hasAnyContainerNetworkConfig;
+                        this.ValidateContainerHostPolicies(containerPolicies, serviceManifestType, context, out hasAnyContainerNetworkConfig);
+                        useOldStyleContainerNetworkConfig = useOldStyleContainerNetworkConfig || hasAnyContainerNetworkConfig;
                     }
 
                     this.ValidateCodePackagesResourceGovernance(
                         resourceGovernancePolicies,
                         context.ApplicationParameters,
                         context.GetApplicationManifestFileName());
+                }
+
+                // Validate that new-style container network config via container network policies defined at service package level would not be used together 
+                // with old-style container network config via network config in container host policies defined at code package level.
+                // The validation is performed at application package level, i.e. in the entire application package old-style or new-style config has to be used consistently.
+                if (useOldStyleContainerNetworkConfig && useNewStyleContainerNetworkConfig)
+                {
+                    ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
+                        TraceType,
+                        context.GetApplicationManifestFileName(),
+                        StringResources.ImageBuilderError_NetworkConfigConflict);
                 }
 
                 // Validates the ConfigurationOverrides in the SeriverManifestImport
@@ -761,8 +787,8 @@ namespace System.Fabric.Management.ImageBuilder
                        serviceManifestType.Name);
                 }
 
-                if(policy.Scope != PackageSharingPolicyTypeScope.Code &&
-                    policy.Scope != PackageSharingPolicyTypeScope.None)
+                if (policy.Scope != PackageSharingPolicyTypeScope.Code &&
+                      policy.Scope != PackageSharingPolicyTypeScope.None)
                 {
                     ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
                         TraceType,
@@ -777,7 +803,7 @@ namespace System.Fabric.Management.ImageBuilder
             {
                 package = serviceManifestType.ConfigPackage?.FirstOrDefault<ConfigPackageType>(
                    configPackageType => ImageBuilderUtility.Equals(configPackageType.Name, policy.PackageRef));
-                if(package != null)
+                if (package != null)
                 {
                     if (policy.Scope != PackageSharingPolicyTypeScope.Config &&
                         policy.Scope != PackageSharingPolicyTypeScope.None)
@@ -795,7 +821,7 @@ namespace System.Fabric.Management.ImageBuilder
                 {
                     package = serviceManifestType.DataPackage?.FirstOrDefault<DataPackageType>(
                         dataPackageType => ImageBuilderUtility.Equals(dataPackageType.Name, policy.PackageRef));
-                    if(package != null)
+                    if (package != null)
                     {
                         if (policy.Scope != PackageSharingPolicyTypeScope.Data &&
                         policy.Scope != PackageSharingPolicyTypeScope.None)
@@ -827,7 +853,7 @@ namespace System.Fabric.Management.ImageBuilder
         private void ValidateResourceGovernancePolicy(
           ResourceGovernancePolicyType resourceGovernancePolicy,
           ServiceManifestType serviceManifestType,
-          IDictionary<string, string> parameters, 
+          IDictionary<string, string> parameters,
           string fileName)
         {
             CodePackageType matchingCodePackageType = serviceManifestType.CodePackage.FirstOrDefault<CodePackageType>(
@@ -846,7 +872,7 @@ namespace System.Fabric.Management.ImageBuilder
                     "ServiceManifest");
             }
             ValidateResourceGovernanceSettings(resourceGovernancePolicy, parameters, fileName);
-          
+
         }
 
         void ValidateResourceGovernanceSettings(
@@ -876,7 +902,7 @@ namespace System.Fabric.Management.ImageBuilder
             }
 
             long? memorySwap = ManifestValidatorUtility.ValidateAsLong(resourceGovernancePolicy.MemorySwapInMB, "MemorySwapMB", parameters, fileName);
-            if(memorySwap.HasValue && memorySwap.Value < -1)
+            if (memorySwap.HasValue && memorySwap.Value < -1)
             {
                 ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
                 TraceType,
@@ -890,7 +916,7 @@ namespace System.Fabric.Management.ImageBuilder
             int? maximumIOps = ManifestValidatorUtility.ValidateAsPositiveIntZeroIncluded(resourceGovernancePolicy.MaximumIOps, "MaximumIOps", parameters, fileName);
             int? maximumIOBps = ManifestValidatorUtility.ValidateAsPositiveIntZeroIncluded(resourceGovernancePolicy.MaximumIOBandwidth, "MaximumIOBandwidth", parameters, fileName);
             int? blockIOWeight = ManifestValidatorUtility.ValidateAsPositiveIntZeroIncluded(resourceGovernancePolicy.BlockIOWeight, "BlockIOWeight", parameters, fileName);
-            if(blockIOWeight.HasValue && 
+            if (blockIOWeight.HasValue &&
                blockIOWeight != 0 &&
                (blockIOWeight < 10 ||
                blockIOWeight > 1000))
@@ -907,6 +933,156 @@ namespace System.Fabric.Management.ImageBuilder
             int? DiskQuotaInMB = ManifestValidatorUtility.ValidateAsPositiveIntZeroIncluded(resourceGovernancePolicy.DiskQuotaInMB, "DiskQuotaInMB", parameters, fileName);
             int? KernelMemoryInMB = ManifestValidatorUtility.ValidateAsPositiveIntZeroIncluded(resourceGovernancePolicy.KernelMemoryInMB, "KernelMemoryInMB", parameters, fileName);
             int? ShmSizeInMB = ManifestValidatorUtility.ValidateAsPositiveIntZeroIncluded(resourceGovernancePolicy.ShmSizeInMB, "ShmSizeInMB", parameters, fileName);
+        }
+
+        private void ValidateApplicationManifestNetworkPolicies(
+          NetworkPoliciesType networkPolicies,
+          ServiceManifestType serviceManifestType,
+          ApplicationTypeContext context,
+          out bool hasAnyContainerNetworkPolicy)
+        {
+            hasAnyContainerNetworkPolicy = false;
+
+            // Validate container network policies during application type provisioning.
+            // Perform all validations that do not require network references materialized. 
+            if (networkPolicies != null && networkPolicies.Items != null)
+            {
+                HashSet<string> servicePackageEndpointNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (serviceManifestType.Resources != null && serviceManifestType.Resources.Endpoints != null)
+                {
+                    foreach (var servicePackageEndpoint in serviceManifestType.Resources.Endpoints)
+                    {
+                        servicePackageEndpointNames.Add(servicePackageEndpoint.Name);
+                    }
+                }
+
+                foreach (var containerNetworkPolicy in networkPolicies.Items)
+                {
+                    if (string.IsNullOrWhiteSpace(containerNetworkPolicy.NetworkRef))
+                    {
+                        // The only validation on a referenced network name performed during application type provisioning would be the name cannot be empty or white-space only.
+                        ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
+                            TraceType,
+                            context.GetApplicationManifestFileName(),
+                            StringResources.ImageBuilderError_InvalidNetworkReference);
+                    }
+
+                    hasAnyContainerNetworkPolicy = true;
+
+                    if (containerNetworkPolicy.Items != null)
+                    {
+                        foreach (var containerNetworkPolicyEndpointBinding in containerNetworkPolicy.Items)
+                        {
+                            // Validate that all endpoint references in container network policies are valid. Endpoint names are case-insensitive.
+                            if (!servicePackageEndpointNames.Contains(containerNetworkPolicyEndpointBinding.EndpointRef))
+                            {
+                                ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
+                                    TraceType,
+                                    context.GetApplicationManifestFileName(),
+                                    StringResources.ImageBuilderError_InvalidRef,
+                                    "EndpointRef",
+                                    containerNetworkPolicyEndpointBinding.EndpointRef,
+                                    "ContainerNetworkPolicy",
+                                    "Endpoint",
+                                    "ServiceManifest");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ValidateServicePackageNetworkPolicies(
+            ServicePackageType servicePackage,
+            string applicationManifestFileName)
+        {
+            // Validate container network policies during application creation.
+            // Perform all validations that require network references materialized. 
+            if (servicePackage.NetworkPolicies != null)
+            {
+                // "Open" and "Nat" are used as case insensitive reserved network names.
+                // Meanwhile names of general network resources are case sensitive like those of other high-level resources.
+                // Therefore, for duplication detection we need to perform comparisons differently.
+                DuplicateDetector duplicateOpenOrNatContainerNetworkPolicies = new DuplicateDetector("ContainerNetworkPolicy", "NetworkRef", applicationManifestFileName, true);
+                DuplicateDetector duplicateLocalOrFederatedContainerNetworkPolicies = new DuplicateDetector("ContainerNetworkPolicy", "NetworkRef", applicationManifestFileName, false);
+
+                bool useLocalOrFederatedNetwork = false;
+                bool useOpenNetwork = false;
+                bool useNatNework = false;
+                Dictionary<string, string> servicePackageEndpointContainerNetworkMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var containerNetworkPolicy in servicePackage.NetworkPolicies)
+                {
+                    bool isOpenNetworkReference = ImageBuilderUtility.IsOpenNetworkReference(containerNetworkPolicy.NetworkRef);
+                    bool isNatNetworkReference = ImageBuilderUtility.IsNatNetworkReference(containerNetworkPolicy.NetworkRef);
+                    useOpenNetwork = useOpenNetwork || isOpenNetworkReference;
+                    useNatNework = useNatNework || isNatNetworkReference;
+                    bool isLocalOrFederatedNetworkReference = !isOpenNetworkReference && !isNatNetworkReference;
+                    useLocalOrFederatedNetwork = useLocalOrFederatedNetwork || isLocalOrFederatedNetworkReference;
+
+                    // Validate that there can be no more than one network policy that refers to a specific network in a service package.
+                    if (isLocalOrFederatedNetworkReference)
+                    {
+                        duplicateLocalOrFederatedContainerNetworkPolicies.Add(containerNetworkPolicy.NetworkRef);
+                    }
+                    else
+                    {
+                        duplicateOpenOrNatContainerNetworkPolicies.Add(containerNetworkPolicy.NetworkRef);
+                    }
+
+                    if (containerNetworkPolicy.Items != null)
+                    {
+                        foreach (var containerNetworkPolicyEndpointBinding in containerNetworkPolicy.Items)
+                        {
+                            if (isLocalOrFederatedNetworkReference)
+                            {
+                                // Validate that an endpoint cannot be exposed on more than one local/federated container network.
+                                if (servicePackageEndpointContainerNetworkMap.ContainsKey(containerNetworkPolicyEndpointBinding.EndpointRef) && ImageBuilderUtility.NotEquals(servicePackageEndpointContainerNetworkMap[containerNetworkPolicyEndpointBinding.EndpointRef], containerNetworkPolicy.NetworkRef))
+                                {
+                                    ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
+                                        TraceType,
+                                        applicationManifestFileName,
+                                        StringResources.ImageBuilderError_EndpointOnMultipleNetworks,
+                                        containerNetworkPolicyEndpointBinding.EndpointRef,
+                                        servicePackageEndpointContainerNetworkMap[containerNetworkPolicyEndpointBinding.EndpointRef],
+                                        containerNetworkPolicy.NetworkRef);
+                                }
+
+                                servicePackageEndpointContainerNetworkMap[containerNetworkPolicyEndpointBinding.EndpointRef] = containerNetworkPolicy.NetworkRef;
+                            }
+                        }
+                    }
+                }
+
+                // Validate that a service package cannot be associated with Open network and NAT network at the same time.
+                // All other network combinations are valid:
+                // container network(s) only, Open network only, NAT network only, container network(s) + Open network, container network(s) + NAT network.
+                if (useNatNework && useOpenNetwork)
+                {
+                    ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
+                        TraceType,
+                        applicationManifestFileName,
+                        StringResources.ImageBuilderError_IncompatibleNetworkPolicies,
+                        servicePackage.Name);
+                }
+
+                // Validate that for a service package associated with any container network, all code package entry point hosts are container hosts.
+                if (useLocalOrFederatedNetwork && servicePackage.DigestedCodePackage != null)
+                {
+                    foreach (var digestedCodePackage in servicePackage.DigestedCodePackage)
+                    {
+                        if (digestedCodePackage.CodePackage != null && digestedCodePackage.CodePackage.EntryPoint != null && !(digestedCodePackage.CodePackage.EntryPoint.Item is ContainerHostEntryPointType))
+                        {
+                            ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
+                                TraceType,
+                                applicationManifestFileName,
+                                StringResources.ImageBuilderError_InvalidCodePackageEntryPointHost,
+                                servicePackage.Name,
+                                digestedCodePackage.CodePackage.Name,
+                                digestedCodePackage.CodePackage.EntryPoint.Item.GetType());
+                        }
+                    }
+                }
+            }
         }
 
         private void ValidateServicePackageResourceGovernancePolicy(
@@ -948,8 +1124,7 @@ namespace System.Fabric.Management.ImageBuilder
                 int? memoryLimit = ManifestValidatorUtility.ValidateAsPositiveIntZeroIncluded(rgPolicy.MemoryInMB, "MemoryInMB", parameters, fileName);
                 // If user specified memory as simple value check if the value exists and it is > 0
                 // If user specified memory as parameter value, just check if the value exists (application should be provisioned but not created)
-                if (memoryLimit.HasValue &&
-                   (memoryLimit > 0 || ImageBuilderUtility.IsParameter(rgPolicy.MemoryInMB)))
+                if ((memoryLimit.HasValue && memoryLimit > 0) || ImageBuilderUtility.IsParameter(rgPolicy.MemoryInMB))
                 {
                     ++memorySpecifiedCount;
                 }
@@ -1083,9 +1258,12 @@ namespace System.Fabric.Management.ImageBuilder
         private void ValidateContainerHostPolicies(
             List<ContainerHostPoliciesType> containerPolicies,
             ServiceManifestType serviceManifestType,
-            ApplicationTypeContext context)
+            ApplicationTypeContext context,
+            out bool hasAnyContainerNetworkConfig)
         {
-            foreach(ContainerHostPoliciesType policy in containerPolicies)
+            hasAnyContainerNetworkConfig = false;
+
+            foreach (ContainerHostPoliciesType policy in containerPolicies)
             {
                 CodePackageType matchingCodePackageType = serviceManifestType.CodePackage.FirstOrDefault<CodePackageType>(
                     codePackageType => ImageBuilderUtility.Equals(codePackageType.Name, policy.CodePackageRef));
@@ -1102,7 +1280,7 @@ namespace System.Fabric.Management.ImageBuilder
                         "CodePackage",
                         "ServiceManifest");
                 }
-                else if(!(matchingCodePackageType.EntryPoint.Item is ContainerHostEntryPointType))
+                else if (!(matchingCodePackageType.EntryPoint.Item is ContainerHostEntryPointType))
                 {
                     ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
                         TraceType,
@@ -1162,6 +1340,8 @@ namespace System.Fabric.Management.ImageBuilder
                             {
                                 hasNetworkConfig = true;
                             }
+
+                            hasAnyContainerNetworkConfig = true;
                         }
                         else if (item.GetType().Equals(typeof(ContainerHealthConfigType)))
                         {
@@ -1274,13 +1454,13 @@ namespace System.Fabric.Management.ImageBuilder
                 cert => ImageBuilderUtility.Equals(certRef, cert.Name));
             return matchingCert != null;
         }
-        private bool IsValidUserRef(  string referenceName,
+        private bool IsValidUserRef(string referenceName,
             SecurityPrincipalsType principals,
             IDictionary<string, string> parameters,
             string propertyName,
             string fileName)
         {
-             bool matchFound = false;
+            bool matchFound = false;
             if (!ManifestValidatorUtility.IsValidParameter(referenceName, propertyName, parameters, fileName))
             {
                 if (principals != null)
@@ -1305,7 +1485,7 @@ namespace System.Fabric.Management.ImageBuilder
             return matchFound;
         }
 
-        private bool IsValidGroupRef( string referenceName,
+        private bool IsValidGroupRef(string referenceName,
             SecurityPrincipalsType principals,
             IDictionary<string, string> parameters,
             string propertyName,
@@ -1443,7 +1623,7 @@ namespace System.Fabric.Management.ImageBuilder
                 }
 
                 // Provided parameterized value itself can be empty.
-                if(string.IsNullOrEmpty(serviceDnsName))
+                if (string.IsNullOrEmpty(serviceDnsName))
                 {
                     return;
                 }
@@ -1515,7 +1695,7 @@ namespace System.Fabric.Management.ImageBuilder
                 }
                 else if (serviceOrServiceGroupType is ServiceGroupTypeType)
                 {
-                    ServiceGroupTypeType serviceGroupTypeType = (ServiceGroupTypeType) serviceOrServiceGroupType;
+                    ServiceGroupTypeType serviceGroupTypeType = (ServiceGroupTypeType)serviceOrServiceGroupType;
                     if (ImageBuilderUtility.Equals(serviceGroupTypeType.ServiceGroupTypeName, serviceType.ServiceTypeName))
                     {
                         if (serviceType.GetType().Equals(typeof(StatefulServiceGroupType)))
@@ -1752,8 +1932,16 @@ namespace System.Fabric.Management.ImageBuilder
                         }
                     }
                 }
-                else if (serviceType.NamedPartition != null && serviceType.NamedPartition.Partition != null)
+                else if (serviceType.NamedPartition != null)
                 {
+                    if (serviceType.NamedPartition.Partition == null)
+                    {
+                        ImageBuilderUtility.TraceAndThrowValidationErrorWithFileName(
+                            TraceType,
+                            fileName,
+                            StringResources.ImageBuilderError_MissingNamedPartitionChildEntries);
+                    }
+
                     DuplicateDetector duplicateNames = new DuplicateDetector("NamedPartition", "Name", fileName, false /*ignoreCase*/);
                     foreach (var p in serviceType.NamedPartition.Partition)
                     {

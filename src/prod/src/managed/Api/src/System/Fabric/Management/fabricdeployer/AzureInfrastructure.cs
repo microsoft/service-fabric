@@ -17,8 +17,18 @@ namespace System.Fabric.Management.FabricDeployer
 
     internal class AzureInfrastructure : Infrastructure
     {
+        [Flags]
+        internal enum DynamicTopologyKind
+        {
+            None = 0x00,
+
+            // Nodes defined in static topology can optionally rely on infrastructure wrappers
+            // to provide values for IPAddressOrFQDN, FD, UD etc.
+            NodeTopologyInfoUpdate = 0x01,
+        }
+
         #region Public Constructors
-        public AzureInfrastructure(ClusterManifestTypeInfrastructure cmInfrastructure, InfrastructureNodeType[] inputInfrastructureNodes, Dictionary<string, ClusterManifestTypeNodeType> nameToNodeTypeMap)
+        public AzureInfrastructure(ClusterManifestTypeInfrastructure cmInfrastructure, InfrastructureNodeType[] inputInfrastructureNodes, Dictionary<string, ClusterManifestTypeNodeType> nameToNodeTypeMap, int dynamicTopologyKindIntValue = 0)
         {
             ReleaseAssert.AssertIfNull(cmInfrastructure, "cmInfrastructure");
             ReleaseAssert.AssertIfNull(nameToNodeTypeMap, "nameToNodeTypeMap");
@@ -36,7 +46,7 @@ namespace System.Fabric.Management.FabricDeployer
             }
             else if (topologyProviderType == TopologyProvider.TopologyProviderType.StaticTopologyProvider)
             {
-                this.InitializeFromStaticTopologyProvider(cmInfrastructure.Item as ClusterManifestTypeInfrastructureWindowsAzureStaticTopology, inputInfrastructureNodes, nameToNodeTypeMap);
+                this.InitializeFromStaticTopologyProvider(cmInfrastructure.Item as ClusterManifestTypeInfrastructureWindowsAzureStaticTopology, inputInfrastructureNodes, nameToNodeTypeMap, (DynamicTopologyKind)dynamicTopologyKindIntValue);
             }
         }
         #endregion
@@ -80,7 +90,8 @@ namespace System.Fabric.Management.FabricDeployer
                 return this.voteMappings;
             }
         }
-       
+
+        private const string AutomaticTopologyInfoValue = "*";
         private bool isScaleMin;
         private List<SettingsTypeSectionParameter> votes;
         private Dictionary<string, string> voteMappings;
@@ -174,9 +185,29 @@ namespace System.Fabric.Management.FabricDeployer
             this.isScaleMin = FabricValidatorUtility.IsAddressLoopback(nodes[0].IPAddressOrFQDN);
         }
 
-        private void InitializeFromStaticTopologyProvider(ClusterManifestTypeInfrastructureWindowsAzureStaticTopology azureStaticTopologyInfrastructure, InfrastructureNodeType[] inputInfrastructureNodes, Dictionary<string, ClusterManifestTypeNodeType> nameToNodeTypeMap)
+        private void InitializeFromStaticTopologyProvider(ClusterManifestTypeInfrastructureWindowsAzureStaticTopology azureStaticTopologyInfrastructure, InfrastructureNodeType[] inputInfrastructureNodes, Dictionary<string, ClusterManifestTypeNodeType> nameToNodeTypeMap, DynamicTopologyKind dynamicTopologyKind)
         {
-            // For static topology provider, source of cluster topology is the cluster manifest while infrastructure manifest is not used in the case.
+            FabricValidator.TraceSource.WriteInfo(FabricValidatorUtility.TraceTag, "DynamicTopologyKind = {0}", dynamicTopologyKind);
+
+            Dictionary<string, InfrastructureNodeType> infrastructureManifestNodes = null;
+            if (dynamicTopologyKind != DynamicTopologyKind.None)
+            {
+                infrastructureManifestNodes = new Dictionary<string, InfrastructureNodeType>(StringComparer.Ordinal);
+                if (inputInfrastructureNodes != null)
+                {
+                    foreach (var inputInfrastructureNode in inputInfrastructureNodes)
+                    {
+                        if (!string.IsNullOrWhiteSpace(inputInfrastructureNode.NodeName))
+                        {
+                            infrastructureManifestNodes[inputInfrastructureNode.NodeName] = inputInfrastructureNode;
+                        }
+                    }
+                }
+            }
+
+            // For static topology provider, effective cluster topology is based on the cluster manifest static topology section + infrastructure manifest.
+            // When dynamicTopologyKind == DynamicTopologyKind.None, effective cluster topology is solely based on cluster manifest static topology section while infrastructure manifest is not used.
+            // When dynamicTopologyKind <> DynamicTopologyKind.None, the information in infrastructure manifest would be used to supplement cluster manifest in determining effective clsuter topology.
             // Seed nodes are determined by IsSeedNode attribute for each node element. 
             foreach (var nodeInfo in azureStaticTopologyInfrastructure.NodeList)
             {
@@ -193,6 +224,44 @@ namespace System.Fabric.Management.FabricDeployer
                     RoleOrTierName = nodeInfo.NodeTypeRef,
                     UpgradeDomain = nodeInfo.UpgradeDomain
                 });
+
+                // Nodes defined in static topology can optionally rely on infrastructure wrappers to provide values for IPAddressOrFQDN, FD, UD etc.
+                // Specifically:
+                // 1) When a concrete value is defined for IPAddressOrFQDN/FD/UD of a node, the concrete value would always be used.
+                // 2) When "*" is defined for IPAddressOrFQDN/FD/UD of a node, the value provided by infrastructure wrappers would be used.
+                if ((dynamicTopologyKind & DynamicTopologyKind.NodeTopologyInfoUpdate) == DynamicTopologyKind.NodeTopologyInfoUpdate)
+                {
+                    if (infrastructureManifestNodes.ContainsKey(node.NodeName))
+                    {
+                        bool nodeTopologyInfoUpdated = false;
+                        var infrastructureManifestNode = infrastructureManifestNodes[node.NodeName];
+
+                        if (string.Compare(node.IPAddressOrFQDN, AutomaticTopologyInfoValue, StringComparison.OrdinalIgnoreCase) == 0)
+                        {
+                            node.IPAddressOrFQDN = infrastructureManifestNode.IPAddressOrFQDN;
+                            nodeTopologyInfoUpdated = true;
+                        }
+
+                        if (string.Compare(node.UpgradeDomain, AutomaticTopologyInfoValue, StringComparison.OrdinalIgnoreCase) == 0)
+                        {
+                            node.UpgradeDomain = infrastructureManifestNode.UpgradeDomain;
+                            nodeTopologyInfoUpdated = true;
+                        }
+
+                        if (string.Compare(node.FaultDomain, AutomaticTopologyInfoValue, StringComparison.OrdinalIgnoreCase) == 0)
+                        {
+                            node.FaultDomain = infrastructureManifestNode.FaultDomain;
+                            nodeTopologyInfoUpdated = true;
+                        }
+
+                        infrastructureManifestNodes.Remove(node.NodeName);
+
+                        if (nodeTopologyInfoUpdated)
+                        {
+                            FabricValidator.TraceSource.WriteNoise(FabricValidatorUtility.TraceTag, "Topology info for node {0} in cluster manifest is updated based infrastructure manifest", node.NodeName);
+                        }
+                    }
+                }
 
                 this.nodes.Add(node);
 

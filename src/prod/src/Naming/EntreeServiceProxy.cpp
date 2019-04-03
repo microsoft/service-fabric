@@ -55,6 +55,7 @@ if (Header.Action == MessageType::Operation##Action)                            
 #define FUOS_ACCESS_CHECK( Operation ) ACCESS_CHECK( routingAgentHeader, UpgradeOrchestrationServiceTcpMessage, Operation )
 #define VOLUME_MANAGER_ACCESS_CHECK( Operation ) ACCESS_CHECK( forwardMessageHeader, VolumeOperationTcpMessage, Operation )
 #define FCSS_ACCESS_CHECK( Operation ) ACCESS_CHECK( routingAgentHeader, CentralSecretServiceMessage, Operation )
+#define GATEWAY_RESOURCE_MANAGER_ACCESS_CHECK( Operation ) ACCESS_CHECK( routingAgentHeader, GatewayResourceManagerTcpMessage, Operation )
 
 class EntreeServiceProxy::ClientRequestJobItem : public JobItem<EntreeServiceProxy>
 {
@@ -343,6 +344,8 @@ void EntreeServiceProxy::AddRoleBasedAccessControlHandlers()
     NS_ACCESS_CHECK( ResetPartitionLoad )
     NS_ACCESS_CHECK( ToggleVerboseServicePlacementHealthReporting )
     NS_ACCESS_CHECK( ReportFault )
+    NS_ACCESS_CHECK( CreateNetwork)
+    NS_ACCESS_CHECK( DeleteNetwork)
 
     //
     // Role names do not match action names
@@ -949,7 +952,12 @@ bool EntreeServiceProxy::RoutingAgentAccessCheck(MessageUPtr &receivedMessage, S
             FUOS_ACCESS_CHECK(GetUpgradesPendingApproval)
             FUOS_ACCESS_CHECK(StartApprovedUpgrades)
             FUOS_ACCESS_CHECK(GetUpgradeOrchestrationServiceState)
-			FUOS_ACCESS_CHECK(SetUpgradeOrchestrationServiceState)
+            FUOS_ACCESS_CHECK(SetUpgradeOrchestrationServiceState)
+        }
+        case Actor::GatewayResourceManager:
+        {
+            GATEWAY_RESOURCE_MANAGER_ACCESS_CHECK(CreateGatewayResource)
+            GATEWAY_RESOURCE_MANAGER_ACCESS_CHECK(DeleteGatewayResource)
         }
 
         break;

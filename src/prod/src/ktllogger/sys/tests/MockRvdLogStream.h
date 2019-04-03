@@ -8,47 +8,47 @@ class RvdLogStreamShim  : public RvdLogStream
     K_FORCE_SHARED_WITH_INHERITANCE(RvdLogStreamShim);
 
 public:
-	//
-	// Control interfaces
-	//
-	inline VOID SetRvdLogStream(
+    //
+    // Control interfaces
+    //
+    inline VOID SetRvdLogStream(
         __in RvdLogStream& CoreLogStream
     )
-	{
-		_CoreLogStream = &CoreLogStream;
-	}
+    {
+        _CoreLogStream = &CoreLogStream;
+    }
 
-	inline RvdLogStream::SPtr GetRvdLogStream()
-	{
-		return(_CoreLogStream);
-	}
-	
-	inline VOID SetTestCaseData(
-	    __in ULONG TestCaseId,
+    inline RvdLogStream::SPtr GetRvdLogStream()
+    {
+        return(_CoreLogStream);
+    }
+    
+    inline VOID SetTestCaseData(
+        __in ULONG TestCaseId,
         __in PVOID TestCaseData
     )
-	{
-		_TestCaseId = TestCaseId;
-		_TestCaseData = TestCaseData;
-	}
+    {
+        _TestCaseId = TestCaseId;
+        _TestCaseData = TestCaseData;
+    }
 
-	inline ULONG GetTestCaseId()
-	{
-		return(_TestCaseId);
-	}
+    inline ULONG GetTestCaseId()
+    {
+        return(_TestCaseId);
+    }
 
-	inline PVOID GetTestCaseData()
-	{
-		return(_TestCaseData);
-	}
-	
+    inline PVOID GetTestCaseData()
+    {
+        return(_TestCaseData);
+    }
+    
 protected:
-	ULONG _TestCaseId;
-	PVOID _TestCaseData;
-	
-	//
-	// RvdLogStream Interfaces
-	//
+    ULONG _TestCaseId;
+    PVOID _TestCaseData;
+    
+    //
+    // RvdLogStream Interfaces
+    //
 public:
     LONGLONG
     QueryLogStreamUsage() override ;
@@ -66,6 +66,10 @@ public:
         __out_opt RvdLogAsn* const LogTruncationAsn) override ;
 
     ULONGLONG QueryCurrentReservation() override ;
+
+    NTSTATUS
+    SetTruncationCompletionEvent(__in_opt KAsyncEvent* const EventToSignal) override ;
+    
 
 #if 0   // TODO; AsyncWriteContextShim
     class AsyncWriteContextShim : public RvdLogStream::AsyncWriteContext
@@ -115,7 +119,7 @@ public:
             __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) override ;
     };
 #endif
-	
+    
     NTSTATUS
     CreateAsyncWriteContext(__out AsyncWriteContext::SPtr& Context) override ;
 
@@ -150,10 +154,10 @@ public:
             __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) override ;        
     };
 #endif
-	
+    
     NTSTATUS
-    CreateAsyncReadContext(__out AsyncReadContext::SPtr& Context) override ;	
-			
+    CreateAsyncReadContext(__out AsyncReadContext::SPtr& Context) override ;    
+            
     NTSTATUS
     QueryRecord(
         __in RvdLogAsn RecordAsn,
@@ -172,7 +176,7 @@ public:
         __out_opt ULONG* const IoBufferSize = nullptr,
         __out_opt ULONGLONG* const DebugInfo1 = nullptr) override ;
 
-	
+    
     NTSTATUS
     QueryRecords(
         __in RvdLogAsn LowestAsn,
@@ -203,10 +207,10 @@ public:
             __in_opt KAsyncContextBase::CompletionCallback CallbackPtr) override ;
     };
 #endif
-	
+    
     NTSTATUS
     CreateUpdateReservationContext(__out AsyncReservationContext::SPtr& Context) override ;
 
-	private:
-		RvdLogStream::SPtr _CoreLogStream;
+    private:
+        RvdLogStream::SPtr _CoreLogStream;
 };

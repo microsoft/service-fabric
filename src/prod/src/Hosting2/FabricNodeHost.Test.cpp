@@ -35,12 +35,9 @@ bool TestFabricNodeHost::Open(Common::FabricNodeConfigSPtr && config, IFabricUpg
 
     config->StartApplicationPortRange = 1000;
     config->EndApplicationPortRange = 5000;
-#if !defined(PLATFORM_UNIX)
-    config->WorkingDir = L"Hosting2.Test\\Data";
-#else
-    config->WorkingDir = L"Hosting2.Test/Data";
-#endif
 
+    auto hostingTestDir = L"Hosting2.Test";
+    config->WorkingDir = Path::Combine(hostingTestDir, L"Data");
     config->WorkingDir = Path::Combine(config->WorkingDir, File::GetTempFileName());
     
     // V2 store stack doesn't support relative paths
@@ -94,6 +91,13 @@ bool TestFabricNodeHost::Open(Common::FabricNodeConfigSPtr && config, IFabricUpg
     Environment::GetEnvironmentVariableW(L"_NTTREE", fabricHostPath);
     //Setting FabricDataRoot because this is checked in fabric node open
     Environment::SetEnvironmentVariableW(L"FabricDataRoot", config->WorkingDir);
+
+    auto fabricLogDir = Path::GetFullPath(Path::Combine(hostingTestDir, L"FabricLog"));
+    fabricLogFolderRoot_ = fabricLogDir;
+    if (!ResetFolder(fabricLogFolderRoot_)) { return false; }
+
+    //Setting FabricLogRoot because this is checked in FabricActivationManager open
+    Environment::SetEnvironmentVariableW(L"FabricLogRoot", fabricLogFolderRoot_);
 
     Directory::SetCurrentDirectoryW(fabricHostPath);
 

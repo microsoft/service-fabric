@@ -7,14 +7,10 @@
 
 using namespace std;
 using namespace Common;
+using namespace ServiceModel;
 
 ConfigSettingsOverride::ConfigSettingsOverride()
     : Sections()
-{
-}
-
-ConfigSettingsOverride::ConfigSettingsOverride(SectionMapType && sections)
-    : Sections(move(sections))
 {
 }
 
@@ -82,6 +78,108 @@ void ConfigSettingsOverride::WriteTo(TextWriter & w, FormatOptions const &) cons
     w.Write("}");
 
     w.Write("}");
+}
+
+void ConfigSettingsOverride::ReadFromXml(XmlReaderUPtr const & xmlReader)
+{
+    clear();
+
+    // ensure that we are positioned on <Settings 
+    xmlReader->StartElement(
+        *SchemaNames::Element_ConfigSettings, 
+        *SchemaNames::Namespace);
+
+    if (xmlReader->IsEmptyElement())
+    {
+        // <Settings ... />
+        xmlReader->ReadElement();
+    }
+    else
+    {
+        // <Settings ...>
+        xmlReader->ReadStartElement();
+
+        bool done = false;
+        while(!done)
+        {
+            // <Section ... >
+            if (xmlReader->IsStartElement(
+                *SchemaNames::Element_ConfigSection,
+                *SchemaNames::Namespace,
+                false))
+            {
+                ConfigSectionOverride section;
+                section.ReadFromXml(xmlReader);
+
+                wstring sectionName(section.Name);
+
+                if (!TryAddSection(move(section)))
+                {
+                    Trace.WriteError(
+                        "Common",
+                        L"XMlParser",
+                        "Parameter {0} with a different name than existing parameters in the section. Input={2}, Line={3}, Position={4}",
+                        sectionName,
+                        xmlReader->FileName,
+                        xmlReader->GetLineNumber(),
+                        xmlReader->GetLinePosition());
+
+                    throw XmlException(ErrorCode(ErrorCodeValue::XmlInvalidContent));
+                }
+            }
+            else
+            {
+                done = true;
+            }
+        }
+
+        // </Settings>
+        xmlReader->ReadEndElement();
+    }
+}
+
+bool ConfigSettingsOverride::TryAddSection(ConfigSectionOverride && section)
+{
+    wstring sectionName(section.Name);
+
+    auto iter = this->Sections.find(sectionName);
+    if (iter != this->Sections.end())
+    {
+        return false;   
+    }
+    else
+    {
+        this->Sections.insert(make_pair(move(sectionName), move(section)));
+        return true;
+    }
+}
+
+ErrorCode ConfigSettingsOverride::WriteToXml(XmlWriterUPtr const & xmlWriter)
+{
+	if (this->Sections.empty())
+	{
+		//Nothing to do, return success
+		return ErrorCodeValue::Success;
+	}
+	//<Settings>
+	ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_ConfigSettings, L"", *SchemaNames::Namespace);
+	if (!er.IsSuccess())
+	{
+		return er;
+	}
+
+	for (auto it = this->Sections.begin();
+		it != Sections.end(); ++it)
+	{
+		er = (*it).second.WriteToXml(xmlWriter);
+		if (!er.IsSuccess())
+		{
+			return er;
+		}
+	}
+
+	//</Settings>
+	return xmlWriter->WriteEndElement();
 }
 
 void ConfigSettingsOverride::clear()

@@ -45,6 +45,10 @@ namespace Management
 
             std::wstring GetInstallerLogFile(std::wstring const & nodeName, std::wstring const & codeVersion) const;
 
+#if defined(PLATFORM_UNIX)
+            std::wstring GetUpgradeScriptFile(std::wstring const & nodeName) const;
+#endif
+
             std::wstring GetInfrastructureManfiestFile(std::wstring const & nodeName);
 
             std::wstring GetConfigurationDeploymentFolder(std::wstring const & nodeName, std::wstring const & configVersion) const;

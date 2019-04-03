@@ -1,0 +1,47 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\ktl\UserBasic.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions)
+        CONDITION_HANDLING=1;
+        KTL_USER_MODE=1;
+      </PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories)
+        ..\..\..\inc;
+      </AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\internalktllogger.cpp" />
+    <ClCompile Include="..\..\ktllogmanager.cpp" />
+    <ClCompile Include="..\..\ktllogmanager.asyncenumeratelogs.cpp" />
+    <ClCompile Include="..\..\ktllogmanager.asynccreatelog.cpp" />
+    <ClCompile Include="..\..\ktllogmanager.asyncopenlog.cpp" />
+    <ClCompile Include="..\..\ktllogmanager.asyncquerylogid.cpp" />
+    <ClCompile Include="..\..\ktllogmanager.asyncdeletelog.cpp" />
+    <ClCompile Include="..\..\ktllog.cpp" />
+    <ClCompile Include="..\..\ktllog.asyncmountlog.cpp" />
+    <ClCompile Include="..\..\ktllog.asyncdeletelog.cpp" />
+    <ClCompile Include="..\..\ktllog.asynccreatelog.cpp" />
+    <ClCompile Include="..\..\ktllog.asynccreatelogstream.cpp" />
+    <ClCompile Include="..\..\ktllog.asyncopenlogstream.cpp" />
+    <ClCompile Include="..\..\ktllog.asyncdeletelogstream.cpp" />
+    <ClCompile Include="..\..\ktllogstream.cpp" />
+    <ClCompile Include="..\..\ktllogstream.asyncreadstream.cpp" />
+    <ClCompile Include="..\..\ktllogstream.asyncwritestream.cpp" />
+    <ClCompile Include="..\..\ktllogrecovery.cpp" />
+    <ClCompile Include="..\..\ktllogstreamrecovery.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostBuildCopy Include="$(IntDir)\$(TargetName).pdb">
+      <DestinationFolder>$(OutDir)</DestinationFolder>
+    </PostBuildCopy>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(KTLSRCROOT)\mc\user\ktlevents.vcxproj" />
+    <ProjectReference Include="$(KTLSRCROOT)\StatusCodes\StatusCodes.vcxproj" />
+  </ItemGroup>
+</Project>

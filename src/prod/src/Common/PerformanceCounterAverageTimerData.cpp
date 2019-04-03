@@ -30,3 +30,12 @@ void PerformanceCounterAverageTimerData::Update(int64 operationStartTime)
 
     counter_.Value = TimeSpan::FromTicks(averageTicks_).TotalMilliseconds();
 }
+
+void PerformanceCounterAverageTimerData::UpdateWithNormalizedTime(int64 elapsedTicks)
+{
+    ++operationCount_;
+    auto delta = (elapsedTicks - averageTicks_) / operationCount_;
+    averageTicks_ += delta;
+
+    counter_.Value = TimeSpan::FromTicks(averageTicks_).TotalMilliseconds();
+}

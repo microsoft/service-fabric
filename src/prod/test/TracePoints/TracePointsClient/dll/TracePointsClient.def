@@ -1,0 +1,11 @@
+LIBRARY TracePointsClient
+EXPORTS
+    TracePointsSetup
+    TracePointsInvoke
+    TracePointsCleanup
+    TracePointsRemoveEventMap
+    TracePointsClearEventMap
+    TracePointsAddEventMapEntry
+    TracePointsRemoveEventMapEntry
+    TracePointsGetEventProvider
+    TracePointsEventWriteString

@@ -1,0 +1,49 @@
+{
+  "Default": {
+  },
+  "Tests": [    
+    {
+      "Name": "Linux.Chaos.SFRPRedHat",
+      "Type": "SFRPRedHat_Chaos",
+      "Owners": "motanv,likevi",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ServiceTimeout": "64800",
+        "ConfigName": "WinFabricTest\\Config\\Linux_Chaos.txt",
+        "ExecutionTimeout": "80000",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SfrpLinuxRedhat.Smoke.Test",
+      "Type": "LinuxRedhat_SFRP_ScriptTest",
+      "Owners": "lemai,maburlik,chenxu",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "SfrpLinuxRedHat.Smoke.Test",
+        "ExecutionTimeout": "7200",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "SfrpLinuxRedhat.FabricUpgrade.Test",
+      "Type": "LinuxRedhat_SFRP_ScriptTest",
+      "Owners": "maburlik,chenxu,lemai,jefchen",
+      "ResourcesRequired": "Server:1&Azure:1",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "TaskName": "SfrpLinux.FabricUpgrade.Test",
+        "ExecutionTimeout": "32400",
+        "CleanupType": "XCopy",
+        "CleanupTimeout": "2100"
+      }
+    }
+  ]
+}

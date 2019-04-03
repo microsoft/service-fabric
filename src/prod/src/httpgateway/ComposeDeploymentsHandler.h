@@ -162,5 +162,8 @@ namespace HttpGateway
 
         void GetUpgradeProgress(Common::AsyncOperationSPtr const & thisSPtr);
         void OnGetUpgradeProgressComplete(Common::AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously);
+
+        void RollbackComposeDeployment(Common::AsyncOperationSPtr const & thisSPtr);
+        void OnRollbackComposeDeploymentComplete(Common::AsyncOperationSPtr const &, bool);
     };
 }

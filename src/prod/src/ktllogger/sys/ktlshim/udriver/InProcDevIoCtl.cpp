@@ -402,7 +402,7 @@ DevIoControlInprocUser::Execute(
     // Emulate buffered IO by creating a buffer and using this
     // buffer for the call to the "kernel" side
     //
-    status = KBuffer::Create(max(_InBufferSize, _OutBufferSize),
+    status = KBuffer::Create(MAX(_InBufferSize, _OutBufferSize),
                              _TransferKBuffer,
                              GetThisAllocator(),
                              _AllocationTag);

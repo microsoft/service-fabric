@@ -15,19 +15,19 @@ ServiceQueryDescription::ServiceQueryDescription()
     : applicationName_(NamingUri::RootNamingUri)
     , serviceNameFilter_(NamingUri::RootNamingUri)
     , serviceTypeNameFilter_()
-    , continuationToken_()
+    , queryPagingDescription_()
 {
 }
-    
+
 ServiceQueryDescription::ServiceQueryDescription(
     NamingUri && applicationName,
     NamingUri && serviceNameFilter,
     wstring && serviceTypeNameFilter,
-    wstring && continuationToken)
+    QueryPagingDescription && queryPagingDescription)
     : applicationName_(move(applicationName))
     , serviceNameFilter_(move(serviceNameFilter))
     , serviceTypeNameFilter_(move(serviceTypeNameFilter))
-    , continuationToken_(move(continuationToken))
+    , queryPagingDescription_(make_unique<QueryPagingDescription>(move(queryPagingDescription)))
 {
 }
 
@@ -58,16 +58,40 @@ ErrorCode ServiceQueryDescription::FromPublicApi(FABRIC_SERVICE_QUERY_DESCRIPTIO
 
     if (svcQueryDesc.Reserved != nullptr)
     {
-        auto svcQueryDescEx1 = reinterpret_cast<FABRIC_SERVICE_QUERY_DESCRIPTION_EX1 *>(svcQueryDesc.Reserved);
+        QueryPagingDescription pagingDescription;
+        wstring continuationToken;
 
-        TRY_PARSE_PUBLIC_STRING_ALLOW_NULL(svcQueryDescEx1->ContinuationToken, continuationToken_)
+        auto svcQueryDescEx1 = static_cast<FABRIC_SERVICE_QUERY_DESCRIPTION_EX1 *>(svcQueryDesc.Reserved);
+
+        TRY_PARSE_PUBLIC_STRING_ALLOW_NULL(svcQueryDescEx1->ContinuationToken, continuationToken)
+
+        if (!continuationToken.empty())
+        {
+            pagingDescription.ContinuationToken = move(continuationToken);
+        }
 
         if (svcQueryDescEx1->Reserved != nullptr)
         {
-            auto svcQueryDescEx2 = reinterpret_cast<FABRIC_SERVICE_QUERY_DESCRIPTION_EX2 *>(svcQueryDescEx1->Reserved);
+            auto svcQueryDescEx2 = static_cast<FABRIC_SERVICE_QUERY_DESCRIPTION_EX2 *>(svcQueryDescEx1->Reserved);
 
             TRY_PARSE_PUBLIC_STRING_ALLOW_NULL(svcQueryDescEx2->ServiceTypeNameFilter, serviceTypeNameFilter_)
+
+            if (svcQueryDescEx2->Reserved != nullptr)
+            {
+                auto svcQueryDescEx3 = static_cast<FABRIC_SERVICE_QUERY_DESCRIPTION_EX3 *>(svcQueryDescEx2->Reserved);
+
+                if (svcQueryDescEx3->MaxResults < 0)
+                {
+                    return ErrorCode(
+                        ErrorCodeValue::InvalidArgument,
+                        wformatString(GET_COMMON_RC(Invalid_Max_Results), svcQueryDescEx3->MaxResults));
+                }
+
+                pagingDescription.MaxResults = svcQueryDescEx3->MaxResults;
+            }
         }
+
+        queryPagingDescription_ = make_unique<QueryPagingDescription>(move(pagingDescription));
     }
 
     return ErrorCodeValue::Success;

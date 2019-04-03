@@ -11,6 +11,7 @@ set( LINUX_SOURCES
     ../../../prebuilt/internal/FabricReliableMessaging__i.c
     ../../../prebuilt/internal/KPhysicalLog__i.c
     ../../../prebuilt/internal/FabricContainerActivatorService__i.c
+    ../../../prebuilt/internal/FabricGatewayResourceManager__i.c
 )
 
 add_library(objects_InternalFabricUUID OBJECT ${LINUX_SOURCES})

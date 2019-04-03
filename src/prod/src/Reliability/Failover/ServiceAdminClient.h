@@ -168,6 +168,22 @@ namespace Reliability
             Common::AsyncOperationSPtr const & parent);
         Common::ErrorCode EndToggleVerboseServicePlacementHealthReporting(Common::AsyncOperationSPtr const & operation);
 
+        Common::AsyncOperationSPtr BeginCreateNetwork(
+            ServiceModel::ModelV2::NetworkResourceDescription const &networkDescription,
+            Transport::FabricActivityHeader const & activityHeader,
+            Common::TimeSpan timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndCreateNetwork(Common::AsyncOperationSPtr const & operation);
+
+        Common::AsyncOperationSPtr BeginDeleteNetwork(
+            ServiceModel::DeleteNetworkDescription const &deleteNetworkDescription,
+            Transport::FabricActivityHeader const & activityHeader,
+            Common::TimeSpan timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+        Common::ErrorCode EndDeleteNetwork(Common::AsyncOperationSPtr const & operation);
+
     private:
 
         Common::AsyncOperationSPtr BeginGetServiceDescriptionInternal(

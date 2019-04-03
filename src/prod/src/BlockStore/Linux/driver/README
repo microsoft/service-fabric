@@ -1,0 +1,34 @@
+1) Driver 
+
+    Build 
+        Go to Linux/driver directory
+        Run “make” : This will create “sfblkstr.ko” driver object file.
+
+    Install 
+        Run “sudo insmod sfblkstr.ko” to install driver
+
+2) Control Application 
+    Build 
+        Go to Linux/user directory
+        Run “make”: This will create blkstore_ctrl executable.
+        Run “export LD_LIBRARY_PATH=<absolute path to Linux/user directory>”
+
+    Run 
+        Create disk:
+            ./blkstore_ctrl -c -n <device_id> -s <size in MB> -i <blkstore service ip address string> -p <blkstore service port>
+        Delete disk:
+            ./blkstore_ctrl -d -n <device_id>
+        List disks from the driver cache:
+            ./blkstore_ctrl -x
+        List disks from blockstore service: 
+            ./blkstore_ctrl -l -i <blkstore service ip> -p <port>
+        Read/Write to disk.
+            ./blkstore_ctrl  -R -n <device_id> -g <number of pages> -o <offset in pages> -i <blkstore service ip address string> -p <blkstore service port>
+            ./blkstore_ctrl  -W -n <device_id> -g <number of pages> -o <offset in pages> -i <blkstore service ip address string> -p <blkstore service port>
+        Explanation:
+            -c : Creates disk with specified device_id name and size.
+            -d : Deletes disk of specified device_id.
+            -x:  Lists all available disk from driver hash list.
+            -l:  Lists all available disk from remote service.
+            -R: Read pages from the disk.
+            -W: Write a fixed pattern to the disk.

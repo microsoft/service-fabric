@@ -42,6 +42,7 @@ namespace Data
                 __in Data::Utilities::IStatefulPartition & partition,
                 __in IStateProvider2Factory & stateProviderFactory,
                 __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+                __in bool hasPersistedState,
                 __in KAllocator& allocator,
                 __out SPtr & result) noexcept;
 
@@ -290,7 +291,8 @@ namespace Data
                 __in TxnReplicator::IRuntimeFolders & runtimeFolders,
                 __in Data::Utilities::IStatefulPartition & partition,
                 __in IStateProvider2Factory & stateProviderFactoryFunction,
-                __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig) noexcept;
+                __in TxnReplicator::TRInternalSettingsSPtr const & transactionalReplicatorConfig,
+                __in bool hasPersistedState) noexcept;
 
         private: // Methods
             ktl::Task OnServiceOpenAsync() noexcept;
@@ -626,6 +628,8 @@ namespace Data
             KArray<Metadata::CSPtr> copyProgressArray_;
 
             Utilities::ThreadSafeSPtrCache<TxnReplicator::IStateManagerChangeHandler> changeHandlerCache_;
+
+            bool hasPersistedState_ = true;
 
         private: // In-class member initialized
             OpenParameters::CSPtr openParametersSPtr_ = nullptr;

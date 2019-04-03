@@ -200,6 +200,8 @@ namespace FabricTest
         bool SetInfrastructureServiceProperties(Common::StringCollection const & params);
         bool RemoveInfrastructureServiceProperties(Common::StringCollection const & params);
         bool SetDnsServiceProperties(Common::StringCollection const & params);
+        bool SetNIMServiceProperties(Common::StringCollection const & params);
+        bool SetEnableUnsupportedPreviewFeatures(Common::StringCollection const & params);
         bool ClearTicket(Common::StringCollection const & params);
         bool ResetStore(Common::StringCollection const & params);
         bool CleanTest();

@@ -20,7 +20,6 @@ namespace Hosting.ContainerActivatorService
         private readonly ContainerDeactivationArgs deactivationArgs;
         private readonly TimeSpan timeout;
         private readonly TimeoutHelper timeoutHelper;
-        private readonly int maxRetryCount;
         private readonly TimeSpan retryDelay;
         private readonly TimeSpan deactivationTimeout;
 
@@ -35,10 +34,13 @@ namespace Hosting.ContainerActivatorService
         {
             this.activator = activator;
             this.deactivationArgs = deactivationArgs;
-            this.timeout = timeout;
+
+            //
+            // NonGracefulDeactivation (i.e. abort request) should never timeout.
+            //
+            this.timeout = deactivationArgs.IsGracefulDeactivation ? timeout : TimeSpan.MaxValue;
 
             this.timeoutHelper = new TimeoutHelper(timeout);
-            this.maxRetryCount = HostingConfig.Config.ContainerTerminationMaxRetryCount;
             this.retryDelay = TimeSpan.FromSeconds(HostingConfig.Config.ContainerDeactivationRetryDelayInSec);
             this.deactivationTimeout = HostingConfig.Config.ContainerDeactivationTimeout;
 
@@ -99,7 +101,12 @@ namespace Hosting.ContainerActivatorService
                     HostingTrace.Source.WriteWarning(TraceType, errorMessage);
                 }
 
-                if ((!this.deactivationArgs.IsGracefulDeactivation && retryCount < maxRetryCount) ||
+                //
+                // In case of nonGracefulDeactivation (i.e. abort request), we should never
+                // give up and keep retrying until container is cleaned to avoid any leak
+                // of containers.
+                //
+                if ((!this.deactivationArgs.IsGracefulDeactivation) ||
                     (this.deactivationArgs.IsGracefulDeactivation && timeoutHelper.RemainingTime.Ticks > 0))
                 {
                     await Task.Delay(retryDelay);
@@ -125,7 +132,7 @@ namespace Hosting.ContainerActivatorService
 
             if (shouldStop)
             {
-                await Utility.ExecuteWithRetriesAsync(
+                await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.activator.Client.ContainerOperation.StopContainerAsync(
@@ -154,7 +161,7 @@ namespace Hosting.ContainerActivatorService
 
         private Task RemoveContainerAsync()
         {
-            return Utility.ExecuteWithRetriesAsync(
+            return Utility.ExecuteWithRetryOnTimeoutAsync(
                 (operationTimeout) =>
                 {
                     return this.activator.Client.ContainerOperation.RemoveContainerAsync(

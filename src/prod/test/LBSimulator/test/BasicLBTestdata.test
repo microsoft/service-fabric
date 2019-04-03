@@ -1,0 +1,47 @@
+# This data checks the basic load balancing
+# no metric + no capacity ratio + no capacity + no constraint
+
+<Config
+LoadBalancingEnabled = true
+>
+
+
+# --- NodeTypes ----- TypeCount 1
+# can specify nodetypes and associated properties
+<NodeTypes
+NODETYPE:{defaultnodetype} PROPERTIES:{isNode:true}
+>
+
+
+# --- Nodes --- NodeCount 5
+# list is for capacities and fault/upgrade domain
+<Node
+INFO:{1} NODENAME:{node1} INSTANCES:{0} NODETYPE:{defaultnodetype} NODESTATUS:{Up} CAPACITYRATIOS:{} METRICCAPACITY:{ } FAULTDOMAIN:{fd://fd/rack1} UPGRADEDOMAIN:{1}
+INFO:{2} NODENAME:{node2} INSTANCES:{0} NODETYPE:{defaultnodetype} NODESTATUS:{Up} CAPACITYRATIOS:{} METRICCAPACITY:{ } FAULTDOMAIN:{fd://fd/rack2} UPGRADEDOMAIN:{2}
+INFO:{3} NODENAME:{node3} INSTANCES:{0} NODETYPE:{defaultnodetype} NODESTATUS:{Up} CAPACITYRATIOS:{} METRICCAPACITY:{ } FAULTDOMAIN:{fd://fd/rack3} UPGRADEDOMAIN:{3}
+INFO:{4} NODENAME:{node4} INSTANCES:{0} NODETYPE:{defaultnodetype} NODESTATUS:{Up} CAPACITYRATIOS:{} METRICCAPACITY:{ } FAULTDOMAIN:{fd://fd/rack4} UPGRADEDOMAIN:{4}
+INFO:{5} NODENAME:{node5} INSTANCES:{0} NODETYPE:{defaultnodetype} NODESTATUS:{Up} CAPACITYRATIOS:{} METRICCAPACITY:{ } FAULTDOMAIN:{fd://fd/rack5} UPGRADEDOMAIN:{5}
+>
+
+# --- Services ---
+# --- list is for {[Stateful] [PartitionCount] [ReplicaCountPerPartition]} {[BlockList]} {[Metrics]}
+<Service
+INFO:{0} URI:{fabric:/sampleserv}  AFF:{} DESC:{Stateful, Singleton, 5, 2}  BLOCKLIST:{ } CONSTRAINTS:{} METRICS:{}
+>
+
+# --- FailoverUnit ---
+# Number of partitions can be calculated in 'Service' section
+# Value pair is the load for Primary/Secondary
+<FailoverUnit
+ INFO:{} PARENT:{0} TYPE:{Singleton} METRICS:{} SERVICE:{fabric:/sampleserv}
+>
+
+# --- Placement ---
+# Each line corresponds to a node. Number of lines should be equal to number of nodes
+# replica descriptions: [partitionIndex]/[replicaRole]/[IsToBePromoted]/[IsToBeDropped]/[IsInBuild]
+# the last three descriptions optional inputs: P/D/B; treated as false by default
+<Placement
+ NODE:{red.0}  REPLICAS:{0:Primary/Ready}
+ NODE:{red.1}  REPLICAS:{0:ActiveSecondary/Ready}
+>
+

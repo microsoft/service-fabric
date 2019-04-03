@@ -1,0 +1,508 @@
+{
+  "nodes": [
+    {
+      "nodeName": "N0010",
+      "nodeInstance": 2147483647,
+      "roleName": null,
+      "nodeTypeRef": "N0010Ref",
+      "iPAddress": "172.17.32.7",
+      "faultDomain": "fd:/dc1/r0",
+      "upgradeDomain": "ud1"
+    },
+    {
+      "nodeName": "N0020",
+      "nodeInstance": 2147483647,
+      "roleName": null,
+      "nodeTypeRef": "N0020Ref",
+      "iPAddress": "172.17.32.8",
+      "faultDomain": "fd:/dc2/r1",
+      "upgradeDomain": "ud2"
+    },
+    {
+      "nodeName": "N0030",
+      "nodeInstance": 2147483647,
+      "roleName": null,
+      "nodeTypeRef": "N0030Ref",
+      "iPAddress": "172.17.32.9",
+      "faultDomain": "fd:/dc3/r0",
+      "upgradeDomain": "ud3"
+    },
+    {
+      "nodeName": "N0040",
+      "nodeInstance": 2147483647,
+      "roleName": null,
+      "nodeTypeRef": "N0040Ref",
+      "iPAddress": "172.17.32.7",
+      "faultDomain": "fd:/dc4/r1",
+      "upgradeDomain": "ud4"
+    },
+    {
+      "nodeName": "N0050",
+      "nodeInstance": 2147483647,
+      "roleName": null,
+      "nodeTypeRef": "N0050Ref",
+      "iPAddress": "172.17.32.8",
+      "faultDomain": "fd:/dc1/r1",
+      "upgradeDomain": "ud1"
+    },
+    {
+      "nodeName": "N0060",
+      "nodeInstance": 2147483647,
+      "roleName": null,
+      "nodeTypeRef": "N0060Ref",
+      "iPAddress": "172.17.32.9",
+      "faultDomain": "fd:/dc2/r0",
+      "upgradeDomain": "ud2"
+    },
+    {
+      "nodeName": "N0070",
+      "nodeInstance": 2147483647,
+      "roleName": null,
+      "nodeTypeRef": "N0070Ref",
+      "iPAddress": "172.17.32.7",
+      "faultDomain": "fd:/dc3/r1",
+      "upgradeDomain": "ud3"
+    },
+    {
+      "nodeName": "N0080",
+      "nodeInstance": 2147483647,
+      "roleName": null,
+      "nodeTypeRef": "N0080Ref",
+      "iPAddress": "172.17.32.8",
+      "faultDomain": "fd:/dc4/r0",
+      "upgradeDomain": "ud4"
+    }
+  ],
+  "apiVersion": "2015-01-01-alpha",
+  "name": "TestCluster",
+  "properties": {
+    "fabricSettings": [
+      {
+        "name": "ClusterManager",
+        "parameters": [
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "5"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          },
+          {
+            "name": "UpgradeStatusPollInterval",
+            "value": "5"
+          },
+          {
+            "name": "FabricUpgradeStatusPollInterval",
+            "value": "5"
+          },
+          {
+            "name": "UpgradeHealthCheckInterval",
+            "value": "5"
+          },
+          {
+            "name": "FabricUpgradeHealthCheckInterval",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "FailoverManager",
+        "parameters": [
+          {
+            "name": "ClusterStableWaitDuration",
+            "value": "0"
+          },
+          {
+            "name": "PeriodicStateScanInterval",
+            "value": "2"
+          },
+          {
+            "name": "MinActionRetryIntervalPerReplica",
+            "value": "5"
+          },
+          {
+            "name": "PeriodicStateCleanupScanInterval",
+            "value": "15"
+          },
+          {
+            "name": "SystemReplicaRestartWaitDuration",
+            "value": "5"
+          },
+          {
+            "name": "DeletedReplicaKeepDuration",
+            "value": "5"
+          },
+          {
+            "name": "ExpectedClusterSize",
+            "value": "1"
+          },
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "5"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          },
+          {
+            "name": "UserReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "FaultAnalysisService",
+        "parameters": [
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "5"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "3"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "Hosting",
+        "parameters": [
+          {
+            "name": "ActivatedProcessDieOnUnhandledExceptionEnabled",
+            "value": "False"
+          },
+          {
+            "name": "RunAsPolicyEnabled",
+            "value": "True"
+          },
+          {
+            "name": "EndpointProviderEnabled",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "HttpGateway",
+        "parameters": [
+          {
+            "name": "IsEnabled",
+            "value": "True"
+          },
+          {
+            "name": "VersionCheck",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "ImageStoreService",
+        "parameters": [
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "5"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "Management",
+        "parameters": [
+          {
+            "name": "ImageStoreConnectionString",
+            "value": "fabric:ImageStore"
+          }
+        ]
+      },
+      {
+        "name": "NamingService",
+        "parameters": [
+          {
+            "name": "PartitionCount",
+            "value": "1"
+          },
+          {
+            "name": "TargetReplicaSetSize",
+            "value": "5"
+          },
+          {
+            "name": "MinReplicaSetSize",
+            "value": "1"
+          },
+          {
+            "name": "ReplicaRestartWaitDuration",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "PlacementAndLoadBalancing",
+        "parameters": [
+          {
+            "name": "VerboseHealthReportLimit",
+            "value": "2147483647"
+          }
+        ]
+      },
+      {
+        "name": "ReconfigurationAgent",
+        "parameters": [
+          {
+            "name": "ReplicaUpMessageRetryInterval",
+            "value": "5"
+          },
+          {
+            "name": "RAUpgradeProgressCheckInterval",
+            "value": "2"
+          },
+          {
+            "name": "FabricUpgradeReplicaCloseCompleteCheckInterval",
+            "value": "1"
+          },
+          {
+            "name": "IsDeactivationInfoEnabled",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "Security",
+        "parameters": [
+          {
+            "name": "ClusterCredentialType",
+            "value": "None"
+          },
+          {
+            "name": "ServerAuthCredentialType",
+            "value": "None"
+          },
+          {
+            "name": "NegotiateForWindowsSecurity",
+            "value": "True"
+          }
+        ]
+      },
+      {
+        "name": "Setup",
+        "parameters": [
+          {
+            "name": "FabricDataRoot",
+            "value": "c:\\bins\\WinFabricTest\\test\\StandaloneEndToEnd.Smoke.test"
+          },
+          {
+            "name": "FabricLogRoot",
+            "value": "c:\\bins\\WinFabricTest\\test\\StandaloneEndToEnd.Smoke.test\\Log"
+          }
+        ]
+      }
+    ],
+    "nodeTypes": [
+      {
+        "name": "N0010Ref",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 10549,
+        "httpGatewayEndpointPort": 10550,
+        "httpApplicationGatewayEndpointPort": null,
+        "clusterConnectionEndpointPort": 10546,
+        "serviceConnectionEndpointPort": 10547,
+        "leaseDriverEndpointPort": 10545,
+        "applicationPorts": {
+          "startPort": 10810,
+          "endPort": 10814
+        },
+        "ephemeralPorts": {
+          "startPort": 10554,
+          "endPort": 10809
+        },
+        "isPrimary": true,
+        "vMInstanceCount": 0,
+        "vMResourceName": null,
+        "durabilityLevel": 0
+      },
+      {
+        "name": "N0020Ref",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 10549,
+        "httpGatewayEndpointPort": 10550,
+        "httpApplicationGatewayEndpointPort": null,
+        "ClusterConnectionEndpointPort": 10546,
+        "serviceConnectionEndpointPort": 10547,
+        "leaseDriverEndpointPort": 10545,
+        "applicationPorts": {
+          "startPort": 10810,
+          "endPort": 10814
+        },
+        "ephemeralPorts": {
+          "startPort": 10554,
+          "endPort": 10809
+        },
+        "isPrimary": false,
+        "vMInstanceCount": 0,
+        "vMResourceName": null,
+        "durabilityLevel": 0
+      },
+      {
+        "name": "N0030Ref",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 10549,
+        "httpGatewayEndpointPort": 10550,
+        "httpApplicationGatewayEndpointPort": null,
+        "ClusterConnectionEndpointPort": 10546,
+        "serviceConnectionEndpointPort": 10547,
+        "leaseDriverEndpointPort": 10545,
+        "applicationPorts": {
+          "startPort": 10810,
+          "endPort": 10814
+        },
+        "ephemeralPorts": {
+          "startPort": 10554,
+          "endPort": 10809
+        },
+        "isPrimary": false,
+        "vMInstanceCount": 0,
+        "vMResourceName": null,
+        "durabilityLevel": 0
+      },
+      {
+        "name": "N0040Ref",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 10819,
+        "httpGatewayEndpointPort": 10820,
+        "httpApplicationGatewayEndpointPort": null,
+        "ClusterConnectionEndpointPort": 10816,
+        "serviceConnectionEndpointPort": 10817,
+        "leaseDriverEndpointPort": 10815,
+        "applicationPorts": {
+          "startPort": 11080,
+          "endPort": 11084
+        },
+        "ephemeralPorts": {
+          "startPort": 10824,
+          "endPort": 11079
+        },
+        "isPrimary": false,
+        "vMInstanceCount": 0,
+        "vMResourceName": null,
+        "durabilityLevel": 0
+      },
+      {
+        "name": "N0050Ref",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 10819,
+        "httpGatewayEndpointPort": 10820,
+        "httpApplicationGatewayEndpointPort": null,
+        "ClusterConnectionEndpointPort": 10816,
+        "serviceConnectionEndpointPort": 10817,
+        "leaseDriverEndpointPort": 10815,
+        "applicationPorts": {
+          "startPort": 11080,
+          "endPort": 11084
+        },
+        "ephemeralPorts": {
+          "startPort": 10824,
+          "endPort": 11079
+        },
+        "isPrimary": false,
+        "vMInstanceCount": 0,
+        "vMResourceName": null,
+        "durabilityLevel": 0
+      },
+      {
+        "name": "N0060Ref",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 10819,
+        "httpGatewayEndpointPort": 10820,
+        "httpApplicationGatewayEndpointPort": null,
+        "ClusterConnectionEndpointPort": 10816,
+        "serviceConnectionEndpointPort": 10817,
+        "leaseDriverEndpointPort": 10815,
+        "applicationPorts": {
+          "startPort": 11080,
+          "endPort": 11084
+        },
+        "ephemeralPorts": {
+          "startPort": 10824,
+          "endPort": 11079
+        },
+        "isPrimary": false,
+        "vMInstanceCount": 0,
+        "vMResourceName": null,
+        "durabilityLevel": 0
+      },
+      {
+        "name": "N0070Ref",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 11089,
+        "httpGatewayEndpointPort": 11090,
+        "httpApplicationGatewayEndpointPort": null,
+        "ClusterConnectionEndpointPort": 11086,
+        "serviceConnectionEndpointPort": 11087,
+        "leaseDriverEndpointPort": 11085,
+        "applicationPorts": {
+          "startPort": 11350,
+          "endPort": 11354
+        },
+        "ephemeralPorts": {
+          "startPort": 11094,
+          "endPort": 11349
+        },
+        "isPrimary": false,
+        "vMInstanceCount": 0,
+        "vMResourceName": null,
+        "durabilityLevel": 0
+      },
+      {
+        "name": "N0080Ref",
+        "placementProperties": {},
+        "capacities": {},
+        "clientConnectionEndpointPort": 11089,
+        "httpGatewayEndpointPort": 11090,
+        "httpApplicationGatewayEndpointPort": null,
+        "ClusterConnectionEndpointPort": 11086,
+        "serviceConnectionEndpointPort": 11087,
+        "leaseDriverEndpointPort": 11085,
+        "applicationPorts": {
+          "startPort": 11350,
+          "endPort": 11354
+        },
+        "ephemeralPorts": {
+          "startPort": 11094,
+          "endPort": 11349
+        },
+        "isPrimary": false,
+        "vMInstanceCount": 0,
+        "vMResourceName": null,
+        "durabilityLevel": 0
+      }
+    ],
+    "security": null,
+    "reliabilityLevel": "Bronze"
+  },
+  "clusterManifestVersion": "v1",
+  "diagnosticsFileShare": null
+}

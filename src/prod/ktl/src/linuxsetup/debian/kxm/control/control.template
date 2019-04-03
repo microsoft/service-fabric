@@ -1,0 +1,9 @@
+Package: sfkxmREPLACE_MAJOR
+Version: REPLACE_VERSION
+Section: base
+Priority: optional
+Architecture: amd64
+Depends:
+Maintainer: ServiceFabric Maintainer <sfmaint@microsoft.com>
+Description: Service Fabric KXM Driver
+ Version REPLACE_VERSION of Servic Fabric KXM Driver for linux

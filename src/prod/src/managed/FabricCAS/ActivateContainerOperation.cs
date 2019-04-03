@@ -16,10 +16,9 @@ namespace Hosting.ContainerActivatorService
 
     internal class ActivateContainerOperation
     {
-        #region Private Memebers
+        #region Private Members
 
         private const string TraceType = "ActivateContainerOperation";
-        private const string RS3Version = "10.0.16299";
 
         private readonly ContainerActivatorService activator;
         private readonly ContainerActivationArgs activationArgs;
@@ -39,6 +38,7 @@ namespace Hosting.ContainerActivatorService
             this.activationArgs = activationArgs;
 
             this.timeoutHelper = new TimeoutHelper(timeout);
+
             this.dockerVersion = string.Empty;
             this.containerId = string.Empty;
         }
@@ -56,31 +56,52 @@ namespace Hosting.ContainerActivatorService
             await this.CreateContainerAsync();
 
 #if !DotNetCoreClrLinux
-            // If container is using open network on windows, we need additional set up before and after
-            // starting the container. This is a mitigation for no support for outbound connectivity from 
-            // open network based containers until RS3.
-            if (!string.IsNullOrEmpty(this.activationArgs.ContainerDescription.AssignedIp))
-            {
-                await this.AddOutboundConnectivityToContainerAsync();
-            }
+            await this.AddOutboundConnectivityToContainerAsync();
 #endif
 
             await this.StartContainerAsync();
 
 #if !DotNetCoreClrLinux
-            // If container is using open network on windows, we need additional set up before and after
-            // starting the container. This is a mitigation for no support for outbound connectivity from 
-            // open network based containers until RS3.
-            if (!string.IsNullOrEmpty(this.activationArgs.ContainerDescription.AssignedIp))
-            {
-                await this.ExecuteUpdateRouteCommandAsync();
-            }
+            await this.UpdateContainerRoutes();
 #endif
 
             return this.containerId;
         }
 
         #region Private Helper Methods
+
+#if !DotNetCoreClrLinux
+        private async Task UpdateContainerRoutes()
+        {
+            if (HostingConfig.Config.LocalNatIpProviderEnabled)
+            {
+                return;
+            }
+
+            // If container is using open network only on windows, we need additional set up before and after
+            // starting the container. This is a mitigation for no support for outbound connectivity from 
+            // open network based containers.
+            if (((this.activationArgs.ContainerDescription.ContainerNetworkConfig.NetworkType & ContainerNetworkType.Open) == ContainerNetworkType.Open &&
+                !string.IsNullOrEmpty(this.activationArgs.ContainerDescription.ContainerNetworkConfig.OpenNetworkAssignedIp)))
+            {
+                var updateRoutesOperation = new UpdateRoutesContainerOperation(
+                    TraceType,
+                    this.containerId,
+                    this.activationArgs.ContainerDescription.ContainerName,
+                    this.activationArgs.ContainerDescription.ApplicationId,
+                    this.activationArgs.ContainerDescription.ApplicationName,
+                    this.activationArgs.ProcessDescription.CgroupName,
+                    this.activationArgs.GatewayIpAddresses,
+                    this.activationArgs.ContainerDescription.AutoRemove,
+                    this.activationArgs.ContainerDescription.IsContainerRoot,
+                    this.activationArgs.ContainerDescription.ContainerNetworkConfig.NetworkType,
+                    this.activator,
+                    this.timeoutHelper);
+
+                await updateRoutesOperation.ExecuteUpdateRouteCommandAsync();
+            }
+        }
+#endif
 
         private string ContainerName
         {
@@ -118,7 +139,7 @@ namespace Hosting.ContainerActivatorService
         {
             try
             {
-                await Utility.ExecuteWithRetriesAsync(
+                await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.activator.Client.VolumeOperation.CreateVolumeAsync(
@@ -135,7 +156,11 @@ namespace Hosting.ContainerActivatorService
                 var errorMessage = string.Format(
                     "Creating Volume '{0}' failed for {1}.",
                     volumeConfig.Name,
-                    this.BuildErrorMessage(ex));
+                    Utility.BuildErrorMessage(
+                            activationArgs.ContainerDescription.ContainerName,
+                            activationArgs.ContainerDescription.ApplicationId,
+                            activationArgs.ContainerDescription.ApplicationName,
+                            ex));
 
                 HostingTrace.Source.WriteError(TraceType, errorMessage);
                 throw new FabricException(errorMessage, FabricErrorCode.InvalidOperation);
@@ -144,163 +169,69 @@ namespace Hosting.ContainerActivatorService
 
         private async Task AddOutboundConnectivityToContainerAsync()
         {
-            var netwrokParams = new NetworkConnectConfig()
+            // If container is using open network only on windows, we need additional set up before and after
+            // starting the container. This is a mitigation for no support for outbound connectivity from 
+            // open network based containers.
+            if ((this.activationArgs.ContainerDescription.ContainerNetworkConfig.NetworkType & ContainerNetworkType.Open) == ContainerNetworkType.Open &&
+                !string.IsNullOrEmpty(this.activationArgs.ContainerDescription.ContainerNetworkConfig.OpenNetworkAssignedIp) &&
+                (this.activationArgs.ContainerDescription.ContainerNetworkConfig.NetworkType & ContainerNetworkType.Isolated) != ContainerNetworkType.Isolated)
             {
-                Container = this.containerId
-            };
-
-            FabricException opEx = null;
-
-            try
-            {
-                await Utility.ExecuteWithRetriesAsync(
-                    (operationTimeout) =>
-                    {
-                        return this.activator.Client.NetworkOperation.ConnectNetworkAsync(
-                            "nat",
-                            netwrokParams,
-                            operationTimeout);
-                    },
-                    $"AddOutboundConnectivityToContainerAsync_{this.ContainerName}",
-                    TraceType,
-                    HostingConfig.Config.DockerRequestTimeout,
-                    this.timeoutHelper.RemainingTime);
-
-                HostingTrace.Source.WriteNoise(
-                    TraceType,
-                    "Adding outbound connectivity to {0} succeeded.",
-                    BuildContainerInfoMessage());
-            }
-            catch(Exception ex)
-            {
-                var errorMessage = string.Format(
-                    "Adding outbound connectivity failed for {0}",
-                    this.BuildErrorMessage(ex));
-
-                HostingTrace.Source.WriteError(TraceType, errorMessage);
-                opEx = new FabricException(errorMessage, FabricErrorCode.InvalidOperation);
-            }
-
-            if (opEx != null)
-            {
-                await this.CleanupOnErrorAsync(opEx);
-            }
-        }
-
-#if !DotNetCoreClrLinux
-        private async Task ExecuteUpdateRouteCommandAsync()
-        {
-            var cmd = string.Format(
-                   "route delete 0.0.0.0 {0}&route add 0.0.0.0 MASK 0.0.0.0 {1} METRIC 6000",
-                   this.activationArgs.GatewayIpAddress,
-                   this.activationArgs.GatewayIpAddress);
-
-            // Route changes on RS3 builds need to be executed with higher privilege.
-            ContainerExecConfig execConfig = new ContainerExecConfig()
-            {
-                AttachStdin = true,
-                AttachStdout = true,
-                AttachStderr = true,
-                Privileged = false,
-                Tty = true,
-                Cmd = new List<string>() { "cmd.exe", "/c", cmd },
-                User = "ContainerAdministrator"
-            };
-
-            FabricException opEx = null;
-            opEx = await ExecuteUpdateRouteCommandAsync(execConfig);
-
-            if (opEx != null)
-            {
-                // reset opEx so that we can deactivate container if second try fails.
-                opEx = null;
-
-                // Execute without higher privilege.
-                execConfig = new ContainerExecConfig()
+                var netwrokParams = new NetworkConnectConfig()
                 {
-                    AttachStdin = true,
-                    AttachStdout = true,
-                    AttachStderr = true,
-                    Privileged = false,
-                    Tty = true,
-                    Cmd = new List<string>() { "cmd.exe", "/c", cmd }
+                    Container = this.containerId
                 };
 
-                opEx = await ExecuteUpdateRouteCommandAsync(execConfig);
+                FabricException opEx = null;
+
+                try
+                {
+                    await Utility.ExecuteWithRetryOnTimeoutAsync(
+                        (operationTimeout) =>
+                        {
+                            return this.activator.Client.NetworkOperation.ConnectNetworkAsync(
+                                "nat",
+                                netwrokParams,
+                                operationTimeout);
+                        },
+                        $"AddOutboundConnectivityToContainerAsync_{this.ContainerName}",
+                        TraceType,
+                        HostingConfig.Config.DockerRequestTimeout,
+                        this.timeoutHelper.RemainingTime);
+
+                    HostingTrace.Source.WriteNoise(
+                        TraceType,
+                        "Adding outbound connectivity to {0} succeeded.",
+                        BuildContainerInfoMessage());
+                }
+                catch (Exception ex)
+                {
+                    var errorMessage = string.Format(
+                        "Adding outbound connectivity failed for {0}",
+                        Utility.BuildErrorMessage(
+                                activationArgs.ContainerDescription.ContainerName,
+                                activationArgs.ContainerDescription.ApplicationId,
+                                activationArgs.ContainerDescription.ApplicationName,
+                                ex));
+
+                    HostingTrace.Source.WriteError(TraceType, errorMessage);
+                    opEx = new FabricException(errorMessage, FabricErrorCode.InvalidOperation);
+                }
 
                 if (opEx != null)
                 {
-                    await this.CleanupOnErrorAsync(opEx);
+                    await Utility.CleanupOnErrorAsync(
+                            TraceType,
+                            activationArgs.ContainerDescription.AutoRemove,
+                            activationArgs.ContainerDescription.IsContainerRoot,
+                            activationArgs.ProcessDescription.CgroupName,
+                            activationArgs.ContainerDescription.ContainerName,
+                            activationArgs.ContainerDescription.ApplicationId,
+                            activator,
+                            timeoutHelper,
+                            opEx);
                 }
             }
         }
-
-        private async Task<FabricException> ExecuteUpdateRouteCommandAsync(ContainerExecConfig execConfig)
-        {
-            FabricException opEx = null;
-
-            try
-            {
-                await ExecuteUpdateRouteCommandWithRetriesAsync(execConfig);
-            }
-            catch (FabricException ex)
-            {
-                opEx = ex;
-            }
-
-            return opEx;
-        }
-
-        private async Task ExecuteUpdateRouteCommandWithRetriesAsync(ContainerExecConfig execConfig)
-        {
-            try
-            {
-                var response = await Utility.ExecuteWithRetriesAsync(
-                    (operationTimeout) =>
-                    {
-                        return this.activator.Client.ExecOperation.CreateContainerExecAsync(
-                            this.containerId,
-                            execConfig,
-                            operationTimeout);
-                    },
-                    $"ExecuteUpdateRouteCommandAsync_CreateContainerExecAsync_{this.ContainerName}",
-                    TraceType,
-                    HostingConfig.Config.DockerRequestTimeout,
-                    this.timeoutHelper.RemainingTime);
-
-                HostingTrace.Source.WriteNoise(
-                    TraceType,
-                    "Setup exec command to update route for {0} succeeded.",
-                    BuildContainerInfoMessage());
-
-                await Utility.ExecuteWithRetriesAsync(
-                    (operationTimeout) =>
-                    {
-                        return this.activator.Client.ExecOperation.StartContainerExecAsync(
-                            response.ID,
-                            operationTimeout);
-                    },
-                    $"ExecuteUpdateRouteCommandAsync_StartContainerExecAsync_{this.ContainerName}",
-                    TraceType,
-                    HostingConfig.Config.DockerRequestTimeout,
-                    this.timeoutHelper.RemainingTime);
-
-                HostingTrace.Source.WriteNoise(
-                    TraceType,
-                    "Command execution to update route for {0}",
-                    BuildContainerInfoMessage());
-            }
-            catch (Exception ex)
-            {
-                var errorMessage = string.Format(
-                    "Set up exec command to update route failed for {0}.",
-                    this.BuildErrorMessage(ex));
-
-                HostingTrace.Source.WriteWarning(TraceType, errorMessage);
-                throw new FabricException(errorMessage, FabricErrorCode.InvalidOperation);
-            }
-        }
-#endif
 
         private async Task CreateContainerAsync()
         {
@@ -321,7 +252,7 @@ namespace Hosting.ContainerActivatorService
 
             try
             {
-                var response = await Utility.ExecuteWithRetriesAsync(
+                var response = await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.activator.Client.ContainerOperation.CreateContainerAsync(
@@ -381,7 +312,11 @@ namespace Hosting.ContainerActivatorService
                     var errorMessage = string.Format(
                         "Creating Container from Image={0} failed for {1}.",
                         containerConfig.Image,
-                        this.BuildErrorMessage(ex));
+                        Utility.BuildErrorMessage(
+                            activationArgs.ContainerDescription.ContainerName, 
+                            activationArgs.ContainerDescription.ApplicationId, 
+                            activationArgs.ContainerDescription.ApplicationName,
+                            ex));
 
                     this.TraceAndThrow(errorMessage);
                 }
@@ -391,7 +326,11 @@ namespace Hosting.ContainerActivatorService
                 var errorMessage = string.Format(
                     "Creating Container from Image={0} failed for {1}.",
                     containerConfig.Image,
-                    this.BuildErrorMessage(ex));
+                    Utility.BuildErrorMessage(
+                        activationArgs.ContainerDescription.ContainerName, 
+                        activationArgs.ContainerDescription.ApplicationId, 
+                        activationArgs.ContainerDescription.ApplicationName, 
+                        ex));
 
                 this.TraceAndThrow(errorMessage);
             }
@@ -428,7 +367,7 @@ namespace Hosting.ContainerActivatorService
         {
             try
             {
-                var response = await Utility.ExecuteWithRetriesAsync(
+                var response = await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.activator.Client.ContainerOperation.InspectContainersAsync(
@@ -454,7 +393,11 @@ namespace Hosting.ContainerActivatorService
             {
                 var errorMessage = string.Format(
                     "Getting container ID failed after container was found existing. {0}.",
-                    this.BuildErrorMessage(ex));
+                    Utility.BuildErrorMessage(
+                            activationArgs.ContainerDescription.ContainerName,
+                            activationArgs.ContainerDescription.ApplicationId,
+                            activationArgs.ContainerDescription.ApplicationName,
+                            ex));
 
                 if (ex is ContainerApiException contApiEx &&
                     contApiEx.StatusCode == HttpStatusCode.NotFound)
@@ -481,7 +424,7 @@ namespace Hosting.ContainerActivatorService
 
             try
             {
-                await Utility.ExecuteWithRetriesAsync(
+                await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.activator.Client.ContainerOperation.StartContainerAsync(
@@ -502,7 +445,11 @@ namespace Hosting.ContainerActivatorService
             {
                 var errorMessage = string.Format(
                     "Failed to start Container. {0}",
-                    this.BuildErrorMessage(ex));
+                     Utility.BuildErrorMessage(
+                            activationArgs.ContainerDescription.ContainerName, 
+                            activationArgs.ContainerDescription.ApplicationId,
+                            activationArgs.ContainerDescription.ApplicationName,
+                            ex));
 
                 HostingTrace.Source.WriteError(TraceType, errorMessage);
                 opEx = new FabricException(errorMessage, FabricErrorCode.InvalidOperation);
@@ -510,65 +457,17 @@ namespace Hosting.ContainerActivatorService
 
             if (opEx != null)
             {
-                await this.CleanupOnErrorAsync(opEx);
+                await Utility.CleanupOnErrorAsync(
+                        TraceType,
+                        activationArgs.ContainerDescription.AutoRemove,
+                        activationArgs.ContainerDescription.IsContainerRoot,
+                        activationArgs.ProcessDescription.CgroupName,
+                        activationArgs.ContainerDescription.ContainerName,
+                        activationArgs.ContainerDescription.ApplicationId,
+                        activator,
+                        timeoutHelper,
+                        opEx);
             }
-        }
-
-        private async Task CleanupOnErrorAsync(FabricException originalEx)
-        {
-            HostingTrace.Source.WriteWarning(
-                TraceType,
-                "CleanupOnErrorAsync(): Deactivating {0}",
-                BuildContainerInfoMessage());
-
-            try
-            {
-                var deactivationArg = new ContainerDeactivationArgs()
-                {
-                    ContainerName = this.activationArgs.ContainerDescription.ContainerName,
-                    ConfiguredForAutoRemove = this.activationArgs.ContainerDescription.AutoRemove,
-                    IsContainerRoot = this.activationArgs.ContainerDescription.IsContainerRoot,
-                    CgroupName = this.activationArgs.ProcessDescription.CgroupName,
-                    IsGracefulDeactivation = false
-                };
-
-                await Utility.ExecuteWithRetriesAsync(
-                    (operationTimeout) =>
-                    {
-                        return this.activator.DeactivateContainerAsync(
-                            deactivationArg,
-                            operationTimeout);
-                    },
-                    $"CleanupOnErrorAsync_DeactivateContainerAsync_{this.ContainerName}",
-                    TraceType,
-                    HostingConfig.Config.DockerRequestTimeout,
-                    this.timeoutHelper.RemainingTime);
-            }
-            catch(FabricException)
-            {
-                // Ignore.
-            }
-
-            throw originalEx;
-        }
-
-        private string BuildErrorMessage(Exception ex)
-        {
-            var errBuilder = new StringBuilder(BuildContainerInfoMessage());
-
-            if (ex is ContainerApiException containerApiEx)
-            {
-                errBuilder.AppendFormat(
-                     " DockerRequest returned StatusCode={0} with ResponseBody={1}.",
-                    containerApiEx.StatusCode,
-                    containerApiEx.ResponseBody);
-            }
-            else
-            {
-                errBuilder.Append(ex.ToString());
-            }
-
-            return errBuilder.ToString();
         }
 
         private string BuildContainerInfoMessage()
@@ -578,7 +477,7 @@ namespace Hosting.ContainerActivatorService
                 activationArgs.ContainerDescription.ApplicationId,
                 activationArgs.ContainerDescription.ApplicationName);
         }
-
+        
         private void TracePortBindings()
         {
             if(activationArgs.ContainerDescription.PortBindings.Count == 0)

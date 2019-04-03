@@ -62,6 +62,11 @@ void ComposeDeploymentsHandler::GetComposeDeploymentApiHandlers(vector<HandlerUr
         Constants::HttpGetVerb,
         MAKE_HANDLER_CALLBACK(GetUpgradeProgress)));
 
+    uris.push_back(HandlerUriTemplate(
+        MAKE_SUFFIX_PATH(Constants::ComposeDeploymentsEntityKeyPath, Constants::RollbackUpgrade),
+        Constants::HttpPostVerb,
+        MAKE_HANDLER_CALLBACK(RollbackComposeDeployment)));
+
     handlerUris = move(uris);
 }
 
@@ -446,4 +451,48 @@ void ComposeDeploymentsHandler::OnGetUpgradeProgressComplete(AsyncOperationSPtr 
         return;
     }
     handlerOperation->OnSuccess(thisSPtr, move(bufferUPtr));
+}
+
+void ComposeDeploymentsHandler::RollbackComposeDeployment(AsyncOperationSPtr const & thisSPtr)
+{
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    auto & client = handlerOperation->FabricClient;
+    UriArgumentParser argumentParser(handlerOperation->Uri);
+
+    wstring deploymentName;
+    auto error = argumentParser.TryGetDeploymentName(deploymentName);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(thisSPtr, error);
+        return;
+    }
+
+    auto operation = client.ComposeAppMgmtClient->BeginRollbackComposeDeployment(
+        deploymentName,
+        handlerOperation->Timeout,
+        [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnRollbackComposeDeploymentComplete(operation, false);
+        },
+        handlerOperation->shared_from_this());
+    this->OnRollbackComposeDeploymentComplete(operation, true);
+}
+
+void ComposeDeploymentsHandler::OnRollbackComposeDeploymentComplete(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+{
+    if (operation->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
+    auto const & thisSPtr = operation->Parent;
+    auto handlerOperation = AsyncOperation::Get<HandlerAsyncOperation>(thisSPtr);
+    auto &client = handlerOperation->FabricClient;
+
+    auto error = client.ComposeAppMgmtClient->EndRollbackComposeDeployment(operation);
+    if (!error.IsSuccess())
+    {
+        handlerOperation->OnError(thisSPtr, error);
+        return;
+    }
+
+    ByteBufferUPtr emptyBody;
+    handlerOperation->OnSuccess(operation->Parent, move(emptyBody));
 }

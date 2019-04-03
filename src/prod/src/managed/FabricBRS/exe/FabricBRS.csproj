@@ -1,0 +1,582 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{FABBACB3-BD18-4D9D-8CE7-B4FF74722EF2}</ProjectGuid>
+    <RootNamespace>System.Fabric.BackupRestore</RootNamespace>
+    <AssemblyName>FabricBRS</AssemblyName>
+    <AssemblyDescription>Fabric Backup Restore Service</AssemblyDescription>
+    <OutputType>Exe</OutputType>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <ResourcesFileName>StringResources</ResourcesFileName>
+    <ResourcesClassName>$(ResourcesFileName)</ResourcesClassName>
+    <LocalizationProject>$(SRCROOT)\prod\loc\System.Fabric.Strings.locbld\locbld.proj</LocalizationProject>
+    <StringResourcesCsFilePath>$(IntermediateOutputPath)$(ResourcesFileName).cs</StringResourcesCsFilePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="StringResources.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="_friends.cs" />
+    <Compile Include="$(StringResourcesCsFilePath)" />
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\BackupRestoreService.cs">
+      <Link>Service\BackupRestoreService.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\BackupRestoreServiceConfig.cs">
+      <Link>Service\BackupRestoreServiceConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\BackupRestoreServiceBroker.cs">
+      <Link>Service\BackupRestoreServiceBroker.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\RetentionManager.cs">
+      <Link>Service\RetentionManager.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\BackupRestoreServiceImpl.cs">
+      <Link>Service\BackupRestoreServiceImpl.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\ConfigUpdateHandler.cs">
+      <Link>Service\ConfigUpdateHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\EncryptionCertConfigHandler.cs">
+      <Link>Service\EncryptionCertConfigHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\FabricBackupRestoreServiceAgent.cs">
+      <Link>Service\FabricBackupRestoreServiceAgent.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\FabricBrsNativeCommunicationListener.cs">
+      <Link>Service\FabricBrsNativeCommunicationListener.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\IBackupRestoreService.cs">
+      <Link>Service\IBackupRestoreService.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\Interop\NativeBackupRestoreService.cs">
+      <Link>Service\Interop\NativeBackupRestoreService.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\RetentionTimer.cs">
+      <Link>Service\RetentionTimer.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\RetentionScheduler.cs">
+      <Link>Service\RetentionScheduler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\Program.cs">
+      <Link>Service\Program.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\Service\OwinCommunicationListener.cs">
+      <Link>Service\OwinCommunicationListener.cs</Link>
+    </Compile>
+    <!-- Fabric Resoures View Types></!-->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\EnumTypes.cs">
+      <Link>View\EnumTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupPolicy.cs">
+      <Link>View\BackupPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\PagedBackupPolicyDescriptionList.cs">
+      <Link>View\PagedBackupPolicyDescriptionList.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupRestoreInternalExceptions.cs">
+      <Link>View\BackupRestoreInternalExceptions.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\FrequencyBasedBackupSchedule.cs">
+      <Link>View\FrequencyBasedBackupSchedule.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupStorage.cs">
+      <Link>View\BackupStorage.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupConfigurationInfo.cs">
+      <Link>View\BackupConfigurationInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupSuspensionInfo.cs">
+      <Link>View\BackupSuspensionInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\FileShareBackupStorageInfo.cs">
+      <Link>View\FileShareBackupStorageInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\AzureBlobBackupStorageInfo.cs">
+      <Link>View\AzureBlobBackupStorageInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\DsmsAzureBlobBackupStorageInfo.cs">
+      <Link>View\DsmsAzureBlobBackupStorageInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\RetentionPolicy.cs">
+      <Link>View\RetentionPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupSchedule.cs">
+      <Link>View\BackupSchedule.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\TimeBasedBackupSchedule.cs">
+      <Link>View\TimeBasedBackupSchedule.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BasicRetentionPolicy.cs">
+      <Link>View\BasicRetentionPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\RestorePointEnumerationFailureInfo.cs">
+      <Link>View\RestorePointEnumerationFailureInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\RestorePointEnumerationResult.cs">
+      <Link>View\RestorePointEnumerationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupEpoch.cs">
+      <Link>View\BackupEpoch.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupMapping.cs">
+      <Link>View\BackupMapping.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\CleanBackupView.cs">
+      <Link>View\CleanBackupView.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupEntity.cs">
+      <Link>View\BackupEntity.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\PagedBackupEntityList.cs">
+      <Link>View\PagedBackupEntityList.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupMappingInfo.cs">
+      <Link>View\BackupMappingInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\PartitionBackupInfo.cs">
+      <Link>View\PartitionBackupInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupSuspendedPartitionInfo.cs">
+      <Link>View\BackupSuspendedPartitionInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\RetentionPolicyJsonConverter.cs">
+      <Link>View\JsonConverter\RetentionPolicyJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\BackupEntityConverter.cs">
+      <Link>View\JsonConverter\BackupEntityConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\BackupScheduleJsonConverter.cs">
+      <Link>View\JsonConverter\BackupScheduleJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\BackupStorageConverter.cs">
+      <Link>View\JsonConverter\BackupStorageConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\NullableBackupStorageConverter.cs">
+      <Link>View\JsonConverter\NullableBackupStorageConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\LongToStringConverter.cs">
+      <Link>View\JsonConverter\LongToStringConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\DateTimeJsonConverter.cs">
+      <Link>View\JsonConverter\DateTimeJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\TimeSpanConverter.cs">
+      <Link>View\JsonConverter\TimeSpanConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\JsonConverter\RunTimesConverter.cs">
+      <Link>View\JsonConverter\RunTimesConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\CustomValidation\RunTimesValidation.cs">
+      <Link>View\CustomValidation\RunTimesValidation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\CustomValidation\RunDaysValidation.cs">
+      <Link>View\CustomValidation\RunDaysValidation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\PartitionInformation.cs">
+      <Link>View\PartitionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\FabricError.cs">
+      <Link>View\FabricError.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\FabricErrorError.cs">
+      <Link>View\FabricErrorError.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\SingletonPartitionInformation.cs">
+      <Link>View\SingletonPartitionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\Int64RangePartitionInformation.cs">
+      <Link>View\Int64RangePartitionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\NamedPartitionInformation.cs">
+      <Link>View\NamedPartitionInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\RestorePoint.cs">
+      <Link>View\RestorePoint.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\PagedBackupInfoList.cs">
+      <Link>View\PagedBackupInfoList.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\GetBackupByStorageQueryDescription.cs">
+      <Link>View\GetBackupByStorageQueryDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\RestoreRequest.cs">
+      <Link>View\RestoreRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\RestoreProgress.cs">
+      <Link>View\RestoreProgress.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupPartitionRequest.cs">
+      <Link>View\BackupPartitionRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreTypes\BackupProgress.cs">
+      <Link>View\BackupProgress.cs</Link>
+    </Compile>
+    <!-- Fabric EndPoint Types></!-->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Startup.cs">
+      <Link>Endpoints\Startup.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\OwinHttpServer.cs">
+      <Link>Endpoints\OwinHttpServer.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Constants.cs">
+      <Link>Endpoints\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\ControllerSetting.cs">
+      <Link>Endpoints\ControllerSetting.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\SecuritySetting.cs">
+      <Link>Endpoints\SecuritySetting.cs</Link>
+    </Compile>
+    <!-- Handler-->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Handlers\XRoleHeaderHandler.cs">
+      <Link>Handlers\XRoleHeaderHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Handlers\ClientCertAuthorizationHandler.cs">
+      <Link>Handlers\ClientCertAuthorizationHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Handlers\ClientIdentityAuthorizationHandler.cs">
+      <Link>Handlers\ClientIdentityAuthorizationHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Handlers\XContentTypeHandler.cs">
+      <Link>Handlers\XContentTypeHandler.cs</Link>
+    </Compile>
+    <!-- Base Class for Operation-->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\OperationBase.cs">
+      <Link>Endpoints\Operations\OperationBase.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\DependencyResolver\ControllerDependencyResolver.cs">
+      <Link>Endpoints\DependencyResolver\ControllerDependencyResolver.cs</Link>
+    </Compile>
+    <!-- Controllers -->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Controllers\BaseController.cs">
+      <Link>Endpoints\Controllers\BaseController.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Controllers\BackupPolicyController.cs">
+      <Link>Endpoints\Controllers\BackupPolicyController.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Controllers\BackupMappingController.cs">
+      <Link>Endpoints\Controllers\BackupMappingController.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Controllers\BackupRestorePointsController.cs">
+      <Link>Endpoints\Controllers\BackupRestorePointsController.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Controllers\RestoreController.cs">
+      <Link>Endpoints\Controllers\RestoreController.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Controllers\SuspendBackupController.cs">
+      <Link>Endpoints\Controllers\SuspendBackupController.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Controllers\BackupPartitionController.cs">
+      <Link>Endpoints\Controllers\BackupPartitionController.cs</Link>
+    </Compile>
+    <!-- Backup Policy Operations -->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\BackupPolicyOperations.cs">
+      <Link>Endpoints\Operations\BackupPolicyOperations.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\AddBackupPolicyOperation.cs">
+      <Link>Endpoints\Operations\AddBackupPolicyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\GetAllBackupPolicyOperation.cs">
+      <Link>Endpoints\Operations\GetAllBackupPolicyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\GetBackupPolicyByNameOperation.cs">
+      <Link>Endpoints\Operations\GetBackupPolicyByNameOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\GetBackupPolicyProtectedItemsOperation.cs">
+      <Link>Endpoints\Operations\GetBackupPolicyProtectedItemsOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\DeleteBackupPolicyOperation.cs">
+      <Link>Endpoints\Operations\DeleteBackupPolicyOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\UpdateBackupPolicyOperation.cs">
+      <Link>Endpoints\Operations\UpdateBackupPolicyOperation.cs</Link>
+    </Compile>
+    <!-- Backup Enumeration -->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\GetRestorePointsOperation.cs">
+      <Link>Endpoints\Operations\GetRestorePointsOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\RestorePointOperation.cs">
+      <Link>Endpoints\Operations\RestorePointOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\GetRestorePointsWithBackupStorageOperation.cs">
+      <Link>Endpoints\Operations\GetRestorePointsWithBackupStorageOperation.cs</Link>
+    </Compile>
+    <!-- Backup Protection-->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\BackupMappingOperation.cs">
+      <Link>Endpoints\Operations\BackupMappingOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\EnableBackupMappingOperation.cs">
+      <Link>Endpoints\Operations\EnableBackupMappingOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\GetBackupMappingInfoOperation.cs">
+      <Link>Endpoints\Operations\GetBackupMappingInfoOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\DisableBackupMappingOperation.cs">
+      <Link>EndPoints\Operations\DisableBackupMappingOperation.cs</Link>
+    </Compile>
+    <!-- Restore Operations -->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\BackupRestorePartitionOperation.cs">
+      <Link>Endpoints\Operations\BackupRestorePartitionOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\RestorePartitionRequestOperation.cs">
+      <Link>EndPoints\Operations\RestorePartitionRequestOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\RestorePartitionStatusOperation.cs">
+      <Link>EndPoints\Operations\RestorePartitionStatusOperation.cs</Link>
+    </Compile>
+    <!-- Suspend Operations -->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\ResumeBackupOperation.cs">
+      <Link>EndPoints\Operations\ResumeBackupOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\SuspendBackupOperation.cs">
+      <Link>EndPoints\Operations\SuspendBackupOperation.cs</Link>
+    </Compile>
+    <!-- Backup Partition Operations -->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\BackupPartitionRequestOperation.cs">
+      <Link>EndPoints\Operations\BackupPartitionRequestOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreEndPoints\Operations\BackupPartitionResponseOperation.cs">
+      <Link>EndPoints\Operations\BackupPartitionResponseOperation.cs</Link>
+    </Compile>
+    <!-- Fabric Common Types></!-->
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\BaseStore.cs">
+      <Link>Common\Store\BaseStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\CleanupStore.cs">
+      <Link>Common\Store\CleanupStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\RetentionStore.cs">
+      <Link>Common\Store\RetentionSchedulerStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\BackupPolicyStore.cs">
+      <Link>Common\Store\BackupPolicyStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\BackupMappingStore.cs">
+      <Link>Common\Store\BackupMappingStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\BaseWorkItemQueue.cs">
+      <Link>Common\Store\BaseWorkItemQueue.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\WorkItemQueue.cs">
+      <Link>Common\Store\WorkItemQueue.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\WorkItemStore.cs">
+      <Link>Common\Store\WorkItemStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\WorkItemInProcessStore.cs">
+      <Link>Common\Store\WorkItemInProcessStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\RestoreStore.cs">
+      <Link>Common\Store\RestoreStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\SuspendStore.cs">
+      <Link>Common\Store\SuspendStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\BackupPartitionStore.cs">
+      <Link>Common\Store\BackupPartitionStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Store\ConfigStore.cs">
+      <Link>Common\Store\ConfigStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\BackupPolicy.cs">
+      <Link>Common\Model\BackupPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\BackupMapping.cs">
+      <Link>Common\Model\BackupMapping.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\BackupSchedule.cs">
+      <Link>Common\Model\BackupSchedule.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\BackupStorage.cs">
+      <Link>Common\Model\BackupStorage.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\AzureBlobBackupStorageInfo.cs">
+      <Link>Common\Model\AzureBlobBackupStorageInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\DsmsAzureBlobBackupStorageInfo.cs">
+      <Link>Common\Model\DsmsAzureBlobBackupStorageInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\FileShareBackupStorageInfo.cs">
+      <Link>Common\Model\FileShareBackupStorageInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\RestoreStatus.cs">
+      <Link>Common\Model\RestoreStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\BasicRetentionPolicy.cs">
+      <Link>Common\Model\BasicRetentionPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\TimeBasedBackupSchedule.cs">
+      <Link>Common\Model\TimeBasedBackupSchedule.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\FrequencyBasedBackupSchedule.cs">
+      <Link>Common\Model\FrequencyBasedBackupSchedule.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\RetentionPolicy.cs">
+      <Link>Common\Model\RetentionPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\BackupPartitionStatus.cs">
+      <Link>Common\Model\BackupPartitionStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Model\RetentionMetadata.cs">
+      <Link>Common\Model\RetentionMetadata.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem\ResolveToPartitionWorkItem.cs">
+      <Link>Common\WorkItem\ResolveToPartitionWorkItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem\SendToServiceNodeWorkItem.cs">
+      <Link>Common\WorkItem\SendToServiceNodeWorkItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem\UpdateEnablementWorkItem.cs">
+      <Link>Common\WorkItem\UpdateEnablementWorkItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\IWorkItem.cs">
+      <Link>Common\WorkItem\IWorkItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem.cs">
+      <Link>Common\WorkItem\WorkItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem\WorkItemInfo.cs">
+      <Link>Common\WorkItem\WorkItemInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem\WorkItemProcessInfo.cs">
+      <Link>Common\WorkItem\WorkItemProcessInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem\BackupPolicyWorkItem.cs">
+      <Link>Common\WorkItem\BackupPolicyWorkItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem\RestorePartitionWorkItem.cs">
+      <Link>Common\WorkItem\RestorePartitionWorkItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItem\BackupPartitionWorkItem.cs">
+      <Link>Common\WorkItem\BackupPartitionWorkItem.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\WorkItemHandler.cs">
+      <Link>Common\WorkItem\WorkItemHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\Constants.cs">
+      <Link>Common\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\BRSContinuationToken.cs">
+      <Link>Common\BRSContinuationToken.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\FabricClientHelper.cs">
+      <Link>Common\Helper\FabricClientHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\UtilityHelper.cs">
+      <Link>Common\Helper\UtilityHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\IRecoveryPointManager.cs">
+      <Link>Common\RecoveryPointManager.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\RecoveryPointManagerFactory.cs">
+      <Link>Common\RecoveryPointManagerFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\FileShareRecoveryPointManager.cs">
+      <Link>Common\FileShareRecoveryPointManager.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\AzureBlobRecoveryPointManager.cs">
+      <Link>Common\AzureBlobRecoveryPointManager.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\DsmsAzureBlobRecoveryPointManager.cs">
+      <Link>Common\DsmsAzureBlobRecoveryPointManager.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\AzureBlobRecoveryPointStoreBase.cs">
+      <Link>Common\AzureBlobRecoveryPointStoreBase.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\AzureBlobRecoveryPointStore.cs">
+      <Link>Common\AzureBlobRecoveryPointStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\DsmsAzureBlobRecoveryPointStore.cs">
+      <Link>Common\DsmsAzureBlobRecoveryPointStore.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\AzureBlobStoreHelper.cs">
+      <Link>Common\AzureBlobStoreHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\src\System\Fabric\BackupRestore\BackupRestoreCommon\X509CertificateUtility.cs">
+      <Link>Common\X509CertificateUtility.cs</Link>
+    </Compile>
+    <!-- Fabric Common Over ></!-->
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="$(PkgMicrosoft_Owin_Host_HttpListener)\lib\net45\Microsoft.Owin.Host.HttpListener.dll" />
+    <Reference Include="$(PkgMicrosoft_Owin)\lib\net45\Microsoft.Owin.dll" />
+    <Reference Include="$(PkgMicrosoft_Owin_Hosting)\lib\net45\Microsoft.Owin.Hosting.dll" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="$(PkgOwin)\lib\net40\Owin.dll" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Core)\lib\net45\System.Web.Http.dll" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Owin)\lib\net45\System.Web.Http.Owin.dll" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Client_5_2)\lib\net45\System.Net.Http.Formatting.dll" />
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Api\Dlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj">
+      <Project>{3869599b-43ed-46ee-b2ac-fbe66657b858}</Project>
+      <Name>Microsoft.ServiceFabric.Internal.Strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Project>{eb728138-47ac-41cb-a2c7-53521b396afd}</Project>
+      <Name>Microsoft.ServiceFabric.Internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{fc4947d4-a39d-47eb-a3e2-445510ffc430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.BackupRestore\System.Fabric.BackupRestore.csproj">
+      <Project>{FABB432F-46A5-4D4B-99FA-52400896BCC4}</Project>
+      <Name>System.Fabric.BackupRestore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj">
+      <Project>{6244C9FE-DC97-4783-A63E-94CE833196B4}</Project>
+      <Name>Microsoft.ServiceFabric.Data.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj">
+      <Project>{0454fa10-771f-4734-bb4f-00aac3b7d56e}</Project>
+      <Name>Microsoft.ServiceFabric.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj">
+      <Name>Microsoft.ServiceFabric.Data.Impl</Name>
+      <Project>{0454FA10-771F-4734-BB4F-00AAC3B7D56E}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Framework)\Microsoft.ServiceFabric.Services.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="BeforeResGen" Inputs="StringResources.resx" Outputs="$(StringResourcesCsFilePath)">
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe $(ResourcesFileName).resx $(IntermediateOutputPath)$(RootNamespace).$(ResourcesFileName).resources /str:csharp,$(RootNamespace),$(ResourcesClassName),$(StringResourcesCsFilePath)" />
+  </Target>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\__FabricSystem_App4294967295\BRS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\__FabricSystem_App4294967295\BRS.Code.Current" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -733,7 +733,19 @@ void PLBDiagnostics::ReportServiceHealth(
     {
         attributeList.AddAttribute(*ServiceModel::HealthAttributeNames::ApplicationName, move(serviceDescription.ApplicationName));
     }
-    attributeList.AddAttribute(*ServiceModel::HealthAttributeNames::ServiceTypeName, move(serviceDescription.ServiceTypeName));
+
+    // Obtaining service type name from qualified service type name
+    ServiceModel::ServiceTypeIdentifier serviceTypeIdentifier;
+    auto parseError = ServiceModel::ServiceTypeIdentifier::FromString(serviceDescription.ServiceTypeName, serviceTypeIdentifier);
+    if (parseError.IsSuccess())
+    {
+        attributeList.AddAttribute(*ServiceModel::HealthAttributeNames::ServiceTypeName, serviceTypeIdentifier.ServiceTypeName);
+    }
+    else
+    {
+        Trace.HealthReportingFailure(parseError);
+        return;
+    }
 
     ServiceModel::HealthReport serviceHealthReport = HealthReport::CreateSystemHealthReport(
         reportCode,
@@ -1101,6 +1113,9 @@ std::wstring PLBDiagnostics::ShortFriendlyConstraintName(IConstraint::Enum type)
         case IConstraint::ApplicationCapacity:
             return wformatString("ApplicationCapacity");
             break;
+        case IConstraint::Throttling:
+            return L"Throttling";
+            break;
         default:
             return wformatString("Unknown Constraint Type");
     }
@@ -1151,6 +1166,9 @@ std::wstring PLBDiagnostics::FriendlyConstraintName(IConstraint::Enum type, Plac
             break;
         case IConstraint::ApplicationCapacity:
             return wformatString("ApplicationCapacity -- Nodes with sufficient remaining Application-Specific Capacities");
+            break;
+        case IConstraint::Throttling:
+            return L"Throttling";
             break;
         default:
             return wformatString("Unknown Constraint Type");
@@ -1363,6 +1381,8 @@ std::wstring PLBDiagnostics::ConstraintDetails(IConstraint::Enum type, Placement
     case IConstraint::ApplicationCapacity:
         return wformatString("ApplicationCapacity");
         break;
+    case IConstraint::Throttling:
+        return wformatString("Throttling");
     default:
         return wformatString("Unknown Constraint Type");
     }

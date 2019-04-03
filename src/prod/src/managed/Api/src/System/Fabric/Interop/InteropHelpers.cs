@@ -921,6 +921,26 @@ namespace System.Fabric.Interop
             }
         }
 
+        internal static ContainerNetworkType FromNativeContainerNetworkType(
+            NativeTypes.FABRIC_CONTAINER_NETWORK_TYPE nativeContainerNetworkType)
+        {
+            ContainerNetworkType networkType = ContainerNetworkType.Other;
+
+            if ((nativeContainerNetworkType & NativeTypes.FABRIC_CONTAINER_NETWORK_TYPE.FABRIC_CONTAINER_NETWORK_TYPE_OPEN)
+                == NativeTypes.FABRIC_CONTAINER_NETWORK_TYPE.FABRIC_CONTAINER_NETWORK_TYPE_OPEN)
+            {
+                networkType = networkType | ContainerNetworkType.Open;
+            }
+
+            if ((nativeContainerNetworkType & NativeTypes.FABRIC_CONTAINER_NETWORK_TYPE.FABRIC_CONTAINER_NETWORK_TYPE_ISOLATED)
+                == NativeTypes.FABRIC_CONTAINER_NETWORK_TYPE.FABRIC_CONTAINER_NETWORK_TYPE_ISOLATED)
+            {
+                networkType = networkType | ContainerNetworkType.Isolated;
+            }
+
+            return networkType;
+        }
+
         internal static NativeTypes.FABRIC_CONTAINER_EVENT_TYPE ToNativeContainerEventType(
             ContainerEventType eventType)
         {

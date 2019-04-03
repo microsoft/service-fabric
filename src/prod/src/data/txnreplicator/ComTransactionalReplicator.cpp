@@ -25,7 +25,8 @@ ComTransactionalReplicator::ComTransactionalReplicator(
     __in SLInternalSettingsSPtr && ktlLoggerSharedLogConfig,
     __in Log::LogManager & logManager,
     __in IFabricDataLossHandler & userDataLossHandler,
-    __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient)
+    __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient,
+    __in BOOLEAN hasPersistedState)
     : KObject()
     , KShared()
     , PartitionedReplicaTraceComponent(prId)
@@ -98,6 +99,7 @@ ComTransactionalReplicator::ComTransactionalReplicator(
             logManager,
             *dataLossHandlerSPtr,
             move(healthClient),
+            hasPersistedState,
             allocator);
     }
     catch (Exception e)
@@ -263,7 +265,8 @@ NTSTATUS ComTransactionalReplicator::Create(
             move(ktlLoggerSharedLogConfig),
             logManager,
             userDataLossHandler,
-            move(v2HealthClient));
+            move(v2HealthClient),
+            hasPersistedState);
 
     if (comTransactionalReplicator == nullptr)
     {

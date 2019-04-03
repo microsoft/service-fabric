@@ -1,0 +1,8 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Set MockNative to true to execute against mock ReliableCollection implementation. -->
+    <!-- Set MockCluster to true to execute against real ReliableCollection implementation but mock cluster. -->
+    <MockNative>false</MockNative>
+    <MockCluster>false</MockCluster>
+  </PropertyGroup>
+</Project>

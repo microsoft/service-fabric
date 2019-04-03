@@ -46,9 +46,13 @@ namespace Data
 
              void Dispose() override;
 
+             ktl::Awaitable<LogRecord::SPtr> GetLastCompletedBeginCheckpointRecord(__in LogRecord & record);
+             
              ktl::Awaitable<BeginCheckpointLogRecord::SPtr> GetLastCompletedBeginCheckpointRecord(__inout EndCheckpointLogRecord & record);
 
              ktl::Awaitable<PhysicalLogRecord::SPtr> GetLinkedPhysicalRecord(__in PhysicalLogRecord & record);
+
+             ULONG64 GetNextLogRecordPosition(__in ULONG64 recordPosition);
 
              ktl::Awaitable<LogRecord::SPtr> GetNextLogRecord(__in ULONG64 recordPosition);
 
@@ -63,6 +67,8 @@ namespace Data
                  __in ULONG64 newStartingRecordPosition);
 
              ktl::Awaitable<LogRecord::SPtr> SeekToLastRecord();
+
+			 ktl::Awaitable<LogRecord::SPtr> SeekToFirstRecord(__in ULONG64 );
 
         private:
 

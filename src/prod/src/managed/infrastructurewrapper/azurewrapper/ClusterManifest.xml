@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClusterManifest
+	Name="Azure-FiveNode"
+	Version="3.0"
+	xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <NodeTypes>
+    <NodeType Name="NodeType1" />
+  </NodeTypes>
+  <Infrastructure>
+    <WindowsAzure>
+      <Roles>
+        <Role RoleName="WindowsFabricRole" NodeTypeRef="NodeType1" SeedNodeCount="5"/>
+      </Roles>
+    </WindowsAzure>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="NamingService">
+      <!-- PartitionCount is 3 by default -->
+      <!-- TargetReplicaSetSize is 7 by default -->
+      <!-- MinReplicaSetSize is 3 by default-->
+    </Section>
+    <Section Name="FailoverManager">
+      <!-- "TargetReplicaSetSize" is 7 by default -->
+      <!-- MinReplicaSetSize is 3 by default-->
+      <Parameter Name="ExpectedClusterSize" Value="4"/>
+    </Section>
+    <Section Name="ClusterManager">
+      <!-- TargetReplicaSetSize is 7 by default -->
+      <!-- MinReplicaSetSize is 3 by default-->
+    </Section>
+    <Section Name="Management">
+        <Parameter Name="ImageStoreConnectionString" Value="xstore:DefaultEndpointsProtocol=https;AccountName=[];AccountKey=[];Container=[]"/>
+    </Section>
+    <Section Name="Hosting">
+      <Parameter Name="RunAsPolicyEnabled" Value="true" />
+      <Parameter Name="EndpointProviderEnabled" Value="true"/>
+    </Section>
+    <Section Name="Trace/Etw">
+      <Parameter Name="Level" Value="4"/>
+    </Section>
+    <Section Name="Security">
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+    </Section>
+
+    <!-- 
+         HttpGateway section
+         ===================
+         HttpGateway is disabled by default. It requires at least .net 4.5 installed for it to run
+         You can enable it here by uncommenting out the section below.
+    -->
+    <!--<Section Name="HttpGateway">
+      <Parameter Name="IsEnabled" Value="true"/>
+    </Section>-->
+    
+    <!-- 
+         Diagnostics section
+         ===================
+         Producer and consumer instances are specified as a comma-separated list.
+         Each item in the list is the name of a section in the manifest that 
+         contains more information about that producer/consumer instance
+         
+    -->
+    <Section Name="Diagnostics">
+      <Parameter Name="ProducerInstances" Value="WinFabEtlFile, WinFabEtlFileQueryable, WinFabCrashDump, WinFabPerfCounter"/>
+      <Parameter Name="ConsumerInstances" Value="AzureBlobWinFabEtw, AzureTableWinFabEtwQueryable, AzureBlobWinFabCrashDump, AzureBlobWinFabPerfCounter"/>
+    </Section>
+
+    <!-- 
+         Diagnostic producer instance sections
+         =====================================
+         The value for parameter "ProducerType" is one of the well-defined producer 
+         types supported by the DCA
+    -->
+    <Section Name="WinFabEtlFile">
+      <Parameter Name="ProducerType" Value="EtlFileProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+    </Section>
+    <Section Name="WinFabEtlFileQueryable">
+      <Parameter Name="ProducerType" Value="EtlFileProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="WindowsFabricEtlType" Value="QueryEtl"/>
+    </Section>
+    <Section Name="WinFabCrashDump">
+      <Parameter Name="ProducerType" Value="FolderProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="FolderType" Value="WindowsFabricCrashDumps"/>
+    </Section>
+    <Section Name="WinFabPerfCounter">
+      <Parameter Name="ProducerType" Value="FolderProducer"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <Parameter Name="FolderType" Value="WindowsFabricPerformanceCounters"/>
+    </Section>
+
+    <!-- 
+         Diagnostic consumer instance sections
+         =====================================
+         The value for parameter "ConsumerType" is one of the well-defined consumer 
+         types supported by the DCA
+         
+         The value for parameter "ProducerInstance" is the name of the section 
+         that contains information about the producer instance that the consumer
+         is associated with
+    -->
+    <Section Name="AzureBlobWinFabEtw">
+      <Parameter Name="ConsumerType" Value="AzureBlobEtwCsvUploader"/>
+      <Parameter Name="ProducerInstance" Value="WinFabEtlFile"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <!-- 
+           Specify connection string to Azure storage account below. Connection string
+           should be in the following format
+               xstore:DefaultEndpointsProtocol=https;AccountName=[];AccountKey=[]
+      -->
+      <Parameter Name="StoreConnectionString" Value=""/>
+      <Parameter Name="ContainerName" Value="fabriclogs"/>
+    </Section>
+    <Section Name="AzureTableWinFabEtwQueryable">
+      <Parameter Name="ConsumerType" Value="AzureTableQueryableEventUploader"/>
+      <Parameter Name="ProducerInstance" Value="WinFabEtlFileQueryable"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <!-- 
+           Specify connection string to Azure storage account below. Connection string
+           should be in the following format
+               xstore:DefaultEndpointsProtocol=https;AccountName=[];AccountKey=[]
+      -->
+      <Parameter Name="StoreConnectionString" Value=""/>
+      <Parameter Name="TableNamePrefix" Value="fabriclogs"/>
+    </Section>
+    <Section Name="AzureBlobWinFabCrashDump">
+      <Parameter Name="ConsumerType" Value="AzureBlobFolderUploader"/>
+      <Parameter Name="ProducerInstance" Value="WinFabCrashDump"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <!-- 
+           Specify connection string to Azure storage account below. Connection string
+           should be in the following format
+               xstore:DefaultEndpointsProtocol=https;AccountName=[];AccountKey=[]
+      -->
+      <Parameter Name="StoreConnectionString" Value=""/>
+      <Parameter Name="ContainerName" Value="fabriccrashdumps"/>
+    </Section>
+    <Section Name="AzureBlobWinFabPerfCounter">
+      <Parameter Name="ConsumerType" Value="AzureBlobFolderUploader"/>
+      <Parameter Name="ProducerInstance" Value="WinFabPerfCounter"/>
+      <Parameter Name="IsEnabled" Value="true"/>
+      <!-- 
+           Specify connection string to Azure storage account below. Connection string
+           should be in the following format
+               xstore:DefaultEndpointsProtocol=https;AccountName=[];AccountKey=[]
+      -->
+      <Parameter Name="StoreConnectionString" Value=""/>
+      <Parameter Name="ContainerName" Value="fabriccounters"/>
+    </Section>
+  </FabricSettings>
+</ClusterManifest>

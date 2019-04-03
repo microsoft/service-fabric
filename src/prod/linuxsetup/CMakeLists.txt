@@ -18,9 +18,11 @@ add_custom_target(fabricdrop
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/azurecliproxy/CoreCLR/azurecliproxy/AzureCliProxy.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/ImageBuilderExe/CoreCLR/ImageBuilder/ImageBuilder.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/FabricCAS/CoreCLR/FabricCAS.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
+    COMMAND cp ${PROJECT_SOURCE_DIR}/tools/CoreCLRUtilites/SfTrace/lttng_handler.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/AzureCliProxy.sh
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/ImageBuilder.sh
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/FabricCAS.sh
+    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/lttng_handler.sh
 
     COMMAND cp -r ${Package_Managed_Libs_Dir}/DCA.Code/. ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code
     COMMAND cp ${WinFab_Babeltrace_Dir}/bin/sftrace ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code
@@ -29,7 +31,7 @@ add_custom_target(fabricdrop
     COMMAND cp ${WinFab_Babeltrace_Dir}/lib/lib* ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code
     COMMAND cp ${WinFab_Babeltrace_Dir}/lib/lib* ${TEST_OUTPUT_DIR}
     COMMAND cp ${WinFab_Babeltrace_Dir}/lib/lib* ${CLUSTER_DEPLOYER_DIR}
-	COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/azurecliproxy/CoreCLR/azurecliproxy/AzureCliProxy.sh ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code/.
+    COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/azurecliproxy/CoreCLR/azurecliproxy/AzureCliProxy.sh ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code/.
     COMMAND cp ${LIBRARY_OUTPUT_DIR}/libLttngReader.so ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/DCA/product/host/CoreClrDll/FabricDCA/FabricDCA.sh ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code/.
     COMMAND cp ${PROJECT_SOURCE_DIR}/tools/CoreCLRUtilites/SfTrace/lttng_handler.sh ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code/.
@@ -65,6 +67,9 @@ add_custom_target(fabricdrop
     COMMAND cp -r ${LIBRARY_OUTPUT_DIR}/libFabricTransport.so ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
     COMMAND cp -r ${LIBRARY_OUTPUT_DIR}/libFabricFaultAnalysisService.so      ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
 
+    COMMAND cp -r ${LIBRARY_OUTPUT_DIR}/libReliableCollectionService.so      ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
+    COMMAND cp -r ${LIBRARY_OUTPUT_DIR}/libFabricGatewayResourceManager.so  ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
+
     COMMAND echo Cluster Version ${Cluster_Version}
     COMMAND echo -n ${Cluster_Version} > ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/ClusterVersion
     COMMAND echo -n ${Cluster_Version} > ${FABRIC_DROP_DIR}/bin/Fabric/DCA.Code/ClusterVersion
@@ -86,6 +91,8 @@ add_custom_target(fabricdrop
     COMMAND cp -a ${Linux_Setup_Dir}/runtime/scripts/startservicefabricupdater.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/startservicefabricupdater.sh
     COMMAND cp -a ${Linux_Setup_Dir}/runtime/scripts/doupgrade.sh ${FABRIC_DROP_DIR}/bin/doupgrade.sh
     COMMAND cp -a ${Linux_Setup_Dir}/runtime/scripts/cleancgroup.sh ${FABRIC_DROP_DIR}/bin/cleancgroup.sh
+
+    COMMAND chmod 0755 ${FABRIC_DROP_DIR}/bin/doupgrade.sh
 
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/ServiceModel/xsd/ServiceFabricServiceModel.xsd ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/ServiceFabricServiceModel.xsd
 
@@ -128,7 +135,7 @@ add_custom_target(fabricdrop
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/FabricUS/CoreCLR/FabricUS/FabricUS.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/US.Code.Current/.
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/US.Code.Current/FabricUS.sh
 
-    # Let FabricIS come from winfab coreclr libs 
+    # Let FabricIS come from winfab coreclr libs
     COMMAND cp -r ${WinFab_CoreCLR_Libs_Dir}/FabricIS/IS.Code.Current ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/IS.Code.Current
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/fabricis/host/CoreCLR/FabricIS/FabricIS.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/IS.Code.Current/.
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/IS.Code.Current/FabricIS.sh
@@ -142,6 +149,10 @@ add_custom_target(fabricdrop
     COMMAND cp -r ${Package_Managed_Libs_Dir}/FabricTVS/. ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/.
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/TokenValidationService/CoreCLR/FabricTVS/FabricTVS.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/TVS.Code.Current/.
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/TVS.Code.Current/FabricTVS.sh
+
+    COMMAND cp -r ${Package_Managed_Libs_Dir}/FabricGRM/. ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/.
+    COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/FabricGRM/CoreCLR/FabricGRM/FabricGRM.sh ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/GRM.Code.Current/.
+    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/GRM.Code.Current/FabricGRM.sh
 
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/Management/fabricsystemapppackage/__fabricsystem_app4294967295/App.1.0.prod.linux.xml ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/App.1.0.xml
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/Management/fabricsystemapppackage/__fabricsystem_app4294967295/IS.Package.1.0.prod.linux.xml ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/IS.Package.1.0.xml
@@ -159,8 +170,10 @@ add_custom_target(fabricdrop
     COMMAND cp -r ${PROJECT_SOURCE_DIR}/src/linux/dockers ${PROJECT_BINARY_DIR}
     COMMAND cp -r ${PROJECT_SOURCE_DIR}/src/linux/dockers/.dockerignore ${PROJECT_BINARY_DIR}
 
-    COMMAND cp ${PROJECT_SOURCE_DIR}/src/Hosting2/crio.sh   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
-    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/crio.sh
+    COMMAND cp ${PROJECT_SOURCE_DIR}/src/Hosting2/crio.cc.sh   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
+    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/crio.cc.sh
+    COMMAND cp ${PROJECT_SOURCE_DIR}/src/Hosting2/crio.kata.sh   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
+    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/crio.kata.sh
     COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/crictl   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/crictl
     COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/crio   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
@@ -169,7 +182,8 @@ add_custom_target(fabricdrop
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/conmon
     COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/pause  ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/pause
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/crio.conf    ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
+    COMMAND cp ${Linux_Setup_Dir}/crio.cc.conf    ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
+    COMMAND cp ${Linux_Setup_Dir}/crio.kata.conf    ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/seccomp.json ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
 
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/Hosting2/containerlogrotate.sh   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
@@ -181,44 +195,66 @@ add_custom_target(fabricdrop
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/loopback
     COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/cni/host-local  ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/host-local
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/cni/10-mynet.conf ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/cni/99-loopback.conf ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
+
     COMMAND cp -r ${PROJECT_SOURCE_DIR}/../test/ClusterDeployer ${PROJECT_BINARY_DIR}/ClusterDeployerTest
 
-    COMMAND cp -r ${TEST_OUTPUT_DIR}/CheckLinuxLog.exe     ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
+    # BlockStore Service
+    COMMAND mkdir -p ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/BlockStore/
+    COMMAND cp ${TEST_OUTPUT_DIR}/SFBlockStoreService ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/
+    COMMAND cp ${LIBRARY_OUTPUT_DIR}/libSFBDCtlLib.so ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
 
+    # Copy Blockstore driver.
+    COMMAND cp -r ${PROJECT_SOURCE_DIR}/src/BlockStore/Linux/driver ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/BlockStore/
+    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/BlockStore/driver/blockstore.sh
+
+    # Copy Volume Drive Manifests and update version
+    COMMAND cp ${PROJECT_SOURCE_DIR}/src/BlockStore/Service/VolumeDriver/Service/Manifests/Linux/ApplicationManifest.xml ${PROJECT_BINARY_DIR}/coreclr/bin/BlockStore/VolumeDriver/ubuntu.16.04-x64/
+    COMMAND cp ${PROJECT_SOURCE_DIR}/src/BlockStore/Service/VolumeDriver/Service/Manifests/Linux/ServiceManifest.xml ${PROJECT_BINARY_DIR}/coreclr/bin/BlockStore/VolumeDriver/ubuntu.16.04-x64/ServiceFabricVolumeDriverPkg/
+    COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/Container/VolumePlugin/AzureFiles/Service/Manifests/Linux/ApplicationManifest.xml ${PROJECT_BINARY_DIR}/coreclr/bin/VolumePluginDrop/ubuntu.16.04-x64/AzureFiles/
+    COMMAND cp ${PROJECT_SOURCE_DIR}/src/managed/Container/VolumePlugin/AzureFiles/Service/Manifests/Linux/ServiceManifest.xml ${PROJECT_BINARY_DIR}/coreclr/bin/VolumePluginDrop/ubuntu.16.04-x64/AzureFiles/AzureFilesVolumePluginPkg/
+    # Simulate SpecializeFabricVersion target to replace !FABRIC_VERSION! with build version
+    COMMAND sed -i 's/!FABRIC_VERSION!/${BUILD_VERSION}/g' ${PROJECT_BINARY_DIR}/coreclr/bin/BlockStore/VolumeDriver/ubuntu.16.04-x64/ServiceFabricVolumeDriverPkg/ServiceManifest.xml
+    COMMAND sed -i 's/!FABRIC_VERSION!/${BUILD_VERSION}/g' ${PROJECT_BINARY_DIR}/coreclr/bin/BlockStore/VolumeDriver/ubuntu.16.04-x64/ApplicationManifest.xml
+    COMMAND sed -i 's/!FABRIC_VERSION!/${BUILD_VERSION}/g' ${PROJECT_BINARY_DIR}/coreclr/bin/VolumePluginDrop/ubuntu.16.04-x64/AzureFiles/AzureFilesVolumePluginPkg/ServiceManifest.xml
+    COMMAND sed -i 's/!FABRIC_VERSION!/${BUILD_VERSION}/g' ${PROJECT_BINARY_DIR}/coreclr/bin/VolumePluginDrop/ubuntu.16.04-x64/AzureFiles/ApplicationManifest.xml
+    COMMAND cp -r ${TEST_OUTPUT_DIR}/CheckLinuxLog.exe     ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
     )
 
 add_custom_target(symsplit
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/FabricHost                                ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/Fabric                 ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/FabricGateway.exe      ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/FabricTypeHost.exe     ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricRuntime.so    ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricCommon.so     ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricResources.so  ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricClient.so     ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricImageStore.so ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricInfrastructureService.so   ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricTokenValidationService.so  ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe  ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/CSS.Code.Current/FabricCSS.exe  ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/FileStoreService.Code.Current/FileStoreService.exe  ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libReliableCollectionRuntime.so    ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricFaultAnalysisService.so     ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libKPhysicalLog.so     ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricContainerActivatorService.so  ${FABRIC_DROP_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/RMS.Code.Current/ResourceMonitor.exe  ${FABRIC_DROP_DIR}/symbols
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/FabricHost                                ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/Fabric                 ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/FabricGateway.exe      ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/FabricTypeHost.exe     ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricRuntime.so    ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricCommon.so     ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricResources.so  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricClient.so     ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricImageStore.so ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricInfrastructureService.so   ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricTokenValidationService.so  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricGatewayResourceManager.so   ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/RM.Code.Current/FabricRM.exe  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/CSS.Code.Current/FabricCSS.exe  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/FileStoreService.Code.Current/FileStoreService.exe  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libReliableCollectionRuntime.so    ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricFaultAnalysisService.so     ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libKPhysicalLog.so     ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricContainerActivatorService.so  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/__FabricSystem_App4294967295/RMS.Code.Current/ResourceMonitor.exe  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/SFBlockStoreService  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libSFBDCtlLib.so  ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${FABRIC_DROP_DIR}  bin/Fabric/Fabric.Code/libFabricGatewayResourceManager.so     ${FABRIC_DROP_DIR}/symbols ${CMAKE_STRIP}
     )
 
 add_custom_target(symsplitfortestdir
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  Fabric ${TEST_OUTPUT_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FabricRM ${TEST_OUTPUT_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FabricCSS ${TEST_OUTPUT_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FileStoreService ${TEST_OUTPUT_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FabricGateway ${TEST_OUTPUT_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FabricHost  ${TEST_OUTPUT_DIR}/symbols
-    COMMAND ${Linux_Setup_Dir}/scripts/splittestdir.sh ${TEST_OUTPUT_DIR} ${TEST_OUTPUT_DIR}/symbols
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  Fabric ${TEST_OUTPUT_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FabricRM ${TEST_OUTPUT_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FabricCSS ${TEST_OUTPUT_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FileStoreService ${TEST_OUTPUT_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FabricGateway ${TEST_OUTPUT_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/symsplit.sh ${TEST_OUTPUT_DIR}  FabricHost  ${TEST_OUTPUT_DIR}/symbols ${CMAKE_STRIP}
+    COMMAND ${Linux_Setup_Dir}/scripts/splittestdir.sh ${TEST_OUTPUT_DIR} ${TEST_OUTPUT_DIR}/symbols ${CMAKE_STRIP}
 )
 
 if(LINUX_DISTRIBUTION STREQUAL "DEBIAN")

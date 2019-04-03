@@ -1,0 +1,10 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup>
+    <Reference Include="$(PkgTaef_Redist)\Build\Binaries\release\x64\NetFx4.5\TE.Managed.dll" />
+    <Reference Include="$(PkgTaef_Redist)\Build\Binaries\release\x64\NetFx4.5\Wex.Logger.Interop.dll" />
+    <ProjectReference Include="$(RepoRoot)\src\external\taef\taef.proj" >
+	  <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+	</ProjectReference>
+  </ItemGroup>
+</Project>

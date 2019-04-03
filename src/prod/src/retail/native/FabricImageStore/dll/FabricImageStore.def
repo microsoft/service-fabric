@@ -1,0 +1,8 @@
+LIBRARY FabricImageStore
+EXPORTS
+    FabricCreateNativeImageStoreClient
+    FabricCreateLocalNativeImageStoreClient
+    ArchiveApplicationPackage
+    TryExtractApplicationPackage
+    GenerateSfpkg
+    ExpandSfpkg

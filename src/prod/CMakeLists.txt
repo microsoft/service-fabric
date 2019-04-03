@@ -238,7 +238,14 @@ sf_add_compile_options(-Wno-reserved-id-macro)
 # Create a lib directory for output during config time
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/lib ${PROJECT_BINARY_DIR}/test)
 
-set(EXTERNAL_DEPS_DIR "${PROJECT_SOURCE_DIR}/../../external/")
+option(ARM_CROSS_COMPILE OFF)
+if (ARM_CROSS_COMPILE)
+    set(EXTERNAL_DEPS_DIR "${ARM_SYS_ROOT}/external")
+else()
+    set(EXTERNAL_DEPS_DIR "${PROJECT_SOURCE_DIR}/../../external/")
+endif()
+
+set(MANAGED_DEPS_DIR "${PROJECT_SOURCE_DIR}/../../external/") 
 
 option(BUILD_THIRD_PARTY OFF)
 if (BUILD_THIRD_PARTY)
@@ -252,6 +259,7 @@ set (EXTERNAL_LIB_PATH ${EXTERNAL_DEPS_DIR}/WinFab.Linux.Libs)
 set (CLRPAL_LIB_PATH ${EXTERNAL_LIB_PATH}/ClrPal)
 set (BOOST_TEST_PATH ${THIRD_PARTY_LIB_DIR}/Boost_1_61_0/lib)
 set (CASABLANCA_LIB_PATH ${THIRD_PARTY_LIB_DIR}/casablanca_v_2/lib)
+set (LIBSSH2_LIB_PATH ${EXTERNAL_DEPS_DIR}/SF.Linux.Libssh2.1.5.1/lib/x64)
 
 # for WindowsFabric
 include_directories (".")
@@ -450,6 +458,8 @@ set(JAVA_SAMPLE_LIB_DIR ${JAVA_SRC_DIR}/sample/lib CACHE STRING "Lib folder with
 
 set (lib_Serialization "Serialization" CACHE STRING "Serialization library")
 
+set (exe_DllExportTest "DllExportTest.exe" CACHE STRING "DllExportTest.Exe")
+
 set (exe_CommonTest "Common.Test.exe" CACHE STRING "Common.Test.Exe")
 set (exe_KtlLogCoreTest "KtlLogCoreTest" CACHE STRING "Ktl Logger Core Logger Test")
 set (exe_KtlLogBvtUPassthroughTest "KtlLogBvtUPassthroughTest" CACHE STRING "Ktl Logger UPassthrough BVT Test")
@@ -481,6 +491,7 @@ set (lib_Lease "Lease" CACHE STRING "Lease library")
 set (exe_Lease.Test "Lease.Test.exe" CACHE STRING "Lease.Test.Exe")
 set (lib_LeaseAgent "LeaseAgent" CACHE STRING "LeaseAgent library")
 set (lib_FabricCommon "FabricCommon" CACHE STRING "FabricCommon library")
+set (lib_FabricCommonStatic "FabricCommonStatic" CACHE STRING "FabricCommon Static Library")
 set (lib_FabricNode "FabricNode" CACHE STRING "FabricNode library")
 set (exe_FabricNode.Test "FabricNode.Test.exe" CACHE STRING "FabricNode.Test.Exe")
 
@@ -495,6 +506,7 @@ set (lib_ServiceModel "ServiceModel" CACHE STRING "Service Model library")
 set (exe_ServiceModelTest "ServiceModel.Test.exe" CACHE STRING "ServiceModel Boost Test Exe")
 
 set (lib_FabricResources "FabricResources" CACHE STRING "Fabric Resources library")
+set (lib_FabricResourcesStatic "FabricResourcesStatic" CACHE STRING "Fabric Resources Static Library")
 
 set (lib_Transport "Transport" CACHE STRING "Transport library")
 set (exe_Transport.Test "Transport.Test.exe" CACHE STRING "Transport.Test.Exe")
@@ -505,6 +517,7 @@ set (exe_Transport.PerfTest.Client "Transport.PerfTest.Client.exe" CACHE STRING 
 set (lib_Failover "Failover" CACHE STRING "Failover library")
 set (lib_FailoverCommon "FailoverCommon" CACHE STRING "Failover Common library")
 set (lib_FailoverFM "FailoverFM" CACHE STRING "FailoverFM library")
+set (lib_NetworkInventoryManager "NetworkInventoryManager" CACHE STRING "NetworkInventoryManager library")
 set (exe_FailoverFM.Test "FM.Test.exe" CACHE STRING "FM.Test.exe")
 set (exe_FailoverRA.Test "RA.Test.exe" CACHE STRING "RA.Test.exe")
 
@@ -541,14 +554,17 @@ set (lib_FabricFaultAnalysisService "FabricFaultAnalysisService" CACHE STRING "F
 
 
 set (lib_ImageStore "ImageStore" CACHE STRING "ImageStore library")
+set (exe_ImageStore.Test "ImageStore.Test.exe" CACHE STRING "ImageStore.Test")
+
+
 set (lib_ClusterManager "ClusterManager" CACHE STRING "ClusterManager library")
 set (lib_HealthManager "HealthManager" CACHE STRING "HealthManager library")
 set (lib_UpgradeService "UpgradeService" CACHE STRING "UpgradeService library")
-
 set (lib_SystemServices "SystemServices" CACHE STRING "SystemServices library")
 
 set (lib_Hosting2 "Hosting2" CACHE STRING "Hosting2 library")
 set (exe_Hosting2Test "Hosting2.Test.exe" CACHE STRING "Hosting2 Boost Test Exe")
+set (exe_Hosting2NetworkingTest "Hosting2.Networking.Test.exe" CACHE STRING "Hosting2 Boost Networking Test Exe")
 set (lib_httpgateway "HttpGateway" CACHE STRING "HttpGateway library")
 
 set (lib_Testability "Testability" CACHE STRING "Testability library")
@@ -611,6 +627,9 @@ set (lib_FabricContainerActivatorService "FabricContainerActivatorService" CACHE
 set (lib_InfrastructureService "InfrastructureService" CACHE STRING "InfrastructureService library")
 set (lib_FabricInfrastructureService "FabricInfrastructureService" CACHE STRING "FabricInfrastructureService library")
 
+set (lib_GatewayResourceManager "GatewayResourceManager" CACHE STRING "GatewayResourceManager library")
+set (lib_FabricGatewayResourceManager "FabricGatewayResourceManager" CACHE STRING "FabricGatewayResourceManager library")
+
 set (lib_KComAdapter "KComAdapter" CACHE STRING "KComAdapter library")
 set (exe_KComAdapter_Test "KComAdapter.Test" CACHE STRING "KComAdapter.Test Exe")
 
@@ -660,6 +679,12 @@ set (lib_ReliableCollectionRuntime "ReliableCollectionRuntime" CACHE STRING "Rel
 
 set (lib_BackupRestoreService "BackupRestoreService" CACHE STRING "BackupRestoreService library")
 
+set (lib_BlockStore "SFBDCtlLib" CACHE STRING "SFBDCtlLib")
+set (exe_BlockStore "SFBlockStoreService" CACHE STRING "SFBlockStoreService")
+set (exe_BlockStoreCtl "SFBlockStoreCtl" CACHE STRING "SFBlockStoreCtl")
+set (exe_BlkDeviceLinuxKernelValidation_Test "BlkDeviceLinuxKernelValidation" CACHE STRING "BlkDeviceLinuxKernelValidation")
+
+set (lib_ReliableCollectionService "ReliableCollectionService" CACHE STRING "ReliableCollectionService")
 set (lib_LttngReader "LttngReader" CACHE STRING "LttngReader library")
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel" CACHE STRING "" FORCE)

@@ -9,7 +9,7 @@
 #include <boost/test/unit_test.hpp>
 #include "Common/boost-taef.h"
 
-std::wstring const SharedLogGuid(L"4CA2CCDA-DD0F-49c8-A741-62AAC0D4EB62");
+std::wstring const SharedLogGuid(L"3CA2CCDA-DD0F-49c8-A741-62AAC0D4EB62"); // This is the same as the default application shared log GUID defined in prod\src\ktllogger\constants.cpp
 std::wstring const DefaultTestSubDirectoryName(L"KtlLogs");
 
 extern std::wstring GetWorkingDirectory()
@@ -80,7 +80,6 @@ extern void LR_Test_InitializeKtlConfig(
     KMemCpySafe(&settings->Path[0], 512 * sizeof(WCHAR), sharedLogFileName->operator PVOID(), sharedLogFileName->LengthInBytes());
     settings->Path[sharedLogFileName->LengthInBytes() / sizeof(WCHAR)] = L'\0'; // set the null terminator
     settings->LogSize = 257 * 1024 * 1024; // shared log lower than this value results in some errors while creating the log
-    settings->Flags = static_cast<ULONG>(Data::Log::LogCreationFlags::UseSparseFile);
 
     Common::Guid g;
     bool ret = Common::Guid::TryParse(SharedLogGuid, g);

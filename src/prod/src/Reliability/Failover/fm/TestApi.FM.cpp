@@ -705,6 +705,11 @@ bool ApplicationSnapshot::get_IsDeleted() const
     return app_->IsDeleted;
 }
 
+bool ApplicationSnapshot::get_IsUpgradeCompleted() const
+{
+    return !app_->Upgrade || app_->Upgrade->IsCompleted();
+}
+
 void ApplicationSnapshot::WriteTo(Common::TextWriter& writer, Common::FormatOptions const & options) const
 {
     app_->WriteTo(writer, options);

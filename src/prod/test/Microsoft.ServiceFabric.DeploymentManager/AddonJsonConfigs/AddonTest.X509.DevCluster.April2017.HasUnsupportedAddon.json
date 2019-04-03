@@ -1,0 +1,121 @@
+{
+    "name": "SampleCluster",
+    "clusterConfigurationVersion": "1.0.0",
+    "apiVersion": "04-2017",
+    "nodes": [
+        {
+            "nodeName": "vm0",
+            "iPAddress": "localhost",
+            "nodeTypeRef": "NodeType0",
+            "faultDomain": "fd:/dc1/r0",
+            "upgradeDomain": "UD0"
+        },
+        {
+            "nodeName": "vm1",
+            "iPAddress": "localhost",
+            "nodeTypeRef": "NodeType1",
+            "faultDomain": "fd:/dc1/r1",
+            "upgradeDomain": "UD1"
+        },
+        {
+            "nodeName": "vm2",
+            "iPAddress": "localhost",
+            "nodeTypeRef": "NodeType2",
+            "faultDomain": "fd:/dc1/r2",
+            "upgradeDomain": "UD2"
+        }
+    ],
+    "properties": {
+        "diagnosticsStore": 
+        {
+            "metadata":  "Please replace the diagnostics file share with an actual file share accessible from all cluster machines. For example, \\\\localhost\\DiagnosticsStore.",
+            "dataDeletionAgeInDays": "7",
+            "storeType": "FileShare",
+            "connectionstring": "c:\\ProgramData\\SF\\DiagnosticsStore"
+        },
+      "security": {
+        "metadata": "The Credential type X509 indicates this is cluster is secured using X509 Certificates. The thumbprint format is - d5 ec 42 3b 79 cb e5 07 fd 83 59 3c 56 b9 d5 31 24 25 42 64.",
+        "ClusterCredentialType": "X509",
+        "ServerCredentialType": "X509",
+        "CertificateInformation": {
+          "ClusterCertificate": {
+            "Thumbprint": "17E90DBD-EE81-52ED-B34B-7DC60E7E6079",
+            "X509StoreName": "My"
+          },
+          "ServerCertificate": {
+            "Thumbprint": "27E90DBD-EE81-42ED-B34B-7DC60E7E6072",
+            "X509StoreName": "My"
+          },
+          "ClientCertificateThumbprints": [
+            {
+              "CertificateThumbprint": "37E90DBD-EE81-42ED-B34B-7DC60E7E6072",
+              "IsAdmin": false
+            }
+          ]
+        }
+      },
+        "nodeTypes": [
+            {
+                "name": "NodeType0",
+                "clientConnectionEndpointPort": "19000",
+                "clusterConnectionEndpointPort": "19001",
+                "leaseDriverEndpointPort": "19002",
+                "serviceConnectionEndpointPort": "19003",
+                "httpGatewayEndpointPort": "19080",
+                "reverseProxyEndpointPort": "19081",
+                "applicationPorts": {
+                    "startPort": "20001",
+                    "endPort": "20031"
+                },
+                "isPrimary": true
+            },
+            {
+                "name": "NodeType1",
+                "clientConnectionEndpointPort": "19004",
+                "clusterConnectionEndpointPort": "19005",
+                "leaseDriverEndpointPort": "19006",
+                "serviceConnectionEndpointPort": "19007",
+                "httpGatewayEndpointPort": "19082",
+                "reverseProxyEndpointPort": "19083",
+                "applicationPorts": {
+                    "startPort": "20288",
+                    "endPort": "20318"
+                },
+                "isPrimary": true
+            },
+            {
+                "name": "NodeType2",
+                "clientConnectionEndpointPort": "19008",
+                "clusterConnectionEndpointPort": "19009",
+                "leaseDriverEndpointPort": "19010",
+                "serviceConnectionEndpointPort": "19011",
+                "httpGatewayEndpointPort": "19084",
+                "reverseProxyEndpointPort": "19085",
+                "applicationPorts": {
+                    "startPort": "20575",
+                    "endPort": "20605"
+                },
+                "isPrimary": false
+            }
+        ],
+        "fabricSettings": [
+            {
+                "name": "Setup",
+                "parameters": [
+                    {
+                        "name": "FabricDataRoot",
+                        "value": "C:\\ProgramData\\SF"
+                    },
+                    {
+                        "name": "FabricLogRoot",
+                        "value": "C:\\ProgramData\\SF\\Log"
+                    }
+                ]
+            }
+        ],
+      "addOnFeatures": [
+          "RepairManager",
+          "iamunsupported"
+      ]
+    }
+}

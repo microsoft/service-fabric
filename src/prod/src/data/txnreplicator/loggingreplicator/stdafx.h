@@ -10,6 +10,7 @@
 #define FILELOGMANAGER_TAG 'FgoL'
 #define KTLLOGMANAGER_TAG  'KgoL'
 #define FAULTYFILELOGMANAGER_TAG 'GlfF'
+#define MEMORYLOGMANAGER_TAG 'LmeM'
 #define LOGGEDRECORDS_TAG 'SgoL'
 #define LOGGINGREPLICATOR_TAG 'peRL'
 #define LOGRECORDS_DISPATCHER_TAG 'DgoL'
@@ -185,6 +186,8 @@
 #endif
 
 #include "FaultyFileLog.h"
+#include "MemoryLog.h"
+#include "MemoryLogReadStream.h"
 #include "TransactionMap.h"
 #include "LogRecordsMap.h"
 #include "LoggedRecords.h"
@@ -196,6 +199,7 @@
 #include "LogManager.h"
 #include "FileLogManager.h"
 #include "KLogManager.h"
+#include "MemoryLogManager.h"
 #include "IReplicatedLogManager.h"
 #include "ReplicatedLogManager.h"
 #include "RecordProcessingMode.h"

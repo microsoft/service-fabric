@@ -1,0 +1,2 @@
+SingleMachine-CIT.json
+  TESTS:ConfigurationValidation.Test.dll

@@ -29,14 +29,15 @@ namespace System.Fabric.FabricDeployer
                 throw new ArgumentNullException(nameof(settings));
             }
 
-#if !DotNetCoreClr
+#if !DotNetCoreClrLinux
             // This logic is specific to Windows plugins and how ETW/PerfCtr sessions are created separate from DCA.
             AddOrUpdateDiagnosticsSection(settings);
             AddProducerAndConsumerSections(settings);
+#else
+            AddAzureTableOperationalConsumerIfNeededLinux(settings);
 #endif
         }
 
-#if !DotNetCoreClr
         private static void AddOrUpdateDiagnosticsSection(List<SettingsTypeSection> settings)
         {
             var diagnosticsSection = settings.SingleOrDefault(section => section.Name.Equals(Constants.SectionNames.Diagnostics, StringComparison.OrdinalIgnoreCase));
@@ -77,7 +78,7 @@ namespace System.Fabric.FabricDeployer
         {
             var queryableProducerSectionName = AddTypedEtlProducerSection(settings, EtlProducerValidator.QueryEtl);
             var operationalProducerSectionName = AddTypedEtlProducerSection(settings, EtlProducerValidator.OperationalEtl);
-            
+
             AddAzureTableOperationalConsumerIfNeeded(settings, queryableProducerSectionName, operationalProducerSectionName);
         }
 
@@ -258,7 +259,7 @@ namespace System.Fabric.FabricDeployer
 
             var queryableConsumer = FindCorrespondingConsumerSection(
                 settings,
-                queryableProducerSectionName, 
+                queryableProducerSectionName,
                 DcaStandardPluginValidators.AzureTableQueryableEventUploader);
             if (queryableConsumer == null ||
                 !CheckSettingsSectionParameterValueEquals(
@@ -301,6 +302,17 @@ namespace System.Fabric.FabricDeployer
                     .ToArray();
             }
 
+            var queryableConsumerDeploymentId = queryableConsumer.Parameter.SingleOrDefault(p => p.Name == FabricValidatorConstants.ParameterNames.DeploymentId);
+            if (queryableConsumerDeploymentId != null)
+            {
+                operationalConsumer.Parameter = operationalConsumer.Parameter.Union(
+                        new[] {
+                        new SettingsTypeSectionParameter {
+                        Name = FabricValidatorConstants.ParameterNames.DeploymentId,
+                        Value = queryableConsumerDeploymentId.Value } })
+                    .ToArray();
+            }
+
             // Remove any existing using same name
             settings.RemoveAll(s => s.Name == operationalConsumer.Name);
             settings.Add(operationalConsumer);
@@ -339,12 +351,151 @@ namespace System.Fabric.FabricDeployer
             return consumerSection;
         }
 
+#if DotNetCoreClrLinux
+        // Adds in case Queryable Table uploader is present
+        private static void AddAzureTableOperationalConsumerIfNeededLinux(List<SettingsTypeSection> settings)
+        {
+            // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+            bool isStructuredTracesEnabled = GetIsStructuredTracesEnabled(settings);
+            if (isStructuredTracesEnabled == false)
+            {
+                return;
+            }
+
+            SettingsTypeSection operationalConsumer = CreateOperationalTableUploaderSectionFromQueryableTable(settings);
+            if (operationalConsumer == null)
+            {
+                return;
+            }
+
+            SettingsTypeSection diagnosticsSection = GetSectionWithName(Constants.SectionNames.Diagnostics, settings);
+            if (diagnosticsSection == null)
+            {
+                return;
+            }
+
+            SettingsTypeSectionParameter consumersParam = GetParameterWithName(FabricValidatorConstants.ParameterNames.ConsumerInstances, diagnosticsSection);
+            if (consumersParam == null)
+            {
+                return;
+            }
+
+            // Updating ConsumerInstances in Diagnostics Section
+            var consumers = consumersParam.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(pluginName => pluginName.Trim());
+            consumersParam.Value = string.Join(", ", consumers.Union(new string[] { operationalConsumer.Name }));
+
+            // Adding operational table uploader Section
+            settings.Add(operationalConsumer);
+        }
+
+        private static SettingsTypeSection CreateOperationalTableUploaderSectionFromQueryableTable(List<SettingsTypeSection> settings)
+        {
+            SettingsTypeSection azureTableQueryableCsvUploaderConsumerSection = GetFirstConsumerOfType(settings, DcaStandardPluginValidators.AzureTableQueryableCsvUploader);
+            SettingsTypeSection azureTableOperationalEventUploaderConsumerSection = GetFirstConsumerOfType(settings, DcaStandardPluginValidators.AzureTableOperationalEventUploader);
+
+            // don't add in case there is no queryable table uploader or there is an existing operational table uploader defined.
+            if (azureTableQueryableCsvUploaderConsumerSection == null ||
+                azureTableOperationalEventUploaderConsumerSection != null)
+            {
+                return null;
+            }
+
+            SettingsTypeSectionParameter queryableConsumerTableNamePrefix = GetParameterWithName(FabricValidatorConstants.ParameterNames.TableNamePrefix, azureTableQueryableCsvUploaderConsumerSection);
+            SettingsTypeSectionParameter queryableConsumerStoreConnectionString = GetParameterWithName(FabricValidatorConstants.ParameterNames.StoreConnectionString, azureTableQueryableCsvUploaderConsumerSection);
+            SettingsTypeSectionParameter queryableConsumerProducerInstance = GetParameterWithName(FabricValidatorConstants.ParameterNames.ProducerInstance, azureTableQueryableCsvUploaderConsumerSection);
+
+            if (queryableConsumerTableNamePrefix == null ||
+                queryableConsumerStoreConnectionString == null ||
+                queryableConsumerProducerInstance == null)
+            {
+                DeployerTrace.WriteError($"Unable to create Operational trace from Queryable Table Uploader. Not all required parameters defined.\n" +
+                    "{FabricValidatorConstants.ParameterNames.ProducerInstance} : {queryableConsumerProducerInstance != null}\n" +
+                    "{FabricValidatorConstants.ParameterNames.StoreConnectionString} : {queryableConsumerStoreConnectionString != null}\n" +
+                    "{FabricValidatorConstants.ParameterNames.TableNamePrefix} : {QueryableConsumerTableNamePrefix != null}");
+                return null;
+            }
+
+            var operationalProducerSectionValue = queryableConsumerProducerInstance.Value;
+
+            var operationalConsumer = new SettingsTypeSection
+            {
+                Name = DefaultAzureTableOperationalConsumerSectionName,
+                Parameter = new[]
+                    {
+                        new SettingsTypeSectionParameter { Name = FabricValidatorConstants.ParameterNames.ConsumerType, Value = DcaStandardPluginValidators.AzureTableOperationalEventUploader },
+                        new SettingsTypeSectionParameter { Name = FabricValidatorConstants.ParameterNames.IsEnabled, Value = "true" },
+                        new SettingsTypeSectionParameter { Name = FabricValidatorConstants.ParameterNames.ProducerInstance, Value = operationalProducerSectionValue },
+                        new SettingsTypeSectionParameter {
+                            Name = FabricValidatorConstants.ParameterNames.StoreConnectionString,
+                            Value = queryableConsumerStoreConnectionString.Value,
+                            IsEncrypted = queryableConsumerStoreConnectionString.IsEncrypted },
+                        new SettingsTypeSectionParameter {
+                            Name = FabricValidatorConstants.ParameterNames.TableNamePrefix,
+                            Value = queryableConsumerTableNamePrefix.Value }
+                    }
+            };
+
+            var queryableConsumerDataDeletionAgeInDays = GetParameterWithName(FabricValidatorConstants.ParameterNames.DataDeletionAgeInDays, azureTableQueryableCsvUploaderConsumerSection);
+            if (queryableConsumerDataDeletionAgeInDays != null)
+            {
+                operationalConsumer.Parameter = operationalConsumer.Parameter.Union(
+                    new[] {
+                        new SettingsTypeSectionParameter {
+                            Name = FabricValidatorConstants.ParameterNames.DataDeletionAgeInDays,
+                            Value = queryableConsumerDataDeletionAgeInDays.Value } })
+                    .ToArray();
+            }
+
+            var queryableConsumerDeploymentId = GetParameterWithName(FabricValidatorConstants.ParameterNames.DeploymentId, azureTableQueryableCsvUploaderConsumerSection);
+            if (queryableConsumerDeploymentId != null)
+            {
+                operationalConsumer.Parameter = operationalConsumer.Parameter.Union(
+                    new[] {
+                        new SettingsTypeSectionParameter {
+                            Name = FabricValidatorConstants.ParameterNames.DeploymentId,
+                            Value = queryableConsumerDeploymentId.Value } })
+                    .ToArray();
+            }
+
+            return operationalConsumer;
+        }
+
+        private static SettingsTypeSection GetFirstConsumerOfType(List<SettingsTypeSection> settings, string consumerTypeName)
+        {
+            return settings.FirstOrDefault(
+                s => s.Parameter.Any(
+                    p => p.Name == FabricValidatorConstants.ParameterNames.ConsumerType &&
+                         p.Value == consumerTypeName));
+        }
+
+        private static SettingsTypeSection GetSectionWithName(string sectionName, List<SettingsTypeSection> settings)
+        {
+            return settings.SingleOrDefault(section => section.Name.Equals(sectionName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static SettingsTypeSectionParameter GetParameterWithName(string parameterName, SettingsTypeSection section)
+        {
+            return section.Parameter.FirstOrDefault(p => p.Name.Equals(parameterName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // TODO - Following code will be removed once fully transitioned to structured traces in Linux
+        private static bool GetIsStructuredTracesEnabled(List<SettingsTypeSection> settings)
+        {
+            SettingsTypeSection commonSection = GetSectionWithName(FabricValidatorConstants.SectionNames.Common, settings);
+            if (commonSection == null)
+            {
+                return false;
+            }
+
+            return CheckSettingsSectionParameterValueEquals(commonSection, FabricValidatorConstants.ParameterNames.Common.LinuxStructuredTracesEnabled, "true");
+        }
+#endif
+
         private static bool CheckSettingsSectionParameterValueEquals(SettingsTypeSection section, string parameterName, string value)
         {
             return section != null &&
                 section.Parameter.SingleOrDefault(p => p.Name == parameterName) != null &&
                 section.Parameter.Single(p => p.Name == parameterName).Value.Trim().Equals(value, StringComparison.OrdinalIgnoreCase);
         }
-#endif
     }
 }

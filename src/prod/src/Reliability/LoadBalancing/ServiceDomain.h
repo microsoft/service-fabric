@@ -137,6 +137,9 @@ namespace Reliability
             __declspec (property(get = get_AutoScalerComponent)) AutoScaler & AutoScalerComponent;
             AutoScaler & get_AutoScalerComponent() { return autoScaler_; }
 
+            __declspec (property(get = get_InBuildCountPerNode)) Uint64UnorderedMap<uint64_t> const& InBuildCountPerNode;
+            Uint64UnorderedMap<uint64_t> const& get_InBuildCountPerNode() const { return inBuildCountPerNode_; }
+
             size_t BalancingMovementCount() const;
             size_t PlacementMovementCount() const;
 
@@ -268,7 +271,11 @@ namespace Reliability
                 Federation::NodeId nodeId);
 
         private:
-            void UpdateNodeToFailoverUnitMapping(FailoverUnit const& failoverUnit, std::vector<ReplicaDescription> const& oldReplicas, std::vector<ReplicaDescription> const& newReplicas);
+            void UpdateNodeToFailoverUnitMapping(
+                FailoverUnit const& failoverUnit,
+                std::vector<ReplicaDescription> const& oldReplicas,
+                std::vector<ReplicaDescription> const& newReplicas,
+                bool isStateful);
 
             void UpdatePendingLoadsOrMoveCosts();
 
@@ -389,6 +396,9 @@ namespace Reliability
             // The set of replicas on each node (counts primary, secondary and standBy replicas).
             // Boolean value indicates whether primary (true) or secondary replica load (false) should be used.
             std::map<Federation::NodeId, std::map<Common::Guid, bool>> partitionsPerNode_;
+
+            // Number of InBuild replicas per node
+            Uint64UnorderedMap<uint64_t> inBuildCountPerNode_;
 
             std::map<Federation::NodeId, std::map<uint64, ServicePackageNode>> servicePackageReplicaCountPerNode_;
 

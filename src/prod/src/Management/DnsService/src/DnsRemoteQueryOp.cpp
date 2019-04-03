@@ -41,6 +41,7 @@ _context(nullptr)
 
 DnsRemoteQueryOp::~DnsRemoteQueryOp()
 {
+    _tracer.Trace(DnsTraceLevel_Noise, "Destructing DnsRemoteQueryOp.");
 }
 
 //***************************************
@@ -56,16 +57,19 @@ void DnsRemoteQueryOp::OnStart()
 
 void DnsRemoteQueryOp::OnCompleted()
 {
+    _tracer.Trace(DnsTraceLevel_Info, "DnsRemoteQueryOp OnCompleted called.");
     _callback(*_spBuffer, _numberOfBytesInBuffer, _context);
 }
 
 void DnsRemoteQueryOp::OnReuse()
 {
+    _tracer.Trace(DnsTraceLevel_Noise, "DnsRemoteQueryOp OnReuse called.");
     _context = nullptr;
 }
 
 void DnsRemoteQueryOp::OnCancel()
 {
+    _tracer.Trace(DnsTraceLevel_Info, "DnsRemoteQueryOp OnCancel called.");
     TerminateAsync();
 }
 
@@ -134,6 +138,13 @@ void DnsRemoteQueryOp::OnStateEnter_TransportOpen()
         /*inout*/port,
         completionCallback
     );
+
+    if (!fSuccess)
+    {
+        _tracer.Trace(DnsTraceLevel_Error,
+            "DnsRemoteQueryOp activityId {0}, failed to start the UDP listener",
+            WSTR(_activityId));
+    }
 
     ChangeStateAsync(fSuccess);
 }

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationInstance 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Version="1" 
+    NameUri="fabric:/OnDemandCodePackageActivationTest" 
+    ApplicationId="OnDemandCodePackageActivationTestApp_App0" 
+    ApplicationTypeName="OnDemandCodePackageActivationTestApp" 
+    ApplicationTypeVersion="1.0" 
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <ApplicationPackageRef RolloutVersion="1.0" />
+    <ServicePackageRef Name="OnDemandCodePackageActivationTestService" RolloutVersion="1.0" />
+    <ServicePackageRef Name="OnDemandCodePackageActivationTestService1" RolloutVersion="1.0" />
+  <ServiceTemplates/>
+  <DefaultServices/>
+</ApplicationInstance>

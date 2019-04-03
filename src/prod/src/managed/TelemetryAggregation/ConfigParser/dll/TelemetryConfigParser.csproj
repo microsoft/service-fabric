@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{8F5269D6-6F47-411A-8DF1-98A61D30890B}</ProjectGuid>
+    <RootNamespace>TelemetryAggregation</RootNamespace>
+    <AssemblyName>TelemetryConfigParser</AssemblyName>
+    <AssemblyDescription>Library for parsing config file for Telemetry</AssemblyDescription>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <OutputType>Library</OutputType>
+    <TargetDestination>bin</TargetDestination>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\LexicalAnalyzer.cs">
+      <Link>LexicalAnalyzer.cs</Link>
+    </Compile>
+    <Compile Include="..\ParseResult.cs">
+      <Link>ParseResult.cs</Link>
+    </Compile>
+    <Compile Include="..\SemanticsAnalyzer.cs">
+      <Link>SemanticsAnalyzer.cs</Link>
+    </Compile>
+    <Compile Include="..\SyntaxAnalyzer.cs">
+      <Link>SyntaxAnalyzer.cs</Link>
+    </Compile>
+    <Compile Include="..\Token.cs">
+      <Link>Token.cs</Link>
+    </Compile>
+    <Compile Include="..\ManifestEventFieldsLookup.cs">
+      <Link>ManifestEventFieldsLookup.cs</Link>
+    </Compile>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\TelemetryAggregation\dll\TelemetryAggregation.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\EtlReader\EtlReader.csproj" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+</Project>

@@ -12,6 +12,7 @@ Serialization.User.Test.exe
 ClusterManager.SingleNode.Test.exe
 ClusterManagerServiceDnsName.test
 ClusterManagerDefaultServicesDnsName.test
+ClusterManagerPartitionedQuerySchemeCheck.test
 
 # Security:
 SslBasic.test

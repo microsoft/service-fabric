@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- ServiceFabric.CoreClr.targets -->
+  <PropertyGroup>
+    <NetStandardBuildWindows>false</NetStandardBuildWindows>
+    <RuntimeIdentifier>ubuntu.16.04-x64</RuntimeIdentifier>
+    <RuntimeFrameworkVersion>2.0.7</RuntimeFrameworkVersion>
+  </PropertyGroup>
+  <Import Project="..\BSDockerVolumePluginSetup.targets" />
+
+  <Target Name="CopyFiles" AfterTargets="Publish">
+    <ItemGroup>
+      <CopySourceFiles Include="$(PublishDir)\**\*" Exclude="$(PublishDir)\**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(CopySourceFiles)" DestinationFolder="$(CodePackageDropPath)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(CopySourceFiles)" DestinationFolder="$(CodePackageDropPath2)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

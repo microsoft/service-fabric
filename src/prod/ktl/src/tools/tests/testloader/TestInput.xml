@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Data>
+	<Table Id="Test">
+		<ParameterTypes>
+			<ParameterType Name="Parameters" Array="true">String</ParameterType>
+		</ParameterTypes>
+		<Row Name="Test">
+			<Parameter Name="Parameters">
+				<Value>SamplePass:firstargument,secondargument</Value>
+				<Value>SamplePass:firstsecondargument</Value>
+				<Value>SampleFail:</Value>
+			</Parameter>
+		</Row>
+	</Table>
+</Data>	

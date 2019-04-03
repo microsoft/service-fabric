@@ -23,14 +23,6 @@ using namespace Management::ResourceManager;
 
 StringLiteral const TraceComponent("CentralSecretServiceReplica");
 
-void AddHandler(
-    unordered_map<wstring, ProcessRequestHandler> & handlers,
-    wstring const & action,
-    ProcessRequestHandler const & handler)
-{
-    handlers.insert(make_pair(action, handler));
-}
-
 template <class TAsyncOperation>
 AsyncOperationSPtr CreateHandler(
     __in CentralSecretServiceReplica & replica,
@@ -50,6 +42,14 @@ AsyncOperationSPtr CreateHandler(
         parent);
 }
 
+ErrorCode CompleteHandler(
+    AsyncOperationSPtr const & operationSPtr,
+    __out MessageUPtr & replyMsgUPtr,
+    __out IpcReceiverContextUPtr & receiverContextUPtr)
+{
+    return ClientRequestAsyncOperation::End(operationSPtr, replyMsgUPtr, receiverContextUPtr);
+}
+
 AsyncOperationSPtr CreateResourceManagerHandler(
     __in CentralSecretServiceReplica & replica,
     __in MessageUPtr request,
@@ -64,6 +64,22 @@ AsyncOperationSPtr CreateResourceManagerHandler(
         timeout,
         callback,
         parent);
+}
+
+ErrorCode CompleteResourceManagerHandler(
+    AsyncOperationSPtr const & operationSPtr,
+    __out MessageUPtr & replyMsgUPtr,
+    __out IpcReceiverContextUPtr & receiverContextUPtr)
+{
+    return IpcReplicaActivityAsyncOperation::End(operationSPtr, replyMsgUPtr, receiverContextUPtr);
+}
+
+CentralSecretServiceReplica::RequestProcessor::RequestProcessor(
+    StartRequestProcessHandler const & startHandler,
+    CompleteRequestProcessHandler const & completeHandler)
+    : StartHandler(startHandler)
+    , CompleteHandler(completeHandler)
+{
 }
 
 CentralSecretServiceReplica::CentralSecretServiceReplica(
@@ -103,6 +119,15 @@ CentralSecretServiceReplica::~CentralSecretServiceReplica()
         TraceThis);
 }
 
+void CentralSecretServiceReplica::AddHandler(
+    wstring const & action,
+    StartRequestProcessHandler const & startHandler,
+    CompleteRequestProcessHandler const & completeHandler)
+{
+    this->requestHandlers_.insert(make_pair(action, CentralSecretServiceReplica::RequestProcessor(startHandler, completeHandler)));
+}
+
+
 // *******************
 // StatefulServiceBase
 // *******************
@@ -123,7 +148,7 @@ ErrorCode CentralSecretServiceReplica::OnOpen(ComPointer<IFabricStatefulServiceP
             this->ReplicatedStore,
             this->PartitionedReplicaId);
 
-    this->resourceManagerSvc_ = 
+    this->resourceManagerSvc_ =
         IpcResourceManagerService::Create(
             this->PartitionedReplicaId,
             this->ReplicatedStore,
@@ -225,23 +250,20 @@ TimeSpan CentralSecretServiceReplica::GetRandomizedOperationRetryDelay(ErrorCode
 
 void CentralSecretServiceReplica::InitializeRequestHandlers()
 {
-    unordered_map<wstring, ProcessRequestHandler> handlers;
-
-    AddHandler(handlers, CentralSecretServiceMessage::GetSecretsAction, CreateHandler<GetSecretsAsyncOperation>);
-    AddHandler(handlers, CentralSecretServiceMessage::SetSecretsAction, CreateHandler<SetSecretsAsyncOperation>);
-    AddHandler(handlers, CentralSecretServiceMessage::RemoveSecretsAction, CreateHandler<RemoveSecretsAsyncOperation>);
+    AddHandler(CentralSecretServiceMessage::GetSecretsAction, CreateHandler<GetSecretsAsyncOperation>, CompleteHandler);
+    AddHandler(CentralSecretServiceMessage::SetSecretsAction, CreateHandler<SetSecretsAsyncOperation>, CompleteHandler);
+    AddHandler(CentralSecretServiceMessage::RemoveSecretsAction, CreateHandler<RemoveSecretsAsyncOperation>, CompleteHandler);
+    AddHandler(CentralSecretServiceMessage::GetSecretVersionsAction, CreateHandler<GetSecretVersionsAsyncOperation>, CompleteHandler);
 
     /* ResourceManager Actions */
     vector<wstring> resourceManagerActions;
-        
+
     this->ResourceManager.GetSupportedActions(resourceManagerActions);
 
     for (wstring const & action : resourceManagerActions)
     {
-        AddHandler(handlers, action, CreateResourceManagerHandler);
+        AddHandler(action, CreateResourceManagerHandler, CompleteResourceManagerHandler);
     }
-
-    this->requestHandlers_.swap(handlers);
 }
 
 void CentralSecretServiceReplica::ProcessMessage(
@@ -268,20 +290,22 @@ void CentralSecretServiceReplica::ProcessMessage(
     auto messageId = request->MessageId;
 
     auto handler = this->requestHandlers_.find(request->Action);
-    
+
     if (handler != this->requestHandlers_.end())
     {
-        auto operation = (handler->second)(
+        auto requestProcessor = handler->second;
+
+        auto operation = requestProcessor.StartHandler(
             *this,
             move(request),
             move(receiverContext),
             timeout,
-            [this, activityId, messageId](AsyncOperationSPtr const & asyncOperation)
+            [this, activityId, messageId, requestProcessor](AsyncOperationSPtr const & asyncOperation)
         {
-            this->OnProcessMessageComplete(activityId, messageId, asyncOperation, false);
+            this->OnProcessMessageComplete(requestProcessor, activityId, messageId, asyncOperation, false);
         },
             this->CreateAsyncOperationRoot());
-        this->OnProcessMessageComplete(activityId, messageId, operation, true);
+        this->OnProcessMessageComplete(requestProcessor, activityId, messageId, operation, true);
     }
     else
     {
@@ -291,6 +315,7 @@ void CentralSecretServiceReplica::ProcessMessage(
 }
 
 void CentralSecretServiceReplica::OnProcessMessageComplete(
+    CentralSecretServiceReplica::RequestProcessor const & requestProcessor,
     ActivityId const & activityId,
     MessageId const & messageId,
     AsyncOperationSPtr const & asyncOperation,
@@ -305,7 +330,7 @@ void CentralSecretServiceReplica::OnProcessMessageComplete(
 
     MessageUPtr reply;
     IpcReceiverContextUPtr receiverContext;
-    auto error = ClientRequestAsyncOperation::End(asyncOperation, reply, receiverContext);
+    auto error = requestProcessor.CompleteHandler(asyncOperation, reply, receiverContext);
 
     if (error.IsSuccess())
     {
@@ -319,15 +344,18 @@ void CentralSecretServiceReplica::OnProcessMessageComplete(
 
 ErrorCode CentralSecretServiceReplica::QuerySecretResourceMetadata(
     __in wstring const & resourceName,
-    __in ActivityId const & activityId,
+    __in Common::ActivityId const & activityId,
     __out ResourceMetadata & metadata)
 {
+    UNREFERENCED_PARAMETER(activityId);
+
     vector<SecretReference> secretRefs;
     vector<Secret> secrets;
 
-    secretRefs.push_back(SecretReference(resourceName));
+    secretRefs.push_back(SecretReference(resourceName)); 
+    ErrorCode error;
 
-    ErrorCode error = this->SecretManagerAgent.GetSecrets(secretRefs, false, activityId, secrets);
+    //ErrorCode error = this->SecretManagerAgent.BeginGetSecrets(secretRefs, false, TimeSpan::MaxValue, [this]() {}, AsyncOperation:: activityId);
 
     if (!error.IsSuccess())
     {

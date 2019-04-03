@@ -148,6 +148,11 @@ namespace System.Fabric.Common
         }
 
 #if DotNetCoreClrLinux
+        public static void SetSfInstalledMoby(string fileContents)
+        {
+            Utility.WrapNativeSyncInvoke(() => FabricEnvironment.SetSfInstalledMobyHelper(fileContents), "FabricEnvironment.SetSfInstalledMoby");
+        }
+
         private static LinuxPackageManagerType GetLinuxPackageManagerTypeHelper()
         {
             using (var pin = new PinCollection())
@@ -354,7 +359,17 @@ namespace System.Fabric.Common
                 }
             }
         }
-        
+
+#if DotNetCoreClrLinux
+        private static void SetSfInstalledMobyHelper(string fileContents)
+        {
+            using (var pin = new PinCollection())
+            {
+                NativeCommon.FabricSetSfInstalledMoby(pin.AddBlittable(fileContents));
+            }
+        }
+#endif
+
         private static bool GetEnableCircularTraceSessionHelper(string machineName)
         {
             using (var pin = new PinCollection())

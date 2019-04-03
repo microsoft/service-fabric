@@ -115,7 +115,7 @@ void FileAsyncOperation::OnCommitToIntermediateStateCompleted(AsyncOperationSPtr
     }
     else
     {
-        this->TryComplete(operation->Parent, error);
+        this->TryComplete(operation->Parent, move(error));
     }
 }
 
@@ -253,11 +253,11 @@ void FileAsyncOperation::OnCommitToCommittedStateCompleted(AsyncOperationSPtr co
 
     if (error.IsSuccess())
     {
-        this->TryComplete(thisSPtr, error);
+        this->TryComplete(thisSPtr, move(error));
     }
     else
     {
-        this->Rollback(thisSPtr, error);
+        this->Rollback(thisSPtr, move(error));
     }
 }
 
@@ -269,8 +269,6 @@ void FileAsyncOperation::Rollback(AsyncOperationSPtr const & thisSPtr, ErrorCode
         "Performing rollback due to Error:{0}, StoreRelativePath:{1}",
         originalError,
         storeRelativePath_);
-
-    this->UndoFileOperation();
 
     WriteInfo(
         TraceComponent,
@@ -307,12 +305,15 @@ void FileAsyncOperation::OnCommitToRolledbackStateCompleted(AsyncOperationSPtr c
 
     if(error.IsSuccess())
     {
+        // Undo file operation only if rollback is successful
+        this->UndoFileOperation();
+
         // If the operation rolled back, from client's perspective
         // the operations has failed
         error.Overwrite(originalError);
     }
 
-    TryComplete(operation->Parent, error);
+    TryComplete(operation->Parent, move(error));
 }    
 
 ErrorCode FileAsyncOperation::TryScheduleRetry(AsyncOperationSPtr const & thisSPtr, function<void(AsyncOperationSPtr const &)> const & callback)

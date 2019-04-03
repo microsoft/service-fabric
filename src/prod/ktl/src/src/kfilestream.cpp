@@ -342,12 +342,21 @@ Task KFileStream::OpenTask()
     HANDLE fileHandle;
     _File->QueryFileHandle(fileHandle);
 
+#if defined(PLATFORM_UNIX)
+    KDbgPrintfInformational(
+        "Opening KFileStream. Stream ptr: %llx File ptr: %llx File handle: %llx Filename: %s",
+        PtrToActivityId(this),
+        PtrToActivityId(_File.RawPtr()),
+        PtrToActivityId(fileHandle),
+        Utf16To8(_File->GetFileName()).c_str());
+#else
     KDbgPrintfInformational(
         "Opening KFileStream. Stream ptr: %llx File ptr: %llx File handle: %llx Filename: %S",
         PtrToActivityId(this),
         PtrToActivityId(_File.RawPtr()),
         PtrToActivityId(fileHandle),
         _File->GetFileName());
+#endif
 
     LONGLONG eof;
     status = co_await _File->GetEndOfFileAsync(eof);

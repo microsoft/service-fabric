@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{2ADB6D48-C720-4407-8955-4D7035C30EA6}</ProjectGuid>
+    <RootNamespace>System.Fabric.Dca.Validator</RootNamespace>
+    <AssemblyName>System.Fabric.Dca.Validator</AssemblyName>
+    <AssemblyDescription>Data Collection Agent Validation APIs</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <!-- 
+    Disable code coverage build since this project doesn't contain any code.
+    If not disabled, Magellan code coverage builds will fail with error:
+    Call to ProgIter.Initialize failed: No code in binary.  Nothing to do! 
+    -->
+    <CoverageDisabled>true</CoverageDisabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\IDcaSettingsValidator.cs">
+      <Link>IDcaSettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\ITraceWriter.cs">
+      <Link>ITraceWriter.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

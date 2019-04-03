@@ -1,0 +1,4 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <Import Project="$(SRCROOT)\properties\service_fabric_native_user_test.props" />
+   <Import Project="$(SRCROOT)\properties\service_fabric_native_user_test_taef_decl.props" />
+</Project>

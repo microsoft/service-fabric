@@ -52,8 +52,17 @@ KAllocationBitmapTestX(
 
     EventRegisterMicrosoft_Windows_KTL();
 
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     KTestPrintf("Starting KAllocationBitmapTest test");
-
+	
     //
     // Create an allocation bitmap from an io buffer element.
     //
@@ -243,6 +252,9 @@ Finish:
 
     EventUnregisterMicrosoft_Windows_KTL();
 
+#if defined(PLATFORM_UNIX)
+	KtlTraceUnregister();
+#endif	
     return status;
 }
 

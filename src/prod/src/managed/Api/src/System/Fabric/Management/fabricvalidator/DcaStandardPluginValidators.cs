@@ -36,6 +36,7 @@ namespace System.Fabric.Management.WindowsFabricValidator
         public const string AzureTableOperationalEventUploader = "AzureTableOperationalEventUploader";
         public const string MdsEtwEventUploader = "MdsEtwEventUploader";
         public const string MdsFileProducer = "MdsFileProducer";
+        public const string SyslogConsumer = "SyslogConsumer";
 
         internal static Dictionary<string, PluginTypeInfo> ProducerValidators = new Dictionary<string, PluginTypeInfo>()
             {
@@ -56,7 +57,7 @@ namespace System.Fabric.Management.WindowsFabricValidator
                         TypeName = typeof(FabricDCA.EtlInMemoryProducerValidator).FullName
                     } 
                 },
-#if !DotNetCoreClrIOT
+    #if !DotNetCoreClrIOT
                 { 
                     PerfCounterConfigReader, 
                     new PluginTypeInfo() 
@@ -65,7 +66,7 @@ namespace System.Fabric.Management.WindowsFabricValidator
                         TypeName = typeof(FabricDCA.PerfCounterConfigReaderValidator).FullName
                     } 
                 },
-#endif
+    #endif
 #else
                 {
                     LttProducer,
@@ -113,7 +114,7 @@ namespace System.Fabric.Management.WindowsFabricValidator
                         TypeName = typeof(FabricDCA.AzureBlobEtwCsvUploaderValidator).FullName
                     } 
                 },
-#if !DotNetCoreClrIOT
+    #if !DotNetCoreClrIOT
                 { 
                     AzureBlobEtwUploader, 
                     new PluginTypeInfo() 
@@ -130,7 +131,7 @@ namespace System.Fabric.Management.WindowsFabricValidator
                         TypeName = typeof(FabricDCA.AzureTableEtwEventUploaderValidator).FullName
                     } 
                 },
-#endif 
+    #endif
                 { 
                     AzureTableQueryableEventUploader, 
                     new PluginTypeInfo() 
@@ -139,7 +140,7 @@ namespace System.Fabric.Management.WindowsFabricValidator
                         TypeName = typeof(FabricDCA.AzureTableSelectiveEventUploaderValidator).FullName
                     } 
                 },
-#if !DotNetCoreClrIOT
+    #if !DotNetCoreClrIOT
                 {
                     AzureTableOperationalEventUploader,
                     new PluginTypeInfo()
@@ -164,7 +165,7 @@ namespace System.Fabric.Management.WindowsFabricValidator
                         TypeName = typeof(FabricDCA.MdsEtwEventUploaderValidator).FullName
                     } 
                 },
-#endif
+    #endif
 #else
                 {
                     AzureBlobCsvUploader,
@@ -181,6 +182,22 @@ namespace System.Fabric.Management.WindowsFabricValidator
                         AssemblyName = typeof(FabricDCA.AzureTableSelectiveEventUploaderValidator).GetTypeInfo().Assembly.FullName, 
                         TypeName = typeof(FabricDCA.AzureTableSelectiveEventUploaderValidator).FullName
                     } 
+                },
+                {
+                    AzureTableOperationalEventUploader,
+                    new PluginTypeInfo()
+                    {
+                        AssemblyName = typeof(FabricDCA.AzureTableSelectiveEventUploaderValidator).GetTypeInfo().Assembly.FullName,
+                        TypeName = typeof(FabricDCA.AzureTableSelectiveEventUploaderValidator).FullName
+                    }
+                },
+                {
+                    SyslogConsumer,
+                    new PluginTypeInfo()
+                    {
+                        AssemblyName = typeof(FabricDCA.SyslogConsumerValidator).GetTypeInfo().Assembly.FullName,
+                        TypeName = typeof(FabricDCA.SyslogConsumerValidator).FullName
+                    }
                 },
 #endif
                 {
@@ -201,7 +218,9 @@ namespace System.Fabric.Management.WindowsFabricValidator
                     new string[]
                     {
                         AzureBlobCsvUploader,
-                        AzureTableQueryableCsvUploader
+                        AzureTableQueryableCsvUploader,
+                        AzureTableOperationalEventUploader,
+                        SyslogConsumer
                     }
                 },
 #else

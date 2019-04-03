@@ -28,7 +28,7 @@ Usage: ./build.sh [-c] [-d] [-pe] [-pd] [-n] [-createdeb] [-createinstaller] [-k
     -v: Verbose
     -all: Build third party libraries
     -nocoreclrbuild: Does not build manage coreclr build
-    -packagelocalcoreclrbuild: Package locally build manage coreclr binaries in installer
+    -packagelocalcoreclrbuild: [Deprecated : Always true now] Package locally build manage coreclr binaries in installer
 EOF
 }
 
@@ -55,7 +55,7 @@ GetOs LINUX_DISTRIBUTION
 pushd `dirname $0` > /dev/null
 ScriptPath=`pwd -P`
 popd > /dev/null
-ProjRoot=${ScriptPath}/..
+ProjRoot=${ScriptPath}/.. 
 ProjBinRoot=${ProjRoot}
 LibPath=${ProjRoot}/external/WinFab.Linux.Libs
 CleanBuildDrop="-nc"
@@ -76,12 +76,18 @@ DoKtlOnlyBuild="OFF"
 CLEAN_DEPS=0
 BUILD_MANAGED=1
 PACKAGE_LOCAL_CORECLR_BUILD="ON"
+ArmCrossCompile="OFF"
+ArmCrossCompileTriple="aarch64-linux-gnu"
+SkipDepCheck="false"
+# Ninja build binary has a different default name on CentOS based distros than Ubuntu
+NinjaBuildBinaryName="ninja"
 
 #WinFab.Linux.Libs library version
 LinuxLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/linuxlibs.version)
 
 if [ $LINUX_DISTRIBUTION = "REDHAT" ]; then
     LinuxLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/linuxlibscentos.version)
+    NinjaBuildBinaryName="ninja-build"
 fi
 CoreCLRLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/coreclrlibs.version)
 SFXLibVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/sfxlibs.version)
@@ -89,17 +95,18 @@ SFUpgradeTestVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/upgradetestl
 SFResgenVersion="ServiceFabric.ResGen.NetStandard.1.0.1"
 CoreclrBuildArtifacts="ServiceFabric.Linux.Coreclr.BuildArtifacts.1.0.1"
 MCGLinux="Microsoft.DotNet.Interop.1.0.0.7171701"
-DataExtensions="Microsoft.ServiceFabric.Data.Extensions.1.4.4"
+DataExtensions="Microsoft.ServiceFabric.Data.Extensions.1.4.5"
 SFAspNetCoreInternal="SF.AspNetCore.Internal.3.3.1"
-SFActorsServicesInternal="SF.ActorsServices.Internal.3.3.9"
-
+SFActorsServicesInternal="SF.ActorsServices.Internal.3.3.15"
+SFArmCrossCompileSysRoot="SF.ArmCrossCompileSysRoot.Internal.1.0.0"
+SFLinuxLibssh2="SF.Linux.Libssh2.1.5.1"
 export CMAKE_NO_VERBOSE=1
 
 # Install any required packages that docker image don't have yet
 # After the docker image has this, this should be removed.
 InstallPkgs()
 {
-    ${ProjRoot}/src/prod/tools/linux/init.sh ${LinuxLibVersion} ${CoreCLRLibVersion} ${SFXLibVersion} ${SFUpgradeTestVersion} ${SFResgenVersion} ${CoreclrBuildArtifacts} ${DataExtensions} ${MCGLinux} ${SFAspNetCoreInternal} ${SFActorsServicesInternal} ${CloudBuild}
+    ${ProjRoot}/src/prod/tools/linux/init.sh ${LinuxLibVersion} ${CoreCLRLibVersion} ${SFXLibVersion} ${SFUpgradeTestVersion} ${SFResgenVersion} ${CoreclrBuildArtifacts} ${DataExtensions} ${MCGLinux} ${SFAspNetCoreInternal} ${SFActorsServicesInternal} ${SFLinuxLibssh2} ${SFArmCrossCompileSysRoot} ${CloudBuild} 
     if [ $? != 0 ]; then
         return 1
     fi
@@ -196,6 +203,28 @@ BuildDir()
         if [ "ON" = ${DoKtlOnlyBuild} ]; then
             echo -e "\e[0;32mKTL Only Build \e[0m"
         fi
+        
+        DARM_CMAKE_FLAG=""
+        if [ "ON" = ${ArmCrossCompile} ]; then
+            echo -e "\e[0;32mCross compile for AArch64.\e[0m"
+            echo -e "\e[0;32mNote that cross compiling for ARM does NOT support packaging or building coreclr or third-party lib from source NOW \e[0m"
+            if [ ! -f /usr/bin/${ArmCrossCompileTriple}-ld ]; then
+                echo "Error: please install binutils-$ArmCrossCompileTriple for cross compile."
+                exit -1
+            fi
+            SYS_ROOT_DIR="${ScriptPath}/../external/SF.ArmCrossCompileSysRoot.Internal"
+            SYS_ROOT_TAR="${SYS_ROOT_DIR}/raspberrypi-rootfs.tar.gz"
+            SYS_ROOT="${SYS_ROOT_DIR}/rootfs"
+            mkdir -p ${SYS_ROOT} && tar -xvzf ${SYS_ROOT_TAR} -C ${SYS_ROOT_DIR}  > /dev/null;
+            if [ $? != 0 ]; then
+              echo -e '\e[01;31m tar failed. Package $SYS_ROOT_TAR may be incomplete or corrupted.  Try deleting package and trying again. \e[0m'
+              exit -1
+            fi 
+            DARM_CMAKE_FLAG="DARM_CROSS_COMPILE=${ArmCrossCompile} \
+                             -DCMAKE_TOOLCHAIN_FILE=${ScriptPath}/cross-compile.cmake \ 
+                             -DARM_SYS_ROOT=${SYS_ROOT} \
+                             -DARM_TARGET_TRIPLE=${ArmCrossCompileTriple}"          
+        fi
 
         cmake ${CMakeGenerator} \
               -DCMAKE_C_COMPILER=${CC} \
@@ -204,6 +233,7 @@ BuildDir()
               -DBUILD_THIRD_PARTY=${BuildThirdPartyLib} \
               -DBUILD_KTL_ONLY=${DoKtlOnlyBuild} \
               -DPACKAGE_LOCAL_BUILD_MANAGED=${PACKAGE_LOCAL_CORECLR_BUILD} \
+              -${DARM_CMAKE_FLAG} \
               ${DisablePrecompileFlag} ${ScriptPath}/$DirName
         if [ $? != 0 ]; then
             let TotalErrors+=1
@@ -213,7 +243,7 @@ BuildDir()
     fi
 
     if [ -f ${ProjBinRoot}/build.${DirName}/build.ninja ]; then
-        BuildSystem="ninja"
+        BuildSystem=$NinjaBuildBinaryName
     fi
 
     cd ${ProjBinRoot}/build.${DirName}
@@ -398,6 +428,8 @@ while (( "$#" )); do
         BUILD_MANAGED=0
     elif [ "$1" == "-packagelocalcoreclrbuild" ]; then
         PACKAGE_LOCAL_CORECLR_BUILD="ON"
+    elif [ "$1" == "-arm" ]; then
+        ArmCrossCompile="ON"
     else
         echo "Unknown option $1"
         PrintUsage
@@ -413,6 +445,16 @@ if [ $CloudBuild == "true" ]; then
     exit 1
   fi
 fi
+
+if [ "ON" = ${ArmCrossCompile} ]; then
+     BuildThirdPartyLib="OFF"
+    if [ "ON" == ${BuildThirdPartyLib} ]; then
+        echo Error: Cross compiling ARM build does NOT support packaging or building coreclr or third-party lib from source NOW.
+        exit -1
+    fi
+else
+    SFArmCrossCompileSysRoot=""
+fi    
 
 mkdir -p ${ProjRoot}/external
 InstallPkgs

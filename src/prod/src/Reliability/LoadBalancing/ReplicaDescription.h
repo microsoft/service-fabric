@@ -122,6 +122,9 @@ namespace Reliability
             bool UsePrimaryLoad() const;
             bool UseSecondaryLoad() const;
 
+            // Check if replica is None and if it has resource governance configured
+            bool UseNoneLoad(bool isRGLoad) const;
+
             bool HasLoad() const;
 
             void WriteTo(Common::TextWriter&, Common::FormatOptions const &) const;

@@ -1,6 +1,6 @@
 ##############################################################################################################################
 # RDBUg 8850593 - Add commands in fabric test to wait for a particular lsn to ALL apply ack'd and a particular lsn to be ALL receive ack'd
-# [owner - hanagar]
+# [owner - tyadam]
 #
 #   1. Add 2 operations to the target service
 #   2. Verify LSN 2 has been received and apply ack'd by all secondaries

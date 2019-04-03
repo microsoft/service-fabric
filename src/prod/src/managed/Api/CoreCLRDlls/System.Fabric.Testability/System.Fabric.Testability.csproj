@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test_signing.props" />
+
+  <PropertyGroup>
+    <Description>Microsoft Azure Service Fabric Testability Subsystem</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputType>Library</OutputType>
+    <AssemblyName>System.Fabric.Testability</AssemblyName>
+    <PackageId>System.Fabric.Testability</PackageId>
+    <AssemblyDescription>Microsoft Azure Service Fabric Testability Subsystem</AssemblyDescription>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="
+    ..\..\Dlls\System.Fabric.Testability\_friends.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationNameRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetServiceNameRequest.cs;
+    ..\..\src\System\Fabric\Testability\UnreliableTransportBehavior.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\IRequest.cs;
+    ..\..\src\System\Fabric\Testability\Constants.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\ApplicationResource.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\ApplicationResourceList.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\CancelData.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\InvokeDataLossData.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\InvokeQuorumLossData.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\ReplicaResource.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\ReplicaResourceList.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\RestartPartitionData.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\ServicePartitionResolutionChangeEventArgs.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\ServiceResource.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\ServiceResourceList.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\StartCallDataBase.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\TestServicePartitionInfo.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricNameEnumerationResult.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricPropertyBatchResult.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricPropertyEnumerationResult.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricServiceResolutionChangeEventArgs.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricCreateServiceFromTemplate.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricManifestResult.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricProvisionFabric.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricUnprovisionApplication.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricCopyImageStoreContentDescription.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricUnprovisionFabric.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricServicePackageSharingType.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTargetDescription.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTask.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTaskState.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTaskFlags.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairTaskResult.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRepairImpactDescription.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricServiceModelExtensions.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricNodeControlData.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricRestartNodeControlData.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricStartNodeData.cs;
+    ..\..\src\System\Fabric\Testability\Client\Structures\WinFabricCodePackageControlData.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ActivateNodeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CopyImageStoreContentRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ListUploadSessionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeleteUploadSessionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CommitUploadSessionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UploadChunkRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\AddUnreliableTransportBehaviorRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\AddUnreliableLeaseBehaviorRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CancelTestCommandRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RemoveApplicationPackageRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CopyApplicationPackageRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CopyClusterPackageRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CopyWindowsFabricServicePackageToNodeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CreateApplicationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CreateNameRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CreateServiceFromTemplateRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CreateServiceGroupRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CreateServiceRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ConfigurationUpgradeFabricRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeactivateNodeInitialRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeactivateNodeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeleteApplicationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ListImageStoreContentRequest.cs;
+	..\..\src\System\Fabric\Testability\Client\Requests\ListImageStorePagedContentRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeleteImageStoreContentRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeleteNameRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeletePropertyRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeleteServiceGroupRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DeleteServiceRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\EnumerateSubNamesRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\FabricRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\FabricRequestExtensions.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationHealthRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UpdateApplicationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationLoadRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationManifestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationTypeListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationTypePagedListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationTypeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetApplicationUpgradeProgressRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetClusterManifestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetClusterLoadRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetClusterHealthRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetClusterHealthChunkRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedApplicationListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedApplicationHealthRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedServicePackageHealthRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedCodePackageListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedReplicaListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedServicePackageListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetDeployedServiceTypeListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetFabricUpgradeProgressRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetFabricConfigUpgradeProgressRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetFabricConfigurationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetUpgradeOrchestrationServiceStateRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\SetUpgradeOrchestrationServiceStateRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetNodeHealthRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetNodeListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetNodeLoadRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetNodeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetNodeTransitionProgressRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionHealthRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionListRestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionLoadRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionDataLossProgressRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionDataLossProgressRestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionQuorumLossProgressRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionQuorumLossProgressRestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionRestartProgressRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPartitionRestartProgressRestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetChaosEventsSegmentRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartChaosRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetChaosReportRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StopChaosRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetChaosDescriptionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\SetChaosScheduleDescriptionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetChaosScheduleDescriptionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetPropertyRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetReplicaHealthRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetReplicaListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetReplicaListRestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetReplicaLoadRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetServiceDescriptionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetServiceHealthRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetServiceListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetServiceManifestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetServicePartitionReplicaRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetServicePartitionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetServiceTypeListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetSystemServicesListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\GetTestCommandStatusListRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\InvokeEncryptSecretRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\MoveNextApplicationUpgradeDomainRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\MoveNextDomainRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\MoveNextFabricUpgradeDomainRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\NewNodeConfigurationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\NodeControlRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ProvisionApplicationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ProvisionFabricRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\PutCustomPropertyRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\PutPropertyRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RecoverPartitionsRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RecoverServicePartitionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RecoverSystemPartitionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RemoveNodeStateRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ResolveServiceRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RestartCodePackageRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RestartNodeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ReplicaControlRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RestartReplicaRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RemoveReplicaRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RemoveUnreliableTransportBehaviorRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RemoveUnreliableLeaseBehaviorRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartNodeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartNodeTransitionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionDataLossRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionDataLossRestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionQuorumLossRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionQuorumLossRestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionRestartRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StartPartitionRestartRestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\StopNodeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\SubmitPropertyBatchRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\TestApplicationPackageRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\TestClusterConnectionRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\TestClusterManifestRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UnprovisionApplicationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UnprovisionFabricRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UpdateServiceGroupRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UpdateServiceRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UpgradeApplicationRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UpgradeFabricRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UpdateFabricUpgradeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RegisterServiceNotificationFilterRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UnregisterServiceNotificationFilterRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\FabricRequestProcessor.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\IRetryContext.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\TimeBasedCondition.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RetryCountBasedCondition.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RequestPerformer.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\DelayStrategy.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ConditionalStrategy.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\CompositeStrategy.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\ICondition.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\IStrategy.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UpdateApplicationUpgradeRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\UpgradeProgressRequest.cs;
+    ..\..\src\System\Fabric\Testability\Client\Requests\RetryLoop.cs;
+    ..\..\src\System\Fabric\Testability\Client\FabricClientObject.cs;
+    ..\..\src\System\Fabric\Testability\Client\FabricClientState.cs;
+    ..\..\src\System\Fabric\Testability\Client\FabricClientTypes.cs;
+    ..\..\src\System\Fabric\Testability\Client\FabricClientHelper.cs;
+    ..\..\src\System\Fabric\Testability\Client\FabricClientWrapperInfo.cs;
+    ..\..\src\System\Fabric\Testability\Client\FabricClientWrapperCollection.cs;
+    ..\..\src\System\Fabric\Testability\Client\IFabricClient.cs;
+    ..\..\src\System\Fabric\Testability\Client\IFabricTestabilityClient.cs;
+    ..\..\src\System\Fabric\Testability\Client\OperationResult.cs;
+    ..\..\src\System\Fabric\Testability\Client\OperationResult.TResult.cs;
+    ..\..\src\System\Fabric\Testability\Client\SystemFabricClient.cs;
+    ..\..\src\System\Fabric\Testability\Common\AsyncWaiter.cs;
+    ..\..\src\System\Fabric\Testability\Common\Disposable.cs;
+    ..\..\src\System\Fabric\Testability\Common\EnumerationWrapper.cs;
+    ..\..\src\System\Fabric\Testability\Common\ObjectHolder.cs;
+    ..\..\src\System\Fabric\Testability\Common\RandomUtility.cs;
+    ..\..\src\System\Fabric\Testability\Common\TestabilityTrace.cs;
+    ..\..\src\System\Fabric\Testability\Common\ThrowIf.cs;
+    ..\..\src\System\Fabric\Testability\Common\TaskUtility.cs;
+    ..\..\src\System\Fabric\Testability\Actions\AbnormalProcessTerminationAction.cs;
+    ..\..\src\System\Fabric\Testability\Actions\ApiFaultInformationAction.cs;
+    ..\..\src\System\Fabric\Testability\Client\PowershellManager.cs;
+    ..\..\src\System\Fabric\Testability\Client\PowershellConstants.cs;
+    ..\..\src\System\Fabric\Testability\Client\PowershellFabricClient.cs;
+    ..\..\src\System\Fabric\Testability\Client\RestFabricClient.cs;
+    ..\..\src\System\Fabric\Testability\Client\RestPathBuilder.cs;
+    ..\..\src\System\Fabric\Testability\Client\RunspaceGroup.cs;
+    ..\..\src\System\Fabric\Testability\Client\RunspaceGroupLoader.cs;
+    ..\..\src\System\Fabric\Testability\LocalEventStoreConnectionInformation.cs;
+    ..\..\src\System\Fabric\Testability\MdsTableEventStoreConnectionInformation.cs;
+    ..\..\src\System\Fabric\Testability\TestabilityExtensionsFuture.cs;
+    ..\..\src\System\Fabric\Testability\AbnormalProcessTerminationInformation.cs;
+    ..\..\src\System\Fabric\Testability\ApiErrorInformation.cs;
+    ..\..\src\System\Fabric\Testability\ApiFaultInformation.cs;
+    ..\..\src\System\Fabric\Testability\ApiSlowInformation.cs;
+    ..\..\src\System\Fabric\Testability\AzureEventStoreConnectionInformation.cs;
+    ..\..\src\System\Fabric\Testability\AzureTableEventStoreConnectionInformation.cs;
+    ..\..\src\System\Fabric\Testability\EventStoreConnection.cs;
+    ..\..\src\System\Fabric\Testability\EventStoreConnectionInformation.cs;
+    ..\..\src\System\Fabric\Testability\Common\EntityHelperLocal.cs;
+    ..\..\src\System\Fabric\Testability\Common\EventInfoExtractor.cs;
+    ..\..\src\System\Fabric\Testability\Common\EventStoreHelper.cs;
+    ..\..\src\System\Fabric\Testability\Common\LocalEventStore.cs;
+    ..\..\src\System\Fabric\Testability\Common\RegexHelper.cs"
+    Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\CoreCLR\EtlReader\EtlReader.csproj" />
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="..\System.Fabric.Management\System.Fabric.Management.csproj" />
+    <ProjectReference Include="..\system.fabric.strings\system.fabric.strings.csproj" />
+    <ProjectReference Include="..\System.Fabric.JsonSerializerWrapper\System.Fabric.JsonSerializerWrapper.csproj" />
+    <ProjectReference Include="..\..\..\..\..\tools\TraceDiagnostic\CoreCLR\TraceDiagnostic.Store\TraceDiagnostic.Store.csproj" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="WindowsAzure.Storage" Version="8.1.1" />
+    <PackageReference Include="Microsoft.Data.OData" Version="5.8.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" $(TargetsLinux) == 'true' ">
+  <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

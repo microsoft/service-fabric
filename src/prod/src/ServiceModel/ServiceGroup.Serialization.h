@@ -28,23 +28,41 @@ namespace ServiceModel
             SERIALIZABLE_PROPERTY(Constants::SecondaryDefaultLoad, SecondaryDefaultLoad)
         END_JSON_SERIALIZABLE_PROPERTIES()
 
-        static BOOLEAN Equals(CServiceGroupMemberLoadMetricDescription const & first, CServiceGroupMemberLoadMetricDescription const & second)
+        static Common::ErrorCode Equals(CServiceGroupMemberLoadMetricDescription const & first, CServiceGroupMemberLoadMetricDescription const & second)
         {
-            BOOLEAN isEqual = TRUE;
+            if (first.Name != second.Name)
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupMemberLoadMetricDescription_Name_Changed), first.Name, second.Name));
+            }
 
-            isEqual = (first.Name == second.Name);
-            if (!isEqual) { return isEqual; }
+            if (first.Weight != second.Weight)
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupMemberLoadMetricDescription_Weight_Changed), first.Weight, second.Weight));
+            }
 
-            isEqual = (first.Weight == second.Weight);
-            if (!isEqual) { return isEqual; }
+            if (first.PrimaryDefaultLoad != second.PrimaryDefaultLoad)
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupMemberLoadMetricDescription_PrimaryDefaultLoad_Changed), first.PrimaryDefaultLoad, second.PrimaryDefaultLoad));
+            }
 
-            isEqual = (first.PrimaryDefaultLoad == second.PrimaryDefaultLoad);
-            if (!isEqual) { return isEqual; }
+            if (first.SecondaryDefaultLoad != second.SecondaryDefaultLoad)
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupMemberLoadMetricDescription_SecondaryDefaultLoad_Changed), first.SecondaryDefaultLoad, second.SecondaryDefaultLoad));
+            }
 
-            isEqual = (first.SecondaryDefaultLoad == second.SecondaryDefaultLoad);
-            if (!isEqual) { return isEqual; }
-
-            return isEqual;
+            return Common::ErrorCode::Success();
         }
     };
 
@@ -76,44 +94,76 @@ namespace ServiceModel
             SERIALIZABLE_PROPERTY(ServiceModel::Constants::ServiceLoadMetrics, Metrics)
         END_JSON_SERIALIZABLE_PROPERTIES()
 
-        static BOOLEAN Equals(CServiceGroupMemberDescription const & first, CServiceGroupMemberDescription const & second, BOOLEAN ignoreMemberIdentifier)
+        static Common::ErrorCode Equals(CServiceGroupMemberDescription const & first, CServiceGroupMemberDescription const & second, BOOLEAN ignoreMemberIdentifier)
         {
-            BOOLEAN isEqual = TRUE;
-
             if (!ignoreMemberIdentifier)
             {
-                isEqual = (first.Identifier == second.Identifier);
-                if (!isEqual) { return isEqual; }
+                if (first.Identifier != second.Identifier)
+                {
+                    return Common::ErrorCode(
+                        Common::ErrorCodeValue::InvalidArgument,
+                        GET_FM_RC(ServiceGroupMemberDescription_Member_Identifier_Changed));
+                }
             }
 
-            isEqual = (first.ServiceDescriptionType == second.ServiceDescriptionType);
-            if (!isEqual) { return isEqual; }
+            if (first.ServiceDescriptionType != second.ServiceDescriptionType)
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupMemberDescription_ServiceDescriptionType_Changed), first.ServiceDescriptionType, second.ServiceDescriptionType));
+            }
 
-            isEqual = (first.ServiceType == second.ServiceType);
-            if (!isEqual) { return isEqual; }
+            if (first.ServiceType != second.ServiceType)
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupMemberDescription_ServiceType_Changed), first.ServiceType, second.ServiceType));
+            }
 
-            isEqual = (first.ServiceName == second.ServiceName);
-            if (!isEqual) { return isEqual; }
+            if (first.ServiceName != second.ServiceName)
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupMemberDescription_ServiceName_Changed), first.ServiceName, second.ServiceName));
+            }
 
-            isEqual = (first.Metrics.size() == second.Metrics.size());
-            if (!isEqual) { return isEqual; }
+            if (first.Metrics.size() != second.Metrics.size())
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupMemberDescription_Load_Metric_Count_Changed), first.Metrics.size(), second.Metrics.size()));
+            }
 
             for (size_t i = 0; i < first.Metrics.size(); ++i)
             {
-                isEqual = CServiceGroupMemberLoadMetricDescription::Equals(first.Metrics[i], second.Metrics[i]);
-                if (!isEqual) { return isEqual; }
+                auto error = CServiceGroupMemberLoadMetricDescription::Equals(first.Metrics[i], second.Metrics[i]);
+                if (!error.IsSuccess()) { return error; }
             }
 
-            isEqual = (first.ServiceGroupMemberInitializationData.size() == second.ServiceGroupMemberInitializationData.size());
-            if (!isEqual) { return isEqual; }
+            if (first.ServiceGroupMemberInitializationData.size() != second.ServiceGroupMemberInitializationData.size())
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupDescription_ServiceGroupInitializationData_Size_Changed), first.ServiceGroupMemberInitializationData.size(), second.ServiceGroupMemberInitializationData.size()));
+            }
 
             for (size_t i = 0; i < first.ServiceGroupMemberInitializationData.size(); ++i)
             {
-                isEqual = (first.ServiceGroupMemberInitializationData[i] == second.ServiceGroupMemberInitializationData[i]);
-                if (!isEqual) { return isEqual; }
+                if (first.ServiceGroupMemberInitializationData[i] != second.ServiceGroupMemberInitializationData[i])
+                {
+                    return Common::ErrorCode(
+                        Common::ErrorCodeValue::InvalidArgument,
+                        Common::wformatString(
+                            GET_FM_RC(ServiceGroupDescription_ServiceGroupInitializationData_Changed), i, first.ServiceGroupMemberInitializationData[i], second.ServiceGroupMemberInitializationData[i]));
+                }
             }
 
-            return isEqual;
+            return Common::ErrorCode::Success();
         }
     };
 
@@ -129,34 +179,64 @@ namespace ServiceModel
             ServiceGroupInitializationData, 
             ServiceGroupMemberData);
 
-        static BOOLEAN Equals(CServiceGroupDescription const & first, CServiceGroupDescription const & second, BOOLEAN ignoreMemberIdentifier)
+        static Common::ErrorCode Equals(CServiceGroupDescription const & first, CServiceGroupDescription const & second, BOOLEAN ignoreMemberIdentifier)
         {
-            BOOLEAN isEqual = TRUE;
-            isEqual = (first.HasPersistedState == second.HasPersistedState);
-            if (!isEqual) { return isEqual; }
+            if (first.HasPersistedState != second.HasPersistedState)
+            {
+                if (first.HasPersistedState)
+                {
+                    return Common::ErrorCode(
+                        Common::ErrorCodeValue::InvalidArgument,
+                        GET_FM_RC(ServiceGroupDescription_Changed_To_NonPersisted));
+                }
+                else
+                {
+                    return Common::ErrorCode(
+                        Common::ErrorCodeValue::InvalidArgument,
+                        GET_FM_RC(ServiceGroupDescription_Changed_To_Persisted));
+                }
+            }
 
-            isEqual = (first.ServiceGroupMemberData.size() == second.ServiceGroupMemberData.size());
-            if (!isEqual) { return isEqual; }
+            if (first.ServiceGroupMemberData.size() != second.ServiceGroupMemberData.size())
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupDescription_ServiceGroupMemberData_Size_Changed), first.ServiceGroupMemberData.size(), second.ServiceGroupMemberData.size()));
+            }
 
             for (size_t i = 0; i < first.ServiceGroupMemberData.size(); ++i)
             {
-                isEqual = CServiceGroupMemberDescription::Equals(first.ServiceGroupMemberData[i], second.ServiceGroupMemberData[i], ignoreMemberIdentifier);
-                if (!isEqual) { return isEqual; }
+                auto error = CServiceGroupMemberDescription::Equals(first.ServiceGroupMemberData[i], second.ServiceGroupMemberData[i], ignoreMemberIdentifier);
+                if (!error.IsSuccess())
+                {
+                    return error;
+                }
             }
 
-            isEqual = (first.ServiceGroupInitializationData.size() == second.ServiceGroupInitializationData.size());
-            if (!isEqual) { return isEqual; }
+            if (first.ServiceGroupInitializationData.size() != second.ServiceGroupInitializationData.size())
+            {
+                return Common::ErrorCode(
+                    Common::ErrorCodeValue::InvalidArgument,
+                    Common::wformatString(
+                        GET_FM_RC(ServiceGroupDescription_ServiceGroupInitializationData_Size_Changed), first.ServiceGroupInitializationData.size(), second.ServiceGroupInitializationData.size()));
+            }
 
             for (size_t i = 0; i < first.ServiceGroupInitializationData.size(); ++i)
             {
-                isEqual = (first.ServiceGroupInitializationData[i] == second.ServiceGroupInitializationData[i]);
-                if (!isEqual) { return isEqual; }
+                if (first.ServiceGroupInitializationData[i] != second.ServiceGroupInitializationData[i])
+                {
+                    return Common::ErrorCode(
+                        Common::ErrorCodeValue::InvalidArgument,
+                        Common::wformatString(
+                            GET_FM_RC(ServiceGroupDescription_ServiceGroupInitializationData_Changed), i, first.ServiceGroupInitializationData[i], second.ServiceGroupInitializationData[i]));
+                }
             }
 
-            return isEqual;
+            return Common::ErrorCode::Success();
         }
 
-        static BOOLEAN Equals(std::vector<byte> const & first, std::vector<byte> const & second, BOOLEAN ignoreMemberIdentifier)
+        static Common::ErrorCode Equals(std::vector<byte> const & first, std::vector<byte> const & second, BOOLEAN ignoreMemberIdentifier)
         {
             CServiceGroupDescription deserializedFirst;
             CServiceGroupDescription deserializedSecond;

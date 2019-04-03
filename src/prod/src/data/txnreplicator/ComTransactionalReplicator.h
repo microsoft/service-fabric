@@ -323,7 +323,8 @@ namespace TxnReplicator
             __in TxnReplicator::SLInternalSettingsSPtr && ktlLoggerSharedLogConfig,
             __in Data::Log::LogManager & logManager,
             __in IFabricDataLossHandler & userDataLossHandler,
-            __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient);
+            __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient,
+            __in BOOLEAN hasPersistedState);
 
         Common::ComPointer<IFabricPrimaryReplicator> primaryReplicator_;
         Common::ComPointer<IFabricStateReplicator> fabricStateReplicator_;

@@ -16,9 +16,15 @@ install(
 )
 
 install(
-   FILES ./../../src/ServiceModel/xsd/ServiceFabricServiceModel.xsd
-   DESTINATION ${TEST_OUTPUT_DIR}/
+    FILES ./../../src/ServiceModel/xsd/ServiceFabricServiceModel.xsd
+    DESTINATION ${TEST_OUTPUT_DIR}/
 )
+
+install(
+    FILES ./../../ktl/src/test/JsonTests/LinuxKtlUnitTests.json 
+    DESTINATION ${TEST_OUTPUT_DIR}/../JsonTests
+)
+
 
 install(CODE "EXECUTE_PROCESS(COMMAND ln ${TEST_OUTPUT_DIR}/ ${TEST_OUTPUT_DIR}/../FabricUnitTests -fs)")
 install(CODE "EXECUTE_PROCESS(COMMAND cp -a ${EXTERNAL_DEPS_DIR}/WinFab.Linux.Libs/RunTests/. ${TEST_OUTPUT_DIR}/../RunTests)")
@@ -56,6 +62,16 @@ install(
 install(
     DIRECTORY ./../../../test/JsonTestTypes
     DESTINATION ${TEST_OUTPUT_DIR}/../RunTests
+)
+
+install(
+     FILES 
+        ./../../ktl/src/test/JsonTestTypes/SF/Linux.KConsTest.json
+        ./../../ktl/src/test/JsonTestTypes/SF/Linux.KConsTest_Sequential.json
+        ./../../ktl/src/test/JsonTestTypes/SF/Linux.KConsTest_Isolated.json
+        ./../../ktl/src/test/JsonTestTypes/SF/Linux.KConsLongTest.json
+
+    DESTINATION ${TEST_OUTPUT_DIR}/../RunTests/JsonTestTypes/
 )
 
 install(

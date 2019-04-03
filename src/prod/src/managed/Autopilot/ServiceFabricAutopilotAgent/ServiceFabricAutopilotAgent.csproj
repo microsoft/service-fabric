@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <AssemblyName>ServiceFabricAutopilotAgent</AssemblyName>
+    <RootNamespace>System.Fabric.SourceInclude.Common</RootNamespace>
+    <ProjectGuid>{FC0CADCA-98F3-4C8C-A506-D09DD5389BC1}</ProjectGuid>
+    <AssemblyDescription>Service Fabric Autopilot Agent</AssemblyDescription>
+    <AssemblyTitle>Service Fabric Autopilot Agent</AssemblyTitle>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(BinariesBuildTypeArchDirectory)\WindowsFabricServiceModel\ServiceFabricServiceModel.cs" />
+    <Compile Include="..\..\Api\src\System\Fabric\Common\FxCop.cs">
+      <Link>FxCop.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Api\src\System\Fabric\FabricConstants.cs">
+      <Link>FabricConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Infrastructurewrapper\WrapperCommon\CodingException.cs">
+      <Link>CodingException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Infrastructurewrapper\WrapperCommon\Constants.cs">
+      <Link>Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Infrastructurewrapper\WrapperCommon\Errorcode.cs">
+      <Link>Errorcode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Infrastructurewrapper\WrapperCommon\IEntryPoint.cs">
+      <Link>IEntryPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Infrastructurewrapper\WrapperCommon\InfrastructureWrapper.cs">
+      <Link>InfrastructureWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Infrastructurewrapper\WrapperCommon\Logger.cs">
+      <Link>Logger.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Infrastructurewrapper\WrapperCommon\Utilities.cs">
+      <Link>Utilities.cs</Link>
+    </Compile>
+    <Compile Include="ClusterTopology.cs" />
+    <Compile Include="ConfigurationManager.cs" />
+    <Compile Include="ServiceFabricAutopilotAgentHost.cs" />
+    <Compile Include="ServiceFabricAutopilotAgent.cs" />
+    <Compile Include="ServiceFabricAutopilotAgentStatus.cs" />
+    <Compile Include="ServiceFabricLocalNodeManager.cs" />
+    <Compile Include="StringConstants.cs" />
+    <Compile Include="TopologyProvider.cs" />
+    <Compile Include="..\Common\TextLogger.cs" />
+    <Compile Include="..\Common\ProcessStandardOutputHandler.cs" />
+    <Compile Include="..\Common\CommandLineUtility.cs" />
+    <Compile Include="..\Common\CsvReader.cs" />
+    <Compile Include="..\Common\MachineProperty.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DiskLayout.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ServiceConfig.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Start.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="$(PkgMicrosoft_Search_Autopilot)\lib\Microsoft.Search.Autopilot.dll" />
+    <Reference Include="$(PkgMicrosoft_Search_Autopilot)\lib\Microsoft.Search.Autopilot.DMCommands.dll" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Api\Dlls\System.Fabric.Management.ServiceModel.CsFileBuilder\System.Fabric.Management.ServiceModel.CsFileBuilder.csproj">
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\AutopilotBootstrap\ServiceFabricAutopilotAgent" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\AutopilotBootstrap\ServiceFabricAutopilotAgent" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

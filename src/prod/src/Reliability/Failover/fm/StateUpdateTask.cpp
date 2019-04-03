@@ -207,8 +207,14 @@ void StateUpdateTask::CheckFailoverUnit(
                 }
                 else
                 {
-                    lockedFailoverUnit.EnableUpdate();
-                    replica.IsToBeDroppedForNodeDeactivation = true;
+                    // if the RemoveNodeOrDataCloseStatelessInstanceAfterSafetyCheckComplete is set we dont want to mark these replicas as to be dropped
+                    // in order to avoid dropping them while safety checks are ongoing
+                    // RA will close them once the deactivation message is sent by FM
+                    if (failoverUnit.IsStateful || !FailoverConfig::GetConfig().RemoveNodeOrDataCloseStatelessInstanceAfterSafetyCheckComplete)
+                    {
+                        lockedFailoverUnit.EnableUpdate();
+                        replica.IsToBeDroppedForNodeDeactivation = true;
+                    }
                 }
             }
         }

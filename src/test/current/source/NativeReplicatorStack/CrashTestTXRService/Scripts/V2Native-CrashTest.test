@@ -1,0 +1,34 @@
+#################################################################
+# Summary of Test:
+#    1. Create a Cluster.
+#    2. Deploy CrashOnRunAsyncTest App.
+#    3. Client waits for 60 minutes
+#    4. Service crashes on runasync and ensures no Restore API is invoked
+#################################################################
+load SetCrashDumpConfigs.test
+
+setcfg Config.TraceEtw.Level 4
+
+# Disable PLB because it can end up moving a quorum of replicas at once causing RA to detect suspected data loss until RA bug is fixed
+setcfg Config.PlacementAndLoadBalancing.LoadBalancingEnabled false
+
+# Enable Progress Vector Trimming
+setcfg Config.TransactionalReplicator2.ProgressVectorMaxEntries 20
+
+# Create 5 node cluster.
+load FabSrvFiveNodeLocalCluster.test
+
+# Deploy and create FabSrv app.
+uploadapp CrashTestApp apppackages\CrashTestTXRAppPkg
+provisionapp CrashTestApp
+var appName fabric:/CrashTestApp
+
+createapp <var.appName> CrashTestApp appParameters={"RandomCrashChance":"12","DiagnosticsConnectionString":"xstore:DefaultEndpointsProtocol=https;AccountName=shrek;AccountKey=<var.accountKey>","CrashDumpContainerName":"<var.dumpContainerName>"}
+
+# Start client and test
+client.newclient client MS.Test.WinFabric.FabSrv.ClientWorkload.CrashOnRunAsyncTestClient,FabSrvTest.ClientWorkload 
+# Wait for 120 minutes
+client.starttask client test1 StartTest parameters={"DurationSeconds":"7200"}
+client.waittask timeout=7300
+
+quit
