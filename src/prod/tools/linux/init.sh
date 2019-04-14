@@ -8,7 +8,7 @@
 # Replace "PkgName" and "PkgVer"
 # NugetRepo="https://msazure.pkgs.visualstudio.com/_packaging/ManualMirror/nuget/v2?id=PkgName&version=PkgVer"
 
-PrebuiltBlobStore="https://sfprebuiltinternal212418.blob.core.windows.net/binaries/"
+PrebuiltBlobStore="https://sfprebuilt.blob.core.windows.net/binaries"
 
 PkgsList=()
 

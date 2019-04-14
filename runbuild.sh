@@ -37,6 +37,6 @@ EOF
     shift
 done
 
-build_command="cd /out/ && /src/build.sh ${NINJA_FLAG} -d $BUILD_PARAMS"
+build_command="cd /out/ && /src/build.sh  ${NINJA_FLAG} -d $BUILD_PARAMS"
 echo "Running Build for ${TARGET_OS} in docker..."
 exec $CDIR_RUNBUILD/tools/docker/run_in_docker.sh $TARGET_OS "$build_command" 
