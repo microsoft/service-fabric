@@ -10,7 +10,7 @@
              3. change the sdk publish version for this package at .config\FabricVersions.Targets
              4. Upload nupkg to linux blob storage for linux build.
              5. Update src/build.sh with new version -->
-    <ReferenceDataExtensionsNugetPackageVersion>1.4.5</ReferenceDataExtensionsNugetPackageVersion>
+    <ReferenceDataExtensionsNugetPackageVersion>1.4.4</ReferenceDataExtensionsNugetPackageVersion>
     <ReferenceDataExtensionsNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_Data_Extensions)</ReferenceDataExtensionsNugetPackageInstallPath>
     <ReferenceReliableCollectionAspNetNugetPackageVersion>1.0.11-beta</ReferenceReliableCollectionAspNetNugetPackageVersion>
     <ReferenceReliableCollectionAspNetNugetPackageInstallPath>$(PkgMicrosoft_ServiceFabric_ReliableCollection_AspNet)</ReferenceReliableCollectionAspNetNugetPackageInstallPath>

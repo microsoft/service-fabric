@@ -23,6 +23,14 @@ apt-get install -y libcgroup-dev cgroup-bin
 apt-get install -y lttng-tools liblttng-ust-dev liblttng-ctl-dev lttng-modules-dkms
 apt-get install -y libcurl4-openssl-dev
 
+apt-get install -y golang go-md2man
+echo 'export GOPATH=$HOME/go' >> ~/.bashrc
+
+#build 3rd parties
+apt-get install -y libgpgme-dev lvm2 libseccomp-dev libdevmapper-dev  # build cri-o
+apt-get install -y libglib2.0-dev libpopt-dev              #build babeltrace
+apt-get install -y libncurses5-dev libncursesw5-dev swig libedit-dev  #llvm
+
 cd /usr/lib/
 tar xvf /tmp/llvm-3.6-patched.tgz
 ln -fs /usr/lib/llvm-3.6/bin/clang /usr/bin/clang
