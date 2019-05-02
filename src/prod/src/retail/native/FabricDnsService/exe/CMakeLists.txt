@@ -25,10 +25,6 @@ add_precompiled_header(${exe_FabricDnsService} ../precomp/stdafx.h)
 set_target_properties(${exe_FabricDnsService} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
     
-ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
-SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
-    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
-
 add_custom_target(CopyFabricDnsService ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/DnsService.Code.Current
     COMMAND ${CMAKE_COMMAND} -E copy ${TEST_OUTPUT_DIR}/${exe_FabricDnsService} ${TEST_OUTPUT_DIR}/__FabricSystem_App4294967295/DnsService.Code.Current/FabricDnsService.exe

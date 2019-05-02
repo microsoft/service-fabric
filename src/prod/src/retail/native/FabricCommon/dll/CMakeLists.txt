@@ -20,10 +20,6 @@ add_library(objects_fabriccommon OBJECT ${LINUX_SOURCES})
 add_library(objects_fabriccommon2 OBJECT ${LINUX_SOURCES2})
 add_library(${lib_FabricCommon} SHARED $<TARGET_OBJECTS:objects_fabriccommon> $<TARGET_OBJECTS:objects_fabriccommon2>)
 
-ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
-SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
-    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
-
 set_target_properties(${lib_FabricCommon} PROPERTIES 
     LIBRARY_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_DIR})
 

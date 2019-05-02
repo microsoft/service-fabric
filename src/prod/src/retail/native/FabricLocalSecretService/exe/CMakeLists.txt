@@ -21,10 +21,6 @@ add_custom_target(CopyFabricLSS ALL
     DEPENDS ${exe_FabricLSS}
 )
 
-ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
-SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
-    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
-
 target_link_libraries(${exe_FabricLSS}
   ${lib_LocalSecretService}
   ${lib_FabricNode}

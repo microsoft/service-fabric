@@ -19,10 +19,6 @@ add_precompiled_header(${exe_FabricTypeHost} ../stdafx.h)
 set_target_properties(${exe_FabricTypeHost} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}) 
     
-ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
-SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
-    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
-
 target_link_libraries(${exe_FabricTypeHost}
   ${lib_FabricNode}
   ${lib_Communication}
