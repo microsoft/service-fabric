@@ -68,6 +68,7 @@ docker run \
     -ti \
     -v "$OUT_DIR":/out \
     -v "$REPOROOT"/external:/external \
+    -v "$REPOROOT"/deps:/deps \
     -v "$REPOROOT"/src:/src \
     -v "$REPOROOT"/.config:/.config \
     -v "$REPOROOT"/tools/ci/scripts:/scripts \

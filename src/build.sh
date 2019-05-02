@@ -95,11 +95,10 @@ SFUpgradeTestVersion=$(cat ${ProjRoot}/src/prod/linuxsetup/versions/upgradetestl
 SFResgenVersion="ServiceFabric.ResGen.NetStandard.1.0.1"
 CoreclrBuildArtifacts="ServiceFabric.Linux.Coreclr.BuildArtifacts.1.0.1"
 MCGLinux="Microsoft.DotNet.Interop.1.0.0.7171701"
-DataExtensions="Microsoft.ServiceFabric.Data.Extensions.1.4.5"
+DataExtensions="Microsoft.ServiceFabric.Data.Extensions.1.4.4"
 SFAspNetCoreInternal="SF.AspNetCore.Internal.3.3.1"
-SFActorsServicesInternal="SF.ActorsServices.Internal.3.3.15"
+SFActorsServicesInternal="SF.ActorsServices.Internal.3.3.9"
 SFArmCrossCompileSysRoot="SF.ArmCrossCompileSysRoot.Internal.1.0.0"
-SFLinuxLibssh2="SF.Linux.Libssh2.1.5.1"
 export CMAKE_NO_VERBOSE=1
 
 # Install any required packages that docker image don't have yet
