@@ -44,7 +44,7 @@ target_link_libraries(${lib_FabricCommon}
   lttng-ust
   ${Cxx}
   ${CxxABI}
-  patched_libssh2
+  ssh2
   ssl
   crypto
   xml2

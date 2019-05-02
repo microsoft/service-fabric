@@ -15,10 +15,6 @@ add_precompiled_header(${exe_FileStoreService} ../stdafx.h)
 set_target_properties(${exe_FileStoreService} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
 
-ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
-SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
-    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
-
 target_link_libraries(${exe_FileStoreService}
   ${lib_FileStoreService}
   ${lib_FabricNode}
@@ -65,7 +61,7 @@ target_link_libraries(${exe_FileStoreService}
   ${lib_FabricCommon}
   ${Cxx}
   ${CxxABI}
-  patched_libssh2
+  ssh2
   ssl
   crypto
   m

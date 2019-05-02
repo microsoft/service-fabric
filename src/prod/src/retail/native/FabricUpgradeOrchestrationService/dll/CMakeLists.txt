@@ -66,7 +66,7 @@ target_link_libraries(${lib_FabricUpgradeOrchestrationService}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
-  patched_libssh2
+  ssh2
   ssl
   crypto
   m

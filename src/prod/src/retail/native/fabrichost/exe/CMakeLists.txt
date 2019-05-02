@@ -17,10 +17,6 @@ add_precompiled_header(${exe_FabricHost} ../stdafx.h)
 set_target_properties(${exe_FabricHost} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}) 
     
-ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
-SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
-    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
-
 target_link_libraries(${exe_FabricHost}
   ${lib_FabricNode}
   ${lib_Communication}
@@ -73,7 +69,7 @@ target_link_libraries(${exe_FabricHost}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
-  patched_libssh2
+  ssh2
   minizip
   z
   ssl

@@ -71,7 +71,7 @@ target_link_libraries(${exe_FabricRM}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
-  patched_libssh2
+  ssh2
   ssl
   crypto
   m

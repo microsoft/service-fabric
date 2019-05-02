@@ -61,7 +61,7 @@ target_link_libraries(${exe_FabricGateway}
   ${KtlUser}
   ${Cxx}
   ${CxxABI}
-  patched_libssh2
+  ssh2
   minizip
   z
   ssl

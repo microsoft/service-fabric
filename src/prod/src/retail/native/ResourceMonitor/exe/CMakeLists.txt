@@ -15,10 +15,6 @@ add_custom_target(CopyFabricResourceMonitorService ALL
     DEPENDS ${exe_ResourceMonitor}
 )
 
-ADD_LIBRARY(patched_libssh2 STATIC IMPORTED)
-SET_TARGET_PROPERTIES(patched_libssh2 PROPERTIES
-    IMPORTED_LOCATION ${LIBSSH2_LIB_PATH}/libssh2.a)
- 
 target_link_libraries(${exe_ResourceMonitor}
   ${lib_ResourceMonitor}
   ${lib_ResourceMonitorConfig}
@@ -66,7 +62,7 @@ target_link_libraries(${exe_ResourceMonitor}
   ${lib_FabricCommon}
   ${Cxx}
   ${CxxABI}
-  patched_libssh2
+  ssh2
   ssl
   crypto
   m
