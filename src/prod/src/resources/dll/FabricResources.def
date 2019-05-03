@@ -1,0 +1,3 @@
+LIBRARY FabricResources
+EXPORTS
+    LoadStringResource

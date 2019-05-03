@@ -1,0 +1,103 @@
+//The below code will generate the serialization fields macros:
+
+
+// Begin code
+using System;
+using System.IO;
+
+namespace MacroGenerator
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            using (StreamWriter writer = new StreamWriter(File.Create("KStreamHelper.h")))
+            {
+                writer.WriteLine(FileHeader);
+
+                string writeLines = String.Empty;
+                string readLines = String.Empty;
+
+                for (int i = 1; i <= 25; ++i)
+                {
+                    writeLines += String.Format(WriteLinesFormat, (i - 1));
+                    readLines += String.Format(ReadLinesFormat, (i - 1));
+
+                    writer.WriteLine(
+                        MacroFormat,
+                        i,
+                        CreateArgLine(i),
+                        writeLines,
+                        readLines);
+                }
+            }
+        }
+
+        static string CreateArgLine(int count)
+        {
+            string argLine = "ARG0";
+
+            for (int i = 1; i < count; i++)
+            {
+                argLine = String.Format("{0}, ARG{1}", argLine, i);
+            }
+
+            return argLine;
+        }
+
+        static string FileHeader =
+            @"//------------------------------------------------------------------------------" + Environment.NewLine +
+            @"// Copyright (c) Microsoft Corporation. All rights reserved." + Environment.NewLine +
+            @"//------------------------------------------------------------------------------" + Environment.NewLine +
+            Environment.NewLine +
+            @"#pragma once" + Environment.NewLine +
+            Environment.NewLine +
+            @"#define CheckStatus(status)     \" + Environment.NewLine +
+            @"if (NT_ERROR(status))           \" + Environment.NewLine +
+            @"{                               \" + Environment.NewLine +
+            @"    return status;              \" + Environment.NewLine +
+            @"}                               \" + Environment.NewLine +
+            Environment.NewLine;
+
+        static string MacroFormat =
+            @"#define FABRIC_FIELDS_{0:00}({1}) \" + Environment.NewLine +
+            @"    virtual NTSTATUS Write(IKSerializableStream * stream)       \" + Environment.NewLine +
+            @"    {{                                                           \" + Environment.NewLine +
+            @"        NTSTATUS status = __super::Write(stream);               \" + Environment.NewLine +
+            @"        CheckStatus(status);                                    \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine +
+            @"        KSerializationHelper streamHelper(stream);              \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine +
+            @"        status = streamHelper.WriteStartType();                 \" + Environment.NewLine +
+            @"        CheckStatus(status);                                    \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine +
+            @"{2}" +
+            @"        return streamHelper.WriteEndType();                     \" + Environment.NewLine +
+            @"    }}                                                           \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine +
+            @"    virtual NTSTATUS Read(IKSerializableStream * stream)        \" + Environment.NewLine +
+            @"    {{                                                           \" + Environment.NewLine +
+            @"        NTSTATUS status = __super::Read(stream);                \" + Environment.NewLine +
+            @"        CheckStatus(status);                                    \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine +
+            @"        KSerializationHelper streamHelper(stream);              \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine +
+            @"        status = streamHelper.ReadStartType();                  \" + Environment.NewLine +
+            @"        CheckStatus(status);                                    \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine +
+            @"{3}" +
+            @"        return stream->ReadEndType();                           \" + Environment.NewLine +
+            @"    }}                                                           \" + Environment.NewLine +
+            Environment.NewLine;
+
+        static string WriteLinesFormat =
+            @"        status = streamHelper.Write(ARG{0});                      \" + Environment.NewLine +
+            @"        CheckStatus(status);                                    \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine;
+
+        static string ReadLinesFormat =
+            @"        status = streamHelper.Read(ARG{0});                       \" + Environment.NewLine +
+            @"        CheckStatus(status);                                    \" + Environment.NewLine +
+            @"                                                                \" + Environment.NewLine;
+    }
+}

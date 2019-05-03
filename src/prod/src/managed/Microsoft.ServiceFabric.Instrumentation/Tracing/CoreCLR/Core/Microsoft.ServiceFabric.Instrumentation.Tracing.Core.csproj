@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_coreclr.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>ffe6f528-be48-411a-ab94-e8ce3921ce99</ProjectGuid>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootNamespace>Microsoft.ServiceFabric.Instrumentation.Tracing.Core</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Instrumentation.Tracing.Core</AssemblyName>
+    <AssemblyTitle>Service Fabric Tracing Core Assembly</AssemblyTitle>
+    <OutputType>library</OutputType>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Core\Definition\Assert.cs;" />
+    <Compile Include="..\..\Core\Definition\InstanceIdentity.cs;" />
+    <Compile Include="..\..\Core\Definition\ValueReader.cs" />
+    <Compile Include="..\..\Core\Definition\ByteValueReader.cs" />
+    <Compile Include="..\..\Core\Definition\PropertyBagValueReader.cs" />
+    <Compile Include="..\..\Core\Definition\PropertyMetadata.cs" />
+    <Compile Include="..\..\Core\Definition\ValueReaderCreator.cs" />
+    <Compile Include="..\..\Core\Definition\ITraceObject.cs" />
+    <Compile Include="..\..\Core\Definition\PropertyDescriptor.cs" />
+    <Compile Include="..\..\Core\Definition\StronglyTypedTraceRecord.cs" />
+    <Compile Include="..\..\Core\Definition\TaskName.cs" />
+    <Compile Include="..\..\Core\Definition\TraceFieldAttribute.cs" />
+    <Compile Include="..\..\Core\Definition\TraceKeyword.cs" />
+    <Compile Include="..\..\Core\Definition\TraceLevel.cs" />
+    <Compile Include="..\..\Core\Definition\TraceRecord.cs" />
+    <Compile Include="..\..\Core\Definition\TraceIdentity.cs" />
+    <Compile Include="..\..\Core\Parser\BaseTraceRecordParser.cs" />
+    <Compile Include="..\..\Core\Parser\HelpfulExtensions.cs" />
+    <Compile Include="..\..\Core\Parser\ITraceRecordParser.cs" />
+    <Compile Include="..\..\Core\Parser\ParserObservableExtensions.cs" />
+    <Compile Include="..\..\Core\Reader\ITraceRecordDispatcher.cs" />
+    <Compile Include="..\..\Core\Reader\ITraceRecordReader.cs" />
+    <Compile Include="..\..\Core\Reader\TraceRecordFilter.cs" />
+    <Compile Include="..\..\Core\Reader\PropertyFilter.cs" />
+    <Compile Include="..\..\Core\Reader\TraceRecordSession.cs" />
+    <None Update="lib\**">
+      <Pack>true</Pack>
+    </None>
+  </ItemGroup>
+
+  <Import Project="$(SRCROOT)\properties\ServiceFabric.CoreClr.targets" />
+</Project>

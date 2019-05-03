@@ -1,0 +1,4 @@
+LIBRARY FabricTransport
+EXPORTS
+	CreateFabricTransportListener
+	CreateFabricTransportClient

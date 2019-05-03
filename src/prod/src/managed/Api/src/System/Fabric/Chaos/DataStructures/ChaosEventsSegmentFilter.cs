@@ -88,8 +88,8 @@ namespace System.Fabric.Chaos.DataStructures
         {
             var nativeEventsSegmentFilter = new NativeTypes.FABRIC_CHAOS_EVENTS_SEGMENT_FILTER();
 
-            nativeEventsSegmentFilter.StartTimeUtc = NativeTypes.ToNativeFILETIME(this.StartTimeUtc);
-            nativeEventsSegmentFilter.EndTimeUtc = NativeTypes.ToNativeFILETIME(this.EndTimeUtc);
+            nativeEventsSegmentFilter.StartTimeUtc = ChaosUtility.ToNativeFILETIMENormalTimeStamp(this.StartTimeUtc);
+            nativeEventsSegmentFilter.EndTimeUtc = ChaosUtility.ToNativeFILETIMENormalTimeStamp(this.EndTimeUtc);
 
             return pinCollection.AddBlittable(nativeEventsSegmentFilter);
         }

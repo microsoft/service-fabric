@@ -35,6 +35,9 @@ namespace Management
         class FileStoreServiceFactory;
         typedef Common::RootedObjectHolder<FileStoreServiceFactory> FileStoreServiceFactoryHolder;
 
+        class FileStoreServiceCounters;
+        typedef std::shared_ptr<FileStoreServiceCounters> FileStoreServiceCountersSPtr;
+
         class UploadSessionMetadata;
         typedef std::shared_ptr<UploadSessionMetadata> UploadSessionMetadataSPtr;
         typedef std::map<Common::Guid, UploadSessionMetadataSPtr> UploadSessionMetadataMap;

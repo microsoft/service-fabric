@@ -1,0 +1,4 @@
+SingleMachine-CIT.json
+    TYPES:FederationTest
+SingleMachine-Functional.json
+    TYPES:FederationTest

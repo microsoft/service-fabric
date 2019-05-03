@@ -106,8 +106,12 @@ namespace System.Fabric.FabricDeployer
                 string backupRestoreServicePath = Path.Combine(
                     GetFabricSystemApplicationCodeFolder(setting.DeploymentFoldersInfo, Constants.BackupRestoreService, Constants.SystemServiceCodePackageName, Constants.SystemServiceCodePackageVersion),
                     Constants.ServiceExes[Constants.BackupRestoreService]);
+                string eventStoreServicePath = Path.Combine(
+                    GetFabricSystemApplicationCodeFolder(setting.DeploymentFoldersInfo, Constants.EventStoreService, Constants.SystemServiceCodePackageName, Constants.SystemServiceCodePackageVersion),
+                    Constants.ServiceExes[Constants.EventStoreService]);
 #else
                 string backupRestoreServicePath = null;
+                string eventStoreServicePath = null;
 #endif
                 string fabricUpgradeServicePath = Path.Combine(
                     GetFabricSystemApplicationCodeFolder(setting.DeploymentFoldersInfo, Constants.FabricUpgradeService, Constants.SystemServiceCodePackageName, Constants.SystemServiceCodePackageVersion),
@@ -118,6 +122,9 @@ namespace System.Fabric.FabricDeployer
                 string fabricInfrastructureServicePath = Path.Combine(
                     GetFabricSystemApplicationCodeFolder(setting.DeploymentFoldersInfo, Constants.FabricInfrastructureService, Constants.SystemServiceCodePackageName, Constants.SystemServiceCodePackageVersion),
                     Constants.ServiceExes[Constants.FabricInfrastructureService]);
+                string gatewayResourceManagerPath = Path.Combine(
+                    GetFabricSystemApplicationCodeFolder(setting.DeploymentFoldersInfo, Constants.GatewayResourceManager, Constants.SystemServiceCodePackageName, Constants.SystemServiceCodePackageVersion),
+                    Constants.ServiceExes[Constants.GatewayResourceManager]);
 
 #if !DotNetCoreClrLinux && !DotNetCoreClrIOT
                 string centralsecretServicePath = Path.Combine(
@@ -166,6 +173,8 @@ namespace System.Fabric.FabricDeployer
                     fabricInfrastructureServicePath,
                     upgradeOrchestrationServicePath,
                     centralsecretServicePath,
+                    eventStoreServicePath,
+                    gatewayResourceManagerPath,
                     dynamicPortRange,
                     securitySection);
                 newRules.AddRange(rulesForNode);

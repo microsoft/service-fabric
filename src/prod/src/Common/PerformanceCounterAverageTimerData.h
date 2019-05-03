@@ -18,6 +18,8 @@ namespace Common
 
         void Update(int64 operationStartTime);
 
+        void UpdateWithNormalizedTime(int64 elapsedTicks);
+
         __declspec(property(get=get_Value, put=set_Value)) PerformanceCounterValue Value;
         inline PerformanceCounterValue get_Value(void) const { return counter_.Value; }
         inline void set_Value(PerformanceCounterValue value) { counter_.Value = value; }

@@ -14,19 +14,20 @@ namespace Data
         class CopyManager
             : public KObject<CopyManager>
             , public KShared<CopyManager>
+            , public ICopyManager
         {
             K_FORCE_SHARED(CopyManager)
+            K_SHARED_INTERFACE_IMP(ICopyManager)
+
         public:
             static NTSTATUS Create(
+                __in KStringView const & directory,
                 __in StoreTraceComponent & traceComponent,
                 __in KAllocator & allocator,
                 __in StorePerformanceCountersSPtr & perfCounters,
                 __out SPtr & result);
 
-            ktl::Awaitable<void> AddCopyDataAsync(
-                __in KStringView const & directory,
-                __in OperationData const & data);
-
+            ktl::Awaitable<void> AddCopyDataAsync(__in OperationData const & data) override;
 
              __declspec(property(get = get_MetadataTable)) MetadataTable::SPtr MetadataTableSPtr;
              MetadataTable::SPtr get_MetadataTable()
@@ -35,12 +36,12 @@ namespace Data
              }
 
              __declspec(property(get = get_IsCopyCompleted)) bool IsCopyCompleted;
-             bool get_IsCopyCompleted()
+             bool get_IsCopyCompleted() override
              {
                  return copyCompleted_;
              }
 
-             ktl::Awaitable<void> CloseAsync();
+             ktl::Awaitable<void> CloseAsync() override;
 
             static const ULONG32 CopyProtocolVersion = 1;
             static const ULONG32 InvalidCopyProtocolVersion = 0;
@@ -62,9 +63,13 @@ namespace Data
             static ULONG32 GetULONG32(__in KBuffer & buffer, __in ULONG offsetBytes);
             void TraceException(__in KStringView const & methodName, __in ktl::Exception const & exception);
 
-            CopyManager(__in StoreTraceComponent & traceComponent, __in StorePerformanceCountersSPtr & perfCounters);
+            CopyManager(
+                __in KStringView const & directory,
+                __in StoreTraceComponent & traceComponent, 
+                __in StorePerformanceCountersSPtr & perfCounters);
 
             bool copyCompleted_;
+            KString::SPtr workDirectorySPtr_;
             KString::SPtr currentCopyFileNameSPtr_;
             KBlockFile::SPtr currentCopyFileSPtr_;
             ktl::io::KFileStream::SPtr currentCopyFileStreamSPtr_;

@@ -688,18 +688,35 @@ typedef enum _IO_PRIORITY_HINT {
 
 typedef void * PVOID64;
 
-inline __uint128_t InterlockedCompareExchange128( volatile __uint128_t * src, __uint128_t cmp, __uint128_t with )
+#ifdef __aarch64__ 
+inline __uint128_t InterlockedCompareExchange128(__uint128_t * src, __uint128_t cmp, __uint128_t with)
 {
-  __asm__ __volatile__
-  (
-      "lock cmpxchg16b %1"
-      : "+A" ( cmp )
-      , "+m" ( *src )
-      : "b" ( (long long)with )
-      , "c" ( (long long)(with>>64) )
-      : "cc"
-  );
-  return cmp;
+    return __sync_val_compare_and_swap(src, cmp, with);
+}
+
+inline unsigned char InterlockedCompareExchange128(
+    _Inout_ LONGLONG volatile *Destination,
+    _In_    LONGLONG          ExchangeHigh,
+    _In_    LONGLONG          ExchangeLow,
+    _Inout_ LONGLONG          *ComparandResult
+    )
+{
+    LONGLONG exchange[2]= {ExchangeHigh, ExchangeLow};  
+    return __sync_bool_compare_and_swap((__uint128_t*)Destination, *(__uint128_t*)exchange, *(__uint128_t*)ComparandResult);
+}
+#else
+inline __uint128_t InterlockedCompareExchange128(volatile __uint128_t * src, __uint128_t cmp, __uint128_t with)
+{
+    __asm__ __volatile__
+    (
+        "lock cmpxchg16b %1"
+        : "+A" (cmp)
+        , "+m" (*src)
+        : "b" ((long long)with)
+        , "c" ((long long)(with >> 64))
+        : "cc"
+    );
+    return cmp;
 }
 
 inline unsigned char InterlockedCompareExchange128(
@@ -724,6 +741,8 @@ inline unsigned char InterlockedCompareExchange128(
     );
     return result;
 }
+#endif
+
 
 typedef struct _FILE_STANDARD_INFORMATION {
     LARGE_INTEGER AllocationSize;

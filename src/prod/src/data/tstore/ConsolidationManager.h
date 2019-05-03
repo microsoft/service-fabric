@@ -58,6 +58,13 @@ namespace Data
             {
                numberOfDeltasToBeConsolidated_ = value;
             }
+
+            // Exposed for testing
+            __declspec(property(get = get_AggregatedStoreComponent)) KSharedPtr<AggregatedStoreComponent<TKey, TValue>> AggregatedStoreComponentSPtr;
+            KSharedPtr<AggregatedStoreComponent<TKey, TValue>> get_AggregatedStoreComponent()
+            {
+                return aggregatedStoreComponentSPtr_.Get();
+            }
             
             static int CompareEnumerators(__in KSharedPtr<DifferentialStateEnumerator<TKey, TValue>> const & one, __in KSharedPtr<DifferentialStateEnumerator<TKey, TValue>> const & two)
             {
@@ -230,16 +237,19 @@ namespace Data
                         versionedItems->Append(valueInConsolidatedState);
 
                         // Decrement number of valid entries.
-                        FileMetadata::SPtr fileMetadataSPtr = nullptr;
-                        if (!metadataTableSPtr->Table->TryGetValue(valueInConsolidatedState->GetFileId(), fileMetadataSPtr))
+                        if (consolidationProviderSPtr_->HasPersistedState)
                         {
-                           STORE_ASSERT(
-                              fileMetadataSPtr != nullptr,
-                              "Failed to find file metadata for versioned item in consolidated with file id {1}.",
-                              valueInConsolidatedState->GetFileId());
-                        }
+                            FileMetadata::SPtr fileMetadataSPtr = nullptr;
+                            if (!metadataTableSPtr->Table->TryGetValue(valueInConsolidatedState->GetFileId(), fileMetadataSPtr))
+                            {
+                                STORE_ASSERT(
+                                    fileMetadataSPtr != nullptr,
+                                    "Failed to find file metadata for versioned item in consolidated with file id {1}.",
+                                    valueInConsolidatedState->GetFileId());
+                            }
 
-                        fileMetadataSPtr->DecrementValidEntries();
+                            fileMetadataSPtr->DecrementValidEntries();
+                        }
 
                         // Remove the value in differential.
                         auto differentialStateVersionsSPtr = oldDifferentialState->ReadVersions(differntialStateKey);
@@ -365,7 +375,9 @@ namespace Data
 
                   // If any files fall below the threshold, merge them together
                   KSharedArray<ULONG32>::SPtr mergeFileIds = nullptr;
-                  if (co_await consolidationProviderSPtr_->MergeHelperSPtr->ShouldMerge(*metadataTableSPtr, mergeFileIds))
+                  if (
+                      consolidationProviderSPtr_->HasPersistedState &&
+                      co_await consolidationProviderSPtr_->MergeHelperSPtr->ShouldMerge(*metadataTableSPtr, mergeFileIds))
                   {
                      STORE_ASSERT(mergeFileIds != nullptr, "mergeFileIds != nullptr");
                      postMergeMetadataTableInformation = co_await MergeAsync(*metadataTableSPtr, *mergeFileIds, *newConsolidatedStateSPtr, perfCounters, cancellationToken);
@@ -483,6 +495,14 @@ namespace Data
                STORE_ASSERT(cachedAggregratedStoreComponentSPtr != nullptr, "cachedAggregratedStoreComponentSPtr != nullptr");
 
                return cachedAggregratedStoreComponentSPtr->GetSortedKeyEnumerable(useFirstKey, firstKey, useLastKey, lastKey);
+            }
+
+            KSharedPtr<IEnumerator<KeyValuePair<TKey, KSharedPtr<VersionedItem<TValue>>>>> GetAllKeysAndValuesEnumerator()
+            {
+               auto cachedAggregratedStoreComponentSPtr = aggregatedStoreComponentSPtr_.Get();
+               STORE_ASSERT(cachedAggregratedStoreComponentSPtr != nullptr, "cachedAggregratedStoreComponentSPtr != nullptr");
+
+               return cachedAggregratedStoreComponentSPtr->GetKeysAndValuesEnumerator();
             }
 
             LONG64 Count()

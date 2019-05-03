@@ -38,6 +38,16 @@ namespace System.Fabric.FabricDeployer
         /// </summary>
         public static readonly string ContainerProviderProcessName = "dockerd";
 
+        /// <summary>
+        /// Docker daemon pid file directory name
+        /// </summary>
+        public static readonly string DockerProcessIdFileDirectory = "_sf_docker_pid";
+
+        /// <summary>
+        /// Docker daemon pid file name
+        /// </summary>
+        public static readonly string DockerProcessFile = "sfdocker.pid";
+
 #if !DotNetCoreClrLinux
         /// <summary>
         /// Docker service name
@@ -50,15 +60,14 @@ namespace System.Fabric.FabricDeployer
         public static readonly string ContainerProviderProcessNameWithExtension = "dockerd.exe";
 
         /// <summary>
-        /// Arguments passed in to dockerd. On docker will pickup the listening
-        /// address from its config.
+        /// Argument passed in to dockerd to start up in debug mode.
         /// </summary>
-        public static readonly string ContainerProviderServiceSetupCommandArgs = "-D";
+        public static readonly string ContainerProviderServiceDebugModeArg = "-D";
 
         /// <summary>
-        /// Docker pid file relative path
+        /// Docker daemon arguments
         /// </summary>
-        public static readonly string DockerPidFileRelativePath = "docker\\docker.pid";
+        public static readonly string ContainerServiceArguments = "-H localhost:2375 -H npipe://";
 #else
         /// <summary>
         /// Azure network plugin used to set up flat network
@@ -71,9 +80,9 @@ namespace System.Fabric.FabricDeployer
         public static readonly string AzureVnetPluginSockPath = "/run/docker/plugins/azure-vnet.sock";
 
         /// <summary>
-        /// Docker pid file path
+        /// Docker daemon arguments
         /// </summary>
-        public static readonly string DockerPidFilePath = "/var/run/docker.pid";
+        public static readonly string ContainerServiceArguments = "-H localhost:2375 -H unix:///var/run/docker.sock";
 #endif
         #endregion
 

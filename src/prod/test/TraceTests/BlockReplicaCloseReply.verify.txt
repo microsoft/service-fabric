@@ -1,0 +1,8 @@
+###Partition 76d33d7f-6382-4413-94bd-afb7b0766f38 time range 7/23/2014 6:38:52 AM-7/23/2014 6:43:27 AM
+Partition stuck in reconfiguration for at least ###00:04:00.9010000
+Checking primary on node 60
+Primary is stuck in Phase3_Deactivate for at least ###00:04:00.8380000
+Primary is still waiting for 50 to complete deactivation
+DeactivateSecondary for 50 not completed
+Failed Task: DeactivateSecondary(CloseReplica(RAPSendReply)[*3])
+

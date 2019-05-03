@@ -18,7 +18,7 @@ add_precompiled_header(${exe_FabricTypeHost} ../stdafx.h)
 
 set_target_properties(${exe_FabricTypeHost} PROPERTIES 
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}) 
-
+    
 target_link_libraries(${exe_FabricTypeHost}
   ${lib_FabricNode}
   ${lib_Communication}
@@ -45,6 +45,7 @@ target_link_libraries(${exe_FabricTypeHost}
   ${lib_StoreRepairPolicy}
   ${lib_Replication}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_LoadBalancing}
   ${lib_SystemServices}
   ${lib_ServiceGroup}

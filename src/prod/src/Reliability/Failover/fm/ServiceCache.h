@@ -96,6 +96,7 @@ namespace Reliability
                 ApplicationCapacityDescription const& applicationCapacity,
                 ServiceModel::ServicePackageResourceGovernanceMap const& rgDescription,
                 ServiceModel::CodePackageContainersImagesMap const& cpContainersImages,
+                Common::StringCollection networks,
                 Common::AsyncCallback const& callback,
                 Common::AsyncOperationSPtr const& state);
 

@@ -27,6 +27,8 @@ namespace Data
             // 
             static bool IsAllowedToThrottle(__in LogicalLogRecord const & logicalRecord);
 
+            virtual std::wstring ToString() const override;
+
             __declspec(property(get = get_IsReplicated)) bool IsReplicated;
             bool get_IsReplicated()
             {

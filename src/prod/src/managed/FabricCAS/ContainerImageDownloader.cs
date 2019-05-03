@@ -28,6 +28,11 @@ namespace Hosting.ContainerActivatorService
         private readonly ConcurrentDictionary<string, object> imageCache;
         private readonly TimeSpan downloadProgressStatusInterval;
 
+        // CRYPT_E_ASN1_BADTAG = -2146881269 (0x8009310b) is a windows error code that is not defined
+        // and successfully mapped by service fabric resulting in an unreadable error (ASN1 bad tag value met)
+        // back to the user.
+        private readonly int CRYPT_E_ASN1_BADTAG = -2146881269;
+
         private string cachedToken = "";
         private WebClient webClient;
 
@@ -40,12 +45,20 @@ namespace Hosting.ContainerActivatorService
 
         #endregion
 
+        // This has to be in sync with the ServiceFabricServiceModel.xsd EnvironmentVariableType attribute Type
+        // and Hosting Constants SecretsStoreRef and Encrypted.
+        enum Type { SecretsStoreRef, PlainText, Encrypted };
+
         public ContainerImageDownloader(ContainerActivatorService activator)
         {
             this.activator = activator;
             this.imageCache = new ConcurrentDictionary<string, object>();
             this.downloadProgressStatusInterval = TimeSpan.FromSeconds(15);
             webClient = new WebClient();
+
+            #if !DotNetCoreClr
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            #endif
         }
 
         public Task DownloadImagesAsync(
@@ -113,7 +126,7 @@ namespace Hosting.ContainerActivatorService
             {
                 AuthConfig authConfig = this.GetAuthConfig(imageDescription.RepositoryCredential, imageDescription.ImageName, currentCredentialAttempt);
 
-                var downloadProgressStream = await Utility.ExecuteWithRetriesAsync(
+                var downloadProgressStream = await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.ImageOperation.CreateImageAsync(
@@ -163,11 +176,23 @@ namespace Hosting.ContainerActivatorService
             {
                 var errMsgBuilder = new StringBuilder();
 
-                errMsgBuilder.AppendFormat(
-                    "Container image download failed with authorization attempt type {0} for ImageName={1} with unexpected error. Exception={2}.",
-                    currentCredentialAttempt.ToString(),
-                    imageDescription.ImageName,
-                    ex.ToString());
+                // ASN1 BADTAG is an esoteric error message so lets return a more readable/useful error message.
+                if (ex.HResult == CRYPT_E_ASN1_BADTAG)
+                {
+                    errMsgBuilder.AppendFormat(
+                        "Container image download failed with authorization attempt type={0} for ImageName={1} due to an error decrypting the repository credential password. Is the PasswordEncrypted flag set correctly in ApplicationManifest.xml? Exception={2}.",
+                        currentCredentialAttempt.ToString(),
+                        imageDescription.ImageName,
+                        ex.ToString());
+                }
+                else
+                {
+                    errMsgBuilder.AppendFormat(
+                        "Container image download failed with authorization attempt type={0} for ImageName={1} with unexpected error. Exception={2}.",
+                        currentCredentialAttempt.ToString(),
+                        imageDescription.ImageName,
+                        ex.ToString());
+                }
 
                 HostingTrace.Source.WriteWarning(TraceType, errMsgBuilder.ToString());
                 throw new FabricException(errMsgBuilder.ToString(), FabricErrorCode.InvalidOperation);
@@ -250,7 +275,7 @@ namespace Hosting.ContainerActivatorService
         {
             try
             {
-                await Utility.ExecuteWithRetriesAsync(
+                await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.activator.Client.ImageOperation.DeleteImageAsync(
@@ -307,7 +332,7 @@ namespace Hosting.ContainerActivatorService
         {
             try
             {
-                await Utility.ExecuteWithRetriesAsync(
+                await Utility.ExecuteWithRetryOnTimeoutAsync(
                     (operationTimeout) =>
                     {
                         return this.ImageOperation.GetImageHistoryAsync(
@@ -387,7 +412,9 @@ namespace Hosting.ContainerActivatorService
             {
                 username = credentials.AccountName;
 
-                if (credentials.IsPasswordEncrypted && !string.IsNullOrEmpty(credentials.Password))
+                bool isencrypted = (credentials.IsPasswordEncrypted || credentials.Type.Equals(Type.Encrypted));
+
+                if (isencrypted && !string.IsNullOrEmpty(credentials.Password))
                 {
                     password = Utility.GetDecryptedValue(credentials.Password);
                 }
@@ -399,7 +426,10 @@ namespace Hosting.ContainerActivatorService
             else if (credentialType == CredentialType.ClusterManifestDefaultCredentials)
             {
                 username = HostingConfig.Config.DefaultContainerRepositoryAccountName;
-                if (HostingConfig.Config.IsDefaultContainerRepositoryPasswordEncrypted && !string.IsNullOrEmpty(HostingConfig.Config.DefaultContainerRepositoryPassword))
+
+                bool isencrypted = (HostingConfig.Config.IsDefaultContainerRepositoryPasswordEncrypted || HostingConfig.Config.DefaultContainerRepositoryPasswordType.Equals(Type.Encrypted));
+
+                if (isencrypted && !string.IsNullOrEmpty(HostingConfig.Config.DefaultContainerRepositoryPassword))
                 {
                     password = Utility.GetDecryptedValue(HostingConfig.Config.DefaultContainerRepositoryPassword);
                 }

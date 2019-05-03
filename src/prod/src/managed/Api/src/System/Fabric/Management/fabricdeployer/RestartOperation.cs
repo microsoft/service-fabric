@@ -81,47 +81,7 @@ namespace System.Fabric.FabricDeployer
             }
 
 #if !DotNetCoreClrIOT && !DotNetCoreClrLinux
-            #region Container Network Reset
-            // CreateOrUpdate operation inherits from RestartOperation.
-            // This check will invoke network reset only in the restart case.
-            // This is a work around to handle the case where the flat network was not usable after VM reboot.
-            if (parameters.Operation == DeploymentOperations.None)
-            {
-                if (!parameters.SkipContainerNetworkResetOnReboot)
-                {
-                    var lastBootUpTimeFromRegistry = Utility.GetNodeLastBootUpTimeFromRegistry();
-                    var lastBootUpTimeFromSystem = Utility.GetNodeLastBootUpTimeFromSystem();
-                    DeployerTrace.WriteInfo("Last boot up time from registry:{0} from system:{1}", lastBootUpTimeFromRegistry, lastBootUpTimeFromSystem);
-
-                    if (!string.Equals(lastBootUpTimeFromRegistry.ToString(), lastBootUpTimeFromSystem.ToString(), StringComparison.OrdinalIgnoreCase))
-                    {
-                        DeployerTrace.WriteInfo("Invoking container network reset.");
-
-                        // This check is needed to allow clean up on azure. This is symmetrical to the set up condition.
-                        if (clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructureWindowsAzure ||
-                            clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructurePaaS)
-                        {
-                            var containerNetworkCleanupOperation = new ContainerNetworkCleanupOperation();
-                            containerNetworkCleanupOperation.ExecuteOperation(parameters.ContainerNetworkName, parameters.Operation);
-                        }
-
-                        if (parameters.ContainerNetworkSetup)
-                        {
-                            // set up docker network.
-                            var containerNetworkSetupOperation = new ContainerNetworkSetupOperation();
-                            containerNetworkSetupOperation.ExecuteOperation(parameters, clusterManifest, infrastructure);
-                        }
-
-                        // Record last boot up time
-                        Utility.SaveNodeLastBootUpTimeToRegistry(lastBootUpTimeFromSystem);
-                    }
-                }
-                else
-                {
-                    DeployerTrace.WriteInfo("Skipping container network reset on reboot because SkipContainerNetworkResetOnReboot flag is enabled.");
-                }
-            }
-            #endregion
+            ResetNetworks(parameters, clusterManifest, infrastructure);
 #endif
 
 #if !DotNetCoreClrIOT
@@ -188,13 +148,103 @@ namespace System.Fabric.FabricDeployer
 #endif
         }
 
+#if !DotNetCoreClrIOT && !DotNetCoreClrLinux
+        /// <summary>
+        /// CreateOrUpdate operation inherits from RestartOperation.
+        /// This api will invoke network reset only in the restart case.
+        /// </summary>
+        /// <param name="clusterManifest"></param>
+        private void ResetNetworks(DeploymentParameters parameters, ClusterManifestType clusterManifest, Infrastructure infrastructure)
+        {
+            if (parameters.Operation == DeploymentOperations.None)
+            {
+                var lastBootUpTimeFromRegistry = Utility.GetNodeLastBootUpTimeFromRegistry();
+                var lastBootUpTimeFromSystem = Utility.GetNodeLastBootUpTimeFromSystem();
+                DeployerTrace.WriteInfo("Last boot up time from registry:{0} from system:{1}", lastBootUpTimeFromRegistry, lastBootUpTimeFromSystem);
+
+                // This is a work around to handle the case where the flat network was not usable after VM reboot.
+                #region Container Network Reset
+                if (!parameters.SkipContainerNetworkResetOnReboot)
+                {
+                    if (!string.Equals(lastBootUpTimeFromRegistry.ToString(), lastBootUpTimeFromSystem.ToString(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        DeployerTrace.WriteInfo("Invoking container network reset.");
+
+                        var containerServiceArguments = (parameters.UseContainerServiceArguments) ? (parameters.ContainerServiceArguments) : (FlatNetworkConstants.ContainerServiceArguments);
+                        containerServiceArguments = (parameters.EnableContainerServiceDebugMode) 
+                            ? (string.Format("{0} {1}", containerServiceArguments, FlatNetworkConstants.ContainerProviderServiceDebugModeArg))
+                            : containerServiceArguments;
+
+                        // This check is needed to allow clean up on azure. This is symmetrical to the set up condition.
+                        if (clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructureWindowsAzure ||
+                            clusterManifest.Infrastructure.Item is ClusterManifestTypeInfrastructurePaaS)
+                        {
+                            var containerNetworkCleanupOperation = new ContainerNetworkCleanupOperation();
+                            containerNetworkCleanupOperation.ExecuteOperation(parameters.ContainerNetworkName, containerServiceArguments, parameters.FabricDataRoot, parameters.Operation);
+                        }
+
+                        if (parameters.ContainerNetworkSetup)
+                        {
+                            // Set up docker network.
+                            var containerNetworkSetupOperation = new ContainerNetworkSetupOperation();
+                            containerNetworkSetupOperation.ExecuteOperation(parameters, clusterManifest, infrastructure);
+                        }
+
+                        // Record last boot up time.
+                        Utility.SaveNodeLastBootUpTimeToRegistry(lastBootUpTimeFromSystem);
+                    }
+                }
+                else
+                {
+                    DeployerTrace.WriteInfo("Skipping container network reset on reboot because SkipContainerNetworkResetOnReboot flag is enabled.");
+                }
+                #endregion
+
+                // This is a work around to handle the case where the isolated network was not usable after VM reboot.
+                #region Isolated Network Reset
+                if (parameters.EnableUnsupportedPreviewFeatures)
+                {
+                    if (!parameters.SkipIsolatedNetworkResetOnReboot)
+                    {
+                        if (!string.Equals(lastBootUpTimeFromRegistry.ToString(), lastBootUpTimeFromSystem.ToString(), StringComparison.OrdinalIgnoreCase))
+                        {
+                            DeployerTrace.WriteInfo("Invoking isolated network reset.");
+
+                            // Clean up isolated network set up
+                            var isolatedNetworkCleanupOperation = new IsolatedNetworkCleanupOperation();
+                            isolatedNetworkCleanupOperation.ExecuteOperation(parameters.IsolatedNetworkName, parameters.FabricBinRoot, parameters.Operation);
+
+                            if (parameters.IsolatedNetworkSetup)
+                            {
+                                var isolatedNetworkSetupOperation = new IsolatedNetworkSetupOperation();
+                                isolatedNetworkSetupOperation.ExecuteOperation(parameters, clusterManifest, infrastructure);
+                            }
+
+                            // Record last boot up time.
+                            Utility.SaveNodeLastBootUpTimeToRegistry(lastBootUpTimeFromSystem);
+                        }
+                    }
+                    else
+                    {
+                        DeployerTrace.WriteInfo("Skipping isolated network reset on reboot because SkipIsolatedNetworkResetOnReboot flag is enabled.");
+                    }
+                }
+                else
+                {
+                    DeployerTrace.WriteInfo("Isolated Network preview feature disabled for the cluster.");
+                }
+                #endregion
+            }
+        }
+#endif
+
         public List<NodeSettings> GetNodeSettings()
         {
             var versions = new Versions(
                 manifest.Version,
                 parameters.InstanceId,
                 parameters.TargetVersion,
-                parameters.CurrrentVersion ?? Utility.GetCurrentCodeVersion(null));
+                parameters.CurrentVersion ?? Utility.GetCurrentCodeVersion(null));
 
             List<NodeSettings> nodeSettings = new List<NodeSettings>();
 

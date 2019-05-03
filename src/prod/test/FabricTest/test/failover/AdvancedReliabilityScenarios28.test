@@ -13,6 +13,7 @@ namingservice 1 1 1
 cleantest
 
 set IsStrongSafetyCheckEnabled false
+set SwapPrimaryRequestTimeout 30
 
 #start nodes
 +10

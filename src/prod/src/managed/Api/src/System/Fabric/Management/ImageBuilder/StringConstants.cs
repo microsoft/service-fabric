@@ -27,7 +27,12 @@ namespace System.Fabric.Management.ImageBuilder
         public static readonly string Incoming = "Incoming";        
         public static readonly string FabricNamespace = "http://schemas.microsoft.com/2011/01/fabric";
         public static readonly string OpenNetworkConfig = "Open";
+        public static readonly string IsolatedNetworkConfig = "Isolated";
         public static readonly string OtherNetworkConfig = "Other";
         public static readonly string SfpkgExtension = ".sfpkg";
+        public static readonly string OpenNetworkName = "Open";
+        public static readonly string NatNetworkName = "Other";
+        public static readonly string TargetReplicaSetSizeKeyName = "TargetReplicaSetSize";
+        public static readonly string FailoverManagerSectionName = "FailoverManager";
     }
 }

@@ -12,7 +12,7 @@ namespace ServiceModel
 {
     // <ServicePackage> element.
     struct Parser;
-	struct Serializer;
+    struct Serializer;
     struct ServicePackageDescription
     {
     public:
@@ -28,6 +28,10 @@ namespace ServiceModel
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
         Common::ErrorCode FromXml(std::wstring const & fileName);
+
+        std::map<std::wstring, std::wstring> GetEndpointNetworkMap(wstring const & networkTypeStr) const;
+
+        std::vector<std::wstring> GetNetworks(wstring const & networkTypeStr) const;
 
     public:
         std::wstring PackageName;
@@ -46,10 +50,11 @@ namespace ServiceModel
         ServicePackageResourceGovernanceDescription ResourceGovernanceDescription;
         ServicePackageContainerPolicyDescription ContainerPolicyDescription;
         ServiceFabricRuntimeAccessDescription SFRuntimeAccessDescription;
+        NetworkPoliciesDescription NetworkPolicies;
 
     private:
         friend struct Parser;
-		friend struct Serializer;
+        friend struct Serializer;
         void ReadFromXml(Common::XmlReaderUPtr const &);
         void ParseServiceFabricRuntimeAccessDescription(Common::XmlReaderUPtr const & xmlReader);
         void ParseResourceGovernanceDescription(Common::XmlReaderUPtr const & xmlReader);
@@ -59,8 +64,10 @@ namespace ServiceModel
         void ParseDigestedConfigPackages(Common::XmlReaderUPtr const & xmlReader);
         void ParseDigestedDataPackages(Common::XmlReaderUPtr const & xmlReader);
         void ParseDigestedResources(Common::XmlReaderUPtr const & xmlReader);
+        void ParseNetworkPolicies(Common::XmlReaderUPtr const & xmlReader);
         void ParseDiagnostics(Common::XmlReaderUPtr const & xmlReader);
+        bool MatchNetworkTypeRef(std::wstring const & networkTypeStr, std::wstring const & networkRef) const;
 
-		Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const & xmlWriter);
+        Common::ErrorCode WriteToXml(Common::XmlWriterUPtr const & xmlWriter);
     };
 }

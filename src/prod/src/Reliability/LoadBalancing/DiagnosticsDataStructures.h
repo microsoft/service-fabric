@@ -510,6 +510,19 @@ namespace Reliability
             };
         };
 
+        class ThrottlingConstraintDiagnosticsData : public IConstraintDiagnosticsData
+        {
+        public:
+
+            ThrottlingConstraintDiagnosticsData() { changed_ = false; constraintType_ = IConstraint::ScaleoutCount; }
+
+            std::wstring DiagnosticsMessage()
+            {
+                return L"ThrottlingCountConstraintDiagnosticsData                 " + Common::StringUtility::ToWString(changed_);
+            };
+
+        };
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
         /* The Below Classes are for unplaced replica diagnostics*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////

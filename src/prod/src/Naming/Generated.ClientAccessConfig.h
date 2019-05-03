@@ -131,7 +131,7 @@ namespace Naming
         // Security configuration for recovering system service partitions
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", RecoverSystemPartitions, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum RecoverSystemPartitionsRoles;
         // Security configuration for reporting fault
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", ReportFault, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum ReportFaultRoles; 
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", ReportFault, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum ReportFaultRoles;
 
         // Security configuration for infrastructure task management commands
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", InvokeInfrastructureCommand, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum InvokeInfrastructureCommandRoles;
@@ -139,9 +139,9 @@ namespace Naming
         // Security configuration for image store client file transfer (external to cluster)
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", FileContent, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum FileContentRoles;
         // Security configuration for image store client file download initiation (external to cluster)
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", FileDownload, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum FileDownloadRoles;        
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", FileDownload, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum FileDownloadRoles;
         // Security configuration for image store client file list operation (internal)
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", InternalList, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum InternalListRoles;        
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", InternalList, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum InternalListRoles;
         // Security configuration for image store client delete operation
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", Delete, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum DeleteRoles;
 
@@ -157,14 +157,14 @@ namespace Naming
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetStoreLocation, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetStoreLocationRoles;
 
         // Security configuration for starting, stopping, and restarting nodes
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", NodeControl, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum NodeControlRoles; 
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", NodeControl, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum NodeControlRoles;
 
         // Security configuration for restarting code packages
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", CodePackageControl, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum CodePackageControlRoles; 
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", CodePackageControl, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum CodePackageControlRoles;
 
        // Unreliable Transport for adding and removing behaviors
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", UnreliableTransportControl, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum UnreliableTransportControlRoles;        
-       // Move replica 		
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", UnreliableTransportControl, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum UnreliableTransportControlRoles;
+       // Move replica
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", MoveReplicaControl, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum MoveReplicaControlRoles;
         //Predeployment api
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", PredeployPackageToNode, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum PredeployPackageToNodeRoles;
@@ -201,8 +201,8 @@ namespace Naming
         // Induces GetUpgradeOrchestrationServiceState on a partition
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetUpgradeOrchestrationServiceState, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetUpgradeOrchestrationServiceStateRoles;
 
-		// Induces SetUpgradeOrchestrationServiceState on a partition
-		PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", SetUpgradeOrchestrationServiceState, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum SetUpgradeOrchestrationServiceStateRoles;
+        // Induces SetUpgradeOrchestrationServiceState on a partition
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", SetUpgradeOrchestrationServiceState, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum SetUpgradeOrchestrationServiceStateRoles;
 
         // Creates an compose deployment described by compose files
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", CreateComposeDeployment, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum CreateComposeDeploymentRoles;
@@ -222,6 +222,18 @@ namespace Naming
         // Deletes a volume
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", DeleteVolume, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum DeleteVolumeRoles;
 
+        // Creates a container network
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", CreateNetwork, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum CreateNetworkRoles;
+
+        // Deletes a container network
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", DeleteNetwork, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum DeleteNetworkRoles;
+
+        // Create a gateway resource
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", CreateGatewayResource, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum CreateGatewayResourceRoles;
+
+        // Deletes a gateway resource
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", DeleteGatewayResource, L"Admin", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum DeleteGatewayResourceRoles;
+
         // Admin and User operations
         //
 
@@ -229,7 +241,7 @@ namespace Naming
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", Ping, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum PingRoles;
         // Security configuration for queries
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", Query, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum QueryRoles;
-        
+
         // Security configuration for Naming URI existence checks
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", NameExists, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum NameExistsRoles;
         // Security configuration for Naming URI enumeration
@@ -248,7 +260,7 @@ namespace Naming
         // Security configuration for resolving system services
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", ResolvePartition, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum ResolvePartitionRoles;
         // Security configuration for event-based service notifications
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", ServiceNotifications, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum ServiceNotificationsRoles; 
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", ServiceNotifications, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum ServiceNotificationsRoles;
         // Security configuration for complaint-based service prefix resolution
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", PrefixResolveService, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum PrefixResolveServiceRoles;
         // Security configuration for resolving system services
@@ -269,7 +281,7 @@ namespace Naming
 
         // Security configuration for Toggling Verbose ServicePlacement HealthReporting
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", ToggleVerboseServicePlacementHealthReporting, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum ToggleVerboseServicePlacementHealthReportingRoles;
-        
+
         // Fetches the progress for an invoke data loss api call
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetPartitionDataLossProgress, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetPartitionDataLossProgressRoles;
         // Fetches the progress for an invoke quorum loss api call
@@ -278,10 +290,10 @@ namespace Naming
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetPartitionRestartProgress, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetPartitionRestartProgressRoles;
 
         // Fetches the status of Chaos within a given time range
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetChaosReport, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetChaosReportRoles;        
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetChaosReport, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetChaosReportRoles;
 
-        // Security configuration for getting progress on a node transition command        
-        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetNodeTransitionProgress, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetNodeTransitionProgressRoles;        
+        // Security configuration for getting progress on a node transition command
+        PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetNodeTransitionProgress, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetNodeTransitionProgressRoles;
 
         // Induces GetClusterConfigurationUpgradeStatus on a partition
         PUBLIC_CONFIG_ENTRY(std::wstring, L"Security/ClientAccess", GetClusterConfigurationUpgradeStatus, L"Admin||User", Common::ConfigEntryUpgradePolicy::Dynamic) public: Transport::RoleMask::Enum GetClusterConfigurationUpgradeStatusRoles;

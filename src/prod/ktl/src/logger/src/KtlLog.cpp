@@ -225,11 +225,11 @@ RvdLogManagerImp::RvdOnDiskLog::~RvdOnDiskLog()
 
     _LogManager->DiskLogDestructed();
 
-	if (_BlockDevice)
-	{
-		_BlockDevice->Close();
-	}
-	
+    if (_BlockDevice)
+    {
+        _BlockDevice->Close();
+    }
+    
     if (_ShutdownEvent != nullptr)
     {
         KDbgCheckpointWData((KActivityId)(_LogId.Get().Data1), "SetEventForRvdLog", STATUS_SUCCESS,
@@ -274,6 +274,45 @@ ULONGLONG
 RvdLogManagerImp::RvdOnDiskLog::QueryReservedSpace()
 {
     return(2 * QueryMaxRecordSize());
+}
+
+
+VOID
+RvdLogManagerImp::RvdOnDiskLog::QueryLsnRangeInformation(
+    __out LONGLONG& LowestLsn,
+    __out LONGLONG& HighestLsn,
+    __out RvdLogStreamId& LowestLsnStreamId
+    )
+{
+    KGuid guidNull(0x00000000,0x0000,0x0000,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00);
+    
+    LowestLsn = RvdLogLsn::Max().Get();
+    HighestLsn = _NextLsnToWrite.Get();
+    LowestLsnStreamId = guidNull;   
+
+    //
+    // Search all of the active streams for the lowest lsn in the log
+    // so that its stream id can be returned.
+    //
+    K_LOCK_BLOCK(_ThisLock)
+    {
+        LogStreamDescriptor* sDesc = _Streams.PeekHead();
+        while (sDesc != nullptr)
+        {                 
+            if ((sDesc->State != LogStreamDescriptor::OpenState::Deleting) &&
+                (! (sDesc->Info.IsEmptyStream())) &&    // not empty
+                (! (sDesc->Info.LogStreamType == RvdDiskLogConstants::CheckpointStreamType())))
+            {
+                if (sDesc->Info.LowestLsn < LowestLsn)
+                {
+                    LowestLsn = sDesc->Info.LowestLsn.Get();
+                    LowestLsnStreamId = sDesc->Info.LogStreamId;
+                }
+
+            }
+            sDesc = _Streams.Successor(sDesc);
+        }
+    }
 }
 
     
@@ -1342,7 +1381,7 @@ RvdLogManagerImp::RvdOnDiskLog::UnsafeSnapLogState(
 
                     newEntry->SetLowestLsnOfHigherASNs(asnEntry->GetLowestLsnOfHigherASNs());
 
-					ULONGLONG dontCare;
+                    ULONGLONG dontCare;
                     status = dDesc._AsnIndex->AddOrUpdate(newEntry, resultEntry, entryState, previousIndexEntryWasStored, dontCare);
                     if (!NT_SUCCESS(status))
                     {

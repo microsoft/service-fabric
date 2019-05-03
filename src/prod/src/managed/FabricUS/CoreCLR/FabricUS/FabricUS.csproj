@@ -66,7 +66,8 @@
       ..\..\src\system\fabric\upgradeservice\WRP\ResourceOperations.cs;
       ..\..\src\system\fabric\upgradeservice\WRP\OperationContext.cs;
       ..\..\src\system\fabric\upgradeservice\WRP\DictionaryExtensions.cs;
-      ..\..\src\system\fabric\upgradeservice\WRP\ClusterOperation.cs
+      ..\..\src\system\fabric\upgradeservice\WRP\ClusterOperation.cs;
+      ..\..\src\system\fabric\upgradeservice\KvsExtensions.cs
       "
 	  Exclude="bin\**;obj\**;**\*.xproj;packages\**" />
     <None Update="FabricUS.sh">

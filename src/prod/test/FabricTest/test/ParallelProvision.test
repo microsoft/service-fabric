@@ -7,6 +7,10 @@ votes 10
 fmservice 1 1
 namingservice 1 1 1
 cmservice 1 1
+
+# Avoid automatic cleanup of unused application types
+!setcfg Management.CleanupUnusedApplicationTypes=false
+
 cleantest
 
 +10

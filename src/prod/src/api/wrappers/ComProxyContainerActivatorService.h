@@ -16,7 +16,7 @@ namespace Api
 
     public:
         ComProxyContainerActivatorService(
-            Common::ComPointer<IFabricContainerActivatorService> const & comImpl);
+            Common::ComPointer<IFabricContainerActivatorService2> const & comImpl);
 
         virtual ~ComProxyContainerActivatorService();
 
@@ -70,6 +70,15 @@ namespace Api
         virtual Common::ErrorCode EndInvokeContainerApi(
             Common::AsyncOperationSPtr const & operation,
             __out Hosting2::ContainerApiExecutionResponse & apiExecResp);
+    
+        virtual Common::AsyncOperationSPtr BeginContainerUpdateRoutes(
+            Hosting2::ContainerUpdateRoutesRequest const & updateRoutesRequest,
+            Common::TimeSpan const timeout,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+    
+        virtual Common::ErrorCode EndContainerUpdateRoutes(
+            Common::AsyncOperationSPtr const & operation);
 
     private:
         class OpenAsyncOperation;
@@ -80,7 +89,8 @@ namespace Api
         class DownloadContainerImagesAsyncOperation;
         class DeleteContainerImagesAsyncOperation;
         class InvokeContainerApiAsyncOperation;
+        class ContainerUpdateRoutesAsyncOperation;
 
-        Common::ComPointer<IFabricContainerActivatorService> const comImpl_;
+        Common::ComPointer<IFabricContainerActivatorService2> const comImpl_;
     };
 }

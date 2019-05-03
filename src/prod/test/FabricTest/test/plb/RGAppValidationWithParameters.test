@@ -185,15 +185,19 @@ unprovisionapp AppPassThrough vPT
 ## Mixed parameters and simple values ##
 app.add versionMV2 AppMemory2 vRTM2
 app.clear versionMV2
-app.parameters versionMV2 MemoryA2:256
+app.parameters versionMV2 MemoryA2:mm
 app.servicepack versionMV2 ServicePackageA version=vRTM2
 app.servicetypes versionMV2 ServicePackageA ServiceTypeA stateful persist
 app.servicetypes versionMV2 ServicePackageA ServiceTypeB stateful persist
 app.codepack versionMV2 ServicePackageA CodeA types=ServiceTypeA version=vRTM2 rgpolicies=MemoryInMB;[MemoryA2]
 app.codepack versionMV2 ServicePackageA CodeB types=ServiceTypeB version=vRTM2 rgpolicies=MemoryInMB;100
 app.upload versionMV2
+
+#Validate that provisioning will happen even though MemoryA2 param is invalid
 provisionapp versionMV2
 
+#Validate that creation will fail when MemoryA2 param is invalid
+createapp fabric:/badMemApp2 AppMemory2 vRTM2 error=ImageBuilderValidationError
 createapp fabric:/badMemApp2 AppMemory2 vRTM2 appparam=MemoryA2:-256 error=ImageBuilderValidationError
 
 createapp fabric:/okMemApp2 AppMemory2 vRTM2 appparam=MemoryA2:256

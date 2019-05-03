@@ -49,6 +49,11 @@ namespace Data
             static bool IsCommitLogRecord(__in LogRecord const & logRecord);
 
             //
+            // Creates a wstring in json format with the information of the log record 
+            //
+            virtual std::wstring ToString() const;
+
+            //
             // Invoked by the PhysicalLogWriter::FlushTask() method in order to serialize the log record before writing it to the log
             //      record - The log record to be serialized
             //      binaryWriter - A temporary binary writer that can be used for serializing data
@@ -87,6 +92,18 @@ namespace Data
                 __in bool setRecordLength = true);
 
             //
+            // Primarily used by the recovery and backup log readers to read the next record in the input file stream
+            //
+            static ktl::Awaitable<LogRecord::SPtr> ReadNextRecordAsync(
+                __in ktl::io::KStream & stream,
+                __in InvalidLogRecords & invalidLogRecords,
+                __in KAllocator & allocator,
+                __out ULONG64 & nextRecordPosition,
+                __in bool isPhysicalRead = true,
+                __in bool useInvalidRecordPosition = false,
+                __in bool setRecordLength = true);
+
+            //
             // Primarily used by the recovery and backup log readers to read the previous record in the input file stream
             //
             static ktl::Awaitable<LogRecord::SPtr> ReadPreviousRecordAsync(
@@ -99,6 +116,8 @@ namespace Data
             {
                 return recordType_;
             }
+
+            std::wstring get_RecordTypeName() const;
 
             //
             // TRUE if the log record has been applied, which implies it has been logged and processed by the dispatcher
@@ -349,7 +368,7 @@ namespace Data
             {
                 approximateDiskSize_ = value;
             }
-            
+
             KSharedPtr<PhysicalLogRecord> previousPhysicalRecord_;
 
         private:

@@ -1,0 +1,520 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_System_Fabric_csproj", "Dlls\System.Fabric\System.Fabric.csproj", "{65905332-C075-40A4-99DD-71800412191C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dlls", "Dlls", "{12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric", "Dlls\System.Fabric", "{A3D7A267-3E6C-4CB7-8846-70D047E40A95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_Strings_system_fabric_strings_csproj", "Dlls\System.Fabric.Strings\system.fabric.strings.csproj", "{FC4947D4-A39D-47EB-A3E2-445510FFC430}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Strings", "Dlls\System.Fabric.Strings", "{9581D39C-DBA1-4757-9812-123455F4D0AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_Management_ServiceModel_System_Fabric_Management_ServiceModel_csproj", "Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj", "{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Management.ServiceModel", "Dlls\System.Fabric.Management.ServiceModel", "{CF416D14-AA5B-41B7-92F7-E095BF57F22F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_Management_ServiceModel_CsFileBuilder_System_Fabric_Management_ServiceModel_CsFileBuilder_csproj", "Dlls\System.Fabric.Management.ServiceModel.CsFileBuilder\System.Fabric.Management.ServiceModel.CsFileBuilder.csproj", "{245CA2BD-5F90-4C0B-848E-3F7056C04F37}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Management.ServiceModel.CsFileBuilder", "Dlls\System.Fabric.Management.ServiceModel.CsFileBuilder", "{F93144EA-CE9A-447A-9A0A-BBB8D1AE212A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_Microsoft_ServiceFabric_ClusterManagementCommon_Microsoft_ServiceFabric_ClusterManagementCommon_csproj", "Dlls\Microsoft.ServiceFabric.ClusterManagementCommon\Microsoft.ServiceFabric.ClusterManagementCommon.csproj", "{F4598049-C09F-4A6C-A5C7-9D215EF355CA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.ClusterManagementCommon", "Dlls\Microsoft.ServiceFabric.ClusterManagementCommon", "{71EAF935-4FE2-4E23-BC0E-2E191D68EF7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_Microsoft_ServiceFabric_Internal_Strings_Microsoft_ServiceFabric_Internal_strings_csproj", "Dlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.strings.csproj", "{3869599B-43ED-46EE-B2AC-FBE66657B858}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Internal.Strings", "Dlls\Microsoft.ServiceFabric.Internal.Strings", "{044CB15F-31DF-4E8C-B9B1-8413B3A19FD6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_Microsoft_ServiceFabric_Internal_Microsoft_ServiceFabric_Internal_csproj", "Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj", "{EB728138-47AC-41CB-A2C7-53521B396AFD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Internal", "Dlls\Microsoft.ServiceFabric.Internal", "{44E0EC67-E77B-4EEE-9814-BBAEF2C7980D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_Microsoft_ServiceFabric_DeploymentManager_Microsoft_ServiceFabric_DeploymentManager_csproj", "Dlls\Microsoft.ServiceFabric.DeploymentManager\Microsoft.ServiceFabric.DeploymentManager.csproj", "{738570C5-43DB-4C00-AB7B-6975ECA8A61E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.DeploymentManager", "Dlls\Microsoft.ServiceFabric.DeploymentManager", "{C2F41E4C-A035-4699-8091-9B3FDEBF5A71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_Management_System_Fabric_Management_csproj", "Dlls\System.Fabric.Management\System.Fabric.Management.csproj", "{20A09191-7AC9-4851-BAF2-AD98D481CEB6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Management", "Dlls\System.Fabric.Management", "{995DF4ED-7A5A-43DB-A2B8-EE4E11031F85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________test_generated_generated_csproj", "..\..\..\test\generated\generated.csproj", "{E4088B2E-1379-4502-9ECA-4E08B891A04E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prod", "..\..\..", "{EE2E0359-412D-4DBC-90FC-5061B0973782}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "..\..\..\test", "{5126E6C5-DFEB-48FC-BA5E-C1ACBEB6DA44}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "generated", "..\..\..\test\generated", "{8AE0814F-6F6B-47EE-98C7-332DF9F6BFD6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_pluginvalidators_dll_DcaStandardPluginValidator_csproj", "..\DCA\product\pluginvalidators\dll\DcaStandardPluginValidator.csproj", "{B7F82509-3E0B-45EC-B1C6-BB565E3DD760}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "managed", "..", "{59BF513B-9EF7-495C-B4FB-76EED45EF767}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DCA", "..\DCA", "{75362EA5-CB96-4440-9A82-F8B78BA5E5A0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "product", "..\DCA\product", "{25DA159D-BDFC-496A-90B2-A9DE007D2411}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pluginvalidators", "..\DCA\product\pluginvalidators", "{4115D97F-43F3-4787-BAC7-271535D8F332}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dll", "..\DCA\product\pluginvalidators\dll", "{F5A8DB82-C643-4A31-B6C7-D640A85E4553}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_system_fabric_dca_dll_System_Fabric_Dca_csproj", "..\DCA\product\system.fabric.dca\dll\System.Fabric.Dca.csproj", "{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "system.fabric.dca", "..\DCA\product\system.fabric.dca", "{8B1F18BB-A9E0-43D2-8DA5-60D6090EC69B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dll", "..\DCA\product\system.fabric.dca\dll", "{44A688A6-C3CC-4332-969C-20F6DB0C44D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___EtlReader_EtlReader_csproj", "..\EtlReader\EtlReader.csproj", "{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EtlReader", "..\EtlReader", "{F8747F12-15A5-47D2-A7A6-79E758C830F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_system_fabric_dca_validator_dll_System_Fabric_Dca_Validator_csproj", "..\DCA\product\system.fabric.dca.validator\dll\System.Fabric.Dca.Validator.csproj", "{2ADB6D48-C720-4407-8955-4D7035C30EA6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "system.fabric.dca.validator", "..\DCA\product\system.fabric.dca.validator", "{45E20E41-6183-4E19-8658-6D3DEFFCD9F3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dll", "..\DCA\product\system.fabric.dca.validator\dll", "{4A0A4F38-FF1B-4282-A193-6267B1475260}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___Microsoft_ServiceFabric_ContainerServiceClient_dll_Microsoft_ServiceFabric_ContainerServiceClient_csproj", "..\Microsoft.ServiceFabric.ContainerServiceClient\dll\Microsoft.ServiceFabric.ContainerServiceClient.csproj", "{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.ContainerServiceClient", "..\Microsoft.ServiceFabric.ContainerServiceClient", "{E52FE53D-7F37-4360-A620-913DE985B93F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dll", "..\Microsoft.ServiceFabric.ContainerServiceClient\dll", "{C30707FC-24D6-4DD1-B3FA-18C59C0A3EF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_BackupRestore_System_Fabric_BackupRestore_csproj", "Dlls\System.Fabric.BackupRestore\System.Fabric.BackupRestore.csproj", "{FABB432F-46A5-4D4B-99FA-52400896BCC4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.BackupRestore", "Dlls\System.Fabric.BackupRestore", "{7840D5B4-0679-466D-B7B5-36F7E29F542C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_JsonSerializerImpl_System_Fabric_JsonSerializerImpl_csproj", "Dlls\System.Fabric.JsonSerializerImpl\System.Fabric.JsonSerializerImpl.csproj", "{A0E9C358-184C-4806-A962-530B599C1EF9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.JsonSerializerImpl", "Dlls\System.Fabric.JsonSerializerImpl", "{3DE6868A-07E6-4FDE-9DDE-0EB72628AF46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_JsonSerializerWrapper_System_Fabric_JsonSerializerWrapper_csproj", "Dlls\System.Fabric.JsonSerializerWrapper\System.Fabric.JsonSerializerWrapper.csproj", "{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.JsonSerializerWrapper", "Dlls\System.Fabric.JsonSerializerWrapper", "{60F633C1-E174-442E-A362-B6D4886053EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_System_Fabric_Testability_System_Fabric_Testability_csproj", "Dlls\System.Fabric.Testability\System.Fabric.Testability.csproj", "{A9C6ADD1-3AE4-48BF-BB84-B8E272D1A579}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Testability", "Dlls\System.Fabric.Testability", "{0D3DE9D1-D420-47D3-94D4-F5FA20EE4BEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___FabricBRS_exe_FabricBRS_csproj", "..\FabricBRS\exe\FabricBRS.csproj", "{FABBACB3-BD18-4D9D-8CE7-B4FF74722EF2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FabricBRS", "..\FabricBRS", "{373F11A9-EA5D-4237-9C8A-289A514B4BDF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "exe", "..\FabricBRS\exe", "{2BD788CD-761E-4D78-B0AE-251F5ED37271}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___Microsoft_ServiceFabric_Data_Interfaces_Microsoft_ServiceFabric_Data_Interfaces_csproj", "..\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj", "{6244C9FE-DC97-4783-A63E-94CE833196B4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Data.Interfaces", "..\Microsoft.ServiceFabric.Data.Interfaces", "{CCDBFCC1-1AD7-4659-96E6-D4780BEAAD2B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___Microsoft_ServiceFabric_Data_Microsoft_ServiceFabric_Data_csproj", "..\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj", "{0454FA10-771F-4734-BB4F-00AAC3B7D56E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Data", "..\Microsoft.ServiceFabric.Data", "{CC0D2CD2-F7A6-44D6-A22F-2A89BA1DF1A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___Microsoft_ServiceFabric_Data_Impl_Microsoft_ServiceFabric_Data_Impl_csproj", "..\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj", "{ECDDA3CB-B09D-4056-A3A2-17C9BF681CC5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Data.Impl", "..\Microsoft.ServiceFabric.Data.Impl", "{A78EF47F-5B3F-4937-AF82-004E97B180AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___Microsoft_ServiceFabric_Diagnostics_Microsoft_ServiceFabric_Diagnostics_csproj", "..\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj", "{98634BFA-BA2B-4798-8C17-6B1F63ADE999}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Diagnostics", "..\Microsoft.ServiceFabric.Diagnostics", "{33B1C0DC-10C5-4238-B500-1D08EDA317EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________tools_TraceDiagnostic_TraceDiagnostic_Store_TraceDiagnostic_Store_csproj", "..\..\..\tools\TraceDiagnostic\TraceDiagnostic.Store\TraceDiagnostic.Store.csproj", "{7950E116-2AB3-49E5-8BFD-5F457EEF7C69}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "..\..\..\tools", "{7333BD1C-BA3F-45B8-BA58-3152CE419A6A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TraceDiagnostic", "..\..\..\tools\TraceDiagnostic", "{0A268833-2B0E-4FF5-8ECA-995245A5B9A5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TraceDiagnostic.Store", "..\..\..\tools\TraceDiagnostic\TraceDiagnostic.Store", "{228713E9-F131-48C0-B89E-1C8603DCF90C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_policy_1_0_system_fabric_Policy_1_0_System_Fabric_csproj", "Dlls\policy.1.0.system.fabric\Policy.1.0.System.Fabric.csproj", "{1033BB6B-D531-4B17-88B9-4497C22CB291}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "policy.1.0.system.fabric", "Dlls\policy.1.0.system.fabric", "{F5F57684-6EAD-4805-8523-431DEF1E5C07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_policy_2_0_system_fabric_Policy_2_0_System_Fabric_csproj", "Dlls\policy.2.0.system.fabric\Policy.2.0.System.Fabric.csproj", "{1033BB6B-D531-4B17-88B9-4497C22CB292}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "policy.2.0.system.fabric", "Dlls\policy.2.0.system.fabric", "{A6E6D978-4E20-45DB-9821-8DDBA09C026E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_policy_3_0_system_fabric_Policy_3_0_System_Fabric_csproj", "Dlls\policy.3.0.system.fabric\Policy.3.0.System.Fabric.csproj", "{1033BB6B-D531-4B17-88B9-4497C22CB293}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "policy.3.0.system.fabric", "Dlls\policy.3.0.system.fabric", "{06CC95CC-37B2-4499-B611-3F38DB9C7DA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_policy_4_0_system_fabric_Policy_4_0_System_Fabric_csproj", "Dlls\policy.4.0.system.fabric\Policy.4.0.System.Fabric.csproj", "{1033BB6B-D531-4B17-88B9-4497C22CB294}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "policy.4.0.system.fabric", "Dlls\policy.4.0.system.fabric", "{D5C8D0B4-D6FD-40B4-BD35-C4F5CD009FFE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_policy_3_0_system_fabric_dstsclient_Policy_3_0_System_Fabric_dstsClient_csproj", "Dlls\policy.3.0.system.fabric.dstsclient\Policy.3.0.System.Fabric.dstsClient.csproj", "{45AF47B9-BF9B-46E2-AE20-1B57C839A8F1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "policy.3.0.system.fabric.dstsclient", "Dlls\policy.3.0.system.fabric.dstsclient", "{D752C217-5EA7-4268-AEAA-FE8F7BA260E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dlls_policy_5_0_System_Fabric_Policy_5_0_System_Fabric_csproj", "Dlls\policy.5.0.System.Fabric\Policy.5.0.System.Fabric.csproj", "{1033BB6B-D531-4B17-88B9-4497C22CB295}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "policy.5.0.System.Fabric", "Dlls\policy.5.0.System.Fabric", "{3FED160E-FDCE-4F2D-B24D-DA5F3D84390D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_Microsoft_ServiceFabric_Internal_Microsoft_ServiceFabric_Internal_csproj", "CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj", "{CCEBA5EA-A7DC-4EE8-B1E1-2E1049AD5B1E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDlls", "CoreCLRDlls", "{77AF3DA2-1BD3-40FC-A256-64D4541474CD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Internal", "CoreCLRDlls\Microsoft.ServiceFabric.Internal", "{A522FEF5-6F8B-433C-A238-83C7315BD0EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_System_Fabric_System_Fabric_csproj", "CoreCLRDlls\System.Fabric\System.Fabric.csproj", "{84E703F1-9045-4937-8AD6-7D12069387AF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric", "CoreCLRDlls\System.Fabric", "{5D163393-1EB2-43C1-A929-DAA2A2119BAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_System_Fabric_Management_ServiceModel_System_Fabric_Management_ServiceModel_csproj", "CoreCLRDlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj", "{CE170C82-71F0-4B7C-AC9D-10BB134F0B25}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Management.ServiceModel", "CoreCLRDlls\System.Fabric.Management.ServiceModel", "{5FC6B21D-2951-43D7-8C60-79DC6108AF76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_system_fabric_strings_system_fabric_strings_csproj", "CoreCLRDlls\system.fabric.strings\system.fabric.strings.csproj", "{8F4A0778-F72E-440C-BBD6-D51687A4ADC8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "system.fabric.strings", "CoreCLRDlls\system.fabric.strings", "{F1A08777-8DCA-4AD4-8330-D2CD10AB1F66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_Microsoft_ServiceFabric_Internal_Strings_Microsoft_ServiceFabric_Internal_Strings_csproj", "CoreCLRDlls\Microsoft.ServiceFabric.Internal.Strings\Microsoft.ServiceFabric.Internal.Strings.csproj", "{705A4D3C-DC07-4E5C-B16A-6254E7743092}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.ServiceFabric.Internal.Strings", "CoreCLRDlls\Microsoft.ServiceFabric.Internal.Strings", "{6CC39B27-0B75-469C-8117-A1286BFC9D3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_System_Fabric_AzureActiveDirectory_Server_System_Fabric_AzureActiveDirectory_Server_csproj", "CoreCLRDlls\System.Fabric.AzureActiveDirectory.Server\System.Fabric.AzureActiveDirectory.Server.csproj", "{0E25653C-ADBD-454F-80A1-FA3DC455F1E2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.AzureActiveDirectory.Server", "CoreCLRDlls\System.Fabric.AzureActiveDirectory.Server", "{A4FFFD73-DF0A-49F1-81EE-DB703849468D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_System_Fabric_BackupRestore_System_Fabric_BackupRestore_csproj", "CoreCLRDlls\System.Fabric.BackupRestore\System.Fabric.BackupRestore.csproj", "{AB8FA710-65C0-47B8-87A9-8F2D626ACD49}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.BackupRestore", "CoreCLRDlls\System.Fabric.BackupRestore", "{51A87D27-B790-43CB-8059-A8E25009A3BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_System_Fabric_Management_System_Fabric_Management_csproj", "CoreCLRDlls\System.Fabric.Management\System.Fabric.Management.csproj", "{E97AD92A-9DA8-4B3C-BE50-452A0C4A1732}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Management", "CoreCLRDlls\System.Fabric.Management", "{AC1783A5-6AB4-4FE9-8EEE-6516F841C051}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_plugins_azure_blob_CoreCLRDll_AzureFileUploader_AzureFileUploader_csproj", "..\DCA\product\plugins\azure\blob\CoreCLRDll\AzureFileUploader\AzureFileUploader.csproj", "{70E8E2D9-1FD8-482D-AC35-F0E0A602ECAA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "..\DCA\product\plugins", "{BC112485-03C1-448F-8D3C-F5A99C531510}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure", "..\DCA\product\plugins\azure", "{02284B33-C5FB-486B-8FB4-87F314C8B1B0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "blob", "..\DCA\product\plugins\azure\blob", "{07196E04-6ED7-46C6-AD5F-E9E3FDAC0AA6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDll", "..\DCA\product\plugins\azure\blob\CoreCLRDll", "{0DB1AD55-5C61-431A-9B0D-60CAAFDCAF40}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureFileUploader", "..\DCA\product\plugins\azure\blob\CoreCLRDll\AzureFileUploader", "{E8F5848A-2A23-40C0-8104-1714251D16A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_plugins_azure_common_CoreCLRDll_AzureUploaderCommon_AzureUploaderCommon_csproj", "..\DCA\product\plugins\azure\common\CoreCLRDll\AzureUploaderCommon\AzureUploaderCommon.csproj", "{52E2D0F7-ADD2-461F-ACF7-43FD9AA4C078}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "..\DCA\product\plugins\azure\common", "{C3BAE228-2EEB-4F9B-B959-6C6A4EC95848}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDll", "..\DCA\product\plugins\azure\common\CoreCLRDll", "{A2BBAE9F-DB4D-4A9F-82AD-65DB9AEEDF0C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureUploaderCommon", "..\DCA\product\plugins\azure\common\CoreCLRDll\AzureUploaderCommon", "{6A5A6E25-2EE5-453D-B467-BC1F30535BF7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_system_fabric_dca_CoreCLRDll_System_Fabric_Dca_System_Fabric_Dca_csproj", "..\DCA\product\system.fabric.dca\CoreCLRDll\System.Fabric.Dca\System.Fabric.Dca.csproj", "{73A28432-68C5-4BF9-B707-8AC3C25373EC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDll", "..\DCA\product\system.fabric.dca\CoreCLRDll", "{5F335292-1DA1-4F88-9927-8C31ACB9ACC8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Dca", "..\DCA\product\system.fabric.dca\CoreCLRDll\System.Fabric.Dca", "{699E732E-1BCA-4AF0-BC45-4A0BB51B580F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___CoreCLR_EtlReader_EtlReader_csproj", "..\CoreCLR\EtlReader\EtlReader.csproj", "{5CF58BB9-C9B4-4546-AC5A-F094F5B4F18A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLR", "..\CoreCLR", "{3CB58861-40E5-4AA5-83C2-B86EDCF3B542}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EtlReader", "..\CoreCLR\EtlReader", "{1718FD03-BFBB-47CC-A94F-651F48E241DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_plugins_azure_table_CoreCLRDll_AzureTableUploader_AzureTableUploader_csproj", "..\DCA\product\plugins\azure\table\CoreCLRDll\AzureTableUploader\AzureTableUploader.csproj", "{9B8D9474-C9C2-4658-8397-05FD95352AFE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "table", "..\DCA\product\plugins\azure\table", "{F8A2F5AC-EA74-4727-9108-433B98AD1C7D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDll", "..\DCA\product\plugins\azure\table\CoreCLRDll", "{6B4B3756-802B-417B-9A18-3D44AEF4AA47}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureTableUploader", "..\DCA\product\plugins\azure\table\CoreCLRDll\AzureTableUploader", "{C6D74F01-C9EF-486E-A1D2-4BC3669CA1B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_plugins_folderproducer_CoreCLRDll_FolderProducer_FolderProducer_csproj", "..\DCA\product\plugins\folderproducer\CoreCLRDll\FolderProducer\FolderProducer.csproj", "{40DF3E61-F64D-4BD3-BDE1-26CB3AAB5294}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "folderproducer", "..\DCA\product\plugins\folderproducer", "{DD977AAB-BD1E-4D27-ABC6-F35D5FB11EC1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDll", "..\DCA\product\plugins\folderproducer\CoreCLRDll", "{450A63C7-C09F-4D3D-B3C3-519FD50867E7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FolderProducer", "..\DCA\product\plugins\folderproducer\CoreCLRDll\FolderProducer", "{EBC6A61A-DE09-4688-B7EF-545B9EE11FE3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_pluginvalidators_CoreCLRDll_pluginvalidators_pluginvalidators_csproj", "..\DCA\product\pluginvalidators\CoreCLRDll\pluginvalidators\pluginvalidators.csproj", "{E7D89EFD-D147-469B-A0EC-8496B106A360}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDll", "..\DCA\product\pluginvalidators\CoreCLRDll", "{074D88DD-20C5-43BE-8C64-18A23C0FC6C8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pluginvalidators", "..\DCA\product\pluginvalidators\CoreCLRDll\pluginvalidators", "{9DC40EF5-C0EB-4AB7-BB34-A4A939F3DA27}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_plugins_lttproducer_CoreCLRDll_LttProducer_LttProducer_csproj", "..\DCA\product\plugins\lttproducer\CoreCLRDll\LttProducer\LttProducer.csproj", "{6D952000-76DE-406D-91F2-AD05E7CCC51B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lttproducer", "..\DCA\product\plugins\lttproducer", "{20A4AC78-682B-4404-AE1A-AB075A25BBBD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDll", "..\DCA\product\plugins\lttproducer\CoreCLRDll", "{D2F4A544-7B07-43DE-A90A-71AEA92BB157}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LttProducer", "..\DCA\product\plugins\lttproducer\CoreCLRDll\LttProducer", "{8D60DA73-F2C1-48A2-B192-9667EE2CE2E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___DCA_product_system_fabric_dca_validator_CoreCLRDll_System_Fabric_Dca_Validator_System_Fabric_Dca_Validator_csproj", "..\DCA\product\system.fabric.dca.validator\CoreCLRDll\System.Fabric.Dca.Validator\System.Fabric.Dca.Validator.csproj", "{F613F5C8-0985-4A26-9543-3CA5F96278F5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLRDll", "..\DCA\product\system.fabric.dca.validator\CoreCLRDll", "{F37D19FF-D0A8-418D-8AA1-2E82201869C7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Dca.Validator", "..\DCA\product\system.fabric.dca.validator\CoreCLRDll\System.Fabric.Dca.Validator", "{277153BD-B00A-4EF2-9CE3-4185C1A63C3D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "___Microsoft_ServiceFabric_ContainerServiceClient_CoreCLR_Microsoft_ServiceFabric_ContainerServiceClient_csproj", "..\Microsoft.ServiceFabric.ContainerServiceClient\CoreCLR\Microsoft.ServiceFabric.ContainerServiceClient.csproj", "{C134F293-BA85-4E04-8E07-7B24280B5F72}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLR", "..\Microsoft.ServiceFabric.ContainerServiceClient\CoreCLR", "{3E5E1286-7501-4188-8F74-8945262EBE0A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________test_generated_generated_coreclr_csproj", "..\..\..\test\generated\generated.coreclr.csproj", "{3AD185E2-B7A9-45FB-A90B-7C98D0A5BFE7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_System_Fabric_Testability_System_Fabric_Testability_csproj", "CoreCLRDlls\System.Fabric.Testability\System.Fabric.Testability.csproj", "{2AF0F8B4-5DCA-4D97-A5E6-48B77BC6F293}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.Testability", "CoreCLRDlls\System.Fabric.Testability", "{9A62F522-6B2C-4F15-A64A-9FCF2EB2B437}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreCLRDlls_System_Fabric_JsonSerializerWrapper_System_Fabric_JsonSerializerWrapper_csproj", "CoreCLRDlls\System.Fabric.JsonSerializerWrapper\System.Fabric.JsonSerializerWrapper.csproj", "{5ABC8B66-C09F-4977-9F46-55A6408B84AF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "System.Fabric.JsonSerializerWrapper", "CoreCLRDlls\System.Fabric.JsonSerializerWrapper", "{53ED6041-1483-41BB-8E39-882073B3B289}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_________tools_TraceDiagnostic_CoreCLR_TraceDiagnostic_Store_TraceDiagnostic_Store_csproj", "..\..\..\tools\TraceDiagnostic\CoreCLR\TraceDiagnostic.Store\TraceDiagnostic.Store.csproj", "{BDED1692-A9F9-424F-9F2A-FEE604C49ACD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreCLR", "..\..\..\tools\TraceDiagnostic\CoreCLR", "{B9D8EAE9-D64C-430F-BBE8-81C4D36AC8D1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TraceDiagnostic.Store", "..\..\..\tools\TraceDiagnostic\CoreCLR\TraceDiagnostic.Store", "{6C5F0B4A-BA8E-4408-A1F2-E3B91F43022F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		VSMSBuild|Any CPU = VSMSBuild|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{65905332-C075-40A4-99DD-71800412191C}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{65905332-C075-40A4-99DD-71800412191C}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{FC4947D4-A39D-47EB-A3E2-445510FFC430}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC4947D4-A39D-47EB-A3E2-445510FFC430}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{245CA2BD-5F90-4C0B-848E-3F7056C04F37}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{245CA2BD-5F90-4C0B-848E-3F7056C04F37}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{F4598049-C09F-4A6C-A5C7-9D215EF355CA}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4598049-C09F-4A6C-A5C7-9D215EF355CA}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{3869599B-43ED-46EE-B2AC-FBE66657B858}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{3869599B-43ED-46EE-B2AC-FBE66657B858}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{EB728138-47AC-41CB-A2C7-53521B396AFD}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB728138-47AC-41CB-A2C7-53521B396AFD}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{738570C5-43DB-4C00-AB7B-6975ECA8A61E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{738570C5-43DB-4C00-AB7B-6975ECA8A61E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{20A09191-7AC9-4851-BAF2-AD98D481CEB6}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{20A09191-7AC9-4851-BAF2-AD98D481CEB6}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{E4088B2E-1379-4502-9ECA-4E08B891A04E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4088B2E-1379-4502-9ECA-4E08B891A04E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{B7F82509-3E0B-45EC-B1C6-BB565E3DD760}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7F82509-3E0B-45EC-B1C6-BB565E3DD760}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{2ADB6D48-C720-4407-8955-4D7035C30EA6}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{2ADB6D48-C720-4407-8955-4D7035C30EA6}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{FABB432F-46A5-4D4B-99FA-52400896BCC4}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{FABB432F-46A5-4D4B-99FA-52400896BCC4}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{A0E9C358-184C-4806-A962-530B599C1EF9}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0E9C358-184C-4806-A962-530B599C1EF9}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{A9C6ADD1-3AE4-48BF-BB84-B8E272D1A579}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9C6ADD1-3AE4-48BF-BB84-B8E272D1A579}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{FABBACB3-BD18-4D9D-8CE7-B4FF74722EF2}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{FABBACB3-BD18-4D9D-8CE7-B4FF74722EF2}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{6244C9FE-DC97-4783-A63E-94CE833196B4}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{6244C9FE-DC97-4783-A63E-94CE833196B4}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{0454FA10-771F-4734-BB4F-00AAC3B7D56E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{0454FA10-771F-4734-BB4F-00AAC3B7D56E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{ECDDA3CB-B09D-4056-A3A2-17C9BF681CC5}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECDDA3CB-B09D-4056-A3A2-17C9BF681CC5}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{98634BFA-BA2B-4798-8C17-6B1F63ADE999}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{98634BFA-BA2B-4798-8C17-6B1F63ADE999}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{7950E116-2AB3-49E5-8BFD-5F457EEF7C69}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{7950E116-2AB3-49E5-8BFD-5F457EEF7C69}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB291}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB291}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB292}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB292}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB293}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB293}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB294}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB294}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{45AF47B9-BF9B-46E2-AE20-1B57C839A8F1}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{45AF47B9-BF9B-46E2-AE20-1B57C839A8F1}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB295}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{1033BB6B-D531-4B17-88B9-4497C22CB295}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{CCEBA5EA-A7DC-4EE8-B1E1-2E1049AD5B1E}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCEBA5EA-A7DC-4EE8-B1E1-2E1049AD5B1E}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{84E703F1-9045-4937-8AD6-7D12069387AF}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{84E703F1-9045-4937-8AD6-7D12069387AF}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{CE170C82-71F0-4B7C-AC9D-10BB134F0B25}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE170C82-71F0-4B7C-AC9D-10BB134F0B25}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{8F4A0778-F72E-440C-BBD6-D51687A4ADC8}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F4A0778-F72E-440C-BBD6-D51687A4ADC8}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{705A4D3C-DC07-4E5C-B16A-6254E7743092}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{705A4D3C-DC07-4E5C-B16A-6254E7743092}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{0E25653C-ADBD-454F-80A1-FA3DC455F1E2}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E25653C-ADBD-454F-80A1-FA3DC455F1E2}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{AB8FA710-65C0-47B8-87A9-8F2D626ACD49}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB8FA710-65C0-47B8-87A9-8F2D626ACD49}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{E97AD92A-9DA8-4B3C-BE50-452A0C4A1732}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{E97AD92A-9DA8-4B3C-BE50-452A0C4A1732}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{70E8E2D9-1FD8-482D-AC35-F0E0A602ECAA}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{70E8E2D9-1FD8-482D-AC35-F0E0A602ECAA}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{52E2D0F7-ADD2-461F-ACF7-43FD9AA4C078}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{52E2D0F7-ADD2-461F-ACF7-43FD9AA4C078}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{73A28432-68C5-4BF9-B707-8AC3C25373EC}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{73A28432-68C5-4BF9-B707-8AC3C25373EC}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{5CF58BB9-C9B4-4546-AC5A-F094F5B4F18A}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CF58BB9-C9B4-4546-AC5A-F094F5B4F18A}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{9B8D9474-C9C2-4658-8397-05FD95352AFE}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B8D9474-C9C2-4658-8397-05FD95352AFE}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{40DF3E61-F64D-4BD3-BDE1-26CB3AAB5294}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{40DF3E61-F64D-4BD3-BDE1-26CB3AAB5294}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{E7D89EFD-D147-469B-A0EC-8496B106A360}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7D89EFD-D147-469B-A0EC-8496B106A360}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{6D952000-76DE-406D-91F2-AD05E7CCC51B}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D952000-76DE-406D-91F2-AD05E7CCC51B}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{F613F5C8-0985-4A26-9543-3CA5F96278F5}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{F613F5C8-0985-4A26-9543-3CA5F96278F5}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{C134F293-BA85-4E04-8E07-7B24280B5F72}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{C134F293-BA85-4E04-8E07-7B24280B5F72}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{3AD185E2-B7A9-45FB-A90B-7C98D0A5BFE7}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AD185E2-B7A9-45FB-A90B-7C98D0A5BFE7}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{2AF0F8B4-5DCA-4D97-A5E6-48B77BC6F293}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AF0F8B4-5DCA-4D97-A5E6-48B77BC6F293}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{5ABC8B66-C09F-4977-9F46-55A6408B84AF}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ABC8B66-C09F-4977-9F46-55A6408B84AF}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+		{BDED1692-A9F9-424F-9F2A-FEE604C49ACD}.VSMSBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDED1692-A9F9-424F-9F2A-FEE604C49ACD}.VSMSBuild|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A3D7A267-3E6C-4CB7-8846-70D047E40A95} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{65905332-C075-40A4-99DD-71800412191C} = {A3D7A267-3E6C-4CB7-8846-70D047E40A95}
+		{9581D39C-DBA1-4757-9812-123455F4D0AA} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{FC4947D4-A39D-47EB-A3E2-445510FFC430} = {9581D39C-DBA1-4757-9812-123455F4D0AA}
+		{CF416D14-AA5B-41B7-92F7-E095BF57F22F} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{8962599F-C6B0-4C47-AE92-5BDAFE19F12E} = {CF416D14-AA5B-41B7-92F7-E095BF57F22F}
+		{F93144EA-CE9A-447A-9A0A-BBB8D1AE212A} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{245CA2BD-5F90-4C0B-848E-3F7056C04F37} = {F93144EA-CE9A-447A-9A0A-BBB8D1AE212A}
+		{71EAF935-4FE2-4E23-BC0E-2E191D68EF7C} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{F4598049-C09F-4A6C-A5C7-9D215EF355CA} = {71EAF935-4FE2-4E23-BC0E-2E191D68EF7C}
+		{044CB15F-31DF-4E8C-B9B1-8413B3A19FD6} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{3869599B-43ED-46EE-B2AC-FBE66657B858} = {044CB15F-31DF-4E8C-B9B1-8413B3A19FD6}
+		{44E0EC67-E77B-4EEE-9814-BBAEF2C7980D} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{EB728138-47AC-41CB-A2C7-53521B396AFD} = {44E0EC67-E77B-4EEE-9814-BBAEF2C7980D}
+		{C2F41E4C-A035-4699-8091-9B3FDEBF5A71} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{738570C5-43DB-4C00-AB7B-6975ECA8A61E} = {C2F41E4C-A035-4699-8091-9B3FDEBF5A71}
+		{995DF4ED-7A5A-43DB-A2B8-EE4E11031F85} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{20A09191-7AC9-4851-BAF2-AD98D481CEB6} = {995DF4ED-7A5A-43DB-A2B8-EE4E11031F85}
+		{5126E6C5-DFEB-48FC-BA5E-C1ACBEB6DA44} = {EE2E0359-412D-4DBC-90FC-5061B0973782}
+		{8AE0814F-6F6B-47EE-98C7-332DF9F6BFD6} = {5126E6C5-DFEB-48FC-BA5E-C1ACBEB6DA44}
+		{E4088B2E-1379-4502-9ECA-4E08B891A04E} = {8AE0814F-6F6B-47EE-98C7-332DF9F6BFD6}
+		{75362EA5-CB96-4440-9A82-F8B78BA5E5A0} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{25DA159D-BDFC-496A-90B2-A9DE007D2411} = {75362EA5-CB96-4440-9A82-F8B78BA5E5A0}
+		{4115D97F-43F3-4787-BAC7-271535D8F332} = {25DA159D-BDFC-496A-90B2-A9DE007D2411}
+		{F5A8DB82-C643-4A31-B6C7-D640A85E4553} = {4115D97F-43F3-4787-BAC7-271535D8F332}
+		{B7F82509-3E0B-45EC-B1C6-BB565E3DD760} = {F5A8DB82-C643-4A31-B6C7-D640A85E4553}
+		{8B1F18BB-A9E0-43D2-8DA5-60D6090EC69B} = {25DA159D-BDFC-496A-90B2-A9DE007D2411}
+		{44A688A6-C3CC-4332-969C-20F6DB0C44D2} = {8B1F18BB-A9E0-43D2-8DA5-60D6090EC69B}
+		{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6} = {44A688A6-C3CC-4332-969C-20F6DB0C44D2}
+		{F8747F12-15A5-47D2-A7A6-79E758C830F7} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{54BBF6D7-BAF6-489E-972F-5EB83C793E1D} = {F8747F12-15A5-47D2-A7A6-79E758C830F7}
+		{45E20E41-6183-4E19-8658-6D3DEFFCD9F3} = {25DA159D-BDFC-496A-90B2-A9DE007D2411}
+		{4A0A4F38-FF1B-4282-A193-6267B1475260} = {45E20E41-6183-4E19-8658-6D3DEFFCD9F3}
+		{2ADB6D48-C720-4407-8955-4D7035C30EA6} = {4A0A4F38-FF1B-4282-A193-6267B1475260}
+		{E52FE53D-7F37-4360-A620-913DE985B93F} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{C30707FC-24D6-4DD1-B3FA-18C59C0A3EF6} = {E52FE53D-7F37-4360-A620-913DE985B93F}
+		{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E} = {C30707FC-24D6-4DD1-B3FA-18C59C0A3EF6}
+		{7840D5B4-0679-466D-B7B5-36F7E29F542C} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{FABB432F-46A5-4D4B-99FA-52400896BCC4} = {7840D5B4-0679-466D-B7B5-36F7E29F542C}
+		{3DE6868A-07E6-4FDE-9DDE-0EB72628AF46} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{A0E9C358-184C-4806-A962-530B599C1EF9} = {3DE6868A-07E6-4FDE-9DDE-0EB72628AF46}
+		{60F633C1-E174-442E-A362-B6D4886053EA} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{05DD0CC9-3047-4EF0-9BF5-93F784D37F2E} = {60F633C1-E174-442E-A362-B6D4886053EA}
+		{0D3DE9D1-D420-47D3-94D4-F5FA20EE4BEA} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{A9C6ADD1-3AE4-48BF-BB84-B8E272D1A579} = {0D3DE9D1-D420-47D3-94D4-F5FA20EE4BEA}
+		{373F11A9-EA5D-4237-9C8A-289A514B4BDF} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{2BD788CD-761E-4D78-B0AE-251F5ED37271} = {373F11A9-EA5D-4237-9C8A-289A514B4BDF}
+		{FABBACB3-BD18-4D9D-8CE7-B4FF74722EF2} = {2BD788CD-761E-4D78-B0AE-251F5ED37271}
+		{CCDBFCC1-1AD7-4659-96E6-D4780BEAAD2B} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{6244C9FE-DC97-4783-A63E-94CE833196B4} = {CCDBFCC1-1AD7-4659-96E6-D4780BEAAD2B}
+		{CC0D2CD2-F7A6-44D6-A22F-2A89BA1DF1A8} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{0454FA10-771F-4734-BB4F-00AAC3B7D56E} = {CC0D2CD2-F7A6-44D6-A22F-2A89BA1DF1A8}
+		{A78EF47F-5B3F-4937-AF82-004E97B180AB} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{ECDDA3CB-B09D-4056-A3A2-17C9BF681CC5} = {A78EF47F-5B3F-4937-AF82-004E97B180AB}
+		{33B1C0DC-10C5-4238-B500-1D08EDA317EF} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{98634BFA-BA2B-4798-8C17-6B1F63ADE999} = {33B1C0DC-10C5-4238-B500-1D08EDA317EF}
+		{7333BD1C-BA3F-45B8-BA58-3152CE419A6A} = {EE2E0359-412D-4DBC-90FC-5061B0973782}
+		{0A268833-2B0E-4FF5-8ECA-995245A5B9A5} = {7333BD1C-BA3F-45B8-BA58-3152CE419A6A}
+		{228713E9-F131-48C0-B89E-1C8603DCF90C} = {0A268833-2B0E-4FF5-8ECA-995245A5B9A5}
+		{7950E116-2AB3-49E5-8BFD-5F457EEF7C69} = {228713E9-F131-48C0-B89E-1C8603DCF90C}
+		{F5F57684-6EAD-4805-8523-431DEF1E5C07} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{1033BB6B-D531-4B17-88B9-4497C22CB291} = {F5F57684-6EAD-4805-8523-431DEF1E5C07}
+		{A6E6D978-4E20-45DB-9821-8DDBA09C026E} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{1033BB6B-D531-4B17-88B9-4497C22CB292} = {A6E6D978-4E20-45DB-9821-8DDBA09C026E}
+		{06CC95CC-37B2-4499-B611-3F38DB9C7DA2} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{1033BB6B-D531-4B17-88B9-4497C22CB293} = {06CC95CC-37B2-4499-B611-3F38DB9C7DA2}
+		{D5C8D0B4-D6FD-40B4-BD35-C4F5CD009FFE} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{1033BB6B-D531-4B17-88B9-4497C22CB294} = {D5C8D0B4-D6FD-40B4-BD35-C4F5CD009FFE}
+		{D752C217-5EA7-4268-AEAA-FE8F7BA260E0} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{45AF47B9-BF9B-46E2-AE20-1B57C839A8F1} = {D752C217-5EA7-4268-AEAA-FE8F7BA260E0}
+		{3FED160E-FDCE-4F2D-B24D-DA5F3D84390D} = {12CF6773-D5DB-4C37-95D2-7EDDD5C6C24C}
+		{1033BB6B-D531-4B17-88B9-4497C22CB295} = {3FED160E-FDCE-4F2D-B24D-DA5F3D84390D}
+		{A522FEF5-6F8B-433C-A238-83C7315BD0EA} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{CCEBA5EA-A7DC-4EE8-B1E1-2E1049AD5B1E} = {A522FEF5-6F8B-433C-A238-83C7315BD0EA}
+		{5D163393-1EB2-43C1-A929-DAA2A2119BAE} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{84E703F1-9045-4937-8AD6-7D12069387AF} = {5D163393-1EB2-43C1-A929-DAA2A2119BAE}
+		{5FC6B21D-2951-43D7-8C60-79DC6108AF76} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{CE170C82-71F0-4B7C-AC9D-10BB134F0B25} = {5FC6B21D-2951-43D7-8C60-79DC6108AF76}
+		{F1A08777-8DCA-4AD4-8330-D2CD10AB1F66} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{8F4A0778-F72E-440C-BBD6-D51687A4ADC8} = {F1A08777-8DCA-4AD4-8330-D2CD10AB1F66}
+		{6CC39B27-0B75-469C-8117-A1286BFC9D3B} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{705A4D3C-DC07-4E5C-B16A-6254E7743092} = {6CC39B27-0B75-469C-8117-A1286BFC9D3B}
+		{A4FFFD73-DF0A-49F1-81EE-DB703849468D} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{0E25653C-ADBD-454F-80A1-FA3DC455F1E2} = {A4FFFD73-DF0A-49F1-81EE-DB703849468D}
+		{51A87D27-B790-43CB-8059-A8E25009A3BD} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{AB8FA710-65C0-47B8-87A9-8F2D626ACD49} = {51A87D27-B790-43CB-8059-A8E25009A3BD}
+		{AC1783A5-6AB4-4FE9-8EEE-6516F841C051} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{E97AD92A-9DA8-4B3C-BE50-452A0C4A1732} = {AC1783A5-6AB4-4FE9-8EEE-6516F841C051}
+		{BC112485-03C1-448F-8D3C-F5A99C531510} = {25DA159D-BDFC-496A-90B2-A9DE007D2411}
+		{02284B33-C5FB-486B-8FB4-87F314C8B1B0} = {BC112485-03C1-448F-8D3C-F5A99C531510}
+		{07196E04-6ED7-46C6-AD5F-E9E3FDAC0AA6} = {02284B33-C5FB-486B-8FB4-87F314C8B1B0}
+		{0DB1AD55-5C61-431A-9B0D-60CAAFDCAF40} = {07196E04-6ED7-46C6-AD5F-E9E3FDAC0AA6}
+		{E8F5848A-2A23-40C0-8104-1714251D16A9} = {0DB1AD55-5C61-431A-9B0D-60CAAFDCAF40}
+		{70E8E2D9-1FD8-482D-AC35-F0E0A602ECAA} = {E8F5848A-2A23-40C0-8104-1714251D16A9}
+		{C3BAE228-2EEB-4F9B-B959-6C6A4EC95848} = {02284B33-C5FB-486B-8FB4-87F314C8B1B0}
+		{A2BBAE9F-DB4D-4A9F-82AD-65DB9AEEDF0C} = {C3BAE228-2EEB-4F9B-B959-6C6A4EC95848}
+		{6A5A6E25-2EE5-453D-B467-BC1F30535BF7} = {A2BBAE9F-DB4D-4A9F-82AD-65DB9AEEDF0C}
+		{52E2D0F7-ADD2-461F-ACF7-43FD9AA4C078} = {6A5A6E25-2EE5-453D-B467-BC1F30535BF7}
+		{5F335292-1DA1-4F88-9927-8C31ACB9ACC8} = {8B1F18BB-A9E0-43D2-8DA5-60D6090EC69B}
+		{699E732E-1BCA-4AF0-BC45-4A0BB51B580F} = {5F335292-1DA1-4F88-9927-8C31ACB9ACC8}
+		{73A28432-68C5-4BF9-B707-8AC3C25373EC} = {699E732E-1BCA-4AF0-BC45-4A0BB51B580F}
+		{3CB58861-40E5-4AA5-83C2-B86EDCF3B542} = {59BF513B-9EF7-495C-B4FB-76EED45EF767}
+		{1718FD03-BFBB-47CC-A94F-651F48E241DD} = {3CB58861-40E5-4AA5-83C2-B86EDCF3B542}
+		{5CF58BB9-C9B4-4546-AC5A-F094F5B4F18A} = {1718FD03-BFBB-47CC-A94F-651F48E241DD}
+		{F8A2F5AC-EA74-4727-9108-433B98AD1C7D} = {02284B33-C5FB-486B-8FB4-87F314C8B1B0}
+		{6B4B3756-802B-417B-9A18-3D44AEF4AA47} = {F8A2F5AC-EA74-4727-9108-433B98AD1C7D}
+		{C6D74F01-C9EF-486E-A1D2-4BC3669CA1B6} = {6B4B3756-802B-417B-9A18-3D44AEF4AA47}
+		{9B8D9474-C9C2-4658-8397-05FD95352AFE} = {C6D74F01-C9EF-486E-A1D2-4BC3669CA1B6}
+		{DD977AAB-BD1E-4D27-ABC6-F35D5FB11EC1} = {BC112485-03C1-448F-8D3C-F5A99C531510}
+		{450A63C7-C09F-4D3D-B3C3-519FD50867E7} = {DD977AAB-BD1E-4D27-ABC6-F35D5FB11EC1}
+		{EBC6A61A-DE09-4688-B7EF-545B9EE11FE3} = {450A63C7-C09F-4D3D-B3C3-519FD50867E7}
+		{40DF3E61-F64D-4BD3-BDE1-26CB3AAB5294} = {EBC6A61A-DE09-4688-B7EF-545B9EE11FE3}
+		{074D88DD-20C5-43BE-8C64-18A23C0FC6C8} = {4115D97F-43F3-4787-BAC7-271535D8F332}
+		{9DC40EF5-C0EB-4AB7-BB34-A4A939F3DA27} = {074D88DD-20C5-43BE-8C64-18A23C0FC6C8}
+		{E7D89EFD-D147-469B-A0EC-8496B106A360} = {9DC40EF5-C0EB-4AB7-BB34-A4A939F3DA27}
+		{20A4AC78-682B-4404-AE1A-AB075A25BBBD} = {BC112485-03C1-448F-8D3C-F5A99C531510}
+		{D2F4A544-7B07-43DE-A90A-71AEA92BB157} = {20A4AC78-682B-4404-AE1A-AB075A25BBBD}
+		{8D60DA73-F2C1-48A2-B192-9667EE2CE2E7} = {D2F4A544-7B07-43DE-A90A-71AEA92BB157}
+		{6D952000-76DE-406D-91F2-AD05E7CCC51B} = {8D60DA73-F2C1-48A2-B192-9667EE2CE2E7}
+		{F37D19FF-D0A8-418D-8AA1-2E82201869C7} = {45E20E41-6183-4E19-8658-6D3DEFFCD9F3}
+		{277153BD-B00A-4EF2-9CE3-4185C1A63C3D} = {F37D19FF-D0A8-418D-8AA1-2E82201869C7}
+		{F613F5C8-0985-4A26-9543-3CA5F96278F5} = {277153BD-B00A-4EF2-9CE3-4185C1A63C3D}
+		{3E5E1286-7501-4188-8F74-8945262EBE0A} = {E52FE53D-7F37-4360-A620-913DE985B93F}
+		{C134F293-BA85-4E04-8E07-7B24280B5F72} = {3E5E1286-7501-4188-8F74-8945262EBE0A}
+		{3AD185E2-B7A9-45FB-A90B-7C98D0A5BFE7} = {8AE0814F-6F6B-47EE-98C7-332DF9F6BFD6}
+		{9A62F522-6B2C-4F15-A64A-9FCF2EB2B437} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{2AF0F8B4-5DCA-4D97-A5E6-48B77BC6F293} = {9A62F522-6B2C-4F15-A64A-9FCF2EB2B437}
+		{53ED6041-1483-41BB-8E39-882073B3B289} = {77AF3DA2-1BD3-40FC-A256-64D4541474CD}
+		{5ABC8B66-C09F-4977-9F46-55A6408B84AF} = {53ED6041-1483-41BB-8E39-882073B3B289}
+		{B9D8EAE9-D64C-430F-BBE8-81C4D36AC8D1} = {0A268833-2B0E-4FF5-8ECA-995245A5B9A5}
+		{6C5F0B4A-BA8E-4408-A1F2-E3B91F43022F} = {B9D8EAE9-D64C-430F-BBE8-81C4D36AC8D1}
+		{BDED1692-A9F9-424F-9F2A-FEE604C49ACD} = {6C5F0B4A-BA8E-4408-A1F2-E3B91F43022F}
+	EndGlobalSection
+EndGlobal

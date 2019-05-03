@@ -1,0 +1,7 @@
+###Partition befdad90-fdb4-4db4-baaf-8cce1271b5a5 time range 10/29/2014 12:03:13 AM-10/29/2014 12:07:57 AM
+Partition stuck in reconfiguration for at least ###00:04:04.5360000
+Checking primary on node 40
+Primary is not in the expected epoch ###130590146283525709:200000005
+FM has not successfully started the reconfiguration on RA primary.
+Failed Task: StartReconfigurationOnPrimary(P2PReceiveRequest[*3])
+

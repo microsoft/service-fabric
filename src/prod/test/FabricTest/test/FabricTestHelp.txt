@@ -146,6 +146,30 @@ verify - verify if compose deployment deletion completes
 noapp - no Service Fabric application is expected to be deleted
 error = expected error (string)
 
+Command:rollbackcompose
+Description: rollback a compose deployment upgrade
+Usage: rollbackcompose <deploymentname> [options]*
+Options:
+error = expected error (string)
+
+Command:createnetwork
+Description: Create a container network
+Usage: createnetwork <networkName> <networkAddressPrefix>
+Options: 
+error - expected error
+
+Command:deletenetwork
+Description: Delete a container network
+Usage: deletenetwork <networkName>
+Options: 
+error - expected error
+
+Command:getnetwork
+Description: Get the container network with a specific name
+Usage: getnetwork <networkName> <networkExists>
+Example:
+getnetwork testNetwork1 true
+
 Command:set
 Description: Sets specified properties
 Usage: set <propertyName> <value>
@@ -160,6 +184,14 @@ ConsiderWarningAsError, MaxPercentUnhealthyNodes, MaxPercentUnhealthyApplication
 NamingMaxMessageSize, NamingMaxPropertySize, NamingMaxPropertyNameLength, NamingMaxNamingUriLength, NamingMaxServiceChangePollBatchedRequests, NamingMaxNotificationReplyEntryCount, NamingPlacementConstraints, NamingMaxOperationTimeout,
 RETombstoneCleanupLimit,ClusterWideCredentials,ClientCredentials
 MaxApiDelayInterval, MinApiDelayInterval
+
+Command:dnsservice
+Description: Sets the service properties for the DNS service
+Usage: dnsservice <IsEnabled> <EnablePartitionedQuery>
+
+Command:enableunsupportedpreviewfeatures
+Description: Sets the unsupported preview config flag
+Usage: enableunsupportedpreviewfeatures <IsEnabled>
 
 Command:fmservice
 Description: Sets the service properties for the failover manager service
@@ -934,6 +966,20 @@ isolationtype - code package isolation policy type (wstring)
 interval - code package periodic interval (wstring)
 isshared - code package IsShared attribute (wstring)
 types - comma separated list of servictypes this code package should supports(wstring)
+
+Command:app.network
+Description: Sets the network policies for the service package. If ClearAll is specified instead of service package name all existing network policies for all service packages are cleared
+else the specified network policies will be used for the service package.
+Usage: app.network <appAlias> <servicePackName | clearall> [options]*
+jsondescription - specify the network policy description in JSON format, mandatory
+
+Command:app.endpoint
+Description: Sets the endpoints for the service package. If ClearAll is specified instead of service package name all existing endpoints for all service packages are cleared
+else the specified endpoint will be added to the service package's list
+Usage: app.endpoint <appAlias> <servicePackName | clearall> [options]*
+name - endpoint name, mandatory (wstring)
+protocol - endpoint protocol, optional (enum). Allowed values: Tcp|Http|Https|Udp
+type - endpoint type, optional (enum). Allowed values: Internal|Input
 
 Command:app.parameters
 Description: Sets the application parameters and default values in the application manifest.

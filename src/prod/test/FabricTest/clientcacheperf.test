@@ -1,0 +1,61 @@
+set NamingOperationTimeout 10
+
+### Scale by service count (cache hit)
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=500 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=500 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=2000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=2000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=100000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+### Scale by service count (stale cache)
+
+scenario ResolveServicePerformance previousrsp v2cache=false mockgateway serviceCount=500 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance previousrsp v2cache=true mockgateway serviceCount=500 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance previousrsp v2cache=false mockgateway serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance previousrsp v2cache=true mockgateway serviceCount=1000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance previousrsp v2cache=false mockgateway serviceCount=2000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance previousrsp v2cache=true mockgateway serviceCount=2000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance previousrsp v2cache=true mockgateway serviceCount=100000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+### Scale by key count (cache hit)
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=1000 keys=2 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=1000 keys=2 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=1000 keys=10 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=1000 keys=10 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=1000 keys=20 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=1000 keys=20 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=1000 keys=1000 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+
+### Scale by service count (20% eviction)
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=500 cachelimit=400 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=500 cachelimit=400 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=1000 cachelimit=800 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=1000 cachelimit=800 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=false mockgateway serviceCount=2000 cachelimit=1600 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=2000 cachelimit=1600 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+scenario ResolveServicePerformance v2cache=true mockgateway serviceCount=100000 cachelimit=80000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2
+
+### notifications and service groups
+
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=100 serviceCount=2000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=0
+scenario ResolveServicePerformance v2cache=true mockgateway notificationCount=0 serviceCount=2000 keys=1 name=fabric:/perftest subname=subname_ shuffle iterations=2 replicas=3 sgmembers=100
+
+!q

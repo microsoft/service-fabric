@@ -19,7 +19,7 @@ namespace Hosting2
             ContainerDescription const & containerDesc,
             ProcessDescription const & processDesc,
             std::wstring const & fabricBinPath,
-            std::wstring const & gatewayIpAddress);
+            std::vector<std::wstring> const & gatewayIpAddresses);
 
         ContainerActivationArgs(ContainerActivationArgs const & other) = default;
         ContainerActivationArgs(ContainerActivationArgs && other) = default;
@@ -30,7 +30,7 @@ namespace Hosting2
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_07(IsUserLocalSystem, AppHostId, NodeId, ContainerDescriptionObj, ProcessDescriptionObj, FabricBinPath, GatewayIpAddress);
+        FABRIC_FIELDS_08(IsUserLocalSystem, AppHostId, NodeId, ContainerDescriptionObj, ProcessDescriptionObj, FabricBinPath, GatewayIpAddress, GatewayIpAddresses);
 
     public:
         bool IsUserLocalSystem;
@@ -40,5 +40,6 @@ namespace Hosting2
         ProcessDescription ProcessDescriptionObj;
         std::wstring FabricBinPath;
         std::wstring GatewayIpAddress;
+        std::vector<std::wstring> GatewayIpAddresses;
     };
 }

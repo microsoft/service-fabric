@@ -377,6 +377,17 @@ void BeginCheckpointLogRecord::SignalCompletionPhase1FirstCheckpointOnFullCopy()
     firstCheckpointPhase1CompletionTcs_.Get()->SetResult(STATUS_SUCCESS);
 }
 
+std::wstring BeginCheckpointLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CompEndlJSON;
+
+    logRecordString += L"Earliest Pending Transaction Offset" + Constants::DivisionJSON +
+        std::to_wstring(earliestPendingTransactionOffset_) + Constants::Quote;
+    logRecordString += Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}
+
 bool BeginCheckpointLogRecord::FreePreviousLinksLowerThanPsn(
     __in LONG64 newHeadPsn,
     __in InvalidLogRecords & invalidLogRecords)

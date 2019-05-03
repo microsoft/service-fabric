@@ -53,8 +53,11 @@ namespace Data
                 __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
                 __in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
+                __in bool hasPersistedState,
                 __in KAllocator& allocator,
                 __out IStateProvider::SPtr & stateProvider);
+
+            bool get_HasPersistedState() const override;
 
             ktl::Awaitable<NTSTATUS> OpenAsync(
                 __out TxnReplicator::RecoveryInformation & recoveryInformation) noexcept override;
@@ -336,6 +339,7 @@ namespace Data
                 __in TxnReplicator::TRPerformanceCountersSPtr const & perfCounters,
                 __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
                 __in TxnReplicator::ITransactionalReplicator & transactionalReplicator,
+                __in bool hasPersistedState,
                 __out IStateProvider::SPtr & stateProvider);
             
             NTSTATUS ErrorIfNoWriteStatus() const noexcept;
@@ -381,6 +385,8 @@ namespace Data
             void CreateAllManagers();
 
             void CreateOperationProcessor();
+
+            bool hasPersistedState_ = true;
 
             TxnReplicator::IRuntimeFolders::CSPtr runtimeFolders_;
             TxnReplicator::TRInternalSettingsSPtr const transactionalReplicatorConfig_;

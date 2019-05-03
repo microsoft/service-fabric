@@ -1,0 +1,4 @@
+SingleMachine-CIT.json
+  TAGS:SystemFabric
+SingleMachine-Functional.json
+  TAGS:SystemFabric

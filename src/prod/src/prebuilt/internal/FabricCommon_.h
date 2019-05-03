@@ -2396,6 +2396,17 @@ EXTERN_C const IID IID_IFabricStringMapResult;
     /* [in] */ __RPC__in_opt IFabricConfigStoreUpdateHandler *updateHandler,
     /* [retval][out] */ __RPC__deref_out_opt void **configStore);
 
+/* [entry] */ HRESULT FabricGetConfigStoreEnvironmentVariable( 
+    /* [out] */ __RPC__deref_out_opt IFabricStringResult **envVariableName,
+    /* [out] */ __RPC__deref_out_opt IFabricStringResult **envVariableValue);
+
+/* [entry] */ LONG FabricGetThreadCount( void);
+
+/* [entry] */ void FabricSetThreadTestLimit( 
+    LONG __MIDL__FabricCommonInternalModule0000);
+
+/* [entry] */ LPCSTR FabricSymInitializeOnce( void);
+
 /* [entry] */ HRESULT FabricDecryptValue( 
     /* [in] */ __RPC__in LPCWSTR encryptedValue,
     /* [retval][out] */ __RPC__deref_out_opt IFabricStringResult **decryptedValue);
@@ -2652,17 +2663,17 @@ EXTERN_C const IID IID_IFabricStringMapResult;
     /* [in] */ BOOLEAN enableCircularTraceSession,
     /* [in] */ __RPC__in LPCWSTR machineName);
 
-/* [entry] */ HRESULT FabricSetEnableCircularTraceSession( 
+/* [entry] */ HRESULT FabricSetEnableCircularTraceSession(
     /* [in] */ BOOLEAN enableCircularTraceSession);
 
-/* [entry] */ HRESULT FabricSetEnableUnsupportedPreviewFeatures2( 
+/* [entry] */ HRESULT FabricSetEnableUnsupportedPreviewFeatures2(
     /* [in] */ BOOLEAN enableUnsupportedPreviewFeatures,
     /* [in] */ __RPC__in LPCWSTR machineName);
 
-/* [entry] */ HRESULT FabricSetEnableUnsupportedPreviewFeatures( 
+/* [entry] */ HRESULT FabricSetEnableUnsupportedPreviewFeatures(
     /* [in] */ BOOLEAN enableUnsupportedPreviewFeatures);
 
-/* [entry] */ HRESULT FabricSetIsSFVolumeDiskServiceEnabled2( 
+/* [entry] */ HRESULT FabricSetIsSFVolumeDiskServiceEnabled2(
     /* [in] */ BOOLEAN isSFVolumeDiskServiceEnabled,
     /* [in] */ __RPC__in LPCWSTR machineName);
 
@@ -2676,8 +2687,14 @@ EXTERN_C const IID IID_IFabricStringMapResult;
 /* [entry] */ HRESULT FabricGetEnableCircularTraceSession( 
     /* [retval][out] */ __RPC__out BOOLEAN *enableCircularTraceSession);
 
-/* [entry] */ void FabricGetGlobals( 
-    /* [retval][out] */ __RPC__deref_out_opt void **globals);
+/* [entry] */ void FabricSetCrashLeasingApplicationCallback(
+    /* [in] */ __RPC__in void *callback);
+
+/* [entry] */ void FabricGetCrashLeasingApplicationCallback(
+    /* [retval][out] */ __RPC__deref_out_opt void **callback);
+
+/* [entry] */ HRESULT FabricSetSfInstalledMoby(
+    /* [in] */ __RPC__in LPCWSTR fileContents);
 
 #endif /* __FabricCommonInternalModule_MODULE_DEFINED__ */
 #endif /* __FabricCommonInternalLib_LIBRARY_DEFINED__ */

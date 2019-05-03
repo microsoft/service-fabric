@@ -19,6 +19,9 @@ namespace ServiceModel
             __declspec(property(get=get_VolumeRefs)) std::vector<IndependentVolumeRef> & VolumeRefs;
             std::vector<IndependentVolumeRef> & get_VolumeRefs() { return volumeRefs_; }
 
+            __declspec(property(get=get_EndpointRefs)) std::vector<ContainerEndpointDescription> const & EndpointRefs;
+            std::vector<ContainerEndpointDescription> const & get_EndpointRefs() const { return endpoints_; }
+
             __declspec(property(get=get_InstanceViewPtr, put=put_InstanceViewPtr)) std::shared_ptr<CodePackageInstanceView> & InstanceViewSPtr;
             std::shared_ptr<CodePackageInstanceView> & get_InstanceViewPtr() { return instanceViewPtr_; }
             void put_InstanceViewPtr(std::shared_ptr<CodePackageInstanceView> && value) { instanceViewPtr_ = move(value); }

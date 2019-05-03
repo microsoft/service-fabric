@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClusterManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="WRP_Generated_ClusterManifest" Version="1" Description="This is a generated file. Do not modify." xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <NodeTypes>
+    <NodeType Name="NodeType0">
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000" />
+        <LeaseDriverEndpoint Port="19002" />
+        <ClusterConnectionEndpoint Port="19001" />
+        <HttpGatewayEndpoint Port="19080" Protocol="http" />
+        <HttpApplicationGatewayEndpoint Port="19081" Protocol="http" />
+        <ServiceConnectionEndpoint Port="19003" />
+        <ApplicationEndpoints StartPort="20001" EndPort="20031" />
+      </Endpoints>
+      <PlacementProperties>
+        <Property Name="NodeTypeName" Value="NodeType0" />
+      </PlacementProperties>
+    </NodeType>
+  </NodeTypes>
+  <Infrastructure>
+    <WindowsServer>
+      <NodeList>
+        <Node NodeName="vm0" IPAddressOrFQDN="10.145.25.132" IsSeedNode="true" NodeTypeRef="NodeType0" FaultDomain="fd:/dc1/r0" UpgradeDomain="UD0" />
+        <Node NodeName="vm1" IPAddressOrFQDN="10.145.25.133" IsSeedNode="true" NodeTypeRef="NodeType0" FaultDomain="fd:/dc2/r0" UpgradeDomain="UD1" />
+        <Node NodeName="vm2" IPAddressOrFQDN="10.145.25.134" IsSeedNode="true" NodeTypeRef="NodeType0" FaultDomain="fd:/dc3/r0" UpgradeDomain="UD2" />
+      </NodeList>
+    </WindowsServer>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="ApplicationGateway/Http">
+      <Parameter Name="IsEnabled" Value="true" />
+    </Section>
+    <Section Name="ClusterManager">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="PlacementConstraints" Value="NodeTypeName==NodeType0" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="Diagnostics">
+      <Parameter Name="ClusterId" Value="a95c6850-f3c7-488e-a42c-6de855779d6b" />
+      <Parameter Name="ConsumerInstances" Value="FileShareWinFabEtw, FileShareWinFabCrashDump, FileShareWinFabPerfCtr" />
+      <Parameter Name="EnableTelemetry" Value="True" />
+      <Parameter Name="MaxDiskQuotaInMB" Value="5120" />
+      <Parameter Name="ProducerInstances" Value="WinFabEtlFile, WinFabCrashDump, WinFabPerfCtrFolder" />
+    </Section>
+    <Section Name="FailoverManager">
+      <Parameter Name="ExpectedClusterSize" Value="3" />
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="PlacementConstraints" Value="NodeTypeName==NodeType0" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="FaultAnalysisService">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="PlacementConstraints" Value="NodeTypeName==NodeType0" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="Federation">
+      <Parameter Name="NodeIdGeneratorVersion" Value="V4" />
+    </Section>
+    <Section Name="FileShareWinFabCrashDump">
+      <Parameter Name="ConsumerType" Value="FileShareFolderUploader" />
+      <Parameter Name="DataDeletionAgeInDays" Value="10" />
+      <Parameter Name="IsEnabled" Value="true" />
+      <Parameter Name="ProducerInstance" Value="WinFabCrashDump" />
+      <Parameter Name="StoreConnectionString" Value="\\erp-a3v1-vm01\diagnosticsSto\fabricdumps-a95c6850-f3c7-488e-a42c-6de855779d6b" />
+    </Section>
+    <Section Name="FileShareWinFabEtw">
+      <Parameter Name="ConsumerType" Value="FileShareEtwCsvUploader" />
+      <Parameter Name="DataDeletionAgeInDays" Value="10" />
+      <Parameter Name="IsEnabled" Value="true" />
+      <Parameter Name="ProducerInstance" Value="WinFabEtlFile" />
+      <Parameter Name="StoreConnectionString" Value="%systemdrive%\hiahiaFabricLogsShare" />
+    </Section>
+    <Section Name="FileShareWinFabPerfCtr">
+      <Parameter Name="ConsumerType" Value="FileShareFolderUploader" />
+      <Parameter Name="DataDeletionAgeInDays" Value="10" />
+      <Parameter Name="IsEnabled" Value="true" />
+      <Parameter Name="ProducerInstance" Value="WinFabPerfCtrFolder" />
+      <Parameter Name="StoreConnectionString" Value="%systemdrive%\hiahiaPerfCountersShare" />
+    </Section>
+    <Section Name="FileStoreService">
+      <Parameter Name="AnonymousAccessEnabled" Value="false" />
+      <Parameter Name="PrimaryAccountNTLMPasswordSecret" Value="914abcae-1bd9-4a7f-8344-b9ceeb777dca" />
+      <Parameter Name="PrimaryAccountType" Value="LocalUser" />
+      <Parameter Name="SecondaryAccountNTLMPasswordSecret" Value="6bce054c-a505-4ae3-b180-736458519947" />
+      <Parameter Name="SecondaryAccountType" Value="LocalUser" />
+    </Section>
+    <Section Name="Hosting">
+      <Parameter Name="EndpointProviderEnabled" Value="true" />
+      <Parameter Name="FirewallPolicyEnabled" Value="true" />
+      <Parameter Name="RunAsPolicyEnabled" Value="true" />
+    </Section>
+    <Section Name="HttpGateway">
+      <Parameter Name="IsEnabled" Value="true" />
+    </Section>
+    <Section Name="ImageStoreService">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="PlacementConstraints" Value="NodeTypeName==NodeType0" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="Management">
+      <Parameter Name="ImageStoreConnectionString" Value="fabric:ImageStore" />
+    </Section>
+    <Section Name="NamingService">
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="PlacementConstraints" Value="NodeTypeName==NodeType0" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="ReconfigurationAgent">
+      <Parameter Name="IsDeactivationInfoEnabled" Value="true" />
+    </Section>
+    <Section Name="Security">
+      <Parameter Name="ClientRoleEnabled" Value="true" />
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="DisableFirewallRuleForDomainProfile" Value="true" />
+      <Parameter Name="DisableFirewallRuleForPrivateProfile" Value="true" />
+      <Parameter Name="DisableFirewallRuleForPublicProfile" Value="true" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+    </Section>
+    <Section Name="Setup">
+      <Parameter Name="FabricDataRoot" Value="C:\ProgramData\SF\hiahiaData" />
+      <Parameter Name="FabricLogRoot" Value="C:\ProgramData\SF\hiahiaLog" />
+    </Section>
+    <Section Name="Trace/Etw">
+      <Parameter Name="Level" Value="4" />
+    </Section>
+    <Section Name="UpgradeOrchestrationService">
+      <Parameter Name="AutoupgradeEnabled" Value="True" />
+      <Parameter Name="ClusterId" Value="a95c6850-f3c7-488e-a42c-6de855779d6b" />
+      <Parameter Name="MinReplicaSetSize" Value="3" />
+      <Parameter Name="PlacementConstraints" Value="NodeTypeName==NodeType0" />
+      <Parameter Name="TargetReplicaSetSize" Value="3" />
+    </Section>
+    <Section Name="WinFabCrashDump">
+      <Parameter Name="DataDeletionAgeInDays" Value="10" />
+      <Parameter Name="FolderType" Value="WindowsFabricCrashDumps" />
+      <Parameter Name="IsEnabled" Value="true" />
+      <Parameter Name="ProducerType" Value="FolderProducer" />
+    </Section>
+    <Section Name="WinFabEtlFile">
+      <Parameter Name="DataDeletionAgeInDays" Value="10" />
+      <Parameter Name="IsEnabled" Value="true" />
+      <Parameter Name="ProducerType" Value="EtlFileProducer" />
+    </Section>
+    <Section Name="WinFabPerfCtrFolder">
+      <Parameter Name="DataDeletionAgeInDays" Value="10" />
+      <Parameter Name="FolderType" Value="WindowsFabricPerformanceCounters" />
+      <Parameter Name="IsEnabled" Value="true" />
+      <Parameter Name="ProducerType" Value="FolderProducer" />
+    </Section>
+  </FabricSettings>
+</ClusterManifest>

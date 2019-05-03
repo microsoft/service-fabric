@@ -23,9 +23,10 @@ Replica::SPtr Replica::Create(
     __in KAllocator & allocator,
     __in_opt Data::StateManager::IStateProvider2Factory * stateProviderFactory,
     __in_opt TRANSACTIONAL_REPLICATOR_SETTINGS const * const settings,
-    __in_opt TxnReplicator::IDataLossHandler * const dataLossHandler)
+    __in_opt TxnReplicator::IDataLossHandler * const dataLossHandler,
+    __in_opt BOOLEAN hasPersistedState)
 {
-    Replica * value = _new(REPLICA_TAG, allocator) Replica(pId, replicaId, workFolder, logManager, stateProviderFactory, settings, dataLossHandler);
+    Replica * value = _new(REPLICA_TAG, allocator) Replica(pId, replicaId, workFolder, logManager, stateProviderFactory, settings, dataLossHandler, hasPersistedState);
     THROW_ON_ALLOCATION_FAILURE(value);
 
     return Replica::SPtr(value);
@@ -173,7 +174,8 @@ Replica::Replica(
     __in Data::Log::LogManager & logManager,
     __in Data::StateManager::IStateProvider2Factory * stateProviderFactory,
     __in TRANSACTIONAL_REPLICATOR_SETTINGS const * const settings,
-    __in_opt TxnReplicator::IDataLossHandler * const dataLossHandler)
+    __in_opt TxnReplicator::IDataLossHandler * const dataLossHandler,
+    __in_opt BOOLEAN hasPersistedState)
     : Common::ComponentRoot()
     , KObject()
     , KShared()
@@ -236,7 +238,7 @@ Replica::Replica(
         settings,
         nullptr,
         *codePackage,
-        TRUE,
+        hasPersistedState,
         nullptr,
         comFactory.GetRawPointer(),
         comProxyDataLossHandler.GetRawPointer(),

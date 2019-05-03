@@ -1,0 +1,438 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{ECDDA3CB-B09D-4056-A3A2-17C9BF681CC5}</ProjectGuid>
+    <AssemblyName>Microsoft.ServiceFabric.Data.Impl</AssemblyName>
+    <RootNamespace>Microsoft.ServiceFabric.Data</RootNamespace>
+    <AssemblyDescription>Microsoft Azure Service Fabric Data Implementation</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <ResourcesFileName>SR</ResourcesFileName>
+    <ResourcesClassName>$(ResourcesFileName)</ResourcesClassName>
+    <UseVSHostingProcess>False</UseVSHostingProcess>
+    <DefineConstants>$(DefineConstants);TRACE;WINDOWS_BUILD;SYSTEM_FABRIC;USE_KTL_LOGGER_DRIVER</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <StyleCopOverrideSettingsFile>Settings.StyleCop</StyleCopOverrideSettingsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj">
+      <Project>{6244C9FE-DC97-4783-A63E-94CE833196B4}</Project>
+      <Name>Microsoft.ServiceFabric.Data.Interfaces</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DataStructures\BloomFilter.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\ConsolidationMode.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\DifferentialStateFlags.cs" />
+    <Compile Include="_friends.cs" />
+    <Compile Include="$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+    <Compile Include="Testability\LogWriteFaultInjectionParameters.cs" />
+    <Compile Include="Collections\IsolationHelper.cs" />
+    <Compile Include="Collections\PrepareForRemoveStateLockContext.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\Checkpoint.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\CheckpointManager.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\TestableAssertHelper.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\CheckpointFrame.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\Constants.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\IListElement.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\ListElementState.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\OperationType.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\PrimeLockThrows.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\ReliableConcurrentQueue.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\CheckpointFileHelper.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\CopyFileWriter.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\CopyStream.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\MetadataOperationData.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\DataStore.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\OperationLockContext.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\RedoUndoOperationData.cs" />
+    <Compile Include="Collections\ReliableConcurrentQueue\UnlockSource.cs" />
+    <Compile Include="Common\Diagnostics.cs" />
+    <Compile Include="Common\MergeManager\ComparableSortedSequenceEnumerator.cs" />
+    <Compile Include="Common\MergeManager\SortedSequenceMergeEnumerable.cs" />
+    <Compile Include="Common\MergeManager\SortedSequenceMergeEnumerator.cs" />
+    <Compile Include="Common\MergeManager\SortedSequenceMergeManager.cs" />
+    <Compile Include="DataStructures\Index.cs" />
+    <Compile Include="DataStructures\IPartition.cs" />
+    <Compile Include="DataStructures\KVList.cs" />
+    <Compile Include="DataStructures\Partition.cs" />
+    <Compile Include="DataStructures\PartitionComparer.cs" />
+    <Compile Include="DataStructures\PartitionedList.cs" />
+    <Compile Include="DataStructures\PartitionedSortedList.cs" />
+    <Compile Include="DataStructures\PartitionSearchKey.cs" />
+    <Compile Include="DataStructures\Concurrent\ConcurrentSkipList.cs" />
+    <Compile Include="DataStructures\Concurrent\ISortedList.cs" />
+    <Compile Include="DataStructures\Concurrent\RandomGenerator.cs" />
+    <Compile Include="SerializationHelper.cs" />
+    <Compile Include="TimeoutHelper.cs" />
+    <Compile Include="RetryHelper.cs" />
+    <Compile Include="Collections\QueueSnapshotAsyncEnumerable.cs" />
+    <Compile Include="Collections\SnapshotAsyncEnumerable.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\DiskSizeMetric.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\ISamplingSuggester.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\ItemCountMetric.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\KeyTypeMetric.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\KeyValueSizeMetric.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\ReadLatencyMetric.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\ReadWriteMetric.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\SamplingSuggester.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\StoreCountMetric.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\TStoreMetricProvider.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\TStorePerformanceCounters.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\TStorePerformanceCounterSet.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\AddList.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\FileCountMergeConfiguration.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\MergePolicy.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\RecoveryStoreComponent.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\KeyValueAsyncEnumerable.cs" />
+    <Compile Include="Replicator\CopyHeader.cs" />
+    <Compile Include="Replicator\CopyMetadata.cs" />
+    <Compile Include="Replicator\CopyStage.cs" />
+    <Compile Include="ReplicationHelper.cs" />
+    <Compile Include="AsyncEnumerableWrapper.cs" />
+    <Compile Include="AsyncEnumeratorWrapper.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="EntryPoints.cs" />
+    <Compile Include="ReliableStateManagerReplicatorSettingsConfigurationNames.cs" />
+    <Compile Include="ReliableStateManagerReplicatorSettingsUtil.cs" />
+    <Compile Include="Common.cs" />
+    <Compile Include="ConfigStoreUtility.cs" />
+    <Compile Include="DataImplTrace.cs" />
+    <Compile Include="ReliableStateManagerImpl.cs" />
+    <Compile Include="ReliableStateManagerReplica.cs" />
+    <Compile Include="StateManagerTypeCache.cs" />
+    <Compile Include="Collections\DefaultComparer.cs" />
+    <Compile Include="Collections\DefaultEqualityComparer.cs" />
+    <Compile Include="Collections\DictionaryInitializationContext.cs" />
+    <Compile Include="Collections\DistributedDictionary.cs" />
+    <Compile Include="Collections\DistributedQueue.cs" />
+    <!--<Compile Include="Collections\DistributedVersionedDictionary.cs"/>-->
+    <Compile Include="Collections\EmptyOperationDataStream.cs" />
+    <Compile Include="Collections\EmptyRangePartitioner.cs" />
+    <Compile Include="Collections\IDistributedCollection.cs" />
+    <Compile Include="Collections\IDistributedDictionary.cs" />
+    <Compile Include="Collections\IDistributedQueue.cs" />
+    <!--<Compile Include="Collections\IDistributedVersionedDictionary.cs"/>-->
+    <Compile Include="Collections\LongByteConverter.cs" />
+    <Compile Include="Collections\LongComparer.cs" />
+    <Compile Include="Collections\LongRangePartitioner.cs" />
+    <Compile Include="Collections\QueueInitializationContext.cs" />
+    <Compile Include="Collections\StringByteConverter.cs" />
+    <Compile Include="Collections\StringCompareOrdinal.cs" />
+    <Compile Include="Collections\StringRangePartitioner.cs" />
+    <Compile Include="ApiMonitoring\ReplicatorApiMonitor.cs" />
+    <!-- Replicator -->
+    <Compile Include="Replicator\AbsoluteUriEqualityComparer.cs" />
+    <Compile Include="Replicator\ApiDispatcher.cs" />
+    <Compile Include="Replicator\ApplyContext.cs" />
+    <Compile Include="Replicator\AssemblyInfo.cs" />
+    <Compile Include="Replicator\AtomicOperation.cs" />
+    <Compile Include="Replicator\AtomicRedoOperation.cs" />
+    <Compile Include="Replicator\BackupManager\BackupFolderInfo.cs" />
+    <Compile Include="Replicator\BackupManager\BackupLogFile.cs" />
+    <Compile Include="Replicator\BackupManager\BackupLogFileAsyncEnumerator.cs" />
+    <Compile Include="Replicator\BackupManager\BackupLogFileProperties.cs" />
+    <Compile Include="Replicator\BackupManager\BackupManager.cs" />
+    <Compile Include="Replicator\BackupManager\BackupMetadataFile.cs" />
+    <Compile Include="Replicator\BackupManager\BackupMetadataFileProperties.cs" />
+    <Compile Include="Replicator\BackupManager\IBackupManager.cs" />
+    <Compile Include="Replicator\BackupManager\IBackupRestoreProvider.cs" />
+    <Compile Include="Replicator\BackupManager\IncrementalBackupLogRecordAsyncEnumerator.cs" />
+    <Compile Include="Replicator\BackupLogRecord.cs" />
+    <Compile Include="Replicator\BarrierLogRecord.cs" />
+    <Compile Include="Replicator\BeginCheckpointLogRecord.cs" />
+    <Compile Include="Replicator\BeginTransactionOperationLogRecord.cs" />
+    <Compile Include="Replicator\CheckpointManager.cs" />
+    <Compile Include="Replicator\CompleteCheckpointLogRecord.cs" />
+    <Compile Include="Replicator\Constants.cs" />
+    <Compile Include="Replicator\CRC64.cs" />
+    <Compile Include="Replicator\Diagnostics\IMetricManager.cs" />
+    <Compile Include="Replicator\Diagnostics\IMetricProvider.cs" />
+    <Compile Include="Replicator\Diagnostics\IMetricReporter.cs" />
+    <Compile Include="Replicator\Diagnostics\MetricManager.cs" />
+    <Compile Include="Replicator\Diagnostics\MetricProviderType.cs" />
+    <Compile Include="Replicator\Diagnostics\PerformanceCounterWriter.cs" />
+    <Compile Include="Replicator\Diagnostics\TransactionalReplicatorPerformanceCounters.cs" />
+    <Compile Include="Replicator\DrainingStream.cs" />
+    <Compile Include="Replicator\DynamicStateManager.cs" />
+    <Compile Include="Replicator\EndCheckpointLogRecord.cs" />
+    <Compile Include="Replicator\EndTransactionLogRecord.cs" />
+    <Compile Include="Replicator\FileFormat\BlockHandle.cs" />
+    <Compile Include="Replicator\FileFormat\FileBlock.cs" />
+    <Compile Include="Replicator\FileFormat\FileFooter.cs" />
+    <Compile Include="Replicator\FileFormat\FileProperties.cs" />
+    <Compile Include="Replicator\FileFormat\VarInt.cs" />
+    <Compile Include="Replicator\FileLogicalLog.cs" />
+    <Compile Include="Replicator\FileLogManager.cs" />
+    <Compile Include="Replicator\ICheckpointManager.cs" />
+    <Compile Include="Replicator\ILockManager.cs" />
+    <Compile Include="Replicator\ILoggingReplicator.cs" />
+    <Compile Include="Replicator\IOperationProcessor.cs" />
+    <Compile Include="Replicator\IndexingLogRecord.cs" />
+    <Compile Include="Replicator\InformationLogRecord.cs" />
+    <Compile Include="Replicator\InMemoryBinaryReader.cs" />
+    <Compile Include="Replicator\InMemoryBinaryWriter.cs" />
+    <Compile Include="Replicator\IReplicatedLogManager.cs" />
+    <Compile Include="Replicator\IPhysicalLogReader.cs" />
+    <Compile Include="Replicator\IStateManager.cs" />
+    <Compile Include="Replicator\IStateProvider2.cs" />
+    <Compile Include="Replicator\ITracer.cs" />
+    <Compile Include="Replicator\ITransactionalReplicator.cs" />
+    <Compile Include="Replicator\ITransactionsManager.cs" />
+    <Compile Include="Replicator\KtlLogManager.cs" />
+    <Compile Include="Replicator\LockContext.cs" />
+    <Compile Include="Replicator\LockContextMode.cs" />
+    <Compile Include="Replicator\LoggingReplicator.cs" />
+    <Compile Include="Replicator\LoggingReplicatorCopyContext.cs" />
+    <Compile Include="Replicator\LoggingReplicatorCopyStream.cs" />
+    <Compile Include="Replicator\LogHeadRecord.cs" />
+    <Compile Include="Replicator\LogicalLogRecord.cs" />
+    <Compile Include="Replicator\LogicalSequenceNumber.cs" />
+    <Compile Include="Replicator\LogManager.cs" />
+    <Compile Include="Replicator\LogRecord.cs" />
+    <Compile Include="Replicator\LogRecords.cs" />
+    <Compile Include="Replicator\LogRecordsMap.cs" />
+    <Compile Include="Replicator\LogRecordsDispatcher.cs" />
+    <Compile Include="Replicator\LoggerEngine.cs" />
+    <Compile Include="Replicator\LogTruncationManager.cs" />
+    <Compile Include="Replicator\Metadata.cs" />
+    <Compile Include="Replicator\MemoryLogManager.cs" />
+    <Compile Include="Replicator\MemoryLogicalLog.cs" />
+    <Compile Include="Replicator\NamedOperationContext.cs" />
+    <Compile Include="Replicator\NamedOperationData.cs" />
+    <Compile Include="Replicator\NamedOperationDataCollection.cs" />
+    <Compile Include="Replicator\NativeMethods.cs" />
+    <Compile Include="Replicator\OperationLogRecord.cs" />
+    <Compile Include="Replicator\OperationProcessor.cs" />
+    <Compile Include="Replicator\PerformCheckpointMode.cs" />
+    <Compile Include="Replicator\PeriodicCheckpointTruncationState.cs" />
+    <Compile Include="Replicator\PhysicalLogReader.cs" />
+    <Compile Include="Replicator\PhysicalLogRecord.cs" />
+    <Compile Include="Replicator\PhysicalLogWriter.cs" />
+    <Compile Include="Replicator\PhysicalLogWriterCallbackManager.cs" />
+    <Compile Include="Replicator\PhysicalSequenceNumber.cs" />
+    <Compile Include="Replicator\ProgressVector.cs" />
+    <Compile Include="Replicator\ReaderWriterAsyncLock.cs" />
+    <Compile Include="Replicator\RecordProcessingMode.cs" />
+    <Compile Include="Replicator\RecoveredOrCopiedCheckpointLsn.cs" />
+    <Compile Include="Replicator\RecoveryInformation.cs" />
+    <Compile Include="Replicator\RecoveryManager.cs" />
+    <Compile Include="Replicator\ReplicatedLogManager.cs" />
+    <Compile Include="Replicator\ReplicatorBackup.cs" />
+    <Compile Include="Replicator\ReplicationMetadata.cs" />
+    <Compile Include="Replicator\ReplicatorDynamicConstants.cs" />
+    <Compile Include="Replicator\RoleContextDrainState.cs" />
+    <Compile Include="Replicator\SecondaryDrainManager.cs" />
+    <Compile Include="Replicator\SerializableMetadata.cs" />
+    <Compile Include="Replicator\StatefulServiceReplica.cs" />
+    <Compile Include="Replicator\StateProviderMetadataManager.cs" />
+    <Compile Include="Replicator\StateProviderIdentifier.cs" />
+    <Compile Include="Replicator\StateManagerApplyType.cs" />
+    <Compile Include="Replicator\StateManagerApplyOperationContext.cs" />
+    <Compile Include="Replicator\StateManagerConstants.cs" />
+    <Compile Include="Replicator\StateManagerCopyOperation.cs" />
+    <Compile Include="Replicator\StateManagerFile.cs" />
+    <Compile Include="Replicator\StateManagerFileBlocks.cs" />
+    <Compile Include="Replicator\StateManagerFileProperties.cs" />
+    <Compile Include="Replicator\StateManagerLockContext.cs" />
+    <Compile Include="Replicator\StateManagerLockMode.cs" />
+    <Compile Include="Replicator\StateManagerTransactionContext.cs" />
+    <Compile Include="Replicator\StateManagerCopyStream.cs" />
+    <Compile Include="Replicator\StateManagerStructuredEvents.cs" />
+    <Compile Include="Replicator\utils\ByteAlignedReadWriteHelper.cs" />
+    <Compile Include="Replicator\utils\TaskUtils.cs" />
+    <Compile Include="Replicator\Tracer.cs" />
+    <Compile Include="Replicator\Transaction.cs" />
+    <Compile Include="Replicator\TransactionBase.cs" />
+    <Compile Include="Replicator\TransactionLogRecord.cs" />
+    <Compile Include="Replicator\TransactionalReplicator.cs" />
+    <Compile Include="Replicator\TransactionalReplicatorSettings.cs" />
+    <Compile Include="Replicator\TransactionManager.cs" />
+    <Compile Include="Replicator\TransactionMap.cs" />
+    <Compile Include="Replicator\TransactionState.cs" />
+    <Compile Include="Replicator\TransactionStateMachine.cs" />
+    <Compile Include="Replicator\TruncateHeadLogRecord.cs" />
+    <Compile Include="Replicator\TruncateTailLogRecord.cs" />
+    <Compile Include="Replicator\TruncateTailManager.cs" />
+    <Compile Include="Replicator\UpdateEpochLogRecord.cs" />
+    <Compile Include="Replicator\Utility.cs" />
+    <Compile Include="Replicator\utils\ServiceReplicaUtils.cs" />
+    <Compile Include="Replicator\SerializationManager\BuiltInTypeSerializer.cs" />
+    <Compile Include="Replicator\SerializationManager\BuiltInTypeSerializerBuilder.cs" />
+    <Compile Include="Replicator\SerializationManager\DataContractStateSerializer.cs" />
+    <Compile Include="Replicator\SerializationManager\ISerializationManager.cs" />
+    <Compile Include="Replicator\SerializationManager\NamedType.cs" />
+    <Compile Include="Replicator\SerializationManager\SerializationManager.cs" />
+    <Compile Include="Replicator\VersionManager\EnumerationCompletionResult.cs" />
+    <Compile Include="Replicator\VersionManager\IInternalVersionManager.cs" />
+    <Compile Include="Replicator\VersionManager\ILoggingReplicatorToVersionManager.cs" />
+    <Compile Include="Replicator\VersionManager\ITransactionVersionManager.cs" />
+    <Compile Include="Replicator\VersionManager\IVersionManager.cs" />
+    <Compile Include="Replicator\VersionManager\IVersionProvider.cs" />
+    <Compile Include="Replicator\VersionManager\NotificationKey.cs" />
+    <Compile Include="Replicator\VersionManager\TryRemoveVersionResult.cs" />
+    <Compile Include="Replicator\VersionManager\VersionManager.cs" />
+    <!-- ReplicatedStore -->
+    <Compile Include="ReplicatedStore\DifferentialStore\AggregatedState.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\ConsolidationManager.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\DifferentialStateEnumerator.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\MetadataOperationData.cs" />
+    <Compile Include="ReplicatedStore\LockManager\Disposable.cs" />
+    <Compile Include="ReplicatedStore\LockManager\ILock.cs" />
+    <Compile Include="ReplicatedStore\LockManager\LockCompatibility.cs" />
+    <Compile Include="ReplicatedStore\LockManager\LockControlBlock.cs" />
+    <Compile Include="ReplicatedStore\LockManager\LockHashTable.cs" />
+    <Compile Include="ReplicatedStore\LockManager\LockHashValue.cs" />
+    <Compile Include="ReplicatedStore\LockManager\LockManager.cs" />
+    <Compile Include="ReplicatedStore\LockManager\LockModes.cs" />
+    <Compile Include="ReplicatedStore\LockManager\LockResourceControlBlock.cs" />
+    <Compile Include="ReplicatedStore\LockManager\PrimeLockRequest.cs" />
+    <Compile Include="ReplicatedStore\LockManager\LockStatus.cs" />
+    <Compile Include="ReplicatedStore\Configuration\StoreSettings.cs" />
+    <Compile Include="ReplicatedStore\Configuration\StoreSettingsConfigurationNames.cs" />
+    <Compile Include="ReplicatedStore\Configuration\StoreSettingsUtil.cs" />
+    <Compile Include="ReplicatedStore\Diagnostics\StorePerformanceCounterWriter.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\AsyncEnumerable.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TStoreAsyncEnumerator.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\DifferentialStateVersions.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\DifferentialStoreConstants.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\IActivityManager.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\ILockContainer.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\IRangePartitioner.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\IReadableStoreComponent.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\IStoreSweepProvider.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\IVersion.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\IVersionChainsDictionary.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\ConcurrentVersionChainsDictionary.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\IWritableStoreComponent.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\LoadValueCounter.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\PostMergeMetadataTableInformation.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\RecordKind.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\RedoUndoOperationData.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\RedoUndoOperationDataEnumerator.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\SnapshotContainer.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\SnapshotComponent.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\StoreApi.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\StoreReadTransaction.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\StoreReadWriteTransaction.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\StoreTransaction.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TConsolidatedStoreComponent.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TDeletedItem.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TDifferentialStoreComponent.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TInsertedItem.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TStore.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TUpdatedItem.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TVersionedItem.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TWriteSetStoreComponent.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\EmptyOperationDataStream.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\StoreInitializationParameters.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\StoreComponentReadResult.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\AsyncEnumerator.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\DictionaryKind.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TStoreConstants.cs" />
+    <Compile Include="ReplicatedStore\Table\ByteArrayComparer.cs" />
+    <Compile Include="ReplicatedStore\Table\PriorityQueue.cs" />
+    <Compile Include="ReplicatedStore\Table\TableConstants.cs" />
+    <Compile Include="ReplicatedStore\Disk\BlockAlignedWriter.cs" />
+    <Compile Include="ReplicatedStore\Disk\KeyBlockAlignedWriter.cs" />
+    <Compile Include="ReplicatedStore\Disk\ValueBlockAlignedWriter.cs" />
+    <Compile Include="ReplicatedStore\Disk\CheckpointFile.cs" />
+    <Compile Include="ReplicatedStore\Disk\DiskConstants.cs" />
+    <Compile Include="ReplicatedStore\Disk\FileMetadata.cs" />
+    <Compile Include="ReplicatedStore\Disk\FilePropertySection.cs" />
+    <Compile Include="ReplicatedStore\Disk\StreamPool.cs" />
+    <Compile Include="ReplicatedStore\Disk\KeyChunkMetadata.cs" />
+    <Compile Include="ReplicatedStore\Disk\KeyCheckpointFile.cs" />
+    <Compile Include="ReplicatedStore\Disk\KeyCheckpointFileProperties.cs" />
+    <Compile Include="ReplicatedStore\Disk\MetadataManager.cs" />
+    <Compile Include="ReplicatedStore\Disk\MetadataManagerFileProperties.cs" />
+    <Compile Include="ReplicatedStore\Disk\MetadataTable.cs" />
+    <Compile Include="ReplicatedStore\Disk\PropertyChunkMetadata.cs" />
+    <Compile Include="ReplicatedStore\Disk\ValueCheckpointFile.cs" />
+    <Compile Include="ReplicatedStore\Disk\ValueCheckpointFileProperties.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\KeyCheckpointFileAsyncEnumerator.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\CopyManager.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\IStoreCopyProvider.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\KeyData.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\MergeHelper.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TStoreCopyOperation.cs" />
+    <Compile Include="ReplicatedStore\DifferentialStore\TStoreCopyStream.cs" />
+    <!-- Log -->
+    <Compile Include="Log\Interfaces.cs" />
+    <Compile Include="Log\Interop\KIoBufferStream.cs" />
+    <Compile Include="Log\Interop\NativeLog.cs" />
+    <Compile Include="Log\Interop\PhysicalLogContainer.cs" />
+    <Compile Include="Log\Interop\PhysicalLogManager.cs" />
+    <Compile Include="Log\Interop\PhysicalLogStream.cs" />
+    <Compile Include="Log\LogManager.cs" />
+    <Compile Include="Log\LogManager.LogicalLog.Buffer.cs" />
+    <Compile Include="Log\LogManager.LogicalLog.cs" />
+    <Compile Include="Log\LogManager.PhysicalLog.cs" />
+    <Compile Include="Log\Utility.cs" />
+    <!-- ReliableMessaging -->
+    <Compile Include="ReliableMessaging\session\Interfaces.cs" />
+    <Compile Include="ReliableMessaging\session\NativeReliableSession.cs" />
+    <Compile Include="ReliableMessaging\session\ReliableSession.cs" />
+    <Compile Include="ReliableMessaging\stream\ByteArraySerializer.cs" />
+    <Compile Include="ReliableMessaging\stream\ChangeRoleHandler.cs" />
+    <Compile Include="ReliableMessaging\stream\InboundSessionDriver.cs" />
+    <Compile Include="ReliableMessaging\stream\Interfaces.cs" />
+    <Compile Include="ReliableMessaging\stream\MessageWaiter.cs" />
+    <Compile Include="ReliableMessaging\stream\OutboundSessionDriver.cs" />
+    <Compile Include="ReliableMessaging\stream\PartitionInfo.cs" />
+    <Compile Include="ReliableMessaging\stream\PartitionKey.cs" />
+    <Compile Include="ReliableMessaging\stream\SessionConnectionManager.cs" />
+    <Compile Include="ReliableMessaging\stream\Stream.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamActiveResources.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamConsolidatedBody.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamConsolidatedKey.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamConstants.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamExceptions.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamManager.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamMetadataBody.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamMetadataKey.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamNameBody.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamNameKey.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamStoreMessageBody.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamStoreMessageKey.cs" />
+    <Compile Include="ReliableMessaging\stream\StreamWireMessages.cs" />
+    <Compile Include="ReliableMessaging\stream\StringEncoder.cs" />
+    <Compile Include="ReliableMessaging\stream\SyncPoint.cs" />
+    <Compile Include="ReliableMessaging\stream\TimeoutHandler.cs" />
+    <Compile Include="ReliableMessaging\stream\Tracing.cs" />
+    <Compile Include="ReliableMessaging\stream\InboundCallbacks.cs" />
+    <Compile Include="ReliableMessaging\Diagnostics.cs" />
+    <!-- NativeRunConfiguration -->
+    <Compile Include="ReliableStateManagerNativeRunConfigurationNames.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(ResourcesFileName).resx" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <!-- DO NOT CHANGE Inputs to $(ResourcesFileName).resx. It is required to build incrementally as MSBUILD cannot
+       expand the Inputs tag correctly for BeforeResGen targets
+   -->
+  <Target Name="BeforeResGen" Inputs="SR.resx" Outputs="$(IntermediateOutputPath)$(ResourcesFileName).cs">
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe $(ResourcesFileName).resx $(IntermediateOutputPath)\$(RootNamespace).$(ResourcesFileName).resources /str:csharp,$(RootNamespace),$(ResourcesClassName),$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </Target>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

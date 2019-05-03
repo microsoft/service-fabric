@@ -11,9 +11,7 @@ namespace Management
     {    
         class UnprovisionApplicationTypeDescription : public ServiceModel::ClientServerMessageBody
         {
-            DEFAULT_COPY_CONSTRUCTOR(UnprovisionApplicationTypeDescription)
-            DEFAULT_COPY_ASSIGNMENT(UnprovisionApplicationTypeDescription)
-        
+            DEFAULT_MOVE_AND_COPY(UnprovisionApplicationTypeDescription)
         public:
             UnprovisionApplicationTypeDescription();
 

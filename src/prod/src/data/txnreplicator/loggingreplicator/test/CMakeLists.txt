@@ -26,6 +26,7 @@ add_executable(${exe_loggingreplicator_test}
   ../LogManager.Test.cpp
   ../LogRecordsDispatcher.Test.cpp
   ../LogTruncationManager.Test.cpp
+  ../MemoryLog.Test.cpp
   ../OperationProcessor.Test.cpp
   ../PeriodicCheckpointTruncation.Test.cpp
   ../PhysicalLogRecord.Test.cpp

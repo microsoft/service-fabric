@@ -31,6 +31,8 @@ Common::WStringLiteral const ContainerState::PidParameter(L"Pid");
 Common::WStringLiteral const ContainerState::IsDeadParameter(L"Dead");
 
 Common::GlobalWString const ContainerConfig::FabricPackageFileNameEnvironment = make_global<wstring>(L"FabricPackageFileName");
+Common::GlobalWString const ContainerConfig::RuntimeSslConnectionCertFilePath = make_global<wstring>(L"Fabric_RuntimeSslConnectionCertFilePath");
+
 // Starting from this version there is no need to limit cpu to 1% of total machine capacity
 double const ContainerConfig::DockerVersionThreshold = 17.06;
 
@@ -124,6 +126,7 @@ ErrorCode ContainerConfig::CreateContainerConfig(
     config.Image = processDescription.ExePath;
     vector<wstring> envVars;
     wstring packageFilePath;
+    wstring runtimeSslConnectionCertFilePath;
     wstring containerPackageFilePath;
     auto containerWFRoot = HostingConfig::GetConfig().ContainerPackageRootFolder;
 
@@ -138,6 +141,16 @@ ErrorCode ContainerConfig::CreateContainerConfig(
         {
             wstring result = wformatString("{0}={1}", iter->first, iter->second);
             envVars.push_back(result);
+            
+            if (StringUtility::AreEqualCaseInsensitive(iter->first, FabricPackageFileNameEnvironment->c_str()))
+            {
+                packageFilePath = iter->second;
+            }
+            
+            if (StringUtility::AreEqualCaseInsensitive(iter->first, RuntimeSslConnectionCertFilePath->c_str()))
+            {
+                runtimeSslConnectionCertFilePath = iter->second;
+            }
         }
     }
 
@@ -147,40 +160,10 @@ ErrorCode ContainerConfig::CreateContainerConfig(
     {
         return error;
     }
+    fabricCodePath = Path::GetFullPath(fabricCodePath);
 
     wstring fabricLogRoot;
     error = FabricEnvironment::GetFabricLogRoot(fabricLogRoot);
-    if (!error.IsSuccess())
-    {
-        return error;
-    }
-
-    wstring fabricContainerLogRoot = Path::Combine(fabricLogRoot, L"Containers");
-    if (!Directory::Exists(fabricContainerLogRoot))
-    {
-        error = Directory::Create2(fabricContainerLogRoot);
-        if (!error.IsSuccess())
-        {
-            return error;
-        }
-    }
-
-    wstring fabricContainerRoot = Path::Combine(fabricContainerLogRoot, containerDescription.ContainerName);
-    error = Directory::Create2(fabricContainerRoot);
-    if (!error.IsSuccess())
-    {
-        return error;
-    }
-
-    wstring fabricContainerTraceRoot = Path::Combine(fabricContainerRoot, L"Traces");
-    error = Directory::Create2(fabricContainerTraceRoot);
-    if (!error.IsSuccess())
-    {
-        return error;
-    }
-
-    wstring fabricContainerQueryTraceRoot = Path::Combine(fabricContainerRoot, L"QueryTraces");
-    error = Directory::Create2(fabricContainerQueryTraceRoot);
     if (!error.IsSuccess())
     {
         return error;
@@ -211,6 +194,8 @@ ErrorCode ContainerConfig::CreateContainerConfig(
         binds.push_back(binBinding);
     }
 
+    wstring fabricContainerLogRoot = Path::Combine(fabricLogRoot, L"Containers");
+    wstring fabricContainerRoot = Path::Combine(fabricContainerLogRoot, containerDescription.ContainerName);
     if (!fabricContainerRoot.empty())
     {
         auto binBinding = wformatString("{0}:{1}", fabricContainerRoot, fabricContainerRoot);
@@ -219,6 +204,22 @@ ErrorCode ContainerConfig::CreateContainerConfig(
 
     auto logRoot = wformatString("FabricLogRoot={0}", fabricContainerRoot);
     envVars.push_back(logRoot);
+    
+    wstring fabricDataRoot;
+    error = FabricEnvironment::GetFabricDataRoot(fabricDataRoot);
+    if (error.IsSuccess())
+    {
+        fabricDataRoot = Path::GetFullPath(fabricDataRoot);
+        auto dataRoot = wformatString("FabricDataRoot={0}", fabricDataRoot);
+        envVars.push_back(dataRoot);
+    }
+    
+    if (!runtimeSslConnectionCertFilePath.empty())
+    {        
+        auto certDir = Path::GetDirectoryName(runtimeSslConnectionCertFilePath);
+        auto binBinding = wformatString("{0}:{1}:ro", certDir, certDir);
+        binds.push_back(binBinding);
+    }
 
     // Container Log Path
 #if defined(PLATFORM_UNIX)
@@ -274,21 +275,18 @@ ErrorCode ContainerConfig::CreateContainerConfig(
     AddVolumesToBinds(binds, localVolumes);
     AddVolumesToBinds(binds, mappedVolumes);
 
+    //Add the config package policies binds
+
+    for (auto const& configBind : containerDescription.BindMounts)
+    {
+      binds.push_back(wformatString("{0}:{1}:ro", configBind.second, configBind.first));
+    }
+
 #if defined(PLATFORM_UNIX)
     // this is for the log mount
     binds.push_back(wformatString("{0}:{0}:ro", logMountDirectory));
 #endif
 
-    if (containerDescription.AssignedIP.empty())
-    {
-        auto networkingMode = wformatString("{0}={1}", Common::ContainerEnvironment::ContainerNetworkingModeEnvironmentVariable, NetworkType::EnumToString(NetworkType::Other));
-        envVars.push_back(networkingMode);
-    }
-    else
-    {
-        auto networkingMode = wformatString("{0}={1}", Common::ContainerEnvironment::ContainerNetworkingModeEnvironmentVariable, NetworkType::EnumToString(NetworkType::Open));
-        envVars.push_back(networkingMode);
-    }
     //populate process debug parameters
     auto debugParams = processDescription.DebugParameters;
     for (auto it = debugParams.ContainerMountedVolumes.begin(); it != debugParams.ContainerMountedVolumes.end(); ++it)
@@ -332,33 +330,6 @@ ErrorCode ContainerConfig::CreateContainerConfig(
 
     }
 
-    //network namespace can only be shared for open network config
-    if (!namespaceId.empty() &&
-        !containerDescription.AssignedIP.empty())
-    {
-        config.HostConfig.NetworkMode = namespaceId;
-        config.HostConfig.PublishAllPorts = false;
-        sharingNetworkNamespace = true;
-    }
-    else if (!containerDescription.PortBindings.empty())
-    {
-        for (auto it = containerDescription.PortBindings.begin(); it != containerDescription.PortBindings.end(); it++)
-        {
-            config.HostConfig.PortBindings[it->first].push_back(PortBinding(it->second));
-            config.ExposedPorts[it->first] = ExposedPort();
-        }
-        config.HostConfig.PublishAllPorts = false;
-    }
-    else if (!containerDescription.AssignedIP.empty())
-    {
-        config.NetworkConfig.EndpointConfig.UnderlayConfig.IpamConfig.IPv4Address = containerDescription.AssignedIP;
-        config.HostConfig.NetworkMode = L"servicefabric_network";
-        config.HostConfig.PublishAllPorts = false;
-    }
-    else
-    {
-        config.HostConfig.PublishAllPorts = true;
-    }
     if(!sharingNetworkNamespace)
     {
         config.HostConfig.Dns = containerDescription.DnsServers;
@@ -369,14 +340,17 @@ ErrorCode ContainerConfig::CreateContainerConfig(
             config.HostConfig.DnsSearch.push_back(searchOptions);
         }
     }
+    
     if (!processDescription.CgroupName.empty())
     {
         config.HostConfig.CgroupName = processDescription.CgroupName;
     }
+    
     if (resourceGovPolicy.MemoryInMB > 0)
     {
         config.HostConfig.Memory = static_cast<uint64>(resourceGovPolicy.MemoryInMB) * MegaBytesToBytesMultiplier;
     }
+    
     if (resourceGovPolicy.MemorySwapInMB > 0)
     {
         //just a precaution here - in practise it does not matter whether we use int64 or uint64
@@ -388,10 +362,12 @@ ErrorCode ContainerConfig::CreateContainerConfig(
         }
         config.HostConfig.MemorySwap = static_cast<int64> (swapMemory);
     }
+    
     if (resourceGovPolicy.MemoryReservationInMB > 0)
     {
         config.HostConfig.MemoryReservation = static_cast<uint64>(resourceGovPolicy.MemoryReservationInMB) * MegaBytesToBytesMultiplier;
     }
+
     if (resourceGovPolicy.DiskQuotaInMB > 0)
     {
         config.HostConfig.DiskQuota = static_cast<uint64>(resourceGovPolicy.DiskQuotaInMB) * MegaBytesToBytesMultiplier;
@@ -409,14 +385,17 @@ ErrorCode ContainerConfig::CreateContainerConfig(
         config.HostConfig.KernelMemory = static_cast<uint64>(resourceGovPolicy.KernelMemoryInMB) * MegaBytesToBytesMultiplier;
     }
 #endif
+
     if (resourceGovPolicy.CpuShares > 0)
     {
         config.HostConfig.CpuShares = resourceGovPolicy.CpuShares;
     }
+    
     if (!resourceGovPolicy.CpusetCpus.empty())
     {
         config.HostConfig.CpusetCpus = resourceGovPolicy.CpusetCpus;
     }
+    
     if (resourceGovPolicy.NanoCpus > 0)
     {
         //for linux no need to adjust
@@ -433,6 +412,7 @@ ErrorCode ContainerConfig::CreateContainerConfig(
     {
         config.HostConfig.AutoRemove = false;
     }
+    
     if (containerDescription.RunInteractive)
     {
         config.Tty = true;

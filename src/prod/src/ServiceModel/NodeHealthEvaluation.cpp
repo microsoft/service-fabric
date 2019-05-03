@@ -91,7 +91,6 @@ Common::ErrorCode NodeHealthEvaluation::FromPublicApi(
 void NodeHealthEvaluation::SetDescription()
 {
     description_ = wformatString(
-        "{0} NodeName='{1}', AggregatedHealthState='{2}'.",
         HMResource::GetResources().HealthEvaluationUnhealthyNode,
         nodeName_,
         aggregatedHealthState_);

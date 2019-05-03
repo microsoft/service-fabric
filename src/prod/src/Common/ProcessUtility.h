@@ -14,6 +14,13 @@ namespace Common
             DWORD dwDesiredAccess,
             BOOL bInheritHandle,
             DWORD dwProcessId,
+            __out Common::HandleUPtr & processHandle,
+            __out DWORD & osErrorCode);
+
+        static Common::ErrorCode OpenProcess(
+            DWORD dwDesiredAccess,
+            BOOL bInheritHandle,
+            DWORD dwProcessId,
             __out Common::HandleUPtr & processHandle);
 
         static Common::ErrorCode CreateProcess(

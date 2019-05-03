@@ -583,7 +583,7 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                     auto applicationContext = dynamic_cast<ApplicationContext*>(&context);
                     ASSERT_IF(applicationContext == nullptr, "Failed to cast ApplicationContext");
 
-                    if (applicationContext->IsUpgrading)
+                    if (applicationContext->IsUpgrading || applicationContext->ApplicationDefinitionKind != ApplicationDefinitionKind::Enum::ServiceFabricApplicationDescription)
                     {
                         // The recovered corresponding ApplicationUpgradeContext will run the upgrade logic
                         // so no-op the recovered ApplicationContext
@@ -619,7 +619,14 @@ void RolloutManager::ProcessRolloutContext(__in RolloutContext & context)
                 case RolloutContextType::SingleInstanceDeployment:
                 {
                     auto singleInstanceDeploymentContext = dynamic_cast<SingleInstanceDeploymentContext *>(&context);
-                    ProcessPendingSingleInstanceDeployment(*singleInstanceDeploymentContext);
+                    if (singleInstanceDeploymentContext->IsUpgrading)
+                    {
+                        ProcessCompleted(*singleInstanceDeploymentContext);
+                    }
+                    else
+                    {
+                        ProcessPendingSingleInstanceDeployment(*singleInstanceDeploymentContext);
+                    }
                     break;
                 }
 

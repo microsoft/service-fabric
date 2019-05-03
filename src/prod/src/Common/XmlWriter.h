@@ -74,7 +74,7 @@ namespace Common
 		//@param bool & attrValue, the value of the attribute
 		//@param std::wstring & prefix, the prefix of the attribute (default is empty string)
 		//@param std::wstring & nameSpace, the namespace for the attribute (default is empty string)
-		ErrorCode WriteBooleanAttribute(std::wstring const & attrName, bool const & value,
+		ErrorCode WriteBooleanAttribute(std::wstring const & attrName, bool & value,
 			std::wstring const & prefix = L"", std::wstring const & nameSpace = L"");
 
         //Writes a valid comment at the current head of the writer 

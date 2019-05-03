@@ -1,0 +1,18 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <ItemDefinitionGroup>
+    <Link>
+      <AdditionalLibraryDirectories>
+		%(AdditionalLibraryDirectories);
+		$(PkgTaef_Redist)\Build\Library\x64;
+      </AdditionalLibraryDirectories>
+    </Link>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
+         $(PkgTaef_Redist)\Build\include;
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

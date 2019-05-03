@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_external_repo_nuget_package_version.props" />
+  <PropertyGroup>
+    <ProjectGuid>{0454FA10-771F-4734-BB4F-00AAC3B7D56E}</ProjectGuid>
+    <AssemblyName>Microsoft.ServiceFabric.Data</AssemblyName>
+    <AssemblyDescription>Microsoft Azure Service Fabric Data</AssemblyDescription>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <RootNamespace>Microsoft.ServiceFabric.Data</RootNamespace>
+    <OutputType>Library</OutputType>
+    <ResourcesFileName>SR</ResourcesFileName>
+    <ResourcesClassName>$(ResourcesFileName)</ResourcesClassName>
+    <AssemblyCLSCompliant>true</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Project>{EB728138-47AC-41CB-A2C7-53521B396AFD}</Project>
+      <Name>Microsoft.ServiceFabric.Internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj">
+      <Project>{6244C9FE-DC97-4783-A63E-94CE833196B4}</Project>
+      <Name>Microsoft.ServiceFabric.Data.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Microsoft.ServiceFabric.Data.Impl\Microsoft.ServiceFabric.Data.Impl.csproj">
+      <Project>{ECDDA3CB-B09D-4056-A3A2-17C9BF681CC5}</Project>
+      <Name>Microsoft.ServiceFabric.Data.Impl</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Add references for Data.Extensions and Interop -->
+    <Reference Include="$(ReferenceDataExtensionsNugetPackageInstallPath)\lib\net45\Microsoft.ServiceFabric.Data.Extensions.dll"/>
+    <Reference Include="$(ReferenceDataExtensionsNugetPackageInstallPath)\lib\net45\Microsoft.ServiceFabric.ReliableCollection.Interop.dll"/>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="_friends.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="DataAssemblyResolver.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="DataTrace.cs" />
+    <Compile Include="ReliableStateManager.cs" />
+    <Compile Include="$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(ResourcesFileName).resx" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <!-- DO NOT CHANGE Inputs to $(ResourcesFileName).resx. It is required to build incrementally as MSBUILD cannot
+       expand the Inputs tag correctly for BeforeResGen targets
+   -->
+  <Target Name="BeforeResGen" Inputs="SR.resx" Outputs="$(IntermediateOutputPath)$(ResourcesFileName).cs">
+    <Exec Command="$(PkgDotNetFxGAC_Corext)\v4.0.30319\ResGen.exe $(ResourcesFileName).resx $(IntermediateOutputPath)\$(RootNamespace).$(ResourcesFileName).resources /str:csharp,$(RootNamespace),$(ResourcesClassName),$(IntermediateOutputPath)$(ResourcesFileName).cs" />
+  </Target>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

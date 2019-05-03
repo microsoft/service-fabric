@@ -1,0 +1,26 @@
+load SetPerfCountersCollection.test
+
+setcfg Config.TraceEtw.Level 4
+setcfg Config.ApplicationGatewayHttp.IsEnabled true
+
+# Create 5 node cluster.
+load FabSrvFiveNodeLocalCluster.test
+
+# Deploy and create Tpcc app.
+uploadapp TpccApp apppackages\TpccApp1P3R
+provisionapp TpccApp
+
+createapp fabric:/TpccApp TpccApp
+createservice fabric:/TpccApp fabric:/TpccApp/Service TpccServiceType true minReplicaSetSize=2 targetReplicaSetSize=3 partitionCount=1 lowKey=0 highKey=5 uniformInt64Partition=true hasPersistedState=true
+
+verify
+
+# Start client and test
+client.newclient TPCC NativeReplicatorHTTPClient.HTTPClient,NativeReplicatorHTTPClient parameters=serviceName:fabric:/TpccApp/Service
+
+client.starttask TPCC TpccTask StartTest parameters={"loopCount":"1","int64PartitionKey":"1","retryCount":"256","sendTimeout":"30"}
+
+# test takes a day
+client.waittask taskIds=TpccTask timeout=86400
+
+quit

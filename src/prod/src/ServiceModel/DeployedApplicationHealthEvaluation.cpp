@@ -103,9 +103,7 @@ Common::ErrorCode DeployedApplicationHealthEvaluation::FromPublicApi(
 void DeployedApplicationHealthEvaluation::SetDescription()
 {
     description_ = wformatString(
-        "{0} ApplicationName='{1}', NodeName='{2}', AggregatedHealthState='{3}'.",
         HMResource::GetResources().HealthEvaluationUnhealthyDeployedApplication,
-        applicationName_,
         nodeName_,
         aggregatedHealthState_);
 }

@@ -1,0 +1,4 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!-- Common properties for the native projects that should be included after setting the ConfigurationType -->
+   <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.props" />
+</Project>

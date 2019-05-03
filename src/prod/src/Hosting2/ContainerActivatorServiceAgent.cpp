@@ -595,6 +595,95 @@ private:
     vector<wstring> images_;
 };
 
+class ContainerActivatorServiceAgent::ContainerUpdateRoutesAsyncOperation : public AsyncOperation
+{
+    DENY_COPY(ContainerUpdateRoutesAsyncOperation)
+
+public:
+    ContainerUpdateRoutesAsyncOperation(
+        __in ContainerActivatorServiceAgent & owner,
+        __in IpcReceiverContextUPtr & context,
+        ContainerUpdateRoutesRequest const & updateRoutesRequest,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(callback, parent)
+        , updateRoutesRequest_(move(updateRoutesRequest))
+        , context_(move(context))
+        , owner_(owner)
+        , timeoutHelper_(timeout)
+    {
+    }
+
+    virtual ~ContainerUpdateRoutesAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<ContainerUpdateRoutesAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto operation = owner_.activatorImpl_->BeginContainerUpdateRoutes(
+            updateRoutesRequest_,
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->FinishContainerUpdateRoutes(operation, false);
+        },
+            thisSPtr);
+
+        FinishContainerUpdateRoutes(operation, true);
+    }
+
+    void FinishContainerUpdateRoutes(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.activatorImpl_->EndContainerUpdateRoutes(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.TraceId,
+            "FinishContainerUpdateRoutes: Error={0}, Message={1}.",
+            error,
+            error.Message);
+
+        SendContainerUpdateRoutesReplyAndComplete(error, operation->Parent);
+    }
+
+    void SendContainerUpdateRoutesReplyAndComplete(ErrorCode error, AsyncOperationSPtr const & thisSPtr)
+    {
+        auto replyBody = make_unique<ContainerOperationReply>(error, error.Message);
+        auto reply = make_unique<Message>(*replyBody);
+
+        context_->Reply(move(reply));
+
+        WriteNoise(
+            TraceType,
+            owner_.TraceId,
+            "Sent ContainerUpdateRoutesReply: Error={0}, Message={1}.",
+            error,
+            error.Message);
+
+        TryComplete(thisSPtr, error);
+    }
+
+private:
+    ContainerActivatorServiceAgent & owner_;
+    IpcReceiverContextUPtr context_;
+    TimeoutHelper timeoutHelper_;
+    ContainerUpdateRoutesRequest updateRoutesRequest_;
+};
+
 class ContainerActivatorServiceAgent::InvokeContainerApiAsyncOperation : public AsyncOperation
 {
     DENY_COPY(InvokeContainerApiAsyncOperation)
@@ -989,6 +1078,10 @@ void ContainerActivatorServiceAgent::ProcessIpcMessage(
     {
         this->ProcessDownloadContainerImagesMessage(message, context);
     }
+    else if (action == Hosting2::Protocol::Actions::ContainerUpdateRoutes)
+    {
+        this->ProcessContainerUpdateRoutesMessage(message, context);
+    }
     else if (action == Hosting2::Protocol::Actions::DeleteContainerImages)
     {
         this->ProcessDeleteContainerImagesMessage(message, context);
@@ -1137,6 +1230,36 @@ void ContainerActivatorServiceAgent::ProcessDeleteContainerImagesMessage(
         {
             DeleteContainerImagesAsyncOperation::End(operation);
         },
+        this->CreateAsyncOperationRoot());
+}
+
+void ContainerActivatorServiceAgent::ProcessContainerUpdateRoutesMessage(
+    __in Message & message,
+    __in IpcReceiverContextUPtr & context)
+{
+    ContainerUpdateRoutesRequest request;
+    if (!message.GetBody<ContainerUpdateRoutesRequest>(request))
+    {
+        auto error = ErrorCode::FromNtStatus(message.GetStatus());
+
+        WriteWarning(
+            TraceType,
+            TraceId,
+            "Invalid message received: {0}, dropping",
+            message);
+
+        return;
+    }
+
+    auto operation = AsyncOperation::CreateAndStart<ContainerUpdateRoutesAsyncOperation>(
+        *this,
+        context,
+        request,
+        TimeSpan::FromTicks(request.TimeoutInTicks),
+        [this](AsyncOperationSPtr const & operation)
+    {
+        ContainerUpdateRoutesAsyncOperation::End(operation);
+    },
         this->CreateAsyncOperationRoot());
 }
 

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<instrumentationManifest xsi:schemaLocation="http://schemas.microsoft.com/win/2004/08/events eventman.xsd" xmlns="http://schemas.microsoft.com/win/2004/08/events" xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:trace="http://schemas.microsoft.com/win/2004/08/events/trace">
+  <instrumentation>
+    <events>
+      <provider name="TracePoints" guid="{019DAA0F-E775-471A-AA85-49363C18E179}" symbol="TracePoints" resourceFileName="" messageFileName="" parameterFileName="">
+        <events>
+          <event symbol="Event_TracePoints_PipeCreated" value="1" version="0" level="win:Informational" template="IdTemplate" message="$(string.TracePoints.event.1.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeCreateFailed" value="2" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.2.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeConnected" value="3" version="0" level="win:Informational" template="DefaultTemplate" message="$(string.TracePoints.event.3.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeConnectFailed" value="4" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.4.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeReceived" value="5" version="0" level="win:Informational" template="BytesTemplate" message="$(string.TracePoints.event.5.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeReceiveFailed" value="6" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.6.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeEnded" value="7" version="0" level="win:Informational" template="ErrorCodeTemplate" message="$(string.TracePoints.event.7.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeDisconnected" value="8" version="0" level="win:Informational" template="DefaultTemplate" message="$(string.TracePoints.event.8.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeDisconnectFailed" value="9" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.9.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeClosed" value="10" version="0" level="win:Informational" template="DefaultTemplate" message="$(string.TracePoints.event.10.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_ServerStarted" value="11" version="0" level="win:Informational" template="DefaultTemplate" message="$(string.TracePoints.event.11.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_ServerStartFailed" value="12" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.12.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_ServerStopped" value="13" version="0" level="win:Informational" template="DefaultTemplate" message="$(string.TracePoints.event.13.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_ServerWaitForThreadFailed" value="14" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.14.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_ReceivedSetupCommand" value="15" version="0" level="win:Informational" template="CommandTemplate" message="$(string.TracePoints.event.15.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_ReceivedInvokeCommand" value="16" version="0" level="win:Informational" template="CommandTemplate" message="$(string.TracePoints.event.16.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_ReceivedCleanupCommand" value="17" version="0" level="win:Informational" template="CommandTemplate" message="$(string.TracePoints.event.17.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_ReceivedUnknownCommand" value="18" version="0" level="win:Error" template="CommandTemplate" message="$(string.TracePoints.event.18.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_EventProviderRegistered" value="51" version="0" level="win:Informational" template="EventProviderTemplate" message="$(string.TracePoints.event.51.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_EventProviderUnregistered" value="52" version="0" level="win:Informational" template="RegHandleTemplate" message="$(string.TracePoints.event.52.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_InvokingUserFunction" value="61" version="0" level="win:Informational" template="ProviderIdEventIdTemplate" message="$(string.TracePoints.event.61.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeClientConnected" value="101" version="0" level="win:Informational" template="IdTemplate" message="$(string.TracePoints.event.101.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeClientConnectFailed" value="102" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.102.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeSent" value="103" version="0" level="win:Informational" template="BytesTemplate" message="$(string.TracePoints.event.103.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeSendFailed" value="104" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.104.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_PipeClientClosed" value="105" version="0" level="win:Informational" template="DefaultTemplate" message="$(string.TracePoints.event.105.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_CreateCommandFailed" value="106" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.106.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_SendingSetupCommand" value="107" version="0" level="win:Informational" template="CommandTemplate" message="$(string.TracePoints.event.107.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_SendingInvokeCommand" value="108" version="0" level="win:Informational" template="CommandTemplate" message="$(string.TracePoints.event.108.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_SendingCleanupCommand" value="109" version="0" level="win:Informational" template="CommandTemplate" message="$(string.TracePoints.event.109.message)" task="TracePoints">
+          </event>
+          <event symbol="Event_TracePoints_SendCommandFailed" value="110" version="0" level="win:Error" template="ErrorCodeTemplate" message="$(string.TracePoints.event.110.message)" task="TracePoints">
+          </event>
+        </events>
+        <tasks>
+          <task message="$(string.TracePoints.task.0.message)" name="TracePoints" value="0" />
+        </tasks>
+        <levels>
+        </levels>
+        <templates>
+          <template tid="DefaultTemplate">
+          </template>
+          <template tid="ErrorCodeTemplate">
+            <data name="ErrorCode" inType="win:UInt32" outType="win:Win32Error">
+            </data>
+          </template>
+          <template tid="BytesTemplate">
+            <data name="Bytes" inType="win:Int32" outType="xs:int">
+            </data>
+          </template>
+          <template tid="EventProviderTemplate">
+            <data name="ProviderId" inType="win:GUID" outType="xs:GUID">
+            </data>
+            <data name="RegHandle" inType="win:UInt64" outType="xs:unsignedLong">
+            </data>
+          </template>
+          <template tid="RegHandleTemplate">
+            <data name="RegHandle" inType="win:UInt64" outType="xs:unsignedLong">
+            </data>
+          </template>
+          <template tid="IdTemplate">
+            <data name="Id" inType="win:Int32" outType="xs:int">
+            </data>
+          </template>
+          <template tid="CommandTemplate">
+            <data name="DllName" inType="win:UnicodeString" outType="xs:string">
+            </data>
+            <data name="FunctionName" inType="win:AnsiString" outType="xs:string">
+            </data>
+            <data name="UserData" inType="win:UnicodeString" outType="xs:string">
+            </data>
+          </template>
+          <template tid="ProviderIdEventIdTemplate">
+            <data name="ProviderId" inType="win:GUID" outType="xs:GUID">
+            </data>
+            <data name="EventId" inType="win:UInt16" outType="xs:unsignedShort">
+            </data>
+          </template>
+        </templates>
+      </provider>
+    </events>
+  </instrumentation>
+  <localization>
+    <resources culture="en-US">
+      <stringTable>
+        <string id="level.Informational" value="Information">
+        </string>
+        <string id="level.Error" value="Error">
+        </string>
+        <string id="TracePoints.event.110.message" value="Send command failed with error %1.">
+        </string>
+        <string id="TracePoints.event.109.message" value="Sending cleanup command %1!%2('%3').">
+        </string>
+        <string id="TracePoints.event.108.message" value="Sending invoke command %1!%2('%3').">
+        </string>
+        <string id="TracePoints.event.107.message" value="Sending setup command %1!%2('%3').">
+        </string>
+        <string id="TracePoints.event.106.message" value="Create command failed with error %1.">
+        </string>
+        <string id="TracePoints.event.105.message" value="Pipe client closed.">
+        </string>
+        <string id="TracePoints.event.104.message" value="Pipe send failed with error %1.">
+        </string>
+        <string id="TracePoints.event.103.message" value="Pipe sent %1 bytes.">
+        </string>
+        <string id="TracePoints.event.102.message" value="Pipe client connect failed with error %1.">
+        </string>
+        <string id="TracePoints.event.101.message" value="Pipe client connected to ID %1.">
+        </string>
+        <string id="TracePoints.event.61.message" value="Invoking user function, provider=%1, eventId=%2.">
+        </string>
+        <string id="TracePoints.event.52.message" value="Event provider unregistered; RegHandle=%1.">
+        </string>
+        <string id="TracePoints.event.51.message" value="Event provider registered; ID=%1, RegHandle=%2.">
+        </string>
+        <string id="TracePoints.event.18.message" value="Received unknown command %1!%2('%3').">
+        </string>
+        <string id="TracePoints.event.17.message" value="Received cleanup command %1!%2('%3').">
+        </string>
+        <string id="TracePoints.event.16.message" value="Received invoke command %1!%2('%3').">
+        </string>
+        <string id="TracePoints.event.15.message" value="Received setup command %1!%2('%3').">
+        </string>
+        <string id="TracePoints.event.14.message" value="Server wait for thread failed with error %1.">
+        </string>
+        <string id="TracePoints.event.13.message" value="Server stopped.">
+        </string>
+        <string id="TracePoints.event.12.message" value="Server start failed with error %1.">
+        </string>
+        <string id="TracePoints.event.11.message" value="Server started.">
+        </string>
+        <string id="TracePoints.event.10.message" value="Pipe closed.">
+        </string>
+        <string id="TracePoints.event.9.message" value="Pipe disconnect failed with error %1.">
+        </string>
+        <string id="TracePoints.event.8.message" value="Pipe disconnected.">
+        </string>
+        <string id="TracePoints.event.7.message" value="Pipe ended with error %1.">
+        </string>
+        <string id="TracePoints.event.6.message" value="Pipe receive failed with error %1.">
+        </string>
+        <string id="TracePoints.event.5.message" value="Pipe received %1 bytes.">
+        </string>
+        <string id="TracePoints.event.4.message" value="Pipe connect failed with error %1.">
+        </string>
+        <string id="TracePoints.event.3.message" value="Pipe connected.">
+        </string>
+        <string id="TracePoints.event.2.message" value="Pipe create failed with error %1.">
+        </string>
+        <string id="TracePoints.event.1.message" value="Pipe created with ID %1.">
+        </string>
+        <string id="TracePoints.task.0.message" value="TracePoints">
+        </string>
+      </stringTable>
+    </resources>
+  </localization>
+</instrumentationManifest>

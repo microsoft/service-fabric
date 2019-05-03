@@ -54,6 +54,8 @@ namespace Reliability
             Common::ErrorCode GetApplicationLoadInformation(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
             Common::ErrorCode GetServiceName(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
             Common::ErrorCode GetReplicaListByServiceNames(ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
+            Common::ErrorCode ProcessNIMQuery(Query::QueryNames::Enum queryname, ServiceModel::QueryArgumentMap const & queryArgs, ServiceModel::QueryResult & queryResult, Common::ActivityId const & activityId);
+
             void ConvertToLoadMetricReport(std::vector<LoadBalancingComponent::LoadMetricStats> const &, __out std::vector<ServiceModel::LoadMetricReport> &);
 
             bool IsMatch(FABRIC_QUERY_SERVICE_REPLICA_STATUS replicaStatus, DWORD replicaStatusFilter);

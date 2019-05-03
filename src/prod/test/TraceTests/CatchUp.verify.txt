@@ -1,0 +1,8 @@
+###Partition ef642fbb-80a6-4c81-a5cf-aef828ee41eb time range 7/11/2014 5:27:25 PM-7/11/2014 7:00:00 PM
+Partition stuck in reconfiguration for at least ###00:26:49.0670000
+Checking primary on node c0fd990edfa7b4f370f7482e76c5d07e
+Primary is stuck in Phase2_Catchup for at least ###00:26:49.1040000
+Replica on 40acbc57636d2799057a0999ebac3ad6 is not ready
+Checking replica on 40acbc57636d2799057a0999ebac3ad6
+Unable to find replication periodic state
+

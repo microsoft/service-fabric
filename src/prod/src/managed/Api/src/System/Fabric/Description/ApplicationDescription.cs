@@ -224,7 +224,7 @@ namespace System.Fabric.Description
                         var nativeMetricsArray = new NativeTypes.FABRIC_APPLICATION_METRIC_DESCRIPTION[this.Metrics.Count];
                         for (int i = 0; i < this.Metrics.Count; i++)
                         {
-                            Metrics[i].ToNative(pinCollection, ref nativeMetricsArray[i]);
+                             Metrics[i].ToNative(pinCollection, ref nativeMetricsArray[i]);
                         }
 
                         nativeMetricsList.Metrics = pinCollection.AddBlittable(nativeMetricsArray);
@@ -244,9 +244,9 @@ namespace System.Fabric.Description
                 nativeDescriptionEx1.ApplicationCapacity = pinCollection.AddBlittable(nativeApplicationCapacityDescription);
 
                 nativeDescription.Reserved = pinCollection.AddBlittable(nativeDescriptionEx1);
-            }
+            }         
 
             return pinCollection.AddBlittable(nativeDescription);
         }
-    }
+    }    
 }

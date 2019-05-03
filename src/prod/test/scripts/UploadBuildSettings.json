@@ -7,7 +7,7 @@
     },
     "AppSettingsLinux":
     {
-        "IncludeFolderNames": "FabricDrop,JsonTests,RunTests,test,ClusterDeployer",
+        "IncludeFolderNames": "FabricDrop,JsonTests,RunTests,test,ClusterDeployer,ktl",
         "ExcludeFolderPatterns": "test/IntegrationTests$, test/test$, .*FabricUnitTests, .*FabricUnitTests/log.*, .*FabricUnitTests/.*(?<!Hosting\\.)Test\\.Data.*,.*RunTests/log.*, .*RunTests\\\\.*(?<!Hosting\\.)Test\\.Data.*, .*[a-z0-9]{10,}_[0-9]{8,}$, test/KtlLogs, test/symbols, FabricDrop/symbols",
         "ExcludeFilePatterns": ".*\\.trace$, .*\\.etl$, .*\\.pdb$, .*\\.swp$, .*\\.o$, .*\\.cpt$, .*\\.cmake$, .*\\.sflog$, FabricDrop/bin/Fabric/Fabric.Code/*\\.a$, FabricDrop/bin/Fabric/Fabric.Code/*\\.so$",
         "IncludeFiles": ""

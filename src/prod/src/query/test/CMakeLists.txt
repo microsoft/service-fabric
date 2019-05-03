@@ -28,6 +28,7 @@ target_link_libraries(${exe_Query.Test}
   ${lib_ApiWrappers}
   ${lib_ClientServerTransport}
   ${lib_Failover}
+  ${lib_NetworkInventoryManager}
   ${lib_ManagementRepairManager}
   ${lib_ServiceModel}
   ${lib_ImageModel}

@@ -1,0 +1,1 @@
+call ServiceFabricEnvironmentSync.exe

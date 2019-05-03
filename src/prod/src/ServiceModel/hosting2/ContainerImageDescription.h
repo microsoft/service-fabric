@@ -35,6 +35,8 @@ namespace Hosting2
 
         void WriteTo(Common::TextWriter & w, Common::FormatOptions const &) const;
 
+        void SetContainerRepositoryPassword(std::wstring const& password);
+
         Common::ErrorCode ToPublicApi(
             __in Common::ScopedHeap & heap,
             __out FABRIC_CONTAINER_IMAGE_DESCRIPTION & fabricContainerImageDesc) const;

@@ -268,7 +268,7 @@ namespace Naming
             this->Name,
             this->Store,
             true /*isCreationComplete*/,
-            isRebuildFromFM_ /*shouldUpdatePsd*/, 
+            isRebuildFromFM_ /*shouldUpdatePsd*/,
             this->ServiceDescriptor,
             this->ActivityHeader,
             this->GetRemainingTime(),

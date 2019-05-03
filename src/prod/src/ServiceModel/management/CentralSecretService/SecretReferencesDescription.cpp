@@ -13,40 +13,40 @@ using namespace std;
 using namespace Management::CentralSecretService;
 
 SecretReferencesDescription::SecretReferencesDescription()
-	: ClientServerMessageBody()
-	, secretReferences_()
+    : ClientServerMessageBody()
+    , secretReferences_()
 {
 }
 
 SecretReferencesDescription::SecretReferencesDescription(std::vector<SecretReference> const & references)
-	: ClientServerMessageBody()
-	, secretReferences_(references)
+    : ClientServerMessageBody()
+    , secretReferences_(references)
 {
 }
 
 ErrorCode SecretReferencesDescription::FromPublicApi(__in FABRIC_SECRET_REFERENCE_LIST const * referenceList)
 {
-	return ServiceModel::PublicApiHelper::FromPublicApiList(referenceList, this->secretReferences_);
+    return ServiceModel::PublicApiHelper::FromPublicApiList(referenceList, this->secretReferences_);
 }
 
 ErrorCode SecretReferencesDescription::ToPublicApi(__in ScopedHeap & heap, __out FABRIC_SECRET_REFERENCE_LIST & referenceList) const
 {
-	return ServiceModel::PublicApiHelper::ToPublicApiList<SecretReference, FABRIC_SECRET_REFERENCE, FABRIC_SECRET_REFERENCE_LIST>(heap, this->secretReferences_, referenceList);
+    return ServiceModel::PublicApiHelper::ToPublicApiList<SecretReference, FABRIC_SECRET_REFERENCE, FABRIC_SECRET_REFERENCE_LIST>(heap, this->secretReferences_, referenceList);
 }
 
 ErrorCode SecretReferencesDescription::Validate() const
 {
-	ErrorCode error = ErrorCode::Success();
+    ErrorCode error = ErrorCode::Success();
 
-	for (SecretReference secretRef : this->secretReferences_)
-	{
-		error = secretRef.Validate();
+    for (SecretReference secretRef : this->secretReferences_)
+    {
+        error = secretRef.Validate();
 
-		if (!error.IsSuccess()) 
-		{
-			break;
-		}
-	}
+        if (!error.IsSuccess()) 
+        {
+            break;
+        }
+    }
 
-	return error;
+    return error;
 }

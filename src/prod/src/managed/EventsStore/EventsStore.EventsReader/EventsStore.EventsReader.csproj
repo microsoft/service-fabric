@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{1CDFF880-7EA2-5555-AF3A-44443122CE3E}</ProjectGuid>
+    <RootNamespace>EventsStore.EventsReader</RootNamespace>
+    <AssemblyName>EventsStore.EventsReader</AssemblyName>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ConfigReader\AzureConsumerType.cs" />
+    <Compile Include="ConfigReader\AzureTableConsumer.cs" />
+    <Compile Include="Exceptions\ConnectionParsingException.cs" />
+    <Compile Include="DataReader\FilterFactory.cs" />
+    <Compile Include="ErrorCodes.cs" />
+    <Compile Include="Exceptions\EventStoreException.cs" />
+    <Compile Include="LogProvider\EventStoreLogProvider.cs" />
+    <Compile Include="LogProvider\EventStoreLogger.cs" />
+    <Compile Include="ConfigReader\ClusterSettingsReader.cs" />
+    <Compile Include="DataReader\EntityType.cs" />
+    <Compile Include="DataReader\EventStoreReader.cs" />
+    <Compile Include="DataReader\Mapping.cs" />
+    <Compile Include="QueryStatTracker.cs" />
+    <Compile Include="ReaderConstants.cs" />
+    <Compile Include="EventsReaderExe.cs" />
+    <Compile Include="IResultWriter.cs" />
+    <Compile Include="ParsedUri.cs" />
+    <Compile Include="ConfigReader\ProtectedAccountKeyHelper.cs" />
+    <Compile Include="QueryParametersWrapper.cs" />
+    <Compile Include="RequestParser.cs" />
+    <Compile Include="RequestRouter.cs" />
+    <Compile Include="ConfigReader\StorageConnection.cs" />
+    <Compile Include="UriCollection.cs" />
+    <Compile Include="JsonSerializerHelper.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\Common\ClusterAnalysis.Common.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\ClusterAnalysis\TraceAccessLayer\ClusterAnalysis.TraceAccessLayer.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Core\Microsoft.ServiceFabric.Instrumentation.Tracing.Core.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Instrumentation\Tracing\Definitions\Microsoft.ServiceFabric.Instrumentation.Tracing.Definitions.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\EventsStore\EventsStore.EventsModels\EventsStore.EventsModels.csproj" />
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management\System.Fabric.Management.csproj">
+      <Project>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</Project>
+      <Name>System.Fabric.Management</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\FabricGateway" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

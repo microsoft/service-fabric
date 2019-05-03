@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{3C71019E-892D-464C-BBAC-D1C2C1040BE5}</ProjectGuid>
+    <RootNamespace>System.Fabric.InfrastructureService.Parallel.ManualControl</RootNamespace>
+    <AssemblyName>FabricInfrastructureManualControl</AssemblyName>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\dll\FabricIS.common.csproj">
+      <Project>{b2c86537-979a-473a-b5a0-f9d1082a7e22}</Project>
+      <Name>FabricIS.common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\dll\FabricIS.parallel.csproj">
+      <Project>{edb25cbc-9aea-4629-b28d-984e7b5c3af9}</Project>
+      <Name>FabricIS.parallel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\schema\FabricIS.parallel.schema.csproj">
+      <Project>{a14cf6a8-0565-4282-806e-82d44001cfb5}</Project>
+      <Name>FabricIS.parallel.schema</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- 
+    Note: Use net45 instead of portable-net45+wp80+win8+wpa81+dnxcore50 for now till CoreCLR v-team gets back to us
+    about correct usage.
+    -->
+    <Reference Include="$(PkgBond_Core_CSharp)\lib\net45\Bond.dll">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="$(PkgBond_Core_CSharp)\lib\net45\Bond.Attributes.dll">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+</Project>

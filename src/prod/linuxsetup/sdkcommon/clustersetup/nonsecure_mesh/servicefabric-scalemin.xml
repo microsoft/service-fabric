@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+
+The settings used within this ClusterManifest are expressly for use only
+within a developer single-box environment.  Any use of these settings outside
+of that environment are highly likely to produce incorrect, and misperforming
+systems.
+
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+
+-->
+<ClusterManifest
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric"
+    Name="Local-Cluster"
+    Version="1.0">
+    <NodeTypes>
+        <NodeType Name="NodeType0">
+            <Endpoints>
+                <ClientConnectionEndpoint Port="19000" />
+                <LeaseDriverEndpoint Port="19001" />
+                <ClusterConnectionEndpoint Port="19002" />
+                <HttpGatewayEndpoint Port="19080" Protocol="http" />
+                <ServiceConnectionEndpoint Port="19006" />
+                <HttpApplicationGatewayEndpoint Port="19081" Protocol="http" />
+                <ApplicationEndpoints StartPort="22001" EndPort="23000" />
+            </Endpoints>
+        </NodeType>
+        <NodeType Name="NodeType1">
+            <Endpoints>
+                <ClientConnectionEndpoint Port="19010" />
+                <LeaseDriverEndpoint Port="19011" />
+                <ClusterConnectionEndpoint Port="19012" />
+                <HttpGatewayEndpoint Port="19082" Protocol="http" />
+                <ServiceConnectionEndpoint Port="19016" />
+                <HttpApplicationGatewayEndpoint Port="19083" Protocol="http" />
+                <ApplicationEndpoints StartPort="23001" EndPort="24000" />
+            </Endpoints>
+        </NodeType>
+        <NodeType Name="NodeType2">
+            <Endpoints>
+                <ClientConnectionEndpoint Port="19020" />
+                <LeaseDriverEndpoint Port="19021" />
+                <ClusterConnectionEndpoint Port="19022" />
+                <HttpGatewayEndpoint Port="19084" Protocol="http" />
+                <ServiceConnectionEndpoint Port="19026" />
+                <HttpApplicationGatewayEndpoint Port="19085" Protocol="http" />
+                <ApplicationEndpoints StartPort="24001" EndPort="25000" />
+            </Endpoints>
+        </NodeType>
+        <NodeType Name="NodeType3">
+            <Endpoints>
+                <ClientConnectionEndpoint Port="19030" />
+                <LeaseDriverEndpoint Port="19031" />
+                <ClusterConnectionEndpoint Port="19032" />
+                <HttpGatewayEndpoint Port="19086" Protocol="http" />
+                <ServiceConnectionEndpoint Port="19036" />
+                <HttpApplicationGatewayEndpoint Port="19087" Protocol="http" />
+                <ApplicationEndpoints StartPort="25001" EndPort="26000" />
+            </Endpoints>
+        </NodeType>
+        <NodeType Name="NodeType4">
+            <Endpoints>
+                <ClientConnectionEndpoint Port="19040" />
+                <LeaseDriverEndpoint Port="19041" />
+                <ClusterConnectionEndpoint Port="19042" />
+                <HttpGatewayEndpoint Port="19088" Protocol="http" />
+                <ServiceConnectionEndpoint Port="19046" />
+                <HttpApplicationGatewayEndpoint Port="19089" Protocol="http" />
+                <ApplicationEndpoints StartPort="26001" EndPort="27000" />
+            </Endpoints>
+        </NodeType>
+    </NodeTypes>
+    <Infrastructure>
+        <Linux IsScaleMin="true">
+            <NodeList>
+                <Node NodeName="_Node_0" IPAddressOrFQDN="localhost" IsSeedNode="true"  NodeTypeRef="NodeType0" FaultDomain="fd:/0" UpgradeDomain="0" />
+                <Node NodeName="_Node_1" IPAddressOrFQDN="localhost" IsSeedNode="true"  NodeTypeRef="NodeType1" FaultDomain="fd:/1" UpgradeDomain="1" />
+                <Node NodeName="_Node_2" IPAddressOrFQDN="localhost" IsSeedNode="true"  NodeTypeRef="NodeType2" FaultDomain="fd:/2" UpgradeDomain="2" />
+                <Node NodeName="_Node_3" IPAddressOrFQDN="localhost" IsSeedNode="false" NodeTypeRef="NodeType3" FaultDomain="fd:/3" UpgradeDomain="3" />
+                <Node NodeName="_Node_4" IPAddressOrFQDN="localhost" IsSeedNode="false" NodeTypeRef="NodeType4" FaultDomain="fd:/4" UpgradeDomain="4" />
+            </NodeList>
+        </Linux>
+    </Infrastructure>
+    <FabricSettings>
+        <Section Name="Security">
+            <Parameter Name="ClusterCredentialType" Value="None" />
+            <Parameter Name="ServerAuthCredentialType" Value="None" />
+        </Section>
+        <Section Name="FailoverManager">
+            <!-- expected cluster size allows the placement to start when the cluster is started. This value should be less than total number of nodes
+                 as without it the FailoverManager will not start the placement of the user services. This value should be 80% to 90% of the cluster size.
+            -->
+            <Parameter Name="ExpectedClusterSize" Value="4" />
+            <!-- The default target and min replica set sizes are 7 and 5. The below configuration is not required for cluster that have 7 or more nodes.  -->
+            <Parameter Name="TargetReplicaSetSize" Value="3" />
+            <Parameter Name="MinReplicaSetSize" Value="3" />
+            <Parameter Name="ReconfigurationTimeLimit" Value="20" />
+            <Parameter Name="BuildReplicaTimeLimit" Value="20" />
+            <Parameter Name="CreateInstanceTimeLimit" Value="20" />
+            <Parameter Name="PlacementTimeLimit" Value="20" />
+        </Section>
+        <Section Name="ReconfigurationAgent">
+            <Parameter Name="ServiceApiHealthDuration" Value="20" />
+            <Parameter Name="ServiceReconfigurationApiHealthDuration" Value="20" />
+            <Parameter Name="LocalHealthReportingTimerInterval" Value="5" />
+            <Parameter Name="IsDeactivationInfoEnabled" Value="true" />
+            <Parameter Name="RAUpgradeProgressCheckInterval" Value="3" />
+        </Section>
+        <Section Name="ClusterManager">
+            <!-- The default target and min replica set sizes are 7 and 5. The below configuration is not required for cluster that have 7 or more nodes.  -->
+            <Parameter Name="TargetReplicaSetSize" Value="3" />
+            <Parameter Name="MinReplicaSetSize" Value="3" />
+            <Parameter Name="UpgradeStatusPollInterval" Value="5" />
+            <Parameter Name="UpgradeHealthCheckInterval" Value="5" />
+            <Parameter Name="FabricUpgradeHealthCheckInterval" Value="5" />
+        </Section>
+        <Section Name="NamingService">
+            <!-- The default target and min replica set sizes are 7 and 5. The below configuration is not required for cluster that have 7 or more nodes.  -->
+            <Parameter Name="TargetReplicaSetSize" Value="3" />
+            <Parameter Name="MinReplicaSetSize" Value="3" />
+        </Section>
+        <Section Name="ImageStoreService">
+            <Parameter Name="TargetReplicaSetSize" Value="3" />
+            <Parameter Name="MinReplicaSetSize" Value="1" />
+        </Section>
+        <Section Name="FileStoreService">
+            <Parameter Name="PrimaryAccountType" Value="LocalUser"/>
+            <Parameter Name="PrimaryAccountNTLMPasswordSecret" Value="Foo"/>
+            <Parameter Name="SecondaryAccountType" Value="LocalUser"/>
+            <Parameter Name="SecondaryAccountNTLMPasswordSecret" Value="Bar"/>
+        </Section>
+        <Section Name="Management">
+            <Parameter Name="ImageStoreConnectionString" Value="fabric:ImageStore" />
+            <Parameter Name="ImageCachingEnabled" Value="false" />
+            <Parameter Name="EnableDeploymentAtDataRoot" Value="true"/>
+        </Section>
+        <Section Name="Hosting">
+            <Parameter Name="EndpointProviderEnabled" Value="true" />
+            <Parameter Name="RunAsPolicyEnabled" Value="true" />
+            <Parameter Name="DeactivationScanInterval" Value="60" />
+            <Parameter Name="DeactivationGraceInterval" Value="10" />
+            <Parameter Name="EnableProcessDebugging" Value="true" />
+            <Parameter Name="ServiceTypeRegistrationTimeout" Value="20" />
+            <Parameter Name="CacheCleanupScanInterval" Value="300" />
+            <Parameter Name="IsSFVolumeDiskServiceEnabled" Value="true" />
+            <Parameter Name="VolumePluginPorts" Value="sfazurefile:19100" />
+            <Parameter Name="FabricContainerAppsEnabled" Value="true"/>
+        </Section>
+        <Section Name="HttpGateway">
+            <Parameter Name="IsEnabled" Value="true" />
+        </Section>
+        <Section Name="PlacementAndLoadBalancing">
+            <!-- balance the load on the cluster every 5 minutes.  -->
+            <Parameter Name="MinLoadBalancingInterval" Value="300" />
+        </Section>
+        <Section Name="Federation">
+            <Parameter Name="NodeIdGeneratorVersion" Value="V4" />
+        </Section>
+        <Section Name="Trace/Etw">
+            <Parameter Name="Level" Value="4" />
+        </Section>
+        <Section Name="Diagnostics">
+          <Parameter Name="ProducerInstances" Value="WinFabLttProducer" />
+        </Section>
+        <Section Name="WinFabLttProducer">
+          <Parameter Name="ProducerType" Value="LttProducer"/>
+          <Parameter Name="IsEnabled" Value="true"/>
+        </Section>
+        <Section Name="RunAs_DCA">
+          <Parameter Name="RunAsAccountType" Value="LocalSystem" />
+        </Section>
+        <!-- SystemSharedLogSizeInMB specifies the size of the log used for the local cluster node database. It is in units of Megabytes.
+             SystemSharedLogMaximumRecordSizeInKB  specifies the size of the maximum record that can be stored in the log. It is in units of KB.
+             Important Note: The local cluster node log size must be at least 16 times the size of the maximum record. So in the settings below, the log size is 256MB and the maximum record size is 16MB. 16 times 16MB is 256MB. If the log size is less than 16 times the maximum record size, the cluster will not start.-->
+        <Section Name="KtlLogger">
+          <Parameter Name="SystemSharedLogSizeInMB" Value="256"/>
+          <Parameter Name="SystemSharedLogMaximumRecordSizeInKB" Value="16384" />
+        </Section>
+        <!-- The sections below specify parameters for the logs used by the different stateful system services.
+             LogSize specifies the size of the log used for by the system service. It is in units of bytes.
+             MaximumRecordSize  specifies the size of the maximum record that can be stored in the log. It is in units of bytes.
+             Important Note: The log size must be at least 16 times the size of the maximum record. So in the settings below, the log size is 128MB and the maximum record size is 8MB. 16 times 8MB is 128MB. If the log size is less than 16 times the maximum record size, the cluster will not start.-->
+        <Section Name="ClusterManager/SharedLog">
+          <Parameter Name="LogSize" Value="134217728"/>
+          <Parameter Name="MaximumRecordSize" Value="8388608" />
+        </Section>
+        <Section Name="ClusterManager/ContainerGroup">
+          <Parameter Name="CG_IsolationLevel" Value="hyperv"/>
+        </Section>
+        <Section Name="FileStoreService/SharedLog">
+          <Parameter Name="LogSize" Value="134217728"/>
+          <Parameter Name="MaximumRecordSize" Value="8388608" />
+        </Section>
+        <Section Name="Naming/SharedLog">
+          <Parameter Name="LogSize" Value="134217728"/>
+          <Parameter Name="MaximumRecordSize" Value="8388608" />
+        </Section>
+        <Section Name="Failover/SharedLog">
+          <Parameter Name="LogSize" Value="134217728"/>
+          <Parameter Name="MaximumRecordSize" Value="8388608" />
+        </Section>
+        <Section Name="Common">
+          <Parameter Name="EnableUnsupportedPreviewFeatures" Value="true" />
+        </Section>
+        <Section Name="Setup">
+          <Parameter Name="IsolatedNetworkSetup" Value="true" />
+          <Parameter Name="IsolatedNetworkInterfaceName" Value="InterfaceNameParameter" />
+        </Section>
+        <Section Name="NetworkInventoryManager">
+          <Parameter Name="IsEnabled" Value="true" />
+        </Section>
+        <Section Name= "DnsService">
+          <Parameter Name="IsEnabled" Value="true"/>
+          <Parameter Name="PartitionSuffix" Value=""/>
+          <Parameter Name="PartitionPrefix" Value="--"/>
+          <Parameter Name="AllowMultipleListeners" Value="true"/>
+          <Parameter Name="EnablePartitionedQuery" Value="true"/>
+        </Section>
+        <Section Name= "GatewayResourceManager">
+          <Parameter Name="TargetReplicaSetSize" Value="3"/>
+          <Parameter Name="MinReplicaSetSize" Value="3"/>
+          <Parameter Name="LinuxProxyImageName" Value="microsoft/service-fabric-reverse-proxy:0.20.0"/>
+          <Parameter Name="ProxyReplicaCount" Value="1"/>
+        </Section>
+    </FabricSettings>
+</ClusterManifest>

@@ -1,0 +1,123 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <ItemDefinitionGroup>
+    <ClCompile>
+
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <RuntimeTypeInfo></RuntimeTypeInfo>
+      <OmitFramePointers></OmitFramePointers>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <ExceptionHandling>false</ExceptionHandling>
+      <UseFullPaths>true</UseFullPaths>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <!--<MultiProcessorCompilation>true</MultiProcessorCompilation>-->
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <OmitDefaultLibName>true</OmitDefaultLibName>
+      <BasicRuntimeChecks />
+
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions)
+        KTL_USER_MODE=0;
+        DEVL=1;
+        STRSAFE_LIB;
+        UNICODE=1;
+        _UNICODE=1;
+        NTDDI_VERSION=0x06010000;
+        _APISET_WINDOWS_VERSION=0x601;
+        _APISET_MINWIN_VERSION=0x0100;
+        _APISET_MINCORE_VERSION=0x0100;
+        WINNT=1;
+        _WIN32_WINNT=0x0601;
+        WINVER=0x0601;
+        WIN32_LEAN_AND_MEAN=1;
+        CONDITION_HANDLING=1;
+        NT_UP=1;
+        NT_INST=0;
+        WIN32=100;
+        _NT1X_=100;
+        BUILD_WINDOWS;
+        __WRL_CONFIGURATION_LEGACY__;
+        _USE_DECLSPECS_FOR_SAL=1
+      </PreprocessorDefinitions>
+
+      <AdditionalOptions>
+        /Oi /MT /Zc:sizedDealloc- /U_MT /favor:AMD64 /kernel /d2guardspecload %(AdditionalOptions)
+      </AdditionalOptions>
+
+      <AdditionalIncludeDirectories>
+        $(O);
+        .;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin;
+        $(KtlIncludePath);
+        $(SrcRoot)\prod;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_oak)\inc;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\minwin;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\mincore;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\minwin;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\wdm;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\wdf\kmdf\$(KmdfVersion);
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\crt
+      </AdditionalIncludeDirectories>
+
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>DBG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <PreprocessorDefinitions>NDEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_WIN64=1;_AMD64_=1;AMD64=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed Condition="'$(Configuration)'=='Release'">Size</FavorSizeOrSpeed>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup>
+    <ResourceCompile>
+      <PreprocessorDefinitions>CONDITION_HANDLING=1;NT_UP=1;NT_INST=0;WIN32=100;_NT1X_=100;WINNT=1;_WIN32_WINNT=0x0601;WINVER=0x0601;_WIN32_IE=0x0800;WIN32_LEAN_AND_MEAN=1;DEVL=1;_DLL=1;UNICODE;KTL_TRANSPORT;_APISET_WINDOWS_VERSION=0x601;_APISET_MINWIN_VERSION=0x0100;_APISET_MINCORE_VERSION=0x0100;NTDDI_VERSION=0x06010000;BUILD_WINDOWS;__WRL_CONFIGURATION_LEGACY__;_USE_DECLSPECS_FOR_SAL=1;RUN_WPP;</PreprocessorDefinitions>
+
+      <AdditionalIncludeDirectories>
+        $(CONFROOT)\.inc;
+        $(O);
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin;
+        $(SrcRoot)\prod;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\minwin;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\mincore;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\wdm;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\crt
+      </AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+
+  <!--Override for debug with retail runtime configuration-->
+  <ItemDefinitionGroup Condition="'$(UseRetailCrtWithDebugBuild)' == 'true'">
+    <ClCompile>
+      <UndefinePreprocessorDefinitions>
+        %(UndefinePreprocessorDefinitions);
+        DBG;
+        _DEBUG;
+      </UndefinePreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+</Project>

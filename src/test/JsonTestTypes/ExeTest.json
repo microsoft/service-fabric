@@ -29,7 +29,7 @@
     "TestExecution": [
         {
             "ExeName": "[BINS]\\FabricUnitTests\\[TASKNAME]",
-            "Arguments": "[PARAMS] %-security:[CREDENTIALTYPE]% --log_level=all --catch_system_errors=no",
+            "Arguments": "[PARAMS] %-security:[CREDENTIALTYPE]% --log_level=test_suite --catch_system_errors=no",
             "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
             "WorkingDirectory" : "[WORKINGDIRECTORY]"
         }

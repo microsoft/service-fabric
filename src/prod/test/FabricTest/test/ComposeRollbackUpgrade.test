@@ -1,0 +1,118 @@
+# This test covers rollback compose deployment upgrade
+
+set TestComposeDeploymentTestMode true
+set DummyPLBEnabled true
+set UpgradeStatusPollInterval 5
+set UserReplicaRestartWaitDuration 9999
+
+votes 10 20 30
+fmservice 3 2
+namingservice 1 3 2
+cmservice 3 2
+cleantest
+
++10 ud=UD1
++20 ud=UD2
++30 ud=UD3
+verify
+
+# type1
+app.add type1 type1 v1
+app.clear type1
+app.servicepack type1 ServicePackageA version=v1
+app.servicetypes type1 ServicePackageA StatelessServiceType stateless
+app.codepack type1 ServicePackageA CodeA types=StatelessServiceType version=v1
+app.reqservices type1 ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type1
+
+# type2
+app.add type2 type1 v2
+app.clear type2
+app.servicepack type2 ServicePackageA version=v2
+app.servicetypes type2 ServicePackageA StatelessServiceType stateless
+app.codepack type2 ServicePackageA CodeA1 types=StatelessServiceType version=v2
+app.reqservices type2 ServiceA StatelessServiceType stateless partition=1 instance=3
+app.upload type2
+
+
+#
+# Test case 1:  Errors when application is not upgrading
+#
+rollbackcompose app error=ComposeDeploymentNotFound
+
+# Create compose deployment app in version v1
+createcompose app type1 type1 v1 verify
+rollbackcompose app error=ComposeDeploymentNotUpgrading
+
+
+#
+# Test case 2:  Rollback during provisioning
+#
+# Upgrade from v1 to v2
+set ImageBuilderJobQueueDelay 20
+upgradecompose app type2 type1 v2 asyncverify expectUpgradeNotStart=true
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=ProvisioningTarget,TargetApplicationTypeVersion=v2
+
+# Rollback during provisioning
+rollbackcompose app
+
+# If compose deployment upgrade is rolled back during provision, GetComposeDeploymentUpgradeProgress will try to get ApplicationUpgradeContext, which is not created during provision, so the query will return error not found. 
+# will uncomment this query after fix the GetComposeDeploymentUpgradeProgress
+# query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingBackCompleted,TargetApplicationTypeVersion=v1
+query GetDockerComposeApplicationStatusList verify DeploymentName=app,Status=Ready
+query GetApplicationTypePagedList verify ApplicationTypeName=type1,ApplicationTypeVersion=v1
+query GetApplicationTypePagedList ApplicationTypeName=type1 ApplicationTypeVersion=v2 expectempty=true
+rollbackcompose app error=ComposeDeploymentNotUpgrading
+
+set ImageBuilderJobQueueDelay 0
+
+#
+# Test case 3:  Rollback during upgrading
+#
+# Upgrade from v1 to v2
+upgradecompose app type2 type1 v2 upgrademode=manual
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardPending,TargetApplicationTypeVersion=v2
+verifyupgradeapp fabric:/app upgradedomains=UD1
+
+upgradeappmovenext fabric:/app
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardPending,TargetApplicationTypeVersion=v2
+verifyupgradeapp fabric:/app upgradedomains=UD1,UD2
+
+# Rollback during upgrading
+rollbackcompose app
+setrollbackapp fabric:/app v1 failurereason=Interrupted
+verifyupgradeapp fabric:/app upgradedomains=UD1
+
+upgradeappmovenext fabric:/app
+verifyupgradeapp fabric:/app upgradedomains=UD1,UD2
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingBackInProgress,TargetApplicationTypeVersion=v1
+
+upgradeappmovenext fabric:/app
+verifyupgradeapp fabric:/app upgradedomains=UD1,UD2,UD3
+
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingBackCompleted,TargetApplicationTypeVersion=v1
+query GetApplicationTypePagedList verify ApplicationTypeName=type1,ApplicationTypeVersion=v1
+query GetApplicationTypePagedList ApplicationTypeName=type1 ApplicationTypeVersion=v2 expectempty=true
+
+verifyupgradeapp fabric:/app
+rollbackcompose app error=ComposeDeploymentNotUpgrading
+
+#
+# Test case 4: Error when upgrade completed
+#
+# Upgrade from v1 to v2
+upgradecompose app type2 type1 v2
+
+verifyupgradeapp fabric:/app upgradedomains=UD1,UD2,UD3
+
+# rollback after upgrade completed
+query getcomposedeploymentupgradeprogress DeploymentName=app verify DeploymentName=app,Status=RollingForwardCompleted,TargetApplicationTypeVersion=v2
+rollbackcompose app error=ComposeDeploymentNotUpgrading
+
+query GetApplicationTypePagedList verify ApplicationTypeName=type1,ApplicationTypeVersion=v2
+query GetApplicationTypePagedList ApplicationTypeName=type1 ApplicationTypeVersion=v1 expectempty=true
+
+deletecompose app verify
+query GetDockerComposeApplicationStatusList DeploymentName=app expectempty=true
+verify
+!q

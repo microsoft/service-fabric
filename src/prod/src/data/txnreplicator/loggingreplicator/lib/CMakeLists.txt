@@ -24,6 +24,9 @@ set( LINUX_SOURCES
   ../LogRecordsDispatcher.cpp
   ../LogRecordsMap.cpp
   ../LogTruncationManager.cpp
+  ../MemoryLog.cpp
+  ../MemoryLogManager.cpp
+  ../MemoryLogReadStream.cpp
   ../NotificationKey.cpp
   ../NotificationKeyComparer.cpp
   ../OperationProcessor.cpp

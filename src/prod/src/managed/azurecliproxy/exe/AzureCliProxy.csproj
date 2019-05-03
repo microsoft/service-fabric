@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{43B64CDD-EE5F-4C88-9FB3-9CDE66BB4807}</ProjectGuid>
+    <RootNamespace>AzureCliProxy</RootNamespace>
+    <AssemblyName>AzureCliProxy</AssemblyName>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\AzureCliProxy.cs">
+      <Link>AzureCliProxy.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Api\Dlls\System.Fabric.Management\System.Fabric.Management.csproj">
+      <Project>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</Project>
+      <Name>Microsoft.ServiceFabric.Powershell</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\powershell\servicefabric\Microsoft.ServiceFabric.Powershell.csproj">
+      <Project>{46D14E73-362F-4A84-AC7B-F984DB425E39}</Project>
+      <Name>Microsoft.ServiceFabric.Powershell</Name>
+    </ProjectReference>
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

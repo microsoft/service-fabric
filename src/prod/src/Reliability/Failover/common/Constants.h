@@ -32,6 +32,8 @@ namespace Reliability
 
         static Common::StringLiteral const ServiceResolverSource;
 
+        static Common::StringLiteral const NIMApiSource;
+
         static int64 const InvalidConfigurationVersion;
         static int64 const InvalidDataLossVersion;
         static int64 const InvalidReplicaId;

@@ -17,6 +17,15 @@ namespace Common
 
         static GlobalWString IsContainerHostEnvironmentVariableName;
         static GlobalWString ContainerNetworkingModeEnvironmentVariable;
+        static GlobalWString ContainerNetworkingResourceEnvironmentVariable;
+        static GlobalWString ContainerNetworkName;
+        static GlobalWString ContainerOverlayNetworkTypeName;
+
+#if defined(PLATFORM_UNIX)
+        static GlobalWString ContainerUnderlayNetworkTypeName;
+        static GlobalWString ContainerNatNetworkTypeName;
+#endif
+
     private:
         static GlobalWString ContainertracePathEnvironmentVariableName;        
     };

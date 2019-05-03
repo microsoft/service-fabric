@@ -1,4 +1,0 @@
-SingleMachine-CIT.json
-  TAGS:Failover,Reliability
-SingleMachine-Functional.json
-  TAGS:Failover,Reliability

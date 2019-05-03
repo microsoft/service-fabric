@@ -107,6 +107,13 @@ namespace KtlPhysicalLogTest
     }
 #endif // 0
 
+#if 0  // Re-enable when able to run on cloud
+    BOOST_AUTO_TEST_CASE(AccelerateFlushTest)
+    {
+        ::AccelerateFlushTest(_diskId, _logManagers[0]);
+    }
+#endif
+    
     BOOST_AUTO_TEST_CASE(ContainerLimitsTest)
     {
         ::ContainerLimitsTest(_diskId, _logManagers[0]);

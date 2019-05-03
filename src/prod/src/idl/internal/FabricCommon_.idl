@@ -1,0 +1,863 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricTypes_.idl";
+
+//
+// Forward Declarations
+//
+interface IFabricDeploymentSpecification;
+interface IFabricWinFabStoreLayoutSpecification;
+interface IFabricWinFabRunLayoutSpecification;
+interface IFabricBuildLayoutSpecification;
+interface IFabricBuildLayoutSpecification2;
+interface IFabricStoreLayoutSpecification;
+interface IFabricRunLayoutSpecification;
+interface IFabricConfigStore;
+interface IFabricConfigStore2;
+interface IFabricConfigStoreUpdateHandler;
+interface IFabricStringMapResult;
+
+[
+    uuid(ba19d79c-06a9-4e30-b9b3-af75dcf3d8d8),
+    helpstring("Microsoft Azure Service Fabric Common INTERNAL Type Library"),
+    version(1.0),
+]
+library FabricCommonInternalLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+
+    // ----------------------------------------------------------------------------
+    // Structures
+
+    typedef struct FABRIC_SERVICE_MANIFEST_DESCRIPTION
+    {
+        LPCWSTR Name;
+        LPCWSTR Version;
+        const FABRIC_SERVICE_TYPE_DESCRIPTION_LIST * ServiceTypes;
+        const FABRIC_SERVICE_GROUP_TYPE_DESCRIPTION_LIST * ServiceGroupTypes;
+        const FABRIC_CODE_PACKAGE_DESCRIPTION_LIST * CodePackages;
+        const FABRIC_CONFIGURATION_PACKAGE_DESCRIPTION_LIST * ConfigurationPackages;
+        const FABRIC_DATA_PACKAGE_DESCRIPTION_LIST * DataPackages;
+        const FABRIC_ENDPOINT_RESOURCE_DESCRIPTION_LIST * Endpoints;
+        void * Reserved;
+
+    } FABRIC_SERVICE_MANIFEST_DESCRIPTION;
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricDeploymentSpecification;
+    interface IFabricWinFabStoreLayoutSpecification;
+    interface IFabricWinFabRunLayoutSpecification;
+    interface IFabricBuildLayoutSpecification;
+    interface IFabricBuildLayoutSpecification2;
+    interface IFabricStoreLayoutSpecification;
+    interface IFabricRunLayoutSpecification;    
+    interface IFabricConfigStore;
+    interface IFabricConfigStore2;
+    interface IFabricConfigStoreUpdateHandler;
+    interface IFabricStringMapResult;
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(13e48069-ba81-46aa-a790-b10f64f1e37e),
+        dllname("FabricCommon.dll")
+    ]
+    module FabricCommonInternalModule {
+        [entry("FabricCreateFabricDeploymentSpecification")] HRESULT FabricCreateFabricDeploymentSpecification(
+            [in] REFIID riid,
+            [out, retval] void ** fabricDeploymentSpecification);
+
+        [entry("FabricCreateBuildLayoutSpecification")] HRESULT FabricCreateBuildLayoutSpecification(
+            [in] REFIID riid,
+            [out, retval] void ** buildLayoutSpecification);
+
+        [entry("FabricCreateStoreLayoutSpecification")] HRESULT FabricCreateStoreLayoutSpecification(
+            [in] REFIID riid,
+            [out, retval] void ** storeLayoutSpecification);
+
+        [entry("FabricCreateRunLayoutSpecification")] HRESULT FabricCreateRunLayoutSpecification(
+            [in] REFIID riid,
+            [out, retval] void ** runLayoutSpecification);
+
+        [entry("FabricCreateWinFabStoreSpecification")] HRESULT FabricCreateWinFabStoreLayoutSpecification(
+            [in] REFIID riid,
+            [out, retval] void ** winFabStoreLayoutSpecification);
+
+        [entry("FabricCreateWinFabRunSpecification")] HRESULT FabricCreateWinFabRunLayoutSpecification(
+            [in] REFIID riid,
+            [out, retval] void ** winFabRunLayoutSpecification);
+
+        [entry("FabricGetConfigStore")] HRESULT FabricGetConfigStore(
+            [in] REFIID riid,
+            [in] IFabricConfigStoreUpdateHandler * updateHandler,
+            [out, retval] void ** configStore);
+        
+        [entry("FabricGetConfigStoreEnvironmentVariable")] HRESULT FabricGetConfigStoreEnvironmentVariable(
+            [out] IFabricStringResult ** envVariableName,
+            [out] IFabricStringResult ** envVariableValue);
+
+        [entry("FabricGetThreadCount")] LONG FabricGetThreadCount();
+
+        [entry("FabricSetThreadTestLimit")] void FabricSetThreadTestLimit(LONG);
+
+        [entry("FabricSymInitializeOnce")] LPCSTR FabricSymInitializeOnce();
+
+        [entry("FabricDecryptValue")] HRESULT FabricDecryptValue(
+            [in] LPCWSTR encryptedValue,
+            [out, retval] IFabricStringResult ** decryptedValue);
+
+        [entry("FabricIsValidExpression")] HRESULT FabricIsValidExpression( 
+             [in] LPCWSTR expression,
+             [out,retval] BOOLEAN * isValid);
+
+        [entry("GetLinuxPackageManagerType")] HRESULT GetLinuxPackageManagerType(
+            [out] INT32 * packageManagerType);
+
+        [entry("FabricGetRoot2")] HRESULT FabricGetRoot2(
+            [in] LPCWSTR machineName, [out] IFabricStringResult **fabricRoot);
+
+        [entry("FabricGetRoot")] HRESULT FabricGetRoot(
+            [out] IFabricStringResult **fabricRoot);
+
+        [entry("FabricGetBinRoot")] HRESULT FabricGetBinRoot(
+            [out] IFabricStringResult **fabricBinRoot);
+
+        [entry("FabricGetBinRoot2")] HRESULT FabricGetBinRoot2(
+            [in] LPCWSTR machineName, [out] IFabricStringResult **fabricBinRoot);
+
+        [entry("FabricGetCodePath2")] HRESULT FabricGetCodePath2(
+            [in] LPCWSTR machineName, [out] IFabricStringResult **fabricCodePath);
+
+        [entry("FabricGetCodePath")] HRESULT FabricGetCodePath(
+            [out] IFabricStringResult **fabricCodePath);
+
+        [entry("FabricGetDataRoot2")] HRESULT FabricGetDataRoot2(
+            [in] LPCWSTR machineName, [out] IFabricStringResult **fabricDataRoot);
+
+        [entry("FabricGetDataRoot")] HRESULT FabricGetDataRoot(
+            [out] IFabricStringResult **fabricDataRoot);
+
+        [entry("FabricGetLogRoot2")] HRESULT FabricGetLogRoot2(
+            [in] LPCWSTR machineName, [out] IFabricStringResult **fabricLogRoot);
+
+        [entry("FabricGetLogRoot")] HRESULT FabricGetLogRoot(
+            [out] IFabricStringResult **fabricLogRoot);
+
+        [entry("FabricSetRoot2")] HRESULT FabricSetRoot2(
+            [in] LPCWSTR fabricRoot, [in] LPCWSTR machineName);
+
+        [entry("FabricSetRoot")] HRESULT FabricSetRoot(
+            [in] LPCWSTR fabricRoot);
+
+        [entry("FabricSetBinRoot2")] HRESULT FabricSetBinRoot2(
+            [in] LPCWSTR binRoot, [in] LPCWSTR machineName);
+
+        [entry("FabricSetBinRoot")] HRESULT FabricSetBinRoot(
+            [in] LPCWSTR binRoot);
+
+        [entry("FabricSetCodePath2")] HRESULT FabricSetCodePath2(
+            [in] LPCWSTR codePath, [in] LPCWSTR machineName);
+
+        [entry("FabricSetCodePath")] HRESULT FabricSetCodePath(
+            [in] LPCWSTR codePath);
+
+        [entry("FabricSetDataRoot2")] HRESULT FabricSetDataRoot2(
+            [in] LPCWSTR dataRoot, [in] LPCWSTR machineName);
+
+        [entry("FabricSetDataRoot")] HRESULT FabricSetDataRoot(
+            [in] LPCWSTR dataRoot);
+
+        [entry("FabricSetLogRoot2")] HRESULT FabricSetLogRoot2(
+            [in] LPCWSTR logRoot, [in] LPCWSTR machineName);
+
+        [entry("FabricSetLogRoot")] HRESULT FabricSetLogRoot(
+            [in] LPCWSTR logRoot);
+
+        [entry("FabricGetCommonDllVersion")] HRESULT FabricGetCommonDllVersion( 
+             [out] IFabricStringResult ** commonDllVersion);
+
+        [entry("FabricDirectoryCreate")] HRESULT FabricDirectoryCreate(
+            [in] LPCWSTR path);
+
+        [entry("FabricDirectoryGetDirectories")] HRESULT FabricDirectoryGetDirectories(
+            [in] LPCWSTR path,
+            [in] LPCWSTR pattern,
+            [in] BOOLEAN getFullPath,
+            [in] BOOLEAN topDirectoryOnly,
+            [out] IFabricStringListResult ** result);
+
+        [entry("FabricDirectoryGetFiles")] HRESULT FabricDirectoryGetFiles(
+            [in] LPCWSTR path,
+            [in] LPCWSTR pattern,
+            [in] BOOLEAN getFullPath,
+            [in] BOOLEAN topDirectoryOnly,
+            [out] IFabricStringListResult ** result);
+
+        [entry("FabricDirectoryCopy")] HRESULT FabricDirectoryCopy(
+            [in] LPCWSTR src,
+            [in] LPCWSTR des,
+            [in] BOOLEAN overwrite);
+
+        [entry("FabricDirectoryRename")] HRESULT FabricDirectoryRename(
+            [in] LPCWSTR src,
+            [in] LPCWSTR des,
+            [in] BOOLEAN overwrite);
+
+        [entry("FabricDirectoryExists")] HRESULT FabricDirectoryExists(
+            [in] LPCWSTR path,
+            [out] BOOLEAN * isExisted);
+
+        [entry("FabricDirectoryDelete")] HRESULT FabricDirectoryDelete(
+            [in] LPCWSTR path,
+            [in] BOOLEAN recursive,
+            [in] BOOLEAN deleteReadOnlyFiles);
+
+        [entry("FabricDirectoryIsSymbolicLink")] HRESULT FabricDirectoryIsSymbolicLink(
+            [in] LPCWSTR path,
+            [out] BOOLEAN * result);
+
+        [entry("FabricGetDirectoryName")] HRESULT FabricGetDirectoryName(
+            [in] LPCWSTR path,
+            [out] IFabricStringResult ** result);
+
+        [entry("FabricGetFullPath")] HRESULT FabricGetFullPath(
+            [in] LPCWSTR path,
+            [out] IFabricStringResult ** result);
+
+        [entry("FabricSetLastErrorMessage")] HRESULT FabricSetLastErrorMessage(
+            [in] LPCWSTR message,
+            [out] DWORD * threadId);
+
+        [entry("FabricClearLastErrorMessage")] HRESULT FabricClearLastErrorMessage(
+            [in] DWORD threadId);
+
+        [entry("FabricFileOpen")] HRESULT FabricFileOpen(
+            [in] LPCWSTR path,
+            [in] FABRIC_FILE_MODE fileMode,
+            [in] FABRIC_FILE_ACCESS fileAccess,
+            [in] FABRIC_FILE_SHARE fileShare,
+            [out] HANDLE * fileHandle);
+
+        [entry("FabricFileOpenEx")] HRESULT FabricFileOpenEx(
+            [in] LPCWSTR path,
+            [in] FABRIC_FILE_MODE fileMode,
+            [in] FABRIC_FILE_ACCESS fileAccess,
+            [in] FABRIC_FILE_SHARE fileShare,
+            [in] FABRIC_FILE_ATTRIBUTES fileAttributes,
+            [out] HANDLE * fileHandle);
+
+        [entry("FabricFileCopy")] HRESULT FabricFileCopy(
+            [in] LPCWSTR src,
+            [in] LPCWSTR des,
+            [in] BOOLEAN overwrite);
+
+        [entry("FabricFileMove")] HRESULT FabricFileMove(
+            [in] LPCWSTR src,
+            [in] LPCWSTR des);
+
+        [entry("FabricFileExists")] HRESULT FabricFileExists(
+            [in] LPCWSTR path,
+            [out] BOOLEAN * isExisted);
+
+        [entry("FabricFileDelete")] HRESULT FabricFileDelete(
+            [in] LPCWSTR path,
+            [in] BOOLEAN deleteReadonly);
+
+        [entry("FabricFileReplace")] HRESULT FabricFileReplace(
+            [in] LPCWSTR lpReplacedFileName,
+            [in] LPCWSTR lpReplacementFileName,
+            [in] LPCWSTR lpBackupFileName,
+            [in] BOOLEAN bIgnoreMergeErrors);
+
+        [entry("FabricFileCreateHardLink")] HRESULT FabricFileCreateHardLink(
+            [in] LPCWSTR lpFileName,
+            [in] LPCWSTR lpExistingFileName,
+            [out] BOOLEAN * succeeded);
+			
+        [entry("FabricFileGetSize")] HRESULT FabricFileGetSize(
+            [in] LPCWSTR path,
+            [out] LONGLONG * size);
+	
+        [entry("FabricFileGetLastWriteTime")] HRESULT FabricFileGetLastWriteTime(
+            [in] LPCWSTR path,
+            [out] FILETIME * lastWriteTime);
+
+        [entry("FabricFileGetVersionInfo")] HRESULT FabricFileGetVersionInfo(
+            [in] LPCWSTR path,
+            [out] IFabricStringResult **uncPath);
+
+        [entry("FabricFileRemoveReadOnlyAttribute")] HRESULT FabricFileRemoveReadOnlyAttribute(
+            [in] LPCWSTR path);
+
+        [entry("FabricGetUncPath")] HRESULT FabricGetUncPath(
+            [in] LPCWSTR path,
+            [out] IFabricStringResult **uncPath);
+
+        [entry("FabricGetNodeIdFromNodeName")] HRESULT FabricGetNodeIdFromNodeName(
+            [in] LPCWSTR nodeName,
+            [in] LPCWSTR rolesForWhichToUseV1generator,
+            [in] BOOLEAN useV2NodeIdGenerator,
+            [in] LPCWSTR nodeIdGeneratorVersion,
+            [out] FABRIC_NODE_ID *fabricNodeId);
+
+        [entry("CabExtractFiltered")] HRESULT CabExtractFiltered(
+            [in] LPCWSTR cabPath,
+            [in] LPCWSTR extractPath,
+            [in] LPCWSTR filters,
+            [in] BOOLEAN inclusive);
+
+        [entry("IsCabFile")] HRESULT IsCabFile(
+            [in] LPCWSTR cabPath,
+            [out, retval] BOOLEAN * isCab);
+
+		[entry("GenerateSelfSignedCertAndImportToStore")] HRESULT GenerateSelfSignedCertAndImportToStore(
+			[in] LPCWSTR subName,
+			[in] LPCWSTR storeName,
+			[in] LPCWSTR profile,
+			[in] LPCWSTR DNS,
+			[in] FILETIME expireDate);
+
+		[entry("GenerateSelfSignedCertAndSaveAsPFX")] HRESULT GenerateSelfSignedCertAndSaveAsPFX(
+			[in] LPCWSTR subName,
+			[in] LPCWSTR fileName,
+			[in] LPCWSTR password,
+			[in] LPCWSTR DNS,
+			[in] FILETIME expireDate);
+
+		[entry("DeleteCertificateFromStore")] HRESULT DeleteCertificateFromStore(
+			[in] LPCWSTR certName,
+			[in] LPCWSTR store,
+			[in] LPCWSTR profile,
+			[in] BOOLEAN isExactMatch);
+
+        [entry("WriteManagedTrace")] HRESULT WriteManagedTrace(
+            [in] LPCWSTR taskName,
+            [in] LPCWSTR eventName,
+            [in] LPCWSTR id,
+            [in] USHORT level,
+            [in] LPCWSTR text);
+
+        [entry("WriteManagedStructuredTrace")] HRESULT WriteManagedStructuredTrace(
+            [in] const FABRIC_ETW_TRACE_EVENT_PAYLOAD *eventPayload);
+
+        [entry("VerifyFileSignature")] HRESULT VerifyFileSignature(
+            [in] LPCWSTR filename,
+            [out] BOOLEAN * isValid);
+
+        [entry("FabricSetEnableCircularTraceSession2")] HRESULT FabricSetEnableCircularTraceSession2(
+            [in] BOOLEAN enableCircularTraceSession, [in] LPCWSTR machineName);
+
+        [entry("FabricSetEnableCircularTraceSession")] HRESULT FabricSetEnableCircularTraceSession(
+            [in] BOOLEAN enableCircularTraceSession);
+
+        [entry("FabricSetEnableUnsupportedPreviewFeatures2")] HRESULT FabricSetEnableUnsupportedPreviewFeatures2(
+            [in] BOOLEAN enableUnsupportedPreviewFeatures, [in] LPCWSTR machineName);
+
+        [entry("FabricSetEnableUnsupportedPreviewFeatures")] HRESULT FabricSetEnableUnsupportedPreviewFeatures(
+            [in] BOOLEAN enableUnsupportedPreviewFeatures);
+
+        [entry("FabricSetIsSFVolumeDiskServiceEnabled2")] HRESULT FabricSetIsSFVolumeDiskServiceEnabled2(
+            [in] BOOLEAN isSFVolumeDiskServiceEnabled, [in] LPCWSTR machineName);
+
+        [entry("FabricSetIsSFVolumeDiskServiceEnabled")] HRESULT FabricSetIsSFVolumeDiskServiceEnabled(
+            [in] BOOLEAN isSFVolumeDiskServiceEnabled);
+
+        [entry("FabricGetEnableCircularTraceSession2")] HRESULT FabricGetEnableCircularTraceSession2(
+            [in] LPCWSTR machineName, [out][retval] BOOLEAN *enableCircularTraceSession);
+
+        [entry("FabricGetEnableCircularTraceSession")] HRESULT FabricGetEnableCircularTraceSession(
+            [out][retval] BOOLEAN *enableCircularTraceSession);
+
+        [entry("FabricSetCrashLeasingApplicationCallback")] void FabricSetCrashLeasingApplicationCallback(
+            [in] void(*callback));
+
+        [entry("FabricGetCrashLeasingApplicationCallback")] void FabricGetCrashLeasingApplicationCallback(
+            [out][retval] void *(*callback));
+
+        [entry("FabricSetSfInstalledMoby")] HRESULT FabricSetSfInstalledMoby(
+            [in] LPCWSTR fileContents);
+    }
+
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(5C36B827-0297-4355-B591-7EB7211548AE)]
+interface IFabricDeploymentSpecification : IUnknown
+{
+    HRESULT SetDataRoot([in] LPCWSTR value);
+
+    HRESULT GetDataRoot([out, retval] IFabricStringResult ** value);
+
+    HRESULT SetLogRoot([in] LPCWSTR value);
+
+    HRESULT GetLogRoot([out, retval] IFabricStringResult ** value);
+
+    [] HRESULT GetLogFolder(        
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetTracesFolder(        
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCrashDumpsFolder(        
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetApplicationCrashDumpsFolder(        
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetAppInstanceDataFolder(        
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetPerformanceCountersBinaryFolder(        
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetTargetInformationFile(
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetNodeFolder(
+        [in] LPCWSTR nodeName, 
+        [out, retval] IFabricStringResult ** result);
+    
+    [] HRESULT GetFabricFolder(
+        [in] LPCWSTR nodeName, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCurrentClusterManifestFile(
+        [in] LPCWSTR nodeName, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetVersionedClusterManifestFile( 
+        [in] LPCWSTR nodeName,   
+        [in] LPCWSTR version,
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetInstallerScriptFile(
+        [in] LPCWSTR nodeName,        
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetInstallerLogFile(
+        [in] LPCWSTR nodeName,
+        [in] LPCWSTR codeVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetInfrastructureManfiestFile(
+        [in] LPCWSTR nodeName,
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetConfigurationDeploymentFolder(
+        [in] LPCWSTR nodeName,
+        [in] LPCWSTR configVersion,
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetDataDeploymentFolder(
+        [in] LPCWSTR nodeName,
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetCodeDeploymentFolder(
+        [in] LPCWSTR nodeName,
+        [in] LPCWSTR service,
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetInstalledBinaryFolder(
+        [in] LPCWSTR installationFolder,
+        [in] LPCWSTR service,
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetWorkFolder(
+        [in] LPCWSTR nodeName,
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetCurrentFabricPackageFile( 
+        [in] LPCWSTR nodeName,   
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetVersionedFabricPackageFile( 
+        [in] LPCWSTR nodeName,   
+        [in] LPCWSTR version,
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetQueryTraceFolder(
+        [retval][out] IFabricStringResult **result);
+
+    [] HRESULT GetEnableCircularTraceSession(
+        [retval][out] BOOLEAN *result);
+
+    [] HRESULT SetEnableCircularTraceSession(
+        [in] BOOLEAN value);
+}
+
+[object, local, uuid(D07D4CB7-0E31-4930-8AC1-DC1A1062241D)]
+interface IFabricWinFabStoreLayoutSpecification : IUnknown
+{
+    HRESULT SetRoot([in] LPCWSTR value);
+
+    HRESULT GetRoot([out, retval] IFabricStringResult ** value);
+
+    [] HRESULT GetPatchFile(
+        [in] LPCWSTR codeVersion, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCabPatchFile(
+        [in] LPCWSTR codeVersion, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCodePackageFolder(
+        [in] LPCWSTR codeVersion, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetClusterManifestFile(
+        [in] LPCWSTR clusterManifestVersion, 
+        [out, retval] IFabricStringResult ** result);      
+}
+
+[object, local, uuid(2B299756-A1DA-450D-88A0-11B7190EA3A0)]
+interface IFabricWinFabRunLayoutSpecification : IUnknown
+{
+    HRESULT SetRoot([in] LPCWSTR value);
+
+    HRESULT GetRoot([out, retval] IFabricStringResult ** value);
+
+    [] HRESULT GetPatchFile(
+        [in] LPCWSTR codeVersion, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCabPatchFile(
+        [in] LPCWSTR codeVersion, 
+        [out, retval] IFabricStringResult ** result);
+        
+    [] HRESULT GetCodePackageFolder(
+        [in] LPCWSTR codeVersion, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetClusterManifestFile(
+        [in] LPCWSTR clusterManifestVersion, 
+        [out, retval] IFabricStringResult ** result);      
+}
+
+[object, local, uuid(a5344964-3542-41bd-a271-f2f21ac541a8)]
+interface IFabricBuildLayoutSpecification : IUnknown
+{
+    HRESULT SetRoot([in] LPCWSTR value);
+
+    HRESULT GetRoot([out, retval] IFabricStringResult ** value);
+
+    [] HRESULT GetApplicationManifestFile(
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetServiceManifestFile(
+        [in] LPCWSTR serviceManifestName, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetServiceManifestChecksumFile(
+        [in] LPCWSTR serviceManifestName, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCodePackageFolder(
+        [in] LPCWSTR serviceManifestName, 
+        [in] LPCWSTR codePackageName,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCodePackageChecksumFile(
+        [in] LPCWSTR serviceManifestName, 
+        [in] LPCWSTR codePackageName,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetConfigPackageFolder(
+        [in] LPCWSTR serviceManifestName, 
+        [in] LPCWSTR configPackageName,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetConfigPackageChecksumFile(
+        [in] LPCWSTR serviceManifestName, 
+        [in] LPCWSTR configPackageName,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetDataPackageFolder(
+        [in] LPCWSTR serviceManifestName, 
+        [in] LPCWSTR dataPackageName,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetDataPackageChecksumFile(
+        [in] LPCWSTR serviceManifestName, 
+        [in] LPCWSTR dataPackageName,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetSettingsFile(
+        [in] LPCWSTR configPackageFolder,
+        [out, retval] IFabricStringResult ** result);         
+}
+
+[object, local, uuid(93f7ca0f-8be0-4601-92a9-ad864b4a798d)]
+interface IFabricBuildLayoutSpecification2 : IFabricBuildLayoutSpecification
+{
+    [] HRESULT GetSubPackageArchiveFile(
+        [in] LPCWSTR packageFolder, 
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetChecksumFile(
+        [in] LPCWSTR fileOrDirectoryName, 
+        [out, retval] IFabricStringResult ** result);
+}
+
+[object, local, uuid(a4e94cf4-a47b-4767-853f-cbd5914641d6)]
+interface IFabricStoreLayoutSpecification : IUnknown
+{
+    HRESULT SetRoot([in] LPCWSTR value);
+
+    HRESULT GetRoot([out, retval] IFabricStringResult ** value);
+
+    [] HRESULT GetApplicationManifestFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR applicationTypeVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetApplicationInstanceFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR aplicationId,
+        [in] LPCWSTR applicationInstanceVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetApplicationPackageFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR aplicationId,
+        [in] LPCWSTR applicationRolloutVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetServicePackageFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR aplicationId,
+        [in] LPCWSTR servicePackageName,
+        [in] LPCWSTR servicePackageRolloutVersion,
+        [out, retval] IFabricStringResult ** result);    
+
+    [] HRESULT GetServiceManifestFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR serviceManifestVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetServiceManifestChecksumFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR serviceManifestVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCodePackageFolder(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR codePackageName,
+        [in] LPCWSTR codePackageVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCodePackageChecksumFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR codePackageName,
+        [in] LPCWSTR codePackageVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetConfigPackageFolder(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR configPackageName,
+        [in] LPCWSTR configPackageVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetConfigPackageChecksumFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR configPackageName,
+        [in] LPCWSTR configPackageVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetDataPackageFolder(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR dataPackageName,
+        [in] LPCWSTR dataPackageVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetDataPackageChecksumFile(
+        [in] LPCWSTR applicationTypeName,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR dataPackageName,
+        [in] LPCWSTR dataPackageVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetSettingsFile(
+        [in] LPCWSTR configPackageFolder,
+        [out, retval] IFabricStringResult ** result);  
+}
+
+[object, local, uuid(e4a20405-2cef-4da0-bd6c-b466a5845d48)]
+interface IFabricStoreLayoutSpecification2 : IFabricStoreLayoutSpecification
+{
+    [] HRESULT GetSubPackageArchiveFile(
+        [in] LPCWSTR packageFolder,
+        [out, retval] IFabricStringResult ** result);
+}
+
+[object, local, uuid(53636fde-84ca-4657-9927-1d22dc37297d)]
+interface IFabricRunLayoutSpecification : IUnknown
+{
+    HRESULT SetRoot([in] LPCWSTR value);
+
+    HRESULT GetRoot([out, retval] IFabricStringResult ** value);
+
+    [] HRESULT GetApplicationFolder(
+        [in] LPCWSTR applicationId,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetApplicationWorkFolder(
+        [in] LPCWSTR applicationId,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetApplicationLogFolder(
+        [in] LPCWSTR applicationId,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetApplicationTempFolder(
+        [in] LPCWSTR applicationId,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetApplicationPackageFile(
+        [in] LPCWSTR aplicationId,
+        [in] LPCWSTR applicationRolloutVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetServicePackageFile(
+        [in] LPCWSTR aplicationId,
+        [in] LPCWSTR servicePackageName,
+        [in] LPCWSTR servicePackageRolloutVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCurrentServicePackageFile(
+        [in] LPCWSTR aplicationId,
+        [in] LPCWSTR servicePackageName,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetEndpointDescriptionsFile(
+        [in] LPCWSTR aplicationId,
+        [in] LPCWSTR servicePackageName,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetServiceManifestFile(
+        [in] LPCWSTR applicationId,
+        [in] LPCWSTR serviceManifestName,
+        [in] LPCWSTR serviceManifestVersion,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCodePackageFolder(
+        [in] LPCWSTR applicationId,
+        [in] LPCWSTR servicePackageName,
+        [in] LPCWSTR codePackageName,
+        [in] LPCWSTR codePackageVersion,
+        [in] BOOLEAN isSharedPackage,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetConfigPackageFolder(
+        [in] LPCWSTR applicationId,
+        [in] LPCWSTR servicePackageName,
+        [in] LPCWSTR configPackageName,
+        [in] LPCWSTR configPackageVersion,
+        [in] BOOLEAN isSharedPackage,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetDataPackageFolder(
+        [in] LPCWSTR applicationId,
+        [in] LPCWSTR servicePackageName,
+        [in] LPCWSTR dataPackageName,
+        [in] LPCWSTR dataPackageVersion,
+        [in] BOOLEAN isSharedPackage,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetSettingsFile(
+        [in] LPCWSTR configPackageFolder,
+        [out, retval] IFabricStringResult ** result);
+}
+
+[object, local, uuid(10AD836A-12E5-4581-9303-65DE0710EB88)]
+interface IFabricRunLayoutSpecification2 : IFabricRunLayoutSpecification
+{
+    [] HRESULT GetEndpointDescriptionsFile2(
+        [in] LPCWSTR applicationId,
+        [in] LPCWSTR servicePackageName,
+        [in] LPCWSTR servicePackageActivationId,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT GetCurrentServicePackageFile2(
+        [in] LPCWSTR applicationId,
+        [in] LPCWSTR servicePackageName,
+        [in] LPCWSTR servicePackageActivationId,
+        [out, retval] IFabricStringResult ** result);
+}
+
+[object, local, uuid(edd6091d-5230-4064-a731-5d2e6bac3436)]
+interface IFabricConfigStore : IUnknown
+{
+    [] HRESULT GetSections(
+        [in] LPCWSTR partialSectionName,
+        [out, retval] IFabricStringListResult ** result);
+
+    [] HRESULT GetKeys(
+        [in] LPCWSTR sectionName,
+        [in] LPCWSTR partialKeyName,
+        [out, retval] IFabricStringListResult ** result);
+
+    [] HRESULT ReadString(
+        [in] LPCWSTR section,
+        [in] LPCWSTR key,
+        [out] BOOLEAN * isEncrypted,
+        [out, retval] IFabricStringResult ** result);
+}
+
+[object, local, uuid(c8beea34-1f9d-4d3b-970d-f26ca0e4a762)]
+interface IFabricConfigStore2 : IFabricConfigStore
+{
+    [] BOOLEAN get_IgnoreUpdateFailures();
+    [] void set_IgnoreUpdateFailures(BOOLEAN value);
+}
+
+
+[object, local, uuid(792d2f8d-15bd-449f-a607-002cb6004709)]
+interface IFabricConfigStoreUpdateHandler : IUnknown
+{
+    [] HRESULT OnUpdate(
+        [in] LPCWSTR section, 
+        [in] LPCWSTR key, 
+        [out,retval] BOOLEAN * isProcessed);
+
+    [] HRESULT CheckUpdate(
+        [in] LPCWSTR section, 
+        [in] LPCWSTR key, 
+        [in] LPCWSTR value, 
+        [in] BOOLEAN isEncrypted,
+        [out,retval] BOOLEAN * canUpdate);
+}
+
+[object, local, uuid(ce7ebe69-f61b-4d62-ba2c-59cf07030206)]
+interface IFabricStringMapResult : IUnknown
+{
+    [] FABRIC_STRING_PAIR_LIST * get_Result();
+}

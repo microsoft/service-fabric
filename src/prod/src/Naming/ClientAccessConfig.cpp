@@ -131,14 +131,17 @@ namespace Naming
         CLIENT_OPERATION_ACE_INIT(GetUpgradesPendingApproval)
         CLIENT_OPERATION_ACE_INIT(StartApprovedUpgrades)
         CLIENT_OPERATION_ACE_INIT(GetUpgradeOrchestrationServiceState)
-		CLIENT_OPERATION_ACE_INIT(SetUpgradeOrchestrationServiceState)
+        CLIENT_OPERATION_ACE_INIT(SetUpgradeOrchestrationServiceState)
         CLIENT_OPERATION_ACE_INIT(CreateComposeDeployment)
         CLIENT_OPERATION_ACE_INIT(DeleteComposeDeployment)
         CLIENT_OPERATION_ACE_INIT(UpgradeComposeDeployment)
         CLIENT_OPERATION_ACE_INIT(InvokeContainerApi)
         CLIENT_OPERATION_ACE_INIT(CreateVolume)
         CLIENT_OPERATION_ACE_INIT(DeleteVolume)
-
         CLIENT_OPERATION_ACE_INIT(GetSecrets)
+        CLIENT_OPERATION_ACE_INIT(CreateNetwork)
+        CLIENT_OPERATION_ACE_INIT(DeleteNetwork)
+        CLIENT_OPERATION_ACE_INIT(CreateGatewayResource)
+        CLIENT_OPERATION_ACE_INIT(DeleteGatewayResource)
     }
 }

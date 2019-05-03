@@ -1,0 +1,17 @@
+kuunitcommon:
+This directory contains common header files between user space and kernel unit test.
+
+kumapcommon:
+This directory contains common header files between linux user space and kernel mapping layer.
+
+unitapp:
+This directory contains unit test user application.
+
+unitdrv:
+This directory contains unit test driver.
+
+mapping:
+This directory contains WDF mapping layer code.
+
+abstract:
+Abstraction code for probe_and_lock & spinlock apis.

@@ -1,0 +1,139 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SRCROOT)\properties\_service_fabric_native_msbuild15_fixes.props" />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <!--Actually building a driver now-->
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <TargetVersion>Windows7</TargetVersion>
+    <CharacterSet>Unicode</CharacterSet>
+    <!-- <TrackFileAccess>false</TrackFileAccess> -->
+    <ConfigurationType>Driver</ConfigurationType>
+    <DriverType>UMDF</DriverType>
+    <IsDriver>true</IsDriver>
+    <TargetExt>.sys</TargetExt>
+    <OutputType>sys</OutputType>
+    <LinkCompiled>true</LinkCompiled>
+    <EnableTestSign>true</EnableTestSign>
+    <GenerateManifest>false</GenerateManifest>
+    <LegacyManifestEmbedding>true</LegacyManifestEmbedding>
+    <!--Required if including any rc files-->
+    <GenerateAssemblyFileVersion>false</GenerateAssemblyFileVersion>
+  </PropertyGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.Cpp.props" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <MinimalRebuild>false</MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>true</OmitDefaultLibName>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <PreprocessorDefinitions>CONDITION_HANDLING=1;NT_UP=1;NT_INST=0;WIN32=100;_NT1X_=100;WINNT=1;_WIN32_WINNT=0x0602;WINVER=0x0602;_WIN32_IE=0x0A00;WIN32_LEAN_AND_MEAN=1;DEVL=1;NDEBUG;UNICODE=1;KTL_USER_MODE=0;_APISET_WINDOWS_VERSION=0x601;_APISET_MINWIN_VERSION=0x0101;_APISET_MINCORE_VERSION=0x0100;NTDDI_VERSION=0x06020000;BUILD_WINDOWS;__WRL_CONFIGURATION_LEGACY__;_USE_DECLSPECS_FOR_SAL=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
+        <!--TODO: Start using the default WDK imports instead of this custom crap-->
+        <!--Kind of janky but this is how we determine which version of the Razzle libs to import-->
+        <!--$(KmdfVersion) gets set to by using the WindowsWDK package-->
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ifskit)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\mincore\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\clientcore\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\crt\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\priv_sdk\inc\net\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\wdf\kmdf\$(KmdfVersion)\;
+        $(KTLSRCROOT)\inc\;
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions>/MT /Zc:sizedDealloc- /U_MT /d1import_no_registry /kernel -d2epilogunwind /d1nodatetime /d2AllowCompatibleILVersions /d2Zi+ /EHs-c- /favor:AMD64 /d2guardspecload %(AdditionalOptions)</AdditionalOptions>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>
+        %(AdditionalIncludeDirectories);
+        <!--TODO: Start using the default WDK imports instead of this custom crap-->
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ifskit)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_shared)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\mincore\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\clientcore\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\inc\minwin\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\inc\crt\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_Internal_sdk)\priv_sdk\inc\net\;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\inc\wdf\kmdf\$(KmdfVersion)\;
+        $(KTLSRCROOT)\inc\;
+      </AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <TargetExt>.sys</TargetExt>
+      <SubSystem>Native</SubSystem>
+      <Driver>Driver</Driver>
+      <StackCommitSize>0x1000</StackCommitSize>
+      <StackReserveSize>0x40000</StackReserveSize>
+      <EntryPointSymbol>FxDriverEntry</EntryPointSymbol>
+      <LinkIncremental>false</LinkIncremental>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalDependencies>
+        %(AdditionalDependencies)
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\ntoskrnl.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\hal.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\wmilib.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\ntstrsafe.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\wdmsec.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\wdf\kmdf\$(KmdfVersion)\WdfLdr.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\wdf\kmdf\$(KmdfVersion)\WdfDriverEntry.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\ksecdd.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\$(BuildArchitecture)\netio.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\lib\$(BuildArchitecture)\bufferoverflowu.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\lib\$(BuildArchitecture)\libcpmt.lib;
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>DBG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+     <Optimization>Full</Optimization>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+     <PreprocessorDefinitions>NDEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_WIN64=1;_AMD64_=1;AMD64=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+</Project>

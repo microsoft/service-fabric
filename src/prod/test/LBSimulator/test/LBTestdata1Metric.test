@@ -1,0 +1,49 @@
+# This data checks the basic load balancing where we have 
+# 1 metrics + no capacity + no capacity ratio + no constraint
+
+# --- Nodes --- NodeCount 5
+# list is for capacities and fault/upgrade domain
+<Node
+NODENAME:{A} NODESTATUS:{Up} FAULTDOMAIN:{fd:/0} UPGRADEDOMAIN:{0}
+NODENAME:{B} NODESTATUS:{Up} FAULTDOMAIN:{fd:/1} UPGRADEDOMAIN:{1}
+NODENAME:{C} NODESTATUS:{Up} FAULTDOMAIN:{fd:/2} UPGRADEDOMAIN:{2}
+NODENAME:{D} NODESTATUS:{Up} FAULTDOMAIN:{fd:/3} UPGRADEDOMAIN:{3}
+NODENAME:{E} NODESTATUS:{Up} FAULTDOMAIN:{fd:/4} UPGRADEDOMAIN:{4}
+
+>
+
+# --- Services ---
+# --- list is for {[Stateful] [PartitionCount] [ReplicaCountPerPartition]} {[BlockList]} {[Metrics]}
+# --- metrics is {[metricName1]/[weight]/[primaryDefaultLoad]/[secondaryDefaultLoad], [metricName2]/[weight(text)]/[primaryDefaultLoad]/[secondaryDefaultLoad], ...}
+
+<Service
+INFO:{} URI:{fabric:/testsrvc}  AFF: {} {Stateful,5,1,1}  BLOCKLIST:{ } CONSTRAINTS:{} METRICS:{metric0/High/20/10}
+>
+
+# --- FailoverUnit ---
+# Number of partitions can be calculated in 'Service' section
+# Value pair is MetricName:Primary/Secondary
+# number of columns should equal to number of metrics
+
+<FailoverUnit
+INFO:{} PARENT:{0}  METRICS:{metric0:10/5} SERVICE:{fabric:/testsrvc}
+INFO:{} PARENT:{0}  METRICS:{metric0:10/5} SERVICE:{fabric:/testsrvc}
+INFO:{} PARENT:{0}  METRICS:{metric0:10/5} SERVICE:{fabric:/testsrvc}
+INFO:{} PARENT:{0}  METRICS:{metric0:10/5} SERVICE:{fabric:/testsrvc}
+INFO:{} PARENT:{0}  METRICS:{metric0:10/5} SERVICE:{fabric:/testsrvc}
+
+>
+
+# --- Placement ---
+# Each line corresponds to a node. Number of lines should be equal to number of nodes
+# replica descriptions: [partitionIndex]/[replicaRole]/[IsToBePromoted]/[IsToBeDropped]/[IsInBuild]
+# the last three descriptions optional inputs: P/D/B; treated as false by default
+
+<Placement
+NODE:{A}  REPLICAS:{1:Primary/Ready, 2:Primary/Ready, 3:Primary/Ready, 4:ActiveSecondary/Ready}
+NODE:{B}  REPLICAS:{0:Primary/Ready}
+NODE:{C}  REPLICAS:{1:ActiveSecondary/Ready}
+NODE:{D}  REPLICAS:{0:ActiveSecondary/Ready, 2:ActiveSecondary/Ready, 3:ActiveSecondary/Ready}
+NODE:{E}  REPLICAS:{4:ActiveSecondary/Ready}
+>
+

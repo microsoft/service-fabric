@@ -1,0 +1,46 @@
+namespace bond
+
+// Enumerator of Bond meta-schema types
+enum BondDataType
+{
+    BT_STOP       = 0,
+    BT_STOP_BASE  = 1,
+    BT_BOOL       = 2,
+    BT_UINT8      = 3,
+    BT_UINT16     = 4,
+    BT_UINT32     = 5,
+    BT_UINT64     = 6,
+    BT_FLOAT      = 7,
+    BT_DOUBLE     = 8,
+    BT_STRING     = 9,
+    BT_STRUCT     = 10,
+    BT_LIST       = 11,
+    BT_SET        = 12,
+    BT_MAP        = 13,
+    BT_INT8       = 14,
+    BT_INT16      = 15,
+    BT_INT32      = 16,
+    BT_INT64      = 17,
+    BT_WSTRING    = 18,
+    BT_UNAVAILABLE= 127
+}
+
+
+// Magic numbers of predefined protocols
+enum ProtocolType
+{
+    // Actual protocol type is marshaled with payload
+    MARSHALED_PROTOCOL = 0,
+
+    // Fast binary protocol
+    FAST_PROTOCOL = 0x464d,
+
+    // Compact binary protocol
+    COMPACT_PROTOCOL = 0x4243,
+
+    // Simple JSON protocol
+    SIMPLE_JSON_PROTOCOL = 0x4a53,
+
+    // Simple binary protocol
+    SIMPLE_PROTOCOL = 0x5053,
+}

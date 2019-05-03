@@ -5,7 +5,7 @@
     {
       "Name": "logicallog.test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier",
-      "Owners": "tyadam,alanwar",
+      "Owners": "tyadam,alanwar,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "logicallog.test.exe",
@@ -17,7 +17,7 @@
     {
       "Name": "statemanager.test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier",
-      "Owners": "zhol",
+      "Owners": "zuparvez,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "statemanager.test.exe",
@@ -29,7 +29,7 @@
     {
       "Name": "loggingreplicator.test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier",
-      "Owners": "imang,yzha",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "loggingreplicator.test.exe",
@@ -41,7 +41,7 @@
     {
       "Name": "txnreplicator.test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier",
-      "Owners": "imang,yzha",
+      "Owners": "rahku,alanwar,tyadam,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "txnreplicator.test.exe",
@@ -52,7 +52,7 @@
     {
       "Name": "data.utilities.test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier",
-      "Owners": "yzha,preethas",
+      "Owners": "shalabhs,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "data.utilities.test.exe",
@@ -64,7 +64,7 @@
     {
       "Name": "data.utilities.stresstest.exe",
       "Type": "ExeTest_Sequential",
-      "Owners": "yzha,preethas",
+      "Owners": "shalabhs,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "data.utilities.stresstest.exe",
@@ -75,7 +75,7 @@
     {
       "Name": "data.integration.test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier_NoLock",
-      "Owners": "zhol",
+      "Owners": "shalabhs,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "data.integration.test.exe",
@@ -86,7 +86,7 @@
     {
       "Name": "data.integration.upgrade.test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier_NoLock",
-      "Owners": "imang,yzha",
+      "Owners": "shalabhs,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "data.integration.upgrade.test.exe",
@@ -98,11 +98,11 @@
     {
       "Name": "TStore.Test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier",
-      "Owners": "preethas,zuparvez",
+      "Owners": "zuparvez,deeom,viyogend,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "TStore.Test.exe",
-        "ExecutionTimeout": "7200",
+        "ExecutionTimeout": "10800",
         "SetupType": "XCopy",
         "WorkingDirectory" : "[BINS]\\FabricUnitTests\\"        
       }
@@ -110,7 +110,7 @@
     {
       "Name": "ReliableCollectionRuntimeImpl.Test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier",
-      "Owners": "rahku",
+      "Owners": "rahku,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "ReliableCollectionRuntimeImpl.Test.exe",
@@ -121,7 +121,7 @@
     {
       "Name": "ReliableConcurrentQueue.Test.exe(AppVerifier)",
       "Type": "ExeTest_Sequential_AppVerifier",
-      "Owners": "yzha",
+      "Owners": "deeom,zuparvez,viyogend,preethas",
       "ResourcesRequired": "Server:1;Group=windbg",
       "TestExecutionParameters": {
         "TaskName": "ReliableConcurrentQueue.Test.exe",
@@ -132,7 +132,7 @@
 	{
       "Name": "FabSrvNative TPCC CIT OneMachine",
       "Type": "V2_ScriptTest",
-      "Owners": "shalabhs,yzha,rahku,tyadam,preethas,rajak",
+      "Owners": "shalabhs,rahku,preethas",
       "Tags": "NData,TPCC,FabSrvNative",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -149,7 +149,7 @@
     {
       "Name": "FabSrvNative TPCC CIT MultiMachine",
       "Type": "V2_ScriptTest",
-      "Owners": "shalabhs,yzha,rahku,tyadam,preethas,rajak",
+      "Owners": "shalabhs,rahku,preethas",
       "Tags": "NData,TPCC,FabSrvNative",
       "ResourcesRequired": "Server:4",
       "TestExecutionParameters": {
@@ -166,7 +166,7 @@
     {
       "Name": "Backup-CIT-Native",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "NData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -181,7 +181,7 @@
     {
       "Name": "Backup-Quick-Native",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "NData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -196,7 +196,7 @@
     {
       "Name": "Backup-Chained-CIT-Native",
       "Type": "V2_ScriptTest",
-      "Owners": "zhol",
+      "Owners": "hrushib,raunakp,preethas",
       "Tags": "NData,Backup",
       "ResourcesRequired": "Server:1",
       "TestExecutionParameters": {
@@ -205,6 +205,23 @@
         "ConfigName": "WinFabricTest\\Config\\V2_Script_Replicator.txt",
         "TaskName": "Backup-Chained-CIT-Native.test",
         "ExecutionTimeout": "3600",
+        "CleanupTimeout": "2100"
+      }
+    },
+    {
+      "Name": "FabSrv-Simple-Model-TPCC-CIT-OneMachine",
+      "Type": "V2_ScriptTest",
+      "Owners": "kailasl,shalabhs,preethas",
+      "Tags": "NData,TPCC,FabSrvSimpleModel",
+      "ResourcesRequired": "Server:1",
+      "TestExecutionParameters": {
+        "SetupInstall": "/servicefabric",
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\FabSrvTestConfig.txt",
+        "TaskName": "FabSrvSimpleModelTPCCService-CIT.test",
+        "ExecutionTimeout": "21600",
+        "CleanupType": "XCopy",
         "CleanupTimeout": "2100"
       }
     }

@@ -2811,7 +2811,7 @@ internal class SR {
 
     /// <summary>
     ///   Looks up a localized string similar to 
-    ///    Timed out waiting for {0} lock on key; id={1}, timeout={2}ms, txn={3}, lockResourceNameHash={4}
+    ///    Timed out waiting for {0} lock on key; id={1}, timeout={2}ms, txn={3}, lockResourceNameHash={4}; oldest txn with lock={5}
     ///  
     /// </summary>
     internal static string LockTimeout_TStore_KeyLock {

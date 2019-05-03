@@ -121,6 +121,13 @@ EndCheckpointLogRecord::SPtr EndCheckpointLogRecord::CreateOneEndCheckpointLogRe
     return EndCheckpointLogRecord::SPtr(pointer);
 }
 
+std::wstring EndCheckpointLogRecord::ToString() const
+{
+    std::wstring logRecordString = Constants::CloseJSON;
+
+    return __super::ToString() + logRecordString;
+}
+
 void EndCheckpointLogRecord::UpdateApproximateDiskSize()
 {
     ApproximateSizeOnDisk = ApproximateSizeOnDisk + DiskSpaceUsed;

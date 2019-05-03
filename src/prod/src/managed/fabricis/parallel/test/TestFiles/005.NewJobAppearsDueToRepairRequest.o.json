@@ -1,0 +1,11 @@
+{
+  "Comment": "The repair task that requested a repair creates a tenant job. The context Ids should match and the repair task should move to Preparing state",
+  "Items": [
+    {
+      "Id": "3cbd5a8b-1fa9-42b0-a4b1-aba8f0ded836",
+      "Actions": [
+        "MoveToPreparingAction"
+      ]
+    }
+  ]
+}

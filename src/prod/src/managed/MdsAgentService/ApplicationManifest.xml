@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest ApplicationTypeName="FabricMonitoringServiceApplication" ApplicationTypeVersion="6.0.20" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Parameters>
+    <Parameter Name="HealthDataReadIntervalInMinutes" DefaultValue="5" />
+    <Parameter Name="HealthDataReadTimeoutInSeconds" DefaultValue="60" />
+    <Parameter Name="ClusterName" DefaultValue="ClusterNameUnknown" />
+    <Parameter Name="DataCenterName" DefaultValue="DataCenterNameUnknown" />
+    <Parameter Name="HealthQueryTimeoutInSeconds" DefaultValue="30" />
+    <Parameter Name="MAConfigFileName" DefaultValue="MdsConfig.xml" />
+    <Parameter Name="MAXStoreAccounts" DefaultValue="" />
+    <Parameter Name="MAMdmAccountName" DefaultValue="" />
+    <Parameter Name="MAMdmNamespace" DefaultValue="" />
+    <Parameter Name="MARestartDelayInSeconds" DefaultValue="180" />
+    <Parameter Name="ReportServiceHealth" DefaultValue="Always" />
+    <Parameter Name="ApplicationsThatReportServiceHealth" DefaultValue="All" />
+    <Parameter Name="ReportPartitionHealth" DefaultValue="Always" />
+    <Parameter Name="ApplicationsThatReportPartitionHealth" DefaultValue="fabric:/System" />
+    <Parameter Name="ReportReplicaHealth" DefaultValue="Always" />
+    <Parameter Name="ApplicationsThatReportReplicaHealth" DefaultValue="fabric:/System" />
+    <Parameter Name="ReportDeployedApplicationHealth" DefaultValue="Never" />
+    <Parameter Name="ApplicationsThatReportDeployedApplicationHealth" DefaultValue="" />
+    <Parameter Name="ReportServicePackageHealth" DefaultValue="Never" />
+    <Parameter Name="ApplicationsThatReportServicePackageHealth" DefaultValue="" />
+    <Parameter Name="ReportHealthEvents" DefaultValue="Always" />
+    <Parameter Name="ApplicationsThatReportHealthEvents" DefaultValue="All" />
+    <!-- Parameters to support GCS. Refer to GCS documentation on Geneva portal. -->
+    <Parameter Name="GCSEnvironment" DefaultValue="" />
+    <Parameter Name="GCSAccount" DefaultValue="" />
+    <Parameter Name="GCSNamespace" DefaultValue="" />
+    <Parameter Name="GCSRegion" DefaultValue="" />
+    <Parameter Name="GCSEndpoint" DefaultValue="" />
+    <Parameter Name="GCSThumbprint" DefaultValue="" />
+    <Parameter Name="GCSCertStore" DefaultValue="" />
+    <Parameter Name="GCSDsmsUrl" DefaultValue="" />
+    <Parameter Name="GCSAgentVersion" DefaultValue="" />
+    <Parameter Name="UseGCS" DefaultValue="false" />
+    <Parameter Name="GCSConfigVersion" DefaultValue="" />
+    <Parameter Name="GCSExactVersion" DefaultValue="" />
+    <!-- Optional parameters for AzSecpack. -->
+    <Parameter Name="AZSECPACK_PILOT_FEATURES" DefaultValue="" />
+    <Parameter Name="AZSECPACK_CUSTOMPOLICY_LOCATION" DefaultValue="" />
+    <Parameter Name="AZSECPACK_DISABLED_FEATURES" DefaultValue="" />
+    <Parameter Name="AZSECPACK_DISABLED_SCENARIOS" DefaultValue="" />
+  </Parameters> 
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="MonitoringServicePackage" ServiceManifestVersion="6.0.20" />
+    <ConfigOverrides>
+      <ConfigOverride Name="MonitoringService.Config">
+        <Settings>
+          <Section Name="HealthDataProducer">
+            <Parameter Name="HealthDataReadIntervalInMinutes" Value="[HealthDataReadIntervalInMinutes]" />
+            <Parameter Name="HealthDataReadTimeoutInSeconds" Value="[HealthDataReadTimeoutInSeconds]" />
+            <Parameter Name="ClusterName" Value="[ClusterName]" />
+            <Parameter Name="HealthQueryTimeoutInSeconds" Value="[HealthQueryTimeoutInSeconds]" />
+            <Parameter Name="ReportServiceHealth" Value="[ReportServiceHealth]" />
+            <Parameter Name="ApplicationsThatReportServiceHealth" Value="[ApplicationsThatReportServiceHealth]" />
+            <Parameter Name="ReportPartitionHealth" Value="[ReportPartitionHealth]" />
+            <Parameter Name="ApplicationsThatReportPartitionHealth" Value="[ApplicationsThatReportPartitionHealth]" />
+            <Parameter Name="ReportReplicaHealth" Value="[ReportReplicaHealth]" />
+            <Parameter Name="ApplicationsThatReportReplicaHealth" Value="[ApplicationsThatReportReplicaHealth]" />
+            <Parameter Name="ReportDeployedApplicationHealth" Value="[ReportDeployedApplicationHealth]" />
+            <Parameter Name="ApplicationsThatReportDeployedApplicationHealth" Value="[ApplicationsThatReportDeployedApplicationHealth]" />
+            <Parameter Name="ReportServicePackageHealth" Value="[ReportServicePackageHealth]" />
+            <Parameter Name="ApplicationsThatReportServicePackageHealth" Value="[ApplicationsThatReportServicePackageHealth]" />
+            <Parameter Name="ReportHealthEvents" Value="[ReportHealthEvents]" />
+            <Parameter Name="ApplicationsThatReportHealthEvents" Value="[ApplicationsThatReportHealthEvents]" />
+          </Section>
+          <Section Name="MdsHealthDataConsumer">
+            <Parameter Name="MdmAccountName" Value="[MAMdmAccountName]" />
+            <Parameter Name="MdmNamespace" Value="[MAMdmNamespace]" />
+            <Parameter Name="DataCenter" Value="[DataCenterName]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
+  </ServiceManifestImport>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="MdsAgentServicePackage" ServiceManifestVersion="6.0.20" />
+    <ConfigOverrides>
+      <ConfigOverride Name="MdsAgentService.Config">
+        <Settings>
+          <Section Name="FabricMdsAgentServiceConfig">
+            <Parameter Name="MAConfigFileName" Value="[MAConfigFileName]" />
+            <Parameter Name="ClusterName" Value="[ClusterName]" />
+            <Parameter Name="DataCenterName" Value="[DataCenterName]" />
+            <Parameter Name="MAXStoreAccounts" Value="[MAXStoreAccounts]" />
+            <Parameter Name="MAMdmAccountName" Value="[MAMdmAccountName]" />
+            <Parameter Name="MAMdmNamespace" Value="[MAMdmNamespace]" />
+            <Parameter Name="MARestartDelayInSeconds" Value="[MARestartDelayInSeconds]" />
+            <Parameter Name="GCSEnvironment" Value="[GCSEnvironment]" />
+            <Parameter Name="GCSAccount" Value="[GCSAccount]" />
+            <Parameter Name="GCSNamespace" Value="[GCSNamespace]" />
+            <Parameter Name="GCSRegion" Value="[GCSRegion]" />
+            <Parameter Name="GCSEndpoint" Value="[GCSEndpoint]" />
+            <Parameter Name="GCSThumbprint" Value="[GCSThumbprint]" />
+            <Parameter Name="GCSCertStore" Value="[GCSCertStore]" />
+            <Parameter Name="GCSDsmsUrl" Value="[GCSDsmsUrl]" />
+            <Parameter Name="GCSAgentVersion" Value="[GCSAgentVersion]" />
+            <Parameter Name="UseGCS" Value="[UseGCS]" />
+            <Parameter Name="GCSConfigVersion" Value="[GCSConfigVersion]" />
+            <Parameter Name="GCSExactVersion" Value="[GCSExactVersion]" />
+            <Parameter Name="AZSECPACK_PILOT_FEATURES" Value="[AZSECPACK_PILOT_FEATURES]" />
+            <Parameter Name="AZSECPACK_CUSTOMPOLICY_LOCATION" Value="[AZSECPACK_CUSTOMPOLICY_LOCATION]" />
+            <Parameter Name="AZSECPACK_DISABLED_FEATURES" Value="[AZSECPACK_DISABLED_FEATURES]" />
+            <Parameter Name="AZSECPACK_DISABLED_SCENARIOS" Value="[AZSECPACK_DISABLED_SCENARIOS]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
+    <Policies>
+      <RunAsPolicy CodePackageRef="MdsAgentService.Code" UserRef="MALocalSystem" EntryPointType="Main"/>
+    </Policies>
+  </ServiceManifestImport>
+  <Principals>
+    <Users>
+      <User Name="MALocalSystem" AccountType="LocalSystem" />
+    </Users>
+  </Principals>
+</ApplicationManifest>

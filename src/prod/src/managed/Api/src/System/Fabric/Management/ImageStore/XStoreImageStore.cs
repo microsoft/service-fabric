@@ -8,6 +8,7 @@ namespace System.Fabric.Management.ImageStore
     using System;
     using System.Collections.Generic;
     using System.Fabric.Common;
+    using System.Fabric.Common.Tracing;
     using System.Fabric.Description;
     using System.Fabric.ImageStore;
     using System.Fabric.Query;
@@ -25,9 +26,15 @@ namespace System.Fabric.Management.ImageStore
     /// </summary>
     internal class XStoreImageStore : IImageStore
     {
+        /// <summary>Class name </summary>
+        private const string ClassName = "XStoreImageStore";
+
         /// <summary>XStore params </summary>
         private readonly XStoreProviderParameters providerParams = null;
         private readonly string localRoot;
+
+        /// <summary> Source for writing traces in XStoreImageStore. </summary>
+        private FabricEvents.ExtensionsEvents traceSource = new FabricEvents.ExtensionsEvents(FabricEvents.Tasks.ImageStoreClient);
 
         static XStoreImageStore()
         {
@@ -306,6 +313,8 @@ namespace System.Fabric.Management.ImageStore
                     }
                     else
                     {
+                        var operationId = Guid.NewGuid();
+
                         // this is a multiple blob (folder) copy from xstore to smb
                         xstoreFileOperation.CopyFolder(
                             tag,
@@ -314,7 +323,42 @@ namespace System.Fabric.Management.ImageStore
                             copyFlag,
                             null,
                             null,
-                            helper);
+                            helper,
+                            operationId);
+
+                        var blobContentEntries = XStoreCommon.GetDownloadContentEntries(operationId);
+                        if (blobContentEntries == null)
+                        {
+                            return;
+                        }
+
+                        var missingFiles = blobContentEntries.Where(entry => !File.Exists(entry.Item2));
+                        if (missingFiles.Count() > 0)
+                        {
+                            //The missing file count will be traced out and there will be no retrying without remaining time.
+                            //The following step to do will return proper error code after sync up with hosting and image builder.
+                            if (helper != null && helper.GetRemainingTime() == TimeSpan.Zero)
+                            {
+                                this.traceSource.WriteWarning(
+                                    ClassName,
+                                    "{0} files missing after downloading, OperationID: {1}", missingFiles.Count(), operationId);
+                                return;
+                            }
+
+                            this.traceSource.WriteWarning(
+                                ClassName,
+                                "Retry to download the {0} missing files, operationID: {1}", missingFiles.Count(), operationId);
+
+                            foreach (var file in missingFiles)
+                            {
+                                xstoreFileOperation.CopyFile(
+                                    file.Item1,
+                                    file.Item2,
+                                    XStoreFileOperationType.CopyFromXStoreToSMB,
+                                    helper);
+                            }
+
+                        }
                     }
                 }
             }

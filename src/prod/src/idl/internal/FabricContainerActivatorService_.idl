@@ -1,0 +1,179 @@
+// ------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("// Copyright (c) Microsoft Corporation. All rights reserved.")
+cpp_quote("// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.")
+cpp_quote("// ------------------------------------------------------------")
+cpp_quote("#if ( _MSC_VER >= 1020 )")
+cpp_quote("#pragma once")
+cpp_quote("#endif")
+
+import "Unknwn.idl";
+import "FabricCommon.idl";
+import "FabricCommon_.idl";
+import "FabricTypes_.idl";
+import "FabricRuntime.idl";
+
+//
+// Forward Declarations
+//
+
+interface IFabricContainerActivatorService;
+interface IFabricContainerActivatorService2;
+interface IFabricContainerActivatorServiceAgent;
+interface IFabricHostingSettingsResult;
+interface IFabricContainerApiExecutionResult;
+
+[
+    uuid(6f9891a3-d279-4e19-9a22-ff47d0ad58a6),
+    version(1.0),
+]
+library FabricContainerActivatorServiceLib
+{
+    importlib("stdole2.tlb");
+
+#pragma pack (push, 8)
+
+    // ----------------------------------------------------------------------------
+    // List of interfaces to include in the type library
+    //
+
+    interface IFabricContainerActivatorService;
+    interface IFabricContainerActivatorService2;
+    interface IFabricContainerActivatorServiceAgent;
+    interface IFabricHostingSettingsResult;
+    interface IFabricContainerApiExecutionResult;
+
+    // ----------------------------------------------------------------------------
+    // coclass definitions
+
+    [
+        uuid(16c96a7a-a6d2-481c-b057-678ad8fa105e),
+        noncreatable
+    ]
+    coclass FabricContainerActivatorServiceAgent
+    {
+        [default] interface IFabricContainerActivatorServiceAgent;
+    }
+
+    // ----------------------------------------------------------------------------
+    // module definitions
+    [
+        uuid(29d70a23-1167-4b5a-997f-69c86ef258d0),
+        dllname("FabricContainerActivatorService.dll")
+    ]
+    module FabricContainerActivatorService
+    {
+        [entry("CreateFabricContainerActivatorServiceAgent")] HRESULT CreateFabricContainerActivatorServiceAgent(
+            [in] REFIID riid,
+            [out, retval] void ** fabricContainerActivatorServiceAgent);
+
+        [entry("LoadHostingSettings")] HRESULT LoadHostingSettings(
+            [out, retval] void ** fabricHostingSettings);
+    }
+
+#pragma pack (pop)
+}
+
+// ----------------------------------------------------------------------------
+// Interfaces
+
+[object, local, uuid(111d2880-5b3e-48b3-895c-c62036830a14)]
+interface IFabricContainerActivatorService : IUnknown
+{
+    [] HRESULT StartEventMonitoring(
+        [in] BOOLEAN isContainerServiceManaged,
+        [in] ULONGLONG sinceTime);
+
+    [] HRESULT BeginActivateContainer(
+        [in] FABRIC_CONTAINER_ACTIVATION_ARGS * activationParams,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndActivateContainer(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricStringResult ** result);
+
+    [] HRESULT BeginDeactivateContainer(
+        [in] FABRIC_CONTAINER_DEACTIVATION_ARGS * deactivationParams,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndDeactivateContainer(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDownloadImages(
+        [in] FABRIC_CONTAINER_IMAGE_DESCRIPTION_LIST * images,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndDownloadImages(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginDeleteImages(
+        [in] FABRIC_STRING_LIST * images,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndDeleteImages(
+        [in] IFabricAsyncOperationContext * context);
+
+    [] HRESULT BeginInvokeContainerApi(
+        [in] FABRIC_CONTAINER_API_EXECUTION_ARGS * apiExecArgs,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndInvokeContainerApi(
+        [in] IFabricAsyncOperationContext * context,
+        [out, retval] IFabricContainerApiExecutionResult ** result);
+}
+
+[object, local, uuid(8fdba659-674c-4464-ac64-21d410313b96)]
+interface IFabricContainerActivatorService2 : IFabricContainerActivatorService
+{
+    [] HRESULT BeginContainerUpdateRoutes(
+        [in] FABRIC_CONTAINER_UPDATE_ROUTE_ARGS * updateExecArgs,
+        [in] DWORD timeoutMilliseconds,
+        [in] IFabricAsyncOperationCallback * callback,
+        [out, retval] IFabricAsyncOperationContext ** context);
+
+    [] HRESULT EndContainerUpdateRoutes(
+        [in] IFabricAsyncOperationContext * context);
+}
+
+[object, local, uuid(b40b7396-5d2a-471a-b6bc-6cfad1cb2061)]
+interface IFabricContainerActivatorServiceAgent : IUnknown
+{
+    [] HRESULT ProcessContainerEvents(
+        [in] FABRIC_CONTAINER_EVENT_NOTIFICATION * notifiction);
+
+    [] HRESULT RegisterContainerActivatorService(
+        [in] IFabricContainerActivatorService * activatorService);
+}
+
+[object, local, uuid(ac2bcdde-3987-4bf0-ac91-989948faac85)]
+interface IFabricContainerActivatorServiceAgent2 : IFabricContainerActivatorServiceAgent
+{
+    [] HRESULT RegisterContainerActivatorService(
+        [in] IFabricContainerActivatorService2 * activatorService);
+}
+
+[object, local, uuid(24e88e38-deb8-4bd9-9b55-ca67d6134850)]
+interface IFabricHostingSettingsResult : IUnknown
+{
+    [] const FABRIC_HOSTING_SETTINGS * get_Result();
+}
+
+[object, local, uuid(c40d5451-32c4-481a-b340-a9e771cc6937)]
+interface IFabricContainerApiExecutionResult : IUnknown
+{
+    [] const FABRIC_CONTAINER_API_EXECUTION_RESPONSE * get_Result();
+}

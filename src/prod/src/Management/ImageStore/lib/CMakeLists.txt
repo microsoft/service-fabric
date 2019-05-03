@@ -2,6 +2,7 @@ set( LINUX_SOURCES
     ../AzureImageStore.cpp
     ../FileImageStore.cpp
     ../IImageStore.cpp
+    ../ImageCacheConstants.cpp
     ../ImageStoreAccessDescription.cpp
     ../ImageStoreFactory.cpp
     ../ImageStoreServiceConfig.cpp

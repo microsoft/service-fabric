@@ -94,7 +94,6 @@ void NodesHealthEvaluation::SetDescription()
 {
     size_t unhealthyCount = unhealthyEvaluations_.size();
     description_ = wformatString(
-        "{0} {1}% ({2}/{3}), MaxPercentUnhealthyNodes={4}%.",
         HMResource::GetResources().HealthEvaluationUnhealthyNodesPerPolicy,
         GetUnhealthyPercent(unhealthyCount, totalCount_),
         unhealthyCount,

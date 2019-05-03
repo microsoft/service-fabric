@@ -1,0 +1,29 @@
+#Block FM replication to trigger lock failure
+set DummyPLBEnabled true
+votes 10 20 30
+cmservice 3 1
+namingservice 1 3 2
+fmservice 3 1
+cleantest
++10
++20
++30
+verify
++40
++50
++60
+verify
+
+createname fabric:/test1
+createservice fabric:/test1 TestPersistedStoreServiceType y 1 3 persist
+verify
+
+addbehavior b1 50 * DoReconfigurationReply
+-60
+!pause,10
+addbehavior b2 30 * ReplicationOperation
+removebehavior b1
+!pause,300
+removebehavior b2
+verify
+!q

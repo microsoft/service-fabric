@@ -1,0 +1,9 @@
+###Partition af7bbd06-2946-4737-b5ef-b8e48f5498d1 time range 10/23/2014 7:02:47 PM-10/23/2014 7:08:13 PM
+1 replica(s) are being built for at least ###00:04:54.3630000
+Analyzing replica on 40
+Checking primary
+Replica is being created on primary
+Checking node 40
+Replica is not opened successfully.
+Failed Task: OpenReplica(RAPEndActions(ApiError: ServiceOpenOperation->E_FAIL)[*3])
+

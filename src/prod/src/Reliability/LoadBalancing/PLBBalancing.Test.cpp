@@ -61,6 +61,8 @@ namespace PlacementAndLoadBalancingUnitTest
 
         void SwapCostTestHelper(PlacementAndLoadBalancing & plb, wstring const& testName);
 
+    void LoadBalancingWithShouldDisappearLoadTestHelper(wstring const& testName, bool featureSwitch);
+
         shared_ptr<TestFM> fm_;
     };
 
@@ -10005,6 +10007,16 @@ namespace PlacementAndLoadBalancingUnitTest
 
     }
 
+    BOOST_AUTO_TEST_CASE(LoadBalancingWithShouldDisappearLoadTest)
+    {
+        LoadBalancingWithShouldDisappearLoadTestHelper(L"LoadBalancingWithShouldDisappearLoadTest", true);
+    }
+
+    BOOST_AUTO_TEST_CASE(LoadBalancingWithShouldDisappearLoadTestFeatureSwitchOff)
+    {
+        LoadBalancingWithShouldDisappearLoadTestHelper(L"LoadBalancingWithShouldDisappearLoadTestFeatureSwitchOff", false);
+    }
+
     // This test is the simulation that systematically checks if unused nodes can be utilized.
     // Formula for switching between '+1' and quorum based logic is determined by this simulation.
     // It's not 'classic' boost test so shouldn't be used on regular basis. 
@@ -10129,7 +10141,49 @@ namespace PlacementAndLoadBalancingUnitTest
     */
     BOOST_AUTO_TEST_SUITE_END()
 
-        void TestPLBBalancing::BalancingThrottlingHelper(uint limit)
+    void TestPLBBalancing::LoadBalancingWithShouldDisappearLoadTestHelper(wstring const& testName, bool featureSwitch)
+    {
+        // Node capacity is 100 for both nodes.
+        //  Node 0: 100 load, 0 disappearing load
+        //  Node 1: 0 load, 100 disappearing load
+        // Cluster is imbalanced:
+        //      Feature switch on: no moves can be made because node 1 is full of disappearing load.
+        //      Feature switch off: moves can be made regardless of node 1 that is full of disappearing load.
+        Trace.WriteInfo("PLBBalancingTestSource", "{0}", testName);
+        PLBConfigScopeChange(PreventTransientOvercommit, bool, true);
+        PLBConfigScopeChange(CountDisappearingLoadForSimulatedAnnealing, bool, featureSwitch);
+
+        PlacementAndLoadBalancing & plb = fm_->PLB;
+
+        plb.UpdateNode(CreateNodeDescriptionWithCapacity(0, L"CPU/100"));
+        plb.UpdateNode(CreateNodeDescriptionWithCapacity(1, L"CPU/100"));
+        plb.ProcessPendingUpdatesPeriodicTask();
+
+        wstring serviceName = wformatString("{0}_Service", testName);
+
+        plb.UpdateServiceType(ServiceTypeDescription(wstring(L"TestType"), set<NodeId>()));
+
+        plb.UpdateService(CreateServiceDescriptionWithApplication(
+            serviceName,
+            L"TestType",
+            wstring(L""),
+            true,
+            CreateMetrics(L"CPU/1.0/50/50")));
+
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(0), wstring(serviceName), 0, CreateReplicas(L"P/0"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(1), wstring(serviceName), 0, CreateReplicas(L"P/0"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(2), wstring(serviceName), 0, CreateReplicas(L"P/1/V"), 0));
+        plb.UpdateFailoverUnit(FailoverUnitDescription(CreateGuid(3), wstring(serviceName), 0, CreateReplicas(L"P/1/D"), 0));
+
+        plb.Refresh(Stopwatch::Now());
+
+        vector<wstring> actionList = GetActionListString(fm_->MoveActions);
+        size_t expectedMoves = featureSwitch ? 0 : 1;
+        VERIFY_ARE_EQUAL(expectedMoves, actionList.size());
+        VerifyPLBAction(plb, L"LoadBalancing");
+    }
+
+    void TestPLBBalancing::BalancingThrottlingHelper(uint limit)
     {
         // This test helper expects that number of movements is throttled to limit
         // Throttling is set in the test that is calling the helper

@@ -1,0 +1,5 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <GeneratedRCFile>$(IntermediateOutputPath)wf_custom_generated.rc</GeneratedRCFile>
+  </PropertyGroup>
+</Project>

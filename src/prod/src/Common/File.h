@@ -196,6 +196,9 @@ namespace Common
         static ErrorCode GetAttributes(const std::wstring& path, FileAttributes::Enum & attributes);
         static ErrorCode SetAttributes(const std::wstring& path, FileAttributes::Enum fileAttributes);
         static ErrorCode RemoveReadOnlyAttribute(const std::wstring& path);
+#if defined(PLATFORM_UNIX)
+        static ErrorCode AllowAccessToAll(const std::wstring& path);
+#endif
 
         void Flush();
 

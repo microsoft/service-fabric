@@ -19,7 +19,7 @@ class ComProxyContainerActivatorService::ActivateContainerAsyncOperation : publi
 
 public:
     ActivateContainerAsyncOperation(
-        IFabricContainerActivatorService & comImpl,
+        IFabricContainerActivatorService2 & comImpl,
         ContainerActivationArgs const & activationArgs,
         TimeSpan const & timeout,
         AsyncCallback const & callback,
@@ -89,7 +89,7 @@ protected:
     }
 
 private:
-    IFabricContainerActivatorService & comImpl_;
+    IFabricContainerActivatorService2 & comImpl_;
     ContainerActivationArgs activationArgs_;
     TimeSpan timeout_;
     IFabricStringResult * result_;
@@ -101,7 +101,7 @@ class ComProxyContainerActivatorService::DeactivateContainerAsyncOperation : pub
 
 public:
     DeactivateContainerAsyncOperation(
-        IFabricContainerActivatorService & comImpl,
+        IFabricContainerActivatorService2 & comImpl,
         ContainerDeactivationArgs const & deactivationArgs,
         TimeSpan const & timeout,
         AsyncCallback const & callback,
@@ -153,7 +153,7 @@ protected:
     }
 
 private:
-    IFabricContainerActivatorService & comImpl_;
+    IFabricContainerActivatorService2 & comImpl_;
     ContainerDeactivationArgs deactivationArgs_;
     TimeSpan timeout_;
 };
@@ -164,7 +164,7 @@ class ComProxyContainerActivatorService::InvokeContainerApiAsyncOperation : publ
 
 public:
     InvokeContainerApiAsyncOperation(
-        IFabricContainerActivatorService & comImpl,
+        IFabricContainerActivatorService2 & comImpl,
         ContainerApiExecutionArgs const & apiExecArgs,
         TimeSpan const & timeout,
         AsyncCallback const & callback,
@@ -232,7 +232,7 @@ protected:
     }
 
 private:
-    IFabricContainerActivatorService & comImpl_;
+    IFabricContainerActivatorService2 & comImpl_;
     ContainerApiExecutionArgs apiExecArgs_;
     TimeSpan timeout_;
     IFabricContainerApiExecutionResult * result;
@@ -244,7 +244,7 @@ class ComProxyContainerActivatorService::DownloadContainerImagesAsyncOperation :
 
 public:
     DownloadContainerImagesAsyncOperation(
-        IFabricContainerActivatorService & comImpl,
+        IFabricContainerActivatorService2 & comImpl,
         vector<ContainerImageDescription> const& images,
         TimeSpan const & timeout,
         AsyncCallback const & callback,
@@ -299,7 +299,7 @@ protected:
     }
 
 private:
-    IFabricContainerActivatorService & comImpl_;
+    IFabricContainerActivatorService2 & comImpl_;
     vector<ContainerImageDescription> images_;
     TimeSpan timeout_;
 };
@@ -310,7 +310,7 @@ class ComProxyContainerActivatorService::DeleteContainerImagesAsyncOperation : p
 
 public:
     DeleteContainerImagesAsyncOperation(
-        IFabricContainerActivatorService & comImpl,
+        IFabricContainerActivatorService2 & comImpl,
         vector<wstring> const& images,
         TimeSpan const & timeout,
         AsyncCallback const & callback,
@@ -353,13 +353,78 @@ protected:
     }
 
 private:
-    IFabricContainerActivatorService & comImpl_;
+    IFabricContainerActivatorService2 & comImpl_;
     vector<wstring> images_;
     TimeSpan timeout_;
 };
 
+class ComProxyContainerActivatorService::ContainerUpdateRoutesAsyncOperation : public ComProxyAsyncOperation
+{
+    DENY_COPY(ContainerUpdateRoutesAsyncOperation)
+
+public:
+    ContainerUpdateRoutesAsyncOperation(
+        IFabricContainerActivatorService2 & comImpl,
+        Hosting2::ContainerUpdateRoutesRequest const & updateRoutesRequest,
+        TimeSpan const & timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : ComProxyAsyncOperation(callback, parent)
+        , comImpl_(comImpl)
+        , updateRoutesRequest_(move(updateRoutesRequest))
+        , timeout_(timeout)
+    {
+    }
+
+    virtual ~ContainerUpdateRoutesAsyncOperation() { }
+
+    static ErrorCode End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<ContainerUpdateRoutesAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    DWORD GetDWORDTimeout() { return static_cast<DWORD>(timeout_.TotalMilliseconds()); }
+
+    HRESULT BeginComAsyncOperation(IFabricAsyncOperationCallback * callback, IFabricAsyncOperationContext ** context)
+    {
+        ScopedHeap heap;
+        FABRIC_CONTAINER_UPDATE_ROUTE_ARGS fabricUpdateRouteArgs = {};
+
+        fabricUpdateRouteArgs.ContainerId = heap.AddString(this->updateRoutesRequest_.ContainerId);
+        fabricUpdateRouteArgs.ContainerName = heap.AddString(this->updateRoutesRequest_.ContainerName);
+        fabricUpdateRouteArgs.ApplicationId = heap.AddString(this->updateRoutesRequest_.ApplicationId);
+        fabricUpdateRouteArgs.ApplicationName = heap.AddString(this->updateRoutesRequest_.ApplicationName);
+        fabricUpdateRouteArgs.NetworkType = NetworkType::ToPublicApi(this->updateRoutesRequest_.NetworkType);
+        fabricUpdateRouteArgs.AutoRemove = this->updateRoutesRequest_.AutoRemove;
+        fabricUpdateRouteArgs.IsContainerRoot = this->updateRoutesRequest_.IsContainerRoot;
+        fabricUpdateRouteArgs.CgroupName = heap.AddString(this->updateRoutesRequest_.CgroupName);
+
+        auto gatewayIpAddresses = heap.AddItem<FABRIC_STRING_LIST>();
+        StringList::ToPublicAPI(heap, this->updateRoutesRequest_.GatewayIpAddresses, gatewayIpAddresses);
+        fabricUpdateRouteArgs.GatewayIpAddresses = gatewayIpAddresses.GetRawPointer();
+
+        return comImpl_.BeginContainerUpdateRoutes(
+            &fabricUpdateRouteArgs,
+            this->GetDWORDTimeout(),
+            callback,
+            context);
+    }
+
+    HRESULT EndComAsyncOperation(IFabricAsyncOperationContext * context)
+    {
+        return comImpl_.EndContainerUpdateRoutes(context);
+    }
+
+private:
+    IFabricContainerActivatorService2 & comImpl_;
+    ContainerUpdateRoutesRequest updateRoutesRequest_;
+    TimeSpan timeout_;
+};
+
 ComProxyContainerActivatorService::ComProxyContainerActivatorService(
-    ComPointer<IFabricContainerActivatorService> const & comImpl)
+    ComPointer<IFabricContainerActivatorService2> const & comImpl)
     : IContainerActivatorService()
     , comImpl_(comImpl)
 {
@@ -488,4 +553,26 @@ ErrorCode ComProxyContainerActivatorService::EndInvokeContainerApi(
     __out ContainerApiExecutionResponse & apiExecResp)
 {
     return InvokeContainerApiAsyncOperation::End(operation, apiExecResp);
+}
+
+AsyncOperationSPtr ComProxyContainerActivatorService::BeginContainerUpdateRoutes(
+    ContainerUpdateRoutesRequest const & updateRoutesRequest,
+    TimeSpan const timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    auto operation = AsyncOperation::CreateAndStart<ContainerUpdateRoutesAsyncOperation>(
+        *comImpl_.GetRawPointer(),
+        updateRoutesRequest,
+        timeout,
+        callback,
+        parent);
+
+    return operation;
+}
+
+ErrorCode ComProxyContainerActivatorService::EndContainerUpdateRoutes(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return ContainerUpdateRoutesAsyncOperation::End(operation);
 }

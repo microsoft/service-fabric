@@ -29,8 +29,8 @@ volatile long       _g_K$UnitTest$AwaitableStateRaceTestCount = 0;
 volatile long       _g_K$UnitTest$AwaitableStateRaceTestResultReadyCount = 0;
 volatile long       _g_K$UnitTest$AwaitableStateRaceTestSuspendedCount = 0;
 volatile long       _g_K$UnitTest$AwaitableStateRaceTestFinalHeldCount = 0;
-bool				_g_ForceTaskFrameAllocationFailure = false;
-bool 				_g_ForceAwaitableTFrameAllocationFailure = false;
+bool                _g_ForceTaskFrameAllocationFailure = false;
+bool                _g_ForceAwaitableTFrameAllocationFailure = false;
 bool                _g_KtlEitherReady_TestFastPath = true;
 unsigned long       _g_KtlEitherReady_TestHoldAwDelay = 0;
 unsigned long       _g_KCo$TotalObjects = 0;
@@ -62,7 +62,7 @@ using namespace ktl;
 using namespace ktl::kasync;
 using namespace ktl::kservice;
 
-volatile ULONGLONG		AcsMonitorCount = 0;
+volatile ULONGLONG      AcsMonitorCount = 0;
 AwaitableState      _g_AwaitableStateUnderTest;
 KEvent              _g_EntryHoldEvent;
 KEvent              _g_DoneHoldEvent;
@@ -179,7 +179,7 @@ public:
    }
 
    /* Test APIs */
-   Task TaskTest(KAsyncEvent& CompletionEvent, BOOLEAN HasDeferredClose)		// Task
+   Task TaskTest(KAsyncEvent& CompletionEvent, BOOLEAN HasDeferredClose)        // Task
    {
       KCoService$TaskEntry(HasDeferredClose);
       puts("MyTestService::TaskTest: Entry");
@@ -191,7 +191,7 @@ public:
       CompletionEvent.SetEvent();
    }
 
-   Awaitable<NTSTATUS> AwaitableTest(BOOLEAN HasDeferredClose)		// Awaitable
+   Awaitable<NTSTATUS> AwaitableTest(BOOLEAN HasDeferredClose)      // Awaitable
    {
       puts("MyTestService::AwaitableTest: Entry");
       KCoService$ApiEntry(HasDeferredClose);
@@ -209,11 +209,11 @@ MyTestService::~MyTestService() {}
 // Simple Service test
 Awaitable<NTSTATUS> SimpleServiceTests(KAllocator& Alloc, char* Str)
 {
-   MyTestService::SPtr		service;
-   KAsyncEvent				compEvent;
-   KAsyncEvent::WaitContext::SPtr	eventWaitContext;
+   MyTestService::SPtr      service;
+   KAsyncEvent              compEvent;
+   KAsyncEvent::WaitContext::SPtr   eventWaitContext;
 
-   NTSTATUS		status = MyTestService::Create(service, Alloc);
+   NTSTATUS     status = MyTestService::Create(service, Alloc);
    if (!NT_SUCCESS(status))
    {
       co_return status;
@@ -350,7 +350,7 @@ public:
       this->_testType = TestType::simpleKtaskTest;
 
 #if !defined(PLATFORM_UNIX) // clang//llvm bug
-      byte			bytes[32];
+      byte          bytes[32];
       for (int i = 0; i < 32; i++)
       {
          bytes[i] = (byte)i;
@@ -407,9 +407,9 @@ public:
    Awaitable<NTSTATUS> AwaitableMethod1()
    {
       KCoAsync$ApiEntry();
-      NTSTATUS	status = STATUS_SUCCESS;
+      NTSTATUS  status = STATUS_SUCCESS;
 
-      KTimer::SPtr	localTimer;
+      KTimer::SPtr  localTimer;
 
       status = KTimer::Create(localTimer, GetThisAllocator(), KTL_TAG_TEST);
       if (!NT_SUCCESS(status))
@@ -462,7 +462,7 @@ private:
       undefined
    };
 
-   TestType	_testType;
+   TestType _testType;
 
 
 private:
@@ -471,7 +471,7 @@ private:
    {
       KCoAsync$TaskEntry();
 
-      KSpinLock		myLock;
+      KSpinLock     myLock;
 
       for (int ix2 = 0; ix2 < 100; ix2++)
       {
@@ -481,7 +481,7 @@ private:
          {
             KInvariant(myLock.IsOwned());
 
-            KTimer::SPtr	testTimer;
+            KTimer::SPtr    testTimer;
             NTSTATUS status = KTimer::Create(testTimer, GetThisAllocator(), KTL_TAG_TEST);
 
             if (!NT_SUCCESS(status))
@@ -514,7 +514,7 @@ private:
       // Form another parallel Task
       OnStartAsync1(_joinEvent);
 
-      KTimer::SPtr	testTimer;
+      KTimer::SPtr  testTimer;
       NTSTATUS status = KTimer::Create(testTimer, GetThisAllocator(), KTL_TAG_TEST);
       if (!NT_SUCCESS(status))
       {
@@ -529,7 +529,7 @@ private:
          co_return;
       }
 
-      KSpinLock		myLock;
+      KSpinLock     myLock;
 
       for (int ix1 = 0; ix1 < 100; ix1++)
       {
@@ -554,7 +554,7 @@ private:
          KInvariant(!myLock.IsOwned());
       }
 
-      KAsyncEvent::WaitContext::SPtr	waitContext;
+      KAsyncEvent::WaitContext::SPtr    waitContext;
       status = _joinEvent.CreateWaitContext(KTL_TAG_TEST, GetThisAllocator(), waitContext);
       if (!NT_SUCCESS(status))
       {
@@ -611,7 +611,7 @@ Awaitable<NTSTATUS> ExecAwaiterParallelKAsync(AsyncAwaiterTestContext& async)
        co_return{ status };
    }
 
-   KTimer::SPtr	testTimer;
+   KTimer::SPtr testTimer;
    status = KTimer::Create(testTimer, async.GetThisAllocator(), KTL_TAG_TEST);
    if (!NT_SUCCESS(status))
    {
@@ -631,18 +631,18 @@ class GClass : public KObject<GClass>, public KShared<GClass>, public KTagBase<G
    K_FORCE_SHARED(GClass);
 
 public:
-   static GClass::SPtr	Create(KAllocator& Allocator)
+   static GClass::SPtr  Create(KAllocator& Allocator)
    {
       return SPtr(_new(KTL_TAG_TEST, Allocator) GClass());
    }
 
    Awaitable<int> KSharedTypedAwaitableIMethod(int ValueToReturn)
    {
-      KCoShared$ApiEntry();			// Test when caller drops refcount --- optional  
+      KCoShared$ApiEntry();         // Test when caller drops refcount --- optional  
 
       printf("GClass::KSharedTypedAwaitableIMethod: ValueToReturn: %i\n", ValueToReturn);
 
-      KTimer::SPtr	myTimer;
+      KTimer::SPtr  myTimer;
       KInvariant(NT_SUCCESS(KTimer::Create(myTimer, GetThisAllocator(), KTL_TAG_TEST)));
 
       NTSTATUS status = co_await myTimer->StartTimerAsync(1000, nullptr);
@@ -656,7 +656,7 @@ public:
       co_return ValueToReturn;
    }
 
-   static bool	testGClassDtored;
+   static bool  testGClassDtored;
 };
 
 GClass::GClass() {}
@@ -666,11 +666,11 @@ GClass::~GClass()
    puts("GClass::~GClass");
 }
 
-bool	GClass::testGClassDtored = false;
+bool    GClass::testGClassDtored = false;
 
 //* Simple unit tests for co_awaitable ktl::Awaitable<T> funtionality; also
 //  proves simple KShared<> awaitable instance methods works; the KCoShared$ApiEntry
-//	macro is also proven
+//  macro is also proven
 //
 Awaitable<int> BasicAwaitableTypeTestImp(KAllocator& AllocIn, int ValueToReturn)
 {
@@ -716,7 +716,7 @@ Awaitable<KTimer::SPtr> BasicAwaitableVoidTestImp(KAllocator& Alloc, char* Str)
 {
    printf("BasicAwaitableVoidTestImp: Entry: %s\n", Str);
 
-   KTimer::SPtr	myTimer;
+   KTimer::SPtr myTimer;
    KInvariant(NT_SUCCESS(KTimer::Create(myTimer, Alloc, KTL_TAG_TEST)));
 
    co_await myTimer->StartTimerAsync(1000, nullptr);
@@ -737,7 +737,7 @@ Awaitable<KTimer::SPtr> BasicAwaitableVoidTestImp(KAllocator& Alloc, char* Str)
 Awaitable<void> BasicAwaitableVoidTest(KAllocator& Alloc, char* Str)
 {
    puts("BasicAwaitableVoidTest: Entry");
-   KTimer::SPtr	myTimer = co_await BasicAwaitableVoidTestImp(Alloc, Str);
+   KTimer::SPtr myTimer = co_await BasicAwaitableVoidTestImp(Alloc, Str);
    puts("BasicAwaitableVoidTest: Exit");
 }
 
@@ -861,7 +861,7 @@ public:
    }
 
 private:
-   const char*	_desc;
+   const char*  _desc;
 };
 
 
@@ -960,7 +960,7 @@ Awaitable<void> SyncAwait_SyncCompAwaitVoidTest(KAllocator& Alloc)
 {
     auto timer = KTimer::StartTimerAsync(Alloc, KTL_TAG_TEST, 1000, nullptr);
     auto status = co_await timer;
-    bool		result = NT_SUCCESS(status);
+    bool        result = NT_SUCCESS(status);
     KInvariant(result);
 
     co_return;
@@ -1150,69 +1150,69 @@ void ProveAwaitableState(KAllocator& Allocator)
 class TestDebugInfoProvider : public ExceptionDebugInfoProvider
 {
 public:
-	static KSpinLock		_g_Lock;
-	static volatile LONG	_g_AcquireCount;
-	static volatile LONG	_g_ReleaseCount;
-	static volatile LONG	_g_UnsafeSymInitializeCount;
-	static volatile LONG	_g_UnsafeSymFromAddrCount;
-	static volatile LONG	_g_UnsafeSymGetLineFromAddr64Count;
+    static KSpinLock        _g_Lock;
+    static volatile LONG    _g_AcquireCount;
+    static volatile LONG    _g_ReleaseCount;
+    static volatile LONG    _g_UnsafeSymInitializeCount;
+    static volatile LONG    _g_UnsafeSymFromAddrCount;
+    static volatile LONG    _g_UnsafeSymGetLineFromAddr64Count;
 
 public:
-	void AcquireLock() noexcept override
-	{
-		InterlockedIncrement(&_g_AcquireCount);
-		_g_Lock.Acquire();
-	}
+    void AcquireLock() noexcept override
+    {
+        InterlockedIncrement(&_g_AcquireCount);
+        _g_Lock.Acquire();
+    }
 
-	void ReleaseLock() noexcept override
-	{
-		InterlockedIncrement(&_g_ReleaseCount);
-		_g_Lock.Release();
-	}
+    void ReleaseLock() noexcept override
+    {
+        InterlockedIncrement(&_g_ReleaseCount);
+        _g_Lock.Release();
+    }
 
-	// Assumes AcquireLock() was called
-	BOOL UnsafeSymInitialize(_In_ HANDLE hProcess, _In_opt_ PCSTR UserSearchPath, _In_ BOOL fInvadeProcess) noexcept override
-	{
-		KInvariant(_g_Lock.IsOwned());
-		InterlockedIncrement(&_g_UnsafeSymInitializeCount);
-		return ::SymInitialize(hProcess, UserSearchPath, fInvadeProcess);
-	}
+    // Assumes AcquireLock() was called
+    BOOL UnsafeSymInitialize(_In_ HANDLE hProcess, _In_opt_ PCSTR UserSearchPath, _In_ BOOL fInvadeProcess) noexcept override
+    {
+        KInvariant(_g_Lock.IsOwned());
+        InterlockedIncrement(&_g_UnsafeSymInitializeCount);
+        return ::SymInitialize(hProcess, UserSearchPath, fInvadeProcess);
+    }
 
-	BOOL UnsafeSymFromAddr(_In_ HANDLE hProcess, _In_ DWORD64 Address, _Out_opt_ PDWORD64 Displacement, _Inout_ PSYMBOL_INFO Symbol) noexcept override
-	{
-		KInvariant(_g_Lock.IsOwned());
-		InterlockedIncrement(&_g_UnsafeSymFromAddrCount);
-		return ::SymFromAddr(hProcess, Address, Displacement, Symbol);
-	}
+    BOOL UnsafeSymFromAddr(_In_ HANDLE hProcess, _In_ DWORD64 Address, _Out_opt_ PDWORD64 Displacement, _Inout_ PSYMBOL_INFO Symbol) noexcept override
+    {
+        KInvariant(_g_Lock.IsOwned());
+        InterlockedIncrement(&_g_UnsafeSymFromAddrCount);
+        return ::SymFromAddr(hProcess, Address, Displacement, Symbol);
+    }
 
-	// Assumes AcquireLock() was called
-	BOOL UnsafeSymGetLineFromAddr64(_In_ HANDLE hProcess, _In_ DWORD64 qwAddr, _Out_ PDWORD pdwDisplacement, _Out_ PIMAGEHLP_LINE64 Line64) noexcept override
-	{
-		KInvariant(_g_Lock.IsOwned());
-		InterlockedIncrement(&_g_UnsafeSymGetLineFromAddr64Count);
-		return ::SymGetLineFromAddr64(hProcess, qwAddr, pdwDisplacement, Line64);
-	}
+    // Assumes AcquireLock() was called
+    BOOL UnsafeSymGetLineFromAddr64(_In_ HANDLE hProcess, _In_ DWORD64 qwAddr, _Out_ PDWORD pdwDisplacement, _Out_ PIMAGEHLP_LINE64 Line64) noexcept override
+    {
+        KInvariant(_g_Lock.IsOwned());
+        InterlockedIncrement(&_g_UnsafeSymGetLineFromAddr64Count);
+        return ::SymGetLineFromAddr64(hProcess, qwAddr, pdwDisplacement, Line64);
+    }
 };
 
-KSpinLock			TestDebugInfoProvider::_g_Lock;
-volatile LONG		TestDebugInfoProvider::_g_AcquireCount = 0;
-volatile LONG		TestDebugInfoProvider::_g_ReleaseCount = 0;
-volatile LONG		TestDebugInfoProvider::_g_UnsafeSymInitializeCount = 0;
-volatile LONG		TestDebugInfoProvider::_g_UnsafeSymFromAddrCount = 0;
-volatile LONG		TestDebugInfoProvider::_g_UnsafeSymGetLineFromAddr64Count = 0;
+KSpinLock           TestDebugInfoProvider::_g_Lock;
+volatile LONG       TestDebugInfoProvider::_g_AcquireCount = 0;
+volatile LONG       TestDebugInfoProvider::_g_ReleaseCount = 0;
+volatile LONG       TestDebugInfoProvider::_g_UnsafeSymInitializeCount = 0;
+volatile LONG       TestDebugInfoProvider::_g_UnsafeSymFromAddrCount = 0;
+volatile LONG       TestDebugInfoProvider::_g_UnsafeSymGetLineFromAddr64Count = 0;
 
-TestDebugInfoProvider	_g_TestDebugInfoProvider;
+TestDebugInfoProvider   _g_TestDebugInfoProvider;
 
 void InitAll()
 {
-	_g_KCo$TotalObjects = 0;
-	GClass::testGClassDtored = false;
-	AcsMonitorCount = 0;
-	_g_AwaitableStateUnderTest.AwaitableState::AwaitableState();
-	_g_EndRaceTest = false;
-	_g_ThreadsHeld = 0;
-	_g_EntryHoldEvent.KEvent::KEvent();
-	_g_DoneHoldEvent.KEvent::KEvent();
+    _g_KCo$TotalObjects = 0;
+    GClass::testGClassDtored = false;
+    AcsMonitorCount = 0;
+    _g_AwaitableStateUnderTest.AwaitableState::AwaitableState();
+    _g_EndRaceTest = false;
+    _g_ThreadsHeld = 0;
+    _g_EntryHoldEvent.KEvent::KEvent();
+    _g_DoneHoldEvent.KEvent::KEvent();
 }
 
 #if defined(K_UseResumableDbgExt)
@@ -1269,7 +1269,7 @@ protected:
 #if !defined(PLATFORM_UNIX)
     static DWORD WINAPI ThreadProc(_In_ LPVOID lpParameter);
 #else
-	static void* ThreadProc(void* context);
+    static void* ThreadProc(void* context);
 #endif
 
 
@@ -1281,24 +1281,24 @@ protected:
 #if !defined(PLATFORM_UNIX)
         KInvariant(QueueUserWorkItem(ThreadProc, this, WT_EXECUTEDEFAULT));
 #else
-		int error;
-		pthread_t thread;
-		pthread_attr_t attr;
-		int stack_size = 512 * 1024;
-		void *sp;
+        int error;
+        pthread_t thread;
+        pthread_attr_t attr;
+        int stack_size = 512 * 1024;
+        void *sp;
 
-		error = pthread_attr_init(&attr);
-		KInvariant(error == 0);
-		error = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		KInvariant(error == 0);
+        error = pthread_attr_init(&attr);
+        KInvariant(error == 0);
+        error = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        KInvariant(error == 0);
 
-		error = posix_memalign(&sp, 4096, stack_size);
-		KInvariant(error == 0);
-		error = pthread_attr_setstack(&attr, sp, stack_size);
-		KInvariant(error == 0);
-		
-		error = pthread_create(&thread, &attr, AsyncFunWaitEvent::ThreadProc, this);
-		KInvariant(error == 0);
+        error = posix_memalign(&sp, 4096, stack_size);
+        KInvariant(error == 0);
+        error = pthread_attr_setstack(&attr, sp, stack_size);
+        KInvariant(error == 0);
+        
+        error = pthread_create(&thread, &attr, AsyncFunWaitEvent::ThreadProc, this);
+        KInvariant(error == 0);
 #endif
     }
 
@@ -1329,7 +1329,7 @@ DWORD WINAPI AsyncFunWaitEvent::ThreadProc(_In_ LPVOID lpParameter)
 void* AsyncFunWaitEvent::ThreadProc(void* context)
 {
     ((AsyncFunWaitEvent*)context)->Execute();
-	return(nullptr);
+    return(nullptr);
 }
 #endif
 
@@ -1635,8 +1635,8 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
 
    InitAll();
 
-   LONGLONG		StartingAllocs = KAllocatorSupport::gs_AllocsRemaining;
-   KAllocator&	allocator = UnderlyingSystem.NonPagedAllocator();
+   LONGLONG     StartingAllocs = KAllocatorSupport::gs_AllocsRemaining;
+   KAllocator&  allocator = UnderlyingSystem.NonPagedAllocator();
 
    //* Cause Exception::InitSymbols()'s call to SymInitialize() to fail - allows secondary callers
    SymInitialize(GetCurrentProcess(), NULL, TRUE);
@@ -2247,19 +2247,19 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
    //** Prove CancellationToken/Source behavior
    {
       CancellationTokenSource::SPtr testSPtr;
-      NTSTATUS		status = CancellationTokenSource::Create(allocator, KTL_TAG_TEST, testSPtr);
+      NTSTATUS      status = CancellationTokenSource::Create(allocator, KTL_TAG_TEST, testSPtr);
       KInvariant(NT_SUCCESS(status));
       KInvariant(testSPtr->_RefCount == 1);
 
       // Prove ref counting, copy, move, and reset semantics
-      CancellationToken	t1 = testSPtr->Token;
+      CancellationToken t1 = testSPtr->Token;
       KInvariant(!t1.IsCancellationRequested);
       KInvariant(testSPtr->_RefCount == 2);
 
-      CancellationToken	t2 = t1;
+      CancellationToken t2 = t1;
       KInvariant(testSPtr->_RefCount == 3);
 
-      CancellationToken	t3 = Ktl::Move(t2);
+      CancellationToken t3 = Ktl::Move(t2);
       KInvariant(testSPtr->_RefCount == 3);
       KInvariant(!t1.IsCancellationRequested);
       KInvariant(!t2.IsCancellationRequested);
@@ -2272,7 +2272,7 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
       KInvariant(!t2.IsCancellationRequested);
       KInvariant(t3.IsCancellationRequested);
 
-      CancellationToken	t4 = testSPtr->Token;
+      CancellationToken t4 = testSPtr->Token;
       KInvariant(testSPtr->_RefCount == 4);
       KInvariant(t1.IsCancellationRequested);
       KInvariant(!t2.IsCancellationRequested);
@@ -2320,11 +2320,11 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
    //** Prove basic Task behavior
    {
       puts("Starting: BasicTaskTest");
-      KEvent		syncEvent{ false };
-      BOOLEAN		syncState = false;				// set true when BasicTaskTest has made entry
+      KEvent        syncEvent{ false };
+      BOOLEAN       syncState = false;              // set true when BasicTaskTest has made entry
 
       Task t = BasicTaskTest(syncEvent, syncState);
-	  KInvariant(t.IsTaskStarted());
+      KInvariant(t.IsTaskStarted());
       syncEvent.WaitUntilSet();
       KInvariant(syncState);
       puts("Completion of: BasicTaskTest");
@@ -2335,17 +2335,17 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
 #if !defined(PLATFORM_UNIX)
    //** Prove basic Task behavior with allocation failure
    {
-	   puts("Starting: BasicTaskTest - alloc failure");
-	   KEvent		syncEvent{ false };
-	   BOOLEAN		syncState = false;				// set true when BasicTaskTest has made entry
+       puts("Starting: BasicTaskTest - alloc failure");
+       KEvent       syncEvent{ false };
+       BOOLEAN      syncState = false;              // set true when BasicTaskTest has made entry
 
-	   ::_g_ForceTaskFrameAllocationFailure = true;
-	   Task t = BasicTaskTest(syncEvent, syncState);
-	   ::_g_ForceTaskFrameAllocationFailure = false;
-	   KInvariant(!t.IsTaskStarted());
-	   Task	t2 = t;
-	   KInvariant(!t2.IsTaskStarted());
-	   puts("Completion of: BasicTaskTest - alloc failure");
+       ::_g_ForceTaskFrameAllocationFailure = true;
+       Task t = BasicTaskTest(syncEvent, syncState);
+       ::_g_ForceTaskFrameAllocationFailure = false;
+       KInvariant(!t.IsTaskStarted());
+       Task t2 = t;
+       KInvariant(!t2.IsTaskStarted());
+       puts("Completion of: BasicTaskTest - alloc failure");
    }
    // Allow all background tasks to complete
    SleepUntil([&]() {return _g_KCo$TotalObjects == 0;});
@@ -2462,7 +2462,7 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
        {
            // also prove that KRTT on Exception derivation works and we can catch on a base exception class
            KInvariant(is_type<MyException>(&Excp));
-           MyException& myExcp = (MyException&)Excp;	// Downcast
+           MyException& myExcp = (MyException&)Excp;    // Downcast
 
            printf("Main: caught typed: %i; %s\n", myExcp.GetStatus(), myExcp.GetDesc());
            KInvariant(myExcp.GetStatus() == STATUS_TIMEOUT);
@@ -2489,7 +2489,7 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
        {
            // also prove that KRTT on Exception derivation works and we can catch on a base exception class
            KInvariant(is_type<MyException>(&Excp));
-           MyException& myExcp = (MyException&)Excp;	// Downcast
+           MyException& myExcp = (MyException&)Excp;    // Downcast
 
            printf("Main: caught typed: %i; %s\n", myExcp.GetStatus(), myExcp.GetDesc());
            KInvariant(myExcp.GetStatus() == STATUS_TIMEOUT);
@@ -2521,11 +2521,11 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
    //** Prove basic kasync::StartAwaiter in a Task behavior
    {
       puts("Starting: BasicStartAwaiterTest");
-      KAsyncEvent			asyncEvent{ true };
-      NTSTATUS				status;
-      KAsyncEvent::WaitContext::SPtr	waitContext;
-      BOOLEAN				hasStarted = false;
-      KEvent				compEvent{ false };
+      KAsyncEvent           asyncEvent{ true };
+      NTSTATUS              status;
+      KAsyncEvent::WaitContext::SPtr    waitContext;
+      BOOLEAN               hasStarted = false;
+      KEvent                compEvent{ false };
 
       status = asyncEvent.CreateWaitContext(KTL_TAG_TEST, allocator, waitContext);
       KInvariant(NT_SUCCESS(status));
@@ -2547,69 +2547,69 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
    //** Prove basic kasync::StartAwaiter in a SyncAwait<void>() behavior
    {
       puts("Starting: BasicSyncAwaitVoidAwaiterTest");
-      KAsyncEvent			asyncEvent{ true };
-      NTSTATUS				status;
-      KAsyncEvent::WaitContext::SPtr	waitContext;
-      BOOLEAN				hasStarted = false;
-	  Awaitable<void>		future;
+      KAsyncEvent           asyncEvent{ true };
+      NTSTATUS              status;
+      KAsyncEvent::WaitContext::SPtr    waitContext;
+      BOOLEAN               hasStarted = false;
+      Awaitable<void>       future;
 
-	  {
-		  status = asyncEvent.CreateWaitContext(KTL_TAG_TEST, allocator, waitContext);
-		  KInvariant(NT_SUCCESS(status));
+      {
+          status = asyncEvent.CreateWaitContext(KTL_TAG_TEST, allocator, waitContext);
+          KInvariant(NT_SUCCESS(status));
 
-		  future = BasicFutureTest(*waitContext, hasStarted);
-		  KInvariant(hasStarted);
+          future = BasicFutureTest(*waitContext, hasStarted);
+          KInvariant(hasStarted);
 
-		  hasStarted = false;
-		  asyncEvent.SetEvent();
-		  SyncAwait(future);
-		  MemoryBarrier(); // work around bug in LLVM that is optimizing away the read below
-		  KInvariant(hasStarted);
-	  }
+          hasStarted = false;
+          asyncEvent.SetEvent();
+          SyncAwait(future);
+          MemoryBarrier(); // work around bug in LLVM that is optimizing away the read below
+          KInvariant(hasStarted);
+      }
 
 #if !defined(PLATFORM_UNIX)
-	  //** Prove out of memory behavior
-	  {
-		  ::_g_ForceAwaitableTFrameAllocationFailure = true;
-		  hasStarted = false;
-		  future = BasicFutureTest(*waitContext, hasStarted);
-		  KInvariant(!hasStarted);
-		  KInvariant((bool)future == false);
-		  KInvariant(future.await_ready() == true);
-		  KInvariant(future.await_suspend(std::experimental::coroutine_handle<void>{}) == false);
-		  KInvariant(future.IsComplete() == true);
-		  KInvariant(future.IsExceptionCompletion() == true);
-		  ExceptionHandle expPtr = future.GetExceptionHandle();
-		  try
-		  {
+      //** Prove out of memory behavior
+      {
+          ::_g_ForceAwaitableTFrameAllocationFailure = true;
+          hasStarted = false;
+          future = BasicFutureTest(*waitContext, hasStarted);
+          KInvariant(!hasStarted);
+          KInvariant((bool)future == false);
+          KInvariant(future.await_ready() == true);
+          KInvariant(future.await_suspend(std::experimental::coroutine_handle<void>{}) == false);
+          KInvariant(future.IsComplete() == true);
+          KInvariant(future.IsExceptionCompletion() == true);
+          ExceptionHandle expPtr = future.GetExceptionHandle();
+          try
+          {
               #if defined(PLATFORM_UNIX)
               rethrow_exception(expPtr);
               #else
               expPtr._RethrowException();
               #endif
-		  }
-		  catch (ktl::FrameNotBoundException)
-		  {
-		  }
-		  catch (...)
-		  {
-			  KInvariant(false);
-		  }
+          }
+          catch (ktl::FrameNotBoundException)
+          {
+          }
+          catch (...)
+          {
+              KInvariant(false);
+          }
 
-		  try
-		  {
-			  future.await_resume();
-			  KInvariant(false);
-		  }
-		  catch (ktl::FrameNotBoundException)
-		  {
-		  }
-		  catch (...)
-		  {
-			  KInvariant(false);
-		  }
-		  ::_g_ForceAwaitableTFrameAllocationFailure = false;
-	  }
+          try
+          {
+              future.await_resume();
+              KInvariant(false);
+          }
+          catch (ktl::FrameNotBoundException)
+          {
+          }
+          catch (...)
+          {
+              KInvariant(false);
+          }
+          ::_g_ForceAwaitableTFrameAllocationFailure = false;
+      }
 #endif
 
       puts("Completion of: BasicSyncAwaitVoidAwaiterTest");
@@ -2620,72 +2620,72 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
    //** Prove basic kasync::StartAwaiter in a SyncAwait<T>() behavior
    {
       puts("Starting: BasicSyncAwaitTypedAwaiterTest");
-	  KAsyncEvent::WaitContext::SPtr	waitContext;
-	  BOOLEAN							hasStarted = false;
-	  KAsyncEvent						asyncEvent{ true };
-	  NTSTATUS							status;
-	  Awaitable<NTSTATUS>				future;
+      KAsyncEvent::WaitContext::SPtr    waitContext;
+      BOOLEAN                           hasStarted = false;
+      KAsyncEvent                       asyncEvent{ true };
+      NTSTATUS                          status;
+      Awaitable<NTSTATUS>               future;
 
-	  {
-		  status = asyncEvent.CreateWaitContext(KTL_TAG_TEST, allocator, waitContext);
-		  KInvariant(NT_SUCCESS(status));
+      {
+          status = asyncEvent.CreateWaitContext(KTL_TAG_TEST, allocator, waitContext);
+          KInvariant(NT_SUCCESS(status));
 
-		  future = BasicFutureTypedTest(*waitContext, hasStarted);
-		  KInvariant(hasStarted);
+          future = BasicFutureTypedTest(*waitContext, hasStarted);
+          KInvariant(hasStarted);
 
-		  hasStarted = false;
-		  asyncEvent.SetEvent();
-		  status = SyncAwait(future);
-		  KInvariant(status == STATUS_WAIT_63);
-		  MemoryBarrier(); // work around bug in LLVM that is optimizing away the read below
-		  KInvariant(hasStarted);
-	  }
+          hasStarted = false;
+          asyncEvent.SetEvent();
+          status = SyncAwait(future);
+          KInvariant(status == STATUS_WAIT_63);
+          MemoryBarrier(); // work around bug in LLVM that is optimizing away the read below
+          KInvariant(hasStarted);
+      }
 
 #if !defined(PLATFORM_UNIX)
-	  //** Prove out of memory behavior
-	  {
-		  ::_g_ForceAwaitableTFrameAllocationFailure = true;
-		  hasStarted = false;
-		  future = BasicFutureTypedTest(*waitContext, hasStarted);
-		  KInvariant(!hasStarted);
-		  KInvariant((bool)future == false);
-		  KInvariant(future.await_ready() == true);
-		  KInvariant(future.await_suspend(std::experimental::coroutine_handle<void>{}) == false);
-		  KInvariant(future.IsComplete() == true);
-		  KInvariant(future.IsExceptionCompletion() == true);
-		  ExceptionHandle expPtr = future.GetExceptionHandle();
-		  try
-		  {
+      //** Prove out of memory behavior
+      {
+          ::_g_ForceAwaitableTFrameAllocationFailure = true;
+          hasStarted = false;
+          future = BasicFutureTypedTest(*waitContext, hasStarted);
+          KInvariant(!hasStarted);
+          KInvariant((bool)future == false);
+          KInvariant(future.await_ready() == true);
+          KInvariant(future.await_suspend(std::experimental::coroutine_handle<void>{}) == false);
+          KInvariant(future.IsComplete() == true);
+          KInvariant(future.IsExceptionCompletion() == true);
+          ExceptionHandle expPtr = future.GetExceptionHandle();
+          try
+          {
               #if defined(PLATFORM_UNIX)
               rethrow_exception(expPtr);
               #else
               expPtr._RethrowException();
               #endif
-		  }
-		  catch (ktl::FrameNotBoundException)
-		  {
-		  }
-		  catch (...)
-		  {
-			  KInvariant(false);
-		  }
+          }
+          catch (ktl::FrameNotBoundException)
+          {
+          }
+          catch (...)
+          {
+              KInvariant(false);
+          }
 
-		  try
-		  {
-			  future.await_resume();
-			  KInvariant(false);
-		  }
-		  catch (ktl::FrameNotBoundException)
-		  {
-		  }
-		  catch (...)
-		  {
-			  KInvariant(false);
-		  }
-		  ::_g_ForceAwaitableTFrameAllocationFailure = false;
-	  }
+          try
+          {
+              future.await_resume();
+              KInvariant(false);
+          }
+          catch (ktl::FrameNotBoundException)
+          {
+          }
+          catch (...)
+          {
+              KInvariant(false);
+          }
+          ::_g_ForceAwaitableTFrameAllocationFailure = false;
+      }
 #endif
-	  
+      
       puts("Completion of: BasicSyncAwaitTypedAwaiterTest");
    }
    // Allow all background tasks to complete
@@ -2715,7 +2715,7 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
    //   Tasks, Awaitable<>, and kasync::StartAwaitable; includes parallel
    //   executing private Tasks that hold completion until done
    {
-      AsyncAwaiterTestContext::SPtr	testInst = AsyncAwaiterTestContext::Create(allocator);
+      AsyncAwaiterTestContext::SPtr testInst = AsyncAwaiterTestContext::Create(allocator);
 
       // Prove sync return of NTSTATUS works on Start*Async methods
       SyncAwait(testInst->DoNullFailedTest());
@@ -2792,7 +2792,7 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
    //** Prove AwaitableCompletionSource<void> behavior
    {
       AwaitableCompletionSource<void>::SPtr testSPtr0;
-      NTSTATUS		status = AwaitableCompletionSource<void>::Create(allocator, KTL_TAG_TEST, testSPtr0);
+      NTSTATUS      status = AwaitableCompletionSource<void>::Create(allocator, KTL_TAG_TEST, testSPtr0);
       KInvariant(NT_SUCCESS(status));
 
       AwaitableCompletionSource<void>::SPtr testSPtr1;
@@ -2803,9 +2803,9 @@ BasicAwaitableTests(KtlSystem& UnderlyingSystem)
       status = AwaitableCompletionSource<void>::Create(allocator, KTL_TAG_TEST, testSPtr2);
       KInvariant(NT_SUCCESS(status));
 
-      KEvent		compEvent{ false };
+      KEvent        compEvent{ false };
       const int MaxMonitors = 1000;
-      static char		names[MaxMonitors][128];
+      static char       names[MaxMonitors][128];
 
       AcsMonitorCount = MaxMonitors * 3;
       for (int x = 0; x < MaxMonitors; x++)
@@ -2995,11 +2995,21 @@ KtlAwaitableTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
+    NTSTATUS status;
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     EventRegisterMicrosoft_Windows_KTL();
     KTestPrintf("Starting KtlAwaitableTest test\n");
 
     KtlSystem* underlyingSystem;
-    NTSTATUS status = KtlSystem::Initialize(&underlyingSystem);
+    status = KtlSystem::Initialize(&underlyingSystem);
     if (!NT_SUCCESS(status))
     {
         KTestPrintf("%s: %i: KtlSystem::Initialize failed\n", __FUNCTION__, __LINE__);
@@ -3020,6 +3030,11 @@ KtlAwaitableTest(
     KtlSystem::Shutdown();
 
     EventUnregisterMicrosoft_Windows_KTL();
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return STATUS_SUCCESS;
 }
 

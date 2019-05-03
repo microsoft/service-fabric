@@ -584,44 +584,48 @@ ErrorCode ServiceUpdateDescription::TryDiffForUpgrade(
     auto const & target = targetPsd.Service;
     auto const & active = activePsd.Service;
 
+    if (targetPsd.Service.IsStateful)
+    {
+        if (active.MinReplicaSetSize != target.MinReplicaSetSize)
+        {
+            updateDescription->UpdateMinReplicaSetSize = true;
+            updateDescription->MinReplicaSetSize = target.MinReplicaSetSize;
+            rollbackUpdateDescription->UpdateMinReplicaSetSize = true;
+            rollbackUpdateDescription->MinReplicaSetSize = active.MinReplicaSetSize;
+        }
+
+        if (active.ReplicaRestartWaitDuration != target.ReplicaRestartWaitDuration)
+        {
+            updateDescription->UpdateReplicaRestartWaitDuration = true;
+            updateDescription->ReplicaRestartWaitDuration = target.ReplicaRestartWaitDuration;
+            rollbackUpdateDescription->UpdateReplicaRestartWaitDuration = true;
+            rollbackUpdateDescription->ReplicaRestartWaitDuration = active.ReplicaRestartWaitDuration;
+        }
+
+        if (active.QuorumLossWaitDuration != target.QuorumLossWaitDuration)
+        {
+            updateDescription->UpdateQuorumLossWaitDuration = true;
+            updateDescription->QuorumLossWaitDuration = target.QuorumLossWaitDuration;
+            rollbackUpdateDescription->UpdateQuorumLossWaitDuration = true;
+            rollbackUpdateDescription->QuorumLossWaitDuration = active.QuorumLossWaitDuration;
+        }
+
+        if (active.StandByReplicaKeepDuration != target.StandByReplicaKeepDuration)
+        {
+            updateDescription->UpdateStandByReplicaKeepDuration = true;
+            updateDescription->StandByReplicaKeepDuration = target.StandByReplicaKeepDuration;
+            rollbackUpdateDescription->UpdateStandByReplicaKeepDuration = true;
+            rollbackUpdateDescription->StandByReplicaKeepDuration = active.StandByReplicaKeepDuration;
+        }
+    }
+
+    // Corresponds to min size in stateless
     if (active.TargetReplicaSetSize != target.TargetReplicaSetSize)
     {
         updateDescription->UpdateTargetReplicaSetSize = true;
         updateDescription->TargetReplicaSetSize = target.TargetReplicaSetSize;
         rollbackUpdateDescription->UpdateTargetReplicaSetSize = true;
         rollbackUpdateDescription->TargetReplicaSetSize = active.TargetReplicaSetSize;
-    }
-
-    if (active.MinReplicaSetSize != target.MinReplicaSetSize)
-    {
-        updateDescription->UpdateMinReplicaSetSize = true;
-        updateDescription->MinReplicaSetSize = target.MinReplicaSetSize;
-        rollbackUpdateDescription->UpdateMinReplicaSetSize = true;
-        rollbackUpdateDescription->MinReplicaSetSize = active.MinReplicaSetSize;
-    }
-
-    if (active.ReplicaRestartWaitDuration != target.ReplicaRestartWaitDuration)
-    {
-        updateDescription->UpdateReplicaRestartWaitDuration = true;
-        updateDescription->ReplicaRestartWaitDuration = target.ReplicaRestartWaitDuration;
-        rollbackUpdateDescription->UpdateReplicaRestartWaitDuration = true;
-        rollbackUpdateDescription->ReplicaRestartWaitDuration = active.ReplicaRestartWaitDuration;
-    }
-
-    if (active.QuorumLossWaitDuration != target.QuorumLossWaitDuration)
-    {
-        updateDescription->UpdateQuorumLossWaitDuration = true;
-        updateDescription->QuorumLossWaitDuration = target.QuorumLossWaitDuration;
-        rollbackUpdateDescription->UpdateQuorumLossWaitDuration = true;
-        rollbackUpdateDescription->QuorumLossWaitDuration = active.QuorumLossWaitDuration;
-    }
-
-    if (active.StandByReplicaKeepDuration != target.StandByReplicaKeepDuration)
-    {
-        updateDescription->UpdateStandByReplicaKeepDuration = true;
-        updateDescription->StandByReplicaKeepDuration = target.StandByReplicaKeepDuration;
-        rollbackUpdateDescription->UpdateStandByReplicaKeepDuration = true;
-        rollbackUpdateDescription->StandByReplicaKeepDuration = active.StandByReplicaKeepDuration;
     }
 
     if (active.Correlations != target.Correlations)

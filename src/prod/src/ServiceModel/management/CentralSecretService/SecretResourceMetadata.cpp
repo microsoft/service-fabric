@@ -11,18 +11,18 @@ using namespace Management::ResourceManager;
 using namespace Management::CentralSecretService;
 
 SecretResourceMetadata::SecretResourceMetadata(
-	wstring const & secretName,
-	wstring const & secretVersion)
-	: ResourceMetadata(ResourceTypes::Secret)
+    wstring const & secretName,
+    wstring const & secretVersion)
+    : ResourceMetadata(ResourceTypes::Secret)
 {
-	this->Metadata[MetadataNames::SecretName] = secretName;
-	this->Metadata[MetadataNames::SecretVersion] = secretVersion;
+    this->Metadata[MetadataNames::SecretName] = secretName;
+    this->Metadata[MetadataNames::SecretVersion] = secretVersion;
 }
 
 SecretResourceMetadata::SecretResourceMetadata(
-	Secret const & secret)
-	: ResourceMetadata(ResourceTypes::Secret)
+    Secret const & secret)
+    : ResourceMetadata(ResourceTypes::Secret)
 {
-	this->Metadata[MetadataNames::SecretName] = secret.Name;
-	this->Metadata[MetadataNames::SecretVersion] = secret.Version;
+    this->Metadata[MetadataNames::SecretName] = secret.Name;
+    this->Metadata[MetadataNames::SecretVersion] = secret.Version;
 }

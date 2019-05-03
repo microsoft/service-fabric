@@ -37,6 +37,16 @@ namespace System.Fabric.FabricDeployer
         /// <summary>
         /// Cleans up docker network used for flat networking
         /// </summary>
-        ContainerNetworkCleanup
+        ContainerNetworkCleanup,
+
+        /// <summary>
+        /// Sets up the isolated network.
+        /// </summary>
+        IsolatedNetworkSetup,
+
+        /// <summary>
+        /// Cleans up the isolated network.
+        /// </summary>
+        IsolatedNetworkCleanup,
     }
 }

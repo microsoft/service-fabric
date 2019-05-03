@@ -24,11 +24,13 @@ namespace System.Fabric.UpgradeService
 
         private readonly IConfigStore configStore;
         private readonly string configSectionName;
+        private readonly IExceptionHandlingPolicy exceptionPolicy;
 
         public NodeStatusManager(
             KeyValueStoreReplica kvsStore,
             IConfigStore configStore,
-            string configSectionName)
+            string configSectionName,
+            IExceptionHandlingPolicy exceptionPolicy)
         {
             kvsStore.ThrowIfNull(nameof(kvsStore));
             configStore.ThrowIfNull(nameof(configStore));
@@ -37,6 +39,7 @@ namespace System.Fabric.UpgradeService
             this.kvsStore = kvsStore;
             this.configStore = configStore;
             this.configSectionName = configSectionName;
+            this.exceptionPolicy = exceptionPolicy;
         }
 
         public async Task<List<PaasNodeStatusInfo>> GetNodeStates(TimeSpan timeout,  CancellationToken cancellationToken)
@@ -152,7 +155,7 @@ namespace System.Fabric.UpgradeService
         private async Task PerformKvsOperation(Func<List<UpgradeServiceNodeState>, bool> operation, TimeSpan timeout, CancellationToken cancellationToken)
         {
             Trace.WriteNoise(TraceType, "PerformKvsOperation: Begin.");
-            using (var tx = this.kvsStore.CreateTransaction())
+            using (var tx = await this.kvsStore.CreateTransactionWithRetryAsync(this.exceptionPolicy, cancellationToken))
             {
                 bool shouldAdd = false;
                 List<UpgradeServiceNodeState> upgradeServiceNodeStates = new List<UpgradeServiceNodeState>();
@@ -197,7 +200,7 @@ namespace System.Fabric.UpgradeService
 
         internal async Task FilterNodeTypesAsync(IEnumerable<string> primaryNodeTypes, TimeSpan timeout, CancellationToken cancellationToken)
         {
-            using (var tx = this.kvsStore.CreateTransaction())
+            using (var tx = await this.kvsStore.CreateTransactionWithRetryAsync(this.exceptionPolicy, cancellationToken))
             {
                 var item = this.kvsStore.TryGet(tx, StoreKey);
                 if (item == null)

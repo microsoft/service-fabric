@@ -42,8 +42,6 @@ namespace Management
             PUBLIC_CONFIG_ENTRY(std::wstring, L"UpgradeService", X509SecondaryFindValue, L"", Common::ConfigEntryUpgradePolicy::Dynamic);
             // The interval between UpgradeService poll of SFRP
             PUBLIC_CONFIG_ENTRY(Common::TimeSpan, L"UpgradeService", PollIntervalInSeconds, Common::TimeSpan::FromSeconds(60), Common::ConfigEntryUpgradePolicy::Dynamic);            
-            // Primary node types for which node status needs to be provided. The values is a comma separated list of node types." 
-            INTERNAL_CONFIG_ENTRY(std::wstring, L"UpgradeService", PrimaryNodeTypes, L"", Common::ConfigEntryUpgradePolicy::Static);
 
             // The TTL of health report sent by UpgradeService. The service will be marked as Error if the health report is not periodically updates within this interval
             INTERNAL_CONFIG_ENTRY(Common::TimeSpan, L"UpgradeService", HealthReportTTLInSeconds, Common::TimeSpan::FromSeconds(600), Common::ConfigEntryUpgradePolicy::Dynamic);

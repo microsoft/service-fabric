@@ -32,6 +32,12 @@ namespace LoggingReplicatorTests
             throw ktl::Exception(STATUS_NOT_IMPLEMENTED);
         }
 
+        __declspec(property(get = get_HasPersistedState)) bool HasPersistedState;
+        bool get_HasPersistedState() const override
+        {
+            return true;
+        }
+
         Data::Utilities::IStatefulPartition::SPtr get_StatefulPartition() const
         {
             CODING_ASSERT("STATUS_NOT_IMPLEMENTED");

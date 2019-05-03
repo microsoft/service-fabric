@@ -79,6 +79,7 @@ private:
         }
 
         auto error = this->owner_.ipam_->EndInitialize(operation);
+
         WriteTrace(
             error.ToLogLevel(),
             TraceIPAddressProvider,
@@ -89,49 +90,18 @@ private:
         {
             this->owner_.ipamInitialized_ = true;
 
+            wstring subnetCIDR = L"";
             uint gatewayIpAddress = 0;
-            auto getGatewayIpErrorCode = this->owner_.ipam_->GetGatewayIpAddress(gatewayIpAddress);
-            if (getGatewayIpErrorCode.IsSuccess())
+            auto getSubnetAndGatewayIpErrorCode = this->owner_.ipam_->GetSubnetAndGatewayIpAddress(subnetCIDR, gatewayIpAddress);
+            if (getSubnetAndGatewayIpErrorCode.IsSuccess())
             {
                 this->owner_.gatewayIpAddress_ = IPHelper::Format(gatewayIpAddress);
+                this->owner_.subnet_ = subnetCIDR;
             }
-
-#if defined(PLATFORM_UNIX)
-            auto ipoperation = owner_.azureVnetPluginProcessManager_->BeginOpen(
-                timeoutHelper_.GetRemainingTime(),
-                [this](AsyncOperationSPtr const & ipoperation)
-                {
-                    this->OnAzureVnetPluginProceessManagerInitializationComplete(ipoperation, false);
-                },
-                operation->Parent);
-
-            OnAzureVnetPluginProceessManagerInitializationComplete(ipoperation, true);
-#endif
         }
-
-#if !defined(PLATFORM_UNIX)
-        TryComplete(operation->Parent, error);
-#endif
-    }
-
-#if defined(PLATFORM_UNIX)
-    void OnAzureVnetPluginProceessManagerInitializationComplete(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
-        {
-            return;
-        }
-
-        auto error = owner_.azureVnetPluginProcessManager_->EndOpen(operation);
-        WriteTrace(
-            error.ToLogLevel(),
-            TraceIPAddressProvider,
-            "Azure vnet plugin process manager initialization complete. ErrorCode={0}",
-            error);
 
         TryComplete(operation->Parent, error);
     }
-#endif
 
 private:
     IPAddressProvider & owner_;
@@ -173,38 +143,8 @@ public:
 protected:
     void OnStart(AsyncOperationSPtr const & thisSPtr)
     {
-#if defined PLATFORM_UNIX
-        auto operation = owner_.azureVnetPluginProcessManager_->BeginClose(
-            timeoutHelper_.GetRemainingTime(),
-            [this](AsyncOperationSPtr const & operation)
-            {
-                this->OnAzureVnetPluginProcessManagerClosed(operation, false);
-            },
-            thisSPtr);
-        OnAzureVnetPluginProcessManagerClosed(operation, true);
-#else
         TryComplete(thisSPtr, ErrorCodeValue::Success);
-#endif
     }
-
-#if defined PLATFORM_UNIX
-    void OnAzureVnetPluginProcessManagerClosed(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
-    {
-        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
-        {
-            return;
-        }
-
-        auto error = owner_.azureVnetPluginProcessManager_->EndClose(operation);
-        WriteTrace(
-            error.ToLogLevel(),
-            TraceIPAddressProvider,
-            "Azure vnet plugin process manager close completed. ErrorCode={0}",
-            error);
-
-        TryComplete(operation->Parent, error);
-    }
-#endif
 
 private:
     IPAddressProvider & owner_;
@@ -229,16 +169,11 @@ IPAddressProvider::IPAddressProvider(
 #else
     auto ipam = make_unique<IPAMLinux>(root);
     this->ipam_ = move(ipam);
-    auto azureVnetPluginProcessManager = make_unique<AzureVnetPluginProcessManager>(root, processActivationManager);
-    this->azureVnetPluginProcessManager_ = move(azureVnetPluginProcessManager);
 #endif
 }
 
 IPAddressProvider::IPAddressProvider(
     IIPAMSPtr const & ipamClient,
-#if defined(PLATFORM_UNIX)
-    IAzureVnetPluginProcessManagerSPtr const & azureVnetPluginProcessManager,
-#endif
     std::wstring const & clusterId,
     bool const ipAddressProviderEnabled,
     ComponentRootSPtr const & root)
@@ -248,9 +183,6 @@ IPAddressProvider::IPAddressProvider(
     ipamInitialized_(false),
     ipAddressProviderEnabled_(ipAddressProviderEnabled),
     ipam_(ipamClient),
-#if defined(PLATFORM_UNIX)
-    azureVnetPluginProcessManager_(azureVnetPluginProcessManager),
-#endif
     reservedCodePackages_(),
     reservationIdCodePackageMap_()
 {
@@ -512,6 +444,29 @@ void IPAddressProvider::GetReservedCodePackages(std::map<std::wstring, std::map<
     }
 }
 
+void IPAddressProvider::GetNetworkReservedCodePackages(std::map<std::wstring, std::map<std::wstring, std::vector<std::wstring>>> & networkReservedCodePackages)
+{
+    std::map<std::wstring, std::map<std::wstring, std::vector<std::wstring>>> reservedCodePackages;
+    std::map<std::wstring, std::wstring> reservationIdCodePackageMap;
+    this->GetReservedCodePackages(reservedCodePackages, reservationIdCodePackageMap);
+
+    networkReservedCodePackages.insert(make_pair(Common::ContainerEnvironment::ContainerNetworkName, std::map<wstring, std::vector<wstring>>()));
+    auto networkIter = networkReservedCodePackages.find(Common::ContainerEnvironment::ContainerNetworkName);
+
+    for (auto r : reservedCodePackages)
+    {
+        for (auto s : r.second)
+        {
+            vector<std::wstring> codePackages;
+            for (auto c : s.second)
+            {
+                codePackages.push_back(c);
+            }
+            networkIter->second[s.first] = codePackages;
+        }
+    }
+}
+
 Common::ErrorCode IPAddressProvider::StartRefreshProcessing(
     Common::TimeSpan const refreshInterval,
     Common::TimeSpan const refreshTimeout,
@@ -600,6 +555,8 @@ AsyncOperationSPtr IPAddressProvider::OnBeginOpen(
     AsyncCallback const & callback,
     AsyncOperationSPtr const & parent)
 {
+    WriteNoise(TraceIPAddressProvider, "Opening IPAddressProvider.");
+
     return AsyncOperation::CreateAndStart<OpenAsyncOperation>(
         *this,
         timeout,
@@ -618,6 +575,8 @@ AsyncOperationSPtr IPAddressProvider::OnBeginClose(
     AsyncCallback const & callback,
     AsyncOperationSPtr const & parent)
 {
+    WriteNoise(TraceIPAddressProvider, "Closing IPAddressProvider.");
+
     return AsyncOperation::CreateAndStart<CloseAsyncOperation>(
         *this,
         timeout,
@@ -635,9 +594,8 @@ void IPAddressProvider::OnAbort()
 {
     WriteNoise(TraceIPAddressProvider, "Aborting IPAddressProvider.");
 
-    this->ipam_->CancelRefreshProcessing();
-
-#if defined(PLATFORM_UNIX)
-    this->azureVnetPluginProcessManager_->Abort();
-#endif
+    if (this->ipam_)
+    {
+        this->ipam_->CancelRefreshProcessing();
+    }
 }

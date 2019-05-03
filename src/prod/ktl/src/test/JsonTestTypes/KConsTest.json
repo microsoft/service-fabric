@@ -1,0 +1,61 @@
+{
+    "RequiredParameters": [ "TaskName" ],
+
+    "Defaults": {
+        "SetupArgs": "",
+        "SetupType": "",
+        "Params": "",
+        "CleanupType": "",
+        "CredentialType": "",
+        "WorkingDirectory" : "",
+        "SetupTimeout": "1200",
+        "ExecutionTimeout": "2100",
+        "CleanupTimeout": "2100"
+    },
+
+    "TestSetup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\SetupTest.cmd",
+        "Arguments": "[SETUPTYPE] [SETUPARGS] ",
+        "MaxExecutionTimeInSeconds": "[SETUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+    },
+
+    "TestExecution": [
+        {
+            "ExeName": "[BINS]\\ktltest\\[TASKNAME].exe",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
+            "WorkingDirectory" : "[WORKINGDIRECTORY]"
+        }
+    ],
+
+    "IndividualTestCleanup": [
+        {
+            "ExeName": "__WER__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__KILL__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        },
+        {
+            "ExeName": "__ARCHIVE__",
+            "Arguments": "",
+            "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]"
+        }
+    ],
+
+    "TestCleanup": {
+        "ExeName": "[CLOUDBINPATH]\\WinFabricTest\\CleanupTest.cmd",
+        "Arguments": "\"[MACHINES]\" [CLEANUPTYPE] ",
+        "MaxExecutionTimeInSeconds": "[CLEANUPTIMEOUT]",
+        "WorkingDirectory": "[CLOUDBINPATH]"
+
+    },
+
+    "ArchiverProperties": {
+        "IncludeFilePatterns": ".*\\.trace$,.*\\.out$,.-*\\.trace$,.*\\.pdb$,.*\\.dmp$,.*\\.etl$,.*\\.xml$,.*\\.json$,.*\\.man$"
+    }
+}

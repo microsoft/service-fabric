@@ -117,7 +117,7 @@ private:
                                 this->TraceId,
                                 volumeName);
 
-                            this->TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::VolumeNotFound, GET_RC(Volume_Not_Found)));
+                            this->TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::VolumeNotFound, wformatString(GET_RC(Volume_Not_Found), volumeName)));
                         }
                         else if (!error.IsSuccess())
                         {

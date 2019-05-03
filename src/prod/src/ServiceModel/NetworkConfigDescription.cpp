@@ -10,8 +10,36 @@ using namespace Common;
 using namespace ServiceModel;
 
 NetworkConfigDescription::NetworkConfigDescription()
-	: Type()
+    : Type()
 {
+}
+
+NetworkConfigDescription::NetworkConfigDescription(NetworkConfigDescription const & other)
+    : Type(other.Type)
+{
+}
+
+NetworkConfigDescription::NetworkConfigDescription(NetworkConfigDescription && other)
+    : Type(other.Type)
+{
+}
+
+NetworkConfigDescription const & NetworkConfigDescription::operator=(NetworkConfigDescription const & other)
+{
+    if (this != &other)
+    {
+        this->Type = other.Type;
+    }
+    return *this;
+}
+
+NetworkConfigDescription const & NetworkConfigDescription::operator=(NetworkConfigDescription && other)
+{
+    if (this != &other)
+    {
+        this->Type = move(other.Type);
+    }
+    return *this;
 }
 
 bool NetworkConfigDescription::operator== (NetworkConfigDescription const & other) const
@@ -52,19 +80,19 @@ void NetworkConfigDescription::ReadFromXml(
 
 Common::ErrorCode NetworkConfigDescription::WriteToXml(XmlWriterUPtr const & xmlWriter)
 {	//<NetworkConfig>
-	ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_NetworkConfig, L"", *SchemaNames::Namespace);
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-	er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Type, NetworkType::EnumToString(this->Type));
-	if (!er.IsSuccess())
-	{
-		return er;
-	}
-   
-	//</NetworkConfig>
-	return xmlWriter->WriteEndElement();
+    ErrorCode er = xmlWriter->WriteStartElement(*SchemaNames::Element_NetworkConfig, L"", *SchemaNames::Namespace);
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+    er = xmlWriter->WriteAttribute(*SchemaNames::Attribute_Type, NetworkType::EnumToString(this->Type));
+    if (!er.IsSuccess())
+    {
+        return er;
+    }
+
+    //</NetworkConfig>
+    return xmlWriter->WriteEndElement();
 }
 
 void NetworkConfigDescription::clear()

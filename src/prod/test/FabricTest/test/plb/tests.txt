@@ -1,4 +1,0 @@
-SingleMachine-CIT.json
-  TAGS:LoadBalancing
-SingleMachine-Functional.json
-  TAGS:LoadBalancing

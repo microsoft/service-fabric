@@ -52,7 +52,8 @@ TransactionalReplicator::TransactionalReplicator(
     __in SLInternalSettingsSPtr && ktlLoggerSharedLogConfig,
     __in Log::LogManager & logManager,
     __in IDataLossHandler & dataLossHandler,
-    __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient)
+    __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient,
+    __in bool hasPersistedState)
     : KAsyncServiceBase()
     , KWeakRefType<TransactionalReplicator>()
     , PartitionedReplicaTraceComponent(traceId)
@@ -87,6 +88,7 @@ TransactionalReplicator::TransactionalReplicator(
         partition, 
         stateProviderFactoryFunction, 
         transactionalReplicatorConfig_,
+        hasPersistedState,
         GetThisAllocator(), 
         stateManager_);
 
@@ -114,6 +116,7 @@ TransactionalReplicator::TransactionalReplicator(
         perfCounters_,
         healthClient_,
         *this,
+        hasPersistedState,
         GetThisAllocator(),
         stateProvider_);
 }
@@ -140,6 +143,7 @@ TransactionalReplicator::SPtr TransactionalReplicator::Create(
     __in Log::LogManager & logManager,
     __in IDataLossHandler & dataLossHandler,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr && healthClient,
+    __in bool hasPersistedState,
     __in KAllocator& allocator)
 {
     TransactionalReplicator::SPtr result = _new(TRANSACTIONALREPLICATOR_TAG, allocator) TransactionalReplicator(
@@ -152,7 +156,8 @@ TransactionalReplicator::SPtr TransactionalReplicator::Create(
         move(ktlLoggerSharedLogConfig),
         logManager,
         dataLossHandler,
-        move(healthClient));
+        move(healthClient),
+        hasPersistedState);
 
     THROW_ON_ALLOCATION_FAILURE(result);
 
@@ -853,6 +858,11 @@ Awaitable<NTSTATUS> TransactionalReplicator::GetOrAddAsync(
 bool TransactionalReplicator::get_IsReadable() const noexcept
 {
     return loggingReplicator_->IsReadable();
+}
+
+bool TransactionalReplicator::get_HasPersistedState() const noexcept
+{
+    return loggingReplicator_->HasPersistedState;
 }
 
 

@@ -14,7 +14,7 @@ namespace Query
         explicit GetContainerCodePackageLogsQuerySpecification();
 
         virtual Common::ErrorCode GetNext(
-            __in Query::QuerySpecificationSPtr const & previousQuerySpecification,
+            Query::QuerySpecificationSPtr const & previousQuerySpecification,
             __in std::unordered_map<Query::QueryNames::Enum, ServiceModel::QueryResult> & queryResults,
             __inout ServiceModel::QueryArgumentMap & queryArgs,
             __out Query::QuerySpecificationSPtr & nextQuery,

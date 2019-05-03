@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceManifest Name="RepairPolicyEnginePackage" Version="!FABRIC_VERSION!" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>
+    RepairPolicyEngineService monitors Microsoft Azure Service Fabric nodes and if there are any reported health errors reported against the node
+    for specific amount of time it will schedule a repair on the node.
+  </Description>
+  <ServiceTypes>
+    <StatefulServiceType ServiceTypeName="RepairPolicyEngineService" HasPersistedState="true" />
+  </ServiceTypes>
+  <CodePackage Name="RepairPolicyEngineService.Code" Version="!FABRIC_VERSION!"> 
+    <EntryPoint>
+        <ExeHost>
+          <Program>FabricPE.exe</Program>
+        </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="RepairPolicyEngineService.Config" Version="!FABRIC_VERSION!" />
+  <Resources>
+    <Endpoints>
+      <Endpoint Name="RepairPolicyEngineService_ReplicatorEndpoint" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>

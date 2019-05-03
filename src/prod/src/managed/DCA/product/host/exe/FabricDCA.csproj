@@ -1,0 +1,214 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <Import Project="$(SrcRoot)\solutions\EnableStylecop.props" />
+  <PropertyGroup>
+    <ProjectGuid>{E2A033DA-A524-49EB-A65C-2125F88E3581}</ProjectGuid>
+    <RootNamespace>FabricDCA</RootNamespace>
+    <AssemblyName>FabricDCA</AssemblyName>
+    <AssemblyDescription>Microsoft Azure Service Fabric Data Collection Agent</AssemblyDescription>
+    <AssemblyTitle>Microsoft Azure Service Fabric Data Collection Agent</AssemblyTitle>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\ContainerManager.cs">
+      <Link>ContainerManager.cs</Link>
+    </Compile>
+    <Compile Include="..\ContainerFolderScheduledForRemoval.cs">
+      <Link>ContainerFolderScheduledForRemoval.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryWriterFactory.cs">
+      <Link>TelemetryWriterFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\_friends.cs">
+      <Link>_friends.cs</Link>
+    </Compile>
+    <Compile Include="..\AppInstance.cs">
+      <Link>AppInstance.cs</Link>
+    </Compile>
+    <Compile Include="..\AppInstanceEtlFileDataReader.cs">
+      <Link>AppInstanceEtlFileDataReader.cs</Link>
+    </Compile>
+    <Compile Include="..\AppInstanceEtwDataReader.cs">
+      <Link>AppInstanceEtwDataReader.cs</Link>
+    </Compile>
+    <Compile Include="..\AppInstanceManager.cs">
+      <Link>AppInstanceManager.cs</Link>
+    </Compile>
+    <Compile Include="..\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\ConfigUpdateHandler.cs">
+      <Link>ConfigUpdateHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\ConsumerFactory.cs">
+      <Link>ConsumerFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\DCASettings.cs">
+      <Link>DCASettings.cs</Link>
+    </Compile>
+    <Compile Include="..\EtwEventTimestamp.cs">
+      <Link>EtwEventTimestamp.cs</Link>
+    </Compile>
+    <Compile Include="..\FabricDCA.cs">
+      <Link>FabricDCA.cs</Link>
+    </Compile>
+    <Compile Include="..\ProducerFactory.cs">
+      <Link>ProducerFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\Program.cs">
+      <Link>Program.cs</Link>
+    </Compile>
+    <Compile Include="..\ServicePackageTable.cs">
+      <Link>ServicePackageTable.cs</Link>
+    </Compile>
+    <Compile Include="..\ServicePackageTableBackup.cs">
+      <Link>ServicePackageTableBackup.cs</Link>
+    </Compile>
+    <Compile Include="..\ServicePackageTableManager.cs">
+      <Link>ServicePackageTableManager.cs</Link>
+    </Compile>
+    <Compile Include="..\StandardPlugins.cs">
+      <Link>StandardPlugins.cs</Link>
+    </Compile>
+    <Compile Include="..\ServicePackageTableRecord.cs">
+      <Link>ServicePackageTableRecord.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryConsumerBase.cs">
+      <Link>TelemetryConsumerBase.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryConsumerWindows.cs">
+      <Link>TelemetryConsumerWindows.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryEtwSink.cs">
+      <Link>TelemetryEtwSink.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryFilter.cs">
+      <Link>TelemetryFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\EnvironmentTelemetry.cs">
+      <Link>EnvironmentTelemetry.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryPerformanceInstrumentation.cs">
+      <Link>TelemetryPerformanceInstrumentation.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryUtility.cs">
+      <Link>TelemetryUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\DiskInfoTelemetry.cs">
+      <Link>DiskInfoTelemetry.cs</Link>
+    </Compile>
+    <Compile Include="..\DriveInfoTelemetry.cs">
+      <Link>DriveInfoTelemetry.cs</Link>
+    </Compile>
+    <Compile Include="..\TelemetryScheduler.cs">
+      <Link>TelemetryScheduler.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\TelemetryAggregation\dll\TelemetryAggregation.csproj">
+      <Project>{4ED2B9F1-639E-465D-8200-CD05E499232F}</Project>
+      <Name>TelemetryAggregation</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\TelemetryAggregation\ConfigParser\dll\TelemetryConfigParser.csproj">
+      <Project>{8F5269D6-6F47-411A-8DF1-98A61D30890B}</Project>
+      <Name>TelemetryConfigParser</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\DCA\product\plugins\telemetry\telemetrywriters\dll\TelemetryWriters.csproj">
+      <Project>{0C6E0DCC-7A0A-4D3E-B19B-CC06E94BB9DD}</Project>
+      <Name>TelemetryWriters</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\azure\blobetw\dll\AzureBlobEtwUploader.csproj">
+      <Project>{b4b48eaa-ef54-4353-9154-94a6339bf01e}</Project>
+      <Name>AzureBlobEtwUploader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\azure\common\dll\AzureUploaderCommon.csproj">
+      <Project>{24F2BEFB-C57A-4C2E-99DA-3C0335410F99}</Project>
+      <Name>AzureUploaderCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\azure\blob\dll\AzureFileUploader.csproj">
+      <Project>{053FD62D-E691-4B0E-8F93-1CC663225FA1}</Project>
+      <Name>AzureFileUploader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\azure\table\dll\AzureTableUploader.csproj">
+      <Project>{A2B9441E-A2EE-4781-BCC2-75B811405838}</Project>
+      <Name>AzureTableUploader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\etlinmemoryproducer\dll\EtlInMemoryProducer.csproj">
+      <Project>{2661a99b-1614-4f88-aaae-95b727985421}</Project>
+      <Name>EtlInMemoryProducer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\etlproducer\dll\EtlProducer.csproj">
+      <Project>{0B59CCF4-3802-4835-9CF0-7BEE689A54C9}</Project>
+      <Name>EtlProducer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\EtlReader\EtlReader.csproj">
+      <Project>{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}</Project>
+      <Name>EtlReader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\fileshareuploader\dll\FileShareUploader.csproj">
+      <Project>{E5F31E1F-2A5F-43A5-A6B1-054A29D39536}</Project>
+      <Name>FileShareUploader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\folderproducer\dll\FolderProducer.csproj">
+      <Project>{A7C44ED3-411C-4452-B1C4-27EA18425194}</Project>
+      <Name>FolderProducer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\mdsfileproducer\dll\MdsFileProducer.csproj">
+      <Project>{a7eb3ae1-2e80-4de4-bd9f-4b57a38d0a03}</Project>
+      <Name>MdsFileProducer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\mds\dll\MdsUploader.csproj">
+      <Project>{81B4777C-8E6C-426C-AE68-10F3E84C881B}</Project>
+      <Name>MdsUploader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\plugins\perfcounterproducer\dll\PerfCounterProducer.csproj">
+      <Project>{3BF9C5EA-2AAA-45B5-B15C-7B0E17815D19}</Project>
+      <Name>PerfCounterProducer</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\system.fabric.dca\dll\System.Fabric.Dca.csproj">
+      <Project>{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}</Project>
+      <Name>System.Fabric.Dca</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\pluginvalidators\dll\DcaStandardPluginValidator.csproj">
+      <Name>DcaStandardPluginValidator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Api\Dlls\System.Fabric.Strings\System.Fabric.Strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <Reference Include="$(PkgNewtonsoft_Json_6_0)\lib\net45\Newtonsoft.Json.dll">
+      <Name>Newtonsoft.Json</Name>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Management" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Content Include="FabricDCA.exe.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\tconfig.ini">
+      <Link>tconfig.ini</Link>
+    </None>
+  </ItemGroup>
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

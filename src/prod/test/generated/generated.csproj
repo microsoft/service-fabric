@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_test.props" />
+  
+  <PropertyGroup>
+    <ProjectGuid>{e4088b2e-1379-4502-9eca-4e08b891a04e}</ProjectGuid>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Target Name="Build" DependsOnTargets="Gen_Trace_Man;Gen_NonFiji_Tests;Gen_V1_Error_Codes;Gen_V2_Error_Codes;Gen_Config_Files;Gen_Srv_Model;CopyFiles"></Target>
+  <Target Name="Gen_Trace_Man" Inputs="..\..\manifests\components\Microsoft-ServiceFabric-Events.man" Outputs="$(BinariesBuildTypeArchDirectory)\inc\WinFabricStructuredTracingCode.cs">
+    <MakeDir Directories="$(BinariesBuildTypeArchDirectory)\inc" />
+    <Exec Command="GenerateTracingCodeFile.cmd ..\..\manifests\components\Microsoft-ServiceFabric-Events.man &gt; $(BinariesBuildTypeArchDirectory)\inc\WinFabricStructuredTracingCode.cs" />
+  </Target>
+  <Target Name="Gen_NonFiji_Tests" Inputs="$(SrcRoot)\prod\test\scripts\RunTests.exe.config" Outputs="$(BinariesBuildTypeArchDirectory)\inc\WinFabricNonFijiTestCases.g.cs">
+    <MakeDir Directories="$(BinariesBuildTypeArchDirectory)\inc" />
+    <Exec Command="GenerateTestCases.cmd $(SrcRoot)\prod\test\scripts\RunTests.exe.config &gt; $(BinariesBuildTypeArchDirectory)\inc\WinFabricNonFijiTestCases.g.cs" />
+  </Target>
+  <Target Name="Gen_V1_Error_Codes" Inputs="$(SrcRoot)\prod\src\Common\ErrorCodeValue.h;$(SrcRoot)\prod\src\idl\public\FabricTypes.idl;$(SrcRoot)\prod\test\generated\WinFabricErrorCodeInteropTemplate.txt" Outputs="$(BinariesBuildTypeArchDirectory)\inc\WinFabricErrorCodeInterop.cs">
+    <MakeDir Directories="$(BinariesBuildTypeArchDirectory)\inc" />
+    <Exec Command="perl GenerateErrorCodes.pl $(SrcRoot)\prod $(BinariesBuildTypeArchDirectory)\inc\WinFabricErrorCodeInterop.cs" />
+  </Target>
+  <Target Name="Gen_V2_Error_Codes" Inputs="$(SrcRoot)\prod\src\Common\ErrorCodeValue.h;$(SrcRoot)\prod\src\idl\public\FabricTypes.idl;$(SrcRoot)\prod\test\generated\WinFabricErrorCodeInteropTemplateV2.txt" Outputs="$(BinariesBuildTypeArchDirectory)\inc\WinFabricErrorCodeInteropV2.cs">
+    <MakeDir Directories="$(BinariesBuildTypeArchDirectory)\inc" />
+    <Exec Command="perl GenerateErrorCodesV2.pl $(SrcRoot)\prod $(BinariesBuildTypeArchDirectory)\inc\WinFabricErrorCodeInteropV2.cs" />
+  </Target>
+  <ItemGroup>
+    <ConfigFiles Include="$(SrcRoot)\prod\**\*Config.h" />
+  </ItemGroup>
+  <Target Name="Gen_Config_Files" Inputs="@(ConfigFiles);WinFabricConfigSectionsTemplate.txt" Outputs="$(BinariesBuildTypeArchDirectory)\inc\Configurations.csv;$(BinariesBuildTypeArchDirectory)\inc\Configurations.linux.csv;$(BinariesBuildTypeArchDirectory)\inc\PublicConfigurations.csv;$(BinariesBuildTypeArchDirectory)\inc\WinFabricConfigSections.cs">
+    <MakeDir Directories="$(BinariesBuildTypeArchDirectory)\inc" />
+    <Exec Command="perl ..\..\tools\ConfigurationValidator\GenerateConfigurationsCSV.pl $(SrcRoot)\prod $(BinariesBuildTypeArchDirectory)\inc\Configurations.csv $(BinariesBuildTypeArchDirectory)\inc\Configurations.linux.csv $(BinariesBuildTypeArchDirectory)\inc\PublicConfigurations.csv" />
+    <Exec Command="perl GenerateConfigSections.pl $(SrcRoot)\prod $(BinariesBuildTypeArchDirectory)\inc\Configurations.csv $(BinariesBuildTypeArchDirectory)\inc\WinFabricConfigSections.cs" />
+  </Target>
+  <Target Name="Gen_Srv_Model" Inputs="$(SrcRoot)\prod\src\ServiceModel\xsd\ServiceFabricServiceModel.xsd" Outputs="$(BinariesBuildTypeArchDirectory)\inc\ServiceFabricGeneratedServiceModel.cs">
+    <MakeDir Directories="$(BinariesBuildTypeArchDirectory)\inc" />
+    <Exec Command="GenerateServiceModel.cmd /fabricRoot:$(SrcRoot)\prod /destPath:$(BinariesBuildTypeArchDirectory)\inc /destFile:ServiceFabricGeneratedServiceModel.cs" />
+  </Target>
+  <Target Name="CopyFiles">
+    <ItemGroup>
+      <!-- General copy for anything under \inc -->
+      <Content Include="$(BinariesBuildTypeArchDirectory)\inc\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Content)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(Content)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTest" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(Content)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="GetTargetFrameworkProperties" />
+</Project>

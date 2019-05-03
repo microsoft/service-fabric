@@ -85,6 +85,13 @@ RvdLogStreamShim::QueryCurrentReservation()
 }
 
 NTSTATUS
+RvdLogStreamShim::SetTruncationCompletionEvent(__in_opt KAsyncEvent* const EventToSignal)
+{
+    return(_CoreLogStream->SetTruncationCompletionEvent(EventToSignal));
+}
+
+
+NTSTATUS
 RvdLogStreamShim::CreateAsyncWriteContext(__out AsyncWriteContext::SPtr& Context)
 {
     return(_CoreLogStream->CreateAsyncWriteContext(Context));

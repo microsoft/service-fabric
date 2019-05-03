@@ -449,6 +449,7 @@ namespace System.Fabric.Common
         internal static void PerformWithRetry(Action action, Type[] exceptionTypes, TimeSpan retryInterval, int retryCount = 3)
         {
             Exception lastException = null;
+
             for (int retry=0; retry < retryCount; retry++)
             {
                 try
@@ -482,6 +483,54 @@ namespace System.Fabric.Common
                         String.Format("PerformWithRetry retrying action after exception {0}\nStack:\n{1}", ex.GetType().ToString(), ex.StackTrace));
                 }
             }
+
+            ThrowIf.Null(lastException, "lastException");
+            throw lastException;
+        }
+
+        internal static void PerformWithRetry(Action action, Type[] exceptionTypes, TimeSpan retryInterval, TimeSpan timeout)
+        {
+            bool firstRun = true;
+            var timeoutHelper = new TimeoutHelper(timeout);
+            Exception lastException = null;
+
+            while (!TimeoutHelper.HasExpired(timeoutHelper))
+            {
+                try
+                {
+                    if (!firstRun)
+                    {
+                        System.Threading.Thread.Sleep(retryInterval);
+                    }
+                    action();
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    bool exceptionSupported = false;
+                    foreach (Type type in exceptionTypes)
+                    {
+                        if (ex.GetType() == type)
+                        {
+                            exceptionSupported = true;
+                            lastException = ex;
+                            break;
+                        }
+                    }
+                    if (!exceptionSupported)
+                    {
+                        AppTrace.TraceSource.WriteError("PerformWithRetry",
+                            "PerformWithRetry hit unexpected exception {0}\nStack:\n{1}", ex.GetType().ToString(), ex.StackTrace);
+                        throw;
+                    }
+                    AppTrace.TraceSource.WriteWarning("PerformWithRetry",
+                        String.Format("PerformWithRetry retrying action after exception {0}\nStack:\n{1}", ex.GetType().ToString(), ex.StackTrace));
+
+                    firstRun = false;
+                }
+            }
+
+            ThrowIf.Null(lastException, "lastException");
             throw lastException;
         }
 

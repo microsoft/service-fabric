@@ -44,7 +44,12 @@ namespace FabricDCA
             GC.SuppressFinalize(this);
         }
 
-        internal void CreateApplicationInstance(string applicationInstanceId, AppConfig appConfig)
+        public virtual bool Contains(string appInstanceId)
+        {
+            return this.applicationInstances.ContainsKey(appInstanceId);
+        }
+
+        internal virtual void CreateApplicationInstance(string applicationInstanceId, AppConfig appConfig)
         {
             this.CreateApplicationInstance(applicationInstanceId, DateTime.MaxValue, appConfig, null, null);
         }
@@ -121,7 +126,7 @@ namespace FabricDCA
             appInstance.RemoveService(servicePackageName);
         }
 
-        internal void DeleteApplicationInstance(string applicationInstanceId)
+        internal virtual void DeleteApplicationInstance(string applicationInstanceId)
         {
             AppInstance appInstance;
             lock (this.applicationInstances)

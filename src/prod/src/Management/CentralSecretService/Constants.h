@@ -7,22 +7,23 @@
 
 namespace Management
 {
-	namespace CentralSecretService
-	{
-		class Constants
-		{
-		public:
+    namespace CentralSecretService
+    {
+        class Constants
+        {
+        public:
 
-			static Common::GlobalWString CentralSecretServicePrimaryCountName;
-			static Common::GlobalWString CentralSecretServiceReplicaCountName;
-			static Common::GlobalWString DatabaseDirectory;
-			static Common::GlobalWString DatabaseFilename;
-			static Common::GlobalWString SharedLogFilename;
-
-			class StoreType {
-			public:
-				static Common::GlobalWString Secrets;
-			};
-		};
-	}
+            static Common::GlobalWString CentralSecretServicePrimaryCountName;
+            static Common::GlobalWString CentralSecretServiceReplicaCountName;
+            static Common::GlobalWString DatabaseDirectory;
+            static Common::GlobalWString DatabaseFilename;
+            static Common::GlobalWString SharedLogFilename;
+            
+            class StoreType {
+            public:
+                static Common::GlobalWString Secrets;
+                static Common::GlobalWString SecretsMetadata;
+            };
+        };
+    }
 }

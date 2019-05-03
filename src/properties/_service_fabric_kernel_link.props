@@ -1,0 +1,23 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <ItemDefinitionGroup>
+    <Link>
+      <SubSystem>native</SubSystem>
+      <AdditionalOptions>/MERGE:_PAGE=PAGE /MERGE:_TEXT=.text /OPT:REF /OPT:ICF /IGNORE:4010,4037,4039,4065,4070,4078,4087,4089,4221,4198,4281 /INCREMENTAL:NO /release /WX /debug /debugtype:cv,fixup,pdata /version:6.1 /osversion:6.1 /GUARD:NO /pdbcompress /driver /kernel /base:0x10000 /d2:-guardspecload</AdditionalOptions>
+      <AdditionalDependencies>
+          $(KtlKernelLib);
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\lib\amd64\BufferOverflowK.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\ntoskrnl.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\hal.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\wmilib.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\ntstrsafe.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\wdmsec.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\wdf\kmdf\$(KmdfVersion)\WdfLdr.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\wdf\kmdf\$(KmdfVersion)\WdfDriverEntry.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\msnetioid.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\netio.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_sdk)\lib\amd64\uuid.lib;
+        $(PkgMicrosoft_WindowsAzure_DirectDrive_External_Windows_ddk)\lib\amd64\ksecdd.lib
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

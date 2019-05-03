@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest
+    ApplicationTypeName="CrashTestTXRAppType"
+    ApplicationTypeVersion="1.0"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Description>CrashTest Transactional Replicator Application</Description>
+    <Parameters>
+        <Parameter Name="RandomCrashChance" DefaultValue="-1" />
+        <Parameter Name="DiagnosticsConnectionString" DefaultValue="" />
+        <Parameter Name="DiagnosticsConnectionStringIsEncrypted" DefaultValue="false" />
+        <Parameter Name="CrashDumpContainerName" DefaultValue="" />
+    </Parameters>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="Service" ServiceManifestVersion="1.0"/>
+        <ConfigOverrides>
+           <ConfigOverride Name="Config">
+               <Settings>
+                   <Section Name="TestConfig">
+                       <Parameter Name="RandomCrashChance" Value="[RandomCrashChance]" />
+                   </Section>
+               </Settings>
+           </ConfigOverride>
+       </ConfigOverrides>
+    </ServiceManifestImport>
+    <DefaultServices>
+        <Service Name="Service">
+          <StatefulService ServiceTypeName="CrashTestTXRServiceType" MinReplicaSetSize="2" TargetReplicaSetSize="3">
+            <UniformInt64Partition PartitionCount="18" LowKey="0" HighKey="17" />
+          </StatefulService>
+        </Service>
+    </DefaultServices>
+    <Diagnostics>
+      <CrashDumpSource IsEnabled="true">
+        <Destinations>
+          <LocalStore IsEnabled="true" RelativeFolderPath="CrashDumps"/>
+          <AzureBlob IsEnabled="true"
+                     ConnectionString="[DiagnosticsConnectionString]"
+                     ConnectionStringIsEncrypted="[DiagnosticsConnectionStringIsEncrypted]"
+                     ContainerName="[CrashDumpContainerName]"
+                     UploadIntervalInMinutes="1" />
+        </Destinations>
+      </CrashDumpSource>
+    </Diagnostics>
+</ApplicationManifest>

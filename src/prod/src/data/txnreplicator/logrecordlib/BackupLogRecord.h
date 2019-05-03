@@ -39,6 +39,8 @@ namespace Data
                 __in PhysicalLogRecord & invalidPhysicalLogRecord,
                 __in KAllocator & allocator);
 
+            virtual std::wstring ToString() const override;
+
             __declspec(property(get = get_BackupId)) KGuid & BackupId;
             KGuid const & get_BackupId() const
             {

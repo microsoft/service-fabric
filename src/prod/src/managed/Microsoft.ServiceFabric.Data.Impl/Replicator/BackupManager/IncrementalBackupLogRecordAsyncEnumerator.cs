@@ -56,6 +56,29 @@ namespace Microsoft.ServiceFabric.Replicator
             this.count = 0;
         }
 
+        internal IncrementalBackupLogRecordAsyncEnumerator(
+            string traceType,
+            Guid backupId,
+            IAsyncEnumerator<LogRecord> source,
+            BackupLogRecord lastBackupLogRecord,
+            Epoch startingEpoch,
+            LogicalSequenceNumber startingLsn)
+        {
+            this.traceType = traceType;
+            this.backupId = backupId;
+            this.source = source;
+            this.lastBackupLogRecord = lastBackupLogRecord;
+            this.loggingReplicator = null;
+
+            // TODO: verify startingEpoch & startingLsn is not invalid
+            this.startingEpoch = startingEpoch;
+            this.startingLsn = startingLsn;
+            this.lastEpoch = LoggingReplicator.InvalidEpoch;
+            this.lastLsn = LogicalSequenceNumber.InvalidLsn;
+
+            this.count = 0;
+        }
+
         public uint Count
         {
             get { return this.count; }

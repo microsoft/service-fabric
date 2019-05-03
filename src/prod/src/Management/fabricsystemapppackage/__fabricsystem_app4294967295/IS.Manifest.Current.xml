@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    Name="IS" 
+    Version="Current"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric">
+    <Description>A Microsoft Azure Service Fabric system service that interacts with the underlying Infrastructure.</Description>
+    <ServiceTypes>
+        <StatefulServiceType ServiceTypeName="InfrastructureServiceType" HasPersistedState="false" />
+    </ServiceTypes>
+    <CodePackage Name="Code" Version="Current">
+        <EntryPoint>
+            <ExeHost>
+                <Program>FabricIS.exe</Program>
+            </ExeHost>
+        </EntryPoint>
+    </CodePackage>
+    <Resources>
+      <!-- This causes activation in FabricTest to fail with an 'EndpointProvider is not enabled on this node' error.
+      <Endpoints>
+        <Endpoint Name="ReplicatorEndpoint" Type="Internal" Protocol="tcp" />
+      </Endpoints>
+      -->
+    </Resources>
+</ServiceManifest>

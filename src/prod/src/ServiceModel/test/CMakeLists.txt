@@ -19,7 +19,6 @@ add_executable(${exe_ServiceModelTest}
     ../NodeIdGenerator.Test.cpp
     ../Serializer.Test.cpp
 	../KeyRange.Test.cpp
-    ../JsonSerialization.Test.cpp
     ../QueryArgumentMap.Test.cpp
     ../modelV2/modelV2.Test.cpp
 )
@@ -97,5 +96,10 @@ install(
     FILES ./RunServiceModelTests.sh
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_WRITE WORLD_EXECUTE 
     DESTINATION ${TEST_OUTPUT_DIR}
+)
+
+install(
+    DIRECTORY ./../modelV2/modelV2TestFiles
+    DESTINATION ${TEST_OUTPUT_DIR}/
 )
 

@@ -209,14 +209,6 @@ namespace TStoreTests
             co_return;
         }
 
-        ktl::Awaitable<void> FullCopyToSecondaryAsync(__in Data::TStore::Store<LONG64, KString::SPtr> & secondaryStore)
-        {
-            // Checkpoint the Primary, to get all current state
-            co_await CheckpointAsync(*Store);
-            co_await CopyCheckpointToSecondaryAsync(secondaryStore);
-            co_return;
-        }
-        
         ktl::Awaitable<void> FullCopyToSecondariesAsync(__inout KSharedArray<Data::TStore::Store<LONG64, KString::SPtr>::SPtr> & secondaries)
         {
             // Checkpoint the Primary, to get all current state
@@ -718,7 +710,6 @@ namespace TStoreTests
             // Start copying files to each
             co_await FullCopyToSecondariesAsync(*secondariesCopy);
 
-            // TODO: Can Apply come before EndSettingCurrentState?
             for (ULONG32 i = 0; i < numSecondaries; i++)
             {
                 auto secondaryStore = (*secondaries)[i];

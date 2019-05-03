@@ -5,7 +5,8 @@
       {
         "Name": "NW-V1Repl-3R-6P-PaaS-Linux (D14)",
         "Type": "Linux_ScriptTest_Perf",
-        "Owners": "ImanG",
+        "Owners": "rahku,tyadam,alanwar,kailasl,preethas",
+        "IsEnabled": "false",
         "ResourcesRequired": "Server:1&Azure:1",
         "TestExecutionParameters": {
           "SetupType": "XCopy",
@@ -21,7 +22,8 @@
       {
         "Name": "NW-V1Repl-3R-1P-PaaS-Linux (D14)",
         "Type": "Linux_ScriptTest_Perf",
-        "Owners": "ImanG",
+        "Owners": "rahku,tyadam,alanwar,kailasl,preethas",
+        "IsEnabled": "false",
         "ResourcesRequired": "Server:1&Azure:1",
         "TestExecutionParameters": {
           "SetupType": "XCopy",
@@ -37,7 +39,8 @@
       {
         "Name": "NW-TXR-3R-6P-PaaS-Linux (D14)",
         "Type": "Linux_ScriptTest_Perf",
-        "Owners": "ImanG",
+        "Owners": "rahku,tyadam,alanwar,kailasl,preethas",
+        "IsEnabled": "false",
         "ResourcesRequired": "Server:1&Azure:1",
         "TestExecutionParameters": {
           "SetupType": "XCopy",
@@ -53,7 +56,8 @@
       {
         "Name": "NW-TXR-3R-1P-PaaS-Linux (D14)",
         "Type": "Linux_ScriptTest_Perf",
-        "Owners": "ImanG",
+        "Owners": "rahku,tyadam,alanwar,kailasl,preethas",
+        "IsEnabled": "false",
         "ResourcesRequired": "Server:1&Azure:1",
         "TestExecutionParameters": {
           "SetupType": "XCopy",
@@ -69,7 +73,8 @@
       {
         "Name": "NW-TXR-1R-1P-PaaS-Linux (D14)",
         "Type": "Linux_ScriptTest_Perf",
-        "Owners": "ImanG",
+        "Owners": "rahku,tyadam,alanwar,kailasl,preethas",
+        "IsEnabled": "false",
         "ResourcesRequired": "Server:1&Azure:1",
         "TestExecutionParameters": {
           "SetupType": "XCopy",

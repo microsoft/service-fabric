@@ -214,6 +214,15 @@ KRTTTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
+#if defined(PLATFORM_UNIX)
+    NTSTATUS status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+	
     KTestPrintf("KRTTTest: STARTED\n");
 
     NTSTATUS Result;
@@ -255,6 +264,11 @@ KRTTTest(
     EventUnregisterMicrosoft_Windows_KTL();
 
     KTestPrintf("KRTTTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  	
+	
     return Result;
 }
 

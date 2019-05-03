@@ -1,0 +1,8 @@
+[Version]
+Signature="$WINDOWS NT$"
+
+[KtlLoggerKernel.NT.Wdf]
+KmdfService = KtlLoggerKernel, KmUnit_Service_kmdfInst
+
+[KmUnit_Service_kmdfInst]
+KmdfLibraryVersion = 1.9

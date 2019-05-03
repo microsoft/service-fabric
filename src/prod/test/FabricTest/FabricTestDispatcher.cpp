@@ -509,6 +509,14 @@ void FabricTestDispatcher::SetCommandHandlers()
     {
         return SetDnsServiceProperties(paramCollection);
     };
+    commandHandlers_[FabricTestCommands::DefineNIMServiceCommand] = [this](StringCollection const & paramCollection)
+    {
+        return SetNIMServiceProperties(paramCollection);
+    };
+    commandHandlers_[FabricTestCommands::DefineEnableUnsupportedPreviewFeaturesCommand] = [this](StringCollection const & paramCollection)
+    {
+        return SetEnableUnsupportedPreviewFeatures(paramCollection);
+    };
     commandHandlers_[FabricTestCommands::VerifyCommand] = [this](StringCollection const & paramCollection)
     {
         return VerifyAll(paramCollection);
@@ -1009,6 +1017,26 @@ void FabricTestDispatcher::SetCommandHandlers()
     commandHandlers_[FabricTestCommands::UpgradeComposeCommand] = [this](StringCollection const & paramCollection)
     {
         return FabricClientUpgrade.UpgradeComposeDeployment(paramCollection);
+    };
+    commandHandlers_[FabricTestCommands::RollbackComposeCommand] = [this](StringCollection const & paramCollection)
+    {
+        return FabricClientUpgrade.RollbackComposeDeployment(paramCollection);
+    };
+    commandHandlers_[FabricTestCommands::CreateNetworkCommand] = [this](StringCollection const & paramCollection)
+    {
+        return FabricClient.CreateNetwork(paramCollection);
+    };
+    commandHandlers_[FabricTestCommands::DeleteNetworkCommand] = [this](StringCollection const & paramCollection)
+    {
+        return FabricClient.DeleteNetwork(paramCollection);
+    };
+    commandHandlers_[FabricTestCommands::GetNetworkCommand] = [this](StringCollection const & paramCollection)
+    {
+        return FabricClient.GetNetwork(paramCollection);
+    };
+    commandHandlers_[FabricTestCommands::ShowNetworksCommand] = [this](StringCollection const & paramCollection)
+    {
+        return FabricClient.ShowNetworks(paramCollection);
     };
     commandHandlers_[FabricTestCommands::KillCodePackageCommand] = [this](StringCollection const & paramCollection)
     {
@@ -5433,6 +5461,17 @@ bool FabricTestDispatcher::PLBUpdateService(StringCollection const& params)
         parentService = serviceDescription.AffinitizedService;
     }
 
+    vector<Reliability::ServiceScalingPolicyDescription> scalingPolicies;
+    wstring scalingPolicy;
+    parser.TryGetString(L"scalingPolicy", scalingPolicy, L"");
+    if (!scalingPolicy.empty())
+    {
+        if (!TestFabricClient::GetServiceScalingPolicy(scalingPolicy, scalingPolicies))
+        {
+            return false;
+        }
+    }
+
     Reliability::LoadBalancingComponent::ServiceDescription newDescription(
         wstring(serviceDescription.Name),
         wstring(serviceDescription.ServiceTypeName),
@@ -5445,7 +5484,12 @@ bool FabricTestDispatcher::PLBUpdateService(StringCollection const& params)
         serviceDescription.DefaultMoveCost,
         serviceDescription.OnEveryNode,
         serviceDescription.PartitionCount,
-        serviceDescription.TargetReplicaSetSize);
+        serviceDescription.TargetReplicaSetSize,
+        true,
+        ServiceModel::ServicePackageIdentifier(),
+        ServiceModel::ServicePackageActivationMode::SharedProcess,
+        0,
+        move(scalingPolicies));
 
     auto error = plb->UpdateService(move(newDescription), forceUpdate);
 
@@ -6842,6 +6886,39 @@ bool FabricTestDispatcher::SetDnsServiceProperties(StringCollection const & para
 
     DNS::DnsServiceConfig & config = DNS::DnsServiceConfig::GetConfig();
     config.IsEnabled = StringUtility::AreEqualCaseInsensitive(params[0], L"true");
+
+    if (params.size() > 1)
+    {
+        config.EnablePartitionedQuery = StringUtility::AreEqualCaseInsensitive(params[1], L"true");
+    }
+
+    return true;
+}
+
+bool FabricTestDispatcher::SetNIMServiceProperties(StringCollection const & params)
+{
+    if (params.size() < 1)
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::DefineDnsServiceCommand);
+        return false;
+    }
+
+    auto & config = NetworkInventoryManager::NetworkInventoryManagerConfig::GetConfig();
+    config.IsEnabled = StringUtility::AreEqualCaseInsensitive(params[0], L"true");
+
+    return true;
+}
+
+bool FabricTestDispatcher::SetEnableUnsupportedPreviewFeatures(StringCollection const & params)
+{
+    if (params.size() < 1)
+    {
+        FABRICSESSION.PrintHelp(FabricTestCommands::DefineEnableUnsupportedPreviewFeaturesCommand);
+        return false;
+    }
+
+    auto & config = CommonConfig::GetConfig();
+    config.EnableUnsupportedPreviewFeatures = StringUtility::AreEqualCaseInsensitive(params[0], L"true");
 
     return true;
 }
@@ -10344,6 +10421,11 @@ wstring FabricTestDispatcher::GetFMApplicationState(StringCollection const& para
         if (params[2] == L"IsDeleted")
         {
             return wformatString(appInfo->IsDeleted);
+        }
+
+        if (params[2] == L"IsUpgradeCompleted")
+        {
+            return wformatString(appInfo->IsUpgradeCompleted);
         }
     }
 

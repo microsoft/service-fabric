@@ -1,0 +1,689 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>System.Fabric.Management</AssemblyName>
+    <AssemblyDescription>Fabric Management Library</AssemblyDescription>
+    <RootNamespace>System.Fabric.Management</RootNamespace>
+    <ProjectGuid>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</ProjectGuid>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(SrcRoot)\prod\setup\ArtifactsSpecification.csv">
+      <LogicalName>ArtifactsSpecification.csv</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(BinariesBuildTypeArchDirectory)\inc\Configurations.csv">
+      <LogicalName>Configurations.csv</LogicalName>
+    </EmbeddedResource>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkDeploymentOperation.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkDeploymentOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\Config.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\Config.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkCleanupOperation.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkCleanupOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkSetupOperation.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\ContainerNetworkSetupOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\FlatNetworkConstants.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\FlatNetworkConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\Interface.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\Interface.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\Interfaces.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\Interfaces.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\IPAddressDetails.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\IPAddressDetails.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\IpamConfig.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\IpamConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\IPSubnet.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\IPSubnet.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\NetworkConfig.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\NetworkConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\SafeInteropPtrToStructureMemoryHandle.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\SafeInteropPtrToStructureMemoryHandle.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\SafeInteropStructureToPtrMemoryHandle.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\SafeInteropStructureToPtrMemoryHandle.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\CnsResponse.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\CnsResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\CreateNetworkRequest.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\CreateNetworkRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\InitializeRequest.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\FlatNetwork\CNSApi\InitializeRequest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DcaSettings.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\DcaSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkSetupOperation.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkSetupOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkCleanupOperation.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkCleanupOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkDeploymentOperation.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkDeploymentOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkConstants.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkConfig.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkPolicyConfig.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkPolicyConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkSubnetConfig.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\IsolatedNetwork\IsolatedNetworkSubnetConfig.cs</Link>
+    </Compile>
+    <Compile Include="_friends.cs" />
+    <Compile Include="..\..\src\System\Fabric\Management\common\ArtifactsSpecificationDescription.cs">
+      <Link>src\System\Fabric\Management\Common\ArtifactsSpecificationDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageStore\ImageStoreFactoryProxy.cs">
+      <Link>src\System\Fabric\Management\ImageStore\ImageStoreFactoryProxy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageStore\XStoreBlobWrapper.cs">
+      <Link>src\System\Fabric\Management\ImageStore\XStoreBlobWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageStore\XStoreCommon.cs">
+      <Link>src\System\Fabric\Management\ImageStore\XStoreCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageStore\XStoreFileOperations.cs">
+      <Link>src\System\Fabric\Management\ImageStore\XStoreFileOperations.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageStore\XStoreFileOperationsWorker.cs">
+      <Link>src\System\Fabric\Management\ImageStore\XStoreFileOperationsWorker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageStore\XStoreImageStore.cs">
+      <Link>src\System\Fabric\Management\ImageStore\XStoreImageStore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationCreateInstanceOperation.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationCreateInstanceOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationDiagnosticsValidator.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationDiagnosticsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationInstanceBuilder.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationInstanceBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationInstanceContext.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationInstanceContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationInstanceOperationBase.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationInstanceOperationBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationManifestValidator.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationManifestValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationProvisionOperation.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationProvisionOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationProvisionProgressHandler.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationProvisionProgressHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationTypeContext.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationTypeContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationTypeInformation.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationTypeInformation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ApplicationUpgradeInstanceOperation.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ApplicationUpgradeInstanceOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\CodePackage.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\CodePackage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ConfigPackage.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ConfigPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DataPackage.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DataPackage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DuplicateDetector.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DuplicateDetector.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\FabricImageBuilderValidationException.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\FabricImageBuilderValidationException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\FabricProvisionOperation.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\FabricProvisionOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\FabricUpgradeOperation.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\FabricUpgradeOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\IApplicationValidator.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\IApplicationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilder.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ImageBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilderSorterUtility.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ImageBuilderSorterUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\XmlUtility.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\XmlUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilderUtility.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ImageBuilderUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ImageBuilderUtilityExtension.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ImageBuilderUtilityExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ImageStoreWrapper.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ImageStoreWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ManifestValidatorUtility.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ManifestValidatorUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ServiceManifest.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ServiceManifest.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\ServiceManifestValidator.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\ServiceManifestValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\StringConstants.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\StringConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeApplicationTypeDescription.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeApplicationTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeObjectDescription.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeObjectDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ContainerRepositoryCredentials.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ContainerRepositoryCredentials.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceLoggingOptions.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceLoggingOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServicePorts.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServicePorts.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceTypeDescription.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceTypeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceVolume.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeServiceVolume.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeVolumeDescription.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeVolumeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeNetworkDescription.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeNetworkDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeResourceGovernance.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ComposeResourceGovernance.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeConstants.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeConstants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\FabricDockerComposeException.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\FabricDockerComposeException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeUtils.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\DockerComposeUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\DockerCompose\ContainerApplicationPkgGenerator.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\DockerCompose\ContainerApplicationPkgGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Application.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\Application.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationPackageGenerator.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationPackageGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMount.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMount.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMountJsonConverter.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeMountJsonConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeProvider.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescription.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionAzureFile.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionAzureFile.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionVolumeDisk.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\VolumeDescriptionVolumeDisk.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationScopedVolumeProvider.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\ApplicationScopedVolumeProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\CertificateRef.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\CertificateRef.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\CodePackage.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\CodePackage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Endpoint.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\Endpoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\FabricApplicationException.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\FabricApplicationException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ReliableCollectionsRef.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\ReliableCollectionsRef.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ImageRegistryCredential.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\ImageRegistryCredential.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Resource.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\Resource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Service.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\Service.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Label.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\Label.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\GenerationConfig.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\GenerationConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\EnvironmentVariable.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\EnvironmentVariable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsDescription.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsSinkBase.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsSinkBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsRef.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\DiagnosticsRef.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\AzureInternalMonitoringPipelineSinkDescription.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\AzureInternalMonitoringPipelineSinkDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\NetworkRef.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\NetworkRef.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\EndpointRef.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\EndpointRef.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\Setting.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\Setting.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\ImageBuilder\SingleInstance\ScalingPolicy.cs">
+      <Link>src\System\Fabric\Management\ImageBuilder\SingleInstance\ScalingPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\BaseFabricConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\BaseFabricConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\ConfigDescription.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\ConfigDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\DnsServiceConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\DnsServiceConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FabricValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FabricValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorAzure.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FabricValidatorAzure.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorBlackbird.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FabricValidatorBlackbird.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorPaaS.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FabricValidatorPaaS.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorServer.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FabricValidatorServer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FabricValidatorUtility.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FabricValidatorUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\DCASettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\DCASettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\DcaStandardPluginValidators.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\DCAStandardPluginValidators.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\DeploymentFolders.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\DeploymentFolders.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FabricHostConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FabricHostConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FabricSettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FabricSettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FailoverManagerConfigurationValidators.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FailoverManagerConfigurationValidators.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\FileStoreServiceConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\FileStoreServiceConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\UpgradeServiceConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\UpgradeServiceConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\NamingConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\NamingConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\ClusterManagerConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\ClusterManagerConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\HttpGatewaySettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\HttpGatewaySettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\HttpAppGatewaySettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\HttpAppGatewaySettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\TokenValidationServiceSettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\TokenValidationServiceSettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\LoadBalancingConfigurationValidators.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\LoadBalancingConfigurationValidators.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\PerformanceCountersConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\PerformanceCountersConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\DiagnosticsConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\DiagnosticsConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\KtlLoggerConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\KtlLoggerConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\HostingConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\HostingConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\ImageStoreConfigurationValidators.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\ImageStoreConfigurationValidators.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\SettingsOverridesTypeSectionParameter.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\SettingsOverridesTypeSectionParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\ValueValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\ValueValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\ReplicatorSettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\ReplicatorSettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\TStoreSettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\TStoreSettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\RASettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\RASettingsValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\WindowsFabricSettings.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\WindowsFabricSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\InfrastructureServiceConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\InfrastructureServiceConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\RepairManagerConfigurationValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\RepairManagerConfigurationValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\ManagementConfigurationValidators.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\ManagementConfigurationValidators.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\UnsupportedPreviewFeatureValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\UnsupportedPreviewFeatureValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Versions.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Versions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Infrastructure.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Infrastructure.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\AzureInfrastructure.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\AzureInfrastructure.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\ServerInfrastructure.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\ServerInfrastructure.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\PaaSInfrastructure.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\PaaSInfrastructure.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\ClusterSettings.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\ClusterSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Constants.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\CreateOrUpdateOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\CreateOrUpdateOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\UpdateInstanceIdOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\UpdateInstanceIdOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\ConfigureOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\ConfigureOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DeploymentNode.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\DeploymentNode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DeploymentOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\DeploymentOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DeploymentOperations.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\DeploymentOperations.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DeploymentParameters.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\DeploymentParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DeployerTrace.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\DeployerTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\RemoveNodeConfigOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\RemoveNodeConfigOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FabricDeployerServiceController.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\FabricDeployerServiceController.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\UnreliableTransportSettings.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\UnreliableTransportSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\InfrastructureNode.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\InfrastructureNode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\NetworkApiHelper.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\NetworkApiHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\NodeSettings.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\NodeSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\PerformanceCounters.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\PerformanceCounters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\RemoveOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\RemoveOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\RestartOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\RestartOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\RollbackOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\RollbackOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\SetupSettings.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\SetupSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\SpnManager.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\SpnManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\UpdateNodeStateOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\UpdateNodeStateOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Utility.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Utility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DockerDnsHelper.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\DockerDnsHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DockerDnsSetupOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\DockerDnsSetupOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\DockerDnsCleanupOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\DockerDnsCleanupOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\ValidateOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\ValidateOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\ValidateClusterManifestOperation.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\ValidateClusterManifestOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\TopologyProvider.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\TopologyProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\TVSSetup.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\TVSSetup.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FabricValidatorWrapper.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\FabricValidatorWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\XMLHelper.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\XMLHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FabricNodeFirewallRules.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\FabricNodeFirewallRules.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Firewall.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Firewall.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FirewallManager.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\FirewallManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\FirewallRule.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\FirewallRule.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\V1FabricFirewallRuleSpecifications.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\V1FabricFirewallRuleSpecifications.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\..\src\managed\DCA\product\system.fabric.dca\PerformanceCounterCommon.cs">
+      <Link>..\..\..\src\managed\DCA\product\System.Fabric.Dca\PerformanceCounterCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\ConfigurationDeployer.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\ConfigurationDeployer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Dism\DismHelper.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Dism\DismHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Dism\DismFeatureInfo.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Dism\DismFeatureInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Dism\DismPackageFeatureState.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Dism\DismPackageFeatureState.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\Dism\DismRestartType.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Dism\DismRestartType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\FabricDeployer\Dism\DismLogLevel.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Dism\DismLogLevel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\FabricDeployer\Dism\DismPackageIdentifier.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Dism\DismPackageIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\FabricDeployer\Dism\DismSession.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Dism\DismSession.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\FabricDeployer\Dism\DismNativeMethods.cs">
+      <Link>src\System\Fabric\Management\FabricDeployer\Dism\DismNativeMethods.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricdeployer\NativeMethods.cs">
+      <Link>src\System\Fabric\Management\fabricdeployer\NativeMethods.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\System\Fabric\Management\fabricvalidator\NativeRunConfigurationSettingsValidator.cs">
+      <Link>src\System\Fabric\Management\FabricValidator\NativeRunConfigurationSettingsValidator.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(BinariesBuildTypeArchDirectory)\inc\Configurations.csv" />
+    <Content Include="$(SrcRoot)\prod\setup\ArtifactsSpecification.csv" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Management.Instrumentation" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <ProjectReference Include="..\..\..\..\..\test\generated\generated.csproj">
+      <Project>{e4088b2e-1379-4502-9eca-4e08b891a04e}</Project>
+      <Name>generated</Name>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\DCA\product\pluginvalidators\dll\DcaStandardPluginValidator.csproj">
+      <Project>{B7F82509-3E0B-45EC-B1C6-BB565E3DD760}</Project>
+      <Name>DcaStandardPluginValidator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\DCA\product\system.fabric.dca.validator\dll\System.Fabric.Dca.Validator.csproj">
+      <Project>{2ADB6D48-C720-4407-8955-4D7035C30EA6}</Project>
+      <Name>System.Fabric.Dca.Validator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Fabric.Strings\system.fabric.strings.csproj">
+      <Project>{FC4947D4-A39D-47EB-A3E2-445510FFC430}</Project>
+      <Name>system.fabric.strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.ContainerServiceClient\dll\Microsoft.ServiceFabric.ContainerServiceClient.csproj">
+      <Name>Microsoft.ServiceFabric.ContainerServiceClient</Name>
+      <Project>{A1A8E3CC-038F-45E6-967F-2D73CE3CC14E}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(SrcRoot)\external\NetFwTypeLib\copy.proj">
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\bin\NetFwTypeLib.dll" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.IO" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Core_5_2)\lib\net45\System.Web.Http.dll">
+      <Name>System.Web.Http</Name>
+    </Reference>
+    <Reference Include="System.IdentityModel" />
+    <Reference Include="System.IdentityModel.Selectors" />
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="$(PkgDotNetFxGAC_Corext)\v4.0.30319\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="$(PkgMicrosoft_AspNet_WebApi_Client_5_2)\lib\net45\System.Net.Http.Formatting.dll">
+      <Name>System.Net.Http.Formatting</Name>
+    </Reference>
+    <Reference Include="$(PkgYamlDotNet_Signed_4_1_0)\lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\YamlDotNet.dll">
+      <Name>YamlDotNet.dll</Name>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\WinFabricTestInfra" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

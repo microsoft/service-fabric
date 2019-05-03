@@ -24,7 +24,7 @@ namespace Management
 
             virtual Common::ErrorCode GetNextVersion(
                 Store::StoreTransaction const &,
-                std::wstring const &,
+                std::wstring const & deploymentName,
                 ServiceModelVersion const &,
                 __out ServiceModelVersion &) = 0;
 

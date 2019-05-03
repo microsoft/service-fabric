@@ -18,6 +18,7 @@ namespace Client
         DECLARE_STRUCTURED_TRACE( Dtor, std::wstring);
         DECLARE_STRUCTURED_TRACE( Open, std::wstring);
         DECLARE_STRUCTURED_TRACE( Close, std::wstring);
+        DECLARE_STRUCTURED_TRACE( CloseDropReports, std::wstring, uint64);
         DECLARE_STRUCTURED_TRACE( Send, std::wstring, Common::ActivityId, uint64, uint64, uint64, uint64, uint64, bool, Common::DateTime);
         DECLARE_STRUCTURED_TRACE( SendFailure, std::wstring, Common::ErrorCodeValue::Trace);
         DECLARE_STRUCTURED_TRACE( Reject, std::wstring, uint64, std::wstring, std::wstring );
@@ -45,6 +46,7 @@ namespace Client
         HEALTH_CLIENT_STRUCTURED_TRACE( Dtor, 5, Info, "Dtor", "id"),
         HEALTH_CLIENT_STRUCTURED_TRACE( Open, 6, Info, "Open", "id"),
         HEALTH_CLIENT_STRUCTURED_TRACE( Close, 7, Info, "Close", "id"),
+        HEALTH_CLIENT_STRUCTURED_TRACE( CloseDropReports, 8, Warning, "Closing client. There are {1} reports pending that may not reach Health Manager.", "id", "droppedReports"),
         HEALTH_CLIENT_STRUCTURED_TRACE( Send, 10, Info, "{1}: sequence streams: {2}/{3}/{4}, reports: {5}/{6}, throttled: {7}. ScheduledFireTime: {8}", "id", "activityId", "sequenceStreamGetProgress", "sequenceStreamCount", "ssRequestCount", "sentCount", "reportCount", "throttled", "scheduledFireTime"),
         HEALTH_CLIENT_STRUCTURED_TRACE( SendFailure, 11, Warning, "Report failed with {1}", "id", "error"),
         HEALTH_CLIENT_STRUCTURED_TRACE( Reject, 13, Warning, "Cannot add report as max reports reached: {1}. Rejected report: {2}+{3}", "id", "reportCount", "reportSource", "reportProperty" ),

@@ -1,0 +1,25 @@
+{
+   "Default": {
+    "RunLocally": "true"
+  },
+  "Tests": [
+    {
+      "Name": "TraceValidateSimpleReadWrite",
+      "Type": "V2_ScriptTest",
+      "Owners": "vipind",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "TaskName": "TraceValidateSimpleReadWrite.test"
+      }
+    },
+    {
+      "Name": "TraceValidateDeployApp",
+      "Type": "V2_ScriptTest",
+      "Owners": "vipind",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "TaskName": "TraceValidateDeployApp.test"
+      }
+    }            
+  ]
+}

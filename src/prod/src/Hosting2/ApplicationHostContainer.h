@@ -171,8 +171,8 @@ namespace Hosting2
             Common::EnvironmentMap const & envMap,
             __out CodePackageContext & codeContext);
 
-        static Common::ErrorCode StartTraceSession();
-        
+        static Common::ErrorCode StartTraceSessionInsideContainer();
+
     private:
         class CreateFabricRuntimeComAsyncOperationContext;
         friend class CreateFabricRuntimeComAsyncOperationContext;

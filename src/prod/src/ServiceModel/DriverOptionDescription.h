@@ -37,6 +37,7 @@ namespace ServiceModel
         std::wstring Name;
         std::wstring Value;
         std::wstring IsEncrypted;
+        std::wstring Type;
 
     private:
         friend struct ContainerVolumeDescription;

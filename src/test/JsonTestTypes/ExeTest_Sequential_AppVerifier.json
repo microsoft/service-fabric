@@ -38,7 +38,7 @@
         },      
         {
             "ExeName": "[BINS]\\FabricUnitTests\\[TASKNAME]",
-            "Arguments": "[PARAMS] --log_level=all %-security:[CREDENTIALTYPE]% --catch_system_errors=no",
+            "Arguments": "[PARAMS] --log_level=test_suite %-security:[CREDENTIALTYPE]% --catch_system_errors=no",
             "MaxExecutionTimeInSeconds": "[EXECUTIONTIMEOUT]",
             "WorkingDirectory" : "[WORKINGDIRECTORY]"
         },        

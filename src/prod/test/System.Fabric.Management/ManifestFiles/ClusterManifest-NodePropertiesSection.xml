@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClusterManifest Name="Server-Default-SingleNode" Version="1.0" xsi:schemaLocation="http://schemas.microsoft.com/2011/01/fabric .\ServiceFabricServiceModel.xsd" xmlns="http://schemas.microsoft.com/2011/01/fabric" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <NodeTypes>
+    <NodeType Name="NodeType1" >
+      <Endpoints>
+        <ClientConnectionEndpoint Port="19000"/>
+        <LeaseDriverEndpoint Port="19001"/>
+        <ClusterConnectionEndpoint Port="19002"/>
+        <ServiceConnectionEndpoint Port="19006"/>
+        <ApplicationEndpoints StartPort="30001" EndPort="31000"/>
+      </Endpoints>
+    </NodeType>
+  </NodeTypes>
+  <Infrastructure>
+    <WindowsServer IsScaleMin="false">
+      <NodeList>
+        <Node NodeTypeRef="NodeType1" IsSeedNode="true" IPAddressOrFQDN="localhost" NodeName="Node1" FaultDomain="fd:/RACK1" UpgradeDomain="MYUD1" />
+      </NodeList>
+    </WindowsServer>
+  </Infrastructure>
+  <FabricSettings>
+    <Section Name="NodeProperties">
+      <Parameter Name="StopTimeout" Value="1.0" />
+    </Section>
+    <Section Name="Security">
+      <Parameter Name="ClusterCredentialType" Value="None" />
+      <Parameter Name="ServerAuthCredentialType" Value="None" />
+    </Section>
+    <Section Name="FailoverManager">
+      <Parameter Name="ExpectedClusterSize" Value="1" />
+    </Section>    
+  </FabricSettings>
+</ClusterManifest>

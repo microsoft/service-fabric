@@ -822,12 +822,14 @@ BOOST_AUTO_TEST_CASE(DummyContainerCertificateSetupTest)
     // Set-up application environment
     ServicePackageInstanceEnvironmentContextSPtr packageEnvironmentContext;
     ManualResetEvent deployDone;
+    wstring appName = L"friendlyAppName";
+    
     GetEnvironmentManager().BeginSetupServicePackageInstanceEnvironment(
         appEnvironmentContext,
+        appName,
         servicePackageInstanceId,
         instanceId,
         servicePackageDescription,
-        L"friendlyAppName",
         TimeSpan::MaxValue,
         [this, &deployDone, &packageEnvironmentContext](AsyncOperationSPtr const & operation)
         {

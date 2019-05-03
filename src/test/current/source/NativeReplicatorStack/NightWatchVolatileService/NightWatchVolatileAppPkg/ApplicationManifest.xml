@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationManifest
+    ApplicationTypeName="NightWatchTXRAppType"
+    ApplicationTypeVersion="1.0"
+    xmlns="http://schemas.microsoft.com/2011/01/fabric"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Description>NightWatch Volatile Replicator Application</Description>
+    <Parameters>
+        <Parameter Name="PartitionCount" DefaultValue="6" />
+        <Parameter Name="PartitionHighKey" DefaultValue="5" />
+        <Parameter Name="ReplicaSetSize" DefaultValue="3" />
+        <Parameter Name="ServiceActivationMode" DefaultValue="SharedProcess" />
+        <Parameter Name="DiagnosticsConnectionString" DefaultValue="" />
+        <Parameter Name="DiagnosticsConnectionStringIsEncrypted" DefaultValue="false" />
+        <Parameter Name="CrashDumpContainerName" DefaultValue="" />
+    </Parameters>
+    <ServiceManifestImport>
+        <ServiceManifestRef ServiceManifestName="service" ServiceManifestVersion="1.0"/>
+    </ServiceManifestImport>
+    <DefaultServices>
+        <Service Name="service" ServicePackageActivationMode="[ServiceActivationMode]">
+          <StatefulService ServiceTypeName="NightWatchTXRServiceType" MinReplicaSetSize="[ReplicaSetSize]" TargetReplicaSetSize="[ReplicaSetSize]">
+            <UniformInt64Partition PartitionCount="[PartitionCount]" LowKey="0" HighKey="[PartitionHighKey]" />
+          </StatefulService>
+        </Service>
+    </DefaultServices>
+    <Diagnostics>
+      <CrashDumpSource IsEnabled="true">
+        <Destinations>
+          <LocalStore IsEnabled="true" RelativeFolderPath="CrashDumps"/>
+          <AzureBlob IsEnabled="true"
+                     ConnectionString="[DiagnosticsConnectionString]"
+                     ConnectionStringIsEncrypted="[DiagnosticsConnectionStringIsEncrypted]"
+                     ContainerName="[CrashDumpContainerName]"
+                     UploadIntervalInMinutes="1" />
+        </Destinations>
+      </CrashDumpSource>
+    </Diagnostics>
+</ApplicationManifest>

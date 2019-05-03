@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{55863F7A-3839-49B2-8A39-7B0653BD7500}</ProjectGuid>
+    <RootNamespace>Microsoft.ServiceFabric.Instrumentation.Tracing.Core</RootNamespace>
+    <AssemblyName>Microsoft.ServiceFabric.Instrumentation.Tracing.Core</AssemblyName>
+    <AssemblyDescription>Service Fabric Tracing Core Assembly</AssemblyDescription>
+    <OutputType>library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BinaryPackagePath>.\$(BinaryPackageName)</BinaryPackagePath>
+    <BinaryPackageDropPath>$(BinariesBuildTypeArchDirectory)\bin\Tracing</BinaryPackageDropPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Definition\Assert.cs" />
+    <Compile Include="Definition\InstanceIdentity.cs" />
+    <Compile Include="Definition\ValueReader.cs" />
+    <Compile Include="Definition\ByteValueReader.cs" />
+    <Compile Include="Definition\PropertyBagValueReader.cs" />
+    <Compile Include="Definition\PropertyMetadata.cs" />
+    <Compile Include="Definition\ValueReaderCreator.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Parser\BaseTraceRecordParser.cs" />
+    <Compile Include="Parser\HelpfulExtensions.cs" />
+    <Compile Include="Parser\ITraceRecordParser.cs" />
+    <Compile Include="Parser\ParserObservableExtensions.cs" />
+    <Compile Include="Reader\ITraceRecordDispatcher.cs" />
+    <Compile Include="Reader\ITraceRecordReader.cs" />
+    <Compile Include="Reader\TraceRecordFilter.cs" />
+    <Compile Include="Reader\PropertyFilter.cs" />
+    <Compile Include="Reader\TraceRecordSession.cs" />
+    <Compile Include="Definition\ITraceObject.cs" />
+    <Compile Include="Definition\PropertyDescriptor.cs" />
+    <Compile Include="Definition\StronglyTypedTraceRecord.cs" />
+    <Compile Include="Definition\TaskName.cs" />
+    <Compile Include="Definition\TraceFieldAttribute.cs" />
+    <Compile Include="Definition\TraceKeyword.cs" />
+    <Compile Include="Definition\TraceLevel.cs" />
+    <Compile Include="Definition\TraceRecord.cs" />
+    <Compile Include="Definition\TraceIdentity.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Robocopy Include="$(OutDir)">
+      <DestinationFolder>$(BinaryPackageDropPath)</DestinationFolder>
+    </Robocopy>
+  </ItemGroup>
+</Project>

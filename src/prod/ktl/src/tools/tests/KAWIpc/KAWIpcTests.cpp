@@ -5116,12 +5116,22 @@ KAWIpcTest(
     KFinally([&](){ KtlSystem::Shutdown(); });
     g_Allocator = &KtlSystem::GlobalNonPagedAllocator();
 
+	
     // Turn on strict allocation tracking
     underlyingSystem->SetStrictAllocationChecks(TRUE);
 
     
     EventRegisterMicrosoft_Windows_KTL();
 
+#if defined(PLATFORM_UNIX)
+    NTSTATUS status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+	
     
     // ULONGLONG StartingAllocs = KAllocatorSupport::gs_AllocsRemaining;
 
@@ -5132,7 +5142,12 @@ KAWIpcTest(
         KTestPrintf("Test failure\n");
     }
 
+#if defined(PLATFORM_UNIX)
+	KtlTraceUnregister();
+#endif	
+	
     EventUnregisterMicrosoft_Windows_KTL();
+	
     return Result;
 }
 

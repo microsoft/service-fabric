@@ -36,9 +36,10 @@ ServiceAccount::ServiceAccount(
     wstring const & accountName,
     wstring const & password,
     bool isPasswordEncrypted,
+    bool loadProfile,
     SecurityPrincipalAccountType::Enum accountType,
     vector<wstring> parentApplicationGroups,
-    vector<wstring> parentSystemGroups) : SecurityUser(applicationId, name, accountName, password, isPasswordEncrypted, accountType, parentApplicationGroups, parentSystemGroups)
+    vector<wstring> parentSystemGroups) : SecurityUser(applicationId, name, accountName, password, isPasswordEncrypted, accountType, parentApplicationGroups, parentSystemGroups, loadProfile)
 {
     auto error = AccountHelper::GetServiceAccountName(accountName_, serviceAccountName_, domain_, accountName_);
     if(!error.IsSuccess())
@@ -114,7 +115,7 @@ ErrorCode ServiceAccount::CreateLogonToken(__out AccessTokenSPtr & userToken)
             AccountName,
             AccountType);
 
-        auto error = AccessToken::CreateServiceAccountToken(serviceAccountName_, domain_, password_, this->SidToAdd, userToken_);
+        auto error = AccessToken::CreateServiceAccountToken(serviceAccountName_, domain_, password_, this->LoadProfile, this->SidToAdd, userToken_);
 
         if (!error.IsSuccess())
         {

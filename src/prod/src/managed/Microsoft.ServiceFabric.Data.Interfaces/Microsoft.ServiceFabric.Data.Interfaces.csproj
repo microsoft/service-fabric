@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{6244C9FE-DC97-4783-A63E-94CE833196B4}</ProjectGuid>
+    <AssemblyName>Microsoft.ServiceFabric.Data.Interfaces</AssemblyName>
+    <AssemblyDescription>Microsoft Azure Service Fabric Data Interfaces</AssemblyDescription>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <!-- the root namespace is used by the resource generator - do not change it -->
+    <RootNamespace>Microsoft.ServiceFabric.Data</RootNamespace>
+    <OutputType>Library</OutputType>
+    <AssemblyCLSCompliant>true</AssemblyCLSCompliant>
+    <AssemblyVersion>5.0.0.0</AssemblyVersion>
+    <!-- this must be static. todo: move to separate repo bug/6079488 -->
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="_friends.cs" />
+    <Compile Include="Collections\IReliableConcurrentQueue.cs" />
+    <Compile Include="Collections\QueueFullException.cs" />
+    <Compile Include="BackupDescription.cs" />
+    <Compile Include="RestoreContext.cs" />
+    <Compile Include="RestoreDescription.cs" />
+    <Compile Include="BackupInfo.cs" />
+    <Compile Include="BackupOption.cs" />
+    <Compile Include="IAsyncEnumerable.cs" />
+    <Compile Include="IAsyncEnumerator.cs" />
+    <Compile Include="IReliableStateManagerReplica.cs" />
+    <Compile Include="IReliableStateManagerReplica2.cs" />
+    <Compile Include="IReliableState.cs" />
+    <Compile Include="IReliableStateManager.cs" />
+    <Compile Include="IReliableStream.cs" />
+    <Compile Include="IStateProviderReplica.cs" />
+    <Compile Include="IStateProviderReplica2.cs" />
+    <Compile Include="IStateSerializer.cs" />
+    <Compile Include="ITransaction.cs" />
+    <Compile Include="EnumerationMode.cs" />
+    <Compile Include="IReliableCollection.cs" />
+    <Compile Include="IReliableDictionary.cs" />
+    <Compile Include="IReliableDictionary2.cs" />
+    <Compile Include="IReliableQueue.cs" />
+    <Compile Include="LockMode.cs" />
+    <Compile Include="ConditionalResult.cs" />
+    <Compile Include="ReliableStateManagerConfiguration.cs" />
+    <Compile Include="ReliableStateManagerReplicatorSettings.cs" />
+    <Compile Include="RestorePolicy.cs" />
+    <Compile Include="Notifications\NotifyDictionaryChangedEventArgs.cs" />
+    <Compile Include="Notifications\NotifyStateManagerChangedAction.cs" />
+    <Compile Include="Notifications\NotifyStateManagerChangedEventArgs.cs" />
+    <Compile Include="Notifications\NotifyStateManagerRebuildEventArgs.cs" />
+    <Compile Include="Notifications\NotifyStateManagerSingleEntityChangedEventArgs.cs" />
+    <Compile Include="Notifications\NotifyTransactionChangedAction.cs" />
+    <Compile Include="Notifications\NotifyTransactionChangedEventArgs.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Api\Dlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj">
+      <Project>{EB728138-47AC-41CB-A2C7-53521B396AFD}</Project>
+      <Name>Microsoft.ServiceFabric.Internal</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\FabricUnitTests" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

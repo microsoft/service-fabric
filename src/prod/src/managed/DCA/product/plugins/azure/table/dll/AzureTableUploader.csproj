@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <ProjectGuid>{A2B9441E-A2EE-4781-BCC2-75B811405838}</ProjectGuid>
+    <RootNamespace>AzureTableUploader</RootNamespace>
+    <AssemblyName>AzureTableUploader</AssemblyName>
+    <AssemblyDescription>Azure Table Uploader for DCA</AssemblyDescription>
+    <OutputType>Library</OutputType>
+    <AssemblyClsCompliant>false</AssemblyClsCompliant>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\AzureTableCommon.cs">
+      <Link>AzureTableCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\AzureTableEtwEventUploader.cs">
+      <Link>AzureTableEtwEventUploader.cs</Link>
+    </Compile>
+    <Compile Include="..\AzureTablePerformance.cs">
+      <Link>AzureTablePerformance.cs</Link>
+    </Compile>
+    <Compile Include="..\AzureTableSelectiveEventUploader.cs">
+      <Link>AzureTableSelectiveEventUploader.cs</Link>
+    </Compile>
+    <Compile Include="..\AzureTableQueryableEventUploader.cs">
+      <Link>AzureTableQueryableEventUploader.cs</Link>
+    </Compile>
+    <Compile Include="..\AzureTableOperationalEventUploader.cs">
+      <Link>AzureTableOperationalEventUploader.cs</Link>
+    </Compile>
+    <Compile Include="..\AzureTableTrimmer.cs">
+      <Link>AzureTableTrimmer.cs</Link>
+    </Compile>
+    <Compile Include="_friends.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\dll\AzureUploaderCommon.csproj">
+      <Project>{24F2BEFB-C57A-4C2E-99DA-3C0335410F99}</Project>
+      <Name>AzureUploaderCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\..\EtlReader\EtlReader.csproj">
+      <Project>{54BBF6D7-BAF6-489E-972F-5EB83C793E1D}</Project>
+      <Name>EtlReader</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\..\..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\system.fabric.dca\dll\System.Fabric.Dca.csproj">
+      <Project>{32DDA3E4-9A52-474B-A3DF-9A6D201A38F6}</Project>
+      <Name>System.Fabric.Dca</Name>
+    </ProjectReference>
+    <Reference Include="System.Xml" />
+    <Reference Include="$(PkgWindowsAzure_Storage)\lib\net40\Microsoft.WindowsAzure.Storage.dll" />
+    <Reference Include="$(PkgMicrosoft_Data_Services_Client)\lib\net40\Microsoft.Data.Services.Client.dll" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

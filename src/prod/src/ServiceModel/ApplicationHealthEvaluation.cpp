@@ -70,7 +70,7 @@ Common::ErrorCode ApplicationHealthEvaluation::FromPublicApi(
         return error;
     }
 
-    // Application name is only empty for addhoc
+    // Application name is only empty for adhoc
     hr = StringUtility::LpcwstrToWstring(publicApplicationHealthEvaluation->ApplicationName, true, 0, ParameterValidator::MaxStringSize, applicationName_);
     if (FAILED(hr))
     {
@@ -92,7 +92,6 @@ Common::ErrorCode ApplicationHealthEvaluation::FromPublicApi(
 void ApplicationHealthEvaluation::SetDescription()
 {
     description_ = wformatString(
-        "{0} ApplicationName='{1}', AggregatedHealthState='{2}'.",
         HMResource::GetResources().HealthEvaluationUnhealthyApplication,
         applicationName_,
         aggregatedHealthState_);

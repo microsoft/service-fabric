@@ -51,6 +51,8 @@ namespace Data
                 return BaseTransaction.IsAtomicOperation;
             }
 
+            virtual std::wstring ToString() const override;
+
             //
             // TRUE if this is a redo only operation, which implies it can never be undone
             //

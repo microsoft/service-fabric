@@ -1,0 +1,106 @@
+﻿
+; SFBDMiniport.INF
+;
+; Copyright (c) 1998-2017, Microsoft Corporation.
+
+[Version]
+Signature="$WINDOWS NT$"
+
+; If the Class name is changed, please update it in SFBDCtlLib as well.
+Class=ServiceFabricBlockDevice
+ClassGUID={4C885631-29F4-4BBE-807A-7A38698EF60E}
+Provider=%MSFT%
+DriverVer=01/30/2007,6.0.6000.16386
+CatalogFile = SFBDMiniport.cat
+
+[ClassInstall32]
+AddReg=SFBD_CLASS_ADDREG
+
+[SFBD_CLASS_ADDREG]
+HKR,,,,%DisplayClassName%
+
+[DestinationDirs]
+SFBDMiniport_Device_CoInstaller_CopyFiles = 11
+DefaultDestDir = 12
+
+[Manufacturer]
+%MSFT%=MSFT, NT$ARCH$
+
+[MSFT.NT$ARCH$]
+%SFBDMiniportDeviceDesc%=SFBDMiniport_Device, %rootstr%
+
+[SFBDMiniport_Device]
+CopyFiles=@SFBDMiniport.sys
+
+[SFBDMiniport_Device.HW]
+AddReg = SFBDMiniport_Device_AddReg
+
+[SFBDMiniport_Device_AddReg]
+HKR, "ScsiPort", "NeedsSystemShutdownNotification", 0x00010001, 1
+
+[SFBDMiniport_Device.Services]
+AddService = sfbdminiport, %SPSVCINST_ASSOCSERVICE%, SFBDMiniport_Service_Inst
+
+[SourceDisksNames.$ARCH$]
+1 = %DiskId1%,,,
+
+[SourceDisksFiles.$ARCH$]
+SFBDMiniport.sys = 1,
+; TODO: Would we need WdfCoInstaller for Win7?
+;WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1,  ; make sure the number matches with SourceDisksNames
+
+;
+;--- SFBDMiniport_Device Coinstaller installation ------
+;
+[SFBDMiniport_Device.CoInstallers]
+AddReg=SFBDMiniport_Device_CoInstaller_AddReg
+CopyFiles=SFBDMiniport_Device_CoInstaller_CopyFiles
+
+[SFBDMiniport_Device_CoInstaller_AddReg]
+; TODO: Would we need WdfCoInstaller for Win7?
+; HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[SFBDMiniport_Device_CoInstaller_CopyFiles]
+; TODO: Would we need WdfCoInstaller for Win7?
+; WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[SFBDMiniport_Device.Wdf]
+KmdfService = sfbdminiport, SFBDMiniport_Device_wdfsect
+
+[SFBDMiniport_Device_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[SFBDMiniport_Service_Inst]
+DisplayName    = %SFBDMiniportDeviceDesc%
+ServiceType    = %SERVICE_KERNEL_DRIVER%
+StartType      = %SERVICE_BOOT_START%
+ErrorControl   = %SERVICE_ERROR_NORMAL%
+ServiceBinary  = %12%\sfbdminiport.sys
+LoadOrderGroup = SCSI Miniport
+AddReg         = pnpsafe_isa_addreg
+
+[pnpsafe_isa_addreg]
+HKR, "Parameters\PnpInterface", "1",    %REG_DWORD%,  0x00000001
+HKR, "Parameters", "LUNPerHBA",     %REG_DWORD%,  0x00000001
+
+;
+; Any change to SFBDMiniportDeviceDesc should be reflected in the controller application as well
+;
+[Strings]
+MSFT           = "Service Fabric"
+SCSIClassName  = "SCSI and RAID controllers"
+SFBDMiniportDeviceDesc   = "Service Fabric BlockDevice Virtual Miniport Driver"
+DiskId1        = "Service Fabric BlockDevice Virtual Miniport Device Installation Disk #1"
+rootstr        = "root\sfbdminiport"
+DisplayClassName = "ServiceFabricBlockDevice"
+
+;*******************************************
+;Handy macro substitutions (non-localizable)
+SPSVCINST_ASSOCSERVICE = 0x00000002
+SERVICE_KERNEL_DRIVER  = 1
+SERVICE_BOOT_START     = 0
+SERVICE_ERROR_NORMAL   = 1
+
+REG_DWORD              = 0x00010001
+REG_BINARY             = 0x00000001
+REG_SZ                 = 0x00000000

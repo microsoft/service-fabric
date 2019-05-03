@@ -1860,7 +1860,8 @@ public:
     BOOLEAN
     CheckForRecordsWithHigherVersion(
         __in RvdLogAsn Asn,
-        __in ULONGLONG Version);
+        __in ULONGLONG Version,
+        __out ULONGLONG& HigherVersion);
 
     RvdAsnIndexEntry::SPtr
     UnsafeFirst();
@@ -2180,7 +2181,6 @@ public:
 };
 
 
-
 //** RvdLogStreamImp class
 class RvdLogStreamImp : public RvdLogStream, public KWeakRefType<RvdLogStreamImp>
 {
@@ -2251,7 +2251,13 @@ public:
     VOID
     TruncateBelowVersion(__in RvdLogAsn TruncationPoint, ULONGLONG Version) override;
 
+    NTSTATUS
+    SetTruncationCompletionEvent(__in_opt KAsyncEvent* const EventToSignal) override;
+        
     //** Test support API
+
+#define GetRvdLogStreamActivityId() ((KActivityId)_LogStreamDescriptor.Info.LogStreamId.Get().Data1)
+                
     VOID
     GetPhysicalExtent(__out RvdLogLsn& Lowest, __out RvdLogLsn& Highest);
 
@@ -2311,8 +2317,9 @@ private:
     KSharedPtr<AsyncWriteStream>                _AutoCloseReserveOp;
 
     KAsyncContextBase::CompletionCallback       _TruncationCompletion;
+    KSpinLock                                   _ThisLock;
+    KAsyncEvent*                                _TruncationCompletionEvent;
 };
-
 
 //** LogStreamDescriptor - all streams carried within a log are represented by an
 //   instance of this class - no matter if that stream is open for access by the
@@ -2382,6 +2389,7 @@ private:
     LogStreamDescriptor();
 };
 
+
 //** Disk-based Log derivation of the RvdLog abstraction
 class RvdLogManagerImp::RvdOnDiskLog : public RvdLog, public KWeakRefType<RvdOnDiskLog>
 {
@@ -2442,6 +2450,13 @@ public:
         return sizeof(RvdLogUserRecordHeader);
     }
 
+    VOID
+    QueryLsnRangeInformation(
+        __out LONGLONG& LowestLsn,
+        __out LONGLONG& HighestLsn,
+        __out RvdLogStreamId& LowestLsnStreamId
+        ) override ;
+    
     VOID
     SetCacheSize(__in LONGLONG CacheSizeLimit);
 

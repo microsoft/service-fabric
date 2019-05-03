@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(ExtendedTargetsPath)\NoTarget.targets" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_coreclr_mcg_deps.props" />
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_mstest.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>acf37932-04f7-436b-b711-b98133619bbf</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>EventsValidationTest</RootNamespace>
+    <AssemblyName>EventsValidationTest</AssemblyName>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <DefineConstants>$(DefineConstants);TRACE;SYSTEM_FABRIC</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <PackageTargetFallback>$(PackageTargetFallback)</PackageTargetFallback>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="EventsValidation.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\System.Fabric\System.Fabric.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Microsoft.ServiceFabric.Data\CoreCLR\Microsoft.ServiceFabric.Data\Microsoft.ServiceFabric.Data.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Data.Interfaces\CoreCLR\Microsoft.ServiceFabric.Data.Interfaces\Microsoft.ServiceFabric.Data.Interfaces.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.Diagnostics\CoreCLR\Microsoft.ServiceFabric.Diagnostics\Microsoft.ServiceFabric.Diagnostics.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.FabricTransport\CoreCLR\Microsoft.ServiceFabric.FabricTransport\Microsoft.ServiceFabric.FabricTransport.csproj" />
+    <ProjectReference Include="$(SrcRoot)\prod\src\managed\Microsoft.ServiceFabric.FabricTransport.V2\CoreCLR\Microsoft.ServiceFabric.FabricTransport.V2\Microsoft.ServiceFabric.FabricTransport.V2.csproj" />
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\Api\CoreCLRDlls\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.csproj" >
+      <Aliases>ServiceFabricInternal</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="$(SRCROOT)\prod\src\managed\CoreCLR\EtlReader\EtlReader.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(SF_ActorsServices_DotNet_Standard)\Microsoft.ServiceFabric.Actors.dll" />
+    <Reference Include="$(SF_ActorsServices_DotNet_Standard)\Microsoft.ServiceFabric.Services.dll" />
+    <Reference Include="$(SF_ActorsServices_DotNet_Standard)\Microsoft.ServiceFabric.Services.Remoting.dll" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsLinux)' == true ">
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\System.Fabric\System.Fabric.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.Internal\Microsoft.ServiceFabric.Internal.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.FabricTransport\Microsoft.ServiceFabric.FabricTransport.McgInterop.dll" />
+    <Reference Include="$(BinariesBuildTypeArchDirectory)\netstandard2.0\$(CurrentRuntimeIdentifier)\Microsoft.ServiceFabric.FabricTransport.V2\Microsoft.ServiceFabric.FabricTransport.V2.McgInterop.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Castle.Core" Version="4.1.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.1.18" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.1.18" />
+  </ItemGroup>
+  <Import Project="$(SRCROOT)\properties\NetStandard\service_fabric_managed_coreclr_test.targets" />
+</Project>

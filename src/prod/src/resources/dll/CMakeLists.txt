@@ -1,5 +1,5 @@
 set( LINUX_SOURCES
-  ./dllmain.cpp
+  ../StringResourceRepo.cpp
   ../../pal/wc16.c
 )
 

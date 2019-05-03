@@ -1,0 +1,110 @@
+{
+  "Default": {
+  },
+  "Tests": [
+    {
+      "Name": "E2E Container Perf OnePerNode IIS RP (D3)",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "caiwang,harahma",      
+      "ResourcesRequired": "Server:14;Group=WS2016RS4-D3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "E2EContainerPerf-1Con-IIS-RP.test",
+        "ExecutionTimeout": "25200",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Container Perf OnePerNode OWIN RP (D3)",
+      "Type": "V2_ScriptTest_Container_Perf",
+      "Owners": "caiwang,harahma",      
+      "IsEnabled": "false",
+      "ResourcesRequired": "Server:14;Group=WS2016RS4-D3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "E2E Container Perf OnePerNode OWIN RP (D3)",
+        "ExpectedResultsFileName": "E2EContainerPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "E2EContainerPerf-1Con-OWIN-RP.test",
+        "ExecutionTimeout": "25200",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E GuestExe Perf OnePerNode OWIN RP (D3)",
+      "Type": "V2_ScriptTest_Container_Perf",
+      "Owners": "caiwang,harahma",      
+      "IsEnabled": "false",
+      "ResourcesRequired": "Server:14;Group=WS2016RS4-D3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "PerfTestTaskName": "E2E GuestExe Perf OnePerNode OWIN RP (D3)",
+        "ExpectedResultsFileName": "E2EContainerPerfExpectedResults.xml",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "E2EContainerPerf-1Exe-OWIN-RP.test",
+        "ExecutionTimeout": "25200",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Container Perf NoDynam IIS (D3)",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "caiwang,harahma",      
+      "ResourcesRequired": "Server:14;Group=WS2016RS4-D3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "E2EContainerPerf-NoDyn-IIS-SPC.test",
+        "ExecutionTimeout": "25200",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Container Perf LoDynam IIS (D3)",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "caiwang,harahma",      
+      "ResourcesRequired": "Server:14;Group=WS2016RS4-D3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "E2EContainerPerf-LoDyn-IIS-SPC.test",
+        "ExecutionTimeout": "25200",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Container Perf MedDynam IIS (D3)",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "caiwang,harahma",      
+      "ResourcesRequired": "Server:14;Group=WS2016RS4-D3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "E2EContainerPerf-MedDyn-IIS-SPC.test",
+        "ExecutionTimeout": "25200",
+        "CleanupTimeout": "5400"
+      }
+    },
+    {
+      "Name": "E2E Container Perf HiDynam IIS (D3)",
+      "Type": "V2_ScriptTest_Container",
+      "Owners": "caiwang,harahma",      
+      "ResourcesRequired": "Server:14;Group=WS2016RS4-D3",
+      "TestExecutionParameters": {
+        "SetupType": "XCopy",
+        "SetupTimeout": "900",
+        "ConfigName": "WinFabricTest\\Config\\E2EContainerPerfTestConfig.txt",
+        "TaskName": "E2EContainerPerf-HiDyn-IIS-SPC.test",
+        "ExecutionTimeout": "25200",
+        "CleanupTimeout": "5400"
+      }
+    }
+  ]
+}

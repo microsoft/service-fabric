@@ -144,13 +144,21 @@ ErrorCode HealthReportingComponent::OnOpen()
 
 ErrorCode HealthReportingComponent::OnClose()
 {
-    Trace->Close(traceContext_);
-
     { // lock
         AcquireWriteLock grab(lock_);
         if (open_)
         {
             open_ = false;
+
+            uint64 pendingReportCount = static_cast<uint64>(currentReportCount_.load());
+            if (pendingReportCount == 0)
+            {
+                Trace->Close(traceContext_);
+            }
+            else
+            {
+                Trace->CloseDropReports(traceContext_, pendingReportCount);
+            }
 
             transportRoot_ = nullptr;
 

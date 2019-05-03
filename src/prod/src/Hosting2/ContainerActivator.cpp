@@ -453,6 +453,84 @@ private:
             "OnContainerServiceStarted: ErrorCode={0}",
             error);
 
+        if (error.IsSuccess())
+        {
+            OpenOverlayNetworkManager(operation->Parent);
+        }
+        else
+        {
+            TryComplete(operation->Parent, error);
+        }
+    }
+
+    void OpenOverlayNetworkManager(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto operation = owner_.overlayNetworkManager_->BeginOpen(
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnOverlayNetworkManagerOpened(operation, false);
+        },
+            thisSPtr);
+
+        OnOverlayNetworkManagerOpened(operation, true);
+    }
+
+    void OnOverlayNetworkManagerOpened(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.overlayNetworkManager_->EndOpen(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.Root.TraceId,
+            "End(OverlayNetworkManagerOpen): ErrorCode={0}",
+            error);
+
+        if (error.IsSuccess())
+        {
+            OpenNetworkPluginProcessManager(operation->Parent);
+        }
+        else
+        {
+            TryComplete(operation->Parent, error);
+        }
+    }
+
+    void OpenNetworkPluginProcessManager(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto operation = owner_.networkPluginProcessManager_->BeginOpen(
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnNetworkPluginProcessManagerOpened(operation, false);
+        },
+            thisSPtr);
+
+        OnNetworkPluginProcessManagerOpened(operation, true);
+    }
+
+    void OnNetworkPluginProcessManagerOpened(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.networkPluginProcessManager_->EndOpen(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.Root.TraceId,
+            "End(NetworkPluginProcessManagerOpen): ErrorCode={0}",
+            error);
+        
         TryComplete(operation->Parent, error);
     }
 
@@ -473,7 +551,8 @@ public:
         AsyncOperationSPtr const & parent)
         : AsyncOperation(callback, parent),
         owner_(owner),
-        timeoutHelper_(timeout)
+        timeoutHelper_(timeout),
+        lastError_(ErrorCodeValue::Success)
     {
     }
 
@@ -531,6 +610,11 @@ private:
             "End(DockerProcessManagerDeactivate): ErrorCode={0}",
             error);
 
+        if (!error.IsSuccess())
+        {
+            lastError_.Overwrite(error);
+        }
+
         CloseIpAddressProvider(operation->Parent);
     }
 
@@ -553,6 +637,7 @@ private:
         {
             return;
         }
+
         auto error = owner_.ipAddressProvider_->EndClose(operation);
 
         WriteTrace(
@@ -562,6 +647,128 @@ private:
             "End(IPProviderClose): ErrorCode={0}",
             error);
 
+        if (!error.IsSuccess())
+        {
+            lastError_.Overwrite(error);
+        }
+
+        CloseOverlayManager(operation->Parent);
+    }
+
+    void CloseOverlayManager(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto overlayOperation = owner_.overlayNetworkManager_->BeginClose(
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & overlayOperation)
+        {
+            this->OnOverlayManagerClosed(overlayOperation, false);
+        },
+            thisSPtr);
+
+        OnOverlayManagerClosed(overlayOperation, true);
+    }
+
+    void OnOverlayManagerClosed(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.overlayNetworkManager_->EndClose(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.Root.TraceId,
+            "End(OverlayManagerClose): ErrorCode={0}",
+            error);
+
+        if (!error.IsSuccess())
+        {
+            lastError_.Overwrite(error);
+        }
+
+        CloseNetworkPluginProcessManager(operation->Parent);
+    }
+
+    void CloseNetworkPluginProcessManager(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto pluginOperation = owner_.networkPluginProcessManager_->BeginClose(
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & pluginOperation)
+        {
+            this->OnNetworkPluginProcessManagerClosed(pluginOperation, false);
+        },
+            thisSPtr);
+
+        OnNetworkPluginProcessManagerClosed(pluginOperation, true);
+    }
+
+    void OnNetworkPluginProcessManagerClosed(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.networkPluginProcessManager_->EndClose(operation);
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            owner_.Root.TraceId,
+            "End(NetworkPluginProcessManagerClose): ErrorCode={0}",
+            error);
+
+        if (!error.IsSuccess())
+        {
+            lastError_.Overwrite(error);
+        }
+
+        if (HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+        {
+            CloseNatIpAddressProvider(operation->Parent);
+        }
+        else
+        {
+            TryComplete(operation->Parent, lastError_);
+        }
+    }
+
+    void CloseNatIpAddressProvider(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto natIpoperation = owner_.natIpAddressProvider_->BeginClose(
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & natIpoperation)
+        {
+            this->OnNatIpAddressProviderClosed(natIpoperation, false);
+        },
+            thisSPtr);
+
+        OnNatIpAddressProviderClosed(natIpoperation, true);
+    }
+
+    void OnNatIpAddressProviderClosed(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        auto error = owner_.natIpAddressProvider_->EndClose(operation);
+
+        WriteInfo(
+            TraceType,
+            owner_.Root.TraceId,
+            "End(NatIPProviderClose): ErrorCode={0}",
+            error);
+
+        if (!error.IsSuccess())
+        {
+            lastError_.Overwrite(error);
+        }
+
         if (owner_.requestJobQueue_)
         {
             owner_.requestJobQueue_->Close();
@@ -569,11 +776,12 @@ private:
 
         owner_.UregisterIpcRequestHandler();
 
-        TryComplete(operation->Parent, error);
+        TryComplete(operation->Parent, lastError_);
     }
 
 private:
     ContainerActivator & owner_;
+    ErrorCode lastError_;
     TimeoutHelper timeoutHelper_;
 };
 
@@ -606,6 +814,7 @@ public:
 #if defined(PLATFORM_UNIX)
         , isIsolated_(false)
 #endif
+        , containerId_()
     {
     }
 
@@ -613,7 +822,7 @@ public:
     {
     }
 
-    static ErrorCode End(AsyncOperationSPtr const & operation)
+    static ErrorCode ActivateAsyncOperation::End(AsyncOperationSPtr const & operation, std::wstring & containerId)
     {
         auto thisPtr = AsyncOperation::End<ActivateAsyncOperation>(operation);
 
@@ -635,6 +844,11 @@ public:
             }
         }
 #endif
+
+        if (thisPtr->Error.IsSuccess())
+        {
+            containerId = move(thisPtr->containerId_);
+        }
 
         return thisPtr->Error;
     }
@@ -764,8 +978,10 @@ protected:
             this->CleanupOnError(operation->Parent);
             return;
         }
-
-        containerId_ = replyBody.ContainerId;
+        else
+        {
+            this->containerId_ = replyBody.ContainerId;
+        }
 
         TryComplete(operation->Parent, error);
     }
@@ -843,6 +1059,10 @@ protected:
         }
 #endif
 
+        // Retrieve container gateway ip addresses
+        std::vector<std::wstring> gatewayIpAddresses;
+        owner_.RetrieveGatewayIpAddresses(containerDescription_, gatewayIpAddresses);
+
         ContainerActivationArgs activationArgs(
             isUserLocalSystem_,
             appHostId_,
@@ -850,7 +1070,7 @@ protected:
             containerDescription_,
             processDescription_,
             fabricBinFolder_,
-            owner_.ipAddressProvider_->GatewayIpAddress);
+            gatewayIpAddresses);
 
         //
         // Keep the timeout for remote operation little smaller
@@ -1125,6 +1345,14 @@ private:
             RemoveCgroup();
         }
 #endif
+
+        if (error.IsSuccess())
+        {
+            // Create marker files for the container log directory with containerName so that FabricDCA can delete them.
+            // Perform this action only on success since if deactivation fails, OnAbort for ApplicationService will also consume this code.
+            // If the OnAbort fails as well, then you leaked a container and hence you don't want to remove the container logs in that case.
+            ContainerHelper::GetContainerHelper().MarkContainerLogFolder(containerName_);
+        }
 
         TryComplete(
             operation->Parent,
@@ -1841,6 +2069,218 @@ public:
 #endif
 };
 
+
+class ContainerActivator::GetContainerStatsAsyncOperation : public AsyncOperation
+{
+    DENY_COPY(GetContainerStatsAsyncOperation)
+
+public:
+    GetContainerStatsAsyncOperation(
+        __in ContainerActivator & owner,
+        Hosting2::ContainerDescription const & containerDescription,
+        Hosting2::ProcessDescription const & processDescription,
+        std::wstring const & parentId,
+        std::wstring const & appServiceId,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(callback, parent)
+        , owner_(owner)
+        , containerDescription_(containerDescription)
+        , processDescription_(processDescription)
+        , parentId_(parentId)
+        , appServiceId_(appServiceId)
+        , timeoutHelper_(timeout)
+    {
+    }
+
+    virtual ~GetContainerStatsAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(
+        AsyncOperationSPtr const & operation,
+        __out uint64 & memoryUsage,
+        __out uint64 & totalCpuTime,
+        __out Common::DateTime & timeRead)
+    {
+        auto thisPtr = AsyncOperation::End<GetContainerStatsAsyncOperation>(operation);
+        memoryUsage = thisPtr->memoryUsage_;
+        totalCpuTime = thisPtr->totalCpuTime_;
+        timeRead = thisPtr->timeRead_;
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+#if defined(PLATFORM_UNIX)
+        // if container is Clear/Kata container
+        if (ContainerRuntimeHandler::ContainerExists(containerDescription_.ContainerName))
+        {
+            // Read clear/kata container stats
+            // Need to read cgroup as crio stats api doesn't work
+            string containerGroupId;
+            string containerGroupNameUtf8;
+            StringUtility::Utf16ToUtf8(containerDescription_.GroupContainerName, containerGroupNameUtf8);
+
+            // Get podID from container group name
+            if (!ContainerRuntimeHandler::GetPodIdFromName(containerGroupNameUtf8, containerGroupId))
+            {
+                WriteWarning(
+                    TraceType,
+                    parentId_,
+                    "Application Service with service Id {0} - Unable to get podID from container group name {1}",
+                    appServiceId_,
+                    containerDescription_.GroupContainerName);
+                TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::OperationFailed));
+                return;
+            }
+
+            wstring containerCgroup = processDescription_.CgroupName.empty() ?
+                Constants::CrioCgroupName + StringUtility::ToWString(containerGroupId) :
+                processDescription_.CgroupName + Constants::CrioCgroupName + StringUtility::ToWString(containerGroupId);
+
+            uint64 cpuUsage;
+            uint64 memoryUsage;
+            string cgroupNameUtf8;
+            StringUtility::Utf16ToUtf8(containerCgroup, cgroupNameUtf8);
+            auto error = ProcessActivator::GetCgroupUsage(cgroupNameUtf8, cpuUsage, memoryUsage);
+
+            if (error != 0)
+            {
+                WriteError(
+                    TraceType,
+                    parentId_,
+                    "Failed to get cgroup info for {0}, error {1}. CgroupName {2}",
+                    appServiceId_,
+                    error,
+                    cgroupNameUtf8);
+
+                TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::InvalidOperation));
+                return;
+            }
+
+            WriteInfo(
+                TraceType,
+                parentId_,
+                "Container stats: TotalCpuTime {0} - memUsage {1}", cpuUsage, memoryUsage);
+
+            memoryUsage_ = memoryUsage;
+            totalCpuTime_ = cpuUsage;
+            timeRead_ = Common::DateTime::Now();
+
+            TryComplete(thisSPtr, ErrorCode(ErrorCodeValue::Success));
+            return;
+        }
+
+#endif
+
+        // Api for getting stats for docker containers
+        auto timeout = timeoutHelper_.GetRemainingTime();
+        auto operation = owner_.BeginInvokeContainerApi(
+            containerDescription_,
+            L"GET",
+            L"/containers/{id}/stats?stream=false",
+            L"application/json",
+            L"",
+            timeout,
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->OnContainerApiStatsCompleted(operation, false);
+        },
+            thisSPtr);
+        this->OnContainerApiStatsCompleted(operation, true);
+    }
+
+    void OnContainerApiStatsCompleted(
+        AsyncOperationSPtr const & operation,
+        bool expectedCompletedSynhronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynhronously)
+        {
+            return;
+        }
+        wstring result;
+        auto error = owner_.EndInvokeContainerApi(operation, result);
+
+        if (!error.IsSuccess())
+        {
+            TryComplete(operation->Parent, error);
+            return;
+        }
+        else
+        {
+            ContainerApiResponse containerApiResponse;
+            error = JsonHelper::Deserialize(containerApiResponse, result);
+
+            if (error.IsSuccess())
+            {
+                ContainerApiResult const & containerApiResult = containerApiResponse.Result();
+
+                if (containerApiResult.Status() == 200)
+                {
+                    ContainerStatsResponse containerStatsResponse;
+                    error = JsonHelper::Deserialize(containerStatsResponse, containerApiResult.Body());
+                    if (error.IsSuccess())
+                    {
+                        memoryUsage_ = containerStatsResponse.MemoryStats_.MemoryUsage_;
+                        totalCpuTime_ = containerStatsResponse.CpuStats_.CpuUsage_.TotalUsage_;
+                        timeRead_ = containerStatsResponse.Read_;
+                    }
+                    else
+                    {
+                        WriteWarning(
+                            TraceType,
+                            parentId_,
+                            "Application Service with service Id {0} ContainerStatsResponse error {1}",
+                            appServiceId_,
+                            error);
+                    }
+                }
+                else
+                {
+                    WriteWarning(
+                        TraceType,
+                        parentId_,
+                        "Application Service with service Id {0} ContainerApiResult status {1}",
+                        appServiceId_,
+                        containerApiResult.Status());
+                    error = ErrorCode(ErrorCodeValue::InvalidOperation);
+                }
+            }
+            else
+            {
+                WriteWarning(
+                    TraceType,
+                    parentId_,
+                    "Application Service with service Id {0} ContainerApiResponse error {1}",
+                    appServiceId_,
+                    error);
+            }
+
+            TryComplete(operation->Parent, error);
+            return;
+        }
+    }
+
+protected:
+    // in params
+    ContainerActivator & owner_;
+    Hosting2::ContainerDescription containerDescription_;
+    Hosting2::ProcessDescription processDescription_;
+    wstring containerName_;
+    std::wstring const parentId_;
+    std::wstring appServiceId_;
+    TimeoutHelper timeoutHelper_;
+
+    // out params
+    uint64 memoryUsage_;
+    uint64 totalCpuTime_;
+    Common::DateTime timeRead_;
+
+};
+
 class ContainerActivator::GetContainerInfoAsyncOperation : public AsyncOperation
 {
     DENY_COPY(GetContainerInfoAsyncOperation)
@@ -2247,8 +2687,10 @@ protected:
                 processDescription_.CgroupName,
                 containerDescription_.PodDescription.HostName,
                 logDirectory,
+                containerDescription_.NetworkConfig.NetworkType,
                 isdnsservicenabled,
                 dnsSearchOptions,
+                containerDescription_.DnsServers,
                 portmappings,
                 owner_.Root.TraceId,
                 TimeSpan::MaxValue,
@@ -2397,10 +2839,24 @@ protected:
                 nodeId_,
                 processDescription_.ExePath);
 
+        auto repositoryCredentialsPassword = containerDescription_.RepositoryCredentials.Password;
+        //If the RepositoryCredential is encrypted then decrypt the value before trying to pull the image
+        if (StringUtility::AreEqualCaseInsensitive(containerDescription_.RepositoryCredentials.Type, Constants::Encrypted) || containerDescription_.RepositoryCredentials.IsPasswordEncrypted)
+        {
+            wstring value;
+            auto error = ContainerConfigHelper::DecryptValue(containerDescription_.RepositoryCredentials.Password, value);
+            if (!error.IsSuccess())
+            {
+                TryComplete(thisSPtr, error);
+                return;
+            }
+            repositoryCredentialsPassword = value;
+        }
+
         auto operation = ContainerRuntimeHandler::BeginPullImage(
                 processDescription_.ExePath,
                 containerDescription_.RepositoryCredentials.AccountName,
-                containerDescription_.RepositoryCredentials.Password,
+                repositoryCredentialsPassword,
                 owner_.Root.TraceId,
                 TimeSpan::MaxValue,
                 [&](AsyncOperationSPtr const & operationSPtr) -> void
@@ -2526,6 +2982,11 @@ protected:
                     containerDescription_.ContainerName,
                     error);
         }
+        else
+        {
+            ContainerHelper::GetContainerHelper().MarkContainerLogFolder(containerDescription_.ContainerName);
+        }
+
         this->UnmapVolumes(operation->Parent);
     }
 
@@ -2989,6 +3450,11 @@ protected:
                     "Unsuccessful RemoveContainer for {0}",
                     containerName_);
         }
+        else
+        {
+            ContainerHelper::GetContainerHelper().MarkContainerLogFolder(containerName_);
+        }
+
         this->StopPodSandbox(operation->Parent);
     }
 
@@ -3182,6 +3648,201 @@ protected:
 };
 #endif
 
+class ContainerActivator::ContainerUpdateRoutesAsyncOperation : public AsyncOperation
+{
+    DENY_COPY(ContainerUpdateRoutesAsyncOperation)
+
+public:
+    ContainerUpdateRoutesAsyncOperation(
+        __in ContainerActivator & owner,
+        wstring const & containerId,
+        ContainerDescription const & containerDescription,
+        TimeSpan const timeout,
+        AsyncCallback const & callback,
+        AsyncOperationSPtr const & parent)
+        : AsyncOperation(callback, parent),
+        containerId_(containerId),
+        containerDescription_(containerDescription),
+        owner_(owner),
+        timeoutHelper_(timeout),
+        initialEnqueueSucceeded_(false)
+    {
+    }
+
+    virtual ~ContainerUpdateRoutesAsyncOperation()
+    {
+    }
+
+    static ErrorCode End(AsyncOperationSPtr const & operation)
+    {
+        auto thisPtr = AsyncOperation::End<ContainerUpdateRoutesAsyncOperation>(operation);
+        return thisPtr->Error;
+    }
+
+protected:
+    void OnStart(AsyncOperationSPtr const & thisSPtr)
+    {
+        if (owner_.dockerProcessManager_->IsDockerServicePresent == false)
+        {
+            ErrorCode error(ErrorCodeValue::ServiceOffline,
+                StringResource::Get(IDS_HOSTING_ContainerDeploymentNotSupported));
+
+            TryComplete(thisSPtr, error);
+            return;
+        }
+
+        auto jobItem = make_unique<DefaultTimedJobItem<IContainerActivator>>(
+            timeoutHelper_.GetRemainingTime(),
+            [thisSPtr, this](IContainerActivator &)
+        {
+            this->initialEnqueueSucceeded_ = true;
+            this->ContainerUpdateRoutes(thisSPtr);
+        },
+            [thisSPtr, this](IContainerActivator &)
+        {
+            initialEnqueueSucceeded_ = true;
+
+            WriteWarning(
+                TraceType,
+                "Operation timed out before container update routes queue item was processed.");
+
+            ErrorCode error(
+                ErrorCodeValue::Timeout,
+                move(wstring(L"Operation timed out before container update routes queue item was processed.")));
+
+            this->TryComplete(thisSPtr, error);
+        });
+
+        if (!this->owner_.JobQueueObject.Enqueue(move(jobItem)))
+        {
+            WriteWarning(
+                TraceType,
+                "Could not enqueue container update routes operation to JobQueue.");
+
+            ErrorCode error(
+                ErrorCodeValue::InvalidOperation,
+                move(wstring(L"Could not enqueue container update routes operation to JobQueue.")));
+
+            this->TryComplete(thisSPtr, error);
+        }
+    }
+
+    void OnCompleted()
+    {
+        if (initialEnqueueSucceeded_)
+        {
+            owner_.JobQueueObject.CompleteAsyncJob();
+        }
+    }
+
+private:
+    void ContainerUpdateRoutes(AsyncOperationSPtr const & thisSPtr)
+    {
+        auto request = CreateContainerUpdateRoutesRequestMessage();
+
+        auto operation = owner_.BeginSendMessage(
+            move(request),
+            timeoutHelper_.GetRemainingTime(),
+            [this](AsyncOperationSPtr const & operation)
+        {
+            this->FinishContainerUpdateRoutes(operation, false);
+        },
+            thisSPtr);
+
+        FinishContainerUpdateRoutes(operation, true);
+    }
+
+    void FinishContainerUpdateRoutes(AsyncOperationSPtr const & operation, bool expectedCompletedSynchronously)
+    {
+        if (operation->CompletedSynchronously != expectedCompletedSynchronously)
+        {
+            return;
+        }
+
+        MessageUPtr reply;
+        auto error = owner_.EndSendMessage(operation, reply);
+        if (!error.IsSuccess())
+        {
+            WriteWarning(
+                TraceType,
+                owner_.Root.TraceId,
+                "FinishContainerUpdateRoutes: Error={0}.",
+                error);
+
+            TryComplete(operation->Parent, error);
+            return;
+        }
+
+        ContainerOperationReply replyBody;
+        if (!reply->GetBody<ContainerOperationReply>(replyBody))
+        {
+            WriteWarning(
+                TraceType,
+                owner_.Root.TraceId,
+                "FinishContainerUpdateRoutes: GetBody<ContainerOperationReply> failed: Message={0}, ErrorCode={1}",
+                *reply,
+                error);
+
+            TryComplete(operation->Parent, error);
+            return;
+        }
+
+        error = replyBody.Error;
+        if (!error.IsSuccess())
+        {
+            WriteWarning(
+                TraceType,
+                owner_.Root.TraceId,
+                "FinishContainerUpdateRoutes: replyBody.Error={0}, replyBody.ErrorMessage={1}.",
+                error,
+                replyBody.ErrorMessage);
+        }
+
+        TryComplete(
+            operation->Parent,
+            ErrorCode(error.ReadValue(), replyBody.TakeErrorMessage()));
+    }
+
+    MessageUPtr CreateContainerUpdateRoutesRequestMessage()
+    {
+        // Retrieve container gateway ip addresses
+        std::vector<std::wstring> gatewayIpAddresses;
+        owner_.RetrieveGatewayIpAddresses(containerDescription_, gatewayIpAddresses);
+
+        ContainerUpdateRoutesRequest requestBody(
+            containerId_,
+            containerDescription_.ContainerName,
+            containerDescription_.ApplicationId,
+            containerDescription_.ApplicationName,
+            containerDescription_.NetworkConfig.NetworkType,
+            gatewayIpAddresses,
+            containerDescription_.AutoRemove,
+            containerDescription_.IsContainerRoot,
+            containerDescription_.GroupContainerName,
+            timeoutHelper_.GetRemainingTime().Ticks);
+
+        auto request = make_unique<Message>(requestBody);
+        request->Headers.Add(Transport::ActorHeader(Actor::ContainerActivatorService));
+        request->Headers.Add(Transport::ActionHeader(Hosting2::Protocol::Actions::ContainerUpdateRoutes));
+
+        WriteNoise(
+            TraceType,
+            owner_.Root.TraceId,
+            "ContainerUpdateRoutesRequestMessage: Message={0}, Body={1}",
+            *request,
+            requestBody);
+
+        return move(request);
+    }
+
+private:
+    wstring containerId_;
+    ContainerDescription containerDescription_;
+    ContainerActivator & owner_;
+    TimeoutHelper timeoutHelper_;
+    bool initialEnqueueSucceeded_;
+};
+
 ContainerActivator::ContainerActivator(
     ComponentRoot const & root,
     ProcessActivationManager & processActivationManager,
@@ -3207,11 +3868,22 @@ ContainerActivator::ContainerActivator(
 
     auto dockerManager = make_unique<DockerProcessManager>(root, engineTerminationCallback, processActivationManager);
     auto ipProvider = make_unique<IPAddressProvider>(make_shared<ComponentRoot>(root), processActivationManager);
+    auto natIpProvider = make_unique<NatIPAddressProvider>(make_shared<ComponentRoot>(root), *this);
+    auto overlayNetworkManager = make_unique<OverlayNetworkManager>(make_shared<ComponentRoot>(root), processActivationManager);
+    auto containerNetworkOperations = make_unique<ContainerNetworkOperations>(make_shared<ComponentRoot>(root));
     auto eventTracker = make_unique<ContainerEventTracker>(*this);
 
     dockerProcessManager_ = move(dockerManager);
     ipAddressProvider_ = move(ipProvider);
+    natIpAddressProvider_ = move(natIpProvider);
+    overlayNetworkManager_ = move(overlayNetworkManager);
+    containerNetworkOperations_ = move(containerNetworkOperations);
     eventTracker_ = move(eventTracker);
+
+    networkPluginProcessRestartedCallback_ = [this]()
+    {
+        this->overlayNetworkManager_->RequestPublishNetworkTables();
+    };
 
 #if defined(PLATFORM_UNIX)
     containerStatusCallback_ = ContainerRuntimeHandler::RegisterContainerStateUpdateCallback(
@@ -3237,6 +3909,34 @@ ContainerActivator::ContainerActivator(
                     ((ContainerActivator *)ptr)->processActivationManager_.OnContainerTerminated(apphostidW, nodeidW, -1);
                 }
             }, this);
+
+    auto networkPluginProcessManager = make_unique<NetworkPluginProcessManager>(
+        root,
+        processActivationManager,
+        networkPluginProcessRestartedCallback_,
+        HostingConfig::GetConfig().AzureVnetPluginName,
+        L"",
+        true, // plugin setup 
+        HostingConfig::GetConfig().AzureVnetPluginProcessManagerInitTimeout,
+        HostingConfig::GetConfig().AzureVnetPluginActivationExceptionInterval,
+        HostingConfig::GetConfig().AzureVnetPluginActivationRetryBackoffInterval,
+        HostingConfig::GetConfig().AzureVnetPluginActivationMaxFailureCount);
+
+    this->networkPluginProcessManager_ = move(networkPluginProcessManager);
+#else
+    auto networkPluginProcessManager = make_unique<NetworkPluginProcessManager>(
+        root,
+        processActivationManager,
+        networkPluginProcessRestartedCallback_,
+        HostingConfig::GetConfig().IsolatedNetworkPluginName,
+        L"",
+        true, // plugin setup
+        HostingConfig::GetConfig().IsolatedNetworkPluginProcessManagerInitTimeout,
+        HostingConfig::GetConfig().IsolatedNetworkPluginActivationExceptionInterval,
+        HostingConfig::GetConfig().IsolatedNetworkPluginActivationRetryBackoffInterval,
+        HostingConfig::GetConfig().IsolatedNetworkPluginActivationMaxFailureCount);
+
+    this->networkPluginProcessManager_ = move(networkPluginProcessManager);
 #endif
 }
 
@@ -3296,7 +3996,8 @@ AsyncOperationSPtr ContainerActivator::BeginActivate(
 }
 
 ErrorCode ContainerActivator::EndActivate(
-    AsyncOperationSPtr const & operation)
+    AsyncOperationSPtr const & operation,
+    __out std::wstring & containerId)
 {
 #if defined(PLATFORM_UNIX)
     auto op = std::dynamic_pointer_cast<ActivateAsyncOperation>(operation);
@@ -3305,7 +4006,7 @@ ErrorCode ContainerActivator::EndActivate(
         return ActivateClearContainersAsyncOperation::End(operation);
     }
 #endif
-    return ActivateAsyncOperation::End(operation);
+    return ActivateAsyncOperation::End(operation, containerId);
 }
 
 AsyncOperationSPtr ContainerActivator::BeginQuery(
@@ -3470,6 +4171,36 @@ ErrorCode ContainerActivator::EndDeleteImages(
     return DeleteContainerImagesAsyncOperation::End(operation);
 }
 
+
+AsyncOperationSPtr ContainerActivator::BeginGetStats(
+    Hosting2::ContainerDescription const & containerDescription,
+    Hosting2::ProcessDescription const & processDescription,
+    std::wstring const & parentId,
+    std::wstring const & appServiceId,
+    TimeSpan const timeout,
+    AsyncCallback const & callback,
+    AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<GetContainerStatsAsyncOperation>(
+        *this,
+        containerDescription,
+        processDescription,
+        parentId,
+        appServiceId,
+        timeout,
+        callback,
+        parent);
+}
+
+ErrorCode ContainerActivator::EndGetStats(
+    AsyncOperationSPtr const & operation,
+    __out uint64 & memoryUsage,
+    __out uint64 & totalCpuTime,
+    __out Common::DateTime & timeRead)
+{
+    return GetContainerStatsAsyncOperation::End(operation, memoryUsage, totalCpuTime, timeRead);
+}
+
 AsyncOperationSPtr ContainerActivator::BeginInvokeContainerApi(
     ContainerDescription const & containerDescription,
     wstring const & httpVerb,
@@ -3573,20 +4304,502 @@ ErrorCode ContainerActivator::AllocateIPAddresses(
     vector<wstring> const & codePackageNames,
     vector<wstring> & assignedIps)
 {
-    return this->ipAddressProvider_->AcquireIPAddresses(nodeId, servicePackageId, codePackageNames, assignedIps);
+    if (HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+    {
+        return this->natIpAddressProvider_->AcquireIPAddresses(nodeId, servicePackageId, codePackageNames, assignedIps);
+    }
+    else
+    {
+        return this->ipAddressProvider_->AcquireIPAddresses(nodeId, servicePackageId, codePackageNames, assignedIps);
+    }
 }
 
 void ContainerActivator::ReleaseIPAddresses(
     wstring const & nodeId,
     wstring const & servicePackageId)
 {
-    this->ipAddressProvider_->ReleaseIpAddresses(nodeId, servicePackageId);
+    if (HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+    {
+        this->natIpAddressProvider_->ReleaseIpAddresses(nodeId, servicePackageId);
+    }
+    else
+    {
+        this->ipAddressProvider_->ReleaseIpAddresses(nodeId, servicePackageId);
+    }
 }
 
 void ContainerActivator::CleanupAssignedIpsToNode(
     wstring const & nodeId)
 {
-    this->ipAddressProvider_->ReleaseAllIpsForNode(nodeId);
+    if (HostingConfig::GetConfig().LocalNatIpProviderEnabled)
+    {
+        this->natIpAddressProvider_->ReleaseAllIpsForNode(nodeId);
+    }
+    else
+    {
+        this->ipAddressProvider_->ReleaseAllIpsForNode(nodeId);
+    }
+}
+
+Common::AsyncOperationSPtr ContainerActivator::BeginAssignOverlayNetworkResources(
+    std::wstring const & nodeId,
+    std::wstring const & nodeName,
+    std::wstring const & nodeIpAddress,
+    std::wstring const & servicePackageId,
+    std::map<wstring, std::vector<std::wstring>> const & codePackageNetworkNames,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return containerNetworkOperations_->BeginAssignOverlayNetworkResources(
+        *this,
+        nodeId,
+        nodeName,
+        nodeIpAddress,
+        servicePackageId,
+        codePackageNetworkNames,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndAssignOverlayNetworkResources(
+    Common::AsyncOperationSPtr const & operation,
+    __out std::map<std::wstring, std::map<std::wstring, std::wstring>> & assignedNetworkResources)
+{
+    return containerNetworkOperations_->EndAssignOverlayNetworkResources(operation, assignedNetworkResources);
+}
+
+Common::AsyncOperationSPtr ContainerActivator::BeginReleaseOverlayNetworkResources(
+    std::wstring const & nodeId,
+    std::wstring const & nodeName,
+    std::wstring const & nodeIpAddress,
+    std::wstring const & servicePackageId,
+    std::vector<std::wstring> const & networkNames,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return containerNetworkOperations_->BeginReleaseOverlayNetworkResources(
+        *this,
+        nodeId,
+        nodeName,
+        nodeIpAddress,
+        servicePackageId,
+        networkNames,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndReleaseOverlayNetworkResources(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return containerNetworkOperations_->EndReleaseOverlayNetworkResources(operation);
+}
+
+Common::AsyncOperationSPtr ContainerActivator::BeginCleanupAssignedOverlayNetworkResourcesToNode(
+    std::wstring const & nodeId,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return containerNetworkOperations_->BeginCleanupAssignedOverlayNetworkResourcesToNode(
+        *this,
+        nodeId,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndCleanupAssignedOverlayNetworkResourcesToNode(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return containerNetworkOperations_->EndCleanupAssignedOverlayNetworkResourcesToNode(operation);
+}
+
+Common::AsyncOperationSPtr ContainerActivator::BeginAttachContainerToNetwork(
+    std::wstring const & nodeId,
+    std::wstring const & nodeName,
+    std::wstring const & nodeIpAddress,
+    std::wstring const & containerId,
+    std::map<std::wstring, std::wstring> const & overlayNetworkResources,
+    Common::StringCollection const & dnsServerList,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    wstring dnsServersString;
+    for (auto const & dns : dnsServerList)
+    {
+        if (dnsServersString.empty())
+        {
+            dnsServersString = dns;
+        }
+        else
+        {
+            dnsServersString = wformatString("{0},{1}", dnsServersString, dns);
+        }
+    }
+
+    std::vector<OverlayNetworkContainerParametersSPtr> paramsList;
+    for (auto const & onr : overlayNetworkResources)
+    {
+        auto networkDefinition = make_shared<OverlayNetworkDefinition>(
+            onr.first, // network name
+            L"", // network id
+            Common::ContainerEnvironment::ContainerOverlayNetworkTypeName, // network type
+            L"", // subnet
+            L"", // gateway
+            0, // mask
+            0, // vxlan id
+            L"", // start mac pool address
+            L"", // end mac pool address
+            nodeIpAddress,
+            nodeId,
+            nodeName,
+            std::map<std::wstring, std::wstring>(), // ip and mac address map to be added
+            std::map<std::wstring, std::wstring>()); // ip and mac address map to be removed
+
+        wstring ipAddress;
+        wstring macAddress;
+        StringUtility::SplitOnce(onr.second, ipAddress, macAddress, L",");
+
+        auto params = make_shared<OverlayNetworkContainerParameters>(
+            networkDefinition,
+            ipAddress,
+            macAddress,
+            containerId,
+            dnsServersString);
+
+        paramsList.push_back(params);
+    }
+
+    return containerNetworkOperations_->BeginAttachContainerToNetwork(
+        *this,
+        paramsList,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndAttachContainerToNetwork(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return containerNetworkOperations_->EndAttachContainerToNetwork(operation);
+}
+
+Common::AsyncOperationSPtr ContainerActivator::BeginDetachContainerFromNetwork(
+    std::wstring const & nodeId,
+    std::wstring const & nodeName,
+    std::wstring const & nodeIpAddress,
+    std::wstring const & containerId,
+    std::vector<std::wstring> const & networkNames,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return containerNetworkOperations_->BeginDetachContainerFromNetwork(
+        *this,
+        nodeId,
+        nodeName,
+        nodeIpAddress,
+        containerId,
+        networkNames,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndDetachContainerFromNetwork(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return containerNetworkOperations_->EndDetachContainerFromNetwork(operation);
+}
+
+#if defined(PLATFORM_UNIX)
+Common::AsyncOperationSPtr ContainerActivator::BeginSaveContainerNetworkParamsForLinuxIsolation(
+    std::wstring const & nodeId,
+    std::wstring const & nodeName,
+    std::wstring const & nodeIpAddress,
+    std::wstring const & containerId,
+    std::wstring const & openNetworkAssignedIp,
+    std::map<std::wstring, std::wstring> const & overlayNetworkResources,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    std::vector<OverlayNetworkContainerParametersSPtr> paramsList;
+
+    if (!openNetworkAssignedIp.empty())
+    {
+        auto networkDefinition = make_shared<OverlayNetworkDefinition>(
+            Common::ContainerEnvironment::ContainerNetworkName,
+            L"", // network id
+            Common::ContainerEnvironment::ContainerUnderlayNetworkTypeName,
+            this->ipAddressProvider_->Subnet,
+            this->ipAddressProvider_->GatewayIpAddress,
+            0, // mask
+            0, // vxlan id
+            L"", // start mac pool address
+            L"", // end mac pool address
+            nodeIpAddress,
+            nodeId,
+            nodeName,
+            std::map<std::wstring, std::wstring>(), // ip and mac address map to be added
+            std::map<std::wstring, std::wstring>()); // ip and mac address map to be deleted
+
+        auto params = make_shared<OverlayNetworkContainerParameters>(
+            networkDefinition,
+            openNetworkAssignedIp,
+            L"", // mac address
+            containerId,
+            L""); // dns server list
+
+        paramsList.push_back(params);
+    }
+
+    for (auto const & onr : overlayNetworkResources)
+    {
+        auto networkDefinition = make_shared<OverlayNetworkDefinition>(
+            onr.first,
+            L"", // network id
+            Common::ContainerEnvironment::ContainerOverlayNetworkTypeName, // network type
+            L"", // subnet
+            L"", // gateway
+            0, // mask
+            0, // vxlan id
+            L"", // start mac pool address
+            L"", // end mac pool address
+            nodeIpAddress,
+            nodeId,
+            nodeName,
+            std::map<std::wstring, std::wstring>(), // ip mac address map to be added
+            std::map<std::wstring, std::wstring>()); // ip mac address map to be removed
+
+        wstring ipAddress;
+        wstring macAddress;
+        StringUtility::SplitOnce(onr.second, ipAddress, macAddress, L",");
+
+        auto params = make_shared<OverlayNetworkContainerParameters>(
+            networkDefinition,
+            ipAddress,
+            macAddress,
+            containerId,
+            L""); // dns server list
+
+        paramsList.push_back(params);
+    }
+
+    // If both open and isolated network resources are empty, then NAT config is saved.
+    if (openNetworkAssignedIp.empty() && overlayNetworkResources.empty())
+    {
+        auto networkDefinition = make_shared<OverlayNetworkDefinition>(
+            Common::ContainerEnvironment::ContainerNatNetworkTypeName, // network name
+            L"", // network id
+            Common::ContainerEnvironment::ContainerNatNetworkTypeName, // network type
+            L"", // subnet
+            L"", // gateway
+            0, // mask
+            0, // vxlan id
+            L"", // start mac pool address
+            L"", // end mac pool address
+            nodeIpAddress,
+            nodeId,
+            nodeName,
+            std::map<std::wstring, std::wstring>(), // ip mac address map to be added
+            std::map<std::wstring, std::wstring>()); // ip mac address map to be removed
+
+        auto params = make_shared<OverlayNetworkContainerParameters>(
+            networkDefinition,
+            L"", // ip address
+            L"", // mac address
+            containerId,
+            L""); // dns server list
+
+        paramsList.push_back(params);
+    }
+
+    return containerNetworkOperations_->BeginSaveContainerNetworkParamsForLinuxIsolation(
+        *this,
+        paramsList,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndSaveContainerNetworkParamsForLinuxIsolation(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return containerNetworkOperations_->EndSaveContainerNetworkParamsForLinuxIsolation(operation);
+}
+
+Common::AsyncOperationSPtr ContainerActivator::BeginClearContainerNetworkParamsForLinuxIsolation(
+    std::wstring const & nodeId,
+    std::wstring const & nodeName,
+    std::wstring const & nodeIpAddress,
+    std::wstring const & containerId,
+    std::vector<std::wstring> const & networkNames,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return containerNetworkOperations_->BeginClearContainerNetworkParamsForLinuxIsolation(
+        *this,
+        nodeId,
+        nodeName,
+        nodeIpAddress,
+        containerId,
+        networkNames,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndClearContainerNetworkParamsForLinuxIsolation(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return containerNetworkOperations_->EndClearContainerNetworkParamsForLinuxIsolation(operation);
+}
+#endif
+
+Common::AsyncOperationSPtr ContainerActivator::BeginUpdateRoutes(
+    OverlayNetworkRoutingInformationSPtr const & routingInfo,
+    Common::TimeSpan const timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return containerNetworkOperations_->BeginUpdateRoutes(
+        *this,
+        routingInfo,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndUpdateRoutes(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return containerNetworkOperations_->EndUpdateRoutes(operation);
+}
+
+Common::AsyncOperationSPtr ContainerActivator::BeginContainerUpdateRoutes(
+    std::wstring const & containerId,
+    ContainerDescription const & containerDescription,
+    Common::TimeSpan timeout,
+    Common::AsyncCallback const & callback,
+    Common::AsyncOperationSPtr const & parent)
+{
+    return AsyncOperation::CreateAndStart<ContainerUpdateRoutesAsyncOperation>(
+        *this,
+        containerId,
+        containerDescription,
+        timeout,
+        callback,
+        parent);
+}
+
+Common::ErrorCode ContainerActivator::EndContainerUpdateRoutes(
+    Common::AsyncOperationSPtr const & operation)
+{
+    return ContainerUpdateRoutesAsyncOperation::End(operation);
+}
+
+void ContainerActivator::GetDeployedNetworkCodePackages(
+    std::vector<std::wstring> const & servicePackageIds,
+    std::wstring const & codePackageName,
+    std::wstring const & networkName,
+    __out std::map<std::wstring, std::vector<std::wstring>> & networkReservedCodePackages)
+{
+    // filter by network name, if provided
+    std::map<std::wstring, std::map<std::wstring, std::vector<std::wstring>>> reservedCodePackages;
+    if (networkName.empty())
+    {
+        this->IPAddressProviderObj.GetNetworkReservedCodePackages(reservedCodePackages);
+        this->OverlayNetworkManagerObj.GetNetworkReservedCodePackages(reservedCodePackages);
+    }
+    else if (StringUtility::CompareCaseInsensitive(networkName, NetworkType::OpenStr) == 0)
+    {
+        this->IPAddressProviderObj.GetNetworkReservedCodePackages(reservedCodePackages);
+    }
+    else if (StringUtility::CompareCaseInsensitive(networkName, NetworkType::OpenStr) != 0 &&
+        StringUtility::CompareCaseInsensitive(networkName, NetworkType::OtherStr) != 0)
+    {
+        this->OverlayNetworkManagerObj.GetNetworkReservedCodePackages(reservedCodePackages);
+    }
+
+    // filter by service package ids and code package name
+    for (auto const & network : reservedCodePackages)
+    {
+        for (auto const & servicePackageIdsMap : network.second)
+        {
+            vector<std::wstring> codePackagesToBeFiltered;
+            if (servicePackageIds.size() == 0)
+            {
+                codePackagesToBeFiltered = servicePackageIdsMap.second;
+            }
+            else if (std::find(servicePackageIds.begin(), servicePackageIds.end(), servicePackageIdsMap.first) != servicePackageIds.end() )
+            {
+                codePackagesToBeFiltered = servicePackageIdsMap.second;
+            }
+
+            vector<std::wstring> codePackages;
+            for (auto const & cp : codePackagesToBeFiltered)
+            {
+                if (codePackageName.empty())
+                {
+                    codePackages.push_back(cp);
+                }
+                else if (StringUtility::CompareCaseInsensitive(cp, codePackageName) == 0)
+                {
+                    codePackages.push_back(cp);
+                }
+            }
+
+            if (codePackages.size() > 0)
+            {
+                auto key = wformatString("{0},{1}", network.first, servicePackageIdsMap.first);
+                networkReservedCodePackages.insert(make_pair(key, std::vector<wstring>()));
+                auto networkIter = networkReservedCodePackages.find(key);
+                networkIter->second = codePackages;
+            }
+        }
+    }
+}
+
+void ContainerActivator::RetrieveGatewayIpAddresses(
+    ContainerDescription const & containerDescription,
+    __out std::vector<std::wstring> & gatewayIpAddresses)
+{
+    if ((containerDescription.NetworkConfig.NetworkType & NetworkType::Enum::Open) == NetworkType::Enum::Open && 
+        !containerDescription.NetworkConfig.OpenNetworkAssignedIp.empty())
+    {
+        gatewayIpAddresses.push_back(ipAddressProvider_->GatewayIpAddress);
+    }
+    else if ((containerDescription.NetworkConfig.NetworkType & NetworkType::Enum::Isolated) == NetworkType::Enum::Isolated && 
+        !containerDescription.NetworkConfig.OverlayNetworkResources.empty())
+    {
+        std::vector<std::wstring> networkNames;
+        for (auto const & onr : containerDescription.NetworkConfig.OverlayNetworkResources)
+        {
+            networkNames.push_back(onr.first);
+        }
+
+        overlayNetworkManager_->RetrieveGatewayIpAddress(networkNames, gatewayIpAddresses);
+    }
+}
+
+void ContainerActivator::GetDeployedNetworkNames(NetworkType::Enum networkType, std::vector<std::wstring> & networkNames)
+{
+    if ((networkType & NetworkType::Enum::Open) == NetworkType::Enum::Open && this->IPAddressProviderObj.Initialized)
+    {
+        networkNames.push_back(Common::ContainerEnvironment::ContainerNetworkName);
+    }
+
+    if ((networkType & NetworkType::Enum::Isolated) == NetworkType::Enum::Isolated)
+    {
+        this->OverlayNetworkManagerObj.GetNetworkNames(networkNames);
+    }
 }
 
 void ContainerActivator::RegisterIpcRequestHandler()
@@ -3773,6 +4986,100 @@ ErrorCode ContainerActivator::UnregisterContainerActivatorService()
     return ErrorCode(ErrorCodeValue::Success);
 }
 
+ErrorCode ContainerActivator::RegisterNatIpAddressProvider()
+{
+    AsyncOperationWaiterSPtr registrationWaiter = make_shared<AsyncOperationWaiter>();
+    TimeSpan timeout = TimeSpan::FromSeconds(60);
+
+    for (int i = 0; i < NatIpRetryCount; i++)
+    {
+        auto operation = natIpAddressProvider_->BeginOpen(
+            timeout,
+            [this, registrationWaiter](AsyncOperationSPtr const & operation)
+        {
+            auto error = natIpAddressProvider_->EndOpen(operation);
+            registrationWaiter->SetError(error);
+            registrationWaiter->Set();
+        },
+            this->Root.CreateAsyncOperationRoot());
+
+        if (registrationWaiter->WaitOne(timeout))
+        {
+            auto result = registrationWaiter->GetError();
+
+            WriteTrace(
+                result.ToLogLevel(),
+                TraceType,
+                "Register NatIPAddressProvider request returned error {0}.",
+                result);
+
+            if (result.IsSuccess())
+            {
+                return result;
+            }
+        }
+        else
+        {
+            WriteWarning(
+                TraceType,
+                "Register NatIPAddressProvider request timed out.");
+        }
+        ::Sleep(NatIpRetryIntervalInMilliseconds);
+    }
+
+    WriteError(
+            TraceType,
+            "Unable to register NatIpAddressProvider after {0} retries. Completing with OperationFailed.", NatIpRetryCount);
+    return ErrorCodeValue::OperationFailed;
+}
+
+ErrorCode ContainerActivator::UnregisterNatIpAddressProvider()
+{
+    ErrorCode error;
+    AsyncOperationWaiterSPtr unregisterWaiter = make_shared<AsyncOperationWaiter>();
+    TimeSpan timeout = TimeSpan::FromSeconds(20);
+
+    WriteInfo(TraceType, "UnregisterNatIpAddressProvider started.");
+    auto operation = natIpAddressProvider_->BeginClose(
+        timeout,
+        [this, unregisterWaiter](AsyncOperationSPtr const & operation)
+    {
+        auto error = natIpAddressProvider_->EndClose(operation);
+        unregisterWaiter->SetError(error);
+        unregisterWaiter->Set();
+    },
+        this->Root.CreateAsyncOperationRoot());
+
+    if (unregisterWaiter->WaitOne(timeout))
+    {
+        error = unregisterWaiter->GetError();
+
+        WriteTrace(
+            error.ToLogLevel(),
+            TraceType,
+            "UnregisterNatIPAddressProvider request returned error {0}.",
+            error);
+    }
+    else
+    {
+        WriteWarning(
+            TraceType,
+            "UnregisterNatIPAddressProvider request timed out.}");
+        error = ErrorCode(ErrorCodeValue::Timeout);
+    }
+
+    return error;
+}
+
+void ContainerActivator::AbortNatIpAddressProvider()
+{
+    WriteInfo(TraceType, "AbortNatIpAddressProvider");
+    if (natIpAddressProvider_)
+    { 
+        natIpAddressProvider_->Abort();
+    }
+}
+
 void ContainerActivator::SendRegisterContainerActivatorServiceReply(
     ErrorCode const & error,
     __in IpcReceiverContextUPtr & context)
@@ -3866,6 +5173,21 @@ void ContainerActivator::OnAbort()
     if (ipAddressProvider_)
     {
         ipAddressProvider_->Abort();
+    }
+
+    if (natIpAddressProvider_)
+    {
+        natIpAddressProvider_->Abort();
+    }
+
+    if (overlayNetworkManager_)
+    {
+        overlayNetworkManager_->Abort();
+    }
+
+    if (networkPluginProcessManager_)
+    {
+        networkPluginProcessManager_->Abort();
     }
 
     if (dockerProcessManager_)

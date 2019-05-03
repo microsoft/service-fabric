@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Import Project="$(EnvironmentConfig)" />
+  <Import Project="$(SRCROOT)\properties\service_fabric_managed_prod.props" />
+  <PropertyGroup>
+    <AssemblyName>VMMWrapper</AssemblyName>
+    <RootNamespace>Microsoft.Fabric.InfrastructureWrapper</RootNamespace>
+    <ProjectGuid>{308628C6-DAC9-40C5-BF12-3A59FC3897F2}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Program.cs">
+      <Link>Program.cs</Link>
+    </Compile>
+    <Compile Include="..\VMMNodeList.cs">
+      <Link>VMMNodeList.cs</Link>
+    </Compile>
+    <Compile Include="..\VMMWrapper.cs">
+      <Link>VMMWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\wrappercommon\CodingException.cs">
+      <Link>..\WrapperCommon\CodingException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\wrappercommon\Constants.cs">
+      <Link>..\WrapperCommon\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\..\wrappercommon\Errorcode.cs">
+      <Link>..\WrapperCommon\Errorcode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\wrappercommon\IEntryPoint.cs">
+      <Link>..\WrapperCommon\IEntryPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\..\wrappercommon\InfrastructureWrapper.cs">
+      <Link>..\WrapperCommon\InfrastructureWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\wrappercommon\Logger.cs">
+      <Link>..\WrapperCommon\Logger.cs</Link>
+    </Compile>
+    <Compile Include="..\..\wrappercommon\Utilities.cs">
+      <Link>..\WrapperCommon\Utilities.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric\System.Fabric.csproj">
+      <Project>{65905332-C075-40A4-99DD-71800412191C}</Project>
+      <Name>System.Fabric</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric.Management\System.Fabric.Management.csproj">
+      <Project>{20A09191-7AC9-4851-BAF2-AD98D481CEB6}</Project>
+      <Name>System.Fabric.Management</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Api\Dlls\System.Fabric.Management.ServiceModel\System.Fabric.Management.ServiceModel.csproj">
+      <Project>{8962599F-C6B0-4C47-AE92-5BDAFE19F12E}</Project>
+      <Name>System.Fabric.Management.ServiceModel</Name>
+    </ProjectReference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <Import Project="$(ExtendedTargetsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BinplaceFiles Include="$(OutputPath)**\*" Exclude="$(OutputPath)**\*.pdb;$(OutputPath)**\*.lib" />
+      <SymbolFiles Include="$(OutputPath)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinplaceFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\bin\$(INFRASTRUCTUREWRAPPERS_DIR)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SymbolFiles)" DestinationFolder="$(BinariesBuildTypeArchDirectory)\symbols" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

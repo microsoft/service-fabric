@@ -1,6 +1,0 @@
-SingleMachine-CIT.json
-  TYPES:FabricTest
-  TAGS:Management,Query
-SingleMachine-Functional.json
-  TYPES:FabricTest
-  TAGS:Management,Query

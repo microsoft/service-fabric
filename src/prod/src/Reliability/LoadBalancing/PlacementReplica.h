@@ -24,7 +24,9 @@ namespace Reliability
 
             public:
                 // constructor for a new replica
-                PlacementReplica(size_t index, ReplicaRole::Enum role);
+                PlacementReplica(size_t index,
+                    ReplicaRole::Enum role,
+                    bool canBeThrottled);
 
                 // constructor for an existing replica
                 PlacementReplica(
@@ -37,7 +39,8 @@ namespace Reliability
                     bool isMoveInProgress,
                     bool isToBeDropped,
                     bool isInUpgrade,
-                    bool isSingletonReplicaMovableDuringUpgrade);
+                    bool isSingletonReplicaMovableDuringUpgrade,
+                    bool canBeThrottled);
 
                 __declspec (property(get=get_ReplicaIndex)) size_t Index;
                 size_t get_ReplicaIndex() const { return index_; }
@@ -102,6 +105,9 @@ namespace Reliability
                 __declspec (property(get = get_IsInUpgrade)) bool IsInUpgrade;
                 bool get_IsInUpgrade() const { return isInUpgrade_; }
 
+                __declspec (property(get=get_CanBeThrottled)) bool CanBeThrottled;
+                bool get_CanBeThrottled() const { return canBeThrottled_; }
+
                 std::wstring ReplicaHash(bool alreadyExists = false) const;
 
                 void SetPartitionEntry(PartitionEntry const* partitionEntry);
@@ -153,6 +159,9 @@ namespace Reliability
 
                 // Whether the replica is movable during singleton replica upgrade
                 bool isSingletonReplicaMovableDuringUpgrade_;
+
+                // True if this replica can be throttled.
+                bool canBeThrottled_;
         };
     }
 }

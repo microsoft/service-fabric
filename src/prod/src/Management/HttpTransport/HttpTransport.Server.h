@@ -10,7 +10,7 @@
 #include "Transport/Transport.h"
 
 #include "HttpTransport.Pointers.h"
-
+#include "HttpUtil.h"
 #include "Constants.h"
 
 #include "LookasideAllocatorSettings.h"

@@ -182,7 +182,9 @@ ErrorCode QueryAddressGenerator::ValidateAddressArguments(
                 "{0}: Required query arg {1} not found",
                 activityId,
                 arg);
-            return ErrorCodeValue::InvalidArgument;
+            return ErrorCode(
+                ErrorCodeValue::InvalidArgument,
+                wformatString(GET_QUERY_RC(Query_Arg_Not_Found), arg));
         }
 
         auto pos = queryArgs[arg].find_first_of(*QueryAddress::ReservedCharacters);
@@ -196,7 +198,7 @@ ErrorCode QueryAddressGenerator::ValidateAddressArguments(
                 queryArgs[arg],
                 queryArgs[arg][pos]);
 
-            return ErrorCodeValue::InvalidArgument;
+            return ErrorCode(ErrorCodeValue::InvalidArgument, wformatString(GET_QUERY_RC(Query_Arg_Invalid_Character), arg, queryArgs[arg], queryArgs[arg][pos]));
         }
     }
 

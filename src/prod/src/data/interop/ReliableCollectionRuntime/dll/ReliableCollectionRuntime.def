@@ -55,3 +55,4 @@ EXPORTS
     ConcurrentQueue_GetCount
     TxnReplicator_BackupAsync2
     ReliableCollectionRuntime_Initialize2
+    ReliableCollectionRuntime_StartTraceSessions

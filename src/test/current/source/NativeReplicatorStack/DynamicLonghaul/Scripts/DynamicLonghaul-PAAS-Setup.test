@@ -1,0 +1,25 @@
+# PaaS Configuration
+var vmSize Standard_D14
+
+load SetV1PerfConfig.test
+
+#
+# This will cause RAP to raise health event if some async api takes longer than 2 minutes and 
+# you can use it to directly narrow down to the async api that is stuck.
+setcfg Config.ReconfigurationAgent.ServiceApiHealthDuration 120
+
+# Set deployment type to Paas to indicate all deployments and connections will be to an Paas cluster
+setcfg Config.DeploymentType Paas
+
+# Client sends requests to a load driver service running in the Paas cluster. The request goes
+# through the test gateway that is installed on the Paas cluster by the ScriptTest framework.
+# Therefore, we need to make sure that the WCF NetTcpBinding settings used by this test gateway
+# match the settings used by the client and the service of our test.
+setcfg Paas.Gateway.WcfSendTimeoutInSeconds -1
+setcfg Paas.Gateway.WcfReceiveTimeoutInSeconds -1
+setcfg Paas.Gateway.WcfOpenTimeoutInSeconds 5
+setcfg Paas.Gateway.WcfCloseTimeoutInSeconds 5
+setcfg Paas.Gateway.WcfMaxReceivedMessageSizeInBytes 134217728
+
+# Enable Progress Vector Trimming
+setcfg Config.TransactionalReplicator2.ProgressVectorMaxEntries 20

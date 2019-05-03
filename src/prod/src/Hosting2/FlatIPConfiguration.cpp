@@ -11,7 +11,8 @@ using namespace Hosting2;
 
 StringLiteral const FlatIPConfigurationProvider("FlatIPConfiguration");
 
-FlatIPConfiguration::Subnet::Subnet(uint gateway, uint mask) :
+FlatIPConfiguration::Subnet::Subnet(wstring subnetCIDR, uint gateway, uint mask) :
+    subnetCIDR_(subnetCIDR),
     gatewayAddress_(gateway),
     addressMask_(mask),
     primaryAddress_(INVALID_IP),
@@ -189,6 +190,7 @@ void FlatIPConfiguration::ProcessIPSubnetElement(Common::ComProxyXmlLiteReaderUP
 {
     uint gatewayIP = INVALID_IP;
     uint mask = 0;
+    wstring subnetCIDR = L"";
 
     // First, get the attributes associated with the Interface element
     //
@@ -205,6 +207,8 @@ void FlatIPConfiguration::ProcessIPSubnetElement(Common::ComProxyXmlLiteReaderUP
                     return false;
                 }
 
+                subnetCIDR = attrValue;
+
                 // Convert the mask number to a bitmask;
                 for (int i = 0; i < maskNum; i++)
                 {
@@ -219,7 +223,7 @@ void FlatIPConfiguration::ProcessIPSubnetElement(Common::ComProxyXmlLiteReaderUP
             return true;
         });
 
-    auto subnet = new Subnet(gatewayIP, mask);
+    auto subnet = new Subnet(subnetCIDR, gatewayIP, mask);
     if (!subnetInterace->AddSubnet(subnet))
     {
         ThrowInvalidContent(

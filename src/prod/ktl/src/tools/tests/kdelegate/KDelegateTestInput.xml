@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Data>
+    <Table Id="Test">
+        <ParameterTypes>
+            <ParameterType Name="Parameters" Array="true">String</ParameterType>
+        </ParameterTypes>
+        <Row Name="Test">
+            <Parameter Name="Parameters">
+                <Value>ConstructorTests:</Value>
+                <Value>BindTests:</Value>
+                <Value>RebindTests:</Value>
+                <Value>FunctionScaleTests:</Value>
+                <Value>FunctionObjectScaleTests:</Value>
+                <Value>InheritanceTests:</Value>
+            </Parameter>
+        </Row>
+    </Table>
+</Data>

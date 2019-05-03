@@ -316,7 +316,6 @@ class KBlockFileStandard : public KBlockFile {
                     __in KIoBuffer& IoBuffer
                     );
 
-                KListEntry ListEntry;
 
             private:
 
@@ -350,6 +349,9 @@ class KBlockFileStandard : public KBlockFile {
 
                 friend class KBlockFileStandard;
 
+                KListEntry ListEntry;
+                KListEntry ListEntryCompletion;
+                                
                 KBlockFileStandard::SPtr _File;
                 IoPriority _Priority;
                 SystemIoPriorityHint _IoPriorityHint;
@@ -4624,7 +4626,7 @@ Return Value:
             //
             status = STATUS_PRIVILEGE_NOT_HELD;
             KTraceFailedAsyncRequest(status, NULL, (ULONGLONG)this, 0);
-			status = STATUS_SUCCESS;
+            status = STATUS_SUCCESS;
         }
     }
 #endif
@@ -5838,11 +5840,11 @@ KBlockFileStandard::IoCompletionRoutineKernelMode(
     }
 #endif
 
-    ULONG i;
+    KNodeList<TransferStandard> transferList(FIELD_OFFSET(TransferStandard, ListEntryCompletion));
     TransferStandard* transfer;
     LONG r;
-    BOOLEAN b;
-
+    ULONG numTransferPackets;
+    
     //
     // Common completion code for both user and kernel mode.
     //
@@ -5860,7 +5862,7 @@ KBlockFileStandard::IoCompletionRoutineKernelMode(
         if (file->IsScatterGatherAvailable())
         {
 #endif
-            for (i = 0; i < sgPacket->NumTransferPackets; i++) {
+            for (ULONG i = 0; i < sgPacket->NumTransferPackets; i++) {
                 transfer = sgPacket->TransferPackets[i];
                 InterlockedExchange(&transfer->_Status, status);
             }
@@ -5891,8 +5893,6 @@ KBlockFileStandard::IoCompletionRoutineKernelMode(
     // hold a reference on the KBlockFile which needs to stay in
     // existence until this routine finishes
     //
-    ULONG numTransferPackets;
-    TransferStandard* transferPackets[MaxBlocksPerIo];
 
 #if KTL_USER_MODE
 #else
@@ -5902,17 +5902,25 @@ KBlockFileStandard::IoCompletionRoutineKernelMode(
         numTransferPackets = sgPacket->NumTransferPackets;
         KInvariant(numTransferPackets <= MaxBlocksPerIo);
 
-        KMemCpySafe(
-            transferPackets,
-            sizeof(TransferStandard*)*MaxBlocksPerIo,
-            sgPacket->TransferPackets,
-            numTransferPackets*sizeof(TransferStandard*));
+        for (ULONG i = 0; i < numTransferPackets; i++)
+        {
+            transfer = sgPacket->TransferPackets[i];
+            r = InterlockedDecrement(&transfer->_RefCount);
+            KInvariant(r >= 0);
+            if (r == 0) {           
+                transferList.AppendTail(transfer);
+            }
+        }
 
 #if KTL_USER_MODE
 #else
     } else {
-        numTransferPackets = 1;
-        transferPackets[0] = nosgPacket->TransferPacket;
+        transfer = nosgPacket->TransferPacket;
+        r = InterlockedDecrement(&transfer->_RefCount);
+        KInvariant(r >= 0);
+        if (r == 0) {           
+            transferList.AppendTail(transfer);
+        }
     }
 #endif
 
@@ -5930,7 +5938,8 @@ KBlockFileStandard::IoCompletionRoutineKernelMode(
     }
 
     //
-    // Return the IO packet to the free list.
+    // Return the IO packet to the free list. This must be done before
+    // completing the transfer packets
     //
 
     file->_IoPacketList.AppendTail(ioPacket);
@@ -5963,20 +5972,18 @@ KBlockFileStandard::IoCompletionRoutineKernelMode(
     //
     // Decrement the ref count on the transfer packets that are depending on this IO.
     //
-    for (i = 0; i < numTransferPackets; i++) {
-        transfer = transferPackets[i];
-        r = InterlockedDecrement(&transfer->_RefCount);
-        KInvariant(r >= 0);
-        if (!r) {
-            if (!NT_SUCCESS(transfer->_Status)) {
-                KTraceFailedAsyncRequest(transfer->_Status, transfer, transfer->_Offset, transfer->_Length);
-                KTraceFailedAsyncRequest(transfer->_Status, transfer, transfer->_TargetOffset, transfer->_Length);
-            }
-
-            transfer->_InstrumentedOperation.EndOperation(static_cast<ULONGLONG>(transfer->_Length));
-            b = transfer->Complete(transfer->_Status);
-            KInvariant(b);
+    while (transferList.Count()) {
+        BOOLEAN b;
+        
+        transfer = transferList.RemoveHead();
+        if (!NT_SUCCESS(transfer->_Status)) {
+            KTraceFailedAsyncRequest(transfer->_Status, transfer, transfer->_Offset, transfer->_Length);
+            KTraceFailedAsyncRequest(transfer->_Status, transfer, transfer->_TargetOffset, transfer->_Length);
         }
+
+        transfer->_InstrumentedOperation.EndOperation(static_cast<ULONGLONG>(transfer->_Length));
+        b = transfer->Complete(transfer->_Status);
+        KAssert(b);
     }
 
 Finish:

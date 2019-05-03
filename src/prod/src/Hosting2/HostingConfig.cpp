@@ -41,6 +41,10 @@ ErrorCode HostingConfig::ToPublicApi(
     settingsMap.insert(make_pair(L"DefaultNatNetwork", wformatString("{0}", this->DefaultNatNetwork)));
     settingsMap.insert(make_pair(L"DefaultContainerNetwork", wformatString("{0}", this->DefaultContainerNetwork)));
     settingsMap.insert(make_pair(L"EnableDockerHealthCheckIntegration", this->EnableDockerHealthCheckIntegration ? L"true" : L"false"));
+    settingsMap.insert(make_pair(L"DefaultContainerRepositoryPasswordType", this->DefaultContainerRepositoryPasswordType));
+    settingsMap.insert(make_pair(L"DisableDockerRequestRetry", this->DisableDockerRequestRetry ? L"true" : L"false"));
+    settingsMap.insert(make_pair(L"LocalNatIpProviderEnabled", this->LocalNatIpProviderEnabled ? L"true" : L"false"));
+    settingsMap.insert(make_pair(L"LocalNatIpProviderNetworkName", this->LocalNatIpProviderNetworkName));
 
     auto nativeSettingMap = heap.AddItem<FABRIC_STRING_PAIR_LIST>();
     auto error = PublicApiHelper::ToPublicApiStringPairList(heap, settingsMap, *nativeSettingMap);

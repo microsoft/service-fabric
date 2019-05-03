@@ -73,6 +73,13 @@ namespace Data
              timeoutInMS_ = timeout;
          }
 
+         // Exposed for testability
+         __declspec(property(get = get_SweepCompletionSource)) ktl::AwaitableCompletionSource<bool>::SPtr SweepCompletionSource;
+         ktl::AwaitableCompletionSource<bool>::SPtr get_SweepCompletionSource()
+         {
+             return sweepCompletionSourceSPtr_;
+         }
+         
          ktl::Awaitable<void> SweepAsync()
          {
             ktl::AwaitableCompletionSource<bool>::SPtr sweepCompletionSourceSPtr = nullptr;

@@ -16,7 +16,7 @@ using namespace ServiceModel;
 using namespace Management::ResourceManager;
 using namespace Management::CentralSecretService;
 
-StringLiteral const TraceComponent("SetSecretsAsyncOperation");
+StringLiteral const SetSecretsAsyncOperation::TraceComponent("CentralSecretServiceReplica::SetSecretsAsyncOperation");
 
 SetSecretsAsyncOperation::SetSecretsAsyncOperation(
     Management::CentralSecretService::SecretManager & secretManager,
@@ -34,6 +34,7 @@ SetSecretsAsyncOperation::SetSecretsAsyncOperation(
         timeout,
         callback,
         parent)
+    , secrets_()
 {
 }
 
@@ -42,121 +43,126 @@ void SetSecretsAsyncOperation::Execute(AsyncOperationSPtr const & thisSPtr)
     ErrorCode error(ErrorCodeValue::Success);
     SecretsDescription description;
 
-    WriteInfo(TraceComponent,
-        "{0}: SetSecrets: Begins.",
-        this->TraceId);
-
     if (this->RequestMsg.GetBody(description))
     {
-        vector<SecretReference> secretReferences;
+        WriteInfo(
+            this->TraceComponent,
+            "{0}: {1} -> Setting secrets ...",
+            this->TraceId,
+            this->TraceComponent);
 
-        transform(
-            description.Secrets.begin(),
-            description.Secrets.end(),
-            back_inserter(secretReferences),
-            [](Secret const & secret)
-            {
-                return SecretReference(secret.Name, secret.Version);
-            });
-
-        WriteInfo(TraceComponent,
-            "{0}: SetSecrets: Setting secrets.",
-            this->TraceId);
-
-        this->SecretManager.SetSecretsAsync(
+        auto secretsOperationSPtr = this->SecretManager.BeginSetSecrets(
             description.Secrets,
             this->RemainingTime,
-            [this, thisSPtr, secretReferences](AsyncOperationSPtr const & operationSPtr)
+            [this](AsyncOperationSPtr const & operationSPtr)
             {
-                this->SetSecretsCallback(thisSPtr, operationSPtr, secretReferences);
+                this->CompleteSetSecretsOperation(operationSPtr, false);
             },
             thisSPtr,
             this->ActivityId);
+
+        this->CompleteSetSecretsOperation(secretsOperationSPtr, true);
     }
     else
     {
         error = ErrorCode::FromNtStatus(this->RequestMsg.GetStatus());
-        WriteWarning(TraceComponent,
-            "{0}: SetSecrets: Failed to get the body of the request, ErrorCode: {1}.",
+        WriteWarning(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to get the body of the request. Error: {2}.",
             this->TraceId,
+            this->TraceComponent,
             error);
 
         this->Complete(thisSPtr, error);
     }
 }
 
-void SetSecretsAsyncOperation::OnCompleted()
-{
-    WriteTrace(
-        this->Error.IsSuccess() ? LogLevel::Info : LogLevel::Error,
-        TraceComponent,
-        "{0}: SetSecrets: Ended with ErrorCode: {1}",
-        this->TraceId,
-        this->Error);
-}
-
-void SetSecretsAsyncOperation::SetSecretsCallback(
-    AsyncOperationSPtr const & thisSPtr,
+void SetSecretsAsyncOperation::CompleteSetSecretsOperation(
     AsyncOperationSPtr const & operationSPtr,
-    vector<SecretReference> const & secretReferences)
+    bool expectedCompletedSynchronously)
 {
-    auto error = StoreTransaction::EndCommit(operationSPtr);
+    if (operationSPtr->CompletedSynchronously != expectedCompletedSynchronously) { return; }
 
+    auto error = this->SecretManager.EndSetSecrects(operationSPtr, this->secrets_);
     if (!error.IsSuccess())
     {
-        WriteWarning(TraceComponent,
-            "{0}: SetSecrets: Failed to setting secrets, ErrorCode: {1}.",
+        WriteError(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to set secrets. Error: {2}.",
             this->TraceId,
+            this->TraceComponent,
             error);
 
-        this->Complete(thisSPtr, error);
+        this->Complete(operationSPtr->Parent, error);
         return;
     }
 
-    WriteInfo(TraceComponent,
-        "{0}: SetSecrets: Registering secret resources.",
-        this->TraceId);
+    WriteInfo(
+        this->TraceComponent,
+        "{0}: {1} -> Registering secret resources ...",
+        this->TraceId,
+        this->TraceComponent);
 
     vector<wstring> resourceNames;
 
     transform(
-        secretReferences.begin(),
-        secretReferences.end(),
+        this->secrets_.begin(),
+        this->secrets_.end(),
         back_inserter(resourceNames),
-        [](SecretReference const & secretRef)
+        [](Secret const & secret)
         {
-            return secretRef.ToResourceName();
+            return secret.ToResourceName();
         });
 
-    this->ResourceManager.RegisterResources(
+    auto resourcesOperationSPtr = this->ResourceManager.RegisterResources(
         resourceNames,
         this->RemainingTime,
-        [this, thisSPtr, secretReferences](AsyncOperationSPtr const & operationSPtr)
+        [this](AsyncOperationSPtr const & resourcesOperationSPtr)
         {
-            this->RegisterResourcesCallback(thisSPtr, operationSPtr, secretReferences);
+            this->CompleteRegisterResourcesOperation(resourcesOperationSPtr, false);
         },
-        thisSPtr,
+        operationSPtr->Parent,
         this->ActivityId);
+
+    this->CompleteRegisterResourcesOperation(resourcesOperationSPtr, true);
 }
 
-void SetSecretsAsyncOperation::RegisterResourcesCallback(
-    AsyncOperationSPtr const & thisSPtr,
+void SetSecretsAsyncOperation::CompleteRegisterResourcesOperation(
     AsyncOperationSPtr const & operationSPtr,
-    vector<SecretReference> const & secretReferences)
+    bool expectedCompletedSynchronously)
 {
+    if (operationSPtr->CompletedSynchronously != expectedCompletedSynchronously) { return; }
+
     auto error = AsyncOperation::End(operationSPtr);
+
+    // The registration is invoked for any SetSecrets operation, which could correspond
+    // to an update of an existing secret. In that case, RegisterResource (which calls
+    // internally Insert) would fail with an internal error of 'duplicate key'. If that's
+    // the case, eat the failure and return success.
+    // todo [dragosav]: this is obviously a hack, made necessary by the shortness of time.
+    // Post-Ignite, revisit the CSS API and either return a differentiated status from the
+    // SetSecrets API, or handle conflicts inside RegisterResource with an SF-specific error
+    // code (as opposed to the JET error being returned currently.)
+    if (!error.IsSuccess()
+        && error.IsError(ErrorCodeValue::StoreRecordAlreadyExists))
+    {
+        // expected for updates; reset and carry on
+        error.Reset();
+    }
 
     if (!error.IsSuccess())
     {
-        WriteError(TraceComponent,
-            "{0}: SetSecrets: Failed to register resources, ErrorCode: {1}.",
+        WriteError(
+            this->TraceComponent,
+            "{0}: {1} -> Failed to register resources. Error: {2}.",
             this->TraceId,
+            this->TraceComponent,
             error);
     }
     else
     {
-        this->SetReply(make_unique<SecretReferencesDescription>(secretReferences));
+        this->SetReply(make_unique<SecretsDescription>(this->secrets_));
     }
 
-    this->Complete(thisSPtr, error);
+    this->Complete(operationSPtr->Parent, error);
 }

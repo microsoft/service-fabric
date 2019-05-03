@@ -3,5 +3,5 @@ EXPORTS
     initialize_trace_processing
     finalize_trace_processing
     read_next_event
-    get_lost_events_count
+    set_start_end_time
     get_active_lttng_session_path 

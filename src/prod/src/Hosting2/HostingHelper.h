@@ -18,12 +18,22 @@ namespace Hosting2
             std::vector<ServiceModel::DigestedConfigPackageDescription> const& digestedConfigPackages,
             _Out_ std::map<std::wstring, Common::ConfigSettings> & configSettingsMapResult);
 
-        static Common::ErrorCode DecryptAndGetSecretStoreRef(
+        static Common::ErrorCode DecryptAndGetSecretStoreRefForConfigSetting(
             _Inout_ std::map<std::wstring, Common::ConfigSettings> & configSettingsMapResult,
             _Out_ std::vector<std::wstring> & secretStoreRef);
-
-        static void ReplaceSecretStoreRef(_Inout_ std::map<std::wstring, Common::ConfigSettings> & configSettingsMapResult, std::map<std::wstring, std::wstring> const& secrteStoreRef);
-
         static Common::ErrorCode WriteSettingsToFile(std::wstring const& settingName, std::wstring const& settingValue, std::wstring const& fileName);
+
+        static Common::AsyncOperationSPtr BeginGetSecretStoreRef(
+            _In_ HostingSubsystem & hosting,
+            std::vector<std::wstring> const & secretStoreRefs,
+            Common::AsyncCallback const & callback,
+            Common::AsyncOperationSPtr const & parent);
+
+        static Common::ErrorCode EndGetSecretStoreRef(
+            Common::AsyncOperationSPtr const & operation,
+            _Out_ map<std::wstring, std::wstring> & decryptedSecretStoreRef);
+
+    private:
+        class GetSecretStoreRefValuesAsyncOperation;
     };
 }

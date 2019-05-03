@@ -65,6 +65,8 @@ namespace ClientServerTransport
         static Common::GlobalWString ResolveSystemServiceReplyAction;
         static Common::GlobalWString ResetPartitionLoadAction;
         static Common::GlobalWString ToggleVerboseServicePlacementHealthReportingAction;
+        static Common::GlobalWString CreateNetworkAction;
+        static Common::GlobalWString DeleteNetworkAction;
 
         NamingTcpMessage(std::wstring const & action)
             : Client::ClientServerRequestMessage(action, actor_)
@@ -189,6 +191,18 @@ namespace ClientServerTransport
         static Client::ClientServerRequestMessageUPtr GetToggleVerboseServicePlacementHealthReporting(bool enabled)
         {
             return Common::make_unique<NamingTcpMessage>(ToggleVerboseServicePlacementHealthReportingAction, Common::make_unique<Naming::ToggleVerboseServicePlacementHealthReportingMessageBody>(enabled));
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetCreateNetwork(
+            std::unique_ptr<Management::NetworkInventoryManager::CreateNetworkMessageBody> && body)
+        {
+            return Common::make_unique<NamingTcpMessage>(CreateNetworkAction, std::move(body));
+        }
+
+        static Client::ClientServerRequestMessageUPtr GetDeleteNetwork(
+            std::unique_ptr<Management::NetworkInventoryManager::DeleteNetworkMessageBody> && body)
+        {
+            return Common::make_unique<NamingTcpMessage>(DeleteNetworkAction, std::move(body));
         }
 
         // Naming store messages

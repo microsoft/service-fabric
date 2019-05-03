@@ -18,9 +18,10 @@ namespace System.Fabric.FabricDeployer
     {
         public static int Main(string[] args)
         {
+            string argsString = string.Join(" ", args);
             try
             {
-                DeployerTrace.WriteInfo("Deployer called with {0}", string.Join(" ", args));
+                DeployerTrace.WriteInfo("Deployer called with {0}", argsString);
                 DeploymentParameters parameters = CommandLineInfo.Parse(args);
                 DeploymentOperation.ExecuteOperation(parameters, false);
                 return Constants.ErrorCode_Success;
@@ -37,6 +38,7 @@ namespace System.Fabric.FabricDeployer
             }
             catch (Exception e)
             {
+                DeployerTrace.WriteError("Deployer failed with args: {0}", argsString);
                 DeployerTrace.WriteError(e.ToString());
                 return Constants.ErrorCode_Failure;
             }

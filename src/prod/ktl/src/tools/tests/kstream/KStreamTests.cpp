@@ -9,6 +9,7 @@
 #include <ktl.h>
 #include <ktrace.h>
 #include "KStreamTests.h"
+#include <CommandLineParser.h>
 #include <ktlevents.um.h>
 #include <KTpl.h>
 
@@ -1960,12 +1961,22 @@ KStreamTest(
     UNREFERENCED_PARAMETER(argc);
     UNREFERENCED_PARAMETER(args);
 
+    NTSTATUS status;
+#if defined(PLATFORM_UNIX)
+    status = KtlTraceRegister();
+    if (! NT_SUCCESS(status))
+    {
+        KTestPrintf("Failed to KtlTraceRegister\n");
+        return(status);
+    }
+#endif
+    
     KTestPrintf("KStreamTest: STARTED\n");
 
     EventRegisterMicrosoft_Windows_KTL();
 
     KtlSystem* underlyingSystem;
-    NTSTATUS status = KtlSystem::Initialize(&underlyingSystem);
+    status = KtlSystem::Initialize(&underlyingSystem);
     if (!NT_SUCCESS(status))
     {
         KTestPrintf("%s: %i: KtlSystem::Initialize failed\n", __FUNCTION__, __LINE__);
@@ -2063,6 +2074,11 @@ KStreamTest(
     }
 
     KTestPrintf("KStreamTest: COMPLETED\n");
+
+#if defined(PLATFORM_UNIX)
+    KtlTraceUnregister();
+#endif  
+    
     return status;
 }
 

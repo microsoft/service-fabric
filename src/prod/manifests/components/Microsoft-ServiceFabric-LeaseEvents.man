@@ -4124,6 +4124,36 @@
               template="ntid_406"
               value="406"
               />
+          <event
+              channel="Analytic"
+              keywords="LeaseAgent"
+              level="win:Informational"
+              message="$(string.ns18446744072986220863.0)"
+              symbol="ArbitrationNeutralRemoteLeaseAgentFound"
+              task="Lease"
+              template="ntid_407"
+              value="407"
+              />
+          <event
+              channel="Analytic"
+              keywords="LeaseAgent"
+              level="win:Informational"
+              message="$(string.ns607329654.0)"
+              symbol="ProcessArbitrationNeutralStaleMessage"
+              task="Lease"
+              template="ntid_408"
+              value="408"
+              />
+          <event
+              channel="Analytic"
+              keywords="LeaseAgent"
+              level="win:Informational"
+              message="$(string.ns1151438052.0)"
+              symbol="ProcessNonArbitrationNeutralStaleMessage"
+              task="Lease"
+              template="ntid_409"
+              value="409"
+              />
         </events>
         <tasks>
           <task
@@ -10144,6 +10174,144 @@
                 name="arg9"
                 />
           </template>
+          <template tid="ntid_407">
+            <data
+                inType="win:UnicodeString"
+                name="arg1"
+                />
+            <data
+                inType="win:Int64"
+                name="arg2"
+                />
+            <data
+                inType="win:Int64"
+                name="arg3"
+                />
+            <data
+                inType="win:Int64"
+                name="arg4"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg5"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg6"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg7"
+                />
+            <data
+                inType="win:Boolean"
+                name="arg8"
+                />
+            <data
+                inType="win:Int64"
+                name="arg9"
+                />
+          </template>
+          <template tid="ntid_408">
+            <data
+                inType="win:UnicodeString"
+                name="arg1"
+                />
+            <data
+                inType="win:Int64"
+                name="arg2"
+                />
+            <data
+                inType="win:Int64"
+                name="arg3"
+                />
+            <data
+                inType="win:Int64"
+                name="arg4"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg5"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg6"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg7"
+                />
+            <data
+                inType="win:Boolean"
+                name="arg8"
+                />
+            <data
+                inType="win:Int64"
+                name="arg9"
+                />
+            <data
+                inType="win:Int64"
+                name="arg10"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg11"
+                />
+            <data
+                inType="win:Int64"
+                name="arg12"
+                />
+          </template>
+          <template tid="ntid_409">
+            <data
+                inType="win:UnicodeString"
+                name="arg1"
+                />
+            <data
+                inType="win:Int64"
+                name="arg2"
+                />
+            <data
+                inType="win:Int64"
+                name="arg3"
+                />
+            <data
+                inType="win:Int64"
+                name="arg4"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg5"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg6"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg7"
+                />
+            <data
+                inType="win:Boolean"
+                name="arg8"
+                />
+            <data
+                inType="win:Int64"
+                name="arg9"
+                />
+            <data
+                inType="win:Int64"
+                name="arg10"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="arg11"
+                />
+            <data
+                inType="win:Int64"
+                name="arg12"
+                />
+          </template>
         </templates>
         <keywords>
           <keyword
@@ -10343,6 +10511,10 @@
             value="Connection %1 to %2 at %3 : %4 : %5"
             />
         <string
+            id="ns607329654.0"
+            value="Process arbitration neutral stale message (%1/%2, subject = %3, monitor = %4), state = %5 (%6-%7), IsActive = %8, RemoteLeaseAgentInstance = %9, MessageId = %10, MessageType = %11, LeaseInstance = %12"
+            />
+        <string
             id="ns627997475.0"
             value="WdfWmiInstanceCreate failed with 0x%1"
             />
@@ -10533,6 +10705,10 @@
         <string
             id="ns1139595594.0"
             value="Connection %1: Received %2"
+            />
+        <string
+            id="ns1151438052.0"
+            value="Process non arbitration neutral stale message (%1/%2, subject = %3, monitor = %4), state = %5 (%6-%7), IsActive = %8, RemoteLeaseAgentInstance = %9, MessageId = %10, MessageType = %11, LeaseInstance = %12"
             />
         <string
             id="ns1152818447.0"
@@ -11331,6 +11507,10 @@
             value="Transport %1 listening"
             />
         <string
+            id="ns18446744072986220863.0"
+            value="Arbitration neutral remote lease agent (%1/%2, subject = %3, monitor = %4), state = %5 (%6-%7), IsActive = %8, RemoteLeaseAgentInstance = %9, found"
+            />
+        <string
             id="ns18446744072986907414.0"
             value="target %1 to %2 at %3: refresh connection starts with %4 milliseconds random delay"
             />
@@ -11602,4 +11782,3 @@
     </resources>
   </localization>
 </assembly>
-

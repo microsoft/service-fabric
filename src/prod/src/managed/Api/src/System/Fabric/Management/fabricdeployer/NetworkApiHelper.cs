@@ -73,7 +73,7 @@ namespace System.Fabric.FabricDeployer
                 }
             }
 
-            currentMachineNames.Add("localhost");
+            currentMachineNames.Add(Constants.LocalHostMachineName);
 
             return currentMachineNames;
         }
@@ -133,7 +133,7 @@ namespace System.Fabric.FabricDeployer
             {
                 IdnMapping mapping = new IdnMapping();
                 string inputHostName = mapping.GetAscii(address);
-                string localhost = mapping.GetAscii("localhost");
+                string localhost = mapping.GetAscii(Constants.LocalHostMachineName);
                 return inputHostName.Equals(localhost, StringComparison.OrdinalIgnoreCase);
             }
         }

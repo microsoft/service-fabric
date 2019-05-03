@@ -382,6 +382,14 @@ vector<QuerySpecificationSPtr> QuerySpecification::CreateSpecifications()
                 break;
             }
 
+        case QueryNames::GetClusterVersion:
+        {
+            resultSPtr.push_back(make_shared<QuerySpecification>(
+                queryName,
+                Query::QueryAddresses::GetCM()));
+            break;
+        }
+
         case QueryNames::GetApplicationListDeployedOnNode:
             {
                 resultSPtr.push_back(make_shared<QuerySpecification>(
@@ -875,6 +883,7 @@ vector<QuerySpecificationSPtr> QuerySpecification::CreateSpecifications()
             resultSPtr.push_back(make_shared<GetReplicaResourceListQuerySpecification>());
             break;
         }
+
         case QueryNames::GetApplicationUnhealthyEvaluation:
         {
             resultSPtr.push_back(make_shared<QuerySpecification>(
@@ -885,6 +894,7 @@ vector<QuerySpecificationSPtr> QuerySpecification::CreateSpecifications()
                 QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
             break;
         }
+
         case QueryNames::GetVolumeResourceList:
         {
             resultSPtr.push_back(make_shared<QuerySpecification>(
@@ -895,11 +905,95 @@ vector<QuerySpecificationSPtr> QuerySpecification::CreateSpecifications()
                 QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
             break;
         }
+        case QueryNames::GetGatewayResourceList:
+        {
+            resultSPtr.push_back(make_shared<QuerySpecification>(
+                queryName,
+                QueryAddresses::GetGRM(),
+                QueryArgument(Query::QueryResourceProperties::GatewayResource::GatewayName, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
+            break;
+        }
 
-        default:
-            Assert::CodingError("Query specification unknown for query : {0}", queryName);
+        case QueryNames::GetNetworkList:
+        {
+            resultSPtr.push_back(make_shared<QuerySpecification>(
+                QueryNames::GetNetworkList,
+                Query::QueryAddresses::GetFM(),
+                QueryArgument(Query::QueryResourceProperties::Network::NetworkName, false),
+                QueryArgument(Query::QueryResourceProperties::Network::NetworkStatusFilter, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
+            break;
+        }
+
+        case QueryNames::GetNetworkApplicationList:
+        {
+            resultSPtr.push_back(make_shared<QuerySpecification>(
+                QueryNames::GetNetworkApplicationList,
+                Query::QueryAddresses::GetFM(),
+                QueryArgument(Query::QueryResourceProperties::Network::NetworkName, true),
+                QueryArgument(Query::QueryResourceProperties::Application::ApplicationName, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
+            break;
+        }
+
+        case QueryNames::GetNetworkNodeList:
+        {
+            resultSPtr.push_back(make_shared<QuerySpecification>(
+                QueryNames::GetNetworkNodeList,
+                Query::QueryAddresses::GetFM(),
+                QueryArgument(Query::QueryResourceProperties::Network::NetworkName, true),
+                QueryArgument(Query::QueryResourceProperties::Node::Name, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
+            break;
+        }
+
+        case QueryNames::GetApplicationNetworkList:
+        {
+            resultSPtr.push_back(make_shared<QuerySpecification>(
+                QueryNames::GetApplicationNetworkList,
+                Query::QueryAddresses::GetFM(),
+                QueryArgument(Query::QueryResourceProperties::Application::ApplicationName, true),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
+            break;
+        }
+
+        case QueryNames::GetDeployedNetworkList:
+        {
+            resultSPtr.push_back(make_shared<QuerySpecification>(
+                QueryNames::GetDeployedNetworkList,
+                Query::QueryAddresses::GetHosting(),
+                QueryArgument(Query::QueryResourceProperties::Node::Name, true),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
+            break;
+        }
+
+        case QueryNames::GetDeployedNetworkCodePackageList:
+        {
+            resultSPtr.push_back(make_shared<QuerySpecification>(
+                QueryNames::GetDeployedNetworkCodePackageList,
+                Query::QueryAddresses::GetHosting(),
+                QueryArgument(Query::QueryResourceProperties::Node::Name, true),
+                QueryArgument(Query::QueryResourceProperties::Network::NetworkName, true),
+                QueryArgument(Query::QueryResourceProperties::Application::ApplicationName, false),
+                QueryArgument(Query::QueryResourceProperties::ServiceType::ServiceManifestName, false),
+                QueryArgument(Query::QueryResourceProperties::CodePackage::CodePackageName, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::ContinuationToken, false),
+                QueryArgument(Query::QueryResourceProperties::QueryMetadata::MaxResults, false)));
+            break;
+        }
+
+    default:
+        Assert::CodingError("Query specification unknown for query : {0}", queryName);
         }
     }
+
     return move(resultSPtr);
 }
 

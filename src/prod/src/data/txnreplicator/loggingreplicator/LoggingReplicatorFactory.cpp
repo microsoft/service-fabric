@@ -24,6 +24,7 @@ ILoggingReplicator::SPtr Factory::Create(
     __in TRPerformanceCountersSPtr const & perfCounters,
     __in Reliability::ReplicationComponent::IReplicatorHealthClientSPtr const & healthClient,
     __in ITransactionalReplicator & transactionalReplicator,
+    __in bool hasPersistedState,
     __in KAllocator& allocator,
     __out IStateProvider::SPtr & stateProvider)
 {
@@ -41,6 +42,7 @@ ILoggingReplicator::SPtr Factory::Create(
         perfCounters,
         healthClient,
         transactionalReplicator,
+        hasPersistedState,
         allocator,
         stateProvider);
     

@@ -17,6 +17,7 @@ namespace ClientServerTransport
         static Common::GlobalWString GetSecretsAction;
         static Common::GlobalWString SetSecretsAction;
         static Common::GlobalWString RemoveSecretsAction;
+        static Common::GlobalWString GetSecretVersionsAction;
 
         CentralSecretServiceMessage(
             std::wstring const & action,

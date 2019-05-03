@@ -38,7 +38,8 @@ bool FabricData::DeserializeServiceEndpoints(
     {
         FABRIC_RESOLVED_SERVICE_ENDPOINT& endpoint = pPartition->Endpoints[i];
 
-        if (endpoint.Address != nullptr)
+        // For stateful services, only return endpoint information of the primary replica.
+        if ((endpoint.Role != FABRIC_SERVICE_ROLE_STATEFUL_SECONDARY) && (endpoint.Address != nullptr))
         {
             EndpointsDescription endpointDesc;
             Common::ErrorCode error = Common::JsonHelper::Deserialize(endpointDesc, endpoint.Address);

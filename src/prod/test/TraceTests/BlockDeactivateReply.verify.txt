@@ -1,0 +1,8 @@
+###Partition adfbfea4-d9fb-464c-ae93-754d79d25ac1 time range 7/23/2014 6:30:50 AM-7/23/2014 6:35:48 AM
+Partition stuck in reconfiguration for at least ###00:04:09.6900000
+Checking primary on node 60
+Primary is stuck in Phase3_Deactivate for at least ###00:04:09.6270000
+Primary is still waiting for 50 to complete deactivation
+DeactivateSecondary for 50 not completed
+Failed Task: DeactivateSecondary(P2PReceiveReply[*3])
+

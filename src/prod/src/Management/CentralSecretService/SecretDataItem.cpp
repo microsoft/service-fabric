@@ -8,35 +8,42 @@
 using namespace std;
 using namespace Management::CentralSecretService;
 
-SecretDataItem::SecretDataItem(wstring const & key) : StoreData(), key_(key)
-{
-
-}
-
-SecretDataItem::SecretDataItem(std::wstring const & key, Secret & secret) : SecretDataItem(key)
-{
-    *this = secret;
-}
-
-SecretDataItem::SecretDataItem(std::wstring const & name, std::wstring const & version) : StoreData()
-{
-    if (!version.empty())
-    {
-        this->key_ = name + L"::" + version;
-    }
-    else
-    {
-        this->key_ = name;
-    }
-}
-
-SecretDataItem::SecretDataItem(SecretReference & secretRef) : SecretDataItem(secretRef.Name, secretRef.Version)
+SecretDataItem::SecretDataItem() 
+    : SecretDataItemBase()
+    , version_()
+    , value_()
 {
 }
 
-SecretDataItem::SecretDataItem(Secret & secret) : SecretDataItem(secret.Name, secret.Version)
+SecretDataItem::SecretDataItem(std::wstring const & name, std::wstring const & version)
+    : SecretDataItemBase(name)
+    , version_(version)
+    , value_()
 {
-    *this = secret;
+}
+
+SecretDataItem::SecretDataItem(
+    std::wstring const & name, 
+    std::wstring const & version, 
+    std::wstring const & value,
+    std::wstring const & kind, 
+    std::wstring const & contentType,
+    std::wstring const & description)
+    : SecretDataItemBase(name, kind, contentType, description)
+    , version_(version)
+    , value_(value)
+{}
+
+SecretDataItem::SecretDataItem(SecretReference const & secretRef)
+    : SecretDataItem(secretRef.Name, secretRef.Version)
+{
+}
+
+SecretDataItem::SecretDataItem(Secret const & secret)
+    : SecretDataItemBase(secret.Name, secret.Kind, secret.ContentType, secret.Description)
+    , version_(secret.Version)
+    , value_(secret.Value)
+{
 }
 
 SecretDataItem::~SecretDataItem()
@@ -44,26 +51,35 @@ SecretDataItem::~SecretDataItem()
     SecureZeroMemory((void *)this->value_.c_str(), this->value_.size() * sizeof(wchar_t));
 }
 
-SecretDataItem& SecretDataItem::operator=(Secret & secret)
-{
-    this->name_ = secret.Name;
-    this->version_ = secret.Version;
-    this->value_ = secret.Value;
-
-    return *this;
-}
-
 void SecretDataItem::WriteTo(__in Common::TextWriter & w, Common::FormatOptions const &) const
 {
     w.Write("Secret:{1}#{2}#[{0}]", this->Key, this->Name, this->Version);
 }
 
-SecretReference SecretDataItem::ToSecretReference()
+SecretReference SecretDataItem::ToSecretReference() const
 {
     return SecretReference(this->Name, this->Version);
 }
 
-Secret SecretDataItem::ToSecret()
+Secret SecretDataItem::ToSecret() const
 {
-    return Secret(this->Name, this->Version, this->Value);
+    return Secret(
+        this->Name,
+        this->Version,
+        this->Value,
+        this->Kind,
+        this->ContentType,
+        this->Description);
+}
+
+wstring SecretDataItem::ConstructKey() const
+{
+    return SecretDataItem::ToKeyName(this->Name, this->version_);
+}
+
+static const wstring KeyNameFormat(L"{0}::{1}");
+
+wstring SecretDataItem::ToKeyName(wstring const & secretName, wstring const & secretVersion)
+{
+    return wformatString(KeyNameFormat, secretName, secretVersion);
 }

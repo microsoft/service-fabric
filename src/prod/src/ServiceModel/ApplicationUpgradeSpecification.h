@@ -25,7 +25,9 @@ namespace ServiceModel
             std::vector<ServicePackageUpgradeSpecification> && packageUpgrades,
             std::vector<ServiceTypeRemovalSpecification> && removedTypes,
             ServicePackageResourceGovernanceMap && spRGSettings = ServicePackageResourceGovernanceMap(),
-            CodePackageContainersImagesMap && cpContainersImages = CodePackageContainersImagesMap());
+            CodePackageContainersImagesMap && cpContainersImages = CodePackageContainersImagesMap(),
+            std::vector<std::wstring> && networks = std::vector<std::wstring>());
+
         ApplicationUpgradeSpecification(ApplicationUpgradeSpecification const & other);
         ApplicationUpgradeSpecification(ApplicationUpgradeSpecification && other);
 
@@ -69,6 +71,9 @@ namespace ServiceModel
         __declspec(property(get = get_UpgradedCPContainersImages)) std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> & UpgradedCPContainersImages;
         std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> const& get_UpgradedCPContainersImages() const { return cpContainersImages_; }
 
+        __declspec(property(get = get_Networks)) std::vector<std::wstring> const & Networks;
+        std::vector<std::wstring> const & get_Networks() const { return networks_; }
+
         ApplicationUpgradeSpecification const & operator = (ApplicationUpgradeSpecification const & other);
         ApplicationUpgradeSpecification const & operator = (ApplicationUpgradeSpecification && other);
 
@@ -83,7 +88,7 @@ namespace ServiceModel
 
         void WriteTo(__in Common::TextWriter & w, Common::FormatOptions const &) const;
 
-        FABRIC_FIELDS_11(
+        FABRIC_FIELDS_12(
             applicationId_,
             applicationVersion_,
             instanceId_,
@@ -94,7 +99,8 @@ namespace ServiceModel
             removedTypes_,
             isManual_,
             spRGSettings_,
-            cpContainersImages_);
+            cpContainersImages_,
+            networks_);
 
         static std::string AddField(Common::TraceEvent & traceEvent, std::string const & name)
         {
@@ -129,5 +135,6 @@ namespace ServiceModel
         std::vector<ServiceTypeRemovalSpecification> removedTypes_;
         std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::ServicePackageResourceGovernanceDescription> spRGSettings_;
         std::map<ServiceModel::ServicePackageIdentifier, ServiceModel::CodePackageContainersImagesDescription> cpContainersImages_;
+        std::vector<std::wstring> networks_;
     };
 }

@@ -577,8 +577,22 @@ bool DownloadManagerTestHelper::Setup()
     sandboxedPQueuePackageFiles.push_back(L"SandboxPersistentQueueApp_App1\\PersistentQueueServicePackage.PersistentQueueService.Code.1.0\\SandboxPersistentQueueService.exe.txt");
 
     fabricUpgradeFiles.push_back(L"ClusterManifest.1.0.xml");
+
+// TODO: Get codeVersion from FabricCodeVersion instead of hardcoded 
 #if defined(PLATFORM_UNIX)    
-    fabricUpgradeFiles.push_back(L"servicefabric_1.0.961.0.deb");
+    Common::LinuxPackageManagerType::Enum packageManagerType;
+    auto error = FabricEnvironment::GetLinuxPackageManagerType(packageManagerType);
+    ASSERT_IF(!error.IsSuccess(), "GetLinuxPackageManagerType failed. Type: {0}. Error: {1}", packageManagerType, error);
+    CODING_ERROR_ASSERT(packageManagerType != Common::LinuxPackageManagerType::Enum::Unknown);
+    switch (packageManagerType)
+    {
+    case Common::LinuxPackageManagerType::Enum::Deb:
+        fabricUpgradeFiles.push_back(L"servicefabric_1.0.961.0.deb");    
+        break;
+    case Common::LinuxPackageManagerType::Enum::Rpm:
+        fabricUpgradeFiles.push_back(L"servicefabric_1.0.961.0.rpm");    
+        break;
+    }
 #else
     fabricUpgradeFiles.push_back(L"WindowsFabric.1.0.961.0.msi");
 #endif

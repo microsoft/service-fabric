@@ -46,6 +46,7 @@ _params(params)
 
 DnsExchangeOp::~DnsExchangeOp()
 {
+    _tracer.Trace(DnsTraceLevel_Noise, "Destructing DnsExchangeOp.");
 }
 
 //***************************************
@@ -60,15 +61,18 @@ void DnsExchangeOp::OnStart()
 
 void DnsExchangeOp::OnCancel()
 {
+    _tracer.Trace(DnsTraceLevel_Info, "DnsExchangeOp OnCancel called.");
     TerminateAsync();
 }
 
 void DnsExchangeOp::OnCompleted()
 {
+    _tracer.Trace(DnsTraceLevel_Info, "DnsExchangeOp OnCompleted Called.");
 }
 
 void DnsExchangeOp::OnReuse()
 {
+    _tracer.Trace(DnsTraceLevel_Noise, "DnsExchangeOp OnReuse called.");
 }
 
 //***************************************

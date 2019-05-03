@@ -64,6 +64,9 @@ namespace Hosting2
         //Used for fetching info about cgroup limits - only for tests
         static int Test_QueryCgroupInfo(std::string const & cgroupName, uint64 & cpuLimit, uint64 & memoryLimit);
 
+        //Used for getting usage from cgroup
+        static int GetCgroupUsage(std::string const & cgroupName, uint64 & cpuUsage, uint64 & memoryUsage);
+
         //Use this to synchronize access to cgroup hierarchy as the libcgroup library is not really threadsafe
         static Common::RwLock cgroupLock_;
 

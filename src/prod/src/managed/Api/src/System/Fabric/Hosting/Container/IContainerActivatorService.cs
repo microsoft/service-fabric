@@ -14,6 +14,8 @@ namespace System.Fabric
 
         Task<string> ActivateContainerAsync(ContainerActivationArgs activationArgs, TimeSpan timeout);
 
+        Task ExecuteUpdateRoutesAsync(ContainerUpdateRouteArgs updateRouteArgs, TimeSpan timeout);
+
         Task DeactivateContainerAsync(ContainerDeactivationArgs deactivationArgs, TimeSpan timeout);
 
         Task DownloadImagesAsync(List<ContainerImageDescription> imageDescriptions, TimeSpan timeout);

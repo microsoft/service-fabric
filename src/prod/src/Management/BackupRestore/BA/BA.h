@@ -26,6 +26,7 @@
 #include "Management/BackupRestore/BA/BackupStoreFileShareAccessType.h"
 #include "Management/BackupRestore/BA/BackupStoreFileShareInfo.h"
 #include "Management/BackupRestore/BA/BackupStoreAzureStorageInfo.h"
+#include "Management/BackupRestore/BA/BackupStoreDsmsAzureStorageInfo.h"
 #include "Management/BackupRestore/BA/BackupStoreInfo.h"
 #include "Management/BackupRestore/BA/BackupScheduleRuntimeList.h"
 #include "Management/BackupRestore/BA/BackupFrequency.h"

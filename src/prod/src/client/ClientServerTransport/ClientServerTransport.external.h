@@ -77,6 +77,10 @@
 #include "client/ClientServerTransport/ImageStoreContentExistsReplyMessageBody.h"
 #include "client/ClientServerTransport/DeleteComposeDeploymentMessageBody.h"
 #include "client/ClientServerTransport/DeleteSingleInstanceDeploymentMessageBody.h"
+#include "client/ClientServerTransport/RollbackComposeDeploymentMessageBody.h"
+#include "client/ClientServerTransport/NIMCreateNetworkMessageBody.h"
+#include "client/ClientServerTransport/NIMDeleteNetworkMessageBody.h"
+#include "client/ClientServerTransport/NIMValidateNetworkMessageBody.h"
 
 //
 // Internal ClientServer Transport public headers
@@ -117,6 +121,7 @@
 #include "client/ClientServerTransport/RepairManagerTcpMessage.h"
 #include "client/ClientServerTransport/UpgradeOrchestrationServiceTcpMessage.h"
 #include "client/ClientServerTransport/CentralSecretServiceMessage.h"
+#include "client/ClientServerTransport/GatewayResourceManagerTcpMessage.h"
 
 #include "client/ClientServerTransport/ClientProtocolVersionHeader.h"
 #include "client/ClientServerTransport/PingReplyMessageBody.h"
