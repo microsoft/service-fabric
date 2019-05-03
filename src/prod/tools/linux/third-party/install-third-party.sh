@@ -35,7 +35,7 @@ libs=(
   cpprest
   protobuf
   grpc
-  cri-o
+#  cri-o
   cri-tools
   containernetworking-plugins
   )

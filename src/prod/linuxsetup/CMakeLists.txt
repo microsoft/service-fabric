@@ -174,39 +174,23 @@ add_custom_target(fabricdrop
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/crio.cc.sh
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/Hosting2/crio.kata.sh   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/crio.kata.sh
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/crictl   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
-    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/crictl
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/crio   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
-    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/crio
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/conmon ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
-    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/conmon
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/pause  ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
-    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/pause
     COMMAND cp ${Linux_Setup_Dir}/crio.cc.conf    ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND cp ${Linux_Setup_Dir}/crio.kata.conf    ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/seccomp.json ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
 
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/Hosting2/containerlogrotate.sh   ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/containerlogrotate.sh
 
     COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/cni/bridge  ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/bridge
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/cni/loopback  ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
-    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/loopback
     COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/cni/host-local  ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
     COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/host-local
-    COMMAND cp ${THIRD_PARTY_LIB_DIR}/cri-o/cni/99-loopback.conf ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code
 
     COMMAND cp -r ${PROJECT_SOURCE_DIR}/../test/ClusterDeployer ${PROJECT_BINARY_DIR}/ClusterDeployerTest
 
     # BlockStore Service
     COMMAND mkdir -p ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/BlockStore/
-    COMMAND cp ${TEST_OUTPUT_DIR}/SFBlockStoreService ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/
-    COMMAND cp ${LIBRARY_OUTPUT_DIR}/libSFBDCtlLib.so ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/.
 
     # Copy Blockstore driver.
-    COMMAND cp -r ${PROJECT_SOURCE_DIR}/src/BlockStore/Linux/driver ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/BlockStore/
-    COMMAND chmod +x ${FABRIC_DROP_DIR}/bin/Fabric/Fabric.Code/BlockStore/driver/blockstore.sh
 
     # Copy Volume Drive Manifests and update version
     COMMAND cp ${PROJECT_SOURCE_DIR}/src/BlockStore/Service/VolumeDriver/Service/Manifests/Linux/ApplicationManifest.xml ${PROJECT_BINARY_DIR}/coreclr/bin/BlockStore/VolumeDriver/ubuntu.16.04-x64/
