@@ -36,7 +36,7 @@ libs=(
   protobuf
   grpc
 #  cri-o
-  cri-tools
+#  cri-tools
   containernetworking-plugins
   )
 
